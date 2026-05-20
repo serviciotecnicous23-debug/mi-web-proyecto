@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame, Radio, Signal } from "lucide-react";
-import { RadioEmblemSVG } from "@/components/RadioEmblemSVG";
 import { DEFAULT_AZURACAST_METADATA_URL } from "@shared/radio";
+
+const RADIO_BRAND_IMAGE =
+  "https://40.160.2.176.sslip.io/static/uploads/avivando_el_fuego/radio-logo-woodfire-20260520.jpg";
 
 type SceneSnapshot = {
   online: boolean;
   playlist: string;
   song: string;
   nextSong: string;
-  elapsed: number;
-  duration: number;
 };
 
 function getSongText(song: any) {
@@ -26,16 +26,7 @@ function parseSnapshot(data: unknown): SceneSnapshot {
     playlist: String(nowPlaying.playlist || "AzuraCast AutoDJ"),
     song: getSongText(nowPlaying.song) || "Avivando el Fuego Radio",
     nextSong: getSongText(record.playing_next?.song) || "Programacion continua",
-    elapsed: Math.max(0, Number(nowPlaying.elapsed ?? 0)),
-    duration: Math.max(0, Number(nowPlaying.duration ?? 0)),
   };
-}
-
-function formatDuration(totalSeconds: number) {
-  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return "--:--";
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function SceneBars() {
@@ -61,8 +52,6 @@ export default function RadioLiveScene() {
     playlist: "AzuraCast AutoDJ",
     song: "Avivando el Fuego Radio",
     nextSong: "Programacion continua",
-    elapsed: 0,
-    duration: 0,
   });
   const [clock, setClock] = useState(() => new Date());
   const qrUrl = useMemo(() => {
@@ -101,19 +90,22 @@ export default function RadioLiveScene() {
     minute: "2-digit",
     timeZone: "America/Chicago",
   }).format(clock);
-  const progress = snapshot.duration > 0 ? Math.min(100, Math.max(0, (snapshot.elapsed / snapshot.duration) * 100)) : 0;
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#08070a] text-white">
       <section className="relative mx-auto flex min-h-screen w-full max-w-[1080px] flex-col justify-between px-6 py-8 md:px-10 md:py-12">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(249,115,22,0.34),transparent_34%),radial-gradient(circle_at_50%_82%,rgba(220,38,38,0.22),transparent_38%)]" />
+        <div
+          className="absolute inset-0 opacity-[0.14] blur-2xl"
+          style={{ backgroundImage: `url(${RADIO_BRAND_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        />
         <div className="absolute inset-0 hero-grid-bg opacity-35" />
         <div className="absolute inset-x-0 top-0 h-2 fire-gradient" />
 
         <header className="relative z-10 flex items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <span className="flex h-20 w-20 items-center justify-center rounded-[1.35rem] border border-orange-300/25 bg-[linear-gradient(145deg,rgba(255,247,237,0.10),rgba(0,0,0,0.40))] shadow-[0_0_60px_rgba(249,115,22,0.24)] backdrop-blur md:h-28 md:w-28">
-              <RadioEmblemSVG className="h-[4.6rem] w-[4.6rem] md:h-24 md:w-24" animate />
+            <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.35rem] border border-orange-300/35 bg-black/40 shadow-[0_0_60px_rgba(249,115,22,0.28)] backdrop-blur md:h-28 md:w-28">
+              <img src={RADIO_BRAND_IMAGE} alt="Avivando el Fuego Radio" className="h-full w-full object-cover" />
             </span>
             <div>
               <p className="font-display text-sm uppercase tracking-[0.32em] text-orange-200 md:text-xl">Avivando</p>
@@ -132,8 +124,12 @@ export default function RadioLiveScene() {
             {snapshot.online ? "Transmitiendo en vivo" : "Conectando senal"}
           </div>
 
-          <div className="mb-6 flex h-48 w-48 items-center justify-center rounded-[2rem] border border-orange-300/25 bg-[linear-gradient(145deg,rgba(255,247,237,0.12),rgba(249,115,22,0.10)_44%,rgba(0,0,0,0.46))] shadow-[0_0_100px_rgba(249,115,22,0.24),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur md:h-72 md:w-72 md:rounded-[2.8rem]">
-            <RadioEmblemSVG className="h-44 w-44 md:h-[17rem] md:w-[17rem]" animate />
+          <div className="mb-6 flex h-56 w-56 items-center justify-center overflow-hidden rounded-[2rem] border border-orange-300/35 bg-black/40 p-2 shadow-[0_0_100px_rgba(249,115,22,0.28),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur md:h-80 md:w-80 md:rounded-[2.8rem]">
+            <img
+              src={RADIO_BRAND_IMAGE}
+              alt="Logo Avivando el Fuego Radio"
+              className="h-full w-full rounded-[1.5rem] object-cover md:rounded-[2.25rem]"
+            />
           </div>
 
           <p className="mb-3 text-sm uppercase tracking-[0.3em] text-orange-200 md:text-lg">{snapshot.playlist}</p>
@@ -152,19 +148,10 @@ export default function RadioLiveScene() {
             </div>
             <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-6">
               <div className="mb-3 flex items-center justify-between gap-4 text-xs uppercase tracking-[0.24em] text-orange-200">
-                <span>En reproduccion</span>
+                <span>Radio en vivo</span>
                 <Radio className="h-5 w-5 text-orange-300" />
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/12">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-red-600 via-orange-400 to-amber-200 shadow-[0_0_20px_rgba(249,115,22,0.6)]"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="mt-3 font-display text-2xl leading-none md:text-3xl">
-                {formatDuration(snapshot.elapsed)}
-                <span className="text-orange-200/70"> / {formatDuration(snapshot.duration)}</span>
-              </p>
+              <SceneBars />
             </div>
           </div>
         </div>

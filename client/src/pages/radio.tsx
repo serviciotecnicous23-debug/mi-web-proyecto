@@ -17,7 +17,6 @@ import {
   Tv2,
   Volume2,
 } from "lucide-react";
-import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { Layout } from "@/components/layout";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
 import { RadioStationPlayer } from "@/components/RadioStationPlayer";
@@ -31,6 +30,9 @@ import {
   DEFAULT_AZURACAST_STATION_URL,
   DEFAULT_AZURACAST_STREAM_URL,
 } from "@shared/radio";
+
+const RADIO_BRAND_IMAGE =
+  "https://40.160.2.176.sslip.io/static/uploads/avivando_el_fuego/radio-logo-woodfire-20260520.jpg";
 
 const billboardItems = [
   {
@@ -54,26 +56,32 @@ const activeBlocks = [
   {
     title: "Adoracion y ministracion continua",
     description: "Base principal para oracion, altar y busqueda de la presencia de Dios.",
-    count: "107 audios",
+    count: "144 audios",
     status: "Rotacion principal",
   },
   {
-    title: "Alabanza nueva, coros y gozo",
+    title: "Alabanza y coros renovados",
     description: "Cantos con energia, coros y celebracion para levantar la fe.",
-    count: "26 audios",
-    status: "Bloques de manana y tarde",
+    count: "136 audios",
+    status: "Rotacion principal",
   },
   {
     title: "Predicas programadas separadas",
     description: "Mensajes y ensenanzas sin pegar una predica inmediatamente despues de otra.",
-    count: "15 audios",
-    status: "5:00, 13:00 y 21:00",
+    count: "19 audios",
+    status: "Una por hora",
   },
   {
-    title: "Separadores IA, proverbios e IDs",
-    description: "Identidad sonora, proverbios, frases cortas y avisos entre canciones.",
-    count: "37 audios",
+    title: "Separadores profesionales Avivando",
+    description: "Identidad sonora de la emisora, transiciones, avisos e IDs finales.",
+    count: "9 jingles",
     status: "Cada 4 canciones",
+  },
+  {
+    title: "Biblia dramatizada y proverbios",
+    description: "Capitulos de Mateo y Marcos dramatizados mas devocionales breves.",
+    count: "37 audios",
+    status: "Cada 14 canciones",
   },
   {
     title: "Audios del ministerio y especiales",
@@ -119,7 +127,7 @@ const tiktokNotes = [
   },
 ];
 
-const archiveSummary = "68 audios del paquete inicial quedan preservados como archivo inactivo.";
+const archiveSummary = "El archivo base anterior, la lista global y los jingles viejos quedaron fuera de la rotacion activa.";
 
 function formatTime(value?: string) {
   if (!value) return "";
@@ -181,7 +189,7 @@ function getLiveSnapshot(data: unknown): LiveSnapshot | null {
 
 function SceneBars() {
   return (
-    <div className="flex h-16 items-end justify-center gap-1.5 md:h-24 md:gap-2" aria-hidden>
+    <div className="flex h-14 items-end justify-center gap-1.5 md:h-20 md:gap-2" aria-hidden>
       {Array.from({ length: 28 }).map((_, index) => (
         <span
           key={index}
@@ -249,20 +257,25 @@ export default function RadioPage() {
 
   return (
     <Layout>
-      <section className="relative overflow-hidden bg-[#08070a] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(249,115,22,0.32),transparent_34%),radial-gradient(circle_at_78%_14%,rgba(220,38,38,0.2),transparent_32%),radial-gradient(circle_at_50%_92%,rgba(251,191,36,0.16),transparent_42%)]" />
+      <section className="relative overflow-hidden bg-[#070203] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(255,91,0,0.36),transparent_32%),radial-gradient(circle_at_78%_12%,rgba(255,197,77,0.14),transparent_28%),radial-gradient(circle_at_50%_92%,rgba(255,91,0,0.22),transparent_42%)]" />
+        <div
+          className="absolute inset-0 opacity-[0.11] blur-2xl"
+          style={{ backgroundImage: `url(${RADIO_BRAND_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center" }}
+          aria-hidden
+        />
         <div className="absolute inset-0 hero-grid-bg opacity-30" aria-hidden />
         <div className="absolute inset-x-0 top-0 h-2 fire-gradient" aria-hidden />
 
         <div className="relative mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <span className="flame-logo-wrap flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-orange-400/30 bg-black/35 backdrop-blur md:h-20 md:w-20">
-                <FlameLogoSVG className="h-14 w-14 md:h-16 md:w-16" animate />
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-orange-300/40 bg-black/40 shadow-[0_0_34px_rgba(249,115,22,0.36)] md:h-20 md:w-20">
+                <img src={RADIO_BRAND_IMAGE} alt="Avivando el Fuego Radio" className="h-full w-full object-cover" />
               </span>
               <div>
                 <p className="font-display text-xs uppercase tracking-[0.28em] text-orange-200 md:text-sm">Avivando el Fuego</p>
-                <h1 className="heading-display text-[clamp(3.1rem,8vw,7.25rem)] leading-none">Radio</h1>
+                <h1 className="heading-display text-[clamp(2.8rem,7vw,6.8rem)] leading-none">Radio</h1>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -281,6 +294,14 @@ export default function RadioPage() {
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-center">
             <div className="min-w-0 space-y-6">
+              <div className="relative mx-auto max-w-[520px] overflow-hidden rounded-[1.7rem] border border-orange-300/35 bg-black/40 p-2 shadow-[0_28px_90px_rgba(0,0,0,0.55),0_0_70px_rgba(249,115,22,0.24)] lg:mx-0">
+                <img
+                  src={RADIO_BRAND_IMAGE}
+                  alt="Logo Avivando el Fuego Radio con mundo, fuego, audifonos y letras de lena"
+                  className="aspect-square w-full rounded-[1.25rem] object-cover"
+                />
+              </div>
+
               <div className="inline-flex items-center gap-3 rounded-full border border-orange-300/25 bg-orange-500/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-orange-100 md:text-sm">
                 <Radio className="h-5 w-5" />
                 {liveSnapshot?.isOnline || isAzuraCastPrimary ? "Transmitiendo en vivo" : "Conectando senal"}
@@ -299,6 +320,27 @@ export default function RadioPage() {
               </div>
 
               <SceneBars />
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button asChild className="fire-btn-primary w-full sm:w-auto">
+                  <a href="#radio-player">
+                    <Headphones className="h-4 w-4" />
+                    Escuchar ahora
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full border-orange-300/30 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
+                  <a href={stationUrl} target="_blank" rel="noreferrer">
+                    <ArrowUpRight className="h-4 w-4" />
+                    Abrir radio publica
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full border-orange-300/30 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
+                  <a href="https://ministerioavivandoelfuego.com" target="_blank" rel="noreferrer">
+                    <Flame className="h-4 w-4" />
+                    Ministerio
+                  </a>
+                </Button>
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
                 <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-5">
@@ -358,20 +400,6 @@ export default function RadioPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <Button asChild className="fire-btn-primary w-full sm:w-auto">
-                  <a href="#radio-player">
-                    <Headphones className="h-4 w-4" />
-                    Escuchar ahora
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="w-full border-orange-300/30 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
-                  <a href={stationUrl} target="_blank" rel="noreferrer">
-                    <ArrowUpRight className="h-4 w-4" />
-                    Abrir AzuraCast
-                  </a>
-                </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -528,8 +556,8 @@ export default function RadioPage() {
           <div className="flex items-start gap-3">
             <Flame className="mt-1 h-5 w-5 text-primary" />
             <div>
-              <h3 className="font-bold">Avivamiento 24/7</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Una senal viva para acompanamiento espiritual y evangelismo digital.</p>
+              <h3 className="font-bold">Avivando el Fuego Radio</h3>
+              <p className="mt-1 text-sm text-muted-foreground">La radio sostiene el ambiente espiritual y apunta de regreso al ministerio.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
