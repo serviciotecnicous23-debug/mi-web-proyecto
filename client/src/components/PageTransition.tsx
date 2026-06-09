@@ -1,9 +1,10 @@
 /**
- * PageTransition — GSAP-powered cinematic route change veil.
+ * PageTransition — transicion de ruta suave estilo "brasas".
  *
- * Renders an obsidian + fire-gradient overlay that slides in/out on
- * every location change. Pages fade+slide upward into view after the
- * veil recedes. Works with Wouter via `useLocation`.
+ * v7: se elimino el velo oscuro que barria la pantalla (causaba un
+ * destello brusco en cada navegacion). Ahora el contenido entra con
+ * un fundido calido: opacidad + leve desenfoque que se enfoca, sin
+ * flashes ni saltos. Compatible con Wouter via `useLocation`.
  */
 
 import { useEffect, useRef } from "react";
@@ -12,9 +13,8 @@ import gsap from "gsap";
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const veilRef    = useRef<HTMLDivElement>(null);
-  const childRef   = useRef<HTMLDivElement>(null);
-  const prevLoc    = useRef<string | null>(null);
+  const childRef = useRef<HTMLDivElement>(null);
+  const prevLoc = useRef<string | null>(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -22,56 +22,34 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const veil  = veilRef.current;
     const child = childRef.current;
-    if (!veil || !child) return;
+    if (!child) return;
 
-    // Same location (initial mount) → just reveal content
-    if (prevLoc.current === null) {
-      prevLoc.current = location;
-      gsap.fromTo(
-        child,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }
-      );
-      return;
-    }
-
+    const isFirstMount = prevLoc.current === null;
     prevLoc.current = location;
 
-    // Build timeline: veil sweeps in → tiny hold → sweeps out → content appears
-    const tl = gsap.timeline();
-    tl.set(veil, { scaleY: 0, transformOrigin: "bottom center", display: "block" })
-      .to(veil,  { scaleY: 1, duration: 0.32, ease: "power3.in" })
-      .to(veil,  { scaleY: 0, transformOrigin: "top center", duration: 0.34, ease: "power3.out", delay: 0.06 })
-      .fromTo(
-        child,
-        { opacity: 0, y: 22 },
-        { opacity: 1, y: 0, duration: 0.42, ease: "power2.out" },
-        "-=0.14"
-      )
-      .set(veil, { display: "none" });
+    // Fundido de brasas: el contenido emerge enfocandose suavemente.
+    const tween = gsap.fromTo(
+      child,
+      {
+        opacity: 0,
+        y: isFirstMount ? 18 : 12,
+        filter: "blur(10px) brightness(1.15)",
+      },
+      {
+        opacity: 1,
+        y: 0,
+        filter: "blur(0px) brightness(1)",
+        duration: isFirstMount ? 0.6 : 0.45,
+        ease: "power2.out",
+        clearProps: "filter,transform",
+      }
+    );
 
-    return () => { tl.kill(); };
+    return () => {
+      tween.kill();
+    };
   }, [location]);
 
-  return (
-    <>
-      {/* Transition veil */}
-      <div
-        ref={veilRef}
-        className="fixed inset-0 z-[200] pointer-events-none"
-        style={{
-          display: "none",
-          background:
-            "linear-gradient(180deg, hsl(222,20%,3%) 0%, hsl(222,20%,5%) 30%, hsl(10,80%,8%) 100%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* Page content wrapper */}
-      <div ref={childRef} style={{ opacity: 1 }}>
-        {children}
-      </div>
-    </>
-  );
+  return <div ref={childRef}>{children}</div>;
 }
