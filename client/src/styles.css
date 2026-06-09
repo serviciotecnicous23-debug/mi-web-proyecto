@@ -11,6 +11,8 @@
        (scrollbar/selection/focus), glass inputs, aurora sections.
    v5: hero watermark tipografico, marquee, equalizer, gradient rings,
        glow orbs, scroll cue — composicion editorial audaz.
+   v6: FUTURISMO TECNOLOGICO GLOBAL — HUD corners, dot-grid + scanlines,
+       navbar scan-line, tarjetas tech en TODAS las paginas, labels mono.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -390,14 +392,15 @@
       0 18px 40px -16px rgba(0,0,0,0.18);
   }
 
-  /* ── Glass pill (hero tag / status) — v4: refined chip ──────────── */
+  /* ── Glass pill — v6: chip tecnico monoespaciado ─────────────────── */
   .glass-pill {
     border: 1px solid rgba(249, 115, 22, 0.28);
     background: rgba(249, 115, 22, 0.08);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border-radius: 999px;
+    border-radius: 4px;
     padding: 0.3rem 0.9rem;
+    font-family: var(--font-mono);
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -1011,6 +1014,151 @@ select:focus {
 @keyframes scroll-cue {
   0%, 100% { transform: translateY(0); opacity: 0.45; }
   50%      { transform: translateY(8px); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v6 — FUTURISMO TECNOLOGICO GLOBAL
+   Esta capa transforma TODAS las paginas del sitio (eventos, comunidad,
+   auth, admin, biblioteca, finanzas...) porque actua sobre los componentes
+   compartidos: Card de shadcn (.bg-card), popovers, navbar, tablas.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Reticula de puntos sobre el fondo (todo el sitio, modo oscuro) ──── */
+.dark body {
+  background-image:
+    radial-gradient(hsl(220 40% 60% / 0.055) 1px, transparent 1.3px);
+  background-size: 28px 28px;
+}
+
+/* Scanlines CRT ultra sutiles encima de la vineta global */
+.dark body::after {
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      transparent 1px,
+      transparent 4px),
+    radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(0,0,0,0.42) 100%);
+}
+
+/* ── TODAS las tarjetas shadcn del sitio → vidrio tecnologico ────────── */
+.dark .bg-card.border,
+.dark .border.bg-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0) 42%),
+    hsl(222 22% 7% / 0.62);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border-color: hsl(222 26% 22% / 0.55);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.045) inset,
+    0 14px 34px -18px rgba(0,0,0,0.6);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.dark .bg-card.border:hover,
+.dark .border.bg-card:hover {
+  border-color: hsl(24 95% 53% / 0.38);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 0 0 1px hsl(24 95% 53% / 0.10) inset,
+    0 0 26px hsl(24 95% 53% / 0.10),
+    0 18px 40px -18px rgba(0,0,0,0.7);
+}
+
+/* Popovers, menus y dialogos con vidrio profundo */
+.dark .bg-popover {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 45%),
+    hsl(222 24% 8% / 0.88);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* ── Esquinas HUD tacticas en las glass-card ─────────────────────────── */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  pointer-events: none;
+  background:
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 top 0 / 16px 1.5px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 top 0 / 1.5px 16px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 top 0 / 16px 1.5px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 top 0 / 1.5px 16px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 bottom 0 / 16px 1.5px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 bottom 0 / 1.5px 16px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 bottom 0 / 16px 1.5px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 bottom 0 / 1.5px 16px;
+  background-repeat: no-repeat;
+  opacity: 0.28;
+  transition: opacity 0.3s ease, inset 0.3s ease;
+}
+.glass-card:hover::before {
+  opacity: 0.85;
+  inset: 4px;
+}
+
+/* ── Navbar: linea de escaneo animada (todas las paginas) ────────────── */
+.navbar-glass::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1.5px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(24 95% 53% / 0.9) 50%,
+    transparent 100%);
+  background-size: 28% 100%;
+  background-repeat: no-repeat;
+  background-position: -30% 0;
+  animation: nav-scan 5.5s ease-in-out infinite;
+  opacity: 0.75;
+}
+
+@keyframes nav-scan {
+  0%   { background-position: -30% 0; }
+  55%  { background-position: 130% 0; }
+  100% { background-position: 130% 0; }
+}
+
+/* ── Encabezados de tabla en mono tecnico (admin, finanzas, listas) ──── */
+th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Utilidades HUD para los redisenos por pagina ────────────────────── */
+.data-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: hsl(24 95% 60%);
+}
+.hud-frame {
+  position: relative;
+  border: 1px solid hsl(222 26% 22% / 0.6);
+  background: hsl(222 24% 6% / 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.hud-frame::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 top 0 / 22px 2px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) left 0 top 0 / 2px 22px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 bottom 0 / 22px 2px,
+    linear-gradient(hsl(24 95% 53%), hsl(24 95% 53%)) right 0 bottom 0 / 2px 22px;
+  background-repeat: no-repeat;
+  opacity: 0.8;
 }
 
 /* ── Respect reduced motion preferences ───────────────────────────────── */
