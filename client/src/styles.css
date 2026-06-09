@@ -3,12 +3,14 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════
-   FUTURISMO MINISTERIAL — Design System v4.0
+   FUTURISMO MINISTERIAL — Design System v5.0
    Dark: Obsidian cool-black + Fire neon accents (orange/red/amber)
    Light: Premium warm stone + Refined fire accents
    Type: Oswald (display/headings) · DM Sans (body/UI)
    v4: ambient ember atmosphere, 3D card depth, fire-themed chrome
        (scrollbar/selection/focus), glass inputs, aurora sections.
+   v5: hero watermark tipografico, marquee, equalizer, gradient rings,
+       glow orbs, scroll cue — composicion editorial audaz.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -521,8 +523,8 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(42% 55% at 18% 8%,  hsl(24 95% 53% / 0.075), transparent 70%),
-      radial-gradient(38% 50% at 85% 90%, hsl(0 82% 52% / 0.055),  transparent 70%);
+      radial-gradient(42% 55% at 18% 8%,  hsl(24 95% 53% / 0.14), transparent 70%),
+      radial-gradient(38% 50% at 85% 90%, hsl(0 82% 52% / 0.10),  transparent 70%);
     animation: aurora-drift 14s ease-in-out infinite alternate;
   }
   :root:not(.dark) .section-aurora::before {
@@ -897,6 +899,120 @@ select:focus {
   to { transform: rotate(360deg); }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   v5 — COMPOSICION EDITORIAL AUDAZ
+   Watermark tipografico, marquee, equalizer, gradient rings, glow orbs.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Marca de agua tipografica gigante detras del hero */
+.hero-watermark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(7rem, 24vw, 24rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1.5px hsl(24 95% 53% / 0.16);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+:root:not(.dark) .hero-watermark {
+  -webkit-text-stroke: 1.5px hsl(24 92% 45% / 0.18);
+}
+
+/* Cinta marquee infinita */
+.marquee-strip {
+  overflow: hidden;
+  border-top: 1px solid hsl(24 95% 53% / 0.20);
+  border-bottom: 1px solid hsl(24 95% 53% / 0.20);
+  background: linear-gradient(90deg, hsl(24 95% 53% / 0.06), hsl(0 82% 52% / 0.06));
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  padding: 0.85rem 0;
+  animation: marquee-scroll 30s linear infinite;
+  will-change: transform;
+}
+.marquee-strip:hover .marquee-track { animation-play-state: paused; }
+
+@keyframes marquee-scroll {
+  to { transform: translateX(-50%); }
+}
+
+/* Ecualizador animado (radio en el aire) */
+.equalizer {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+}
+.equalizer span {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, hsl(39 100% 56%), hsl(0 82% 52%));
+  transform-origin: bottom;
+  animation: eq-pulse 0.9s ease-in-out infinite;
+}
+.equalizer span:nth-child(1) { animation-delay: 0s; }
+.equalizer span:nth-child(2) { animation-delay: 0.15s; }
+.equalizer span:nth-child(3) { animation-delay: 0.3s; }
+.equalizer span:nth-child(4) { animation-delay: 0.1s; }
+.equalizer span:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes eq-pulse {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+
+/* Borde de gradiente real (anillo de fuego) via mask */
+.gradient-ring {
+  position: relative;
+}
+.gradient-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg,
+    hsl(24 95% 53% / 0.65) 0%,
+    hsl(39 100% 56% / 0.20) 30%,
+    transparent 55%,
+    hsl(0 82% 52% / 0.45) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Orbes de luz difusa decorativos */
+.glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* Indicador de scroll del hero */
+.scroll-cue {
+  animation: scroll-cue 1.8s ease-in-out infinite;
+}
+@keyframes scroll-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+
 /* ── Respect reduced motion preferences ───────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -908,4 +1024,6 @@ select:focus {
   .cursor-dot, .cursor-ring { display: none; }
   .dark body::before { animation: none; }
   .section-aurora::before { animation: none; }
+  .marquee-track { animation: none; }
+  .equalizer span { animation: none; }
 }
