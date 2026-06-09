@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════
-   FUTURISMO MINISTERIAL — Design System v3.0
-   Dark:  Obsidian cool-black + Fire neon accents (orange/red/amber)
+   FUTURISMO MINISTERIAL — Design System v4.0
+   Dark: Obsidian cool-black + Fire neon accents (orange/red/amber)
    Light: Premium warm stone + Refined fire accents
-   Type:  Oswald (display/headings) · DM Sans (body/UI)
+   Type: Oswald (display/headings) · DM Sans (body/UI)
+   v4: ambient ember atmosphere, 3D card depth, fire-themed chrome
+       (scrollbar/selection/focus), glass inputs, aurora sections.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -17,10 +19,10 @@
   --elevate-1: rgba(0,0,0, .025);
   --elevate-2: rgba(0,0,0, .055);
 
-  --background: 36 22% 97%;          /* warm stone white  */
-  --foreground: 20 28% 9%;           /* deep espresso     */
-  --border: 30 16% 86%;              /* warm light border */
-  --card: 36 28% 99%;                /* near white canvas */
+  --background: 36 22% 97%;        /* warm stone white */
+  --foreground: 20 28% 9%;         /* deep espresso */
+  --border: 30 16% 86%;            /* warm light border */
+  --card: 36 28% 99%;              /* near white canvas */
   --card-foreground: 20 28% 9%;
   --card-border: 30 16% 87%;
   --sidebar: 36 16% 96%;
@@ -34,13 +36,13 @@
   --popover: 36 28% 99%;
   --popover-foreground: 20 28% 9%;
   --popover-border: 30 16% 86%;
-  --primary: 24 92% 50%;             /* fire orange       */
+  --primary: 24 92% 50%;           /* fire orange */
   --primary-foreground: 0 0% 100%;
   --secondary: 36 16% 92%;
   --secondary-foreground: 20 24% 13%;
   --muted: 36 14% 91%;
-  --muted-foreground: 25 14% 42%;    /* warm brown-grey   */
-  --accent: 0 80% 50%;               /* fire red          */
+  --muted-foreground: 25 14% 42%;  /* warm brown-grey */
+  --accent: 0 80% 50%;             /* fire red */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -60,12 +62,12 @@
 
   --radius: .5rem;
   --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.03);
-  --shadow-xs:  0px 1px 2px 0px rgba(0,0,0,0.05);
-  --shadow-sm:  0px 1px 3px 0px rgba(0,0,0,0.06), 0px 1px 2px -1px rgba(0,0,0,0.06);
-  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.06), 0px 1px 2px -1px rgba(0,0,0,0.06);
-  --shadow-md:  0px 4px 6px -1px rgba(0,0,0,0.07), 0px 2px 4px -2px rgba(0,0,0,0.07);
-  --shadow-lg:  0px 10px 15px -3px rgba(0,0,0,0.07), 0px 4px 6px -4px rgba(0,0,0,0.07);
-  --shadow-xl:  0px 20px 25px -5px rgba(0,0,0,0.08), 0px 8px 10px -6px rgba(0,0,0,0.08);
+  --shadow-xs: 0px 1px 2px 0px rgba(0,0,0,0.05);
+  --shadow-sm: 0px 1px 3px 0px rgba(0,0,0,0.06), 0px 1px 2px -1px rgba(0,0,0,0.06);
+  --shadow: 0px 2px 4px 0px rgba(0,0,0,0.06), 0px 1px 2px -1px rgba(0,0,0,0.06);
+  --shadow-md: 0px 4px 6px -1px rgba(0,0,0,0.07), 0px 2px 4px -2px rgba(0,0,0,0.07);
+  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.07), 0px 4px 6px -4px rgba(0,0,0,0.07);
+  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.08), 0px 8px 10px -6px rgba(0,0,0,0.08);
   --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -94,10 +96,10 @@
   --elevate-1: rgba(255,255,255, .03);
   --elevate-2: rgba(255,255,255, .07);
 
-  --background: 222 20% 4%;          /* obsidian cool-black  */
-  --foreground: 36 25% 91%;          /* warm cream           */
-  --border: 222 18% 12%;             /* subtle slate edge    */
-  --card: 222 22% 7%;                /* deep charcoal        */
+  --background: 222 20% 4%;        /* obsidian cool-black */
+  --foreground: 36 25% 91%;        /* warm cream */
+  --border: 222 18% 12%;           /* subtle slate edge */
+  --card: 222 22% 7%;              /* deep charcoal */
   --card-foreground: 36 25% 91%;
   --card-border: 222 18% 11%;
   --sidebar: 222 24% 5%;
@@ -111,13 +113,13 @@
   --popover: 222 22% 7%;
   --popover-foreground: 36 25% 91%;
   --popover-border: 222 18% 12%;
-  --primary: 24 95% 53%;             /* fire orange          */
+  --primary: 24 95% 53%;           /* fire orange */
   --primary-foreground: 0 0% 5%;
   --secondary: 222 18% 11%;
   --secondary-foreground: 36 22% 87%;
   --muted: 222 18% 10%;
-  --muted-foreground: 220 10% 48%;   /* cool mid-grey        */
-  --accent: 0 82% 52%;               /* fire red             */
+  --muted-foreground: 220 10% 48%; /* cool mid-grey */
+  --accent: 0 82% 52%;             /* fire red */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 62% 32%;
   --destructive-foreground: 0 0% 100%;
@@ -130,12 +132,12 @@
   --chart-5: 24 80% 42%;
 
   --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.5);
-  --shadow-xs:  0px 1px 2px 0px rgba(0,0,0,0.6);
-  --shadow-sm:  0px 1px 3px 0px rgba(0,0,0,0.6), 0px 1px 2px -1px rgba(0,0,0,0.6);
-  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.55), 0px 1px 2px -1px rgba(0,0,0,0.55);
-  --shadow-md:  0px 4px 6px -1px rgba(0,0,0,0.6), 0px 2px 4px -2px rgba(0,0,0,0.6);
-  --shadow-lg:  0px 10px 15px -3px rgba(0,0,0,0.6), 0px 4px 6px -4px rgba(0,0,0,0.6);
-  --shadow-xl:  0px 20px 25px -5px rgba(0,0,0,0.65), 0px 8px 10px -6px rgba(0,0,0,0.65);
+  --shadow-xs: 0px 1px 2px 0px rgba(0,0,0,0.6);
+  --shadow-sm: 0px 1px 3px 0px rgba(0,0,0,0.6), 0px 1px 2px -1px rgba(0,0,0,0.6);
+  --shadow: 0px 2px 4px 0px rgba(0,0,0,0.55), 0px 1px 2px -1px rgba(0,0,0,0.55);
+  --shadow-md: 0px 4px 6px -1px rgba(0,0,0,0.6), 0px 2px 4px -2px rgba(0,0,0,0.6);
+  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.6), 0px 4px 6px -4px rgba(0,0,0,0.6);
+  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.65), 0px 8px 10px -6px rgba(0,0,0,0.65);
   --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.8);
 }
 
@@ -153,6 +155,43 @@
   }
   .bg-background, .bg-card, .bg-muted, .border-b, .border-t, nav, footer, main {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+  }
+
+  /* ── v4: fire-themed text selection ─────────────────────────────── */
+  ::selection {
+    background: hsl(24 95% 53% / 0.30);
+    color: inherit;
+  }
+
+  /* ── v4: themed scrollbar (WebKit + Firefox) ────────────────────── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(24 60% 30% / 0.55) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(24 70% 38% / 0.65), hsl(0 60% 32% / 0.65));
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(24 95% 53% / 0.85), hsl(0 80% 50% / 0.85));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  /* ── v4: consistent fire focus ring for keyboard navigation ────── */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.8);
+    outline-offset: 2px;
+    border-radius: var(--radius);
   }
 }
 
@@ -228,11 +267,11 @@
   .fire-text {
     background: linear-gradient(
       105deg,
-      hsl(0,  88%, 52%)  0%,
+      hsl(0, 88%, 52%) 0%,
       hsl(18, 95%, 53%) 25%,
       hsl(39, 100%, 56%) 50%,
       hsl(18, 95%, 55%) 75%,
-      hsl(0,  88%, 54%) 100%
+      hsl(0, 88%, 54%) 100%
     );
     background-size: 280% auto;
     -webkit-background-clip: text;
@@ -243,7 +282,7 @@
 
   /* ── Canvas particle: screen blend in dark mode ─────────────────── */
   .dark .fire-canvas { mix-blend-mode: screen; }
-  .fire-canvas       { mix-blend-mode: normal; }
+  .fire-canvas { mix-blend-mode: normal; }
 
   /* ── Logo breathing glow (wraps the FlameLogoSVG) ───────────────── */
   .flame-logo-wrap {
@@ -275,7 +314,7 @@
     background: linear-gradient(135deg,
       hsl(39 100% 55%),
       hsl(24 95% 53%),
-      hsl(0  88% 48%));
+      hsl(0 88% 48%));
     z-index: -1;
     opacity: 0;
     filter: blur(8px);
@@ -292,7 +331,7 @@
     transition-duration: 0.08s;
   }
 
-  /* ── Glassmorphism panels ────────────────────────────────────────── */
+  /* ── Glassmorphism panels — v4: 3D depth, lift & sheen ──────────── */
   .glass-panel {
     background: rgba(9, 10, 18, 0.72);
     backdrop-filter: blur(24px) saturate(180%);
@@ -300,16 +339,32 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
   .glass-card {
-    background: rgba(14, 16, 26, 0.65);
+    position: relative;
+    border-radius: calc(var(--radius) + 4px);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 38%),
+      rgba(14, 16, 26, 0.65);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 10px 30px -12px rgba(0,0,0,0.45);
+    /* `translate` composes with framer-motion inline transforms */
+    translate: 0 0;
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      translate 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .glass-card:hover {
-    border-color: rgba(249, 115, 22, 0.22);
-    box-shadow: 0 0 0 1px rgba(249,115,22,0.1) inset,
-                0 4px 24px rgba(249,115,22,0.08);
+    translate: 0 -4px;
+    border-color: rgba(249, 115, 22, 0.26);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.07) inset,
+      0 0 0 1px rgba(249,115,22,0.10) inset,
+      0 6px 28px rgba(249,115,22,0.10),
+      0 22px 48px -18px rgba(0,0,0,0.65);
   }
   /* Light-mode glass: warm frosted look */
   :root:not(.dark) .glass-panel {
@@ -317,16 +372,38 @@
     border: 1px solid rgba(0,0,0,0.07);
   }
   :root:not(.dark) .glass-card {
-    background: rgba(255, 253, 250, 0.72);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 42%),
+      rgba(255, 253, 250, 0.72);
     border: 1px solid rgba(0,0,0,0.08);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 8px 24px -12px rgba(0,0,0,0.10);
+  }
+  :root:not(.dark) .glass-card:hover {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 0 0 1px rgba(249,115,22,0.10) inset,
+      0 6px 22px rgba(249,115,22,0.10),
+      0 18px 40px -16px rgba(0,0,0,0.18);
   }
 
-  /* ── Glass pill (hero tag / status) ─────────────────────────────── */
+  /* ── Glass pill (hero tag / status) — v4: refined chip ──────────── */
   .glass-pill {
     border: 1px solid rgba(249, 115, 22, 0.28);
     background: rgba(249, 115, 22, 0.08);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(24 95% 62%);
+    box-shadow: 0 0 14px rgba(249,115,22,0.10);
+  }
+  :root:not(.dark) .glass-pill {
+    color: hsl(24 92% 38%);
   }
 
   /* ── Glassmorphic Navbar ─────────────────────────────────────────── */
@@ -380,10 +457,10 @@
     transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 1px;
   }
-  .nav-link:hover              { color: hsl(var(--foreground)); }
-  .nav-link:hover::after       { width: 65%; }
-  .nav-link-active             { color: hsl(var(--primary)); }
-  .nav-link-active::after      { width: 65%; }
+  .nav-link:hover { color: hsl(var(--foreground)); }
+  .nav-link:hover::after { width: 65%; }
+  .nav-link-active { color: hsl(var(--primary)); }
+  .nav-link-active::after { width: 65%; }
 
   /* ── Hero grid background ────────────────────────────────────────── */
   .hero-grid-bg {
@@ -414,6 +491,7 @@
     letter-spacing: -0.01em;
     line-height: 0.95;
     text-transform: uppercase;
+    text-wrap: balance;
   }
 
   /* ── Section reveal ──────────────────────────────────────────────── */
@@ -427,6 +505,59 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* ═══ v4 NEW UTILITIES ═══════════════════════════════════════════ */
+
+  /* Aurora de fuego para fondos de sección (colócala en un section
+     con position:relative; no requiere markup extra) */
+  .section-aurora {
+    position: relative;
+    isolation: isolate;
+  }
+  .section-aurora::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 55% at 18% 8%,  hsl(24 95% 53% / 0.075), transparent 70%),
+      radial-gradient(38% 50% at 85% 90%, hsl(0 82% 52% / 0.055),  transparent 70%);
+    animation: aurora-drift 14s ease-in-out infinite alternate;
+  }
+  :root:not(.dark) .section-aurora::before {
+    background:
+      radial-gradient(42% 55% at 18% 8%,  hsl(24 92% 50% / 0.05), transparent 70%),
+      radial-gradient(38% 50% at 85% 90%, hsl(0 80% 50% / 0.04),  transparent 70%);
+  }
+
+  /* Tarjeta con inclinación 3D al hover (perspective real) */
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-3d:hover {
+    transform: perspective(900px) rotateX(2.2deg) rotateY(-2.2deg) translateY(-4px);
+  }
+
+  /* Chip de ícono con halo de fuego (para íconos de áreas/secciones) */
+  .icon-chip-fire {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) + 2px);
+    border: 1px solid hsl(24 95% 53% / 0.30);
+    background:
+      linear-gradient(160deg, hsl(24 95% 53% / 0.16), hsl(0 82% 52% / 0.08));
+    box-shadow:
+      0 0 0 1px hsl(24 95% 53% / 0.06) inset,
+      0 0 18px hsl(24 95% 53% / 0.12);
+  }
+
+  /* Número de estadística con halo (combínalo con .fire-text) */
+  .stat-glow {
+    filter: drop-shadow(0 0 14px hsl(24 95% 53% / 0.35));
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -434,42 +565,107 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 @keyframes fire-shimmer {
-  0%   { background-position: 0%   center; }
+  0%   { background-position: 0% center; }
   100% { background-position: 280% center; }
 }
 
 @keyframes flame-glow-pulse {
   0%, 100% {
-    filter: drop-shadow(0 0  5px hsl(24 95% 53% / 0.55))
+    filter: drop-shadow(0 0 5px hsl(24 95% 53% / 0.55))
             drop-shadow(0 0 12px hsl(24 95% 53% / 0.22));
   }
   50% {
     filter: drop-shadow(0 0 10px hsl(24 95% 65% / 0.90))
             drop-shadow(0 0 24px hsl(24 95% 53% / 0.55))
-            drop-shadow(0 0 44px hsl(0   80% 52% / 0.30));
+            drop-shadow(0 0 44px hsl(0 80% 52% / 0.30));
   }
 }
 
 @keyframes neon-pulse {
   0%, 100% { box-shadow: 0 0 12px hsl(24 95% 53% / 0.40); }
-  50%       { box-shadow: 0 0 28px hsl(24 95% 53% / 0.70),
-                          0 0 50px hsl(0  80% 50% / 0.28); }
+  50%      { box-shadow: 0 0 28px hsl(24 95% 53% / 0.70),
+                         0 0 50px hsl(0 80% 50% / 0.28); }
 }
 
 @keyframes slide-up-fade {
   from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0);    }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes aurora-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(2%, -2%, 0) scale(1.06); }
+}
+
+@keyframes ember-ambient {
+  0%, 100% { opacity: 0.55; transform: translate3d(0, 0, 0); }
+  50%      { opacity: 0.95; transform: translate3d(-1.5%, -2%, 0); }
 }
 
 /* ── Global button micro-interactions ─────────────────────────────────── */
 button:not([disabled]) {
   transition:
     box-shadow 0.22s ease,
-    filter      0.22s ease,
-    transform   0.14s ease;
+    filter 0.22s ease,
+    transform 0.14s ease;
 }
 button:not([disabled]):hover  { filter: brightness(1.05); }
 button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.08s; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v4 — AMBIENT EMBER ATMOSPHERE (dark mode)
+   Una capa fija de brasas/calor que da profundidad a TODAS las páginas
+   sin tocar ningún componente. Muy sutil, GPU-friendly (solo gradientes).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dark body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 42% at 50% -8%,  hsl(24 95% 53% / 0.060), transparent 65%),
+    radial-gradient(40% 34% at 8% 105%,  hsl(0 82% 52% / 0.050),  transparent 70%),
+    radial-gradient(34% 30% at 96% 88%,  hsl(39 100% 50% / 0.035), transparent 70%);
+  animation: ember-ambient 16s ease-in-out infinite;
+}
+/* Viñeta de profundidad: enfoca el contenido al centro */
+.dark body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(0,0,0,0.42) 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v4 — GLASS FORM CONTROLS
+   Todos los inputs/textareas/selects del sitio (auth, contacto, admin…)
+   ganan vidrio + glow de fuego al enfocar. Cero cambios de markup.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: rgba(14, 16, 26, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+textarea:focus,
+select:focus {
+  border-color: hsl(24 95% 53% / 0.55) !important;
+  box-shadow:
+    0 0 0 1px hsl(24 95% 53% / 0.25),
+    0 0 18px hsl(24 95% 53% / 0.12);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    HERO TEXT CONTRAST WELL
@@ -477,111 +673,111 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
    while preserving the flame's visual impact.
    ═══════════════════════════════════════════════════════════════════════ */
 
-  .hero-text-well {
-    position: relative;
-    border-radius: 1.25rem;
-    background: rgba(7, 8, 15, 0.52);
-    backdrop-filter: blur(14px) saturate(160%);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    box-shadow:
-      0 0 0 1px rgba(249,115,22,0.06) inset,
-      0 32px 80px rgba(0,0,0,0.55);
-  }
-  /* Light mode: light-frosted contrast */
-  :root:not(.dark) .hero-text-well {
-    background: rgba(250, 249, 246, 0.62);
-    box-shadow:
-      0 0 0 1px rgba(0,0,0,0.05) inset,
-      0 24px 60px rgba(0,0,0,0.12);
-  }
+.hero-text-well {
+  position: relative;
+  border-radius: 1.25rem;
+  background: rgba(7, 8, 15, 0.52);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow:
+    0 0 0 1px rgba(249,115,22,0.06) inset,
+    0 32px 80px rgba(0,0,0,0.55);
+}
+/* Light mode: light-frosted contrast */
+:root:not(.dark) .hero-text-well {
+  background: rgba(250, 249, 246, 0.62);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.05) inset,
+    0 24px 60px rgba(0,0,0,0.12);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PREMIUM FIRE BUTTON  (.btn-fire-glow)
+   PREMIUM FIRE BUTTON (.btn-fire-glow)
    Dark glass base with neon-fire border, layered glow on hover,
    depth shimmer via ::before, thermal pulse on active.
    ═══════════════════════════════════════════════════════════════════════ */
 
-  .btn-fire-glow {
-    position: relative;
-    overflow: hidden;
-    background: rgba(14, 16, 28, 0.82);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(249, 115, 22, 0.38) !important;
-    color: hsl(var(--foreground)) !important;
-    font-family: var(--font-sans);
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    /* multi-layer shadow for depth illusion */
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.06) inset,
-      0 -1px 0 rgba(0,0,0,0.35) inset,
-      0 4px 16px rgba(0,0,0,0.35);
-    transition:
-      border-color 0.28s ease,
-      box-shadow   0.28s ease,
-      background   0.28s ease;
-  }
-  /* Diagonal shimmer layer (depth glass refraction) */
-  .btn-fire-glow::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -75%;
-    width: 55%; height: 100%;
-    background: linear-gradient(
-      100deg,
-      transparent       0%,
-      rgba(255,255,255,0.06) 50%,
-      transparent       100%
-    );
-    transform: skewX(-18deg);
-    transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-  }
-  /* Fire glow pulse layer (scales up on hover via ::after) */
-  .btn-fire-glow::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-      hsl(39 100% 56% / 0.0),
-      hsl(24 95% 53% / 0.0));
-    filter: blur(12px);
-    z-index: -1;
-    transition: opacity 0.35s ease, background 0.35s ease;
-    opacity: 0;
-  }
-  .btn-fire-glow:hover {
-    border-color: rgba(249,115,22,0.85) !important;
-    background: rgba(18, 20, 34, 0.92);
-    box-shadow:
-      0 0 0 1px rgba(249,115,22,0.22) inset,
-      0 0 24px rgba(249,115,22,0.30),
-      0 0 48px rgba(249,115,22,0.12),
-      0 8px 32px rgba(0,0,0,0.40);
-  }
-  .btn-fire-glow:hover::before { left: 130%; }
-  .btn-fire-glow:hover::after {
-    opacity: 1;
-    background: linear-gradient(135deg,
-      hsl(39 100% 56% / 0.18),
-      hsl(24 95% 53% / 0.14));
-  }
-  .btn-fire-glow:active {
-    box-shadow:
-      0 0 12px rgba(249,115,22,0.22),
-      0 2px 8px rgba(0,0,0,0.4);
-  }
-  /* Light-mode variant */
-  :root:not(.dark) .btn-fire-glow {
-    background: rgba(255, 252, 248, 0.78);
-    color: hsl(20 28% 9%) !important;
-  }
-  :root:not(.dark) .btn-fire-glow:hover {
-    background: rgba(255, 252, 248, 0.96);
-  }
+.btn-fire-glow {
+  position: relative;
+  overflow: hidden;
+  background: rgba(14, 16, 28, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(249, 115, 22, 0.38) !important;
+  color: hsl(var(--foreground)) !important;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  /* multi-layer shadow for depth illusion */
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 -1px 0 rgba(0,0,0,0.35) inset,
+    0 4px 16px rgba(0,0,0,0.35);
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease;
+}
+/* Diagonal shimmer layer (depth glass refraction) */
+.btn-fire-glow::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -75%;
+  width: 55%; height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 50%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+/* Fire glow pulse layer (scales up on hover via ::after) */
+.btn-fire-glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    hsl(39 100% 56% / 0.0),
+    hsl(24 95% 53% / 0.0));
+  filter: blur(12px);
+  z-index: -1;
+  transition: opacity 0.35s ease, background 0.35s ease;
+  opacity: 0;
+}
+.btn-fire-glow:hover {
+  border-color: rgba(249,115,22,0.85) !important;
+  background: rgba(18, 20, 34, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(249,115,22,0.22) inset,
+    0 0 24px rgba(249,115,22,0.30),
+    0 0 48px rgba(249,115,22,0.12),
+    0 8px 32px rgba(0,0,0,0.40);
+}
+.btn-fire-glow:hover::before { left: 130%; }
+.btn-fire-glow:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg,
+    hsl(39 100% 56% / 0.18),
+    hsl(24 95% 53% / 0.14));
+}
+.btn-fire-glow:active {
+  box-shadow:
+    0 0 12px rgba(249,115,22,0.22),
+    0 2px 8px rgba(0,0,0,0.4);
+}
+/* Light-mode variant */
+:root:not(.dark) .btn-fire-glow {
+  background: rgba(255, 252, 248, 0.78);
+  color: hsl(20 28% 9%) !important;
+}
+:root:not(.dark) .btn-fire-glow:hover {
+  background: rgba(255, 252, 248, 0.96);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    CUSTOM CURSOR (desktop only, applied via GlassCursor component)
@@ -591,34 +787,34 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
   body { cursor: none; }
 
   .cursor-dot {
-    position:  fixed;
-    top:       0;
-    left:      0;
-    width:     7px;
-    height:    7px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background:    hsl(24 95% 58%);
-    box-shadow:    0 0 10px hsl(24 95% 58% / 0.85),
-                   0 0 22px hsl(24 95% 58% / 0.45);
+    background: hsl(24 95% 58%);
+    box-shadow: 0 0 10px hsl(24 95% 58% / 0.85),
+                0 0 22px hsl(24 95% 58% / 0.45);
     pointer-events: none;
-    z-index:   9999;
+    z-index: 9999;
     will-change: transform;
     transition: width 0.18s ease, height 0.18s ease;
   }
 
   .cursor-ring {
-    position:  fixed;
-    top:       0;
-    left:      0;
-    width:     38px;
-    height:    38px;
-    border:    1.5px solid hsl(24 95% 55% / 0.65);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 38px;
+    height: 38px;
+    border: 1.5px solid hsl(24 95% 55% / 0.65);
     border-radius: 50%;
     pointer-events: none;
-    z-index:   9998;
+    z-index: 9998;
     will-change: transform;
     transition:
-      width  0.22s cubic-bezier(0.25,0.46,0.45,0.94),
+      width 0.22s cubic-bezier(0.25,0.46,0.45,0.94),
       height 0.22s cubic-bezier(0.25,0.46,0.45,0.94),
       border-color 0.22s ease;
     backdrop-filter: blur(2px);
@@ -626,7 +822,7 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   3D DEPTH GLASS BUTTONS  (data-magnetic eligible elements)
+   3D DEPTH GLASS BUTTONS (data-magnetic eligible elements)
    ═══════════════════════════════════════════════════════════════════════ */
 
 [data-magnetic] {
@@ -662,7 +858,7 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   HOLOGRAPHIC SHIMMER CARD  (premium tier)
+   HOLOGRAPHIC SHIMMER CARD (premium tier)
    ═══════════════════════════════════════════════════════════════════════ */
 
 .holo-card {
@@ -681,17 +877,17 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
 .holo-card::before {
   content: '';
   position: absolute;
-  top:    -60%;
-  left:   -60%;
-  width:  220%;
+  top: -60%;
+  left: -60%;
+  width: 220%;
   height: 220%;
   background: conic-gradient(
     from 200deg at 60% 40%,
     hsl(24 95% 53% / 0.08) 0deg,
-    hsl(0  80% 52% / 0.06) 60deg,
-    transparent              120deg,
+    hsl(0 80% 52% / 0.06) 60deg,
+    transparent 120deg,
     hsl(39 100% 56% / 0.05) 200deg,
-    transparent              280deg
+    transparent 280deg
   );
   animation: holo-rotate 9s linear infinite;
   pointer-events: none;
@@ -710,4 +906,6 @@ button:not([disabled]):active { transform: scale(0.965); transition-duration: 0.
     scroll-behavior: auto !important;
   }
   .cursor-dot, .cursor-ring { display: none; }
+  .dark body::before { animation: none; }
+  .section-aurora::before { animation: none; }
 }
