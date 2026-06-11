@@ -4,13 +4,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { TeamMember } from "@shared/schema";
 import { Layout } from "@/components/layout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { Settings, Pencil, Trash2, Plus, Loader2, Save, Users, Search, UserCheck } from "lucide-react";
+import { Settings, Pencil, Trash2, Plus, Loader2, Save, Users, Search, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const emptyForm = { name: "", role: "", description: "", verse: "", initials: "", userId: null as number | null };
@@ -41,16 +39,15 @@ export default function Equipo() {
     queryKey: ["/api/team-members"],
   });
 
-  // Fetch registered users for admin selection
+  // Usuarios registrados para vincular (solo admin)
   const { data: registeredUsers = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
     enabled: isAdmin && dialogOpen,
   });
 
-  // Filter users by search and exclude already-in-team users
   const existingUserIds = new Set((teamMembers || []).map((m: any) => m.userId).filter(Boolean));
   const filteredUsers = registeredUsers.filter((u: any) => {
-    if (editingMember?.userId === u.id) return true; // allow re-selecting current user
+    if (editingMember?.userId === u.id) return true;
     if (existingUserIds.has(u.id)) return false;
     if (!userSearch.trim()) return false;
     const q = userSearch.toLowerCase();
@@ -149,113 +146,151 @@ export default function Equipo() {
 
   return (
     <Layout>
-      <section className="py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm text-primary font-medium mb-2">Nuestro Equipo</p>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-team-title">
-              Lideres con Vision y Pasion
-            </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Un equipo unido por el mismo llamado: encender el fuego del avivamiento en cada rincon del mundo.
-            </p>
-          </div>
+      {/* ═══ PORTADA EDITORIAL ═════════════════════════════════════ */}
+      <section className="relative overflow-hidden section-aurora py-16 md:py-24">
+        <p
+          className="heading-display pointer-events-none absolute -right-8 top-2 select-none text-[clamp(7rem,20vw,18rem)] leading-none text-foreground/[0.04]"
+          aria-hidden
+        >
+          AVF
+        </p>
+        <div className="relative mx-auto max-w-6xl px-4">
+          <span className="glass-pill mb-6 inline-block text-xs">Nuestro equipo</span>
+          <h1 className="heading-display text-[clamp(3rem,9.5vw,8rem)] leading-[0.9]" data-testid="text-team-title">
+            Rostros <span className="accent-serif fire-text lowercase">del fuego</span>
+          </h1>
+          <p className="accent-serif mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
+            Un equipo unido por el mismo llamado: encender el avivamiento
+            en cada rincón del mundo.
+          </p>
 
           {isAdmin && (
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 variant={managementMode ? "default" : "outline"}
                 onClick={() => setManagementMode(!managementMode)}
                 data-testid="button-toggle-management"
               >
                 <Settings className="mr-2 h-4 w-4" />
-                Gestionar Equipo
+                Gestionar equipo
               </Button>
               {managementMode && (
                 <Button onClick={openAddDialog} data-testid="button-add-member">
                   <Plus className="mr-2 h-4 w-4" />
-                  Agregar Miembro
+                  Agregar miembro
                 </Button>
               )}
             </div>
           )}
+        </div>
+      </section>
 
+      {/* ═══ GALERÍA DE RETRATOS ═══════════════════════════════════ */}
+      <section className="py-12 md:py-16">
+        <div className="mx-auto max-w-6xl px-4">
           {isLoading ? (
             <div className="flex justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" data-testid="loading-spinner" />
             </div>
           ) : !teamMembers || teamMembers.length === 0 ? (
-            <Card className="p-12 text-center" data-testid="empty-state">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No hay miembros del equipo</h3>
-              <p className="text-muted-foreground">
+            <div className="hud-frame rounded-md py-20 text-center" data-testid="empty-state">
+              <Users className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+              <p className="heading-display text-3xl text-foreground/20 md:text-5xl">El equipo se conforma</p>
+              <p className="accent-serif mx-auto mt-3 max-w-md text-muted-foreground">
                 {isAdmin
-                  ? "Activa el modo de gestion para agregar miembros al equipo."
-                  : "El equipo se esta conformando. Vuelve pronto."}
+                  ? "Activa el modo de gestión para agregar miembros al equipo."
+                  : "El equipo se está conformando. Vuelve pronto."}
               </p>
-            </Card>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {teamMembers.map((member) => (
-                <Card key={member.id} className="p-6" data-testid={`card-leader-${member.id}`}>
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-14 w-14">
-                      {(member as any).user?.avatarUrl && (
-                        <AvatarImage src={(member as any).user.avatarUrl} alt={member.name} />
-                      )}
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+            <div className="divide-y border-y-2 border-foreground/15">
+              {teamMembers.map((member, index) => (
+                <article
+                  key={member.id}
+                  className="group relative grid gap-5 py-10 transition-colors hover:bg-card/40 md:grid-cols-[5.5rem_auto_1fr] md:gap-10 md:py-12"
+                  data-testid={`card-leader-${member.id}`}
+                >
+                  {/* Índice editorial */}
+                  <p className="heading-display fire-text text-5xl leading-none md:text-6xl">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+
+                  {/* Retrato */}
+                  <Avatar className="h-28 w-28 rounded-md border-2 border-foreground/10 shadow-[0_14px_40px_rgba(0,0,0,0.18)] transition duration-300 group-hover:shadow-[0_18px_50px_rgba(249,115,22,0.22)] md:h-36 md:w-36">
+                    {(member as any).user?.avatarUrl && (
+                      <AvatarImage src={(member as any).user.avatarUrl} alt={member.name} className="object-cover" />
+                    )}
+                    <AvatarFallback className="rounded-md bg-primary/10">
+                      <span className="accent-serif text-3xl text-primary md:text-4xl">
                         {member.initials || member.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-lg">{member.name}</h3>
-                          <p className="text-sm text-primary font-medium">{member.role}</p>
-                        </div>
-                        {managementMode && isAdmin && (
-                          <div className="flex gap-1" style={{ visibility: "visible" }}>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => openEditDialog(member)}
-                              data-testid={`button-edit-member-${member.id}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setDeleteConfirmId(member.id)}
-                              data-testid={`button-delete-member-${member.id}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                      </span>
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Ficha editorial */}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <h3 className="accent-serif text-3xl leading-tight md:text-5xl">{member.name}</h3>
+                        <p className="data-label mt-2 text-primary">{member.role}</p>
                       </div>
-                      {member.description && (
-                        <p className="text-sm text-muted-foreground mt-2">{member.description}</p>
-                      )}
-                      {member.verse && (
-                        <p className="text-xs text-muted-foreground mt-2 italic">"{member.verse}"</p>
+                      {managementMode && isAdmin && (
+                        <div className="flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => openEditDialog(member)}
+                            data-testid={`button-edit-member-${member.id}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setDeleteConfirmId(member.id)}
+                            data-testid={`button-delete-member-${member.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                     </div>
+                    {member.description && (
+                      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+                        {member.description}
+                      </p>
+                    )}
+                    {member.verse && (
+                      <blockquote className="accent-serif mt-4 border-l-2 border-primary pl-4 text-sm italic text-muted-foreground md:text-base">
+                        “{member.verse}”
+                      </blockquote>
+                    )}
                   </div>
-                </Card>
+                </article>
               ))}
             </div>
           )}
+        </div>
+      </section>
 
-          <Card className="mt-12 p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Sientes el llamado?</h2>
-            <p className="text-muted-foreground mb-6">
-              Estamos buscando obreros apasionados que quieran unirse a esta vision de llevar el fuego del evangelio a las naciones.
-            </p>
-            <Link href="/registro">
-              <Button data-testid="button-join-team">Ser Parte del Equipo</Button>
-            </Link>
-          </Card>
+      {/* ═══ LLAMADO ═══════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#0a0405] py-16 text-white md:py-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,91,0,0.3),transparent_55%)]" aria-hidden />
+        <div className="absolute inset-x-0 top-0 h-1.5 fire-gradient" aria-hidden />
+        <div className="relative mx-auto max-w-4xl px-4 text-center">
+          <Flame className="mx-auto mb-5 h-7 w-7 text-orange-300" />
+          <h2 className="heading-display text-4xl md:text-6xl">
+            ¿Sientes <span className="accent-serif fire-text lowercase">el llamado?</span>
+          </h2>
+          <p className="accent-serif mx-auto mt-5 max-w-xl text-lg text-orange-50/80">
+            Buscamos obreros apasionados que quieran unirse a esta visión de llevar
+            el fuego del evangelio a las naciones.
+          </p>
+          <Link href="/registro">
+            <Button className="fire-btn-primary mt-8 h-12 px-8 text-base" data-testid="button-join-team">
+              Ser parte del equipo
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -263,14 +298,13 @@ export default function Equipo() {
         <DialogContent className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              {editingMember ? "Editar Miembro" : "Agregar Miembro"}
+              {editingMember ? "Editar miembro" : "Agregar miembro"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4 overflow-y-auto flex-1 pr-2">
-            {/* User selection for linking to registered users */}
             {isAdmin && !editingMember && (
               <div className="space-y-2">
-                <Label>Vincular a Usuario Registrado (opcional)</Label>
+                <Label>Vincular a usuario registrado (opcional)</Label>
                 {selectedUser ? (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
                     <Avatar className="h-8 w-8">
@@ -351,12 +385,12 @@ export default function Equipo() {
                 id="member-description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Breve descripcion del miembro"
+                placeholder="Breve descripción del miembro"
                 data-testid="input-member-description"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="member-verse">Versiculo</Label>
+              <Label htmlFor="member-verse">Versículo</Label>
               <Input
                 id="member-verse"
                 value={form.verse}
@@ -383,7 +417,7 @@ export default function Equipo() {
             </Button>
             <Button onClick={handleSubmit} disabled={isSaving || !form.name.trim() || !form.role.trim()} data-testid="button-save-member">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {editingMember ? "Guardar Cambios" : "Agregar"}
+              {editingMember ? "Guardar cambios" : "Agregar"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -392,10 +426,10 @@ export default function Equipo() {
       <Dialog open={deleteConfirmId !== null} onOpenChange={() => setDeleteConfirmId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Eliminacion</DialogTitle>
+            <DialogTitle>Confirmar eliminación</DialogTitle>
           </DialogHeader>
           <p className="text-muted-foreground py-4">
-            Esta seguro de que desea eliminar este miembro del equipo? Esta accion no se puede deshacer.
+            ¿Está seguro de que desea eliminar este miembro del equipo? Esta acción no se puede deshacer.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirmId(null)} data-testid="button-cancel-delete">
