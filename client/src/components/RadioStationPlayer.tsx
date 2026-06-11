@@ -3,6 +3,7 @@ import Hls from "hls.js";
 import {
   AlertTriangle,
   ExternalLink,
+  Loader2,
   Pause,
   Play,
   Radio,
@@ -25,7 +26,7 @@ type RadioStationPlayerProps = {
   isConfigured: boolean;
   metadataUrl?: string;
   playlist?: RadioLibraryTrack[];
-  variant?: "default" | "scene";
+  variant?: "default" | "scene" | "console";
 };
 
 function isHlsUrl(url: string) {
@@ -261,6 +262,104 @@ export function RadioStationPlayer({
   const statusLabel = isConfigured ? (playlist.length ? "BIBLIOTECA ACTIVA" : "SENAL OFICIAL") : "MODO PRUEBA";
   const isScene = variant === "scene";
 
+  const audioElement = (
+    <audio
+      ref={audioRef}
+      crossOrigin="anonymous"
+      playsInline
+      preload="none"
+      onPlaying={() => setStatus("playing")}
+      onWaiting={() => setStatus("loading")}
+      onPause={() => setStatus((current) => (current === "error" ? "error" : "paused"))}
+      onEnded={() => void handleEnded()}
+      onError={() => setStatus("error")}
+    />
+  );
+
+  /* ── Variante consola: un solo play protagonista ──────────────── */
+  if (variant === "console") {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center">
+        {audioElement}
+
+        <button
+          type="button"
+          onClick={togglePlayback}
+          disabled={!currentSource}
+          aria-label={isPlaying ? "Pausar la radio" : "Reproducir la radio en vivo"}
+          data-testid="button-radio-station-play"
+          className="group relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_0_0_10px_rgba(251,146,60,0.1),0_22px_60px_rgba(249,115,22,0.4)] transition hover:scale-105 hover:brightness-110 disabled:opacity-50 md:h-32 md:w-32"
+        >
+          {status === "playing" && (
+            <span
+              className="absolute -inset-2 animate-ping rounded-full border-2 border-orange-400/40"
+              style={{ animationDuration: "2.4s" }}
+              aria-hidden
+            />
+          )}
+          {status === "loading" ? (
+            <Loader2 className="h-11 w-11 animate-spin md:h-12 md:w-12" />
+          ) : isPlaying ? (
+            <Pause className="h-11 w-11 md:h-12 md:w-12" fill="currentColor" />
+          ) : (
+            <Play className="ml-1.5 h-11 w-11 md:h-12 md:w-12" fill="currentColor" />
+          )}
+        </button>
+
+        <p className="text-xs font-black uppercase tracking-[0.32em] text-orange-200">
+          {status === "error"
+            ? "Sin conexión"
+            : status === "playing"
+              ? "Sonando en vivo"
+              : status === "loading"
+                ? "Conectando…"
+                : "Toca para escuchar"}
+        </p>
+
+        {status === "error" && (
+          <Button size="sm" variant="outline" onClick={retry} className="gap-2 border-orange-300/30 bg-white/10 text-white hover:bg-white/20">
+            <RotateCw className="h-3 w-3" />
+            Reintentar
+          </Button>
+        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMuted((value) => !value)}
+            aria-label={muted ? "Activar sonido" : "Silenciar"}
+            data-testid="button-radio-station-mute"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-orange-100 transition hover:bg-white/15"
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+          <input
+            aria-label="Volumen de la radio"
+            className="w-36 accent-orange-400"
+            type="range"
+            min={0}
+            max={100}
+            value={muted ? 0 : volume}
+            onChange={(event) => {
+              setVolume(Number(event.target.value));
+              setMuted(false);
+            }}
+          />
+          {playlist.length > 1 && (
+            <button
+              type="button"
+              onClick={() => void playNext()}
+              aria-label="Siguiente pista"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-orange-100 transition hover:bg-white/15"
+            >
+              <SkipForward className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={
@@ -269,17 +368,7 @@ export function RadioStationPlayer({
           : "overflow-hidden rounded-lg border bg-card shadow-xl"
       }
     >
-      <audio
-        ref={audioRef}
-        crossOrigin="anonymous"
-        playsInline
-        preload="none"
-        onPlaying={() => setStatus("playing")}
-        onWaiting={() => setStatus("loading")}
-        onPause={() => setStatus((current) => (current === "error" ? "error" : "paused"))}
-        onEnded={() => void handleEnded()}
-        onError={() => setStatus("error")}
-      />
+      {audioElement}
 
       <div className={isScene ? "bg-gradient-to-br from-orange-300 via-orange-600 to-red-700 p-[1px]" : "fire-gradient p-[1px]"}>
         <div className={isScene ? "bg-[#090608]/92 px-5 py-6 md:px-8 md:py-8" : "bg-card px-5 py-5 md:px-7 md:py-6"}>
