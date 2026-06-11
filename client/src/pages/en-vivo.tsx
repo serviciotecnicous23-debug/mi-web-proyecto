@@ -1,8 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import Hls from "hls.js";
 import { Layout } from "@/components/layout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLiveStreamConfig } from "@/hooks/use-users";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,10 +13,10 @@ import {
 import { SiYoutube, SiFacebook, SiTiktok } from "react-icons/si";
 
 const schedule = [
-  { day: "Lunes - Viernes", time: "12:00 PM", program: "Fuego al Mediodia", type: "Ensenanza Biblica" },
-  { day: "Sabado", time: "7:00 PM", program: "Noche de Avivamiento", type: "Culto en Vivo" },
-  { day: "Domingo", time: "10:00 AM", program: "Culto Dominical", type: "Servicio Principal" },
-  { day: "Miercoles", time: "8:00 PM", program: "Estudio Biblico", type: "Ensenanza" },
+  { day: "Lunes a viernes", time: "12:00 PM", program: "Fuego al Mediodía", type: "Enseñanza bíblica" },
+  { day: "Sábado", time: "7:00 PM", program: "Noche de Avivamiento", type: "Culto en vivo" },
+  { day: "Domingo", time: "10:00 AM", program: "Culto Dominical", type: "Servicio principal" },
+  { day: "Miércoles", time: "8:00 PM", program: "Estudio Bíblico", type: "Enseñanza" },
 ];
 
 function extractYouTubeId(url: string): string | null {
@@ -112,10 +110,10 @@ function getSourceLabel(type: string) {
     case "facebook": return "Facebook";
     case "tiktok": return "TikTok";
     case "restream": return "Restream";
-    case "hls": return "Stream Directo";
+    case "hls": return "Stream directo";
     case "radio": return "Radio";
-    case "custom": return "Transmision Externa";
-    default: return "En Vivo";
+    case "custom": return "Transmisión externa";
+    default: return "En vivo";
   }
 }
 
@@ -180,8 +178,8 @@ function RadioPlayer({ url, title }: { url: string; title?: string }) {
         onEnded={() => setIsPlaying(false)}
       />
 
-      <div className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 rounded-md p-6 flex flex-col items-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center">
+      <div className="rounded-md bg-gradient-to-br from-orange-500/10 to-red-600/15 p-6 flex flex-col items-center gap-4">
+        <div className="w-20 h-20 rounded-full bg-orange-500/15 flex items-center justify-center">
           {isPlaying ? (
             <AudioVisualizer isPlaying={isPlaying} />
           ) : (
@@ -190,30 +188,31 @@ function RadioPlayer({ url, title }: { url: string; title?: string }) {
         </div>
 
         <div className="text-center">
-          <p className="font-bold text-lg">{title || "Avivando el Fuego Radio"}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {isPlaying ? "Reproduciendo..." : url ? "Listo para reproducir" : "Sin senal configurada"}
+          <p className="font-bold text-lg text-white">{title || "Avivando el Fuego Radio"}</p>
+          <p className="text-xs text-orange-100/60 mt-1">
+            {isPlaying ? "Reproduciendo..." : url ? "Listo para reproducir" : "Sin señal configurada"}
           </p>
         </div>
 
         {error && (
-          <p className="text-xs text-destructive">No se pudo conectar con la emisora. Verifica la URL de la senal.</p>
+          <p className="text-xs text-red-400">No se pudo conectar con la emisora. Verifica la URL de la señal.</p>
         )}
 
         <div className="flex items-center gap-4">
           <Button
             size="icon"
-            variant={isPlaying ? "default" : "outline"}
+            className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_10px_30px_rgba(249,115,22,0.35)] hover:brightness-110"
             onClick={togglePlay}
             disabled={!url}
             data-testid="button-radio-play"
           >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
 
           <Button
             size="icon"
             variant="ghost"
+            className="text-orange-100 hover:bg-white/10"
             onClick={() => setIsMuted(!isMuted)}
             data-testid="button-radio-mute"
           >
@@ -226,7 +225,7 @@ function RadioPlayer({ url, title }: { url: string; title?: string }) {
             max={100}
             value={isMuted ? 0 : volume}
             onChange={(e) => { setVolume(Number(e.target.value)); setIsMuted(false); }}
-            className="w-24 accent-primary"
+            className="w-24 accent-orange-400"
             data-testid="slider-radio-volume"
           />
         </div>
@@ -391,9 +390,9 @@ function YouTubePlayer({ sourceUrl }: { sourceUrl: string }) {
     return (
       <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-red-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <SiYoutube className="w-16 h-16 text-red-500" />
-        <p className="text-white text-center font-medium text-lg">Este video no permite reproducirse aqui</p>
+        <p className="text-white text-center font-medium text-lg">Este video no permite reproducirse aquí</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
-          El creador del video ha restringido su reproduccion fuera de YouTube (Error de embed). 
+          El creador del video ha restringido su reproducción fuera de YouTube (error de embed).
           Puedes verlo directamente en YouTube haciendo clic abajo.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 mt-2">
@@ -504,14 +503,14 @@ function HlsPlayer({ sourceUrl }: { sourceUrl: string }) {
         <Signal className="w-16 h-16 text-purple-400" />
         <p className="text-white text-center font-medium">No se pudo conectar con el stream</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
-          Verifica que la URL del stream HLS sea correcta y que el servidor este transmitiendo.
+          Verifica que la URL del stream HLS sea correcta y que el servidor esté transmitiendo.
         </p>
         <Button
           variant="outline"
           className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
           onClick={() => { setError(false); setLoading(true); hlsRef.current?.startLoad(); }}
         >
-          Reintentar conexion
+          Reintentar conexión
         </Button>
       </div>
     );
@@ -874,194 +873,206 @@ function VideoPlayer({ sourceType, sourceUrl }: { sourceType: string; sourceUrl:
   return null;
 }
 
+/* ── Marco de pantalla de cine con escáner ───────────────────────── */
+function CinemaScreen({ children, live }: { children: ReactNode; live: boolean }) {
+  return (
+    <div className="relative">
+      <style>{`@keyframes avf-scan { 0% { top: 0.5rem; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: calc(100% - 3rem); opacity: 0; } }`}</style>
+      {/* resplandor de proyección */}
+      <div
+        className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.16),transparent_70%)] blur-2xl"
+        aria-hidden
+      />
+      <div className="relative rounded-lg border border-orange-300/25 bg-black p-2 shadow-[0_44px_130px_rgba(0,0,0,0.65)] md:p-3">
+        {/* esquinas tácticas */}
+        <span className="pointer-events-none absolute left-0 top-0 h-7 w-7 rounded-tl-lg border-l-2 border-t-2 border-orange-400" aria-hidden />
+        <span className="pointer-events-none absolute right-0 top-0 h-7 w-7 rounded-tr-lg border-r-2 border-t-2 border-orange-400" aria-hidden />
+        <span className="pointer-events-none absolute bottom-0 left-0 h-7 w-7 rounded-bl-lg border-b-2 border-l-2 border-orange-400" aria-hidden />
+        <span className="pointer-events-none absolute bottom-0 right-0 h-7 w-7 rounded-br-lg border-b-2 border-r-2 border-orange-400" aria-hidden />
+        {/* línea de escáner */}
+        {live && (
+          <span
+            className="pointer-events-none absolute inset-x-3 z-20 h-8 rounded-full bg-gradient-to-b from-orange-400/12 to-transparent"
+            style={{ animation: "avf-scan 5s ease-in-out infinite" }}
+            aria-hidden
+          />
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function EnVivo() {
   const { data: config, isLoading, isError } = useLiveStreamConfig();
   const { user } = useAuth();
 
   const isLive = config?.isLive && config?.sourceType !== "radio" && config?.sourceUrl;
-  const showRadio = !isLive || config?.sourceType === "radio";
   const activeSource = isLive ? config.sourceType : "radio";
 
   return (
     <Layout>
-      <section className="py-12">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              {isLive ? <PulsingDot /> : <Signal className="w-5 h-5 text-muted-foreground" />}
-              <Badge variant={isLive ? "destructive" : "secondary"} data-testid="badge-live-status">
-                {isLive ? "EN VIVO" : "RADIO 24/7"}
-              </Badge>
+      <section className="relative overflow-hidden bg-[#050203] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(255,91,0,0.28),transparent_45%),radial-gradient(circle_at_8%_80%,rgba(255,91,0,0.12),transparent_36%)]" aria-hidden />
+        <div className="absolute inset-0 hero-grid-bg opacity-20" aria-hidden />
+        <div className="absolute inset-x-0 top-0 h-1.5 fire-gradient" aria-hidden />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-10 md:py-14">
+          {/* Marquesina */}
+          <div className="mb-8 flex flex-col gap-4 md:mb-12 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/10 bg-black/40 px-4 py-2 backdrop-blur">
+                {isLive ? <PulsingDot /> : <span className="h-3 w-3 rounded-full bg-emerald-500" />}
+                <span className="text-xs font-black uppercase tracking-[0.3em] text-orange-100" data-testid="badge-live-status">
+                  {isLive ? "En vivo ahora" : "Radio 24/7 activa"}
+                </span>
+                <span className="hidden items-center gap-2 border-l border-white/10 pl-3 text-xs text-orange-50/70 sm:flex">
+                  {getSourceIcon(activeSource)}
+                  {getSourceLabel(activeSource)}
+                </span>
+              </div>
+              <h1 className="heading-display text-[clamp(3rem,9vw,7.5rem)] leading-[0.9]" data-testid="text-live-title">
+                {isLive && config?.title ? (
+                  config.title
+                ) : (
+                  <>
+                    Pantalla <span className="accent-serif fire-text lowercase">grande</span>
+                  </>
+                )}
+              </h1>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3" data-testid="text-live-title">
-              {isLive && config?.title ? config.title : "Radio y Transmisiones"}
-            </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="accent-serif max-w-sm text-base text-orange-50/75 md:text-right md:text-lg">
               {isLive
-                ? "Estamos transmitiendo en vivo. Conectate ahora y se parte de este momento especial."
-                : "Conectate con nosotros desde cualquier lugar del mundo. Escucha nuestra radio y unete a nuestras reuniones en vivo."}
+                ? "Estamos transmitiendo en vivo. Conéctate ahora y sé parte de este momento especial."
+                : "Cultos, reuniones y eventos en tiempo real — y la radio sonando las 24 horas."}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Card data-testid="card-main-player">
-                <CardContent className="p-4 md:p-6">
-                  {isLoading ? (
-                    <div className="aspect-video flex items-center justify-center bg-muted rounded-md">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Signal className="w-8 h-8 animate-pulse" />
-                        <p className="text-sm">Conectando...</p>
-                      </div>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
+            {/* ── La pantalla ── */}
+            <div className="min-w-0 space-y-6">
+              <CinemaScreen live={Boolean(isLive)}>
+                {isLoading ? (
+                  <div className="flex aspect-video items-center justify-center rounded-md bg-zinc-950">
+                    <div className="flex flex-col items-center gap-2 text-orange-100/70">
+                      <Signal className="w-8 h-8 animate-pulse" />
+                      <p className="text-sm">Conectando...</p>
                     </div>
-                  ) : isError ? (
-                    <div className="aspect-video flex items-center justify-center bg-muted rounded-md">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Radio className="w-10 h-10 text-primary" />
-                        <p className="font-bold text-lg">Avivando el Fuego Radio</p>
-                        <p className="text-sm text-center max-w-xs">La senal esta disponible. Vuelve pronto para escuchar nuestra programacion en vivo.</p>
-                      </div>
+                  </div>
+                ) : isError ? (
+                  <div className="flex aspect-video items-center justify-center rounded-md bg-zinc-950">
+                    <div className="flex flex-col items-center gap-2 px-6 text-center text-orange-100/70">
+                      <Radio className="w-10 h-10 text-primary" />
+                      <p className="font-bold text-lg text-white">Avivando el Fuego Radio</p>
+                      <p className="text-sm max-w-xs">La señal está disponible. Vuelve pronto para escuchar nuestra programación en vivo.</p>
                     </div>
-                  ) : isLive ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <PulsingDot />
-                        {getSourceIcon(activeSource)}
-                        <span className="text-sm font-medium">Transmitiendo por {getSourceLabel(activeSource)}</span>
-                      </div>
-                      <VideoPlayer sourceType={config.sourceType} sourceUrl={config.sourceUrl} />
-                    </div>
-                  ) : (
-                    <RadioPlayer
-                      url={config?.radioUrl || ""}
-                      title={config?.title || "Avivando el Fuego Radio"}
-                    />
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                ) : isLive ? (
+                  <VideoPlayer sourceType={config.sourceType} sourceUrl={config.sourceUrl} />
+                ) : (
+                  <RadioPlayer
+                    url={config?.radioUrl || ""}
+                    title={config?.title || "Avivando el Fuego Radio"}
+                  />
+                )}
+              </CinemaScreen>
 
+              {/* Butaca técnica: estado + plataformas */}
+              <div className="hud-frame flex flex-wrap items-center justify-between gap-4 rounded-md bg-black/40 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  {isLive ? <PulsingDot /> : <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />}
+                  <p className="data-label">{isLive ? `Transmitiendo por ${getSourceLabel(activeSource)}` : "Radio activa · señal propia"}</p>
+                </div>
+                <div className="flex items-center gap-4 text-orange-100/60">
+                  <Radio className="h-4 w-4" />
+                  <SiYoutube className="h-4 w-4" />
+                  <SiFacebook className="h-4 w-4" />
+                  <SiTiktok className="h-4 w-4" />
+                  <Cast className="h-4 w-4" />
+                  <Signal className="h-4 w-4" />
+                </div>
+              </div>
+
+              {/* Radio de respaldo cuando hay video en vivo */}
               {isLive && config?.radioUrl && (
-                <Card data-testid="card-radio-fallback">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Radio className="w-5 h-5 text-primary" />
-                      <span className="font-medium text-sm">Avivando el Fuego Radio</span>
-                      <Badge variant="secondary" className="ml-auto">Radio</Badge>
-                    </div>
-                    <RadioPlayer url={config.radioUrl} title="Avivando el Fuego Radio" />
-                  </CardContent>
-                </Card>
+                <div className="hud-frame rounded-md bg-black/40 p-5" data-testid="card-radio-fallback">
+                  <div className="mb-4 flex items-center gap-3">
+                    <Radio className="w-5 h-5 text-primary" />
+                    <p className="data-label">Mientras tanto, la radio sigue sonando</p>
+                  </div>
+                  <RadioPlayer url={config.radioUrl} title="Avivando el Fuego Radio" />
+                </div>
               )}
 
-              {/* Sala de Transmision en Vivo (Jitsi) */}
+              {/* Sala de transmisión (Jitsi) */}
               {user && (
-                <LiveRoom
-                  context="live"
-                  contextId="main"
-                  roomTitle="Transmision en Vivo - Culto"
-                  canManage={isTeacherOrAdminRole(user.role)}
-                  userName={user.displayName || user.username}
-                  userEmail={user.email}
-                  startLabel="Iniciar Transmision en Vivo"
-                  joinLabel="Unirse a la Transmision"
-                  startDescription="Se creara una sala de video para transmitir un culto, reunion o evento en vivo. Todos los usuarios recibiran una notificacion automatica."
-                />
+                <div className="hud-frame rounded-md bg-black/40 p-5">
+                  <p className="data-label mb-2">Cabina de transmisión</p>
+                  <h2 className="heading-display mb-5 text-2xl md:text-3xl">Sala en vivo del ministerio</h2>
+                  <LiveRoom
+                    context="live"
+                    contextId="main"
+                    roomTitle="Transmision en Vivo - Culto"
+                    canManage={isTeacherOrAdminRole(user.role)}
+                    userName={user.displayName || user.username}
+                    userEmail={user.email}
+                    startLabel="Iniciar transmisión en vivo"
+                    joinLabel="Unirse a la transmisión"
+                    startDescription="Se creará una sala de video para transmitir un culto, reunión o evento en vivo. Todos los usuarios recibirán una notificación automática."
+                  />
+                </div>
               )}
             </div>
 
-            <div className="space-y-4">
-              <Card data-testid="card-current-source">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-                    <Signal className="w-4 h-4 text-primary" />
-                    Estado de la Senal
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      {isLive ? <PulsingDot /> : <div className="w-3 h-3 rounded-full bg-green-500" />}
-                      <span className="text-sm font-medium">{isLive ? "Transmision en vivo" : "Radio activa"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      {getSourceIcon(activeSource)}
-                      <span>Fuente: {getSourceLabel(activeSource)}</span>
-                    </div>
-
-                    <div className="border-t pt-3 mt-3">
-                      <p className="text-xs font-medium mb-2 text-muted-foreground">Plataformas compatibles</p>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Radio className="w-3 h-3" /> Radio
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <SiYoutube className="w-3 h-3" /> YouTube
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <SiFacebook className="w-3 h-3" /> Facebook
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <SiTiktok className="w-3 h-3" /> TikTok
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Cast className="w-3 h-3" /> Restream
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Signal className="w-3 h-3" /> HLS
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card data-testid="card-schedule">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+            {/* ── Cartelera lateral ── */}
+            <div className="space-y-6">
+              <div className="hud-frame rounded-md bg-black/40 p-5" data-testid="card-schedule">
+                <div className="mb-5 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-lg font-black uppercase tracking-wide">
                     <Calendar className="w-4 h-4 text-primary" />
-                    Programacion Semanal
+                    Funciones
                   </h3>
-                  <div className="space-y-2">
-                    {schedule.map((item) => (
-                      <div
-                        key={item.program}
-                        className="flex items-center justify-between gap-2 p-2 bg-muted rounded-md"
-                        data-testid={`schedule-${item.program.replace(/\s/g, "-").toLowerCase()}`}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium truncate">{item.program}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.type}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-xs font-medium">{item.time}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.day}</p>
-                        </div>
+                  <p className="data-label">Semanal</p>
+                </div>
+                <div className="divide-y divide-white/10">
+                  {schedule.map((item) => (
+                    <div
+                      key={item.program}
+                      className="flex items-center gap-4 py-4"
+                      data-testid={`schedule-${item.program.replace(/\s/g, "-").toLowerCase()}`}
+                    >
+                      <p className="font-display w-24 shrink-0 text-xl font-black leading-none text-orange-300">
+                        {item.time}
+                      </p>
+                      <div className="min-w-0">
+                        <p className="truncate font-bold">{item.program}</p>
+                        <p className="data-label mt-1">{item.type} · {item.day}</p>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              <Card data-testid="card-connect-info">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-                    <Music className="w-4 h-4 text-primary" />
-                    Como Conectarte
-                  </h3>
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div className="flex items-start gap-2">
-                      <Radio className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
-                      <p><span className="font-medium text-foreground">Radio 24/7:</span> Musica cristiana, predicaciones y ensenanzas las 24 horas.</p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Video className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
-                      <p><span className="font-medium text-foreground">En Vivo:</span> Cultos, reuniones y eventos transmitidos en tiempo real.</p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Mic className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
-                      <p><span className="font-medium text-foreground">Interactivo:</span> Participa con nosotros desde cualquier lugar del mundo.</p>
-                    </div>
+              <div className="hud-frame rounded-md bg-black/40 p-5" data-testid="card-connect-info">
+                <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-black uppercase tracking-wide">
+                  <Music className="w-4 h-4 text-primary" />
+                  Cómo conectarte
+                </h3>
+                <div className="space-y-3 text-sm text-orange-50/70">
+                  <div className="flex items-start gap-3">
+                    <Radio className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p><span className="font-bold text-white">Radio 24/7:</span> música cristiana, predicaciones y enseñanzas las 24 horas.</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-start gap-3">
+                    <Video className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p><span className="font-bold text-white">En vivo:</span> cultos, reuniones y eventos transmitidos en tiempo real.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mic className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p><span className="font-bold text-white">Interactivo:</span> participa con nosotros desde cualquier lugar del mundo.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
