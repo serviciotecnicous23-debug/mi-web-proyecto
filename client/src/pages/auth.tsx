@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,15 +36,17 @@ export function LoginPage() {
   const { login, isLoggingIn, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { username: "", password: "" },
   });
+
+  // Redireccion segura: fuera del render para no romper los hooks de React.
+  useEffect(() => {
+    if (user) setLocation("/");
+  }, [user, setLocation]);
+
+  if (user) return null;
 
   function onSubmit(data: z.infer<typeof loginSchema>) {
     login(data);
@@ -132,15 +135,17 @@ export function RegisterPage() {
   const { register, isRegistering, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: { username: "", password: "", displayName: "", role: "miembro", country: "", phone: "", email: "" },
   });
+
+  // Redireccion segura: fuera del render para no romper los hooks de React.
+  useEffect(() => {
+    if (user) setLocation("/");
+  }, [user, setLocation]);
+
+  if (user) return null;
 
   async function onSubmit(data: z.infer<typeof registerSchema>) {
     try {

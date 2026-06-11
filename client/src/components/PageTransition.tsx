@@ -1,77 +1,97 @@
 /**
- * PageTransition — GSAP-powered cinematic route change veil.
+ * PageTransition — ASCUA flame warp.
  *
- * Renders an obsidian + fire-gradient overlay that slides in/out on
- * every location change. Pages fade+slide upward into view after the
- * veil recedes. Works with Wouter via `useLocation`.
+ * En cada cambio de ruta, una esfera de fuego nace en el punto exacto
+ * del ultimo clic del usuario, envuelve la pantalla y se desvanece
+ * revelando la nueva pagina (alusion directa al logo del ministerio).
+ * Cero cambios necesarios en botones o links: escuchamos pointerdown
+ * a nivel de window. Respeta prefers-reduced-motion.
  */
 
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import gsap from "gsap";
 
+const lastClick = { x: 0, y: 0 };
+if (typeof window !== "undefined") {
+  lastClick.x = window.innerWidth / 2;
+  lastClick.y = window.innerHeight / 2;
+  window.addEventListener(
+    "pointerdown",
+    (e: PointerEvent) => {
+      lastClick.x = e.clientX;
+      lastClick.y = e.clientY;
+    },
+    { capture: true, passive: true }
+  );
+}
+
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const veilRef    = useRef<HTMLDivElement>(null);
-  const childRef   = useRef<HTMLDivElement>(null);
-  const prevLoc    = useRef<string | null>(null);
+  const childRef = useRef<HTMLDivElement>(null);
+  const orbRef = useRef<HTMLDivElement>(null);
+  const prevLoc = useRef<string | null>(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      prevLoc.current = location;
-      return;
-    }
-
-    const veil  = veilRef.current;
     const child = childRef.current;
-    if (!veil || !child) return;
+    const orb = orbRef.current;
+    if (!child || !orb) return;
 
-    // Same location (initial mount) → just reveal content
-    if (prevLoc.current === null) {
-      prevLoc.current = location;
-      gsap.fromTo(
-        child,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }
-      );
-      return;
-    }
-
+    const isFirstMount = prevLoc.current === null;
     prevLoc.current = location;
 
-    // Build timeline: veil sweeps in → tiny hold → sweeps out → content appears
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    if (isFirstMount) {
+      const intro = gsap.fromTo(
+        child,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.55, ease: "power2.out", clearProps: "transform" }
+      );
+      return () => { intro.kill(); };
+    }
+
+    orb.style.left = lastClick.x + "px";
+    orb.style.top = lastClick.y + "px";
+
     const tl = gsap.timeline();
-    tl.set(veil, { scaleY: 0, transformOrigin: "bottom center", display: "block" })
-      .to(veil,  { scaleY: 1, duration: 0.32, ease: "power3.in" })
-      .to(veil,  { scaleY: 0, transformOrigin: "top center", duration: 0.34, ease: "power3.out", delay: 0.06 })
+    tl.set(child, { opacity: 0 })
+      .set(orb, { display: "block", xPercent: -50, yPercent: -50, scale: 0, opacity: 1 })
+      .to(orb, { scale: 60, duration: 0.5, ease: "power3.in" })
       .fromTo(
         child,
-        { opacity: 0, y: 22 },
-        { opacity: 1, y: 0, duration: 0.42, ease: "power2.out" },
-        "-=0.14"
+        { opacity: 0, y: 14, filter: "blur(8px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power2.out", clearProps: "filter,transform" },
+        ">-0.08"
       )
-      .set(veil, { display: "none" });
+      .to(orb, { opacity: 0, duration: 0.45, ease: "power2.out" }, "<+0.05")
+      .set(orb, { display: "none", scale: 0 });
 
     return () => { tl.kill(); };
   }, [location]);
 
   return (
     <>
-      {/* Transition veil */}
       <div
-        ref={veilRef}
-        className="fixed inset-0 z-[200] pointer-events-none"
+        ref={orbRef}
+        aria-hidden="true"
         style={{
           display: "none",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: 60,
+          height: 60,
+          borderRadius: "50%",
+          zIndex: 9998,
+          pointerEvents: "none",
           background:
-            "linear-gradient(180deg, hsl(222,20%,3%) 0%, hsl(222,20%,5%) 30%, hsl(10,80%,8%) 100%)",
+            "radial-gradient(circle at 38% 32%, #FFD66B 0%, #FFB000 22%, #FF5A1F 55%, #FF2D55 78%, #6E0D1F 100%)",
+          boxShadow: "0 0 90px 36px rgba(255,90,31,0.45)",
+          willChange: "transform",
         }}
-        aria-hidden="true"
       />
-      {/* Page content wrapper */}
-      <div ref={childRef} style={{ opacity: 1 }}>
-        {children}
-      </div>
+      <div ref={childRef}>{children}</div>
     </>
   );
 }
