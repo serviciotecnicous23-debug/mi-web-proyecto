@@ -86,7 +86,7 @@ const memberDesktopNavLinks = [
   { href: "/biblioteca", label: "Biblioteca" },
   { href: "/regiones", label: "Regiones" },
   { href: "/comunidad", label: "Comunidad" },
-  { href: "/oracion", label: "Oracion" },
+  { href: "/oracion", label: "Oración" },
   { href: "/eventos", label: "Eventos" },
   { href: "/radio", label: "Radio" },
   { href: "/en-vivo", label: "En Vivo" },
@@ -166,7 +166,7 @@ const memberMobileNavGroups = [
     icon: Heart,
     links: [
       { href: "/comunidad", label: "Comunidad", icon: MessageSquare },
-      { href: "/oracion", label: "Oracion", icon: Heart },
+      { href: "/oracion", label: "Oración", icon: Heart },
       { href: "/eventos", label: "Eventos", icon: Calendar },
       { href: "/grupos", label: "Grupos", icon: Users },
       { href: "/calendario", label: "Calendario", icon: Calendar },
@@ -333,7 +333,7 @@ function NotificationBell() {
           <p className="font-semibold text-sm">Notificaciones</p>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" onClick={() => markAllRead.mutate()} data-testid="button-mark-all-read">
-              Marcar leidas
+              Marcar leídas
             </Button>
           )}
         </div>
@@ -436,7 +436,7 @@ export function Navbar() {
   }, [menuOpen]);
 
   return (
-    <nav ref={navRef} className="navbar-glass sticky top-0 z-50" role="navigation" aria-label="Navegacion principal">
+    <nav ref={navRef} className="navbar-glass sticky top-0 z-50" role="navigation" aria-label="Navegación principal">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3" data-testid="link-home-logo" aria-label="Ir al inicio - Avivando el Fuego">
           <span className="flame-logo-wrap">
@@ -488,7 +488,7 @@ export function Navbar() {
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" data-testid="button-user-menu" aria-label="Menu de usuario">
+                    <Button variant="ghost" size="icon" data-testid="button-user-menu" aria-label="Menú de usuario">
                       <Avatar className="h-8 w-8">
                         {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName || user.username} />}
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -544,7 +544,7 @@ export function Navbar() {
                     <DropdownMenuItem asChild>
                       <Link href="/oracion" className="cursor-pointer">
                         <Heart className="mr-2 h-4 w-4" aria-hidden="true" />
-                        Oracion
+                        Oración
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -596,7 +596,7 @@ export function Navbar() {
                       data-testid="button-logout"
                     >
                       <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Cerrar Sesion
+                      Cerrar Sesión
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -605,7 +605,7 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Link href="/login">
                   <Button variant="ghost" size="sm" data-testid="link-login">
-                    Iniciar Sesion
+                    Iniciar Sesión
                   </Button>
                 </Link>
                 <Link href="/registro">
@@ -625,7 +625,7 @@ export function Navbar() {
             className="lg:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
             data-testid="button-mobile-menu"
-            aria-label={menuOpen ? "Cerrar menu" : "Abrir menu de navegacion"}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
             aria-expanded={menuOpen}
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -646,7 +646,7 @@ export function Navbar() {
               Avivando el Fuego
             </SheetTitle>
             <SheetDescription className="text-left text-xs">
-              Ministerio Evangelistico Internacional
+              Ministerio Evangelístico Internacional
             </SheetDescription>
           </SheetHeader>
 
@@ -770,13 +770,13 @@ export function Navbar() {
                 onClick={() => { logout(); closeMenu(); }}
                 data-testid="button-mobile-logout"
               >
-                <LogOut className="w-4 h-4" aria-hidden="true" /> Cerrar Sesion
+                <LogOut className="w-4 h-4" aria-hidden="true" /> Cerrar Sesión
               </Button>
             ) : (
               <div className="space-y-2">
                 <Link href="/login" onClick={closeMenu}>
                   <Button variant="ghost" className="w-full justify-start" size="sm" data-testid="link-mobile-login">
-                    Iniciar Sesion
+                    Iniciar Sesión
                   </Button>
                 </Link>
                 <Link href="/registro" onClick={closeMenu}>
@@ -809,7 +809,7 @@ export function Footer() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ministerio evangelistico internacional. Desde 2017, Ciudad Bolivar, Venezuela.
+              Ministerio evangelístico internacional. Desde 2017, Ciudad Bolivar, Venezuela.
             </p>
           </div>
           <div>
@@ -826,13 +826,13 @@ export function Footer() {
             <h4 className="font-display text-xs font-semibold mb-3 tracking-widest uppercase text-foreground/80">Presencia Internacional</h4>
             <p className="text-sm text-muted-foreground">Venezuela - Peru - USA</p>
             <p className="text-sm text-muted-foreground mt-2 italic">
-              "No apagueis el Espiritu" - 1 Tesalonicenses 5:19
+              "No apaguéis el Espiritu" - 1 Tesalonicenses 5:19
             </p>
           </div>
         </div>
         <div className="border-t border-border/40 mt-8 pt-6 text-center">
           <p className="text-xs text-muted-foreground">
-            Avivando el Fuego &mdash; Ministerio Evangelistico Internacional
+            Avivando el Fuego &mdash; Ministerio Evangelístico Internacional
           </p>
         </div>
       </div>
