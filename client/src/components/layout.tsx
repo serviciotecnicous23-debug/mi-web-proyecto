@@ -912,7 +912,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const transition = () => {
       const isHome      = location === "/";
       const scrolledDown = window.scrollY > 260;
-      const mode: "hero" | "ember" = (isHome && !scrolledDown) ? "hero" : "ember";
+      const mode: "hero" | "ember" = "ember";
       fireRef.current?.setMode(mode);
     };
     // Immediate on location change
@@ -982,7 +982,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
       <Footer />
       <BackToTop />
-      <Fire3DScene ref={fireRef} className="fixed inset-0 z-0" opacity={0.88} />
+      <Fire3DScene ref={fireRef} className="fixed inset-0 z-0" opacity={0.18} />
     </div>
   );
 }
