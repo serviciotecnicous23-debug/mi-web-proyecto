@@ -179,25 +179,23 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ═══ STATS ══════════════════════════════════════════════════ */}
-      <section className="py-20 section-aurora">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-5">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              className="gradient-ring glass-card card-3d text-center py-10 px-4"
-              data-testid={`stat-${s.value}`}
-              {...fadeUp}
-              transition={{ duration: 0.45, delay: i * 0.1 }}
-            >
-              <p className="font-display text-5xl md:text-6xl font-bold fire-text stat-glow">{s.value}</p>
-              <p className="text-[0.68rem] text-muted-foreground mt-3 tracking-[0.22em] uppercase">{s.label}</p>
-            </motion.div>
-          ))}
+      {/* ═══ NUMEROS — seccion papel editorial (prototipo ASCUA) ════ */}
+      <section className="paper-section py-24 px-4">
+        <div className="max-w-6xl mx-auto">
+          <p className="data-label" style={{ color: "#A4500F" }}>El ministerio en numeros</p>
+          <h2 className="heading-display font-display text-4xl md:text-6xl mt-4 max-w-3xl">
+            Un avivamiento <span className="accent-serif">que se puede medir.</span>
+          </h2>
+          <div className="stat-grid mt-14">
+            {stats.map((s) => (
+              <div key={s.label} className="stat-cell" data-testid={`stat-${s.value}`}>
+                <div className="stat-num">{s.value}</div>
+                <div className="stat-label">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
-
-      <div className="section-divider max-w-5xl mx-auto" />
 
       {/* ═══ AREAS (BENTO) ══════════════════════════════════════════ */}
       <section className="py-24 section-aurora">
@@ -205,50 +203,26 @@ export default function Home() {
           <div className="text-center mb-14">
             <span className="glass-pill inline-block mb-5 text-xs">Nuestro Trabajo</span>
             <h2 className="heading-display font-display text-5xl md:text-7xl">
-              Areas de <span className="fire-text">Accion</span>
+              Areas de <span className="accent-serif fire-text">accion</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto md:text-lg">
               Multiples frentes, un solo objetivo: llevar el fuego del evangelio a toda criatura.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:auto-rows-fr">
-            {areas.map((a, i) =>
-              a.featured ? (
-                <motion.div
-                  key={a.title}
-                  className="holo-card gradient-ring p-8 md:p-10 md:col-span-2 md:row-span-2 flex flex-col justify-end min-h-[320px]"
-                  data-testid={`card-area-${a.title}`}
-                  {...fadeUp}
-                  transition={{ duration: 0.5 }}
-                >
-                  <span className="icon-chip-fire w-16 h-16 mb-6">
-                    <a.icon className="w-8 h-8 text-primary" />
+          <div className="area-rows">
+            {areas.map((a, i) => (
+              <Link key={a.title} href={i === 1 ? "/radio" : i === 5 ? "/alianza" : "/eventos"}>
+                <div className="area-row" data-testid={`card-area-${a.title}`}>
+                  <span className="area-idx">{String(i + 1).padStart(2, "0")}</span>
+                  <span>
+                    <b className="font-display font-bold uppercase tracking-wide text-base md:text-2xl block">{a.title}</b>
+                    <small className="text-sm text-muted-foreground block mt-1 max-w-xl">{a.desc}</small>
                   </span>
-                  <h3 className="heading-display font-display text-3xl md:text-4xl mb-3">{a.title}</h3>
-                  <p className="text-muted-foreground md:text-lg max-w-lg">{a.desc}</p>
-                  <Link href="/eventos">
-                    <Button variant="outline" className="btn-fire-glow mt-6 w-fit" data-magnetic>
-                      Ver proximas jornadas <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={a.title}
-                  className="glass-card card-3d p-6"
-                  data-testid={`card-area-${a.title}`}
-                  {...fadeUp}
-                  transition={{ duration: 0.4, delay: i * 0.06 }}
-                >
-                  <span className="icon-chip-fire w-11 h-11 mb-4">
-                    <a.icon className="w-5 h-5 text-primary" />
-                  </span>
-                  <h3 className="font-display text-sm font-semibold tracking-wider uppercase mb-2">{a.title}</h3>
-                  <p className="text-sm text-muted-foreground">{a.desc}</p>
-                </motion.div>
-              )
-            )}
+                  <span className="area-arrow">→</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
