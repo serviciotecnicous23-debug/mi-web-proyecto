@@ -70,53 +70,91 @@ export default function Home() {
           <span aria-hidden="true" className="hero-watermark">FUEGO</span>
 
           <motion.div
-            className="relative z-10 max-w-5xl mx-auto px-4 text-center"
+            className="relative z-10 max-w-6xl mx-auto px-4 grid gap-12 lg:grid-cols-[1.25fr_0.85fr] items-center text-center lg:text-left"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <span className="glass-pill inline-flex items-center gap-2 mb-8 text-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              Desde 2017 &bull; Ciudad Bolivar, Venezuela
-            </span>
+            <div>
+              <div className="flame-logo-wrap mx-auto lg:mx-0 mb-6 w-20 h-20 md:w-28 md:h-28">
+                <FlameLogoSVG className="w-full h-full" animate />
+              </div>
 
-            <div className="flame-logo-wrap mx-auto mb-8 w-24 h-24 md:w-32 md:h-32">
-              <FlameLogoSVG className="w-full h-full" animate />
+              <span className="glass-pill inline-flex items-center gap-2 mb-6 text-xs">
+                <Sparkles className="w-3.5 h-3.5" />
+                Ministerio Internacional &bull; Desde 2017
+              </span>
+
+              <h1 className="heading-display font-display text-6xl md:text-8xl mb-6" data-testid="text-title">
+                <span className="block text-ghost">MINISTERIO</span>
+                <span className="block fire-text drop-shadow-[0_0_45px_rgba(255,90,31,0.40)]">AVIVANDO</span>
+                <span className="block text-foreground/95">EL FUEGO</span>
+              </h1>
+
+              <blockquote className="accent-serif text-base md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+                "Para que vuestra fe no este fundada en la sabiduria de los hombres,
+                sino en el poder de Dios"
+              </blockquote>
+              <p className="text-sm text-primary/90 font-semibold tracking-[0.25em] uppercase mt-3 mb-10 font-mono">
+                1 Corintios 2:4
+              </p>
+
+              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                <Link href="/radio">
+                  <Button size="lg" className="fire-btn-primary px-8 h-12 text-base" data-testid="button-hero-radio" data-magnetic>
+                    <Radio className="w-5 h-5 mr-2" />
+                    Escuchar Radio
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" size="lg" className="btn-fire-glow h-12" data-testid="button-hero-login" data-magnetic>
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Iniciar Sesion
+                  </Button>
+                </Link>
+                <Link href="/registro">
+                  <Button variant="outline" size="lg" className="btn-fire-glow h-12" data-testid="button-hero-register" data-magnetic>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Registrarse
+                  </Button>
+                </Link>
+              </div>
             </div>
 
-            <h1 className="heading-display font-display text-7xl md:text-9xl mb-6" data-testid="text-title">
-              <span className="block fire-text drop-shadow-[0_0_45px_rgba(249,115,22,0.40)]">AVIVANDO</span>
-              <span className="block text-foreground/95">EL FUEGO</span>
-            </h1>
-
-            <blockquote className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto italic">
-              "Para que vuestra fe no este fundada en la sabiduria de los hombres,
-              sino en el poder de Dios"
-            </blockquote>
-            <p className="text-sm text-primary/90 font-semibold tracking-[0.25em] uppercase mt-3 mb-10">
-              1 Corintios 2:4
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/radio">
-                <Button size="lg" className="fire-btn-primary px-8 h-12 text-base" data-testid="button-hero-radio" data-magnetic>
-                  <Radio className="w-5 h-5 mr-2" />
-                  Escuchar Radio
+            <aside className="glass-card gradient-ring p-7 text-left" data-testid="panel-agenda">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-display font-bold uppercase tracking-[0.12em] text-sm">Proximas actividades</h2>
+                <span className="data-label flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                  </span>
+                  En agenda
+                </span>
+              </div>
+              <div className="space-y-1">
+                {[
+                  { d: "VIE", t: "Vigilia de avivamiento", s: "10:00 PM · Sede principal" },
+                  { d: "SAB", t: "Congreso Alianza Global", s: "Iglesias aliadas" },
+                  { d: "24/7", t: "Adoracion y predicas en vivo", s: "Avivando el Fuego Radio" },
+                ].map((ev) => (
+                  <Link key={ev.t} href="/eventos">
+                    <div className="grid grid-cols-[auto_1fr] gap-4 items-center py-3 border-t border-border/60 cursor-pointer hover:bg-primary/5 hover:pl-2 transition-all rounded-sm">
+                      <span className="icon-chip-fire w-12 h-10 font-display font-bold text-xs fire-text">{ev.d}</span>
+                      <span>
+                        <b className="block text-sm font-semibold">{ev.t}</b>
+                        <small className="data-label opacity-70">{ev.s}</small>
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/calendario">
+                <Button className="fire-btn-primary w-full mt-5" data-testid="button-agenda-calendario" data-magnetic>
+                  Ver calendario completo
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button variant="outline" size="lg" className="btn-fire-glow h-12" data-testid="button-hero-login" data-magnetic>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Iniciar Sesion
-                </Button>
-              </Link>
-              <Link href="/registro">
-                <Button variant="outline" size="lg" className="btn-fire-glow h-12" data-testid="button-hero-register" data-magnetic>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Registrarse
-                </Button>
-              </Link>
-            </div>
+            </aside>
           </motion.div>
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 scroll-cue text-muted-foreground">
