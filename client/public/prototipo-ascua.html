@@ -41,8 +41,38 @@ nav .links span:hover{opacity:1}
 .view{min-height:100vh;position:relative}
 #view-radio{display:none}
 
-.hero{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding:0 4vw;position:relative;overflow:hidden}
-#embers{position:absolute;inset:0;pointer-events:none}
+#embers{position:fixed;inset:0;pointer-events:none;z-index:40}
+
+.proto-tag{position:fixed;bottom:1rem;right:1rem;z-index:60;font-family:var(--mono);font-size:.56rem;
+  letter-spacing:.22em;text-transform:uppercase;color:rgba(242,235,221,.55);border:1px solid rgba(255,176,0,.35);
+  padding:.45rem .8rem;border-radius:3px;background:rgba(10,10,15,.72);backdrop-filter:blur(8px)}
+
+.hero{display:grid;grid-template-columns:1.35fr .9fr;gap:3rem;align-items:center;min-height:100vh;
+  padding:7rem 4vw 4rem;position:relative;overflow:hidden}
+@media(max-width:980px){.hero{grid-template-columns:1fr}}
+.flame-mark{width:74px;height:96px;margin-bottom:1.6rem;filter:drop-shadow(0 0 26px rgba(255,90,31,.55));
+  animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+.agenda{border:1px solid rgba(255,176,0,.3);background:rgba(16,16,24,.6);backdrop-filter:blur(14px);
+  border-radius:6px;padding:1.8rem;position:relative}
+.agenda::before{content:'';position:absolute;inset:-1px;pointer-events:none;border-radius:6px;
+  background:linear-gradient(160deg,rgba(255,176,0,.5),transparent 30%,transparent 70%,rgba(255,45,85,.4));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;padding:1px}
+.agenda .ag-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+.agenda .ag-head b{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:.8rem}
+.agenda .ag-head span{font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;color:var(--molten-1);text-transform:uppercase}
+.ag-item{display:grid;grid-template-columns:auto 1fr;gap:1.1rem;align-items:center;padding:.95rem 0;
+  border-top:1px solid rgba(242,235,221,.12);cursor:pointer;transition:padding .25s,background .25s}
+.ag-item:hover{background:linear-gradient(90deg,rgba(255,90,31,.1),transparent);padding-left:.6rem}
+.ag-date{text-align:center;border:1px solid rgba(255,176,0,.4);border-radius:4px;padding:.4rem .7rem;min-width:54px}
+.ag-date b{font-family:var(--display);font-weight:900;font-size:1.25rem;display:block;line-height:1;
+  background:linear-gradient(120deg,var(--molten-1),var(--molten-3));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ag-date small{font-family:var(--mono);font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(242,235,221,.6)}
+.ag-item .ti b{font-family:var(--body);font-weight:600;font-size:.88rem;display:block}
+.ag-item .ti small{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(242,235,221,.5)}
+.ag-cta{margin-top:1.3rem;width:100%}
 .hero .meta{font-family:var(--mono);font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--molten-1);
   display:flex;gap:1.4rem;align-items:center;margin-bottom:2.2rem}
 .hero .meta::before{content:'';width:42px;height:1px;background:var(--molten-2)}
@@ -150,27 +180,51 @@ footer .mono{font-family:var(--mono);font-size:.6rem;letter-spacing:.26em;text-t
 </head>
 <body class="grain">
 
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="fg" x1="0" y1="1" x2="1" y2="0">
+<stop offset="0" stop-color="#FF2D55"/><stop offset=".5" stop-color="#FF5A1F"/><stop offset="1" stop-color="#FFB000"/>
+</linearGradient></defs></svg>
+
+<canvas id="embers"></canvas>
+<div class="proto-tag">Prototipo visual · todas las funciones reales se conservan</div>
+
 <nav>
-  <div class="brand">AVIVANDO <em>el</em> FUEGO</div>
+  <div class="brand" style="display:flex;align-items:center;gap:.6rem">
+    <svg width="18" height="24" viewBox="0 0 24 32"><path d="M12 0c1.2 7 7 9.4 7 17a7 7 0 0 1-14 0c0-5 3-7 4-11 1.6 1.8 3 4 3 7 2-2.4 2-7 0-13z" fill="url(#fg)"/></svg>
+    AVIVANDO <em>el</em> FUEGO
+  </div>
   <div class="links">
-    <span data-nav>Radio</span><span data-nav>En vivo</span><span data-nav>Eventos</span><span data-nav>Alianza</span>
+    <span data-nav>Radio</span><span data-goto="#agenda">Eventos</span><span data-goto=".areas">Alianza</span>
+    <span data-warp style="color:var(--molten-1);opacity:1">Iniciar sesión</span>
+    <span data-warp style="border:1px solid rgba(255,176,0,.5);padding:.4rem .8rem;border-radius:3px;opacity:1">Registrarse</span>
   </div>
 </nav>
 
 <div id="view-home" class="view">
   <section class="hero">
-    <canvas id="embers"></canvas>
-    <div class="meta">Ministerio internacional · Ciudad Bolívar · Desde 2017</div>
-    <h1>
-      <span class="line"><span class="ghost">DONDE ARDE</span></span>
-      <span class="line"><span class="molten">EL FUEGO</span></span>
-      <span class="line"><span>NADIE <span class="serif">duerme.</span></span></span>
-    </h1>
-    <p class="lede">"No con ejército, ni con fuerza, sino con mi Espíritu" — una comunidad encendida en tres naciones.</p>
-    <div class="cta-row">
-      <button class="btn3d" data-warp>Escuchar la radio</button>
-      <button class="btn3d ghosted" data-warp>Unirme al ministerio</button>
+    <div>
+      <svg class="flame-mark" viewBox="0 0 24 32"><path d="M12 0c1.2 7 7 9.4 7 17a7 7 0 0 1-14 0c0-5 3-7 4-11 1.6 1.8 3 4 3 7 2-2.4 2-7 0-13z" fill="url(#fg)"/></svg>
+      <div class="meta">Ministerio internacional · Ciudad Bolívar · Desde 2017</div>
+      <h1>
+        <span class="line"><span class="ghost">MINISTERIO</span></span>
+        <span class="line"><span class="molten">AVIVANDO</span></span>
+        <span class="line"><span>EL FUEGO</span></span>
+      </h1>
+      <p class="lede">"No con ejército, ni con fuerza, sino con mi Espíritu" — una comunidad encendida en tres naciones.</p>
+      <div class="cta-row">
+        <button class="btn3d" data-warp>Escuchar la radio</button>
+        <button class="btn3d ghosted" data-warp>Iniciar sesión</button>
+        <button class="btn3d ghosted" data-warp>Registrarse</button>
+      </div>
     </div>
+
+    <aside class="agenda" id="agenda">
+      <div class="ag-head"><b>Próximas actividades</b><span>● En agenda</span></div>
+      <div class="ag-item"><div class="ag-date"><b>13</b><small>Jun</small></div><div class="ti"><b>Vigilia de avivamiento</b><small>Viernes · 10:00 PM · Sede principal</small></div></div>
+      <div class="ag-item"><div class="ag-date"><b>21</b><small>Jun</small></div><div class="ti"><b>Congreso Alianza Global</b><small>Sábado · Iglesias aliadas</small></div></div>
+      <div class="ag-item"><div class="ag-date"><b>24/7</b><small>Radio</small></div><div class="ti"><b>Adoración y predicas en vivo</b><small>Avivando el Fuego Radio · AzuraCast</small></div></div>
+      <button class="btn3d ag-cta" data-warp>Ver calendario completo</button>
+    </aside>
   </section>
 
   <div class="marq"><div class="track" id="track"></div></div>
@@ -228,9 +282,9 @@ const items=['Avivando el Fuego','Radio 24/7','Evangelismo','Alianza global','Fo
 track.innerHTML=(items.map(t=>'<span><i>✦</i>'+t+'</span>').join('')).repeat(2);
 
 const cv=document.getElementById('embers'),cx=cv.getContext('2d');let W,H,P=[];
-function rs(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight}
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}
 rs();addEventListener('resize',rs);
-for(let i=0;i<70;i++)P.push({x:Math.random()*2000,y:Math.random()*1200,s:Math.random()*2.2+.6,v:Math.random()*.55+.18,o:Math.random()*.7+.15,w:Math.random()*40});
+for(let i=0;i<90;i++)P.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:Math.random()*2.2+.6,v:Math.random()*.55+.18,o:Math.random()*.65+.12,w:Math.random()*40});
 (function loop(){cx.clearRect(0,0,W,H);
 for(const p of P){p.y-=p.v;p.w+=.02;const x=(p.x+Math.sin(p.w)*26)%W;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}
 const g=cx.createRadialGradient(x,p.y,0,x,p.y,p.s*3);
@@ -271,6 +325,9 @@ function warp(x,y,showRadio){if(busy)return;busy=true;
 document.querySelectorAll('[data-warp]').forEach(el=>el.addEventListener('click',e=>warp(e.clientX,e.clientY,true)));
 document.querySelectorAll('[data-back],[data-nav]').forEach(el=>el.addEventListener('click',e=>{
   const toRadio=el.textContent.trim()==='Radio';warp(e.clientX,e.clientY,toRadio)}));
+document.querySelectorAll('[data-goto]').forEach(el=>el.addEventListener('click',()=>{
+  const t=document.querySelector(el.getAttribute('data-goto'));
+  if(t)t.scrollIntoView({behavior:'smooth',block:'center'})}));
 </script>
 </body>
 </html>
