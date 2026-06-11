@@ -18,7 +18,6 @@ import {
 import { Layout } from "@/components/layout";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
 import { RadioStationPlayer } from "@/components/RadioStationPlayer";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadioStation } from "@/hooks/use-radio";
 import {
@@ -378,39 +377,41 @@ export default function RadioPage() {
                 sin depender de nadie.
               </p>
 
-              {/* Ahora suena */}
-              <div className="mt-8 rounded-md border border-orange-300/20 bg-black/45 p-5 backdrop-blur md:p-6">
-                <p className="data-label mb-2">Ahora suena</p>
-                <p className="heading-display break-words text-[clamp(1.4rem,4vw,2.6rem)] leading-tight [overflow-wrap:anywhere]">
+              {/* Consola: ahora suena + play protagonista */}
+              <div
+                id="radio-player"
+                className="mt-8 min-w-0 scroll-mt-24 rounded-md border border-orange-300/20 bg-black/45 p-6 backdrop-blur md:p-8"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="data-label">Ahora suena</p>
+                  <p className="data-label text-orange-300">{liveSnapshot?.playlist || "AzuraCast AutoDJ"}</p>
+                </div>
+                <p className="heading-display mt-2 break-words text-[clamp(1.3rem,3.2vw,2.1rem)] leading-tight [overflow-wrap:anywhere]">
                   {liveSnapshot?.song || "Avivando el Fuego Radio"}
                 </p>
-                <div className="mt-4">
+                <div className="mt-5">
                   <ConsoleEqualizer active={onAir} />
                 </div>
-              </div>
-
-              {/* Reproductor — el corazón de la consola */}
-              <div id="radio-player" className="mt-5 min-w-0 scroll-mt-24">
-                {isLoading ? (
-                  <Skeleton className="h-64 w-full rounded-[2rem] bg-white/10" />
-                ) : isError || !station ? (
-                  <Card className="border-orange-300/25 bg-black/45 text-white">
-                    <CardContent className="flex items-center gap-3 p-6">
-                      <Radio className="h-5 w-5 text-orange-300" />
-                      <p className="text-sm text-orange-50/80">No se pudo cargar la configuración de la radio.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <RadioStationPlayer
-                    streamUrl={effectiveStreamUrl}
-                    title={station.name}
-                    subtitle={station.slogan}
-                    isConfigured={station.isConfigured}
-                    metadataUrl={effectiveMetadataUrl}
-                    playlist={effectiveStreamUrl.startsWith("/uploads/radio/") ? libraryTracks : []}
-                    variant="scene"
-                  />
-                )}
+                <div className="mt-8">
+                  {isLoading ? (
+                    <Skeleton className="mx-auto h-32 w-32 rounded-full bg-white/10" />
+                  ) : isError || !station ? (
+                    <div className="flex items-center justify-center gap-3 text-sm text-orange-50/80">
+                      <Radio className="h-5 w-5 shrink-0 text-orange-300" />
+                      No se pudo cargar la configuración de la radio.
+                    </div>
+                  ) : (
+                    <RadioStationPlayer
+                      streamUrl={effectiveStreamUrl}
+                      title={station.name}
+                      subtitle={station.slogan}
+                      isConfigured={station.isConfigured}
+                      metadataUrl={effectiveMetadataUrl}
+                      playlist={effectiveStreamUrl.startsWith("/uploads/radio/") ? libraryTracks : []}
+                      variant="console"
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
