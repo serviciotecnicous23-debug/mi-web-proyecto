@@ -1674,7 +1674,7 @@ function ResourcesTab() {
               data-testid="input-resource-title"
             />
             <Textarea
-              placeholder="Descripcion (opcional)"
+              placeholder="Descripción (opcional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               data-testid="input-resource-description"

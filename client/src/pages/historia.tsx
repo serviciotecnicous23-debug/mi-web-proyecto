@@ -5,9 +5,9 @@ import { LogoIcon } from "@/components/LogoIcon";
 
 const timeline = [
   { year: "2017", title: "El Llamado", desc: "Nacimiento del ministerio en Ciudad Bolivar, Venezuela. Un grupo de jovenes apasionados por Dios reciben el mandato de llevar el fuego del evangelio a las naciones." },
-  { year: "2018-2019", title: "Expansion Nacional", desc: "Primeras campanas evangelisticas masivas. Formacion de equipos de evangelismo callejero. Alcance de cientos de vidas en Venezuela." },
+  { year: "2018-2019", title: "Expansion Nacional", desc: "Primeras campanas evangelisticas masivas. Formación de equipos de evangelismo callejero. Alcance de cientos de vidas en Venezuela." },
   { year: "2020-2021", title: "Nuevos Horizontes", desc: "Expansion a Peru bajo la cobertura de Mision Peru. Adaptacion a medios digitales durante la pandemia. Radio y transmisiones en vivo." },
-  { year: "2022-2023", title: "Traslado a USA", desc: "Nueva sede en Austin, Texas. Consolidacion del ministerio internacional. Formacion de lideres y estructura organizativa." },
+  { year: "2022-2023", title: "Traslado a USA", desc: "Nueva sede en Austin, Texas. Consolidacion del ministerio internacional. Formación de lideres y estructura organizativa." },
   { year: "2024-2025", title: "Plataforma Digital", desc: "Lanzamiento de la plataforma ministerial global. Conexion de obreros de todas las naciones. Escuela de ministerio en linea." },
 ];
 
@@ -16,7 +16,7 @@ const missionPoints = [
   "Medios digitales y radio",
   "Campanas y cruzadas",
   "Obras sociales y ayuda humanitaria",
-  "Capacitacion de obreros",
+  "Capacitación de obreros",
 ];
 
 export default function Historia() {

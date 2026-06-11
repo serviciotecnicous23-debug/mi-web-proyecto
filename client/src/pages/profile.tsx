@@ -272,7 +272,7 @@ export default function Profile() {
               Amigos {friendRequests.length > 0 && <Badge variant="destructive" className="ml-1 h-5 min-w-5 text-xs">{friendRequests.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="notificaciones">
-              <Bell className="w-4 h-4 mr-1" /> Notificaciones
+              <Bell className="w-4 h-4 mr-1" /> Notificaciónes
             </TabsTrigger>
           </TabsList>
 
@@ -343,7 +343,7 @@ export default function Profile() {
 
               <Card className="md:col-span-2">
                 <CardHeader>
-                  <CardTitle>Informacion Personal</CardTitle>
+                  <CardTitle>Información Personal</CardTitle>
                   <CardDescription>Actualiza los datos de tu perfil.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -702,7 +702,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="notificaciones">
-            <NotificacionesTab />
+            <NotificaciónesTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -764,7 +764,7 @@ const NOTIFICATION_PREFS = [
   { key: "emailNotifyEventReminder", label: "Recordatorios de eventos", description: "Recibir email de confirmación cuando te registres a un evento." },
 ] as const;
 
-function NotificacionesTab() {
+function NotificaciónesTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -809,7 +809,7 @@ function NotificacionesTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Notificaciones por Email</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Notificaciónes por Email</CardTitle>
         <CardDescription>Elige qué notificaciones deseas recibir. Puedes cambiarlas en cualquier momento.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

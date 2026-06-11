@@ -587,8 +587,8 @@ function SessionCard({
             <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..." />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">Descripcion</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripcion de la sesion..." rows={2} />
+            <Label className="text-xs">Descripción</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesion..." rows={2} />
           </div>
         </div>
         <div className="flex gap-2">
@@ -723,8 +723,8 @@ function CreateSessionDialog({ courseId, onSubmit, isPending }: { courseId: numb
             </div>
           </div>
           <div>
-            <Label>Descripcion</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripcion de la sesion..." rows={2} />
+            <Label>Descripción</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesion..." rows={2} />
           </div>
         </div>
         <DialogFooter>
@@ -806,8 +806,8 @@ function ScheduleEntryCard({
           <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://..." className="h-8" />
         </div>
         <div>
-          <Label className="text-xs">Descripcion</Label>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripcion..." className="h-8" />
+          <Label className="text-xs">Descripción</Label>
+          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción..." className="h-8" />
         </div>
         <div className="flex gap-2">
           <Button size="sm" className="h-7 text-xs" onClick={handleSave}><Save className="w-3 h-3 mr-1" /> Guardar</Button>
@@ -928,7 +928,7 @@ function CreateScheduleDialog({ courseId, onSubmit, isPending }: { courseId: num
             </div>
           </div>
           <div>
-            <Label>Descripcion</Label>
+            <Label>Descripción</Label>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Clase principal, Taller practico..." />
           </div>
         </div>
@@ -1008,8 +1008,8 @@ function MaterialCard({
             <Input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} placeholder="https://..." />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">Descripcion</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripcion del material..." rows={2} />
+            <Label className="text-xs">Descripción</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción del material..." rows={2} />
           </div>
         </div>
         <div className="flex gap-2">
@@ -1192,8 +1192,8 @@ function CreateMaterialDialog({ courseId, onSubmit, isPending }: { courseId: num
             </div>
           )}
           <div>
-            <Label>Descripcion</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripcion breve del material..." rows={2} />
+            <Label>Descripción</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción breve del material..." rows={2} />
           </div>
         </div>
         <DialogFooter>

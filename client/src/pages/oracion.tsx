@@ -163,7 +163,7 @@ export default function OracionPage() {
                     )} />
                     <FormField control={form.control} name="description" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Descripcion</FormLabel>
+                        <FormLabel>Descripción</FormLabel>
                         <FormControl><Textarea placeholder="Detalles de la actividad..." className="resize-none" {...field} data-testid="input-prayer-description" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -283,7 +283,7 @@ export default function OracionPage() {
                 )} />
                 <FormField control={editForm.control} name="description" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripcion</FormLabel>
+                    <FormLabel>Descripción</FormLabel>
                     <FormControl><Textarea placeholder="Detalles de la actividad..." className="resize-none" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>

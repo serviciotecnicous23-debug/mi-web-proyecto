@@ -140,8 +140,8 @@ const CONTENT_SECTIONS = [
   { key: "home_hero", label: "Inicio - Hero Principal", description: "Texto principal y versiculo de la pagina de inicio" },
   { key: "home_cta", label: "Inicio - Llamado a la Accion", description: "Seccion final de la pagina de inicio" },
   { key: "historia_intro", label: "Historia - Introduccion", description: "Texto introductorio de la pagina de historia" },
-  { key: "en_vivo_info", label: "En Vivo - Informacion", description: "Informacion sobre transmisiones en vivo" },
-  { key: "footer_info", label: "Pie de Pagina", description: "Informacion del pie de pagina" },
+  { key: "en_vivo_info", label: "En Vivo - Información", description: "Información sobre transmisiones en vivo" },
+  { key: "footer_info", label: "Pie de Pagina", description: "Información del pie de pagina" },
   { key: "anuncio_general", label: "Anuncio General", description: "Anuncio visible en la pagina de inicio" },
 ];
 
@@ -342,7 +342,7 @@ function LiveStreamAdmin() {
           <div className="flex items-center gap-3 border-t pt-4 flex-wrap">
             <Button onClick={handleSave} disabled={updateLive.isPending} data-testid="button-save-live">
               {updateLive.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-              Guardar Configuracion
+              Guardar Configuración
             </Button>
             {isLive && sourceUrl.trim() && (
               <Button onClick={handleGoLive} disabled={updateLive.isPending} variant="destructive" data-testid="button-go-live">
@@ -831,7 +831,7 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold" data-testid="text-admin-title">Panel de Administracion</h1>
+            <h1 className="text-3xl font-bold" data-testid="text-admin-title">Panel de Administración</h1>
             <p className="text-muted-foreground mt-1">Gestiona miembros, cursos, eventos, contenido y mensajes del ministerio.</p>
           </div>
         </div>
@@ -994,7 +994,7 @@ export default function AdminDashboard() {
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>Gestion de Cursos</CardTitle>
+                    <CardTitle>Gestión de Cursos</CardTitle>
                     <CardDescription>Crea cursos y asigna maestros.</CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1124,7 +1124,7 @@ export default function AdminDashboard() {
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>Gestion de Eventos</CardTitle>
+                    <CardTitle>Gestión de Eventos</CardTitle>
                     <CardDescription>Crea, edita y gestiona los eventos del ministerio.</CardDescription>
                   </div>
                   <Button onClick={openNewEventDialog} data-testid="button-new-event">
@@ -1175,7 +1175,7 @@ export default function AdminDashboard() {
           <TabsContent value="content">
             <Card>
               <CardHeader>
-                <CardTitle>Gestion de Contenido</CardTitle>
+                <CardTitle>Gestión de Contenido</CardTitle>
                 <CardDescription>Modifica el contenido de las secciones del sitio web.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -1460,7 +1460,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </DialogTitle>
-                      <DialogDescription>Informacion completa del usuario en el sistema</DialogDescription>
+                      <DialogDescription>Información completa del usuario en el sistema</DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4">
@@ -1816,7 +1816,7 @@ export default function AdminDashboard() {
           </DialogHeader>
           <div className="space-y-4">
             <div><Label>Titulo *</Label><Input value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} data-testid="input-event-title" /></div>
-            <div><Label>Descripcion *</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-event-description" /></div>
+            <div><Label>Descripción *</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-event-description" /></div>
             <div><Label>Ubicacion *</Label><Input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} data-testid="input-event-location" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Fecha y Hora Inicio *</Label><Input type="datetime-local" value={eventForm.eventDate} onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })} data-testid="input-event-date" /></div>
@@ -1847,7 +1847,7 @@ export default function AdminDashboard() {
           </DialogHeader>
           <div className="space-y-4">
             <div><Label>Titulo *</Label><Input value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} data-testid="input-course-title" /></div>
-            <div><Label>Descripcion *</Label><Textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-course-description" /></div>
+            <div><Label>Descripción *</Label><Textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-course-description" /></div>
             <div><Label>Categoria</Label>
               <Select value={courseForm.category} onValueChange={(v) => setCourseForm({ ...courseForm, category: v })}>
                 <SelectTrigger data-testid="select-course-category"><SelectValue /></SelectTrigger>

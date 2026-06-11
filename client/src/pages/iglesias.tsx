@@ -216,9 +216,9 @@ function ChurchManagementPanel() {
         </div>
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Descripcion</Label>
+        <Label className="text-xs">Descripción</Label>
         <Textarea
-          placeholder="Descripcion de la iglesia..."
+          placeholder="Descripción de la iglesia..."
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={3}
@@ -499,7 +499,7 @@ export default function IglesiasPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/church-posts"] });
       setPostContent("");
       setPostImageUrl(null);
-      toast({ title: "Publicacion creada" });
+      toast({ title: "Publicación creada" });
     },
     onError: () => {
       toast({ title: "Error", description: "No se pudo crear la publicacion.", variant: "destructive" });
@@ -512,7 +512,7 @@ export default function IglesiasPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/church-posts"] });
-      toast({ title: "Publicacion eliminada" });
+      toast({ title: "Publicación eliminada" });
     },
   });
 

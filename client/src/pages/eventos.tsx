@@ -367,12 +367,12 @@ function EventFormDialog({
             />
           </div>
           <div>
-            <Label htmlFor="event-description">Descripcion</Label>
+            <Label htmlFor="event-description">Descripción</Label>
             <Textarea
               id="event-description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Descripcion del evento"
+              placeholder="Descripción del evento"
               data-testid="input-event-description"
             />
           </div>
@@ -620,7 +620,7 @@ function EventDetailDialog({
 
           {/* Description */}
           <div>
-            <h4 className="text-sm font-medium mb-1">Descripcion</h4>
+            <h4 className="text-sm font-medium mb-1">Descripción</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
           </div>
 

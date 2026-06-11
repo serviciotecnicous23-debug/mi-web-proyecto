@@ -346,7 +346,7 @@ export default function Equipo() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="member-description">Descripcion</Label>
+              <Label htmlFor="member-description">Descripción</Label>
               <Textarea
                 id="member-description"
                 value={form.description}
