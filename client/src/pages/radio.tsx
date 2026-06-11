@@ -2,15 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   Bell,
-  CalendarClock,
   Clock3,
+  Disc3,
   Flame,
-  FolderOpen,
   Headphones,
   Megaphone,
   Mic2,
   MonitorUp,
-  Music2,
   Radio,
   Smartphone,
   Sparkles,
@@ -20,9 +18,7 @@ import {
 import { Layout } from "@/components/layout";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
 import { RadioStationPlayer } from "@/components/RadioStationPlayer";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadioStation } from "@/hooks/use-radio";
 import {
@@ -37,57 +33,69 @@ const RADIO_BRAND_IMAGE =
 const billboardItems = [
   {
     icon: Radio,
-    title: "Senal oficial",
-    text: "La transmision sale desde AzuraCast y se escucha aqui sin depender de plataformas externas.",
+    title: "Señal oficial",
+    text: "La transmisión sale desde AzuraCast y se escucha aquí sin depender de plataformas externas.",
   },
   {
     icon: Megaphone,
     title: "Cartelera ministerial",
-    text: "Este espacio queda listo para anuncios, vigilias, cultos, campanas y avisos de la radio.",
+    text: "Este espacio queda listo para anuncios, vigilias, cultos, campañas y avisos de la radio.",
   },
   {
     icon: Headphones,
     title: "Audio continuo",
-    text: "El reproductor usa controles nativos del telefono para escuchar mientras navegas o bloqueas la pantalla.",
+    text: "El reproductor usa controles nativos del teléfono para escuchar mientras navegas o bloqueas la pantalla.",
   },
 ];
 
 const activeBlocks = [
   {
-    title: "Adoracion y ministracion continua",
-    description: "Base principal para oracion, altar y busqueda de la presencia de Dios.",
+    channel: "CH·01",
+    title: "Adoración y ministración continua",
+    description: "Base principal para oración, altar y búsqueda de la presencia de Dios.",
     count: "144 audios",
-    status: "Rotacion principal",
+    status: "Rotación principal",
+    level: 92,
   },
   {
+    channel: "CH·02",
     title: "Alabanza y coros renovados",
-    description: "Cantos con energia, coros y celebracion para levantar la fe.",
+    description: "Cantos con energía, coros y celebración para levantar la fe.",
     count: "136 audios",
-    status: "Rotacion principal",
+    status: "Rotación principal",
+    level: 86,
   },
   {
-    title: "Predicas programadas separadas",
-    description: "Mensajes y ensenanzas sin pegar una predica inmediatamente despues de otra.",
+    channel: "CH·03",
+    title: "Prédicas programadas separadas",
+    description: "Mensajes y enseñanzas sin pegar una prédica inmediatamente después de otra.",
     count: "19 audios",
     status: "Una por hora",
+    level: 58,
   },
   {
+    channel: "CH·04",
     title: "Separadores profesionales Avivando",
     description: "Identidad sonora de la emisora, transiciones, avisos e IDs finales.",
     count: "9 jingles",
     status: "Cada 4 canciones",
+    level: 44,
   },
   {
+    channel: "CH·05",
     title: "Biblia dramatizada y proverbios",
-    description: "Capitulos de Mateo y Marcos dramatizados mas devocionales breves.",
+    description: "Capítulos de Mateo y Marcos dramatizados más devocionales breves.",
     count: "37 audios",
     status: "Cada 14 canciones",
+    level: 36,
   },
   {
+    channel: "CH·06",
     title: "Audios del ministerio y especiales",
     description: "Material propio, notas pastorales y contenido especial de la comunidad.",
     count: "33 audios",
     status: "Cada 9 canciones",
+    level: 50,
   },
 ];
 
@@ -95,7 +103,7 @@ const installGuides = [
   {
     icon: Smartphone,
     title: "Android o Chrome",
-    text: "Toca Instalar app gratis o abre el menu del navegador y elige Instalar app.",
+    text: "Toca Instalar app gratis o abre el menú del navegador y elige Instalar app.",
   },
   {
     icon: MonitorUp,
@@ -105,7 +113,7 @@ const installGuides = [
   {
     icon: Volume2,
     title: "Segundo plano",
-    text: "Despues de tocar play, usa los controles del telefono. Algunos navegadores pueden limitarlo.",
+    text: "Después de tocar play, usa los controles del teléfono. Algunos navegadores pueden limitarlo.",
   },
 ];
 
@@ -113,21 +121,22 @@ const tiktokNotes = [
   {
     icon: Tv2,
     title: "Usar como escena",
-    text: "Abre la escena vertical y capturala en TikTok Live Studio como ventana o fuente de navegador.",
+    text: "Abre la escena vertical y captúrala en TikTok Live Studio como ventana o fuente de navegador.",
   },
   {
     icon: Mic2,
     title: "Mejor uso recomendado",
-    text: "Combinala con tu voz, camara, oracion, saludos y avisos; AzuraCast sigue siendo la radio 24/7.",
+    text: "Combínala con tu voz, cámara, oración, saludos y avisos; AzuraCast sigue siendo la radio 24/7.",
   },
   {
     icon: Sparkles,
     title: "Cuidado con derechos",
-    text: "Para directos publicos, usa musica propia, autorizada o habla encima con volumen controlado.",
+    text: "Para directos públicos, usa música propia, autorizada o habla encima con volumen controlado.",
   },
 ];
 
-const archiveSummary = "El archivo base anterior, la lista global y los jingles viejos quedaron fuera de la rotacion activa.";
+const archiveSummary =
+  "El archivo base anterior, la lista global y los jingles viejos quedaron fuera de la rotación activa.";
 
 function formatTime(value?: string) {
   if (!value) return "";
@@ -142,6 +151,7 @@ function formatChicagoClock(date: Date) {
   return new Intl.DateTimeFormat("es", {
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     timeZone: "America/Chicago",
   }).format(date);
 }
@@ -182,21 +192,69 @@ function getLiveSnapshot(data: unknown): LiveSnapshot | null {
     listeners: Number(record.listeners?.current ?? record.listeners?.total ?? 0),
     playlist: String(record.now_playing?.playlist || "AzuraCast AutoDJ"),
     song: getSongText(record.now_playing?.song) || "Avivando el Fuego Radio",
-    nextPlaylist: String(record.playing_next?.playlist || "Rotacion automatica"),
-    nextSong: getSongText(record.playing_next?.song) || "Programacion continua",
+    nextPlaylist: String(record.playing_next?.playlist || "Rotación automática"),
+    nextSong: getSongText(record.playing_next?.song) || "Programación continua",
   };
 }
 
-function SceneBars() {
+/* ── Disco de vinilo fundido ─────────────────────────────────────── */
+function MoltenDisc({ spinning }: { spinning: boolean }) {
   return (
-    <div className="flex h-14 items-end justify-center gap-1.5 md:h-20 md:gap-2" aria-hidden>
-      {Array.from({ length: 28 }).map((_, index) => (
+    <div className="relative mx-auto w-full max-w-[420px]">
+      {/* halo de brasa */}
+      <div
+        className="absolute -inset-8 rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.32),transparent_62%)] blur-2xl"
+        aria-hidden
+      />
+      {/* disco */}
+      <div
+        className={`relative aspect-square w-full rounded-full border border-orange-300/25 shadow-[0_30px_90px_rgba(0,0,0,0.6),0_0_60px_rgba(249,115,22,0.25)] ${
+          spinning ? "animate-[spin_14s_linear_infinite]" : ""
+        }`}
+        style={{
+          background:
+            "repeating-radial-gradient(circle at center, #0d0608 0px, #0d0608 3px, #1a0c0a 4px, #0d0608 6px), conic-gradient(from 120deg, rgba(249,115,22,0.0), rgba(249,115,22,0.22) 18%, rgba(255,197,77,0.1) 32%, rgba(249,115,22,0.0) 55%, rgba(220,38,38,0.16) 78%, rgba(249,115,22,0.0))",
+          backgroundBlendMode: "screen",
+        }}
+      >
+        {/* reflejo de luz fija que el giro hace brillar */}
+        <div
+          className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.07)_24deg,transparent_60deg,transparent_180deg,rgba(255,255,255,0.05)_210deg,transparent_250deg)]"
+          aria-hidden
+        />
+        {/* etiqueta central con el logo */}
+        <div className="absolute inset-[27%] overflow-hidden rounded-full border-4 border-black/70 shadow-[0_0_30px_rgba(249,115,22,0.4)]">
+          <img
+            src={RADIO_BRAND_IMAGE}
+            alt="Logo Avivando el Fuego Radio con mundo, fuego, audífonos y letras de leña"
+            className="h-full w-full object-cover"
+          />
+        </div>
+        {/* eje */}
+        <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-200 shadow-[0_0_12px_rgba(255,197,77,0.9)]" />
+      </div>
+      {/* brazo de la tornamesa */}
+      <div className="pointer-events-none absolute -right-3 -top-3 hidden h-28 w-28 md:block" aria-hidden>
+        <div className="absolute right-6 top-6 h-4 w-4 rounded-full border border-orange-300/40 bg-black/80 shadow-[0_0_14px_rgba(249,115,22,0.45)]" />
+        <div className="absolute right-8 top-8 h-24 w-[3px] origin-top rotate-[28deg] rounded-full bg-gradient-to-b from-orange-200/70 via-orange-400/50 to-red-600/60" />
+      </div>
+    </div>
+  );
+}
+
+/* ── Ecualizador de consola ──────────────────────────────────────── */
+function ConsoleEqualizer({ active }: { active: boolean }) {
+  return (
+    <div className="flex h-16 items-end gap-[5px] md:h-24 md:gap-2" aria-hidden>
+      {Array.from({ length: 32 }).map((_, index) => (
         <span
           key={index}
-          className="w-2 rounded-full bg-gradient-to-t from-red-600 via-orange-400 to-amber-200 shadow-[0_0_18px_rgba(249,115,22,0.45)] animate-radio-bar"
+          className={`w-1.5 rounded-t-sm bg-gradient-to-t from-red-700 via-orange-500 to-amber-200 shadow-[0_0_14px_rgba(249,115,22,0.5)] md:w-2 ${
+            active ? "animate-radio-bar" : "opacity-30"
+          }`}
           style={{
-            height: `${28 + ((index * 23) % 68)}%`,
-            animationDelay: `${index * 48}ms`,
+            height: active ? `${22 + ((index * 29) % 74)}%` : "12%",
+            animationDelay: `${index * 42}ms`,
           }}
         />
       ))}
@@ -254,326 +312,310 @@ export default function RadioPage() {
   }, [effectiveMetadataUrl]);
 
   const clockText = formatChicagoClock(clock);
+  const onAir = liveSnapshot?.isOnline || isAzuraCastPrimary;
+  const tickerText = `Ahora suena · ${liveSnapshot?.song || "Avivando el Fuego Radio"} · Siguiente · ${
+    liveSnapshot?.nextSong || "Programación continua"
+  } · Señal propia 24/7 · ${liveSnapshot?.playlist || "AzuraCast AutoDJ"}`;
 
   return (
     <Layout>
+      {/* ═══ CONSOLA EN VIVO ═══════════════════════════════════════ */}
       <section className="relative overflow-hidden bg-[#070203] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(255,91,0,0.36),transparent_32%),radial-gradient(circle_at_78%_12%,rgba(255,197,77,0.14),transparent_28%),radial-gradient(circle_at_50%_92%,rgba(255,91,0,0.22),transparent_42%)]" />
-        <div
-          className="absolute inset-0 opacity-[0.11] blur-2xl"
-          style={{ backgroundImage: `url(${RADIO_BRAND_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,91,0,0.34),transparent_34%),radial-gradient(circle_at_82%_10%,rgba(255,197,77,0.12),transparent_30%),radial-gradient(circle_at_55%_95%,rgba(255,91,0,0.2),transparent_44%)]" />
+        <div className="absolute inset-0 hero-grid-bg opacity-25" aria-hidden />
+        <div className="absolute inset-x-0 top-0 h-1.5 fire-gradient" aria-hidden />
+        {/* RADIO gigante como marca de agua */}
+        <p
+          className="heading-display pointer-events-none absolute -right-6 top-10 select-none text-[clamp(7rem,22vw,20rem)] leading-none text-white/[0.035]"
           aria-hidden
-        />
-        <div className="absolute inset-0 hero-grid-bg opacity-30" aria-hidden />
-        <div className="absolute inset-x-0 top-0 h-2 fire-gradient" aria-hidden />
+        >
+          RADIO
+        </p>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-8 md:py-12">
-          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-4">
-              <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-orange-300/40 bg-black/40 shadow-[0_0_34px_rgba(249,115,22,0.36)] md:h-20 md:w-20">
-                <img src={RADIO_BRAND_IMAGE} alt="Avivando el Fuego Radio" className="h-full w-full object-cover" />
+        <div className="relative mx-auto max-w-7xl px-4 py-10 md:py-16">
+          {/* Barra superior de cabina */}
+          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-md border border-white/10 bg-black/40 px-4 py-3 backdrop-blur md:px-6">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                {onAir && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-70" />
+                )}
+                <span className={`relative inline-flex h-3 w-3 rounded-full ${onAir ? "bg-red-500" : "bg-zinc-600"}`} />
               </span>
-              <div>
-                <p className="font-display text-xs uppercase tracking-[0.28em] text-orange-200 md:text-sm">Avivando el Fuego</p>
-                <h1 className="heading-display text-[clamp(2.8rem,7vw,6.8rem)] leading-none">Radio</h1>
+              <p className="font-display text-sm font-black uppercase tracking-[0.3em] md:text-base">
+                {onAir ? "En el aire" : "Conectando señal"}
+              </p>
+            </div>
+            <p className="data-label hidden md:block">Avivando el Fuego · Señal propia 24/7</p>
+            <div className="flex items-center gap-4">
+              <p className="font-display text-xl leading-none tabular-nums md:text-2xl">{clockText}</p>
+              <span className="data-label">Hora central</span>
+            </div>
+          </div>
+
+          <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+            {/* Disco fundido */}
+            <div className="order-2 lg:order-1">
+              <MoltenDisc spinning={onAir} />
+              <div className="mt-6 flex items-center justify-center gap-3 text-center">
+                <Disc3 className="h-4 w-4 text-orange-300" />
+                <p className="data-label">
+                  {liveSnapshot?.playlist || "AzuraCast AutoDJ"} · {liveSnapshot?.listeners ?? 0} oyentes
+                </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-md border border-white/10 bg-white/10 px-4 py-3 text-right backdrop-blur">
-                <p className="font-display text-3xl leading-none md:text-4xl">{clockText}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.26em] text-orange-200">Hora central</p>
+
+            {/* Consola */}
+            <div className="order-1 min-w-0 lg:order-2">
+              <span className="glass-pill mb-5 inline-block text-xs">Radio en vivo</span>
+              <h1 className="heading-display text-[clamp(3rem,9vw,7.5rem)] leading-[0.92]">
+                La <span className="fire-text">consola</span>
+                <br />
+                del avivamiento<span className="accent-serif">.</span>
+              </h1>
+              <p className="accent-serif mt-5 max-w-xl text-lg text-orange-50/80 md:text-xl">
+                Adoración, alabanza, Palabra y predicación — transmitidas desde el servidor propio del ministerio,
+                sin depender de nadie.
+              </p>
+
+              {/* Ahora suena */}
+              <div className="mt-8 rounded-md border border-orange-300/20 bg-black/45 p-5 backdrop-blur md:p-6">
+                <p className="data-label mb-2">Ahora suena</p>
+                <p className="heading-display break-words text-[clamp(1.4rem,4vw,2.6rem)] leading-tight [overflow-wrap:anywhere]">
+                  {liveSnapshot?.song || "Avivando el Fuego Radio"}
+                </p>
+                <div className="mt-4">
+                  <ConsoleEqualizer active={onAir} />
+                </div>
               </div>
-              <Button asChild variant="outline" className="border-orange-300/30 bg-white/10 text-white hover:bg-white/20">
-                <a href="/radio-live-scene" target="_blank" rel="noreferrer">
+
+              {/* Reproductor — el corazón de la consola */}
+              <div id="radio-player" className="mt-5 min-w-0 scroll-mt-24">
+                {isLoading ? (
+                  <Skeleton className="h-64 w-full rounded-[2rem] bg-white/10" />
+                ) : isError || !station ? (
+                  <Card className="border-orange-300/25 bg-black/45 text-white">
+                    <CardContent className="flex items-center gap-3 p-6">
+                      <Radio className="h-5 w-5 text-orange-300" />
+                      <p className="text-sm text-orange-50/80">No se pudo cargar la configuración de la radio.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <RadioStationPlayer
+                    streamUrl={effectiveStreamUrl}
+                    title={station.name}
+                    subtitle={station.slogan}
+                    isConfigured={station.isConfigured}
+                    metadataUrl={effectiveMetadataUrl}
+                    playlist={effectiveStreamUrl.startsWith("/uploads/radio/") ? libraryTracks : []}
+                    variant="scene"
+                  />
+                )}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href={stationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-orange-300/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                  Abrir radio pública
+                </a>
+                <a
+                  href="/radio-live-scene"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-orange-300/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
                   <Mic2 className="h-4 w-4" />
                   Escena TikTok
                 </a>
-              </Button>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-center">
-            <div className="min-w-0 space-y-6">
-              <div className="relative mx-auto max-w-[520px] overflow-hidden rounded-[1.7rem] border border-orange-300/35 bg-black/40 p-2 shadow-[0_28px_90px_rgba(0,0,0,0.55),0_0_70px_rgba(249,115,22,0.24)] lg:mx-0">
-                <img
-                  src={RADIO_BRAND_IMAGE}
-                  alt="Logo Avivando el Fuego Radio con mundo, fuego, audifonos y letras de lena"
-                  className="aspect-square w-full rounded-[1.25rem] object-cover"
-                />
-              </div>
-
-              <div className="inline-flex items-center gap-3 rounded-full border border-orange-300/25 bg-orange-500/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-orange-100 md:text-sm">
-                <Radio className="h-5 w-5" />
-                {liveSnapshot?.isOnline || isAzuraCastPrimary ? "Transmitiendo en vivo" : "Conectando senal"}
-              </div>
-
-              <div>
-                <p className="mb-3 text-sm uppercase tracking-[0.28em] text-orange-200 md:text-base">
-                  {liveSnapshot?.playlist || "AzuraCast AutoDJ"}
-                </p>
-                <h2 className="heading-display max-w-full break-words text-[clamp(1.55rem,5.8vw,5.6rem)] leading-[1.02] [overflow-wrap:anywhere] md:max-w-4xl md:text-[clamp(2.4rem,5.8vw,5.6rem)] md:leading-[0.96]">
-                  {liveSnapshot?.song || "Avivando el Fuego Radio"}
-                </h2>
-                <p className="mt-5 max-w-2xl text-base leading-relaxed text-orange-50/82 md:text-xl">
-                  Adoracion, alabanza, Palabra, separadores y predicacion desde el servidor propio del ministerio.
-                </p>
-              </div>
-
-              <SceneBars />
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button asChild className="fire-btn-primary w-full sm:w-auto">
-                  <a href="#radio-player">
-                    <Headphones className="h-4 w-4" />
-                    Escuchar ahora
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="w-full border-orange-300/30 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
-                  <a href={stationUrl} target="_blank" rel="noreferrer">
-                    <ArrowUpRight className="h-4 w-4" />
-                    Abrir radio publica
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="w-full border-orange-300/30 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
-                  <a href="https://ministerioavivandoelfuego.com" target="_blank" rel="noreferrer">
-                    <Flame className="h-4 w-4" />
-                    Ministerio
-                  </a>
-                </Button>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
-                <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-5">
-                  <p className="mb-2 text-xs uppercase tracking-[0.28em] text-orange-200">Siguiente</p>
-                  <p className="line-clamp-2 text-lg font-semibold md:text-2xl">
-                    {liveSnapshot?.nextSong || "AzuraCast selecciona el proximo audio"}
-                  </p>
-                </div>
-                <div className="rounded-md border border-white/10 bg-white/10 p-4 text-center backdrop-blur md:p-5">
-                  <Headphones className="mx-auto mb-2 h-7 w-7 text-orange-300" />
-                  <p className="font-display text-4xl leading-none">{liveSnapshot?.listeners ?? 0}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.22em] text-orange-200">Oyentes</p>
-                </div>
-              </div>
-            </div>
-
-            <div id="radio-player" className="min-w-0 scroll-mt-24">
-              {isLoading ? (
-                <Skeleton className="h-72 w-full rounded-[2rem] bg-white/10" />
-              ) : isError || !station ? (
-                <Card className="border-orange-300/25 bg-black/45 text-white">
-                  <CardContent className="flex items-center gap-3 p-6">
-                    <Radio className="h-5 w-5 text-orange-300" />
-                    <p className="text-sm text-orange-50/80">No se pudo cargar la configuracion de la radio.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <RadioStationPlayer
-                  streamUrl={effectiveStreamUrl}
-                  title={station.name}
-                  subtitle={station.slogan}
-                  isConfigured={station.isConfigured}
-                  metadataUrl={effectiveMetadataUrl}
-                  playlist={effectiveStreamUrl.startsWith("/uploads/radio/") ? libraryTracks : []}
-                  variant="scene"
-                />
-              )}
-
-              <div className="mt-5 rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-5">
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-display text-2xl leading-none text-white">Instalala como app</h3>
-                    <p className="mt-2 text-sm text-orange-50/76">
-                      Gratis desde cualquier navegador compatible. No necesitas descargar nada de una tienda.
-                    </p>
-                  </div>
-                  <RadioInstallActions url="https://ministerioavivandoelfuego.com/radio" compact />
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {installGuides.map((item) => (
-                    <div key={item.title} className="rounded-md border border-orange-200/10 bg-black/20 p-3">
-                      <item.icon className="mb-2 h-5 w-5 text-orange-300" />
-                      <p className="text-sm font-bold text-white">{item.title}</p>
-                      <p className="mt-1 text-xs leading-relaxed text-orange-50/72">{item.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+        {/* Cinta transportadora con la señal */}
+        <div className="marquee-strip border-t border-orange-300/15 bg-black/60 py-3">
+          <div className="marquee-track font-display text-sm font-bold uppercase tracking-[0.24em] text-orange-200/90">
+            <span className="mx-6">{tickerText}</span>
+            <span className="mx-6">{tickerText}</span>
           </div>
         </div>
       </section>
 
-      <section className="border-b bg-card/30 py-8">
-        <div className="mx-auto grid max-w-7xl gap-4 px-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold">Ahora en vivo</p>
-                <Badge variant={liveSnapshot?.isOnline ? "default" : "secondary"}>
-                  {liveSnapshot?.isOnline ? "Online" : "Sin datos"}
-                </Badge>
+      {/* ═══ MESA DE MEZCLAS — PROGRAMACIÓN ACTIVA ═════════════════ */}
+      <section className="relative overflow-hidden bg-[#0b0506] py-14 text-white md:py-20">
+        <div className="absolute inset-0 hero-grid-bg opacity-15" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-4">
+          <div className="mb-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <span className="glass-pill mb-4 inline-block text-xs">Programación activa</span>
+              <h2 className="heading-display text-4xl md:text-6xl">
+                Mesa de <span className="fire-text">mezclas</span>
+              </h2>
+            </div>
+            <p className="accent-serif max-w-md text-orange-50/65">
+              Seis canales alimentan la rotación: el AutoDJ los mezcla según su peso y horario.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {activeBlocks.map((block) => (
+              <div
+                key={block.title}
+                className="hud-frame group flex flex-col rounded-md bg-black/45 p-4 transition hover:bg-black/60"
+              >
+                <p className="data-label mb-3">{block.channel}</p>
+                {/* Fader del canal */}
+                <div className="relative mx-auto mb-4 h-36 w-2.5 rounded-full bg-white/10 md:h-44">
+                  <div
+                    className="absolute bottom-0 left-0 w-full rounded-full bg-gradient-to-t from-red-700 via-orange-500 to-amber-300 shadow-[0_0_16px_rgba(249,115,22,0.45)]"
+                    style={{ height: `${block.level}%` }}
+                  />
+                  <div
+                    className="absolute left-1/2 h-4 w-7 -translate-x-1/2 rounded-sm border border-orange-200/50 bg-zinc-900 shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition group-hover:border-orange-300"
+                    style={{ bottom: `calc(${block.level}% - 8px)` }}
+                  />
+                </div>
+                <h3 className="text-sm font-bold leading-snug">{block.title}</h3>
+                <p className="mt-2 hidden text-xs leading-relaxed text-orange-50/60 md:block">{block.description}</p>
+                <div className="mt-auto pt-3">
+                  <p className="text-xs font-semibold text-orange-300">{block.count}</p>
+                  <p className="data-label mt-1">{block.status}</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{liveSnapshot?.playlist || "AzuraCast AutoDJ"}</p>
-              <p className="mt-1 line-clamp-2 font-bold">{liveSnapshot?.song || "Cargando informacion del servidor..."}</p>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
 
-          <Card>
-            <CardContent className="p-4">
-              <p className="mb-2 text-sm font-semibold">Siguiente bloque</p>
-              <p className="text-sm text-muted-foreground">{liveSnapshot?.nextPlaylist || "Rotacion automatica"}</p>
-              <p className="mt-1 line-clamp-2 font-bold">{liveSnapshot?.nextSong || "AzuraCast selecciona el proximo audio"}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <p className="mb-2 text-sm font-semibold">Servidor</p>
-              <p className="text-sm text-muted-foreground">{streamHost}</p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="hud-frame rounded-md p-5">
+              <p className="data-label mb-2">Siguiente bloque</p>
+              <p className="text-sm text-orange-50/70">{liveSnapshot?.nextPlaylist || "Rotación automática"}</p>
+              <p className="mt-1 line-clamp-2 font-bold">
+                {liveSnapshot?.nextSong || "AzuraCast selecciona el próximo audio"}
+              </p>
+            </div>
+            <div className="hud-frame rounded-md p-5">
+              <p className="data-label mb-2">Servidor</p>
+              <p className="text-sm text-orange-50/70">{streamHost}</p>
               <p className="mt-1 font-bold">{liveSnapshot?.listeners ?? 0} oyentes conectados</p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="hud-frame rounded-md p-5">
+              <p className="data-label mb-2">Última sincronización</p>
+              <p className="text-sm text-orange-50/70">
+                {lastSync || "La página consulta el servidor en vivo cada pocos segundos."}
+              </p>
+              <p className="mt-1 font-bold">Liquidsoap + Icecast</p>
+            </div>
+          </div>
+
+          <p className="mt-6 text-xs text-orange-50/45">{archiveSummary}</p>
         </div>
       </section>
 
-      <section className="py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
-                  Cartelera de la Radio
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                {billboardItems.map((item) => (
-                  <div key={item.title} className="flex gap-3 rounded-md border bg-background/60 p-4">
-                    <item.icon className="mt-1 h-5 w-5 shrink-0 text-primary" />
-                    <div>
-                      <h3 className="font-bold">{item.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
-                    </div>
+      {/* ═══ CABINA — APP, CARTELERA Y ESCENA ══════════════════════ */}
+      <section className="py-12 md:py-16">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 lg:grid-cols-3">
+          {/* Instalar app */}
+          <div className="glass-card gradient-ring p-6 md:p-7">
+            <p className="data-label mb-2">Llévala contigo</p>
+            <h3 className="font-display text-2xl font-bold uppercase tracking-wide">Instálala como app</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Gratis desde cualquier navegador compatible. No necesitas descargar nada de una tienda.
+            </p>
+            <div className="mt-4">
+              <RadioInstallActions url="https://ministerioavivandoelfuego.com/radio" compact />
+            </div>
+            <div className="mt-5 space-y-3">
+              {installGuides.map((item) => (
+                <div key={item.title} className="flex gap-3 rounded-md border bg-background/60 p-3">
+                  <item.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-bold">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.text}</p>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tv2 className="h-5 w-5 text-primary" />
-                  Escena TikTok Live
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  La escena vertical puede usarse como fondo o captura visual en un directo. El servidor de radio debe seguir siendo AzuraCast.
+          {/* Cartelera */}
+          <div className="glass-card p-6 md:p-7">
+            <p className="data-label mb-2">Cabina informativa</p>
+            <h3 className="flex items-center gap-2 font-display text-2xl font-bold uppercase tracking-wide">
+              <Bell className="h-5 w-5 text-primary" />
+              Cartelera de la radio
+            </h3>
+            <div className="mt-5 space-y-3">
+              {billboardItems.map((item) => (
+                <div key={item.title} className="flex gap-3 rounded-md border bg-background/60 p-4">
+                  <span className="icon-chip-fire h-10 w-10 shrink-0">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold">{item.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="rounded-md border bg-background/60 p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <Clock3 className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-bold">Prédicas separadas</p>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Las prédicas se programan en horarios concretos para evitar que una termine y empiece otra de
+                  inmediato.
                 </p>
-                <div className="grid gap-3">
-                  {tiktokNotes.map((item) => (
-                    <div key={item.title} className="flex gap-3 rounded-md border bg-background/60 p-4">
-                      <item.icon className="mt-1 h-5 w-5 shrink-0 text-primary" />
-                      <div>
-                        <h3 className="font-bold">{item.title}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button asChild variant="outline" className="w-full sm:w-auto">
-                  <a href="/radio-live-scene" target="_blank" rel="noreferrer">
-                    <Mic2 className="h-4 w-4" />
-                    Abrir escena vertical
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-primary" />
-                  Programacion Activa
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-2">
-                {activeBlocks.map((block) => (
-                  <div key={block.title} className="rounded-md border bg-background/60 p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <h3 className="font-bold">{block.title}</h3>
-                      <Badge variant="outline">{block.count}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{block.description}</p>
-                    <p className="mt-3 text-xs font-medium text-primary">{block.status}</p>
+          {/* Escena TikTok */}
+          <div className="glass-card p-6 md:p-7">
+            <p className="data-label mb-2">Para creadores</p>
+            <h3 className="flex items-center gap-2 font-display text-2xl font-bold uppercase tracking-wide">
+              <Tv2 className="h-5 w-5 text-primary" />
+              Escena TikTok Live
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              La escena vertical puede usarse como fondo o captura visual en un directo. El servidor de radio sigue
+              siendo AzuraCast.
+            </p>
+            <div className="mt-4 space-y-3">
+              {tiktokNotes.map((item) => (
+                <div key={item.title} className="flex gap-3 rounded-md border bg-background/60 p-3">
+                  <item.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-bold">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.text}</p>
                   </div>
-                ))}
-                <div className="rounded-md border bg-background/60 p-4 sm:col-span-2">
-                  <h3 className="font-bold">Archivo base anterior</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{archiveSummary}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock3 className="h-5 w-5 text-primary" />
-                  Operacion del AutoDJ
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <div className="rounded-md border bg-background/60 p-4">
-                  <h3 className="font-bold">AutoDJ propio</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Liquidsoap e Icecast manejan la lista activa desde el servidor. La pagina lee la playlist actual y la proxima pista desde AzuraCast.
-                  </p>
-                </div>
-                <div className="rounded-md border bg-background/60 p-4">
-                  <h3 className="font-bold">Predicas separadas</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Las predicas se programan en horarios concretos para evitar que una predica termine y empiece otra de inmediato.
-                  </p>
-                </div>
-                <div className="rounded-md border bg-background/60 p-4">
-                  <h3 className="font-bold">Ultima sincronizacion</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {lastSync || "La pagina consulta el servidor en vivo cada pocos segundos."}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+            <a
+              href="/radio-live-scene"
+              target="_blank"
+              rel="noreferrer"
+              className="fire-btn-primary mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold"
+            >
+              <Mic2 className="h-4 w-4" />
+              Abrir escena vertical
+            </a>
           </div>
         </div>
       </section>
 
+      {/* ═══ CIERRE ════════════════════════════════════════════════ */}
       <section className="border-t bg-card/40 py-10">
-        <div className="mx-auto grid max-w-7xl gap-4 px-4 md:grid-cols-3">
-          <div className="flex items-start gap-3">
-            <Flame className="mt-1 h-5 w-5 text-primary" />
-            <div>
-              <h3 className="font-bold">Avivando el Fuego Radio</h3>
-              <p className="mt-1 text-sm text-muted-foreground">La radio sostiene el ambiente espiritual y apunta de regreso al ministerio.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Music2 className="mt-1 h-5 w-5 text-primary" />
-            <div>
-              <h3 className="font-bold">Contenido vocal</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Adoracion, coros, Palabra, separadores y mensajes del ministerio.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CalendarClock className="mt-1 h-5 w-5 text-primary" />
-            <div>
-              <h3 className="font-bold">Lista para crecer</h3>
-              <p className="mt-1 text-sm text-muted-foreground">La cartelera puede recibir anuncios, campanas y predicas nuevas del ministerio.</p>
-            </div>
-          </div>
+        <div className="mx-auto max-w-7xl px-4 text-center">
+          <Flame className="mx-auto mb-3 h-6 w-6 text-primary" />
+          <p className="heading-display text-2xl md:text-3xl">
+            La radio sostiene el ambiente espiritual<span className="accent-serif"> — y apunta de regreso al ministerio.</span>
+          </p>
         </div>
       </section>
     </Layout>
