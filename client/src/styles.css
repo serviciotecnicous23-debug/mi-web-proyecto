@@ -13,6 +13,9 @@
        glow orbs, scroll cue — composicion editorial audaz.
    v6: FUTURISMO TECNOLOGICO GLOBAL — HUD corners, dot-grid + scanlines,
        navbar scan-line, tarjetas tech en TODAS las paginas, labels mono.
+   v7 ASCUA: paleta tinta + fundido (dorado-naranja-magenta) + crema
+       editorial, tipografia Archivo Expanded / Fraunces italic,
+       gradiente molten en .fire-text, acentos serif.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -23,12 +26,12 @@
   --elevate-1: rgba(0,0,0, .025);
   --elevate-2: rgba(0,0,0, .055);
 
-  --background: 36 22% 97%;        /* warm stone white */
-  --foreground: 20 28% 9%;         /* deep espresso */
-  --border: 30 16% 86%;            /* warm light border */
-  --card: 36 28% 99%;              /* near white canvas */
-  --card-foreground: 20 28% 9%;
-  --card-border: 30 16% 87%;
+  --background: 42 39% 91%;        /* bone editorial (ASCUA) */
+  --foreground: 25 45% 8%;         /* espresso profundo */
+  --border: 38 22% 80%;            /* warm light border */
+  --card: 43 45% 95%;              /* crema canvas */
+  --card-foreground: 25 45% 8%;
+  --card-border: 38 22% 81%;
   --sidebar: 36 16% 96%;
   --sidebar-foreground: 20 24% 13%;
   --sidebar-border: 30 16% 87%;
@@ -58,10 +61,10 @@
   --chart-4: 20 14% 30%;
   --chart-5: 24 78% 68%;
 
-  /* ── Typography ─────────────────────────────────────────────────── */
-  --font-sans: 'DM Sans', 'Inter', system-ui, sans-serif;
-  --font-display: 'Oswald', 'Inter', system-ui, sans-serif;
-  --font-serif: Georgia, serif;
+  /* ── Typography ASCUA ───────────────────────────────────────────── */
+  --font-sans: 'Archivo', 'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-display: 'Archivo Expanded', 'Archivo', 'Oswald', system-ui, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
   --font-mono: 'JetBrains Mono', Menlo, monospace;
 
   --radius: .5rem;
@@ -100,12 +103,12 @@
   --elevate-1: rgba(255,255,255, .03);
   --elevate-2: rgba(255,255,255, .07);
 
-  --background: 222 20% 4%;        /* obsidian cool-black */
-  --foreground: 36 25% 91%;        /* warm cream */
-  --border: 222 18% 12%;           /* subtle slate edge */
-  --card: 222 22% 7%;              /* deep charcoal */
-  --card-foreground: 36 25% 91%;
-  --card-border: 222 18% 11%;
+  --background: 240 20% 5%;        /* tinta ASCUA */
+  --foreground: 42 32% 90%;        /* hueso calido */
+  --border: 240 14% 14%;           /* filo de tinta */
+  --card: 240 18% 8%;              /* tinta elevada */
+  --card-foreground: 42 32% 90%;
+  --card-border: 240 14% 13%;
   --sidebar: 222 24% 5%;
   --sidebar-foreground: 36 22% 87%;
   --sidebar-border: 222 18% 11%;
@@ -119,11 +122,11 @@
   --popover-border: 222 18% 12%;
   --primary: 24 95% 53%;           /* fire orange */
   --primary-foreground: 0 0% 5%;
-  --secondary: 222 18% 11%;
-  --secondary-foreground: 36 22% 87%;
-  --muted: 222 18% 10%;
-  --muted-foreground: 220 10% 48%; /* cool mid-grey */
-  --accent: 0 82% 52%;             /* fire red */
+  --secondary: 240 16% 11%;
+  --secondary-foreground: 42 28% 86%;
+  --muted: 240 16% 10%;
+  --muted-foreground: 240 8% 52%;  /* tinta media */
+  --accent: 349 100% 59%;          /* magenta fundido ASCUA */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 62% 32%;
   --destructive-foreground: 0 0% 100%;
@@ -271,11 +274,11 @@
   .fire-text {
     background: linear-gradient(
       105deg,
-      hsl(0, 88%, 52%) 0%,
-      hsl(18, 95%, 53%) 25%,
-      hsl(39, 100%, 56%) 50%,
-      hsl(18, 95%, 55%) 75%,
-      hsl(0, 88%, 54%) 100%
+      hsl(41, 100%, 50%) 0%,
+      hsl(17, 100%, 56%) 30%,
+      hsl(349, 100%, 59%) 55%,
+      hsl(17, 100%, 56%) 80%,
+      hsl(41, 100%, 50%) 100%
     );
     background-size: 280% auto;
     -webkit-background-clip: text;
@@ -562,6 +565,24 @@
   /* Número de estadística con halo (combínalo con .fire-text) */
   .stat-glow {
     filter: drop-shadow(0 0 14px hsl(24 95% 53% / 0.35));
+  }
+
+  /* ── ASCUA: acento editorial en itálica serif ───────────────────── */
+  .accent-serif {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 320;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* ── ASCUA: texto fantasma delineado (capa ghost del hero) ──────── */
+  .text-ghost {
+    color: transparent;
+    -webkit-text-stroke: 1.5px hsl(42 32% 90% / 0.30);
+  }
+  :root:not(.dark) .text-ghost {
+    -webkit-text-stroke: 1.5px hsl(25 45% 8% / 0.28);
   }
 }
 
@@ -1160,6 +1181,94 @@ th {
   background-repeat: no-repeat;
   opacity: 0.8;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v7 ASCUA — SECCION PAPEL EDITORIAL (composicion del prototipo)
+   Bloque crema con tipografia espresso, numeros en serif italica y
+   retícula de estadisticas con bordes duros. Filas editoriales de areas.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.paper-section {
+  background: #F2EBDD;
+  color: #191007;
+}
+.paper-section .glass-pill {
+  color: #A4500F;
+  border-color: rgba(164, 80, 15, 0.4);
+  background: rgba(255, 90, 31, 0.07);
+}
+.paper-section .heading-display { color: #191007; }
+.paper-section .text-muted-paper { color: rgba(25, 16, 7, 0.62); }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  border-top: 1.5px solid #191007;
+}
+.stat-cell {
+  padding: 2rem 1.4rem 2.4rem;
+  border-bottom: 1.5px solid #191007;
+  border-right: 1.5px solid #191007;
+  transition: background 0.3s ease, color 0.3s ease;
+  cursor: default;
+}
+.stat-cell:hover { background: #191007; color: #F2EBDD; }
+.stat-num {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 330;
+  font-size: clamp(3.2rem, 6vw, 5.2rem);
+  line-height: 1;
+}
+.stat-cell:hover .stat-num {
+  background: linear-gradient(120deg, #FFB000, #FF2D55);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  margin-top: 0.9rem;
+  opacity: 0.75;
+}
+
+/* Filas editoriales de areas (lista numerada con flecha) */
+.area-rows { border-top: 1px solid hsl(42 32% 90% / 0.18); }
+.area-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.6rem;
+  align-items: center;
+  padding: 1.6rem 0.6rem;
+  border-bottom: 1px solid hsl(42 32% 90% / 0.18);
+  cursor: pointer;
+  transition: padding 0.3s ease, background 0.3s ease;
+}
+.area-row:hover {
+  background: linear-gradient(90deg, hsl(17 100% 56% / 0.12), transparent 70%);
+  padding-left: 1.6rem;
+}
+.area-row .area-idx {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: hsl(41 100% 50%);
+  letter-spacing: 0.2em;
+}
+.area-row .area-arrow {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.5rem;
+  color: hsl(17 100% 56%);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: 0.3s;
+}
+.area-row:hover .area-arrow { opacity: 1; transform: none; }
+:root:not(.dark) .area-rows { border-color: hsl(25 45% 8% / 0.2); }
+:root:not(.dark) .area-row { border-color: hsl(25 45% 8% / 0.2); }
 
 /* ── Respect reduced motion preferences ───────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
