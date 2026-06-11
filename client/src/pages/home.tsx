@@ -109,7 +109,7 @@ export default function Home() {
                 <Link href="/login">
                   <Button variant="outline" size="lg" className="btn-fire-glow h-12" data-testid="button-hero-login" data-magnetic>
                     <LogIn className="w-4 h-4 mr-2" />
-                    Iniciar Sesion
+                    Iniciar Sesión
                   </Button>
                 </Link>
                 <Link href="/registro">

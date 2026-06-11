@@ -1284,3 +1284,35 @@ th {
   .marquee-track { animation: none; }
   .equalizer span { animation: none; }
 }
+
+/* v7.2 ASCUA - PANEL INTERNO (admin, maestro, finanzas, perfil) */
+.dark [role="tablist"] {
+  background: hsl(240 18% 8% / 0.7);
+  border: 1px solid hsl(240 14% 16%);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+[role="tab"] {
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+[role="tab"][data-state="active"] {
+  background: linear-gradient(120deg, hsl(41 100% 50%), hsl(17 100% 56%) 60%, hsl(349 100% 59%)) !important;
+  color: #16060A !important;
+  box-shadow: 0 6px 18px -6px hsl(17 100% 56% / 0.6);
+}
+.dark table tbody tr { transition: background 0.2s ease; }
+.dark table tbody tr:hover { background: linear-gradient(90deg, hsl(17 100% 56% / 0.08), transparent 70%); }
+.dark [role="dialog"] {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%), hsl(240 20% 7% / 0.92);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-color: hsl(240 14% 18%);
+}
+.dark .bg-secondary { backdrop-filter: blur(6px); }
+[role="tab"]:focus-visible { outline-color: hsl(17 100% 56%); }
