@@ -14,19 +14,19 @@ import AnimatedSection from "@/components/AnimatedSection";
 import FireParticles from "@/components/FireParticles";
 
 const stats = [
-  { label: "Anos de Servicio", value: "7+" },
-  { label: "Paises Alcanzados", value: "3" },
-  { label: "Iglesias Aliadas", value: "10+" },
-  { label: "Vidas Impactadas", value: "1000+" },
+  { label: "Años de servicio", value: "7+" },
+  { label: "Países alcanzados", value: "3" },
+  { label: "Iglesias aliadas", value: "10+" },
+  { label: "Vidas impactadas", value: "1000+" },
 ];
 
 const marqueeItems = [
   "Avivando el Fuego",
   "Radio 24/7",
   "Evangelismo",
-  "Formacion de Lideres",
-  "Misiones Internacionales",
-  "Obras Sociales",
+  "Formación de líderes",
+  "Misiones internacionales",
+  "Obras sociales",
   "Alianza Global",
   "Desde 2017",
 ];
@@ -34,21 +34,21 @@ const marqueeItems = [
 const areas = [
   {
     icon: Flame,
-    title: "Evangelismo Callejero",
-    desc: "Alcanzando vidas en plazas, parques y hogares con el mensaje de salvacion. El corazon del ministerio desde el primer dia.",
+    title: "Evangelismo y Alcance",
+    desc: "Llevando el mensaje de salvación a plazas, hogares y comunidades. El corazón del ministerio desde el primer día.",
     featured: true,
   },
-  { icon: Radio, title: "Medios Digitales", desc: "Radio, podcasts, YouTube y redes llevando el evangelio a todo lugar." },
-  { icon: Heart, title: "Obras Sociales", desc: "Ayuda humanitaria, jornadas comunitarias y apoyo a los necesitados." },
-  { icon: BookOpen, title: "Formacion de Lideres", desc: "Escuela de ministerio, discipulado y capacitacion de obreros fieles." },
-  { icon: Users, title: "Retiros y Encuentros", desc: "Vigilias, campamentos, congresos y tiempos de avivamiento." },
-  { icon: Globe, title: "Misiones", desc: "Expansion del ministerio a nuevas naciones y culturas." },
+  { icon: Radio, title: "Medios digitales", desc: "Radio, pódcast, YouTube y redes llevando el evangelio a todo lugar." },
+  { icon: Heart, title: "Obras sociales", desc: "Ayuda humanitaria, jornadas comunitarias y apoyo a los más necesitados." },
+  { icon: BookOpen, title: "Formación de líderes", desc: "Escuela de ministerio, discipulado y capacitación de obreros fieles." },
+  { icon: Users, title: "Retiros y encuentros", desc: "Vigilias, campamentos, congresos y tiempos de avivamiento." },
+  { icon: Globe, title: "Misiones", desc: "Expansión del ministerio a nuevas naciones y culturas." },
 ];
 
 const alianza = [
-  { icon: Church, title: "Iglesias Aliadas", desc: "Cada congregacion mantiene su autonomia pastoral mientras accede a recursos compartidos." },
-  { icon: Award, title: "Formacion Ministerial", desc: "Cursos nucleares del ministerio mas formacion propia. Certificacion conjunta." },
-  { icon: Shield, title: "Canalizacion Etica", desc: "Miembros conectados con iglesias locales. Sin proselitismo, con transparencia." },
+  { icon: Church, title: "Iglesias aliadas", desc: "Cada congregación mantiene su autonomía pastoral mientras accede a recursos compartidos." },
+  { icon: Award, title: "Formación ministerial", desc: "Cursos centrales del ministerio más formación propia. Certificación conjunta." },
+  { icon: Shield, title: "Canalización ética", desc: "Miembros conectados con iglesias locales. Sin proselitismo y con transparencia." },
 ];
 
 const fadeUp = {
@@ -92,7 +92,7 @@ export default function Home() {
               </h1>
 
               <blockquote className="accent-serif text-base md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
-                "Para que vuestra fe no este fundada en la sabiduria de los hombres,
+                "Para que vuestra fe no esté fundada en la sabiduría de los hombres,
                 sino en el poder de Dios"
               </blockquote>
               <p className="text-sm text-primary/90 font-semibold tracking-[0.25em] uppercase mt-3 mb-10 font-mono">
@@ -123,7 +123,7 @@ export default function Home() {
 
             <aside className="glass-card gradient-ring p-7 text-left" data-testid="panel-agenda">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-display font-bold uppercase tracking-[0.12em] text-sm">Proximas actividades</h2>
+                <h2 className="font-display font-bold uppercase tracking-[0.12em] text-sm">Próximas actividades</h2>
                 <span className="data-label flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -136,7 +136,7 @@ export default function Home() {
                 {[
                   { d: "VIE", t: "Vigilia de avivamiento", s: "10:00 PM · Sede principal" },
                   { d: "SAB", t: "Congreso Alianza Global", s: "Iglesias aliadas" },
-                  { d: "24/7", t: "Adoracion y predicas en vivo", s: "Avivando el Fuego Radio" },
+                  { d: "24/7", t: "Adoración y prédicas en vivo", s: "Avivando el Fuego Radio" },
                 ].map((ev) => (
                   <Link key={ev.t} href="/eventos">
                     <div className="grid grid-cols-[auto_1fr] gap-4 items-center py-3 border-t border-border/60 cursor-pointer hover:bg-primary/5 hover:pl-2 transition-all rounded-sm">
@@ -182,7 +182,7 @@ export default function Home() {
       {/* ═══ NUMEROS — seccion papel editorial (prototipo ASCUA) ════ */}
       <section className="paper-section py-24 px-4">
         <div className="max-w-6xl mx-auto">
-          <p className="data-label" style={{ color: "#A4500F" }}>El ministerio en numeros</p>
+          <p className="data-label" style={{ color: "#A4500F" }}>El ministerio en números</p>
           <h2 className="heading-display font-display text-4xl md:text-6xl mt-4 max-w-3xl">
             Un avivamiento <span className="accent-serif">que se puede medir.</span>
           </h2>
@@ -203,10 +203,10 @@ export default function Home() {
           <div className="text-center mb-14">
             <span className="glass-pill inline-block mb-5 text-xs">Nuestro Trabajo</span>
             <h2 className="heading-display font-display text-5xl md:text-7xl">
-              Areas de <span className="accent-serif fire-text">accion</span>
+              Áreas de <span className="accent-serif fire-text">acción</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto md:text-lg">
-              Multiples frentes, un solo objetivo: llevar el fuego del evangelio a toda criatura.
+              Múltiples frentes, un solo objetivo: llevar el fuego del evangelio a toda criatura.
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export default function Home() {
                   Avivando el Fuego <span className="fire-text">Radio</span>
                 </h2>
                 <p className="max-w-2xl text-muted-foreground md:text-lg">
-                  Adoracion, alabanza, predicas y contenido ministerial nuevo,
+                  Adoración, alabanza, prédicas y contenido ministerial nuevo,
                   transmitiendo 24/7 desde nuestro propio servidor AzuraCast.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -276,9 +276,9 @@ export default function Home() {
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">AzuraCast</span>
                 </div>
                 {[
-                  ["Nueva adoracion", "Ministracion y busqueda de la presencia de Dios."],
-                  ["Predicas nuevas", "Mensajes y ensenanzas en la rotacion."],
-                  ["App instalable", "Acceso directo desde tu telefono."],
+                  ["Nueva adoración", "Ministración y búsqueda de la presencia de Dios."],
+                  ["Prédicas nuevas", "Mensajes y enseñanzas en la rotación."],
+                  ["App instalable", "Acceso directo desde tu teléfono."],
                 ].map(([title, text]) => (
                   <div key={title} className="flex gap-3">
                     <Smartphone className="mt-1 h-5 w-5 shrink-0 text-primary" />
@@ -329,8 +329,8 @@ export default function Home() {
               Una Red de <span className="fire-text">Iglesias Unidas</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto md:text-lg">
-              No somos cobertura, somos companeros de yugo. Iglesias autonomas unidas
-              por el mismo fuego, compartiendo recursos, formacion y proposito.
+              No somos cobertura, somos compañeros de yugo. Iglesias autónomas unidas
+              por el mismo fuego, compartiendo recursos, formación y propósito.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
@@ -352,7 +352,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/alianza">
               <Button size="lg" className="fire-btn-primary px-8" data-magnetic>
-                <Church className="w-4 h-4 mr-2" /> Eres Pastor? Unete a la Alianza
+                <Church className="w-4 h-4 mr-2" /> ¿Eres pastor? Únete a la Alianza
               </Button>
             </Link>
             <Link href="/buscar-iglesia">
@@ -372,10 +372,10 @@ export default function Home() {
           <div className="text-center mb-10">
             <span className="glass-pill inline-block mb-5 text-xs">Apoyo</span>
             <h2 className="heading-display font-display text-5xl md:text-6xl">
-              Apoya el <span className="fire-text">Ministerio</span>
+              Apoya el <span className="fire-text">ministerio</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              Tu generosidad hace posible que el fuego del evangelio siga llegando a mas personas.
+              Tu generosidad hace posible que el fuego del evangelio siga llegando a más personas.
             </p>
           </div>
           <PublicDonationSection />
@@ -388,10 +388,10 @@ export default function Home() {
         <div className="max-w-3xl mx-auto px-4 text-center relative">
           <motion.div className="holo-card gradient-ring neon-border-fire p-12 md:p-16" {...fadeUp} transition={{ duration: 0.5 }}>
             <h2 className="heading-display font-display text-5xl md:text-7xl mb-6">
-              Sientes el <span className="fire-text">Llamado?</span>
+              ¿Sientes el <span className="fire-text">llamado?</span>
             </h2>
             <p className="text-muted-foreground mb-10 max-w-lg mx-auto md:text-lg">
-              Unete como miembro, maestro o iglesia aliada. Juntos llevamos el fuego
+              Únete como miembro, maestro o iglesia aliada. Juntos llevamos el fuego
               del evangelio a las naciones.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
