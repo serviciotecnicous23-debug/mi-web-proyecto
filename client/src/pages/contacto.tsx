@@ -1,5 +1,4 @@
 import { Layout } from "@/components/layout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,16 +22,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Globe, Heart, Loader2 } from "lucide-react";
+import { MapPin, Globe, Heart, Loader2, Send } from "lucide-react";
 
 const contactSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
-  email: z.string().email("Email invalido"),
+  email: z.string().email("Email inválido"),
   subject: z.string().min(1, "Selecciona un asunto"),
   content: z.string().min(10, "El mensaje debe tener al menos 10 caracteres"),
 });
 
 type ContactForm = z.infer<typeof contactSchema>;
+
+const infoCards = [
+  { icon: MapPin, label: "Sede principal", lines: ["Austin, Texas, USA", "Iglesia Casa del Alfarero"] },
+  { icon: Globe, label: "Presencia internacional", lines: ["Venezuela · Perú · USA", "Expansión continua"] },
+  { icon: Heart, label: "Cobertura espiritual", lines: ["Pastores Carlo y Trinibeth Chevez", "Misión Perú"] },
+];
 
 export default function Contacto() {
   const { toast } = useToast();
@@ -67,139 +72,130 @@ export default function Contacto() {
 
   return (
     <Layout>
-      <section className="py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm text-primary font-medium mb-2">Contacto</p>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-contact-title">
-              Conecta con Nosotros
+      <section className="relative overflow-hidden py-20 md:py-28 section-aurora min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-16 items-start">
+          {/* ── Columna editorial ──────────────────────────────────── */}
+          <div className="lg:sticky lg:top-28">
+            <span className="glass-pill inline-block mb-6 text-xs">Contacto</span>
+            <h1 className="heading-display font-display text-6xl md:text-8xl" data-testid="text-contact-title">
+              Hable<span className="fire-text">mos</span>
+              <span className="accent-serif">.</span>
             </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Queremos escucharte. Ya sea que desees unirte al ministerio, solicitar oracion o invitarnos a tu ciudad.
+            <p className="accent-serif text-lg md:text-xl text-muted-foreground max-w-md mt-5 mb-10">
+              Queremos escucharte. Ya sea que desees unirte al ministerio,
+              solicitar oración o invitarnos a tu ciudad.
             </p>
+
+            <div className="space-y-4">
+              {infoCards.map((c) => (
+                <div key={c.label} className="hud-frame rounded-md p-5 flex items-start gap-4">
+                  <span className="icon-chip-fire w-11 h-11 shrink-0">
+                    <c.icon className="w-5 h-5 text-primary" />
+                  </span>
+                  <div>
+                    <p className="data-label mb-1">{c.label}</p>
+                    {c.lines.map((l) => (
+                      <p key={l} className="text-sm text-muted-foreground">{l}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="space-y-4">
-              <Card className="p-5">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-sm">Sede Principal</h3>
-                    <p className="text-sm text-muted-foreground">Austin, Texas, USA</p>
-                    <p className="text-sm text-muted-foreground">Iglesia Casa del Alfarero</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-5">
-                <div className="flex items-start gap-3">
-                  <Globe className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-sm">Presencia Internacional</h3>
-                    <p className="text-sm text-muted-foreground">Venezuela - Peru - USA</p>
-                    <p className="text-sm text-muted-foreground">Expansion continua</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-5">
-                <div className="flex items-start gap-3">
-                  <Heart className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-sm">Cobertura Espiritual</h3>
-                    <p className="text-sm text-muted-foreground">Pastores Carlo y Trinibeth Chevez</p>
-                    <p className="text-sm text-muted-foreground">Mision Peru</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <Card className="lg:col-span-2 p-6">
-              <h2 className="font-bold text-lg mb-4">Envianos un Mensaje</h2>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Tu nombre" {...field} data-testid="input-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="tu@email.com" {...field} data-testid="input-email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+          {/* ── Formulario glass ───────────────────────────────────── */}
+          <div className="glass-card gradient-ring p-7 md:p-10">
+            <p className="data-label mb-2">Canal directo</p>
+            <h2 className="font-display font-bold uppercase tracking-wide text-2xl mb-7">
+              Envíanos un mensaje
+            </h2>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <FormField
                     control={form.control}
-                    name="subject"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Asunto</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-subject">
-                              <SelectValue placeholder="Selecciona un asunto" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="unirse">Quiero unirme al ministerio</SelectItem>
-                            <SelectItem value="oracion">Solicitud de oracion</SelectItem>
-                            <SelectItem value="invitar">Invitar a mi ciudad/iglesia</SelectItem>
-                            <SelectItem value="otro">Otro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="content"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mensaje</FormLabel>
+                        <FormLabel className="data-label">Nombre</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Escribe tu mensaje aqui..."
-                            className="resize-none min-h-[120px]"
-                            {...field}
-                            data-testid="textarea-message"
-                          />
+                          <Input placeholder="Tu nombre" {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={sendMutation.isPending}
-                    data-testid="button-send-message"
-                  >
-                    {sendMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : null}
-                    Enviar Mensaje
-                  </Button>
-                </form>
-              </Form>
-            </Card>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="data-label">Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="tu@email.com" {...field} data-testid="input-email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="data-label">Asunto</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-subject">
+                            <SelectValue placeholder="Selecciona un asunto" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="unirse">Quiero unirme al ministerio</SelectItem>
+                          <SelectItem value="oracion">Solicitud de oración</SelectItem>
+                          <SelectItem value="invitar">Invitar a mi ciudad/iglesia</SelectItem>
+                          <SelectItem value="otro">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="data-label">Mensaje</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Escribe tu mensaje aquí..."
+                          className="resize-none min-h-[140px]"
+                          {...field}
+                          data-testid="textarea-message"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full fire-btn-primary h-12 text-base"
+                  disabled={sendMutation.isPending}
+                  data-testid="button-send-message"
+                  data-magnetic
+                >
+                  {sendMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Enviar mensaje
+                </Button>
+              </form>
+            </Form>
           </div>
         </div>
       </section>
