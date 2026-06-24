@@ -423,7 +423,7 @@ export default function RadioPage() {
                   className="inline-flex items-center gap-2 rounded-full border border-orange-300/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
                   <ArrowUpRight className="h-4 w-4" />
-                  Abrir radio pública
+                  Abrir la web original de la radio
                 </a>
                 <a
                   href="/radio-live-scene"
