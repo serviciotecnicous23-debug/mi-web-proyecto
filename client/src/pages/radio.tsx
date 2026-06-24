@@ -21,13 +21,14 @@ import { RadioStationPlayer } from "@/components/RadioStationPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadioStation } from "@/hooks/use-radio";
 import {
+  DEFAULT_AZURACAST_LOGO_URL,
   DEFAULT_AZURACAST_METADATA_URL,
   DEFAULT_AZURACAST_STATION_URL,
   DEFAULT_AZURACAST_STREAM_URL,
+  PUBLIC_SITE_RADIO_URL,
 } from "@shared/radio";
 
-const RADIO_BRAND_IMAGE =
-  "https://40.160.2.176.sslip.io/static/uploads/avivando_el_fuego/radio-logo-woodfire-20260520.jpg";
+const RADIO_BRAND_IMAGE = DEFAULT_AZURACAST_LOGO_URL;
 
 const billboardItems = [
   {
@@ -528,7 +529,7 @@ export default function RadioPage() {
               Gratis desde cualquier navegador compatible. No necesitas descargar nada de una tienda.
             </p>
             <div className="mt-4">
-              <RadioInstallActions url="https://ministerioavivandoelfuego.com/radio" compact />
+              <RadioInstallActions url={PUBLIC_SITE_RADIO_URL} compact />
             </div>
             <div className="mt-5 space-y-3">
               {installGuides.map((item) => (

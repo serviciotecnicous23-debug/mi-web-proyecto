@@ -10,6 +10,7 @@ import {
 import { PublicDonationSection } from "@/pages/finanzas";
 import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
+import { PUBLIC_SITE_RADIO_URL } from "@shared/radio";
 import AnimatedSection from "@/components/AnimatedSection";
 import FireParticles from "@/components/FireParticles";
 
@@ -259,7 +260,7 @@ export default function Home() {
                   </Link>
                 </div>
                 <div className="mt-5">
-                  <RadioInstallActions url="https://ministerioavivandoelfuego.com/radio" compact />
+                  <RadioInstallActions url={PUBLIC_SITE_RADIO_URL} compact />
                 </div>
               </div>
 

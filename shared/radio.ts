@@ -82,11 +82,21 @@ export const RADIO_TIMEZONE = "America/Chicago";
 
 export const DEFAULT_AZURACAST_BASE_URL = "https://40.160.2.176.sslip.io";
 
-export const DEFAULT_AZURACAST_STATION_URL = `${DEFAULT_AZURACAST_BASE_URL}/public/avivando_el_fuego`;
+// Identificador (shortcode) de la estacion en AzuraCast. Fuente unica: todo se deriva de aqui.
+export const AZURACAST_STATION_SHORTCODE = "avivando_el_fuego";
 
-export const DEFAULT_AZURACAST_STREAM_URL = `${DEFAULT_AZURACAST_BASE_URL}/listen/avivando_el_fuego/radio.mp3`;
+export const DEFAULT_AZURACAST_STATION_URL = `${DEFAULT_AZURACAST_BASE_URL}/public/${AZURACAST_STATION_SHORTCODE}`;
+
+export const DEFAULT_AZURACAST_STREAM_URL = `${DEFAULT_AZURACAST_BASE_URL}/listen/${AZURACAST_STATION_SHORTCODE}/radio.mp3`;
 
 export const DEFAULT_AZURACAST_METADATA_URL = `${DEFAULT_AZURACAST_BASE_URL}/api/nowplaying`;
+
+// Logo/branding de la radio servido por AzuraCast.
+export const DEFAULT_AZURACAST_LOGO_URL = `${DEFAULT_AZURACAST_BASE_URL}/static/uploads/${AZURACAST_STATION_SHORTCODE}/radio-logo-woodfire-20260520.jpg`;
+
+// URL publica de NUESTRA propia web (despliegue en Render). Es el centro de la experiencia:
+// se usa para instalar la PWA, compartir y generar el QR.
+export const PUBLIC_SITE_RADIO_URL = "https://ministerioavivandoelfuego.com/radio";
 
 export const LEGACY_PUBLIC_RADIO_STREAM =
   "https://upload.wikimedia.org/wikipedia/commons/8/82/God_of_Our_Fathers_-_Concert_Band_-_United_States_Air_Force_Heritage_of_America_Band.mp3";
