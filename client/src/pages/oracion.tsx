@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePrayerAttendees, useMyPrayerAttendance, useAttendPrayer, useCancelPrayerAttendance } from "@/hooks/use-users";
 
 const createPrayerSchema = z.object({
-  title: z.string().min(3, "Minimo 3 caracteres"),
+  title: z.string().min(3, "Mínimo 3 caracteres"),
   description: z.string().optional(),
   meetingUrl: z.string().url("URL invalida").optional().or(z.literal("")),
   meetingPlatform: z.string().default("zoom"),
@@ -77,7 +77,7 @@ export default function OracionPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/prayer-activities"] });
-      toast({ title: "Actividad creada", description: "La actividad de oracion ha sido publicada." });
+      toast({ title: "Actividad creada", description: "La actividad de oración ha sido publicada." });
       form.reset();
       setDialogOpen(false);
     },
@@ -137,8 +137,8 @@ export default function OracionPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold" data-testid="text-oracion-title">Oracion</h1>
-            <p className="text-muted-foreground mt-1">Actividades de oracion, reuniones y enlaces en vivo</p>
+            <h1 className="text-3xl font-bold" data-testid="text-oracion-title">Oración</h1>
+            <p className="text-muted-foreground mt-1">Actividades de oración, reuniones y enlaces en vivo</p>
           </div>
           {user && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -149,15 +149,15 @@ export default function OracionPage() {
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Crear Actividad de Oracion</DialogTitle>
-                  <DialogDescription>Comparte una actividad de oracion con la comunidad.</DialogDescription>
+                  <DialogTitle>Crear Actividad de Oración</DialogTitle>
+                  <DialogDescription>Comparte una actividad de oración con la comunidad.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
                     <FormField control={form.control} name="title" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Titulo</FormLabel>
-                        <FormControl><Input placeholder="Vigilia de oracion..." {...field} data-testid="input-prayer-title" /></FormControl>
+                        <FormLabel>Título</FormLabel>
+                        <FormControl><Input placeholder="Vigilia de oración..." {...field} data-testid="input-prayer-title" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -186,7 +186,7 @@ export default function OracionPage() {
                     )} />
                     <FormField control={form.control} name="meetingUrl" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Enlace de Reunion</FormLabel>
+                        <FormLabel>Enlace de Reunión</FormLabel>
                         <FormControl><Input type="url" placeholder="https://zoom.us/j/..." {...field} data-testid="input-prayer-url" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -237,7 +237,7 @@ export default function OracionPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium">No hay actividades de oracion</p>
+              <p className="text-lg font-medium">No hay actividades de oración</p>
               <p className="text-muted-foreground text-sm mt-1">Se la primera persona en crear una actividad.</p>
             </CardContent>
           </Card>
@@ -269,15 +269,15 @@ export default function OracionPage() {
         <Dialog open={!!editActivity} onOpenChange={(open) => { if (!open) setEditActivity(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Editar Actividad de Oracion</DialogTitle>
+              <DialogTitle>Editar Actividad de Oración</DialogTitle>
               <DialogDescription>Modifica los datos de la actividad.</DialogDescription>
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit((d) => editActivity && updateMutation.mutate({ id: editActivity.id, data: d }))} className="space-y-4">
                 <FormField control={editForm.control} name="title" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Titulo</FormLabel>
-                    <FormControl><Input placeholder="Vigilia de oracion..." {...field} /></FormControl>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl><Input placeholder="Vigilia de oración..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -306,7 +306,7 @@ export default function OracionPage() {
                 )} />
                 <FormField control={editForm.control} name="meetingUrl" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Enlace de Reunion</FormLabel>
+                    <FormLabel>Enlace de Reunión</FormLabel>
                     <FormControl><Input type="url" placeholder="https://zoom.us/j/..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>

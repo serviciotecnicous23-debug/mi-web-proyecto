@@ -27,7 +27,6 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
   const courseId = parseInt(params.id);
   const { user } = useAuth();
   const { data: course, isLoading } = useCourse(courseId);
-  const { data: materials } = useCourseMaterials(courseId);
   const { data: sessions } = useCourseSessions(courseId);
   const { data: myEnrollments } = useMyEnrollments();
   const createEnrollment = useCreateEnrollment();
@@ -41,6 +40,8 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
   const isObrero = user?.role === "obrero" || user?.role === "admin";
   const isTeacher = course?.teacherId === user?.id;
   const isEnrolled = myEnrollment && (myEnrollment.status === "aprobado" || myEnrollment.status === "completado");
+  const isAdminUser = user?.role === "admin" || user?.role === "director" || user?.role === "staff_global";
+  const { data: materials } = useCourseMaterials(courseId, !!(isEnrolled || isTeacher || isAdminUser));
 
   if (isLoading) {
     return (
@@ -178,7 +179,7 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Inscripcion</CardTitle>
+                <CardTitle className="text-lg">Inscripción</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {myEnrollment ? (
@@ -198,7 +199,7 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
                     )}
                     {myEnrollment.grade && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground">Calificacion: </span>
+                        <span className="text-muted-foreground">Calificación: </span>
                         <span className="font-semibold">{myEnrollment.grade}</span>
                       </div>
                     )}
@@ -236,7 +237,7 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
                   </Button>
                 ) : !user ? (
                   <Link href="/login">
-                    <Button className="w-full" variant="outline">Inicia sesion</Button>
+                    <Button className="w-full" variant="outline">Inicia sesión</Button>
                   </Link>
                 ) : (
                   <p className="text-sm text-muted-foreground">Tu cuenta debe estar activa para inscribirte.</p>

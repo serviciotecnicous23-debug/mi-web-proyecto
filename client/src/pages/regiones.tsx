@@ -217,10 +217,10 @@ function RegionManagementPanel() {
       queryClient.invalidateQueries({ queryKey: ["/api/ministry-regions"] });
       setNewRegionName("");
       setShowAddDialog(false);
-      toast({ title: "Region creada", description: "La region ha sido creada exitosamente." });
+      toast({ title: "Región creada", description: "La región ha sido creada exitosamente." });
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo crear la region.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo crear la región.", variant: "destructive" });
     },
   });
 
@@ -231,10 +231,10 @@ function RegionManagementPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ministry-regions"] });
       setEditRegion(null);
-      toast({ title: "Region actualizada", description: "La region ha sido actualizada." });
+      toast({ title: "Región actualizada", description: "La región ha sido actualizada." });
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo actualizar la region.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo actualizar la región.", variant: "destructive" });
     },
   });
 
@@ -244,10 +244,10 @@ function RegionManagementPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ministry-regions"] });
-      toast({ title: "Region eliminada", description: "La region ha sido eliminada." });
+      toast({ title: "Región eliminada", description: "La región ha sido eliminada." });
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo eliminar la region.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo eliminar la región.", variant: "destructive" });
     },
   });
 
@@ -339,11 +339,11 @@ function RegionManagementPanel() {
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nueva Region</DialogTitle>
-            <DialogDescription>Ingresa el nombre de la nueva region del ministerio.</DialogDescription>
+            <DialogTitle>Nueva Región</DialogTitle>
+            <DialogDescription>Ingresa el nombre de la nueva región del ministerio.</DialogDescription>
           </DialogHeader>
           <Input
-            placeholder="Nombre de la region"
+            placeholder="Nombre de la región"
             value={newRegionName}
             onChange={(e) => setNewRegionName(e.target.value)}
             data-testid="input-new-region-name"
@@ -373,12 +373,12 @@ function RegionManagementPanel() {
       <Dialog open={!!editRegion} onOpenChange={(open) => { if (!open) setEditRegion(null); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Region</DialogTitle>
-            <DialogDescription>Modifica el nombre y redes sociales de la region.</DialogDescription>
+            <DialogTitle>Editar Región</DialogTitle>
+            <DialogDescription>Modifica el nombre y redes sociales de la región.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <Input
-              placeholder="Nombre de la region"
+              placeholder="Nombre de la región"
               value={editRegionName}
               onChange={(e) => setEditRegionName(e.target.value)}
               data-testid="input-edit-region-name"
@@ -522,7 +522,7 @@ export default function RegionesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/region-posts"] });
       resetForm();
-      toast({ title: "Publicado", description: "Tu mensaje ha sido publicado en la region." });
+      toast({ title: "Publicado", description: "Tu mensaje ha sido publicado en la región." });
     },
     onError: () => {
       toast({ title: "Error", description: "No se pudo publicar el mensaje.", variant: "destructive" });
@@ -591,7 +591,7 @@ export default function RegionesPage() {
               </Button>
             )}
           </div>
-          <p className="text-muted-foreground mt-1">Muro de actividades por region del ministerio</p>
+          <p className="text-muted-foreground mt-1">Muro de actividades por región del ministerio</p>
         </div>
 
         {showManageRegions && user?.role === "admin" && <RegionManagementPanel />}

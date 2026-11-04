@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, forwardRef, type ComponentProps } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -23,13 +24,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Flame, Users, BookOpen, Heart } from "lucide-react";
+import { Loader2, Users, BookOpen, Heart, Eye, EyeOff } from "lucide-react";
 import { LogoIcon } from "@/components/LogoIcon";
 import { ROLES, MINISTRY_COUNTRIES } from "@shared/schema";
 
+// Campo de contraseña con botón para mostrarla. El botón no envía el formulario
+// (type="button") y se anuncia a los lectores de pantalla.
+const PasswordInput = forwardRef<HTMLInputElement, ComponentProps<typeof Input>>(
+  function PasswordInput(props, ref) {
+    const [visible, setVisible] = useState(false);
+    return (
+      <div className="relative">
+        <Input ref={ref} {...props} type={visible ? "text" : "password"} className="pr-10" />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          data-testid="button-toggle-password"
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    );
+  },
+);
+
 const loginSchema = z.object({
-  username: z.string().min(1, "El usuario es requerido"),
-  password: z.string().min(1, "La contrasena es requerida"),
+  username: z.string().trim().min(1, "Escribe tu usuario"),
+  password: z.string().min(1, "Escribe tu contraseña"),
+  remember: z.boolean(),
 });
 
 export function LoginPage() {
@@ -38,10 +63,10 @@ export function LoginPage() {
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: "", password: "" },
+    defaultValues: { username: "", password: "", remember: true },
   });
 
-  // Redireccion segura: fuera del render para no romper los hooks de React.
+  // Redirección segura: fuera del render para no romper los hooks de React.
   useEffect(() => {
     if (user) setLocation("/");
   }, [user, setLocation]);
@@ -57,8 +82,8 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <LogoIcon className="w-10 h-10 mx-auto mb-2" />
-          <CardTitle className="text-2xl font-bold" data-testid="text-login-title">Iniciar Sesion</CardTitle>
-          <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
+          <CardTitle className="text-2xl font-bold" data-testid="text-login-title">Iniciar sesión</CardTitle>
+          <CardDescription>Ingresa tus datos para acceder</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -70,7 +95,14 @@ export function LoginPage() {
                   <FormItem>
                     <FormLabel>Usuario</FormLabel>
                     <FormControl>
-                      <Input placeholder="Tu usuario" {...field} data-testid="input-username" />
+                      <Input
+                        placeholder="Tu usuario"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        {...field}
+                        data-testid="input-username"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -81,11 +113,39 @@ export function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contrasena</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Contraseña</FormLabel>
+                      <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                        ¿Olvidaste tu contraseña?
+                      </Link>
+                    </div>
                     <FormControl>
-                      <Input type="password" placeholder="Tu contrasena" {...field} data-testid="input-password" />
+                      <PasswordInput
+                        placeholder="Tu contraseña"
+                        autoComplete="current-password"
+                        {...field}
+                        data-testid="input-password"
+                      />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="remember"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(v === true)}
+                        data-testid="checkbox-remember"
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Recordarme en este dispositivo
+                    </FormLabel>
                   </FormItem>
                 )}
               />
@@ -97,17 +157,14 @@ export function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
-          <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-            Olvidaste tu contrasena?
-          </Link>
           <div>
-            No tienes cuenta?{" "}
+            ¿No tienes cuenta?{" "}
             <Link href="/registro" className="text-primary hover:underline font-medium" data-testid="link-to-register">
-              Registrate
+              Regístrate
             </Link>
           </div>
           <Link href="/" className="text-xs hover:text-foreground">
-            Volver al Inicio
+            Volver al inicio
           </Link>
         </CardFooter>
       </Card>
@@ -116,19 +173,19 @@ export function LoginPage() {
 }
 
 const registerSchema = z.object({
-  username: z.string().min(3, "Minimo 3 caracteres"),
-  password: z.string().min(6, "Minimo 6 caracteres"),
-  displayName: z.string().min(1, "Nombre requerido"),
+  username: z.string().trim().min(3, "Mínimo 3 caracteres"),
+  password: z.string().min(8, "Mínimo 8 caracteres"),
+  displayName: z.string().trim().min(1, "Escribe tu nombre"),
   role: z.string().default("miembro"),
   country: z.string().optional(),
-  phone: z.string().min(7, "Telefono requerido"),
-  email: z.string().email("Correo electronico invalido"),
+  phone: z.string().trim().min(7, "Escribe tu teléfono"),
+  email: z.string().trim().email("Correo electrónico no válido"),
 });
 
 const roleDescriptions: Record<string, { icon: any; desc: string }> = {
   miembro: { icon: Heart, desc: "Miembro del ministerio con acceso completo" },
   usuario: { icon: Users, desc: "Acceso a recursos sin ser miembro oficial" },
-  obrero: { icon: BookOpen, desc: "Maestro o lider con experiencia ministerial" },
+  obrero: { icon: BookOpen, desc: "Maestro o líder con experiencia ministerial" },
 };
 
 export function RegisterPage() {
@@ -140,7 +197,7 @@ export function RegisterPage() {
     defaultValues: { username: "", password: "", displayName: "", role: "miembro", country: "", phone: "", email: "" },
   });
 
-  // Redireccion segura: fuera del render para no romper los hooks de React.
+  // Redirección segura: fuera del render para no romper los hooks de React.
   useEffect(() => {
     if (user) setLocation("/");
   }, [user, setLocation]);
@@ -169,9 +226,9 @@ export function RegisterPage() {
                 name="displayName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre Completo</FormLabel>
+                    <FormLabel>Nombre completo</FormLabel>
                     <FormControl>
-                      <Input placeholder="Tu nombre" {...field} data-testid="input-display-name" />
+                      <Input placeholder="Tu nombre" autoComplete="name" {...field} data-testid="input-display-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,8 +241,16 @@ export function RegisterPage() {
                   <FormItem>
                     <FormLabel>Usuario</FormLabel>
                     <FormControl>
-                      <Input placeholder="Elige un usuario" {...field} data-testid="input-username" />
+                      <Input
+                        placeholder="Elige un usuario"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        {...field}
+                        data-testid="input-username"
+                      />
                     </FormControl>
+                    <FormDescription>Con este usuario entrarás a la web.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -195,9 +260,14 @@ export function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contrasena</FormLabel>
+                    <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Minimo 6 caracteres" {...field} data-testid="input-password" />
+                      <PasswordInput
+                        placeholder="Mínimo 8 caracteres"
+                        autoComplete="new-password"
+                        {...field}
+                        data-testid="input-password"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,7 +278,7 @@ export function RegisterPage() {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Registro</FormLabel>
+                    <FormLabel>Tipo de registro</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-role">
@@ -228,7 +298,7 @@ export function RegisterPage() {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {roleDescriptions[field.value ?? ""]?.desc || "Selecciona como deseas participar"}
+                      {roleDescriptions[field.value ?? ""]?.desc || "Selecciona cómo deseas participar"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -239,9 +309,9 @@ export function RegisterPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Correo Electronico</FormLabel>
+                    <FormLabel>Correo electrónico</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="tu@correo.com" {...field} data-testid="input-email" />
+                      <Input type="email" placeholder="tu@correo.com" autoComplete="email" {...field} data-testid="input-email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -252,9 +322,9 @@ export function RegisterPage() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefono</FormLabel>
+                    <FormLabel>Teléfono</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1 234 567 8900" {...field} data-testid="input-phone" />
+                      <Input type="tel" placeholder="+1 234 567 8900" autoComplete="tel" {...field} data-testid="input-phone" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -265,11 +335,11 @@ export function RegisterPage() {
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pais</FormLabel>
+                    <FormLabel>País</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-country">
-                          <SelectValue placeholder="Selecciona tu pais" />
+                          <SelectValue placeholder="Selecciona tu país" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -284,20 +354,20 @@ export function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={isRegistering} data-testid="button-register">
                 {isRegistering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Crear Cuenta
+                Crear cuenta
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
           <div>
-            Ya tienes cuenta?{" "}
+            ¿Ya tienes cuenta?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-to-login">
-              Inicia sesion
+              Inicia sesión
             </Link>
           </div>
           <Link href="/" className="text-xs hover:text-foreground">
-            Volver al Inicio
+            Volver al inicio
           </Link>
         </CardFooter>
       </Card>

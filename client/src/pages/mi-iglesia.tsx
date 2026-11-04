@@ -23,9 +23,9 @@ export default function MiIglesiaPage() {
   const isChurchAdminUser = user?.role === "admin_iglesia" || isAdminUser;
 
   const { data: churches } = useQuery({
-    queryKey: ["/api/churches"],
+    queryKey: ["/api/ministry-churches"],
     queryFn: async () => {
-      const res = await fetch("/api/churches");
+      const res = await fetch("/api/ministry-churches");
       if (!res.ok) return [];
       return res.json();
     },

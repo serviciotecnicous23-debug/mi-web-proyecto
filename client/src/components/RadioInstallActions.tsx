@@ -21,7 +21,7 @@ export function RadioInstallActions({
     if (isInstalled) {
       toast({
         title: "Radio instalada",
-        description: "La app web ya esta abierta en modo instalable.",
+        description: "La app web ya está abierta en modo instalable.",
       });
       return;
     }
@@ -64,7 +64,7 @@ export function RadioInstallActions({
     } catch {
       toast({
         title: "No se pudo compartir",
-        description: "Abre el enlace publico de la radio y compartelo desde tu navegador.",
+        description: "Abre el enlace público de la radio y compártelo desde tu navegador.",
         variant: "destructive",
       });
     }

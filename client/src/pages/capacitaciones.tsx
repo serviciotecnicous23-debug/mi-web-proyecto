@@ -669,10 +669,10 @@ function CursosTab({ user }: { user: any }) {
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-category-filter">
-            <SelectValue placeholder="Categoria" />
+            <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas las categorias</SelectItem>
+            <SelectItem value="all">Todas las categorías</SelectItem>
             {Object.entries(COURSE_CATEGORIES).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
@@ -744,7 +744,7 @@ function CursosTab({ user }: { user: any }) {
                         Inscribirse
                       </Button>
                     ) : !user ? (
-                      <Link href="/login"><Button size="sm" variant="outline">Inicia sesion para inscribirte</Button></Link>
+                      <Link href="/login"><Button size="sm" variant="outline">Inicia sesión para inscribirte</Button></Link>
                     ) : null}
                     <Link href={`/capacitaciones/${course.id}`}>
                       <Button size="sm" variant="ghost" data-testid={`button-view-course-${course.id}`}>

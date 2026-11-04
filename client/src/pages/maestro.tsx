@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast, toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import {
   useCourses, useCourse, useCourseMaterials, useCourseSessions,
@@ -209,7 +209,7 @@ function CourseList({ userId, onSelect }: { userId: number; onSelect: (id: numbe
           <DialogHeader><DialogTitle>Crear Nuevo Curso</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Titulo *</Label>
+              <Label>Título *</Label>
               <Input
                 value={createForm.title}
                 onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
@@ -227,7 +227,7 @@ function CourseList({ userId, onSelect }: { userId: number; onSelect: (id: numbe
               />
             </div>
             <div>
-              <Label>Categoria</Label>
+              <Label>Categoría</Label>
               <Select value={createForm.category} onValueChange={v => setCreateForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger data-testid="select-create-course-category">
                   <SelectValue />
@@ -240,13 +240,13 @@ function CourseList({ userId, onSelect }: { userId: number; onSelect: (id: numbe
               </Select>
             </div>
             <div>
-              <Label>Maximo de Estudiantes (opcional)</Label>
+              <Label>Máximo de Estudiantes (opcional)</Label>
               <Input
                 type="number"
                 min="1"
                 value={createForm.maxStudents}
                 onChange={e => setCreateForm(f => ({ ...f, maxStudents: e.target.value }))}
-                placeholder="Sin limite"
+                placeholder="Sin límite"
                 data-testid="input-create-course-max-students"
               />
             </div>
@@ -485,7 +485,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                           <p className="text-xs text-muted-foreground">@{e.user.username}</p>
                           {e.user.email && <p className="text-xs text-muted-foreground">{e.user.email}</p>}
                           {e.user.country && <p className="text-xs text-muted-foreground">{e.user.country}{e.user.cargo ? ` · ${e.user.cargo}` : ""}</p>}
-                          {e.grade && <p className="text-xs mt-1">Calificacion: <span className="font-semibold">{e.grade}</span></p>}
+                          {e.grade && <p className="text-xs mt-1">Calificación: <span className="font-semibold">{e.grade}</span></p>}
                           {e.observations && <p className="text-xs text-muted-foreground mt-1">{e.observations}</p>}
                         </div>
                       </div>
@@ -523,8 +523,8 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                               try {
                                 const res = await fetch(`/api/certificates/by-enrollment/${e.id}`, { credentials: "include" });
                                 if (res.ok) { setCertPreview(await res.json()); }
-                                else { alert("Certificado aún no generado."); }
-                              } catch { alert("Error al cargar certificado"); }
+                                else { toast({ title: "Certificado aún no generado", description: "Marca la inscripción como completada primero." }); }
+                              } catch { toast({ title: "No se pudo cargar el certificado", variant: "destructive" }); }
                               setLoadingCert(null);
                             }} disabled={loadingCert === e.id}>
                               {loadingCert === e.id ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <GraduationCap className="w-4 h-4 mr-1" />}
@@ -583,7 +583,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
             <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <div>
                 <CardTitle className="text-lg">Sesiones de Clase</CardTitle>
-                <CardDescription>Programa clases y agrega enlaces de reunion</CardDescription>
+                <CardDescription>Programa clases y agrega enlaces de reunión</CardDescription>
               </div>
               <Button size="sm" onClick={() => setSessionDialog(true)} data-testid="button-add-session">
                 <Plus className="w-4 h-4 mr-1" /> Nueva Sesion
@@ -633,7 +633,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
             <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <div>
                 <CardTitle className="text-lg">Horario Semanal</CardTitle>
-                <CardDescription>Configura los dias y horas regulares de clase</CardDescription>
+                <CardDescription>Configura los días y horas regulares de clase</CardDescription>
               </div>
               <Button size="sm" onClick={() => setScheduleDialog(true)} data-testid="button-add-schedule">
                 <Plus className="w-4 h-4 mr-1" /> Agregar Horario
@@ -716,7 +716,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
         <DialogContent>
           <DialogHeader><DialogTitle>Agregar Material</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Titulo</Label><Input value={materialForm.title} onChange={e => setMaterialForm(f => ({ ...f, title: e.target.value }))} data-testid="input-material-title" /></div>
+            <div><Label>Título</Label><Input value={materialForm.title} onChange={e => setMaterialForm(f => ({ ...f, title: e.target.value }))} data-testid="input-material-title" /></div>
             <div><Label>Descripción</Label><Textarea value={materialForm.description} onChange={e => setMaterialForm(f => ({ ...f, description: e.target.value }))} data-testid="input-material-description" /></div>
             <div><Label>URL del Recurso</Label><Input value={materialForm.fileUrl} onChange={e => setMaterialForm(f => ({ ...f, fileUrl: e.target.value }))} placeholder="https://..." data-testid="input-material-url" /></div>
             <div><Label>Tipo</Label>
@@ -738,13 +738,13 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
 
       <Dialog open={sessionDialog} onOpenChange={setSessionDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nueva Sesion de Clase</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Nueva Sesión de Clase</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Titulo</Label><Input value={sessionForm.title} onChange={e => setSessionForm(f => ({ ...f, title: e.target.value }))} data-testid="input-session-title" /></div>
+            <div><Label>Título</Label><Input value={sessionForm.title} onChange={e => setSessionForm(f => ({ ...f, title: e.target.value }))} data-testid="input-session-title" /></div>
             <div><Label>Descripción</Label><Textarea value={sessionForm.description} onChange={e => setSessionForm(f => ({ ...f, description: e.target.value }))} data-testid="input-session-description" /></div>
             <div><Label>Fecha y Hora</Label><Input type="datetime-local" value={sessionForm.sessionDate} onChange={e => setSessionForm(f => ({ ...f, sessionDate: e.target.value }))} data-testid="input-session-date" /></div>
             <div><Label>Duracion (minutos)</Label><Input type="number" value={sessionForm.duration} onChange={e => setSessionForm(f => ({ ...f, duration: e.target.value }))} data-testid="input-session-duration" /></div>
-            <div><Label>Enlace de Reunion</Label><Input value={sessionForm.meetingUrl} onChange={e => setSessionForm(f => ({ ...f, meetingUrl: e.target.value }))} placeholder="https://zoom.us/j/..." data-testid="input-session-url" /></div>
+            <div><Label>Enlace de Reunión</Label><Input value={sessionForm.meetingUrl} onChange={e => setSessionForm(f => ({ ...f, meetingUrl: e.target.value }))} placeholder="https://zoom.us/j/..." data-testid="input-session-url" /></div>
             <div><Label>Plataforma</Label>
               <Select value={sessionForm.meetingPlatform} onValueChange={v => setSessionForm(f => ({ ...f, meetingPlatform: v }))}>
                 <SelectTrigger data-testid="select-session-platform"><SelectValue /></SelectTrigger>
@@ -770,7 +770,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
           <DialogHeader><DialogTitle>Calificar Estudiante</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Estudiante: <span className="font-medium text-foreground">{gradeDialog?.user?.displayName || gradeDialog?.user?.username}</span></p>
-            <div><Label>Calificacion</Label><Input value={gradeForm.grade} onChange={e => setGradeForm(f => ({ ...f, grade: e.target.value }))} placeholder="Ej: Aprobado, 9/10, Excelente" data-testid="input-grade" /></div>
+            <div><Label>Calificación</Label><Input value={gradeForm.grade} onChange={e => setGradeForm(f => ({ ...f, grade: e.target.value }))} placeholder="Ej: Aprobado, 9/10, Excelente" data-testid="input-grade" /></div>
             <div><Label>Observaciones</Label><Textarea value={gradeForm.observations} onChange={e => setGradeForm(f => ({ ...f, observations: e.target.value }))} placeholder="Notas sobre el desempeno del estudiante..." data-testid="input-observations" /></div>
           </div>
           <DialogFooter>
@@ -785,7 +785,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
         <DialogContent>
           <DialogHeader><DialogTitle>Agregar Horario de Clase</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Dia de la Semana</Label>
+            <div><Label>Día de la Semana</Label>
               <Select value={scheduleForm.dayOfWeek} onValueChange={v => setScheduleForm(f => ({ ...f, dayOfWeek: v }))}>
                 <SelectTrigger data-testid="select-schedule-day"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -795,7 +795,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
             </div>
             <div><Label>Hora de Inicio</Label><Input type="time" value={scheduleForm.startTime} onChange={e => setScheduleForm(f => ({ ...f, startTime: e.target.value }))} data-testid="input-schedule-start" /></div>
             <div><Label>Hora de Fin</Label><Input type="time" value={scheduleForm.endTime} onChange={e => setScheduleForm(f => ({ ...f, endTime: e.target.value }))} data-testid="input-schedule-end" /></div>
-            <div><Label>Enlace de Reunion</Label><Input value={scheduleForm.meetingUrl} onChange={e => setScheduleForm(f => ({ ...f, meetingUrl: e.target.value }))} placeholder="https://zoom.us/j/..." data-testid="input-schedule-url" /></div>
+            <div><Label>Enlace de Reunión</Label><Input value={scheduleForm.meetingUrl} onChange={e => setScheduleForm(f => ({ ...f, meetingUrl: e.target.value }))} placeholder="https://zoom.us/j/..." data-testid="input-schedule-url" /></div>
             <div><Label>Plataforma</Label>
               <Select value={scheduleForm.meetingPlatform} onValueChange={v => setScheduleForm(f => ({ ...f, meetingPlatform: v }))}>
                 <SelectTrigger data-testid="select-schedule-platform"><SelectValue /></SelectTrigger>
@@ -821,7 +821,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
         <DialogContent>
           <DialogHeader><DialogTitle>Nuevo Anuncio</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Titulo</Label><Input value={announcementForm.title} onChange={e => setAnnouncementForm(f => ({ ...f, title: e.target.value }))} data-testid="input-announcement-title" /></div>
+            <div><Label>Título</Label><Input value={announcementForm.title} onChange={e => setAnnouncementForm(f => ({ ...f, title: e.target.value }))} data-testid="input-announcement-title" /></div>
             <div><Label>Contenido</Label><Textarea value={announcementForm.content} onChange={e => setAnnouncementForm(f => ({ ...f, content: e.target.value }))} data-testid="input-announcement-content" /></div>
             <div className="flex flex-wrap items-center gap-2">
               <Label>Fijar anuncio</Label>
@@ -863,7 +863,7 @@ function CourseConfig({ course, onUpdate }: { course: Course; onUpdate: (updates
     <Card>
       <CardHeader><CardTitle className="text-lg">Configuración del Curso</CardTitle></CardHeader>
       <CardContent className="space-y-4">
-        <div><Label>Titulo</Label><Input value={title} onChange={e => setTitle(e.target.value)} data-testid="input-course-title-config" /></div>
+        <div><Label>Título</Label><Input value={title} onChange={e => setTitle(e.target.value)} data-testid="input-course-title-config" /></div>
         <div><Label>Descripción</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} className="min-h-[100px]" data-testid="input-course-description-config" /></div>
         <div>
           <Label>Estado de Inscripciones</Label>
@@ -881,7 +881,7 @@ function CourseConfig({ course, onUpdate }: { course: Course; onUpdate: (updates
           </div>
         )}
         {enrollmentStatus === "open" && (
-          <div><Label>Fecha de Cierre Automatico (opcional)</Label><Input type="datetime-local" value={enrollmentCloseDate} onChange={e => setEnrollmentCloseDate(e.target.value)} /></div>
+          <div><Label>Fecha de Cierre Automático (opcional)</Label><Input type="datetime-local" value={enrollmentCloseDate} onChange={e => setEnrollmentCloseDate(e.target.value)} /></div>
         )}
         <Button onClick={() => onUpdate({ title, description, enrollmentStatus, enrollmentOpenDate: enrollmentOpenDate || null, enrollmentCloseDate: enrollmentCloseDate || null })} data-testid="button-save-course-config">
           <Save className="w-4 h-4 mr-1" /> Guardar Cambios

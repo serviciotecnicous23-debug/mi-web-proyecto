@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "@/hooks/use-toast";
 import {
   useAdminUsers, useToggleUserActive, useDeleteUser, useUpdateUserRole,
   useAdminMessages, useToggleMessageRead, useDeleteMessage,
@@ -137,12 +138,12 @@ function CertificatePreview({ cert, containerId }: { cert: any; containerId: str
 }
 
 const CONTENT_SECTIONS = [
-  { key: "home_hero", label: "Inicio - Hero Principal", description: "Texto principal y versiculo de la pagina de inicio" },
-  { key: "home_cta", label: "Inicio - Llamado a la Accion", description: "Seccion final de la pagina de inicio" },
-  { key: "historia_intro", label: "Historia - Introduccion", description: "Texto introductorio de la pagina de historia" },
+  { key: "home_hero", label: "Inicio - Hero Principal", description: "Texto principal y versículo de la página de inicio" },
+  { key: "home_cta", label: "Inicio - Llamado a la Acción", description: "Sección final de la página de inicio" },
+  { key: "historia_intro", label: "Historia - Introduccion", description: "Texto introductorio de la página de historia" },
   { key: "en_vivo_info", label: "En Vivo - Información", description: "Información sobre transmisiones en vivo" },
-  { key: "footer_info", label: "Pie de Pagina", description: "Información del pie de pagina" },
-  { key: "anuncio_general", label: "Anuncio General", description: "Anuncio visible en la pagina de inicio" },
+  { key: "footer_info", label: "Pie de Página", description: "Información del pie de página" },
+  { key: "anuncio_general", label: "Anuncio General", description: "Anuncio visible en la página de inicio" },
 ];
 
 function LiveStreamAdmin() {
@@ -198,7 +199,7 @@ function LiveStreamAdmin() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label className="text-sm font-semibold mb-2 block">Cambio Rapido de Fuente</Label>
+            <Label className="text-sm font-semibold mb-2 block">Cambio Rápido de Fuente</Label>
             <div className="flex flex-wrap gap-2">
               <Button
                 variant={sourceType === "radio" && !isLive ? "default" : "outline"}
@@ -316,7 +317,7 @@ function LiveStreamAdmin() {
                   />
                   {sourceType === "restream" && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Usa Restream.io para retransmitir a YouTube, Facebook y TikTok al mismo tiempo. Pega aqui la URL del player embebible que Restream te proporciona.
+                      Usa Restream.io para retransmitir a YouTube, Facebook y TikTok al mismo tiempo. Pega aquí la URL del player embebible que Restream te proporciona.
                     </p>
                   )}
                   {sourceType === "hls" && (
@@ -327,7 +328,7 @@ function LiveStreamAdmin() {
                 </div>
 
                 <div>
-                  <Label>Titulo de la Transmision (opcional)</Label>
+                  <Label>Título de la Transmision (opcional)</Label>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -379,9 +380,9 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
         setEditingCert(false);
         setCertEdits({});
       } else {
-        alert("Certificado aún no generado. Intenta marcar como 'Completar y Certificar' primero.");
+        toast({ title: "Certificado aún no generado", description: "Marca la inscripción como «Completar y certificar» primero." });
       }
-    } catch { alert("Error al cargar certificado"); }
+    } catch { toast({ title: "No se pudo cargar el certificado", variant: "destructive" }); }
     setLoadingCert(null);
   };
 
@@ -423,9 +424,9 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
         setEditingCert(false);
         setCertEdits({});
       } else {
-        alert("Error al guardar cambios");
+        toast({ title: "No se pudieron guardar los cambios", variant: "destructive" });
       }
-    } catch { alert("Error de conexión al guardar"); }
+    } catch { toast({ title: "Sin conexión", description: "No se pudieron guardar los cambios. Inténtalo de nuevo.", variant: "destructive" }); }
     setSavingCert(false);
   };
 
@@ -443,9 +444,9 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
         const { url } = await res.json();
         setCertEdits(prev => ({ ...prev, signatureUrl: url }));
       } else {
-        alert("Error al subir la firma");
+        toast({ title: "No se pudo subir la firma", variant: "destructive" });
       }
-    } catch { alert("Error de conexión al subir firma"); }
+    } catch { toast({ title: "Sin conexión", description: "No se pudo subir la firma. Inténtalo de nuevo.", variant: "destructive" }); }
     setUploadingSignature(false);
   };
 
@@ -599,7 +600,7 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
               <p className="text-xs text-muted-foreground">@{e.user.username} - {ROLES[e.user.role as keyof typeof ROLES]}</p>
               {e.user.email && <p className="text-xs text-muted-foreground">{e.user.email}</p>}
               {e.user.country && <p className="text-xs text-muted-foreground">{e.user.country}{e.user.cargo ? ` · ${e.user.cargo}` : ""}</p>}
-              {e.grade && <p className="text-xs mt-1">Calificacion: <span className="font-semibold">{e.grade}</span></p>}
+              {e.grade && <p className="text-xs mt-1">Calificación: <span className="font-semibold">{e.grade}</span></p>}
               {e.observations && <p className="text-xs text-muted-foreground mt-1">{e.observations}</p>}
             </div>
           </div>
@@ -1005,8 +1006,8 @@ export default function AdminDashboard() {
                       try {
                         const res = await fetch("/api/certificates/backfill", { method: "POST", credentials: "include" });
                         const data = await res.json();
-                        alert(data.message || "Certificados generados");
-                      } catch { alert("Error al generar certificados"); }
+                        toast({ title: data.message || "Certificados generados" });
+                      } catch { toast({ title: "No se pudieron generar los certificados", variant: "destructive" }); }
                     }} data-testid="button-backfill-certs">
                       <GraduationCap className="h-4 w-4 mr-1" /> Generar Certificados Retroactivos
                     </Button>
@@ -1076,7 +1077,7 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Solicitudes de Maestros</CardTitle>
-                <CardDescription>Obreros que solicitan ensenar un curso. Al aprobar, el obrero se asigna automaticamente como maestro del curso.</CardDescription>
+                <CardDescription>Obreros que solicitan ensenar un curso. Al aprobar, el obrero se asigna automáticamente como maestro del curso.</CardDescription>
               </CardHeader>
               <CardContent>
                 {!teacherRequestsList?.length ? (
@@ -1198,7 +1199,7 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                               <div className="space-y-2">
-                                <div><Label>Titulo</Label><Input value={contentForm.title} onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })} data-testid={`input-content-title-${section.key}`} /></div>
+                                <div><Label>Título</Label><Input value={contentForm.title} onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })} data-testid={`input-content-title-${section.key}`} /></div>
                                 <div><Label>Contenido</Label><Textarea value={contentForm.content} onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })} className="resize-none" rows={4} data-testid={`textarea-content-${section.key}`} /></div>
                               </div>
                             </div>
@@ -1207,7 +1208,7 @@ export default function AdminDashboard() {
                               <div className="flex-1">
                                 <h4 className="font-semibold">{section.label}</h4>
                                 <p className="text-xs text-muted-foreground">{section.description}</p>
-                                {existing?.title && <p className="text-sm mt-1"><span className="text-muted-foreground">Titulo:</span> {existing.title}</p>}
+                                {existing?.title && <p className="text-sm mt-1"><span className="text-muted-foreground">Título:</span> {existing.title}</p>}
                                 {existing?.content && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{existing.content}</p>}
                                 {!existing?.title && !existing?.content && <p className="text-xs text-muted-foreground mt-1 italic">Sin contenido personalizado</p>}
                               </div>
@@ -1230,7 +1231,7 @@ export default function AdminDashboard() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <CardTitle>Miembros del Ministerio</CardTitle>
-                    <CardDescription>Gestiona miembros, cambia roles, estados, cargos y paises.</CardDescription>
+                    <CardDescription>Gestiona miembros, cambia roles, estados, cargos y países.</CardDescription>
                   </div>
                   <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1246,9 +1247,9 @@ export default function AdminDashboard() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Usuario</TableHead>
-                        <TableHead>Email / Telefono</TableHead>
+                        <TableHead>Email / Teléfono</TableHead>
                         <TableHead>Rol</TableHead>
-                        <TableHead>Cargo / Pais</TableHead>
+                        <TableHead>Cargo / País</TableHead>
                         <TableHead>Estado</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
@@ -1312,10 +1313,10 @@ export default function AdminDashboard() {
                                 </Select>
                                 <Select value={userInfoForm.country || "none"} onValueChange={(v) => setUserInfoForm(f => ({ ...f, country: v === "none" ? "" : v }))}>
                                   <SelectTrigger className="w-[160px]" data-testid={`select-country-${u.id}`}>
-                                    <SelectValue placeholder="Pais..." />
+                                    <SelectValue placeholder="País..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="none">Sin pais</SelectItem>
+                                    <SelectItem value="none">Sin país</SelectItem>
                                     {MINISTRY_COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
@@ -1386,7 +1387,7 @@ export default function AdminDashboard() {
                   <SiWhatsapp className="h-5 w-5 text-green-500" />
                   <CardTitle>Enlace de Grupo WhatsApp</CardTitle>
                 </div>
-                <CardDescription>Configura el enlace del grupo de WhatsApp del Club de Lectura. Los miembros podran verlo y unirse desde la seccion de Biblioteca.</CardDescription>
+                <CardDescription>Configura el enlace del grupo de WhatsApp del Club de Lectura. Los miembros podran verlo y unirse desde la sección de Biblioteca.</CardDescription>
               </CardHeader>
               <CardContent>
                 {whatsappLinkEdit ? (
@@ -1472,7 +1473,7 @@ export default function AdminDashboard() {
                         <CardContent>
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             <div data-testid="text-user-country">
-                              <span className="text-muted-foreground block text-xs mb-0.5">Pais</span>
+                              <span className="text-muted-foreground block text-xs mb-0.5">País</span>
                               <span className="font-medium">{userDetail.user.country || "No especificado"}</span>
                             </div>
                             <div data-testid="text-user-cargo">
@@ -1484,7 +1485,7 @@ export default function AdminDashboard() {
                               <span className="font-medium">{userDetail.user.email || "No registrado"}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground block text-xs mb-0.5">Telefono</span>
+                              <span className="text-muted-foreground block text-xs mb-0.5">Teléfono</span>
                               <span className="font-medium">{userDetail.user.phone || "No registrado"}</span>
                             </div>
                             <div className="col-span-2" data-testid="text-user-bio">
@@ -1564,12 +1565,12 @@ export default function AdminDashboard() {
                               <span className="font-mono text-xs bg-muted px-2 py-1 rounded">{userDetail.user.username}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground block text-xs mb-0.5">Contrasena</span>
+                              <span className="text-muted-foreground block text-xs mb-0.5">Contraseña</span>
                               <span className="font-mono text-xs bg-muted px-2 py-1 rounded text-muted-foreground">••••••••</span>
-                              <p className="text-[10px] text-muted-foreground mt-1">La contrasena esta cifrada y no se puede visualizar por seguridad.</p>
+                              <p className="text-[10px] text-muted-foreground mt-1">La contraseña esta cifrada y no se puede visualizar por seguridad.</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground block text-xs mb-0.5">Verificacion de Email</span>
+                              <span className="text-muted-foreground block text-xs mb-0.5">Verificación de Email</span>
                               {userDetail.user.emailVerified ? (
                                 <Badge variant="outline" className="text-green-600 border-green-300 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Verificado</Badge>
                               ) : (
@@ -1815,9 +1816,9 @@ export default function AdminDashboard() {
             <DialogDescription>{editingEvent ? "Modifica los detalles del evento." : "Completa los datos para crear un nuevo evento."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div><Label>Titulo *</Label><Input value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} data-testid="input-event-title" /></div>
+            <div><Label>Título *</Label><Input value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} data-testid="input-event-title" /></div>
             <div><Label>Descripción *</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-event-description" /></div>
-            <div><Label>Ubicacion *</Label><Input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} data-testid="input-event-location" /></div>
+            <div><Label>Ubicación *</Label><Input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} data-testid="input-event-location" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Fecha y Hora Inicio *</Label><Input type="datetime-local" value={eventForm.eventDate} onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })} data-testid="input-event-date" /></div>
               <div><Label>Fecha y Hora Fin</Label><Input type="datetime-local" value={eventForm.eventEndDate} onChange={(e) => setEventForm({ ...eventForm, eventEndDate: e.target.value })} data-testid="input-event-end-date" /></div>
@@ -1846,9 +1847,9 @@ export default function AdminDashboard() {
             <DialogDescription>{editingCourse ? "Modifica los detalles del curso." : "Completa los datos para crear un nuevo curso de capacitacion."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div><Label>Titulo *</Label><Input value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} data-testid="input-course-title" /></div>
+            <div><Label>Título *</Label><Input value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} data-testid="input-course-title" /></div>
             <div><Label>Descripción *</Label><Textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} className="resize-none" rows={3} data-testid="input-course-description" /></div>
-            <div><Label>Categoria</Label>
+            <div><Label>Categoría</Label>
               <Select value={courseForm.category} onValueChange={(v) => setCourseForm({ ...courseForm, category: v })}>
                 <SelectTrigger data-testid="select-course-category"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -1883,7 +1884,7 @@ export default function AdminDashboard() {
             )}
             {courseForm.enrollmentStatus === "open" && (
               <div>
-                <Label>Fecha de Cierre Automatico (opcional)</Label>
+                <Label>Fecha de Cierre Automático (opcional)</Label>
                 <Input type="datetime-local" value={courseForm.enrollmentCloseDate} onChange={(e) => setCourseForm({ ...courseForm, enrollmentCloseDate: e.target.value })} data-testid="input-enrollment-close-auto" />
               </div>
             )}

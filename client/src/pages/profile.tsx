@@ -229,7 +229,7 @@ export default function Profile() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Error", description: "Solo se permiten imagenes.", variant: "destructive" });
+      toast({ title: "Error", description: "Solo se permiten imágenes.", variant: "destructive" });
       return;
     }
 
@@ -363,7 +363,7 @@ export default function Profile() {
                                 data-testid="input-username"
                               />
                             </FormControl>
-                            <FormDescription>Este es tu identificador unico en la plataforma.</FormDescription>
+                            <FormDescription>Este es tu identificador único en la plataforma.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -402,7 +402,7 @@ export default function Profile() {
                                 data-testid="textarea-bio"
                               />
                             </FormControl>
-                            <FormDescription>Breve descripcion para tu perfil.</FormDescription>
+                            <FormDescription>Breve descripción para tu perfil.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -412,11 +412,11 @@ export default function Profile() {
                         name="country"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Pais</FormLabel>
+                            <FormLabel>País</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-profile-country">
-                                  <SelectValue placeholder="Selecciona tu pais" />
+                                  <SelectValue placeholder="Selecciona tu país" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -425,7 +425,7 @@ export default function Profile() {
                                 ))}
                               </SelectContent>
                             </Select>
-                            <FormDescription>Tu pais se mostrara en tu perfil.</FormDescription>
+                            <FormDescription>Tu país se mostrara en tu perfil.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -435,7 +435,7 @@ export default function Profile() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Correo Electronico</FormLabel>
+                            <FormLabel>Correo Electrónico</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="tu@correo.com" {...field} value={field.value || ""} data-testid="input-profile-email" />
                             </FormControl>
@@ -448,7 +448,7 @@ export default function Profile() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Telefono</FormLabel>
+                            <FormLabel>Teléfono</FormLabel>
                             <FormControl>
                               <Input type="tel" placeholder="+1 234 567 8900" {...field} value={field.value || ""} data-testid="input-profile-phone" />
                             </FormControl>
@@ -519,7 +519,7 @@ export default function Profile() {
                                   <p className="font-semibold text-sm">{e.course?.title || e.courseName || 'Curso'}</p>
                                   <Badge variant="secondary" className="text-xs">{COURSE_CATEGORIES[(e.course?.category || 'general') as keyof typeof COURSE_CATEGORIES]}</Badge>
                                 </div>
-                                {e.grade && <p className="text-xs mt-1">Calificacion: <span className="font-bold text-green-700">{e.grade}</span></p>}
+                                {e.grade && <p className="text-xs mt-1">Calificación: <span className="font-bold text-green-700">{e.grade}</span></p>}
                                 {e.observations && <p className="text-xs text-muted-foreground mt-1">{e.observations}</p>}
                                 {e.completedAt && <p className="text-xs text-muted-foreground mt-1">Completado: {new Date(e.completedAt).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" })}</p>}
                               </div>
@@ -559,7 +559,7 @@ export default function Profile() {
                             <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-muted/50">
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm">{e.course?.title || e.courseName || 'Curso'}</p>
-                                <Badge variant="outline" className="text-xs mt-1">Pendiente de aprobacion</Badge>
+                                <Badge variant="outline" className="text-xs mt-1">Pendiente de aprobación</Badge>
                               </div>
                             </div>
                           ))}
@@ -571,7 +571,7 @@ export default function Profile() {
                       <Card>
                         <CardContent className="py-12 text-center">
                           <GraduationCap className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                          <p className="text-muted-foreground">No estas inscrito en ningun curso.</p>
+                          <p className="text-muted-foreground">No estas inscrito en ningún curso.</p>
                           <Link href="/capacitaciones"><Button variant="outline" className="mt-4">Ver Cursos Disponibles</Button></Link>
                         </CardContent>
                       </Card>
@@ -672,7 +672,7 @@ export default function Profile() {
                 </CardHeader>
                 <CardContent>
                   {friends.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Aun no tienes amigos. Busca usuarios arriba para agregarlos.</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">Aún no tienes amigos. Busca usuarios arriba para agregarlos.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {friends.map((f: any) => (
@@ -729,7 +729,7 @@ export default function Profile() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimo 6 caracteres"
+                placeholder="Mínimo 6 caracteres"
               />
             </div>
             <div className="space-y-2">
