@@ -652,9 +652,18 @@ ${urls}
     sessionStore = new MemStore({ checkPeriod: 86400000 });
   }
 
+  // Sin SESSION_SECRET en producción, un secreto conocido ("dev_secret") permitiría
+  // falsificar sesiones. Se usa uno aleatorio por proceso: las sesiones se pierden al
+  // reiniciar, pero nadie puede fabricarlas.
+  if (isProduction && !process.env.SESSION_SECRET) {
+    console.error("⚠ SESSION_SECRET no está definido en producción: se usa un secreto aleatorio temporal");
+  }
+  const sessionSecret = process.env.SESSION_SECRET
+    || (isProduction ? randomBytes(32).toString("hex") : "dev_secret");
+
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "dev_secret",
+      secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
       store: sessionStore,
@@ -711,13 +720,17 @@ ${urls}
   passport.deserializeUser(async (id: number, done) => {
     try {
       let user: Express.User | null | undefined = null;
+      let databaseFailed = false;
       try {
         user = await storage.getUser(id);
       } catch (dbErr) {
+        databaseFailed = true;
         console.log("Database unavailable during deserialization, trying memory storage");
       }
-      // Fallback a almacenamiento en memoria
-      if (!user) {
+      // Respaldo en memoria SOLO si la base de datos falló. Si la base respondió
+      // que el usuario no existe (p. ej. se borró), la sesión no debe "convertirse"
+      // en el usuario de memoria que tenga el mismo id.
+      if (!user && databaseFailed) {
         try {
           user = await memoryStorage.getUser(id) as Express.User | undefined;
         } catch (memErr) {
@@ -734,15 +747,29 @@ ${urls}
     }
   });
 
-  // Inicializar usuario administrador en base de datos y almacenamiento en memoria
+  // Administrador inicial: SOLO desde variables de entorno (ADMIN_EMAIL y
+  // ADMIN_PASSWORD en Render). Este repositorio es público: nunca escribir
+  // credenciales en el código. Si ya existe, no se toca, salvo que
+  // ADMIN_RESET=1 pida restablecer su contraseña al valor de ADMIN_PASSWORD.
   (async () => {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim();
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminUsername = process.env.ADMIN_USERNAME?.trim() || "servicio-tecnico";
+    const resetRequested = process.env.ADMIN_RESET === "1";
+
+    if (!adminEmail || !adminPassword) {
+      console.log("ℹ ADMIN_EMAIL/ADMIN_PASSWORD no definidos: no se crea ni se modifica el administrador inicial");
+      return;
+    }
+    if (adminPassword.length < 12) {
+      console.error("✗ ADMIN_PASSWORD debe tener al menos 12 caracteres; no se usa");
+      return;
+    }
+
     try {
-      const adminUsername = "servicio-tecnico";
-      const adminEmail = "serviciotecnico.us23@gmail.com";
-      const adminPassword = "l27182454";
       const hashedPassword = await hashPassword(adminPassword);
 
-      // Crear en almacenamiento en memoria (fallback)
+      // Respaldo en memoria (solo se usa si la base de datos falla)
       const existingMemory = await memoryStorage.findUserByEmail(adminEmail);
       if (!existingMemory) {
         await memoryStorage.createUser({
@@ -753,10 +780,8 @@ ${urls}
           displayName: "Servicio Técnico",
           isActive: true,
         });
-        console.log("✓ Admin inicializado en memoria");
       }
 
-      // Crear en base de datos PostgreSQL
       try {
         const existingDB = await storage.getUserByUsername(adminUsername);
         if (!existingDB) {
@@ -768,17 +793,14 @@ ${urls}
             displayName: "Servicio Técnico",
             isActive: true,
           });
-          console.log("✓ Admin inicializado en PostgreSQL");
-        } else {
-          console.log("✓ Admin ya existe en PostgreSQL");
+          console.log("✓ Administrador inicial creado en PostgreSQL");
+        } else if (resetRequested) {
+          await storage.updateUser(existingDB.id, { password: hashedPassword, isActive: true });
+          console.log("✓ Contraseña del administrador restablecida desde ADMIN_PASSWORD (quita ADMIN_RESET cuando termines)");
         }
       } catch (dbErr) {
-        console.log("⚠ No se pudo crear admin en PostgreSQL (usando solo memoria):", (dbErr as Error).message);
+        console.log("⚠ No se pudo preparar el admin en PostgreSQL:", (dbErr as Error).message);
       }
-
-      console.log(`  Email: ${adminEmail}`);
-      console.log(`  Usuario: ${adminUsername}`);
-      console.log(`  Rol: admin`);
     } catch (err) {
       console.error("Error al inicializar admin:", err);
     }

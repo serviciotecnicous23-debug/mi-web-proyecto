@@ -10,6 +10,25 @@ import { startBackupScheduler } from "./backup";
 import compression from "compression";
 import helmet from "helmet";
 
+// ========== VERSIÓN DE NODE.JS ==========
+// Primeras versiones con el parche de seguridad de octubre de 2026 (fallo Brotli
+// CVE-2026-111497, explotado activamente). Node 20 ya no recibe parches.
+// En Render la versión la decide NODE_VERSION (render.yaml / panel del servicio).
+const PATCHED_NODE: Record<number, [number, number]> = { 22: [23, 4], 24: [22, 1], 26: [12, 1] };
+{
+  const [major, minor, patch] = process.versions.node.split(".").map(Number);
+  const floor = PATCHED_NODE[major];
+  const patched = floor
+    ? minor > floor[0] || (minor === floor[0] && patch >= floor[1])
+    : major > 26;
+  if (!patched) {
+    console.error(
+      `⚠ Node.js ${process.version} tiene fallos de seguridad sin parche. ` +
+      "Pon NODE_VERSION=24 en Render (Environment) y vuelve a desplegar.",
+    );
+  }
+}
+
 // ========== SENTRY ERROR MONITORING ==========
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -104,11 +123,16 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), {
   etag: true,
 }));
 
+// inflate: false → se rechazan (415) los cuerpos comprimidos (gzip/deflate/br).
+// Los navegadores nunca los envían, y descomprimir lo que manda un extraño es justo
+// la vía del fallo Brotli de Node.js (CVE-2026-111497) y del DoS de body-parser
+// (CVE-2026-111181).
 app.use(
   express.json({
       // increase limit so that base64-encoded file uploads (used by materials, cartelera, etc.)
       // do not trigger a 413 payload-too-large error. 20MB files expand to ~27MB in JSON.
       limit: "30mb",
+      inflate: false,
       verify: (req, _res, buf) => {
         req.rawBody = buf;
       },
@@ -116,7 +140,7 @@ app.use(
 );
 
 // also bump urlencoded since we occasionally send larger form bodies
-app.use(express.urlencoded({ extended: false, limit: "30mb" }));
+app.use(express.urlencoded({ extended: false, limit: "30mb", inflate: false }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -144,8 +168,11 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      // En producción no se copia el cuerpo de la respuesta al log: lleva correos,
+      // teléfonos y datos de miembros. En desarrollo, solo un recorte.
+      if (capturedJsonResponse && process.env.NODE_ENV !== "production") {
+        const body = JSON.stringify(capturedJsonResponse);
+        logLine += ` :: ${body.length > 300 ? `${body.slice(0, 300)}…` : body}`;
       }
 
       log(logLine);
