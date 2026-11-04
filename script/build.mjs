@@ -19,7 +19,7 @@ async function buildApp() {
     entryPoints: [path.resolve(root, "server/index.ts")],
     bundle: true,
     platform: "node",
-    target: "node20",
+    target: "node22",
     format: "cjs",
     outfile: path.resolve(root, "dist/index.cjs"),
     external: [

@@ -280,7 +280,7 @@ export async function restoreBackup(filename: string): Promise<{ success: boolea
 
 // ─── Scheduler ───────────────────────────────────────────────────────────────
 
-let scheduledTask: cron.ScheduledTask | null = null;
+let scheduledTask: ReturnType<typeof cron.schedule> | null = null;
 
 export function startBackupScheduler(): void {
   if (!BACKUP_ENABLED) {

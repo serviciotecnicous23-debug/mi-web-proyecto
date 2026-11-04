@@ -23,10 +23,16 @@ services:
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
+      # Administrador inicial: se escriben SOLO en el panel de Render, nunca aquí.
+      # ADMIN_RESET=1 restablece su contraseña al valor de ADMIN_PASSWORD (luego quitarlo).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: PORT
         value: "10000"
       - key: NODE_VERSION
-        value: "20.19.0"
+        value: "24"
       # S3/R2 file storage (set in Render dashboard)
       - key: S3_ENDPOINT
         sync: false

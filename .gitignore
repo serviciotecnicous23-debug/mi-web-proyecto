@@ -29,3 +29,6 @@ radio-station-kit/zeno-upload/**/*.oga
 radio-station-kit/zeno-upload/**/*.flac
 radio-station-kit/zeno-upload/**/*.m4a
 radio-station-kit/zeno-upload/**/*.aac
+
+# Datos locales del almacenamiento de respaldo (llevan usuarios y hashes)
+data/users.json

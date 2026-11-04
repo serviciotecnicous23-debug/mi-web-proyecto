@@ -193,7 +193,7 @@ export function registerAgentRoutes(app: Express) {
     "/api/agent/missions/:id",
     requireAgentAuth,
     async (req: Request, res: Response) => {
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(String(req.params.id), 10);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "bad_id" });
       const [row] = await db
         .select()
@@ -210,7 +210,7 @@ export function registerAgentRoutes(app: Express) {
     requireAgentAuth,
     async (req: Request, res: Response) => {
       const agentId = (req as any).agentId as string;
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(String(req.params.id), 10);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "bad_id" });
 
       const {
@@ -414,7 +414,7 @@ export function registerAgentRoutes(app: Express) {
     "/api/agent/reviews/:id",
     requireAgentAuth,
     async (req: Request, res: Response) => {
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(String(req.params.id), 10);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "bad_id" });
       const [row] = await db
         .select()
@@ -434,7 +434,7 @@ export function registerAgentRoutes(app: Express) {
     requireAgentAuth,
     async (req: Request, res: Response) => {
       const agentId = (req as any).agentId as string;
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(String(req.params.id), 10);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "bad_id" });
 
       const { decision, decidedBy, reason } = req.body ?? {};

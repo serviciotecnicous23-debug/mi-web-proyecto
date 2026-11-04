@@ -882,6 +882,11 @@ const ADD_COLUMNS_SQL = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verified" boolean NOT NULL DEFAULT false`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verify_token" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verify_expires" timestamp`,
+  // Users - preferencias de correo (Perfil → Notificaciones)
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_notify_account_approved" boolean NOT NULL DEFAULT true`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_notify_direct_message" boolean NOT NULL DEFAULT true`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_notify_new_course" boolean NOT NULL DEFAULT true`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_notify_event_reminder" boolean NOT NULL DEFAULT true`,
   // Certificates - admin editable fields
   `ALTER TABLE "certificates" ADD COLUMN IF NOT EXISTS "student_name_override" text`,
   `ALTER TABLE "certificates" ADD COLUMN IF NOT EXISTS "course_name_override" text`,
