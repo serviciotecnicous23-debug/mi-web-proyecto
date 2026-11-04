@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import {
   Flame, Radio, BookOpen, Heart, Globe, Users, Video, Signal,
   Church, Shield, Award, LogIn, UserPlus, Headphones, ArrowRight,

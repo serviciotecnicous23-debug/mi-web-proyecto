@@ -420,7 +420,7 @@ export default function ReportesPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                         <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                        <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                         <Area type="monotone" dataKey="total" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} name="Ingresos" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -439,7 +439,7 @@ export default function ReportesPage() {
                         >
                           {Object.keys(financeReport.byType).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                         </Pie>
-                        <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                        <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -457,7 +457,7 @@ export default function ReportesPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                       <YAxis tick={{ fontSize: 10 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Bar dataKey="total" fill="#f97316" name="Total" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

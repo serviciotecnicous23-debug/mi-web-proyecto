@@ -630,7 +630,7 @@ function AdminFinanceDashboard() {
                       <Pie data={byTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={40} label>
                         {byTypeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -646,7 +646,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Area type="monotone" dataKey="total" stroke="#f97316" fill="#f97316" fillOpacity={0.2} name="Ingresos" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -668,7 +668,7 @@ function AdminFinanceDashboard() {
                       <Pie data={byMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                         {byMethodData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -684,7 +684,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Bar dataKey="value" fill="#f97316" name="Total" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -743,7 +743,7 @@ function AdminFinanceDashboard() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                    <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                     <Bar dataKey="total" fill="#22c55e" name="Ingresos" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -827,7 +827,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Line type="monotone" dataKey="total" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }} name="Ingresos" />
                     </LineChart>
                   </ResponsiveContainer>

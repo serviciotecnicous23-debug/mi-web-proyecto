@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion, type HTMLMotionProps } from "framer-motion";
+import { motion, type HTMLMotionProps } from "motion/react";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 
 interface AnimatedSectionProps extends Omit<HTMLMotionProps<"div">, "ref"> {
