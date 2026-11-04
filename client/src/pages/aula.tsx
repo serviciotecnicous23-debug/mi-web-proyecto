@@ -235,7 +235,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                         {ENROLLMENT_STATUSES[myEnrollment.status as keyof typeof ENROLLMENT_STATUSES]}
                       </Badge>
                       {myEnrollment.grade && (
-                        <p className="text-xs mt-1">Calificacion: <span className="font-semibold">{myEnrollment.grade}</span></p>
+                        <p className="text-xs mt-1">Calificación: <span className="font-semibold">{myEnrollment.grade}</span></p>
                       )}
                     </>
                   ) : null}
@@ -355,7 +355,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                   <CardContent className="py-12 text-center">
                     <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">No hay sesiones programadas aun.</p>
-                    {canManage && <p className="text-xs text-muted-foreground mt-1">Usa el boton "Nueva Sesion" para crear la primera clase.</p>}
+                    {canManage && <p className="text-xs text-muted-foreground mt-1">Usa el botón "Nueva Sesión" para crear la primera clase.</p>}
                   </CardContent>
                 </Card>
               )}
@@ -412,8 +412,8 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                   <div className="text-center py-8">
                     <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">No hay horario semanal configurado para este curso.</p>
-                    {canManage && <p className="text-xs text-muted-foreground mt-1">Usa el boton "Agregar Horario" para configurar las clases semanales.</p>}
-                    {!canManage && <p className="text-xs text-muted-foreground mt-1">El maestro aun no ha configurado el horario.</p>}
+                    {canManage && <p className="text-xs text-muted-foreground mt-1">Usa el botón "Agregar Horario" para configurar las clases semanales.</p>}
+                    {!canManage && <p className="text-xs text-muted-foreground mt-1">El maestro aún no ha configurado el horario.</p>}
                   </div>
                 )}
               </CardContent>
@@ -555,13 +555,13 @@ function SessionCard({
     return (
       <div className="p-4 rounded-md border-2 border-primary/30 bg-primary/5 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary flex items-center gap-1"><Edit3 className="w-4 h-4" /> Editando Sesion</p>
+          <p className="text-sm font-semibold text-primary flex items-center gap-1"><Edit3 className="w-4 h-4" /> Editando Sesión</p>
           <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4" /></Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Titulo</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nombre de la sesion" />
+            <Label className="text-xs">Título</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nombre de la sesión" />
           </div>
           <div>
             <Label className="text-xs">Fecha y Hora</Label>
@@ -583,12 +583,12 @@ function SessionCard({
             </Select>
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">URL de Reunion</Label>
+            <Label className="text-xs">URL de Reunión</Label>
             <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..." />
           </div>
           <div className="sm:col-span-2">
             <Label className="text-xs">Descripción</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesion..." rows={2} />
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesión..." rows={2} />
           </div>
         </div>
         <div className="flex gap-2">
@@ -683,16 +683,16 @@ function CreateSessionDialog({ courseId, onSubmit, isPending }: { courseId: numb
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nueva Sesion</Button>
+        <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nueva Sesión</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Crear Nueva Sesion</DialogTitle>
+          <DialogTitle>Crear Nueva Sesión</DialogTitle>
           <DialogDescription>Programa una nueva clase para el curso</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Titulo *</Label>
+            <Label>Título *</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Clase 1 - Introduccion" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -718,13 +718,13 @@ function CreateSessionDialog({ courseId, onSubmit, isPending }: { courseId: numb
               </Select>
             </div>
             <div>
-              <Label>URL de Reunion</Label>
+              <Label>URL de Reunión</Label>
               <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..." />
             </div>
           </div>
           <div>
             <Label>Descripción</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesion..." rows={2} />
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción de la sesión..." rows={2} />
           </div>
         </div>
         <DialogFooter>
@@ -802,7 +802,7 @@ function ScheduleEntryCard({
           </Select>
         </div>
         <div>
-          <Label className="text-xs">URL de Reunion</Label>
+          <Label className="text-xs">URL de Reunión</Label>
           <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://..." className="h-8" />
         </div>
         <div>
@@ -885,7 +885,7 @@ function CreateScheduleDialog({ courseId, onSubmit, isPending }: { courseId: num
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Dia de la Semana *</Label>
+            <Label>Día de la Semana *</Label>
             <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -923,13 +923,13 @@ function CreateScheduleDialog({ courseId, onSubmit, isPending }: { courseId: num
               </Select>
             </div>
             <div>
-              <Label>URL de Reunion</Label>
+              <Label>URL de Reunión</Label>
               <Input value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://..." />
             </div>
           </div>
           <div>
             <Label>Descripción</Label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Clase principal, Taller practico..." />
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Clase principal, Taller práctico..." />
           </div>
         </div>
         <DialogFooter>
@@ -989,8 +989,8 @@ function MaterialCard({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Titulo</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titulo del material" />
+            <Label className="text-xs">Título</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título del material" />
           </div>
           <div>
             <Label className="text-xs">Tipo</Label>
@@ -1114,7 +1114,7 @@ function CreateMaterialDialog({ courseId, onSubmit, isPending }: { courseId: num
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Titulo *</Label>
+              <Label>Título *</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nombre del material" />
             </div>
             <div>
@@ -1256,7 +1256,7 @@ function AnnouncementCard({
           <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4" /></Button>
         </div>
         <div>
-          <Label className="text-xs">Titulo</Label>
+          <Label className="text-xs">Título</Label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div>
@@ -1408,8 +1408,8 @@ function CreateAnnouncementDialog({ courseId, onSubmit, isPending }: { courseId:
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Titulo *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titulo del anuncio" />
+            <Label>Título *</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título del anuncio" />
           </div>
           <div>
             <Label>Contenido *</Label>

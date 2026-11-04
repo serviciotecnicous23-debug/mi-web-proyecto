@@ -91,7 +91,7 @@ const avatarUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Solo se permiten imagenes"));
+    else cb(new Error("Solo se permiten imágenes"));
   },
 });
 
@@ -112,7 +112,7 @@ const signatureUpload = multer({
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Solo se permiten imagenes"));
+    else cb(new Error("Solo se permiten imágenes"));
   },
 });
 
@@ -133,7 +133,7 @@ const regionUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Solo se permiten imagenes"));
+    else cb(new Error("Solo se permiten imágenes"));
   },
 });
 
@@ -168,7 +168,7 @@ const libraryUpload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_LIBRARY_TYPES.includes(file.mimetype)) cb(null, true);
-    else cb(new Error("Tipo de archivo no permitido. Se permiten: PDF, Word, Excel, PowerPoint, texto e imagenes."));
+    else cb(new Error("Tipo de archivo no permitido. Se permiten: PDF, Word, Excel, PowerPoint, texto e imágenes."));
   },
 });
 
@@ -278,7 +278,7 @@ const radioAudioUpload = multer({
     destination: (req, _file, cb) => {
       const category = getRouteParam(req.params.category);
       if (!isRadioCategory(category)) {
-        cb(new Error("Categoria de radio no valida"), "");
+        cb(new Error("Categoría de radio no valida"), "");
         return;
       }
       cb(null, ensureRadioCategoryDir(category));
@@ -386,6 +386,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express,
 ): Promise<Server> {
+  // Un identificador mal formado ("undefined", "abc"...) llegaba a la base de datos
+  // como NaN y salía un error 500; ahora responde 400 con un mensaje claro.
+  for (const name of ["id", "courseId", "postId", "userId", "activityId", "churchId", "enrollmentId", "eventId", "optionId", "sessionId"]) {
+    app.param(name, (_req, res, next, value) => {
+      if (/^\d+$/.test(String(value))) return next();
+      res.status(400).json({ message: "Identificador no válido" });
+    });
+  }
   // Schema verification is now handled by ensureDatabaseSchema() in index.ts
   // before registerRoutes is called.
 
@@ -604,7 +612,7 @@ ${urls}
   const uploadLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 15, // 15 uploads per 5 minutes
-    message: { message: "Limite de subida alcanzado. Espera unos minutos." },
+    message: { message: "Límite de subida alcanzado. Espera unos minutos." },
     standardHeaders: true,
     legacyHeaders: false,
   });
@@ -704,10 +712,10 @@ ${urls}
         }
         
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Usuario o contrasena incorrectos" });
+          return done(null, false, { message: "Usuario o contraseña incorrectos" });
         }
         if (!user.isActive) {
-          return done(null, false, { message: "Tu cuenta esta pendiente de aprobacion por un administrador" });
+          return done(null, false, { message: "Tu cuenta está pendiente de aprobación por un administrador" });
         }
         return done(null, user);
       } catch (err) {
@@ -814,6 +822,7 @@ ${urls}
       if (!user) return res.status(401).json({ message: info?.message || "Error al iniciar sesion" });
       req.logIn(user, (err) => {
         if (err) return next(err);
+        if (req.body?.remember === false) req.session.cookie.expires = null;
         const { password, ...safeUser } = user;
         res.json(safeUser);
       });
@@ -832,7 +841,7 @@ ${urls}
       }
 
       if (existing) {
-        return res.status(400).json({ message: "Este nombre de usuario ya esta en uso" });
+        return res.status(400).json({ message: "Este nombre de usuario ya está en uso" });
       }
 
       const hashedPassword = await hashPassword(input.password);
@@ -964,7 +973,7 @@ ${urls}
 
       const resetToken = await storage.getPasswordResetToken(token);
       if (!resetToken) {
-        return res.status(400).json({ message: "Enlace invalido o expirado" });
+        return res.status(400).json({ message: "Enlace inválido o expirado" });
       }
       if (resetToken.usedAt) {
         return res.status(400).json({ message: "Este enlace ya fue utilizado" });
@@ -994,7 +1003,7 @@ ${urls}
 
       const user = await storage.getUserByVerifyToken(token);
       if (!user) {
-        return res.status(400).json({ message: "Enlace de verificacion invalido" });
+        return res.status(400).json({ message: "Enlace de verificación inválido" });
       }
       if (user.emailVerified) {
         return res.json({ message: "El correo ya fue verificado", alreadyVerified: true });
@@ -1029,7 +1038,7 @@ ${urls}
       const user = await storage.getUserByEmail(email.trim());
       if (!user || user.emailVerified) {
         // Don't reveal user existence
-        return res.json({ message: "Si el correo existe y no esta verificado, recibiras un nuevo enlace" });
+        return res.json({ message: "Si el correo existe y no está verificado, recibiras un nuevo enlace" });
       }
 
       const token = randomBytes(32).toString("hex");
@@ -1043,7 +1052,7 @@ ${urls}
         sendVerificationEmail(user.email, token, user.displayName);
       }
 
-      res.json({ message: "Si el correo existe y no esta verificado, recibiras un nuevo enlace" });
+      res.json({ message: "Si el correo existe y no está verificado, recibiras un nuevo enlace" });
     } catch (err) {
       console.error("Resend verification error:", err);
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1064,13 +1073,13 @@ ${urls}
     if (!req.isAuthenticated()) return res.status(401).json({ message: "No autenticado" });
     const user = req.user!;
     if (user.emailVerified) {
-      return res.json({ message: "Tu correo ya esta verificado" });
+      return res.json({ message: "Tu correo ya está verificado" });
     }
     if (!user.email) {
       return res.status(400).json({ message: "No tienes correo registrado en tu perfil" });
     }
     if (!isEmailConfigured) {
-      return res.status(503).json({ message: "El servicio de correo no esta configurado. Contacta al administrador." });
+      return res.status(503).json({ message: "El servicio de correo no está configurado. Contacta al administrador." });
     }
     try {
       const token = randomBytes(32).toString("hex");
@@ -1080,10 +1089,10 @@ ${urls}
         emailVerifyExpires: expires,
       });
       sendVerificationEmail(user.email, token, user.displayName);
-      res.json({ message: "Correo de verificacion enviado! Revisa tu bandeja de entrada y spam." });
+      res.json({ message: "Correo de verificación enviado! Revisa tu bandeja de entrada y spam." });
     } catch (err) {
       console.error("Resend my verification error:", err);
-      res.status(500).json({ message: "Error al enviar correo de verificacion" });
+      res.status(500).json({ message: "Error al enviar correo de verificación" });
     }
   });
 
@@ -1134,7 +1143,7 @@ ${urls}
     try {
       const { endpoint, keys } = req.body;
       if (!endpoint || !keys?.p256dh || !keys?.auth) {
-        return res.status(400).json({ message: "Subscription data invalida" });
+        return res.status(400).json({ message: "Subscription data inválida" });
       }
       await storage.createPushSubscription(req.user!.id, endpoint, keys.p256dh, keys.auth);
       res.json({ message: "Subscripcion guardada" });
@@ -1162,7 +1171,7 @@ ${urls}
     if (!isAdmin(req)) return res.sendStatus(403);
     try {
       const { title, body, url } = req.body;
-      if (!title || !body) return res.status(400).json({ message: "Titulo y mensaje requeridos" });
+      if (!title || !body) return res.status(400).json({ message: "Título y mensaje requeridos" });
 
       const allSubs = await storage.getAllPushSubscriptions();
       const payload: PushPayload = {
@@ -1193,14 +1202,14 @@ ${urls}
       res.json({ message: `Enviando a ${allSubs.length} dispositivos`, count: allSubs.length });
     } catch (err) {
       console.error("Push send error:", err);
-      res.status(500).json({ message: "Error al enviar notificacion" });
+      res.status(500).json({ message: "Error al enviar notificación" });
     }
   });
 
   // ========== AVATAR UPLOAD ==========
   app.post("/api/upload/avatar", uploadLimiter as RequestHandler, avatarUpload.single("avatar") as RequestHandler, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.file) return res.status(400).json({ message: "No se envio ninguna imagen" });
+    if (!req.file) return res.status(400).json({ message: "No se envío ninguna imagen" });
     try {
       const userId = req.user!.id;
       // Optimize image (resize + compress to WebP) then upload
@@ -1224,7 +1233,7 @@ ${urls}
   // ========== REGION IMAGE UPLOAD ==========
   app.post("/api/upload/region-image", uploadLimiter as RequestHandler, regionUpload.single("image") as RequestHandler, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.file) return res.status(400).json({ message: "No se envio ninguna imagen" });
+    if (!req.file) return res.status(400).json({ message: "No se envío ninguna imagen" });
     try {
       // Optimize image then upload to storage
       const optimized = await optimizePostImage(req.file.path);
@@ -1246,7 +1255,7 @@ ${urls}
   app.post("/api/upload/library-file", uploadLimiter as RequestHandler, libraryUpload.single("file") as RequestHandler, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.user!.isActive) return res.sendStatus(403);
-    if (!req.file) return res.status(400).json({ message: "No se envio ningun archivo" });
+    if (!req.file) return res.status(400).json({ message: "No se envío ningún archivo" });
     try {
       const fileBuffer = fs.readFileSync(req.file.path);
       const mimeType = req.file.mimetype || "application/octet-stream";
@@ -1326,7 +1335,7 @@ ${urls}
     const userId = req.user!.id;
     const { addresseeId } = req.body;
     if (!addresseeId || addresseeId === userId) {
-      return res.status(400).json({ message: "ID de usuario invalido" });
+      return res.status(400).json({ message: "ID de usuario inválido" });
     }
     try {
       const friendship = await storage.sendFriendRequest(userId, addresseeId);
@@ -1421,7 +1430,14 @@ ${urls}
     if (!req.user!.isActive) return res.sendStatus(403);
     try {
       const input = api.posts.create.input.parse(req.body);
-      const post = await storage.createMemberPost(req.user!.id, input.content, input.imageUrl);
+      const content = (input.content ?? "").trim();
+      if (!content && !input.imageUrl) {
+        return res.status(400).json({ message: "Escribe algo o agrega una foto para publicar" });
+      }
+      if (content.length > 5000) {
+        return res.status(400).json({ message: "La publicación es demasiado larga (máximo 5000 caracteres)" });
+      }
+      const post = await storage.createMemberPost(req.user!.id, content, input.imageUrl);
       res.status(201).json(post);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -1461,7 +1477,7 @@ ${urls}
   app.post(api.events.create.path, async (req, res) => {
     if (!req.isAuthenticated() || !req.user) {
       console.log("Event create: user not authenticated. Session:", req.sessionID, "User:", req.user, "Authenticated:", req.isAuthenticated?.());
-      return res.status(401).json({ message: "Debes iniciar sesion para crear eventos. Si ya iniciaste sesion, intenta cerrar sesion y volver a entrar." });
+      return res.status(401).json({ message: "Debes iniciar sesión para crear eventos. Si ya iniciaste sesión, intenta cerrar sesión y volver a entrar." });
     }
     try {
       const input = api.events.create.input.parse(req.body);
@@ -1494,9 +1510,9 @@ ${urls}
   });
 
   app.patch(api.events.update.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesion" });
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesión" });
     const eventId = parseInt(req.params.id);
-    if (isNaN(eventId)) return res.status(400).json({ message: "ID de evento invalido" });
+    if (isNaN(eventId)) return res.status(400).json({ message: "ID de evento inválido" });
     const event = await storage.getEvent(eventId);
     if (!event) return res.status(404).json({ message: "Evento no encontrado" });
     if (!isAdmin(req) && event.createdBy !== req.user!.id) return res.status(403).json({ message: "No tienes permiso para editar este evento" });
@@ -1513,9 +1529,9 @@ ${urls}
   });
 
   app.delete(api.events.delete.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesion" });
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesión" });
     const eventId = parseInt(req.params.id);
-    if (isNaN(eventId)) return res.status(400).json({ message: "ID invalido" });
+    if (isNaN(eventId)) return res.status(400).json({ message: "ID inválido" });
     const event = await storage.getEvent(eventId);
     if (!event) return res.status(404).json({ message: "Evento no encontrado" });
     if (!isAdmin(req) && event.createdBy !== req.user!.id) return res.status(403).json({ message: "No tienes permiso" });
@@ -1546,11 +1562,11 @@ ${urls}
   app.post(api.eventRsvps.upsert.path, async (req, res) => {
     if (!req.isAuthenticated()) {
       console.log("RSVP: user not authenticated. Session:", req.sessionID, "User:", req.user);
-      return res.status(401).json({ message: "Debes iniciar sesion para confirmar asistencia" });
+      return res.status(401).json({ message: "Debes iniciar sesión para confirmar asistencia" });
     }
     try {
       const eventId = parseInt(req.params.eventId);
-      if (isNaN(eventId)) return res.status(400).json({ message: "ID de evento invalido" });
+      if (isNaN(eventId)) return res.status(400).json({ message: "ID de evento inválido" });
       const event = await storage.getEvent(eventId);
       if (!event) return res.status(404).json({ message: "Evento no encontrado" });
       // Use the URL eventId, override the body eventId to ensure consistency
@@ -1594,9 +1610,9 @@ ${urls}
   });
 
   app.delete(api.eventRsvps.cancel.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesion" });
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Debes iniciar sesión" });
     const eventId = parseInt(req.params.eventId);
-    if (isNaN(eventId)) return res.status(400).json({ message: "ID invalido" });
+    if (isNaN(eventId)) return res.status(400).json({ message: "ID inválido" });
     try {
       await storage.cancelEventRsvp(eventId, req.user!.id);
       res.json({ success: true });
@@ -1748,9 +1764,24 @@ ${urls}
   });
 
   // ========== COURSE MATERIALS ==========
+  // Materiales, anuncios y enlaces de clase son para quien está dentro del curso:
+  // la administración, su maestro o un alumno con la inscripción aprobada.
+  async function canAccessCourseContent(req: Request, courseId: number): Promise<boolean> {
+    if (!req.isAuthenticated()) return false;
+    if (isAdmin(req)) return true;
+    const course = await storage.getCourse(courseId);
+    if (!course) return false;
+    if (course.teacherId === req.user!.id) return true;
+    const enrollment = await storage.getEnrollmentByUserAndCourse(req.user!.id, courseId);
+    return !!enrollment && (enrollment.status === "aprobado" || enrollment.status === "completado");
+  }
+
   app.get(api.courseMaterials.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
+    if (!(await canAccessCourseContent(req, courseId))) {
+      return res.status(403).json({ message: "Inscríbete en el curso para ver sus materiales" });
+    }
     const materials = await storage.listCourseMaterials(courseId);
     res.json(materials);
   });
@@ -2007,7 +2038,10 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
     const sessions = await storage.listCourseSessions(courseId);
-    res.json(sessions);
+    // La vista previa del curso enseña títulos y fechas; el enlace de la reunión
+    // solo a quien está dentro (evita que extraños entren a la clase).
+    if (await canAccessCourseContent(req, courseId)) return res.json(sessions);
+    res.json(sessions.map((s) => ({ ...s, meetingUrl: null })));
   });
 
   app.post(api.courseSessions.list.path, async (req, res) => {
@@ -2078,11 +2112,11 @@ ${urls}
         return res.status(400).json({ message: "Las inscripciones para este curso estan cerradas" });
       }
       if (course.enrollmentStatus === "scheduled") {
-        return res.status(400).json({ message: "Las inscripciones para este curso aun no estan abiertas" });
+        return res.status(400).json({ message: "Las inscripciones para este curso aún no estan abiertas" });
       }
       const existing = await storage.getEnrollmentByUserAndCourse(req.user!.id, input.courseId);
       if (existing) {
-        return res.status(400).json({ message: "Ya tienes una inscripcion en este curso" });
+        return res.status(400).json({ message: "Ya tienes una inscripción en este curso" });
       }
       const enrollment = await storage.createEnrollment(req.user!.id, input.courseId);
       res.status(201).json(enrollment);
@@ -2208,6 +2242,9 @@ ${urls}
   app.get(api.courseAnnouncements.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
+    if (!(await canAccessCourseContent(req, courseId))) {
+      return res.status(403).json({ message: "Inscríbete en el curso para ver sus anuncios" });
+    }
     const announcements = await storage.listCourseAnnouncements(courseId);
     res.json(announcements);
   });
@@ -2338,7 +2375,7 @@ ${urls}
     const { role } = req.body;
     const validRoles = ["director", "staff_global", "admin_iglesia", "maestro_ministerio", "maestro_iglesia", "miembro", "usuario", "admin", "obrero"];
     if (!validRoles.includes(role)) {
-      return res.status(400).json({ message: "Rol invalido" });
+      return res.status(400).json({ message: "Rol inválido" });
     }
     const user = await storage.updateUserRole(id, role);
     if (!user) return res.sendStatus(404);
@@ -2461,7 +2498,7 @@ ${urls}
     ((req, res, next) => {
       if (!isAdmin(req)) return res.sendStatus(403);
       if (!isRadioCategory(getRouteParam(req.params.category))) {
-        return res.status(400).json({ message: "Categoria de radio no valida" });
+        return res.status(400).json({ message: "Categoría de radio no valida" });
       }
       return next();
     }) as RequestHandler,
@@ -2584,7 +2621,7 @@ ${urls}
 
   app.delete(api.bibleHighlights.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteBibleHighlight(parseInt(req.params.id));
+    await storage.deleteBibleHighlight(parseInt(req.params.id), req.user!.id);
     res.sendStatus(200);
   });
 
@@ -2617,7 +2654,7 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
       const input = api.bibleNotes.update.input.parse(req.body);
-      const note = await storage.updateBibleNote(parseInt(req.params.id), input.content);
+      const note = await storage.updateBibleNote(parseInt(req.params.id), req.user!.id, input.content);
       if (!note) return res.sendStatus(404);
       res.json(note);
     } catch (err) {
@@ -2628,7 +2665,7 @@ ${urls}
 
   app.delete(api.bibleNotes.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteBibleNote(parseInt(req.params.id));
+    await storage.deleteBibleNote(parseInt(req.params.id), req.user!.id);
     res.sendStatus(200);
   });
 
@@ -2677,6 +2714,8 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
       const planId = parseInt(req.params.id);
+      const plan = await storage.getReadingPlan(planId);
+      if (!plan || plan.userId !== req.user!.id) return res.sendStatus(404);
       const input = api.readingPlans.addItem.input.parse({ ...req.body, planId });
       const item = await storage.addReadingPlanItem(input);
       res.status(201).json(item);
@@ -2711,8 +2750,17 @@ ${urls}
     }
   });
 
+  // ¿El ítem pertenece a un plan de este usuario?
+  async function ownsReadingPlanItem(itemId: number, userId: number): Promise<boolean> {
+    const item = await storage.getReadingPlanItem(itemId);
+    if (!item) return false;
+    const plan = await storage.getReadingPlan(item.planId);
+    return !!plan && plan.userId === userId;
+  }
+
   app.patch(api.readingPlans.toggleItem.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await ownsReadingPlanItem(parseInt(req.params.id), req.user!.id))) return res.sendStatus(404);
     const item = await storage.toggleReadingPlanItem(parseInt(req.params.id));
     if (!item) return res.sendStatus(404);
     res.json(item);
@@ -2720,6 +2768,7 @@ ${urls}
 
   app.delete(api.readingPlans.deleteItem.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await ownsReadingPlanItem(parseInt(req.params.id), req.user!.id))) return res.sendStatus(404);
     await storage.deleteReadingPlanItem(parseInt(req.params.id));
     res.sendStatus(200);
   });
@@ -2842,7 +2891,7 @@ ${urls}
 
   app.patch(api.notifications.markRead.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.markNotificationRead(parseInt(req.params.id));
+    await storage.markNotificationRead(parseInt(req.params.id), req.user!.id);
     res.json({ success: true });
   });
 
@@ -2861,7 +2910,7 @@ ${urls}
   app.post(api.prayerActivities.create.path, async (req, res) => {
     if (!req.isAuthenticated()) {
       console.log("Prayer create: user not authenticated. Session:", req.sessionID);
-      return res.status(401).json({ message: "Debes iniciar sesion para crear actividades" });
+      return res.status(401).json({ message: "Debes iniciar sesión para crear actividades" });
     }
     try {
       const input = api.prayerActivities.create.input.parse(req.body);
@@ -2870,7 +2919,7 @@ ${urls}
       try {
         await storage.createNotificationForAll({
           type: "oracion",
-          title: "Nueva Actividad de Oracion",
+          title: "Nueva Actividad de Oración",
           content: `Se creo la actividad: ${activity.title}`,
           link: "/oracion",
         });
@@ -2887,11 +2936,11 @@ ${urls}
 
   app.patch(api.prayerActivities.update.path, async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Debes iniciar sesion para editar actividades" });
+      return res.status(401).json({ message: "Debes iniciar sesión para editar actividades" });
     }
     try {
       const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "ID de actividad invalido" });
+      if (isNaN(id)) return res.status(400).json({ message: "ID de actividad inválido" });
       const activity = await storage.getPrayerActivity(id);
       if (!activity) return res.status(404).json({ message: "Actividad no encontrada" });
       if (activity.userId !== req.user!.id && !isAdmin(req)) {
@@ -2910,11 +2959,11 @@ ${urls}
   app.delete(api.prayerActivities.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) {
       console.log("Prayer delete: user not authenticated. Session:", req.sessionID);
-      return res.status(401).json({ message: "Debes iniciar sesion para eliminar actividades" });
+      return res.status(401).json({ message: "Debes iniciar sesión para eliminar actividades" });
     }
     try {
       const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "ID de actividad invalido" });
+      if (isNaN(id)) return res.status(400).json({ message: "ID de actividad inválido" });
       const activity = await storage.getPrayerActivity(id);
       if (!activity) return res.status(404).json({ message: "Actividad no encontrada" });
       if (activity.userId !== req.user!.id && !isAdmin(req)) {
@@ -3007,7 +3056,7 @@ ${urls}
       res.status(201).json(region);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Error al crear la region" });
+      res.status(500).json({ message: "Error al crear la región" });
     }
   });
 
@@ -3017,11 +3066,11 @@ ${urls}
     try {
       const input = api.ministryRegions.update.input.parse(req.body);
       const updated = await storage.updateMinistryRegion(parseInt(req.params.id), input);
-      if (!updated) return res.status(404).json({ message: "Region no encontrada" });
+      if (!updated) return res.status(404).json({ message: "Región no encontrada" });
       res.json(updated);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Error al actualizar la region" });
+      res.status(500).json({ message: "Error al actualizar la región" });
     }
   });
 
@@ -3164,13 +3213,14 @@ ${urls}
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (file.mimetype.startsWith("image/")) cb(null, true);
-      else cb(new Error("Solo se permiten imagenes"));
+      else cb(new Error("Solo se permiten imágenes"));
     },
   });
 
   app.post("/api/upload/post-image", uploadLimiter as RequestHandler, postImageUpload.single("image") as RequestHandler, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.file) return res.status(400).json({ message: "No se envio ninguna imagen" });
+    if (!req.user!.isActive) return res.sendStatus(403);
+    if (!req.file) return res.status(400).json({ message: "No se envió ninguna imagen" });
     try {
       // Optimize image then upload to storage
       const optimized = await optimizePostImage(req.file.path);
@@ -3202,7 +3252,15 @@ ${urls}
     try {
       const postId = parseInt(req.params.postId);
       const input = api.postComments.create.input.parse({ ...req.body, postId });
-      const comment = await storage.createPostComment(req.user!.id, input);
+      const content = input.content.trim();
+      if (!content) return res.status(400).json({ message: "El comentario no puede estar vacío" });
+      if (content.length > 2000) {
+        return res.status(400).json({ message: "El comentario es demasiado largo (máximo 2000 caracteres)" });
+      }
+      if (!(await storage.getMemberPost(postId))) {
+        return res.status(404).json({ message: "Esta publicación ya no existe" });
+      }
+      const comment = await storage.createPostComment(req.user!.id, { ...input, content });
       res.status(201).json(comment);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -3360,21 +3418,28 @@ ${urls}
 
   app.post(api.churchPosts.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.user!.isActive) return res.sendStatus(403);
     try {
-      const input = api.churchPosts.create.input.parse(req.body);
+      const parsed = api.churchPosts.create.input.parse(req.body);
+      const input = { ...parsed, content: parsed.content.trim() };
+      if (!input.content) return res.status(400).json({ message: "Escribe algo para publicar" });
       const church = await storage.getMinistryChurch(input.churchId);
-      if (!church || !church.isActive) return res.status(400).json({ message: "Iglesia no valida o inactiva" });
+      if (!church || !church.isActive) return res.status(400).json({ message: "Iglesia no válida o inactiva" });
       const post = await storage.createChurchPost(req.user!.id, input);
       res.status(201).json(post);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(500).json({ message: "Error al crear la publicacion" });
+      res.status(500).json({ message: "Error al crear la publicación" });
     }
   });
 
   app.delete(api.churchPosts.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const id = parseInt(req.params.id);
+    const post = await storage.getChurchPost(id);
+    if (!post) return res.sendStatus(404);
+    const isChurchModerator = req.user!.role === "admin_iglesia" && req.user!.churchId === post.churchId;
+    if (post.userId !== req.user!.id && !isAdmin(req) && !isChurchModerator) return res.sendStatus(403);
     await storage.deleteChurchPost(id);
     res.json({ success: true });
   });
@@ -3388,10 +3453,14 @@ ${urls}
 
   app.post(api.regionPosts.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const input = api.regionPosts.create.input.parse(req.body);
+    if (!req.user!.isActive) return res.sendStatus(403);
+    const parsed = api.regionPosts.create.input.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
+    const input = { ...parsed.data, content: parsed.data.content.trim() };
+    if (!input.content) return res.status(400).json({ message: "Escribe algo para publicar" });
     const allRegions = await storage.listMinistryRegions();
     const validRegionNames = allRegions.filter(r => r.isActive).map(r => r.name);
-    if (!validRegionNames.includes(input.region)) return res.status(400).json({ message: "Region no valida" });
+    if (!validRegionNames.includes(input.region)) return res.status(400).json({ message: "Región no válida" });
     const post = await storage.createRegionPost(req.user!.id, input);
     res.status(201).json(post);
   });
@@ -3399,6 +3468,9 @@ ${urls}
   app.delete(api.regionPosts.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const id = parseInt(req.params.id);
+    const post = await storage.getRegionPost(id);
+    if (!post) return res.sendStatus(404);
+    if (post.userId !== req.user!.id && !isAdmin(req)) return res.sendStatus(403);
     await storage.deleteRegionPost(id);
     res.json({ success: true });
   });
@@ -3474,7 +3546,7 @@ ${urls}
   app.get("/api/certificates/by-enrollment/:enrollmentId", async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
     const cert = await storage.getCertificateByEnrollment(parseInt(req.params.enrollmentId));
-    if (!cert) return res.status(404).json({ message: "Certificado no encontrado para esta inscripcion" });
+    if (!cert) return res.status(404).json({ message: "Certificado no encontrado para esta inscripción" });
     const certUser = await storage.getUser(cert.userId);
     const course = await storage.getCourse(cert.courseId);
     res.json({
@@ -3532,7 +3604,7 @@ ${urls}
     try {
       const { enrollmentId } = req.body;
       const enrollment = await storage.getEnrollment(enrollmentId);
-      if (!enrollment) return res.status(404).json({ message: "Inscripcion no encontrada" });
+      if (!enrollment) return res.status(404).json({ message: "Inscripción no encontrada" });
       if (enrollment.status !== "completado") return res.status(400).json({ message: "El estudiante no ha completado el curso" });
       
       const course = await storage.getCourse(enrollment.courseId);
@@ -3619,8 +3691,21 @@ ${urls}
   app.post("/api/upload/signature", uploadLimiter as RequestHandler, signatureUpload.single("signature") as RequestHandler, async (req: Request, res: Response) => {
     if (!isAdmin(req)) return res.sendStatus(403);
     if (!req.file) return res.status(400).json({ message: "No se proporcionó archivo" });
-    const url = `/uploads/signatures/${req.file.filename}`;
-    res.json({ url });
+    try {
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const result = await uploadFile({
+        folder: "signatures",
+        filename: `firma-${Date.now()}${ext}`,
+        buffer: fs.readFileSync(req.file.path),
+        contentType: req.file.mimetype,
+      });
+      res.json({ url: result.url });
+    } catch (err) {
+      console.error("Signature upload error:", err);
+      res.status(500).json({ message: "Error al subir la firma" });
+    } finally {
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+    }
   });
 
   // ========== TITHES ==========
@@ -4020,7 +4105,7 @@ ${urls}
 
   app.delete(api.sermons.deleteNote.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteSermonNote(parseInt(req.params.id));
+    await storage.deleteSermonNote(parseInt(req.params.id), req.user!.id);
     res.json({ success: true });
   });
 
@@ -4101,14 +4186,26 @@ ${urls}
     }
   });
 
+  async function isSmallGroupMember(req: Request, groupId: number): Promise<boolean> {
+    if (isAdmin(req)) return true;
+    const members = await storage.listSmallGroupMembers(groupId);
+    return members.some((m) => m.userId === req.user!.id);
+  }
+
   app.get(api.smallGroups.messages.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await isSmallGroupMember(req, parseInt(req.params.id)))) {
+      return res.status(403).json({ message: "Únete al grupo para ver sus mensajes" });
+    }
     const msgs = await storage.listSmallGroupMessages(parseInt(req.params.id));
     res.json(msgs);
   });
 
   app.post(api.smallGroups.sendMessage.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await isSmallGroupMember(req, parseInt(req.params.id)))) {
+      return res.status(403).json({ message: "Únete al grupo para escribir en él" });
+    }
     try {
       const input = api.smallGroups.sendMessage.input.parse({ ...req.body, groupId: parseInt(req.params.id) });
       const msg = await storage.sendSmallGroupMessage(req.user!.id, input);

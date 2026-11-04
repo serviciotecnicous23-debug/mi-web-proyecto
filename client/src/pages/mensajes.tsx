@@ -92,7 +92,7 @@ export default function Mensajes() {
             Mensajes
           </h1>
           <p className="text-muted-foreground mt-1">
-            Envia y recibe mensajes directos con tus amigos del ministerio.
+            Envía y recibe mensajes directos con tus amigos del ministerio.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export default function Mensajes() {
               {/* Search results */}
               {searchQuery && searchResults.filter((u: any) => u.friendshipStatus === "accepted").length > 0 && (
                 <div className="border-b pb-2">
-                  <p className="text-xs text-muted-foreground px-4 py-2">Resultados de busqueda</p>
+                  <p className="text-xs text-muted-foreground px-4 py-2">Resultados de búsqueda</p>
                   {searchResults
                     .filter((u: any) => u.friendshipStatus === "accepted")
                     .map((u: any) => (
@@ -245,7 +245,7 @@ export default function Mensajes() {
                     </div>
                   ) : chatMessages.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-muted-foreground">No hay mensajes aun. Envia el primero!</p>
+                      <p className="text-sm text-muted-foreground">No hay mensajes aun. Envía el primero!</p>
                     </div>
                   ) : (
                     chatMessages.map((msg: any) => {

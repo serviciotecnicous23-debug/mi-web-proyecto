@@ -43,7 +43,7 @@ export default function MisCapacitaciones() {
           <Card>
             <CardContent className="py-12 text-center">
               <GraduationCap className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground mb-4">Aun no te has inscrito en ningun curso.</p>
+              <p className="text-muted-foreground mb-4">Aún no te has inscrito en ningún curso.</p>
               <Link href="/capacitaciones">
                 <Button data-testid="button-explore-capacitaciones">Explorar Capacitaciones</Button>
               </Link>
@@ -119,7 +119,7 @@ function EnrollmentCard({ enrollment, onCancel }: { enrollment: any; onCancel?: 
               {COURSE_CATEGORIES[enrollment.course.category as keyof typeof COURSE_CATEGORIES] || enrollment.course.category}
             </Badge>
             {enrollment.grade && (
-              <p className="text-sm mt-2"><span className="text-muted-foreground">Calificacion:</span> <span className="font-semibold">{enrollment.grade}</span></p>
+              <p className="text-sm mt-2"><span className="text-muted-foreground">Calificación:</span> <span className="font-semibold">{enrollment.grade}</span></p>
             )}
             {enrollment.observations && (
               <p className="text-sm mt-1"><span className="text-muted-foreground">Observaciones:</span> {enrollment.observations}</p>

@@ -45,7 +45,7 @@ export default function VerifyEmailPage() {
             <>
               <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
               <h2 className="text-xl font-bold mb-2">Verificando...</h2>
-              <p className="text-muted-foreground">Estamos verificando tu correo electronico</p>
+              <p className="text-muted-foreground">Estamos verificando tu correo electrónico</p>
             </>
           )}
 
@@ -80,9 +80,9 @@ export default function VerifyEmailPage() {
           {status === "no-token" && (
             <>
               <XCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Enlace Invalido</h2>
+              <h2 className="text-xl font-bold mb-2">Enlace Inválido</h2>
               <p className="text-muted-foreground mb-4">
-                El enlace de verificacion no es valido. Revisa tu correo o solicita uno nuevo.
+                El enlace de verificación no es válido. Revisa tu correo o solicita uno nuevo.
               </p>
               <Link href="/login">
                 <Button variant="outline" className="gap-2">

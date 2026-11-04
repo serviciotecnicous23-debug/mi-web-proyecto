@@ -14,8 +14,8 @@ import { LogoIcon } from "@/components/LogoIcon";
 import { useToast } from "@/hooks/use-toast";
 
 const resetSchema = z.object({
-  newPassword: z.string().min(6, "Minimo 6 caracteres"),
-  confirmPassword: z.string().min(6, "Minimo 6 caracteres"),
+  newPassword: z.string().min(6, "Mínimo 6 caracteres"),
+  confirmPassword: z.string().min(6, "Mínimo 6 caracteres"),
 }).refine(d => d.newPassword === d.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground mb-4">Enlace invalido. Solicita un nuevo enlace de restablecimiento.</p>
+            <p className="text-muted-foreground mb-4">Enlace inválido. Solicita un nuevo enlace de restablecimiento.</p>
             <Link href="/forgot-password">
               <Button variant="outline">Solicitar nuevo enlace</Button>
             </Link>
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Contraseña Restablecida</h2>
             <p className="text-muted-foreground mb-4">
-              Tu contraseña fue actualizada exitosamente. Ya puedes iniciar sesion.
+              Tu contraseña fue actualizada exitosamente. Ya puedes iniciar sesión.
             </p>
             <Link href="/login">
               <Button className="gap-2">
@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
                   <FormItem>
                     <FormLabel>Nueva Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Minimo 6 caracteres" {...field} />
+                      <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

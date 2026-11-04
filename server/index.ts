@@ -188,6 +188,12 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
+  // Una ruta /api que no existe responde 404 en JSON. Sin esto caía en la página
+  // de la web (HTML con 200) y la pantalla que la pedía fallaba sin aviso.
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ message: "Ruta no encontrada" });
+  });
+
   // Sentry error handler must be registered after all routes but before custom error handler
   if (process.env.SENTRY_DSN) {
     Sentry.setupExpressErrorHandler(app);

@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
           <LogoIcon className="w-10 h-10 mx-auto mb-2" />
           <CardTitle className="text-2xl font-bold">Olvide mi Contraseña</CardTitle>
           <CardDescription>
-            Ingresa tu correo electronico y te enviaremos un enlace para restablecer tu contraseña
+            Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Correo Electronico</FormLabel>
+                    <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="tu@correo.com" {...field} />
                     </FormControl>

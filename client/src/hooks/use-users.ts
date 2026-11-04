@@ -199,11 +199,11 @@ export function useDeleteMemberPost() {
     mutationFn: async (id: number) => {
       const url = buildUrl(api.posts.delete.path, { id });
       const res = await authFetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al eliminar publicacion");
+      if (!res.ok) throw new Error("Error al eliminar publicación");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.posts.list.path] });
-      toast({ title: "Publicacion eliminada" });
+      toast({ title: "Publicación eliminada" });
     },
   });
 }
@@ -243,7 +243,7 @@ export function useCreateEvent() {
         if (res.status === 401) {
           // Session expired - invalidate auth state so UI updates
           queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
-          throw new Error("Tu sesion ha expirado. Por favor, cierra sesion e inicia sesion nuevamente.");
+          throw new Error("Tu sesión ha expirado. Por favor, cierra sesión e inicia sesión nuevamente.");
         }
         throw new Error(errData?.message || `Error al crear evento (${res.status})`);
       }
@@ -268,7 +268,7 @@ export function useUpdateEvent() {
         const errData = await res.json().catch(() => null);
         if (res.status === 401) {
           queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
-          throw new Error("Tu sesion ha expirado. Por favor, cierra sesion e inicia sesion nuevamente.");
+          throw new Error("Tu sesión ha expirado. Por favor, cierra sesión e inicia sesión nuevamente.");
         }
         throw new Error(errData?.message || `Error al actualizar evento (${res.status})`);
       }
@@ -375,7 +375,7 @@ export function useCancelRsvp() {
     onSuccess: (_data, eventId) => {
       queryClient.invalidateQueries({ queryKey: [api.eventRsvps.list.path, eventId] });
       queryClient.invalidateQueries({ queryKey: [api.eventRsvps.myRsvp.path, eventId] });
-      toast({ title: "Confirmacion cancelada" });
+      toast({ title: "Confirmación cancelada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -583,7 +583,8 @@ export function useDeleteCourse() {
 }
 
 // ========== COURSE MATERIALS ==========
-export function useCourseMaterials(courseId: number) {
+// enabled=false para quien no puede verlos (el servidor responde 403 si no está inscrito).
+export function useCourseMaterials(courseId: number, enabled = true) {
   return useQuery({
     queryKey: [api.courseMaterials.list.path, courseId],
     queryFn: async () => {
@@ -592,7 +593,7 @@ export function useCourseMaterials(courseId: number) {
       if (!res.ok) throw new Error("Error al obtener materiales");
       return res.json();
     },
-    enabled: !!courseId,
+    enabled: !!courseId && enabled,
   });
 }
 
@@ -670,12 +671,12 @@ export function useCreateCourseSession() {
     mutationFn: async (data: InsertCourseSession) => {
       const url = buildUrl(api.courseSessions.list.path, { courseId: data.courseId });
       const res = await authFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (!res.ok) throw new Error("Error al crear sesion");
+      if (!res.ok) throw new Error("Error al crear sesión");
       return res.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.courseSessions.list.path, variables.courseId] });
-      toast({ title: "Sesion programada" });
+      toast({ title: "Sesión programada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -688,12 +689,12 @@ export function useUpdateCourseSession() {
     mutationFn: async ({ id, courseId, updates }: { id: number; courseId: number; updates: UpdateCourseSession }) => {
       const url = buildUrl(api.courseSessions.update.path, { id });
       const res = await authFetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
-      if (!res.ok) throw new Error("Error al actualizar sesion");
+      if (!res.ok) throw new Error("Error al actualizar sesión");
       return res.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.courseSessions.list.path, variables.courseId] });
-      toast({ title: "Sesion actualizada" });
+      toast({ title: "Sesión actualizada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -706,11 +707,11 @@ export function useDeleteCourseSession() {
     mutationFn: async ({ id, courseId }: { id: number; courseId: number }) => {
       const url = buildUrl(api.courseSessions.delete.path, { id });
       const res = await authFetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al eliminar sesion");
+      if (!res.ok) throw new Error("Error al eliminar sesión");
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.courseSessions.list.path, variables.courseId] });
-      toast({ title: "Sesion eliminada" });
+      toast({ title: "Sesión eliminada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -755,7 +756,7 @@ export function useCreateEnrollment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.enrollments.list.path] });
-      toast({ title: "Inscripcion solicitada", description: "Tu solicitud sera revisada por el profesor o administrador." });
+      toast({ title: "Inscripción solicitada", description: "Tu solicitud sera revisada por el profesor o administrador." });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -768,7 +769,7 @@ export function useUpdateEnrollment() {
     mutationFn: async ({ id, courseId, updates }: { id: number; courseId: number; updates: UpdateEnrollment }) => {
       const url = buildUrl(api.enrollments.update.path, { id });
       const res = await authFetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
-      if (!res.ok) throw new Error("Error al actualizar inscripcion");
+      if (!res.ok) throw new Error("Error al actualizar inscripción");
       return res.json();
     },
     onSuccess: (_, variables) => {
@@ -776,7 +777,7 @@ export function useUpdateEnrollment() {
       queryClient.invalidateQueries({ queryKey: [api.enrollments.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.courses.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.courses.get.path] });
-      toast({ title: "Inscripcion actualizada" });
+      toast({ title: "Inscripción actualizada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -789,12 +790,12 @@ export function useDeleteEnrollment() {
     mutationFn: async ({ id, courseId }: { id: number; courseId: number }) => {
       const url = buildUrl(api.enrollments.delete.path, { id });
       const res = await authFetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al cancelar inscripcion");
+      if (!res.ok) throw new Error("Error al cancelar inscripción");
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.enrollments.listByCourse.path, variables.courseId] });
       queryClient.invalidateQueries({ queryKey: [api.enrollments.list.path] });
-      toast({ title: "Inscripcion cancelada" });
+      toast({ title: "Inscripción cancelada" });
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
@@ -1368,7 +1369,7 @@ export function useUpdateUserInfo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.admin.listUsers.path] });
-      toast({ title: "Informacion actualizada" });
+      toast({ title: "Información actualizada" });
     },
     onError: (error: any) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });

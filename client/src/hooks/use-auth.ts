@@ -19,7 +19,8 @@ export function useAuth() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+    // remember=false: la sesión dura hasta cerrar el navegador.
+    mutationFn: async (credentials: { username: string; password: string; remember?: boolean }) => {
       const res = await fetch(api.auth.login.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,12 +78,12 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch(api.auth.logout.path, { method: "POST", credentials: "include" });
-      if (!res.ok) throw new Error("Error al cerrar sesion");
+      if (!res.ok) throw new Error("Error al cerrar sesión");
     },
     onSuccess: () => {
       queryClient.setQueryData([api.auth.me.path], null);
       queryClient.clear();
-      toast({ title: "Hasta pronto", description: "Sesion cerrada" });
+      toast({ title: "Hasta pronto", description: "Sesión cerrada" });
     },
   });
 

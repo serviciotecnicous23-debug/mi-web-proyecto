@@ -123,7 +123,7 @@ function VerseOfTheDay() {
         <div className="flex items-start gap-3">
           <BookOpen className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">Versiculo del Dia</p>
+            <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">Versículo del Día</p>
             <p className="text-sm italic leading-relaxed">&ldquo;{verse.text}&rdquo;</p>
             <p className="text-xs text-muted-foreground mt-1 font-medium">{verse.ref}</p>
           </div>
@@ -163,7 +163,7 @@ function BibleTab() {
       try {
         const slug = BIBLE_BOOK_SLUG_MAP[selectedBook] || selectedBook.toLowerCase();
         const res = await fetch(`https://bible-api.deno.dev/api/read/${bibleVersion}/${slug}/${chapter}`);
-        if (!res.ok) throw new Error("Error al cargar texto biblico");
+        if (!res.ok) throw new Error("Error al cargar texto bíblico");
         const data = await res.json();
         if (data.vers && Array.isArray(data.vers)) {
           setVerses(data.vers.map((v: any) => ({
@@ -880,7 +880,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Paso 2: Elige tu ritmo de lectura</CardTitle>
-              <CardDescription>¿En cuanto tiempo quieres completar tu plan? El sistema organizara los capitulos automaticamente.</CardDescription>
+              <CardDescription>¿En cuanto tiempo quieres completar tu plan? El sistema organizara los capitulos automáticamente.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -927,7 +927,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
                     <span className="text-2xl">⚙️</span>
                     <div>
                       <p className="font-semibold">Personalizado</p>
-                      <p className="text-xs text-muted-foreground">Define tu propio numero de dias</p>
+                      <p className="text-xs text-muted-foreground">Define tu propio número de días</p>
                     </div>
                   </div>
                 </button>
@@ -941,7 +941,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
                       min={1}
                       max={1095}
                     />
-                    <span className="text-sm text-muted-foreground">dias</span>
+                    <span className="text-sm text-muted-foreground">días</span>
                     <span className="text-sm ml-auto">
                       <span className="font-medium text-primary">{getChaptersPerDay()} cap/dia</span>
                       <span className="text-muted-foreground"> · ~{getEstimatedMinutesPerDay()} min/dia</span>
@@ -991,7 +991,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
-                placeholder="Nombre del plan (ej: Mi lectura biblica mensual)"
+                placeholder="Nombre del plan (ej: Mi lectura bíblica mensual)"
                 value={planName}
                 onChange={(e) => setPlanName(e.target.value)}
                 data-testid="input-plan-name"
@@ -1018,7 +1018,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-primary">{getDays()}</p>
-                      <p className="text-xs text-muted-foreground">Dias</p>
+                      <p className="text-xs text-muted-foreground">Días</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-primary">~{getEstimatedMinutesPerDay()}</p>
@@ -1030,7 +1030,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
 
               {/* Schedule preview (first 7 days) */}
               <div>
-                <p className="text-sm font-medium mb-2">Vista previa del calendario (primeros dias):</p>
+                <p className="text-sm font-medium mb-2">Vista previa del calendario (primeros días):</p>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {schedule.slice(0, 10).map((day) => (
                     <div key={day.day} className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
@@ -1082,7 +1082,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
             <div>
               <h3 className="font-semibold">Plan de Lectura Inteligente</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Crea un plan personalizado que organiza tu lectura biblica automaticamente.
+                Crea un plan personalizado que organiza tu lectura bíblica automáticamente.
                 Elige los libros, el tiempo disponible y el sistema dividira los capitulos por dia.
               </p>
             </div>
@@ -1259,11 +1259,11 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
   const dailyVerse = DAILY_VERSES[dayOfYear % DAILY_VERSES.length];
 
   const READING_CHALLENGES = [
-    { icon: "📖", title: "Lectura Diaria", desc: "Lee al menos un capitulo de la Biblia cada dia. La constancia es la clave.", tip: "Comienza con un libro corto como Filipenses o Santiago.", action: "bible" as const },
-    { icon: "✍️", title: "Diario Espiritual", desc: "Anota lo que Dios te habla cada dia a traves de su Palabra.", tip: "Usa la seccion de notas en la Biblia para guardar tus reflexiones.", action: "journal" as const },
-    { icon: "🙏", title: "Lectura + Oracion", desc: "Lee un pasaje y luego ora sobre lo que leiste.", tip: "Convierte los versiculos en oraciones personales.", action: "bible" as const },
+    { icon: "📖", title: "Lectura Diaria", desc: "Lee al menos un capitulo de la Biblia cada día. La constancia es la clave.", tip: "Comienza con un libro corto como Filipenses o Santiago.", action: "bible" as const },
+    { icon: "✍️", title: "Diario Espiritual", desc: "Anota lo que Dios te habla cada día a traves de su Palabra.", tip: "Usa la seccion de notas en la Biblia para guardar tus reflexiones.", action: "journal" as const },
+    { icon: "🙏", title: "Lectura + Oración", desc: "Lee un pasaje y luego ora sobre lo que leiste.", tip: "Convierte los versiculos en oraciones personales.", action: "bible" as const },
     { icon: "👥", title: "Comparte con Alguien", desc: "Lee junto a un amigo o familiar y compartan lo aprendido.", tip: "Unete al grupo de WhatsApp para compartir con la comunidad.", action: "whatsapp" as const },
-    { icon: "🎯", title: "Memoriza un Versiculo", desc: "Escoge un versiculo cada semana y memorizalo.", tip: "Escribirlo varias veces ayuda a memorizarlo mas rapido.", action: "bible" as const },
+    { icon: "🎯", title: "Memoriza un Versículo", desc: "Escoge un versículo cada semana y memorizalo.", tip: "Escribirlo varias veces ayuda a memorizarlo mas rapido.", action: "bible" as const },
     { icon: "📚", title: "Lee un Libro Completo", desc: "Propon te leer un libro completo de la Biblia este mes.", tip: "El Evangelio de Juan es excelente para comenzar.", action: "plan" as const },
   ];
   const todayChallenge = READING_CHALLENGES[dayOfYear % READING_CHALLENGES.length];
@@ -1309,9 +1309,9 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
                 <SiWhatsapp className="h-8 w-8 text-white" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="text-lg font-bold text-green-700 dark:text-green-300">Club de Lectura Biblica</h3>
+                <h3 className="text-lg font-bold text-green-700 dark:text-green-300">Club de Lectura Bíblica</h3>
                 <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                  Unete a nuestro grupo de WhatsApp donde compartimos lecturas diarias, reflexiones y nos animamos mutuamente en el estudio de la Palabra de Dios.
+                  Únete a nuestro grupo de WhatsApp donde compartimos lecturas diarias, reflexiones y nos animamos mutuamente en el estudio de la Palabra de Dios.
                 </p>
               </div>
               <Button
@@ -1331,7 +1331,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
             <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-3">
               <SiWhatsapp className="h-7 w-7 text-green-500" />
             </div>
-            <h3 className="font-semibold text-green-700 dark:text-green-300">Club de Lectura Biblica</h3>
+            <h3 className="font-semibold text-green-700 dark:text-green-300">Club de Lectura Bíblica</h3>
             <p className="text-sm text-muted-foreground mt-1">
               Pronto estara disponible el grupo de WhatsApp. ¡Estate pendiente!
             </p>
@@ -1347,7 +1347,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
               <BookOpen className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Versiculo del Dia</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Versículo del Día</p>
               <p className="text-base italic leading-relaxed font-medium">&ldquo;{dailyVerse.text}&rdquo;</p>
               <p className="text-sm text-primary font-medium mt-2">{dailyVerse.ref}</p>
             </div>
@@ -1369,7 +1369,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
           <Card className="mb-3 border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20">
             <CardContent className="p-3 text-center">
               <span className="text-2xl">🏆</span>
-              <p className="text-sm font-bold text-green-700 dark:text-green-300">¡Felicidades! Has completado todos los desafios del dia.</p>
+              <p className="text-sm font-bold text-green-700 dark:text-green-300">¡Felicidades! Has completado todos los desafios del día.</p>
             </CardContent>
           </Card>
         )}
@@ -1474,7 +1474,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
                 Aun no tienes notas. Ve a la pestaña <strong>Biblia</strong>, selecciona un versiculo y agrega una reflexion.
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Tus notas espirituales aparecerán aqui como un diario de fe.
+                Tus notas espirituales aparecerán aquí como un diario de fe.
               </p>
             </CardContent>
           </Card>
@@ -1485,7 +1485,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
       <div>
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <BookMarked className="w-5 h-5 text-primary" />
-          Ideas para tu Proximo Plan de Lectura
+          Ideas para tu Próximo Plan de Lectura
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {BIBLE_READING_PLANS_SUGGESTIONS.map((plan, idx) => {
@@ -1516,7 +1516,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
           })}
         </div>
         <p className="text-sm text-muted-foreground text-center mt-3">
-          Haz clic en cualquier idea para crear ese plan de lectura automaticamente.
+          Haz clic en cualquier idea para crear ese plan de lectura automáticamente.
         </p>
       </div>
 
@@ -1529,7 +1529,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
             <div className="text-center">
               <p className="text-2xl mb-1">🌱</p>
               <p className="text-sm font-medium">Crecimiento Espiritual</p>
-              <p className="text-xs text-muted-foreground">La Palabra de Dios transforma tu vida dia a dia.</p>
+              <p className="text-xs text-muted-foreground">La Palabra de Dios transforma tu vida día a día.</p>
             </div>
             <div className="text-center">
               <p className="text-2xl mb-1">💪</p>
@@ -1538,7 +1538,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
             </div>
             <div className="text-center">
               <p className="text-2xl mb-1">🧭</p>
-              <p className="text-sm font-medium">Direccion</p>
+              <p className="text-sm font-medium">Dirección</p>
               <p className="text-xs text-muted-foreground">La Biblia es lampara a tus pies y lumbrera a tu camino.</p>
             </div>
           </div>
@@ -1668,7 +1668,7 @@ function ResourcesTab() {
         <Card>
           <CardContent className="p-4 space-y-3">
             <Input
-              placeholder="Titulo del recurso"
+              placeholder="Título del recurso"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               data-testid="input-resource-title"
@@ -1881,11 +1881,11 @@ export default function BibliotecaPage() {
           <Library className="w-16 h-16 mx-auto text-primary mb-4" />
           <h1 className="text-3xl font-bold mb-2">Biblioteca</h1>
           <p className="text-muted-foreground mb-6">
-            Inicia sesion para acceder a la Biblia de estudio, planes de lectura, club de lectura y recursos compartidos.
+            Inicia sesión para acceder a la Biblia de estudio, planes de lectura, club de lectura y recursos compartidos.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/login">
-              <Button variant="outline" data-testid="link-login-biblioteca">Iniciar Sesion</Button>
+              <Button variant="outline" data-testid="link-login-biblioteca">Iniciar Sesión</Button>
             </Link>
             <Link href="/registro">
               <Button data-testid="link-register-biblioteca">Unirse</Button>
@@ -1903,7 +1903,7 @@ export default function BibliotecaPage() {
           <Library className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-3xl font-bold mb-2">Biblioteca</h1>
           <p className="text-muted-foreground">
-            Tu cuenta esta pendiente de aprobacion. Una vez aprobada, podras acceder a todos los recursos de la biblioteca.
+            Tu cuenta está pendiente de aprobación. Una vez aprobada, podras acceder a todos los recursos de la biblioteca.
           </p>
         </div>
       </Layout>

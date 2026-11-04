@@ -166,10 +166,10 @@ function ChurchManagementPanel() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Pais</Label>
+          <Label className="text-xs">País</Label>
           <Select value={formData.country} onValueChange={(v) => setFormData({ ...formData, country: v })}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccionar pais" />
+              <SelectValue placeholder="Seleccionar país" />
             </SelectTrigger>
             <SelectContent>
               {MINISTRY_COUNTRIES.map((c) => (
@@ -189,9 +189,9 @@ function ChurchManagementPanel() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Direccion</Label>
+          <Label className="text-xs">Dirección</Label>
           <Input
-            placeholder="Direccion"
+            placeholder="Dirección"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
           />
@@ -199,9 +199,9 @@ function ChurchManagementPanel() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">Telefono</Label>
+          <Label className="text-xs">Teléfono</Label>
           <Input
-            placeholder="Telefono"
+            placeholder="Teléfono"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
@@ -502,7 +502,7 @@ export default function IglesiasPage() {
       toast({ title: "Publicación creada" });
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo crear la publicacion.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo crear la publicación.", variant: "destructive" });
     },
   });
 
@@ -529,7 +529,7 @@ export default function IglesiasPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Error", description: "Solo se permiten imagenes.", variant: "destructive" });
+      toast({ title: "Error", description: "Solo se permiten imágenes.", variant: "destructive" });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -713,7 +713,7 @@ export default function IglesiasPage() {
                           {post.imageUrl && (
                             <img
                               src={post.imageUrl}
-                              alt="Imagen de publicacion"
+                              alt="Imagen de publicación"
                               className="mt-2 rounded-lg max-h-64 object-cover border"
                             />
                           )}

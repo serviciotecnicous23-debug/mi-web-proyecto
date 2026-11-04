@@ -13,6 +13,7 @@ import {
   PhoneOff, Loader2,
 } from "lucide-react";
 import { useLiveClassroom, useStartLiveClassroom, useStopLiveClassroom } from "@/hooks/use-users";
+import { toast } from "@/hooks/use-toast";
 
 interface LiveClassroomProps {
   courseId: number;
@@ -136,7 +137,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
         console.error("Error loading Jitsi:", err);
         setJitsiLoading(false);
         setJoined(false);
-        alert("Error al cargar Jitsi Meet. Por favor intente de nuevo.");
+        toast({ title: "No se pudo abrir la sala en vivo", description: "Revisa tu conexión e inténtalo de nuevo.", variant: "destructive" });
       });
 
     return () => {
@@ -271,7 +272,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
                 <Video className="w-16 h-16 text-primary mx-auto mb-4 opacity-70" />
                 <h3 className="text-lg font-semibold mb-2">La clase esta en curso</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Haz clic en el boton para unirte a la sala de video
+                  Haz clic en el botón para unirte a la sala de video
                 </p>
                 <Button size="lg" onClick={handleJoinClass} className="gap-2">
                   <Video className="w-5 h-5" />
@@ -340,7 +341,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="classTitle">Titulo de la Clase (opcional)</Label>
+                    <Label htmlFor="classTitle">Título de la Clase (opcional)</Label>
                     <Input
                       id="classTitle"
                       placeholder={`Clase en Vivo - ${courseTitle}`}
@@ -355,7 +356,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
                       <li>• Chat de texto integrado</li>
                       <li>• Compartir pantalla</li>
                       <li>• Levantar la mano</li>
-                      <li>• Sin limite de tiempo</li>
+                      <li>• Sin límite de tiempo</li>
                       <li>• 100% gratuito (Jitsi Meet)</li>
                     </ul>
                   </div>
@@ -395,7 +396,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
             No hay clase en vivo en este momento.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Recibiras una notificacion cuando el maestro inicie una clase.
+            Recibiras una notificación cuando el maestro inicie una clase.
           </p>
         </div>
       </CardContent>
