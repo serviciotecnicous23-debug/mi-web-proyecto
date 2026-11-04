@@ -1216,6 +1216,7 @@ function AnnouncementCard({
   courseId: number; canManage: boolean;
   onUpdate: (data: any) => void; onDelete: (data: any) => void;
 }) {
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(announcement.title);
   const [content, setContent] = useState(announcement.content);
@@ -1350,7 +1351,7 @@ function AnnouncementCard({
               {announcement.fileName || "Descargar adjunto"}
             </button>
           ) : (
-            <a href={announcement.fileUrl} target="_blank" rel="noopener noreferrer" className="underline text-sm">
+            <a href={announcement.fileUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="underline text-sm">
               {announcement.fileName || announcement.fileUrl}
             </a>
           )}

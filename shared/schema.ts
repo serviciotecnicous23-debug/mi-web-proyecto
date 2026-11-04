@@ -14,6 +14,11 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   emailVerifyToken: text("email_verify_token"),
   emailVerifyExpires: timestamp("email_verify_expires"),
+  // Preferencias de correo (Perfil → Notificaciones)
+  emailNotifyAccountApproved: boolean("email_notify_account_approved").notNull().default(true),
+  emailNotifyDirectMessage: boolean("email_notify_direct_message").notNull().default(true),
+  emailNotifyNewCourse: boolean("email_notify_new_course").notNull().default(true),
+  emailNotifyEventReminder: boolean("email_notify_event_reminder").notNull().default(true),
   cargo: text("cargo"),
   country: text("country"),
   phone: text("phone"),

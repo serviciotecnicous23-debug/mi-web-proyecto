@@ -555,6 +555,52 @@ export class DatabaseStorage implements IStorage {
     await db.delete(memberPosts).where(eq(memberPosts.id, id));
   }
 
+  // ========== COMENTARIOS EN PUBLICACIONES ==========
+
+  async createPostComment(userId: number, data: InsertPostComment): Promise<PostComment> {
+    const [created] = await db.insert(postComments).values({
+      postId: data.postId,
+      userId,
+      content: data.content,
+    }).returning();
+    return created;
+  }
+
+  async listPostComments(postId: number): Promise<(PostComment & { user: { id: number; username: string; displayName: string | null; avatarUrl: string | null } })[]> {
+    const rows = await db
+      .select({
+        id: postComments.id,
+        postId: postComments.postId,
+        userId: postComments.userId,
+        content: postComments.content,
+        createdAt: postComments.createdAt,
+        username: users.username,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(postComments)
+      .innerJoin(users, eq(postComments.userId, users.id))
+      .where(eq(postComments.postId, postId))
+      .orderBy(postComments.createdAt);
+    return rows.map((c) => ({
+      id: c.id,
+      postId: c.postId,
+      userId: c.userId,
+      content: c.content,
+      createdAt: c.createdAt,
+      user: { id: c.userId, username: c.username, displayName: c.displayName, avatarUrl: c.avatarUrl },
+    }));
+  }
+
+  async getPostComment(id: number): Promise<PostComment | undefined> {
+    const [comment] = await db.select().from(postComments).where(eq(postComments.id, id));
+    return comment;
+  }
+
+  async deletePostComment(id: number): Promise<void> {
+    await db.delete(postComments).where(eq(postComments.id, id));
+  }
+
   async createEvent(event: InsertEvent & { createdBy: number }): Promise<Event> {
     const [created] = await db.insert(events).values({
       title: event.title,
@@ -1842,13 +1888,23 @@ export class DatabaseStorage implements IStorage {
     return church;
   }
 
+  // allianceDate llega como texto desde el formulario/API, pero la columna es
+  // timestamp: Drizzle espera un Date (con texto falla en toISOString()).
   async createMinistryChurch(data: InsertMinistryChurch): Promise<MinistryChurch> {
-    const [created] = await db.insert(ministryChurches).values(data).returning();
+    const { allianceDate, ...rest } = data;
+    const [created] = await db.insert(ministryChurches).values({
+      ...rest,
+      allianceDate: allianceDate ? new Date(allianceDate) : null,
+    }).returning();
     return created;
   }
 
   async updateMinistryChurch(id: number, data: UpdateMinistryChurch): Promise<MinistryChurch | undefined> {
-    const [updated] = await db.update(ministryChurches).set(data).where(eq(ministryChurches.id, id)).returning();
+    const { allianceDate, ...rest } = data;
+    const [updated] = await db.update(ministryChurches).set({
+      ...rest,
+      ...(allianceDate !== undefined && { allianceDate: allianceDate ? new Date(allianceDate) : null }),
+    }).where(eq(ministryChurches.id, id)).returning();
     return updated;
   }
 

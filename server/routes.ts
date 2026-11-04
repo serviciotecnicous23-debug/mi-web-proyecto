@@ -795,7 +795,8 @@ ${urls}
           });
           console.log("✓ Administrador inicial creado en PostgreSQL");
         } else if (resetRequested) {
-          await storage.updateUser(existingDB.id, { password: hashedPassword, isActive: true });
+          await storage.updateUser(existingDB.id, { password: hashedPassword });
+          if (!existingDB.isActive) await storage.toggleUserActive(existingDB.id);
           console.log("✓ Contraseña del administrador restablecida desde ADMIN_PASSWORD (quita ADMIN_RESET cuando termines)");
         }
       } catch (dbErr) {

@@ -1,7 +1,10 @@
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
-const currentDir = typeof __dirname !== "undefined" ? __dirname : path.dirname(new URL(import.meta.url).pathname);
+// fileURLToPath y no `new URL(...).pathname`: en Windows este último da
+// "/C:/..." y la carpeta acaba como "C:\C:\...".
+const currentDir = typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(currentDir, "..", "data");
 const usersFile = path.join(dataDir, "users.json");
 
