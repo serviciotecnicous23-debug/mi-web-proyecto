@@ -814,6 +814,7 @@ ${urls}
       if (!user) return res.status(401).json({ message: info?.message || "Error al iniciar sesion" });
       req.logIn(user, (err) => {
         if (err) return next(err);
+        if (req.body?.remember === false) req.session.cookie.expires = null;
         const { password, ...safeUser } = user;
         res.json(safeUser);
       });
@@ -1421,7 +1422,14 @@ ${urls}
     if (!req.user!.isActive) return res.sendStatus(403);
     try {
       const input = api.posts.create.input.parse(req.body);
-      const post = await storage.createMemberPost(req.user!.id, input.content, input.imageUrl);
+      const content = (input.content ?? "").trim();
+      if (!content && !input.imageUrl) {
+        return res.status(400).json({ message: "Escribe algo o agrega una foto para publicar" });
+      }
+      if (content.length > 5000) {
+        return res.status(400).json({ message: "La publicación es demasiado larga (máximo 5000 caracteres)" });
+      }
+      const post = await storage.createMemberPost(req.user!.id, content, input.imageUrl);
       res.status(201).json(post);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -1748,9 +1756,24 @@ ${urls}
   });
 
   // ========== COURSE MATERIALS ==========
+  // Materiales, anuncios y enlaces de clase son para quien está dentro del curso:
+  // la administración, su maestro o un alumno con la inscripción aprobada.
+  async function canAccessCourseContent(req: Request, courseId: number): Promise<boolean> {
+    if (!req.isAuthenticated()) return false;
+    if (isAdmin(req)) return true;
+    const course = await storage.getCourse(courseId);
+    if (!course) return false;
+    if (course.teacherId === req.user!.id) return true;
+    const enrollment = await storage.getEnrollmentByUserAndCourse(req.user!.id, courseId);
+    return !!enrollment && (enrollment.status === "aprobado" || enrollment.status === "completado");
+  }
+
   app.get(api.courseMaterials.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
+    if (!(await canAccessCourseContent(req, courseId))) {
+      return res.status(403).json({ message: "Inscríbete en el curso para ver sus materiales" });
+    }
     const materials = await storage.listCourseMaterials(courseId);
     res.json(materials);
   });
@@ -2007,7 +2030,10 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
     const sessions = await storage.listCourseSessions(courseId);
-    res.json(sessions);
+    // La vista previa del curso enseña títulos y fechas; el enlace de la reunión
+    // solo a quien está dentro (evita que extraños entren a la clase).
+    if (await canAccessCourseContent(req, courseId)) return res.json(sessions);
+    res.json(sessions.map((s) => ({ ...s, meetingUrl: null })));
   });
 
   app.post(api.courseSessions.list.path, async (req, res) => {
@@ -2208,6 +2234,9 @@ ${urls}
   app.get(api.courseAnnouncements.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
+    if (!(await canAccessCourseContent(req, courseId))) {
+      return res.status(403).json({ message: "Inscríbete en el curso para ver sus anuncios" });
+    }
     const announcements = await storage.listCourseAnnouncements(courseId);
     res.json(announcements);
   });
@@ -2584,7 +2613,7 @@ ${urls}
 
   app.delete(api.bibleHighlights.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteBibleHighlight(parseInt(req.params.id));
+    await storage.deleteBibleHighlight(parseInt(req.params.id), req.user!.id);
     res.sendStatus(200);
   });
 
@@ -2617,7 +2646,7 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
       const input = api.bibleNotes.update.input.parse(req.body);
-      const note = await storage.updateBibleNote(parseInt(req.params.id), input.content);
+      const note = await storage.updateBibleNote(parseInt(req.params.id), req.user!.id, input.content);
       if (!note) return res.sendStatus(404);
       res.json(note);
     } catch (err) {
@@ -2628,7 +2657,7 @@ ${urls}
 
   app.delete(api.bibleNotes.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteBibleNote(parseInt(req.params.id));
+    await storage.deleteBibleNote(parseInt(req.params.id), req.user!.id);
     res.sendStatus(200);
   });
 
@@ -2677,6 +2706,8 @@ ${urls}
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
       const planId = parseInt(req.params.id);
+      const plan = await storage.getReadingPlan(planId);
+      if (!plan || plan.userId !== req.user!.id) return res.sendStatus(404);
       const input = api.readingPlans.addItem.input.parse({ ...req.body, planId });
       const item = await storage.addReadingPlanItem(input);
       res.status(201).json(item);
@@ -2711,8 +2742,17 @@ ${urls}
     }
   });
 
+  // ¿El ítem pertenece a un plan de este usuario?
+  async function ownsReadingPlanItem(itemId: number, userId: number): Promise<boolean> {
+    const item = await storage.getReadingPlanItem(itemId);
+    if (!item) return false;
+    const plan = await storage.getReadingPlan(item.planId);
+    return !!plan && plan.userId === userId;
+  }
+
   app.patch(api.readingPlans.toggleItem.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await ownsReadingPlanItem(parseInt(req.params.id), req.user!.id))) return res.sendStatus(404);
     const item = await storage.toggleReadingPlanItem(parseInt(req.params.id));
     if (!item) return res.sendStatus(404);
     res.json(item);
@@ -2720,6 +2760,7 @@ ${urls}
 
   app.delete(api.readingPlans.deleteItem.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await ownsReadingPlanItem(parseInt(req.params.id), req.user!.id))) return res.sendStatus(404);
     await storage.deleteReadingPlanItem(parseInt(req.params.id));
     res.sendStatus(200);
   });
@@ -2842,7 +2883,7 @@ ${urls}
 
   app.patch(api.notifications.markRead.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.markNotificationRead(parseInt(req.params.id));
+    await storage.markNotificationRead(parseInt(req.params.id), req.user!.id);
     res.json({ success: true });
   });
 
@@ -3170,7 +3211,8 @@ ${urls}
 
   app.post("/api/upload/post-image", uploadLimiter as RequestHandler, postImageUpload.single("image") as RequestHandler, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.file) return res.status(400).json({ message: "No se envio ninguna imagen" });
+    if (!req.user!.isActive) return res.sendStatus(403);
+    if (!req.file) return res.status(400).json({ message: "No se envió ninguna imagen" });
     try {
       // Optimize image then upload to storage
       const optimized = await optimizePostImage(req.file.path);
@@ -3202,7 +3244,15 @@ ${urls}
     try {
       const postId = parseInt(req.params.postId);
       const input = api.postComments.create.input.parse({ ...req.body, postId });
-      const comment = await storage.createPostComment(req.user!.id, input);
+      const content = input.content.trim();
+      if (!content) return res.status(400).json({ message: "El comentario no puede estar vacío" });
+      if (content.length > 2000) {
+        return res.status(400).json({ message: "El comentario es demasiado largo (máximo 2000 caracteres)" });
+      }
+      if (!(await storage.getMemberPost(postId))) {
+        return res.status(404).json({ message: "Esta publicación ya no existe" });
+      }
+      const comment = await storage.createPostComment(req.user!.id, { ...input, content });
       res.status(201).json(comment);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -3375,6 +3425,10 @@ ${urls}
   app.delete(api.churchPosts.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const id = parseInt(req.params.id);
+    const post = await storage.getChurchPost(id);
+    if (!post) return res.sendStatus(404);
+    const isChurchModerator = req.user!.role === "admin_iglesia" && req.user!.churchId === post.churchId;
+    if (post.userId !== req.user!.id && !isAdmin(req) && !isChurchModerator) return res.sendStatus(403);
     await storage.deleteChurchPost(id);
     res.json({ success: true });
   });
@@ -3399,6 +3453,9 @@ ${urls}
   app.delete(api.regionPosts.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const id = parseInt(req.params.id);
+    const post = await storage.getRegionPost(id);
+    if (!post) return res.sendStatus(404);
+    if (post.userId !== req.user!.id && !isAdmin(req)) return res.sendStatus(403);
     await storage.deleteRegionPost(id);
     res.json({ success: true });
   });
@@ -3619,8 +3676,21 @@ ${urls}
   app.post("/api/upload/signature", uploadLimiter as RequestHandler, signatureUpload.single("signature") as RequestHandler, async (req: Request, res: Response) => {
     if (!isAdmin(req)) return res.sendStatus(403);
     if (!req.file) return res.status(400).json({ message: "No se proporcionó archivo" });
-    const url = `/uploads/signatures/${req.file.filename}`;
-    res.json({ url });
+    try {
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const result = await uploadFile({
+        folder: "signatures",
+        filename: `firma-${Date.now()}${ext}`,
+        buffer: fs.readFileSync(req.file.path),
+        contentType: req.file.mimetype,
+      });
+      res.json({ url: result.url });
+    } catch (err) {
+      console.error("Signature upload error:", err);
+      res.status(500).json({ message: "Error al subir la firma" });
+    } finally {
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+    }
   });
 
   // ========== TITHES ==========
@@ -4020,7 +4090,7 @@ ${urls}
 
   app.delete(api.sermons.deleteNote.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    await storage.deleteSermonNote(parseInt(req.params.id));
+    await storage.deleteSermonNote(parseInt(req.params.id), req.user!.id);
     res.json({ success: true });
   });
 
@@ -4101,14 +4171,26 @@ ${urls}
     }
   });
 
+  async function isSmallGroupMember(req: Request, groupId: number): Promise<boolean> {
+    if (isAdmin(req)) return true;
+    const members = await storage.listSmallGroupMembers(groupId);
+    return members.some((m) => m.userId === req.user!.id);
+  }
+
   app.get(api.smallGroups.messages.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await isSmallGroupMember(req, parseInt(req.params.id)))) {
+      return res.status(403).json({ message: "Únete al grupo para ver sus mensajes" });
+    }
     const msgs = await storage.listSmallGroupMessages(parseInt(req.params.id));
     res.json(msgs);
   });
 
   app.post(api.smallGroups.sendMessage.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!(await isSmallGroupMember(req, parseInt(req.params.id)))) {
+      return res.status(403).json({ message: "Únete al grupo para escribir en él" });
+    }
     try {
       const input = api.smallGroups.sendMessage.input.parse({ ...req.body, groupId: parseInt(req.params.id) });
       const msg = await storage.sendSmallGroupMessage(req.user!.id, input);

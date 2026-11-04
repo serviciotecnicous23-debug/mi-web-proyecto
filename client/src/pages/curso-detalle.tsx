@@ -27,7 +27,6 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
   const courseId = parseInt(params.id);
   const { user } = useAuth();
   const { data: course, isLoading } = useCourse(courseId);
-  const { data: materials } = useCourseMaterials(courseId);
   const { data: sessions } = useCourseSessions(courseId);
   const { data: myEnrollments } = useMyEnrollments();
   const createEnrollment = useCreateEnrollment();
@@ -41,6 +40,8 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
   const isObrero = user?.role === "obrero" || user?.role === "admin";
   const isTeacher = course?.teacherId === user?.id;
   const isEnrolled = myEnrollment && (myEnrollment.status === "aprobado" || myEnrollment.status === "completado");
+  const isAdminUser = user?.role === "admin" || user?.role === "director" || user?.role === "staff_global";
+  const { data: materials } = useCourseMaterials(courseId, !!(isEnrolled || isTeacher || isAdminUser));
 
   if (isLoading) {
     return (

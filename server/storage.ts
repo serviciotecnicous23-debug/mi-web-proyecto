@@ -158,12 +158,12 @@ export interface IStorage {
   // Biblioteca
   createBibleHighlight(userId: number, data: InsertBibleHighlight): Promise<BibleHighlight>;
   listBibleHighlights(userId: number, book?: string, chapter?: number): Promise<BibleHighlight[]>;
-  deleteBibleHighlight(id: number): Promise<void>;
+  deleteBibleHighlight(id: number, userId: number): Promise<void>;
 
   createBibleNote(userId: number, data: InsertBibleNote): Promise<BibleNote>;
   listBibleNotes(userId: number, book?: string, chapter?: number): Promise<BibleNote[]>;
-  updateBibleNote(id: number, content: string): Promise<BibleNote | undefined>;
-  deleteBibleNote(id: number): Promise<void>;
+  updateBibleNote(id: number, userId: number, content: string): Promise<BibleNote | undefined>;
+  deleteBibleNote(id: number, userId: number): Promise<void>;
 
   createReadingPlan(userId: number, data: InsertReadingPlan): Promise<ReadingPlan>;
   getReadingPlan(id: number): Promise<ReadingPlan | undefined>;
@@ -173,6 +173,7 @@ export interface IStorage {
   addReadingPlanItem(data: InsertReadingPlanItem): Promise<ReadingPlanItem>;
   bulkAddReadingPlanItems(items: InsertReadingPlanItem[]): Promise<ReadingPlanItem[]>;
   listReadingPlanItems(planId: number): Promise<ReadingPlanItem[]>;
+  getReadingPlanItem(id: number): Promise<ReadingPlanItem | undefined>;
   toggleReadingPlanItem(id: number): Promise<ReadingPlanItem | undefined>;
   deleteReadingPlanItem(id: number): Promise<void>;
 
@@ -190,7 +191,7 @@ export interface IStorage {
   createNotification(data: InsertNotification): Promise<Notification>;
   createNotificationForAll(data: Omit<InsertNotification, "userId">): Promise<void>;
   listNotifications(userId: number): Promise<Notification[]>;
-  markNotificationRead(id: number): Promise<void>;
+  markNotificationRead(id: number, userId: number): Promise<void>;
   markAllNotificationsRead(userId: number): Promise<void>;
   getUnreadNotificationCount(userId: number): Promise<number>;
 
@@ -209,6 +210,7 @@ export interface IStorage {
 
   createRegionPost(userId: number, data: InsertRegionPost): Promise<RegionPost>;
   listRegionPosts(region?: string): Promise<(RegionPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; country: string | null } })[]>;
+  getRegionPost(id: number): Promise<RegionPost | undefined>;
   deleteRegionPost(id: number): Promise<void>;
 
   listMinistryRegions(): Promise<MinistryRegion[]>;
@@ -226,6 +228,7 @@ export interface IStorage {
   // Church Posts
   createChurchPost(userId: number, data: InsertChurchPost): Promise<ChurchPost>;
   listChurchPosts(churchId?: number): Promise<(ChurchPost & { user: { username: string; displayName: string | null; avatarUrl: string | null }; church: { name: string; churchType: string } })[]>;
+  getChurchPost(id: number): Promise<ChurchPost | undefined>;
   deleteChurchPost(id: number): Promise<void>;
 
   listTeamMembers(): Promise<TeamMember[]>;
@@ -343,7 +346,7 @@ export interface IStorage {
   deleteSermon(id: number): Promise<void>;
   createSermonNote(userId: number, data: InsertSermonNote): Promise<SermonNote>;
   listSermonNotes(sermonId: number, userId: number): Promise<SermonNote[]>;
-  deleteSermonNote(id: number): Promise<void>;
+  deleteSermonNote(id: number, userId: number): Promise<void>;
 
   // Small Groups
   createSmallGroup(data: InsertSmallGroup): Promise<SmallGroup>;
@@ -1437,8 +1440,8 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(bibleHighlights).where(and(...conditions)).orderBy(bibleHighlights.verseStart);
   }
 
-  async deleteBibleHighlight(id: number): Promise<void> {
-    await db.delete(bibleHighlights).where(eq(bibleHighlights.id, id));
+  async deleteBibleHighlight(id: number, userId: number): Promise<void> {
+    await db.delete(bibleHighlights).where(and(eq(bibleHighlights.id, id), eq(bibleHighlights.userId, userId)));
   }
 
   async createBibleNote(userId: number, data: InsertBibleNote): Promise<BibleNote> {
@@ -1453,13 +1456,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(bibleNotes).where(and(...conditions)).orderBy(bibleNotes.verse);
   }
 
-  async updateBibleNote(id: number, content: string): Promise<BibleNote | undefined> {
-    const [updated] = await db.update(bibleNotes).set({ content }).where(eq(bibleNotes.id, id)).returning();
+  async updateBibleNote(id: number, userId: number, content: string): Promise<BibleNote | undefined> {
+    const [updated] = await db.update(bibleNotes).set({ content })
+      .where(and(eq(bibleNotes.id, id), eq(bibleNotes.userId, userId))).returning();
     return updated;
   }
 
-  async deleteBibleNote(id: number): Promise<void> {
-    await db.delete(bibleNotes).where(eq(bibleNotes.id, id));
+  async deleteBibleNote(id: number, userId: number): Promise<void> {
+    await db.delete(bibleNotes).where(and(eq(bibleNotes.id, id), eq(bibleNotes.userId, userId)));
   }
 
   async createReadingPlan(userId: number, data: InsertReadingPlan): Promise<ReadingPlan> {
@@ -1512,6 +1516,11 @@ export class DatabaseStorage implements IStorage {
 
   async listReadingPlanItems(planId: number): Promise<ReadingPlanItem[]> {
     return await db.select().from(readingPlanItems).where(eq(readingPlanItems.planId, planId)).orderBy(readingPlanItems.sortOrder);
+  }
+
+  async getReadingPlanItem(id: number): Promise<ReadingPlanItem | undefined> {
+    const [item] = await db.select().from(readingPlanItems).where(eq(readingPlanItems.id, id));
+    return item;
   }
 
   async toggleReadingPlanItem(id: number): Promise<ReadingPlanItem | undefined> {
@@ -1683,8 +1692,9 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(50);
   }
 
-  async markNotificationRead(id: number): Promise<void> {
-    await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+  async markNotificationRead(id: number, userId: number): Promise<void> {
+    await db.update(notifications).set({ isRead: true })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
   }
 
   async markAllNotificationsRead(userId: number): Promise<void> {
@@ -1838,6 +1848,11 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getRegionPost(id: number): Promise<RegionPost | undefined> {
+    const [post] = await db.select().from(regionPosts).where(eq(regionPosts.id, id));
+    return post;
+  }
+
   async deleteRegionPost(id: number): Promise<void> {
     // Delete cascading: votes -> options -> polls, reactions, then the post
     const polls = await db.select({ id: regionPostPolls.id }).from(regionPostPolls).where(eq(regionPostPolls.postId, id));
@@ -1946,6 +1961,11 @@ export class DatabaseStorage implements IStorage {
       user: { username: r.username!, displayName: r.displayName, avatarUrl: r.avatarUrl },
       church: { name: r.churchName!, churchType: r.churchType! },
     }));
+  }
+
+  async getChurchPost(id: number): Promise<ChurchPost | undefined> {
+    const [post] = await db.select().from(churchPosts).where(eq(churchPosts.id, id));
+    return post;
   }
 
   async deleteChurchPost(id: number): Promise<void> {
@@ -2315,8 +2335,8 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(sermonNotes).where(and(eq(sermonNotes.sermonId, sermonId), eq(sermonNotes.userId, userId))).orderBy(desc(sermonNotes.createdAt));
   }
 
-  async deleteSermonNote(id: number): Promise<void> {
-    await db.delete(sermonNotes).where(eq(sermonNotes.id, id));
+  async deleteSermonNote(id: number, userId: number): Promise<void> {
+    await db.delete(sermonNotes).where(and(eq(sermonNotes.id, id), eq(sermonNotes.userId, userId)));
   }
 
   // ========== SMALL GROUPS ==========

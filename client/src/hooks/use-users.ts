@@ -583,7 +583,8 @@ export function useDeleteCourse() {
 }
 
 // ========== COURSE MATERIALS ==========
-export function useCourseMaterials(courseId: number) {
+// enabled=false para quien no puede verlos (el servidor responde 403 si no está inscrito).
+export function useCourseMaterials(courseId: number, enabled = true) {
   return useQuery({
     queryKey: [api.courseMaterials.list.path, courseId],
     queryFn: async () => {
@@ -592,7 +593,7 @@ export function useCourseMaterials(courseId: number) {
       if (!res.ok) throw new Error("Error al obtener materiales");
       return res.json();
     },
-    enabled: !!courseId,
+    enabled: !!courseId && enabled,
   });
 }
 
