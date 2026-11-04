@@ -682,7 +682,7 @@ ${urls}
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         sameSite: "lax",
       },
-    }) as session.SessionOptions,
+    }) as RequestHandler,
   );
 
   app.use(passport.initialize() as RequestHandler);

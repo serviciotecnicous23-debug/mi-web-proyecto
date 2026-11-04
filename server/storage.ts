@@ -937,6 +937,11 @@ export class DatabaseStorage implements IStorage {
         enrollmentStatus: courses.enrollmentStatus,
         enrollmentOpenDate: courses.enrollmentOpenDate,
         enrollmentCloseDate: courses.enrollmentCloseDate,
+        courseChurchId: courses.churchId,
+        courseType: courses.courseType,
+        coursePrerequisiteCourseId: courses.prerequisiteCourseId,
+        courseIsPublic: courses.isPublic,
+        courseLevel: courses.level,
       })
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
@@ -966,6 +971,11 @@ export class DatabaseStorage implements IStorage {
         enrollmentStatus: r.enrollmentStatus,
         enrollmentOpenDate: r.enrollmentOpenDate,
         enrollmentCloseDate: r.enrollmentCloseDate,
+        churchId: r.courseChurchId,
+        courseType: r.courseType,
+        prerequisiteCourseId: r.coursePrerequisiteCourseId,
+        isPublic: r.courseIsPublic,
+        level: r.courseLevel,
       },
     }));
   }
@@ -2228,6 +2238,10 @@ export class DatabaseStorage implements IStorage {
       customMessage: certificates.customMessage,
       signatureUrl: certificates.signatureUrl,
       issuedDateOverride: certificates.issuedDateOverride,
+      churchId: certificates.churchId,
+      churchLogoUrl: certificates.churchLogoUrl,
+      churchName: certificates.churchName,
+      isCoCertified: certificates.isCoCertified,
       courseTitle: courses.title,
     }).from(certificates).leftJoin(courses, eq(certificates.courseId, courses.id)).where(eq(certificates.userId, userId)).orderBy(desc(certificates.issuedAt));
     return rows.map(r => ({
@@ -2235,6 +2249,7 @@ export class DatabaseStorage implements IStorage {
       certificateCode: r.certificateCode, issuedAt: r.issuedAt, teacherName: r.teacherName, grade: r.grade,
       studentNameOverride: r.studentNameOverride, courseNameOverride: r.courseNameOverride,
       customMessage: r.customMessage, signatureUrl: r.signatureUrl, issuedDateOverride: r.issuedDateOverride,
+      churchId: r.churchId, churchLogoUrl: r.churchLogoUrl, churchName: r.churchName, isCoCertified: r.isCoCertified,
       course: { title: r.courseTitle || "Curso eliminado" },
     }));
   }

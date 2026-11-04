@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import type { User } from "@shared/schema";
 
 // fileURLToPath y no `new URL(...).pathname`: en Windows este último da
 // "/C:/..." y la carpeta acaba como "C:\C:\...".
@@ -18,15 +19,46 @@ interface StoredUser {
   username: string;
   password: string;
   role: string;
-  displayName?: string;
-  bio?: string;
-  avatarUrl?: string;
+  displayName?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
   isActive: boolean;
-  cargo?: string;
-  country?: string;
-  phone?: string;
-  email?: string;
+  cargo?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  email?: string | null;
   createdAt: string;
+}
+
+// El respaldo solo guarda algunos campos, pero el resto de la app trabaja con
+// `User`: se completa con los mismos valores por defecto que tiene la tabla.
+function toUser(u: StoredUser): User {
+  return {
+    displayName: null,
+    bio: null,
+    avatarUrl: null,
+    emailVerified: false,
+    emailVerifyToken: null,
+    emailVerifyExpires: null,
+    emailNotifyAccountApproved: true,
+    emailNotifyDirectMessage: true,
+    emailNotifyNewCourse: true,
+    emailNotifyEventReminder: true,
+    cargo: null,
+    country: null,
+    phone: null,
+    email: null,
+    facebook: null,
+    instagram: null,
+    youtube: null,
+    tiktok: null,
+    twitter: null,
+    website: null,
+    churchId: null,
+    memberType: "independiente",
+    ...u,
+    createdAt: new Date(u.createdAt),
+  };
 }
 
 let users: StoredUser[] = [];
@@ -59,19 +91,21 @@ function saveUsers() {
 loadUsers();
 
 export const memoryStorage = {
-  getUser: async (id: number): Promise<StoredUser | null> => {
-    return users.find(u => u.id === id) || null;
+  getUser: async (id: number): Promise<User | null> => {
+    const user = users.find(u => u.id === id);
+    return user ? toUser(user) : null;
   },
 
-  getUserByUsername: async (username: string): Promise<StoredUser | null> => {
-    return users.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
+  getUserByUsername: async (username: string): Promise<User | null> => {
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    return user ? toUser(user) : null;
   },
 
   listUsers: async (): Promise<StoredUser[]> => {
     return users;
   },
 
-  createUser: async (data: Omit<StoredUser, "id" | "createdAt">): Promise<StoredUser> => {
+  createUser: async (data: Omit<StoredUser, "id" | "createdAt">): Promise<User> => {
     const user: StoredUser = {
       ...data,
       id: nextId++,
@@ -79,7 +113,7 @@ export const memoryStorage = {
     };
     users.push(user);
     saveUsers();
-    return user;
+    return toUser(user);
   },
 
   updateUser: async (id: number, data: Partial<StoredUser>): Promise<StoredUser | null> => {
