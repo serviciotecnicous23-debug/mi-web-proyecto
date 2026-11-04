@@ -88,13 +88,13 @@ export function RadioLibraryAdmin() {
             Biblioteca de Radio
           </CardTitle>
           <CardDescription>
-            Sube musica, predicas, palabras, devocionales, testimonios y jingles. La pagina publica de radio reproduce esta biblioteca cuando no configuras una URL externa.
+            Sube música, prédicas, palabras, devocionales, testimonios y jingles. La página publica de radio reproduce esta biblioteca cuando no configuras una URL externa.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-4 md:grid-cols-[minmax(220px,320px)_1fr] md:items-end">
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label>Categoría</Label>
               <Select value={category} onValueChange={(value) => setCategory(value as RadioCategoryId)}>
                 <SelectTrigger data-testid="select-radio-upload-category">
                   <SelectValue />
@@ -140,7 +140,7 @@ export function RadioLibraryAdmin() {
               <p className="mt-1 text-2xl font-bold">{data?.trackCount || 0}</p>
             </div>
             <div className="rounded-lg border bg-background p-4">
-              <p className="text-sm text-muted-foreground">Categoria activa</p>
+              <p className="text-sm text-muted-foreground">Categoría activa</p>
               <p className="mt-1 font-semibold">{currentCategory?.name || "Adoracion"}</p>
             </div>
             <div className="rounded-lg border bg-background p-4">
@@ -171,7 +171,7 @@ export function RadioLibraryAdmin() {
             <CardContent>
               {!tracks.length ? (
                 <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                  Todavia no hay audios en esta carpeta.
+                  Todavía no hay audios en esta carpeta.
                 </div>
               ) : (
                 <div className="space-y-2">

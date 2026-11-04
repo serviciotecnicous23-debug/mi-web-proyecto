@@ -54,7 +54,7 @@ const MEMBER_NAV_ITEMS = [
   { label: "Biblioteca", href: "/biblioteca", icon: Library, category: "Formacion" },
   { label: "Sermones", href: "/sermones", icon: FileText, category: "Formacion" },
   { label: "Comunidad", href: "/comunidad", icon: MessageSquare, category: "Comunidad" },
-  { label: "Oracion", href: "/oracion", icon: Heart, category: "Comunidad" },
+  { label: "Oración", href: "/oracion", icon: Heart, category: "Comunidad" },
   { label: "Grupos", href: "/grupos", icon: Users, category: "Comunidad" },
   { label: "Mensajes", href: "/mensajes", icon: MessageSquare, category: "Comunidad" },
 ];
@@ -72,7 +72,7 @@ const TYPE_META: Record<string, { label: string; icon: typeof GraduationCap; col
   event: { label: "Evento", icon: Calendar, color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
   library: { label: "Biblioteca", icon: Library, color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" },
   sermon: { label: "Sermon", icon: FileText, color: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" },
-  post: { label: "Publicacion", icon: MessageSquare, color: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300" },
+  post: { label: "Publicación", icon: MessageSquare, color: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300" },
 };
 
 export function GlobalSearch() {
@@ -160,7 +160,7 @@ export function GlobalSearch() {
         size="sm"
         className="hidden md:flex items-center gap-2 text-muted-foreground h-9 px-3 w-[200px] lg:w-[260px] justify-start"
         onClick={() => setOpen(true)}
-        aria-label="Busqueda global"
+        aria-label="Búsqueda global"
       >
         <Search className="h-4 w-4" />
         <span className="text-sm">Buscar...</span>
@@ -175,7 +175,7 @@ export function GlobalSearch() {
         size="icon"
         className="md:hidden"
         onClick={() => setOpen(true)}
-        aria-label="Busqueda global"
+        aria-label="Búsqueda global"
       >
         <Search className="h-5 w-5" />
       </Button>

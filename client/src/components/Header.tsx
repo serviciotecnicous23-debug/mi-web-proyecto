@@ -35,7 +35,7 @@ const navLinks = [
   { href: '/capacitaciones', label: 'Capacitaciones' },
   { href: '/biblioteca', label: 'Biblioteca' },
   { href: '/sermones', label: 'Sermones' },
-  { href: '/oracion', label: 'Oracion' },
+  { href: '/oracion', label: 'Oración' },
   { href: '/grupos', label: 'Grupos' },
   { href: '/calendario', label: 'Calendario' },
   { href: '/regiones', label: 'Regiones' },
@@ -75,7 +75,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           <Link href="/login">
             <Button variant="ghost" size="sm">
-              Iniciar Sesion
+              Iniciar Sesión
             </Button>
           </Link>
           <Link href="/registro">
@@ -108,7 +108,7 @@ export function Navbar() {
           <div className="border-t my-2" />
           <Link href="/login" onClick={() => setMenuOpen(false)}>
             <Button variant="ghost" className="w-full justify-start" size="sm">
-              Iniciar Sesion
+              Iniciar Sesión
             </Button>
           </Link>
           <Link href="/registro" onClick={() => setMenuOpen(false)}>

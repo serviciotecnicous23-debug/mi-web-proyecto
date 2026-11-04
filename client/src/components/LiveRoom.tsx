@@ -304,7 +304,7 @@ export default function LiveRoom({
                 <Video className="w-16 h-16 text-primary mx-auto mb-4 opacity-70" />
                 <h3 className="text-lg font-semibold mb-2">La sala esta en curso</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Haz clic en el boton para unirte a la sala de video
+                  Haz clic en el botón para unirte a la sala de video
                 </p>
                 <Button size="lg" onClick={handleJoin} className="gap-2">
                   <Video className="w-5 h-5" />
@@ -372,7 +372,7 @@ export default function LiveRoom({
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="roomTitle">Titulo de la Sala (opcional)</Label>
+                    <Label htmlFor="roomTitle">Título de la Sala (opcional)</Label>
                     <Input
                       id="roomTitle"
                       placeholder={roomTitle}
@@ -387,7 +387,7 @@ export default function LiveRoom({
                       <li>• Chat de texto integrado</li>
                       <li>• Compartir pantalla</li>
                       <li>• Levantar la mano</li>
-                      <li>• Sin limite de tiempo</li>
+                      <li>• Sin límite de tiempo</li>
                       <li>• 100% gratuito (Jitsi Meet)</li>
                     </ul>
                   </div>
@@ -427,7 +427,7 @@ export default function LiveRoom({
             No hay sala en vivo en este momento.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Recibiras una notificacion cuando se inicie una sala.
+            Recibiras una notificación cuando se inicie una sala.
           </p>
         </div>
       </CardContent>

@@ -129,7 +129,7 @@ export default function Comunidad() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Error", description: "Solo se permiten imagenes.", variant: "destructive" });
+      toast({ title: "Error", description: "Solo se permiten imágenes.", variant: "destructive" });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -243,9 +243,9 @@ export default function Comunidad() {
             </form>
             ) : (
               <div className="text-center py-4">
-                <p className="text-muted-foreground mb-3">Inicia sesion para publicar mensajes y comentarios.</p>
+                <p className="text-muted-foreground mb-3">Inicia sesión para publicar mensajes y comentarios.</p>
                 <div className="flex justify-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setLocation("/login")}>Iniciar Sesion</Button>
+                  <Button variant="outline" size="sm" onClick={() => setLocation("/login")}>Iniciar Sesión</Button>
                   <Button size="sm" onClick={() => setLocation("/registro")}>Registrarse</Button>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export default function Comunidad() {
                       </p>
                       {post.imageUrl && (
                         <div className="mt-2">
-                          <img src={post.imageUrl} alt="Imagen de publicacion" className="max-h-96 rounded-lg object-cover" />
+                          <img src={post.imageUrl} alt="Imagen de publicación" className="max-h-96 rounded-lg object-cover" />
                         </div>
                       )}
                       <div className="flex items-center gap-3 mt-2">
@@ -314,7 +314,7 @@ export default function Comunidad() {
                       )}
                       {expandedComments.has(post.id) && !user && (
                         <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs text-muted-foreground text-center py-2">Inicia sesion para ver y escribir comentarios.</p>
+                          <p className="text-xs text-muted-foreground text-center py-2">Inicia sesión para ver y escribir comentarios.</p>
                         </div>
                       )}
                     </div>
