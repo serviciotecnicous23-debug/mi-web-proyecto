@@ -52,12 +52,12 @@ export default function OracionPage() {
     queryKey: ["/api/prayer-activities"],
   });
 
-  const form = useForm<z.infer<typeof createPrayerSchema>>({
+  const form = useForm<z.input<typeof createPrayerSchema>, unknown, z.output<typeof createPrayerSchema>>({
     resolver: zodResolver(createPrayerSchema),
     defaultValues: { title: "", description: "", meetingUrl: "", meetingPlatform: "zoom", scheduledDate: "" },
   });
 
-  const editForm = useForm<z.infer<typeof createPrayerSchema>>({
+  const editForm = useForm<z.input<typeof createPrayerSchema>, unknown, z.output<typeof createPrayerSchema>>({
     resolver: zodResolver(createPrayerSchema),
     defaultValues: { title: "", description: "", meetingUrl: "", meetingPlatform: "zoom", scheduledDate: "" },
   });

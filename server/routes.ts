@@ -894,7 +894,7 @@ ${urls}
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: err.issues[0].message });
       }
       console.error("Registration error:", err);
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1392,7 +1392,7 @@ ${urls}
       const user = await storage.updateUser(id, updates);
       res.json(user);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1404,7 +1404,7 @@ ${urls}
       await storage.createMessage(input);
       res.json({ success: true });
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1424,7 +1424,7 @@ ${urls}
       const post = await storage.createMemberPost(req.user!.id, input.content, input.imageUrl);
       res.status(201).json(post);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1488,7 +1488,7 @@ ${urls}
       res.status(201).json(event);
     } catch (err: any) {
       console.error("Error creating event:", err);
-      if (err instanceof z.ZodError) return res.status(400).json({ message: "Datos invalidos: " + err.errors.map((e: any) => e.message).join(", ") });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Datos invalidos: " + err.issues.map((e: any) => e.message).join(", ") });
       res.status(500).json({ message: err?.message || "Error interno al crear el evento. Intenta de nuevo." });
     }
   });
@@ -1507,7 +1507,7 @@ ${urls}
       res.json(updated);
     } catch (err: any) {
       console.error("Error updating event:", err);
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors.map((e: any) => e.message).join(", ") });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues.map((e: any) => e.message).join(", ") });
       res.status(500).json({ message: err?.message || "Error al actualizar evento" });
     }
   });
@@ -1588,7 +1588,7 @@ ${urls}
       res.json(rsvp);
     } catch (err) {
       console.error("Error in RSVP upsert:", err);
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error interno al confirmar asistencia" });
     }
   });
@@ -1623,7 +1623,7 @@ ${urls}
       const content = await storage.upsertSiteContent(req.params.key, input, req.user!.id);
       res.json(content);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1719,7 +1719,7 @@ ${urls}
       
       res.status(201).json(course);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1736,7 +1736,7 @@ ${urls}
       const updated = await storage.updateCourse(id, input);
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1768,7 +1768,7 @@ ${urls}
       const material = await storage.createCourseMaterial(input);
       res.status(201).json(material);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -1781,7 +1781,7 @@ ${urls}
       if (!material) return res.sendStatus(404);
       res.json(material);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2023,7 +2023,7 @@ ${urls}
       const s = await storage.createCourseSession(input);
       res.status(201).json(s);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2036,7 +2036,7 @@ ${urls}
       if (!s) return res.sendStatus(404);
       res.json(s);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2087,7 +2087,7 @@ ${urls}
       const enrollment = await storage.createEnrollment(req.user!.id, input.courseId);
       res.status(201).json(enrollment);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2125,7 +2125,7 @@ ${urls}
 
       res.json({ ...enrollment, certificate: generatedCert });
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2176,7 +2176,7 @@ ${urls}
       const request = await storage.createTeacherRequest(req.user!.id, input.courseId, input.message);
       res.status(201).json(request);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2193,7 +2193,7 @@ ${urls}
       }
       res.json(request);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2225,7 +2225,7 @@ ${urls}
       const announcement = await storage.createCourseAnnouncement({ ...input, authorId: req.user!.id });
       res.status(201).json(announcement);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2238,7 +2238,7 @@ ${urls}
       if (!announcement) return res.sendStatus(404);
       res.json(announcement);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2269,7 +2269,7 @@ ${urls}
       const entry = await storage.createCourseScheduleEntry(input);
       res.status(201).json(entry);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2282,7 +2282,7 @@ ${urls}
       if (!entry) return res.sendStatus(404);
       res.json(entry);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2308,7 +2308,7 @@ ${urls}
       const attendance = await storage.upsertSessionAttendance(input);
       res.json(attendance);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2577,7 +2577,7 @@ ${urls}
       const highlight = await storage.createBibleHighlight(req.user!.id, input);
       res.status(201).json(highlight);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2608,7 +2608,7 @@ ${urls}
       const note = await storage.createBibleNote(req.user!.id, input);
       res.status(201).json(note);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2621,7 +2621,7 @@ ${urls}
       if (!note) return res.sendStatus(404);
       res.json(note);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2659,7 +2659,7 @@ ${urls}
       const plan = await storage.createReadingPlan(req.user!.id, input);
       res.status(201).json(plan);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2681,7 +2681,7 @@ ${urls}
       const item = await storage.addReadingPlanItem(input);
       res.status(201).json(item);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2739,7 +2739,7 @@ ${urls}
       const post = await storage.createReadingClubPost(req.user!.id, input);
       res.status(201).json(post);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2779,7 +2779,7 @@ ${urls}
       const comment = await storage.createReadingClubComment(req.user!.id, input);
       res.status(201).json(comment);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2809,7 +2809,7 @@ ${urls}
       const resource = await storage.createLibraryResource(req.user!.id, input);
       res.status(201).json(resource);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -2880,7 +2880,7 @@ ${urls}
       res.status(201).json(activity);
     } catch (err: any) {
       console.error("Error creating prayer activity:", err);
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: err?.message || "Error interno al crear la actividad" });
     }
   });
@@ -2902,7 +2902,7 @@ ${urls}
       res.json(updated);
     } catch (err: any) {
       console.error("Error updating prayer activity:", err);
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: err?.message || "Error interno al editar la actividad" });
     }
   });
@@ -2980,7 +2980,7 @@ ${urls}
 
       res.json(attendance);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -3006,7 +3006,7 @@ ${urls}
       const region = await storage.createMinistryRegion(input);
       res.status(201).json(region);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al crear la region" });
     }
   });
@@ -3020,7 +3020,7 @@ ${urls}
       if (!updated) return res.status(404).json({ message: "Region no encontrada" });
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al actualizar la region" });
     }
   });
@@ -3046,7 +3046,7 @@ ${urls}
       const member = await storage.createTeamMember(input);
       res.status(201).json(member);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al crear el miembro" });
     }
   });
@@ -3060,7 +3060,7 @@ ${urls}
       if (!updated) return res.status(404).json({ message: "Miembro no encontrado" });
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al actualizar el miembro" });
     }
   });
@@ -3205,7 +3205,7 @@ ${urls}
       const comment = await storage.createPostComment(req.user!.id, input);
       res.status(201).json(comment);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -3292,7 +3292,7 @@ ${urls}
       
       res.status(201).json(msg);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -3325,7 +3325,7 @@ ${urls}
       const church = await storage.createMinistryChurch(input);
       res.status(201).json(church);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al crear la iglesia" });
     }
   });
@@ -3339,7 +3339,7 @@ ${urls}
       if (!updated) return res.status(404).json({ message: "Iglesia no encontrada" });
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al actualizar la iglesia" });
     }
   });
@@ -3367,7 +3367,7 @@ ${urls}
       const post = await storage.createChurchPost(req.user!.id, input);
       res.status(201).json(post);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.status(500).json({ message: "Error al crear la publicacion" });
     }
   });
@@ -3642,7 +3642,7 @@ ${urls}
       const tithe = await storage.createTithe({ ...input, recordedBy: req.user!.id });
       res.status(201).json(tithe);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -3676,7 +3676,7 @@ ${urls}
       });
       res.status(201).json({ success: true, id: tithe.id });
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       console.error("Public donation error:", err);
       res.sendStatus(500);
     }
@@ -3976,7 +3976,7 @@ ${urls}
       const sermon = await storage.createSermon({ ...input, createdBy: req.user!.id });
       res.status(201).json(sermon);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -3989,7 +3989,7 @@ ${urls}
       if (!updated) return res.sendStatus(404);
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4013,7 +4013,7 @@ ${urls}
       const note = await storage.createSermonNote(req.user!.id, input);
       res.status(201).json(note);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4043,7 +4043,7 @@ ${urls}
       const group = await storage.createSmallGroup(input);
       res.status(201).json(group);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4056,7 +4056,7 @@ ${urls}
       if (!updated) return res.sendStatus(404);
       res.json(updated);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4096,7 +4096,7 @@ ${urls}
       const meeting = await storage.createSmallGroupMeeting(input);
       res.status(201).json(meeting);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4114,7 +4114,7 @@ ${urls}
       const msg = await storage.sendSmallGroupMessage(req.user!.id, input);
       res.status(201).json(msg);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4184,7 +4184,7 @@ ${urls}
       const request = await storage.createAllianceRequest(data);
       res.status(201).json(request);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4199,7 +4199,7 @@ ${urls}
       await storage.createAuditLog({ userId: req.user!.id, action: "review_alliance", entityType: "alliance_request", entityId: request.id, details: data.status });
       res.json(request);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4261,7 +4261,7 @@ ${urls}
       await storage.createAuditLog({ userId: req.user!.id, action: "request_channeling", entityType: "member_channeling", entityId: channeling.id });
       res.status(201).json(channeling);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4302,7 +4302,7 @@ ${urls}
       const assignment = await storage.createCourseTeacherAssignment(data, req.user!.id);
       res.status(201).json(assignment);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
@@ -4317,7 +4317,7 @@ ${urls}
       if (!assignment) return res.sendStatus(404);
       res.json(assignment);
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       res.sendStatus(500);
     }
   });
