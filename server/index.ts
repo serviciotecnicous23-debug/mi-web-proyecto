@@ -39,8 +39,24 @@ if (process.env.SENTRY_DSN) {
       Sentry.httpIntegration(),
       Sentry.expressIntegration(),
     ],
-    // Don't send PII by default
-    sendDefaultPii: false,
+    // Don't send PII by default. Sentry 11 cambió `sendDefaultPii` por
+    // `dataCollection`, que si no se define envía cookies, cuerpos de las
+    // peticiones (contraseñas incluidas) y datos de usuario. Esto deja lo mismo
+    // que `sendDefaultPii: false` en Sentry 10.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: {
+        request: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+        response: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+      },
+      httpBodies: [],
+      urlQueryParams: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      graphQL: { document: false, variables: false },
+    },
   });
   console.log("[sentry] Server monitoring initialized");
 }
@@ -193,11 +209,6 @@ app.use((req, res, next) => {
   app.use("/api", (_req, res) => {
     res.status(404).json({ message: "Ruta no encontrada" });
   });
-
-  // Sentry error handler must be registered after all routes but before custom error handler
-  if (process.env.SENTRY_DSN) {
-    Sentry.setupExpressErrorHandler(app);
-  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

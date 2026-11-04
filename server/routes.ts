@@ -3804,7 +3804,10 @@ ${urls}
   if (stripeSecretKey) {
     try {
       const Stripe = (await import("stripe")).default;
-      stripe = new Stripe(stripeSecretKey);
+      // Versión de la API fijada a la del SDK (stripe 23). Al subir de versión el
+      // SDK, revisar el changelog: en esta se cambió payment_method_types por
+      // allowed_payment_method_types en Checkout.
+      stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-10-28.endive" });
       console.log("[stripe] Payment processing initialized");
     } catch (err) {
       console.warn("[stripe] Could not initialize Stripe:", err);
@@ -3836,7 +3839,7 @@ ${urls}
       const baseUrl = `${protocol}://${host}`;
 
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        allowed_payment_method_types: ["card"],
         mode: "payment",
         customer_email: input.email,
         line_items: [{
