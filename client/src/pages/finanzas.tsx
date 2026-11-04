@@ -143,7 +143,7 @@ export function PublicDonationSection() {
       {paymentSuccess && (
         <Card className="border-green-300 bg-green-50 dark:bg-green-950/30">
           <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0" />
+            <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />
             <div>
               <p className="font-semibold text-green-800 dark:text-green-200">¡Pago exitoso!</p>
               <p className="text-sm text-green-700 dark:text-green-300">
@@ -158,7 +158,7 @@ export function PublicDonationSection() {
       {paymentCancelled && (
         <Card className="border-orange-300 bg-orange-50 dark:bg-orange-950/30">
           <CardContent className="p-4 flex items-center gap-3">
-            <Heart className="h-6 w-6 text-orange-600 flex-shrink-0" />
+            <Heart className="h-6 w-6 text-orange-600 shrink-0" />
             <div>
               <p className="font-semibold text-orange-800 dark:text-orange-200">Pago cancelado</p>
               <p className="text-sm text-orange-700 dark:text-orange-300">
@@ -171,7 +171,7 @@ export function PublicDonationSection() {
       )}
 
       {/* Ministry info */}
-      <Card className="border-orange-200 bg-gradient-to-br from-orange-50/50 to-amber-50/30 dark:from-orange-950/20 dark:to-amber-950/10">
+      <Card className="border-orange-200 bg-linear-to-br from-orange-50/50 to-amber-50/30 dark:from-orange-950/20 dark:to-amber-950/10">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-orange-500" /> Finanzas del Ministerio

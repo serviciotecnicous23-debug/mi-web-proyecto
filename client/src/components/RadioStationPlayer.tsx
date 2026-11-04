@@ -288,7 +288,7 @@ export function RadioStationPlayer({
           disabled={!currentSource}
           aria-label={isPlaying ? "Pausar la radio" : "Reproducir la radio en vivo"}
           data-testid="button-radio-station-play"
-          className="group relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_0_0_10px_rgba(251,146,60,0.1),0_22px_60px_rgba(249,115,22,0.4)] transition hover:scale-105 hover:brightness-110 disabled:opacity-50 md:h-32 md:w-32"
+          className="group relative flex h-28 w-28 items-center justify-center rounded-full bg-linear-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_0_0_10px_rgba(251,146,60,0.1),0_22px_60px_rgba(249,115,22,0.4)] transition hover:scale-105 hover:brightness-110 disabled:opacity-50 md:h-32 md:w-32"
         >
           {status === "playing" && (
             <span
@@ -364,13 +364,13 @@ export function RadioStationPlayer({
     <div
       className={
         isScene
-          ? "overflow-hidden rounded-[2rem] border border-orange-400/25 bg-black/45 shadow-[0_36px_120px_rgba(0,0,0,0.48),0_0_70px_rgba(249,115,22,0.16)] backdrop-blur"
+          ? "overflow-hidden rounded-4xl border border-orange-400/25 bg-black/45 shadow-[0_36px_120px_rgba(0,0,0,0.48),0_0_70px_rgba(249,115,22,0.16)] backdrop-blur-sm"
           : "overflow-hidden rounded-lg border bg-card shadow-xl"
       }
     >
       {audioElement}
 
-      <div className={isScene ? "bg-gradient-to-br from-orange-300 via-orange-600 to-red-700 p-[1px]" : "fire-gradient p-[1px]"}>
+      <div className={isScene ? "bg-linear-to-br from-orange-300 via-orange-600 to-red-700 p-px" : "fire-gradient p-px"}>
         <div className={isScene ? "bg-[#090608]/92 px-5 py-6 md:px-8 md:py-8" : "bg-card px-5 py-5 md:px-7 md:py-6"}>
           <div className={isScene ? "flex flex-col gap-7 2xl:flex-row 2xl:items-center 2xl:justify-between" : "flex flex-col gap-6 md:flex-row md:items-center md:justify-between"}>
             <div className="flex items-center gap-4">
@@ -409,7 +409,7 @@ export function RadioStationPlayer({
                   size="icon"
                   className={
                     isScene
-                      ? "h-16 w-16 rounded-full bg-gradient-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_0_0_9px_rgba(251,146,60,0.12),0_18px_50px_rgba(249,115,22,0.38)] hover:scale-[1.03] hover:brightness-110"
+                      ? "h-16 w-16 rounded-full bg-linear-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_0_0_9px_rgba(251,146,60,0.12),0_18px_50px_rgba(249,115,22,0.38)] hover:scale-[1.03] hover:brightness-110"
                       : "h-12 w-12 rounded-lg"
                   }
                   onClick={togglePlayback}

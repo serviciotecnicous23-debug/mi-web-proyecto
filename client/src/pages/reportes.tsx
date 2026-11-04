@@ -202,7 +202,7 @@ export default function ReportesPage() {
         {/* ===== KEY METRICS BAR ===== */}
         {dashboard && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <Card className="bg-linear-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <UserCheck className="h-4 w-4 text-blue-600" />
@@ -214,7 +214,7 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <Card className="bg-linear-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <Award className="h-4 w-4 text-green-600" />
@@ -226,7 +226,7 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
+            <Card className="bg-linear-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <TrendingUp className="h-4 w-4 text-purple-600" />
@@ -238,7 +238,7 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200/50">
+            <Card className="bg-linear-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200/50">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <Activity className="h-4 w-4 text-orange-600" />
@@ -573,7 +573,7 @@ export default function ReportesPage() {
             {/* Summary Cards */}
             {liveEventsReport?.summary && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Card className="border-red-200/50 bg-gradient-to-br from-red-50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/10">
+                <Card className="border-red-200/50 bg-linear-to-br from-red-50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/10">
                   <CardContent className="p-3 text-center">
                     <Video className="h-6 w-6 mx-auto text-red-500 mb-1" />
                     <div className="text-xl font-bold">{liveEventsReport.summary.totalSessions}</div>

@@ -378,8 +378,8 @@ function CarteleraAnnouncementCard({ announcement, canManage, currentUserId, onU
               </div>
             ) : (
               <>
-                <h3 className="font-semibold text-base break-words">{announcement.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{announcement.content}</p>
+                <h3 className="font-semibold text-base wrap-break-word">{announcement.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap wrap-break-word">{announcement.content}</p>
                 {(announcement.fileData || announcement.fileUrl) && (
                   <p className="mt-2">
                     {announcement.fileData ? (

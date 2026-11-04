@@ -236,7 +236,7 @@ function MoltenDisc({ spinning }: { spinning: boolean }) {
       {/* brazo de la tornamesa */}
       <div className="pointer-events-none absolute -right-3 -top-3 hidden h-28 w-28 md:block" aria-hidden>
         <div className="absolute right-6 top-6 h-4 w-4 rounded-full border border-orange-300/40 bg-black/80 shadow-[0_0_14px_rgba(249,115,22,0.45)]" />
-        <div className="absolute right-8 top-8 h-24 w-[3px] origin-top rotate-[28deg] rounded-full bg-gradient-to-b from-orange-200/70 via-orange-400/50 to-red-600/60" />
+        <div className="absolute right-8 top-8 h-24 w-[3px] origin-top rotate-28 rounded-full bg-linear-to-b from-orange-200/70 via-orange-400/50 to-red-600/60" />
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ function ConsoleEqualizer({ active }: { active: boolean }) {
       {Array.from({ length: 32 }).map((_, index) => (
         <span
           key={index}
-          className={`w-1.5 rounded-t-sm bg-gradient-to-t from-red-700 via-orange-500 to-amber-200 shadow-[0_0_14px_rgba(249,115,22,0.5)] md:w-2 ${
+          className={`w-1.5 rounded-t-sm bg-linear-to-t from-red-700 via-orange-500 to-amber-200 shadow-[0_0_14px_rgba(249,115,22,0.5)] md:w-2 ${
             active ? "animate-radio-bar" : "opacity-30"
           }`}
           style={{
@@ -334,7 +334,7 @@ export default function RadioPage() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-10 md:py-16">
           {/* Barra superior de cabina */}
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-md border border-white/10 bg-black/40 px-4 py-3 backdrop-blur md:px-6">
+          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-md border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-sm md:px-6">
             <div className="flex items-center gap-3">
               <span className="relative flex h-3 w-3">
                 {onAir && (
@@ -381,13 +381,13 @@ export default function RadioPage() {
               {/* Consola: ahora suena + play protagonista */}
               <div
                 id="radio-player"
-                className="mt-8 min-w-0 scroll-mt-24 rounded-md border border-orange-300/20 bg-black/45 p-6 backdrop-blur md:p-8"
+                className="mt-8 min-w-0 scroll-mt-24 rounded-md border border-orange-300/20 bg-black/45 p-6 backdrop-blur-sm md:p-8"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="data-label">Ahora suena</p>
                   <p className="data-label text-orange-300">{liveSnapshot?.playlist || "AzuraCast AutoDJ"}</p>
                 </div>
-                <p className="heading-display mt-2 break-words text-[clamp(1.3rem,3.2vw,2.1rem)] leading-tight [overflow-wrap:anywhere]">
+                <p className="heading-display mt-2 wrap-break-word text-[clamp(1.3rem,3.2vw,2.1rem)] leading-tight wrap-anywhere">
                   {liveSnapshot?.song || "Avivando el Fuego Radio"}
                 </p>
                 <div className="mt-5">
@@ -474,7 +474,7 @@ export default function RadioPage() {
                 {/* Fader del canal */}
                 <div className="relative mx-auto mb-4 h-36 w-2.5 rounded-full bg-white/10 md:h-44">
                   <div
-                    className="absolute bottom-0 left-0 w-full rounded-full bg-gradient-to-t from-red-700 via-orange-500 to-amber-300 shadow-[0_0_16px_rgba(249,115,22,0.45)]"
+                    className="absolute bottom-0 left-0 w-full rounded-full bg-linear-to-t from-red-700 via-orange-500 to-amber-300 shadow-[0_0_16px_rgba(249,115,22,0.45)]"
                     style={{ height: `${block.level}%` }}
                   />
                   <div

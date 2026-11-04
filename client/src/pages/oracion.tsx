@@ -562,9 +562,9 @@ function PrayerActivityCard({ activity, user, deleteMutation, getPlatformLabel, 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm text-primary hover:underline break-all"
                   >
-                    <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                    <Link2 className="h-3.5 w-3.5 shrink-0" />
                     {activity.meetingUrl}
-                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                    <ExternalLink className="h-3 w-3 shrink-0" />
                   </a>
                   <Button
                     size="sm"

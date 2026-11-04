@@ -118,10 +118,10 @@ function VerseOfTheDay() {
   const verse = DAILY_VERSES[dayOfYear % DAILY_VERSES.length];
 
   return (
-    <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+    <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <BookOpen className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+          <BookOpen className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">Versiculo del Dia</p>
             <p className="text-sm italic leading-relaxed">&ldquo;{verse.text}&rdquo;</p>
@@ -681,7 +681,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
           <ChevronLeft className="w-4 h-4 mr-1" /> Volver a Planes
         </Button>
 
-        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+        <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
           <CardContent className="p-5">
             <h2 className="text-xl font-bold">{selectedPlan.title}</h2>
             {selectedPlan.description && (
@@ -724,7 +724,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
               >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                       allCompleted ? "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400" :
                       isCurrent ? "bg-primary text-primary-foreground" :
                       "bg-muted text-muted-foreground"
@@ -953,7 +953,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
               <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                 <CardContent className="p-3">
                   <div className="flex items-start gap-2">
-                    <BookOpen className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <BookOpen className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                     <div className="text-sm">
                       <p className="font-medium text-blue-700 dark:text-blue-300">Recomendacion:</p>
                       <p className="text-blue-600 dark:text-blue-400">
@@ -1005,7 +1005,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
               </div>
 
               {/* Summary card */}
-              <Card className="bg-gradient-to-r from-primary/10 to-transparent border-primary/20">
+              <Card className="bg-linear-to-r from-primary/10 to-transparent border-primary/20">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                     <div>
@@ -1075,10 +1075,10 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
   return (
     <div className="space-y-4">
       {/* Header with motivational message */}
-      <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+      <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <BookMarked className="w-6 h-6 text-primary flex-shrink-0" />
+            <BookMarked className="w-6 h-6 text-primary shrink-0" />
             <div>
               <h3 className="font-semibold">Plan de Lectura Inteligente</h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -1102,7 +1102,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
               return (
                 <Card
                   key={suggestion.id}
-                  className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-gradient-to-br ${suggestion.color} border-primary/10`}
+                  className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-linear-to-br ${suggestion.color} border-primary/10`}
                   onClick={() => applySuggestion(suggestion)}
                   data-testid={`card-suggestion-${suggestion.id}`}
                 >
@@ -1302,10 +1302,10 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
     <div className="space-y-5">
       {/* Hero: WhatsApp Group - Most Prominent */}
       {whatsappData?.link ? (
-        <Card className="border-green-300 dark:border-green-700 bg-gradient-to-r from-green-50 via-green-50/50 to-white dark:from-green-950/40 dark:via-green-950/20 dark:to-transparent shadow-md">
+        <Card className="border-green-300 dark:border-green-700 bg-linear-to-r from-green-50 via-green-50/50 to-white dark:from-green-950/40 dark:via-green-950/20 dark:to-transparent shadow-md">
           <CardContent className="p-5">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shrink-0">
                 <SiWhatsapp className="h-8 w-8 text-white" />
               </div>
               <div className="flex-1 text-center sm:text-left">
@@ -1316,7 +1316,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
               </div>
               <Button
                 size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white shadow-lg flex-shrink-0"
+                className="bg-green-600 hover:bg-green-700 text-white shadow-lg shrink-0"
                 onClick={() => window.open(whatsappData.link, "_blank")}
                 data-testid="button-join-whatsapp"
               >
@@ -1340,10 +1340,10 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
       )}
 
       {/* Daily Verse - Prominent */}
-      <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+      <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <BookOpen className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -1417,7 +1417,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
       <Card>
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
               <Highlighter className="w-5 h-5 text-blue-500" />
             </div>
             <div>
@@ -1437,10 +1437,10 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
         {recentNotes.length > 0 ? (
           <div className="space-y-2">
             {recentNotes.map((note: any) => (
-              <Card key={note.id} className="hover:shadow-sm transition-shadow">
+              <Card key={note.id} className="hover:shadow-xs transition-shadow">
                 <CardContent className="p-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                       <StickyNote className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1506,7 +1506,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
                         <span className="text-muted-foreground">{plan.time}</span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" tabIndex={-1}>
+                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" tabIndex={-1}>
                       <Plus className="w-4 h-4 text-primary" />
                     </Button>
                   </div>
@@ -1521,7 +1521,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
       </div>
 
       {/* Motivational section */}
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+      <Card className="bg-linear-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
         <CardContent className="p-5 text-center">
           <p className="text-3xl mb-3">✨</p>
           <h3 className="font-bold text-lg mb-2">¿Por que leer la Biblia?</h3>
@@ -1718,7 +1718,7 @@ function ResourcesTab() {
                 />
                 {uploadedFileName ? (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
-                    <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                    <FileText className="w-5 h-5 text-primary shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{uploadedFileName}</p>
                       {uploadedFileSize && <p className="text-xs text-muted-foreground">{formatFileSize(uploadedFileSize)}</p>}

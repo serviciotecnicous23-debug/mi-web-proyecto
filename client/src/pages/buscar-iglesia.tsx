@@ -57,7 +57,7 @@ export default function BuscarIglesiaPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
+      <div className="min-h-screen bg-linear-to-b from-background to-background/80">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-10">

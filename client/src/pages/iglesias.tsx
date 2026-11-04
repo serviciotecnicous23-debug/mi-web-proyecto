@@ -257,18 +257,18 @@ function ChurchManagementPanel() {
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {church.churchType === "cobertura" ? (
-                    <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+                    <Shield className="w-4 h-4 text-primary shrink-0" />
                   ) : (
-                    <HandHeart className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <HandHeart className="w-4 h-4 text-muted-foreground shrink-0" />
                   )}
                   <div className="min-w-0">
                     <span className="font-medium text-sm block truncate">{church.name}</span>
                     {church.pastor && <span className="text-xs text-muted-foreground">Pastor: {church.pastor}</span>}
                   </div>
-                  <Badge variant={church.churchType === "cobertura" ? "default" : "secondary"} className="text-xs flex-shrink-0">
+                  <Badge variant={church.churchType === "cobertura" ? "default" : "secondary"} className="text-xs shrink-0">
                     {CHURCH_TYPES[church.churchType as keyof typeof CHURCH_TYPES] || church.churchType}
                   </Badge>
-                  <Badge variant={church.isActive ? "outline" : "secondary"} className="text-xs flex-shrink-0">
+                  <Badge variant={church.isActive ? "outline" : "secondary"} className="text-xs shrink-0">
                     {church.isActive ? "Activa" : "Inactiva"}
                   </Badge>
                 </div>
@@ -403,7 +403,7 @@ function ChurchCard({ church }: { church: MinistryChurch }) {
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
             church.churchType === "cobertura"
               ? "bg-primary/10 text-primary"
               : "bg-secondary/50 text-muted-foreground"
@@ -722,7 +722,7 @@ export default function IglesiasPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="flex-shrink-0"
+                            className="shrink-0"
                             onClick={() => deletePostMutation.mutate(post.id)}
                             disabled={deletePostMutation.isPending}
                           >
@@ -773,10 +773,10 @@ export default function IglesiasPage() {
           </TabsList>
 
           <TabsContent value="cobertura" className="mt-4">
-            <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 mb-4">
+            <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 mb-4">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Shield className="w-6 h-6 text-primary flex-shrink-0" />
+                  <Shield className="w-6 h-6 text-primary shrink-0" />
                   <div>
                     <h3 className="font-semibold">Iglesia Cobertura</h3>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -790,10 +790,10 @@ export default function IglesiasPage() {
           </TabsContent>
 
           <TabsContent value="respaldo" className="mt-4">
-            <Card className="bg-gradient-to-r from-secondary/30 via-secondary/10 to-transparent border-secondary/20 mb-4">
+            <Card className="bg-linear-to-r from-secondary/30 via-secondary/10 to-transparent border-secondary/20 mb-4">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <HandHeart className="w-6 h-6 text-muted-foreground flex-shrink-0" />
+                  <HandHeart className="w-6 h-6 text-muted-foreground shrink-0" />
                   <div>
                     <h3 className="font-semibold">Iglesias en Respaldo</h3>
                     <p className="text-sm text-muted-foreground mt-1">

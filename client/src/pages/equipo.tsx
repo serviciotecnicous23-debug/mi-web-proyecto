@@ -149,7 +149,7 @@ export default function Equipo() {
       {/* ═══ PORTADA EDITORIAL ═════════════════════════════════════ */}
       <section className="relative overflow-hidden section-aurora py-16 md:py-24">
         <p
-          className="heading-display pointer-events-none absolute -right-8 top-2 select-none text-[clamp(7rem,20vw,18rem)] leading-none text-foreground/[0.04]"
+          className="heading-display pointer-events-none absolute -right-8 top-2 select-none text-[clamp(7rem,20vw,18rem)] leading-none text-foreground/4"
           aria-hidden
         >
           AVF

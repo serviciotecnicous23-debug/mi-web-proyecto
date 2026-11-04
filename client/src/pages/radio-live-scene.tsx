@@ -34,7 +34,7 @@ function SceneBars() {
       {Array.from({ length: 34 }).map((_, index) => (
         <span
           key={index}
-          className="w-2 rounded-full bg-gradient-to-t from-red-600 via-orange-400 to-amber-200 shadow-[0_0_18px_rgba(249,115,22,0.45)] animate-radio-bar"
+          className="w-2 rounded-full bg-linear-to-t from-red-600 via-orange-400 to-amber-200 shadow-[0_0_18px_rgba(249,115,22,0.45)] animate-radio-bar"
           style={{
             height: `${28 + ((index * 23) % 68)}%`,
             animationDelay: `${index * 48}ms`,
@@ -103,7 +103,7 @@ export default function RadioLiveScene() {
 
         <header className="relative z-10 flex items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.35rem] border border-orange-300/35 bg-black/40 shadow-[0_0_60px_rgba(249,115,22,0.28)] backdrop-blur md:h-28 md:w-28">
+            <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.35rem] border border-orange-300/35 bg-black/40 shadow-[0_0_60px_rgba(249,115,22,0.28)] backdrop-blur-sm md:h-28 md:w-28">
               <img src={RADIO_BRAND_IMAGE} alt="Avivando el Fuego Radio" className="h-full w-full object-cover" />
             </span>
             <div>
@@ -111,7 +111,7 @@ export default function RadioLiveScene() {
               <h1 className="heading-display text-[clamp(3.1rem,10vw,7rem)] leading-none">El Fuego</h1>
             </div>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/10 px-4 py-3 text-right backdrop-blur md:px-5 md:py-4">
+          <div className="rounded-md border border-white/10 bg-white/10 px-4 py-3 text-right backdrop-blur-sm md:px-5 md:py-4">
             <p className="font-display text-[clamp(2rem,6vw,4rem)] leading-none">{time}</p>
             <p className="mt-1 text-xs uppercase tracking-[0.26em] text-orange-200">Radio Live</p>
           </div>
@@ -123,11 +123,11 @@ export default function RadioLiveScene() {
             {snapshot.online ? "Transmitiendo en vivo" : "Conectando senal"}
           </div>
 
-          <div className="mb-6 flex h-56 w-56 items-center justify-center overflow-hidden rounded-[2rem] border border-orange-300/35 bg-black/40 p-2 shadow-[0_0_100px_rgba(249,115,22,0.28),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur md:h-80 md:w-80 md:rounded-[2.8rem]">
+          <div className="mb-6 flex h-56 w-56 items-center justify-center overflow-hidden rounded-4xl border border-orange-300/35 bg-black/40 p-2 shadow-[0_0_100px_rgba(249,115,22,0.28),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-sm md:h-80 md:w-80 md:rounded-[2.8rem]">
             <img
               src={RADIO_BRAND_IMAGE}
               alt="Logo Avivando el Fuego Radio"
-              className="h-full w-full rounded-[1.5rem] object-cover md:rounded-[2.25rem]"
+              className="h-full w-full rounded-3xl object-cover md:rounded-[2.25rem]"
             />
           </div>
 
@@ -141,11 +141,11 @@ export default function RadioLiveScene() {
           </div>
 
           <div className="mt-6 grid w-full max-w-4xl gap-4 text-left md:mt-10 md:grid-cols-[1fr_minmax(16rem,0.72fr)] md:gap-5">
-            <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-6">
+            <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur-sm md:p-6">
               <p className="mb-2 text-xs uppercase tracking-[0.28em] text-orange-200">Siguiente</p>
               <p className="line-clamp-2 text-lg font-semibold md:text-2xl">{snapshot.nextSong}</p>
             </div>
-            <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur md:p-6">
+            <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur-sm md:p-6">
               <div className="mb-3 flex items-center justify-between gap-4 text-xs uppercase tracking-[0.24em] text-orange-200">
                 <span>Radio en vivo</span>
                 <Radio className="h-5 w-5 text-orange-300" />

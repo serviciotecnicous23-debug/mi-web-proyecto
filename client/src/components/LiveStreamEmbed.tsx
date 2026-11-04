@@ -227,7 +227,7 @@ function EmbedYouTubePlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-red-950 to-black flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-red-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <SiYoutube className="w-16 h-16 text-red-500" />
         <p className="text-white text-center font-medium text-lg">Este video no permite reproducirse aquí</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
@@ -346,7 +346,7 @@ function EmbedFacebookPlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-blue-950 to-black flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-blue-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <SiFacebook className="w-16 h-16 text-blue-500" />
         <p className="text-white text-center font-medium text-lg">No se pudo reproducir aquí</p>
         <Button variant="default" className="bg-blue-600 hover:bg-blue-700 text-white gap-2" onClick={() => window.open(sourceUrl, "_blank")}>
@@ -368,7 +368,7 @@ function EmbedFacebookPlayer({ sourceUrl }: { sourceUrl: string }) {
       )}
       <div
         ref={containerRef}
-        className="w-full h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_.fb-video]:w-full [&_.fb-video]:h-full [&_.fb_iframe_widget]:w-full [&_.fb_iframe_widget]:h-full [&_span]:block [&_span]:w-full [&_span]:h-full"
+        className="w-full h-full [&_iframe]:w-full! [&_iframe]:h-full! [&_.fb-video]:w-full [&_.fb-video]:h-full [&_.fb_iframe_widget]:w-full [&_.fb_iframe_widget]:h-full [&_span]:block [&_span]:w-full [&_span]:h-full"
       />
       <div className="absolute bottom-2 right-2 z-10">
         <Button size="sm" variant="secondary" className="opacity-70 hover:opacity-100 text-xs gap-1" onClick={() => window.open(sourceUrl, "_blank")}>
@@ -406,7 +406,7 @@ function EmbedTikTokPlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError || isLive || !videoId) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-gray-950 via-black to-pink-950/40 flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-gray-950 via-black to-pink-950/40 flex flex-col items-center justify-center gap-4 p-6">
         <div className="relative">
           <SiTiktok className="w-16 h-16 text-white" />
           {isLive && (
@@ -426,7 +426,7 @@ function EmbedTikTokPlayer({ sourceUrl }: { sourceUrl: string }) {
         </p>
         <Button
           variant="default"
-          className="bg-gradient-to-r from-pink-500 via-red-500 to-blue-500 hover:from-pink-600 hover:via-red-600 hover:to-blue-600 text-white gap-2"
+          className="bg-linear-to-r from-pink-500 via-red-500 to-blue-500 hover:from-pink-600 hover:via-red-600 hover:to-blue-600 text-white gap-2"
           onClick={() => window.open(sourceUrl, "_blank")}
         >
           <SiTiktok className="w-5 h-5" />
@@ -540,7 +540,7 @@ export function LiveStreamEmbed({
           onClick={() => setShowPlayer(true)}
           variant="default"
           size={compact ? "sm" : "default"}
-          className="gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white shadow-lg"
+          className="gap-2 bg-linear-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white shadow-lg"
         >
           <PulsingDot />
           <Play className="w-4 h-4" />

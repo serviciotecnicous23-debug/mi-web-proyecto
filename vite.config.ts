@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -16,23 +17,29 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     // Code-splitting for faster initial page loads
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          // Core React & routing
-          "vendor-react": ["react", "react-dom"],
-          // UI component library
-          "vendor-ui": [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-select",
-            "@radix-ui/react-avatar",
-            "@radix-ui/react-toast",
-            "@radix-ui/react-tooltip",
+        codeSplitting: {
+          groups: [
+            // Core React & routing
+            {
+              name: "vendor-react",
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 3,
+            },
+            // UI component library
+            {
+              name: "vendor-ui",
+              test: /[\\/]node_modules[\\/]@radix-ui[\\/]react-(dialog|dropdown-menu|tabs|select|avatar|toast|tooltip)[\\/]/,
+              priority: 2,
+            },
+            // Data fetching
+            {
+              name: "vendor-data",
+              test: /[\\/]node_modules[\\/](@tanstack[\\/]react-query|zod|react-hook-form)[\\/]/,
+              priority: 1,
+            },
           ],
-          // Data fetching
-          "vendor-data": ["@tanstack/react-query", "zod", "react-hook-form"],
         },
       },
     },

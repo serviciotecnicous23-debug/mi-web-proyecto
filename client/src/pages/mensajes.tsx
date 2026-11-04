@@ -254,7 +254,7 @@ export default function Mensajes() {
                         <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                           <div className={`flex gap-2 max-w-[80%] ${isMine ? "flex-row-reverse" : ""}`}>
                             {!isMine && (
-                              <Avatar className="h-7 w-7 flex-shrink-0">
+                              <Avatar className="h-7 w-7 shrink-0">
                                 {msg.sender?.avatarUrl && <AvatarImage src={msg.sender.avatarUrl} />}
                                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                                   {(msg.sender?.displayName || msg.sender?.username || "?").slice(0, 2).toUpperCase()}
