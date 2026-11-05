@@ -133,7 +133,7 @@ export function Footer() {
               <span className="font-bold text-lg">Avivando el Fuego</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ministerio evangelistico internacional. Desde 2017, Ciudad Bolivar, Venezuela.
+              Ministerio evangelístico internacional. Desde 2017, Ciudad Bolívar, Venezuela.
             </p>
           </div>
           <div>
@@ -146,10 +146,10 @@ export function Footer() {
           </div>
           <div>
             <h4 className="font-semibold mb-3 text-sm">Alianza Global</h4>
-            <p className="text-sm text-muted-foreground">Venezuela · Peru · USA</p>
+            <p className="text-sm text-muted-foreground">Venezuela · Perú · USA</p>
             <p className="text-sm text-muted-foreground mt-1">Red de iglesias autonomas unidas por el fuego</p>
             <p className="text-sm text-muted-foreground mt-2 italic">
-              "No apagueis el Espiritu" - 1 Tesalonicenses 5:19
+              "No apaguéis el Espíritu" - 1 Tesalonicenses 5:19
             </p>
           </div>
         </div>

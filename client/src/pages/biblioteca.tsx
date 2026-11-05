@@ -534,7 +534,7 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
 const SUGGESTED_PLANS = [
   {
     id: "nuevo-testamento-30",
-    name: "Nuevo Testamento en 30 dias",
+    name: "Nuevo Testamento en 30 días",
     description: "Lee todo el Nuevo Testamento en un mes con lecturas diarias guiadas.",
     books: ["Mateo", "Marcos", "Lucas", "Juan", "Hechos", "Romanos", "1 Corintios", "2 Corintios", "Galatas", "Efesios", "Filipenses", "Colosenses", "1 Tesalonicenses", "2 Tesalonicenses", "1 Timoteo", "2 Timoteo", "Tito", "Filemon", "Hebreos", "Santiago", "1 Pedro", "2 Pedro", "1 Juan", "2 Juan", "3 Juan", "Judas", "Apocalipsis"],
     period: "mensual" as const,
@@ -552,8 +552,8 @@ const SUGGESTED_PLANS = [
   },
   {
     id: "sabiduria-30",
-    name: "Libros de Sabiduria (30 dias)",
-    description: "Job, Salmos, Proverbios, Eclesiastés y Cantares para crecer en sabiduria.",
+    name: "Libros de Sabiduría (30 días)",
+    description: "Job, Salmos, Proverbios, Eclesiastés y Cantares para crecer en sabiduría.",
     books: ["Job", "Salmos", "Proverbios", "Eclesiastes", "Cantares"],
     period: "mensual" as const,
     icon: "🕊️",
@@ -570,7 +570,7 @@ const SUGGESTED_PLANS = [
   },
   {
     id: "cartas-pablo-14",
-    name: "Cartas de Pablo (14 dias)",
+    name: "Cartas de Pablo (14 días)",
     description: "Las 13 epístolas del apóstol Pablo en dos semanas de estudio enfocado.",
     books: ["Romanos", "1 Corintios", "2 Corintios", "Galatas", "Efesios", "Filipenses", "Colosenses", "1 Tesalonicenses", "2 Tesalonicenses", "1 Timoteo", "2 Timoteo", "Tito", "Filemon"],
     period: "personalizado" as const,
@@ -579,7 +579,7 @@ const SUGGESTED_PLANS = [
   },
   {
     id: "profetas-90",
-    name: "Profetas Mayores (90 dias)",
+    name: "Profetas Mayores (90 días)",
     description: "Isaías, Jeremías, Lamentaciones, Ezequiel y Daniel en un trimestre.",
     books: ["Isaias", "Jeremias", "Lamentaciones", "Ezequiel", "Daniel"],
     period: "trimestral" as const,
@@ -684,13 +684,13 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
     if (!planName.trim() || selectedBooks.length === 0) return;
     setIsGenerating(true);
     const periodLabels: Record<string, string> = {
-      semanal: "Semanal (7 dias)",
-      mensual: "Mensual (30 dias)",
-      trimestral: "Trimestral (90 dias)",
-      anual: "Anual (365 dias)",
-      personalizado: `Personalizado (${getDays()} dias)`,
+      semanal: "Semanal (7 días)",
+      mensual: "Mensual (30 días)",
+      trimestral: "Trimestral (90 días)",
+      anual: "Anual (365 días)",
+      personalizado: `Personalizado (${getDays()} días)`,
     };
-    const description = `${periodLabels[periodType]} | ${selectedBooks.join(", ")} | ${getTotalChapters()} capitulos | ~${getChaptersPerDay()} cap/dia`;
+    const description = `${periodLabels[periodType]} | ${selectedBooks.map((b) => bibleBookLabel(b)).join(", ")} | ${getTotalChapters()} capítulos | ~${getChaptersPerDay()} cap/día`;
     createPlan.mutate({ title: planName.trim(), description, isPublic }, {
       onSuccess: (data: any) => {
         const allChapters: { book: string; chapter: number; sortOrder: number }[] = [];
@@ -748,7 +748,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
     const progressPct = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
 
     // Parse the description to extract period info for daily grouping
-    const descMatch = selectedPlan.description?.match(/(\d+)\s*cap\/dia/);
+    const descMatch = selectedPlan.description?.match(/(\d+)\s*cap\/d[ií]a/);
     const chaptersPerDayFromDesc = descMatch ? parseInt(descMatch[1]) : Math.max(1, Math.ceil(totalItems / 30));
 
     // Group items by day
@@ -967,7 +967,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
 
               {selectedBooks.length > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {selectedBooks.length} libros seleccionados - {getTotalChapters()} capitulos en total
+                  {selectedBooks.length} libros seleccionados - {getTotalChapters()} capítulos en total
                 </p>
               )}
 
@@ -985,7 +985,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Paso 2: Elige tu ritmo de lectura</CardTitle>
-              <CardDescription>¿En cuanto tiempo quieres completar tu plan? El sistema organizara los capitulos automáticamente.</CardDescription>
+              <CardDescription>¿En cuánto tiempo quieres completar tu plan? El sistema organizará los capítulos automáticamente.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1009,12 +1009,12 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                         <span className="text-2xl">{opt.icon}</span>
                         <div>
                           <p className="font-semibold">{opt.label}</p>
-                          <p className="text-xs text-muted-foreground">{opt.desc} - {opt.days} dias</p>
+                          <p className="text-xs text-muted-foreground">{opt.desc} - {opt.days} días</p>
                         </div>
                       </div>
                       <div className="text-sm">
-                        <span className="font-medium text-primary">{chapPerDay} cap/dia</span>
-                        <span className="text-muted-foreground"> · ~{minsPerDay} min/dia</span>
+                        <span className="font-medium text-primary">{chapPerDay} cap/día</span>
+                        <span className="text-muted-foreground"> · ~{minsPerDay} min/día</span>
                       </div>
                     </button>
                   );
@@ -1048,8 +1048,8 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                     />
                     <span className="text-sm text-muted-foreground">días</span>
                     <span className="text-sm ml-auto">
-                      <span className="font-medium text-primary">{getChaptersPerDay()} cap/dia</span>
-                      <span className="text-muted-foreground"> · ~{getEstimatedMinutesPerDay()} min/dia</span>
+                      <span className="font-medium text-primary">{getChaptersPerDay()} cap/día</span>
+                      <span className="text-muted-foreground"> · ~{getEstimatedMinutesPerDay()} min/día</span>
                     </span>
                   </div>
                 )}
@@ -1060,15 +1060,15 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                   <div className="flex items-start gap-2">
                     <BookOpen className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-blue-700 dark:text-blue-300">Recomendacion:</p>
+                      <p className="font-medium text-blue-700 dark:text-blue-300">Recomendación:</p>
                       <p className="text-blue-600 dark:text-blue-400">
                         {getTotalChapters() <= 30
-                          ? "Para pocos capitulos, un plan semanal o mensual es ideal."
+                          ? "Para pocos capítulos, un plan semanal o mensual es ideal."
                           : getTotalChapters() <= 100
                           ? "Un plan mensual o trimestral te permitira estudiar con calma."
                           : getTotalChapters() <= 500
-                          ? "Para esta cantidad, un plan trimestral o anual es lo mas recomendable."
-                          : "Para la Biblia completa, un plan anual con ~3-4 capitulos diarios es perfecto."}
+                          ? "Para esta cantidad, un plan trimestral o anual es lo más recomendable."
+                          : "Para la Biblia completa, un plan anual con ~3-4 capítulos diarios es perfecto."}
                       </p>
                     </div>
                   </div>
@@ -1077,7 +1077,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setGeneratorStep(1)}>
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Atras
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Atrás
                 </Button>
                 <Button onClick={() => setGeneratorStep(3)}>
                   Siguiente <ChevronRight className="w-4 h-4 ml-1" />
@@ -1119,7 +1119,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-primary">{getTotalChapters()}</p>
-                      <p className="text-xs text-muted-foreground">Capitulos</p>
+                      <p className="text-xs text-muted-foreground">Capítulos</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-primary">{getDays()}</p>
@@ -1127,7 +1127,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-primary">~{getEstimatedMinutesPerDay()}</p>
-                      <p className="text-xs text-muted-foreground">Min/dia</p>
+                      <p className="text-xs text-muted-foreground">Min/día</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1139,15 +1139,15 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {schedule.slice(0, 10).map((day) => (
                     <div key={day.day} className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
-                      <span className="w-16 text-xs font-medium text-muted-foreground">Dia {day.day}</span>
+                      <span className="w-16 text-xs font-medium text-muted-foreground">Día {day.day}</span>
                       <span className="text-sm flex-1">
-                        {day.chapters.map((c) => `${c.book} ${c.chapter}`).join(", ")}
+                        {day.chapters.map((c) => `${bibleBookLabel(c.book)} ${c.chapter}`).join(", ")}
                       </span>
                     </div>
                   ))}
                   {schedule.length > 10 && (
                     <p className="text-xs text-muted-foreground text-center py-2">
-                      ... y {schedule.length - 10} dias mas
+                      ... y {schedule.length - 10} días más
                     </p>
                   )}
                 </div>
@@ -1155,7 +1155,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setGeneratorStep(2)}>
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Atras
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Atrás
                 </Button>
                 <Button
                   onClick={handleCreatePlan}
@@ -1188,7 +1188,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
               <h3 className="font-semibold">Plan de Lectura Inteligente</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Crea un plan personalizado que organiza tu lectura bíblica automáticamente.
-                Elige los libros, el tiempo disponible y el sistema dividira los capitulos por dia.
+                Elige los libros, el tiempo disponible y el sistema dividirá los capítulos por día.
               </p>
             </div>
           </div>
@@ -1266,12 +1266,12 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
           <CardContent className="p-8 text-center">
             <BookMarked className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="font-medium mb-1">
-              {viewPublic ? "No hay planes compartidos aun" : "Aun no tienes planes de lectura"}
+              {viewPublic ? "No hay planes compartidos aún" : "Aún no tienes planes de lectura"}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               {viewPublic
                 ? "Se el primero en compartir tu plan con la comunidad."
-                : "Crea tu primer plan y organiza tu lectura biblica de forma inteligente."}
+                : "Crea tu primer plan y organiza tu lectura bíblica de forma inteligente."}
             </p>
             {!viewPublic && user?.isActive && (
               <Button onClick={() => setShowGenerator(true)} data-testid="button-empty-create-plan">
@@ -1311,7 +1311,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                       {totalCount > 0 && (
                         <div className="mt-2 space-y-1">
                           <Progress value={progressPct} className="h-2" />
-                          <p className="text-xs text-muted-foreground">{completedCount}/{totalCount} capitulos · {progressPct}%</p>
+                          <p className="text-xs text-muted-foreground">{completedCount}/{totalCount} capítulos · {progressPct}%</p>
                         </div>
                       )}
                     </div>
