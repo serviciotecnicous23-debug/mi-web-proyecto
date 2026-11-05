@@ -12,7 +12,8 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import pgSession from "connect-pg-simple";
 import MemoryStore from "memorystore";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
+import { isIP } from "net";
 import multer from "multer";
 import sharp from "sharp";
 import path from "path";
@@ -594,10 +595,24 @@ ${urls}
   });
 
   // ========== RATE LIMITING ==========
+  // En Render el tráfico llega por Cloudflare y su balanceador, y req.ip es la IP
+  // del intermediario (cambia de una conexión a otra), no la del miembro: el límite
+  // ni frenaba a un abusador ni distinguía a la gente. Cloudflare pone la IP real en
+  // CF-Connecting-IP (y la sobrescribe si el cliente la manda); si no llega, se usa
+  // req.ip como antes.
+  const clientKey = (req: Request) => {
+    const cf = req.headers["cf-connecting-ip"];
+    return ipKeyGenerator(typeof cf === "string" && isIP(cf) ? cf : req.ip || "");
+  };
+
   // Protect auth endpoints from brute force attacks
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 attempts per 15 min per IP
+    max: 20, // 20 intentos fallidos cada 15 min por persona
+    // Solo cuentan los fallos: entrar bien (p. ej. muchos miembros a la vez en un
+    // culto) no gasta el cupo; probar contraseñas sí.
+    skipSuccessfulRequests: true,
+    keyGenerator: clientKey,
     message: { message: "Demasiados intentos. Intenta de nuevo en 15 minutos." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -607,6 +622,7 @@ ${urls}
   const apiLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 120, // 120 requests per minute
+    keyGenerator: clientKey,
     message: { message: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -616,6 +632,7 @@ ${urls}
   const uploadLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 15, // 15 uploads per 5 minutes
+    keyGenerator: clientKey,
     message: { message: "Límite de subida alcanzado. Espera unos minutos." },
     standardHeaders: true,
     legacyHeaders: false,

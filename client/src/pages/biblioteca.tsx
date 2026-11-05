@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1669,7 +1670,7 @@ export default function BibliotecaPage() {
             Inicia sesión para acceder a la Biblia de estudio, planes de lectura, club de lectura y recursos compartidos.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link href="/login">
+            <Link href={loginUrl("/biblioteca")}>
               <Button variant="outline" data-testid="link-login-biblioteca">Iniciar Sesión</Button>
             </Link>
             <Link href="/registro">

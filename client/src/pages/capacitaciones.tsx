@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -41,7 +42,7 @@ import type { Course } from "@shared/schema";
 import { useLocation } from "wouter";
 
 export default function Capacitaciones() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("cartelera");
   const [lastSeen, setLastSeen] = useState(() => {
@@ -52,12 +53,13 @@ export default function Capacitaciones() {
   });
   const { data: carteleraAnns } = useCarteleraAnnouncements();
 
-  // Auth guard — only logged-in members can access Capacitaciones
+  // Solo miembros con sesión. Se espera a saber si hay sesión: antes mandaba a
+  // /login mientras cargaba y, como sí había sesión, de ahí a la portada.
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
+    if (!authLoading && !user) {
+      navigate(loginUrl());
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   if (!user) {
     return (
