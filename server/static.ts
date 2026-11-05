@@ -15,6 +15,9 @@ export function serveStatic(app: Express) {
     maxAge: "1y",         // Cache hashed assets for 1 year
     immutable: true,      // These files never change (hashed names)
     etag: true,
+    // Un archivo de una versión anterior que ya no existe responde 404 y no la
+    // página: si no, el navegador y el service worker guardaban HTML como si fuera .js/.css.
+    fallthrough: false,
   }));
 
   // Serve icons, manifest, SW with moderate caching
@@ -33,8 +36,12 @@ export function serveStatic(app: Express) {
 
   // Other static files
   app.use(express.static(distPath, {
-    maxAge: "1h",         // Short cache for index.html, manifest, etc.
+    maxAge: "1h",         // Short cache for manifest, favicon, etc.
     etag: true,
+    // La portada "/" la sirve el respaldo de abajo con no-cache, como las demás
+    // páginas. Con max-age=1h la portada (y la app instalada) seguían mostrando la
+    // versión vieja hasta una hora después de cada publicación.
+    index: false,
   }));
 
   // fall through to index.html if the file doesn't exist (SPA routing)

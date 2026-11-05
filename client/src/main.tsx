@@ -75,4 +75,20 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   });
 }
 
+// Tras una publicación, una pestaña abierta con la versión anterior puede pedir un
+// trozo de código que ya no existe (PDF, capturas…): recargar trae la versión nueva.
+// Como mucho una vez por minuto, para no entrar en bucle si falla la red.
+window.addEventListener("vite:preloadError", (event) => {
+  try {
+    const last = Number(sessionStorage.getItem("avivando:recarga-version") || 0);
+    if (Date.now() - last < 60_000) return;
+    sessionStorage.setItem("avivando:recarga-version", String(Date.now()));
+  } catch {
+    // Sin sessionStorage (modo privado estricto): mejor no recargar que arriesgar un bucle.
+    return;
+  }
+  event.preventDefault();
+  window.location.reload();
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
