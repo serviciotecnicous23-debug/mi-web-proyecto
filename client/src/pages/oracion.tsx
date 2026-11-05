@@ -20,6 +20,9 @@ import { LiveStreamEmbed, isEmbeddableUrl } from "@/components/LiveStreamEmbed";
 import LiveRoom from "@/components/LiveRoom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePrayerAttendees, useMyPrayerAttendance, useAttendPrayer, useCancelPrayerAttendance } from "@/hooks/use-users";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PrayerWall } from "@/components/oracion/prayer-wall";
+import { isTeacherOrAdminRole } from "@/lib/utils";
 
 const createPrayerSchema = z.object({
   title: z.string().min(3, "Mínimo 3 caracteres"),
@@ -138,7 +141,7 @@ export default function OracionPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold" data-testid="text-oracion-title">Oración</h1>
-            <p className="text-muted-foreground mt-1">Actividades de oración, reuniones y enlaces en vivo</p>
+            <p className="text-muted-foreground mt-1">Peticiones de la comunidad, actividades de oración y salas en vivo</p>
           </div>
           {user && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -212,19 +215,34 @@ export default function OracionPage() {
           )}
         </div>
 
-        {/* Sala en Vivo de Oracion */}
+        {/* key: al llegar la sesión se vuelve a montar y abre "Peticiones" (defaultValue solo
+            se lee al montar, y en el primer dibujado aún no se sabe si hay sesión). */}
+        <Tabs key={user?.isActive ? "con-muro" : "sin-muro"} defaultValue={user?.isActive ? "peticiones" : "actividades"} className="w-full">
+          {user?.isActive && (
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="peticiones" className="min-h-10" data-testid="tab-peticiones">Peticiones</TabsTrigger>
+              <TabsTrigger value="actividades" className="min-h-10" data-testid="tab-actividades">Actividades</TabsTrigger>
+            </TabsList>
+          )}
+          {user?.isActive && (
+            <TabsContent value="peticiones">
+              <PrayerWall />
+            </TabsContent>
+          )}
+          <TabsContent value="actividades">
+        {/* Sala de oración en vivo */}
         {user && (
           <div className="mb-6">
             <LiveRoom
               context="prayer"
               contextId="main"
-              roomTitle="Sala de Oracion en Vivo"
-              canManage={user.role === "admin" || user.role === "maestro"}
+              roomTitle="Sala de oración en vivo"
+              canManage={isTeacherOrAdminRole(user.role)}
               userName={user.displayName || user.username}
               userEmail={user.email}
-              startLabel="Iniciar Sala de Oracion"
-              joinLabel="Unirse a la Sala de Oracion"
-              startDescription="Se creara una sala de video para la reunion de oracion. Todos los usuarios recibiran una notificacion."
+              startLabel="Iniciar sala de oración"
+              joinLabel="Unirse a la sala de oración"
+              startDescription="Se creará una sala de video para la reunión de oración. Todos los usuarios recibirán una notificación."
             />
           </div>
         )}
@@ -238,7 +256,7 @@ export default function OracionPage() {
             <CardContent className="py-12 text-center">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-lg font-medium">No hay actividades de oración</p>
-              <p className="text-muted-foreground text-sm mt-1">Se la primera persona en crear una actividad.</p>
+              <p className="text-muted-foreground text-sm mt-1">Sé la primera persona en crear una actividad.</p>
             </CardContent>
           </Card>
         ) : (
@@ -264,6 +282,9 @@ export default function OracionPage() {
             ))}
           </div>
         )}
+
+          </TabsContent>
+        </Tabs>
 
         {/* Edit Activity Dialog */}
         <Dialog open={!!editActivity} onOpenChange={(open) => { if (!open) setEditActivity(null); }}>

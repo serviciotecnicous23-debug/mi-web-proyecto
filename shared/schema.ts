@@ -1777,3 +1777,40 @@ export const clubMemoryVerses = pgTable("club_memory_verses", {
 
 export type BibleReadingEntry = typeof bibleReadingLog.$inferSelect;
 export type ClubChallenge = typeof clubChallenges.$inferSelect;
+
+// ========== ORACIÓN: MURO DE PETICIONES ==========
+// Peticiones que la comunidad (o solo los líderes) ve y por las que ora con un
+// toque. "Oré" cuenta una vez por persona y día local (ver server/prayer-wall.ts).
+export const prayerRequests = pgTable("prayer_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  category: text("category").notNull().default("otro"),
+  visibility: text("visibility").notNull().default("comunidad"), // comunidad | lideres
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  status: text("status").notNull().default("abierta"), // abierta | respondida
+  answeredNote: text("answered_note"),
+  answeredAt: timestamp("answered_at"),
+  isHidden: boolean("is_hidden").notNull().default(false),
+  lastNotifiedOn: text("last_notified_on"), // último día en que se avisó al autor
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const prayerRequestPrayers = pgTable("prayer_request_prayers", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").notNull().references(() => prayerRequests.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  prayedOn: text("prayed_on").notNull(), // YYYY-MM-DD local
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const PRAYER_CATEGORIES = {
+  salud: "Salud",
+  familia: "Familia",
+  trabajo: "Trabajo y finanzas",
+  espiritual: "Vida espiritual",
+  salvacion: "Salvación de un ser querido",
+  otro: "Otro motivo",
+} as const;
+
+export type PrayerRequest = typeof prayerRequests.$inferSelect;
