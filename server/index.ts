@@ -217,7 +217,9 @@ app.use(privateFieldsFilter);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // En un 500 el mensaje interno puede traer la consulta SQL o rutas del servidor:
+    // al navegador va uno genérico (el detalle queda en el log).
+    const message = status >= 500 ? "Error interno del servidor" : err.message || "Error";
 
     console.error("Internal Server Error:", err);
 

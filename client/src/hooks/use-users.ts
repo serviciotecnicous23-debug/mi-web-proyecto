@@ -114,7 +114,11 @@ export function useDeleteUser() {
     mutationFn: async (id: number) => {
       const url = buildUrl(api.admin.deleteUser.path, { id });
       const res = await authFetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al eliminar usuario");
+      if (!res.ok) {
+        // El servidor explica por qué (p. ej. la cuenta tiene actividad y conviene desactivarla).
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || "Error al eliminar usuario");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.admin.listUsers.path] });

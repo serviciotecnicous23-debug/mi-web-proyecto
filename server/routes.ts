@@ -2443,8 +2443,21 @@ ${urls}
     if (id === req.user!.id) {
       return res.status(400).json({ message: "No puedes eliminarte a ti mismo" });
     }
-    await storage.deleteUser(id);
-    res.sendStatus(200);
+    try {
+      await storage.deleteUser(id);
+      res.sendStatus(200);
+    } catch (err: any) {
+      // Otra tabla aún apunta a la cuenta (notas, planes, cursos, diezmos…): borrarla
+      // exige decidir qué pasa con esos datos. Se explica en vez de mostrar el SQL.
+      const code = err?.cause?.code ?? err?.code;
+      if (code === "23503") {
+        return res.status(409).json({
+          message: "No se puede eliminar: esta cuenta tiene actividad en la web (notas, planes, publicaciones, cursos…). Desactívala en su lugar.",
+        });
+      }
+      console.error("[admin] no se pudo eliminar el usuario:", err);
+      res.status(500).json({ message: "No se pudo eliminar el usuario" });
+    }
   });
 
   app.get(api.admin.getWhatsappLink.path, async (req, res) => {
