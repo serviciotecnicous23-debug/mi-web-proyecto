@@ -9,6 +9,7 @@ import path from "path";
 import { startBackupScheduler } from "./backup";
 import compression from "compression";
 import helmet from "helmet";
+import { privateFieldsFilter } from "./private-fields";
 
 // ========== VERSIÓN DE NODE.JS ==========
 // Primeras versiones con el parche de seguridad de octubre de 2026 (fallo Brotli
@@ -197,6 +198,10 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Después del registro: la ruta entrega la respuesta ya sin contraseña ni tokens,
+// y así tampoco llegan al log.
+app.use(privateFieldsFilter);
 
 (async () => {
   // Ensure all database tables and columns exist before starting
