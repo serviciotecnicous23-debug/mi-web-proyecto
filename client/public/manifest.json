@@ -1,12 +1,15 @@
 {
   "id": "/radio",
-  "name": "Avivando el Fuego Radio",
-  "short_name": "Radio Avivando",
-  "description": "Radio cristiana online 24/7 del Ministerio Avivando el Fuego.",
-  "start_url": "/radio?source=pwa",
+  "name": "Avivando el Fuego",
+  "short_name": "Avivando",
+  "description": "Ministerio Avivando el Fuego: clases, Biblia, oración, comunidad y radio cristiana 24/7.",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#08070a",
   "theme_color": "#fb923c",
   "orientation": "portrait-primary",
@@ -26,26 +29,59 @@
   ],
   "shortcuts": [
     {
-      "name": "Escuchar Radio",
+      "name": "Leer la Biblia",
+      "short_name": "Biblia",
+      "url": "/biblioteca?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Clases y capacitaciones",
+      "short_name": "Clases",
+      "url": "/capacitaciones?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Pedir oración",
+      "short_name": "Oración",
+      "url": "/oracion?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Escuchar la radio",
       "short_name": "Radio",
-      "description": "Abrir Avivando el Fuego Radio",
       "url": "/radio?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Iniciar Sesion",
-      "short_name": "Sesion",
-      "url": "/login?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Registrarse",
-      "short_name": "Registro",
-      "url": "/registro?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
-  "categories": ["music", "social", "education"],
+  "categories": [
+    "education",
+    "lifestyle",
+    "music"
+  ],
   "lang": "es",
   "dir": "ltr"
 }
