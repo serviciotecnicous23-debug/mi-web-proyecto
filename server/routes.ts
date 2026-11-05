@@ -23,6 +23,7 @@ import { uploadFile } from "./file-storage";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail, sendAccountApprovedEmail, sendDirectMessageEmail, sendNewCourseEmail, sendEventReminderEmail, isEmailConfigured } from "./email";
 import { sendPushToMany, getVapidPublicKey, isPushConfigured, type PushPayload } from "./push";
 import { registerAgentRoutes } from "./agent/routes";
+import { getBibleChapter, BibleRequestError } from "./bible";
 import {
   DEFAULT_AZURACAST_HLS_URL,
   DEFAULT_AZURACAST_LIGHT_STREAM_URL,
@@ -2598,6 +2599,20 @@ ${urls}
       res.json(listBackups());
     } catch (error) {
       res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // ========== BIBLIOTECA: TEXTO BÍBLICO ==========
+  // Público y cacheable (el texto no cambia). Proveedores y respaldo en server/bible.ts.
+  app.get("/api/bible/chapter/:version/:book/:chapter", async (req, res) => {
+    try {
+      const payload = await getBibleChapter(req.params.version, req.params.book, Number(req.params.chapter));
+      // Si se sirvió el respaldo, que el navegador vuelva a pedir la versión elegida.
+      res.set("Cache-Control", payload.fallbackFrom ? "no-store" : "public, max-age=86400");
+      res.json(payload);
+    } catch (err) {
+      if (err instanceof BibleRequestError) return res.status(err.status).json({ message: err.message });
+      res.status(500).json({ message: "No se pudo cargar el texto bíblico" });
     }
   });
 
