@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CHURCH_PERMISSION_ROLES, ROLES } from "@shared/schema";
 import { useLocation } from "wouter";
 
+import { withAccents } from "@shared/labels";
 export default function MiIglesiaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -128,7 +129,7 @@ export default function MiIglesiaPage() {
             )}
             <div>
               <h1 className="text-3xl font-bold text-white">{currentChurch?.name || "Mi Iglesia"}</h1>
-              <p className="text-gray-400">{currentChurch?.city}, {currentChurch?.country}</p>
+              <p className="text-gray-400">{currentChurch?.city}, {withAccents(currentChurch?.country)}</p>
             </div>
             {currentChurch?.allianceStatus && (
               <Badge className="ml-auto bg-green-500/20 text-green-400">{currentChurch.allianceStatus}</Badge>
