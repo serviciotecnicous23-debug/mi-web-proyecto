@@ -816,7 +816,7 @@ export function Footer() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ministerio evangelístico internacional. Desde 2017, Ciudad Bolivar, Venezuela.
+              Ministerio evangelístico internacional. Desde 2017, Ciudad Bolívar, Venezuela.
             </p>
           </div>
           <div>
@@ -831,9 +831,9 @@ export function Footer() {
           <div>
             <div className="h-0.5 w-10 bg-primary rounded-full mb-3" />
             <h4 className="font-display text-xs font-semibold mb-3 tracking-widest uppercase text-foreground/80">Presencia Internacional</h4>
-            <p className="text-sm text-muted-foreground">Venezuela - Peru - USA</p>
+            <p className="text-sm text-muted-foreground">Venezuela - Perú - USA</p>
             <p className="text-sm text-muted-foreground mt-2 italic">
-              "No apaguéis el Espiritu" - 1 Tesalonicenses 5:19
+              "No apaguéis el Espíritu" - 1 Tesalonicenses 5:19
             </p>
           </div>
         </div>
