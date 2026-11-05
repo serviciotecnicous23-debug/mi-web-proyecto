@@ -21,6 +21,22 @@ if (SENTRY_DSN) {
     // Session replay: 10% normal, 100% on error
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
+    // Sentry 11 recoge por defecto cookies, cuerpos de peticiones y datos de
+    // usuario; esto mantiene lo que enviaba Sentry 10 sin `sendDefaultPii`.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: {
+        request: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+        response: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+      },
+      httpBodies: [],
+      urlQueryParams: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      graphQL: { document: false, variables: false },
+    },
   });
   console.log("[sentry] Client monitoring initialized");
 }

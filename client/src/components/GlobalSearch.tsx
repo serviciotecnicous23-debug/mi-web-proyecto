@@ -82,7 +82,7 @@ export function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Build nav items based on auth state
   const NAV_ITEMS = user

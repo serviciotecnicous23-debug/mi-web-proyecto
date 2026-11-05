@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   LogOut,
   User,
@@ -959,7 +959,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Skip to content link for screen readers - 5.5 Accessibility */}
       <a
         href="#main-content"
-        className="skip-to-content sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:text-sm focus:font-medium"
+        className="skip-to-content sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:text-sm focus:font-medium"
       >
         Saltar al contenido principal
       </a>
@@ -970,7 +970,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <motion.main
           key={location}
           id="main-content"
-          className="flex-1 focus:outline-none"
+          className="flex-1 focus:outline-hidden"
           tabIndex={-1}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

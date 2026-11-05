@@ -202,7 +202,7 @@ export default function Eventos() {
       {/* ═══ PORTADA DE CARTELERA ══════════════════════════════════ */}
       <section className="relative overflow-hidden section-aurora py-16 md:py-24">
         <p
-          className="heading-display pointer-events-none absolute -left-4 bottom-0 select-none text-[clamp(8rem,26vw,24rem)] leading-none text-foreground/[0.04]"
+          className="heading-display pointer-events-none absolute -left-4 bottom-0 select-none text-[clamp(8rem,26vw,24rem)] leading-none text-foreground/4"
           aria-hidden
         >
           {new Date().getFullYear()}
@@ -448,7 +448,7 @@ function FeaturedPoster({
           </div>
 
           <h3
-            className="heading-display mt-4 cursor-pointer break-words text-[clamp(2rem,6vw,4.6rem)] leading-[0.95] transition hover:opacity-90 [overflow-wrap:anywhere]"
+            className="heading-display mt-4 cursor-pointer wrap-break-word text-[clamp(2rem,6vw,4.6rem)] leading-[0.95] transition hover:opacity-90 wrap-anywhere"
             onClick={onViewDetails}
             data-testid={`text-event-title-${event.id}`}
           >
@@ -483,7 +483,7 @@ function FeaturedPoster({
               { value: countdown.hours, label: "horas" },
               { value: countdown.minutes, label: "min" },
             ].map((item) => (
-              <div key={item.label} className="min-w-[4.6rem] rounded-md border border-orange-300/20 bg-black/40 px-4 py-3 text-center backdrop-blur">
+              <div key={item.label} className="min-w-[4.6rem] rounded-md border border-orange-300/20 bg-black/40 px-4 py-3 text-center backdrop-blur-sm">
                 <p className="font-display text-3xl font-black leading-none md:text-4xl">{item.value}</p>
                 <p className="data-label mt-1">{item.label}</p>
               </div>
@@ -928,9 +928,9 @@ function EventDetailDialog({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline break-all"
                 >
-                  <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Link2 className="h-3.5 w-3.5 shrink-0" />
                   {meetingUrl}
-                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                  <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
                 <Button
                   size="sm"

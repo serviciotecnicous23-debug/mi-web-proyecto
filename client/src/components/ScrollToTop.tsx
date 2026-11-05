@@ -46,7 +46,7 @@ export function BackToTop() {
     <Button
       variant="outline"
       size="icon"
-      className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full shadow-lg bg-background/80 backdrop-blur-sm border-2 hover:scale-110 transition-all duration-200 group"
+      className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full shadow-lg bg-background/80 backdrop-blur-xs border-2 hover:scale-110 transition-all duration-200 group"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Volver arriba"
     >

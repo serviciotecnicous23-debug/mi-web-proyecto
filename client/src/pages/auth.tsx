@@ -192,7 +192,7 @@ export function RegisterPage() {
   const { register, isRegistering, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const form = useForm<z.infer<typeof registerSchema>>({
+  const form = useForm<z.input<typeof registerSchema>, unknown, z.output<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: { username: "", password: "", displayName: "", role: "miembro", country: "", phone: "", email: "" },
   });
@@ -298,7 +298,7 @@ export function RegisterPage() {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {roleDescriptions[field.value]?.desc || "Selecciona cómo deseas participar"}
+                      {roleDescriptions[field.value ?? ""]?.desc || "Selecciona cómo deseas participar"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

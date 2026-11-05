@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Target, Eye, Flame } from "lucide-react";
 import { LogoIcon } from "@/components/LogoIcon";
 

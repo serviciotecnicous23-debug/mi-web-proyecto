@@ -46,10 +46,10 @@ export default function AlianzaPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
+      <div className="min-h-screen bg-linear-to-b from-background to-background/80">
         {/* Hero */}
         <section className="relative py-20 px-4 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10" />
+          <div className="absolute inset-0 bg-linear-to-r from-orange-500/10 via-transparent to-orange-500/10" />
           <div className="relative max-w-4xl mx-auto">
             <Handshake className="w-16 h-16 text-orange-500 mx-auto mb-6" />
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">

@@ -134,7 +134,7 @@ export function SocialLinksFormFields({ values, onChange }: SocialLinksFormProps
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
           <div key={key} className="flex items-center gap-2">
-            <div className={`flex-shrink-0 ${SOCIAL_COLORS[key] || "text-muted-foreground"}`}>
+            <div className={`shrink-0 ${SOCIAL_COLORS[key] || "text-muted-foreground"}`}>
               <SocialIcon type={key} className="w-4 h-4" />
             </div>
             <Input

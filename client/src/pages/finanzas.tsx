@@ -143,7 +143,7 @@ export function PublicDonationSection() {
       {paymentSuccess && (
         <Card className="border-green-300 bg-green-50 dark:bg-green-950/30">
           <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0" />
+            <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />
             <div>
               <p className="font-semibold text-green-800 dark:text-green-200">¡Pago exitoso!</p>
               <p className="text-sm text-green-700 dark:text-green-300">
@@ -158,7 +158,7 @@ export function PublicDonationSection() {
       {paymentCancelled && (
         <Card className="border-orange-300 bg-orange-50 dark:bg-orange-950/30">
           <CardContent className="p-4 flex items-center gap-3">
-            <Heart className="h-6 w-6 text-orange-600 flex-shrink-0" />
+            <Heart className="h-6 w-6 text-orange-600 shrink-0" />
             <div>
               <p className="font-semibold text-orange-800 dark:text-orange-200">Pago cancelado</p>
               <p className="text-sm text-orange-700 dark:text-orange-300">
@@ -171,7 +171,7 @@ export function PublicDonationSection() {
       )}
 
       {/* Ministry info */}
-      <Card className="border-orange-200 bg-gradient-to-br from-orange-50/50 to-amber-50/30 dark:from-orange-950/20 dark:to-amber-950/10">
+      <Card className="border-orange-200 bg-linear-to-br from-orange-50/50 to-amber-50/30 dark:from-orange-950/20 dark:to-amber-950/10">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-orange-500" /> Finanzas del Ministerio
@@ -630,7 +630,7 @@ function AdminFinanceDashboard() {
                       <Pie data={byTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={40} label>
                         {byTypeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -646,7 +646,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Area type="monotone" dataKey="total" stroke="#f97316" fill="#f97316" fillOpacity={0.2} name="Ingresos" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -668,7 +668,7 @@ function AdminFinanceDashboard() {
                       <Pie data={byMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                         {byMethodData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -684,7 +684,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Bar dataKey="value" fill="#f97316" name="Total" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -743,7 +743,7 @@ function AdminFinanceDashboard() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                    <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                     <Bar dataKey="total" fill="#22c55e" name="Ingresos" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -827,7 +827,7 @@ function AdminFinanceDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                      <Tooltip formatter={(v) => `$${Number(v).toFixed(2)}`} />
                       <Line type="monotone" dataKey="total" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }} name="Ingresos" />
                     </LineChart>
                   </ResponsiveContainer>

@@ -178,7 +178,7 @@ function RadioPlayer({ url, title }: { url: string; title?: string }) {
         onEnded={() => setIsPlaying(false)}
       />
 
-      <div className="rounded-md bg-gradient-to-br from-orange-500/10 to-red-600/15 p-6 flex flex-col items-center gap-4">
+      <div className="rounded-md bg-linear-to-br from-orange-500/10 to-red-600/15 p-6 flex flex-col items-center gap-4">
         <div className="w-20 h-20 rounded-full bg-orange-500/15 flex items-center justify-center">
           {isPlaying ? (
             <AudioVisualizer isPlaying={isPlaying} />
@@ -201,7 +201,7 @@ function RadioPlayer({ url, title }: { url: string; title?: string }) {
         <div className="flex items-center gap-4">
           <Button
             size="icon"
-            className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_10px_30px_rgba(249,115,22,0.35)] hover:brightness-110"
+            className="h-12 w-12 rounded-full bg-linear-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_10px_30px_rgba(249,115,22,0.35)] hover:brightness-110"
             onClick={togglePlay}
             disabled={!url}
             data-testid="button-radio-play"
@@ -388,7 +388,7 @@ function YouTubePlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-red-950 to-black flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-red-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <SiYoutube className="w-16 h-16 text-red-500" />
         <p className="text-white text-center font-medium text-lg">Este video no permite reproducirse aquí</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
@@ -499,7 +499,7 @@ function HlsPlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (error) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-purple-950 to-black flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-purple-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <Signal className="w-16 h-16 text-purple-400" />
         <p className="text-white text-center font-medium">No se pudo conectar con el stream</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
@@ -669,7 +669,7 @@ function FacebookPlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-blue-950 to-black flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-blue-950 to-black flex flex-col items-center justify-center gap-4 p-6">
         <SiFacebook className="w-16 h-16 text-blue-500" />
         <p className="text-white text-center font-medium text-lg">No se pudo reproducir aquí</p>
         <p className="text-white/60 text-sm text-center max-w-sm">
@@ -708,7 +708,7 @@ function FacebookPlayer({ sourceUrl }: { sourceUrl: string }) {
       )}
       <div
         ref={containerRef}
-        className="w-full h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_.fb-video]:w-full [&_.fb-video]:h-full [&_.fb_iframe_widget]:w-full [&_.fb_iframe_widget]:h-full [&_span]:block [&_span]:w-full [&_span]:h-full"
+        className="w-full h-full [&_iframe]:w-full! [&_iframe]:h-full! [&_.fb-video]:w-full [&_.fb-video]:h-full [&_.fb_iframe_widget]:w-full [&_.fb_iframe_widget]:h-full [&_span]:block [&_span]:w-full [&_span]:h-full"
         data-testid="facebook-player-container"
       />
       <div className="absolute bottom-2 right-2 z-10">
@@ -756,7 +756,7 @@ function TikTokPlayer({ sourceUrl }: { sourceUrl: string }) {
 
   if (embedError || isLive || !videoId) {
     return (
-      <div className="aspect-video w-full rounded-md overflow-hidden bg-gradient-to-br from-gray-950 via-black to-pink-950/40 flex flex-col items-center justify-center gap-4 p-6">
+      <div className="aspect-video w-full rounded-md overflow-hidden bg-linear-to-br from-gray-950 via-black to-pink-950/40 flex flex-col items-center justify-center gap-4 p-6">
         <div className="relative">
           <SiTiktok className="w-16 h-16 text-white" />
           {isLive && (
@@ -777,7 +777,7 @@ function TikTokPlayer({ sourceUrl }: { sourceUrl: string }) {
         <div className="flex flex-col sm:flex-row gap-3 mt-2">
           <Button
             variant="default"
-            className="bg-gradient-to-r from-pink-500 via-red-500 to-blue-500 hover:from-pink-600 hover:via-red-600 hover:to-blue-600 text-white gap-2"
+            className="bg-linear-to-r from-pink-500 via-red-500 to-blue-500 hover:from-pink-600 hover:via-red-600 hover:to-blue-600 text-white gap-2"
             onClick={() => window.open(sourceUrl, "_blank")}
             data-testid="button-tiktok-open"
           >
@@ -880,7 +880,7 @@ function CinemaScreen({ children, live }: { children: ReactNode; live: boolean }
       <style>{`@keyframes avf-scan { 0% { top: 0.5rem; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: calc(100% - 3rem); opacity: 0; } }`}</style>
       {/* resplandor de proyección */}
       <div
-        className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.16),transparent_70%)] blur-2xl"
+        className="absolute -inset-6 rounded-4xl bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.16),transparent_70%)] blur-2xl"
         aria-hidden
       />
       <div className="relative rounded-lg border border-orange-300/25 bg-black p-2 shadow-[0_44px_130px_rgba(0,0,0,0.65)] md:p-3">
@@ -892,7 +892,7 @@ function CinemaScreen({ children, live }: { children: ReactNode; live: boolean }
         {/* línea de escáner */}
         {live && (
           <span
-            className="pointer-events-none absolute inset-x-3 z-20 h-8 rounded-full bg-gradient-to-b from-orange-400/12 to-transparent"
+            className="pointer-events-none absolute inset-x-3 z-20 h-8 rounded-full bg-linear-to-b from-orange-400/12 to-transparent"
             style={{ animation: "avf-scan 5s ease-in-out infinite" }}
             aria-hidden
           />
@@ -921,7 +921,7 @@ export default function EnVivo() {
           {/* Marquesina */}
           <div className="mb-8 flex flex-col gap-4 md:mb-12 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/10 bg-black/40 px-4 py-2 backdrop-blur">
+              <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/10 bg-black/40 px-4 py-2 backdrop-blur-sm">
                 {isLive ? <PulsingDot /> : <span className="h-3 w-3 rounded-full bg-emerald-500" />}
                 <span className="text-xs font-black uppercase tracking-[0.3em] text-orange-100" data-testid="badge-live-status">
                   {isLive ? "En vivo ahora" : "Radio 24/7 activa"}
