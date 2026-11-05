@@ -48,6 +48,10 @@ export type RadioStationPayload = {
   slogan: string;
   timezone: string;
   streamUrl: string;
+  /** Mismo directo a 64 kbps (AAC+) para quien quiere ahorrar datos. */
+  lightStreamUrl: string | null;
+  /** HLS adaptativo (48/96/192 kbps): la calidad se ajusta sola a la conexión. */
+  hlsUrl: string | null;
   metadataUrl: string;
   isConfigured: boolean;
   updatedAt: string;
@@ -88,6 +92,12 @@ export const AZURACAST_STATION_SHORTCODE = "avivando_el_fuego";
 export const DEFAULT_AZURACAST_STATION_URL = `${DEFAULT_AZURACAST_BASE_URL}/public/${AZURACAST_STATION_SHORTCODE}`;
 
 export const DEFAULT_AZURACAST_STREAM_URL = `${DEFAULT_AZURACAST_BASE_URL}/listen/${AZURACAST_STATION_SHORTCODE}/radio.mp3`;
+
+// "Ahorra datos": el mismo directo a 64 kbps AAC+ (un tercio del consumo del normal).
+export const DEFAULT_AZURACAST_LIGHT_STREAM_URL = `${DEFAULT_AZURACAST_BASE_URL}/listen/${AZURACAST_STATION_SHORTCODE}/ligero.aac`;
+
+// HLS adaptativo de AzuraCast: el reproductor elige 48, 96 o 192 kbps según la conexión.
+export const DEFAULT_AZURACAST_HLS_URL = `${DEFAULT_AZURACAST_BASE_URL}/hls/${AZURACAST_STATION_SHORTCODE}/live.m3u8`;
 
 export const DEFAULT_AZURACAST_METADATA_URL = `${DEFAULT_AZURACAST_BASE_URL}/api/nowplaying`;
 

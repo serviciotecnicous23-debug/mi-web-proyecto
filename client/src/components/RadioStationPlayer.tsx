@@ -21,6 +21,8 @@ type PlaybackStatus = "idle" | "loading" | "playing" | "paused" | "error";
 
 type RadioStationPlayerProps = {
   streamUrl: string;
+  lightStreamUrl?: string | null;
+  hlsUrl?: string | null;
   title: string;
   subtitle: string;
   isConfigured: boolean;
@@ -31,6 +33,31 @@ type RadioStationPlayerProps = {
 
 function isHlsUrl(url: string) {
   return /\.m3u8($|\?)/i.test(url) || /\/hls\//i.test(url);
+}
+
+type RadioQuality = "normal" | "ligero" | "auto";
+
+const QUALITY_KEY = "avivando:calidad-radio";
+
+// Consumo aproximado: kbps × 3600 s ÷ 8 bits ≈ MB por hora.
+const QUALITY_OPTIONS: { id: RadioQuality; label: string; detail: string }[] = [
+  { id: "normal", label: "Normal", detail: "192 kbps · ~86 MB/h" },
+  { id: "ligero", label: "Ahorra datos", detail: "64 kbps · ~29 MB/h" },
+  { id: "auto", label: "Automático", detail: "Se adapta a tu señal" },
+];
+
+/** Si el oyente nunca eligió, se respeta su teléfono: ahorro de datos o red lenta → ligero. */
+function initialQuality(): RadioQuality {
+  try {
+    const saved = localStorage.getItem(QUALITY_KEY);
+    if (saved === "normal" || saved === "ligero" || saved === "auto") return saved;
+  } catch {
+    // Sin almacenamiento (modo privado): se decide por la conexión.
+  }
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (connection?.saveData) return "ligero";
+  if (connection?.effectiveType && ["slow-2g", "2g", "3g"].includes(connection.effectiveType)) return "ligero";
+  return "normal";
 }
 
 function getNowPlayingText(data: unknown) {
@@ -67,6 +94,8 @@ function Visualizer({ active }: { active: boolean }) {
 
 export function RadioStationPlayer({
   streamUrl,
+  lightStreamUrl,
+  hlsUrl,
   title,
   subtitle,
   isConfigured,
@@ -82,8 +111,25 @@ export function RadioStationPlayer({
   const [muted, setMuted] = useState(false);
   const [metadata, setMetadata] = useState("");
   const [trackIndex, setTrackIndex] = useState(0);
+  const [quality, setQuality] = useState<RadioQuality>(initialQuality);
+  const qualityUrls: Record<RadioQuality, string | null | undefined> = { normal: streamUrl, ligero: lightStreamUrl, auto: hlsUrl };
+  // Con la biblioteca propia (pistas subidas) no hay calidades: se oye el archivo tal cual.
+  const availableQualities = playlist.length ? [] : QUALITY_OPTIONS.filter((option) => qualityUrls[option.id]);
   const playlistTrack = playlist[trackIndex];
-  const currentSource = playlistTrack?.url || streamUrl;
+  const currentSource = playlistTrack?.url || qualityUrls[quality] || streamUrl;
+
+  // Cambiar de calidad mientras suena: el efecto de currentSource reinicia el audio
+  // y, con autoPlayNextRef, vuelve a sonar solo en el stream nuevo.
+  const changeQuality = (next: RadioQuality) => {
+    if (next === quality) return;
+    autoPlayNextRef.current = status === "playing" || status === "loading";
+    setQuality(next);
+    try {
+      localStorage.setItem(QUALITY_KEY, next);
+    } catch {
+      // Sin almacenamiento: la elección vale solo para esta visita.
+    }
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -259,7 +305,7 @@ export function RadioStationPlayer({
   };
 
   const isPlaying = status === "playing" || status === "loading";
-  const statusLabel = isConfigured ? (playlist.length ? "BIBLIOTECA ACTIVA" : "SENAL OFICIAL") : "MODO PRUEBA";
+  const statusLabel = isConfigured ? (playlist.length ? "BIBLIOTECA ACTIVA" : "SEÑAL OFICIAL") : "MODO PRUEBA";
   const isScene = variant === "scene";
 
   const audioElement = (
@@ -356,6 +402,41 @@ export function RadioStationPlayer({
             </button>
           )}
         </div>
+
+        {availableQualities.length > 1 && (
+          <div className="w-full max-w-sm">
+            <p id="radio-quality-label" className="mb-2 text-[10px] font-black uppercase tracking-[0.32em] text-orange-200/80">
+              Calidad del audio
+            </p>
+            <div
+              role="radiogroup"
+              aria-labelledby="radio-quality-label"
+              className={`grid gap-2 ${availableQualities.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}
+            >
+              {availableQualities.map((option) => {
+                const selected = quality === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => changeQuality(option.id)}
+                    data-testid={`button-radio-quality-${option.id}`}
+                    className={`rounded-xl border px-2 py-2 text-left text-xs font-bold transition ${
+                      selected
+                        ? "border-orange-400/70 bg-orange-500/15 text-orange-100"
+                        : "border-white/15 bg-white/5 text-orange-50/80 hover:bg-white/10"
+                    }`}
+                  >
+                    {option.label}
+                    <span className="mt-0.5 block text-[10px] font-normal opacity-75">{option.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

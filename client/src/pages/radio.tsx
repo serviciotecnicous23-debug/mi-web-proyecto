@@ -404,6 +404,8 @@ export default function RadioPage() {
                   ) : (
                     <RadioStationPlayer
                       streamUrl={effectiveStreamUrl}
+                      lightStreamUrl={station.lightStreamUrl}
+                      hlsUrl={station.hlsUrl}
                       title={station.name}
                       subtitle={station.slogan}
                       isConfigured={station.isConfigured}
