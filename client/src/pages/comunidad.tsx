@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { useMemberPosts, useCreateMemberPost, useDeleteMemberPost, usePostComments, useCreatePostComment, useDeletePostComment } from "@/hooks/use-users";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
@@ -245,7 +246,7 @@ export default function Comunidad() {
               <div className="text-center py-4">
                 <p className="text-muted-foreground mb-3">Inicia sesión para publicar mensajes y comentarios.</p>
                 <div className="flex justify-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setLocation("/login")}>Iniciar Sesión</Button>
+                  <Button variant="outline" size="sm" onClick={() => setLocation(loginUrl())}>Iniciar Sesión</Button>
                   <Button size="sm" onClick={() => setLocation("/registro")}>Registrarse</Button>
                 </div>
               </div>

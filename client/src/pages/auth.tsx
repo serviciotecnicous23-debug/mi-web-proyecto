@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
+import { postLoginPath } from "@/lib/login-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -67,8 +68,9 @@ export function LoginPage() {
   });
 
   // Redirección segura: fuera del render para no romper los hooks de React.
+  // Vuelve a la página de la que vino (?redirect=), si era de la propia web.
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation(postLoginPath());
   }, [user, setLocation]);
 
   if (user) return null;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { useConversations, useDirectMessages, useSendDirectMessage, useUnreadMessageCount } from "@/hooks/use-users";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
@@ -44,7 +45,7 @@ export default function Mensajes() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation("/login");
+      setLocation(loginUrl());
     }
   }, [user, isLoading, setLocation]);
 

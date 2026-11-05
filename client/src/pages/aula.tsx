@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import {
   useCourse, useCourseMaterials, useCourseSessions, useMyEnrollments,
   useCourseAnnouncements, useCourseSchedule,
@@ -75,10 +76,15 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
   const updateScheduleEntry = useUpdateCourseScheduleEntry();
   const deleteScheduleEntry = useDeleteCourseScheduleEntry();
 
+  // Cambiar de página en un efecto, no durante el dibujado (React lo prohíbe).
+  useEffect(() => {
+    if (!authLoading && !user) setLocation(loginUrl());
+  }, [authLoading, user, setLocation]);
+
   if (authLoading) {
     return <Layout><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
-  if (!user) { setLocation("/login"); return null; }
+  if (!user) return null;
 
   const myEnrollment = myEnrollments?.find((e: any) => e.courseId === courseId);
   const isEnrolled = myEnrollment && (myEnrollment.status === "aprobado" || myEnrollment.status === "completado");

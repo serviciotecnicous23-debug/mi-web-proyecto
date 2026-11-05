@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { useMyEnrollments, useDeleteEnrollment } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
 import { useLocation, Link } from "wouter";
@@ -14,10 +16,15 @@ export default function MisCapacitaciones() {
   const { data: enrollments, isLoading } = useMyEnrollments();
   const deleteEnrollment = useDeleteEnrollment();
 
+  // Cambiar de página en un efecto, no durante el dibujado (React lo prohíbe).
+  useEffect(() => {
+    if (!authLoading && !user) setLocation(loginUrl());
+  }, [authLoading, user, setLocation]);
+
   if (authLoading) {
     return <Layout><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
-  if (!user) { setLocation("/login"); return null; }
+  if (!user) return null;
 
   const pending = enrollments?.filter((e: any) => e.status === "solicitado") || [];
   const active = enrollments?.filter((e: any) => e.status === "aprobado") || [];
