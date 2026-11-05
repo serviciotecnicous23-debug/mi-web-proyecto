@@ -264,7 +264,7 @@ export default function Profile() {
         <h1 className="text-3xl font-bold mb-8" data-testid="text-profile-title">Mi Perfil</h1>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
             <TabsTrigger value="perfil">Perfil</TabsTrigger>
             <TabsTrigger value="capacitaciones">
               <GraduationCap className="w-4 h-4 mr-1" /> Capacitaciones
@@ -273,7 +273,7 @@ export default function Profile() {
               Amigos {friendRequests.length > 0 && <Badge variant="destructive" className="ml-1 h-5 min-w-5 text-xs">{friendRequests.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="notificaciones">
-              <Bell className="w-4 h-4 mr-1" /> Notificaciónes
+              <Bell className="w-4 h-4 mr-1" /> Notificaciones
             </TabsTrigger>
           </TabsList>
 
@@ -703,7 +703,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="notificaciones">
-            <NotificaciónesTab />
+            <NotificacionesTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -765,7 +765,7 @@ const NOTIFICATION_PREFS = [
   { key: "emailNotifyEventReminder", label: "Recordatorios de eventos", description: "Recibir email de confirmación cuando te registres a un evento." },
 ] as const;
 
-function NotificaciónesTab() {
+function NotificacionesTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -810,7 +810,7 @@ function NotificaciónesTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Notificaciónes por Email</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Notificaciones por Email</CardTitle>
         <CardDescription>Elige qué notificaciones deseas recibir. Puedes cambiarlas en cualquier momento.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
