@@ -29,6 +29,7 @@ import { Loader2, Users, BookOpen, Heart, Eye, EyeOff } from "lucide-react";
 import { LogoIcon } from "@/components/LogoIcon";
 import { ROLES, MINISTRY_COUNTRIES } from "@shared/schema";
 
+import { withAccents } from "@shared/labels";
 // Campo de contraseña con botón para mostrarla. El botón no envía el formulario
 // (type="button") y se anuncia a los lectores de pantalla.
 const PasswordInput = forwardRef<HTMLInputElement, ComponentProps<typeof Input>>(
@@ -346,7 +347,7 @@ export function RegisterPage() {
                       </FormControl>
                       <SelectContent>
                         {MINISTRY_COUNTRIES.map(c => (
-                          <SelectItem key={c} value={c} data-testid={`option-country-${c}`}>{c}</SelectItem>
+                          <SelectItem key={c} value={c} data-testid={`option-country-${c}`}>{withAccents(c)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

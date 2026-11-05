@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Church, Handshake, Shield, BookOpen, Users, CheckCircle, Globe, Heart } from "lucide-react";
 import { MINISTRY_COUNTRIES } from "@shared/schema";
 
+import { withAccents } from "@shared/labels";
 export default function AlianzaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -169,7 +170,7 @@ export default function AlianzaPage() {
                         <SelectTrigger><SelectValue placeholder="Seleccionar país" /></SelectTrigger>
                         <SelectContent>
                           {MINISTRY_COUNTRIES.map(c => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                            <SelectItem key={c} value={c}>{withAccents(c)}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

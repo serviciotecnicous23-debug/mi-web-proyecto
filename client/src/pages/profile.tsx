@@ -34,6 +34,7 @@ import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+import { withAccents } from "@shared/labels";
 export default function Profile() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -314,7 +315,7 @@ export default function Profile() {
                   <CardTitle data-testid="text-profile-name">{user.displayName || user.username}</CardTitle>
                   <CardDescription>@{user.username}</CardDescription>
                   {user.country && (
-                    <p className="text-sm text-muted-foreground mt-1" data-testid="text-profile-country">{user.country}</p>
+                    <p className="text-sm text-muted-foreground mt-1" data-testid="text-profile-country">{withAccents(user.country)}</p>
                   )}
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>
@@ -422,7 +423,7 @@ export default function Profile() {
                               </FormControl>
                               <SelectContent>
                                 {MINISTRY_COUNTRIES.map(c => (
-                                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                                  <SelectItem key={c} value={c}>{withAccents(c)}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -603,7 +604,7 @@ export default function Profile() {
                           </Avatar>
                           <div>
                             <p className="font-medium text-sm">{req.requester?.displayName || req.requester?.username}</p>
-                            {req.requester?.country && <p className="text-xs text-muted-foreground">{req.requester.country}</p>}
+                            {req.requester?.country && <p className="text-xs text-muted-foreground">{withAccents(req.requester.country)}</p>}
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -687,7 +688,7 @@ export default function Profile() {
                             </Avatar>
                             <div>
                               <p className="font-medium text-sm">{f.friend?.displayName || f.friend?.username}</p>
-                              {f.friend?.country && <p className="text-xs text-muted-foreground">{f.friend.country}</p>}
+                              {f.friend?.country && <p className="text-xs text-muted-foreground">{withAccents(f.friend.country)}</p>}
                             </div>
                           </div>
                           <Button size="icon" variant="ghost" onClick={() => removeFriendMutation.mutate(f.id)} title="Eliminar amigo">

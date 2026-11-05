@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { withAccents } from "@shared/labels";
 /** "hace 2 horas"; la fecha completa queda en el título (al pasar el ratón). */
 function timeAgo(date?: string | Date | null) {
   if (!date) return "";
@@ -295,8 +296,8 @@ export default function Comunidad() {
                         <span className="font-semibold">
                           {post.user?.displayName || post.user?.username || 'Usuario'}
                         </span>
-                        {post.user?.cargo && <Badge variant="outline" className="text-[10px] py-0">{post.user.cargo}</Badge>}
-                        {post.user?.country && <span className="text-[10px] text-muted-foreground">{post.user.country}</span>}
+                        {post.user?.cargo && <Badge variant="outline" className="text-[10px] py-0">{withAccents(post.user.cargo)}</Badge>}
+                        {post.user?.country && <span className="text-[10px] text-muted-foreground">{withAccents(post.user.country)}</span>}
                         <span className="text-xs text-muted-foreground">
                           @{post.user?.username}
                         </span>

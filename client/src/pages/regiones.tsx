@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
+import { withAccents } from "@shared/labels";
 
 type RegionPost = {
   id: number;
@@ -277,7 +278,7 @@ function RegionManagementPanel() {
               >
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">{region.name}</span>
+                  <span className="font-medium text-sm">{withAccents(region.name)}</span>
                   <Badge variant={region.isActive ? "default" : "secondary"} className="text-xs">
                     {region.isActive ? "Activa" : "Inactiva"}
                   </Badge>
@@ -618,7 +619,7 @@ export default function RegionesPage() {
               {activeRegions.map((region) => (
                 <TabsTrigger key={region.id} value={region.name} data-testid={`tab-region-${region.name.toLowerCase().replace(/\s/g, "-")}`}>
                   <MapPin className="w-4 h-4 mr-1" />
-                  {region.name}
+                  {withAccents(region.name)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -648,7 +649,7 @@ export default function RegionesPage() {
                             <Textarea
                               value={newPost}
                               onChange={(e) => setNewPost(e.target.value)}
-                              placeholder={`Comparte algo con la region ${region.name}...`}
+                              placeholder={`Comparte algo con la región ${withAccents(region.name)}...`}
                               className="resize-none flex-1"
                               data-testid="input-region-post"
                             />
@@ -768,7 +769,7 @@ export default function RegionesPage() {
                     <Card>
                       <CardContent className="py-12 text-center">
                         <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-lg font-medium">Sin publicaciones en {region.name}</p>
+                        <p className="text-lg font-medium">Sin publicaciones en {withAccents(region.name)}</p>
                         <p className="text-muted-foreground text-sm mt-1">Se la primera persona en compartir algo.</p>
                       </CardContent>
                     </Card>

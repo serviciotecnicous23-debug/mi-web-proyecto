@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields, YouTubeLinkPreview, PostContentWithLinks } from "@/components/SocialLinks";
 
+import { withAccents } from "@shared/labels";
 type ChurchPostData = {
   id: number;
   userId: number;
@@ -173,7 +174,7 @@ function ChurchManagementPanel() {
             </SelectTrigger>
             <SelectContent>
               {MINISTRY_COUNTRIES.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+                <SelectItem key={c} value={c}>{withAccents(c)}</SelectItem>
               ))}
             </SelectContent>
           </Select>

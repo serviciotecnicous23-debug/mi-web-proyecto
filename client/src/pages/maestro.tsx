@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { withAccents } from "@shared/labels";
 // Inline Certificate Preview for Maestro panel
 function MaestroCertificatePreview({ cert, containerId }: { cert: any; containerId: string }) {
   const studentName = cert.studentName || "Estudiante";
@@ -484,7 +485,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                           <p className="font-medium text-sm">{e.user.displayName || e.user.username}</p>
                           <p className="text-xs text-muted-foreground">@{e.user.username}</p>
                           {e.user.email && <p className="text-xs text-muted-foreground">{e.user.email}</p>}
-                          {e.user.country && <p className="text-xs text-muted-foreground">{e.user.country}{e.user.cargo ? ` · ${e.user.cargo}` : ""}</p>}
+                          {e.user.country && <p className="text-xs text-muted-foreground">{withAccents(e.user.country)}{e.user.cargo ? ` · ${withAccents(e.user.cargo)}` : ""}</p>}
                           {e.grade && <p className="text-xs mt-1">Calificación: <span className="font-semibold">{e.grade}</span></p>}
                           {e.observations && <p className="text-xs text-muted-foreground mt-1">{e.observations}</p>}
                         </div>
