@@ -72,6 +72,7 @@ import type { Fire3DSceneHandle } from "@/components/Fire3DScene";
 // Desktop nav links — PUBLIC (visitors / not logged in)
 const publicDesktopNavLinks = [
   { href: "/", label: "Inicio" },
+  { href: "/biblioteca", label: "Biblia" },
   { href: "/eventos", label: "Eventos" },
   { href: "/regiones", label: "Regiones" },
   { href: "/iglesias", label: "Iglesias" },
@@ -103,6 +104,12 @@ const publicMobileNavGroups = [
     alwaysOpen: true,
   },
   {
+    title: "Formación",
+    icon: BookOpen,
+    links: [{ href: "/biblioteca", label: "Biblia", icon: BookOpen }],
+    alwaysOpen: true,
+  },
+  {
     title: "Eventos",
     icon: Calendar,
     links: [
@@ -131,7 +138,7 @@ const publicMobileNavGroups = [
     alwaysOpen: true,
   },
   {
-    title: "Mas",
+    title: "Más",
     icon: MapPin,
     links: [
       { href: "/contacto", label: "Contacto", icon: MapPin },
@@ -151,7 +158,7 @@ const memberMobileNavGroups = [
     alwaysOpen: true,
   },
   {
-    title: "Formacion",
+    title: "Formación",
     icon: GraduationCap,
     links: [
       { href: "/capacitaciones", label: "Capacitaciones", icon: GraduationCap },
@@ -183,7 +190,7 @@ const memberMobileNavGroups = [
     ],
   },
   {
-    title: "Mas",
+    title: "Más",
     icon: MapPin,
     links: [{ href: "/contacto", label: "Contacto", icon: MapPin }],
     alwaysOpen: true,

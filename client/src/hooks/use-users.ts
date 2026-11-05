@@ -1055,7 +1055,8 @@ export function useUpsertSessionAttendance() {
 }
 
 // ========== BIBLIOTECA: BIBLE HIGHLIGHTS ==========
-export function useBibleHighlights(book?: string, chapter?: number) {
+/** `enabled`: false para visitantes (la Biblia se lee sin cuenta; resaltar no). */
+export function useBibleHighlights(book?: string, chapter?: number, enabled = true) {
   const params = new URLSearchParams();
   if (book) params.set("book", book);
   if (chapter !== undefined) params.set("chapter", String(chapter));
@@ -1067,6 +1068,7 @@ export function useBibleHighlights(book?: string, chapter?: number) {
       if (!res.ok) return [];
       return res.json();
     },
+    enabled,
   });
 }
 
@@ -1095,7 +1097,8 @@ export function useDeleteBibleHighlight() {
 }
 
 // ========== BIBLIOTECA: BIBLE NOTES ==========
-export function useBibleNotes(book?: string, chapter?: number) {
+/** `enabled`: false para visitantes (la Biblia se lee sin cuenta; las notas son personales). */
+export function useBibleNotes(book?: string, chapter?: number, enabled = true) {
   const params = new URLSearchParams();
   if (book) params.set("book", book);
   if (chapter !== undefined) params.set("chapter", String(chapter));
@@ -1107,6 +1110,7 @@ export function useBibleNotes(book?: string, chapter?: number) {
       if (!res.ok) return [];
       return res.json();
     },
+    enabled,
   });
 }
 
