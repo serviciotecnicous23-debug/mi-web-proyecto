@@ -1390,7 +1390,12 @@ ${urls}
     const id = parseInt(req.params.id);
     const user = await storage.getUser(id);
     if (!user) return res.sendStatus(404);
-    res.json(user);
+    const { password, emailVerifyToken, emailVerifyExpires, ...safeUser } = user;
+    if (req.user!.id === id || isAdmin(req)) return res.json(safeUser);
+    // A los demás miembros, solo el perfil público: sin correo, teléfono ni avisos.
+    const { email, phone, emailVerified, emailNotifyAccountApproved, emailNotifyDirectMessage,
+      emailNotifyNewCourse, emailNotifyEventReminder, ...publicProfile } = safeUser;
+    res.json(publicProfile);
   });
 
   app.patch(api.users.update.path, async (req, res) => {
