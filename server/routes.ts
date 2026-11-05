@@ -3657,7 +3657,12 @@ ${urls}
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) return res.status(404).json({ message: "Inscripción no encontrada" });
       if (enrollment.status !== "completado") return res.status(400).json({ message: "El estudiante no ha completado el curso" });
-      
+
+      // Al marcar "completado" ya se emite uno solo: no crear un segundo certificado
+      // (antes este botón duplicaba el del alumno).
+      const existing = await storage.getCertificateByEnrollment(enrollmentId);
+      if (existing) return res.json(existing);
+
       const course = await storage.getCourse(enrollment.courseId);
       const teacher = course?.teacherId ? await storage.getUser(course.teacherId) : null;
       const code = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;

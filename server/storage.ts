@@ -2245,7 +2245,17 @@ export class DatabaseStorage implements IStorage {
       isCoCertified: certificates.isCoCertified,
       courseTitle: courses.title,
     }).from(certificates).leftJoin(courses, eq(certificates.courseId, courses.id)).where(eq(certificates.userId, userId)).orderBy(desc(certificates.issuedAt));
-    return rows.map(r => ({
+    // Un certificado por inscripción: el botón "Generar certificado" llegó a crear
+    // duplicados. Se muestra el más reciente (el que el maestro pudo personalizar);
+    // los códigos de los demás siguen verificándose.
+    const seen = new Set<number>();
+    const unique = rows.filter(r => {
+      if (r.enrollmentId == null) return true;
+      if (seen.has(r.enrollmentId)) return false;
+      seen.add(r.enrollmentId);
+      return true;
+    });
+    return unique.map(r => ({
       id: r.id, userId: r.userId, courseId: r.courseId, enrollmentId: r.enrollmentId,
       certificateCode: r.certificateCode, issuedAt: r.issuedAt, teacherName: r.teacherName, grade: r.grade,
       studentNameOverride: r.studentNameOverride, courseNameOverride: r.courseNameOverride,

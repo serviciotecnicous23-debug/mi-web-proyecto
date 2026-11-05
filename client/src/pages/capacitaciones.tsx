@@ -94,7 +94,7 @@ export default function Capacitaciones() {
           <GraduationCap className="w-12 h-12 text-primary mx-auto mb-3" />
           <h1 className="text-3xl font-bold mb-2" data-testid="text-capacitaciones-title">Capacitaciones</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Centro de formacion ministerial — Cursos, sesiones, horarios y anuncios en un solo lugar.
+            Centro de formación ministerial — Cursos, sesiones, horarios y anuncios en un solo lugar.
           </p>
         </div>
 

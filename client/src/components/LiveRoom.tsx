@@ -427,7 +427,7 @@ export default function LiveRoom({
             No hay sala en vivo en este momento.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Recibiras una notificación cuando se inicie una sala.
+            Recibirás una notificación cuando se inicie una sala.
           </p>
         </div>
       </CardContent>

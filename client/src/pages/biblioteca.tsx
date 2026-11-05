@@ -1689,7 +1689,7 @@ export default function BibliotecaPage() {
           <Library className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-3xl font-bold mb-2">Biblioteca</h1>
           <p className="text-muted-foreground">
-            Tu cuenta está pendiente de aprobación. Una vez aprobada, podras acceder a todos los recursos de la biblioteca.
+            Tu cuenta está pendiente de aprobación. Una vez aprobada, podrás acceder a todos los recursos de la biblioteca.
           </p>
         </div>
       </Layout>

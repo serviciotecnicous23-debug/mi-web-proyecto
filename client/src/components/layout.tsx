@@ -875,19 +875,19 @@ function EmailVerifyBanner() {
         <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
           <MailWarning className="w-4 h-4 shrink-0" />
           <span>
-            Tu correo <strong>{user.email}</strong> no esta verificado.
+            Tu correo <strong>{user.email}</strong> no está verificado.
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-xs border-amber-300 hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900"
+            className="h-9 text-xs border-amber-300 hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900"
             onClick={handleResend}
             disabled={sending}
           >
             {sending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-            Enviar verificacion
+            Enviar verificación
           </Button>
           <Button
             variant="ghost"

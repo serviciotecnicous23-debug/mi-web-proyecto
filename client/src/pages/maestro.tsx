@@ -743,7 +743,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
             <div><Label>Título</Label><Input value={sessionForm.title} onChange={e => setSessionForm(f => ({ ...f, title: e.target.value }))} data-testid="input-session-title" /></div>
             <div><Label>Descripción</Label><Textarea value={sessionForm.description} onChange={e => setSessionForm(f => ({ ...f, description: e.target.value }))} data-testid="input-session-description" /></div>
             <div><Label>Fecha y Hora</Label><Input type="datetime-local" value={sessionForm.sessionDate} onChange={e => setSessionForm(f => ({ ...f, sessionDate: e.target.value }))} data-testid="input-session-date" /></div>
-            <div><Label>Duracion (minutos)</Label><Input type="number" value={sessionForm.duration} onChange={e => setSessionForm(f => ({ ...f, duration: e.target.value }))} data-testid="input-session-duration" /></div>
+            <div><Label>Duración (minutos)</Label><Input type="number" value={sessionForm.duration} onChange={e => setSessionForm(f => ({ ...f, duration: e.target.value }))} data-testid="input-session-duration" /></div>
             <div><Label>Enlace de Reunión</Label><Input value={sessionForm.meetingUrl} onChange={e => setSessionForm(f => ({ ...f, meetingUrl: e.target.value }))} placeholder="https://zoom.us/j/..." data-testid="input-session-url" /></div>
             <div><Label>Plataforma</Label>
               <Select value={sessionForm.meetingPlatform} onValueChange={v => setSessionForm(f => ({ ...f, meetingPlatform: v }))}>
