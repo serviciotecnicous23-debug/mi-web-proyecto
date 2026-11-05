@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -1621,6 +1621,13 @@ export const BADGE_TYPES = {
   maestro_certificado: "Maestro Certificado",
   intercesor: "Intercesor Fiel",
   evangelista_digital: "Evangelista Digital",
+  // Club de lectura (shared/club.ts)
+  primer_capitulo: "Primer Capítulo Leído",
+  racha_7: "Racha de 7 Días",
+  racha_30: "Racha de 30 Días",
+  racha_100: "Racha de 100 Días",
+  desafio_club: "Desafío del Club Completado",
+  versiculo_memorizado: "Versículo Memorizado",
 } as const;
 
 export type MemberProgressEntry = typeof memberProgress.$inferSelect;
@@ -1726,3 +1733,46 @@ export const agentActivityLog = pgTable("agent_activity_log", {
 
 export type AgentActivityEntry = typeof agentActivityLog.$inferSelect;
 export type InsertAgentActivityEntry = typeof agentActivityLog.$inferInsert;
+
+// ========== BIBLIOTECA: CLUB DE LECTURA VIVO ==========
+// Una lectura cuenta cuando se hace en la Biblia de la web: un registro por
+// usuario, capítulo y día local del lector (ver shared/club.ts).
+export const bibleReadingLog = pgTable("bible_reading_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  book: text("book").notNull(),
+  chapter: integer("chapter").notNull(),
+  version: text("version"),
+  readOn: text("read_on").notNull(), // YYYY-MM-DD en la zona horaria del lector
+  seconds: integer("seconds").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const clubChallenges = pgTable("club_challenges", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  chapters: jsonb("chapters").$type<{ book: string; chapter: number }[]>().notNull(),
+  chaptersPerDay: integer("chapters_per_day").notNull().default(1),
+  startDate: text("start_date").notNull(), // YYYY-MM-DD
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const clubChallengeMembers = pgTable("club_challenge_members", {
+  id: serial("id").primaryKey(),
+  challengeId: integer("challenge_id").notNull().references(() => clubChallenges.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const clubMemoryVerses = pgTable("club_memory_verses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  week: text("week").notNull(), // semana ISO, p. ej. 2026-W45
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+export type BibleReadingEntry = typeof bibleReadingLog.$inferSelect;
+export type ClubChallenge = typeof clubChallenges.$inferSelect;

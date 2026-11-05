@@ -812,6 +812,49 @@ CREATE TABLE IF NOT EXISTS "agent_activity_log" (
 
 CREATE INDEX IF NOT EXISTS "idx_agent_activity_mission" ON "agent_activity_log"("mission_id");
 CREATE INDEX IF NOT EXISTS "idx_agent_activity_created_at" ON "agent_activity_log"("created_at");
+
+-- Club de lectura vivo (shared/club.ts). ON DELETE CASCADE para no bloquear el
+-- borrado de usuarios.
+CREATE TABLE IF NOT EXISTS "bible_reading_log" (
+  "id" serial PRIMARY KEY,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "book" text NOT NULL,
+  "chapter" integer NOT NULL,
+  "version" text,
+  "read_on" text NOT NULL,
+  "seconds" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_bible_reading_log_day" ON "bible_reading_log"("user_id", "book", "chapter", "read_on");
+CREATE INDEX IF NOT EXISTS "idx_bible_reading_log_read_on" ON "bible_reading_log"("read_on");
+
+CREATE TABLE IF NOT EXISTS "club_challenges" (
+  "id" serial PRIMARY KEY,
+  "title" text NOT NULL,
+  "description" text,
+  "chapters" jsonb NOT NULL,
+  "chapters_per_day" integer NOT NULL DEFAULT 1,
+  "start_date" text NOT NULL,
+  "created_by" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "created_at" timestamp DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "club_challenge_members" (
+  "id" serial PRIMARY KEY,
+  "challenge_id" integer NOT NULL REFERENCES "club_challenges"("id") ON DELETE CASCADE,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "joined_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_club_challenge_member" ON "club_challenge_members"("challenge_id", "user_id");
+
+CREATE TABLE IF NOT EXISTS "club_memory_verses" (
+  "id" serial PRIMARY KEY,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "week" text NOT NULL,
+  "completed_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_club_memory_verse_week" ON "club_memory_verses"("user_id", "week");
 `;
 
 // ALTER TABLE statements to add columns that might be missing from older schemas

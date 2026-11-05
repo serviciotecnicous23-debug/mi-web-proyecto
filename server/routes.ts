@@ -24,6 +24,7 @@ import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail, sendAc
 import { sendPushToMany, getVapidPublicKey, isPushConfigured, type PushPayload } from "./push";
 import { registerAgentRoutes } from "./agent/routes";
 import { getBibleChapter, BibleRequestError } from "./bible";
+import { registerClubRoutes, notifyClubComment, readingClubPostAuthor } from "./club";
 import {
   DEFAULT_AZURACAST_HLS_URL,
   DEFAULT_AZURACAST_LIGHT_STREAM_URL,
@@ -2621,6 +2622,10 @@ ${urls}
     }
   });
 
+  // ========== BIBLIOTECA: CLUB DE LECTURA VIVO ==========
+  // Lecturas comprobadas, desafíos del club, racha e insignias (server/club.ts).
+  registerClubRoutes(app, { isTeacherOrAdmin });
+
   // ========== BIBLIOTECA: BIBLE HIGHLIGHTS ==========
   app.get(api.bibleHighlights.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -2823,7 +2828,8 @@ ${urls}
   app.delete(api.readingClub.delete.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const id = parseInt(req.params.id);
-    if (!isAdmin(req)) return res.sendStatus(403);
+    // El autor puede borrar su propia reflexión; la moderación, cualquiera.
+    if (!isAdmin(req) && (await readingClubPostAuthor(id)) !== req.user!.id) return res.sendStatus(403);
     await storage.deleteReadingClubPost(id);
     res.sendStatus(200);
   });
@@ -2853,6 +2859,7 @@ ${urls}
       const postId = parseInt(req.params.id);
       const input = api.readingClub.createComment.input.parse({ ...req.body, postId });
       const comment = await storage.createReadingClubComment(req.user!.id, input);
+      notifyClubComment(postId, req.user!).catch((err) => console.error("[club] aviso de comentario:", err));
       res.status(201).json(comment);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
