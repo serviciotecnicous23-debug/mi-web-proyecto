@@ -144,7 +144,8 @@
   }
 }
 
-@utility toggle-elevate {
+/* Las clases propias del diseño van como CSS normal y sin capa, no como @utility: Tailwind 4 ordena las @utility antes que sus utilidades de una sola propiedad (bg-primary, border...) y estas les ganaban; en Tailwind 3 era al revés y el diseño cuenta con que ganen las propias. */
+.toggle-elevate {
   &::before {
     content: '';
     pointer-events: none;
@@ -161,7 +162,7 @@
   }
 }
 
-@utility toggle-elevate-2 {
+.toggle-elevate-2 {
   &::before {
     content: '';
     pointer-events: none;
@@ -172,13 +173,13 @@
   }
 }
 
-@utility toggle-elevated {
+.toggle-elevated {
   &.toggle-elevate::before {
     background-color: var(--elevate-2);
   }
 }
 
-@utility border {
+.border {
   &.toggle-elevate::before {
     inset: -1px;
   }
@@ -196,7 +197,7 @@
   }
 }
 
-@utility hover-elevate {
+.hover-elevate {
   &:not(.no-default-hover-elevate) {
     position: relative;
     z-index: 0;
@@ -217,7 +218,7 @@
   }
 }
 
-@utility active-elevate {
+.active-elevate {
   &:not(.no-default-active-elevate) {
     position: relative;
     z-index: 0;
@@ -238,7 +239,7 @@
   }
 }
 
-@utility hover-elevate-2 {
+.hover-elevate-2 {
   &:not(.no-default-hover-elevate) {
     position: relative;
     z-index: 0;
@@ -259,7 +260,7 @@
   }
 }
 
-@utility active-elevate-2 {
+.active-elevate-2 {
   &:not(.no-default-active-elevate) {
     position: relative;
     z-index: 0;
@@ -280,7 +281,7 @@
   }
 }
 
-@utility fire-gradient {
+.fire-gradient {
   /* ── Fire gradient ─────────────────────────────────────────────── */
   background: linear-gradient(
     135deg,
@@ -290,7 +291,7 @@
   );
 }
 
-@utility fire-text {
+.fire-text {
   /* ── Fire text: animated shimmer sweep (Oswald for max impact) ─── */
   background: linear-gradient(
     105deg,
@@ -307,14 +308,14 @@
   animation: fire-shimmer 4.5s linear infinite;
 }
 
-@utility dark {
+.dark {
   /* ── Canvas particle: screen blend in dark mode ─────────────────── */
   & .fire-canvas {
     mix-blend-mode: screen;
   }
 }
 
-@utility fire-canvas {
+.fire-canvas {
   /* ── Canvas particle: screen blend in dark mode ─────────────────── */
   .dark & {
     mix-blend-mode: screen;
@@ -322,7 +323,7 @@
   mix-blend-mode: normal;
 }
 
-@utility flame-logo-wrap {
+.flame-logo-wrap {
   /* ── Logo breathing glow (wraps the FlameLogoSVG) ───────────────── */
   animation: flame-glow-pulse 2.8s ease-in-out infinite;
   display: inline-flex;
@@ -330,7 +331,7 @@
   justify-content: center;
 }
 
-@utility fire-btn-primary {
+.fire-btn-primary {
   /* ── Primary fire button ─────────────────────────────────────────── */
   position: relative;
   overflow: hidden;
@@ -375,7 +376,7 @@
   }
 }
 
-@utility glass-panel {
+.glass-panel {
   /* ── Glassmorphism panels — v4: 3D depth, lift & sheen ──────────── */
   background: rgba(9, 10, 18, 0.72);
   backdrop-filter: blur(24px) saturate(180%);
@@ -388,7 +389,7 @@
   }
 }
 
-@utility glass-card {
+.glass-card {
   position: relative;
   border-radius: calc(var(--radius) + 4px);
   background:
@@ -441,7 +442,7 @@
   }
 }
 
-@utility glass-pill {
+.glass-pill {
   /* ── Glass pill — v6: chip tecnico monoespaciado ─────────────────── */
   border: 1px solid rgba(249, 115, 22, 0.28);
   background: rgba(249, 115, 22, 0.08);
@@ -460,7 +461,7 @@
   }
 }
 
-@utility navbar-glass {
+.navbar-glass {
   /* ── Glassmorphic Navbar ─────────────────────────────────────────── */
   background: rgba(9, 10, 18, 0.6);
   backdrop-filter: blur(28px) saturate(200%);
@@ -487,7 +488,7 @@
   }
 }
 
-@utility nav-scrolled {
+.nav-scrolled {
   &.navbar-glass {
     background: rgba(9, 10, 18, 0.9);
     box-shadow:
@@ -502,7 +503,7 @@
   }
 }
 
-@utility nav-link {
+.nav-link {
   /* ── Desktop nav link text style ────────────────────────────────── */
   display: inline-flex;
   align-items: center;
@@ -537,14 +538,14 @@
   }
 }
 
-@utility nav-link-active {
+.nav-link-active {
   color: hsl(var(--primary));
   &::after {
     width: 65%;
   }
 }
 
-@utility hero-grid-bg {
+.hero-grid-bg {
   /* ── Hero grid background ────────────────────────────────────────── */
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
@@ -567,7 +568,7 @@
   }
 }
 
-@utility neon-border-fire {
+.neon-border-fire {
   /* ── Neon fire border ────────────────────────────────────────────── */
   box-shadow:
     0 0 0 1px hsl(24 95% 53% / 0.32),
@@ -575,7 +576,7 @@
     inset 0 0 0 1px hsl(24 95% 53% / 0.1);
 }
 
-@utility heading-display {
+.heading-display {
   /* ── Display heading helper (Oswald + uppercase) ─────────────────── */
   font-family: var(--font-display);
   font-weight: 700;
@@ -585,7 +586,7 @@
   text-wrap: balance;
 }
 
-@utility section-reveal {
+.section-reveal {
   /* ── Section reveal ──────────────────────────────────────────────── */
   opacity: 0;
   transform: translateY(22px);
@@ -598,14 +599,14 @@
   }
 }
 
-@utility visible {
+.visible {
   &.section-reveal {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-@utility section-aurora {
+.section-aurora {
   /* ═══ v4 NEW UTILITIES ═══════════════════════════════════════════ */
 
   /* Aurora de fuego para fondos de sección (colócala en un section
@@ -642,7 +643,7 @@
   }
 }
 
-@utility card-3d {
+.card-3d {
   /* Tarjeta con inclinación 3D al hover (perspective real) */
   transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
@@ -652,7 +653,7 @@
   }
 }
 
-@utility icon-chip-fire {
+.icon-chip-fire {
   /* Chip de ícono con halo de fuego (para íconos de áreas/secciones) */
   display: inline-flex;
   align-items: center;
@@ -669,12 +670,12 @@
     0 0 18px hsl(24 95% 53% / 0.12);
 }
 
-@utility stat-glow {
+.stat-glow {
   /* Número de estadística con halo (combínalo con .fire-text) */
   filter: drop-shadow(0 0 14px hsl(24 95% 53% / 0.35));
 }
 
-@utility accent-serif {
+.accent-serif {
   /* ── ASCUA: acento editorial en itálica serif ───────────────────── */
   font-family: var(--font-serif);
   font-style: italic;
@@ -683,7 +684,7 @@
   letter-spacing: 0;
 }
 
-@utility text-ghost {
+.text-ghost {
   /* ── ASCUA: texto fantasma delineado (capa ghost del hero) ──────── */
   color: transparent;
   -webkit-text-stroke: 1.5px hsl(42 32% 90% / 0.3);
@@ -692,7 +693,7 @@
   }
 }
 
-@layer utilities {
+/* Estilos propios del diseño, SIN capa a propósito: en Tailwind 4 lo que va en @layer utilities pierde frente a las utilidades generadas (en Tailwind 3 ganaba). */
   /* ═══════════════════════════════════════════════════════════════════════
    FUTURISMO MINISTERIAL — Design System v5.0
    Dark: Obsidian cool-black + Fire neon accents (orange/red/amber)
@@ -873,7 +874,6 @@
       0px 8px 10px -6px rgba(0, 0, 0, 0.65);
     --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.8);
   }
-}
 
 @layer base {
   * {
@@ -929,7 +929,7 @@
   }
 }
 
-@layer utilities {
+/* Estilos propios del diseño, SIN capa a propósito: en Tailwind 4 lo que va en @layer utilities pierde frente a las utilidades generadas (en Tailwind 3 ganaba). */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }
@@ -940,14 +940,13 @@
   }
   .no-default-hover-elevate {}
   .no-default-active-elevate {}
-}
 
 /*
   En la v3 este CSS iba sin capa detrás de las utilidades y competía con ellas
   por especificidad. En la v4 el CSS sin capa gana siempre, así que se mete en
   la capa de utilidades para conservar el mismo resultado.
 */
-@layer utilities {
+/* Estilos propios del diseño, SIN capa a propósito: en Tailwind 4 lo que va en @layer utilities pierde frente a las utilidades generadas (en Tailwind 3 ganaba). */
   /* ═══════════════════════════════════════════════════════════════════════
      KEYFRAMES
      ═══════════════════════════════════════════════════════════════════════ */
@@ -1678,4 +1677,3 @@
   }
   .dark .bg-secondary { backdrop-filter: blur(6px); }
   [role="tab"]:focus-visible { outline-color: hsl(17 100% 56%); }
-}
