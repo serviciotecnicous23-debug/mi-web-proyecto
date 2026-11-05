@@ -24,6 +24,8 @@ import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail, sendAc
 import { sendPushToMany, getVapidPublicKey, isPushConfigured, type PushPayload } from "./push";
 import { registerAgentRoutes } from "./agent/routes";
 import {
+  DEFAULT_AZURACAST_HLS_URL,
+  DEFAULT_AZURACAST_LIGHT_STREAM_URL,
   DEFAULT_AZURACAST_METADATA_URL,
   DEFAULT_AZURACAST_STATION_URL,
   DEFAULT_AZURACAST_STREAM_URL,
@@ -2444,11 +2446,16 @@ ${urls}
     const configuredStream = envStream || DEFAULT_AZURACAST_STREAM_URL;
     const stationUrl = normalizeRadioStationUrl(process.env.RADIO_STATION_URL || "") || DEFAULT_AZURACAST_STATION_URL;
     const metadataUrl = process.env.RADIO_METADATA_URL || DEFAULT_AZURACAST_METADATA_URL;
+    // Las variantes ligera y HLS solo existen en el AzuraCast propio; si el stream
+    // principal apunta a otro sitio, se configuran aparte o no se ofrecen.
+    const usesOwnAzuraCast = configuredStream === DEFAULT_AZURACAST_STREAM_URL;
     const station: RadioStationPayload = {
       name: "Avivando el Fuego Radio",
-      slogan: "Avivando el fuego del Espiritu Santo 24/7",
+      slogan: "Avivando el fuego del Espíritu Santo 24/7",
       timezone: process.env.RADIO_TIMEZONE || RADIO_TIMEZONE,
       streamUrl: configuredStream || firstUploadedTrack || DEFAULT_PUBLIC_RADIO_STREAM,
+      lightStreamUrl: process.env.RADIO_LIGHT_STREAM_URL || (usesOwnAzuraCast ? DEFAULT_AZURACAST_LIGHT_STREAM_URL : null),
+      hlsUrl: process.env.RADIO_HLS_URL || (usesOwnAzuraCast ? DEFAULT_AZURACAST_HLS_URL : null),
       metadataUrl,
       isConfigured: Boolean(configuredStream || firstUploadedTrack),
       updatedAt: new Date().toISOString(),
