@@ -31,85 +31,57 @@ import {
 } from "@/hooks/use-users";
 import { SiWhatsapp } from "react-icons/si";
 import { HIGHLIGHT_COLORS, RESOURCE_CATEGORIES, BIBLE_BOOKS } from "@shared/schema";
+import {
+  BIBLE_BOOK_CHAPTERS, BIBLE_VERSIONS, DEFAULT_BIBLE_VERSION, bibleBookLabel, isBibleVersion,
+  type BibleChapterPayload, type BibleVersion,
+} from "@shared/bible";
 
-const BIBLE_BOOK_SLUG_MAP: Record<string, string> = {
-  "Genesis": "gn", "Exodo": "ex", "Levitico": "lv", "Numeros": "nm", "Deuteronomio": "dt",
-  "Josue": "js", "Jueces": "jue", "Rut": "rt", "1 Samuel": "1s", "2 Samuel": "2s",
-  "1 Reyes": "1r", "2 Reyes": "2r", "1 Cronicas": "1cr", "2 Cronicas": "2cr",
-  "Esdras": "esd", "Nehemias": "ne", "Ester": "est", "Job": "job", "Salmos": "sal",
-  "Proverbios": "pr", "Eclesiastes": "ec", "Cantares": "cnt", "Isaias": "is", "Jeremias": "jr",
-  "Lamentaciones": "lm", "Ezequiel": "ez", "Daniel": "dn", "Oseas": "os", "Joel": "jl",
-  "Amos": "am", "Abdias": "abd", "Jonas": "jon", "Miqueas": "mi", "Nahum": "nah",
-  "Habacuc": "hab", "Sofonias": "sof", "Hageo": "hag", "Zacarias": "zac", "Malaquias": "mal",
-  "Mateo": "mt", "Marcos": "mr", "Lucas": "lc", "Juan": "jn", "Hechos": "hch",
-  "Romanos": "ro", "1 Corintios": "1co", "2 Corintios": "2co", "Galatas": "ga", "Efesios": "ef",
-  "Filipenses": "fil", "Colosenses": "col", "1 Tesalonicenses": "1ts", "2 Tesalonicenses": "2ts",
-  "1 Timoteo": "1ti", "2 Timoteo": "2ti", "Tito": "tit", "Filemon": "flm", "Hebreos": "he",
-  "Santiago": "stg", "1 Pedro": "1p", "2 Pedro": "2p", "1 Juan": "1jn", "2 Juan": "2jn",
-  "3 Juan": "3jn", "Judas": "jud", "Apocalipsis": "ap",
-};
+type BibleVerse = BibleChapterPayload["verses"][number];
 
-const BOOK_CHAPTERS: Record<string, number> = {
-  "Genesis": 50, "Exodo": 40, "Levitico": 27, "Numeros": 36, "Deuteronomio": 34,
-  "Josue": 24, "Jueces": 21, "Rut": 4, "1 Samuel": 31, "2 Samuel": 24,
-  "1 Reyes": 22, "2 Reyes": 25, "1 Cronicas": 29, "2 Cronicas": 36,
-  "Esdras": 10, "Nehemias": 13, "Ester": 10, "Job": 42, "Salmos": 150,
-  "Proverbios": 31, "Eclesiastes": 12, "Cantares": 8, "Isaias": 66, "Jeremias": 52,
-  "Lamentaciones": 5, "Ezequiel": 48, "Daniel": 12, "Oseas": 14, "Joel": 3,
-  "Amos": 9, "Abdias": 1, "Jonas": 4, "Miqueas": 7, "Nahum": 3,
-  "Habacuc": 3, "Sofonias": 3, "Hageo": 2, "Zacarias": 14, "Malaquias": 4,
-  "Mateo": 28, "Marcos": 16, "Lucas": 24, "Juan": 21, "Hechos": 28,
-  "Romanos": 16, "1 Corintios": 16, "2 Corintios": 13, "Galatas": 6, "Efesios": 6,
-  "Filipenses": 4, "Colosenses": 4, "1 Tesalonicenses": 5, "2 Tesalonicenses": 3,
-  "1 Timoteo": 6, "2 Timoteo": 4, "Tito": 3, "Filemon": 1, "Hebreos": 13,
-  "Santiago": 5, "1 Pedro": 5, "2 Pedro": 3, "1 Juan": 5, "2 Juan": 1,
-  "3 Juan": 1, "Judas": 1, "Apocalipsis": 22,
-};
+const BIBLE_VERSION_KEY = "avivando:version-biblia";
 
-interface BibleVerse {
-  verse: number;
-  text: string;
-  study?: string;
+function readSavedBibleVersion(): BibleVersion {
+  try {
+    const saved = localStorage.getItem(BIBLE_VERSION_KEY);
+    if (saved && isBibleVersion(saved)) return saved;
+  } catch {
+    // Sin localStorage (modo privado): se usa la versión por defecto.
+  }
+  return DEFAULT_BIBLE_VERSION;
 }
 
-const BIBLE_VERSIONS: Record<string, { label: string; desc: string }> = {
-  rv1960: { label: "RV1960", desc: "Reina Valera 1960 - Clásica" },
-  nvi: { label: "NVI", desc: "Nueva Version Internacional - Moderna" },
-  rv1995: { label: "RV1995", desc: "Reina Valera 1995 - Actualizada" },
-};
-
 const DAILY_VERSES = [
-  { ref: "Josue 1:9", text: "Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehova tu Dios estara contigo en dondequiera que vayas." },
-  { ref: "Salmos 23:1", text: "Jehova es mi pastor; nada me faltara." },
-  { ref: "Proverbios 3:5-6", text: "Fiate de Jehova de todo tu corazon, y no te apoyes en tu propia prudencia. Reconocelo en todos tus caminos, y el enderezara tus veredas." },
-  { ref: "Isaias 41:10", text: "No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo; siempre te ayudare, siempre te sustentare con la diestra de mi justicia." },
-  { ref: "Jeremias 29:11", text: "Porque yo se los pensamientos que tengo acerca de vosotros, dice Jehova, pensamientos de paz, y no de mal, para daros el fin que esperais." },
+  { ref: "Josué 1:9", text: "Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo en dondequiera que vayas." },
+  { ref: "Salmos 23:1", text: "Jehová es mi pastor; nada me faltará." },
+  { ref: "Proverbios 3:5-6", text: "Fíate de Jehová de todo tu corazón, Y no te apoyes en tu propia prudencia. Reconócelo en todos tus caminos, Y él enderezará tus veredas." },
+  { ref: "Isaías 41:10", text: "No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo; siempre te ayudaré, siempre te sustentaré con la diestra de mi justicia." },
+  { ref: "Jeremías 29:11", text: "Porque yo sé los pensamientos que tengo acerca de vosotros, dice Jehová, pensamientos de paz, y no de mal, para daros el fin que esperáis." },
   { ref: "Filipenses 4:13", text: "Todo lo puedo en Cristo que me fortalece." },
-  { ref: "Romanos 8:28", text: "Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su proposito son llamados." },
-  { ref: "Salmos 119:105", text: "Lampara es a mis pies tu palabra, y lumbrera a mi camino." },
-  { ref: "Mateo 11:28", text: "Venid a mi todos los que estais trabajados y cargados, y yo os hare descansar." },
-  { ref: "2 Timoteo 1:7", text: "Porque no nos ha dado Dios espiritu de cobardía, sino de poder, de amor y de dominio propio." },
-  { ref: "Salmos 46:1", text: "Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en las tribulaciones." },
-  { ref: "Hebreos 11:1", text: "Es, pues, la fe la certeza de lo que se espera, la conviccion de lo que no se ve." },
-  { ref: "Juan 3:16", text: "Porque de tal manera amo Dios al mundo, que ha dado a su Hijo unigenito, para que todo aquel que en el cree, no se pierda, mas tenga vida eterna." },
-  { ref: "Salmos 37:4", text: "Deléitate asimismo en Jehova, y el te concedera las peticiones de tu corazon." },
-  { ref: "Isaias 40:31", text: "Pero los que esperan a Jehova tendran nuevas fuerzas; levantaran alas como las aguilas; correran, y no se cansaran; caminaran, y no se fatigaran." },
-  { ref: "Romanos 12:2", text: "No os conformeis a este siglo, sino transformaos por medio de la renovacion de vuestro entendimiento." },
-  { ref: "Salmos 91:1-2", text: "El que habita al abrigo del Altisimo morara bajo la sombra del Omnipotente. Dire yo a Jehova: Esperanza mia, y castillo mio; mi Dios, en quien confiare." },
-  { ref: "Galatas 5:22-23", text: "Mas el fruto del Espiritu es amor, gozo, paz, paciencia, benignidad, bondad, fe, mansedumbre, templanza." },
-  { ref: "1 Corintios 13:4-5", text: "El amor es sufrido, es benigno; el amor no tiene envidia, el amor no es jactancioso, no se envanece." },
-  { ref: "Efesios 2:8-9", text: "Porque por gracia sois salvos por medio de la fe; y esto no de vosotros, pues es don de Dios; no por obras, para que nadie se glorie." },
-  { ref: "Salmos 34:8", text: "Gustad, y ved que es bueno Jehova; dichoso el hombre que confia en el." },
-  { ref: "Miqueas 6:8", text: "Oh hombre, el te ha declarado lo que es bueno, y que pide Jehova de ti: solamente hacer justicia, y amar misericordia, y humillarte ante tu Dios." },
-  { ref: "Santiago 1:5", text: "Y si alguno de vosotros tiene falta de sabiduria, pidala a Dios, el cual da a todos abundantemente y sin reproche, y le sera dada." },
-  { ref: "Deuteronomio 31:6", text: "Esforzaos y cobrad animo; no temais, ni tengais miedo de ellos, porque Jehova tu Dios es el que va contigo; no te dejara, ni te desamparara." },
-  { ref: "Salmos 27:1", text: "Jehova es mi luz y mi salvacion; de quien temere? Jehova es la fortaleza de mi vida; de quien he de atemorizarme?" },
-  { ref: "1 Pedro 5:7", text: "Echando toda vuestra ansiedad sobre el, porque el tiene cuidado de vosotros." },
-  { ref: "Apocalipsis 21:4", text: "Enjugara Dios toda lagrima de los ojos de ellos; y ya no habra muerte, ni habra mas llanto, ni clamor, ni dolor." },
-  { ref: "Salmos 139:14", text: "Te alabare; porque formidables, maravillosas son tus obras; estoy maravillado, y mi alma lo sabe muy bien." },
-  { ref: "Proverbios 16:3", text: "Encomienda a Jehova tus obras, y tus pensamientos seran afirmados." },
-  { ref: "Habacuc 3:19", text: "Jehova el Senor es mi fortaleza, el cual hace mis pies como de ciervas, y en mis alturas me hace andar." },
-  { ref: "Salmos 121:1-2", text: "Alzare mis ojos a los montes; de donde vendra mi socorro? Mi socorro viene de Jehova, que hizo los cielos y la tierra." },
+  { ref: "Romanos 8:28", text: "Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados." },
+  { ref: "Salmos 119:105", text: "Lámpara es a mis pies tu palabra, Y lumbrera a mi camino." },
+  { ref: "Mateo 11:28", text: "Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar." },
+  { ref: "2 Timoteo 1:7", text: "Porque no nos ha dado Dios espíritu de cobardía, sino de poder, de amor y de dominio propio." },
+  { ref: "Salmos 46:1", text: "Dios es nuestro amparo y fortaleza, Nuestro pronto auxilio en las tribulaciones." },
+  { ref: "Hebreos 11:1", text: "Es, pues, la fe la certeza de lo que se espera, la convicción de lo que no se ve." },
+  { ref: "Juan 3:16", text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna." },
+  { ref: "Salmos 37:4", text: "Deléitate asimismo en Jehová, Y él te concederá las peticiones de tu corazón." },
+  { ref: "Isaías 40:31", text: "pero los que esperan a Jehová tendrán nuevas fuerzas; levantarán alas como las águilas; correrán, y no se cansarán; caminarán, y no se fatigarán." },
+  { ref: "Romanos 12:2", text: "No os conforméis a este siglo, sino transformaos por medio de la renovación de vuestro entendimiento, para que comprobéis cuál sea la buena voluntad de Dios, agradable y perfecta." },
+  { ref: "Salmos 91:1-2", text: "El que habita al abrigo del Altísimo Morará bajo la sombra del Omnipotente. Diré yo a Jehová: Esperanza mía, y castillo mío; Mi Dios, en quien confiaré." },
+  { ref: "Gálatas 5:22-23", text: "Mas el fruto del Espíritu es amor, gozo, paz, paciencia, benignidad, bondad, fe, mansedumbre, templanza; contra tales cosas no hay ley." },
+  { ref: "1 Corintios 13:4-5", text: "El amor es sufrido, es benigno; el amor no tiene envidia, el amor no es jactancioso, no se envanece; no hace nada indebido, no busca lo suyo, no se irrita, no guarda rencor;" },
+  { ref: "Efesios 2:8-9", text: "Porque por gracia sois salvos por medio de la fe; y esto no de vosotros, pues es don de Dios; no por obras, para que nadie se gloríe." },
+  { ref: "Salmos 34:8", text: "Gustad, y ved que es bueno Jehová; Dichoso el hombre que confía en él." },
+  { ref: "Miqueas 6:8", text: "Oh hombre, él te ha declarado lo que es bueno, y qué pide Jehová de ti: solamente hacer justicia, y amar misericordia, y humillarte ante tu Dios." },
+  { ref: "Santiago 1:5", text: "Y si alguno de vosotros tiene falta de sabiduría, pídala a Dios, el cual da a todos abundantemente y sin reproche, y le será dada." },
+  { ref: "Deuteronomio 31:6", text: "Esforzaos y cobrad ánimo; no temáis, ni tengáis miedo de ellos, porque Jehová tu Dios es el que va contigo; no te dejará, ni te desamparará." },
+  { ref: "Salmos 27:1", text: "Jehová es mi luz y mi salvación; ¿de quién temeré? Jehová es la fortaleza de mi vida; ¿de quién he de atemorizarme?" },
+  { ref: "1 Pedro 5:7", text: "echando toda vuestra ansiedad sobre él, porque él tiene cuidado de vosotros." },
+  { ref: "Apocalipsis 21:4", text: "Enjugará Dios toda lágrima de los ojos de ellos; y ya no habrá muerte, ni habrá más llanto, ni clamor, ni dolor; porque las primeras cosas pasaron." },
+  { ref: "Salmos 139:14", text: "Te alabaré; porque formidables, maravillosas son tus obras; Estoy maravillado, Y mi alma lo sabe muy bien." },
+  { ref: "Proverbios 16:3", text: "Encomienda a Jehová tus obras, Y tus pensamientos serán afirmados." },
+  { ref: "Habacuc 3:19", text: "Jehová el Señor es mi fortaleza, El cual hace mis pies como de ciervas, Y en mis alturas me hace andar." },
+  { ref: "Salmos 121:1-2", text: "Alzaré mis ojos a los montes; ¿De dónde vendrá mi socorro? Mi socorro viene de Jehová, Que hizo los cielos y la tierra." },
 ];
 
 function VerseOfTheDay() {
@@ -146,9 +118,20 @@ function BibleTab() {
   const [noteText, setNoteText] = useState("");
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [showBookSelector, setShowBookSelector] = useState(false);
-  const [bibleVersion, setBibleVersion] = useState("rv1960");
+  const [bibleVersion, setBibleVersionState] = useState<BibleVersion>(readSavedBibleVersion);
+  const [fallbackFrom, setFallbackFrom] = useState<BibleVersion | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const maxChapters = BOOK_CHAPTERS[selectedBook] || 1;
+  const setBibleVersion = (version: BibleVersion) => {
+    setBibleVersionState(version);
+    try {
+      localStorage.setItem(BIBLE_VERSION_KEY, version);
+    } catch {
+      // Sin localStorage: la elección dura lo que dure la página.
+    }
+  };
+
+  const maxChapters = BIBLE_BOOK_CHAPTERS[selectedBook] || 1;
   const { data: highlights = [] } = useBibleHighlights(selectedBook, chapter);
   const { data: notes = [] } = useBibleNotes(selectedBook, chapter);
   const createHighlight = useCreateBibleHighlight();
@@ -157,38 +140,32 @@ function BibleTab() {
   const deleteNote = useDeleteBibleNote();
 
   useEffect(() => {
+    // El texto lo sirve la propia web (server/bible.ts), con respaldo si un proveedor cae.
+    const controller = new AbortController();
     const fetchVerses = async () => {
       setLoading(true);
       setError(null);
       try {
-        const slug = BIBLE_BOOK_SLUG_MAP[selectedBook] || selectedBook.toLowerCase();
-        const res = await fetch(`https://bible-api.deno.dev/api/read/${bibleVersion}/${slug}/${chapter}`);
+        const res = await fetch(
+          `/api/bible/chapter/${bibleVersion}/${encodeURIComponent(selectedBook)}/${chapter}`,
+          { signal: controller.signal },
+        );
         if (!res.ok) throw new Error("Error al cargar texto bíblico");
-        const data = await res.json();
-        if (data.vers && Array.isArray(data.vers)) {
-          setVerses(data.vers.map((v: any) => ({
-            verse: v.number || v.verse,
-            text: v.verse || v.text || "",
-            study: v.study || undefined,
-          })));
-        } else if (Array.isArray(data)) {
-          setVerses(data.map((v: any) => ({
-            verse: v.number || v.verse || 0,
-            text: v.text || v.verse || "",
-            study: v.study || undefined,
-          })));
-        } else {
-          setVerses([]);
-        }
+        const data: BibleChapterPayload = await res.json();
+        setVerses(data.verses);
+        setFallbackFrom(data.fallbackFrom ?? null);
       } catch (err: any) {
-        setError("No se pudo cargar el texto. Intente de nuevo.");
+        if (controller.signal.aborted) return;
+        setError("No se pudo cargar el texto. Revisa tu conexión e inténtalo de nuevo.");
         setVerses([]);
+        setFallbackFrom(null);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchVerses();
-  }, [selectedBook, chapter, bibleVersion]);
+    return () => controller.abort();
+  }, [selectedBook, chapter, bibleVersion, reloadKey]);
 
   const getVerseHighlight = (verse: number) => {
     return highlights.find((h: any) => verse >= h.verseStart && verse <= h.verseEnd);
@@ -233,18 +210,19 @@ function BibleTab() {
 
       {/* Bible Version Selector */}
       <div className="flex items-center gap-2 flex-wrap bg-muted/30 rounded-lg p-2">
-        <span className="text-xs font-medium text-muted-foreground mr-1">Version:</span>
-        {Object.entries(BIBLE_VERSIONS).map(([key, val]) => (
+        <span className="text-xs font-medium text-muted-foreground mr-1">Versión:</span>
+        {(Object.keys(BIBLE_VERSIONS) as BibleVersion[]).map((key) => (
           <Button
             key={key}
             variant={bibleVersion === key ? "default" : "ghost"}
             size="sm"
             className={`text-xs h-7 ${bibleVersion === key ? "" : "text-muted-foreground"}`}
             onClick={() => setBibleVersion(key)}
-            title={val.desc}
+            title={BIBLE_VERSIONS[key].desc}
+            aria-pressed={bibleVersion === key}
             data-testid={`button-version-${key}`}
           >
-            {val.label}
+            {BIBLE_VERSIONS[key].label}
           </Button>
         ))}
         <span className="text-xs text-muted-foreground ml-auto hidden sm:inline">
@@ -257,7 +235,7 @@ function BibleTab() {
           <DialogTrigger asChild>
             <Button variant="outline" data-testid="button-select-book">
               <BookOpen className="w-4 h-4 mr-2" />
-              {selectedBook}
+              {bibleBookLabel(selectedBook)}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
@@ -274,7 +252,7 @@ function BibleTab() {
                   onClick={() => { setSelectedBook(book); setChapter(1); setShowBookSelector(false); setSelectedVerse(null); }}
                   data-testid={`button-book-${book}`}
                 >
-                  {book}
+                  {bibleBookLabel(book)}
                 </Button>
               ))}
             </div>
@@ -320,18 +298,15 @@ function BibleTab() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between gap-2 mb-4">
             <h2 className="text-xl font-bold" data-testid="text-bible-heading">
-              {selectedBook} {chapter}
+              {bibleBookLabel(selectedBook)} {chapter}
             </h2>
-            <Badge variant="outline" className="text-xs">{BIBLE_VERSIONS[bibleVersion]?.label}</Badge>
+            <Badge variant="outline" className="text-xs">{BIBLE_VERSIONS[fallbackFrom ? "rv1909" : bibleVersion].label}</Badge>
           </div>
 
-          {/* Study section header for NVI */}
-          {bibleVersion === "nvi" && verses.length > 0 && verses[0].study && (
-            <div className="mb-3 p-2 rounded-md bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1">
-                <BookOpen className="w-4 h-4" /> {verses[0].study}
-              </p>
-            </div>
+          {fallbackFrom && !loading && (
+            <p className="mb-3 text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2" role="status">
+              La {BIBLE_VERSIONS[fallbackFrom].label} no responde en este momento; se muestra la Reina-Valera 1909.
+            </p>
           )}
 
           {loading ? (
@@ -339,28 +314,24 @@ function BibleTab() {
               {Array.from({ length: 10 }, (_, i) => <Skeleton key={i} className="h-5 w-full" />)}
             </div>
           ) : error ? (
-            <p className="text-muted-foreground text-center py-8">{error}</p>
+            <div className="text-center py-8 space-y-3">
+              <p className="text-muted-foreground">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)} data-testid="button-retry-bible">
+                Reintentar
+              </Button>
+            </div>
           ) : verses.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              No se encontro texto para este capitulo. Intente seleccionar otro libro o capitulo.
+              No se encontró texto para este capítulo. Prueba con otro libro o capítulo.
             </p>
           ) : (
             <div className="space-y-1 leading-relaxed text-base">
-              {verses.map((v, idx) => {
+              {verses.map((v) => {
                 const hl = getVerseHighlight(v.verse);
                 const vNotes = getVerseNotes(v.verse);
                 const isSelected = selectedVerse === v.verse;
-                const prevStudy = idx > 0 ? verses[idx - 1].study : verses[0].study;
-                const showStudyHeader = bibleVersion === "nvi" && v.study && idx > 0 && v.study !== prevStudy;
                 return (
                   <React.Fragment key={v.verse}>
-                    {showStudyHeader && (
-                      <div className="block my-3 p-2 rounded-md bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1">
-                          <BookOpen className="w-4 h-4" /> {v.study}
-                        </p>
-                      </div>
-                    )}
                     <span
                       className={`inline cursor-pointer transition-colors rounded-sm px-0.5 ${isSelected ? "ring-2 ring-primary" : ""}`}
                       style={hl ? { backgroundColor: hl.color + "40" } : undefined}
@@ -389,7 +360,7 @@ function BibleTab() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <p className="font-medium text-sm">
-                {selectedBook} {chapter}:{selectedVerse}
+                {bibleBookLabel(selectedBook)} {chapter}:{selectedVerse}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -554,7 +525,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
   };
 
   const getTotalChapters = () => {
-    return selectedBooks.reduce((sum, book) => sum + (BOOK_CHAPTERS[book] || 0), 0);
+    return selectedBooks.reduce((sum, book) => sum + (BIBLE_BOOK_CHAPTERS[book] || 0), 0);
   };
 
   const getChaptersPerDay = () => {
@@ -572,7 +543,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
   const generateSchedule = () => {
     const allChapters: { book: string; chapter: number }[] = [];
     for (const book of selectedBooks) {
-      const max = BOOK_CHAPTERS[book] || 1;
+      const max = BIBLE_BOOK_CHAPTERS[book] || 1;
       for (let ch = 1; ch <= max; ch++) {
         allChapters.push({ book, chapter: ch });
       }
@@ -609,7 +580,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
         const allChapters: { book: string; chapter: number; sortOrder: number }[] = [];
         let idx = 0;
         for (const book of selectedBooks) {
-          const max = BOOK_CHAPTERS[book] || 1;
+          const max = BIBLE_BOOK_CHAPTERS[book] || 1;
           for (let ch = 1; ch <= max; ch++) {
             allChapters.push({ book, chapter: ch, sortOrder: idx++ });
           }
@@ -642,7 +613,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
     setSelectedBooks([...suggestion.books]);
     setPeriodType(suggestion.period);
     if (suggestion.period === "personalizado") {
-      const totalChapters = suggestion.books.reduce((sum, book) => sum + (BOOK_CHAPTERS[book] || 0), 0);
+      const totalChapters = suggestion.books.reduce((sum, book) => sum + (BIBLE_BOOK_CHAPTERS[book] || 0), 0);
       setCustomDays("14");
     }
     setPlanName(suggestion.name);
@@ -761,7 +732,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
                             data-testid={`toggle-item-${item.id}`}
                           >
                             {item.isCompleted && <Check className="w-3 h-3 inline mr-0.5" />}
-                            {item.book} {item.chapter}
+                            {bibleBookLabel(item.book)} {item.chapter}
                           </button>
                         ))}
                       </div>
@@ -852,8 +823,8 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
                     >
                       <span className="flex items-center gap-2">
                         {isSelected && <Check className="w-3 h-3" />}
-                        {book}
-                        <span className="text-xs text-muted-foreground">({BOOK_CHAPTERS[book]})</span>
+                        {bibleBookLabel(book)}
+                        <span className="text-xs text-muted-foreground">({BIBLE_BOOK_CHAPTERS[book]})</span>
                       </span>
                     </button>
                   );
@@ -1098,7 +1069,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod }: { prefillBooks?: strin
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {SUGGESTED_PLANS.map((suggestion) => {
-              const totalChapters = suggestion.books.reduce((sum, book) => sum + (BOOK_CHAPTERS[book] || 0), 0);
+              const totalChapters = suggestion.books.reduce((sum, book) => sum + (BIBLE_BOOK_CHAPTERS[book] || 0), 0);
               return (
                 <Card
                   key={suggestion.id}
@@ -1287,7 +1258,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
     { name: "Evangelios en un Mes", books: ["Mateo","Marcos","Lucas","Juan"], booksLabel: "Mateo, Marcos, Lucas, Juan", time: "30 dias", period: "mensual" },
     { name: "Proverbios en un Mes", books: ["Proverbios"], booksLabel: "Proverbios", time: "31 dias", period: "mensual" },
     { name: "Salmos en 2 Meses", books: ["Salmos"], booksLabel: "Salmos", time: "60 dias", period: "personalizado" },
-    { name: "Biblia Completa en un Año", books: Object.keys(BOOK_CHAPTERS), booksLabel: "Genesis a Apocalipsis", time: "365 dias", period: "anual" },
+    { name: "Biblia Completa en un Año", books: Object.keys(BIBLE_BOOK_CHAPTERS), booksLabel: "Genesis a Apocalipsis", time: "365 dias", period: "anual" },
     { name: "Cartas de Pablo", books: ["Romanos","1 Corintios","2 Corintios","Galatas","Efesios","Filipenses","Colosenses","1 Tesalonicenses","2 Tesalonicenses","1 Timoteo","2 Timoteo","Tito","Filemon"], booksLabel: "Romanos a Filemon", time: "2 semanas", period: "semanal" },
   ];
 
@@ -1446,7 +1417,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline" className="text-xs">
-                          {note.book} {note.chapter}:{note.verse}
+                          {bibleBookLabel(note.book)} {note.chapter}:{note.verse}
                         </Badge>
                         {note.createdAt && (
                           <span className="text-xs text-muted-foreground">
@@ -1489,7 +1460,7 @@ function ReadingClubTab({ onNavigateToPlan }: { onNavigateToPlan?: (books: strin
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {BIBLE_READING_PLANS_SUGGESTIONS.map((plan, idx) => {
-            const totalChapters = plan.books.reduce((sum, book) => sum + (BOOK_CHAPTERS[book] || 0), 0);
+            const totalChapters = plan.books.reduce((sum, book) => sum + (BIBLE_BOOK_CHAPTERS[book] || 0), 0);
             return (
               <Card
                 key={idx}
