@@ -1,6 +1,8 @@
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useEvents } from "@/hooks/use-users";
 import { motion } from "motion/react";
 import {
   Flame, Radio, BookOpen, Heart, Globe, Users, Video, Signal,
@@ -58,7 +60,44 @@ const fadeUp = {
   viewport: { once: true } as const,
 };
 
+type AgendaItem = { key: string; d: string; t: string; s: string; href: string };
+
+const RADIO_AGENDA_ITEM: AgendaItem = { key: "radio", d: "24/7", t: "Adoración y prédicas en vivo", s: "Avivando el Fuego Radio", href: "/radio" };
+
+/** Las próximas actividades reales (eventos y oración), no ejemplos fijos. */
+function useUpcomingAgenda(): AgendaItem[] {
+  const { data: events = [] } = useEvents();
+  const { data: prayers = [] } = useQuery<any[] | null>({ queryKey: ["/api/prayer-activities"] });
+  const now = Date.now();
+  const upcoming = [
+    ...((events as any[]) || [])
+      .filter((e) => e.isPublished !== false && new Date(e.eventDate).getTime() >= now)
+      .map((e) => ({ date: new Date(e.eventDate), title: e.title as string, place: (e.location as string) || "", href: "/eventos", key: `e${e.id}` })),
+    ...((prayers as any[]) || [])
+      .filter((p) => p.isActive && p.scheduledDate && new Date(p.scheduledDate).getTime() >= now)
+      .map((p) => ({ date: new Date(p.scheduledDate), title: p.title as string, place: "Oración", href: "/oracion", key: `p${p.id}` })),
+  ]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 2);
+  const items: AgendaItem[] = upcoming.map((u) => ({
+    key: u.key,
+    d: u.date.toLocaleDateString("es", { weekday: "short" }).replace(".", "").slice(0, 3).toUpperCase(),
+    t: u.title.trim(),
+    s: [
+      u.date.toLocaleDateString("es", { day: "numeric", month: "short" }),
+      u.date.toLocaleTimeString("es", { hour: "numeric", minute: "2-digit" }),
+      u.place,
+    ].filter(Boolean).join(" · "),
+    href: u.href,
+  }));
+  if (items.length === 0) {
+    items.push({ key: "pronto", d: "PRÓX", t: "Pronto anunciaremos nuevas actividades", s: "Mira la cartelera del ministerio", href: "/eventos" });
+  }
+  return [...items, RADIO_AGENDA_ITEM];
+}
+
 export default function Home() {
+  const agenda = useUpcomingAgenda();
   return (
     <Layout>
       {/* ═══ HERO ═══════════════════════════════════════════════════ */}
@@ -134,12 +173,8 @@ export default function Home() {
                 </span>
               </div>
               <div className="space-y-1">
-                {[
-                  { d: "VIE", t: "Vigilia de avivamiento", s: "10:00 PM · Sede principal" },
-                  { d: "SAB", t: "Congreso Alianza Global", s: "Iglesias aliadas" },
-                  { d: "24/7", t: "Adoración y prédicas en vivo", s: "Avivando el Fuego Radio" },
-                ].map((ev) => (
-                  <Link key={ev.t} href="/eventos">
+                {agenda.map((ev) => (
+                  <Link key={ev.key} href={ev.href}>
                     <div className="grid grid-cols-[auto_1fr] gap-4 items-center py-3 border-t border-border/60 cursor-pointer hover:bg-primary/5 hover:pl-2 transition-all rounded-sm">
                       <span className="icon-chip-fire w-12 h-10 font-display font-bold text-xs fire-text">{ev.d}</span>
                       <span>

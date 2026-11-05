@@ -12,6 +12,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Send, Trash2, MessageSquare, ImagePlus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+
+/** "hace 2 horas"; la fecha completa queda en el título (al pasar el ratón). */
+function timeAgo(date?: string | Date | null) {
+  if (!date) return "";
+  try {
+    return formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
+  } catch {
+    return "";
+  }
+}
 
 function PostComments({ postId, user }: { postId: number; user: any }) {
   const { data: comments = [], isLoading } = usePostComments(postId);
@@ -50,8 +62,8 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
                 <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] text-muted-foreground">
-                  {comment.createdAt ? new Date(comment.createdAt).toLocaleString('es-ES') : ''}
+                <span className="text-[10px] text-muted-foreground" title={comment.createdAt ? new Date(comment.createdAt).toLocaleString("es") : undefined}>
+                  {timeAgo(comment.createdAt)}
                 </span>
                 {(comment.userId === user.id || user.role === "admin") && (
                   <button
@@ -171,7 +183,7 @@ export default function Comunidad() {
             Comunidad
           </h1>
           <p className="text-muted-foreground mt-1">
-            Comparte mensajes, testimonios y palabras de aliento con los demas miembros del ministerio.
+            Comparte mensajes, testimonios y palabras de aliento con los demás miembros del ministerio.
           </p>
         </div>
 
@@ -288,8 +300,8 @@ export default function Comunidad() {
                         <span className="text-xs text-muted-foreground">
                           @{post.user?.username}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {post.createdAt ? new Date(post.createdAt).toLocaleString('es-ES') : ''}
+                        <span className="text-xs text-muted-foreground" title={post.createdAt ? new Date(post.createdAt).toLocaleString("es") : undefined}>
+                          {timeAgo(post.createdAt)}
                         </span>
                       </div>
                       <p className="text-sm whitespace-pre-wrap" data-testid={`text-post-content-${post.id}`}>
@@ -306,7 +318,7 @@ export default function Comunidad() {
                           onClick={() => toggleComments(post.id)}
                         >
                           <MessageSquare className="h-3.5 w-3.5" />
-                          Comentarios
+                          {post.commentCount ? `${post.commentCount} ${post.commentCount === 1 ? "comentario" : "comentarios"}` : "Comentar"}
                           {expandedComments.has(post.id) ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
                       </div>
@@ -325,7 +337,7 @@ export default function Comunidad() {
                         size="icon"
                         onClick={() => deletePost.mutate(post.id)}
                         data-testid={`button-delete-community-post-${post.id}`}
-                        title={post.userId === user.id ? "Eliminar mi publicacion" : "Eliminar publicacion (admin)"}
+                        title={post.userId === user.id ? "Eliminar mi publicación" : "Eliminar publicación (moderación)"}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

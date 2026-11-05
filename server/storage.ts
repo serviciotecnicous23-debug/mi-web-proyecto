@@ -85,7 +85,7 @@ export interface IStorage {
   deleteMessage(id: number): Promise<void>;
 
   createMemberPost(userId: number, content: string, imageUrl?: string | null): Promise<MemberPost>;
-  listMemberPosts(): Promise<(MemberPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; cargo: string | null; country: string | null } })[]>;
+  listMemberPosts(): Promise<(MemberPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; cargo: string | null; country: string | null }; commentCount: number })[]>;
   deleteMemberPost(id: number): Promise<void>;
 
   createEvent(event: InsertEvent & { createdBy: number }): Promise<Event>;
@@ -525,7 +525,7 @@ export class DatabaseStorage implements IStorage {
     return post;
   }
 
-  async listMemberPosts(): Promise<(MemberPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; cargo: string | null; country: string | null } })[]> {
+  async listMemberPosts(): Promise<(MemberPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; cargo: string | null; country: string | null }; commentCount: number })[]> {
     const posts = await db
       .select({
         id: memberPosts.id,
@@ -538,10 +538,12 @@ export class DatabaseStorage implements IStorage {
         avatarUrl: users.avatarUrl,
         cargo: users.cargo,
         country: users.country,
+        commentCount: sql<number>`(SELECT count(*)::int FROM post_comments WHERE post_id = ${memberPosts.id})`,
       })
       .from(memberPosts)
       .innerJoin(users, eq(memberPosts.userId, users.id))
-      .orderBy(desc(memberPosts.createdAt));
+      .orderBy(desc(memberPosts.createdAt))
+      .limit(100); // la comunidad muestra las más recientes; sin límite crecía sin fin
     return posts.map((p) => ({
       id: p.id,
       userId: p.userId,
@@ -549,6 +551,7 @@ export class DatabaseStorage implements IStorage {
       imageUrl: p.imageUrl,
       createdAt: p.createdAt,
       user: { username: p.username, displayName: p.displayName, avatarUrl: p.avatarUrl, cargo: p.cargo, country: p.country },
+      commentCount: p.commentCount,
     }));
   }
 
