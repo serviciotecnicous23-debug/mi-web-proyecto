@@ -3,50 +3,64 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PageTransition } from "@/components/PageTransition";
 import { GlassCursor } from "@/components/GlassCursor";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
-import Historia from "@/pages/historia";
-import Equipo from "@/pages/equipo";
-import EnVivo from "@/pages/en-vivo";
-import RadioPage from "@/pages/radio";
-import RadioLiveScene from "@/pages/radio-live-scene";
-import Contacto from "@/pages/contacto";
-import Eventos from "@/pages/eventos";
-import { LoginPage, RegisterPage } from "@/pages/auth";
-import Profile from "@/pages/profile";
-import AdminDashboard from "@/pages/admin";
-import Comunidad from "@/pages/comunidad";
-import Capacitaciones from "@/pages/capacitaciones";
-import CursoDetalle from "@/pages/curso-detalle";
-import MisCapacitaciones from "@/pages/mis-capacitaciones";
-import MaestroPanel from "@/pages/maestro";
-import AulaVirtual from "@/pages/aula";
-import BibliotecaPage from "@/pages/biblioteca";
-import OracionPage from "@/pages/oracion";
-import RegionesPage from "@/pages/regiones";
-import IglesiasPage from "@/pages/iglesias";
-import MensajesPage from "@/pages/mensajes";
-import ForgotPasswordPage from "@/pages/forgot-password";
-import ResetPasswordPage from "@/pages/reset-password";
-import VerifyEmailPage from "@/pages/verify-email";
-import ReportesPage from "@/pages/reportes";
-import FinanzasPage from "@/pages/finanzas";
-import SermonesPage from "@/pages/sermones";
-import GruposPage from "@/pages/grupos";
-import CalendarioPage from "@/pages/calendario";
-import CertificadosPage from "@/pages/certificados";
-import AlianzaPage from "@/pages/alianza";
-import FichaMinisterialPage from "@/pages/ficha-ministerial";
-import MiIglesiaPage from "@/pages/mi-iglesia";
-import BuscarIglesiaPage from "@/pages/buscar-iglesia";
+import { Loader2 } from "lucide-react";
+
+// Cada página se descarga al visitarla (antes todo iba en un JS de 2,2 MB que el
+// celular bajaba entero para mostrar la portada). Portada y 404 van directas.
+const Historia = lazy(() => import("@/pages/historia"));
+const Equipo = lazy(() => import("@/pages/equipo"));
+const EnVivo = lazy(() => import("@/pages/en-vivo"));
+const RadioPage = lazy(() => import("@/pages/radio"));
+const RadioLiveScene = lazy(() => import("@/pages/radio-live-scene"));
+const Contacto = lazy(() => import("@/pages/contacto"));
+const Eventos = lazy(() => import("@/pages/eventos"));
+const LoginPage = lazy(() => import("@/pages/auth").then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("@/pages/auth").then((m) => ({ default: m.RegisterPage })));
+const Profile = lazy(() => import("@/pages/profile"));
+const AdminDashboard = lazy(() => import("@/pages/admin"));
+const Comunidad = lazy(() => import("@/pages/comunidad"));
+const Capacitaciones = lazy(() => import("@/pages/capacitaciones"));
+const CursoDetalle = lazy(() => import("@/pages/curso-detalle"));
+const MisCapacitaciones = lazy(() => import("@/pages/mis-capacitaciones"));
+const MaestroPanel = lazy(() => import("@/pages/maestro"));
+const AulaVirtual = lazy(() => import("@/pages/aula"));
+const BibliotecaPage = lazy(() => import("@/pages/biblioteca"));
+const OracionPage = lazy(() => import("@/pages/oracion"));
+const RegionesPage = lazy(() => import("@/pages/regiones"));
+const IglesiasPage = lazy(() => import("@/pages/iglesias"));
+const MensajesPage = lazy(() => import("@/pages/mensajes"));
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
+const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
+const ReportesPage = lazy(() => import("@/pages/reportes"));
+const FinanzasPage = lazy(() => import("@/pages/finanzas"));
+const SermonesPage = lazy(() => import("@/pages/sermones"));
+const GruposPage = lazy(() => import("@/pages/grupos"));
+const CalendarioPage = lazy(() => import("@/pages/calendario"));
+const CertificadosPage = lazy(() => import("@/pages/certificados"));
+const AlianzaPage = lazy(() => import("@/pages/alianza"));
+const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
+const MiIglesiaPage = lazy(() => import("@/pages/mi-iglesia"));
+const BuscarIglesiaPage = lazy(() => import("@/pages/buscar-iglesia"));
+
+function PageFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Cargando">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 function Router() {
   return (
+    <Suspense fallback={<PageFallback />}>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/historia" component={Historia} />
@@ -87,6 +101,7 @@ function Router() {
       <Route path="/buscar-iglesia" component={BuscarIglesiaPage} />
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 
@@ -114,7 +129,7 @@ class ErrorBoundary extends Component<
       return (
         <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
           <h1 style={{ color: "#e53e3e", fontSize: "1.5rem", marginBottom: "1rem" }}>
-            Algo salio mal
+            Algo salió mal
           </h1>
           <p style={{ color: "#666", marginBottom: "1rem" }}>
             {this.state.error?.message || "Error desconocido"}
