@@ -717,10 +717,11 @@ export const COURSE_CATEGORIES = {
   doctrina: "Doctrina",
   liderazgo: "Liderazgo",
   evangelismo: "Evangelismo",
-  adoracion: "Adoracion",
-  consejeria: "Consejeria",
+  adoracion: "Adoración",
+  consejeria: "Consejería",
   ninos: "Ministerio Infantil",
-  jovenes: "Jovenes",
+  jovenes: "Jóvenes",
+  biblico: "Estudio Bíblico",
 } as const;
 
 // ========== BIBLIOTECA ==========

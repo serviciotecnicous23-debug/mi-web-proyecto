@@ -28,7 +28,7 @@ export default function VerifyEmailPage() {
           setMessage(data.message || "Correo verificado!");
         } else {
           setStatus("error");
-          setMessage(data.message || "Error de verificacion");
+          setMessage(data.message || "Error de verificación");
         }
       } catch {
         setStatus("error");

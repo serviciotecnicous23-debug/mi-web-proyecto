@@ -72,7 +72,7 @@ export default function MisCapacitaciones() {
             )}
             {pending.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold mb-3">Pendientes de Aprobacion ({pending.length})</h2>
+                <h2 className="text-lg font-semibold mb-3">Pendientes de aprobación ({pending.length})</h2>
                 <div className="grid gap-3">
                   {pending.map((e: any) => (
                     <EnrollmentCard key={e.id} enrollment={e} onCancel={() => deleteEnrollment.mutate({ id: e.id, courseId: e.courseId })} />

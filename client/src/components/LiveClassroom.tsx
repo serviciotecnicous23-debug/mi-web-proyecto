@@ -396,7 +396,7 @@ export default function LiveClassroom({ courseId, courseTitle, canManage, userNa
             No hay clase en vivo en este momento.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Recibiras una notificación cuando el maestro inicie una clase.
+            Recibirás una notificación cuando el maestro inicie una clase.
           </p>
         </div>
       </CardContent>

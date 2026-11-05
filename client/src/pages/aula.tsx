@@ -184,14 +184,25 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                   <GraduationCap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{progress}%</p>
-                  <p className="text-xs text-muted-foreground">Progreso del Curso</p>
+                  {/* El porcentaje es de clases dadas, no del alumno: quien ya completó
+                      el curso no debe ver "0 %" junto a "Completado". */}
+                  <p className="text-2xl font-bold">{myEnrollment?.status === "completado" ? "100%" : `${progress}%`}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {myEnrollment?.status === "completado" ? "Completaste este curso" : "Avance del curso"}
+                  </p>
                 </div>
               </div>
               <div className="mt-3 w-full bg-muted rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                <div
+                  className="bg-primary h-2 rounded-full transition-all"
+                  style={{ width: `${myEnrollment?.status === "completado" ? 100 : progress}%` }}
+                />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">{completedSessions} de {totalSessions} sesiones completadas</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {totalSessions === 0
+                  ? "Aún no hay clases programadas"
+                  : `${completedSessions} de ${totalSessions} ${totalSessions === 1 ? "clase dada" : "clases dadas"}`}
+              </p>
             </CardContent>
           </Card>
 
@@ -206,7 +217,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                   <p className="text-xs text-muted-foreground">
                     {nextSession
                       ? new Date(nextSession.sessionDate).toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
-                      : "No hay proximas clases"}
+                      : "No hay próximas clases"}
                   </p>
                 </div>
               </div>
@@ -313,9 +324,9 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-primary" /> Proximas Clases
+                      <Calendar className="w-5 h-5 text-primary" /> Próximas clases
                     </CardTitle>
-                    <CardDescription>{upcomingSessions.length} sesion(es) programada(s)</CardDescription>
+                    <CardDescription>{upcomingSessions.length === 1 ? "1 sesión programada" : `${upcomingSessions.length} sesiones programadas`}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {upcomingSessions.map((s: CourseSession) => (
@@ -574,7 +585,7 @@ function SessionCard({
             <Input type="datetime-local" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
           </div>
           <div>
-            <Label className="text-xs">Duracion (min)</Label>
+            <Label className="text-xs">Duración (min)</Label>
             <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="15" max="480" />
           </div>
           <div>
@@ -618,7 +629,7 @@ function SessionCard({
         </p>
         {session.duration && (
           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-            <Timer className="w-3 h-3" /> Duracion: {session.duration} min
+            <Timer className="w-3 h-3" /> Duración: {session.duration} min
           </p>
         )}
         {session.description && <p className="text-xs text-muted-foreground mt-1">{session.description}</p>}
@@ -707,7 +718,7 @@ function CreateSessionDialog({ courseId, onSubmit, isPending }: { courseId: numb
               <Input type="datetime-local" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
             </div>
             <div>
-              <Label>Duracion (min)</Label>
+              <Label>Duración (min)</Label>
               <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="15" max="480" />
             </div>
           </div>
@@ -1486,7 +1497,8 @@ function getTimeUntil(date: Date): string | null {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (days > 0) return `En ${days} dia(s) y ${hours} hora(s)`;
-  if (hours > 0) return `En ${hours} hora(s) y ${minutes} minuto(s)`;
-  return `En ${minutes} minuto(s)`;
+  const n = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`;
+  if (days > 0) return `En ${n(days, "día", "días")} y ${n(hours, "hora", "horas")}`;
+  if (hours > 0) return `En ${n(hours, "hora", "horas")} y ${n(minutes, "minuto", "minutos")}`;
+  return `En ${n(minutes, "minuto", "minutos")}`;
 }

@@ -213,12 +213,12 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
                 ) : (course as any).enrollmentStatus === "closed" ? (
                   <div className="text-center py-2">
                     <Badge variant="destructive" className="mb-2">Inscripciones Cerradas</Badge>
-                    <p className="text-sm text-muted-foreground">Las inscripciones para este curso no estan disponibles en este momento.</p>
+                    <p className="text-sm text-muted-foreground">Las inscripciones para este curso no están disponibles en este momento.</p>
                   </div>
                 ) : (course as any).enrollmentStatus === "scheduled" ? (
                   <div className="text-center py-2">
                     <Badge variant="outline" className="mb-2">Inscripciones Programadas</Badge>
-                    <p className="text-sm text-muted-foreground">Las inscripciones se abriran proximamente.</p>
+                    <p className="text-sm text-muted-foreground">Las inscripciones se abrirán próximamente.</p>
                     {(course as any).enrollmentOpenDate && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Apertura: {new Date((course as any).enrollmentOpenDate).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -233,7 +233,7 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
                     data-testid="button-enroll-detail"
                   >
                     {createEnrollment.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <GraduationCap className="w-4 h-4 mr-1" />}
-                    Solicitar Inscripcion
+                    Solicitar inscripción
                   </Button>
                 ) : !user ? (
                   <Link href="/login">

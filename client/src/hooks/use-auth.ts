@@ -29,13 +29,13 @@ export function useAuth() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Error al iniciar sesion");
+        throw new Error(data?.message || "Error al iniciar sesión");
       }
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData([api.auth.me.path], data);
-      toast({ title: "Bienvenido!", description: `Sesion iniciada como ${data.username}` });
+      toast({ title: "¡Bienvenido!", description: `Sesión iniciada como ${data.username}` });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -62,7 +62,7 @@ export function useAuth() {
         toast({
           title: "Registro exitoso",
           description: data.email
-            ? "Te enviamos un correo de verificacion. Revisa tu bandeja de entrada y spam."
+            ? "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y spam."
             : "Tu cuenta fue creada. Un administrador la activara para acceso completo.",
           duration: 8000,
         });
