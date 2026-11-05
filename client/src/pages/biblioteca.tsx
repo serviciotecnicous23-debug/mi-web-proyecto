@@ -110,7 +110,15 @@ function VerseOfTheDay() {
 
 export type ChapterTarget = { book: string; chapter: number; key: number };
 
-function ReadingStatus({ tracker }: { tracker: ReturnType<typeof useReadingTracker> }) {
+function ReadingStatus({ tracker, member }: { tracker: ReturnType<typeof useReadingTracker>; member: boolean }) {
+  if (!member) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Con tu cuenta gratuita, cada capítulo que leas cuenta en tu racha del Club.{" "}
+        <Link href="/registro" className="text-primary underline underline-offset-2 inline-block py-2.5 -my-2.5">Crear cuenta</Link>
+      </p>
+    );
+  }
   if (tracker.state === "registrada" && tracker.result) {
     const { streak, planItemsCompleted } = tracker.result;
     return (
@@ -184,8 +192,9 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
   };
 
   const maxChapters = BIBLE_BOOK_CHAPTERS[selectedBook] || 1;
-  const { data: highlights = [] } = useBibleHighlights(selectedBook, chapter);
-  const { data: notes = [] } = useBibleNotes(selectedBook, chapter);
+  const member = !!user?.isActive;
+  const { data: highlights = [] } = useBibleHighlights(selectedBook, chapter, member);
+  const { data: notes = [] } = useBibleNotes(selectedBook, chapter, member);
   const createHighlight = useCreateBibleHighlight();
   const deleteHighlight = useDeleteBibleHighlight();
   const createNote = useCreateBibleNote();
@@ -429,7 +438,7 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
 
           {!loading && !error && verses.length > 0 && (
             <div className="mt-6 pt-4 border-t flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-              <ReadingStatus tracker={tracker} />
+              <ReadingStatus tracker={tracker} member={member} />
               {hasNext && (
                 <Button onClick={() => goToNextChapter(true)} className="min-h-11 shrink-0" data-testid="button-next-chapter-end">
                   Siguiente capítulo <ChevronRight className="w-4 h-4 ml-1" />
@@ -439,6 +448,24 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
           )}
         </CardContent>
       </Card>
+
+      {selectedVerse !== null && !member && (
+        <Card className="border-primary/30" data-testid="card-verse-signup">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <p className="text-sm flex-1">
+              <strong>{bibleBookLabel(selectedBook)} {chapter}:{selectedVerse}</strong> · {user
+                ? "Cuando aprueben tu cuenta podrás resaltar este versículo y guardar tus notas."
+                : "Crea tu cuenta gratis para resaltar este versículo y guardar tus notas."}
+            </p>
+            {!user && (
+              <div className="flex gap-2 shrink-0">
+                <Link href={loginUrl("/biblioteca")}><Button variant="outline" className="min-h-10">Iniciar sesión</Button></Link>
+                <Link href="/registro"><Button className="min-h-10">Crear cuenta</Button></Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {selectedVerse !== null && user?.isActive && (
         <Card>
@@ -1621,6 +1648,39 @@ function ResourcesTab() {
 
 const BIBLIOTECA_TABS = ["biblia", "planes", "club", "recursos"];
 
+const MEMBER_FEATURES = {
+  planes: { icon: BookMarked, title: "Planes de lectura", text: "Elige un plan (los Evangelios, Proverbios, el Nuevo Testamento…) y la web marca sola tu avance cada vez que lees." },
+  club: { icon: Users, title: "Club de lectura", text: "Tu racha de días, desafíos que se completan solos, desafíos del club con otros hermanos y el muro de reflexiones." },
+  recursos: { icon: FileText, title: "Recursos", text: "Libros, estudios y materiales que comparte la comunidad del ministerio." },
+} as const;
+
+/** Lo que pide cuenta: invitación para visitantes; aviso para cuentas sin aprobar. */
+function MembersOnly({ feature, signedIn }: { feature: keyof typeof MEMBER_FEATURES; signedIn: boolean }) {
+  const f = MEMBER_FEATURES[feature];
+  const Icon = f.icon;
+  return (
+    <Card className="border-dashed" data-testid={`members-only-${feature}`}>
+      <CardContent className="p-8 text-center space-y-4">
+        <Icon className="w-12 h-12 mx-auto text-primary" />
+        <div>
+          <h2 className="text-xl font-bold">{f.title}</h2>
+          <p className="text-muted-foreground mt-1 max-w-md mx-auto">{f.text}</p>
+        </div>
+        {signedIn ? (
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Tu cuenta está pendiente de aprobación. Cuando la aprueben podrás usar esta sección; mientras tanto, la Biblia está abierta.
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href={loginUrl(`/biblioteca?tab=${feature}`)}><Button variant="outline" className="min-h-11">Iniciar sesión</Button></Link>
+            <Link href="/registro"><Button className="min-h-11">Crear cuenta gratis</Button></Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function BibliotecaPage() {
   const { user } = useAuth();
   // ?tab=club abre directo el Club (lo usan los avisos de la campana).
@@ -1660,41 +1720,8 @@ export default function BibliotecaPage() {
     }
   }, [activeTab]);
 
-  if (!user) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-          <Library className="w-16 h-16 mx-auto text-primary mb-4" />
-          <h1 className="text-3xl font-bold mb-2">Biblioteca</h1>
-          <p className="text-muted-foreground mb-6">
-            Inicia sesión para acceder a la Biblia de estudio, planes de lectura, club de lectura y recursos compartidos.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link href={loginUrl("/biblioteca")}>
-              <Button variant="outline" data-testid="link-login-biblioteca">Iniciar Sesión</Button>
-            </Link>
-            <Link href="/registro">
-              <Button data-testid="link-register-biblioteca">Unirse</Button>
-            </Link>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!user.isActive) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-          <Library className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-3xl font-bold mb-2">Biblioteca</h1>
-          <p className="text-muted-foreground">
-            Tu cuenta está pendiente de aprobación. Una vez aprobada, podrás acceder a todos los recursos de la biblioteca.
-          </p>
-        </div>
-      </Layout>
-    );
-  }
+  // La Biblia se lee sin cuenta (como YouVersion); Planes, Club y Recursos la piden.
+  const member = !!user?.isActive;
 
   return (
     <Layout>
@@ -1705,7 +1732,9 @@ export default function BibliotecaPage() {
             Biblioteca
           </h1>
           <p className="text-muted-foreground mt-1">
-            Estudia la Biblia, crea planes de lectura, comparte reflexiones y recursos con la comunidad.
+            {member
+              ? "Estudia la Biblia, crea planes de lectura, comparte reflexiones y recursos con la comunidad."
+              : "Lee la Biblia gratis, sin crear cuenta. Con tu cuenta puedes resaltar, tomar notas, seguir planes y unirte al Club."}
           </p>
         </div>
 
@@ -1729,13 +1758,15 @@ export default function BibliotecaPage() {
             <BibleTab target={bibleTarget} />
           </TabsContent>
           <TabsContent value="planes" className="mt-4">
-            <ReadingPlansTab prefillBooks={prefillBooks} prefillPeriod={prefillPeriod} onOpenChapter={openChapter} />
+            {member
+              ? <ReadingPlansTab prefillBooks={prefillBooks} prefillPeriod={prefillPeriod} onOpenChapter={openChapter} />
+              : <MembersOnly feature="planes" signedIn={!!user} />}
           </TabsContent>
           <TabsContent value="club" className="mt-4">
-            <ClubTab onOpenChapter={openChapter} />
+            {member ? <ClubTab onOpenChapter={openChapter} /> : <MembersOnly feature="club" signedIn={!!user} />}
           </TabsContent>
           <TabsContent value="recursos" className="mt-4">
-            <ResourcesTab />
+            {member ? <ResourcesTab /> : <MembersOnly feature="recursos" signedIn={!!user} />}
           </TabsContent>
         </Tabs>
       </div>
