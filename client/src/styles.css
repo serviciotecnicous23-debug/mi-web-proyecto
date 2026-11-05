@@ -145,6 +145,7 @@
 }
 
 /* Las clases propias del diseño van como CSS normal y sin capa, no como @utility: Tailwind 4 ordena las @utility antes que sus utilidades de una sola propiedad (bg-primary, border...) y estas les ganaban; en Tailwind 3 era al revés y el diseño cuenta con que ganen las propias. */
+/* No escribas -webkit-backdrop-filter a mano: Lightning CSS (Tailwind 4 / Vite 8) ya lo añade para Safari, y si va detrás de backdrop-filter borra la versión normal y Chrome, Edge, Firefox y Android se quedan sin difuminado. */
 .toggle-elevate {
   &::before {
     content: '';
@@ -380,7 +381,6 @@
   /* ── Glassmorphism panels — v4: 3D depth, lift & sheen ──────────── */
   background: rgba(9, 10, 18, 0.72);
   backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   /* Light-mode glass: warm frosted look */
   :root:not(.dark) & {
@@ -400,7 +400,6 @@
     ),
     rgba(14, 16, 26, 0.65);
   backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.05) inset,
@@ -447,7 +446,6 @@
   border: 1px solid rgba(249, 115, 22, 0.28);
   background: rgba(249, 115, 22, 0.08);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border-radius: 4px;
   padding: 0.3rem 0.9rem;
   font-family: var(--font-mono);
@@ -465,7 +463,6 @@
   /* ── Glassmorphic Navbar ─────────────────────────────────────────── */
   background: rgba(9, 10, 18, 0.6);
   backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.055);
   transition:
     background 0.4s ease,
@@ -1038,7 +1035,6 @@
   .dark select {
     background-color: rgba(14, 16, 26, 0.55);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
   }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   textarea,
@@ -1065,7 +1061,6 @@
     border-radius: 1.25rem;
     background: rgba(7, 8, 15, 0.52);
     backdrop-filter: blur(14px) saturate(160%);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.055);
     box-shadow:
       0 0 0 1px rgba(249,115,22,0.06) inset,
@@ -1090,7 +1085,6 @@
     overflow: hidden;
     background: rgba(14, 16, 28, 0.82);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(249, 115, 22, 0.38) !important;
     color: hsl(var(--foreground)) !important;
     font-family: var(--font-sans);
@@ -1259,7 +1253,6 @@
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: var(--radius);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
   .holo-card::before {
     content: '';
@@ -1430,7 +1423,6 @@
       linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0) 42%),
       hsl(222 22% 7% / 0.62);
     backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
     border-color: hsl(222 26% 22% / 0.55);
     box-shadow:
       0 1px 0 rgba(255,255,255,0.045) inset,
@@ -1453,7 +1445,6 @@
       linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 45%),
       hsl(222 24% 8% / 0.88);
     backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
 
   /* ── Esquinas HUD tacticas en las glass-card ─────────────────────────── */
@@ -1527,7 +1518,6 @@
     border: 1px solid hsl(222 26% 22% / 0.6);
     background: hsl(222 24% 6% / 0.55);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
   .hud-frame::before {
     content: '';
