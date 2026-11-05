@@ -314,7 +314,7 @@ export default function Comunidad() {
                       )}
                       <div className="flex items-center gap-3 mt-2">
                         <button
-                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 min-h-9 py-2 -my-2"
                           onClick={() => toggleComments(post.id)}
                         >
                           <MessageSquare className="h-3.5 w-3.5" />

@@ -289,7 +289,7 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
             key={key}
             variant={bibleVersion === key ? "default" : "ghost"}
             size="sm"
-            className={`text-xs h-7 ${bibleVersion === key ? "" : "text-muted-foreground"}`}
+            className={`text-xs h-9 ${bibleVersion === key ? "" : "text-muted-foreground"}`}
             onClick={() => setBibleVersion(key)}
             title={BIBLE_VERSIONS[key].desc}
             aria-pressed={bibleVersion === key}
@@ -356,7 +356,7 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
             {Object.entries(HIGHLIGHT_COLORS).map(([color, name]) => (
               <button
                 key={color}
-                className={`w-6 h-6 rounded-full border-2 transition-transform ${highlightColor === color ? "border-foreground scale-110" : "border-transparent"}`}
+                className={`w-8 h-8 rounded-full border-2 transition-transform ${highlightColor === color ? "border-foreground scale-110" : "border-transparent"}`}
                 style={{ backgroundColor: color }}
                 onClick={() => setHighlightColor(color)}
                 title={name}
