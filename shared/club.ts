@@ -120,7 +120,7 @@ export function normalizeWord(word: string): string {
 
 // ---------- Datos que devuelve GET /api/club/summary ----------
 
-export type DailyChallengeId = "leer" | "desafio" | "reflexion" | "compartir" | "versiculo";
+export type DailyChallengeId = "leer" | "desafio" | "reflexion" | "compartir" | "orar" | "versiculo";
 
 export type ClubDailyChallenge = {
   id: DailyChallengeId;

@@ -855,6 +855,32 @@ CREATE TABLE IF NOT EXISTS "club_memory_verses" (
   "completed_at" timestamp DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_club_memory_verse_week" ON "club_memory_verses"("user_id", "week");
+
+-- Muro de oración (server/prayer-wall.ts)
+CREATE TABLE IF NOT EXISTS "prayer_requests" (
+  "id" serial PRIMARY KEY,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "content" text NOT NULL,
+  "category" text NOT NULL DEFAULT 'otro',
+  "visibility" text NOT NULL DEFAULT 'comunidad',
+  "is_anonymous" boolean NOT NULL DEFAULT false,
+  "status" text NOT NULL DEFAULT 'abierta',
+  "answered_note" text,
+  "answered_at" timestamp,
+  "is_hidden" boolean NOT NULL DEFAULT false,
+  "last_notified_on" text,
+  "created_at" timestamp DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS "idx_prayer_requests_created_at" ON "prayer_requests"("created_at");
+
+CREATE TABLE IF NOT EXISTS "prayer_request_prayers" (
+  "id" serial PRIMARY KEY,
+  "request_id" integer NOT NULL REFERENCES "prayer_requests"("id") ON DELETE CASCADE,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "prayed_on" text NOT NULL,
+  "created_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_prayer_request_prayer_day" ON "prayer_request_prayers"("request_id", "user_id", "prayed_on");
 `;
 
 // ALTER TABLE statements to add columns that might be missing from older schemas

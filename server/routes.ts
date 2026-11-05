@@ -26,6 +26,7 @@ import { sendPushToMany, getVapidPublicKey, isPushConfigured, type PushPayload }
 import { registerAgentRoutes } from "./agent/routes";
 import { getBibleChapter, BibleRequestError } from "./bible";
 import { registerClubRoutes, notifyClubComment, readingClubPostAuthor } from "./club";
+import { registerPrayerWallRoutes } from "./prayer-wall";
 import {
   DEFAULT_AZURACAST_HLS_URL,
   DEFAULT_AZURACAST_LIGHT_STREAM_URL,
@@ -2642,6 +2643,9 @@ ${urls}
   // ========== BIBLIOTECA: CLUB DE LECTURA VIVO ==========
   // Lecturas comprobadas, desafíos del club, racha e insignias (server/club.ts).
   registerClubRoutes(app, { isTeacherOrAdmin });
+
+  // ========== ORACIÓN: MURO DE PETICIONES ==========
+  registerPrayerWallRoutes(app, { isTeacherOrAdmin, isAdmin });
 
   // ========== BIBLIOTECA: BIBLE HIGHLIGHTS ==========
   app.get(api.bibleHighlights.list.path, async (req, res) => {

@@ -4,6 +4,7 @@ import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "./db";
 import { storage } from "./storage";
 import { getBibleChapter } from "./bible";
+import { prayedForOthersToday } from "./prayer-wall";
 import {
   BIBLE_BOOKS, users, bibleNotes, bibleReadingLog, clubChallenges, clubChallengeMembers, clubMemoryVerses,
   memberProgress, notifications, readingClubPosts, readingClubComments, readingPlans, readingPlanItems,
@@ -190,7 +191,7 @@ async function buildSummary(req: Request, tz: string, canLead: boolean): Promise
   const today = localDate(tz);
   const week = isoWeek(today);
 
-  const [dates, totals, noteToday, postToday, commentToday, memoryDone, badgeRows, community] = await Promise.all([
+  const [dates, totals, noteToday, postToday, commentToday, memoryDone, badgeRows, community, prayedToday] = await Promise.all([
     readingDates(userId),
     db.execute(sql`SELECT COUNT(DISTINCT (book, chapter))::int AS n FROM bible_reading_log WHERE user_id = ${userId}`),
     db.select({ id: bibleNotes.id }).from(bibleNotes).where(and(eq(bibleNotes.userId, userId), sql`${localDay(bibleNotes.createdAt, tz)} = ${today}`)).limit(1),
@@ -202,6 +203,7 @@ async function buildSummary(req: Request, tz: string, canLead: boolean): Promise
       .where(and(eq(memberProgress.userId, userId), inArray(memberProgress.badgeType, CLUB_BADGE_TYPES)))
       .orderBy(desc(memberProgress.earnedAt)),
     db.execute(sql`SELECT COUNT(*)::int AS chapters, COUNT(DISTINCT user_id)::int AS readers FROM bible_reading_log WHERE read_on >= ${addDays(today, -6)}`),
+    prayedForOthersToday(userId, today),
   ]);
   const streak = computeStreak(dates, today);
 
@@ -277,6 +279,7 @@ async function buildSummary(req: Request, tz: string, canLead: boolean): Promise
   daily.push(
     { id: "reflexion", title: "Escribe una reflexión", desc: "Toca un versículo en la Biblia y agrega una nota.", done: noteToday.length > 0 },
     { id: "compartir", title: "Comparte con el club", desc: "Publica o comenta una reflexión en el club.", done: postToday.length > 0 || commentToday.length > 0 },
+    { id: "orar", title: "Ora por alguien", desc: "Toca «Oré por esto» en una petición del muro de oración.", done: prayedToday },
     { id: "versiculo", title: "Versículo de la semana", desc: "Complétalo de memoria (una vez por semana).", done: memoryDone.length > 0 },
   );
 

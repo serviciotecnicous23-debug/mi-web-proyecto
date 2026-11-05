@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import {
   useClubSummary, useCheckMemoryVerse, useCreateChallenge, useEndChallenge, useJoinChallenge,
@@ -141,6 +142,7 @@ function DailyChallenges({
   onOpenChapter: OpenChapter;
   onGoTo: (section: "compartir" | "versiculo") => void;
 }) {
+  const [, navigate] = useLocation();
   const done = summary.daily.filter((d) => d.done).length;
   const challengeReading = summary.challenges.flatMap((c) => (c.joined && c.status === "activo" ? c.todayReading : [])).find((r) => !r.read);
   const action = (id: string) => {
@@ -152,6 +154,8 @@ function DailyChallenges({
         return challengeReading ? { label: "Leer", run: () => onOpenChapter(challengeReading.book, challengeReading.chapter) } : null;
       case "compartir":
         return { label: "Escribir", run: () => onGoTo("compartir") };
+      case "orar":
+        return { label: "Ir al muro", run: () => navigate("/oracion") };
       case "versiculo":
         return { label: "Practicar", run: () => onGoTo("versiculo") };
       default:
