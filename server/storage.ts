@@ -1564,7 +1564,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(readingClubPosts)
       .innerJoin(users, eq(readingClubPosts.userId, users.id))
-      .orderBy(desc(readingClubPosts.createdAt));
+      .orderBy(desc(readingClubPosts.createdAt))
+      .limit(100); // el club muestra las más recientes; sin límite crecía sin fin
     return rows.map(r => ({
       id: r.id, userId: r.userId, book: r.book, chapter: r.chapter,
       verseStart: r.verseStart, verseEnd: r.verseEnd, content: r.content, createdAt: r.createdAt,
