@@ -433,7 +433,6 @@ Sitemap: ${SITE_URL}/sitemap.xml`
       { loc: "/equipo", priority: "0.7", changefreq: "monthly" },
       { loc: "/en-vivo", priority: "0.9", changefreq: "daily" },
       { loc: "/radio", priority: "0.9", changefreq: "daily" },
-      { loc: "/radio-live-scene", priority: "0.4", changefreq: "weekly" },
       { loc: "/eventos", priority: "0.9", changefreq: "weekly" },
       { loc: "/capacitaciones", priority: "0.8", changefreq: "weekly" },
       { loc: "/contacto", priority: "0.7", changefreq: "yearly" },

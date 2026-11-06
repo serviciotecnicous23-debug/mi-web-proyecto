@@ -913,6 +913,8 @@ function EmailVerifyBanner() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const fireRef = useRef<Fire3DSceneHandle>(null);
+  // En /radio la radio original ocupa la pantalla: sin pie ni botón de subir.
+  const immersive = location === "/radio";
 
   // ── Fire state bridge: Hero (intense) at home-top → Ember (drifting) elsewhere ──
   useEffect(() => {
@@ -987,8 +989,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </motion.main>
       </AnimatePresence>
-      <Footer />
-      <BackToTop />
+      {!immersive && <Footer />}
+      {!immersive && <BackToTop />}
     </div>
   );
 }
