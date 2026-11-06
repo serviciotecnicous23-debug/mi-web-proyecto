@@ -106,7 +106,9 @@ export function RadioDock() {
           <iframe
             src={src}
             title="Radio Avivando el Fuego"
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            // web-share y clipboard-write: el botón "Compartir" de la radio abre la ventana
+            // de compartir del teléfono (o copia el enlace) también dentro de la web.
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share; clipboard-write"
             referrerPolicy="strict-origin-when-cross-origin"
             className="radio-dock__frame"
             onLoad={() => setLoaded(true)}
