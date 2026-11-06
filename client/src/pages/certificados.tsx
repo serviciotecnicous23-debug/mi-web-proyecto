@@ -139,7 +139,7 @@ function CertificateView({
           )}
           <div style={{ textAlign: "center" }}>
             <img
-              src="/icons/icon-192.png?v4"
+              src="/icons/icon-192.png?v=6"
               alt=""
               crossOrigin="anonymous"
               style={{ width: "32px", height: "32px", objectFit: "contain", margin: "0 auto 4px", opacity: 0.7 }}

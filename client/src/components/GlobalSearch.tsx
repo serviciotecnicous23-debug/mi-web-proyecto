@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 
 // Logo icon for nav items
 function LogoNavIcon(props: { className?: string }) {
-  return <img src="/icons/icon-192.png?v4" alt="" className={props.className || "w-4 h-4"} aria-hidden="true" />;
+  return <img src="/icons/icon-192.png?v=6" alt="" className={props.className || "w-4 h-4"} aria-hidden="true" />;
 }
 
 // Static navigation items for instant results
