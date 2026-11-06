@@ -29,6 +29,8 @@ import { registerAgentRoutes } from "./agent/routes";
 import { getBibleChapter, BibleRequestError } from "./bible";
 import { registerClubRoutes, notifyClubComment, readingClubPostAuthor } from "./club";
 import { registerPrayerWallRoutes } from "./prayer-wall";
+import { eliminarCuentaPropia } from "./account-deletion";
+import { DEFAULT_AZURACAST_BASE_URL, AZURACAST_STATION_SHORTCODE } from "@shared/radio";
 import {
   DEFAULT_AZURACAST_HLS_URL,
   DEFAULT_AZURACAST_LIGHT_STREAM_URL,
@@ -434,9 +436,24 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     );
   });
 
+  // Configuración remota de la app de la radio (Google Play y App Store). La app la lee al
+  // abrir: si cambia el servidor de la radio, se cambia aquí (shared/radio.ts) y las apps
+  // instaladas lo toman sin publicar otra versión. Se lee desde la app (otro origen): CORS.
+  app.get("/radio-app/config.json", (_req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({
+      servers: [DEFAULT_AZURACAST_BASE_URL],
+      mountPath: `/listen/${AZURACAST_STATION_SHORTCODE}/radio.mp3`,
+      lightMountPath: `/listen/${AZURACAST_STATION_SHORTCODE}/ligero.aac`,
+      ministryUrl: SITE_URL,
+    });
+  });
+
   app.get("/sitemap.xml", (_req, res) => {
     const pages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
+      { loc: "/bienvenida", priority: "0.8", changefreq: "monthly" },
       { loc: "/historia", priority: "0.8", changefreq: "monthly" },
       { loc: "/equipo", priority: "0.7", changefreq: "monthly" },
       { loc: "/en-vivo", priority: "0.9", changefreq: "daily" },
@@ -448,6 +465,8 @@ Sitemap: ${SITE_URL}/sitemap.xml`
       { loc: "/biblioteca", priority: "0.7", changefreq: "weekly" },
       { loc: "/oracion", priority: "0.8", changefreq: "weekly" },
       { loc: "/regiones", priority: "0.6", changefreq: "monthly" },
+      { loc: "/privacidad", priority: "0.3", changefreq: "yearly" },
+      { loc: "/terminos", priority: "0.3", changefreq: "yearly" },
       { loc: "/login", priority: "0.3", changefreq: "yearly" },
       { loc: "/registro", priority: "0.5", changefreq: "yearly" },
     ];
@@ -955,6 +974,34 @@ ${urls}
     if (!req.isAuthenticated()) return res.status(401).json({ message: "No autenticado" });
     const { password, ...safeUser } = req.user!;
     res.json(safeUser);
+  });
+
+  // "Eliminar mi cuenta" (Perfil): pide la contraseña y borra los datos personales
+  // (ver server/account-deletion.ts). La administración no se borra desde aquí: otro
+  // administrador debe quitarle el rol antes, para no dejar el ministerio sin acceso.
+  app.post("/api/account/delete", authLimiter as RequestHandler, async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "No autenticado" });
+    const me = req.user!;
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (req.body?.confirm !== "ELIMINAR") {
+      return res.status(400).json({ message: "Escribe ELIMINAR para confirmar." });
+    }
+    if (["admin", "director", "staff_global"].includes(me.role)) {
+      return res.status(403).json({ message: "Una cuenta de administración no se puede eliminar desde aquí. Pide a otro administrador que te quite el rol primero." });
+    }
+    try {
+      const fila = await storage.getUser(me.id);
+      if (!fila || !password || !(await comparePasswords(password, fila.password))) {
+        return res.status(400).json({ message: "La contraseña no es correcta." });
+      }
+      await eliminarCuentaPropia(me.id, await hashPassword(randomBytes(32).toString("hex")));
+      req.logout(() => {
+        req.session?.destroy(() => res.json({ ok: true }));
+      });
+    } catch (err) {
+      console.error("[cuenta] No se pudo eliminar la cuenta", me.id, err);
+      res.status(500).json({ message: "No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos desde Contacto." });
+    }
   });
 
   // ========== FORGOT PASSWORD ==========
