@@ -82,18 +82,91 @@ const publicDesktopNavLinks = [
 ];
 
 // Desktop nav bar — MEMBERS (logged in)
-const memberDesktopNavLinks = [
-  { href: "/capacitaciones", label: "Capacitaciones" },
-  { href: "/biblioteca", label: "Biblioteca" },
-  { href: "/regiones", label: "Regiones" },
-  { href: "/comunidad", label: "Comunidad" },
-  { href: "/oracion", label: "Oración" },
-  { href: "/eventos", label: "Eventos" },
-  { href: "/radio", label: "Radio" },
-  { href: "/en-vivo", label: "En Vivo" },
-  { href: "/perfil?tab=amigos", label: "Amigos" },
-  { href: "/mensajes", label: "Mensajes" },
+// Escritorio — MIEMBROS: los mismos grupos que el menú del celular, como menús
+// desplegables. Antes eran 10 enlaces sueltos y la barra medía ~1.600 px: entre 1024 y
+// 1.536 px de ancho se salía por la derecha y la página se movía de lado. La radio no
+// va aquí porque tiene su botón propio en la barra.
+type DesktopNavGroupData = {
+  title: string;
+  links: { href: string; label: string; icon: typeof Home }[];
+};
+
+const memberDesktopNavGroups: DesktopNavGroupData[] = [
+  {
+    title: "Formación",
+    links: [
+      { href: "/capacitaciones", label: "Capacitaciones", icon: GraduationCap },
+      { href: "/biblioteca", label: "Biblioteca", icon: Library },
+      { href: "/sermones", label: "Sermones", icon: FileText },
+      { href: "/en-vivo", label: "En vivo", icon: Video },
+    ],
+  },
+  {
+    title: "Comunidad",
+    links: [
+      { href: "/comunidad", label: "Comunidad", icon: MessageSquare },
+      { href: "/oracion", label: "Oración", icon: Heart },
+      { href: "/eventos", label: "Eventos", icon: Calendar },
+      { href: "/grupos", label: "Grupos", icon: Users },
+      { href: "/calendario", label: "Calendario", icon: Calendar },
+      { href: "/perfil?tab=amigos", label: "Amigos", icon: Users },
+      { href: "/mensajes", label: "Mensajes", icon: Mail },
+    ],
+  },
+  {
+    title: "Ministerio",
+    links: [
+      { href: "/regiones", label: "Regiones", icon: Globe },
+      { href: "/iglesias", label: "Iglesias", icon: Church },
+      { href: "/historia", label: "Historia", icon: BookOpen },
+      { href: "/equipo", label: "Equipo", icon: Users },
+    ],
+  },
 ];
+
+const navSlug = (value: string) =>
+  value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+
+function pathMatches(location: string, href: string) {
+  const path = href.split("?")[0];
+  return location === path || (path !== "/" && location.startsWith(path + "/"));
+}
+
+function DesktopNavGroup({ group, location }: { group: DesktopNavGroupData; location: string }) {
+  const active = group.links.some((l) => pathMatches(location, l.href));
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={`nav-link inline-flex items-center gap-1 ${active ? "nav-link-active" : ""}`}
+          data-testid={`menu-nav-${navSlug(group.title)}`}
+        >
+          {group.title}
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[13rem]">
+        {group.links.map((l) => {
+          const Icon = l.icon;
+          const isActive = pathMatches(location, l.href);
+          return (
+            <DropdownMenuItem key={l.href} asChild>
+              <Link
+                href={l.href}
+                className={`flex items-center gap-2 ${isActive ? "text-primary font-medium" : ""}`}
+                data-testid={`link-nav-${navSlug(l.label)}`}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {l.label}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 // Mobile nav — PUBLIC (visitors)
 const publicMobileNavGroups = [
@@ -457,19 +530,23 @@ export function Navbar() {
 
         {/* Desktop navigation — public or member */}
         <div className="hidden lg:flex items-center gap-0.5">
-          {(user ? memberDesktopNavLinks : publicDesktopNavLinks).map((l) => {
-            const isActive = location === l.href || (l.href !== "/" && location.startsWith(l.href));
-            return (
-              <Link key={l.href} href={l.href}>
-                <span
-                  className={`nav-link ${isActive ? "nav-link-active" : ""}`}
-                  data-testid={`link-nav-${l.label.toLowerCase().replace(/\s/g, "-")}`}
-                >
-                  {l.label}
-                </span>
-              </Link>
-            );
-          })}
+          {user
+            ? memberDesktopNavGroups.map((group) => (
+                <DesktopNavGroup key={group.title} group={group} location={location} />
+              ))
+            : publicDesktopNavLinks.map((l) => {
+                const isActive = location === l.href || (l.href !== "/" && location.startsWith(l.href));
+                return (
+                  <Link key={l.href} href={l.href}>
+                    <span
+                      className={`nav-link ${isActive ? "nav-link-active" : ""}`}
+                      data-testid={`link-nav-${l.label.toLowerCase().replace(/\s/g, "-")}`}
+                    >
+                      {l.label}
+                    </span>
+                  </Link>
+                );
+              })}
         </div>
 
         {/* Right side: Search + Theme + Auth */}
