@@ -278,19 +278,13 @@ export default function Home() {
                 </h2>
                 <p className="max-w-2xl text-muted-foreground md:text-lg">
                   Adoración, alabanza, prédicas y contenido ministerial nuevo,
-                  transmitiendo 24/7 desde nuestro propio servidor AzuraCast.
+                  transmitiendo las 24 horas con señal propia.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/radio">
                     <Button size="lg" className="fire-btn-primary w-full sm:w-auto px-8" data-testid="button-home-radio" data-magnetic>
                       <Headphones className="h-5 w-5 mr-2" />
-                      Abrir Radio
-                    </Button>
-                  </Link>
-                  <Link href="/radio-live-scene">
-                    <Button size="lg" variant="outline" className="btn-fire-glow w-full sm:w-auto" data-testid="button-home-radio-scene" data-magnetic>
-                      <Video className="h-4 w-4 mr-2" />
-                      Escena en Vivo
+                      Escuchar la radio
                     </Button>
                   </Link>
                 </div>

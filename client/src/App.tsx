@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { RadioDock } from "@/components/RadioDock";
 import { PageTransition } from "@/components/PageTransition";
 import { GlassCursor } from "@/components/GlassCursor";
 import NotFound from "@/pages/not-found";
@@ -169,6 +170,7 @@ function App() {
             <PageTransition>
               <Router />
             </PageTransition>
+            <RadioDock />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

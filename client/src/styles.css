@@ -1667,3 +1667,107 @@
   }
   .dark .bg-secondary { backdrop-filter: blur(6px); }
   [role="tab"]:focus-visible { outline-color: hsl(17 100% 56%); }
+
+/* ── Radio original dentro de la web (RadioDock) ─────────────────────────────
+   El iframe con la página pública de AzuraCast vive fuera de las páginas para que
+   siga sonando al navegar. En /radio ocupa la pantalla bajo la barra de navegación;
+   fuera de /radio queda oculto (visibility, no display: el audio sigue) y aparece
+   la barrita .radio-mini. --app-nav-h es la altura de la barra (h-16). */
+:root { --app-nav-h: 4rem; }
+.radio-page-space { height: calc(100dvh - var(--app-nav-h)); }
+html.radio-immersive, html.radio-immersive body { overflow: hidden; overscroll-behavior: none; }
+.radio-dock {
+  position: fixed;
+  z-index: 40;
+  inset: var(--app-nav-h) 0 0 0;
+  background: #08070a;
+}
+.radio-dock--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+.radio-dock__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.radio-dock__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #fed7aa;
+  font-size: 0.95rem;
+  background: radial-gradient(ellipse at 50% 40%, rgba(124, 58, 237, 0.25), transparent 60%), #08070a;
+}
+.radio-mini {
+  position: fixed;
+  z-index: 45;
+  left: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: min(24rem, calc(100vw - 24px));
+  padding: 0.375rem 0.375rem 0.375rem 0.375rem;
+  border-radius: 9999px;
+  color: #fff7ed;
+  background: rgba(14, 10, 18, 0.84);
+  border: 1px solid rgba(251, 146, 60, 0.38);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38), 0 0 26px rgba(249, 115, 22, 0.2);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+.radio-mini__open {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 44px;
+  padding-right: 0.5rem;
+  border-radius: 9999px;
+  color: inherit;
+  text-decoration: none;
+}
+.radio-mini__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  color: #16060a;
+  background: linear-gradient(135deg, #fbbf24, #f97316 55%, #dc2626);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.55);
+  animation: radio-mini-pulse 2.4s ease-in-out infinite;
+}
+.radio-mini__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.radio-mini__title { font-size: 0.8rem; font-weight: 700; }
+.radio-mini__song {
+  font-size: 0.72rem;
+  color: rgba(255, 237, 213, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radio-mini__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  color: rgba(255, 237, 213, 0.8);
+  background: transparent;
+}
+.radio-mini__close:hover, .radio-mini__open:hover .radio-mini__title { color: #fdba74; }
+.radio-mini__open:focus-visible, .radio-mini__close:focus-visible { outline: 2px solid #fb923c; outline-offset: 2px; }
+@keyframes radio-mini-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(249, 115, 22, 0.45); }
+  50% { box-shadow: 0 0 22px rgba(249, 115, 22, 0.85); }
+}
+@media (prefers-reduced-motion: reduce) { .radio-mini__icon { animation: none; } }
+html.radio-mini-open body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+html.radio-mini-open .back-to-top { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }

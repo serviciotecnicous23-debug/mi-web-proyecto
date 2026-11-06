@@ -9,6 +9,7 @@ import path from "path";
 import { startBackupScheduler } from "./backup";
 import compression from "compression";
 import helmet from "helmet";
+import { DEFAULT_AZURACAST_STATION_URL } from "@shared/radio";
 import { privateFieldsFilter } from "./private-fields";
 
 // ========== VERSIÓN DE NODE.JS ==========
@@ -114,6 +115,17 @@ const videoFrameSources = [
   "https://*.jitsi.net",
   "https://8x8.vc",
 ];
+// La radio ORIGINAL (página pública de AzuraCast) se muestra dentro de /radio.
+const radioFrameSources = [DEFAULT_AZURACAST_STATION_URL, process.env.RADIO_STATION_URL]
+  .map((url) => {
+    try {
+      return url ? new URL(url).origin : null;
+    } catch {
+      return null;
+    }
+  })
+  .filter((origin): origin is string => !!origin);
+const frameSources = Array.from(new Set([...videoFrameSources, ...radioFrameSources]));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -124,8 +136,8 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "https:", "wss:"],
       mediaSrc: ["'self'", "https:", "blob:"],
-      frameSrc: videoFrameSources,
-      childSrc: videoFrameSources,
+      frameSrc: frameSources,
+      childSrc: frameSources,
       workerSrc: ["'self'", "blob:"],
     },
   },

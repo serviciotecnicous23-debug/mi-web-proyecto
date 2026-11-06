@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import Hls from "hls.js";
+import { Link } from "wouter";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useLiveStreamConfig } from "@/hooks/use-users";
@@ -144,92 +145,35 @@ function AudioVisualizer({ isPlaying }: { isPlaying: boolean }) {
   );
 }
 
-function RadioPlayer({ url, title }: { url: string; title?: string }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(80);
-  const [isMuted, setIsMuted] = useState(false);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume / 100;
-    }
-  }, [volume, isMuted]);
-
-  const togglePlay = () => {
-    if (!audioRef.current || !url) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      setError(false);
-      audioRef.current.src = url;
-      audioRef.current.play().catch(() => setError(true));
-      setIsPlaying(true);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <audio
-        ref={audioRef}
-        onError={() => { setError(true); setIsPlaying(false); }}
-        onEnded={() => setIsPlaying(false)}
-      />
-
-      <div className="rounded-md bg-linear-to-br from-orange-500/10 to-red-600/15 p-6 flex flex-col items-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-orange-500/15 flex items-center justify-center">
-          {isPlaying ? (
-            <AudioVisualizer isPlaying={isPlaying} />
-          ) : (
-            <Radio className="w-10 h-10 text-primary" />
-          )}
-        </div>
-
-        <div className="text-center">
-          <p className="font-bold text-lg text-white">{title || "Avivando el Fuego Radio"}</p>
-          <p className="text-xs text-orange-100/60 mt-1">
-            {isPlaying ? "Reproduciendo..." : url ? "Listo para reproducir" : "Sin señal configurada"}
-          </p>
-        </div>
-
-        {error && (
-          <p className="text-xs text-red-400">No se pudo conectar con la emisora. Verifica la URL de la señal.</p>
-        )}
-
-        <div className="flex items-center gap-4">
-          <Button
-            size="icon"
-            className="h-12 w-12 rounded-full bg-linear-to-br from-amber-200 via-orange-500 to-red-600 text-black shadow-[0_10px_30px_rgba(249,115,22,0.35)] hover:brightness-110"
-            onClick={togglePlay}
-            disabled={!url}
-            data-testid="button-radio-play"
-          >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-          </Button>
-
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-orange-100 hover:bg-white/10"
-            onClick={() => setIsMuted(!isMuted)}
-            data-testid="button-radio-mute"
-          >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-          </Button>
-
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={isMuted ? 0 : volume}
-            onChange={(e) => { setVolume(Number(e.target.value)); setIsMuted(false); }}
-            className="w-24 accent-orange-400"
-            data-testid="slider-radio-volume"
-          />
-        </div>
+// La radio de la web es la ORIGINAL (página pública de AzuraCast, ver RadioDock):
+// aquí solo se invita a abrirla. Antes había un reproductor propio con otro diseño.
+function RadioOnAir({ compact = false }: { compact?: boolean }) {
+  const button = (
+    <Link href="/radio">
+      <Button className="fire-btn-primary" data-testid="button-open-radio">
+        <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
+        Escuchar la radio
+      </Button>
+    </Link>
+  );
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4" data-testid="radio-on-air">
+        <p className="text-sm text-orange-100/80">¿Prefieres solo audio? La radio sigue al aire.</p>
+        {button}
       </div>
+    );
+  }
+  return (
+    <div className="flex aspect-video flex-col items-center justify-center gap-4 rounded-md bg-zinc-950 px-6 text-center" data-testid="radio-on-air">
+      <Radio className="w-10 h-10 text-primary" aria-hidden="true" />
+      <div>
+        <p className="font-bold text-lg text-white">Avivando el Fuego Radio</p>
+        <p className="mt-1 text-sm text-orange-100/70 max-w-sm">
+          Ahora no hay transmisión de video. La radio está al aire las 24 horas.
+        </p>
+      </div>
+      {button}
     </div>
   );
 }
@@ -970,10 +914,7 @@ export default function EnVivo() {
                 ) : isLive ? (
                   <VideoPlayer sourceType={config.sourceType} sourceUrl={config.sourceUrl} />
                 ) : (
-                  <RadioPlayer
-                    url={config?.radioUrl || ""}
-                    title={config?.title || "Avivando el Fuego Radio"}
-                  />
+                  <RadioOnAir />
                 )}
               </CinemaScreen>
 
@@ -1000,7 +941,7 @@ export default function EnVivo() {
                     <Radio className="w-5 h-5 text-primary" />
                     <p className="data-label">Mientras tanto, la radio sigue sonando</p>
                   </div>
-                  <RadioPlayer url={config.radioUrl} title="Avivando el Fuego Radio" />
+                  <RadioOnAir compact />
                 </div>
               )}
 
