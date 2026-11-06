@@ -721,7 +721,7 @@ export function Navbar() {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
           side="left"
-          className="w-[300px] sm:w-[340px] p-0"
+          className="w-[300px] sm:w-[340px] p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
           ref={menuRef}
         >
           <SheetHeader className="p-4 pb-2 border-b">

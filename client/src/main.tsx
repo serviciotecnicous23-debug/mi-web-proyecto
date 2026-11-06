@@ -44,19 +44,27 @@ if (SENTRY_DSN) {
 // Register PWA service worker for offline support and fast loading
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
+    // Al tocar un aviso, el service worker pide navegar DENTRO de la app (sin recargar).
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      const data = event.data as { type?: string; url?: string } | null;
+      if (data?.type !== "avivando:navigate" || typeof data.url !== "string") return;
+      const target = new URL(data.url, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      window.history.pushState({}, "", target.pathname + target.search + target.hash);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
     navigator.serviceWorker.register("/sw.js").then(
       (registration) => {
         console.log("SW registered:", registration.scope);
 
-        // When a new SW is found, force it to activate and reload
+        // Versión nueva: se avisa (AppStatus ofrece "Actualizar") en lugar de recargar sola.
+        // Recargar sin avisar cortaba la radio y lo que la persona estaba escribiendo.
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "activated" && navigator.serviceWorker.controller) {
-                // New version activated — reload to get fresh content
-                console.log("New SW activated, reloading for fresh content...");
-                window.location.reload();
+                window.dispatchEvent(new CustomEvent("avivando:update-ready"));
               }
             });
           }
