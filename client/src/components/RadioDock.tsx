@@ -69,6 +69,10 @@ export function RadioDock() {
   // Con la barrita visible, la página deja sitio abajo y el botón de subir se aparta.
   const miniVisible = alive && !onRadio;
   useEffect(() => {
+    document.documentElement.classList.toggle("radio-alive", alive);
+    return () => document.documentElement.classList.remove("radio-alive");
+  }, [alive]);
+  useEffect(() => {
     document.documentElement.classList.toggle("radio-mini-open", miniVisible);
     return () => document.documentElement.classList.remove("radio-mini-open");
   }, [miniVisible]);

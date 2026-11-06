@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "motion/react";
@@ -445,6 +446,12 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  // "Más" de la barra inferior del celular abre este mismo menú.
+  useEffect(() => {
+    const open = () => setMenuOpen(true);
+    window.addEventListener("avivando:open-menu", open);
+    return () => window.removeEventListener("avivando:open-menu", open);
+  }, []);
   const menuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
@@ -552,13 +559,13 @@ export function Navbar() {
         {/* Right side: Search + Theme + Auth */}
         <div className="flex items-center gap-2">
           <Link href="/radio">
-            <Button size="sm" className="hidden sm:inline-flex fire-btn-primary" data-testid="link-radio-quick">
+            <Button size="sm" className="hidden lg:inline-flex fire-btn-primary" data-testid="link-radio-quick">
               <Radio className="w-4 h-4" />
               Radio
             </Button>
           </Link>
           <Link href="/radio">
-            <Button size="icon" className="sm:hidden fire-btn-primary" data-testid="link-radio-quick-mobile" aria-label="Escuchar radio">
+            <Button size="icon" className="hidden fire-btn-primary" data-testid="link-radio-quick-mobile" aria-label="Escuchar radio">
               <Radio className="w-4 h-4" />
             </Button>
           </Link>
@@ -706,7 +713,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="hidden"
             onClick={() => setMenuOpen(!menuOpen)}
             data-testid="button-mobile-menu"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
@@ -1068,6 +1075,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
       {!immersive && <Footer />}
       {!immersive && <BackToTop />}
+      <MobileTabBar />
     </div>
   );
 }

@@ -1674,12 +1674,12 @@
    fuera de /radio queda oculto (visibility, no display: el audio sigue) y aparece
    la barrita .radio-mini. --app-nav-h es la altura de la barra (h-16). */
 :root { --app-nav-h: calc(4rem + env(safe-area-inset-top, 0px)); }
-.radio-page-space { height: calc(100dvh - var(--app-nav-h)); }
+.radio-page-space { height: calc(100dvh - var(--app-nav-h) - var(--app-tabbar-h, 0px)); }
 html.radio-immersive, html.radio-immersive body { overflow: hidden; overscroll-behavior: none; }
 .radio-dock {
   position: fixed;
   z-index: 40;
-  inset: var(--app-nav-h) 0 0 0;
+  inset: var(--app-nav-h) 0 var(--app-tabbar-h, 0px) 0;
   background: #08070a;
 }
 .radio-dock--hidden {
@@ -1836,3 +1836,88 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .app-status__btn:focus-visible, .app-status__close:focus-visible { outline: 2px solid #fb923c; outline-offset: 2px; }
 @keyframes app-status-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .app-status__pill, .app-status__update { animation: none; } }
+
+/* ── Barra inferior del celular (MobileTabBar) ─────────────────────────────────
+   Solo por debajo de 1024 px. --app-tabbar-h es su altura (con la zona del gesto de
+   inicio del iPhone): la página deja ese sitio abajo, la radio termina encima y la
+   barrita de la radio y el botón de subir se apoyan sobre ella. */
+:root { --app-tabbar-h: 0px; }
+.tabbar { display: none; }
+@media (max-width: 1023.98px) {
+  :root { --app-tabbar-h: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .tabbar {
+    position: fixed;
+    z-index: 46;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    height: var(--app-tabbar-h);
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    background: rgba(9, 10, 18, 0.86);
+    border-top: 1px solid rgba(251, 146, 60, 0.18);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px) saturate(1.5);
+  }
+  .tabbar::before {
+    content: "";
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    top: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.7), transparent);
+  }
+  .tabbar__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 48px;
+    color: rgba(255, 237, 213, 0.62);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    background: transparent;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease;
+  }
+  .tabbar__icon { position: relative; display: grid; place-items: center; width: 44px; height: 28px; border-radius: 9999px; transition: background 0.25s ease, transform 0.15s ease; }
+  .tabbar__item:active .tabbar__icon { transform: scale(0.92); }
+  .tabbar__item--active { color: #fdba74; }
+  .tabbar__item--active .tabbar__icon {
+    color: #16060a;
+    background: linear-gradient(135deg, #fbbf24, #f97316 55%, #dc2626);
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.55);
+  }
+  .tabbar__item:focus-visible { outline: 2px solid #fb923c; outline-offset: -4px; border-radius: 12px; }
+  /* Puntito "en el aire" en Radio mientras la radio está abierta (RadioDock pone html.radio-alive). */
+  .tabbar__live {
+    display: none;
+    position: absolute;
+    top: 1px;
+    right: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: #ef4444;
+    box-shadow: 0 0 0 2px rgba(9, 10, 18, 0.9), 0 0 10px rgba(239, 68, 68, 0.9);
+    animation: tabbar-live 1.6s ease-in-out infinite;
+  }
+  html.radio-alive .tabbar__live { display: block; }
+  @keyframes tabbar-live { 50% { opacity: 0.45; } }
+
+  body { padding-bottom: var(--app-tabbar-h); }
+  html.radio-mini-open body { padding-bottom: calc(var(--app-tabbar-h) + 76px); }
+  .radio-mini { bottom: calc(var(--app-tabbar-h) + 10px); }
+  .back-to-top { bottom: calc(var(--app-tabbar-h) + 16px); }
+  html.radio-mini-open .back-to-top { bottom: calc(var(--app-tabbar-h) + 84px); }
+}
+@media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) {
+  .tabbar__live { animation: none; }
+}
