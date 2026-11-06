@@ -20,8 +20,8 @@ export function RadioInstallActions({
   const handleInstall = async () => {
     if (isInstalled) {
       toast({
-        title: "Radio instalada",
-        description: "La app web ya está abierta en modo instalable.",
+        title: "App instalada",
+        description: "Ya estás usando Avivando el Fuego como app.",
       });
       return;
     }
@@ -29,8 +29,8 @@ export function RadioInstallActions({
     const outcome = await install();
     if (outcome === "accepted") {
       toast({
-        title: "Radio instalada",
-        description: "Avivando el Fuego Radio quedo lista en este dispositivo.",
+        title: "App instalada",
+        description: "Avivando el Fuego quedó en tu pantalla de inicio.",
       });
       return;
     }

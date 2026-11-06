@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "motion/react";
@@ -374,6 +375,17 @@ function MobileNavGroup({
   );
 }
 
+// Globo con el número de avisos sin leer en el ícono de la app instalada (Badging API:
+// Windows, macOS, ChromeOS y iPhone con permiso de avisos). Donde no existe, no hace nada.
+function setAppIconBadge(count: number) {
+  const nav = navigator as Navigator & {
+    setAppBadge?: (n?: number) => Promise<void>;
+    clearAppBadge?: () => Promise<void>;
+  };
+  if (count > 0) nav.setAppBadge?.(count).catch(() => {});
+  else nav.clearAppBadge?.().catch(() => {});
+}
+
 // ========== NOTIFICATION BELL ==========
 function NotificationBell() {
   const { data: countData } = useQuery<{ count: number }>({
@@ -396,6 +408,10 @@ function NotificationBell() {
 
   const unreadCount = countData?.count || 0;
   const recentNotifs = notifications.slice(0, 8);
+
+  useEffect(() => {
+    setAppIconBadge(unreadCount);
+  }, [unreadCount]);
 
   return (
     <Popover>
@@ -446,6 +462,11 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Sin sesión no hay avisos: el globo del ícono se borra.
+  useEffect(() => {
+    if (!user) setAppIconBadge(0);
+  }, [user]);
+
   // "Más" de la barra inferior del celular abre este mismo menú.
   useEffect(() => {
     const open = () => setMenuOpen(true);
@@ -848,11 +869,7 @@ export function Navbar() {
 
           {/* Bottom action bar */}
           <div className="border-t p-3 space-y-2">
-            <Link href="/radio" onClick={closeMenu}>
-              <Button className="w-full justify-start gap-3 fire-btn-primary" size="sm" data-testid="link-mobile-radio-primary">
-                <Radio className="w-4 h-4" aria-hidden="true" /> Escuchar Radio
-              </Button>
-            </Link>
+            <InstallAppButton onDone={closeMenu} />
             {user ? (
               <Button
                 variant="ghost"
