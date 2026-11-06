@@ -1,5 +1,4 @@
 import { Link, useLocation } from "wouter";
-import { MobileTabBar } from "@/components/MobileTabBar";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1092,7 +1091,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
       {!immersive && <Footer />}
       {!immersive && <BackToTop />}
-      <MobileTabBar />
     </div>
   );
 }

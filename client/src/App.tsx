@@ -8,6 +8,7 @@ import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { RadioDock } from "@/components/RadioDock";
 import { AppStatus } from "@/components/AppStatus";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageTransition } from "@/components/PageTransition";
 import { GlassCursor } from "@/components/GlassCursor";
 import NotFound from "@/pages/not-found";
@@ -173,6 +174,7 @@ function App() {
             </PageTransition>
             <RadioDock />
             <AppStatus />
+            <MobileTabBar />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -1844,7 +1844,7 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 :root { --app-tabbar-h: 0px; }
 .tabbar { display: none; }
 @media (max-width: 1023.98px) {
-  :root { --app-tabbar-h: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  html.has-tabbar { --app-tabbar-h: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .tabbar {
     position: fixed;
     z-index: 46;
