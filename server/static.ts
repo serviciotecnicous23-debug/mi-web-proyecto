@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { renderPageHtml } from "./seo";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
@@ -44,9 +45,12 @@ export function serveStatic(app: Express) {
     index: false,
   }));
 
-  // fall through to index.html if the file doesn't exist (SPA routing)
-  app.use("/{*path}", (_req, res) => {
+  // fall through to index.html if the file doesn't exist (SPA routing).
+  // Cada ruta sale con su canónica, título y descripción (server/seo.ts).
+  const indexHtml = fs.readFileSync(path.resolve(distPath, "index.html"), "utf-8");
+  app.use("/{*path}", (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
-    res.sendFile(path.resolve(distPath, "index.html"));
+    // req.path aquí siempre es "/" (app.use quita lo que coincide con /{*path}): usar la URL completa.
+    res.type("html").send(renderPageHtml(indexHtml, req.originalUrl));
   });
 }

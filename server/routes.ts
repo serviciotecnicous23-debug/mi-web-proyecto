@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
+import { resolveSiteUrl } from "@shared/site";
 import { z } from "zod";
 import session from "express-session";
 import passport from "passport";
@@ -404,7 +405,8 @@ export async function registerRoutes(
   // before registerRoutes is called.
 
   // ========== SEO: Google verification, robots.txt & sitemap.xml ==========
-  const SITE_URL = process.env.SITE_URL || "https://ministerio-avivando-el-fuego.onrender.com";
+  // La dirección oficial; una SITE_URL de onrender.com se ignora (ver shared/site.ts).
+  const SITE_URL = resolveSiteUrl(process.env.SITE_URL);
 
   app.get("/google2dc20426b22c049c.html", (_req, res) => {
     res.type("text/html").send("google-site-verification: google2dc20426b22c049c.html");
@@ -421,6 +423,7 @@ Disallow: /mensajes
 Disallow: /mis-capacitaciones
 Disallow: /maestro
 Disallow: /aula/
+Disallow: /radio-live-scene
 
 Sitemap: ${SITE_URL}/sitemap.xml`
     );
