@@ -44,7 +44,12 @@ import { useLocation } from "wouter";
 export default function Capacitaciones() {
   const { user, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState("cartelera");
+  // Abre en "Cursos" (a eso viene un miembro, como en Classroom o Coursera); ?tab= abre
+  // otra pestaña (por ejemplo, un aviso de la cartelera).
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+    return tab && ["cartelera", "cursos", "sesiones", "horarios"].includes(tab) ? tab : "cursos";
+  });
   const [lastSeen, setLastSeen] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("cartelera_last_seen") || "";
@@ -100,12 +105,12 @@ export default function Capacitaciones() {
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg mb-6">
+            <TabsTrigger value="cursos" className="flex-1 min-w-[120px] gap-1.5">
+              <BookOpen className="w-4 h-4" /> Cursos
+            </TabsTrigger>
             <TabsTrigger value="cartelera" className="flex-1 min-w-[120px] gap-1.5 relative">
               <LayoutDashboard className="w-4 h-4" /> Cartelera
               {unseen && <span className="absolute -top-1 -right-2 bg-red-500 text-white rounded-full px-1.5 text-xs">Nuevo</span>}
-            </TabsTrigger>
-            <TabsTrigger value="cursos" className="flex-1 min-w-[120px] gap-1.5">
-              <BookOpen className="w-4 h-4" /> Cursos
             </TabsTrigger>
             <TabsTrigger value="sesiones" className="flex-1 min-w-[120px] gap-1.5">
               <Video className="w-4 h-4" /> Sesiones
@@ -163,7 +168,8 @@ function CarteleraCentralTab({ canManage, user }: { canManage: boolean; user: an
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      {statsLoading ? (
+      {/* Las cifras (cursos, estudiantes, sesiones) son para maestros y administradores. */}
+      {!canManage ? null : statsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
@@ -708,7 +714,7 @@ function CursosTab({ user }: { user: any }) {
                       {COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES] || course.category}
                     </Badge>
                     <span className="text-xs text-muted-foreground flex items-center gap-1" data-testid={`text-capacity-${course.id}`}>
-                      <Users className="w-3 h-3" /> {(course as any).enrolledCount || 0}{course.maxStudents ? `/${course.maxStudents}` : ""} inscritos
+                      <Users className="w-3 h-3" /> {(course as any).enrolledCount || 0}{course.maxStudents ? `/${course.maxStudents}` : ""} {((course as any).enrolledCount || 0) === 1 && !course.maxStudents ? "inscrito" : "inscritos"}
                     </span>
                   </div>
                   <CardTitle className="text-lg mt-2" data-testid={`text-course-title-${course.id}`}>{course.title}</CardTitle>
