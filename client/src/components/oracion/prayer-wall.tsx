@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PRAYER_CATEGORIES } from "@shared/schema";
 import { Check, HandHeart, Loader2, Lock, PartyPopper, Trash2, UserX } from "lucide-react";
+import { ReportButton } from "@/components/moderacion/ReportButton";
 
 type PrayerRequestItem = {
   id: number;
@@ -209,6 +210,7 @@ function PrayerCard({ item }: { item: PrayerRequestItem }) {
             🙏 {people === 0 ? "Sé la primera persona en orar" : people === 1 ? "1 persona oró" : `${people} personas oraron`}
           </p>
           <div className="flex items-center gap-1">
+            {!item.mine && <ReportButton contentType="oracion" contentId={item.id} className="text-xs min-h-10 px-2" />}
             {item.canManage && (
               <Button variant="ghost" size="sm" className="min-h-10 text-muted-foreground" onClick={() => setConfirmDelete(true)} aria-label="Borrar petición">
                 <Trash2 className="w-4 h-4" />

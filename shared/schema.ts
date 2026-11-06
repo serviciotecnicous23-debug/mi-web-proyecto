@@ -1823,6 +1823,21 @@ export const prayerRequestPrayers = pgTable("prayer_request_prayers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Denuncias de contenido (server/reports.ts, shared/reports.ts): moderación de lo que publican
+// los miembros. Una por persona y contenido (índice único en ensure-schema).
+export const contentReports = pgTable("content_reports", {
+  id: serial("id").primaryKey(),
+  reporterId: integer("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // publicacion | comentario | oracion
+  contentId: integer("content_id").notNull(),
+  reason: text("reason").notNull(),
+  details: text("details"),
+  status: text("status").notNull().default("pendiente"), // pendiente | revisada | descartada
+  reviewedBy: integer("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const PRAYER_CATEGORIES = {
   salud: "Salud",
   familia: "Familia",

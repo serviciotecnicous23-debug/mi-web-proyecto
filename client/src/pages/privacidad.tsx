@@ -81,6 +81,7 @@ const SECCIONES: LegalSection[] = [
           clases. Si tu nombre de usuario es tu correo, los demás ven un alias en su lugar.
         </li>
         <li>Los mensajes privados solo los ven las personas de la conversación.</li>
+        <li>Si denuncias algo, solo la administración ve tu denuncia y quién la hizo.</li>
       </ul>
     ),
   },
