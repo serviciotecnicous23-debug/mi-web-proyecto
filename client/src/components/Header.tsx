@@ -55,7 +55,7 @@ export function Navbar() {
     <nav className="border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/icons/icon-192.png?v4" alt="Logo" className="w-8 h-8 rounded-md" />
+          <img src="/icons/icon-192.png?v=6" alt="Logo" className="w-8 h-8 rounded-md" />
           <span className="font-bold text-lg hidden sm:inline">Avivando el Fuego</span>
         </Link>
 
@@ -129,7 +129,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <img src="/icons/icon-192.png?v4" alt="Logo" className="w-7 h-7 rounded-md" />
+              <img src="/icons/icon-192.png?v=6" alt="Logo" className="w-7 h-7 rounded-md" />
               <span className="font-bold text-lg">Avivando el Fuego</span>
             </div>
             <p className="text-sm text-muted-foreground">

@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 // Cambiar el número cuando cambie este archivo: así se borran las cachés viejas.
-const CACHE_NAME = "avivando-app-v6";
+const CACHE_NAME = "avivando-app-v7";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   "/manifest.json",

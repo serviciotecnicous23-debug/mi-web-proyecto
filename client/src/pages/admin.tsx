@@ -117,7 +117,7 @@ function CertificatePreview({ cert, containerId }: { cert: any; containerId: str
           )}
           <div style={{ textAlign: "center" }}>
             <img
-              src="/icons/icon-192.png?v4"
+              src="/icons/icon-192.png?v=6"
               alt=""
               crossOrigin="anonymous"
               style={{ width: 28, height: 28, objectFit: "contain", margin: "0 auto 4px", opacity: 0.7 }}

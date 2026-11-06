@@ -8,7 +8,7 @@ import { SITE_ORIGIN } from "@shared/site";
 type PageMeta = { title: string; description: string; jsonLd?: object };
 
 const BRAND = "Avivando el Fuego";
-const LOGO = `${SITE_ORIGIN}/icons/icon-512.png?v4`;
+const LOGO = `${SITE_ORIGIN}/icons/icon-512.png?v=6`;
 
 const RADIO_DESCRIPTION =
   "Escucha en vivo la radio cristiana Avivando el Fuego: adoración, alabanza y prédicas las 24 horas. Gratis y sin crear cuenta, desde el celular o la computadora.";
