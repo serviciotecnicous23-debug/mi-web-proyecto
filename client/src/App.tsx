@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 // Cada página se descarga al visitarla (antes todo iba en un JS de 2,2 MB que el
 // celular bajaba entero para mostrar la portada). Portada y 404 van directas.
 const Historia = lazy(() => import("@/pages/historia"));
+const Bienvenida = lazy(() => import("@/pages/bienvenida"));
 const Equipo = lazy(() => import("@/pages/equipo"));
 const EnVivo = lazy(() => import("@/pages/en-vivo"));
 const RadioPage = lazy(() => import("@/pages/radio"));
@@ -66,6 +67,7 @@ function Router() {
     <Suspense fallback={<PageFallback />}>
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/bienvenida" component={Bienvenida} />
       <Route path="/historia" component={Historia} />
       <Route path="/equipo" component={Equipo} />
       <Route path="/en-vivo" component={EnVivo} />

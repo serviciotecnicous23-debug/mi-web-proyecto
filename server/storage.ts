@@ -1987,11 +1987,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listTeamMembers(): Promise<any[]> {
+    // Esta lista es pública (página Equipo y bienvenida): sin el nombre de usuario, que en
+    // algunas cuentas es el correo de la persona.
     const rows = await db.select({
       member: teamMembers,
       user: {
         id: users.id,
-        username: users.username,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
       },

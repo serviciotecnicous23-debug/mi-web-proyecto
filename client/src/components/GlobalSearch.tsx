@@ -25,6 +25,7 @@ import {
   FileText,
   Home,
   Radio,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ function LogoNavIcon(props: { className?: string }) {
 const PUBLIC_NAV_ITEMS = [
   { label: "Inicio", href: "/", icon: Home, category: "Paginas" },
   { label: "Eventos", href: "/eventos", icon: Calendar, category: "Paginas" },
+  { label: "Conócenos (bienvenida)", href: "/bienvenida", icon: Sparkles, category: "Ministerio" },
   { label: "Historia", href: "/historia", icon: BookOpen, category: "Ministerio" },
   { label: "Equipo", href: "/equipo", icon: Users, category: "Ministerio" },
   { label: "Regiones", href: "/regiones", icon: Globe, category: "Ministerio" },
@@ -158,13 +160,16 @@ export function GlobalSearch() {
       <Button
         variant="outline"
         size="sm"
-        className="hidden md:flex items-center gap-2 text-muted-foreground h-9 px-3 w-[200px] lg:w-[180px] xl:w-[260px] justify-start"
+        // Desde 1.024 px la barra de arriba lleva los enlaces y nunca pasa de 1.280 px de ancho
+        // (max-w-7xl): el buscador es solo la lupa para que todo quepa.
+        className="hidden md:flex items-center gap-2 text-muted-foreground h-9 px-3 w-[200px] justify-start lg:w-9 lg:px-0 lg:justify-center"
         onClick={() => setOpen(true)}
         aria-label="Búsqueda global"
+        title="Buscar (Ctrl+K)"
       >
         <Search className="h-4 w-4" />
-        <span className="text-sm">Buscar...</span>
-        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+        <span className="text-sm lg:hidden">Buscar...</span>
+        <kbd className="pointer-events-none ml-auto h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground inline-flex lg:hidden">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>

@@ -31,6 +31,7 @@ import {
   MapPin,
   FileText,
   Radio,
+  Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -70,15 +71,28 @@ import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { Fire3DScene } from "@/components/Fire3DScene";
 import type { Fire3DSceneHandle } from "@/components/Fire3DScene";
 
-// Desktop nav links — PUBLIC (visitors / not logged in)
-const publicDesktopNavLinks = [
+// Escritorio — VISITANTES. "Conócenos" lleva a la bienvenida. La radio no va aquí: tiene su
+// botón propio en la barra (antes salía dos veces). Regiones, Iglesias, Historia y Equipo van
+// en "Ministerio": con 8 enlaces sueltos la barra medía ~1.410 px y entre 1.024 y 1.400 px de
+// ancho la página se movía de lado. Los enlaces se ven desde 1.280 px; entre 1.024 y 1.279 px
+// el visitante usa el botón de menú (por debajo de 1.024 px está la barra inferior).
+type PublicDesktopNavItem = { href: string; label: string } | DesktopNavGroupData;
+
+const publicDesktopNavItems: PublicDesktopNavItem[] = [
   { href: "/", label: "Inicio" },
+  { href: "/bienvenida", label: "Conócenos" },
   { href: "/biblioteca", label: "Biblia" },
   { href: "/eventos", label: "Eventos" },
-  { href: "/regiones", label: "Regiones" },
-  { href: "/iglesias", label: "Iglesias" },
+  {
+    title: "Ministerio",
+    links: [
+      { href: "/regiones", label: "Regiones", icon: Globe },
+      { href: "/iglesias", label: "Iglesias", icon: Church },
+      { href: "/historia", label: "Historia", icon: BookOpen },
+      { href: "/equipo", label: "Equipo", icon: Users },
+    ],
+  },
   { href: "/comunidad", label: "Comunidad" },
-  { href: "/radio", label: "Radio" },
   { href: "/en-vivo", label: "En Vivo" },
 ];
 
@@ -215,6 +229,7 @@ const publicMobileNavGroups = [
     title: "Más",
     icon: MapPin,
     links: [
+      { href: "/bienvenida", label: "Conócenos", icon: Sparkles },
       { href: "/contacto", label: "Contacto", icon: MapPin },
       { href: "/historia", label: "Historia", icon: BookOpen },
       { href: "/equipo", label: "Equipo", icon: Users },
@@ -556,20 +571,23 @@ export function Navbar() {
         </Link>
 
         {/* Desktop navigation — public or member */}
-        <div className="hidden lg:flex items-center gap-0.5">
+        <div className={`hidden items-center gap-0.5 ${user ? "lg:flex" : "xl:flex"}`}>
           {user
             ? memberDesktopNavGroups.map((group) => (
                 <DesktopNavGroup key={group.title} group={group} location={location} />
               ))
-            : publicDesktopNavLinks.map((l) => {
-                const isActive = location === l.href || (l.href !== "/" && location.startsWith(l.href));
+            : publicDesktopNavItems.map((item) => {
+                if ("links" in item) {
+                  return <DesktopNavGroup key={item.title} group={item} location={location} />;
+                }
+                const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
                 return (
-                  <Link key={l.href} href={l.href}>
+                  <Link key={item.href} href={item.href}>
                     <span
                       className={`nav-link ${isActive ? "nav-link-active" : ""}`}
-                      data-testid={`link-nav-${l.label.toLowerCase().replace(/\s/g, "-")}`}
+                      data-testid={`link-nav-${navSlug(item.label)}`}
                     >
-                      {l.label}
+                      {item.label}
                     </span>
                   </Link>
                 );
@@ -729,11 +747,12 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile hamburger */}
+          {/* Botón de menú: solo visitantes entre 1.024 y 1.279 px (ver publicDesktopNavItems).
+              Por debajo de 1.024 px el menú se abre con "Más" de la barra inferior. */}
           <Button
             variant="ghost"
             size="icon"
-            className="hidden"
+            className={user ? "hidden" : "hidden lg:inline-flex xl:hidden"}
             onClick={() => setMenuOpen(!menuOpen)}
             data-testid="button-mobile-menu"
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
@@ -938,6 +957,10 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-border/40 mt-8 pt-6 text-center">
+          <nav aria-label="Enlaces del pie de página" className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-3 text-xs">
+            <Link href="/bienvenida" className="text-muted-foreground hover:text-primary" data-testid="footer-link-bienvenida">Conócenos</Link>
+            <Link href="/contacto" className="text-muted-foreground hover:text-primary" data-testid="footer-link-contacto">Contacto</Link>
+          </nav>
           <p className="text-xs text-muted-foreground">
             Avivando el Fuego &mdash; Ministerio Evangelístico Internacional
           </p>
