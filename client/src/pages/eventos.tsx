@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RichText } from "@/components/media/RichText";
 import { Layout } from "@/components/layout";
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, useEventRsvps, useMyEventRsvp, useRsvpEvent, useCancelRsvp } from "@/hooks/use-users";
 import { useAuth } from "@/hooks/use-auth";
@@ -953,7 +954,7 @@ function EventDetailDialog({
 
           <div>
             <h4 className="text-sm font-medium mb-1">Descripción</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+            <RichText text={event.description} className="text-sm text-muted-foreground" compact maxEmbeds={1} />
           </div>
 
           {user && new Date(event.eventDate as any) >= new Date() && (

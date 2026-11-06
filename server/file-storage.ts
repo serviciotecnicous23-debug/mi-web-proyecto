@@ -22,7 +22,9 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
+import fs from "fs";
 import path from "path";
+import { saveStoredBuffer, saveStoredPath, StorageFullError } from "./file-store";
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -77,12 +79,16 @@ export interface UploadOptions {
   folder: string;
   /** Original filename (used for extension) */
   filename: string;
-  /** File content as Buffer */
-  buffer: Buffer;
+  /** File content as Buffer (o filePath, para archivos grandes que están en disco) */
+  buffer?: Buffer;
+  /** Ruta de un archivo temporal en disco: se guarda sin cargarlo entero en memoria. */
+  filePath?: string;
   /** MIME type */
   contentType: string;
   /** Cache-Control header (default: 1 year immutable) */
   cacheControl?: string;
+  /** Quién lo sube (para saber de quién es cada archivo guardado en la base). */
+  ownerId?: number | null;
 }
 
 export interface UploadResult {
@@ -98,26 +104,41 @@ export interface UploadResult {
  * Upload a file to S3/R2 or fall back to base64 data URL.
  */
 export async function uploadFile(options: UploadOptions): Promise<UploadResult> {
-  const { folder, filename, buffer, contentType, cacheControl } = options;
+  const { folder, filename, contentType, cacheControl, ownerId, filePath } = options;
+  const buffer = options.buffer ?? (filePath ? null : Buffer.alloc(0));
 
   if (!isS3Configured) {
-    // Fallback: return base64 data URL (current behavior)
-    const base64 = buffer.toString("base64");
+    // Sin S3/R2: se guarda en la base de datos por partes y se sirve en /files/<id>/<nombre>.
+    // Antes se devolvía un data: URL en base64 que quedaba dentro de cada publicación.
+    if (process.env.DATABASE_URL) {
+      try {
+        const input = { name: filename, mime: contentType, ownerId, folder };
+        const saved = filePath ? await saveStoredPath(filePath, input) : await saveStoredBuffer(buffer!, input);
+        return { url: saved.url, key: "", size: saved.size };
+      } catch (err) {
+        if (err instanceof StorageFullError) throw err;
+        console.error("[archivos] no se pudo guardar en la base; se usa base64:", (err as Error).message);
+      }
+    }
+    const data = buffer ?? fs.readFileSync(filePath!);
     return {
-      url: `data:${contentType};base64,${base64}`,
+      url: `data:${contentType};base64,${data.toString("base64")}`,
       key: "",
-      size: buffer.length,
+      size: data.length,
     };
   }
 
   const key = generateKey(folder, filename);
   const client = getS3Client();
+  const body = buffer ?? fs.createReadStream(filePath!);
+  const size = buffer ? buffer.length : fs.statSync(filePath!).size;
 
   await client.send(
     new PutObjectCommand({
       Bucket: S3_BUCKET,
       Key: key,
-      Body: buffer,
+      Body: body,
+      ContentLength: size,
       ContentType: contentType,
       CacheControl: cacheControl || "public, max-age=31536000, immutable",
     })
@@ -126,8 +147,23 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
   return {
     url: getPublicUrl(key),
     key,
-    size: buffer.length,
+    size,
   };
+}
+
+/**
+ * ¿Es un archivo subido a esta web? (/files/... de la base, o el almacenamiento S3/R2).
+ * Sirve para no aceptar como "adjunto" un enlace cualquiera de afuera.
+ */
+export function isOwnFileUrl(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  if (/^\/files\/[A-Za-z0-9_-]{16,40}(\/[^?#]*)?$/.test(url)) return true;
+  if (url.startsWith("data:")) return true; // respaldo antiguo (base64)
+  if (isS3Configured) {
+    const prefixes = [S3_PUBLIC_URL, `${S3_ENDPOINT.replace(/\/$/, "")}/${S3_BUCKET}`].filter(Boolean).map((p) => p.replace(/\/$/, "") + "/");
+    return prefixes.some((p) => url.startsWith(p));
+  }
+  return false;
 }
 
 // ─── Delete ──────────────────────────────────────────────────────────────────

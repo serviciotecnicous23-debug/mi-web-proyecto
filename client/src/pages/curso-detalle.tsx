@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Attachment } from "@/components/media/Attachment";
 import { useAuth } from "@/hooks/use-auth";
 import { useCourse, useCourseMaterials, useCourseSessions, useCreateEnrollment, useMyEnrollments, useMyTeacherRequests, useCreateTeacherRequest } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
@@ -152,22 +153,18 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
                   {materials.map((m: CourseMaterial) => {
                     const Icon = materialIcons[m.materialType] || FileText;
                     return (
-                      <div key={m.id} className="flex items-center justify-between gap-2 p-3 rounded-md bg-muted/50" data-testid={`material-${m.id}`}>
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div key={m.id} className="p-3 rounded-md bg-muted/50 space-y-2" data-testid={`material-${m.id}`}>
+                        <div className="flex items-center gap-3 min-w-0">
                           <Icon className="w-5 h-5 text-primary shrink-0" />
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{m.title}</p>
-                            {m.description && <p className="text-xs text-muted-foreground truncate">{m.description}</p>}
+                            {m.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{m.description}</p>}
                             <Badge variant="outline" className="text-xs mt-1">
                               {MATERIAL_TYPES[m.materialType as keyof typeof MATERIAL_TYPES] || m.materialType}
                             </Badge>
                           </div>
                         </div>
-                        {m.fileUrl && (
-                          <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <Button size="icon" variant="ghost"><ExternalLink className="w-4 h-4" /></Button>
-                          </a>
-                        )}
+                        <Attachment fileData={m.fileData} fileUrl={m.fileUrl} fileName={m.fileName} fileSize={m.fileSize} compact />
                       </div>
                     );
                   })}

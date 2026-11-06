@@ -36,6 +36,22 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
 export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible: string): Promise<void> {
   const alias = `eliminada-${userId}-${randomBytes(4).toString("hex")}`;
   await db.transaction(async (tx) => {
+    // Archivos que subió para sus publicaciones de Comunidad y su foto de perfil (guardados en
+    // la base, /files/...): se borran, salvo que otra persona use el mismo archivo.
+    const hayArchivos = await tx.execute(sql`SELECT to_regclass('public.stored_files') AS t`);
+    if ((hayArchivos as unknown as { rows?: Array<{ t: string | null }> }).rows?.[0]?.t) {
+      await tx.execute(sql`
+        DELETE FROM stored_files f
+        WHERE f.owner_id = ${userId}
+          AND (f.folder IN ('comunidad', 'avatars')
+               OR EXISTS (SELECT 1 FROM users u WHERE u.id = ${userId} AND u.avatar_url LIKE '/files/' || f.id || '/%'))
+          AND NOT EXISTS (
+            SELECT 1 FROM member_posts p
+            WHERE p.user_id <> ${userId}
+              AND (p.file_url LIKE '/files/' || f.id || '/%' OR p.image_url LIKE '/files/' || f.id || '/%')
+          )
+      `);
+    }
     for (const [tabla, condicion] of BORRADOS) {
       // Una base vieja puede no tener alguna tabla todavía: se salta en lugar de fallar.
       const existe = await tx.execute(sql`SELECT to_regclass(${`public.${tabla}`}) AS t`);

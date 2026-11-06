@@ -7,6 +7,7 @@
  * so it's safe to run repeatedly.
  */
 import { pool } from "./db";
+import { STORED_FILES_SQL } from "./file-store";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -983,6 +984,15 @@ const ADD_COLUMNS_SQL = [
   `ALTER TABLE "certificates" ADD COLUMN IF NOT EXISTS "church_logo_url" text`,
   `ALTER TABLE "certificates" ADD COLUMN IF NOT EXISTS "church_name" text`,
   `ALTER TABLE "certificates" ADD COLUMN IF NOT EXISTS "is_co_certified" boolean NOT NULL DEFAULT false`,
+  // ========== CONTENIDO COMPARTIDO (enlaces, prédicas y documentos) ==========
+  `ALTER TABLE "member_posts" ADD COLUMN IF NOT EXISTS "file_url" text`,
+  `ALTER TABLE "member_posts" ADD COLUMN IF NOT EXISTS "file_name" text`,
+  `ALTER TABLE "member_posts" ADD COLUMN IF NOT EXISTS "file_size" integer`,
+  `ALTER TABLE "member_posts" ADD COLUMN IF NOT EXISTS "file_mime" text`,
+  `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "preacher_place" text`,
+  `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_url" text`,
+  `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_name" text`,
+  `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_size" integer`,
 ];
 
 export async function ensureDatabaseSchema(): Promise<void> {
@@ -996,6 +1006,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
     
     // Step 1: Create all tables (IF NOT EXISTS = safe to run repeatedly)
     await pool.query(CREATE_TABLES_SQL);
+    // Archivos guardados en la base (fotos, documentos, audios) cuando no hay S3/R2.
+    await pool.query(STORED_FILES_SQL);
     
     // Step 2: Add missing columns to existing tables
     for (const sql of ADD_COLUMNS_SQL) {

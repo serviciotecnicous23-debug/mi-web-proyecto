@@ -61,6 +61,21 @@ export function RadioDock() {
   const onRadio = location === RADIO_PATH;
   const [alive, setAlive] = useState(onRadio);
   const [loaded, setLoaded] = useState(false);
+  // Un video o audio de la web empezó a sonar: la radio se calla para no sonar encima.
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    const onMediaPlay = () => {
+      if (alive && !onRadio) {
+        setPaused(true);
+        setLoaded(false);
+      }
+    };
+    window.addEventListener("avivando:media-play", onMediaPlay);
+    return () => window.removeEventListener("avivando:media-play", onMediaPlay);
+  }, [alive, onRadio]);
+  useEffect(() => {
+    if (onRadio) setPaused(false);
+  }, [onRadio]);
 
   useEffect(() => {
     if (onRadio) setAlive(true);
@@ -102,7 +117,7 @@ export function RadioDock() {
             Abriendo la radio…
           </div>
         )}
-        {src && (
+        {src && !paused && (
           <iframe
             src={src}
             title="Radio Avivando el Fuego"
@@ -126,7 +141,7 @@ export function RadioDock() {
             <span className="radio-mini__text">
               <span className="radio-mini__title">Radio Avivando el Fuego</span>
               <span className="radio-mini__song">
-                {onAir.data ? `En el aire: ${onAir.data}` : "Toca para volver a la radio"}
+                {paused ? "En pausa mientras ves el video · Toca para volver" : onAir.data ? `En el aire: ${onAir.data}` : "Toca para volver a la radio"}
               </span>
             </span>
           </Link>

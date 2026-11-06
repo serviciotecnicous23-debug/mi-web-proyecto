@@ -84,7 +84,7 @@ export interface IStorage {
   toggleMessageRead(id: number): Promise<Message | undefined>;
   deleteMessage(id: number): Promise<void>;
 
-  createMemberPost(userId: number, content: string, imageUrl?: string | null): Promise<MemberPost>;
+  createMemberPost(userId: number, content: string, imageUrl?: string | null, attachment?: { fileUrl?: string | null; fileName?: string | null; fileSize?: number | null; fileMime?: string | null }): Promise<MemberPost>;
   listMemberPosts(): Promise<(MemberPost & { user: { username: string; displayName: string | null; avatarUrl: string | null; cargo: string | null; country: string | null }; commentCount: number })[]>;
   deleteMemberPost(id: number): Promise<void>;
 
@@ -515,8 +515,16 @@ export class DatabaseStorage implements IStorage {
     await db.delete(messages).where(eq(messages.id, id));
   }
 
-  async createMemberPost(userId: number, content: string, imageUrl?: string | null): Promise<MemberPost> {
-    const [post] = await db.insert(memberPosts).values({ userId, content, imageUrl: imageUrl || null }).returning();
+  async createMemberPost(userId: number, content: string, imageUrl?: string | null, attachment?: { fileUrl?: string | null; fileName?: string | null; fileSize?: number | null; fileMime?: string | null }): Promise<MemberPost> {
+    const [post] = await db.insert(memberPosts).values({
+      userId,
+      content,
+      imageUrl: imageUrl || null,
+      fileUrl: attachment?.fileUrl || null,
+      fileName: attachment?.fileName || null,
+      fileSize: attachment?.fileSize ?? null,
+      fileMime: attachment?.fileMime || null,
+    }).returning();
     return post;
   }
 
@@ -532,6 +540,10 @@ export class DatabaseStorage implements IStorage {
         userId: memberPosts.userId,
         content: memberPosts.content,
         imageUrl: memberPosts.imageUrl,
+        fileUrl: memberPosts.fileUrl,
+        fileName: memberPosts.fileName,
+        fileSize: memberPosts.fileSize,
+        fileMime: memberPosts.fileMime,
         createdAt: memberPosts.createdAt,
         username: users.username,
         displayName: users.displayName,
@@ -549,6 +561,10 @@ export class DatabaseStorage implements IStorage {
       userId: p.userId,
       content: p.content,
       imageUrl: p.imageUrl,
+      fileUrl: p.fileUrl,
+      fileName: p.fileName,
+      fileSize: p.fileSize,
+      fileMime: p.fileMime,
       createdAt: p.createdAt,
       user: { username: p.username, displayName: p.displayName, avatarUrl: p.avatarUrl, cargo: p.cargo, country: p.country },
       commentCount: p.commentCount,

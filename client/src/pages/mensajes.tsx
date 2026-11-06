@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { RichText } from "@/components/media/RichText";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
 import { useConversations, useDirectMessages, useSendDirectMessage, useUnreadMessageCount } from "@/hooks/use-users";
@@ -287,8 +288,8 @@ export default function Mensajes() {
                               </Avatar>
                             )}
                             <div>
-                              <div className={`rounded-2xl px-4 py-2 ${isMine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                              <div className={`chat-bubble rounded-2xl px-4 py-2 ${isMine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                <RichText text={msg.content} className="text-sm" compact maxEmbeds={1} />
                               </div>
                               <p className={`text-[10px] text-muted-foreground mt-1 ${isMine ? "text-right" : ""}`}>
                                 {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}

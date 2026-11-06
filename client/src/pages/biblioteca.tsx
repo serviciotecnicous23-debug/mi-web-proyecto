@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Attachment } from "@/components/media/Attachment";
+import { checkFile } from "@/components/media/upload";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
@@ -1365,9 +1367,12 @@ function ResourcesTab() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast({ title: "Archivo muy grande", description: "El tamaño máximo es 20MB.", variant: "destructive" });
-      return;
+    {
+      const problem = checkFile(file);
+      if (problem) {
+        toast({ title: "No se puede subir", description: problem, variant: "destructive" });
+        return;
+      }
     }
     setUploadingFile(true);
     try {
@@ -1581,12 +1586,14 @@ function ResourcesTab() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h3 className="font-medium truncate">{r.title}</h3>
-                    {r.description && <p className="text-sm text-muted-foreground line-clamp-2">{r.description}</p>}
+                    {r.description && <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">{r.description}</p>}
                   </div>
                   <Badge variant="secondary">
                     {RESOURCE_CATEGORIES[r.category as keyof typeof RESOURCE_CATEGORIES] || r.category}
                   </Badge>
                 </div>
+
+                <Attachment fileData={r.fileData} fileUrl={r.fileUrl} fileName={r.fileName} fileSize={r.fileSize} compact />
 
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs text-muted-foreground">
@@ -1602,29 +1609,6 @@ function ResourcesTab() {
                       <Heart className={`w-4 h-4 mr-1 ${r.isLiked ? "fill-red-500 text-red-500" : ""}`} />
                       {r.likeCount}
                     </Button>
-                    {(r.fileUrl || r.fileData) && (
-                      <Button variant="ghost" size="sm" asChild={!r.fileData}>
-                        {r.fileData ? (
-                          <span
-                            className="cursor-pointer"
-                            onClick={() => {
-                              // Download from base64 data stored in DB
-                              const link = document.createElement("a");
-                              link.href = r.fileData;
-                              link.download = r.fileName || "archivo";
-                              link.click();
-                            }}
-                            data-testid={`link-resource-${r.id}`}
-                          >
-                            <Download className="w-4 h-4 mr-1" /> {r.resourceType === "documento" ? "Descargar" : "Ver"}
-                          </span>
-                        ) : (
-                          <a href={r.fileUrl} target="_blank" rel="noopener noreferrer" data-testid={`link-resource-${r.id}`}>
-                            <Download className="w-4 h-4 mr-1" /> {r.resourceType === "documento" ? "Descargar" : "Ver"}
-                          </a>
-                        )}
-                      </Button>
-                    )}
                     {(user?.role === "admin" || r.userId === user?.id) && (
                       <Button
                         variant="ghost"

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RichText } from "@/components/media/RichText";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
@@ -605,7 +606,7 @@ function PostComments({ postId }: { postId: number }) {
               <p className="text-xs font-medium">
                 {c.user?.displayName || c.displayName || "Miembro"} <span className="font-normal text-muted-foreground">· {timeAgo(c.createdAt)}</span>
               </p>
-              <p className="text-sm whitespace-pre-wrap break-words">{c.content}</p>
+              <RichText text={c.content} className="text-sm" compact maxEmbeds={1} />
             </div>
           </div>
         ))

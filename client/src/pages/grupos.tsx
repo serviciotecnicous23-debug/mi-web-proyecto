@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RichText } from "@/components/media/RichText";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/layout";
@@ -210,9 +211,9 @@ export default function GruposPage() {
                               <AvatarImage src={m.user.avatarUrl || undefined} />
                               <AvatarFallback>{(m.user.displayName || m.user.username)?.[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
-                            <div className={`max-w-[70%] p-3 rounded-lg ${m.userId === user?.id ? "bg-orange-100 dark:bg-orange-900/20" : "bg-muted"}`}>
+                            <div className={`chat-bubble max-w-[70%] p-3 rounded-lg ${m.userId === user?.id ? "bg-orange-100 dark:bg-orange-900/20" : "bg-muted"}`}>
                               <p className="text-xs font-semibold mb-1">{m.user.displayName || m.user.username}</p>
-                              <p className="text-sm">{m.content}</p>
+                              <RichText text={m.content} className="text-sm" compact maxEmbeds={1} />
                               <span className="text-[10px] text-muted-foreground">{m.createdAt ? format(new Date(m.createdAt), "HH:mm", { locale: es }) : ""}</span>
                             </div>
                           </div>

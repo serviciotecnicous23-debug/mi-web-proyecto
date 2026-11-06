@@ -183,9 +183,9 @@ export function useCreateMemberPost() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ content, imageUrl }: { content: string; imageUrl?: string | null }) => {
-      const res = await authFetch(api.posts.create.path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content, imageUrl }) });
-      if (!res.ok) throw new Error("Error al publicar mensaje");
+    mutationFn: async (post: { content: string; imageUrl?: string | null; fileUrl?: string | null; fileName?: string | null; fileSize?: number | null; fileMime?: string | null }) => {
+      const res = await authFetch(api.posts.create.path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(post) });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.message || "Error al publicar mensaje");
       return res.json();
     },
     onSuccess: () => {

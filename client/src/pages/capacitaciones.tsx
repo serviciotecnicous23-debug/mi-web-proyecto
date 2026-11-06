@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { RichText } from "@/components/media/RichText";
+import { Attachment } from "@/components/media/Attachment";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
 import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
@@ -387,27 +389,8 @@ function CarteleraAnnouncementCard({ announcement, canManage, currentUserId, onU
             ) : (
               <>
                 <h3 className="font-semibold text-base wrap-break-word">{announcement.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap wrap-break-word">{announcement.content}</p>
-                {(announcement.fileData || announcement.fileUrl) && (
-                  <p className="mt-2">
-                    {announcement.fileData ? (
-                      <button className="text-sm underline text-primary" onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = announcement.fileData!;
-                        link.download = announcement.fileName || 'archivo';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }}>
-                        {announcement.fileName || "Descargar adjunto"}
-                      </button>
-                    ) : (
-                      <a href={announcement.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline">
-                        {announcement.fileName || announcement.fileUrl}
-                      </a>
-                    )}
-                  </p>
-                )}
+                <RichText text={announcement.content} className="text-sm text-muted-foreground mt-1" />
+                <Attachment fileData={announcement.fileData} fileUrl={announcement.fileUrl} fileName={announcement.fileName} fileSize={announcement.fileSize} className="mt-2" />
               </>
             )}
             <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-muted-foreground">
@@ -465,7 +448,7 @@ function CourseAnnouncementCard({ announcement }: { announcement: any }) {
           </Badge>
         </div>
         <h3 className="font-semibold text-base">{announcement.title}</h3>
-        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{announcement.content}</p>
+        <RichText text={announcement.content} className="text-sm text-muted-foreground mt-1" compact />
         <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
           <Avatar className="w-5 h-5">
             <AvatarImage src={announcement.author?.avatarUrl} />

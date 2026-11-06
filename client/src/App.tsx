@@ -9,6 +9,18 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { RadioDock } from "@/components/RadioDock";
 import { AppStatus } from "@/components/AppStatus";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { useDock } from "@/components/media/player-store";
+
+// La ventanita flotante (video que sigue mientras se navega) se descarga solo cuando hace falta.
+const MediaDock = lazy(() => import("@/components/media/MediaDock").then((m) => ({ default: m.MediaDock })));
+function MediaDockSlot() {
+  const item = useDock();
+  return item ? (
+    <Suspense fallback={null}>
+      <MediaDock />
+    </Suspense>
+  ) : null;
+}
 import { PageTransition } from "@/components/PageTransition";
 import { GlassCursor } from "@/components/GlassCursor";
 import NotFound from "@/pages/not-found";
@@ -181,6 +193,7 @@ function App() {
             <RadioDock />
             <AppStatus />
             <MobileTabBar />
+            <MediaDockSlot />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
