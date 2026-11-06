@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
 import { useConversations, useDirectMessages, useSendDirectMessage, useUnreadMessageCount } from "@/hooks/use-users";
@@ -19,6 +19,24 @@ export default function Mensajes() {
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // En el celular la conversación llena el espacio hasta la barra inferior. Se mide dónde
+  // empieza (cambia con el aviso de verificar el correo) para que el campo de escribir
+  // nunca quede tapado por la barra.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [gridTop, setGridTop] = useState(270);
+  useLayoutEffect(() => {
+    const update = () => {
+      if (gridRef.current) setGridTop(Math.round(gridRef.current.getBoundingClientRect().top + window.scrollY));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(document.body);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   const { data: conversations = [], isLoading: isLoadingConversations } = useConversations();
   const { data: chatMessages = [], isLoading: isLoadingMessages } = useDirectMessages(selectedUserId);
@@ -97,9 +115,15 @@ export default function Mensajes() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-280px)] min-h-[500px]">
+        {/* En el celular, como en WhatsApp: la lista sola, y al tocar una conversación,
+            la conversación sola con "volver". En la computadora, las dos a la vez. */}
+        <div
+          ref={gridRef}
+          style={{ ["--chat-top" as string]: `${gridTop}px` }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100dvh-var(--app-tabbar-h)-var(--chat-top)-12px)] min-h-[360px] md:h-[calc(100vh-280px)] md:min-h-[500px]"
+        >
           {/* Conversation List */}
-          <Card className="md:col-span-1 flex flex-col overflow-hidden">
+          <Card className={`md:col-span-1 flex-col overflow-hidden ${selectedUserId ? "hidden md:flex" : "flex"}`}>
             <CardHeader className="py-3 px-4 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -147,7 +171,7 @@ export default function Mensajes() {
               ) : conversations.length === 0 && !searchQuery ? (
                 <div className="text-center py-8 px-4">
                   <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Sin conversaciones aun</p>
+                  <p className="text-sm text-muted-foreground">Sin conversaciones aún</p>
                   <p className="text-xs text-muted-foreground mt-1">Busca un amigo para enviarle un mensaje.</p>
                 </div>
               ) : (
@@ -210,12 +234,12 @@ export default function Mensajes() {
           </Card>
 
           {/* Chat Area */}
-          <Card className="md:col-span-2 flex flex-col overflow-hidden">
+          <Card className={`md:col-span-2 flex-col overflow-hidden ${selectedUserId ? "flex" : "hidden md:flex"}`}>
             {!selectedUserId ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
                   <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-1">Selecciona una conversacion</h3>
+                  <h3 className="text-lg font-semibold mb-1">Selecciona una conversación</h3>
                   <p className="text-sm text-muted-foreground">Elige un amigo de la lista para comenzar a chatear.</p>
                 </div>
               </div>
@@ -223,7 +247,7 @@ export default function Mensajes() {
               <>
                 {/* Chat Header */}
                 <CardHeader className="py-3 px-4 border-b flex flex-row items-center gap-3">
-                  <Button variant="ghost" size="icon" className="md:hidden h-8 w-8" onClick={() => setSelectedUserId(null)}>
+                  <Button variant="ghost" size="icon" className="md:hidden h-10 w-10" onClick={() => setSelectedUserId(null)} aria-label="Volver a las conversaciones">
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <Avatar className="h-9 w-9">
@@ -246,7 +270,7 @@ export default function Mensajes() {
                     </div>
                   ) : chatMessages.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-muted-foreground">No hay mensajes aun. Envía el primero!</p>
+                      <p className="text-sm text-muted-foreground">No hay mensajes aún. ¡Envía el primero!</p>
                     </div>
                   ) : (
                     chatMessages.map((msg: any) => {

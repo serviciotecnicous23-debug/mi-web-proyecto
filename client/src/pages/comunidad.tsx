@@ -109,6 +109,9 @@ export default function Comunidad() {
   const createPost = useCreateMemberPost();
   const deletePost = useDeleteMemberPost();
   const [newMessage, setNewMessage] = useState("");
+  // El cuadro de publicar empieza en una línea (como en las apps) y crece al tocarlo;
+  // una vez abierto se queda abierto, para que "Imagen" no se cierre al pulsarlo.
+  const [composerOpen, setComposerOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
@@ -202,8 +205,11 @@ export default function Comunidad() {
                 <div className="flex-1">
                   <Textarea
                     placeholder="Comparte un mensaje, testimonio o palabra de aliento..."
-                    className="resize-none min-h-[100px]"
+                    className={`resize-none ${composerOpen || newMessage || imageUrl ? "min-h-[100px]" : "min-h-[44px] h-11 py-2.5"}`}
+                    rows={composerOpen || newMessage || imageUrl ? 3 : 1}
                     value={newMessage}
+                    onFocus={() => setComposerOpen(true)}
+                    onClick={() => setComposerOpen(true)}
                     onChange={(e) => setNewMessage(e.target.value)}
                     data-testid="textarea-new-post"
                   />
@@ -221,7 +227,7 @@ export default function Comunidad() {
                   )}
                 </div>
               </div>
-              <div className="flex justify-between items-center">
+              <div className={`justify-between items-center ${composerOpen || newMessage || imageUrl ? "flex" : "hidden"}`}>
                 <div className="flex gap-2">
                   <Button
                     type="button"
