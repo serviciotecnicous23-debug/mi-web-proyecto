@@ -79,6 +79,15 @@ export const PAGE_META: Record<string, PageMeta> = {
     description:
       "Conoce el ministerio cristiano detrás de Avivando el Fuego Radio: quiénes somos, qué hacemos, dónde estamos y cómo dar tu primer paso. Todo es gratis.",
   },
+  "/privacidad": {
+    title: `Política de privacidad — ${BRAND}`,
+    description:
+      "Qué datos tratamos en la web y en la app de la radio del Ministerio Avivando el Fuego, quién los ve, cómo los cuidamos y cómo eliminar tu cuenta.",
+  },
+  "/terminos": {
+    title: `Términos y normas de la comunidad — ${BRAND}`,
+    description: "Las reglas de uso de la web y la radio del Ministerio Avivando el Fuego y las normas de la comunidad.",
+  },
   "/historia": {
     title: `Nuestra historia — ${BRAND}`,
     description: "Cómo nació el Ministerio Internacional Avivando el Fuego en Ciudad Bolívar, Venezuela, en 2017.",

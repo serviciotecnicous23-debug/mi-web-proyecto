@@ -960,6 +960,8 @@ export function Footer() {
           <nav aria-label="Enlaces del pie de página" className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-3 text-xs">
             <Link href="/bienvenida" className="text-muted-foreground hover:text-primary" data-testid="footer-link-bienvenida">Conócenos</Link>
             <Link href="/contacto" className="text-muted-foreground hover:text-primary" data-testid="footer-link-contacto">Contacto</Link>
+            <Link href="/privacidad" className="text-muted-foreground hover:text-primary" data-testid="footer-link-privacidad">Privacidad</Link>
+            <Link href="/terminos" className="text-muted-foreground hover:text-primary" data-testid="footer-link-terminos">Términos</Link>
           </nav>
           <p className="text-xs text-muted-foreground">
             Avivando el Fuego &mdash; Ministerio Evangelístico Internacional

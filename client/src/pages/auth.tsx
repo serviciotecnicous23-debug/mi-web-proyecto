@@ -359,6 +359,11 @@ export function RegisterPage() {
                 {isRegistering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Crear cuenta
               </Button>
+              <p className="text-xs text-muted-foreground text-center" data-testid="text-register-terms">
+                Al crear tu cuenta aceptas los{" "}
+                <Link href="/terminos" className="text-primary hover:underline">Términos y normas de la comunidad</Link>{" "}
+                y la <Link href="/privacidad" className="text-primary hover:underline">Política de privacidad</Link>.
+              </p>
             </form>
           </Form>
         </CardContent>

@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Camera, Lock, UserPlus, UserMinus, Check, X, Search, Users, GraduationCap, BookOpen, Award, Bell } from "lucide-react";
+import { Loader2, Save, Camera, Lock, UserPlus, UserMinus, Check, X, Search, Users, GraduationCap, BookOpen, Award, Bell, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
@@ -35,6 +35,113 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { withAccents } from "@shared/labels";
+/**
+ * "Eliminar mi cuenta": lo exigen las tiendas de apps y es un derecho de cada persona.
+ * Pide la contraseña y escribir ELIMINAR; el servidor borra lo personal y deja la cuenta
+ * anónima (server/account-deletion.ts). La administración no se borra desde aquí.
+ */
+function EliminarCuenta({ esAdministracion }: { esAdministracion: boolean }) {
+  const [abierto, setAbierto] = useState(false);
+  const [clave, setClave] = useState("");
+  const [confirmacion, setConfirmacion] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  const eliminar = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: clave, confirm: confirmacion.trim().toUpperCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "No se pudo eliminar la cuenta.");
+      return data;
+    },
+    onSuccess: () => {
+      setAbierto(false);
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
+      toast({ title: "Tu cuenta fue eliminada", description: "Gracias por haber sido parte. Aquí siempre serás bienvenido." });
+      setLocation("/");
+    },
+    onError: (err: Error) => {
+      toast({ title: "No se eliminó la cuenta", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Card className="border-destructive/30" data-testid="card-eliminar-cuenta">
+      <CardHeader>
+        <CardTitle className="text-lg">Eliminar mi cuenta</CardTitle>
+        <CardDescription>
+          Se borra lo que publicaste (Comunidad, Club y muro de oración), tus mensajes privados, amistades, avisos y tu
+          estudio personal. Tu cuenta queda anónima y ya no podrás entrar. Lo que debe quedar por contabilidad o
+          historial (ofrendas, certificados, asistencias) se conserva sin tus datos.{" "}
+          <Link href="/privacidad#derechos" className="text-primary hover:underline">
+            Más detalles
+          </Link>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {esAdministracion ? (
+          <p className="text-sm text-muted-foreground">
+            Una cuenta de administración no se puede eliminar desde aquí: otro administrador debe quitarte el rol
+            primero.
+          </p>
+        ) : (
+          <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => setAbierto(true)} data-testid="button-eliminar-cuenta">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar mi cuenta
+          </Button>
+        )}
+      </CardContent>
+
+      <Dialog
+        open={abierto}
+        onOpenChange={(v) => {
+          setAbierto(v);
+          if (!v) {
+            setClave("");
+            setConfirmacion("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar tu cuenta para siempre?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">Esto no se puede deshacer.</p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="eliminar-clave">Tu contraseña</label>
+              <Input id="eliminar-clave" type="password" autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} data-testid="input-eliminar-clave" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="eliminar-confirmar">Escribe ELIMINAR para confirmar</label>
+              <Input id="eliminar-confirmar" value={confirmacion} onChange={(e) => setConfirmacion(e.target.value)} autoCapitalize="characters" data-testid="input-eliminar-confirmar" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAbierto(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              disabled={eliminar.isPending || !clave || confirmacion.trim().toUpperCase() !== "ELIMINAR"}
+              onClick={() => eliminar.mutate()}
+              data-testid="button-confirmar-eliminar"
+            >
+              {eliminar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Eliminar mi cuenta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
 export default function Profile() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -494,6 +601,8 @@ export default function Profile() {
                   </Form>
                 </CardContent>
               </Card>
+
+              <EliminarCuenta esAdministracion={["admin", "director", "staff_global"].includes(user.role)} />
             </div>
           </TabsContent>
 
