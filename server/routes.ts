@@ -1508,6 +1508,10 @@ ${urls}
       console.log("Event create: user not authenticated. Session:", req.sessionID, "User:", req.user, "Authenticated:", req.isAuthenticated?.());
       return res.status(401).json({ message: "Debes iniciar sesión para crear eventos. Si ya iniciaste sesión, intenta cerrar sesión y volver a entrar." });
     }
+    // Una cuenta sin aprobar no publica en el calendario público (ni dispara avisos a todos).
+    if (!req.user.isActive) {
+      return res.status(403).json({ message: "Tu cuenta aún no está aprobada. Cuando la aprueben podrás publicar eventos." });
+    }
     try {
       const input = api.events.create.input.parse(req.body);
       // Ensure eventDate is a valid date string
@@ -2982,6 +2986,10 @@ ${urls}
       console.log("Prayer create: user not authenticated. Session:", req.sessionID);
       return res.status(401).json({ message: "Debes iniciar sesión para crear actividades" });
     }
+    // Crear una actividad avisa a TODOS los miembros: solo cuentas aprobadas.
+    if (!req.user!.isActive) {
+      return res.status(403).json({ message: "Tu cuenta aún no está aprobada. Cuando la aprueben podrás crear actividades de oración." });
+    }
     try {
       const input = api.prayerActivities.create.input.parse(req.body);
       const activity = await storage.createPrayerActivity(req.user!.id, input);
@@ -2990,7 +2998,7 @@ ${urls}
         await storage.createNotificationForAll({
           type: "oracion",
           title: "Nueva Actividad de Oración",
-          content: `Se creo la actividad: ${activity.title}`,
+          content: `Se creó la actividad: ${activity.title}`,
           link: "/oracion",
         });
       } catch (notifErr) {

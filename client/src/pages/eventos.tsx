@@ -218,7 +218,7 @@ export default function Eventos() {
               Encuentros, retiros, vigilias y campañas del ministerio.
               Ven y sé parte de lo que Dios está haciendo.
             </p>
-            {user && (
+            {user?.isActive && (
               <Button className="fire-btn-primary h-12 shrink-0 px-6" onClick={handleCreateOpen} data-testid="button-create-event">
                 <Plus className="mr-2 h-4 w-4" />
                 Publicar evento
