@@ -298,7 +298,7 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
             key={key}
             variant={bibleVersion === key ? "default" : "ghost"}
             size="sm"
-            className={`text-xs h-9 ${bibleVersion === key ? "" : "text-muted-foreground"}`}
+            className={`text-xs h-10 min-w-12 ${bibleVersion === key ? "" : "text-muted-foreground"}`}
             onClick={() => setBibleVersion(key)}
             title={BIBLE_VERSIONS[key].desc}
             aria-pressed={bibleVersion === key}

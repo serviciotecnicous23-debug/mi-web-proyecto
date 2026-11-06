@@ -143,7 +143,7 @@ export default function OracionPage() {
             <h1 className="text-3xl font-bold" data-testid="text-oracion-title">Oración</h1>
             <p className="text-muted-foreground mt-1">Peticiones de la comunidad, actividades de oración y salas en vivo</p>
           </div>
-          {user && (
+          {user?.isActive && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="button-create-prayer">
