@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RichText } from "@/components/media/RichText";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -192,7 +193,7 @@ function PrayerCard({ item }: { item: PrayerRequestItem }) {
           </div>
         </div>
 
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{item.content}</p>
+        <RichText text={item.content} className="text-sm leading-relaxed" compact maxEmbeds={1} />
 
         {item.status === "respondida" && (
           <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 p-3">

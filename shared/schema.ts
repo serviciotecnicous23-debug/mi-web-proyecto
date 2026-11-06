@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, jsonb, customType, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -64,6 +64,11 @@ export const memberPosts = pgTable("member_posts", {
   userId: integer("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   imageUrl: text("image_url"),
+  // Documento adjunto (estudio, PDF, Word, audio...): dirección, nombre, tamaño y tipo.
+  fileUrl: text("file_url"),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  fileMime: text("file_mime"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -217,6 +222,10 @@ export const insertMessageSchema = createInsertSchema(messages);
 export const insertMemberPostSchema = createInsertSchema(memberPosts).pick({
   content: true,
   imageUrl: true,
+  fileUrl: true,
+  fileName: true,
+  fileSize: true,
+  fileMime: true,
 });
 
 export const insertEventSchema = createInsertSchema(events).pick({
@@ -1240,6 +1249,8 @@ export const sermons = pgTable("sermons", {
   description: text("description"),
   preacherId: integer("preacher_id").references(() => users.id),
   preacherName: text("preacher_name"),
+  // De dónde es quien predica: iglesia, ciudad o país.
+  preacherPlace: text("preacher_place"),
   sermonDate: timestamp("sermon_date"),
   category: text("category").notNull().default("general"),
   seriesName: text("series_name"),
@@ -1247,6 +1258,10 @@ export const sermons = pgTable("sermons", {
   audioUrl: text("audio_url"),
   content: text("content"),
   imageUrl: text("image_url"),
+  // Apuntes o estudio de la prédica (PDF, Word...).
+  documentUrl: text("document_url"),
+  documentName: text("document_name"),
+  documentSize: integer("document_size"),
   isPublished: boolean("is_published").notNull().default(true),
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -1266,6 +1281,7 @@ export const insertSermonSchema = z.object({
   description: z.string().optional().nullable(),
   preacherId: z.number().optional().nullable(),
   preacherName: z.string().optional().nullable(),
+  preacherPlace: z.string().max(160).optional().nullable(),
   sermonDate: z.string().optional().nullable(),
   category: z.string().optional(),
   seriesName: z.string().optional().nullable(),
@@ -1273,6 +1289,9 @@ export const insertSermonSchema = z.object({
   audioUrl: z.string().optional().nullable(),
   content: z.string().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
+  documentUrl: z.string().optional().nullable(),
+  documentName: z.string().max(200).optional().nullable(),
+  documentSize: z.number().int().nonnegative().optional().nullable(),
   isPublished: z.boolean().optional(),
 });
 export const updateSermonSchema = insertSermonSchema.partial();
@@ -1814,3 +1833,33 @@ export const PRAYER_CATEGORIES = {
 } as const;
 
 export type PrayerRequest = typeof prayerRequests.$inferSelect;
+
+// ========== ARCHIVOS GUARDADOS EN LA BASE ==========
+// Cuando no hay S3/R2, cada archivo subido se guarda aquí por partes de 512 KB y se sirve
+// en /files/<id>/<nombre> (ver server/file-store.ts).
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+export const storedFiles = pgTable("stored_files", {
+  id: text("id").primaryKey(),
+  ownerId: integer("owner_id"),
+  name: text("name").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256"),
+  folder: text("folder"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const storedFileChunks = pgTable(
+  "stored_file_chunks",
+  {
+    fileId: text("file_id").notNull().references(() => storedFiles.id, { onDelete: "cascade" }),
+    idx: integer("idx").notNull(),
+    data: bytea("data").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.fileId, t.idx] })],
+);

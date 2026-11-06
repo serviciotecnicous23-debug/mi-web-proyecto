@@ -21,7 +21,8 @@ import path from "path";
 import fs from "fs";
 import type { AuthenticatedRequest } from "./types";
 import "./types"; // side-effect: augment Express.User
-import { uploadFile } from "./file-storage";
+import { uploadFile, isOwnFileUrl } from "./file-storage";
+import { registerMediaRoutes, registerFileServing, handleFileUpload } from "./media-routes";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail, sendAccountApprovedEmail, sendDirectMessageEmail, sendNewCourseEmail, sendEventReminderEmail, isEmailConfigured } from "./email";
 import { sendPushToMany, getVapidPublicKey, isPushConfigured, type PushPayload } from "./push";
 import { registerAgentRoutes } from "./agent/routes";
@@ -95,6 +96,7 @@ const avatarStorage = multer.diskStorage({
 });
 const avatarUpload = multer({
   storage: avatarStorage,
+  ...({ defParamCharset: "utf8" } as object), // nombres con tildes (UTF-8); los tipos de multer aún no lo traen
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
@@ -116,6 +118,7 @@ const signatureStorage = multer.diskStorage({
 });
 const signatureUpload = multer({
   storage: signatureStorage,
+  ...({ defParamCharset: "utf8" } as object), // nombres con tildes (UTF-8); los tipos de multer aún no lo traen
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
@@ -137,6 +140,7 @@ const regionStorage = multer.diskStorage({
 });
 const regionUpload = multer({
   storage: regionStorage,
+  ...({ defParamCharset: "utf8" } as object), // nombres con tildes (UTF-8); los tipos de multer aún no lo traen
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
@@ -172,6 +176,7 @@ const ALLOWED_LIBRARY_TYPES = [
 ];
 const libraryUpload = multer({
   storage: libraryStorage,
+  ...({ defParamCharset: "utf8" } as object), // nombres con tildes (UTF-8); los tipos de multer aún no lo traen
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_LIBRARY_TYPES.includes(file.mimetype)) cb(null, true);
@@ -644,6 +649,10 @@ ${urls}
   // Apply general rate limiter to all API routes
   app.use("/api/", apiLimiter as RequestHandler);
 
+  // Archivos subidos (/files/<id>/<nombre>): antes de la sesión, sin cookies.
+  registerFileServing(app);
+
+
   // Trust proxy (needed for Codespaces, Render, and reverse proxy environments)
   // Set here as well as index.ts to cover all environments
   app.set("trust proxy", 1);
@@ -711,6 +720,10 @@ ${urls}
 
   app.use(passport.initialize() as RequestHandler);
   app.use(passport.session() as RequestHandler);
+
+  // Archivos (/files/...), subida general y vistas previas de enlaces (después de la
+  // sesión: la subida necesita saber quién la hace).
+  registerMediaRoutes(app, { uploadLimiter: uploadLimiter as RequestHandler, keyGenerator: clientKey, isAdmin });
 
   // Debug endpoint to check authentication status (must be AFTER session/passport middleware)
   app.get("/api/auth-status", (req, res) => {
@@ -1276,33 +1289,9 @@ ${urls}
   });
 
   // ========== LIBRARY FILE UPLOAD ==========
-  app.post("/api/upload/library-file", uploadLimiter as RequestHandler, libraryUpload.single("file") as RequestHandler, async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.user!.isActive) return res.sendStatus(403);
-    if (!req.file) return res.status(400).json({ message: "No se envío ningún archivo" });
-    try {
-      const fileBuffer = fs.readFileSync(req.file.path);
-      const mimeType = req.file.mimetype || "application/octet-stream";
-      const result = await uploadFile({
-        folder: "library",
-        filename: req.file.originalname,
-        buffer: fileBuffer,
-        contentType: mimeType,
-        cacheControl: "public, max-age=86400", // 1 day for documents
-      });
-      // Delete physical file
-      try { fs.unlinkSync(req.file.path); } catch (_) {}
-      res.json({
-        fileUrl: result.url,
-        fileData: result.url, // backward compat: clients may read fileData
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-      });
-    } catch (err) {
-      console.error("Library file upload error:", err);
-      res.status(500).json({ message: "Error al subir archivo" });
-    }
-  });
+  // Documentos del Aula, la Biblioteca, la Cartelera y los anuncios: pasa por la subida
+  // general (PDF, Word, Excel, PowerPoint, texto, imágenes, audio y video; ver media-routes).
+  app.post("/api/upload/library-file", uploadLimiter as RequestHandler, (req: Request, res: Response) => handleFileUpload(req, res, "file"));
 
   // ========== CHANGE PASSWORD ==========
   app.post("/api/users/change-password", async (req, res) => {
@@ -1460,13 +1449,20 @@ ${urls}
     try {
       const input = api.posts.create.input.parse(req.body);
       const content = (input.content ?? "").trim();
-      if (!content && !input.imageUrl) {
-        return res.status(400).json({ message: "Escribe algo o agrega una foto para publicar" });
+      // El adjunto solo puede ser un archivo subido a esta web (o a su almacenamiento).
+      const fileUrl = isOwnFileUrl(input.fileUrl) ? input.fileUrl! : null;
+      if (!content && !input.imageUrl && !fileUrl) {
+        return res.status(400).json({ message: "Escribe algo o agrega una foto o un archivo para publicar" });
       }
       if (content.length > 5000) {
         return res.status(400).json({ message: "La publicación es demasiado larga (máximo 5000 caracteres)" });
       }
-      const post = await storage.createMemberPost(req.user!.id, content, input.imageUrl);
+      const post = await storage.createMemberPost(req.user!.id, content, input.imageUrl, fileUrl ? {
+        fileUrl,
+        fileName: (input.fileName || "").slice(0, 200) || null,
+        fileSize: typeof input.fileSize === "number" && input.fileSize >= 0 ? Math.round(input.fileSize) : null,
+        fileMime: (input.fileMime || "").slice(0, 120) || null,
+      } : undefined);
       res.status(201).json(post);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
@@ -3288,7 +3284,8 @@ ${urls}
   });
   const postImageUpload = multer({
     storage: postImageStorage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    ...({ defParamCharset: "utf8" } as object), // nombres con tildes (UTF-8); los tipos de multer aún no lo traen
+    limits: { fileSize: 15 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (file.mimetype.startsWith("image/")) cb(null, true);
       else cb(new Error("Solo se permiten imágenes"));

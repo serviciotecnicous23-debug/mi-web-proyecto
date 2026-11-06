@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { RichText } from "@/components/media/RichText";
+import { FileAttachment } from "@/components/media/FileAttachment";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminRole } from "@/lib/utils";
 import { Layout } from "@/components/layout";
@@ -30,7 +32,7 @@ import {
   Building2, Shield, HandHeart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { SocialLinksDisplay, SocialLinksFormFields, YouTubeLinkPreview, PostContentWithLinks } from "@/components/SocialLinks";
+import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
 
 import { withAccents } from "@shared/labels";
 type ChurchPostData = {
@@ -709,15 +711,8 @@ export default function IglesiasPage() {
                               })}
                             </span>
                           </div>
-                          <PostContentWithLinks content={post.content} />
-                          <YouTubeLinkPreview content={post.content} />
-                          {post.imageUrl && (
-                            <img
-                              src={post.imageUrl}
-                              alt="Imagen de publicación"
-                              className="mt-2 rounded-lg max-h-64 object-cover border"
-                            />
-                          )}
+                          <RichText text={post.content} className="text-sm mt-1" />
+                          {post.imageUrl && <FileAttachment url={post.imageUrl} name="Imagen de la publicación" fileType="image" className="mt-2" />}
                         </div>
                         {(post.userId === user?.id || isAdmin) && (
                           <Button

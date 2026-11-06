@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { RichText } from "@/components/media/RichText";
+import { FileAttachment } from "@/components/media/FileAttachment";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -794,17 +796,8 @@ export default function RegionesPage() {
                                     {new Date(post.createdAt).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" })}
                                   </span>
                                 </div>
-                                <p className="text-sm whitespace-pre-wrap" data-testid={`text-post-content-${post.id}`}>
-                                  {post.content}
-                                </p>
-                                {post.imageUrl && (
-                                  <img
-                                    src={post.imageUrl}
-                                    alt=""
-                                    className="mt-2 rounded-md max-h-64 object-cover"
-                                    data-testid={`img-post-image-${post.id}`}
-                                  />
-                                )}
+                                <RichText text={post.content} className="text-sm" testId={`text-post-content-${post.id}`} />
+                                {post.imageUrl && <FileAttachment url={post.imageUrl} name="Imagen de la publicación" fileType="image" className="mt-2" />}
                                 <ReactionBar postId={post.id} user={user} />
                                 <PollDisplay postId={post.id} user={user} />
                               </div>

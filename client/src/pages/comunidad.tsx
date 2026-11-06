@@ -16,6 +16,15 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { withAccents } from "@shared/labels";
+import { RichText } from "@/components/media/RichText";
+import { FileAttachment } from "@/components/media/FileAttachment";
+import { AttachButton, AttachedFile, LinkDraftPreview } from "@/components/media/Composer";
+import type { UploadedFile } from "@/components/media/upload";
+
+/** El usuario se muestra con @ solo si no es un correo (hay cuentas cuyo usuario es su correo). */
+function publicHandle(username?: string | null) {
+  return username && !username.includes("@") ? `@${username}` : "";
+}
 /** "hace 2 horas"; la fecha completa queda en el título (al pasar el ratón). */
 function timeAgo(date?: string | Date | null) {
   if (!date) return "";
@@ -60,7 +69,7 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
                 <span className="font-medium text-xs">
                   {comment.user?.displayName || comment.user?.username || "Usuario"}
                 </span>
-                <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                <RichText text={comment.content} className="text-sm" compact maxEmbeds={1} />
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] text-muted-foreground" title={comment.createdAt ? new Date(comment.createdAt).toLocaleString("es") : undefined}>
@@ -113,6 +122,7 @@ export default function Comunidad() {
   // una vez abierto se queda abierto, para que "Imagen" no se cierre al pulsarlo.
   const [composerOpen, setComposerOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [attachment, setAttachment] = useState<UploadedFile | null>(null);
   const [uploading, setUploading] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,13 +140,21 @@ export default function Comunidad() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!newMessage.trim() && !imageUrl) return;
+    if (!newMessage.trim() && !imageUrl && !attachment) return;
     createPost.mutate(
-      { content: newMessage.trim(), imageUrl },
+      {
+        content: newMessage.trim(),
+        imageUrl,
+        fileUrl: attachment?.url ?? null,
+        fileName: attachment?.fileName ?? null,
+        fileSize: attachment?.fileSize ?? null,
+        fileMime: attachment?.mimeType ?? null,
+      },
       {
         onSuccess: () => {
           setNewMessage("");
           setImageUrl(null);
+          setAttachment(null);
         },
       }
     );
@@ -149,8 +167,8 @@ export default function Comunidad() {
       toast({ title: "Error", description: "Solo se permiten imágenes.", variant: "destructive" });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Error", description: "La imagen no debe superar 5MB.", variant: "destructive" });
+    if (file.size > 15 * 1024 * 1024) {
+      toast({ title: "Error", description: "La imagen no debe superar 15 MB.", variant: "destructive" });
       return;
     }
     setUploading(true);
@@ -187,7 +205,7 @@ export default function Comunidad() {
             Comunidad
           </h1>
           <p className="text-muted-foreground mt-1">
-            Comparte mensajes, testimonios y palabras de aliento con los demás miembros del ministerio.
+            Comparte mensajes, testimonios, prédicas y estudios. Los videos de YouTube, Facebook, Instagram o TikTok se ven aquí mismo.
           </p>
         </div>
 
@@ -204,9 +222,9 @@ export default function Comunidad() {
                 </Avatar>
                 <div className="flex-1">
                   <Textarea
-                    placeholder="Comparte un mensaje, testimonio o palabra de aliento..."
-                    className={`resize-none ${composerOpen || newMessage || imageUrl ? "min-h-[100px]" : "min-h-[44px] h-11 py-2.5"}`}
-                    rows={composerOpen || newMessage || imageUrl ? 3 : 1}
+                    placeholder="Comparte un mensaje, testimonio, prédica o enlace…"
+                    className={`resize-none ${composerOpen || newMessage || imageUrl || attachment ? "min-h-[100px]" : "min-h-[44px] h-11 py-2.5"}`}
+                    rows={composerOpen || newMessage || imageUrl || attachment ? 3 : 1}
                     value={newMessage}
                     onFocus={() => setComposerOpen(true)}
                     onClick={() => setComposerOpen(true)}
@@ -225,10 +243,12 @@ export default function Comunidad() {
                       </button>
                     </div>
                   )}
+                  {attachment && <AttachedFile file={attachment} onRemove={() => setAttachment(null)} />}
+                  <LinkDraftPreview text={newMessage} />
                 </div>
               </div>
-              <div className={`justify-between items-center ${composerOpen || newMessage || imageUrl ? "flex" : "hidden"}`}>
-                <div className="flex gap-2">
+              <div className={`justify-between items-center gap-2 ${composerOpen || newMessage || imageUrl || attachment ? "flex" : "hidden"}`}>
+                <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -250,8 +270,9 @@ export default function Comunidad() {
                     className="hidden"
                     onChange={handleImageUpload}
                   />
+                  {!attachment && <AttachButton folder="comunidad" label="Archivo" onUploaded={setAttachment} />}
                 </div>
-                <Button type="submit" disabled={createPost.isPending || (!newMessage.trim() && !imageUrl)} data-testid="button-publish-post">
+                <Button type="submit" disabled={createPost.isPending || (!newMessage.trim() && !imageUrl && !attachment)} data-testid="button-publish-post">
                   {createPost.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -297,28 +318,23 @@ export default function Comunidad() {
                         {(post.user?.displayName || post.user?.username || '??').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 post-body-media">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-semibold">
                           {post.user?.displayName || post.user?.username || 'Usuario'}
                         </span>
                         {post.user?.cargo && <Badge variant="outline" className="text-[10px] py-0">{withAccents(post.user.cargo)}</Badge>}
                         {post.user?.country && <span className="text-[10px] text-muted-foreground">{withAccents(post.user.country)}</span>}
-                        <span className="text-xs text-muted-foreground">
-                          @{post.user?.username}
-                        </span>
+                        {publicHandle(post.user?.username) && (
+                          <span className="text-xs text-muted-foreground">{publicHandle(post.user?.username)}</span>
+                        )}
                         <span className="text-xs text-muted-foreground" title={post.createdAt ? new Date(post.createdAt).toLocaleString("es") : undefined}>
                           {timeAgo(post.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap" data-testid={`text-post-content-${post.id}`}>
-                        {post.content}
-                      </p>
-                      {post.imageUrl && (
-                        <div className="mt-2">
-                          <img src={post.imageUrl} alt="Imagen de publicación" className="max-h-96 rounded-lg object-cover" />
-                        </div>
-                      )}
+                      <RichText text={post.content} className="text-sm" testId={`text-post-content-${post.id}`} />
+                      {post.imageUrl && <FileAttachment url={post.imageUrl} name="Imagen de la publicación" fileType="image" className="mt-2" />}
+                      {post.fileUrl && <FileAttachment url={post.fileUrl} name={post.fileName} size={post.fileSize} mime={post.fileMime} className="mt-2" />}
                       <div className="flex items-center gap-3 mt-2">
                         <button
                           className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 min-h-9 py-2 -my-2"

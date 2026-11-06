@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { Attachment } from "@/components/media/Attachment";
+import { RichText } from "@/components/media/RichText";
+import { checkFile, ACCEPT_ALL } from "@/components/media/upload";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
@@ -1038,38 +1041,23 @@ function MaterialCard({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/50 group">
+    <div className="p-3 rounded-md bg-muted/50 group space-y-3">
+    <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary/10 shrink-0">
           <Icon className="w-5 h-5 text-primary" />
         </div>
         <div className="min-w-0">
           <p className="font-medium text-sm">{material.title}</p>
-          {material.description && <p className="text-xs text-muted-foreground truncate">{material.description}</p>}
+          {material.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{material.description}</p>}
           <Badge variant="outline" className="text-xs mt-1">
             {MATERIAL_TYPES[material.materialType as keyof typeof MATERIAL_TYPES] || material.materialType}
           </Badge>
         </div>
       </div>
       <div className="flex items-center gap-1">
-        {(material.fileData || material.fileUrl) && (
-          material.fileData ? (
-            <Button size="sm" variant="outline" onClick={() => {
-              const link = document.createElement('a');
-              link.href = material.fileData!;
-              link.download = material.fileName || 'archivo';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}><ExternalLink className="w-4 h-4 mr-1" /> {material.fileName || "Descargar"}</Button>
-          ) : (
-            <a href={material.fileUrl!} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="outline"><ExternalLink className="w-4 h-4 mr-1" /> {material.fileName || "Abrir"}</Button>
-            </a>
-          )
-        )}
         {canManage && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
             <Button size="sm" variant="ghost" onClick={() => setEditing(true)}><Edit3 className="w-4 h-4" /></Button>
             {confirmDelete ? (
               <div className="flex items-center gap-1">
@@ -1082,6 +1070,8 @@ function MaterialCard({
           </div>
         )}
       </div>
+    </div>
+      <Attachment fileData={material.fileData} fileUrl={material.fileUrl} fileName={material.fileName} fileSize={material.fileSize} />
     </div>
   );
 }
@@ -1166,13 +1156,23 @@ function CreateMaterialDialog({ courseId, onSubmit, isPending }: { courseId: num
               <Label>Archivo</Label>
               <Input
                 type="file"
+                accept={ACCEPT_ALL}
                 ref={fileInputRef}
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
                   if (!f) return;
-                  if (f.size > 20 * 1024 * 1024) {
-                    toast({ title: "Archivo muy grande", description: "20MB max.", variant: "destructive" });
-                    return;
+                  {
+
+                    const problem = checkFile(f);
+
+                    if (problem) {
+
+                      toast({ title: "No se puede subir", description: problem, variant: "destructive" });
+
+                      return;
+
+                    }
+
                   }
                   setUploadingFile(true);
                   try {
@@ -1288,9 +1288,12 @@ function AnnouncementCard({
             onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
-              if (f.size > 20 * 1024 * 1024) {
-                toast({ title: "Archivo muy grande", description: "Tamaño máximo 20MB", variant: "destructive" });
-                return;
+              {
+                const problem = checkFile(f);
+                if (problem) {
+                  toast({ title: "No se puede subir", description: problem, variant: "destructive" });
+                  return;
+                }
               }
               setEditUploadingFile(true);
               try {
@@ -1353,27 +1356,8 @@ function AnnouncementCard({
           </div>
         )}
       </div>
-      <p className="text-sm whitespace-pre-wrap mb-3">{announcement.content}</p>
-      {(announcement.fileData || announcement.fileUrl) && (
-        <p className="mt-2">
-          {announcement.fileData ? (
-            <button className="underline text-sm text-primary" onClick={() => {
-              const link = document.createElement('a');
-              link.href = announcement.fileData!;
-              link.download = announcement.fileName || 'archivo';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}>
-              {announcement.fileName || "Descargar adjunto"}
-            </button>
-          ) : (
-            <a href={announcement.fileUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="underline text-sm">
-              {announcement.fileName || announcement.fileUrl}
-            </a>
-          )}
-        </p>
-      )}
+      <RichText text={announcement.content} className="text-sm mb-3" />
+      <Attachment fileData={announcement.fileData} fileUrl={announcement.fileUrl} fileName={announcement.fileName} fileSize={announcement.fileSize} className="mb-3" />
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className="font-medium">{announcement.author.displayName || announcement.author.username}</span>
         <span>·</span>
@@ -1440,9 +1424,12 @@ function CreateAnnouncementDialog({ courseId, onSubmit, isPending }: { courseId:
               onChange={async (e) => {
                 const f = e.target.files?.[0];
                 if (!f) return;
-                if (f.size > 20 * 1024 * 1024) {
-                  toast({ title: "Archivo muy grande", description: "Tamaño máximo 20MB", variant: "destructive" });
-                  return;
+                {
+                  const problem = checkFile(f);
+                  if (problem) {
+                    toast({ title: "No se puede subir", description: problem, variant: "destructive" });
+                    return;
+                  }
                 }
                 setUploadingFile(true);
                 try {
