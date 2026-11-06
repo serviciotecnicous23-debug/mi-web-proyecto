@@ -39,12 +39,21 @@ const infoCards = [
   { icon: Heart, label: "Cobertura espiritual", lines: ["Pastores Carlo y Trinibeth Chevez", "Misión Perú"] },
 ];
 
+// /contacto?asunto=oracion deja elegido el asunto (lo usan la bienvenida y la app de la radio).
+const ASUNTOS = ["unirse", "oracion", "invitar", "otro"] as const;
+
+function asuntoDeLaUrl(): string {
+  if (typeof window === "undefined") return "";
+  const asunto = new URLSearchParams(window.location.search).get("asunto") || "";
+  return (ASUNTOS as readonly string[]).includes(asunto) ? asunto : "";
+}
+
 export default function Contacto() {
   const { toast } = useToast();
 
   const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { name: "", email: "", subject: "", content: "" },
+    defaultValues: { name: "", email: "", subject: asuntoDeLaUrl(), content: "" },
   });
 
   const sendMutation = useMutation({

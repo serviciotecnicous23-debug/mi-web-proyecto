@@ -432,6 +432,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
   app.get("/sitemap.xml", (_req, res) => {
     const pages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
+      { loc: "/bienvenida", priority: "0.8", changefreq: "monthly" },
       { loc: "/historia", priority: "0.8", changefreq: "monthly" },
       { loc: "/equipo", priority: "0.7", changefreq: "monthly" },
       { loc: "/en-vivo", priority: "0.9", changefreq: "daily" },

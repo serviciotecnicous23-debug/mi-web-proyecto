@@ -610,6 +610,10 @@
      con position:relative; no requiere markup extra) */
   position: relative;
   isolation: isolate;
+  /* La aurora se mueve y crece un 6 % (aurora-drift): sin esto se salía por los lados y la
+     página entera se podía mover de lado (~40 px en laptop, ~20 px en el celular).
+     "clip" recorta sin crear un contenedor con scroll, así que no rompe lo pegajoso (sticky). */
+  overflow-x: clip;
   &::before {
     content: '';
     position: absolute;

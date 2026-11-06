@@ -202,6 +202,16 @@ export default function Home() {
                   </Button>
                 </Link>
               </div>
+
+              <Link
+                href="/bienvenida"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                data-testid="link-hero-bienvenida"
+              >
+                <Sparkles className="w-4 h-4" />
+                ¿Primera vez aquí? Conoce el ministerio en un minuto
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
 
             <aside className="glass-card gradient-ring p-7 text-left" data-testid="panel-agenda">

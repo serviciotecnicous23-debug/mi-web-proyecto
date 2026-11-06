@@ -74,6 +74,11 @@ export const PAGE_META: Record<string, PageMeta> = {
     title: `Comunidad — ${BRAND}`,
     description: "La comunidad cristiana del Ministerio Avivando el Fuego: publicaciones, testimonios y reflexiones.",
   },
+  "/bienvenida": {
+    title: `Bienvenido al Ministerio ${BRAND}`,
+    description:
+      "Conoce el ministerio cristiano detrás de Avivando el Fuego Radio: quiénes somos, qué hacemos, dónde estamos y cómo dar tu primer paso. Todo es gratis.",
+  },
   "/historia": {
     title: `Nuestra historia — ${BRAND}`,
     description: "Cómo nació el Ministerio Internacional Avivando el Fuego en Ciudad Bolívar, Venezuela, en 2017.",
