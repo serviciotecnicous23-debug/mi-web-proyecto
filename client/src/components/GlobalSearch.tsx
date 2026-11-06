@@ -158,7 +158,7 @@ export function GlobalSearch() {
       <Button
         variant="outline"
         size="sm"
-        className="hidden md:flex items-center gap-2 text-muted-foreground h-9 px-3 w-[200px] lg:w-[260px] justify-start"
+        className="hidden md:flex items-center gap-2 text-muted-foreground h-9 px-3 w-[200px] lg:w-[180px] xl:w-[260px] justify-start"
         onClick={() => setOpen(true)}
         aria-label="Búsqueda global"
       >
