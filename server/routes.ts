@@ -1303,6 +1303,7 @@ ${urls}
         filename: `avatar-${userId}.webp`,
         buffer: optimized,
         contentType: "image/webp",
+        ownerId: userId,
       });
       await storage.updateUser(userId, { avatarUrl: result.url });
       // Delete temp file
@@ -3351,6 +3352,7 @@ ${urls}
         filename: `post-${Date.now()}.webp`,
         buffer: optimized,
         contentType: "image/webp",
+        ownerId: req.user!.id,
       });
       try { fs.unlinkSync(req.file.path); } catch (_) {}
       res.json({ imageUrl: result.url });
