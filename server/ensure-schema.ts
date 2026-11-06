@@ -882,6 +882,22 @@ CREATE TABLE IF NOT EXISTS "prayer_request_prayers" (
   "created_at" timestamp DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_prayer_request_prayer_day" ON "prayer_request_prayers"("request_id", "user_id", "prayed_on");
+
+-- Denuncias de contenido (server/reports.ts)
+CREATE TABLE IF NOT EXISTS "content_reports" (
+  "id" serial PRIMARY KEY,
+  "reporter_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "content_type" text NOT NULL,
+  "content_id" integer NOT NULL,
+  "reason" text NOT NULL,
+  "details" text,
+  "status" text NOT NULL DEFAULT 'pendiente',
+  "reviewed_by" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "reviewed_at" timestamp,
+  "created_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_content_reports_reporter" ON "content_reports"("reporter_id", "content_type", "content_id");
+CREATE INDEX IF NOT EXISTS "idx_content_reports_status" ON "content_reports"("status", "created_at");
 `;
 
 // ALTER TABLE statements to add columns that might be missing from older schemas

@@ -45,7 +45,8 @@ import { Switch } from "@/components/ui/switch";
 import { ROLES, COURSE_CATEGORIES, ENROLLMENT_STATUSES, ENROLLMENT_MODES, TEACHER_REQUEST_STATUSES, MINISTRY_POSITIONS, MINISTRY_COUNTRIES } from "@shared/schema";
 import type { Event as EventType, SiteContent, Course } from "@shared/schema";
 import { SiWhatsapp } from "react-icons/si";
-import { ChevronDown, ChevronRight, Shield, Upload } from "lucide-react";
+import { ChevronDown, ChevronRight, Flag, Shield, Upload } from "lucide-react";
+import { ReportsAdmin, usePendingReportsCount } from "@/components/admin/ReportsAdmin";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -675,6 +676,9 @@ export default function AdminDashboard() {
   const updateTeacherRequest = useUpdateTeacherRequest();
   const deleteTeacherRequest = useDeleteTeacherRequest();
   const updateUserInfo = useUpdateUserInfo();
+  const denunciasPendientes = usePendingReportsCount(!!user);
+  // /admin?tab=denuncias (el aviso de la campana) abre directo en Denuncias.
+  const tabDeLaUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
   const { data: whatsappData } = useWhatsappLink();
   const updateWhatsappLink = useUpdateWhatsappLink();
   const [search, setSearch] = useState("");
@@ -885,7 +889,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue={pendingUsers.length > 0 ? "pending" : "courses"}>
+        <Tabs defaultValue={tabDeLaUrl === "denuncias" ? "denuncias" : pendingUsers.length > 0 ? "pending" : "courses"}>
           <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="pending" className="gap-2" data-testid="tab-pending">
               <UserPlus className="h-4 w-4" /> Solicitudes
@@ -916,6 +920,10 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="posts" className="gap-2" data-testid="tab-posts">
               <MessageSquare className="h-4 w-4" /> Publicaciones
+            </TabsTrigger>
+            <TabsTrigger value="denuncias" className="gap-2" data-testid="tab-denuncias">
+              <Flag className="h-4 w-4" /> Denuncias
+              {denunciasPendientes > 0 && <Badge variant="destructive" className="ml-1">{denunciasPendientes}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="radio-library" className="gap-2" data-testid="tab-radio-library">
               <Upload className="h-4 w-4" /> Biblioteca Radio
@@ -1795,6 +1803,11 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Denuncias Tab */}
+          <TabsContent value="denuncias">
+            <ReportsAdmin />
           </TabsContent>
 
           {/* Biblioteca Radio Tab */}

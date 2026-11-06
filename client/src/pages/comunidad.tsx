@@ -20,6 +20,7 @@ import { RichText } from "@/components/media/RichText";
 import { FileAttachment } from "@/components/media/FileAttachment";
 import { AttachButton, AttachedFile, LinkDraftPreview } from "@/components/media/Composer";
 import type { UploadedFile } from "@/components/media/upload";
+import { ReportButton } from "@/components/moderacion/ReportButton";
 
 /** El usuario se muestra con @ solo si no es un correo (hay cuentas cuyo usuario es su correo). */
 function publicHandle(username?: string | null) {
@@ -82,6 +83,9 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
                   >
                     Eliminar
                   </button>
+                )}
+                {comment.userId !== user.id && (
+                  <ReportButton contentType="comentario" contentId={comment.id} className="text-[10px]" />
                 )}
               </div>
             </div>
@@ -344,6 +348,9 @@ export default function Comunidad() {
                           {post.commentCount ? `${post.commentCount} ${post.commentCount === 1 ? "comentario" : "comentarios"}` : "Comentar"}
                           {expandedComments.has(post.id) ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
+                        {user && post.userId !== user.id && (
+                          <ReportButton contentType="publicacion" contentId={post.id} className="text-xs min-h-9 py-2 -my-2 ml-auto" />
+                        )}
                       </div>
                       {expandedComments.has(post.id) && user && (
                         <PostComments postId={post.id} user={user} />

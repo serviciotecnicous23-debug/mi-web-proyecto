@@ -63,11 +63,12 @@ const SECCIONES: LegalSection[] = [
           estas normas, y suspender o cerrar cuentas.
         </p>
         <p>
-          Si ves algo que no debería estar, escríbenos desde{" "}
+          Si ves algo que no debería estar, toca «Denunciar» en la publicación, el comentario o la petición de oración,
+          o escríbenos desde{" "}
           <Link href="/contacto" className="text-primary font-semibold hover:underline">
             Contacto
-          </Link>{" "}
-          contándonos dónde está. Lo revisamos lo antes posible.
+          </Link>
+          . Solo la administración ve quién denunció, y lo revisamos lo antes posible.
         </p>
       </>
     ),

@@ -30,6 +30,7 @@ import { getBibleChapter, BibleRequestError } from "./bible";
 import { registerClubRoutes, notifyClubComment, readingClubPostAuthor } from "./club";
 import { registerPrayerWallRoutes } from "./prayer-wall";
 import { eliminarCuentaPropia } from "./account-deletion";
+import { registerReportRoutes } from "./reports";
 import { DEFAULT_AZURACAST_BASE_URL, AZURACAST_STATION_SHORTCODE } from "@shared/radio";
 import {
   DEFAULT_AZURACAST_HLS_URL,
@@ -2709,6 +2710,7 @@ ${urls}
 
   // ========== ORACIÓN: MURO DE PETICIONES ==========
   registerPrayerWallRoutes(app, { isTeacherOrAdmin, isAdmin });
+  registerReportRoutes(app, { isAdmin });
 
   // ========== BIBLIOTECA: BIBLE HIGHLIGHTS ==========
   app.get(api.bibleHighlights.list.path, async (req, res) => {
