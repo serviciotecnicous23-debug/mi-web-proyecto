@@ -1921,3 +1921,97 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 @media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) {
   .tabbar__live { animation: none; }
 }
+
+/* ── Inicio "Hoy" (MemberToday) ─────────────────────────────────────────────── */
+.today-card {
+  position: relative;
+  padding: 16px;
+  border-radius: 20px;
+  background: hsl(var(--card) / 0.72);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px);
+}
+.today-card--fire {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(hsl(var(--card) / 0.92), hsl(var(--card) / 0.92)) padding-box,
+    linear-gradient(135deg, rgba(251, 146, 60, 0.75), rgba(250, 204, 21, 0.35) 45%, rgba(220, 38, 38, 0.6)) border-box;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.22), 0 0 28px rgba(249, 115, 22, 0.14);
+}
+.today-flame {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  color: #16060a;
+  background: linear-gradient(135deg, #fbbf24, #f97316 55%, #dc2626);
+  box-shadow: 0 0 18px rgba(249, 115, 22, 0.5);
+}
+.today-day {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.6);
+}
+.today-day--on {
+  color: #16060a;
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+}
+.today-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--primary));
+}
+.today-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 10px;
+  margin: 0 -10px;
+  border-radius: 14px;
+  transition: background 0.2s ease;
+}
+.today-row:hover, .today-row:focus-visible { background: hsl(var(--muted) / 0.55); }
+.today-date {
+  flex: none;
+  width: 48px;
+  text-align: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: hsl(var(--primary));
+}
+.today-quick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 84px;
+  border-radius: 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: hsl(var(--card) / 0.72);
+  border: 1px solid hsl(var(--border));
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.today-quick svg { color: hsl(var(--primary)); }
+.today-quick:hover { border-color: hsl(var(--primary) / 0.6); }
+.today-quick:active { transform: scale(0.97); }
+.today-link:focus-visible, .today-row:focus-visible, .today-quick:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}

@@ -1688,7 +1688,15 @@ export default function BibliotecaPage() {
     const tab = new URLSearchParams(window.location.search).get("tab");
     return tab && BIBLIOTECA_TABS.includes(tab) ? tab : "biblia";
   });
-  const [bibleTarget, setBibleTarget] = useState<ChapterTarget | null>(null);
+  // ?libro=Juan&cap=3 abre ese capítulo (lo usan "Hoy" en Inicio y los enlaces para compartir).
+  const [bibleTarget, setBibleTarget] = useState<ChapterTarget | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const book = params.get("libro");
+    const chapter = Number(params.get("cap"));
+    const total = book ? BIBLE_BOOK_CHAPTERS[book] : undefined;
+    if (!book || !total || !Number.isInteger(chapter) || chapter < 1 || chapter > total) return null;
+    return { book, chapter, key: Date.now() };
+  });
 
   const setActiveTab = (tab: string) => {
     setActiveTabState(tab);

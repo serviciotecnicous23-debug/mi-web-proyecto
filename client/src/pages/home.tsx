@@ -1,4 +1,6 @@
 import { Layout } from "@/components/layout";
+import { useAuth } from "@/hooks/use-auth";
+import { MemberToday } from "@/components/home/MemberToday";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -96,8 +98,49 @@ function useUpcomingAgenda(): AgendaItem[] {
   return [...items, RADIO_AGENDA_ITEM];
 }
 
+/** "Apoya el ministerio": lo ven visitantes y miembros. */
+function DonationSection() {
+  return (
+    <section className="py-24">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <span className="glass-pill inline-block mb-5 text-xs">Apoyo</span>
+          <h2 className="heading-display font-display text-5xl md:text-6xl">
+            Apoya el <span className="fire-text">ministerio</span>
+          </h2>
+          <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
+            Tu generosidad hace posible que el fuego del evangelio siga llegando a más personas.
+          </p>
+        </div>
+        <PublicDonationSection />
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const agenda = useUpcomingAgenda();
+  const { user, isLoading } = useAuth();
+
+  // Con cuenta, Inicio es "Hoy": lo personal primero (lectura, desafíos, clases, lo que
+  // viene) y el apoyo al ministerio. La portada promocional es para los visitantes; antes
+  // un miembro veía "Iniciar sesión" y "Registrarse" y 8.500 px de promoción.
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[70vh]" aria-busy="true" />
+      </Layout>
+    );
+  }
+  if (user) {
+    return (
+      <Layout>
+        <MemberToday agenda={agenda} />
+        <DonationSection />
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       {/* ═══ HERO ═══════════════════════════════════════════════════ */}
@@ -396,21 +439,7 @@ export default function Home() {
 
       <div className="section-divider max-w-5xl mx-auto" />
 
-      {/* ═══ DONACIONES ═════════════════════════════════════════════ */}
-      <section className="py-24">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <span className="glass-pill inline-block mb-5 text-xs">Apoyo</span>
-            <h2 className="heading-display font-display text-5xl md:text-6xl">
-              Apoya el <span className="fire-text">ministerio</span>
-            </h2>
-            <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              Tu generosidad hace posible que el fuego del evangelio siga llegando a más personas.
-            </p>
-          </div>
-          <PublicDonationSection />
-        </div>
-      </section>
+      <DonationSection />
 
       {/* ═══ CTA FINAL ══════════════════════════════════════════════ */}
       <section className="py-28 section-aurora relative overflow-hidden">
