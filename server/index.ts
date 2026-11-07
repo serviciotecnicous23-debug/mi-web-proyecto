@@ -9,7 +9,7 @@ import path from "path";
 import { startBackupScheduler } from "./backup";
 import compression from "compression";
 import helmet from "helmet";
-import { DEFAULT_AZURACAST_STATION_URL } from "@shared/radio";
+import { DEFAULT_AZURACAST_STATION_URL, LEGACY_AZURACAST_BASE_URL } from "@shared/radio";
 import { privateFieldsFilter } from "./private-fields";
 
 // ========== VERSIÓN DE NODE.JS ==========
@@ -129,7 +129,7 @@ const videoFrameSources = [
   "https://8x8.vc",
 ];
 // La radio ORIGINAL (página pública de AzuraCast) se muestra dentro de /radio.
-const radioFrameSources = [DEFAULT_AZURACAST_STATION_URL, process.env.RADIO_STATION_URL]
+const radioFrameSources = [DEFAULT_AZURACAST_STATION_URL, LEGACY_AZURACAST_BASE_URL, process.env.RADIO_STATION_URL]
   .map((url) => {
     try {
       return url ? new URL(url).origin : null;

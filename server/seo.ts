@@ -1,4 +1,5 @@
 import { SITE_ORIGIN } from "@shared/site";
+import { RADIO_OFFICIAL_URL } from "@shared/radio";
 
 // Cabecera de cada página tal como la recibe Google. La web es una SPA: sin esto,
 // todas las rutas salían con el título y la descripción de la portada, y con una
@@ -24,6 +25,8 @@ const RADIO_JSON_LD = {
   description: RADIO_DESCRIPTION,
   inLanguage: "es",
   broadcastDisplayName: "Avivando el Fuego Radio",
+  // La radio tiene su propia página (enlace oficial para compartir).
+  sameAs: [RADIO_OFFICIAL_URL],
   broadcastFrequency: "INTERNET_STREAM",
   broadcastTimezone: "America/Chicago",
   logo: LOGO,

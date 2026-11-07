@@ -84,7 +84,13 @@ export type RadioStationPayload = {
 
 export const RADIO_TIMEZONE = "America/Chicago";
 
-export const DEFAULT_AZURACAST_BASE_URL = "https://40.160.2.176.sslip.io";
+// La radio tiene enlace propio: es una casa aparte (lleva al ministerio, pero no es una
+// página del ministerio). Lo que se comparte de la radio usa RADIO_OFFICIAL_URL, que abre su
+// página pública en AzuraCast. La dirección técnica anterior (sslip.io) sigue funcionando.
+export const RADIO_OFFICIAL_URL = "https://radio.ministerioavivandoelfuego.com";
+export const DEFAULT_AZURACAST_BASE_URL = RADIO_OFFICIAL_URL;
+/** Dirección técnica de antes: queda de respaldo para enlaces viejos y la app. */
+export const LEGACY_AZURACAST_BASE_URL = "https://40.160.2.176.sslip.io";
 
 // Identificador (shortcode) de la estacion en AzuraCast. Fuente unica: todo se deriva de aqui.
 export const AZURACAST_STATION_SHORTCODE = "avivando_el_fuego";

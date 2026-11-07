@@ -14,7 +14,7 @@ import {
 import { PublicDonationSection } from "@/pages/finanzas";
 import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
-import { PUBLIC_SITE_RADIO_URL } from "@shared/radio";
+import { RADIO_OFFICIAL_URL } from "@shared/radio";
 import AnimatedSection from "@/components/AnimatedSection";
 import FireParticles from "@/components/FireParticles";
 
@@ -342,7 +342,7 @@ export default function Home() {
                   </Link>
                 </div>
                 <div className="mt-5">
-                  <RadioInstallActions url={PUBLIC_SITE_RADIO_URL} compact />
+                  <RadioInstallActions url={RADIO_OFFICIAL_URL} compact />
                 </div>
               </div>
 
