@@ -37,6 +37,8 @@ import {
   DEFAULT_AZURACAST_LIGHT_STREAM_URL,
   DEFAULT_AZURACAST_METADATA_URL,
   DEFAULT_AZURACAST_STATION_URL,
+  LEGACY_AZURACAST_BASE_URL,
+  RADIO_OFFICIAL_URL,
   DEFAULT_AZURACAST_STREAM_URL,
   DEFAULT_PUBLIC_RADIO_STREAM,
   LEGACY_PUBLIC_RADIO_STREAM,
@@ -444,10 +446,13 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Cache-Control", "public, max-age=300");
     res.json({
-      servers: [DEFAULT_AZURACAST_BASE_URL],
+      // El nombre propio de la radio primero; la dirección técnica de antes, de respaldo.
+      servers: [DEFAULT_AZURACAST_BASE_URL, LEGACY_AZURACAST_BASE_URL],
       mountPath: `/listen/${AZURACAST_STATION_SHORTCODE}/radio.mp3`,
       lightMountPath: `/listen/${AZURACAST_STATION_SHORTCODE}/ligero.aac`,
       ministryUrl: SITE_URL,
+      // Lo que comparte la app: el enlace de la radio, no el del ministerio.
+      shareUrl: RADIO_OFFICIAL_URL,
     });
   });
 
@@ -2554,6 +2559,7 @@ ${urls}
         streamUrl: configuredStream,
         metadataUrl,
         isPrimary:
+          configuredStream.startsWith(DEFAULT_AZURACAST_BASE_URL) ||
           configuredStream.includes("sslip.io") ||
           configuredStream.includes("/listen/") ||
           configuredStream.includes("azuracast"),

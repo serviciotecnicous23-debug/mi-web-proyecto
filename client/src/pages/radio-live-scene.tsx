@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame, Radio, Signal } from "lucide-react";
-import { DEFAULT_AZURACAST_LOGO_URL, DEFAULT_AZURACAST_METADATA_URL, PUBLIC_SITE_RADIO_URL } from "@shared/radio";
+import { DEFAULT_AZURACAST_LOGO_URL, DEFAULT_AZURACAST_METADATA_URL, RADIO_OFFICIAL_URL } from "@shared/radio";
 
 const RADIO_BRAND_IMAGE = DEFAULT_AZURACAST_LOGO_URL;
 
@@ -54,7 +54,7 @@ export default function RadioLiveScene() {
   });
   const [clock, setClock] = useState(() => new Date());
   const qrUrl = useMemo(() => {
-    const url = encodeURIComponent(PUBLIC_SITE_RADIO_URL);
+    const url = encodeURIComponent(RADIO_OFFICIAL_URL);
     return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${url}`;
   }, []);
 

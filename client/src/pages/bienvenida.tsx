@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { RADIO_OFFICIAL_URL } from "@shared/radio";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
@@ -22,8 +23,9 @@ function vieneDeLaRadio(): boolean {
   const q = new URLSearchParams(window.location.search);
   if (q.get("desde") === "radio" || q.get("source") === "radio-app") return true;
   try {
-    // La página pública de la radio (AzuraCast) está en un dominio sslip.io.
-    return /(^|\.)sslip\.io$/i.test(new URL(document.referrer).hostname);
+    // La página pública de la radio: su enlace propio o la dirección técnica de antes (sslip.io).
+    const host = new URL(document.referrer).hostname;
+    return host === new URL(RADIO_OFFICIAL_URL).hostname || /(^|\.)sslip\.io$/i.test(host);
   } catch {
     return false;
   }

@@ -1,53 +1,38 @@
-import { Download, Share2, Smartphone } from "lucide-react";
+import { Radio, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 type RadioInstallActionsProps = {
+  /** Enlace oficial y propio de la radio (RADIO_OFFICIAL_URL), no el del ministerio. */
   url: string;
   title?: string;
   compact?: boolean;
 };
 
+/**
+ * Botones de la radio en la web del ministerio. La radio es una casa aparte, con su propio
+ * enlace: "Instalar la radio" abre su página (allí está su botón "Instalar app") y
+ * "Compartir la radio" manda ese enlace. Antes ambos llevaban a la app del ministerio.
+ */
 export function RadioInstallActions({
   url,
   title = "Avivando el Fuego Radio",
   compact = false,
 }: RadioInstallActionsProps) {
   const { toast } = useToast();
-  const { canInstall, isInstalled, install } = usePwaInstall();
 
-  const handleInstall = async () => {
-    if (isInstalled) {
-      toast({
-        title: "App instalada",
-        description: "Ya estás usando Avivando el Fuego como app.",
-      });
-      return;
-    }
-
-    const outcome = await install();
-    if (outcome === "accepted") {
-      toast({
-        title: "App instalada",
-        description: "Avivando el Fuego quedó en tu pantalla de inicio.",
-      });
-      return;
-    }
-
-    if (outcome === "dismissed") return;
-
+  const handleOpen = () => {
     toast({
-      title: "Instalar desde el navegador",
-      description: "En Android usa Instalar app. En iPhone usa Compartir y luego Agregar a pantalla de inicio.",
-      duration: 8000,
+      title: "Se abre la página de la radio",
+      description: "Allí toca «Instalar app» y te queda la radio en tu pantalla de inicio.",
+      duration: 7000,
     });
   };
 
   const handleShare = async () => {
     const shareData = {
       title,
-      text: "Escucha Avivando el Fuego Radio 24/7.",
+      text: "Escucha Avivando el Fuego Radio en vivo, las 24 horas.",
       url,
     };
 
@@ -58,13 +43,14 @@ export function RadioInstallActions({
       }
       await navigator.clipboard.writeText(url);
       toast({
-        title: "Enlace copiado",
-        description: "Ya puedes compartir la radio con la congregacion.",
+        title: "Enlace de la radio copiado",
+        description: `${url.replace(/^https?:\/\//, "")} · Pégalo en WhatsApp o donde quieras.`,
       });
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return;
       toast({
         title: "No se pudo compartir",
-        description: "Abre el enlace público de la radio y compártelo desde tu navegador.",
+        description: `Comparte este enlace: ${url.replace(/^https?:\/\//, "")}`,
         variant: "destructive",
       });
     }
@@ -73,14 +59,15 @@ export function RadioInstallActions({
   return (
     <div className={compact ? "flex flex-wrap gap-2" : "flex flex-col gap-2 sm:flex-row"}>
       <Button
-        type="button"
+        asChild
         className={compact ? "gap-2" : "gap-2 fire-btn-primary"}
         variant={compact ? "outline" : "default"}
-        onClick={handleInstall}
         data-testid="button-install-radio-app"
       >
-        {canInstall || isInstalled ? <Download className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
-        {isInstalled ? "App instalada" : "Instalar app gratis"}
+        <a href={url} target="_blank" rel="noopener" onClick={handleOpen}>
+          <Radio className="h-4 w-4" />
+          Instalar la radio
+        </a>
       </Button>
       <Button
         type="button"
@@ -90,7 +77,7 @@ export function RadioInstallActions({
         data-testid="button-share-radio"
       >
         <Share2 className="h-4 w-4" />
-        Compartir radio
+        Compartir la radio
       </Button>
     </div>
   );
