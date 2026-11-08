@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction, RequestHandler } from "e
 import { createServer, type Server } from "http";
 import { storage, type CourseChildKind } from "./storage";
 import { registerChatRoutes } from "./chat";
+import { registerGameRoutes } from "./games";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3611,6 +3612,9 @@ ${urls}
   // ========== MENSAJES DIRECTOS (tipo WhatsApp, en tiempo real) ==========
   // Fotos, notas de voz, documentos, respuestas, reacciones, vistos: ver server/chat.ts.
   registerChatRoutes(app);
+
+  // ========== JUEGOS (puntajes y tabla de los mejores) ==========
+  registerGameRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

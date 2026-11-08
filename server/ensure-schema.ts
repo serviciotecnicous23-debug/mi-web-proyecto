@@ -8,6 +8,7 @@
  */
 import { pool } from "./db";
 import { STORED_FILES_SQL } from "./file-store";
+import { GAME_SCORES_SQL } from "./games";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1047,6 +1048,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
     await pool.query(CREATE_TABLES_SQL);
     // Archivos guardados en la base (fotos, documentos, audios) cuando no hay S3/R2.
     await pool.query(STORED_FILES_SQL);
+    // Puntajes de los juegos (una fila por persona y juego).
+    try {
+      await pool.query(GAME_SCORES_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (juegos): ${err?.message}`);
+    }
     
     // Step 2: Add missing columns to existing tables
     for (const sql of ADD_COLUMNS_SQL) {

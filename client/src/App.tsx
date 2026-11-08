@@ -59,6 +59,7 @@ const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
 const ReportesPage = lazy(() => import("@/pages/reportes"));
 const PlanillasPage = lazy(() => import("@/pages/planillas"));
+const JuegosPage = lazy(() => import("@/pages/juegos"));
 const FinanzasPage = lazy(() => import("@/pages/finanzas"));
 const SermonesPage = lazy(() => import("@/pages/sermones"));
 const GruposPage = lazy(() => import("@/pages/grupos"));
@@ -112,6 +113,8 @@ function Router() {
       <Route path="/mensajes" component={MensajesPage} />
       <Route path="/reportes" component={ReportesPage} />
       <Route path="/planillas/:id" component={PlanillasPage} />
+      <Route path="/juegos" component={JuegosPage} />
+      <Route path="/juegos/:slug" component={JuegosPage} />
       <Route path="/finanzas" component={FinanzasPage} />
       <Route path="/sermones" component={SermonesPage} />
       <Route path="/grupos" component={GruposPage} />
