@@ -4,11 +4,13 @@
  * se limpia antes de usarse.
  */
 import { HELPERS, STATIONS, UPGRADES, type HelperId, type ProgressView, type StationId, type UpgradeId } from "./data";
-import { GOALS, LOGROS, copas, type Goal, type Stats, type StatKey } from "./progress";
+import { GOALS, LOGROS, copas, todayKey, type Goal, type Stats, type StatKey } from "./progress";
 
 export const GAME_SLUG = "aprendiz-del-templo";
 const SAVE_KEY = "templo-partida-v1";
-export const OFFLINE_CAP_MIN = 240;
+/** Los levitas sirven sin ti como mucho 2 horas cada vez que te vas y 3 horas por día. */
+export const OFFLINE_CAP_MIN = 120;
+export const OFFLINE_DIA_MIN = 180;
 
 export type PileId = "lena" | "aceite" | "pan" | "incienso" | "diezmo";
 
@@ -60,6 +62,8 @@ export type SaveData = {
   rangoMax: number;
   /** Gloria de las generaciones anteriores: la gloria nunca baja. */
   gloriaPrev: number;
+  /** Minutos que ya sirvieron hoy los levitas sin ti (tope diario). */
+  offline: { key: string; min: number };
 };
 
 export function newSave(): SaveData {
@@ -101,6 +105,7 @@ export function newSave(): SaveData {
     gen: 1,
     rangoMax: 0,
     gloriaPrev: 0,
+    offline: { key: "", min: 0 },
   };
 }
 
@@ -228,6 +233,10 @@ export function sanitize(raw: unknown): SaveData {
     gen: Math.round(num(r.gen, 1, 99, 1)),
     rangoMax: Math.max(Math.round(num(r.rangoMax, 0, 4, 0)), Math.round(num(r.rank, 0, 4, 0))),
     gloriaPrev: Math.round(num(r.gloriaPrev, 0, 1e12, 0)),
+    offline: (() => {
+      const o = r.offline && typeof r.offline === "object" ? (r.offline as Record<string, unknown>) : {};
+      return { key: dateKey(o.key), min: num(o.min, 0, 1440, 0) };
+    })(),
   };
 }
 
@@ -282,6 +291,7 @@ export function nuevaGeneracion(old: SaveData): SaveData {
     logros: { ...old.logros },
     daily: old.daily.done ? { ...old.daily, goals: old.daily.goals.map((g) => ({ ...g })) } : { ...old.daily, key: "", goals: [] },
     playSeconds: old.playSeconds,
+    offline: { ...old.offline },
   };
 }
 
@@ -300,15 +310,25 @@ export function offlineRate(s: SaveData): number {
   return rate * (1 + (s.upgrades.abundancia || 0) * 0.2) * (1 + genBonus(s));
 }
 
-export function applyOffline(s: SaveData, now = Date.now()): { gained: number; minutes: number } {
-  const minutes = Math.min(OFFLINE_CAP_MIN, Math.max(0, (now - s.savedAt) / 60000));
-  if (minutes < 2) return { gained: 0, minutes };
-  const gained = Math.floor(offlineRate(s) * minutes);
+/**
+ * Lo que hicieron los levitas mientras no jugabas. Para que sea justo y se crezca parejo, sirven
+ * como mucho 2 horas cada vez que te vas y 3 horas por día; la primera hora rinde completa y la
+ * segunda, la mitad.
+ */
+export function applyOffline(s: SaveData, now = Date.now()): { gained: number; minutes: number; away: number; leftToday: number } {
+  const away = Math.max(0, (now - s.savedAt) / 60000);
+  const key = todayKey(new Date(now));
+  const used = s.offline?.key === key ? s.offline.min : 0;
+  if (away < 2) return { gained: 0, minutes: 0, away: Math.floor(away), leftToday: Math.floor(OFFLINE_DIA_MIN - used) };
+  const minutes = Math.min(away, Math.max(0, Math.min(OFFLINE_CAP_MIN, OFFLINE_DIA_MIN - used)));
+  const efectivos = Math.min(minutes, 60) + Math.max(0, minutes - 60) * 0.5;
+  const gained = Math.floor(offlineRate(s) * efectivos);
+  s.offline = { key, min: used + minutes };
   if (gained > 0) {
     s.gozo += gained;
     s.lifetimeGozo += gained;
   }
-  return { gained, minutes: Math.floor(minutes) };
+  return { gained, minutes: Math.floor(minutes), away: Math.floor(away), leftToday: Math.max(0, Math.floor(OFFLINE_DIA_MIN - used - minutes)) };
 }
 
 export function loadLocal(): SaveData | null {

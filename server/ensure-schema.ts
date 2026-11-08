@@ -9,6 +9,7 @@
 import { pool } from "./db";
 import { STORED_FILES_SQL } from "./file-store";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
+import { JERUSALEN_SQL } from "./jerusalen";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1052,6 +1053,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
     try {
       await pool.query(GAME_SCORES_SQL);
       await pool.query(GAME_SAVES_SQL);
+      // Jerusalén en línea: personajes, mérito por temporada, preguntas vistas y cargos.
+      await pool.query(JERUSALEN_SQL);
     } catch (err: any) {
       console.log(`  Migration note (juegos): ${err?.message}`);
     }

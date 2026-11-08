@@ -35,6 +35,11 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["game_scores_week", (id) => sql`user_id = ${id}`],
   ["game_event_cheers", (id) => sql`user_id = ${id} OR event_id IN (SELECT id FROM game_events WHERE user_id = ${id})`],
   ["game_events", (id) => sql`user_id = ${id}`],
+  // Jerusalén en línea: primero lo que apunta a los personajes, después los personajes.
+  ["game_question_log", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
+  ["game_season_merit", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
+  ["game_offices", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
+  ["game_characters", (id) => sql`user_id = ${id}`],
 ];
 
 /** Borra los datos personales de la cuenta y la deja anónima. Todo o nada (transacción). */

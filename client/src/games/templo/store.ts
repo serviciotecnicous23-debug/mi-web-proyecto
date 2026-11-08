@@ -3,8 +3,20 @@
  * veces por segundo y pide ventanas (diálogos, lecciones, preguntas...). La pantalla se suscribe.
  */
 import { useSyncExternalStore } from "react";
+import type { EscalonId, JerusalenPregunta } from "@shared/jerusalen";
 import type { ItemType, Line } from "./data";
 import type { Goal } from "./progress";
+
+/** Marcador del modo en línea: mérito de la temporada, escalón y cómo va el día. */
+export type OnlineHud = {
+  merito: number;
+  ganado: number;
+  escalon: EscalonId;
+  hoySeg: number;
+  factor: number;
+  pregunta: "lista" | "espera" | "cargando" | "abierta" | "agotada";
+  enviando: boolean;
+};
 
 export type Hud = {
   gozo: number;
@@ -55,14 +67,16 @@ export type Modal =
   | { kind: "upgrades" }
   | { kind: "book" }
   | { kind: "help" }
-  | { kind: "offline"; gained: number; minutes: number }
+  | { kind: "offline"; gained: number; minutes: number; away?: number; leftToday?: number }
   | { kind: "rank"; rank: number }
   | { kind: "finale" }
   | { kind: "camino" }
   | { kind: "jornada"; n: number; stars: number; reward: number; adorno: string | null; seconds: number }
-  | { kind: "comunidad" };
+  | { kind: "comunidad" }
+  | { kind: "temporada" }
+  | { kind: "dificil"; q: JerusalenPregunta };
 
-type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[] };
+type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null };
 
 const emptyHud: Hud = {
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
@@ -72,7 +86,7 @@ const emptyHud: Hud = {
 };
 
 class GameStore {
-  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [] };
+  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null };
   private queue: Modal[] = [];
   private listeners = new Set<() => void>();
   private closeHandlers = new Set<(m: Modal) => void>();
@@ -91,6 +105,11 @@ class GameStore {
 
   setHud(hud: Hud) {
     this.snap = { ...this.snap, hud };
+    this.emit();
+  }
+
+  setOnline(online: OnlineHud | null) {
+    this.snap = { ...this.snap, online };
     this.emit();
   }
 
@@ -140,7 +159,7 @@ class GameStore {
   reset() {
     this.queue = [];
     this.closeHandlers.clear();
-    this.snap = { hud: emptyHud, modal: null, toasts: [] };
+    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online };
     this.emit();
   }
 }
