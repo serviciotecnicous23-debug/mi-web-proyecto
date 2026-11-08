@@ -36,7 +36,7 @@ import {
   Music, Presentation, ExternalLink, ArrowLeft, Users, Bell, MapPin,
   CheckCircle2, GraduationCap, Timer, Megaphone, CalendarDays, Plus,
   Trash2, Edit3, Save, X, AlertCircle, Eye, MoreVertical, Pin, PinOff,
-  UserCheck, Send,
+  UserCheck, Send, ClipboardCheck, ClipboardList,
 } from "lucide-react";
 import {
   COURSE_CATEGORIES, MATERIAL_TYPES, DAYS_OF_WEEK, MEETING_PLATFORMS,
@@ -44,6 +44,8 @@ import {
 } from "@shared/schema";
 import type { CourseMaterial, CourseSession, CourseScheduleEntry, CourseAnnouncement } from "@shared/schema";
 import LiveClassroom from "@/components/LiveClassroom";
+import { AttendanceDialog } from "@/components/planillas/AttendanceDialog";
+import { isAdminRole } from "@/lib/utils";
 
 const materialIcons: Record<string, any> = {
   documento: FileText,
@@ -78,6 +80,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
   const createScheduleEntry = useCreateCourseScheduleEntry();
   const updateScheduleEntry = useUpdateCourseScheduleEntry();
   const deleteScheduleEntry = useDeleteCourseScheduleEntry();
+  const [attendanceSession, setAttendanceSession] = useState<CourseSession | null>(null);
 
   // Cambiar de página en un efecto, no durante el dibujado (React lo prohíbe).
   useEffect(() => {
@@ -92,7 +95,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
   const myEnrollment = myEnrollments?.find((e: any) => e.courseId === courseId);
   const isEnrolled = myEnrollment && (myEnrollment.status === "aprobado" || myEnrollment.status === "completado");
   const isTeacher = course?.teacherId === user?.id;
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminRole(user?.role);
   const canManage = isTeacher || isAdmin;
   const hasAccess = isEnrolled || isTeacher || isAdmin;
 
@@ -174,6 +177,13 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
               <Link href="/maestro">
                 <Button variant="outline" size="sm">Panel del Maestro</Button>
               </Link>
+            )}
+            {canManage && (
+              <Button asChild variant="outline" size="sm" data-testid="button-aula-planillas">
+                <Link href={`/planillas/${courseId}`}>
+                  <ClipboardList className="w-4 h-4 mr-1" /> Planillas
+                </Link>
+              </Button>
             )}
           </div>
         </div>
@@ -341,6 +351,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                         courseId={courseId}
                         onUpdate={updateSession.mutate}
                         onDelete={deleteSession.mutate}
+                        onAttendance={canManage ? () => setAttendanceSession(s) : undefined}
                       />
                     ))}
                   </CardContent>
@@ -364,6 +375,7 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
                         courseId={courseId}
                         onUpdate={updateSession.mutate}
                         onDelete={deleteSession.mutate}
+                        onAttendance={canManage ? () => setAttendanceSession(s) : undefined}
                       />
                     ))}
                   </CardContent>
@@ -523,16 +535,28 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
           </TabsContent>
         </Tabs>
       </div>
+      {canManage && (
+        <AttendanceDialog
+          courseId={courseId}
+          session={attendanceSession}
+          open={!!attendanceSession}
+          onOpenChange={(open) => {
+            if (!open) setAttendanceSession(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
 // ========== SESSION CARD ==========
 function SessionCard({
-  session, isUpcoming, canManage, courseId, onUpdate, onDelete,
+  session, isUpcoming, canManage, courseId, onUpdate, onDelete, onAttendance,
 }: {
   session: CourseSession; isUpcoming: boolean; canManage: boolean; courseId: number;
   onUpdate: (data: any) => void; onDelete: (data: any) => void;
+  /** Abre "Pasar asistencia" de esta clase (solo maestro o administraciÃ³n). */
+  onAttendance?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(session.title);
@@ -655,6 +679,11 @@ function SessionCard({
         )}
         {canManage && (
           <div className="flex items-center gap-1">
+            {onAttendance && (
+              <Button size="sm" variant="outline" onClick={onAttendance} title="Pasar asistencia" data-testid={`button-aula-attendance-${session.id}`}>
+                <ClipboardCheck className="w-4 h-4 mr-1" /> Asistencia
+              </Button>
+            )}
             <Button size="sm" variant="ghost" onClick={handleToggleComplete} title={session.isCompleted ? "Marcar como pendiente" : "Marcar como completada"}>
               <CheckCircle2 className={`w-4 h-4 ${session.isCompleted ? 'text-green-500' : 'text-muted-foreground'}`} />
             </Button>

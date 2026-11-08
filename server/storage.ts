@@ -21,7 +21,7 @@ import {
   type TeacherRequest, type UpdateTeacherRequest,
   type CourseAnnouncement, type InsertCourseAnnouncement, type UpdateCourseAnnouncement,
   type CourseScheduleEntry, type InsertCourseSchedule, type UpdateCourseSchedule,
-  type SessionAttendance, type InsertSessionAttendance,
+  type SessionAttendance, type InsertSessionAttendance, type CourseGradeItem,
   type BibleHighlight, type InsertBibleHighlight,
   type BibleNote, type InsertBibleNote,
   type ReadingPlan, type InsertReadingPlan,
@@ -67,6 +67,29 @@ import {
   memberProgress, type MemberProgressEntry,
 } from "@shared/schema";
 import { eq, desc, asc, and, ilike, or, sql, inArray, ne, lt } from "drizzle-orm";
+
+/** Lo que cuelga de un curso y solo su maestro o la administración pueden cambiar. */
+export type CourseChildKind = "session" | "material" | "announcement" | "schedule";
+
+/** Un alumno en las planillas: su inscripción con los datos de contacto. */
+export type CourseRosterRow = {
+  enrollmentId: number;
+  userId: number;
+  status: string;
+  grade: string | null;
+  scores: Record<string, string> | null;
+  observations: string | null;
+  enrolledAt: Date | null;
+  completedAt: Date | null;
+  username: string;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  cargo: string | null;
+  memberType: string | null;
+  churchName: string | null;
+};
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -152,6 +175,14 @@ export interface IStorage {
 
   upsertSessionAttendance(data: InsertSessionAttendance): Promise<SessionAttendance>;
   listSessionAttendance(sessionId: number): Promise<(SessionAttendance & { user: { id: number; username: string; displayName: string | null } })[]>;
+  // Planillas del curso
+  getCourseSession(id: number): Promise<CourseSession | undefined>;
+  getOwningCourseId(kind: CourseChildKind, id: number): Promise<number | undefined>;
+  listCourseRoster(courseId: number): Promise<CourseRosterRow[]>;
+  listCourseAttendance(courseId: number): Promise<{ sessionId: number; userId: number; status: string }[]>;
+  deleteSessionAttendance(sessionId: number, userId: number): Promise<void>;
+  updateCourseGradeItems(courseId: number, items: CourseGradeItem[]): Promise<void>;
+  updateEnrollmentGrades(id: number, data: { scores?: Record<string, string>; grade?: string | null; observations?: string | null }): Promise<void>;
   listPostsByUser(userId: number): Promise<MemberPost[]>;
   listAttendanceByUser(userId: number): Promise<SessionAttendance[]>;
 
@@ -942,6 +973,7 @@ export class DatabaseStorage implements IStorage {
         status: enrollments.status,
         grade: enrollments.grade,
         observations: enrollments.observations,
+        scores: enrollments.scores,
         enrolledAt: enrollments.enrolledAt,
         completedAt: enrollments.completedAt,
         courseTitle: courses.title,
@@ -961,6 +993,7 @@ export class DatabaseStorage implements IStorage {
         coursePrerequisiteCourseId: courses.prerequisiteCourseId,
         courseIsPublic: courses.isPublic,
         courseLevel: courses.level,
+        courseGradeItems: courses.gradeItems,
       })
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
@@ -974,6 +1007,7 @@ export class DatabaseStorage implements IStorage {
       status: r.status,
       grade: r.grade,
       observations: r.observations,
+      scores: r.scores,
       enrolledAt: r.enrolledAt,
       completedAt: r.completedAt,
       course: {
@@ -995,6 +1029,7 @@ export class DatabaseStorage implements IStorage {
         prerequisiteCourseId: r.coursePrerequisiteCourseId,
         isPublic: r.courseIsPublic,
         level: r.courseLevel,
+        gradeItems: r.courseGradeItems,
       },
     }));
   }
@@ -1008,6 +1043,7 @@ export class DatabaseStorage implements IStorage {
         status: enrollments.status,
         grade: enrollments.grade,
         observations: enrollments.observations,
+        scores: enrollments.scores,
         enrolledAt: enrollments.enrolledAt,
         completedAt: enrollments.completedAt,
         username: users.username,
@@ -1030,6 +1066,7 @@ export class DatabaseStorage implements IStorage {
       status: r.status,
       grade: r.grade,
       observations: r.observations,
+      scores: r.scores,
       enrolledAt: r.enrolledAt,
       completedAt: r.completedAt,
       user: { id: r.userId, username: r.username, displayName: r.displayName, role: r.userRole, avatarUrl: r.avatarUrl || null, email: r.email || null, country: r.country || null, cargo: r.cargo || null },
@@ -1445,6 +1482,74 @@ export class DatabaseStorage implements IStorage {
       createdAt: r.createdAt,
       user: { id: r.userId, username: r.username, displayName: r.displayName },
     }));
+  }
+
+  // ===== Planillas del curso =====
+  async getCourseSession(id: number): Promise<CourseSession | undefined> {
+    const [session] = await db.select().from(courseSessions).where(eq(courseSessions.id, id));
+    return session;
+  }
+
+  async getOwningCourseId(kind: CourseChildKind, id: number): Promise<number | undefined> {
+    let row: { courseId: number } | undefined;
+    if (kind === "session") {
+      [row] = await db.select({ courseId: courseSessions.courseId }).from(courseSessions).where(eq(courseSessions.id, id));
+    } else if (kind === "material") {
+      [row] = await db.select({ courseId: courseMaterials.courseId }).from(courseMaterials).where(eq(courseMaterials.id, id));
+    } else if (kind === "announcement") {
+      [row] = await db.select({ courseId: courseAnnouncements.courseId }).from(courseAnnouncements).where(eq(courseAnnouncements.id, id));
+    } else {
+      [row] = await db.select({ courseId: courseSchedule.courseId }).from(courseSchedule).where(eq(courseSchedule.id, id));
+    }
+    return row?.courseId;
+  }
+
+  async listCourseRoster(courseId: number): Promise<CourseRosterRow[]> {
+    return await db
+      .select({
+        enrollmentId: enrollments.id,
+        userId: enrollments.userId,
+        status: enrollments.status,
+        grade: enrollments.grade,
+        scores: enrollments.scores,
+        observations: enrollments.observations,
+        enrolledAt: enrollments.enrolledAt,
+        completedAt: enrollments.completedAt,
+        username: users.username,
+        displayName: users.displayName,
+        email: users.email,
+        phone: users.phone,
+        country: users.country,
+        cargo: users.cargo,
+        memberType: users.memberType,
+        churchName: ministryChurches.name,
+      })
+      .from(enrollments)
+      .innerJoin(users, eq(enrollments.userId, users.id))
+      .leftJoin(ministryChurches, eq(users.churchId, ministryChurches.id))
+      .where(eq(enrollments.courseId, courseId))
+      .orderBy(asc(enrollments.enrolledAt));
+  }
+
+  async listCourseAttendance(courseId: number): Promise<{ sessionId: number; userId: number; status: string }[]> {
+    return await db
+      .select({ sessionId: sessionAttendance.sessionId, userId: sessionAttendance.userId, status: sessionAttendance.status })
+      .from(sessionAttendance)
+      .innerJoin(courseSessions, eq(sessionAttendance.sessionId, courseSessions.id))
+      .where(eq(courseSessions.courseId, courseId));
+  }
+
+  async deleteSessionAttendance(sessionId: number, userId: number): Promise<void> {
+    await db.delete(sessionAttendance)
+      .where(and(eq(sessionAttendance.sessionId, sessionId), eq(sessionAttendance.userId, userId)));
+  }
+
+  async updateCourseGradeItems(courseId: number, items: CourseGradeItem[]): Promise<void> {
+    await db.update(courses).set({ gradeItems: items }).where(eq(courses.id, courseId));
+  }
+
+  async updateEnrollmentGrades(id: number, data: { scores?: Record<string, string>; grade?: string | null; observations?: string | null }): Promise<void> {
+    await db.update(enrollments).set(data).where(eq(enrollments.id, id));
   }
 
   async listPostsByUser(userId: number): Promise<MemberPost[]> {
@@ -3077,7 +3182,7 @@ export class DatabaseStorage implements IStorage {
         peakViewers: liveEventSessions.peakViewers,
         totalJoins: liveEventSessions.totalJoins,
         status: liveEventSessions.status,
-        creatorName: sql<string>`COALESCE(u.display_name, u.username)`,
+        creatorName: sql<string>`COALESCE(${users.displayName}, ${users.username})`,
         creatorUsername: users.username,
       })
       .from(liveEventSessions)
@@ -3138,7 +3243,7 @@ export class DatabaseStorage implements IStorage {
         peakViewers: liveEventSessions.peakViewers,
         totalJoins: liveEventSessions.totalJoins,
         status: liveEventSessions.status,
-        creatorName: sql<string>`COALESCE(u.display_name, u.username)`,
+        creatorName: sql<string>`COALESCE(${users.displayName}, ${users.username})`,
         creatorUsername: users.username,
       })
       .from(liveEventSessions)

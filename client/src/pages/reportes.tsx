@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "wouter";
+import { COURSE_CATEGORIES } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminRole } from "@/lib/utils";
@@ -16,7 +18,7 @@ import {
   Users, BookOpen, Calendar, Heart, Download, TrendingUp, GraduationCap,
   Library, Activity, DollarSign, FileSpreadsheet, Church, MessageSquare,
   Mic, UserCheck, Globe, Award, BarChart3, ArrowUpRight, ArrowDownRight, Clock,
-  Video, Radio, Eye, Timer, User, ChevronDown, ChevronUp,
+  Video, Radio, Eye, Timer, User, ChevronDown, ChevronUp, ClipboardList,
 } from "lucide-react";
 
 const COLORS = ["#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#f43f5e"];
@@ -27,44 +29,44 @@ export default function ReportesPage() {
 
   const { data: dashboard } = useQuery<any>({
     queryKey: ["/api/reports/dashboard"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: memberGrowth } = useQuery<any>({
     queryKey: ["/api/reports/member-growth"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: courseStats } = useQuery<any>({
     queryKey: ["/api/reports/course-stats"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: prayerStats } = useQuery<any>({
     queryKey: ["/api/reports/prayer"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: libraryStats } = useQuery<any>({
     queryKey: ["/api/reports/library"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: financeReport } = useQuery<any>({
     queryKey: ["/api/tithes/report", reportYear],
     queryFn: () => fetch(`/api/tithes/report?year=${reportYear}`, { credentials: "include" }).then(r => r.json()),
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: budgetSummary } = useQuery<any>({
     queryKey: ["/api/finance/budget-summary", reportYear],
     queryFn: () => fetch(`/api/finance/budget-summary?year=${reportYear}`, { credentials: "include" }).then(r => r.json()),
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: liveEventsReport } = useQuery<any>({
     queryKey: ["/api/reports/live-events"],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const [expandedSession, setExpandedSession] = useState<number | null>(null);
@@ -327,6 +329,46 @@ export default function ReportesPage() {
 
           {/* ===== COURSES TAB ===== */}
           <TabsContent value="courses" className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
+                <div>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-primary" /> Inscripciones y planillas por curso
+                  </CardTitle>
+                  <CardDescription>
+                    Lista de inscritos, asistencia, notas, seguimiento, firmas y acta de cada curso, listas para imprimir o guardar en PDF.
+                  </CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm" data-testid="button-planillas-ejemplo">
+                  <Link href="/planillas/ejemplo">Ver un curso de ejemplo</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {courseStats && Array.isArray(courseStats) && courseStats.length > 0 ? (
+                  <div className="divide-y">
+                    {courseStats.map((c: any) => (
+                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2" data-testid={`row-planillas-${c.id}`}>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{c.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {COURSE_CATEGORIES[c.category as keyof typeof COURSE_CATEGORIES] || c.category} Â·{" "}
+                            {Number(c.enrolled) + Number(c.completed)} inscritos Â· {Number(c.pending)} por aprobar Â· {Number(c.completed)} completaron
+                          </p>
+                        </div>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/planillas/${c.id}`}>
+                            <ClipboardList className="h-3.5 w-3.5 mr-1" /> Planillas
+                          </Link>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-4 text-center text-sm text-muted-foreground">TodavÃ­a no hay cursos creados.</p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader><CardTitle className="text-sm">Estadísticas por Curso</CardTitle></CardHeader>
               <CardContent>

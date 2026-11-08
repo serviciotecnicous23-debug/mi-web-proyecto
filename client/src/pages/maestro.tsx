@@ -10,7 +10,7 @@ import {
   useCourseSchedule, useCreateCourseScheduleEntry, useDeleteCourseScheduleEntry,
 } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2, BookOpen, Users, FileText, Calendar, Plus, Trash2, Save,
   CheckCircle2, XCircle, Video, GraduationCap, Pencil, Clock,
-  Bell, Megaphone, CalendarDays, MapPin, Download,
+  Bell, Megaphone, CalendarDays, MapPin, Download, ClipboardCheck, ClipboardList,
 } from "lucide-react";
 import { MATERIAL_TYPES, ENROLLMENT_STATUSES, ENROLLMENT_MODES, COURSE_CATEGORIES, DAYS_OF_WEEK, MEETING_PLATFORMS } from "@shared/schema";
 import type { Course, CourseMaterial, CourseSession, Enrollment, CourseAnnouncement, CourseScheduleEntry } from "@shared/schema";
@@ -40,6 +40,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { withAccents } from "@shared/labels";
+import { AttendanceDialog } from "@/components/planillas/AttendanceDialog";
+import { isTeacherOrAdminRole } from "@/lib/utils";
 // Inline Certificate Preview for Maestro panel
 function MaestroCertificatePreview({ cert, containerId }: { cert: any; containerId: string }) {
   const studentName = cert.studentName || "Estudiante";
@@ -109,14 +111,19 @@ export default function MaestroPanel() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  // Todos los roles de maestro y de administración (antes solo "obrero" y "admin": un
+  // maestro del ministerio o de una iglesia era devuelto al inicio).
+  const allowed = !!user && isTeacherOrAdminRole(user.role);
+
+  // Cambiar de página en un efecto, no durante el dibujado (React lo prohíbe).
+  useEffect(() => {
+    if (!authLoading && !allowed) setLocation("/");
+  }, [authLoading, allowed, setLocation]);
 
   if (authLoading) {
     return <Layout><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
-  if (!user || (user.role !== "obrero" && user.role !== "admin")) {
-    setLocation("/");
-    return null;
-  }
+  if (!user || !allowed) return null;
 
   return (
     <Layout>
@@ -300,6 +307,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
   const [announcementForm, setAnnouncementForm] = useState({ title: "", content: "", isPinned: false });
   const [scheduleDialog, setScheduleDialog] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ dayOfWeek: "1", startTime: "09:00", endTime: "10:00", meetingUrl: "", meetingPlatform: "zoom", description: "" });
+  const [attendanceSession, setAttendanceSession] = useState<CourseSession | null>(null);
 
   if (!course) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
@@ -401,6 +409,13 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
               <Badge variant="destructive" className="text-xs animate-pulse">{(course as any).pendingCount} pendiente(s)</Badge>
             )}
           </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" data-testid="button-open-planillas">
+            <Link href={`/planillas/${courseId}`}>
+              <ClipboardList className="w-4 h-4 mr-1" /> Planillas
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -606,6 +621,9 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                         {s.meetingUrl && <p className="text-xs text-primary truncate">{s.meetingUrl}</p>}
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setAttendanceSession(s)} data-testid={`button-attendance-session-${s.id}`}>
+                          <ClipboardCheck className="w-4 h-4 mr-1" /> Asistencia
+                        </Button>
                         {s.isCompleted ? (
                           <Badge variant="secondary">Completada</Badge>
                         ) : (
@@ -623,6 +641,14 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
               )}
             </CardContent>
           </Card>
+          <AttendanceDialog
+            courseId={courseId}
+            session={attendanceSession}
+            open={!!attendanceSession}
+            onOpenChange={(open) => {
+              if (!open) setAttendanceSession(null);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="config">

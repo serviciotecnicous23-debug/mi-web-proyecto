@@ -10,7 +10,7 @@ import {
   insertTeacherRequestSchema, updateTeacherRequestSchema,
   insertCourseAnnouncementSchema, updateCourseAnnouncementSchema,
   insertCourseScheduleSchema, updateCourseScheduleSchema,
-  insertSessionAttendanceSchema,
+  insertSessionAttendanceSchema, bulkAttendanceSchema, saveCourseGradesSchema,
   insertBibleHighlightSchema, insertBibleNoteSchema,
   insertReadingPlanSchema, insertReadingPlanItemSchema,
   insertReadingClubPostSchema, insertReadingClubCommentSchema,
@@ -172,6 +172,12 @@ export const api = {
   sessionAttendance: {
     list: { method: "GET" as const, path: "/api/sessions/:sessionId/attendance" as const },
     upsert: { method: "POST" as const, path: "/api/sessions/:sessionId/attendance" as const, input: insertSessionAttendanceSchema },
+    bulk: { method: "POST" as const, path: "/api/sessions/:sessionId/attendance/bulk" as const, input: bulkAttendanceSchema },
+  },
+  // Planillas del curso (inscritos, asistencia, notas, seguimiento, firmas)
+  coursePlanillas: {
+    get: { method: "GET" as const, path: "/api/courses/:courseId/planillas" as const },
+    saveGrades: { method: "PUT" as const, path: "/api/courses/:courseId/grades" as const, input: saveCourseGradesSchema },
   },
   // ========== BIBLIOTECA ==========
   bibleHighlights: {
