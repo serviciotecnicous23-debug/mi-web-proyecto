@@ -30,6 +30,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["bible_notes", (id) => sql`user_id = ${id}`],
   ["sermon_notes", (id) => sql`user_id = ${id}`],
   ["bible_reading_log", (id) => sql`user_id = ${id}`],
+  ["game_scores", (id) => sql`user_id = ${id}`],
 ];
 
 /** Borra los datos personales de la cuenta y la deja anónima. Todo o nada (transacción). */

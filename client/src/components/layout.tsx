@@ -32,6 +32,7 @@ import {
   FileText,
   Radio,
   Sparkles,
+  Gamepad2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -126,6 +127,7 @@ const memberDesktopNavGroups: DesktopNavGroupData[] = [
       { href: "/calendario", label: "Calendario", icon: Calendar },
       { href: "/perfil?tab=amigos", label: "Amigos", icon: Users },
       { href: "/mensajes", label: "Mensajes", icon: Mail },
+      { href: "/juegos", label: "Juegos", icon: Gamepad2 },
     ],
   },
   {
@@ -233,6 +235,7 @@ const publicMobileNavGroups = [
       { href: "/contacto", label: "Contacto", icon: MapPin },
       { href: "/historia", label: "Historia", icon: BookOpen },
       { href: "/equipo", label: "Equipo", icon: Users },
+      { href: "/juegos", label: "Juegos", icon: Gamepad2 },
     ],
     alwaysOpen: true,
   },
@@ -266,6 +269,7 @@ const memberMobileNavGroups = [
       { href: "/eventos", label: "Eventos", icon: Calendar },
       { href: "/grupos", label: "Grupos", icon: Users },
       { href: "/calendario", label: "Calendario", icon: Calendar },
+      { href: "/juegos", label: "Juegos", icon: Gamepad2 },
     ],
   },
   {
