@@ -1,0 +1,256 @@
+/**
+ * La partida guardada: lo que el jugador logró. Se guarda en el navegador para todos y, con
+ * cuenta, también en el servidor (para seguir en otro equipo). Todo número que llega de afuera
+ * se limpia antes de usarse.
+ */
+import { HELPERS, STATIONS, UPGRADES, type HelperId, type ProgressView, type StationId, type UpgradeId } from "./data";
+
+export const GAME_SLUG = "aprendiz-del-templo";
+const SAVE_KEY = "templo-partida-v1";
+export const OFFLINE_CAP_MIN = 240;
+
+export type PileId = "lena" | "aceite" | "pan" | "incienso" | "diezmo";
+
+export type SaveData = {
+  v: 1;
+  gozo: number;
+  sabiduria: number;
+  lifetimeGozo: number;
+  built: Partial<Record<StationId, boolean>>;
+  padPaid: Record<string, number>;
+  helpers: Partial<Record<HelperId, number>>;
+  upgrades: Partial<Record<UpgradeId, number>>;
+  rank: number;
+  lessons: string[];
+  quizzes: Record<string, boolean>;
+  story: Record<string, boolean>;
+  day: number;
+  time: number;
+  ofrendas: number;
+  served: number;
+  altarFuel: number;
+  purity: number;
+  lampOil: number;
+  bread: number;
+  incense: number;
+  abundance: number;
+  piles: Partial<Record<PileId, number>>;
+  gozoPile: number;
+  finale: boolean;
+  /** Pregunta que Azarías tiene lista para hacer. */
+  pendingQuiz: string | null;
+  /** Ofrendas presentadas cuando vino el rey (para saber cuándo llega la Pascua). */
+  kingOfrendas: number;
+  /** Las lámparas estaban llenas al anochecer y no se apagaron. */
+  lampWatch: boolean;
+  savedAt: number;
+  playSeconds: number;
+};
+
+export function newSave(): SaveData {
+  return {
+    v: 1,
+    gozo: 25,
+    sabiduria: 0,
+    lifetimeGozo: 0,
+    built: {},
+    padPaid: {},
+    helpers: {},
+    upgrades: {},
+    rank: 0,
+    lessons: [],
+    quizzes: {},
+    story: {},
+    day: 1,
+    time: 0.24,
+    ofrendas: 0,
+    served: 0,
+    altarFuel: 0,
+    purity: 5,
+    lampOil: 0,
+    bread: 0,
+    incense: 0,
+    abundance: 0,
+    piles: {},
+    gozoPile: 0,
+    finale: false,
+    pendingQuiz: null,
+    kingOfrendas: 0,
+    lampWatch: false,
+    savedAt: Date.now(),
+    playSeconds: 0,
+  };
+}
+
+const num = (v: unknown, min: number, max: number, def: number) => {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : def;
+  return Math.min(max, Math.max(min, n));
+};
+
+/** Une lo guardado con los valores por defecto y descarta lo que no corresponde. */
+export function sanitize(raw: unknown): SaveData {
+  const base = newSave();
+  if (!raw || typeof raw !== "object") return base;
+  const r = raw as Record<string, any>;
+  const stationIds = new Set(STATIONS.map((s) => s.id));
+  const helperIds = new Set(HELPERS.map((h) => h.id));
+  const upgradeIds = new Set(UPGRADES.map((u) => u.id));
+  const built: SaveData["built"] = {};
+  for (const [k, v] of Object.entries(r.built || {})) if (stationIds.has(k as StationId) && v === true) built[k as StationId] = true;
+  const helpers: SaveData["helpers"] = {};
+  for (const [k, v] of Object.entries(r.helpers || {})) if (helperIds.has(k as HelperId)) helpers[k as HelperId] = num(v, 0, 3, 0);
+  const upgrades: SaveData["upgrades"] = {};
+  for (const [k, v] of Object.entries(r.upgrades || {})) if (upgradeIds.has(k as UpgradeId)) upgrades[k as UpgradeId] = Math.round(num(v, 0, 10, 0));
+  const piles: SaveData["piles"] = {};
+  for (const k of ["lena", "aceite", "pan", "incienso", "diezmo"] as PileId[]) if (r.piles && typeof r.piles === "object" && k in r.piles) piles[k] = Math.round(num(r.piles[k], 0, 40, 0));
+  const strList = (v: unknown) => (Array.isArray(v) ? v.filter((x) => typeof x === "string").slice(0, 200) : []);
+  const boolMap = (v: unknown) => {
+    const out: Record<string, boolean> = {};
+    if (v && typeof v === "object") for (const [k, b] of Object.entries(v)) if (typeof b === "boolean" && k.length < 40) out[k] = b;
+    return out;
+  };
+  const padPaid: Record<string, number> = {};
+  if (r.padPaid && typeof r.padPaid === "object") for (const [k, v] of Object.entries(r.padPaid)) if (k.length < 40) padPaid[k] = num(v, 0, 1e7, 0);
+  return {
+    ...base,
+    gozo: num(r.gozo, 0, 1e9, base.gozo),
+    sabiduria: Math.round(num(r.sabiduria, 0, 999, 0)),
+    lifetimeGozo: num(r.lifetimeGozo, 0, 1e10, 0),
+    built,
+    padPaid,
+    helpers,
+    upgrades,
+    rank: Math.round(num(r.rank, 0, 4, 0)),
+    lessons: strList(r.lessons),
+    quizzes: boolMap(r.quizzes),
+    story: boolMap(r.story),
+    day: Math.round(num(r.day, 1, 1e6, 1)),
+    time: num(r.time, 0, 1, base.time),
+    ofrendas: Math.round(num(r.ofrendas, 0, 1e8, 0)),
+    served: Math.round(num(r.served, 0, 1e8, 0)),
+    altarFuel: num(r.altarFuel, 0, 100, 0),
+    purity: num(r.purity, 0, 100, 5),
+    lampOil: num(r.lampOil, 0, 7, 0),
+    bread: Math.round(num(r.bread, 0, 12, 0)),
+    incense: Math.round(num(r.incense, 0, 4, 0)),
+    abundance: num(r.abundance, 0, 1e6, 0),
+    piles,
+    gozoPile: num(r.gozoPile, 0, 1e9, 0),
+    finale: r.finale === true,
+    pendingQuiz: typeof r.pendingQuiz === "string" && r.pendingQuiz.length < 40 ? r.pendingQuiz : null,
+    kingOfrendas: Math.round(num(r.kingOfrendas, 0, 1e8, 0)),
+    lampWatch: r.lampWatch === true,
+    savedAt: num(r.savedAt, 0, 9e15, Date.now()),
+    playSeconds: num(r.playSeconds, 0, 1e9, 0),
+  };
+}
+
+export function progressView(s: SaveData): ProgressView {
+  return {
+    built: (id) => !!s.built[id],
+    rank: s.rank,
+    sabiduria: s.sabiduria,
+    ofrendas: s.ofrendas,
+    story: (id) => !!s.story[id],
+    helpers: (id) => s.helpers[id] || 0,
+  };
+}
+
+/** "Gloria del templo": el puntaje de la tabla de los mejores. Crece con todo lo logrado. */
+export function gloria(s: SaveData): number {
+  const built = Object.values(s.built).filter(Boolean).length;
+  const helpers = Object.values(s.helpers).reduce((a, b) => a + (b || 0), 0);
+  const ups = Object.values(s.upgrades).reduce((a, b) => a + (b || 0), 0);
+  return Math.round(built * 100 + helpers * 60 + ups * 20 + s.rank * 300 + (s.finale ? 1500 : 0) + s.sabiduria * 25 + s.lifetimeGozo / 40);
+}
+
+/** Gozo por minuto que traen los levitas mientras no se juega. */
+export function offlineRate(s: SaveData): number {
+  const h = s.helpers;
+  let rate = 0;
+  if (h.lenero) rate += 3;
+  if (h.ayudante) rate += 8;
+  if (h.portero) rate += 4;
+  if (h.aceitero) rate += 3;
+  if (h.panadero) rate += 3;
+  if (h.incensario) rate += 3;
+  rate += (h.cantor || 0) * 2;
+  if (h.conanias) rate += 6 + Math.min(40, s.abundance * 0.2);
+  return rate * (1 + (s.upgrades.abundancia || 0) * 0.2);
+}
+
+export function applyOffline(s: SaveData, now = Date.now()): { gained: number; minutes: number } {
+  const minutes = Math.min(OFFLINE_CAP_MIN, Math.max(0, (now - s.savedAt) / 60000));
+  if (minutes < 2) return { gained: 0, minutes };
+  const gained = Math.floor(offlineRate(s) * minutes);
+  if (gained > 0) {
+    s.gozo += gained;
+    s.lifetimeGozo += gained;
+  }
+  return { gained, minutes: Math.floor(minutes) };
+}
+
+export function loadLocal(): SaveData | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    return raw ? sanitize(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLocal(s: SaveData) {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  } catch {
+    /* modo privado o sin espacio: se juega igual */
+  }
+}
+
+export function clearLocal() {
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch {
+    /* nada */
+  }
+}
+
+// ---------------------------------------------------------------- servidor (solo con cuenta)
+export async function loadRemote(): Promise<SaveData | null> {
+  try {
+    const res = await fetch(`/api/juegos/${GAME_SLUG}/partida`, { credentials: "include" });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.data ? sanitize(body.data) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRemote(s: SaveData): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/juegos/${GAME_SLUG}/partida`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: s }),
+      keepalive: true,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function submitScore(s: SaveData): Promise<void> {
+  try {
+    await fetch(`/api/juegos/${GAME_SLUG}/puntaje`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ score: gloria(s), seconds: Math.min(6 * 3600, Math.round(s.playSeconds)) }),
+    });
+  } catch {
+    /* sin conexión: se manda la próxima vez */
+  }
+}

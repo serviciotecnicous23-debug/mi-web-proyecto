@@ -8,7 +8,7 @@
  */
 import { pool } from "./db";
 import { STORED_FILES_SQL } from "./file-store";
-import { GAME_SCORES_SQL } from "./games";
+import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1051,6 +1051,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
     // Puntajes de los juegos (una fila por persona y juego).
     try {
       await pool.query(GAME_SCORES_SQL);
+      await pool.query(GAME_SAVES_SQL);
     } catch (err: any) {
       console.log(`  Migration note (juegos): ${err?.message}`);
     }

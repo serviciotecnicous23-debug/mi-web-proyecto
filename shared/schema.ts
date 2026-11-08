@@ -1919,6 +1919,16 @@ export const gameScores = pgTable("game_scores", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Partidas guardadas de los juegos largos (El aprendiz del templo): una por persona y juego,
+// para seguir jugando en otro equipo. El índice único se crea en GAME_SAVES_SQL al arrancar.
+export const gameSaves = pgTable("game_saves", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  game: text("game").notNull(),
+  data: jsonb("data").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const PRAYER_CATEGORIES = {
   salud: "Salud",
   familia: "Familia",

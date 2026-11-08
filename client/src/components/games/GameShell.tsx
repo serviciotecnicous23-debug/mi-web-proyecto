@@ -152,6 +152,10 @@ export function GameShell({ game }: { game: GameDef }) {
     let cancelled = false;
     let runner: GameRunner | null = null;
     setPhase("loading");
+    if (!game.load) {
+      setPhase("error");
+      return;
+    }
     game
       .load()
       .then((scene) => {
