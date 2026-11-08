@@ -2761,6 +2761,13 @@ export class TempleWorld {
     } else {
       this.audio.resume();
       this.last = performance.now();
+      // si cambió de aplicación un rato, los levitas siguieron sirviendo
+      const off = applyOffline(this.s);
+      if (off.gained > 0) {
+        this.persist();
+        gameStore.push({ kind: "offline", gained: off.gained, minutes: off.minutes });
+        this.pushHud();
+      }
     }
   };
 

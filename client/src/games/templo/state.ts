@@ -62,7 +62,7 @@ export function newSave(): SaveData {
     quizzes: {},
     story: {},
     day: 1,
-    time: 0.24,
+    time: 0.3,
     ofrendas: 0,
     served: 0,
     altarFuel: 0,
