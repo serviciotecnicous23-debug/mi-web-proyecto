@@ -43,7 +43,7 @@ export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible:
       await tx.execute(sql`
         DELETE FROM stored_files f
         WHERE f.owner_id = ${userId}
-          AND (f.folder IN ('comunidad', 'avatars')
+          AND (f.folder IN ('comunidad', 'avatars', 'chat')
                OR EXISTS (SELECT 1 FROM users u WHERE u.id = ${userId} AND u.avatar_url LIKE '/files/' || f.id || '/%'))
           AND NOT EXISTS (
             SELECT 1 FROM member_posts p

@@ -555,7 +555,7 @@ function SessionCard({
 }: {
   session: CourseSession; isUpcoming: boolean; canManage: boolean; courseId: number;
   onUpdate: (data: any) => void; onDelete: (data: any) => void;
-  /** Abre "Pasar asistencia" de esta clase (solo maestro o administraciÃ³n). */
+  /** Abre "Pasar asistencia" de esta clase (solo maestro o administración). */
   onAttendance?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
