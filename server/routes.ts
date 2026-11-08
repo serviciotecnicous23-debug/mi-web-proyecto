@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction, RequestHandler } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, type CourseChildKind } from "./storage";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -342,6 +342,12 @@ function isTeacherOrAdmin(req: Request): boolean {
     req.user?.role === "maestro_ministerio" || req.user?.role === "maestro_iglesia" ||
     req.user?.role === "admin_iglesia"
   );
+}
+
+/** Administra un curso: la administración o el maestro a cargo de ESE curso. */
+function canManageCourse(req: Request, course: { teacherId: number | null } | undefined | null): boolean {
+  if (!course) return false;
+  return isAdmin(req) || (isTeacherOrAdmin(req) && course.teacherId === req.user?.id);
 }
 
 function isChurchAdmin(req: Request, churchId: number): boolean {
@@ -1859,6 +1865,14 @@ ${urls}
     return !!enrollment && (enrollment.status === "aprobado" || enrollment.status === "completado");
   }
 
+  // Cambiar o borrar algo de un curso (sesión, material, anuncio, horario) es solo para la
+  // administración o el maestro de ese curso. Antes bastaba con ser maestro de cualquier curso.
+  async function courseChildAccess(req: Request, kind: CourseChildKind, id: number): Promise<200 | 403 | 404> {
+    const courseId = await storage.getOwningCourseId(kind, id);
+    if (!courseId) return 404;
+    return canManageCourse(req, await storage.getCourse(courseId)) ? 200 : 403;
+  }
+
   app.get(api.courseMaterials.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const courseId = parseInt(req.params.courseId);
@@ -1889,6 +1903,8 @@ ${urls}
 
   app.patch(api.courseMaterials.update.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "material", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     try {
       const input = api.courseMaterials.update.input.parse(req.body);
       const material = await storage.updateCourseMaterial(parseInt(req.params.id), input);
@@ -1902,6 +1918,8 @@ ${urls}
 
   app.delete(api.courseMaterials.delete.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "material", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     await storage.deleteCourseMaterial(parseInt(req.params.id));
     res.sendStatus(200);
   });
@@ -2147,6 +2165,8 @@ ${urls}
 
   app.patch(api.courseSessions.update.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "session", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     try {
       const input = api.courseSessions.update.input.parse(req.body);
       const s = await storage.updateCourseSession(parseInt(req.params.id), input);
@@ -2160,6 +2180,8 @@ ${urls}
 
   app.delete(api.courseSessions.delete.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "session", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     await storage.deleteCourseSession(parseInt(req.params.id));
     res.sendStatus(200);
   });
@@ -2211,6 +2233,10 @@ ${urls}
 
   app.patch(api.enrollments.update.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    // Solo el maestro de ESE curso (o la administración) cambia estado, nota u observaciones.
+    const current = await storage.getEnrollment(parseInt(req.params.id));
+    if (!current) return res.sendStatus(404);
+    if (!canManageCourse(req, await storage.getCourse(current.courseId))) return res.sendStatus(403);
     try {
       const input = api.enrollments.update.input.parse(req.body);
       const enrollment = await storage.updateEnrollment(parseInt(req.params.id), input);
@@ -2352,6 +2378,8 @@ ${urls}
 
   app.patch(api.courseAnnouncements.update.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "announcement", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     try {
       const input = api.courseAnnouncements.update.input.parse(req.body);
       const announcement = await storage.updateCourseAnnouncement(parseInt(req.params.id), input);
@@ -2365,6 +2393,8 @@ ${urls}
 
   app.delete(api.courseAnnouncements.delete.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "announcement", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     await storage.deleteCourseAnnouncement(parseInt(req.params.id));
     res.sendStatus(200);
   });
@@ -2396,6 +2426,8 @@ ${urls}
 
   app.patch(api.courseScheduleEntries.update.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "schedule", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     try {
       const input = api.courseScheduleEntries.update.input.parse(req.body);
       const entry = await storage.updateCourseScheduleEntry(parseInt(req.params.id), input);
@@ -2409,14 +2441,33 @@ ${urls}
 
   app.delete(api.courseScheduleEntries.delete.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    const access = await courseChildAccess(req, "schedule", parseInt(req.params.id));
+    if (access !== 200) return res.sendStatus(access);
     await storage.deleteCourseScheduleEntry(parseInt(req.params.id));
     res.sendStatus(200);
   });
 
   // ========== SESSION ATTENDANCE ==========
+  // Pasar asistencia: solo la administración o el maestro del curso de esa sesión, y solo a
+  // personas inscritas en ese curso (antes cualquier maestro marcaba en cualquier sesión).
+  async function attendanceContext(req: Request, sessionId: number) {
+    const session = await storage.getCourseSession(sessionId);
+    if (!session) return { status: 404 as const };
+    const course = await storage.getCourse(session.courseId);
+    if (!course || !canManageCourse(req, course)) return { status: 403 as const };
+    return { status: 200 as const, session, course };
+  }
+
+  async function enrolledUserIds(courseId: number): Promise<Set<number>> {
+    const roster = await storage.listEnrollmentsByCourse(courseId);
+    return new Set(roster.filter((e) => e.status !== "rechazado").map((e) => e.userId));
+  }
+
   app.get(api.sessionAttendance.list.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
     const sessionId = parseInt(req.params.sessionId);
+    const ctx = await attendanceContext(req, sessionId);
+    if (ctx.status !== 200) return res.sendStatus(ctx.status);
     const attendance = await storage.listSessionAttendance(sessionId);
     res.json(attendance);
   });
@@ -2424,11 +2475,154 @@ ${urls}
   app.post(api.sessionAttendance.list.path, async (req, res) => {
     if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
     try {
-      const input = api.sessionAttendance.upsert.input.parse({ ...req.body, sessionId: parseInt(req.params.sessionId) });
+      const sessionId = parseInt(req.params.sessionId);
+      const input = api.sessionAttendance.upsert.input.parse({ ...req.body, sessionId });
+      const ctx = await attendanceContext(req, sessionId);
+      if (ctx.status !== 200) return res.sendStatus(ctx.status);
+      if (!(await enrolledUserIds(ctx.course.id)).has(input.userId)) {
+        return res.status(400).json({ message: "Esa persona no está inscrita en el curso" });
+      }
       const attendance = await storage.upsertSessionAttendance(input);
       res.json(attendance);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
+      res.sendStatus(500);
+    }
+  });
+
+  // Toda la lista de una vez (botón "Guardar asistencia"). status null borra la marca.
+  app.post(api.sessionAttendance.bulk.path, async (req, res) => {
+    if (!isTeacherOrAdmin(req)) return res.sendStatus(403);
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const input = api.sessionAttendance.bulk.input.parse(req.body);
+      const ctx = await attendanceContext(req, sessionId);
+      if (ctx.status !== 200) return res.sendStatus(ctx.status);
+      const enrolled = await enrolledUserIds(ctx.course.id);
+      for (const record of input.records) {
+        if (!enrolled.has(record.userId)) continue;
+        if (record.status === null) await storage.deleteSessionAttendance(sessionId, record.userId);
+        else await storage.upsertSessionAttendance({ sessionId, userId: record.userId, status: record.status });
+      }
+      res.json(await storage.listSessionAttendance(sessionId));
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
+      console.error("Bulk attendance error:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // ========== PLANILLAS DEL CURSO ==========
+  // Inscritos, asistencia, notas, seguimiento y hoja de firmas salen de esta sola consulta.
+  app.get(api.coursePlanillas.get.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const courseId = parseInt(req.params.courseId);
+    const course = await storage.getCourse(courseId);
+    if (!course) return res.sendStatus(404);
+    if (!canManageCourse(req, course)) return res.sendStatus(403);
+    try {
+      const [roster, sessions, schedule, attendance, teacher] = await Promise.all([
+        storage.listCourseRoster(courseId),
+        storage.listCourseSessions(courseId),
+        storage.listCourseSchedule(courseId),
+        storage.listCourseAttendance(courseId),
+        course.teacherId ? storage.getUser(course.teacherId) : Promise.resolve(undefined),
+      ]);
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        course: {
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          category: course.category,
+          level: course.level,
+          maxStudents: course.maxStudents,
+          enrollmentStatus: course.enrollmentStatus,
+          isActive: course.isActive,
+          createdAt: course.createdAt,
+          gradeItems: course.gradeItems || [],
+        },
+        teacher: teacher ? { id: teacher.id, name: teacher.displayName || teacher.username } : null,
+        schedule: schedule.filter((s) => s.isActive).map((s) => ({
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          specificDate: s.specificDate,
+          description: s.description,
+        })),
+        sessions: sessions.map((s) => ({
+          id: s.id,
+          title: s.title,
+          sessionDate: s.sessionDate,
+          duration: s.duration,
+          isCompleted: s.isCompleted,
+        })),
+        students: roster.map((r) => ({
+          enrollmentId: r.enrollmentId,
+          userId: r.userId,
+          name: r.displayName || r.username,
+          username: r.username,
+          email: r.email,
+          phone: r.phone,
+          country: r.country,
+          cargo: r.cargo,
+          church: r.churchName,
+          memberType: r.memberType,
+          status: r.status,
+          grade: r.grade,
+          scores: r.scores || {},
+          observations: r.observations,
+          enrolledAt: r.enrolledAt,
+          completedAt: r.completedAt,
+        })),
+        attendance,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Planillas error:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // Planilla de notas: guarda las evaluaciones del curso y las notas de cada alumno.
+  app.put(api.coursePlanillas.saveGrades.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const courseId = parseInt(req.params.courseId);
+    const course = await storage.getCourse(courseId);
+    if (!course) return res.sendStatus(404);
+    if (!canManageCourse(req, course)) return res.sendStatus(403);
+    try {
+      const input = api.coursePlanillas.saveGrades.input.parse(req.body);
+      const items = input.items ?? course.gradeItems ?? [];
+      if (new Set(items.map((i) => i.key)).size !== items.length) {
+        return res.status(400).json({ message: "Dos evaluaciones tienen la misma clave" });
+      }
+      if (input.items) await storage.updateCourseGradeItems(courseId, input.items);
+      const allowedKeys = new Set(items.map((i) => i.key));
+      const enrollmentIds = new Set((await storage.listEnrollmentsByCourse(courseId)).map((e) => e.id));
+      let saved = 0;
+      for (const row of input.rows ?? []) {
+        if (!enrollmentIds.has(row.enrollmentId)) continue;
+        const patch: { scores?: Record<string, string>; grade?: string | null; observations?: string | null } = {};
+        if (row.scores) {
+          const scores: Record<string, string> = {};
+          for (const [key, value] of Object.entries(row.scores)) {
+            const clean = value.trim();
+            if (allowedKeys.has(key) && clean) scores[key] = clean;
+          }
+          patch.scores = scores;
+        }
+        if (row.grade !== undefined) patch.grade = row.grade?.trim() || null;
+        if (row.observations !== undefined) patch.observations = row.observations?.trim() || null;
+        if (Object.keys(patch).length) {
+          await storage.updateEnrollmentGrades(row.enrollmentId, patch);
+          saved++;
+        }
+      }
+      res.json({ ok: true, saved });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
+      console.error("Save grades error:", err);
       res.sendStatus(500);
     }
   });
@@ -4133,21 +4327,8 @@ ${urls}
     }
   });
 
-  // Live Event Session Detail
-  app.get(api.reports.liveEventDetail.path, async (req, res) => {
-    if (!isAdmin(req)) return res.sendStatus(403);
-    try {
-      const sessionId = parseInt(req.params.sessionId);
-      const data = await storage.getLiveEventSessionDetail(sessionId);
-      if (!data) return res.sendStatus(404);
-      res.json(data);
-    } catch (err) {
-      console.error("Live event detail error:", err);
-      res.sendStatus(500);
-    }
-  });
-
-  // Live Events Export CSV
+  // Live Events Export CSV (va antes que /:sessionId: si no, "export" se tomaba como
+  // número de sesión y el botón Exportar de Reportes respondía 400).
   app.get(api.reports.liveEventExport.path, async (req, res) => {
     if (!isAdmin(req)) return res.sendStatus(403);
     try {
@@ -4172,6 +4353,20 @@ ${urls}
       res.send("\uFEFF" + csv);
     } catch (err) {
       console.error("Live events export error:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // Live Event Session Detail
+  app.get(api.reports.liveEventDetail.path, async (req, res) => {
+    if (!isAdmin(req)) return res.sendStatus(403);
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const data = await storage.getLiveEventSessionDetail(sessionId);
+      if (!data) return res.sendStatus(404);
+      res.json(data);
+    } catch (err) {
+      console.error("Live event detail error:", err);
       res.sendStatus(500);
     }
   });

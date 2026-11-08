@@ -1,0 +1,639 @@
+/*
+ * Planillas del curso: la hoja se ve como papel en la pantalla y sale igual al imprimir
+ * (o al guardar como PDF). Colores fijos de tinta y papel, también en el tema oscuro.
+ */
+
+.planilla-hoja {
+  --pl-tinta: #1c1917;
+  --pl-suave: #57534e;
+  --pl-tenue: #a8a29e;
+  --pl-linea: #d6d3d1;
+  --pl-fondo: #fafaf9;
+  --pl-acento: #c2410c;
+  --pl-acento-oscuro: #7c2d12;
+  --pl-acento-suave: #fff7ed;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 720px;
+  max-width: 216mm;
+  margin: 0 auto 24px;
+  padding: 13mm 12mm 10mm;
+  background: #ffffff;
+  color: var(--pl-tinta);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.14), 0 10px 30px rgba(28, 25, 23, 0.1);
+  font-size: 10pt;
+  line-height: 1.35;
+  color-scheme: light;
+}
+
+.planilla-hoja.planilla-horizontal {
+  min-width: 980px;
+  max-width: 279mm;
+}
+
+.planilla-hoja * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.planilla-marca-agua {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 120px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: rgba(194, 65, 12, 0.07);
+  transform: rotate(-24deg);
+  z-index: 0;
+}
+
+.planilla-hoja > *:not(.planilla-marca-agua) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- encabezado ---------- */
+.planilla-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 2.5px solid var(--pl-acento);
+}
+
+.planilla-logo {
+  width: 32px;
+  height: 42px;
+  flex: none;
+}
+
+.planilla-logo-chico {
+  width: 24px;
+  height: 31px;
+}
+
+.planilla-org {
+  flex: 1;
+  min-width: 0;
+}
+
+.planilla-ministerio {
+  margin: 0;
+  font-size: 13pt;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--pl-tinta);
+}
+
+.planilla-escuela {
+  margin: 0;
+  font-size: 8.5pt;
+  color: var(--pl-suave);
+}
+
+.planilla-titulo {
+  text-align: right;
+}
+
+.planilla-titulo h2 {
+  margin: 0;
+  font-size: 15pt;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--pl-acento);
+}
+
+.planilla-titulo p {
+  margin: 2px 0 0;
+  font-size: 8.5pt;
+  color: var(--pl-suave);
+}
+
+.planilla-titulo .planilla-aviso-ejemplo {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--pl-acento-suave);
+  color: var(--pl-acento-oscuro);
+  font-weight: 700;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.planilla-encabezado-chico {
+  padding-bottom: 5px;
+  margin-bottom: 8px;
+  border-bottom-width: 2px;
+}
+
+.planilla-encabezado-chico .planilla-ministerio {
+  font-size: 11pt;
+}
+
+.planilla-encabezado-chico .planilla-titulo h2 {
+  font-size: 12.5pt;
+}
+
+/* ---------- datos del curso ---------- */
+.planilla-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px 14px;
+  margin: 0 0 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--pl-linea);
+  border-radius: 6px;
+  background: var(--pl-fondo);
+}
+
+.planilla-datos dt {
+  font-size: 7pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pl-suave);
+}
+
+.planilla-datos dd {
+  margin: 0;
+  font-size: 9pt;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- tablas ---------- */
+.planilla-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 8px;
+  font-size: 9pt;
+}
+
+.planilla-tabla + .planilla-tabla {
+  margin-top: 10px;
+}
+
+.planilla-tabla th {
+  padding: 4px 5px;
+  border: 1px solid var(--pl-linea);
+  background: var(--pl-acento-suave);
+  color: var(--pl-acento-oscuro);
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  vertical-align: bottom;
+}
+
+.planilla-tabla td {
+  padding: 3.5px 5px;
+  border: 1px solid var(--pl-linea);
+  vertical-align: middle;
+}
+
+.planilla-tabla tbody tr:nth-child(even) td {
+  background: #fcfbfa;
+}
+
+.planilla-tabla tfoot td {
+  background: var(--pl-fondo);
+  font-weight: 700;
+  font-size: 8pt;
+}
+
+.planilla-tabla .col-num {
+  width: 24px;
+  text-align: center;
+  color: var(--pl-suave);
+}
+
+.planilla-tabla .col-fecha {
+  width: 64px;
+  white-space: nowrap;
+}
+
+.planilla-tabla .col-total {
+  width: 44px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.planilla-tabla .col-marca {
+  width: 26px;
+  min-width: 26px;
+  padding-left: 1px;
+  padding-right: 1px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.planilla-tabla th.col-fecha-clase {
+  font-size: 6.5pt;
+  letter-spacing: 0;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.planilla-tabla .col-nota {
+  width: 58px;
+  text-align: center;
+}
+
+.planilla-tabla .col-final {
+  font-weight: 700;
+}
+
+.planilla-tabla .col-obs {
+  min-width: 120px;
+}
+
+.planilla-tabla .col-firma {
+  width: 34%;
+}
+
+.planilla-tabla .col-hora {
+  width: 56px;
+}
+
+.planilla-tabla .col-seguimiento {
+  width: 32%;
+}
+
+.planilla-tabla .th-sub {
+  display: block;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--pl-suave);
+}
+
+.planilla-tabla .celda-nombre {
+  font-weight: 600;
+}
+
+.planilla-tabla .celda-sub {
+  display: block;
+  font-size: 7.5pt;
+  font-weight: 400;
+  color: var(--pl-suave);
+}
+
+.planilla-tabla .celda-chica {
+  font-size: 8pt;
+}
+
+.planilla-tabla .celda-correo {
+  overflow-wrap: anywhere;
+}
+
+.planilla-tabla .celda-tel {
+  white-space: nowrap;
+}
+
+.planilla-tabla .celda-vacia {
+  padding: 10px;
+  text-align: center;
+  font-style: italic;
+  color: var(--pl-suave);
+}
+
+.planilla-tabla .celda-pie {
+  text-align: right;
+}
+
+.planilla-tabla .celda-promedio {
+  color: var(--pl-suave);
+}
+
+.planilla-tabla .fila-vacia td {
+  height: 22px;
+}
+
+.planilla-tabla .fila-firma td {
+  height: 30px;
+}
+
+.planilla-tabla tbody tr.fila-alerta td {
+  background: #fff7ed;
+}
+
+.planilla-estado {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+
+.estado-aprobado { color: #15803d; }
+.estado-completado { color: #1d4ed8; }
+.estado-solicitado { color: #b45309; }
+.estado-rechazado { color: #b91c1c; }
+
+.marca-presente { color: #15803d; }
+.marca-tardanza { color: #b45309; }
+.marca-ausente { color: #b91c1c; }
+.marca-excusado { color: #1d4ed8; }
+
+.planilla-alerta {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: #c2410c;
+  color: #ffffff;
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+
+/* Gana a los campos "de vidrio" del tema oscuro: en la hoja, los campos son de papel. */
+.planilla-hoja input.planilla-input,
+.dark .planilla-hoja input.planilla-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 44px;
+  padding: 2px 4px;
+  border: 1px solid #fdba74;
+  border-radius: 3px;
+  background-color: #fffbf5 !important;
+  color: var(--pl-tinta) !important;
+  backdrop-filter: none !important;
+  font: inherit;
+  font-size: 9pt;
+  text-align: center;
+}
+
+.planilla-input:focus {
+  outline: 2px solid #f97316;
+  outline-offset: 0;
+}
+
+.planilla-input-obs {
+  min-width: 140px;
+  text-align: left;
+}
+
+/* ---------- textos de apoyo ---------- */
+.planilla-totales,
+.planilla-leyenda,
+.planilla-resumen-linea {
+  margin: 4px 0 8px;
+  font-size: 8.5pt;
+  color: var(--pl-suave);
+}
+
+.planilla-totales b,
+.planilla-resumen-linea b {
+  color: var(--pl-tinta);
+}
+
+.planilla-temas {
+  columns: 2;
+  column-gap: 24px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: 8pt;
+  color: var(--pl-suave);
+}
+
+.planilla-temas li {
+  break-inside: avoid;
+  margin-bottom: 1px;
+}
+
+.planilla-subtitulo {
+  margin: 14px 0 6px;
+  font-size: 10.5pt;
+  font-weight: 800;
+  color: var(--pl-acento-oscuro);
+}
+
+.planilla-criterios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 26px;
+  margin-top: 10px;
+  font-size: 8.5pt;
+  color: var(--pl-suave);
+}
+
+.planilla-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.planilla-kpi {
+  padding: 6px 8px;
+  border: 1px solid var(--pl-linea);
+  border-left: 4px solid var(--pl-acento);
+  border-radius: 6px;
+  background: var(--pl-fondo);
+}
+
+.planilla-kpi .kpi-valor {
+  display: block;
+  font-size: 13pt;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--pl-tinta);
+}
+
+.planilla-kpi .kpi-nombre {
+  display: block;
+  line-height: 1.2;
+  font-size: 6.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pl-suave);
+}
+
+/* ---------- firmas y pie ---------- */
+.planilla-firmas {
+  display: flex;
+  gap: 28px;
+  margin-top: 34px;
+  break-inside: avoid;
+}
+
+.planilla-firma {
+  flex: 1;
+  padding-top: 4px;
+  border-top: 1px solid var(--pl-tinta);
+  text-align: center;
+  font-size: 8pt;
+  color: var(--pl-suave);
+}
+
+.planilla-generado {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 7pt;
+  color: var(--pl-tenue);
+}
+
+/* ---------- ficha de inscripción (dos por hoja) ---------- */
+.planilla-hoja-fichas {
+  padding-top: 10mm;
+  padding-bottom: 8mm;
+}
+
+.planilla-ficha {
+  break-inside: avoid;
+}
+
+.ficha-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+}
+
+.ficha-campo {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-height: 26px;
+  border-bottom: 1px solid var(--pl-linea);
+  font-size: 8.5pt;
+  color: var(--pl-suave);
+}
+
+.ficha-campo.ficha-mitad {
+  flex-basis: calc(50% - 9px);
+}
+
+.ficha-opciones {
+  gap: 16px;
+}
+
+.ficha-casilla::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border: 1px solid var(--pl-suave);
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.ficha-firmas {
+  margin-top: 30px;
+}
+
+.ficha-corte {
+  position: relative;
+  margin: 14mm 0 12mm;
+  border-top: 1.5px dashed var(--pl-tenue);
+  text-align: center;
+}
+
+.ficha-corte span {
+  position: relative;
+  top: -0.75em;
+  padding: 0 8px;
+  background: #ffffff;
+  font-size: 7.5pt;
+  color: var(--pl-tenue);
+}
+
+/* ---------- hoja horizontal: los datos del curso en una sola fila (más lugar para la tabla) ---------- */
+.planilla-horizontal .planilla-datos {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.planilla-horizontal .planilla-temas {
+  columns: 3;
+}
+
+.planilla-horizontal .planilla-firmas {
+  margin-top: 24px;
+}
+
+.planilla-horizontal .planilla-tabla td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+/* ---------- impresión ---------- */
+#planillas-print {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  @page planilla-horizontal {
+    size: landscape;
+    margin: 8mm;
+  }
+
+  /* Sin el espacio de abajo que la web deja para la barra del celular: si no, sale una hoja en blanco. */
+  html:has(#planillas-print),
+  body:has(> #planillas-print) {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  body:has(> #planillas-print) > *:not(#planillas-print) {
+    display: none !important;
+  }
+
+  #planillas-print {
+    display: block !important;
+  }
+
+  #planillas-print .planilla-hoja {
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    break-after: page;
+  }
+
+  #planillas-print .planilla-hoja:last-child {
+    break-after: auto;
+  }
+
+  #planillas-print .planilla-horizontal {
+    page: planilla-horizontal;
+  }
+
+  .planilla-tabla thead {
+    display: table-header-group;
+  }
+
+  .planilla-tabla tr {
+    break-inside: avoid;
+  }
+
+  .planilla-marca-agua {
+    position: fixed;
+  }
+}

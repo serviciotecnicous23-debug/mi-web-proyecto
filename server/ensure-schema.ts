@@ -1009,6 +1009,9 @@ const ADD_COLUMNS_SQL = [
   `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_url" text`,
   `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_name" text`,
   `ALTER TABLE "sermons" ADD COLUMN IF NOT EXISTS "document_size" integer`,
+  // ========== PLANILLAS DEL CURSO (evaluaciones y notas parciales) ==========
+  `ALTER TABLE "courses" ADD COLUMN IF NOT EXISTS "grade_items" jsonb`,
+  `ALTER TABLE "enrollments" ADD COLUMN IF NOT EXISTS "scores" jsonb`,
 ];
 
 export async function ensureDatabaseSchema(): Promise<void> {

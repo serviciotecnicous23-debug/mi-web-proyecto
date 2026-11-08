@@ -124,6 +124,8 @@ export const courses = pgTable("courses", {
   prerequisiteCourseId: integer("prerequisite_course_id"), // para ruta Evangelismo 1->2->3
   isPublic: boolean("is_public").notNull().default(true), // visible para todos o solo miembros
   level: integer("level").notNull().default(1), // nivel del curso (1, 2, 3...)
+  // Planilla de notas: las evaluaciones del curso (nombre y peso en %, opcional).
+  gradeItems: jsonb("grade_items").$type<CourseGradeItem[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -164,6 +166,8 @@ export const enrollments = pgTable("enrollments", {
   observations: text("observations"),
   enrolledAt: timestamp("enrolled_at").defaultNow(),
   completedAt: timestamp("completed_at"),
+  // Notas parciales de la planilla: { [clave de la evaluación]: "18" }.
+  scores: jsonb("scores").$type<Record<string, string>>(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -314,6 +318,34 @@ export const updateEnrollmentSchema = z.object({
   status: z.enum(["solicitado", "aprobado", "rechazado", "completado"]).optional(),
   grade: z.string().optional().nullable(),
   observations: z.string().optional().nullable(),
+});
+
+// ========== PLANILLAS DEL CURSO ==========
+/** Una evaluación de la planilla de notas (p. ej. "Examen final", peso 40 %). */
+export type CourseGradeItem = { key: string; label: string; weight?: number | null };
+
+export const courseGradeItemSchema = z.object({
+  key: z.string().regex(/^[a-z0-9_-]{1,24}$/, "Clave de evaluación no válida"),
+  label: z.string().trim().min(1, "Ponle nombre a la evaluación").max(40),
+  weight: z.number().min(0).max(100).nullable().optional(),
+});
+
+export const saveCourseGradesSchema = z.object({
+  items: z.array(courseGradeItemSchema).max(12, "Máximo 12 evaluaciones").optional(),
+  rows: z.array(z.object({
+    enrollmentId: z.number().int(),
+    scores: z.record(z.string(), z.string().max(12)).optional(),
+    grade: z.string().max(20).nullable().optional(),
+    observations: z.string().max(500).nullable().optional(),
+  })).max(500).optional(),
+});
+
+/** Pasar asistencia de toda la lista de una vez; status null borra la marca. */
+export const bulkAttendanceSchema = z.object({
+  records: z.array(z.object({
+    userId: z.number().int(),
+    status: z.enum(["presente", "ausente", "tardanza", "excusado"]).nullable(),
+  })).max(500),
 });
 
 export type User = typeof users.$inferSelect;

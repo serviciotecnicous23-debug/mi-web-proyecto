@@ -852,7 +852,7 @@ export function Navbar() {
                 </Collapsible>
 
                 {/* Admin/Teacher panel links */}
-                {(user.role === "obrero" || user.role === "admin") && (
+                {isTeacherOrAdminRole(user.role) && (
                   <>
                     <div className="my-2 border-t" />
                     <Link href="/maestro" onClick={closeMenu}>
