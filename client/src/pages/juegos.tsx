@@ -2,16 +2,35 @@
  * Juegos: la sala (/juegos) y cada juego (/juegos/:slug). Se juegan en el navegador, sin
  * descargar nada; los puntajes de quien inicia sesión entran a la tabla de los mejores.
  */
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect, type ComponentType, type LazyExoticComponent } from "react";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, Gamepad2, Sparkles, Trophy, Users, Wifi } from "lucide-react";
+import { ArrowLeft, Gamepad2, Loader2, Sparkles, Trophy, Users, Wifi } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GameShell } from "@/components/games/GameShell";
-import { GAMES_LIST, findGame } from "@/games/registry";
+import { GAMES_LIST, findGame, type GameDef } from "@/games/registry";
+import { TemploCover } from "@/games/templo/Portrait";
 
-function GameCover({ colors }: { colors: [string, string] }) {
+// Los juegos con pantalla propia se descargan solo al abrirlos (y una sola vez).
+const lazyGames = new Map<string, LazyExoticComponent<ComponentType<{ game: GameDef }>>>();
+function lazyGame(g: GameDef) {
+  let c = lazyGames.get(g.slug);
+  if (!c && g.component) {
+    c = lazy(g.component);
+    lazyGames.set(g.slug, c);
+  }
+  return c;
+}
+
+function GameCover({ colors, cover }: { colors: [string, string]; cover?: GameDef["cover"] }) {
+  if (cover === "templo") {
+    return (
+      <div className="relative h-36 overflow-hidden rounded-t-xl bg-[#2b2a6e]">
+        <TemploCover className="absolute inset-0 h-full w-full object-cover" />
+      </div>
+    );
+  }
   return (
     <div className="relative h-36 overflow-hidden rounded-t-xl" style={{ background: `radial-gradient(circle at 50% 120%, ${colors[0]}, ${colors[1]} 60%, #0b0a1f)` }}>
       <svg viewBox="0 0 40 52" className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_18px_rgba(251,146,60,0.8)]" aria-hidden="true">
@@ -51,7 +70,7 @@ function Sala() {
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES_LIST.map((g) => (
           <Link key={g.slug} href={`/juegos/${g.slug}`} className="group block rounded-xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg" data-testid={`card-game-${g.slug}`}>
-            <GameCover colors={g.colors} />
+            <GameCover colors={g.colors} cover={g.cover} />
             <div className="p-4">
               <div className="mb-1 flex items-center gap-2">
                 <h2 className="text-lg font-bold group-hover:text-primary">{g.title}</h2>
@@ -116,9 +135,10 @@ export default function JuegosPage() {
     );
   }
 
+  const Custom = lazyGame(game);
   return (
     <Layout>
-      <div className="mx-auto max-w-3xl px-3 py-3 sm:py-5">
+      <div className={`mx-auto px-3 py-3 sm:py-5 ${Custom ? "max-w-6xl" : "max-w-3xl"}`}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <Button asChild variant="ghost" size="sm">
             <Link href="/juegos">
@@ -128,7 +148,19 @@ export default function JuegosPage() {
           <h1 className="truncate text-lg font-bold">{game.title}</h1>
           <span className="w-20" aria-hidden="true" />
         </div>
-        <GameShell game={game} />
+        {Custom ? (
+          <Suspense
+            fallback={
+              <div className="flex h-[60vh] items-center justify-center rounded-2xl border bg-[#1a1408] text-amber-100">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Preparando el juego…
+              </div>
+            }
+          >
+            <Custom game={game} />
+          </Suspense>
+        ) : (
+          <GameShell game={game} />
+        )}
       </div>
     </Layout>
   );

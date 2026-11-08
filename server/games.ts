@@ -21,7 +21,21 @@ CREATE TABLE IF NOT EXISTS "game_scores" (
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_scores_user_game" ON "game_scores" ("user_id", "game");
 CREATE INDEX IF NOT EXISTS "idx_game_scores_board" ON "game_scores" ("game", "best_score" DESC);`;
 
+export const GAME_SAVES_SQL = `
+CREATE TABLE IF NOT EXISTS "game_saves" (
+  "id" serial PRIMARY KEY,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "game" text NOT NULL,
+  "data" jsonb NOT NULL,
+  "updated_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_saves_user_game" ON "game_saves" ("user_id", "game");`;
+
+/** Una partida guardada no pasa de 32 KB (la del templo pesa unos 3 KB). */
+const MAX_SAVE_BYTES = 32 * 1024;
+
 const lastSubmit = new Map<string, number>();
+const lastSave = new Map<string, number>();
 
 const scoreSchema = z.object({
   score: z.number().int().min(0),
@@ -60,6 +74,49 @@ async function board(game: string, me: number | null) {
 }
 
 export function registerGameRoutes(app: Express) {
+  // Partida guardada (solo juegos largos y solo la de uno mismo)
+  app.get("/api/juegos/:slug/partida", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const slug = String(req.params.slug);
+    if (!isGameSlug(slug) || !GAMES[slug].saves) return res.sendStatus(404);
+    try {
+      const { rows } = await pool.query(`SELECT data, updated_at FROM game_saves WHERE user_id = $1 AND game = $2`, [req.user!.id, slug]);
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ data: rows[0]?.data ?? null, updatedAt: rows[0]?.updated_at ?? null });
+    } catch (err) {
+      console.error("[juegos] leer partida:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  app.put("/api/juegos/:slug/partida", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const slug = String(req.params.slug);
+    if (!isGameSlug(slug) || !GAMES[slug].saves) return res.sendStatus(404);
+    const data = req.body?.data;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return res.status(400).json({ message: "Partida no válida" });
+    const json = JSON.stringify(data);
+    if (json.length > MAX_SAVE_BYTES) return res.status(413).json({ message: "La partida es demasiado grande" });
+    const me = req.user!.id;
+    const key = `${me}:${slug}`;
+    const now = Date.now();
+    // Se guarda cada tanto (y al cerrar): más seguido no hace falta y no carga el servidor.
+    if (now - (lastSave.get(key) || 0) < 4000) return res.status(429).json({ message: "Espera un momento" });
+    lastSave.set(key, now);
+    if (lastSave.size > 5000) lastSave.clear();
+    try {
+      await pool.query(
+        `INSERT INTO game_saves (user_id, game, data, updated_at) VALUES ($1, $2, $3::jsonb, now())
+         ON CONFLICT (user_id, game) DO UPDATE SET data = EXCLUDED.data, updated_at = now()`,
+        [me, slug, json],
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[juegos] guardar partida:", err);
+      res.sendStatus(500);
+    }
+  });
+
   // La tabla de los mejores: para miembros (muestra nombres de la comunidad).
   app.get("/api/juegos/:slug/ranking", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
