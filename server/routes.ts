@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage, type CourseChildKind } from "./storage";
+import { registerChatRoutes } from "./chat";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3607,86 +3608,9 @@ ${urls}
     res.sendStatus(200);
   });
 
-  // ========== DIRECT MESSAGES ==========
-  app.get(api.directMessages.conversations.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const conversations = await storage.listConversations(req.user!.id);
-    res.json(conversations);
-  });
-
-  app.get(api.directMessages.unreadCount.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const count = await storage.getUnreadDirectMessageCount(req.user!.id);
-    res.json({ count });
-  });
-
-  app.get(api.directMessages.list.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const otherUserId = parseInt(req.params.userId);
-    const messages = await storage.listDirectMessages(req.user!.id, otherUserId);
-    // Mark messages as read
-    await storage.markDirectMessagesRead(req.user!.id, otherUserId);
-    res.json(messages);
-  });
-
-  app.post(api.directMessages.send.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.user!.isActive) return res.sendStatus(403);
-    try {
-      const input = api.directMessages.send.input.parse(req.body);
-      if (input.receiverId === req.user!.id) {
-        return res.status(400).json({ message: "No puedes enviarte mensajes a ti mismo" });
-      }
-      const msg = await storage.sendDirectMessage(req.user!.id, input);
-      
-      // Push notification for direct message (non-blocking)
-      if (isPushConfigured) {
-        try {
-          const receiverSubs = await storage.getPushSubscriptionsByUser(input.receiverId);
-          if (receiverSubs.length > 0) {
-            const senderName = req.user!.displayName || req.user!.username;
-            const payload: PushPayload = {
-              title: `Mensaje de ${senderName}`,
-              body: input.content.substring(0, 100),
-              url: "/mensajes",
-              icon: "/icons/icon-192x192.png",
-            };
-            sendPushToMany(
-              receiverSubs.map(s => ({ id: s.id, subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } })),
-              payload
-            ).catch(e => console.error("[push] DM push error:", e));
-          }
-        } catch (pushErr) {
-          console.error("[push] DM notification error (non-blocking):", pushErr);
-        }
-      }
-      
-      // Email notification for direct message (non-blocking)
-      if (isEmailConfigured) {
-        try {
-          const receiver = await storage.getUser(input.receiverId);
-          if (receiver?.email && receiver.emailNotifyDirectMessage !== false) {
-            const senderName = req.user!.displayName || req.user!.username;
-            sendDirectMessageEmail(receiver.email, senderName, input.content, receiver.displayName);
-          }
-        } catch (emailErr) {
-          console.error("[email] DM notification error (non-blocking):", emailErr);
-        }
-      }
-      
-      res.status(201).json(msg);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
-      res.sendStatus(500);
-    }
-  });
-
-  app.patch(api.directMessages.markRead.path, async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const otherUserId = parseInt(req.params.userId);
-    await storage.markDirectMessagesRead(req.user!.id, otherUserId);
-    res.json({ success: true });
-  });
+  // ========== MENSAJES DIRECTOS (tipo WhatsApp, en tiempo real) ==========
+  // Fotos, notas de voz, documentos, respuestas, reacciones, vistos: ver server/chat.ts.
+  registerChatRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

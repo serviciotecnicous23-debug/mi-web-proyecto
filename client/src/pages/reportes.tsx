@@ -351,8 +351,8 @@ export default function ReportesPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">{c.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {COURSE_CATEGORIES[c.category as keyof typeof COURSE_CATEGORIES] || c.category} Â·{" "}
-                            {Number(c.enrolled) + Number(c.completed)} inscritos Â· {Number(c.pending)} por aprobar Â· {Number(c.completed)} completaron
+                            {COURSE_CATEGORIES[c.category as keyof typeof COURSE_CATEGORIES] || c.category} ·{" "}
+                            {Number(c.enrolled) + Number(c.completed)} inscritos · {Number(c.pending)} por aprobar · {Number(c.completed)} completaron
                           </p>
                         </div>
                         <Button asChild size="sm" variant="outline">
@@ -364,7 +364,7 @@ export default function ReportesPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="py-4 text-center text-sm text-muted-foreground">TodavÃ­a no hay cursos creados.</p>
+                  <p className="py-4 text-center text-sm text-muted-foreground">Todavía no hay cursos creados.</p>
                 )}
               </CardContent>
             </Card>

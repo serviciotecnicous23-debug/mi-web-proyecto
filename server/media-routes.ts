@@ -16,6 +16,7 @@ import { uploadFile, isS3Configured } from "./file-storage";
 import { StorageFullError, serveStoredFile, storageStatus, safeFileName } from "./file-store";
 import { getLinkPreview, getLinkPreviews, isValidPreviewUrl } from "./link-preview";
 import { fileExtension, fileTypeOf, FILE_TYPE_LABELS, type FileType } from "@shared/media";
+import { chatQuotaExceeded } from "./chat";
 
 const MB = 1024 * 1024;
 const TMP_DIR = path.join(os.tmpdir(), "avivando-subidas");
@@ -157,6 +158,15 @@ export async function handleFileUpload(req: Request, res: Response, field = "fil
       }
     }
     const folder = String((req.query.carpeta as string) || "archivos").replace(/[^a-z0-9-]/gi, "").slice(0, 30) || "archivos";
+    // Chat: tope de espacio por persona cuando los archivos van dentro de la base (sin costo extra).
+    if (folder === "chat" && !isS3Configured) {
+      const quota = await chatQuotaExceeded(req.user!.id, buffer?.length ?? file.size);
+      if (quota.exceeded) {
+        return res.status(413).json({
+          message: `Llegaste al límite de ${quota.limitMb} MB de archivos en el chat. Elimina para todos algunos mensajes con fotos o archivos y vuelve a intentar.`,
+        });
+      }
+    }
     const result = await uploadFile({
       folder,
       filename: name,

@@ -1012,6 +1012,26 @@ const ADD_COLUMNS_SQL = [
   // ========== PLANILLAS DEL CURSO (evaluaciones y notas parciales) ==========
   `ALTER TABLE "courses" ADD COLUMN IF NOT EXISTS "grade_items" jsonb`,
   `ALTER TABLE "enrollments" ADD COLUMN IF NOT EXISTS "scores" jsonb`,
+  // ========== MENSAJERÍA TIPO WHATSAPP (fotos, voz, archivos, respuestas, reacciones, vistos) ==========
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "kind" text NOT NULL DEFAULT 'text'`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "attachment_url" text`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "attachment_name" text`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "attachment_size" integer`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "attachment_mime" text`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "attachment_meta" jsonb`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "reply_to_id" integer`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "reactions" jsonb`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "client_id" text`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "delivered_at" timestamp`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "read_at" timestamp`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "edited_at" timestamp`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "hidden_by_sender" boolean NOT NULL DEFAULT false`,
+  `ALTER TABLE "direct_messages" ADD COLUMN IF NOT EXISTS "hidden_by_receiver" boolean NOT NULL DEFAULT false`,
+  `CREATE INDEX IF NOT EXISTS "idx_dm_sender" ON "direct_messages" ("sender_id", "id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_dm_receiver" ON "direct_messages" ("receiver_id", "id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_dm_unread" ON "direct_messages" ("receiver_id", "sender_id") WHERE "is_read" = false`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "uq_dm_client" ON "direct_messages" ("sender_id", "client_id") WHERE "client_id" IS NOT NULL`,
 ];
 
 export async function ensureDatabaseSchema(): Promise<void> {

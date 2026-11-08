@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 // Cambiar el número cuando cambie este archivo: así se borran las cachés viejas.
-const CACHE_NAME = "avivando-app-v7";
+const CACHE_NAME = "avivando-app-v8";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   "/manifest.json",
@@ -30,6 +30,10 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return; // la radio, Google Fonts, etc.: el navegador decide
+
+  // El tiempo real de Mensajes (una conexión que queda abierta): directo, sin pasar por aquí.
+  // Si pasara, el navegador podría cortarla al dormir este archivo y habría reconexiones.
+  if (url.pathname === "/api/dm/stream") return;
 
   // API, archivos subidos e íconos: siempre de la red (la caché solo si no hay conexión).
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/icons/")) {

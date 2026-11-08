@@ -1146,12 +1146,48 @@ export const directMessages = pgTable("direct_messages", {
   content: text("content").notNull(),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  // ===== Mensajería tipo WhatsApp =====
+  kind: text("kind").notNull().default("text"), // text | image | audio | video | file
+  attachmentUrl: text("attachment_url"),
+  attachmentName: text("attachment_name"),
+  attachmentSize: integer("attachment_size"),
+  attachmentMime: text("attachment_mime"),
+  attachmentMeta: jsonb("attachment_meta").$type<{ width?: number; height?: number; duration?: number }>(),
+  replyToId: integer("reply_to_id"),
+  reactions: jsonb("reactions").$type<Record<string, number[]>>(),
+  clientId: text("client_id"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  editedAt: timestamp("edited_at"),
+  deletedAt: timestamp("deleted_at"),
+  hiddenBySender: boolean("hidden_by_sender").notNull().default(false),
+  hiddenByReceiver: boolean("hidden_by_receiver").notNull().default(false),
 });
 
-export const insertDirectMessageSchema = z.object({
-  receiverId: z.number(),
-  content: z.string().min(1),
+/** Reacciones permitidas en los mensajes (una por persona, como en WhatsApp). */
+export const DM_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥"] as const;
+
+export const dmAttachmentSchema = z.object({
+  url: z.string().min(1).max(500),
+  name: z.string().max(150).optional(),
+  size: z.number().int().min(0).optional(),
+  mime: z.string().max(120).optional(),
+  kind: z.enum(["image", "audio", "video", "file"]),
+  width: z.number().int().min(1).max(20000).optional(),
+  height: z.number().int().min(1).max(20000).optional(),
+  duration: z.number().min(0).max(3600).optional(),
 });
+
+export const insertDirectMessageSchema = z
+  .object({
+    receiverId: z.number(),
+    content: z.string().max(4000, "El mensaje es muy largo (máximo 4000 letras)").default(""),
+    /** Lo pone el navegador para no duplicar el mensaje si se reintenta el envío. */
+    clientId: z.string().max(64).regex(/^[A-Za-z0-9_-]+$/).optional(),
+    replyToId: z.number().int().optional().nullable(),
+    attachment: dmAttachmentSchema.optional().nullable(),
+  })
+  .refine((d) => d.content.trim().length > 0 || !!d.attachment, { message: "Escribe un mensaje o adjunta un archivo" });
 
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
