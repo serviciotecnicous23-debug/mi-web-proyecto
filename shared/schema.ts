@@ -1906,6 +1906,19 @@ export const contentReports = pgTable("content_reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Puntajes de los juegos (server/games.ts): el mejor de cada persona por juego. Los índices
+// (único usuario+juego y el de la tabla de los mejores) se crean en GAME_SCORES_SQL al arrancar.
+// Va aquí también porque el despliegue corre `drizzle-kit push` con este archivo.
+export const gameScores = pgTable("game_scores", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  game: text("game").notNull(),
+  bestScore: integer("best_score").notNull().default(0),
+  lastScore: integer("last_score"),
+  plays: integer("plays").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const PRAYER_CATEGORIES = {
   salud: "Salud",
   familia: "Familia",
