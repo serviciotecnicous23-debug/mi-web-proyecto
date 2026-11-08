@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X, Award, Landmark, LogOut, Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,14 +18,21 @@ import {
   HELPERS, HOW_TO, ITEMS, LESSONS, LESSON_ORDER, QUIZZES, RANKS, SPEAKERS, STATIONS, UPGRADES, quizById, upgradeCost, type Line,
 } from "./data";
 import { gameStore, useGame, type Hud, type Modal } from "./store";
-import { GAME_SLUG, clearLocal, gloria, loadLocal, loadRemote, newSave, progressView, type SaveData } from "./state";
+import { GAME_SLUG, clearLocal, gloria, loadLocal, loadRemote, newSave, progressView, saveRemote, type SaveData } from "./state";
 import { Portrait, TemploCover } from "./Portrait";
 import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } from "./progress";
 import type { TempleWorld } from "./world";
+import {
+  ESCALONES, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
+  type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
+} from "@shared/jerusalen";
+import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
 const useWorld = () => useContext(WorldCtx);
+/** La sesión del templo en línea (null en el modo local). */
+const SessionCtx = createContext<OnlineSession | null>(null);
 
 function readPref(key: string, def: boolean) {
   try {
@@ -59,6 +66,13 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const [full, setFull] = useState(false);
   const [immersive, setImmersive] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  // Jerusalén en línea: el estado de la cuenta, la sala y la sesión mientras se juega en línea
+  const [estado, setEstado] = useState<JerusalenEstado | null>(null);
+  const [lobby, setLobby] = useState(false);
+  const [session, setSession] = useState<OnlineSession | null>(null);
+  const sessionRef = useRef<OnlineSession | null>(null);
+  sessionRef.current = session;
+  const online = !!session;
 
   // Se busca la partida (en el teléfono y, con cuenta, en el servidor) y se descarga el mundo.
   useEffect(() => {
@@ -73,6 +87,15 @@ export default function TemploGame({ game }: { game: GameDef }) {
       if (remote && (!local || remote.savedAt > local.savedAt + 1000)) chosen = remote;
       setSave(chosen);
       setPhase("title");
+      if (!user) {
+        setEstado(null);
+        return;
+      }
+      // El servidor revisa el cargo de la historia con la partida de la cuenta: si la de este
+      // teléfono es más nueva, se guarda primero para que cuente.
+      if (local && (!remote || local.savedAt > remote.savedAt + 1000)) await saveRemote(local);
+      const r = await fetchEstado();
+      if (!cancelled && r.ok && r.data) setEstado(r.data);
     })();
     return () => {
       cancelled = true;
@@ -84,6 +107,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
   worldRef.current = world;
   useEffect(() => {
     return () => {
+      sessionRef.current?.close();
       worldRef.current?.destroy();
       worldRef.current = null;
       gameStore.reset();
@@ -91,15 +115,24 @@ export default function TemploGame({ game }: { game: GameDef }) {
   }, []);
 
   const start = useCallback(
-    async (fresh: boolean, given?: SaveData) => {
+    async (fresh: boolean, given?: SaveData, enLinea?: JerusalenEstado) => {
       if (!boxRef.current || !worldMod.current) return;
       setPhase("starting");
       try {
         const mod = await worldMod.current;
-        if (fresh) clearLocal();
-        const s = given ?? (fresh || !save ? newSave() : save);
         gameStore.reset();
-        const w = new mod.TempleWorld(boxRef.current, s, { loggedIn: !!user, muted, music });
+        let w: TempleWorld;
+        if (enLinea) {
+          // el templo en línea: ya restaurado, sin levitas y sin tocar la partida local
+          const ses = new OnlineSession(enLinea);
+          w = new mod.TempleWorld(boxRef.current, onlineSave(ses.hooks.rank), { loggedIn: false, muted, music, online: ses.hooks });
+          setSession(ses);
+          setLobby(false);
+        } else {
+          if (fresh) clearLocal();
+          const s = given ?? (fresh || !save ? newSave() : save);
+          w = new mod.TempleWorld(boxRef.current, s, { loggedIn: !!user, muted, music });
+        }
         w.audio.ensure();
         // solo en desarrollo: acceso para revisar el juego desde la consola
         if (import.meta.env.DEV) (window as unknown as { __templo?: TempleWorld }).__templo = w;
@@ -125,6 +158,21 @@ export default function TemploGame({ game }: { game: GameDef }) {
     void start(false, next);
   }, [world, start]);
 
+  // Salir del templo en línea: se mandan los deberes que faltan y se vuelve a la sala.
+  const exitOnline = useCallback(() => {
+    sessionRef.current?.close();
+    setSession(null);
+    world?.destroy();
+    setWorld(null);
+    setPaused(false);
+    gameStore.reset();
+    setPhase("title");
+    setLobby(true);
+    void fetchEstado().then((r) => {
+      if (r.ok && r.data) setEstado(r.data);
+    });
+  }, [world]);
+
   const togglePause = useCallback(
     (p?: boolean) => {
       const next = p ?? !paused;
@@ -135,27 +183,43 @@ export default function TemploGame({ game }: { game: GameDef }) {
     [paused, world],
   );
 
-  // teclado: P o Esc pausa; L abre el libro; M las mejoras
+  // teclado: P o Esc pausa; L abre el libro; M las mejoras; en línea, T la temporada
   useEffect(() => {
     if (phase !== "playing") return;
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if (gameStore.busy) return;
       if (k === "p" || k === "escape") togglePause();
-      else if (k === "l" && !paused) gameStore.push({ kind: "book" });
-      else if (k === "m" && !paused) gameStore.push({ kind: "upgrades" });
-      else if (k === "c" && !paused) gameStore.push({ kind: "comunidad" });
-      else if (k === "j" && !paused) gameStore.push({ kind: "camino" });
+      else if (paused) return;
+      else if (online) {
+        if (k === "t") gameStore.push({ kind: "temporada" });
+      } else if (k === "l") gameStore.push({ kind: "book" });
+      else if (k === "m") gameStore.push({ kind: "upgrades" });
+      else if (k === "c") gameStore.push({ kind: "comunidad" });
+      else if (k === "j") gameStore.push({ kind: "camino" });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, paused, togglePause]);
+  }, [phase, paused, togglePause, online]);
 
   useEffect(() => {
     const onFs = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
+
+  // En el iPhone no hay pantalla completa de verdad: se ocupa toda la pantalla. El gesto o el
+  // botón de «atrás» del teléfono vuelve a la vista normal en lugar de salir del juego.
+  useEffect(() => {
+    if (!immersive) return;
+    window.history.pushState({ ...(window.history.state || {}), templo: "pantalla" }, "");
+    const onPop = () => setImmersive(false);
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (window.history.state?.templo === "pantalla") window.history.back();
+    };
+  }, [immersive]);
 
   const toggleMute = () => {
     const n = !muted;
@@ -181,46 +245,69 @@ export default function TemploGame({ game }: { game: GameDef }) {
   };
 
   const big = full || immersive;
+  // En pantalla completa los botones respetan la cámara, la isla y la barra del teléfono
+  // (zonas seguras). En la vista normal el juego está dentro de la página y no hace falta.
+  const coarse = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+  const safe = (
+    big
+      ? {
+          "--tpl-st": `max(env(safe-area-inset-top, 0px), ${coarse ? "12px" : "0px"})`,
+          "--tpl-sb": "env(safe-area-inset-bottom, 0px)",
+          "--tpl-sl": "env(safe-area-inset-left, 0px)",
+          "--tpl-sr": "env(safe-area-inset-right, 0px)",
+        }
+      : { "--tpl-st": "0px", "--tpl-sb": "0px", "--tpl-sl": "0px", "--tpl-sr": "0px" }
+  ) as React.CSSProperties;
   return (
     <WorldCtx.Provider value={world}>
-      <div
-        ref={wrapRef}
-        className={`select-none overflow-hidden bg-[#1a1408] ${big ? "fixed inset-0 z-[60] rounded-none" : "relative w-full rounded-2xl border border-amber-500/30 shadow-2xl shadow-amber-950/30"}`}
-        style={big ? undefined : { height: GAME_HEIGHT, minHeight: 460, scrollMarginTop: "calc(var(--app-nav-h, 64px) + 8px)" }}
-        data-testid="templo-box"
-      >
-        <div ref={boxRef} className="absolute inset-0" />
-        {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
-        {phase === "playing" && paused && (
-          <PauseMenu
-            onResume={() => togglePause(false)}
-            gen={world?.s.gen || 1}
-            rangoMax={world ? Math.max(world.s.rank, world.s.rangoMax || 0) : 0}
-            canGen={!!world?.s.finale}
-            onGen={startGeneration}
-            muted={muted}
-            music={music}
-            big={big}
-            onMute={toggleMute}
-            onMusic={toggleMusic}
-            onFull={() => void toggleFull()}
-          />
-        )}
-        {phase === "playing" && world && <ModalLayer />}
-        {phase !== "playing" && (
-          <TitleScreen
-            game={game}
-            phase={phase}
-            save={save}
-            loggedIn={!!user}
-            confirmNew={confirmNew}
-            setConfirmNew={setConfirmNew}
-            onStart={start}
-            muted={muted}
-            onMute={toggleMute}
-          />
-        )}
-      </div>
+      <SessionCtx.Provider value={session}>
+        <div
+          ref={wrapRef}
+          className={`select-none overflow-hidden bg-[#1a1408] ${big ? "fixed inset-0 z-[60] rounded-none" : "relative w-full rounded-2xl border border-amber-500/30 shadow-2xl shadow-amber-950/30"}`}
+          style={big ? safe : { ...safe, height: GAME_HEIGHT, minHeight: 460, scrollMarginTop: "calc(var(--app-nav-h, 64px) + 8px)" }}
+          data-testid="templo-box"
+          data-pantalla={big ? "completa" : "normal"}
+        >
+          <div ref={boxRef} className="absolute inset-0" />
+          {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
+          {phase === "playing" && paused && (
+            <PauseMenu
+              onResume={() => togglePause(false)}
+              gen={world?.s.gen || 1}
+              rangoMax={world ? Math.max(world.s.rank, world.s.rangoMax || 0) : 0}
+              canGen={!online && !!world?.s.finale}
+              onGen={startGeneration}
+              muted={muted}
+              music={music}
+              big={big}
+              onMute={toggleMute}
+              onMusic={toggleMusic}
+              onFull={() => void toggleFull()}
+              online={online}
+              onExitOnline={exitOnline}
+            />
+          )}
+          {phase === "playing" && world && <ModalLayer />}
+          {phase !== "playing" &&
+            (lobby && estado ? (
+              <OnlineLobby estado={estado} phase={phase} onBack={() => setLobby(false)} onEnter={(e) => void start(false, undefined, e)} onEstado={setEstado} />
+            ) : (
+              <TitleScreen
+                game={game}
+                phase={phase}
+                save={save}
+                loggedIn={!!user}
+                confirmNew={confirmNew}
+                setConfirmNew={setConfirmNew}
+                onStart={start}
+                muted={muted}
+                onMute={toggleMute}
+                estado={estado}
+                onOnline={() => setLobby(true)}
+              />
+            ))}
+        </div>
+      </SessionCtx.Provider>
     </WorldCtx.Provider>
   );
 }
@@ -236,6 +323,8 @@ function TitleScreen(props: {
   onStart: (fresh: boolean) => void;
   muted: boolean;
   onMute: () => void;
+  estado: JerusalenEstado | null;
+  onOnline: () => void;
 }) {
   const { game, phase, save, loggedIn, confirmNew, setConfirmNew, onStart } = props;
   const has = !!save && (save.ofrendas > 0 || Object.keys(save.built).length > 0 || (save.gen || 1) > 1 || (save.stats.jornadas || 0) > 0);
@@ -248,7 +337,10 @@ function TitleScreen(props: {
   }, []);
   const built = save ? STATIONS.filter((s) => save.built[s.id]).length : 0;
   return (
-    <div className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#5b2a6e_0%,#2b1a3a_45%,#120c08_100%)] text-white">
+    <div
+      className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#5b2a6e_0%,#2b1a3a_45%,#120c08_100%)] text-white"
+      style={{ paddingTop: "var(--tpl-st, 0px)", paddingBottom: "var(--tpl-sb, 0px)" }}
+    >
       <div className="mx-auto flex min-h-full max-w-lg flex-col items-center justify-center gap-4 px-5 py-6 text-center">
         <TemploCover className="w-full max-w-sm rounded-2xl shadow-2xl ring-1 ring-amber-300/40" />
         <div>
@@ -298,6 +390,7 @@ function TitleScreen(props: {
             )}
           </div>
         )}
+        {phase === "title" && !confirmNew && loggedIn && props.estado && <EnLineaEntrada estado={props.estado} onOnline={props.onOnline} />}
         {ahora !== null && ahora > 0 && (
           <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-100">
             🔥 {ahora} {ahora === 1 ? "persona sirviendo" : "personas sirviendo"} en el templo ahora
@@ -377,70 +470,100 @@ function DayClock({ hud }: { hud: Hud }) {
   );
 }
 
-function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: () => void; big: boolean; onFull: () => void }) {
-  const { hud, toasts, modal } = useGame();
+function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; onPause: () => void; big: boolean; onFull: () => void; online: boolean }) {
+  const { hud, toasts, modal, online: oh } = useGame();
   const world = useWorld();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const topRef = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState({ topH: 96, wide: false });
   const [hint, setHint] = useState(true);
-  const prevGozo = useRef(hud.gozo);
+  const [fsHint, setFsHint] = useState(false);
+  const score = online ? oh?.merito ?? 0 : hud.gozo;
+  const prevScore = useRef(score);
   const [bump, setBump] = useState(false);
   useEffect(() => {
-    if (hud.gozo > prevGozo.current) {
+    if (score > prevScore.current) {
       setBump(true);
       const t = setTimeout(() => setBump(false), 180);
-      prevGozo.current = hud.gozo;
+      prevScore.current = score;
       return () => clearTimeout(t);
     }
-    prevGozo.current = hud.gozo;
-  }, [hud.gozo]);
+    prevScore.current = score;
+  }, [score]);
   useEffect(() => {
     const t = setTimeout(() => setHint(false), 14000);
     return () => clearTimeout(t);
   }, []);
-  // el objetivo va debajo del marcador en el celular y arriba al centro en pantallas anchas
+  // al entrar a pantalla completa, unos segundos se explica cómo volver
   useEffect(() => {
-    const ro = new ResizeObserver(() => {
-      const w = rootRef.current?.clientWidth || 0;
-      const h = topRef.current?.offsetHeight || 96;
-      setLayout((l) => (l.topH !== h || l.wide !== w >= 960 ? { topH: h, wide: w >= 960 } : l));
-    });
-    if (rootRef.current) ro.observe(rootRef.current);
-    if (topRef.current) ro.observe(topRef.current);
-    return () => ro.disconnect();
-  }, []);
+    if (!big) {
+      setFsHint(false);
+      return;
+    }
+    setFsHint(true);
+    const t = setTimeout(() => setFsHint(false), 6000);
+    return () => clearTimeout(t);
+  }, [big]);
   const open = (m: Modal) => {
     world?.audio.page();
     gameStore.push(m);
   };
   const c = hud.carrying;
+  const lados = { paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))", paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))" };
+  const sombra = "[text-shadow:0_1px_2px_rgba(0,0,0,.85)]";
+  const factor = oh?.factor ?? 1;
   return (
-    <div ref={rootRef} className="pointer-events-none absolute inset-0 z-10 text-white">
-      {/* arriba */}
-      <div ref={topRef} className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/55 via-black/25 to-transparent p-2 pb-4 sm:p-3">
+    <div className="pointer-events-none absolute inset-0 z-10 text-white">
+      {/* arriba (en pantalla completa, por debajo de la cámara y de la barra del teléfono) */}
+      <div
+        className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/55 via-black/25 to-transparent pb-4"
+        style={{ ...lados, paddingTop: "calc(0.5rem + var(--tpl-st, 0px))" }}
+        data-testid="templo-hud-arriba"
+      >
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <div className={`flex items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 font-black text-amber-950 shadow-lg transition-transform ${bump ? "scale-110" : ""}`} title="Gozo" data-testid="templo-gozo">
-              <Sparkles className="h-4 w-4" />
-              <span className="tabular-nums">{fmt(hud.gozo)}</span>
-            </div>
-            <div className="flex items-center gap-1 rounded-full bg-sky-200 py-1 pl-1.5 pr-3 font-black text-sky-950 shadow-lg" title="Sabiduría">
-              <ScrollText className="h-4 w-4" />
-              <span className="tabular-nums">{hud.sabiduria}</span>
-            </div>
-            <button
-              type="button"
-              className={`pointer-events-auto flex items-center gap-1 rounded-full py-1 pl-1.5 pr-3 text-xs font-bold shadow-lg ${hud.rankReady ? "animate-pulse bg-white text-amber-900" : "bg-black/50 text-white"}`}
-              onClick={() => open({ kind: "book" })}
-              title="Tu rango"
-              data-testid="templo-rank"
-            >
-              <Crown className="h-4 w-4 text-amber-400" />
-              {RANKS[hud.rank].nombre}
-              {hud.gen > 1 && <span className="rounded-full bg-emerald-400/90 px-1.5 text-[10px] font-black text-emerald-950">{hud.gen}.ª gen.</span>}
-              {hud.rankReady && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
-            </button>
+            {online ? (
+              <>
+                <div
+                  className={`flex items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 font-black text-amber-950 shadow-lg transition-transform ${bump ? "scale-110" : ""}`}
+                  title="Mérito de la temporada"
+                  data-testid="templo-merito"
+                >
+                  <Award className="h-4 w-4" />
+                  <span className="tabular-nums">{fmt(oh?.merito ?? 0)}</span>
+                </div>
+                <button
+                  type="button"
+                  className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
+                  onClick={() => open({ kind: "temporada" })}
+                  title="Tu escalón en la temporada"
+                  data-testid="templo-escalon"
+                >
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  {escalonNombre(oh?.escalon)}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className={`flex items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 font-black text-amber-950 shadow-lg transition-transform ${bump ? "scale-110" : ""}`} title="Gozo" data-testid="templo-gozo">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="tabular-nums">{fmt(hud.gozo)}</span>
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-sky-200 py-1 pl-1.5 pr-3 font-black text-sky-950 shadow-lg" title="Sabiduría">
+                  <ScrollText className="h-4 w-4" />
+                  <span className="tabular-nums">{hud.sabiduria}</span>
+                </div>
+                <button
+                  type="button"
+                  className={`pointer-events-auto flex items-center gap-1 rounded-full py-1 pl-1.5 pr-3 text-xs font-bold shadow-lg ${hud.rankReady ? "animate-pulse bg-white text-amber-900" : "bg-black/50 text-white"}`}
+                  onClick={() => open({ kind: "book" })}
+                  title="Tu rango"
+                  data-testid="templo-rank"
+                >
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  {RANKS[hud.rank].nombre}
+                  {hud.gen > 1 && <span className="rounded-full bg-emerald-400/90 px-1.5 text-[10px] font-black text-emerald-950">{hud.gen}.ª gen.</span>}
+                  {hud.rankReady && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
+                </button>
+              </>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-1">
             {hud.fireUnlocked && <Meter icon={<Flame className="h-3 w-3" />} label="Fuego del altar" value={hud.fuel} max={hud.fuelMax} color="#f97316" testid="templo-fuego" />}
@@ -459,60 +582,72 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <div className="pointer-events-auto flex gap-1">
-            <IconBtn label="Comunidad (C)" onClick={() => open({ kind: "comunidad" })} testid="button-templo-comunidad">
-              <Users className="h-5 w-5" />
-            </IconBtn>
-            <IconBtn label="Mejoras (M)" onClick={() => open({ kind: "upgrades" })} testid="button-templo-mejoras">
-              <Sparkles className="h-5 w-5" />
-            </IconBtn>
-            <IconBtn label="Libro del aprendiz (L)" onClick={() => open({ kind: "book" })} testid="button-templo-libro">
-              <BookOpen className="h-5 w-5" />
-            </IconBtn>
-            <IconBtn label={big ? "Salir de pantalla completa" : "Pantalla completa"} onClick={onFull}>
+            {online ? (
+              <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada">
+                <Trophy className="h-5 w-5" />
+              </IconBtn>
+            ) : (
+              <>
+                <IconBtn label="Comunidad (C)" onClick={() => open({ kind: "comunidad" })} testid="button-templo-comunidad">
+                  <Users className="h-5 w-5" />
+                </IconBtn>
+                <IconBtn label="Mejoras (M)" onClick={() => open({ kind: "upgrades" })} testid="button-templo-mejoras">
+                  <Sparkles className="h-5 w-5" />
+                </IconBtn>
+                <IconBtn label="Libro del aprendiz (L)" onClick={() => open({ kind: "book" })} testid="button-templo-libro">
+                  <BookOpen className="h-5 w-5" />
+                </IconBtn>
+              </>
+            )}
+            <IconBtn label={big ? "Salir de pantalla completa" : "Pantalla completa"} onClick={onFull} testid="button-templo-pantalla" active={big}>
               {big ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
             </IconBtn>
             <IconBtn label="Pausa (P)" onClick={onPause} testid="button-templo-pausa">
               <Pause className="h-5 w-5" />
             </IconBtn>
           </div>
+          {fsHint && (
+            <div className="rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold text-amber-950 shadow-lg" data-testid="templo-pantalla-ayuda">
+              Para volver a la vista normal, toca <Minimize2 className="-mt-0.5 inline h-3 w-3" />
+            </div>
+          )}
           <DayClock hud={hud} />
-          <div className="rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm" title="Gloria del templo (tu puntaje)">
-            <Trophy className="mr-1 inline h-3 w-3 text-amber-300" />
-            {fmt(hud.gloria)}
-            {hud.mult > 1.05 && <span className="ml-1 text-amber-300">· gozo ×{hud.mult.toLocaleString("es-419")}</span>}
-          </div>
-          {hud.liga && (hud.liga.lider || hud.liga.puesto) && (
-            <button
-              type="button"
-              className="pointer-events-auto rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm hover:bg-black/60"
-              onClick={() => open({ kind: "comunidad" })}
-              title="Tabla de la semana"
-              data-testid="templo-liga"
+          {online ? (
+            <div
+              className="rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm"
+              title="La primera hora de deberes del día cuenta completa; las dos siguientes, la mitad"
+              data-testid="templo-hoy"
             >
-              <Medal className="mr-1 inline h-3 w-3 text-amber-300" />
-              {hud.liga.puesto ? `Vas ${hud.liga.puesto}.º` : "Esta semana"}
-              {hud.liga.lider && <span className="text-white/75"> · 1.º {hud.liga.lider.split(" ")[0]}</span>}
-            </button>
+              Hoy {Math.floor((oh?.hoySeg || 0) / 60)} min · <span className={factor >= 1 ? "text-emerald-300" : factor > 0 ? "text-amber-300" : "text-red-300"}>{factor >= 1 ? "mérito completo" : factor > 0 ? "mérito a la mitad" : "turno terminado"}</span>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm" title="Gloria del templo (tu puntaje)">
+                <Trophy className="mr-1 inline h-3 w-3 text-amber-300" />
+                {fmt(hud.gloria)}
+                {hud.mult > 1.05 && <span className="ml-1 text-amber-300">· gozo ×{hud.mult.toLocaleString("es-419")}</span>}
+              </div>
+              {hud.liga && (hud.liga.lider || hud.liga.puesto) && (
+                <button
+                  type="button"
+                  className="pointer-events-auto rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm hover:bg-black/60"
+                  onClick={() => open({ kind: "comunidad" })}
+                  title="Tabla de la semana"
+                  data-testid="templo-liga"
+                >
+                  <Medal className="mr-1 inline h-3 w-3 text-amber-300" />
+                  {hud.liga.puesto ? `Vas ${hud.liga.puesto}.º esta semana` : "Esta semana"}
+                  {hud.liga.lider && hud.liga.puesto !== 1 && <span className="text-white/75"> · 1.º {hud.liga.lider.split(" ")[0]}</span>}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* objetivo y evento */}
-      {!modal && !paused && (
-        <div className="absolute inset-x-0 flex flex-col items-center gap-1 px-3" style={{ top: layout.wide ? 12 : layout.topH + 2 }}>
-          {hud.objective && (
-            <div className="max-w-[94%] rounded-2xl border border-amber-200/50 bg-[#2b1d0c]/80 px-3 py-1.5 text-center text-[13px] font-semibold leading-snug shadow-lg backdrop-blur sm:max-w-md" data-testid="templo-objetivo">
-              <ChevronRight className="-mt-0.5 mr-0.5 inline h-4 w-4 text-amber-300" />
-              {hud.objective}
-            </div>
-          )}
-          {hud.jornada && <JornadaStrip hud={hud} onOpen={() => open({ kind: "camino" })} />}
-          {hud.event && <div className="animate-pulse rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-0.5 text-xs font-black text-amber-950 shadow-lg">{hud.event}</div>}
-        </div>
-      )}
-
-      {/* abajo: lo que llevas, avisos y ayuda */}
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1.5 p-3 pb-4">
+      {/* abajo: avisos (lo que hace el aprendiz, la hora del sacrificio, la jornada), lo que llevas y ayuda.
+          Van abajo y transparentes para no tapar el templo. */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))" }} data-testid="templo-hud-abajo">
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -521,6 +656,22 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
             {t.text}
           </div>
         ))}
+        {!modal && !paused && (
+          <>
+            {hud.event && (
+              <div className={`max-w-[94%] rounded-full bg-amber-500/25 px-3 py-0.5 text-center text-[11px] font-bold leading-tight text-amber-100 backdrop-blur-[2px] sm:max-w-lg ${sombra}`} data-testid="templo-evento">
+                {hud.event}
+              </div>
+            )}
+            {hud.objective && (
+              <div className={`max-w-[94%] rounded-full bg-black/30 px-3 py-1 text-center text-[12px] font-semibold leading-tight text-white backdrop-blur-[2px] sm:max-w-md ${sombra}`} data-testid="templo-objetivo">
+                <ChevronRight className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5 text-amber-300" />
+                {hud.objective}
+              </div>
+            )}
+            {hud.jornada && <JornadaStrip hud={hud} onOpen={() => open({ kind: "camino" })} />}
+          </>
+        )}
         {c && (
           <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 py-1 pl-2 pr-1 text-sm font-bold backdrop-blur" data-testid="templo-carga">
             <span className="text-lg">{ITEMS[c.type].icono}</span>
@@ -537,7 +688,7 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
           </div>
         )}
         {hint && !modal && (
-          <div className="rounded-full bg-black/45 px-3 py-1 text-xs text-white/85 backdrop-blur-sm">
+          <div className="rounded-full bg-black/35 px-3 py-1 text-xs text-white/85 backdrop-blur-sm">
             Toca y arrastra para caminar · computadora: flechas o W A S D
           </div>
         )}
@@ -546,7 +697,7 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
   );
 }
 
-function IconBtn({ label, onClick, children, testid }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string }) {
+function IconBtn({ label, onClick, children, testid, active }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean }) {
   const world = useWorld();
   return (
     <button
@@ -557,7 +708,7 @@ function IconBtn({ label, onClick, children, testid }: { label: string; onClick:
         world?.audio.click();
         onClick();
       }}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white shadow-lg backdrop-blur hover:bg-black/70 active:scale-95"
+      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
       data-testid={testid}
     >
       {children}
@@ -577,13 +728,21 @@ function PauseMenu(props: {
   onMute: () => void;
   onMusic: () => void;
   onFull: () => void;
+  online: boolean;
+  onExitOnline: () => void;
 }) {
   const [askGen, setAskGen] = useState(false);
+  const margen = {
+    paddingTop: "calc(0.75rem + var(--tpl-st, 0px))",
+    paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))",
+    paddingLeft: "calc(0.75rem + var(--tpl-sl, 0px))",
+    paddingRight: "calc(0.75rem + var(--tpl-sr, 0px))",
+  };
   if (askGen) {
     const next = props.gen + 1;
     const extra = Math.round(100 * 0.25 * Math.min(4, next - 1));
     return (
-      <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+      <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={margen}>
         <div className="max-h-full w-full max-w-sm space-y-3 overflow-y-auto rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-white shadow-2xl" data-testid="templo-generacion">
           <h3 className="flex items-center justify-center gap-2 font-serif text-2xl font-black">
             <Sprout className="h-6 w-6 text-emerald-300" /> {next}.ª generación
@@ -608,8 +767,8 @@ function PauseMenu(props: {
     );
   }
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-xs space-y-3 rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-center text-white shadow-2xl">
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={margen}>
+      <div className="max-h-full w-full max-w-xs space-y-3 overflow-y-auto rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-center text-white shadow-2xl" data-testid="templo-pausa">
         <h3 className="font-serif text-2xl font-black">En pausa</h3>
         <Button size="lg" className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={props.onResume} data-testid="button-templo-seguir">
           <Play className="mr-2 h-5 w-5 fill-current" /> Seguir sirviendo
@@ -621,11 +780,11 @@ function PauseMenu(props: {
           <Button variant="secondary" onClick={props.onMusic} className={props.music ? "" : "opacity-60"}>
             <Music className="mr-1 h-4 w-4" /> {props.music ? "Música" : "Sin música"}
           </Button>
-          <Button variant="secondary" onClick={() => gameStore.push({ kind: "help" })}>
+          <Button variant="secondary" className="col-span-2" onClick={() => gameStore.push({ kind: "help" })}>
             <CircleHelp className="mr-1 h-4 w-4" /> Ayuda
           </Button>
-          <Button variant="secondary" onClick={props.onFull}>
-            {props.big ? <Minimize2 className="mr-1 h-4 w-4" /> : <Maximize2 className="mr-1 h-4 w-4" />} Pantalla
+          <Button variant="secondary" className="col-span-2" onClick={props.onFull} data-testid="button-pausa-pantalla">
+            {props.big ? <Minimize2 className="mr-1 h-4 w-4" /> : <Maximize2 className="mr-1 h-4 w-4" />} {props.big ? "Salir de pantalla completa" : "Pantalla completa"}
           </Button>
         </div>
         {props.canGen && (
@@ -633,7 +792,16 @@ function PauseMenu(props: {
             <Sprout className="mr-1 h-4 w-4 text-emerald-600" /> Nueva generación {props.gen > 1 ? `(vas en la ${props.gen}.ª)` : "(opcional)"}
           </Button>
         )}
-        <p className="text-xs text-white/60">Tu avance se guarda solo. Puedes cerrar cuando quieras.</p>
+        {props.online ? (
+          <>
+            <p className="text-xs text-white/60">Tus deberes se mandan solos cada 15 segundos. Tu partida de la historia no cambia.</p>
+            <Button variant="ghost" className="w-full text-white/80 hover:text-white" onClick={props.onExitOnline} data-testid="button-en-linea-salir">
+              <LogOut className="mr-1 h-4 w-4" /> Salir del templo en línea
+            </Button>
+          </>
+        ) : (
+          <p className="text-xs text-white/60">Tu avance se guarda solo. Puedes cerrar cuando quieras.</p>
+        )}
         <Button asChild variant="ghost" className="w-full text-white/80 hover:text-white">
           <Link href="/juegos">
             <ArrowLeft className="mr-1 h-4 w-4" /> Volver a los juegos
@@ -658,7 +826,15 @@ function ModalLayer() {
   }
   const bottom = modal.kind === "dialog" || modal.kind === "rank";
   return (
-    <div className={`pointer-events-auto absolute inset-0 z-50 flex justify-center p-2 sm:p-4 ${bottom ? "items-end bg-gradient-to-t from-black/60 via-black/10 to-transparent" : "items-center bg-black/55 backdrop-blur-[2px]"}`}>
+    <div
+      className={`pointer-events-auto absolute inset-0 z-50 flex justify-center p-2 sm:p-4 ${bottom ? "items-end bg-gradient-to-t from-black/60 via-black/10 to-transparent" : "items-center bg-black/55 backdrop-blur-[2px]"}`}
+      style={{
+        paddingTop: "calc(0.5rem + var(--tpl-st, 0px))",
+        paddingBottom: "calc(0.5rem + var(--tpl-sb, 0px))",
+        paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))",
+        paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))",
+      }}
+    >
       <ModalBody key={key} modal={modal} />
     </div>
   );
@@ -679,7 +855,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "help":
       return <HelpView />;
     case "offline":
-      return <OfflineView gained={modal.gained} minutes={modal.minutes} />;
+      return <OfflineView gained={modal.gained} minutes={modal.minutes} away={modal.away} leftToday={modal.leftToday} />;
     case "rank":
       return <RankView rank={modal.rank} />;
     case "finale":
@@ -690,6 +866,10 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <JornadaView n={modal.n} stars={modal.stars} reward={modal.reward} adorno={modal.adorno} seconds={modal.seconds} />;
     case "comunidad":
       return <ComunidadView />;
+    case "temporada":
+      return <TemporadaView />;
+    case "dificil":
+      return <DificilView q={modal.q} />;
   }
 }
 
@@ -1133,16 +1313,22 @@ function HelpView() {
   );
 }
 
-function OfflineView({ gained, minutes }: { gained: number; minutes: number }) {
+function OfflineView({ gained, minutes, away, leftToday }: { gained: number; minutes: number; away?: number; leftToday?: number }) {
+  const tiempo = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`);
+  const tope = away !== undefined && away > minutes + 1;
   return (
     <Card title="Mientras no estabas">
-      <div className="space-y-3 p-4 text-center">
+      <div className="space-y-3 p-4 text-center" data-testid="templo-ausencia">
         <Portrait who="conanias" size={72} />
-        <p className="text-[15px]">
-          Durante {minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`} los levitas siguieron sirviendo en la casa de Jehová.
-        </p>
+        <p className="text-[15px]">Durante {tiempo(minutes)} los levitas siguieron sirviendo en la casa de Jehová.</p>
         <p className="text-3xl font-black text-amber-600">+{fmt(gained)} de gozo</p>
-        <p className="text-xs text-stone-500">«Para ministrar en la casa de Jehová, en los atrios y en las cámaras» (1 Crónicas 23:28)</p>
+        {tope && (
+          <p className="rounded-xl bg-amber-50 p-2 text-xs text-stone-600 dark:bg-amber-950/30 dark:text-stone-300">
+            Estuviste fuera {tiempo(away!)}. Para que todos crezcan parejo, los levitas sirven sin ti hasta 2 horas cada vez y 3 horas por día{leftToday !== undefined ? ` (hoy les quedan ${tiempo(leftToday)})` : ""}.
+          </p>
+        )}
+        <p className="text-[11px] text-stone-500">La primera hora rinde completa y la segunda, la mitad. Tu servicio en el templo sigue contando siempre.</p>
+        <p className="text-xs text-stone-500">«para ministrar en la casa de Jehová, en los atrios, en las cámaras» (1 Crónicas 23:28)</p>
         <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => gameStore.close()}>
           ¡Gracias, hermanos!
         </Button>
@@ -1281,7 +1467,7 @@ function JornadaStrip({ hud, onOpen }: { hud: Hud; onOpen: () => void }) {
       <button
         type="button"
         onClick={onOpen}
-        className="pointer-events-auto flex max-w-[94%] items-center gap-2.5 rounded-full border border-amber-300/40 bg-black/55 px-3 py-1 text-[12px] font-bold shadow-lg backdrop-blur hover:bg-black/65"
+        className="pointer-events-auto flex max-w-[94%] items-center gap-2.5 rounded-full border border-amber-300/40 bg-black/35 px-3 py-1 text-[12px] font-bold shadow-lg backdrop-blur-[2px] hover:bg-black/50"
         data-testid="templo-jornada"
         aria-label={resumen}
         title={resumen}
@@ -1305,7 +1491,7 @@ function JornadaStrip({ hud, onOpen }: { hud: Hud; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="pointer-events-auto w-[94%] max-w-sm rounded-2xl border border-amber-300/40 bg-black/55 px-3 py-1.5 text-left shadow-lg backdrop-blur hover:bg-black/65"
+      className="pointer-events-auto w-[94%] max-w-sm rounded-2xl border border-amber-300/40 bg-black/40 px-3 py-1.5 text-left shadow-lg backdrop-blur-[2px] hover:bg-black/55"
       data-testid="templo-jornada"
     >
       <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
@@ -1677,6 +1863,486 @@ function ComunidadView() {
             )}
           </>
         )}
+      </div>
+    </Card>
+  );
+}
+
+// ================================================================ Jerusalén en línea
+/** En la portada: la entrada al templo en línea, o por qué todavía no se abre. */
+function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnline: () => void }) {
+  const r = estado.requisito;
+  if (estado.cuentaAprobada && r.puedeEntrar)
+    return (
+      <button
+        type="button"
+        onClick={onOnline}
+        className="flex w-full max-w-xs items-center gap-3 rounded-2xl border border-sky-200/40 bg-sky-400/15 px-4 py-2.5 text-left shadow-lg backdrop-blur hover:bg-sky-400/25"
+        data-testid="button-templo-en-linea"
+      >
+        <Landmark className="h-6 w-6 shrink-0 text-sky-200" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">Jerusalén en línea</span>
+          <span className="block text-[11px] text-white/75">
+            Templo en línea · temporada {estado.temporada.n}
+            {estado.temporada.dePrueba ? " (de prueba)" : ""}
+            {estado.enLinea > 0 ? ` · ${estado.enLinea} sirviendo ahora` : ""}
+          </span>
+        </span>
+        <ChevronRight className="h-5 w-5 shrink-0" />
+      </button>
+    );
+  const texto = !estado.cuentaAprobada
+    ? "Jerusalén en línea se abre cuando tu cuenta esté aprobada."
+    : r.rango < 1
+      ? "Jerusalén en línea se abre cuando llegues a sacerdote en la historia."
+      : `Jerusalén en línea: ${r.motivo || "no se pudo comprobar tu partida."}`;
+  return (
+    <p className="flex max-w-xs items-start gap-1.5 text-left text-[11px] text-white/65" data-testid="templo-en-linea-cerrado">
+      <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {texto}
+    </p>
+  );
+}
+
+function NameChip({ label, title, active, onClick }: { label: string; title?: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`rounded-full px-3 py-1 text-sm font-semibold ${active ? "bg-sky-300 text-sky-950" : "bg-white/10 text-white hover:bg-white/20"}`}
+      aria-pressed={active}
+    >
+      {label}
+    </button>
+  );
+}
+
+/** La sala del modo en línea: tu sacerdote, entrar al templo y la temporada. */
+function OnlineLobby({
+  estado,
+  phase,
+  onBack,
+  onEnter,
+  onEstado,
+}: {
+  estado: JerusalenEstado;
+  phase: Phase;
+  onBack: () => void;
+  onEnter: (e: JerusalenEstado) => void;
+  onEstado: (e: JerusalenEstado) => void;
+}) {
+  const p = estado.personaje;
+  const t = estado.temporada;
+  const [nombre, setNombre] = useState(NOMBRE_PROPIO);
+  const [cambiar, setCambiar] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const starting = phase === "starting";
+  const guardar = async () => {
+    setBusy(true);
+    setError(null);
+    const r = p ? await renombrarPersonaje(nombre) : await crearPersonaje(nombre);
+    setBusy(false);
+    if (r.ok && r.data) {
+      onEstado(r.data);
+      setCambiar(false);
+    } else setError(r.data?.message || "No se pudo guardar. Intenta de nuevo.");
+  };
+  const ref = estado.nombres.find((x) => x.nombre === nombre)?.ref;
+  return (
+    <div
+      className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#21436b_0%,#18233a_45%,#0c0a08_100%)] text-white"
+      style={{ paddingTop: "var(--tpl-st, 0px)", paddingBottom: "var(--tpl-sb, 0px)", paddingLeft: "var(--tpl-sl, 0px)", paddingRight: "var(--tpl-sr, 0px)" }}
+      data-testid="templo-en-linea"
+    >
+      <div className="mx-auto flex min-h-full max-w-lg flex-col gap-3 px-4 py-4">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <button type="button" onClick={onBack} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 font-semibold hover:bg-white/20" data-testid="button-en-linea-volver">
+            <ArrowLeft className="h-4 w-4" /> Portada
+          </button>
+          <span className="rounded-full bg-white/10 px-3 py-1.5 text-right font-semibold">
+            Temporada {t.n}
+            {t.dePrueba ? " · de prueba" : ""} · {t.diasRestantes === 1 ? "último día" : `quedan ${t.diasRestantes} días`}
+          </span>
+        </div>
+        <header className="text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>
+          <h2 className="mt-1 font-serif text-3xl font-black">Templo en línea</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-white/80">
+            Sirve en el templo junto con la comunidad. Aquí no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
+          </p>
+        </header>
+        {!p || cambiar ? (
+          <section className="space-y-2.5 rounded-2xl border border-sky-200/30 bg-black/30 p-4" data-testid="templo-personaje-nuevo">
+            <h3 className="font-bold">{p ? "Cambia el nombre de tu sacerdote" : "Tu sacerdote en línea"}</h3>
+            <p className="text-xs text-white/70">Elige el nombre de un sacerdote fiel de la Biblia o usa el de tu cuenta. Así te verá la comunidad.</p>
+            <div className="flex flex-wrap gap-1.5">
+              <NameChip label="Mi nombre" active={nombre === NOMBRE_PROPIO} onClick={() => setNombre(NOMBRE_PROPIO)} />
+              {estado.nombres.map((n) => (
+                <NameChip key={n.nombre} label={n.nombre} title={n.ref} active={nombre === n.nombre} onClick={() => setNombre(n.nombre)} />
+              ))}
+            </div>
+            {nombre !== NOMBRE_PROPIO && ref && (
+              <p className="text-[11px] text-sky-100/85">
+                {nombre}: {ref}
+              </p>
+            )}
+            {error && <p className="rounded-lg bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>}
+            <div className="flex gap-2">
+              {p && (
+                <Button variant="secondary" onClick={() => setCambiar(false)}>
+                  Cancelar
+                </Button>
+              )}
+              <Button className="flex-1 rounded-full bg-sky-300 font-bold text-sky-950 hover:bg-sky-200" disabled={busy} onClick={() => void guardar()} data-testid="button-personaje-guardar">
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />} {p ? "Guardar" : "Consagrarme como sacerdote"}
+              </Button>
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-3 rounded-2xl border border-sky-200/30 bg-black/30 p-4" data-testid="templo-mi-sacerdote">
+            <div className="flex items-center gap-3">
+              <Portrait who={`rank${escalonRank(estado.mio?.escalon)}` as "rank0"} size={56} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-lg font-black">{p.nombre}</p>
+                <p className="text-xs text-sky-100">
+                  {escalonNombre(estado.mio?.escalon)}
+                  {estado.mio?.cargo && t.dePrueba ? " (de prueba)" : ""} · {fmt(estado.mio?.merito || 0)} de mérito
+                </p>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 text-[11px] text-white/70 underline underline-offset-2 hover:text-white"
+                onClick={() => {
+                  setNombre(p.propio ? NOMBRE_PROPIO : p.nombre);
+                  setCambiar(true);
+                }}
+              >
+                Cambiar nombre
+              </button>
+            </div>
+            <Button size="lg" className="w-full rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" disabled={starting} onClick={() => onEnter(estado)} data-testid="button-en-linea-entrar">
+              {starting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5 fill-current" />} Entrar al templo
+            </Button>
+            {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100">🔥 {estado.enLinea} sirviendo en el templo en línea ahora</p>}
+          </section>
+        )}
+        <section className="overflow-hidden rounded-2xl bg-[#fffaf0] text-stone-800 shadow-2xl dark:bg-[#1f1a12] dark:text-stone-100">
+          <div className="flex items-center gap-2 border-b border-amber-200/60 bg-gradient-to-r from-amber-100 to-amber-50 px-4 py-2.5 font-serif text-lg font-bold text-amber-900 dark:border-amber-900/50 dark:from-amber-950/60 dark:to-transparent dark:text-amber-200">
+            <Trophy className="h-5 w-5" /> Temporada sacerdotal {t.n}
+          </div>
+          <div className="p-3">
+            <TemporadaPanel estado={estado} onEstado={onEstado} />
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/** La temporada: tu mérito, cómo va el día, la escalera del sacerdocio con quién tiene cada cargo y la tabla. */
+function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstado?: (e: JerusalenEstado) => void }) {
+  const mio = estado.mio;
+  const prueba = estado.temporada.dePrueba ? " (de prueba)" : "";
+  const [busy, setBusy] = useState(false);
+  const quitar = async (id: number, nombre: string) => {
+    if (!window.confirm(`¿Quitar el cargo a ${nombre}? Pasará al siguiente de la lista.`)) return;
+    setBusy(true);
+    const r = await adminQuitarCargo(id);
+    setBusy(false);
+    if (r.ok && r.data) onEstado?.(r.data);
+  };
+  const revisar = async () => {
+    setBusy(true);
+    const r = await adminRevisar();
+    setBusy(false);
+    if (r.ok && r.data) onEstado?.(r.data);
+  };
+  const min = Math.floor((mio?.hoy.segundos || 0) / 60);
+  const f = mio?.hoy.factor ?? 1;
+  return (
+    <div className="space-y-3 text-sm" data-testid="templo-temporada-panel">
+      {mio ? (
+        <>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
+              <p className="text-lg font-black" data-testid="temporada-merito">{fmt(mio.merito)}</p>mérito
+            </div>
+            <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
+              <p className="text-lg font-black">{mio.puesto ? `${mio.puesto}.º` : "—"}</p>puesto
+            </div>
+            <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
+              <p className="text-sm font-black leading-tight">{escalonNombre(mio.escalon)}</p>
+              {mio.cargo ? `cargo${prueba}` : "escalón"}
+            </div>
+          </div>
+          <div className="rounded-xl border border-stone-200 p-2.5 text-xs dark:border-stone-700" data-testid="temporada-hoy">
+            <p>
+              <b>Hoy:</b> {min} min de servicio ·{" "}
+              <span className={f >= 1 ? "font-semibold text-emerald-700 dark:text-emerald-300" : f > 0 ? "font-semibold text-amber-700 dark:text-amber-300" : "font-semibold text-red-700 dark:text-red-300"}>
+                {f >= 1 ? "el mérito cuenta completo" : f > 0 ? "el mérito cuenta la mitad" : "tu turno de hoy terminó"}
+              </span>
+            </p>
+            <p className="mt-0.5 text-stone-500">
+              Preguntas difíciles: {mio.hoy.preguntas} de {mio.hoy.preguntasMax} · Constancia: {mio.hoy.constancia ? "cumplida ✓" : "10 minutos de servicio"} · {mio.aciertos} {mio.aciertos === 1 ? "acierto" : "aciertos"} en la temporada
+            </p>
+          </div>
+          {mio.diasSinServir !== null && (
+            <p className="rounded-xl bg-red-50 p-2.5 text-xs text-red-900 dark:bg-red-950/30 dark:text-red-200">
+              Llevas {mio.diasSinServir} días sin servir. Si llegas a 7, tu cargo pasa al siguiente de la lista.
+            </p>
+          )}
+          {mio.perdio && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mio.perdio}</p>}
+        </>
+      ) : (
+        <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">Consagra a tu sacerdote para empezar a sumar mérito en esta temporada.</p>
+      )}
+
+      <div>
+        <p className="mb-1 font-black">La escalera del sacerdocio</p>
+        <ol className="space-y-1.5">
+          {[...ESCALONES].reverse().map((e) => {
+            const fila = estado.escalera.find((x) => x.id === e.id);
+            const yo = mio?.escalon === e.id;
+            return (
+              <li key={e.id} className={`rounded-xl border p-2.5 ${yo ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`} data-testid={`escalon-${e.id}`}>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="font-bold">
+                    {e.nombre}
+                    {e.cupo ? prueba : ""} {yo && <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">(tú)</span>}
+                  </p>
+                  <span className="shrink-0 text-[11px] text-stone-500">{e.cupo ? `${fila?.titulares.length || 0} de ${e.cupo}` : "sin cupo"}</span>
+                </div>
+                {fila ? (
+                  fila.titulares.length ? (
+                    <ul className="mt-1 flex flex-wrap gap-1">
+                      {fila.titulares.map((h) => (
+                        <li key={h.personajeId} className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${h.isMe ? "bg-amber-200 font-bold text-amber-900" : "bg-stone-100 dark:bg-stone-800"}`}>
+                          {h.nombre}
+                          {h.persona && h.persona !== h.nombre && <span className="text-stone-500"> · {h.persona}</span>}
+                          {estado.esAdmin && (
+                            <button type="button" disabled={busy} onClick={() => void quitar(h.personajeId, h.nombre)} className="ml-0.5 font-bold text-red-600" title="Quitar el cargo (administración)">
+                              ✕
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-stone-500">Vacante: se reparte al cerrar la temporada.</p>
+                  )
+                ) : (
+                  <p className="mt-0.5 text-xs text-stone-500">{e.como}</p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      <div>
+        <p className="mb-1 font-black">Mérito de la temporada</p>
+        {estado.tabla.length ? (
+          <ol className="divide-y rounded-lg border dark:divide-stone-700 dark:border-stone-700" data-testid="temporada-tabla">
+            {estado.tabla.map((r) => (
+              <li key={r.personajeId} className={`flex items-center gap-2 px-3 py-1.5 text-sm ${r.isMe ? "bg-amber-50 font-semibold dark:bg-amber-950/30" : ""}`}>
+                <span className={`w-6 text-center font-black ${r.puesto === 1 ? "text-yellow-500" : r.puesto === 2 ? "text-slate-400" : r.puesto === 3 ? "text-amber-700" : "text-stone-400"}`}>{r.puesto}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {r.isMe ? `${r.nombre} (tú)` : r.nombre}
+                  {r.persona && r.persona !== r.nombre && <span className="text-xs font-normal text-stone-500"> · {r.persona}</span>}
+                </span>
+                <span className="tabular-nums">{fmt(r.merito)}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="py-2 text-center text-xs text-stone-500">Nadie ha sumado mérito todavía en esta temporada. ¡Sé el primero!</p>
+        )}
+      </div>
+
+      <details className="rounded-xl bg-stone-50 p-3 text-xs dark:bg-stone-900/40">
+        <summary className="cursor-pointer font-bold">Cómo se gana el mérito y los cargos</summary>
+        <ul className="mt-2 list-disc space-y-1 pl-4">
+          <li>Deberes del templo: presentar las ofrendas, avivar el fuego, llenar las lámparas, poner los panes y el incienso, y guardar los diezmos.</li>
+          <li>Constancia: 10 minutos de servicio en el día suman 60.</li>
+          <li>Preguntas difíciles de Azarías: 30 por acierto, 20 segundos para responder, {PREGUNTAS_DIA} por día y sin repetirse en la temporada.</li>
+          <li>La primera hora de cada día cuenta completa; las dos siguientes, la mitad; después tu turno del día termina. Así quien tiene poco tiempo también puede llegar arriba.</li>
+          <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días. Para ser sumo sacerdote hay que haberlo sido en la historia.</li>
+          <li>Quien tiene un cargo y pasa 7 días sin servir lo pierde, y el cargo pasa al siguiente de la lista.</li>
+          <li>Mientras no se abran el palacio del rey y la escuela de los profetas, los cargos son de prueba.</li>
+        </ul>
+      </details>
+      {estado.esAdmin && (
+        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void revisar()} data-testid="button-temporada-revisar">
+          Revisar la temporada ahora (administración)
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function TemporadaView() {
+  const [estado, setEstado] = useState<JerusalenEstado | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    void fetchEstado().then((r) => {
+      if (!vivo) return;
+      if (r.ok && r.data) setEstado(r.data);
+      else setError(true);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Trophy className="h-5 w-5" /> Temporada sacerdotal {estado ? estado.temporada.n : ""}
+        </span>
+      }
+      onClose={() => gameStore.close()}
+      wide
+      testid="templo-temporada"
+    >
+      <div className="p-3">
+        {estado ? (
+          <TemporadaPanel estado={estado} onEstado={setEstado} />
+        ) : error ? (
+          <p className="py-6 text-center text-sm">No se pudo cargar la temporada. Revisa tu conexión.</p>
+        ) : (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/** Pregunta difícil: llega sin la respuesta, hay 20 segundos y el servidor corrige. */
+function DificilView({ q }: { q: JerusalenPregunta }) {
+  const session = useContext(SessionCtx);
+  const world = useWorld();
+  const [left, setLeft] = useState(q.segundos);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [res, setRes] = useState<JerusalenRespuesta | null>(null);
+  const [fallo, setFallo] = useState(false);
+  const sent = useRef(false);
+  const send = useCallback(
+    async (op: string) => {
+      if (sent.current) return;
+      sent.current = true;
+      setPicked(op);
+      const r = session ? await session.answer(q, op) : null;
+      if (!r) {
+        setFallo(true);
+        return;
+      }
+      setRes(r);
+      if (r.correcta) world?.audio.correct();
+      else world?.audio.wrong();
+    },
+    [session, q, world],
+  );
+  useEffect(() => {
+    if (picked !== null) return;
+    if (left <= 0) {
+      void send("");
+      return;
+    }
+    const t = setTimeout(() => setLeft((l) => l - 1), 1000);
+    return () => clearTimeout(t);
+  }, [left, picked, send]);
+  const cerrar = () => {
+    world?.audio.click();
+    gameStore.close();
+  };
+  const tarde = picked === "";
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Portrait who="azarias" size={28} /> Pregunta difícil de Azarías
+        </span>
+      }
+      testid="templo-dificil"
+    >
+      <div className="space-y-3 p-4">
+        {!res && !fallo && (
+          <div className="flex items-center gap-2">
+            <Timer className={`h-4 w-4 ${left <= 5 ? "text-red-600" : "text-amber-700"}`} />
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-700">
+              <div className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${left <= 5 ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${Math.max(0, (left / SEGUNDOS_PREGUNTA) * 100)}%` }} />
+            </div>
+            <span className="w-7 text-right text-sm font-black tabular-nums" data-testid="templo-dificil-tiempo">
+              {Math.max(0, left)}
+            </span>
+          </div>
+        )}
+        <p className="font-serif text-lg font-bold leading-snug">{q.pregunta}</p>
+        <div className="space-y-2">
+          {q.opciones.map((o, i) => {
+            const state = !res ? (picked === o ? "picked" : "") : o === res.respuesta ? "right" : picked === o ? "wrong" : "dim";
+            return (
+              <button
+                key={o}
+                type="button"
+                disabled={picked !== null}
+                onClick={() => void send(o)}
+                className={`w-full rounded-xl border-2 px-3 py-2.5 text-left text-[15px] font-semibold transition ${
+                  state === "right"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                    : state === "wrong"
+                      ? "border-red-400 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200"
+                      : state === "picked"
+                        ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                        : state === "dim"
+                          ? "border-stone-200 opacity-50 dark:border-stone-700"
+                          : "border-amber-200 bg-white hover:border-amber-400 hover:bg-amber-50 dark:border-amber-900 dark:bg-transparent dark:hover:bg-amber-950/30"
+                }`}
+                data-testid={`templo-dificil-opcion-${i}`}
+              >
+                <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm text-amber-900 dark:bg-amber-900 dark:text-amber-100">{"ABCD"[i]}</span>
+                {o}
+              </button>
+            );
+          })}
+        </div>
+        {picked !== null && !res && !fallo && (
+          <p className="flex items-center gap-2 text-sm text-stone-500">
+            <Loader2 className="h-4 w-4 animate-spin" /> Azarías revisa tu respuesta…
+          </p>
+        )}
+        {fallo && (
+          <div className="space-y-2 rounded-xl bg-red-50 p-3 text-sm dark:bg-red-950/30">
+            <p>No se pudo enviar la respuesta. Revisa tu conexión.</p>
+            <Button className="w-full" variant="secondary" onClick={cerrar}>
+              Continuar
+            </Button>
+          </div>
+        )}
+        {res && (
+          <div className={`rounded-xl p-3 ${res.correcta ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-amber-50 dark:bg-amber-950/30"}`} data-testid="templo-dificil-resultado">
+            <p className="font-bold">
+              {res.correcta
+                ? res.ganado
+                  ? `¡Correcto! +${res.ganado} de mérito`
+                  : "¡Correcto! Tu turno de hoy ya terminó: mañana vuelve a sumar mérito."
+                : tarde || !res.aTiempo
+                  ? `Se acabó el tiempo. La respuesta era: ${res.respuesta}`
+                  : `La respuesta es: ${res.respuesta}`}
+            </p>
+            <p className="mt-1 text-sm">{res.explica}</p>
+            <p className="mt-1 text-xs font-semibold text-amber-800 dark:text-amber-300">{res.ref}</p>
+            <Button className="mt-3 w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={cerrar} data-testid="button-templo-dificil-seguir">
+              Continuar
+            </Button>
+          </div>
+        )}
+        {!res && !fallo && <p className="text-[11px] text-stone-500">Un acierto suma mérito a tu temporada. Cada pregunta sale una sola vez por temporada.</p>}
       </div>
     </Card>
   );

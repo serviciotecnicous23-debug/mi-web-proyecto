@@ -32,6 +32,8 @@ import { Fx } from "./three/fx";
 import { NavGrid, collide, walkableArea } from "./three/nav";
 import { Overlay, Ring } from "./three/overlay";
 import { TempleAudio } from "./audio";
+import type { DeberId } from "@shared/jerusalen";
+import type { OnlineHooks } from "./online";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -99,7 +101,10 @@ type Zone = { id: ZoneId; x: number; z: number; r: number; color: string; ring: 
 
 type Pad = { key: string; kind: "station" | "helper"; id: string; cost: number; x: number; z: number; name: string; ring: Ring; label: HTMLDivElement; pop: number };
 
-export type WorldOptions = { loggedIn: boolean; muted: boolean; music: boolean };
+export type WorldOptions = { loggedIn: boolean; muted: boolean; music: boolean; online?: OnlineHooks };
+
+/** En el templo en línea, lo que cuenta como deber para el mérito. */
+const DEBER_DE: Partial<Record<string, DeberId>> = { ofrendas: "ofrendas", lena: "lena", aceite: "aceite", panes: "panes", incienso: "incienso", diezmos: "diezmos", orantes: "orantes" };
 
 const STATION_IDS = STATIONS.map((s) => s.id);
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -124,6 +129,8 @@ const easeOutBack = (t: number) => {
 export class TempleWorld {
   readonly s: SaveData;
   private opts: WorldOptions;
+  /** Modo en línea (Jerusalén): sin levitas, sin compras y sin guardar la partida local. */
+  private online: OnlineHooks | null = null;
   private container: HTMLElement;
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
@@ -216,6 +223,7 @@ export class TempleWorld {
     this.container = container;
     this.s = save;
     this.opts = opts;
+    this.online = opts.online || null;
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
     this.maxRatio = Math.min(window.devicePixelRatio || 1, coarse ? 1.75 : 2);
@@ -312,12 +320,16 @@ export class TempleWorld {
     this.resize();
     this.unsub = gameStore.onClosed(this.onModalClosed);
 
-    // al volver: lo que hicieron los levitas mientras tanto
-    const off = applyOffline(this.s);
-    if (off.gained > 0) gameStore.push({ kind: "offline", gained: off.gained, minutes: off.minutes });
-    if (!this.s.story.intro) {
-      this.s.story.intro = true;
-      this.dialog("intro");
+    if (this.online) {
+      gameStore.toast("Templo en línea: aquí no hay levitas que ayuden. Cada deber suma mérito.", "info");
+    } else {
+      // al volver: lo que hicieron los levitas mientras tanto
+      const off = applyOffline(this.s);
+      if (off.gained > 0) gameStore.push({ kind: "offline", gained: off.gained, minutes: off.minutes, away: off.away, leftToday: off.leftToday });
+      if (!this.s.story.intro) {
+        this.s.story.intro = true;
+        this.dialog("intro");
+      }
     }
     this.updateObjective();
     this.pushHud();
@@ -486,6 +498,7 @@ export class TempleWorld {
   private simulate(dt: number) {
     const s = this.s;
     s.playSeconds += dt;
+    this.online?.tick(dt);
     // día y noche
     const prev = s.time;
     s.time += dt / DAY;
@@ -560,6 +573,7 @@ export class TempleWorld {
   }
 
   private sendScore() {
+    if (this.online) return;
     const g = gloria(this.s);
     if (g > this.lastScore) {
       this.lastScore = g;
@@ -568,6 +582,8 @@ export class TempleWorld {
   }
 
   private persist() {
+    // el templo en línea no se guarda: la partida local queda como estaba
+    if (this.online) return;
     this.s.piles = { ...this.s.piles, lena: this.piles.lena, aceite: this.piles.aceite, pan: this.piles.pan, incienso: this.piles.incienso };
     this.s.savedAt = Date.now();
     saveLocal(this.s);
@@ -644,13 +660,13 @@ export class TempleWorld {
     const s = this.s;
     if (!s.built.altar) return;
     this.audio.trumpet();
-    gameStore.toast(`${HOURS[h][2]}: las ofrendas valen el doble`, "gold");
+    gameStore.toast(this.online ? `${HOURS[h][2]}: el pueblo trae sus ofrendas` : `${HOURS[h][2]}: las ofrendas valen el doble`, "gold");
     if (s.built.altarIncienso) {
       if (s.incense >= 1) {
         s.incense -= 1;
         this.prayer = true;
         this.audio.pray();
-        const n = Math.min(PRAY_SPOTS.length, 6 + s.rank * 2);
+        const n = Math.min(PRAY_SPOTS.length, this.online ? 6 : 6 + s.rank * 2);
         for (let i = 0; i < n; i++) setTimeout(() => this.running && this.spawnOrante(), i * 380);
         if (!s.story.horaIncienso) {
           s.story.horaIncienso = true;
@@ -945,7 +961,7 @@ export class TempleWorld {
       case "azarias":
         return true;
       case "expiacion":
-        return s.rank >= 4 && !!s.story.rango4 && !s.finale && !this.finale;
+        return !this.online && s.rank >= 4 && !!s.story.rango4 && !s.finale && !this.finale;
     }
   }
 
@@ -1290,11 +1306,11 @@ export class TempleWorld {
     const s = this.s;
     const view = progressView(s);
     const want = new Map<string, Omit<Pad, "ring" | "label" | "pop">>();
-    for (const def of STATIONS) {
+    for (const def of this.online ? [] : STATIONS) {
       if (s.built[def.id] || !def.requiere(view)) continue;
       want.set(`st:${def.id}`, { key: `st:${def.id}`, kind: "station", id: def.id, cost: def.costo, x: def.pad[0], z: def.pad[1], name: def.nombre });
     }
-    for (const def of HELPERS) {
+    for (const def of this.online ? [] : HELPERS) {
       const have = s.helpers[def.id] || 0;
       if (have >= def.costos.length || !def.requiere(view)) continue;
       want.set(`he:${def.id}`, { key: `he:${def.id}`, kind: "helper", id: def.id, cost: def.costos[have], x: def.pad[0], z: def.pad[1], name: def.nombre });
@@ -1410,7 +1426,7 @@ export class TempleWorld {
     const bearers = this.visitors.filter((v) => v.kind === "diezmo").length;
     if (s.story.pascua && r < 0.28 && bearers < 3) return void this.spawnBearer();
     const asking = this.visitors.some((v) => v.kind === "pregunta");
-    if (s.built.ensenanza && !asking && this.timers.question <= 0 && r < 0.5) {
+    if (!this.online && s.built.ensenanza && !asking && this.timers.question <= 0 && r < 0.5) {
       this.timers.question = 40;
       return void this.spawnQuestioner();
     }
@@ -1722,11 +1738,14 @@ export class TempleWorld {
 
   // ---------------------------------------------------------------- Azarías
   private rankReady() {
+    if (this.online) return false;
     const next = this.s.rank + 1;
     return next <= 4 && RANKS[next].requiere(progressView(this.s));
   }
 
   private talkAzarias() {
+    // en línea, Azarías trae las preguntas difíciles del servidor
+    if (this.online) return this.online.ask();
     if (this.rankReady()) return this.startRankUp();
     if (this.s.pendingQuiz) {
       gameStore.push({ kind: "quiz", quizId: this.s.pendingQuiz, source: "azarias" });
@@ -2151,6 +2170,12 @@ export class TempleWorld {
 
   private storyTriggers() {
     const s = this.s;
+    if (this.online) {
+      this.audio.layers.night = this.isNight();
+      this.audio.setRadio(document.documentElement.classList.contains("radio-mini-open"));
+      this.audio.layers.event = this.hourIndex() >= 0;
+      return;
+    }
     this.ensureJornada();
     this.ensureDaily();
     this.checkGoals();
@@ -2204,6 +2229,11 @@ export class TempleWorld {
   /** Cuenta algo que pasó: avanza la jornada, el desafío del día y las cuentas de los logros. */
   private track(kind: GoalKind | StatKey, n = 1, byPlayer = true) {
     const s = this.s;
+    if (this.online) {
+      const deber = DEBER_DE[kind];
+      if (deber && byPlayer) this.online.duty(deber, n);
+      return;
+    }
     const stat: StatKey | null = kind === "noche" ? "noches" : kind === "fuegoVivo" ? null : (kind as StatKey);
     if (stat) s.stats[stat] = (s.stats[stat] || 0) + n;
     if (!byPlayer) {
@@ -2440,6 +2470,13 @@ export class TempleWorld {
           return set("Guarda los diezmos en las cámaras", POS.camarasDoor, "camaras");
       }
     }
+    if (this.online) {
+      if (s.lampOil < LAMPS - 0.5 && s.time > 0.6 && s.time < DUSK) return set("Llena las siete lámparas antes de que anochezca", POS.prensaPile, "aceite");
+      if (this.queue.length >= 3) return set("Recibe las ofrendas del pueblo en la puerta", POS.reception, "reception");
+      if (this.online.ready()) return set("Azarías tiene una pregunta difícil para ti", POS.azarias, "azarias");
+      if (this.queue.length) return set("Recibe las ofrendas del pueblo en la puerta", POS.reception, "reception");
+      return set("Sirve en el templo: cada deber suma mérito a tu temporada", null);
+    }
     if (!s.story.primeraOfrenda) return set("Recibe la ofrenda en la puerta del atrio", POS.reception, "reception");
     if (s.gozoPile >= 1 && !s.story.recogio) return set("Recoge el gozo en la fuente dorada, junto a la puerta", POS.gozoBasin, "basin");
     if (s.pendingQuiz && s.lessons.length > 1 && s.sabiduria < 2) return set("Azarías tiene una pregunta para ti", POS.azarias, "azarias");
@@ -2487,7 +2524,7 @@ export class TempleWorld {
     a.rig.pose = this.rankReady() ? "offer" : "idle";
     a.fig.update(a.rig);
     this.shadows.add(a.rig.x, a.rig.y, a.rig.z, 1.1);
-    const mark = this.rankReady() ? "★" : s.pendingQuiz ? "?" : "";
+    const mark = this.online ? (this.online.ready() ? "?" : "") : this.rankReady() ? "★" : s.pendingQuiz ? "?" : "";
     if (mark && !this.finale) {
       if (a.bubble.textContent !== mark) a.bubble.textContent = mark;
       this.overlay.place(a.bubble, this.headPos(a.rig).add(new THREE.Vector3(0, 0.55, 0)));
@@ -2968,7 +3005,7 @@ export class TempleWorld {
     const hour = this.hourIndex();
     const events: string[] = [];
     if (this.pascua > 0) events.push(`La Pascua de Ezequías · gozo ×1,5 · ${Math.ceil(this.pascua)} s`);
-    if (hour >= 0 && s.built.altar) events.push(`${HOURS[hour][2]} · gozo ×2`);
+    if (hour >= 0 && s.built.altar) events.push(this.online ? HOURS[hour][2] : `${HOURS[hour][2]} · gozo ×2`);
     if (this.prayer) events.push("El pueblo ora a la hora del incienso");
     const hud: Hud = {
       gozo: Math.floor(s.gozo),
@@ -3079,11 +3116,11 @@ export class TempleWorld {
     } else {
       this.audio.resume();
       this.last = performance.now();
-      // si cambió de aplicación un rato, los levitas siguieron sirviendo
-      const off = applyOffline(this.s);
+      // si cambió de aplicación un rato, los levitas siguieron sirviendo (en línea no hay levitas)
+      const off = this.online ? { gained: 0, minutes: 0, away: 0, leftToday: 0 } : applyOffline(this.s);
       if (off.gained > 0) {
         this.persist();
-        gameStore.push({ kind: "offline", gained: off.gained, minutes: off.minutes });
+        gameStore.push({ kind: "offline", gained: off.gained, minutes: off.minutes, away: off.away, leftToday: off.leftToday });
         this.pushHud();
       }
     }
@@ -3100,7 +3137,7 @@ export class TempleWorld {
    * para levantar el templo otra vez desde las ruinas. Solo después del Día de la Expiación.
    */
   startNewGeneration(): SaveData {
-    if (!this.s.finale) return sanitize(JSON.parse(JSON.stringify(this.s)));
+    if (this.online || !this.s.finale) return sanitize(JSON.parse(JSON.stringify(this.s)));
     this.running = false;
     for (const k of Object.keys(this.piles)) this.piles[k] = 0;
     Object.assign(this.s, nuevaGeneracion(this.s));

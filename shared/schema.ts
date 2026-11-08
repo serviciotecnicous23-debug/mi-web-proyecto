@@ -1966,6 +1966,83 @@ export const gameSaves = pgTable("game_saves", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ========== JERUSALÉN EN LÍNEA (modo en línea del templo, server/jerusalen.ts) ==========
+// Los índices y las tablas se crean también en JERUSALEN_SQL al arrancar (ensureDatabaseSchema).
+// Personajes en línea: uno por cuenta en la etapa 1 (la tabla admite varios por "slot").
+export const gameCharacters = pgTable("game_characters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  game: text("game").notNull(),
+  slot: integer("slot").notNull().default(1),
+  // nombre de sacerdote elegido de la lista; vacío = el nombre de la cuenta
+  name: text("name"),
+  path: text("path").notNull().default("sacerdocio"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastDutyAt: timestamp("last_duty_at"),
+});
+
+// Mérito de cada personaje por temporada, con la cuenta del día (tope diario y preguntas).
+export const gameSeasonMerit = pgTable(
+  "game_season_merit",
+  {
+    characterId: integer("character_id").notNull().references(() => gameCharacters.id, { onDelete: "cascade" }),
+    season: integer("season").notNull(),
+    merit: integer("merit").notNull().default(0),
+    duties: integer("duties").notNull().default(0),
+    answered: integer("answered").notNull().default(0),
+    hits: integer("hits").notNull().default(0),
+    dayKey: text("day_key"),
+    daySeconds: integer("day_seconds").notNull().default(0),
+    dayQuestions: integer("day_questions").notNull().default(0),
+    daysServed: integer("days_served").notNull().default(0),
+    lastBatchAt: timestamp("last_batch_at"),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.characterId, t.season] })],
+);
+
+// Preguntas difíciles que ya vio cada personaje en la temporada (no se repiten).
+export const gameQuestionLog = pgTable(
+  "game_question_log",
+  {
+    characterId: integer("character_id").notNull().references(() => gameCharacters.id, { onDelete: "cascade" }),
+    season: integer("season").notNull(),
+    question: text("question").notNull(),
+    askedAt: timestamp("asked_at").notNull().defaultNow(),
+    answeredAt: timestamp("answered_at"),
+    correct: boolean("correct"),
+  },
+  (t) => [primaryKey({ columns: [t.characterId, t.season, t.question] })],
+);
+
+// Cargos de cada temporada: la lista del cierre en orden de mérito y el cargo de cada uno.
+export const gameOffices = pgTable(
+  "game_offices",
+  {
+    season: integer("season").notNull(),
+    characterId: integer("character_id").notNull().references(() => gameCharacters.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    merit: integer("merit").notNull().default(0),
+    canHigh: boolean("can_high").notNull().default(false),
+    office: text("office"), // sumo | principal | jefe
+    lostAt: timestamp("lost_at"),
+    lostReason: text("lost_reason"), // inactividad | admin
+  },
+  (t) => [primaryKey({ columns: [t.season, t.characterId] })],
+);
+
+// Temporadas ya cerradas (para no repartir dos veces).
+export const gameSeasons = pgTable(
+  "game_seasons",
+  {
+    game: text("game").notNull(),
+    season: integer("season").notNull(),
+    closedAt: timestamp("closed_at").defaultNow(),
+    candidates: integer("candidates").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.game, t.season] })],
+);
+
 export const PRAYER_CATEGORIES = {
   salud: "Salud",
   familia: "Familia",

@@ -96,9 +96,13 @@ async function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>): Prom
 function forget(prefix: string) {
   for (const k of [...cache.keys()]) if (k.startsWith(prefix)) cache.delete(k);
 }
+/** Para otros módulos (Jerusalén en línea publica en la misma actividad). */
+export function forgetGameCache(prefix: string) {
+  forget(prefix);
+}
 
 const PARECE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-function publicName(r: { display_name?: string | null; username?: string | null; user_id?: number | string }) {
+export function publicName(r: { display_name?: string | null; username?: string | null; user_id?: number | string }) {
   if (r.display_name) return r.display_name;
   const u = r.username || "";
   return PARECE_CORREO.test(u) ? aliasPublico(null, Number(r.user_id)) : u || "Miembro";
