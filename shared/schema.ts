@@ -1916,8 +1916,45 @@ export const gameScores = pgTable("game_scores", {
   bestScore: integer("best_score").notNull().default(0),
   lastScore: integer("last_score"),
   plays: integer("plays").notNull().default(0),
+  // rango, jornada y copas del jugador (para mostrarlos en la tabla)
+  meta: jsonb("meta"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Tabla de la semana de cada juego (en los juegos largos cuenta lo ganado en la semana).
+export const gameScoresWeek = pgTable(
+  "game_scores_week",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    game: text("game").notNull(),
+    week: text("week").notNull(),
+    startScore: integer("start_score").notNull().default(0),
+    bestScore: integer("best_score").notNull().default(0),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.game, t.week] })],
+);
+
+// Actividad de la comunidad de juegos ("Ana llegó a sumo sacerdote") y sus aplausos.
+// El índice único (persona, juego, logro) se crea en GAME_SCORES_SQL al arrancar.
+export const gameEvents = pgTable("game_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  game: text("game").notNull(),
+  key: text("key").notNull(),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const gameEventCheers = pgTable(
+  "game_event_cheers",
+  {
+    eventId: integer("event_id").notNull().references(() => gameEvents.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.userId] })],
+);
 
 // Partidas guardadas de los juegos largos (El aprendiz del templo): una por persona y juego,
 // para seguir jugando en otro equipo. El índice único se crea en GAME_SAVES_SQL al arrancar.

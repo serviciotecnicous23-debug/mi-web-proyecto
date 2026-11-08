@@ -425,14 +425,20 @@ const HAIRS = ["#2b1d14", "#3b2a1e", "#1d1712", "#4a3526", "#6b4a32"];
 const GREYS = ["#d9d4cc", "#bfb8ae", "#e8e4dc"];
 const pk = <X>(a: readonly X[]) => a[Math.floor(Math.random() * a.length)];
 
-export function randomVisitor(): { variant: CrowdVariant; colors: CrowdColors; scale: number } {
+const EXOTIC_ROBES = ["#f4f1ea", "#2a3f7a", "#7a1f3d", "#1f6b5c", "#c4632a", "#e8d36a"];
+const EXOTIC_HEADS = ["#e04a2a", "#f2b632", "#2e9e8f", "#7d3c98", "#ffffff", "#1d4fa8"];
+const EXOTIC_SKINS = ["#6b4226", "#8f5a3a", "#f0c8a0", "#5a3a22", "#d9a274"];
+
+/** Una persona del pueblo; con `exotic`, a veces llega gente de tierras lejanas (1 Reyes 8:41-43). */
+export function randomVisitor(exotic = false): { variant: CrowdVariant; colors: CrowdColors; scale: number } {
   const r = Math.random();
   const variant: CrowdVariant = r < 0.42 ? "hombre" : r < 0.82 ? "mujer" : r < 0.92 ? "anciano" : "nino";
+  const far = exotic && variant !== "nino" && Math.random() < 0.28;
   const colors: CrowdColors = {
-    robe: pk(ROBES),
-    accent: pk(ACCENTS),
-    head: pk(HEADS),
-    skin: pk(SKINS),
+    robe: far ? pk(EXOTIC_ROBES) : pk(ROBES),
+    accent: far ? pk(EXOTIC_HEADS) : pk(ACCENTS),
+    head: far ? pk(EXOTIC_HEADS) : pk(HEADS),
+    skin: far ? pk(EXOTIC_SKINS) : pk(SKINS),
     hair: variant === "anciano" ? pk(GREYS) : pk(HAIRS),
   };
   const scale = variant === "nino" ? 0.74 : variant === "mujer" ? 0.95 : variant === "anciano" ? 0.97 : 1;

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, GraduationCap, Home, Menu, Radio, Video } from "lucide-react";
+import { BookOpen, Gamepad2, GraduationCap, Home, Menu, Radio, Video } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 /**
@@ -21,6 +21,7 @@ const VISITOR_TABS: Tab[] = [
   { href: "/", label: "Inicio", icon: Home, testId: "tab-inicio" },
   { href: "/biblioteca", label: "Biblia", icon: BookOpen, testId: "tab-biblia" },
   { href: "/radio", label: "Radio", icon: Radio, testId: "tab-radio" },
+  { href: "/juegos", label: "Juegos", icon: Gamepad2, testId: "tab-juegos" },
   { href: "/en-vivo", label: "En vivo", icon: Video, testId: "tab-en-vivo" },
 ];
 
@@ -29,6 +30,7 @@ const MEMBER_TABS: Tab[] = [
   { href: "/biblioteca", label: "Biblia", icon: BookOpen, testId: "tab-biblia" },
   { href: "/capacitaciones", label: "Clases", icon: GraduationCap, testId: "tab-clases" },
   { href: "/radio", label: "Radio", icon: Radio, testId: "tab-radio" },
+  { href: "/juegos", label: "Juegos", icon: Gamepad2, testId: "tab-juegos" },
 ];
 
 function isActive(location: string, href: string) {

@@ -1774,6 +1774,8 @@ html.radio-immersive, html.radio-immersive body { overflow: hidden; overscroll-b
 }
 @media (prefers-reduced-motion: reduce) { .radio-mini__icon { animation: none; } }
 html.radio-mini-open body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+/* alto de la barrita de la radio (los juegos lo restan para no quedar debajo) */
+html.radio-mini-open { --radio-mini-h: 76px; }
 html.radio-mini-open .back-to-top { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 
 /* ── Zonas seguras (iPhone con muesca, app instalada) ─────────────────────────

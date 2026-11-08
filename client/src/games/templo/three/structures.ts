@@ -216,6 +216,9 @@ export type WorldVisual = {
   ovenGlow: THREE.Mesh;
   millstone: THREE.Object3D;
   pillarLabels: { jaquin: THREE.Vector3; boaz: THREE.Vector3 };
+  /** Adornos que se ganan con las jornadas (ocultos hasta entonces). */
+  adornos: Record<string, THREE.Group>;
+  braseros: THREE.Vector3[];
 };
 
 // ---------------------------------------------------------------- terreno y ciudad
@@ -1217,6 +1220,108 @@ function buildSky(out: Partial<WorldVisual>) {
   out.clouds = clouds;
 }
 
+// ---------------------------------------------------------------- adornos que se ganan con las jornadas
+const TRIBUS = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
+
+function buildAdornos(root: THREE.Group, out: Partial<WorldVisual>) {
+  const groups: Record<string, THREE.Group> = {};
+  const make = (id: string, fill: (m: GeoBuilder, s: GeoBuilder) => void) => {
+    const g = new THREE.Group();
+    const m = new GeoBuilder(), s = new GeoBuilder();
+    fill(m, s);
+    addMeshes(g, m, s, { cast: true });
+    g.visible = false;
+    root.add(g);
+    groups[id] = g;
+  };
+  // palmeras en las esquinas del atrio (Salmo 92:13)
+  make("palmeras", (m) => {
+    for (const [x, z] of [[-15.0, 12.0], [-15.0, -12.0], [11.2, 12.2], [11.2, -12.2], [-6.2, 12.3], [-6.2, -12.3]] as [number, number][]) {
+      m.cyl(0.42, 0.5, 0.36, C.piedraOsc, { x, y: 0.18, z }, 10);
+      palmTree(m, x, 0.3, z, 0.85);
+    }
+  });
+  // estandartes de las doce tribus en el gran atrio (Números 2:2)
+  make("estandartes", (m, s) => {
+    for (let i = 0; i < 12; i++) {
+      const side = i < 6 ? -1 : 1;
+      const x = OUTER.minX + 1.6 + (i % 6) * 2.4;
+      const z = side * (OUTER.maxZ - 1.9);
+      m.cyl(0.04, 0.05, 3.3, C.cedroOsc, { x, y: 1.65, z }, 6);
+      s.sphere(0.07, C.oro, { x, y: 3.34, z }, 6, 5);
+      m.box(0.04, 0.95, 0.7, TRIBUS[i], { x, y: 2.75, z: z - side * 0.37 });
+      m.box(0.05, 0.12, 0.72, C.oroOsc, { x, y: 2.28, z: z - side * 0.37 });
+    }
+  });
+  // lirios y granados en macetas de piedra (1 Reyes 7:19-20)
+  make("lirios", (m) => {
+    for (const [x, z] of [[13.6, 7.4], [13.6, -7.4], [13.6, 10.2], [13.6, -10.2], [5.4, 6.2], [5.4, -6.2], [-1.6, 5.6], [-1.8, -5.8]] as [number, number][]) {
+      m.cyl(0.32, 0.26, 0.5, C.piedraClara, { x, y: 0.25, z }, 10);
+      m.cyl(0.3, 0.3, 0.04, C.tierra, { x, y: 0.5, z }, 10);
+      for (let k = 0; k < 5; k++) {
+        const a = (k / 5) * Math.PI * 2;
+        m.cyl(0.012, 0.012, 0.45, C.hoja, { x: x + Math.cos(a) * 0.12, y: 0.72, z: z + Math.sin(a) * 0.12 }, 4);
+        m.cone(0.07, 0.14, "#fbfbf6", { x: x + Math.cos(a) * 0.12, y: 0.98, z: z + Math.sin(a) * 0.12, rx: Math.PI }, 6);
+      }
+      for (let k = 0; k < 3; k++) m.sphere(0.06, "#a3452e", { x: x + (k - 1) * 0.12, y: 0.62, z: z + 0.18 }, 6, 5);
+    }
+  });
+  // braseros de bronce (más luz de noche)
+  const braseros: THREE.Vector3[] = [];
+  make("braseros", (m, s) => {
+    for (const [x, z] of [[9.0, -4.6], [9.0, 4.6], [-0.6, 3.6], [-0.6, -6.2], [22.0, 0.0 + 4.0], [26.0, -3.6]] as [number, number][]) {
+      m.box(0.5, 0.12, 0.5, C.piedraOsc, { x, y: 0.06, z });
+      for (let k = 0; k < 3; k++) {
+        const a = (k / 3) * Math.PI * 2;
+        s.cyl(0.03, 0.03, 1.1, C.bronceOsc, { x: x + Math.cos(a) * 0.18, y: 0.6, z: z + Math.sin(a) * 0.18, rx: Math.sin(a) * 0.2, rz: -Math.cos(a) * 0.2 }, 5);
+      }
+      s.lathe([[0, 0], [0.12, 0], [0.3, 0.16], [0.34, 0.24], [0.3, 0.24], [0, 0.12]], C.bronce, { x, y: 1.12, z }, 12);
+      braseros.push(new THREE.Vector3(x, 1.4, z));
+    }
+  });
+  out.braseros = braseros;
+  // toldos para los peregrinos, junto a los muros del gran atrio
+  make("toldos", (m) => {
+    const telas = [C.carmesi, C.azul, "#d9b44a", C.purpura];
+    for (let i = 0; i < 4; i++) {
+      const x = OUTER.minX + 3.4 + i * 3.4;
+      const side = i % 2 ? 1 : -1;
+      const z = side * (OUTER.maxZ - 3.2);
+      for (const dx of [-0.9, 0.9]) m.cyl(0.035, 0.035, 2.4, C.cedroOsc, { x: x + dx, y: 1.2, z: z - side * 0.2 }, 5);
+      m.box(2.2, 0.05, 1.4, telas[i], { x, y: 2.42, z: z + side * 0.35, rx: side * 0.2 });
+    }
+  });
+  // corral de los corderos junto a la puerta del gran atrio (Éxodo 12:5)
+  make("rebano", (m) => {
+    const cx = OUTER.maxX - 2.2, cz = -6.6;
+    for (const [dx, dz, len, rot] of [[0, -1.2, 3.0, 0], [0, 1.2, 3.0, 0], [-1.5, 0, 2.4, Math.PI / 2], [1.5, -0.6, 1.2, Math.PI / 2]] as [number, number, number, number][]) {
+      m.box(len, 0.06, 0.06, C.cedro, { x: cx + dx, y: 0.55, z: cz + dz, ry: rot });
+      m.box(len, 0.06, 0.06, C.cedro, { x: cx + dx, y: 0.3, z: cz + dz, ry: rot });
+    }
+    for (const [dx, dz] of [[-1.5, -1.2], [1.5, -1.2], [-1.5, 1.2], [1.5, 1.2], [0, -1.2], [0, 1.2]] as [number, number][]) m.box(0.1, 0.7, 0.1, C.cedroOsc, { x: cx + dx, y: 0.35, z: cz + dz });
+    for (let k = 0; k < 5; k++) {
+      const x = cx - 0.9 + (k % 3) * 0.8, z = cz - 0.5 + Math.floor(k / 3) * 0.8;
+      for (const [ox, oy, oz, r] of [[0, 0.32, 0, 0.2], [0.13, 0.33, 0.03, 0.15], [-0.13, 0.33, -0.02, 0.15]] as number[][]) m.sphere(r, "#f7f3ea", { x: x + ox, y: oy, z: z + oz }, 8, 6);
+      m.sphere(0.1, "#f1e2cf", { x: x + 0.24, y: 0.4, z }, 8, 6);
+      for (const lx of [-0.1, 0.1]) for (const lz of [-0.08, 0.08]) m.cyl(0.025, 0.025, 0.18, "#3b2f2a", { x: x + lx, y: 0.09, z: z + lz }, 4);
+    }
+    m.box(0.8, 0.25, 0.4, C.cedro, { x: cx + 0.9, y: 0.12, z: cz + 0.8 }); // pesebre
+  });
+  // pórtico adornado de oro (2 Crónicas 3:4-6)
+  make("oro", (m, s) => {
+    const F = T.floor;
+    for (const sg of [-1, 1]) {
+      s.box(0.12, 0.14, 2.1, C.oro, { x: T.porchX + 0.05, y: 6.05, z: sg * 2.6 });
+      for (let k = 0; k < 4; k++) s.sphere(0.09, [C.carmesi, C.azul, "#2e8b57", C.oro][k], { x: T.porchX + 0.08, y: 6.05, z: sg * (1.9 + k * 0.45) }, 8, 6);
+      s.torus(0.5, 0.05, C.oro, { x: -2.95, y: F + 0.35, z: sg * 2.55, rx: Math.PI / 2 }, 6, 20);
+    }
+    s.box(0.1, 0.12, 2 * (T.halfW + T.wall), C.oro, { x: T.porchX + 0.04, y: 7.2, z: 0 });
+    for (let k = 0; k < 7; k++) s.sphere(0.11, C.oro, { x: T.porchX + 0.06, y: 7.6, z: -3 + k }, 8, 6);
+    m.box(0.02, 0.02, 0.02, C.oro, { x: 0, y: -1, z: 0 });
+  });
+  out.adornos = groups;
+}
+
 // ---------------------------------------------------------------- todo junto
 export function buildWorld(): WorldVisual {
   rnd = mulberry32(715);
@@ -1246,6 +1351,7 @@ export function buildWorld(): WorldVisual {
     root.add(st.ruin);
   }
   out.stations = stations;
+  buildAdornos(root, out);
   buildSky(out);
   root.add(out.sky!);
   root.add(out.stars!);
