@@ -44,6 +44,8 @@ export class TempleAudio {
   private ambNext = { bird: 0, crackle: 0, owl: 0, bleat: 0 };
   muted = false;
   musicOn = true;
+  /** La radio del ministerio está sonando: la música del juego se aparta. */
+  radioOn = false;
   layers = { cantores: 0, night: false, event: false };
   private ambState: Ambience = { crowd: 0, fire: 0, water: 0, night: false, day: 1 };
 
@@ -78,7 +80,7 @@ export class TempleAudio {
     comp.release.value = 0.25;
     this.master.connect(comp).connect(ctx.destination);
     this.music = ctx.createGain();
-    this.music.gain.value = this.musicOn ? 0.5 : 0;
+    this.music.gain.value = this.musicOn && !this.radioOn ? 0.5 : 0;
     this.musicDuck = ctx.createGain();
     this.musicDuck.gain.value = 1;
     this.sfx = ctx.createGain();
@@ -227,7 +229,21 @@ export class TempleAudio {
 
   setMusic(on: boolean) {
     this.musicOn = on;
-    if (this.ctx) this.music.gain.setTargetAtTime(on ? 0.5 : 0, this.ctx.currentTime, 0.25);
+    this.applyMusic();
+  }
+
+  /** Con la radio abierta, la música del juego calla y el ambiente baja; los efectos siguen. */
+  setRadio(on: boolean) {
+    if (this.radioOn === on) return;
+    this.radioOn = on;
+    this.applyMusic();
+  }
+
+  private applyMusic() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.music.gain.setTargetAtTime(this.musicOn && !this.radioOn ? 0.5 : 0, t, 0.4);
+    this.amb.gain.setTargetAtTime(this.radioOn ? 0.45 : 0.8, t, 0.4);
   }
 
   suspend() {
@@ -323,7 +339,7 @@ export class TempleAudio {
   /** Programa las notas que vienen (se llama en cada cuadro). */
   update() {
     const ctx = this.ctx;
-    if (!ctx || !this.musicOn || this.muted) return;
+    if (!ctx || !this.musicOn || this.muted || this.radioOn) return;
     const bpm = this.layers.event ? 76 : 66;
     const beat = 60 / bpm / 2;
     while (this.nextNote < ctx.currentTime + 0.25) {
@@ -789,6 +805,28 @@ export class TempleAudio {
     this.trumpet(true);
     const t = this.ctx!.currentTime;
     for (let k = 0; k < 6; k++) this.drum(t + k * 0.22, 0.22, k % 2 === 1, this.sfx);
+  }
+
+  /** Jornada cumplida: una campana por estrella, subiendo, y el motivo del templo. */
+  jornada(stars: number) {
+    if (!this.on) return;
+    this.duck(0.3, 2.6);
+    for (let k = 0; k < stars; k++) this.bell(SCALE[8 + k * 2] * 2, 0.09, 0.15 + k * 0.32, 1.1);
+    this.motif(0.25 + stars * 0.32, 0.22, undefined, 0.11);
+    this.cymbal(this.ctx!.currentTime + 0.25 + stars * 0.32, 0.045, this.sfx);
+  }
+
+  /** Logro: el tintineo de una copa (más rico si es de oro). */
+  logro(nivel: number) {
+    if (!this.on) return;
+    this.duck(0.45, 1.6);
+    const base = [523.25, 659.25, 783.99][Math.max(0, Math.min(2, nivel - 1))];
+    this.bell(base, 0.08, 0, 1.2);
+    this.bell(base * 1.5, 0.06, 0.12, 1.2);
+    if (nivel >= 3) {
+      this.bell(base * 2, 0.06, 0.24, 1.6);
+      this.choir(this.ctx!.currentTime + 0.2, 293.66, 2.2, 0.025, this.sfx);
+    }
   }
 
   /** Corderito (bee). */

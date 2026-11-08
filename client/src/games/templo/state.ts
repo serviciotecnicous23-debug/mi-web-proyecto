@@ -4,6 +4,7 @@
  * se limpia antes de usarse.
  */
 import { HELPERS, STATIONS, UPGRADES, type HelperId, type ProgressView, type StationId, type UpgradeId } from "./data";
+import { GOALS, LOGROS, copas, type Goal, type Stats, type StatKey } from "./progress";
 
 export const GAME_SLUG = "aprendiz-del-templo";
 const SAVE_KEY = "templo-partida-v1";
@@ -43,6 +44,14 @@ export type SaveData = {
   kingOfrendas: number;
   /** Las lámparas estaban llenas al anochecer y no se apagaron. */
   lampWatch: boolean;
+  /** La jornada actual (número, objetivos y cuándo empezó) y las estrellas de cada jornada hecha. */
+  jornada: { n: number; goals: Goal[]; startedAt: number; stars: string };
+  /** Cuentas para los logros. */
+  stats: Stats;
+  /** Escalón de cada logro (1 bronce, 2 plata, 3 oro). */
+  logros: Record<string, number>;
+  /** Desafío del día y racha de días seguidos. */
+  daily: { key: string; goals: Goal[]; done: boolean; streak: number; lastDone: string };
   savedAt: number;
   playSeconds: number;
 };
@@ -77,10 +86,35 @@ export function newSave(): SaveData {
     pendingQuiz: null,
     kingOfrendas: 0,
     lampWatch: false,
+    jornada: { n: 0, goals: [], startedAt: 0, stars: "" },
+    stats: {},
+    logros: {},
+    daily: { key: "", goals: [], done: false, streak: 0, lastDone: "" },
     savedAt: Date.now(),
     playSeconds: 0,
   };
 }
+
+const GOAL_KINDS = new Set(GOALS.map((g) => g.kind));
+const STAT_KEYS: StatKey[] = [
+  "ofrendas", "corderos", "palomas", "cereal", "familias", "lena", "lavar", "gozo", "preguntas", "pueblo",
+  "aceite", "panes", "incienso", "diezmos", "orantes", "noches", "fuegoMax", "jornadas", "estrellas", "dias", "racha",
+];
+
+function cleanGoals(v: unknown): Goal[] {
+  if (!Array.isArray(v)) return [];
+  const out: Goal[] = [];
+  for (const g of v.slice(0, 5)) {
+    if (!g || typeof g !== "object") continue;
+    const r = g as Record<string, unknown>;
+    if (typeof r.kind !== "string" || !GOAL_KINDS.has(r.kind as Goal["kind"])) continue;
+    const target = Math.round(num(r.target, 1, 1e7, 1));
+    out.push({ kind: r.kind as Goal["kind"], target, progress: Math.round(num(r.progress, 0, target, 0)) });
+  }
+  return out;
+}
+
+const dateKey = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 
 const num = (v: unknown, min: number, max: number, def: number) => {
   const n = typeof v === "number" && Number.isFinite(v) ? v : def;
@@ -140,6 +174,37 @@ export function sanitize(raw: unknown): SaveData {
     pendingQuiz: typeof r.pendingQuiz === "string" && r.pendingQuiz.length < 40 ? r.pendingQuiz : null,
     kingOfrendas: Math.round(num(r.kingOfrendas, 0, 1e8, 0)),
     lampWatch: r.lampWatch === true,
+    jornada: (() => {
+      const j = r.jornada && typeof r.jornada === "object" ? (r.jornada as Record<string, unknown>) : {};
+      return {
+        n: Math.round(num(j.n, 0, 1e6, 0)),
+        goals: cleanGoals(j.goals),
+        startedAt: num(j.startedAt, 0, 1e10, 0),
+        stars: typeof j.stars === "string" ? j.stars.replace(/[^123]/g, "").slice(0, 200000) : "",
+      };
+    })(),
+    stats: (() => {
+      const out: Stats = {};
+      const st = r.stats && typeof r.stats === "object" ? (r.stats as Record<string, unknown>) : {};
+      for (const k of STAT_KEYS) if (k in st) out[k] = Math.round(num(st[k], 0, 1e12, 0));
+      return out;
+    })(),
+    logros: (() => {
+      const out: Record<string, number> = {};
+      const lg = r.logros && typeof r.logros === "object" ? (r.logros as Record<string, unknown>) : {};
+      for (const def of LOGROS) if (def.id in lg) out[def.id] = Math.round(num(lg[def.id], 0, 3, 0));
+      return out;
+    })(),
+    daily: (() => {
+      const d = r.daily && typeof r.daily === "object" ? (r.daily as Record<string, unknown>) : {};
+      return {
+        key: dateKey(d.key),
+        goals: cleanGoals(d.goals),
+        done: d.done === true,
+        streak: Math.round(num(d.streak, 0, 100000, 0)),
+        lastDone: dateKey(d.lastDone),
+      };
+    })(),
     savedAt: num(r.savedAt, 0, 9e15, Date.now()),
     playSeconds: num(r.playSeconds, 0, 1e9, 0),
   };
@@ -161,7 +226,11 @@ export function gloria(s: SaveData): number {
   const built = Object.values(s.built).filter(Boolean).length;
   const helpers = Object.values(s.helpers).reduce((a, b) => a + (b || 0), 0);
   const ups = Object.values(s.upgrades).reduce((a, b) => a + (b || 0), 0);
-  return Math.round(built * 100 + helpers * 60 + ups * 20 + s.rank * 300 + (s.finale ? 1500 : 0) + s.sabiduria * 25 + s.lifetimeGozo / 40);
+  const st = s.stats || {};
+  return Math.round(
+    built * 100 + helpers * 60 + ups * 20 + s.rank * 300 + (s.finale ? 1500 : 0) + s.sabiduria * 25 + s.lifetimeGozo / 40 +
+      (st.jornadas || 0) * 40 + (st.estrellas || 0) * 15 + copas(s.logros || {}) * 20,
+  );
 }
 
 /** Gozo por minuto que traen los levitas mientras no se juega. */
@@ -248,7 +317,11 @@ export async function submitScore(s: SaveData): Promise<void> {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score: gloria(s), seconds: Math.min(6 * 3600, Math.round(s.playSeconds)) }),
+      body: JSON.stringify({
+        score: gloria(s),
+        seconds: Math.round(s.playSeconds),
+        meta: { rango: s.rank, jornada: s.stats.jornadas || 0, copas: copas(s.logros || {}) },
+      }),
     });
   } catch {
     /* sin conexión: se manda la próxima vez */

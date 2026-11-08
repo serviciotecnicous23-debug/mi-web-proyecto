@@ -6,8 +6,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
-  ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Crown, Droplets, Flame, Loader2, Lock, Maximize2, Minimize2, Music,
-  Pause, Play, ScrollText, Sparkles, Star, Sun, Trophy, Volume2, VolumeX, Wheat, X,
+  ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
+  Pause, Play, Route, ScrollText, Sparkles, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,9 +20,10 @@ import {
 import { gameStore, useGame, type Hud, type Modal } from "./store";
 import { GAME_SLUG, clearLocal, gloria, loadLocal, loadRemote, newSave, progressView, type SaveData } from "./state";
 import { Portrait, TemploCover } from "./Portrait";
+import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } from "./progress";
 import type { TempleWorld } from "./world";
 
-const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - 76px), 900px)";
+const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
 const useWorld = () => useContext(WorldCtx);
 
@@ -132,6 +133,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
       if (k === "p" || k === "escape") togglePause();
       else if (k === "l" && !paused) gameStore.push({ kind: "book" });
       else if (k === "m" && !paused) gameStore.push({ kind: "upgrades" });
+      else if (k === "c" && !paused) gameStore.push({ kind: "comunidad" });
+      else if (k === "j" && !paused) gameStore.push({ kind: "camino" });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -221,6 +224,13 @@ function TitleScreen(props: {
 }) {
   const { game, phase, save, loggedIn, confirmNew, setConfirmNew, onStart } = props;
   const has = !!save && (save.ofrendas > 0 || Object.keys(save.built).length > 0);
+  const [ahora, setAhora] = useState<number | null>(null);
+  useEffect(() => {
+    fetch(`/api/juegos/${GAME_SLUG}/ahora`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setAhora(Number(d.jugando) || 0))
+      .catch(() => null);
+  }, []);
   const built = save ? STATIONS.filter((s) => save.built[s.id]).length : 0;
   return (
     <div className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#5b2a6e_0%,#2b1a3a_45%,#120c08_100%)] text-white">
@@ -272,6 +282,11 @@ function TitleScreen(props: {
               </Button>
             )}
           </div>
+        )}
+        {ahora !== null && ahora > 0 && (
+          <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-100">
+            🔥 {ahora} {ahora === 1 ? "persona sirviendo" : "personas sirviendo"} en el templo ahora
+          </p>
         )}
         <ul className="max-w-sm space-y-1 text-left text-xs text-white/75">
           {HOW_TO.slice(0, 4).map((h) => (
@@ -428,6 +443,9 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <div className="pointer-events-auto flex gap-1">
+            <IconBtn label="Comunidad (C)" onClick={() => open({ kind: "comunidad" })} testid="button-templo-comunidad">
+              <Users className="h-5 w-5" />
+            </IconBtn>
             <IconBtn label="Mejoras (M)" onClick={() => open({ kind: "upgrades" })} testid="button-templo-mejoras">
               <Sparkles className="h-5 w-5" />
             </IconBtn>
@@ -447,6 +465,19 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
             {fmt(hud.gloria)}
             {hud.mult > 1.05 && <span className="ml-1 text-amber-300">· gozo ×{hud.mult.toLocaleString("es-419")}</span>}
           </div>
+          {hud.liga && (hud.liga.lider || hud.liga.puesto) && (
+            <button
+              type="button"
+              className="pointer-events-auto rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm hover:bg-black/60"
+              onClick={() => open({ kind: "comunidad" })}
+              title="Tabla de la semana"
+              data-testid="templo-liga"
+            >
+              <Medal className="mr-1 inline h-3 w-3 text-amber-300" />
+              {hud.liga.puesto ? `Vas ${hud.liga.puesto}.º` : "Esta semana"}
+              {hud.liga.lider && <span className="text-white/75"> · 1.º {hud.liga.lider.split(" ")[0]}</span>}
+            </button>
+          )}
         </div>
       </div>
 
@@ -459,6 +490,7 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
               {hud.objective}
             </div>
           )}
+          {hud.jornada && <JornadaStrip hud={hud} onOpen={() => open({ kind: "camino" })} />}
           {hud.event && <div className="animate-pulse rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-0.5 text-xs font-black text-amber-950 shadow-lg">{hud.event}</div>}
         </div>
       )}
@@ -480,8 +512,8 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
               {c.count}/{c.cap}
             </span>
             {hud.canDrop ? (
-              <button type="button" className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs hover:bg-white/25" onClick={() => world?.dropCarry()} data-testid="button-templo-soltar">
-                Soltar
+              <button type="button" className="flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-xs font-black text-amber-950 shadow hover:bg-amber-300" onClick={() => world?.dropCarry()} data-testid="button-templo-soltar">
+                <Undo2 className="h-3.5 w-3.5" /> Devolver
               </button>
             ) : (
               <span className="pr-2 text-xs text-white/70">{c.count >= c.cap ? "¡lleno!" : ""}</span>
@@ -590,6 +622,12 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <RankView rank={modal.rank} />;
     case "finale":
       return <FinaleView />;
+    case "camino":
+      return <CaminoView />;
+    case "jornada":
+      return <JornadaView n={modal.n} stars={modal.stars} reward={modal.reward} adorno={modal.adorno} seconds={modal.seconds} />;
+    case "comunidad":
+      return <ComunidadView />;
   }
 }
 
@@ -732,6 +770,14 @@ function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" 
   const [picked, setPicked] = useState<number | null>(null);
   const [ok, setOk] = useState(false);
   const [first] = useState(() => !!world && world.s.quizzes[quizId] !== true);
+  const order = useMemo(() => {
+    const o = [0, 1, 2];
+    for (let i = o.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [o[i], o[j]] = [o[j], o[i]];
+    }
+    return o;
+  }, [quizId]);
   if (!q) return null;
   const title = source === "azarias" ? "Azarías te pregunta" : source === "pueblo" ? "Alguien del pueblo pregunta" : `Examen del sumo sacerdote · ${step + 1} de 3`;
   const choose = (k: number) => {
@@ -751,7 +797,8 @@ function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" 
       <div className="space-y-3 p-4">
         <p className="font-serif text-lg font-bold leading-snug">{q.pregunta}</p>
         <div className="space-y-2">
-          {q.opciones.map((o, k) => {
+          {order.map((k, pos) => {
+            const o = q.opciones[k];
             const isRight = k === q.correcta;
             const state = picked === null ? "" : isRight ? "right" : picked === k ? "wrong" : "dim";
             return (
@@ -769,9 +816,9 @@ function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" 
                         ? "border-stone-200 opacity-50 dark:border-stone-700"
                         : "border-amber-200 bg-white hover:border-amber-400 hover:bg-amber-50 dark:border-amber-900 dark:bg-transparent dark:hover:bg-amber-950/30"
                 }`}
-                data-testid={`templo-opcion-${k}`}
+                data-testid={`templo-opcion-${pos}`}
               >
-                <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm text-amber-900 dark:bg-amber-900 dark:text-amber-100">{"ABC"[k]}</span>
+                <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm text-amber-900 dark:bg-amber-900 dark:text-amber-100">{"ABC"[pos]}</span>
                 {o}
               </button>
             );
@@ -861,7 +908,7 @@ function UpgradesView() {
 function BookView() {
   const world = useWorld();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"lecciones" | "rangos" | "servicio" | "gloria">("lecciones");
+  const [tab, setTab] = useState<"lecciones" | "logros" | "rangos" | "servicio" | "gloria">("lecciones");
   const [lesson, setLesson] = useState<string | null>(null);
   const [board, setBoard] = useState<Parameters<typeof Leaderboard>[0]["board"]>(null);
   const [loading, setLoading] = useState(false);
@@ -906,6 +953,7 @@ function BookView() {
             ["rangos", "Rangos"],
             ["servicio", "Mi servicio"],
             ["gloria", "Tabla de gloria"],
+            ["logros", "Logros"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -988,6 +1036,7 @@ function BookView() {
             ))}
           </div>
         )}
+        {tab === "logros" && <LogrosTab />}
         {tab === "gloria" &&
           (user ? (
             <Leaderboard board={board} loading={loading} />
@@ -1101,6 +1150,470 @@ function FinaleView() {
         >
           <Trophy className="mr-1 h-4 w-4" /> Ver mi libro y la tabla de gloria
         </Button>
+      </div>
+    </Card>
+  );
+}
+
+// ================================================================ avance sin fin
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
+
+function GoalLine({ g, dark = false }: { g: Goal; dark?: boolean }) {
+  const def = goalDef(g.kind);
+  const pct = Math.min(100, (g.progress / g.target) * 100);
+  const done = g.progress >= g.target;
+  const fire = g.kind === "fuegoVivo";
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-5 text-center">{done ? "✅" : def.icono}</span>
+      <div className="min-w-0 flex-1">
+        <p className={`truncate text-[12.5px] font-semibold ${dark ? "text-stone-800 dark:text-stone-100" : ""}`}>{def.texto(g.target)}</p>
+        <div className={`mt-0.5 h-1.5 overflow-hidden rounded-full ${dark ? "bg-stone-200 dark:bg-stone-700" : "bg-white/20"}`}>
+          <div className={`h-full rounded-full ${done ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <span className={`shrink-0 text-[11px] font-bold tabular-nums ${dark ? "text-stone-600 dark:text-stone-300" : "text-white/85"}`}>
+        {fire ? `${mmss(g.progress)}/${mmss(g.target)}` : `${g.progress.toLocaleString("es-419")}/${g.target.toLocaleString("es-419")}`}
+      </span>
+    </div>
+  );
+}
+
+/** Estrellas que se llevarían si la jornada terminara ahora. */
+function liveStars(elapsed: number, par: number) {
+  return elapsed <= par ? 3 : elapsed <= par * 2 ? 2 : 1;
+}
+
+/** Números cortos para la barra de la jornada: 350, 1,2 mil, 12 mil. */
+function corto(n: number) {
+  if (n < 1000) return String(Math.ceil(n));
+  if (n < 10000) return `${(n / 1000).toFixed(1).replace(".", ",").replace(",0", "")} mil`;
+  return `${Math.floor(n / 1000)} mil`;
+}
+
+/** Una meta en la barra corta: su icono y lo que falta, con una rayita que se llena. */
+function GoalChip({ g }: { g: Goal }) {
+  const def = goalDef(g.kind);
+  const done = g.progress >= g.target;
+  const left = Math.max(0, g.target - g.progress);
+  const pct = Math.min(100, (g.progress / g.target) * 100);
+  return (
+    <span className="relative flex items-center gap-1 whitespace-nowrap pb-1">
+      <span>{done ? "✅" : def.icono}</span>
+      {!done && <span className="tabular-nums">{g.kind === "fuegoVivo" ? mmss(left) : corto(left)}</span>}
+      <span className="absolute inset-x-0 bottom-0 h-[3px] overflow-hidden rounded-full bg-white/20">
+        <span className={`block h-full rounded-full ${done ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
+      </span>
+    </span>
+  );
+}
+
+function JornadaStrip({ hud, onOpen }: { hud: Hud; onOpen: () => void }) {
+  const j = hud.jornada!;
+  const stars = liveStars(j.elapsed, j.par);
+  const next = stars === 3 ? j.par - j.elapsed : stars === 2 ? j.par * 2 - j.elapsed : 0;
+  const resumen = `Jornada ${j.n}: ${j.goals.map((g) => `${goalDef(g.kind).texto(g.target)} (${Math.floor(g.progress)} de ${g.target})`).join("; ")}`;
+  // Al empezar cada jornada se ve completa unos segundos; después queda en una sola línea para no tapar el templo.
+  if (j.elapsed >= 8)
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="pointer-events-auto flex max-w-[94%] items-center gap-2.5 rounded-full border border-amber-300/40 bg-black/55 px-3 py-1 text-[12px] font-bold shadow-lg backdrop-blur hover:bg-black/65"
+        data-testid="templo-jornada"
+        aria-label={resumen}
+        title={resumen}
+      >
+        <span className="flex items-center gap-1 text-amber-200">
+          <Route className="h-3.5 w-3.5" /> {j.n}
+        </span>
+        <span className="flex items-center">
+          {[1, 2, 3].map((k) => (
+            <Star key={k} className={`h-3 w-3 ${k <= stars ? "fill-amber-400 text-amber-400" : "text-white/30"}`} />
+          ))}
+          {next > 0 && <span className="ml-1 text-[11px] font-semibold tabular-nums text-white/70">{mmss(next)}</span>}
+        </span>
+        <span className="h-3.5 w-px shrink-0 bg-white/25" />
+        {j.goals.map((g) => (
+          <GoalChip key={g.kind} g={g} />
+        ))}
+      </button>
+    );
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="pointer-events-auto w-[94%] max-w-sm rounded-2xl border border-amber-300/40 bg-black/55 px-3 py-1.5 text-left shadow-lg backdrop-blur hover:bg-black/65"
+      data-testid="templo-jornada"
+    >
+      <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
+        <span className="flex items-center gap-1">
+          <Route className="h-3.5 w-3.5" /> Jornada {j.n}
+        </span>
+        <span className="flex items-center gap-1 normal-case tracking-normal">
+          {[1, 2, 3].map((k) => (
+            <Star key={k} className={`h-3.5 w-3.5 ${k <= stars ? "fill-amber-400 text-amber-400" : "text-white/30"}`} />
+          ))}
+          {next > 0 && <span className="ml-1 font-semibold text-white/70">{mmss(next)}</span>}
+        </span>
+      </div>
+      <div className="space-y-1">
+        {j.goals.map((g) => (
+          <GoalLine key={g.kind} g={g} />
+        ))}
+      </div>
+    </button>
+  );
+}
+
+function CaminoView() {
+  const world = useWorld();
+  const { hud } = useGame();
+  const nowRef = useRef<HTMLDivElement>(null);
+  // al abrir, la jornada de ahora queda en el centro (sin mover la página)
+  useEffect(() => {
+    const el = nowRef.current;
+    let p = el?.parentElement || null;
+    while (p && !(p.scrollHeight > p.clientHeight + 4 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement;
+    if (!el || !p) return;
+    p.scrollTop += el.getBoundingClientRect().top - p.getBoundingClientRect().top - p.clientHeight / 2 + el.clientHeight / 2;
+  }, []);
+  if (!world) return null;
+  const s = world.s;
+  const done = s.stats.jornadas || 0;
+  const starsStr = s.jornada.stars || "";
+  const current = hud.jornada;
+  const totalStars = s.stats.estrellas || 0;
+  // el camino: las últimas hechas, la de ahora y las que vienen
+  const first = Math.max(1, (current?.n || done + 1) - 6);
+  const last = (current?.n || done + 1) + 6;
+  const nodes: number[] = [];
+  for (let n = last; n >= first; n--) nodes.push(n);
+  return (
+    <Card title={<span className="flex items-center gap-2"><Route className="h-5 w-5" /> Camino del servicio</span>} onClose={() => gameStore.close()} wide testid="templo-camino">
+      <div className="space-y-3 p-3">
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30"><p className="text-lg font-black">{done}</p>jornadas</div>
+          <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30"><p className="text-lg font-black">{totalStars} ★</p>estrellas</div>
+          <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30"><p className="text-lg font-black">{hud.copas}</p>puntos de copas</div>
+        </div>
+        {hud.daily && (
+          <div className={`rounded-xl border p-3 ${hud.daily.done ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30" : "border-sky-300 bg-sky-50 dark:bg-sky-950/30"}`} data-testid="templo-desafio">
+            <p className="mb-2 flex items-center justify-between text-sm font-black">
+              <span>📅 Desafío del día {hud.daily.done && "· ¡cumplido!"}</span>
+              <span className="text-xs font-bold text-orange-600">🔥 {hud.daily.streak} {hud.daily.streak === 1 ? "día" : "días"} seguidos</span>
+            </p>
+            <div className="space-y-1.5">
+              {hud.daily.goals.map((g) => (
+                <GoalLine key={g.kind} g={g} dark />
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-stone-500">El mismo desafío para todos hoy. Cumplirlo varios días seguidos da más gozo.</p>
+          </div>
+        )}
+        <div className="relative mx-auto max-w-sm py-1">
+          {nodes.map((n, i) => {
+            const isDone = n <= done;
+            const isNow = current && n === current.n;
+            const st = isDone ? Number(starsStr[n - 1] || 0) : 0;
+            const gift = ADORNOS.find((a) => a.jornada === n);
+            const left = i % 4 === 0 ? "ml-[10%]" : i % 4 === 1 ? "ml-[38%]" : i % 4 === 2 ? "ml-[62%]" : "ml-[34%]";
+            return (
+              <div key={n} ref={isNow ? nowRef : undefined} className={`${left} relative mb-2 w-fit`}>
+                <div
+                  className={`flex h-12 w-12 flex-col items-center justify-center rounded-full border-4 text-sm font-black shadow ${
+                    isNow ? "animate-pulse border-amber-400 bg-amber-300 text-amber-950" : isDone ? "border-amber-300 bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100" : "border-stone-300 bg-stone-100 text-stone-400 dark:border-stone-600 dark:bg-stone-800"
+                  }`}
+                >
+                  {n}
+                  {isDone && <span className="-mt-0.5 text-[9px] leading-none text-amber-600">{"★".repeat(st)}</span>}
+                </div>
+                {gift && (
+                  <span className={`absolute top-2 flex w-24 items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 ${i % 4 === 2 ? "right-full mr-2 justify-end text-right" : "left-full ml-2"}`}>
+                    <Gift className="h-3.5 w-3.5 shrink-0" /> {gift.nombre}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {current && (
+          <div className="rounded-xl border border-amber-300 bg-white p-3 dark:bg-transparent">
+            <p className="mb-2 text-sm font-black">Ahora: jornada {current.n}</p>
+            <div className="space-y-1.5">
+              {current.goals.map((g) => (
+                <GoalLine key={g.kind} g={g} dark />
+              ))}
+            </div>
+            <p className="mt-2 flex items-center gap-1 text-[11px] text-stone-500">
+              <Clock className="h-3 w-3" /> Tres estrellas si la terminas en {mmss(parSeconds(current.goals))}; dos, en {mmss(parSeconds(current.goals) * 2)}.
+            </p>
+          </div>
+        )}
+        <div>
+          <p className="mb-1 text-sm font-black">Adornos del templo</p>
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {ADORNOS.map((a) => (
+              <li key={a.id} className={`rounded-lg border px-2.5 py-1.5 text-xs ${done >= a.jornada ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30" : "border-dashed border-stone-300 text-stone-500 dark:border-stone-700"}`}>
+                <b>{done >= a.jornada ? "✔ " : `Jornada ${a.jornada}: `}{a.nombre}</b>
+                {done >= a.jornada && <span className="block text-stone-600 dark:text-stone-300">{a.texto}</span>}
+              </li>
+            ))}
+            <li className="rounded-lg border border-dashed border-stone-300 px-2.5 py-1.5 text-xs text-stone-500 dark:border-stone-700">Desde la jornada 16 llegan peregrinos de tierras lejanas (1 Reyes 8:41-43).</li>
+          </ul>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function JornadaView({ n, stars, reward, adorno, seconds }: { n: number; stars: number; reward: number; adorno: string | null; seconds: number }) {
+  const world = useWorld();
+  const a = adorno ? ADORNOS.find((x) => x.id === adorno) : null;
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (shown >= stars) return;
+    const t = setTimeout(() => setShown((k) => k + 1), 330);
+    return () => clearTimeout(t);
+  }, [shown, stars]);
+  return (
+    <Card title={<span className="flex items-center gap-2"><Route className="h-5 w-5" /> ¡Jornada {n} cumplida!</span>} testid="templo-jornada-fin">
+      <div className="space-y-3 p-4 text-center">
+        <div className="flex justify-center gap-2">
+          {[1, 2, 3].map((k) => (
+            <Star
+              key={k}
+              className={`h-12 w-12 transition-all duration-300 ${k <= shown ? "scale-110 fill-amber-400 text-amber-500 drop-shadow-[0_0_10px_rgba(251,191,36,.8)]" : "scale-90 text-stone-300"}`}
+            />
+          ))}
+        </div>
+        <p className="text-sm text-stone-600 dark:text-stone-300">La hiciste en {mmss(seconds)}.</p>
+        <p className="text-3xl font-black text-amber-600">+{reward.toLocaleString("es-419")} de gozo</p>
+        {a && (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-left dark:bg-emerald-950/30">
+            <p className="flex items-center gap-1 font-black"><Gift className="h-4 w-4" /> Nuevo adorno: {a.nombre}</p>
+            <p className="mt-1 text-sm">{a.texto}</p>
+          </div>
+        )}
+        <Button
+          className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
+          onClick={() => {
+            world?.audio.click();
+            gameStore.close();
+          }}
+          data-testid="button-templo-jornada-siguiente"
+        >
+          Siguiente jornada <ChevronRight className="ml-1 h-4 w-4" />
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function LogrosTab() {
+  const world = useWorld();
+  if (!world) return null;
+  const s = world.s;
+  const story = (id: string) => (id === "puertas" ? !!s.built.puertas : !!s.story[id]);
+  const cup = ["#cd7f32", "#c0c0c8", "#f2b632"];
+  let got = 0;
+  for (const d of LOGROS) if ((s.logros[d.id] || 0) > 0) got++;
+  return (
+    <div>
+      <p className="mb-2 text-xs text-stone-500">
+        {got} de {LOGROS.length} logros · copas de bronce, plata y oro
+      </p>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {LOGROS.map((d) => {
+          const lv = s.logros[d.id] || logroNivel(d, s.stats, story);
+          const v = d.stat ? s.stats[d.stat] || 0 : 0;
+          const next = d.niveles && lv < 3 ? d.niveles[lv] : null;
+          return (
+            <li key={d.id} className={`flex items-center gap-3 rounded-xl border p-2.5 ${lv ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`}>
+              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl" style={{ background: lv ? cup[(d.historia ? 3 : lv) - 1] + "33" : "rgba(120,120,120,.12)" }}>
+                {d.icono}
+                {lv > 0 && <Trophy className="absolute -bottom-1 -right-1 h-5 w-5 drop-shadow" style={{ color: cup[(d.historia ? 3 : lv) - 1] }} fill="currentColor" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold">{d.nombre}</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400">{d.texto}</p>
+                {d.stat && d.niveles && (
+                  <p className="mt-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                    {lv ? `Copa de ${COPA[lv - 1]}` : "Sin copa"}
+                    {next !== null && ` · ${Math.min(v, next).toLocaleString("es-419")}/${next.toLocaleString("es-419")} ${d.unidad || ""} para ${COPA[lv]}`}
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// ================================================================ comunidad
+type BoardRow = { rank: number; name: string; avatarUrl: string | null; score: number; isMe: boolean; meta?: { rango?: number; jornada?: number; copas?: number } | null };
+type BoardData = { top: BoardRow[]; mine: { best: number; rank: number } | null; week?: string };
+type ActivityItem = { id: number; game: string; name: string; avatarUrl: string | null; text: string; createdAt: string; cheers: number; cheeredByMe: boolean; isMine: boolean };
+
+function hace(iso: string) {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (m < 1) return "ahora";
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  return `hace ${d} ${d === 1 ? "día" : "días"}`;
+}
+
+function ComunidadView() {
+  const { user } = useAuth();
+  const world = useWorld();
+  const [tab, setTab] = useState<"semana" | "siempre" | "actividad">("semana");
+  const [board, setBoard] = useState<BoardData | null>(null);
+  const [items, setItems] = useState<ActivityItem[] | null>(null);
+  const [ahora, setAhora] = useState<{ jugando: number; jugadores: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    fetch(`/api/juegos/${GAME_SLUG}/ahora`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setAhora)
+      .catch(() => null);
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    const url = tab === "actividad" ? `/api/juegos/actividad?juego=${GAME_SLUG}` : `/api/juegos/${GAME_SLUG}/ranking?periodo=${tab}`;
+    fetch(url, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (tab === "actividad") setItems(d?.items || []);
+        else setBoard(d);
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, [tab, user]);
+  const cheer = async (it: ActivityItem) => {
+    if (it.cheeredByMe || it.isMine) return;
+    world?.audio.coin(3);
+    setItems((list) => (list || []).map((x) => (x.id === it.id ? { ...x, cheeredByMe: true, cheers: x.cheers + 1 } : x)));
+    try {
+      await fetch(`/api/juegos/actividad/${it.id}/aplauso`, { method: "POST", credentials: "include" });
+    } catch {
+      /* sin conexión */
+    }
+  };
+  return (
+    <Card title={<span className="flex items-center gap-2"><Users className="h-5 w-5" /> Comunidad del templo</span>} onClose={() => gameStore.close()} wide testid="templo-comunidad">
+      <div className="p-3">
+        <p className="mb-2 text-center text-xs text-stone-600 dark:text-stone-300">
+          {ahora ? (
+            ahora.jugando > 0 ? (
+              <>
+                <b className="text-orange-600">🔥 {ahora.jugando}</b> {ahora.jugando === 1 ? "persona sirviendo" : "personas sirviendo"} ahora · {ahora.jugadores} en la tabla
+              </>
+            ) : (
+              <>
+                <b className="text-orange-600">🏆 {ahora.jugadores}</b> {ahora.jugadores === 1 ? "persona" : "personas"} en la tabla de gloria
+              </>
+            )
+          ) : (
+            "…"
+          )}
+        </p>
+        {!user ? (
+          <p className="py-6 text-center text-sm">
+            <Link href={loginUrl()} className="font-semibold text-amber-700 underline">
+              Inicia sesión
+            </Link>{" "}
+            para ver la tabla de la semana, quién va primero y lo que logra la comunidad.
+          </p>
+        ) : (
+          <>
+            <div className="mb-2 flex gap-1 text-sm">
+              {(
+                [
+                  ["semana", "Esta semana"],
+                  ["siempre", "De siempre"],
+                  ["actividad", "Actividad"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTab(id)}
+                  className={`flex-1 rounded-lg px-2 py-1.5 font-semibold ${tab === id ? "bg-amber-400 text-amber-950" : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {loading && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            )}
+            {!loading && tab !== "actividad" && board && (
+              <div>
+                {tab === "semana" && <p className="mb-1 text-[11px] text-stone-500">Cuenta la gloria ganada desde el lunes. Se reinicia cada semana.</p>}
+                {board.top.length ? (
+                  <ol className="divide-y rounded-lg border dark:divide-stone-700 dark:border-stone-700">
+                    {board.top.map((r) => (
+                      <li key={r.rank} className={`flex items-center gap-2 px-3 py-2 text-sm ${r.isMe ? "bg-amber-50 font-semibold dark:bg-amber-950/30" : ""}`}>
+                        <span className={`w-6 text-center font-black ${r.rank === 1 ? "text-yellow-500" : r.rank === 2 ? "text-slate-400" : r.rank === 3 ? "text-amber-700" : "text-stone-400"}`}>{r.rank}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{r.isMe ? `${r.name} (tú)` : r.name}</span>
+                          {r.meta && (
+                            <span className="block truncate text-[11px] font-normal text-stone-500">
+                              {RANKS[r.meta.rango ?? 0]?.nombre}
+                              {r.meta.jornada ? ` · jorn. ${r.meta.jornada}` : ""}
+                              {r.meta.copas ? ` · 🏆 ${r.meta.copas}` : ""}
+                            </span>
+                          )}
+                        </span>
+                        <span className="tabular-nums">{r.score.toLocaleString("es-419")}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="py-4 text-center text-sm text-stone-500">{tab === "semana" ? "Esta semana nadie ha sumado gloria todavía. ¡Sé el primero!" : "Todavía nadie está en la tabla."}</p>
+                )}
+                {board.mine && !board.top.some((r) => r.isMe) && (
+                  <p className="mt-2 text-center text-xs text-stone-500">
+                    Tú: <b>{board.mine.best.toLocaleString("es-419")}</b> · puesto {board.mine.rank}
+                  </p>
+                )}
+              </div>
+            )}
+            {!loading && tab === "actividad" && items && (
+              <ul className="space-y-1.5">
+                {items.length ? (
+                  items.map((it) => (
+                    <li key={it.id} className="flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm dark:border-stone-700">
+                      <span className="min-w-0 flex-1">
+                        <b>{it.name}</b> {it.text}
+                        <span className="block text-[11px] text-stone-500">{hace(it.createdAt)}</span>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={it.cheeredByMe || it.isMine}
+                        onClick={() => void cheer(it)}
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${it.cheeredByMe ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200" : it.isMine ? "bg-stone-100 text-stone-400 dark:bg-stone-800" : "bg-amber-400 text-amber-950 hover:bg-amber-300"}`}
+                        title={it.isMine ? "Tu logro" : "Aplaudir"}
+                        data-testid={`templo-aplauso-${it.id}`}
+                      >
+                        🙌 {it.cheers}
+                      </button>
+                    </li>
+                  ))
+                ) : (
+                  <li className="py-4 text-center text-sm text-stone-500">Todavía no hay logros de la comunidad. Los rangos, las copas de oro y cada diez jornadas aparecen aquí.</li>
+                )}
+              </ul>
+            )}
+          </>
+        )}
       </div>
     </Card>
   );

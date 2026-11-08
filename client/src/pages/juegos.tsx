@@ -2,9 +2,11 @@
  * Juegos: la sala (/juegos) y cada juego (/juegos/:slug). Se juegan en el navegador, sin
  * descargar nada; los puntajes de quien inicia sesión entran a la tabla de los mejores.
  */
-import { Suspense, lazy, useEffect, type ComponentType, type LazyExoticComponent } from "react";
+import { Suspense, lazy, useEffect, useState, type ComponentType, type LazyExoticComponent } from "react";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, Gamepad2, Loader2, Sparkles, Trophy, Users, Wifi } from "lucide-react";
+import { ArrowLeft, Flame, Gamepad2, Loader2, Medal, Sparkles, Trophy, Users, Wifi } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { loginUrl } from "@/lib/login-redirect";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +90,8 @@ function Sala() {
         </div>
       </div>
 
+      <ComunidadJuegos />
+
       <div className="mt-10 grid gap-4 text-sm sm:grid-cols-3">
         <div className="flex items-start gap-3 rounded-xl border bg-card p-4">
           <Wifi className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -103,6 +107,125 @@ function Sala() {
         </div>
       </div>
     </div>
+  );
+}
+
+type Lider = { name: string; score: number; meta?: { rango?: number; jornada?: number; copas?: number } | null } | null;
+type Comunidad = {
+  juegos: { slug: string; jugando: number; jugadores: number; lider?: Lider; liderSemana?: Lider }[];
+  actividad: { id: number; game: string; name: string; text: string; createdAt: string; cheers: number; cheeredByMe: boolean; isMine: boolean }[];
+};
+
+function haceRato(iso: string) {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (m < 1) return "ahora";
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `hace ${h} h` : `hace ${Math.round(h / 24)} d`;
+}
+
+/** La comunidad de los juegos: quién juega ahora, quién va primero y lo último que lograron. */
+function ComunidadJuegos() {
+  const { user } = useAuth();
+  const [data, setData] = useState<Comunidad | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      fetch("/api/juegos/comunidad", { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => alive && setData(d))
+        .catch(() => null);
+    void load();
+    const t = setInterval(load, 60000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [user]);
+  const cheer = async (id: number) => {
+    setData((d) => (d ? { ...d, actividad: d.actividad.map((a) => (a.id === id ? { ...a, cheeredByMe: true, cheers: a.cheers + 1 } : a)) } : d));
+    try {
+      await fetch(`/api/juegos/actividad/${id}/aplauso`, { method: "POST", credentials: "include" });
+    } catch {
+      /* sin conexión */
+    }
+  };
+  if (!data) return null;
+  const titulo = (slug: string) => GAMES_LIST.find((g) => g.slug === slug)?.title || slug;
+  return (
+    <section className="mt-10 rounded-2xl border bg-card p-4 sm:p-5" data-testid="juegos-comunidad">
+      <h2 className="mb-3 flex items-center gap-2 text-xl font-black">
+        <Users className="h-5 w-5 text-primary" /> Comunidad de juegos
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {data.juegos.map((j) => (
+          <div key={j.slug} className="rounded-xl border p-3">
+            <p className="font-bold">{titulo(j.slug)}</p>
+            <p className="text-xs text-muted-foreground">
+              {j.jugando > 0 ? (
+                <>
+                  <Flame className="mr-1 inline h-3.5 w-3.5 text-orange-500" />
+                  {j.jugando} jugando ahora · {j.jugadores} en la tabla
+                </>
+              ) : (
+                <>
+                  <Trophy className="mr-1 inline h-3.5 w-3.5 text-amber-500" />
+                  {j.jugadores === 0 ? "Sé el primero en la tabla" : `${j.jugadores} ${j.jugadores === 1 ? "persona" : "personas"} en la tabla`}
+                </>
+              )}
+            </p>
+            {user && (j.liderSemana || j.lider) && (
+              <div className="mt-2 space-y-1 text-sm">
+                {j.liderSemana && (
+                  <p>
+                    <Medal className="mr-1 inline h-4 w-4 text-yellow-500" /> 1.º esta semana: <b>{j.liderSemana.name}</b>{" "}
+                    <span className="text-muted-foreground">({j.liderSemana.score.toLocaleString("es-419")})</span>
+                  </p>
+                )}
+                {j.lider && (
+                  <p>
+                    <Trophy className="mr-1 inline h-4 w-4 text-amber-500" /> 1.º de siempre: <b>{j.lider.name}</b>{" "}
+                    <span className="text-muted-foreground">({j.lider.score.toLocaleString("es-419")})</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {user ? (
+        data.actividad.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-bold">Lo último que lograron</p>
+            <ul className="space-y-1.5">
+              {data.actividad.map((a) => (
+                <li key={a.id} className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                  <span className="min-w-0 flex-1">
+                    <b>{a.name}</b> {a.text} <span className="text-xs text-muted-foreground">· {titulo(a.game)} · {haceRato(a.createdAt)}</span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={a.cheeredByMe || a.isMine}
+                    onClick={() => void cheer(a.id)}
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${a.cheeredByMe || a.isMine ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:opacity-90"}`}
+                    title={a.isMine ? "Tu logro" : "Aplaudir"}
+                  >
+                    🙌 {a.cheers}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">
+          <Link href={loginUrl()} className="font-semibold text-primary underline">
+            Inicia sesión
+          </Link>{" "}
+          para ver quién va primero, aplaudir los logros de la comunidad y aparecer en las tablas.
+        </p>
+      )}
+    </section>
   );
 }
 

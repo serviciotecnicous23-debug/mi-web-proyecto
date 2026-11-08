@@ -16,7 +16,11 @@ import {
   CHOIR_FLOOR, CHOIR_SPOTS, DOOR_RECT, GATE_RECT, HELPER_HOME, MAX_QUEUE, OUTER, OUTER_GATE, POS, PRAY_SPOTS, STATIC_CIRCLES,
   STATIC_RECTS, TEMPLE, VEIL_RECT, WAIT_SPOTS, floorHeight, insideTemple, queueSlot, type Rect, type V2,
 } from "./layout";
-import { applyOffline, gloria, progressView, saveLocal, saveRemote, submitScore, type PileId, type SaveData } from "./state";
+import { GAME_SLUG, applyOffline, gloria, progressView, saveLocal, saveRemote, submitScore, type PileId, type SaveData } from "./state";
+import {
+  ADORNOS, COPA, LOGROS, copas, dailyReward, daySeed, goalDef, jornadaReward, logroNivel, makeGoals, parSeconds, starsFor, todayKey,
+  type GoalKind, type StatKey,
+} from "./progress";
 import { gameStore, type Hud, type Modal } from "./store";
 import { buildWorld, disposeWorld, fadeMaterials, type WorldVisual } from "./three/structures";
 import {
@@ -181,6 +185,16 @@ export class TempleWorld {
   private pascua = 0;
   private coinStreak = 0;
   private stepAlt = false;
+  // avance sin fin y comunidad
+  private fireRun = 0;
+  private logrosReady = false;
+  private eventQueue: { tipo: string; valor: number | string }[] = [];
+  private eventTimer = 0;
+  private liga: Hud["liga"] = null;
+  private ligaTimer = 4;
+  private pileWait: Record<string, number> = {};
+  private adornoRise = new Map<string, number>();
+  private choirExtra: CrowdHandle[] = [];
   private coinTime = 0;
   private remoteDirty = false;
   private lastScore = -1;
@@ -205,6 +219,8 @@ export class TempleWorld {
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
     this.maxRatio = Math.min(window.devicePixelRatio || 1, coarse ? 1.75 : 2);
+    // en pantallas finas (celulares) nunca se baja de una resolución que se vea nítida
+    this.minRatio = Math.min(this.maxRatio, (window.devicePixelRatio || 1) >= 2 ? 1.3 : 1);
     this.ratio = this.maxRatio;
     this.renderer.setPixelRatio(this.ratio);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -237,6 +253,7 @@ export class TempleWorld {
     // escenario y personajes
     this.vis = buildWorld();
     this.scene.add(this.vis.root, this.crowd.group, this.shadows.mesh, this.items.group, this.fx.group);
+    if (coarse) this.fx.density = 0.7;
     this.fireLight.position.set(POS.altar[0], 2.6, POS.altar[1]);
     this.lampLight.position.copy(this.vis.stations.candelero.anchors.light);
     this.holyLight.position.copy(this.vis.holiestLightPos);
@@ -336,6 +353,8 @@ export class TempleWorld {
         this.s.sabiduria += 1;
         this.overlay.float("+1 sabiduría", p.clone().add(new THREE.Vector3(0, 0.5, 0)), "blue");
       }
+      this.track("preguntas");
+      if (source === "pueblo") this.track("pueblo");
       const bonus = source === "pueblo" ? 15 + 6 * this.s.rank : source === "azarias" ? 8 + 4 * this.s.rank : 0;
       if (bonus) this.giveGozo(bonus, p);
       this.fx.sparkle(p, 18, 0.5);
@@ -393,14 +412,15 @@ export class TempleWorld {
   private frame = (now: number) => {
     if (!this.running) return;
     this.raf = requestAnimationFrame(this.frame);
-    const dt = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
+    const raw = Math.max(0, (now - this.last) / 1000);
+    const dt = Math.min(0.05, raw);
     this.last = now;
     this.time += dt;
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
     this.renderer.render(this.scene, this.camera);
-    this.adapt(dt);
+    this.adapt(raw);
     this.timers.hud += dt;
     if (this.timers.hud > 0.1) {
       this.timers.hud = 0;
@@ -408,30 +428,46 @@ export class TempleWorld {
     }
   };
 
-  /** Si el equipo va lento, baja la resolución (y vuelve a subirla cuando va bien). */
-  private adapt(dt: number) {
-    this.fpsAcc += dt;
+  /**
+   * Si el equipo de verdad no da abasto, baja un poco la resolución, y la vuelve a subir apenas
+   * puede. No cuenta las ceremonias ni las ventanas (son momentos cortos), y un ritmo parejo y
+   * bajo (el teléfono en ahorro de batería fija 30 cuadros) no es sobrecarga: ahí no se toca la
+   * calidad. Nunca baja de una resolución nítida.
+   */
+  private adapt(raw: number) {
+    if (document.hidden || gameStore.busy || this.ceremony > 0 || this.finale || raw > 0.5) {
+      this.fpsAcc = 0;
+      this.fpsFrames = 0;
+      this.frameGaps.length = 0;
+      return;
+    }
+    this.fpsAcc += raw;
     this.fpsFrames++;
-    if (this.fpsAcc < 2) return;
-    const fps = this.fpsFrames / this.fpsAcc;
+    this.frameGaps.push(raw);
+    if (this.fpsAcc < 3) return;
+    const mean = this.fpsAcc / this.fpsFrames;
+    let v = 0;
+    for (const g of this.frameGaps) v += (g - mean) * (g - mean);
+    const sd = Math.sqrt(v / this.frameGaps.length);
+    const fps = 1 / mean;
     this.fpsAcc = 0;
     this.fpsFrames = 0;
-    if (document.hidden) return;
-    if (fps < 42 && this.ratio > 0.8) {
-      this.ratio = Math.max(0.75, this.ratio - 0.25);
-      this.renderer.setPixelRatio(this.ratio);
+    this.frameGaps.length = 0;
+    const steady = sd < mean * 0.2;
+    const set = (r: number) => {
+      this.ratio = r;
+      this.renderer.setPixelRatio(r);
       this.resize();
       this.goodFor = 0;
-    } else if (fps > 57) {
-      this.goodFor += 2;
-      if (this.goodFor > 8 && this.ratio < this.maxRatio) {
-        this.ratio = Math.min(this.maxRatio, this.ratio + 0.25);
-        this.renderer.setPixelRatio(this.ratio);
-        this.resize();
-        this.goodFor = 0;
-      }
+    };
+    if (fps < 38 && !steady && this.ratio > this.minRatio + 0.01) set(Math.max(this.minRatio, this.ratio - 0.15));
+    else if (fps > 52 || steady) {
+      this.goodFor += 3;
+      if (this.goodFor >= 6 && this.ratio < this.maxRatio) set(Math.min(this.maxRatio, this.ratio + 0.15));
     } else this.goodFor = 0;
   }
+  private frameGaps: number[] = [];
+  private minRatio = 1;
 
   private resize() {
     const r = this.container.getBoundingClientRect();
@@ -504,6 +540,18 @@ export class TempleWorld {
       this.remoteDirty = false;
       void saveRemote(this.s);
     }
+    // avisos de la comunidad (de a uno, sin apurar al servidor) y la tabla de la semana
+    this.eventTimer -= dt;
+    if (this.eventTimer <= 0 && this.eventQueue.length) {
+      this.eventTimer = 3.2;
+      const ev = this.eventQueue.shift()!;
+      void this.sendEvent(ev.tipo, ev.valor);
+    }
+    this.ligaTimer -= dt;
+    if (this.ligaTimer <= 0) {
+      this.ligaTimer = 120;
+      void this.fetchLiga();
+    }
     this.timers.score += dt;
     if (this.opts.loggedIn && this.timers.score > 90) {
       this.timers.score = 0;
@@ -571,6 +619,7 @@ export class TempleWorld {
         const bonus = Math.round(5 * LAMPS * (1 + s.rank) * (1 + 0.2 * (s.upgrades.abundancia || 0)));
         this.giveGozo(bonus, this.vis.stations.candelero.anchors.light);
         gameStore.toast(`Las lámparas ardieron toda la noche (Levítico 24:3): +${bonus} de gozo`, "gold");
+        this.track("noche");
       }
       s.lampWatch = false;
       if (this.isSabbath() && s.built.mesa) {
@@ -620,12 +669,15 @@ export class TempleWorld {
     if (!this.prayer) return;
     this.prayer = false;
     const value = Math.round(4 * this.mult(false));
+    let n = 0;
     for (const v of this.visitors)
       if (v.kind === "orante" && (v.state === "praying" || v.state === "toPray")) {
         this.s.lifetimeGozo += value;
         this.emitGozo(this.headPos(v.rig), value, "basin");
         this.cheer(v);
+        n++;
       }
+    if (n) this.track("orantes", n);
   }
 
   // ---------------------------------------------------------------- capacidades
@@ -800,7 +852,13 @@ export class TempleWorld {
     if (s.built.altar && s.altarFuel > 0) {
       const burn = 1 / (24 + 4 * (s.upgrades.fuego || 0));
       s.altarFuel = Math.max(0, s.altarFuel - burn * dt);
+      this.fireRun += dt;
+      const run = Math.floor(this.fireRun);
+      if (run > (s.stats.fuegoMax || 0)) s.stats.fuegoMax = run;
+      for (const g of s.jornada.goals) if (g.kind === "fuegoVivo") g.progress = Math.max(g.progress, Math.min(g.target, run));
+      if (!s.daily.done) for (const g of s.daily.goals) if (g.kind === "fuegoVivo") g.progress = Math.max(g.progress, Math.min(g.target, run));
       if (s.altarFuel === 0) {
+        this.fireRun = 0;
         this.audio.fireOut();
         if (s.story.primerFuego && !s.story.fuegoApagado) {
           s.story.fuegoApagado = true;
@@ -902,7 +960,10 @@ export class TempleWorld {
       const inside = z.on && (z.id === "altar" ? altarGap(r.x, r.z) < 1.15 : dist(r.x, r.z, zx, zz) < z.r);
       const entered = inside && !z.inside;
       z.inside = inside;
-      if (!inside) continue;
+      if (!inside) {
+        this.pileWait[z.id] = 0;
+        continue;
+      }
       switch (z.id) {
         case "reception":
           this.receive(c, r, true);
@@ -917,7 +978,7 @@ export class TempleWorld {
         case "aceite":
         case "pan":
         case "incienso":
-          this.takeFromPile(z.id, c, r);
+          if (this.settled(z.id, dt)) this.takeFromPile(z.id, c, r);
           break;
         case "diezmo":
           this.takeDiezmo(c, r);
@@ -957,7 +1018,33 @@ export class TempleWorld {
           break;
       }
     }
-    void dt;
+  }
+
+  /**
+   * Para cargar de un montón hay que detenerse un momento sobre él (al pasar caminando no se
+   * recoge nada). Si ya llevas de eso mismo, sigue cargando sin esperar.
+   */
+  private settled(id: string, dt: number) {
+    const c = this.player.carry;
+    if (c.items.length && itemGroup(c.items[0].type) === id) return true;
+    const slow = Math.hypot(this.player.vx, this.player.vz) < 1.4;
+    this.pileWait[id] = slow ? (this.pileWait[id] || 0) + dt : 0;
+    return this.pileWait[id] > 0.35;
+  }
+
+  /** ¿Hace falta llevar esto? (si el lugar ya está lleno, no se carga). */
+  private needed(id: "lena" | "aceite" | "pan" | "incienso", carrying: number) {
+    const s = this.s;
+    switch (id) {
+      case "lena":
+        return !s.built.altar || s.altarFuel + carrying < this.fuelMax() - 0.95;
+      case "aceite":
+        return !s.built.candelero || s.lampOil + carrying < LAMPS - 0.02;
+      case "pan":
+        return !s.built.mesa || s.bread + carrying < BREAD;
+      case "incienso":
+        return !s.built.altarIncienso || s.incense + carrying < INCENSE_MAX;
+    }
   }
 
   /** Recibir en la puerta la ofrenda del primero de la fila. */
@@ -986,6 +1073,7 @@ export class TempleWorld {
       else if (item === "cereal") this.audio.flour();
     }
     this.queue.shift();
+    if (isPlayer) this.track("familias");
     this.goWait(v);
   }
 
@@ -1005,6 +1093,7 @@ export class TempleWorld {
       s.altarFuel = Math.min(this.fuelMax(), s.altarFuel + 1);
       this.flyers.push({ kind: "item", type: "lena", from: this.stackTop(c, this.player.rig), to: ALTAR_TOP.clone(), t: 0, dur: 0.35, arc: 1.2, onArrive: () => this.fx.burst(ALTAR_TOP, 0.4) });
       this.audio.pickup(c.items.length + 1, "lena");
+      this.track("lena");
       if (wasOut) {
         this.audio.ignite();
         if (!s.story.primerFuego) {
@@ -1051,6 +1140,8 @@ export class TempleWorld {
     s.altarFuel = Math.max(0.05, s.altarFuel - 0.25);
     const amount = Math.max(1, Math.round((OFFER_GOZO[it.type] || 4) * this.mult()));
     s.lifetimeGozo += amount;
+    this.track("ofrendas");
+    this.track(it.type === "cordero" ? "corderos" : it.type === "palomas" ? "palomas" : "cereal");
     const v = this.visitors.find((x) => x.id === it.vid);
     this.flyers.push({
       kind: "item", type: it.type, from, to: ALTAR_TOP.clone(), t: 0, dur: 0.38, arc: 1.4,
@@ -1072,7 +1163,12 @@ export class TempleWorld {
   private takeFromPile(id: "lena" | "aceite" | "pan" | "incienso", c: Carrier, rig: Rig) {
     if (this.timers.pick > 0 || this.piles[id] <= 0) return;
     if (!this.canTake(c, id)) {
-      if (c.items.length && itemGroup(c.items[0].type) !== id) this.warnCarry(`Llevas ${ITEMS[c.items[0].type].plural}: llévalo a su lugar o suéltalo`);
+      if (c.items.length && itemGroup(c.items[0].type) !== id) this.warnCarry(`Llevas ${ITEMS[c.items[0].type].plural}: llévalo a su lugar o devuélvelo`);
+      return;
+    }
+    if (!this.needed(id, c.items.length)) {
+      const place = id === "lena" ? "El altar ya tiene toda la leña que cabe" : id === "aceite" ? "Las siete lámparas ya están llenas" : id === "pan" ? "La mesa ya tiene sus doce panes" : "El altar de oro ya tiene su incienso";
+      this.warnCarry(`${place}: no hace falta cargar más`);
       return;
     }
     this.timers.pick = 0.11;
@@ -1119,6 +1215,7 @@ export class TempleWorld {
         }
       },
     });
+    this.track(type === "aceite" ? "aceite" : type === "pan" ? "panes" : type === "incienso" ? "incienso" : "diezmos");
     if (type === "aceite") this.audio.lamp();
     else if (type === "diezmo") this.audio.sack();
     else if (type === "incienso") this.audio.pickup(c.items.length + 2, "incienso");
@@ -1135,6 +1232,7 @@ export class TempleWorld {
     this.fx.splash(this.vis.stations.fuente.anchors.water, 16);
     this.audio.water();
     this.overlay.float("Pureza llena", this.headPos(r), "blue");
+    this.track("lavar");
   }
 
   private collectGozo() {
@@ -1155,6 +1253,7 @@ export class TempleWorld {
       });
     this.overlay.float(`+${total}`, this.headPos(this.player.rig));
     if (!s.story.recogio) s.story.recogio = true;
+    this.track("gozo", total);
   }
 
   private coin() {
@@ -1320,7 +1419,7 @@ export class TempleWorld {
   }
 
   private newVisitor(kind: Visitor["kind"], x: number, z: number, forced?: { variant: Parameters<Crowd["add"]>[0]; colors: Parameters<Crowd["add"]>[1]; scale: number }): Visitor | null {
-    const look = forced || randomVisitor();
+    const look = forced || randomVisitor((this.s.stats.jornadas || 0) >= 16);
     if (kind === "pregunta" && look.variant === "nino") look.variant = "hombre";
     const handle = this.crowd.add(look.variant, look.colors);
     if (!handle) return null;
@@ -1688,6 +1787,7 @@ export class TempleWorld {
     if (next === 1) this.teach("sacerdote");
     if (next === 4) this.teach("sumo");
     gameStore.push({ kind: "rank", rank: next });
+    this.postEvent("rango", next);
     this.refreshPads();
     this.persist();
     this.sendScore();
@@ -1850,6 +1950,7 @@ export class TempleWorld {
   private helperDeliver(id: HelperId, type: ItemType, from: THREE.Vector3) {
     const s = this.s;
     let to: THREE.Vector3;
+    this.track(type === "lena" ? "lena" : type === "aceite" ? "aceite" : type === "pan" ? "panes" : type === "incienso" ? "incienso" : "diezmos", 1, false);
     switch (id) {
       case "lenero":
         s.altarFuel = Math.min(this.fuelMax(), s.altarFuel + 1);
@@ -2050,6 +2151,11 @@ export class TempleWorld {
 
   private storyTriggers() {
     const s = this.s;
+    this.ensureJornada();
+    this.ensureDaily();
+    this.checkGoals();
+    this.checkLogros();
+    this.syncAdornos();
     if (s.built.fuente && !s.story.levitas) {
       s.story.levitas = true;
       this.dialog("levitas");
@@ -2072,6 +2178,7 @@ export class TempleWorld {
       if (q) s.pendingQuiz = q;
     }
     this.audio.layers.night = this.isNight();
+    this.audio.setRadio(document.documentElement.classList.contains("radio-mini-open"));
     this.audio.layers.event = this.pascua > 0 || this.hourIndex() >= 0;
   }
 
@@ -2092,6 +2199,175 @@ export class TempleWorld {
     }
     this.updateObjective();
   };
+
+  // ---------------------------------------------------------------- avance sin fin
+  /** Cuenta algo que pasó: avanza la jornada, el desafío del día y las cuentas de los logros. */
+  private track(kind: GoalKind | StatKey, n = 1, byPlayer = true) {
+    const s = this.s;
+    const stat: StatKey | null = kind === "noche" ? "noches" : kind === "fuegoVivo" ? null : (kind as StatKey);
+    if (stat) s.stats[stat] = (s.stats[stat] || 0) + n;
+    if (!byPlayer) {
+      // lo que hace un levita cuenta para la jornada solo si es justo su tarea
+      const helperFor: Partial<Record<string, HelperId>> = { lena: "lenero", aceite: "aceitero", panes: "panadero", incienso: "incensario", diezmos: "conanias" };
+      const h = helperFor[kind];
+      if (!h || !(s.helpers[h] || 0)) return;
+    }
+    for (const g of s.jornada.goals) if (g.kind === kind && g.progress < g.target) g.progress = Math.min(g.target, g.progress + n);
+    if (!s.daily.done) for (const g of s.daily.goals) if (g.kind === kind && g.progress < g.target) g.progress = Math.min(g.target, g.progress + n);
+  }
+
+  /** La primera jornada empieza después de la primera ofrenda (antes va la enseñanza inicial). */
+  private ensureJornada() {
+    const s = this.s;
+    if (!s.story.primeraOfrenda || s.jornada.goals.length) return;
+    this.startJornada(Math.max(1, (s.stats.jornadas || 0) + 1));
+  }
+
+  private startJornada(n: number) {
+    const s = this.s;
+    s.jornada = { n, goals: makeGoals(n, progressView(s), n * 7919 + 17), startedAt: s.playSeconds, stars: s.jornada.stars };
+    if (n > 1 || s.stats.jornadas) gameStore.toast(`Jornada ${n}: ${s.jornada.goals.map((g) => goalDef(g.kind).texto(g.target)).join(" · ")}`, "info");
+  }
+
+  private checkGoals() {
+    const s = this.s;
+    if (s.jornada.goals.length && s.jornada.goals.every((g) => g.progress >= g.target)) this.completeJornada();
+    if (!s.daily.done && s.daily.goals.length && s.daily.goals.every((g) => g.progress >= g.target)) this.completeDaily();
+  }
+
+  private completeJornada() {
+    const s = this.s;
+    const j = s.jornada;
+    const seconds = Math.max(0, s.playSeconds - j.startedAt);
+    const stars = starsFor(j.goals, seconds);
+    const reward = jornadaReward(j.n, stars);
+    s.stats.jornadas = (s.stats.jornadas || 0) + 1;
+    s.stats.estrellas = (s.stats.estrellas || 0) + stars;
+    const starsStr = j.stars + String(stars);
+    s.lifetimeGozo += reward;
+    this.giveGozo(reward, this.playerChest());
+    const adorno = ADORNOS.find((a) => a.jornada === s.stats.jornadas) || null;
+    if (adorno) this.adornoRise.set(adorno.id, 0);
+    gameStore.push({ kind: "jornada", n: j.n, stars, reward, adorno: adorno ? adorno.id : null, seconds });
+    this.audio.jornada(stars);
+    this.fx.sparkle(this.playerChest(), 50, 0.9, 2.2);
+    if (j.n % 10 === 0) this.postEvent("jornada", j.n);
+    s.jornada = { n: j.n + 1, goals: [], startedAt: s.playSeconds, stars: starsStr };
+    this.startJornada(j.n + 1);
+    this.persist();
+    this.sendScore();
+  }
+
+  /** Un desafío nuevo cada día (el mismo para todos ese día). */
+  private ensureDaily() {
+    const s = this.s;
+    const key = todayKey();
+    if (s.daily.key === key || !s.story.primeraOfrenda) return;
+    s.daily = { ...s.daily, key, goals: makeGoals(0, progressView(s), daySeed(key), true), done: false };
+  }
+
+  private completeDaily() {
+    const s = this.s;
+    const d = s.daily;
+    d.done = true;
+    const yesterday = todayKey(new Date(Date.now() - 86400000));
+    d.streak = d.lastDone === yesterday ? d.streak + 1 : d.lastDone === d.key ? d.streak : 1;
+    d.lastDone = d.key;
+    s.stats.racha = Math.max(s.stats.racha || 0, d.streak);
+    const reward = dailyReward(d.streak);
+    s.lifetimeGozo += reward;
+    this.giveGozo(reward, this.playerChest());
+    this.audio.jornada(3);
+    gameStore.toast(`¡Desafío del día cumplido! Racha de ${d.streak} ${d.streak === 1 ? "día" : "días"} seguidos · +${reward} de gozo`, "gold");
+    if ([7, 30, 100, 365].includes(d.streak)) this.postEvent("racha", d.streak);
+    this.persist();
+  }
+
+  private storyFlag(id: string) {
+    const s = this.s;
+    if (id === "puertas") return !!s.built.puertas;
+    if (id === "todo") return STATION_IDS.every((st) => s.built[st]);
+    if (id === "levitasTodos") return HELPERS.every((h) => (s.helpers[h.id] || 0) >= h.costos.length);
+    return !!s.story[id];
+  }
+
+  private checkLogros() {
+    const s = this.s;
+    s.stats.dias = Math.max(s.stats.dias || 0, s.day);
+    const nuevos: string[] = [];
+    for (const def of LOGROS) {
+      const lv = logroNivel(def, s.stats, (id) => this.storyFlag(id));
+      const had = s.logros[def.id] || 0;
+      if (lv <= had) continue;
+      s.logros[def.id] = lv;
+      nuevos.push(def.historia ? `🏆 ${def.nombre}` : `🏆 ${def.nombre} · copa de ${COPA[lv - 1]}`);
+      if (lv === 3 && this.logrosReady) this.postEvent("copa", def.id);
+      if (this.logrosReady) this.audio.logro(def.historia ? 3 : lv);
+    }
+    if (!nuevos.length) {
+      this.logrosReady = true;
+      return;
+    }
+    if (!this.logrosReady && nuevos.length > 2) gameStore.toast(`🏆 Ganaste ${nuevos.length} logros: míralos en tu Libro`, "gold");
+    else for (const n of nuevos.slice(0, 3)) gameStore.toast(`Logro: ${n.replace("🏆 ", "")}`, "gold");
+    this.logrosReady = true;
+    this.persist();
+  }
+
+  /** Un logro para la actividad de la comunidad (se manda de a uno). */
+  private postEvent(tipo: string, valor: number | string) {
+    if (!this.opts.loggedIn) return;
+    this.eventQueue.push({ tipo, valor });
+  }
+
+  private async sendEvent(tipo: string, valor: number | string) {
+    try {
+      await saveRemote(this.s);
+      await fetch(`/api/juegos/${GAME_SLUG}/logro`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, valor }),
+      });
+    } catch {
+      /* sin conexión: no pasa nada */
+    }
+  }
+
+  /** Quién va primero esta semana y tu puesto (cada dos minutos, solo con cuenta). */
+  private async fetchLiga() {
+    if (!this.opts.loggedIn) return;
+    try {
+      const res = await fetch(`/api/juegos/${GAME_SLUG}/ranking?periodo=semana`, { credentials: "include" });
+      if (!res.ok) return;
+      const b = await res.json();
+      const top = b?.top?.[0];
+      this.liga = { lider: top ? String(top.name) : null, liderPuntos: top ? Number(top.score) : 0, puesto: b?.mine ? Number(b.mine.rank) : null, puntos: b?.mine ? Number(b.mine.best) : 0 };
+    } catch {
+      /* sin conexión */
+    }
+  }
+
+  /** Muestra los adornos ganados y, al ganar uno, lo levanta con brillo. */
+  private syncAdornos() {
+    const done = this.s.stats.jornadas || 0;
+    for (const a of ADORNOS) {
+      const g = this.vis.adornos[a.id];
+      if (!g) continue;
+      const on = done >= a.jornada;
+      if (on && !g.visible) {
+        g.visible = true;
+        if (!this.adornoRise.has(a.id)) g.scale.y = 1;
+        this.shadowDirty = true;
+      }
+      if (a.id === "cantores" && on && !this.choirExtra.length) {
+        for (let i = 0; i < 3; i++) {
+          const h = this.crowd.add("levita", leviteColors(["#5b2a6e", "#2f5aa8", "#a33b2c"][i]));
+          if (h) this.choirExtra.push(h);
+        }
+      }
+    }
+  }
 
   // ---------------------------------------------------------------- el Día de la Expiación
   private startFinale() {
@@ -2115,6 +2391,7 @@ export class TempleWorld {
       this.s.story.finale = true;
       this.teach("expiacion");
       gameStore.push({ kind: "finale" });
+      this.postEvent("final", 1);
       this.persist();
       this.sendScore();
       if (this.opts.loggedIn) void saveRemote(this.s);
@@ -2190,6 +2467,7 @@ export class TempleWorld {
     this.updateCamera(dt);
     this.updateFade(dt);
     this.animateStations(dt);
+    this.animateAdornos(dt);
 
     // personajes
     this.shadows.begin();
@@ -2339,7 +2617,10 @@ export class TempleWorld {
     this.lampLight.intensity = lit ? 9 * flick : 0;
     if (lit) for (let i = 0; i < LAMPS; i++) this.fx.flame(`lamp${i}`, this.vis.stations.candelero.anchors[`lamp${i}`], dt, 0.8);
     // antorchas de noche
-    if (night || s.time > DUSK - 0.05) for (let i = 0; i < this.vis.torches.length; i++) this.fx.flame(`t${i}`, this.vis.torches[i], dt, 1.6);
+    if (night || s.time > DUSK - 0.05) {
+      for (let i = 0; i < this.vis.torches.length; i++) this.fx.flame(`t${i}`, this.vis.torches[i], dt, 1.6);
+      if (this.vis.adornos.braseros?.visible) for (let i = 0; i < this.vis.braseros.length; i++) this.fx.flame(`b${i}`, this.vis.braseros[i], dt, 2.2);
+    }
     // incienso
     if (s.built.altarIncienso && (s.incense > 0 || this.prayer)) this.fx.incense("inc", this.vis.stations.altarIncienso.anchors.top, dt, this.prayer ? 3 : 0.8);
     // horno y prensa
@@ -2388,6 +2669,36 @@ export class TempleWorld {
     const lambs = this.queue.filter((v) => v.item === "cordero").length;
     if (near(18, 0, 16) > 0) this.audio.ambientBleat(lambs);
   }
+
+  private animateAdornos(dt: number) {
+    for (const [id, t0] of this.adornoRise) {
+      const g = this.vis.adornos[id];
+      if (!g) {
+        this.adornoRise.delete(id);
+        continue;
+      }
+      const t = t0 + dt;
+      const k = Math.min(1, t / 1.1);
+      g.visible = true;
+      g.scale.y = Math.max(0.01, easeOutBack(k));
+      if (t0 === 0) this.fx.sparkle(this.playerChest(), 30, 1.2, 2);
+      this.shadowDirty = true;
+      if (k >= 1) {
+        g.scale.y = 1;
+        this.adornoRise.delete(id);
+      } else this.adornoRise.set(id, t);
+    }
+    // el coro de Asaf: tres levitas más tocando atrás de la plataforma
+    this.choirExtra.forEach((h, i) => {
+      const rig = this.choirRigs[i] || (this.choirRigs[i] = newRig(6.9 + i * 1.3, 11.6, 1));
+      rig.y = CHOIR_FLOOR;
+      rig.yaw = Math.PI;
+      rig.pose = "play";
+      rig.t += dt;
+      this.crowd.update(h, rig);
+    });
+  }
+  private choirRigs: Rig[] = [];
 
   private animateStations(dt: number) {
     for (const [id, t0] of this.rising) {
@@ -2687,6 +2998,12 @@ export class TempleWorld {
       gloria: gloria(s),
       mult: Math.round(this.mult() * 10) / 10,
       finale: s.finale,
+      jornada: s.jornada.goals.length
+        ? { n: s.jornada.n, goals: s.jornada.goals.map((g) => ({ ...g })), elapsed: s.playSeconds - s.jornada.startedAt, par: parSeconds(s.jornada.goals) }
+        : null,
+      daily: s.daily.goals.length ? { goals: s.daily.goals.map((g) => ({ ...g })), done: s.daily.done, streak: s.daily.streak } : null,
+      liga: this.liga,
+      copas: copas(s.logros),
     };
     gameStore.setHud(hud);
   }

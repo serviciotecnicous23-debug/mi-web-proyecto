@@ -162,6 +162,8 @@ export class Fx {
   haze = new Layer(1600, false);
   private time = 0;
   private acc = new Map<string, number>();
+  /** 1 en computadora; menos en el celular (se ve igual con menos humo encimado). */
+  density = 1;
 
   constructor() {
     this.group.add(this.haze.points, this.glow.points);
@@ -174,7 +176,7 @@ export class Fx {
 
   /** Cuántas partículas toca emitir este cuadro (para un ritmo por segundo). */
   private rate(key: string, perSec: number, dt: number) {
-    const v = (this.acc.get(key) || 0) + perSec * dt;
+    const v = (this.acc.get(key) || 0) + perSec * this.density * dt;
     const n = Math.floor(v);
     this.acc.set(key, v - n);
     return n;

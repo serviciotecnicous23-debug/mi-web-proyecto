@@ -4,6 +4,7 @@
  */
 import { useSyncExternalStore } from "react";
 import type { ItemType, Line } from "./data";
+import type { Goal } from "./progress";
 
 export type Hud = {
   gozo: number;
@@ -36,6 +37,13 @@ export type Hud = {
   gloria: number;
   mult: number;
   finale: boolean;
+  /** Jornada actual: objetivos y tiempo (para las estrellas). */
+  jornada: { n: number; goals: Goal[]; elapsed: number; par: number } | null;
+  /** Desafío del día. */
+  daily: { goals: Goal[]; done: boolean; streak: number } | null;
+  /** Tabla de la semana: quién va primero y tu puesto. */
+  liga: { lider: string | null; liderPuntos: number; puesto: number | null; puntos: number } | null;
+  copas: number;
 };
 
 export type Modal =
@@ -47,7 +55,10 @@ export type Modal =
   | { kind: "help" }
   | { kind: "offline"; gained: number; minutes: number }
   | { kind: "rank"; rank: number }
-  | { kind: "finale" };
+  | { kind: "finale" }
+  | { kind: "camino" }
+  | { kind: "jornada"; n: number; stars: number; reward: number; adorno: string | null; seconds: number }
+  | { kind: "comunidad" };
 
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[] };
 
@@ -55,6 +66,7 @@ const emptyHud: Hud = {
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
   lamps: null, lampsLit: false, bread: null, incense: null, time: 0.2, day: 1, phase: "", sabbath: false, objective: "",
   carrying: null, canDrop: false, event: null, rankReady: false, built: 0, total: 14, gloria: 0, mult: 1, finale: false,
+  jornada: null, daily: null, liga: null, copas: 0,
 };
 
 class GameStore {
