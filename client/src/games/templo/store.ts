@@ -37,6 +37,8 @@ export type Hud = {
   gloria: number;
   mult: number;
   finale: boolean;
+  /** Generación (1 la primera vez; sube al empezar otra vez la historia). */
+  gen: number;
   /** Jornada actual: objetivos y tiempo (para las estrellas). */
   jornada: { n: number; goals: Goal[]; elapsed: number; par: number } | null;
   /** Desafío del día. */
@@ -66,7 +68,7 @@ const emptyHud: Hud = {
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
   lamps: null, lampsLit: false, bread: null, incense: null, time: 0.2, day: 1, phase: "", sabbath: false, objective: "",
   carrying: null, canDrop: false, event: null, rankReady: false, built: 0, total: 14, gloria: 0, mult: 1, finale: false,
-  jornada: null, daily: null, liga: null, copas: 0,
+  jornada: null, daily: null, liga: null, copas: 0, gen: 1,
 };
 
 class GameStore {

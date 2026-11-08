@@ -73,6 +73,7 @@ const metaSchema = z
     rango: z.number().int().min(0).max(10).optional(),
     jornada: z.number().int().min(0).max(1_000_000).optional(),
     copas: z.number().int().min(0).max(100_000).optional(),
+    gen: z.number().int().min(1).max(99).optional(),
   })
   .strict();
 
@@ -103,7 +104,7 @@ function publicName(r: { display_name?: string | null; username?: string | null;
   return PARECE_CORREO.test(u) ? aliasPublico(null, Number(r.user_id)) : u || "Miembro";
 }
 
-type Meta = { rango?: number; jornada?: number; copas?: number } | null;
+type Meta = { rango?: number; jornada?: number; copas?: number; gen?: number } | null;
 type Row = { rank: number; name: string; avatarUrl: string | null; score: number; userId: number; meta: Meta };
 
 // ---------------------------------------------------------------- tablas

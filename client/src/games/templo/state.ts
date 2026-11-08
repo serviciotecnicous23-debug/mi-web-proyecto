@@ -54,6 +54,12 @@ export type SaveData = {
   daily: { key: string; goals: Goal[]; done: boolean; streak: number; lastDone: string };
   savedAt: number;
   playSeconds: number;
+  /** Generación: al terminar la historia se puede empezar otra vez sin perder lo ganado. */
+  gen: number;
+  /** El cargo más alto alcanzado en cualquier generación (cuenta para la tabla y el modo en línea). */
+  rangoMax: number;
+  /** Gloria de las generaciones anteriores: la gloria nunca baja. */
+  gloriaPrev: number;
 };
 
 export function newSave(): SaveData {
@@ -92,6 +98,9 @@ export function newSave(): SaveData {
     daily: { key: "", goals: [], done: false, streak: 0, lastDone: "" },
     savedAt: Date.now(),
     playSeconds: 0,
+    gen: 1,
+    rangoMax: 0,
+    gloriaPrev: 0,
   };
 }
 
@@ -185,8 +194,17 @@ export function sanitize(raw: unknown): SaveData {
     })(),
     stats: (() => {
       const out: Stats = {};
-      const st = r.stats && typeof r.stats === "object" ? (r.stats as Record<string, unknown>) : {};
-      for (const k of STAT_KEYS) if (k in st) out[k] = Math.round(num(st[k], 0, 1e12, 0));
+      const st = r.stats && typeof r.stats === "object" ? (r.stats as Record<string, unknown>) : null;
+      if (st) {
+        for (const k of STAT_KEYS) if (k in st) out[k] = Math.round(num(st[k], 0, 1e12, 0));
+      } else {
+        // Partida de antes de los logros: lo que ya se hizo cuenta para las copas (una sola vez).
+        out.ofrendas = Math.round(num(r.ofrendas, 0, 1e8, 0));
+        out.gozo = Math.round(num(r.lifetimeGozo, 0, 1e10, 0));
+        out.diezmos = Math.round(num(r.abundance, 0, 1e6, 0));
+        out.preguntas = r.quizzes && typeof r.quizzes === "object" ? Object.values(r.quizzes as Record<string, unknown>).filter((v) => v === true).length : 0;
+        out.dias = Math.round(num(r.day, 1, 1e6, 1));
+      }
       return out;
     })(),
     logros: (() => {
@@ -207,6 +225,9 @@ export function sanitize(raw: unknown): SaveData {
     })(),
     savedAt: num(r.savedAt, 0, 9e15, Date.now()),
     playSeconds: num(r.playSeconds, 0, 1e9, 0),
+    gen: Math.round(num(r.gen, 1, 99, 1)),
+    rangoMax: Math.max(Math.round(num(r.rangoMax, 0, 4, 0)), Math.round(num(r.rank, 0, 4, 0))),
+    gloriaPrev: Math.round(num(r.gloriaPrev, 0, 1e12, 0)),
   };
 }
 
@@ -221,16 +242,47 @@ export function progressView(s: SaveData): ProgressView {
   };
 }
 
-/** "Gloria del templo": el puntaje de la tabla de los mejores. Crece con todo lo logrado. */
-export function gloria(s: SaveData): number {
+/** Gloria de la generación actual: lo que vuelve a empezar en una nueva generación. */
+function gloriaGen(s: SaveData): number {
   const built = Object.values(s.built).filter(Boolean).length;
   const helpers = Object.values(s.helpers).reduce((a, b) => a + (b || 0), 0);
   const ups = Object.values(s.upgrades).reduce((a, b) => a + (b || 0), 0);
+  return built * 100 + helpers * 60 + ups * 20 + s.rank * 300 + (s.finale ? 1500 : 0) + s.sabiduria * 25 + s.lifetimeGozo / 40;
+}
+
+/** "Gloria del templo": el puntaje de la tabla de los mejores. Crece con todo lo logrado y nunca baja. */
+export function gloria(s: SaveData): number {
   const st = s.stats || {};
-  return Math.round(
-    built * 100 + helpers * 60 + ups * 20 + s.rank * 300 + (s.finale ? 1500 : 0) + s.sabiduria * 25 + s.lifetimeGozo / 40 +
-      (st.jornadas || 0) * 40 + (st.estrellas || 0) * 15 + copas(s.logros || {}) * 20,
-  );
+  return Math.round(gloriaGen(s) + (s.gloriaPrev || 0) + (st.jornadas || 0) * 40 + (st.estrellas || 0) * 15 + copas(s.logros || {}) * 20);
+}
+
+/** Gozo de más por cada generación: +25 % cada una, hasta +100 %. */
+export function genBonus(s: Pick<SaveData, "gen">): number {
+  return 0.25 * Math.min(4, Math.max(0, (s.gen || 1) - 1));
+}
+
+/**
+ * Nueva generación (opcional, al terminar la historia): el templo vuelve a las ruinas y se empieza
+ * como aprendiz, pero se quedan las copas, las jornadas con sus adornos, el libro, el desafío del
+ * día, los días de servicio, el cargo más alto y la gloria. Cada generación da más gozo.
+ */
+export function nuevaGeneracion(old: SaveData): SaveData {
+  const base = newSave();
+  const gen = Math.min(99, (old.gen || 1) + 1);
+  return {
+    ...base,
+    gen,
+    rangoMax: Math.max(old.rangoMax || 0, old.rank),
+    gloriaPrev: Math.round((old.gloriaPrev || 0) + gloriaGen(old)),
+    gozo: base.gozo + 100 * (gen - 1),
+    lessons: [...old.lessons],
+    day: old.day,
+    jornada: { n: old.jornada.n, goals: [], startedAt: 0, stars: old.jornada.stars },
+    stats: { ...old.stats },
+    logros: { ...old.logros },
+    daily: old.daily.done ? { ...old.daily, goals: old.daily.goals.map((g) => ({ ...g })) } : { ...old.daily, key: "", goals: [] },
+    playSeconds: old.playSeconds,
+  };
 }
 
 /** Gozo por minuto que traen los levitas mientras no se juega. */
@@ -245,7 +297,7 @@ export function offlineRate(s: SaveData): number {
   if (h.incensario) rate += 3;
   rate += (h.cantor || 0) * 2;
   if (h.conanias) rate += 6 + Math.min(40, s.abundance * 0.2);
-  return rate * (1 + (s.upgrades.abundancia || 0) * 0.2);
+  return rate * (1 + (s.upgrades.abundancia || 0) * 0.2) * (1 + genBonus(s));
 }
 
 export function applyOffline(s: SaveData, now = Date.now()): { gained: number; minutes: number } {
@@ -320,7 +372,7 @@ export async function submitScore(s: SaveData): Promise<void> {
       body: JSON.stringify({
         score: gloria(s),
         seconds: Math.round(s.playSeconds),
-        meta: { rango: s.rank, jornada: s.stats.jornadas || 0, copas: copas(s.logros || {}) },
+        meta: { rango: Math.max(s.rank, s.rangoMax || 0), jornada: s.stats.jornadas || 0, copas: copas(s.logros || {}), gen: s.gen || 1 },
       }),
     });
   } catch {

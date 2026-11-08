@@ -101,6 +101,8 @@ export function eventText(slug: string, tipo: string, valor: number): string | n
       return valor >= 10 && valor <= 100000 && valor % 10 === 0 ? `completó la jornada ${valor}` : null;
     case "racha":
       return [7, 30, 100, 365].includes(valor) ? `cumplió ${valor} días seguidos el desafío del día` : null;
+    case "generacion":
+      return valor >= 2 && valor <= 99 ? `empezó la ${valor}.ª generación en el templo` : null;
     default:
       return null;
   }

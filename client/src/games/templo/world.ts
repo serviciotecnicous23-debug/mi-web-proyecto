@@ -16,7 +16,7 @@ import {
   CHOIR_FLOOR, CHOIR_SPOTS, DOOR_RECT, GATE_RECT, HELPER_HOME, MAX_QUEUE, OUTER, OUTER_GATE, POS, PRAY_SPOTS, STATIC_CIRCLES,
   STATIC_RECTS, TEMPLE, VEIL_RECT, WAIT_SPOTS, floorHeight, insideTemple, queueSlot, type Rect, type V2,
 } from "./layout";
-import { GAME_SLUG, applyOffline, gloria, progressView, saveLocal, saveRemote, submitScore, type PileId, type SaveData } from "./state";
+import { GAME_SLUG, applyOffline, genBonus, gloria, nuevaGeneracion, progressView, sanitize, saveLocal, saveRemote, submitScore, type PileId, type SaveData } from "./state";
 import {
   ADORNOS, COPA, LOGROS, copas, dailyReward, daySeed, goalDef, jornadaReward, logroNivel, makeGoals, parSeconds, starsFor, todayKey,
   type GoalKind, type StatKey,
@@ -705,7 +705,7 @@ export class TempleWorld {
   /** Cuánto gozo deja cada persona bendecida. */
   private mult(withHour = true) {
     const s = this.s;
-    let bonus = 1 + 0.1 * s.rank + 0.1 * (s.helpers.cantor || 0);
+    let bonus = 1 + 0.1 * s.rank + 0.1 * (s.helpers.cantor || 0) + genBonus(s);
     if (this.lampsLit()) bonus += 0.25;
     if (s.built.mesa && s.bread >= BREAD) bonus += 0.25;
     if (s.built.altarIncienso && s.incense > 0) bonus += 0.2;
@@ -3004,6 +3004,7 @@ export class TempleWorld {
       daily: s.daily.goals.length ? { goals: s.daily.goals.map((g) => ({ ...g })), done: s.daily.done, streak: s.daily.streak } : null,
       liga: this.liga,
       copas: copas(s.logros),
+      gen: s.gen || 1,
     };
     gameStore.setHud(hud);
   }
@@ -3094,6 +3095,28 @@ export class TempleWorld {
   };
 
   // ================================================================ cierre
+  /**
+   * Nueva generación: guarda la partida nueva (aquí y, con cuenta, en el servidor) y la devuelve
+   * para levantar el templo otra vez desde las ruinas. Solo después del Día de la Expiación.
+   */
+  startNewGeneration(): SaveData {
+    if (!this.s.finale) return sanitize(JSON.parse(JSON.stringify(this.s)));
+    this.running = false;
+    for (const k of Object.keys(this.piles)) this.piles[k] = 0;
+    Object.assign(this.s, nuevaGeneracion(this.s));
+    this.persist();
+    if (this.opts.loggedIn) {
+      void saveRemote(this.s);
+      void fetch(`/api/juegos/${GAME_SLUG}/logro`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo: "generacion", valor: this.s.gen }),
+      }).catch(() => null);
+    }
+    return sanitize(JSON.parse(JSON.stringify(this.s)));
+  }
+
   destroy() {
     this.running = false;
     cancelAnimationFrame(this.raf);

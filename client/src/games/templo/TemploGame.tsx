@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -91,13 +91,13 @@ export default function TemploGame({ game }: { game: GameDef }) {
   }, []);
 
   const start = useCallback(
-    async (fresh: boolean) => {
+    async (fresh: boolean, given?: SaveData) => {
       if (!boxRef.current || !worldMod.current) return;
       setPhase("starting");
       try {
         const mod = await worldMod.current;
         if (fresh) clearLocal();
-        const s = fresh || !save ? newSave() : save;
+        const s = given ?? (fresh || !save ? newSave() : save);
         gameStore.reset();
         const w = new mod.TempleWorld(boxRef.current, s, { loggedIn: !!user, muted, music });
         w.audio.ensure();
@@ -113,6 +113,17 @@ export default function TemploGame({ game }: { game: GameDef }) {
     },
     [save, user, muted, music],
   );
+
+  // Nueva generación: el mundo guarda la partida nueva y el templo se levanta otra vez desde las ruinas.
+  const startGeneration = useCallback(() => {
+    if (!world) return;
+    const next = world.startNewGeneration();
+    world.destroy();
+    setWorld(null);
+    setPaused(false);
+    setSave(next);
+    void start(false, next);
+  }, [world, start]);
 
   const togglePause = useCallback(
     (p?: boolean) => {
@@ -183,6 +194,10 @@ export default function TemploGame({ game }: { game: GameDef }) {
         {phase === "playing" && paused && (
           <PauseMenu
             onResume={() => togglePause(false)}
+            gen={world?.s.gen || 1}
+            rangoMax={world ? Math.max(world.s.rank, world.s.rangoMax || 0) : 0}
+            canGen={!!world?.s.finale}
+            onGen={startGeneration}
             muted={muted}
             music={music}
             big={big}
@@ -223,7 +238,7 @@ function TitleScreen(props: {
   onMute: () => void;
 }) {
   const { game, phase, save, loggedIn, confirmNew, setConfirmNew, onStart } = props;
-  const has = !!save && (save.ofrendas > 0 || Object.keys(save.built).length > 0);
+  const has = !!save && (save.ofrendas > 0 || Object.keys(save.built).length > 0 || (save.gen || 1) > 1 || (save.stats.jornadas || 0) > 0);
   const [ahora, setAhora] = useState<number | null>(null);
   useEffect(() => {
     fetch(`/api/juegos/${GAME_SLUG}/ahora`)
@@ -423,6 +438,7 @@ function HudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: 
             >
               <Crown className="h-4 w-4 text-amber-400" />
               {RANKS[hud.rank].nombre}
+              {hud.gen > 1 && <span className="rounded-full bg-emerald-400/90 px-1.5 text-[10px] font-black text-emerald-950">{hud.gen}.ª gen.</span>}
               {hud.rankReady && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
             </button>
           </div>
@@ -549,7 +565,48 @@ function IconBtn({ label, onClick, children, testid }: { label: string; onClick:
   );
 }
 
-function PauseMenu(props: { onResume: () => void; muted: boolean; music: boolean; big: boolean; onMute: () => void; onMusic: () => void; onFull: () => void }) {
+function PauseMenu(props: {
+  onResume: () => void;
+  gen: number;
+  rangoMax: number;
+  canGen: boolean;
+  onGen: () => void;
+  muted: boolean;
+  music: boolean;
+  big: boolean;
+  onMute: () => void;
+  onMusic: () => void;
+  onFull: () => void;
+}) {
+  const [askGen, setAskGen] = useState(false);
+  if (askGen) {
+    const next = props.gen + 1;
+    const extra = Math.round(100 * 0.25 * Math.min(4, next - 1));
+    return (
+      <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+        <div className="max-h-full w-full max-w-sm space-y-3 overflow-y-auto rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-white shadow-2xl" data-testid="templo-generacion">
+          <h3 className="flex items-center justify-center gap-2 font-serif text-2xl font-black">
+            <Sprout className="h-6 w-6 text-emerald-300" /> {next}.ª generación
+          </h3>
+          <p className="text-center text-sm italic text-amber-100/90">«Generación a generación celebrará tus obras» (Salmo 145:4)</p>
+          <p className="text-sm text-white/85">El templo vuelve a las ruinas y empiezas otra vez la historia como aprendiz de Azarías. Es opcional: también puedes seguir sirviendo como estás.</p>
+          <ul className="space-y-1.5 rounded-xl bg-white/5 p-3 text-[13px] leading-snug">
+            <li>👑 Tu cargo de <b>{RANKS[props.rangoMax]?.nombre}</b> queda en tu historial y en la tabla.</li>
+            <li>🏆 Te quedas con tus copas, logros, jornadas con sus estrellas y adornos.</li>
+            <li>📖 También tu libro de versículos, la racha del desafío del día y tu gloria (nunca baja).</li>
+            <li>✨ Ganas <b>+{extra} % de gozo</b> para siempre y un regalo de gozo para empezar.</li>
+            <li className="text-white/70">🔄 Vuelven a empezar: los lugares restaurados, los levitas, las mejoras, el cargo de esta generación y las preguntas.</li>
+          </ul>
+          <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={props.onGen} data-testid="button-templo-generacion-si">
+            <Sprout className="mr-2 h-5 w-5" /> Empezar la {next}.ª generación
+          </Button>
+          <Button variant="ghost" className="w-full text-white/80 hover:text-white" onClick={() => setAskGen(false)}>
+            Seguir como estoy
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="w-full max-w-xs space-y-3 rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-center text-white shadow-2xl">
@@ -571,6 +628,11 @@ function PauseMenu(props: { onResume: () => void; muted: boolean; music: boolean
             {props.big ? <Minimize2 className="mr-1 h-4 w-4" /> : <Maximize2 className="mr-1 h-4 w-4" />} Pantalla
           </Button>
         </div>
+        {props.canGen && (
+          <Button variant="secondary" className="w-full" onClick={() => setAskGen(true)} data-testid="button-templo-generacion">
+            <Sprout className="mr-1 h-4 w-4 text-emerald-600" /> Nueva generación {props.gen > 1 ? `(vas en la ${props.gen}.ª)` : "(opcional)"}
+          </Button>
+        )}
         <p className="text-xs text-white/60">Tu avance se guarda solo. Puedes cerrar cuando quieras.</p>
         <Button asChild variant="ghost" className="w-full text-white/80 hover:text-white">
           <Link href="/juegos">
@@ -1453,7 +1515,7 @@ function LogrosTab() {
 }
 
 // ================================================================ comunidad
-type BoardRow = { rank: number; name: string; avatarUrl: string | null; score: number; isMe: boolean; meta?: { rango?: number; jornada?: number; copas?: number } | null };
+type BoardRow = { rank: number; name: string; avatarUrl: string | null; score: number; isMe: boolean; meta?: { rango?: number; jornada?: number; copas?: number; gen?: number } | null };
 type BoardData = { top: BoardRow[]; mine: { best: number; rank: number } | null; week?: string };
 type ActivityItem = { id: number; game: string; name: string; avatarUrl: string | null; text: string; createdAt: string; cheers: number; cheeredByMe: boolean; isMine: boolean };
 
@@ -1568,6 +1630,7 @@ function ComunidadView() {
                             <span className="block truncate text-[11px] font-normal text-stone-500">
                               {RANKS[r.meta.rango ?? 0]?.nombre}
                               {r.meta.jornada ? ` · jorn. ${r.meta.jornada}` : ""}
+                              {r.meta.gen && r.meta.gen > 1 ? ` · ${r.meta.gen}.ª gen.` : ""}
                               {r.meta.copas ? ` · 🏆 ${r.meta.copas}` : ""}
                             </span>
                           )}
