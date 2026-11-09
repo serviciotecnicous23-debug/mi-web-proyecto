@@ -267,7 +267,7 @@ export const LESSONS: Record<string, Lesson> = {
     id: "camaras",
     titulo: "Cámaras para la abundancia",
     texto: "El pueblo trajo tantas primicias y diezmos que se hicieron montones. Ezequías mandó preparar cámaras en el templo y el levita Conanías quedó a cargo.",
-    verso: { ref: "2 Crónicas 31:10-11", text: "Desde que comenzaron a traer las ofrendas a la casa de Jehová, hemos comido y nos hemos saciado, y nos ha sobrado mucho: porque Jehová ha bendecido su pueblo. Entonces mandó Ezequías que preparasen cámaras en la casa de Jehová; y las prepararon." },
+    verso: { ref: "2 Crónicas 31:10-11", text: "Desde que comenzaron a traer las ofrendas a la casa de Jehová, hemos comido y nos hemos saciado, y nos ha sobrado mucho: porque Jehová ha bendecido su pueblo, y ha quedado esta abundancia de provisiones. Entonces mandó Ezequías que preparasen cámaras en la casa de Jehová; y las prepararon." },
     hoy: { texto: "Dios bendice al pueblo que le da con fidelidad.", verso: { ref: "2 Corintios 9:7", text: "Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre." } },
     quiz: "camaras",
   },
