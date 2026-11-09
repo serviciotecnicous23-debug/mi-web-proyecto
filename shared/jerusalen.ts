@@ -117,6 +117,8 @@ export type JerusalenEstado = {
   requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean };
   personaje: { id: number; nombre: string; propio: boolean; creado: string } | null;
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
+  /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
+  jerusalen: { fecha: string; fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null; proxima: { nombre: string; icono: string; enMinutos: number } | null };
   mio: {
     merito: number;
     puesto: number | null;

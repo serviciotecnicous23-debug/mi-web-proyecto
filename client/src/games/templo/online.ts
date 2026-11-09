@@ -10,6 +10,7 @@ import {
   ENVIO_CADA, ESPERA_PREGUNTA, type DeberId, type EscalonId, type JerusalenAcciones, type JerusalenEstado,
   type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
+import { relojEnLinea } from "@shared/calendario";
 import { STATIONS } from "./data";
 import { newSave, type SaveData } from "./state";
 import { gameStore, type OnlineHud } from "./store";
@@ -64,8 +65,10 @@ export function onlineSave(rank: number): SaveData {
   ])
     s.story[k] = true;
   s.gozo = 0;
-  // el turno empieza después del sacrificio de la mañana: la primera hora del incienso la prepara el sacerdote
-  s.time = 0.36;
+  // Jerusalén en línea vive un mismo día y una misma hora para todos (y las mismas fiestas)
+  const reloj = relojEnLinea();
+  s.day = reloj.dia;
+  s.time = reloj.hora;
   s.altarFuel = 2;
   s.purity = 11;
   s.lampOil = 3;

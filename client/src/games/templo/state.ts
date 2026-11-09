@@ -64,6 +64,8 @@ export type SaveData = {
   gloriaPrev: number;
   /** Minutos que ya sirvieron hoy los levitas sin ti (tope diario). */
   offline: { key: string; min: number };
+  /** Tristeza del pueblo por un juicio injusto (0 a 3): baja el gozo y pasa con las mañanas. */
+  tristeza: number;
 };
 
 export function newSave(): SaveData {
@@ -106,13 +108,14 @@ export function newSave(): SaveData {
     rangoMax: 0,
     gloriaPrev: 0,
     offline: { key: "", min: 0 },
+    tristeza: 0,
   };
 }
 
 const GOAL_KINDS = new Set(GOALS.map((g) => g.kind));
 const STAT_KEYS: StatKey[] = [
   "ofrendas", "corderos", "palomas", "cereal", "familias", "lena", "lavar", "gozo", "preguntas", "pueblo",
-  "aceite", "panes", "incienso", "diezmos", "orantes", "noches", "fuegoMax", "jornadas", "estrellas", "dias", "racha",
+  "aceite", "panes", "incienso", "diezmos", "orantes", "noches", "fuegoMax", "jornadas", "estrellas", "dias", "racha", "juicios", "fiestas",
 ];
 
 function cleanGoals(v: unknown): Goal[] {
@@ -237,6 +240,7 @@ export function sanitize(raw: unknown): SaveData {
       const o = r.offline && typeof r.offline === "object" ? (r.offline as Record<string, unknown>) : {};
       return { key: dateKey(o.key), min: num(o.min, 0, 1440, 0) };
     })(),
+    tristeza: Math.round(num(r.tristeza, 0, 3, 0)),
   };
 }
 

@@ -132,7 +132,8 @@ export function adornosFor(jornadasHechas: number) {
 export type Stats = Partial<Record<StatKey, number>>;
 export type StatKey =
   | "ofrendas" | "corderos" | "palomas" | "cereal" | "familias" | "lena" | "lavar" | "gozo" | "preguntas" | "pueblo"
-  | "aceite" | "panes" | "incienso" | "diezmos" | "orantes" | "noches" | "fuegoMax" | "jornadas" | "estrellas" | "dias" | "racha";
+  | "aceite" | "panes" | "incienso" | "diezmos" | "orantes" | "noches" | "fuegoMax" | "jornadas" | "estrellas" | "dias" | "racha"
+  | "juicios" | "fiestas";
 
 export type LogroDef = {
   id: string;
@@ -169,6 +170,8 @@ export const LOGROS: LogroDef[] = [
   { id: "jornadas", nombre: N["jornadas"], icono: "🗺️", stat: "jornadas", niveles: [10, 50, 200], unidad: "jornadas", texto: "Jornadas completadas" },
   { id: "estrellas", nombre: N["estrellas"], icono: "⭐", stat: "estrellas", niveles: [25, 150, 600], unidad: "estrellas", texto: "Estrellas ganadas en las jornadas (Génesis 15:5)" },
   { id: "racha", nombre: N["racha"], icono: "📅", stat: "racha", niveles: [3, 7, 30], unidad: "días seguidos", texto: "Desafíos del día cumplidos seguidos" },
+  { id: "juez", nombre: N["juez"], icono: "⚖️", stat: "juicios", niveles: [3, 10, 30], unidad: "juicios", texto: "Juicios justos como sacerdote (Deuteronomio 17:9)" },
+  { id: "fiestas", nombre: N["fiestas"], icono: "🎺", stat: "fiestas", niveles: [3, 15, 60], unidad: "días de fiesta", texto: "Días de fiesta sirviendo en el templo (Levítico 23:2)" },
   { id: "h-puertas", nombre: N["h-puertas"], icono: "🚪", historia: "puertas", texto: "Abriste las puertas del templo (2 Crónicas 29:3)" },
   { id: "h-fuego", nombre: N["h-fuego"], icono: "🔥", historia: "primerFuego", texto: "Encendiste el altar" },
   { id: "h-rango1", nombre: N["h-rango1"], icono: "🕊️", historia: "rango1", texto: "Te vistieron de sacerdote (Éxodo 28:40)" },
