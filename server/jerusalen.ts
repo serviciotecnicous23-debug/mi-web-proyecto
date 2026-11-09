@@ -12,6 +12,7 @@ import { z } from "zod";
 import { pool } from "./db";
 import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
+import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO,
@@ -381,6 +382,19 @@ async function enLineaAhora(): Promise<number> {
   });
 }
 
+/** La fecha y la fiesta de Jerusalén en línea ahora (y la próxima, en minutos de reloj). */
+function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
+  const reloj = relojEnLinea();
+  const f = fechaDe(reloj.dia);
+  const h = f.fiestas[0];
+  const p = proximaFiesta(reloj.dia);
+  return {
+    fecha: f.texto,
+    fiesta: h ? { id: h.fiesta.id, nombre: h.fiesta.nombre, icono: h.fiesta.icono, merito: h.fiesta.merito, dia: h.dia, de: h.fiesta.duracion } : null,
+    proxima: p ? { nombre: p.fiesta.nombre, icono: p.fiesta.icono, enMinutos: Math.max(1, Math.round(((p.enDias - reloj.hora) * SEGUNDOS_DIA) / 60)) } : null,
+  };
+}
+
 function escalonPorMerito(merito: number): EscalonId {
   return merito >= MERITO_TURNO ? "turno" : "sacerdote";
 }
@@ -439,6 +453,7 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
     requisito: { ...requisito, puedeEntrar: requisito.creible && requisito.rango >= 1, puedeSumo: requisito.creible && requisito.rango >= 4 },
     personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
+    jerusalen: hoyEnJerusalen(),
     mio,
     escalera: (["sumo", "principal", "jefe"] as Cargo[]).map((id) => ({ id, cupo: CUPOS[id], titulares: escalera[id].map(marcar) })),
     tabla: tabla.map(marcar),
@@ -597,7 +612,9 @@ export function registerJerusalenRoutes(app: Express) {
           cuenta += c;
           crudo += c * MERITO_DEBER[k];
         }
-        crudo = Math.min(crudo, meritoMaximo(segundos));
+        // en las fiestas de Jerusalén (el mismo reloj para todos) el servicio vale más
+        const bono = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta.merito ?? 1;
+        crudo = Math.min(Math.round(crudo * bono), Math.floor(meritoMaximo(segundos) * bono));
         // el tiempo sin deberes no cuenta para la hora completa del día
         const despues = antes + (cuenta > 0 ? segundos : 0);
         let ganado = Math.round(crudo * factorTramo(antes, despues));

@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X, Award, Landmark, LogOut, Timer,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +27,8 @@ import {
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
+import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
+import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -377,7 +379,7 @@ function TitleScreen(props: {
                   <Play className="mr-2 h-5 w-5 fill-current" /> Continuar
                 </Button>
                 <p className="text-xs text-amber-100/90">
-                  Día {save.day} · {RANKS[save.rank].nombre} · {built}/{STATIONS.length} lugares restaurados · Gloria {gloria(save).toLocaleString("es-419")}
+                  Día {save.day} ({fechaDe(save.day).texto}) · {RANKS[save.rank].nombre} · {built}/{STATIONS.length} lugares restaurados · Gloria {gloria(save).toLocaleString("es-419")}
                 </p>
                 <button type="button" className="text-xs text-white/60 underline underline-offset-2 hover:text-white" onClick={() => setConfirmNew(true)}>
                   Empezar de nuevo
@@ -463,7 +465,7 @@ function DayClock({ hud }: { hud: Hud }) {
         <circle cx={12 + Math.cos(a + Math.PI) * 7} cy={12 + Math.sin(a + Math.PI) * 7} r="3" fill={night ? "#e8ecff" : "#ffd66b"} />
       </svg>
       <span>
-        Día {hud.day} · {hud.phase}
+        <span title={`Día ${hud.day} de servicio`}>{hud.fecha}</span> · {hud.phase}
         {hud.sabbath && <span className="ml-1 rounded bg-amber-400/90 px-1 text-[10px] text-amber-950">Reposo</span>}
       </span>
     </div>
@@ -627,6 +629,15 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 {fmt(hud.gloria)}
                 {hud.mult > 1.05 && <span className="ml-1 text-amber-300">· gozo ×{hud.mult.toLocaleString("es-419")}</span>}
               </div>
+              {hud.tristeza > 0 && (
+                <div
+                  className="rounded-full bg-slate-700/85 px-2.5 py-0.5 text-[11px] font-semibold text-slate-100 backdrop-blur-sm"
+                  title="Un juicio injusto entristeció al pueblo: el gozo baja hasta que vuelva la alegría (pasa con las mañanas)"
+                  data-testid="templo-tristeza"
+                >
+                  😔 Pueblo triste · gozo −{15 * hud.tristeza} %
+                </div>
+              )}
               {hud.liga && (hud.liga.lider || hud.liga.puesto) && (
                 <button
                   type="button"
@@ -870,6 +881,10 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <TemporadaView />;
     case "dificil":
       return <DificilView q={modal.q} />;
+    case "fiesta":
+      return <FiestaView id={modal.id} />;
+    case "juicio":
+      return <JuicioView casoId={modal.casoId} />;
   }
 }
 
@@ -1150,7 +1165,7 @@ function UpgradesView() {
 function BookView() {
   const world = useWorld();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"lecciones" | "logros" | "rangos" | "servicio" | "gloria">("lecciones");
+  const [tab, setTab] = useState<"lecciones" | "logros" | "rangos" | "servicio" | "gloria" | "fiestas">("lecciones");
   const [lesson, setLesson] = useState<string | null>(null);
   const [board, setBoard] = useState<Parameters<typeof Leaderboard>[0]["board"]>(null);
   const [loading, setLoading] = useState(false);
@@ -1188,7 +1203,7 @@ function BookView() {
   const hours = Math.floor(s.playSeconds / 3600), mins = Math.floor((s.playSeconds % 3600) / 60);
   return (
     <Card title={<span className="flex items-center gap-2"><BookOpen className="h-5 w-5" /> Libro del aprendiz</span>} onClose={() => gameStore.close()} wide testid="templo-libro">
-      <div className="flex gap-1 border-b border-amber-200/60 px-3 pt-2 text-sm dark:border-amber-900/50">
+      <div className="flex gap-1 overflow-x-auto border-b border-amber-200/60 px-3 pt-2 text-sm dark:border-amber-900/50">
         {(
           [
             ["lecciones", "Lecciones"],
@@ -1196,6 +1211,7 @@ function BookView() {
             ["servicio", "Mi servicio"],
             ["gloria", "Tabla de gloria"],
             ["logros", "Logros"],
+            ["fiestas", "Fiestas"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -1205,7 +1221,7 @@ function BookView() {
               world.audio.page();
               setTab(id);
             }}
-            className={`rounded-t-lg px-3 py-1.5 font-semibold ${tab === id ? "bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100" : "text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"}`}
+            className={`shrink-0 whitespace-nowrap rounded-t-lg px-3 py-1.5 font-semibold ${tab === id ? "bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100" : "text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"}`}
           >
             {label}
           </button>
@@ -1279,6 +1295,7 @@ function BookView() {
           </div>
         )}
         {tab === "logros" && <LogrosTab />}
+        {tab === "fiestas" && <FiestasTab />}
         {tab === "gloria" &&
           (user ? (
             <Leaderboard board={board} loading={loading} />
@@ -1966,6 +1983,22 @@ function OnlineLobby({
             {t.dePrueba ? " · de prueba" : ""} · {t.diasRestantes === 1 ? "último día" : `quedan ${t.diasRestantes} días`}
           </span>
         </div>
+        {estado.jerusalen && (
+          <div className="rounded-xl border border-amber-200/30 bg-amber-400/10 px-3 py-2 text-center text-xs text-amber-50" data-testid="templo-jerusalen-hoy">
+            <CalendarDays className="-mt-0.5 mr-1 inline h-3.5 w-3.5" />
+            Hoy en Jerusalén: <b>{estado.jerusalen.fecha}</b>
+            {estado.jerusalen.fiesta ? (
+              <>
+                {" · "}
+                {estado.jerusalen.fiesta.icono} <b>{estado.jerusalen.fiesta.nombre}</b>
+                {estado.jerusalen.fiesta.de > 1 ? ` (día ${estado.jerusalen.fiesta.dia} de ${estado.jerusalen.fiesta.de})` : ""}
+                {estado.jerusalen.fiesta.merito > 1.01 ? ` · el servicio vale ×${estado.jerusalen.fiesta.merito.toLocaleString("es-419")}` : ""}
+              </>
+            ) : estado.jerusalen.proxima ? (
+              <> · {estado.jerusalen.proxima.icono} {estado.jerusalen.proxima.nombre} en {estado.jerusalen.proxima.enMinutos} min</>
+            ) : null}
+          </div>
+        )}
         <header className="text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>
           <h2 className="mt-1 font-serif text-3xl font-black">Templo en línea</h2>
@@ -2345,5 +2378,272 @@ function DificilView({ q }: { q: JerusalenPregunta }) {
         {!res && !fallo && <p className="text-[11px] text-stone-500">Un acierto suma mérito a tu temporada. Cada pregunta sale una sola vez por temporada.</p>}
       </div>
     </Card>
+  );
+}
+
+// ================================================================ fiestas y juicios
+/** Al empezar una fiesta por primera vez: qué es, la ley y su cumplimiento en Cristo. */
+function FiestaView({ id }: { id: FiestaId }) {
+  const world = useWorld();
+  const f = FIESTA[id];
+  if (!f) return null;
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true">{f.icono}</span> {f.nombre}
+        </span>
+      }
+      testid="templo-fiesta"
+    >
+      <div className="space-y-3 p-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+          <CalendarDays className="-mt-0.5 mr-1 inline h-3.5 w-3.5" />
+          {fechaDeFiesta(f)}
+        </p>
+        <p className="text-[15px] leading-relaxed">{f.efecto}</p>
+        <VerseBox text={f.ley.text} refName={f.ley.ref} />
+        <div className="rounded-xl bg-sky-50 p-3 dark:bg-sky-950/30">
+          <p className="mb-1 text-xs font-black uppercase tracking-wider text-sky-800 dark:text-sky-300">En Cristo</p>
+          <p className="font-serif text-sm italic text-stone-700 dark:text-stone-300">
+            «{f.cristo.text}» <span className="not-italic font-semibold text-sky-800 dark:text-sky-300">— {f.cristo.ref}</span>
+          </p>
+          <p className="mt-2 text-sm">{f.hoy}</p>
+        </div>
+        <Button
+          className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
+          onClick={() => {
+            world?.audio.click();
+            gameStore.close();
+          }}
+          data-testid="button-templo-fiesta"
+        >
+          {f.solemne ? "Servir con reverencia" : "¡Que se alegre el pueblo!"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * Un caso para el sacerdote, en tres pasos: escuchar a las partes, inquirir (examinar hasta dos
+ * pistas) y dictar sentencia. Si no es justa, Azarías muestra lo que pasó después.
+ */
+function JuicioView({ casoId }: { casoId: string }) {
+  const world = useWorld();
+  const c = casoPorId(casoId);
+  const [paso, setPaso] = useState<"escuchar" | "inquirir" | "sentencia" | "fin">("escuchar");
+  const [abiertas, setAbiertas] = useState<number[]>([]);
+  const [eleccion, setEleccion] = useState<number | null>(null);
+  const [res, setRes] = useState<{ justa: boolean; gozo: number; clave: boolean } | null>(null);
+  const orden = useMemo(() => {
+    const o = [0, 1, 2];
+    for (let i = o.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [o[i], o[j]] = [o[j], o[i]];
+    }
+    return o;
+  }, [casoId]);
+  if (!c) return null;
+  const abrir = (i: number) => {
+    if (abiertas.includes(i) || abiertas.length >= 2) return;
+    world?.audio.page();
+    setAbiertas([...abiertas, i]);
+  };
+  const dictar = (k: number) => {
+    if (!world || eleccion !== null) return;
+    setEleccion(k);
+    setRes(world.juzgar(c.id, k, abiertas));
+    setPaso("fin");
+  };
+  const justa = c.opciones.find((o) => o.justa);
+  const pasos = [
+    ["escuchar", "1. Escuchar"],
+    ["inquirir", "2. Inquirir"],
+    ["sentencia", "3. Sentencia"],
+  ] as const;
+  const indice = paso === "fin" ? 3 : pasos.findIndex(([p]) => p === paso);
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Scale className="h-5 w-5" /> {c.titulo}
+        </span>
+      }
+      testid="templo-juicio"
+    >
+      <div className="space-y-3 p-4">
+        <div className="flex gap-1 text-[11px] font-bold">
+          {pasos.map(([p, label], i) => (
+            <span key={p} className={`flex-1 rounded-full px-2 py-1 text-center ${i < indice ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : i === indice ? "bg-amber-400 text-amber-950" : "bg-stone-100 text-stone-500 dark:bg-stone-800"}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+
+        {paso === "escuchar" && (
+          <>
+            <p className="text-xs text-stone-500">Llegó un caso difícil a los sacerdotes (Deuteronomio 17:8-9). Escucha primero a las partes.</p>
+            <ul className="space-y-2">
+              {c.partes.map((p) => (
+                <li key={p.quien} className="rounded-xl border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-transparent">
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">{p.quien}</p>
+                  <p className="mt-0.5 font-serif text-[15px] leading-relaxed">—{p.dice}</p>
+                </li>
+              ))}
+            </ul>
+            <VerseBox text={ESCUCHAR.text} refName={ESCUCHAR.ref} />
+            <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => setPaso("inquirir")} data-testid="button-juicio-inquirir">
+              <Search className="mr-1 h-4 w-4" /> Inquirir bien
+            </Button>
+          </>
+        )}
+
+        {paso === "inquirir" && (
+          <>
+            <p className="text-sm">
+              Antes de juzgar, examina <b>hasta dos cosas</b>. Te quedan <b data-testid="juicio-quedan">{2 - abiertas.length}</b>.
+            </p>
+            <ul className="space-y-2">
+              {c.pistas.map((p, i) => {
+                const abierta = abiertas.includes(i);
+                return (
+                  <li key={p.nombre}>
+                    <button
+                      type="button"
+                      disabled={abierta || abiertas.length >= 2}
+                      onClick={() => abrir(i)}
+                      className={`w-full rounded-xl border-2 px-3 py-2 text-left text-sm transition ${abierta ? "border-sky-300 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30" : abiertas.length >= 2 ? "border-stone-200 opacity-50 dark:border-stone-700" : "border-amber-200 bg-white hover:border-amber-400 hover:bg-amber-50 dark:border-amber-900 dark:bg-transparent"}`}
+                      data-testid={`juicio-pista-${i}`}
+                    >
+                      <span className="flex items-center gap-2 font-bold">
+                        <Search className="h-4 w-4 shrink-0" /> {p.nombre}
+                      </span>
+                      {abierta && <span className="mt-1 block text-[13px] leading-snug text-stone-700 dark:text-stone-200">{p.revela}</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <VerseBox text={INQUIRIR.text} refName={INQUIRIR.ref} />
+            <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={!abiertas.length} onClick={() => setPaso("sentencia")} data-testid="button-juicio-sentencia">
+              <Scale className="mr-1 h-4 w-4" /> {abiertas.length ? "Dictar sentencia" : "Examina al menos una cosa"}
+            </Button>
+          </>
+        )}
+
+        {paso === "sentencia" && (
+          <>
+            <p className="text-sm font-semibold">¿Qué dictas?</p>
+            <div className="space-y-2">
+              {orden.map((k, pos) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => dictar(k)}
+                  className="w-full rounded-xl border-2 border-amber-200 bg-white px-3 py-2.5 text-left text-[15px] font-semibold transition hover:border-amber-400 hover:bg-amber-50 dark:border-amber-900 dark:bg-transparent dark:hover:bg-amber-950/30"
+                  data-testid={`juicio-opcion-${pos}`}
+                >
+                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm text-amber-900 dark:bg-amber-900 dark:text-amber-100">{"ABC"[pos]}</span>
+                  {c.opciones[k].texto}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {paso === "fin" && res && eleccion !== null && (
+          <div className="space-y-3" data-testid="juicio-resultado">
+            {res.justa ? (
+              <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30">
+                <p className="flex items-center gap-2 font-black text-emerald-800 dark:text-emerald-200">
+                  <Scale className="h-5 w-5" /> Juicio justo · +{fmt(res.gozo)} de gozo
+                </p>
+                {res.clave && <p className="mt-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">Inquiriste bien: encontraste lo que mostraba la verdad (+50 %).</p>}
+                <p className="mt-2 text-sm">{c.opciones[eleccion].despues}</p>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-slate-100 p-3 dark:bg-slate-900/50">
+                <div className="flex items-start gap-3">
+                  <Portrait who="azarias" size={48} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">Azarías te muestra lo que pasó después</p>
+                    <p className="mt-1 text-sm leading-relaxed">{c.opciones[eleccion].despues}</p>
+                  </div>
+                </div>
+                <p className="mt-3 rounded-lg bg-white/70 p-2 text-sm font-semibold text-slate-700 dark:bg-black/20 dark:text-slate-200">
+                  😔 El pueblo quedó triste: el gozo baja hasta que vuelva la alegría, y la tristeza pasa con las mañanas.
+                </p>
+                {justa && (
+                  <p className="mt-2 text-sm">
+                    <b>La sentencia justa era:</b> {justa.texto}
+                  </p>
+                )}
+              </div>
+            )}
+            <VerseBox text={c.ley.text} refName={c.ley.ref} />
+            {!res.justa && <p className="text-center font-serif text-xs italic text-stone-500">«{ALEGRIA.text}» ({ALEGRIA.ref})</p>}
+            <Button
+              className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
+              onClick={() => {
+                world?.audio.click();
+                gameStore.close();
+              }}
+              data-testid="button-juicio-seguir"
+            >
+              Seguir sirviendo
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/** En el Libro del aprendiz: la fecha de hoy, la próxima fiesta y las fiestas del año. */
+function FiestasTab() {
+  const world = useWorld();
+  if (!world) return null;
+  const s = world.s;
+  const hoy = fechaDe(s.day);
+  const prox = proximaFiesta(s.day);
+  return (
+    <div className="space-y-3" data-testid="templo-fiestas">
+      <div className="grid grid-cols-2 gap-2 text-center text-xs">
+        <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
+          <p className="text-base font-black">{hoy.texto}</p>
+          hoy · año {hoy.anio} · día {s.day} de servicio
+        </div>
+        <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
+          <p className="text-base font-black">{prox ? `${prox.fiesta.icono} ${prox.enDias === 1 ? "mañana" : `en ${prox.enDias} días`}` : "—"}</p>
+          {prox ? `próxima: ${prox.fiesta.nombre}` : "próxima fiesta"}
+        </div>
+      </div>
+      <p className="text-xs text-stone-600 dark:text-stone-400">
+        Cada día de servicio es un día del año hebreo, y el año empieza en Abib (Éxodo 12:2). En las fiestas de Levítico 23 el templo se llena de gente y de gozo.
+      </p>
+      <ul className="space-y-2">
+        {FIESTAS.map((f) => {
+          const ahora = hoy.fiestas.some((x) => x.fiesta.id === f.id);
+          const vivida = !!s.story[`fiesta:${f.id}`];
+          return (
+            <li key={f.id} className={`rounded-xl border p-2.5 ${ahora ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`}>
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="font-bold">
+                  <span aria-hidden="true">{f.icono}</span> {f.nombre} {ahora && <span className="text-xs text-amber-700 dark:text-amber-300">(hoy)</span>}
+                </p>
+                {vivida && <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-label="Ya la celebraste" />}
+              </div>
+              <p className="text-[11px] font-semibold text-stone-500">{fechaDeFiesta(f)}</p>
+              <p className="mt-0.5 text-xs">{f.efecto}</p>
+              <p className="mt-1 font-serif text-xs italic text-stone-700 dark:text-stone-300">
+                «{f.ley.text}» <span className="not-italic font-semibold">— {f.ley.ref}</span>
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-[11px] text-stone-500">Más adelante, en la ciudad, las fiestas también se vivirán en el palacio del rey y en la escuela de los profetas, cada uno a su manera.</p>
+    </div>
   );
 }

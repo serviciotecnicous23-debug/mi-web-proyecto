@@ -85,6 +85,8 @@ export const TEMPLO_LOGROS_NOMBRES: Record<string, string> = {
   "h-velo": "El velo rasgado",
   "h-todo": "Todo restaurado",
   "h-levitas": "Los levitas ayudan",
+  juez: "Juicio justo",
+  fiestas: "Las fiestas solemnes",
 };
 
 const RANGOS = ["", "fue consagrado sacerdote", "ahora es sacerdote de turno", "es principal de los sacerdotes", "llegó a sumo sacerdote"];

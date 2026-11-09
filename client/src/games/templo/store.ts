@@ -4,6 +4,7 @@
  */
 import { useSyncExternalStore } from "react";
 import type { EscalonId, JerusalenPregunta } from "@shared/jerusalen";
+import type { FiestaId } from "@shared/calendario";
 import type { ItemType, Line } from "./data";
 import type { Goal } from "./progress";
 
@@ -58,6 +59,11 @@ export type Hud = {
   /** Tabla de la semana: quién va primero y tu puesto. */
   liga: { lider: string | null; liderPuntos: number; puesto: number | null; puntos: number } | null;
   copas: number;
+  /** Fecha hebrea de hoy («14 de Abib») y la fiesta, si la hay. */
+  fecha: string;
+  fiesta: { id: FiestaId; nombre: string; icono: string; dia: number; de: number; solemne: boolean } | null;
+  /** Tristeza del pueblo por un juicio injusto (0 a 3). */
+  tristeza: number;
 };
 
 export type Modal =
@@ -74,7 +80,9 @@ export type Modal =
   | { kind: "jornada"; n: number; stars: number; reward: number; adorno: string | null; seconds: number }
   | { kind: "comunidad" }
   | { kind: "temporada" }
-  | { kind: "dificil"; q: JerusalenPregunta };
+  | { kind: "dificil"; q: JerusalenPregunta }
+  | { kind: "fiesta"; id: FiestaId }
+  | { kind: "juicio"; casoId: string };
 
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null };
 
@@ -82,7 +90,7 @@ const emptyHud: Hud = {
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
   lamps: null, lampsLit: false, bread: null, incense: null, time: 0.2, day: 1, phase: "", sabbath: false, objective: "",
   carrying: null, canDrop: false, event: null, rankReady: false, built: 0, total: 14, gloria: 0, mult: 1, finale: false,
-  jornada: null, daily: null, liga: null, copas: 0, gen: 1,
+  jornada: null, daily: null, liga: null, copas: 0, gen: 1, fecha: "1 de Abib", fiesta: null, tristeza: 0,
 };
 
 class GameStore {

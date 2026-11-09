@@ -34,6 +34,8 @@ import { Overlay, Ring } from "./three/overlay";
 import { TempleAudio } from "./audio";
 import type { DeberId } from "@shared/jerusalen";
 import type { OnlineHooks } from "./online";
+import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
+import { casoPorId, elegirCaso } from "./casos";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -77,6 +79,8 @@ type Visitor = {
   child?: Visitor;
   bubble?: HTMLDivElement;
   gift?: number;
+  /** Trae un caso para juzgar (desde principal de los sacerdotes). */
+  caso?: string;
 };
 
 type HelperState = "idle" | "toSrc" | "load" | "toDst" | "unload" | "toWash" | "wash" | "stand";
@@ -181,7 +185,7 @@ export class TempleWorld {
   private joy = { on: false, id: -1, ox: 0, oy: 0, x: 0, y: 0 };
 
   // tiempos
-  private timers = { hud: 0, save: 0, remote: 0, score: 0, slow: 0, spawn: 2.5, pick: 0, hand: 0, present: 0, pay: 0, payOrb: 0, quizCool: 20, examCool: 0, fireWarn: 0, purityWarn: 0, carryWarn: 0, wash: 0, collect: 0, question: 25 };
+  private timers = { hud: 0, save: 0, remote: 0, score: 0, slow: 0, spawn: 2.5, pick: 0, hand: 0, present: 0, pay: 0, payOrb: 0, quizCool: 20, examCool: 0, fireWarn: 0, purityWarn: 0, carryWarn: 0, wash: 0, collect: 0, question: 25, caso: 150 };
   private piles: Record<string, number> = { lena: 0, aceite: 0, pan: 0, incienso: 0 };
   private prodAcc: Record<string, number> = {};
   private rising = new Map<StationId, number>();
@@ -218,12 +222,18 @@ export class TempleWorld {
   private pillarTags: HTMLDivElement[];
   private camTarget = new THREE.Vector3(POS.start[0], 0, POS.start[1]);
   private time = 0;
+  // calendario hebreo y fiestas (shared/calendario.ts) y juicios del sacerdote (casos.ts)
+  private fecha!: Fecha;
+  private primicia = -1;
+  private enramadas = false;
+  private ultimoJuicio = true;
 
   constructor(container: HTMLElement, save: SaveData, opts: WorldOptions) {
     this.container = container;
     this.s = save;
     this.opts = opts;
     this.online = opts.online || null;
+    this.fecha = fechaDe(save.day);
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
     this.maxRatio = Math.min(window.devicePixelRatio || 1, coarse ? 1.75 : 2);
@@ -331,6 +341,9 @@ export class TempleWorld {
         this.dialog("intro");
       }
     }
+    const hoy = this.fiestaHoy();
+    if (hoy) gameStore.toast(`${hoy.fiesta.icono} Hoy: ${hoy.fiesta.nombre}. ${hoy.fiesta.efecto}`, hoy.fiesta.solemne ? "info" : "gold");
+    this.syncEnramadas();
     this.updateObjective();
     this.pushHud();
     this.last = performance.now();
@@ -501,10 +514,21 @@ export class TempleWorld {
     this.online?.tick(dt);
     // día y noche
     const prev = s.time;
-    s.time += dt / DAY;
-    if (s.time >= 1) {
-      s.time -= 1;
-      s.day += 1;
+    if (this.online) {
+      // Jerusalén en línea: el mismo día y la misma hora para todos
+      const reloj = relojEnLinea();
+      s.day = reloj.dia;
+      s.time = reloj.hora;
+    } else {
+      s.time += dt / DAY;
+      if (s.time >= 1) {
+        s.time -= 1;
+        s.day += 1;
+      }
+    }
+    if (s.day !== this.fecha.numero) {
+      this.fecha = fechaDe(s.day);
+      this.syncEnramadas();
     }
     this.dayEvents(prev, s.time);
     const T = this.timers as unknown as Record<string, number>;
@@ -646,6 +670,8 @@ export class TempleWorld {
         } else gameStore.toast("Día de reposo: pon doce panes nuevos en la mesa (Levítico 24:8)", "info");
         s.bread = 0;
       }
+      this.anunciarFiesta();
+      this.alegriaDeLaManana();
     }
     // horas del sacrificio y del incienso
     const h = this.hourIndex(now);
@@ -660,6 +686,7 @@ export class TempleWorld {
     const s = this.s;
     if (!s.built.altar) return;
     this.audio.trumpet();
+    if (this.fiestaHoy()?.fiesta.id === "trompetas") setTimeout(() => this.running && this.audio.trumpet(true), 700);
     gameStore.toast(this.online ? `${HOURS[h][2]}: el pueblo trae sus ofrendas` : `${HOURS[h][2]}: las ofrendas valen el doble`, "gold");
     if (s.built.altarIncienso) {
       if (s.incense >= 1) {
@@ -729,6 +756,10 @@ export class TempleWorld {
     if (withHour && this.hourIndex() >= 0) m *= 2;
     if (this.pascua > 0) m *= 1.5;
     if (this.isSabbath()) m *= 1.25;
+    // las fiestas alegran al pueblo; un juicio injusto lo entristece
+    const f = this.fiestaHoy();
+    if (f) m *= f.fiesta.gozo;
+    if (s.tristeza > 0) m *= 1 - 0.15 * s.tristeza;
     return m;
   }
 
@@ -961,7 +992,10 @@ export class TempleWorld {
       case "azarias":
         return true;
       case "expiacion":
-        return !this.online && s.rank >= 4 && !!s.story.rango4 && !s.finale && !this.finale;
+        // la primera vez es la historia; después, una vez al año en el Día de la Expiación (Hebreos 9:7)
+        if (this.online || s.rank < 4 || this.finale) return false;
+        if (!s.finale) return !!s.story.rango4;
+        return this.fiestaHoy()?.fiesta.id === "expiacion" && !s.story[`expiacion${this.fecha.anio}`];
     }
   }
 
@@ -1030,7 +1064,10 @@ export class TempleWorld {
           if (entered) this.talkAzarias();
           break;
         case "expiacion":
-          if (entered) this.startFinale();
+          if (entered) {
+            if (this.s.finale) this.expiacionAnual();
+            else this.startFinale();
+          }
           break;
       }
     }
@@ -1154,7 +1191,13 @@ export class TempleWorld {
     s.ofrendas += 1;
     s.served += 1;
     s.altarFuel = Math.max(0.05, s.altarFuel - 0.25);
-    const amount = Math.max(1, Math.round((OFFER_GOZO[it.type] || 4) * this.mult()));
+    let amount = Math.max(1, Math.round((OFFER_GOZO[it.type] || 4) * this.mult()));
+    // las primicias: la primera ofrenda del día es para Jehová y vale cinco veces más
+    if (this.fiestaHoy()?.fiesta.id === "primicias" && this.primicia !== s.day) {
+      this.primicia = s.day;
+      amount *= 5;
+      gameStore.toast("Las primicias para Jehová: la primera ofrenda del día vale cinco veces más", "gold");
+    }
     s.lifetimeGozo += amount;
     this.track("ofrendas");
     this.track(it.type === "cordero" ? "corderos" : it.type === "palomas" ? "palomas" : "cereal");
@@ -1419,6 +1462,7 @@ export class TempleWorld {
     if (this.timers.spawn > 0) return;
     let every = 7.2 * Math.pow(0.88, s.upgrades.familias || 0) * (s.helpers.portero ? 0.8 : 1);
     if (this.isNight()) every *= 2.2;
+    every *= this.fiestaHoy()?.fiesta.gente ?? 1;
     if (this.pascua > 0) every *= 0.45;
     this.timers.spawn = every * rand(0.75, 1.25);
     if (this.visitors.length >= 46) return;
@@ -1426,6 +1470,12 @@ export class TempleWorld {
     const bearers = this.visitors.filter((v) => v.kind === "diezmo").length;
     if (s.story.pascua && r < 0.28 && bearers < 3) return void this.spawnBearer();
     const asking = this.visitors.some((v) => v.kind === "pregunta");
+    // un caso para juzgar: llega cada tanto desde principal de los sacerdotes (Deuteronomio 17:8-9)
+    if (!this.online && s.rank >= 3 && s.built.ensenanza && !asking && this.timers.caso <= 0) {
+      this.timers.caso = 240;
+      this.timers.question = Math.max(this.timers.question, 30);
+      return void this.spawnQuestioner(true);
+    }
     if (!this.online && s.built.ensenanza && !asking && this.timers.question <= 0 && r < 0.5) {
       this.timers.question = 40;
       return void this.spawnQuestioner();
@@ -1435,7 +1485,7 @@ export class TempleWorld {
   }
 
   private newVisitor(kind: Visitor["kind"], x: number, z: number, forced?: { variant: Parameters<Crowd["add"]>[0]; colors: Parameters<Crowd["add"]>[1]; scale: number }): Visitor | null {
-    const look = forced || randomVisitor((this.s.stats.jornadas || 0) >= 16);
+    const look = forced || randomVisitor((this.s.stats.jornadas || 0) >= 16 || !!this.fiestaHoy()?.fiesta.peregrinos);
     if (kind === "pregunta" && look.variant === "nino") look.variant = "hombre";
     const handle = this.crowd.add(look.variant, look.colors);
     if (!handle) return null;
@@ -1463,7 +1513,9 @@ export class TempleWorld {
     const v = this.newVisitor("ofrenda", POS.spawnOut[0], z);
     if (!v) return;
     const r = Math.random();
-    v.item = r < 0.4 ? "palomas" : r < 0.75 ? "cordero" : "cereal";
+    const pref = this.fiestaHoy()?.fiesta.ofrenda;
+    const r2 = Math.random();
+    v.item = pref && r < 0.6 ? pref : r2 < 0.4 ? "palomas" : r2 < 0.75 ? "cordero" : "cereal";
     v.rig.carrying = true;
     this.queue.push(v);
     const slot = queueSlot(this.queue.length - 1);
@@ -1480,9 +1532,10 @@ export class TempleWorld {
     v.state = "toDrop";
   }
 
-  private spawnQuestioner() {
+  private spawnQuestioner(conCaso = false) {
     const v = this.newVisitor("pregunta", POS.spawnOut[0], rand(-1.8, 1.8));
     if (!v) return;
+    if (conCaso) v.caso = elegirCaso(this.s.rank, (id) => !!this.s.story[`caso:${id}`])?.id;
     v.path = this.nav.path(v.rig.x, v.rig.z, POS.ensenanzaBench[0], POS.ensenanzaBench[1]);
     v.state = "toBench";
   }
@@ -1665,7 +1718,7 @@ export class TempleWorld {
           if (this.walk(r, v.path, v.speed, dt)) {
             v.state = "seated";
             r.pose = "sit";
-            v.bubble = this.overlay.make("tpl-bub", "?");
+            v.bubble = this.overlay.make(v.caso ? "tpl-bub gold" : "tpl-bub", v.caso ? "⚖" : "?");
           }
           break;
         case "seated":
@@ -1713,19 +1766,25 @@ export class TempleWorld {
   private askQuestioner() {
     const v = this.visitors.find((x) => x.kind === "pregunta" && x.state === "seated");
     if (!v) return;
+    if (v.caso && casoPorId(v.caso)) {
+      gameStore.push({ kind: "juicio", casoId: v.caso });
+      return;
+    }
     const q = this.pickQuiz();
     if (!q) return;
     (v as Visitor & { quiz?: string }).quiz = q;
     gameStore.push({ kind: "quiz", quizId: q, source: "pueblo" });
   }
 
-  private finishQuestioner() {
+  private finishQuestioner(alegre = true) {
     const v = this.visitors.find((x) => x.kind === "pregunta" && x.state === "seated");
     if (!v) return;
     if (v.bubble) this.overlay.remove(v.bubble);
     v.bubble = undefined;
     v.rig.pose = "idle";
-    this.cheer(v);
+    // tras un juicio injusto se va triste, sin alegrarse
+    if (alegre) this.cheer(v);
+    else this.leave(v);
   }
 
   private pickQuiz(): string | null {
@@ -2173,7 +2232,7 @@ export class TempleWorld {
     if (this.online) {
       this.audio.layers.night = this.isNight();
       this.audio.setRadio(document.documentElement.classList.contains("radio-mini-open"));
-      this.audio.layers.event = this.hourIndex() >= 0;
+      this.audio.layers.event = this.hourIndex() >= 0 || this.fiestaFestiva();
       return;
     }
     this.ensureJornada();
@@ -2204,12 +2263,13 @@ export class TempleWorld {
     }
     this.audio.layers.night = this.isNight();
     this.audio.setRadio(document.documentElement.classList.contains("radio-mini-open"));
-    this.audio.layers.event = this.pascua > 0 || this.hourIndex() >= 0;
+    this.audio.layers.event = this.pascua > 0 || this.hourIndex() >= 0 || this.fiestaFestiva();
   }
 
   private onModalClosed = (m: Modal) => {
     if (m.kind === "quiz" && m.source === "examen" && m.step === 2) this.finishExam();
     if (m.kind === "quiz" && m.source === "pueblo") this.finishQuestioner();
+    if (m.kind === "juicio") this.finishQuestioner(this.ultimoJuicio);
     if (m.kind === "rank") this.ceremony = 0;
     if (m.kind === "dialog" && m.id === "expiacion" && this.finale) {
       this.finale.phase = "tear";
@@ -2399,6 +2459,103 @@ export class TempleWorld {
     }
   }
 
+  // ---------------------------------------------------------------- calendario hebreo y fiestas
+  /** La fiesta de hoy (la principal), o null. */
+  fiestaHoy(): FiestaHoy | null {
+    return this.fecha?.fiestas[0] || null;
+  }
+
+  private fiestaFestiva() {
+    const f = this.fiestaHoy();
+    return !!f && !f.fiesta.solemne && f.fiesta.id !== "lunaNueva";
+  }
+
+  /** Al amanecer: si empieza una fiesta, se anuncia (la primera vez, con su enseñanza). */
+  private anunciarFiesta() {
+    const f = this.fiestaHoy();
+    if (!f) return;
+    const d = f.fiesta;
+    if (!this.online) this.track("fiestas");
+    if (d.id === "lunaNueva" || d.id === "trompetas") this.audio.trumpet(true);
+    if (f.dia > 1) {
+      if (f.ultimo) gameStore.toast(`${d.icono} Último día: ${d.nombre}`, "gold");
+      return;
+    }
+    const clave = `fiesta:${d.id}`;
+    if (!this.online && d.id !== "lunaNueva" && !this.s.story[clave]) {
+      this.s.story[clave] = true;
+      gameStore.push({ kind: "fiesta", id: d.id });
+    } else gameStore.toast(`${d.icono} ${d.nombre}: ${d.efecto}`, d.solemne ? "info" : "gold");
+  }
+
+  /** La tristeza del pueblo pasa con las mañanas (Salmo 30:5). */
+  private alegriaDeLaManana() {
+    const s = this.s;
+    if (!(s.tristeza > 0)) return;
+    s.tristeza -= 1;
+    gameStore.toast(s.tristeza ? "La tristeza del pueblo va pasando" : "«Y a la mañana vendrá la alegría» (Salmo 30:5): el pueblo vuelve a alegrarse", "info");
+  }
+
+  /** Las enramadas del gran atrio se levantan en la fiesta de los tabernáculos. */
+  private syncEnramadas() {
+    const f = this.fiestaHoy();
+    const on = !!f && (f.fiesta.id === "tabernaculos" || f.fiesta.id === "asamblea");
+    if (on === this.enramadas) return;
+    this.enramadas = on;
+    const g = this.vis.adornos.enramadas;
+    if (g) g.visible = on;
+    this.shadowDirty = true;
+  }
+
+  /** Una vez al año, en el Día de la Expiación, el sumo sacerdote vuelve a entrar al Lugar Santísimo (Hebreos 9:7). */
+  private expiacionAnual() {
+    const s = this.s;
+    s.story[`expiacion${this.fecha.anio}`] = true;
+    const premio = Math.round(500 * (1 + genBonus(s)));
+    s.lifetimeGozo += premio;
+    this.giveGozo(premio, this.playerChest());
+    this.audio.rank();
+    this.fx.sparkle(this.playerChest(), 80, 1.0, 2.4);
+    gameStore.push({
+      kind: "dialog",
+      id: "expiacionAnual",
+      lines: [
+        { quien: "azarias", texto: "Hoy es el Día de la Expiación. Una vez al año, el sumo sacerdote entra con la sangre al Lugar Santísimo por los pecados del pueblo.", ref: "Levítico 16:34" },
+        { quien: "azarias", texto: "Pero no lo olvides: Cristo entró una vez para siempre con su propia sangre, y por él tenemos libertad para acercarnos a Dios.", ref: "Hebreos 9:12; 10:19" },
+      ],
+    });
+    this.persist();
+    this.pushHud();
+  }
+
+  // ---------------------------------------------------------------- juicios del sacerdote
+  /** Sentencia de un caso. Justa: gozo (más si se examinó la pista clave). Injusta: tristeza del pueblo. */
+  juzgar(casoId: string, opcion: number, pistas: number[]): { justa: boolean; gozo: number; clave: boolean } {
+    const c = casoPorId(casoId);
+    const s = this.s;
+    if (!c) return { justa: false, gozo: 0, clave: false };
+    const justa = !!c.opciones[opcion]?.justa;
+    const clave = pistas.some((i) => !!c.pistas[i]?.clave);
+    let gozo = 0;
+    if (justa) {
+      gozo = Math.round((40 + 25 * s.rank) * (clave ? 1.5 : 1) * (1 + genBonus(s)));
+      s.lifetimeGozo += gozo;
+      this.giveGozo(gozo, this.playerChest());
+      this.audio.correct();
+      this.fx.sparkle(this.playerChest(), 30, 0.6);
+      s.story[`caso:${c.id}`] = true;
+      this.track("juicios");
+      if (s.tristeza > 0) s.tristeza -= 1;
+    } else {
+      s.tristeza = Math.min(3, (s.tristeza || 0) + 1);
+      this.audio.wrong();
+    }
+    this.ultimoJuicio = justa;
+    this.persist();
+    this.pushHud();
+    return { justa, gozo, clave };
+  }
+
   // ---------------------------------------------------------------- el Día de la Expiación
   private startFinale() {
     if (this.finale) return;
@@ -2454,6 +2611,7 @@ export class TempleWorld {
     if (carrying && isOffering(carrying) && s.built.fuente && s.purity < 1) return set("Lávate en el mar de bronce para seguir presentando ofrendas", POS.fuente, "fuente");
     if (this.rankReady()) return set(`Ve con Azarías: estás listo para ser ${RANKS[s.rank + 1].nombre.toLowerCase()}`, POS.azarias, "azarias");
     if (s.rank >= 4 && s.story.rango4 && !s.finale) return set("Párate frente al altar del incienso: es el Día de la Expiación", POS.expiacionSpot, "expiacion");
+    if (s.finale && this.zoneOn("expiacion")) return set("Hoy es el Día de la Expiación: entra una vez al año al Lugar Santísimo", POS.expiacionSpot, "expiacion");
     if (carrying) {
       switch (itemGroup(carrying)) {
         case "ofrenda":
@@ -2477,6 +2635,7 @@ export class TempleWorld {
       if (this.queue.length) return set("Recibe las ofrendas del pueblo en la puerta", POS.reception, "reception");
       return set("Sirve en el templo: cada deber suma mérito a tu temporada", null);
     }
+    if (this.visitors.some((v) => v.caso && v.state === "seated")) return set("Un caso espera tu juicio en el lugar de enseñanza", POS.ensenanzaSpot, "ensenanza");
     if (!s.story.primeraOfrenda) return set("Recibe la ofrenda en la puerta del atrio", POS.reception, "reception");
     if (s.gozoPile >= 1 && !s.story.recogio) return set("Recoge el gozo en la fuente dorada, junto a la puerta", POS.gozoBasin, "basin");
     if (s.pendingQuiz && s.lessons.length > 1 && s.sabiduria < 2) return set("Azarías tiene una pregunta para ti", POS.azarias, "azarias");
@@ -3004,6 +3163,12 @@ export class TempleWorld {
     const c = this.player.carry;
     const hour = this.hourIndex();
     const events: string[] = [];
+    const fh = this.fiestaHoy();
+    if (fh) {
+      const d = fh.fiesta;
+      const extra = this.online ? (d.merito > 1.01 ? ` · mérito ×${d.merito.toLocaleString("es-419")}` : "") : d.gozo > 1.01 ? ` · gozo ×${d.gozo.toLocaleString("es-419")}` : "";
+      events.push(`${d.icono} ${d.corto}${d.duracion > 1 ? ` · día ${fh.dia} de ${d.duracion}` : ""}${extra}`);
+    }
     if (this.pascua > 0) events.push(`La Pascua de Ezequías · gozo ×1,5 · ${Math.ceil(this.pascua)} s`);
     if (hour >= 0 && s.built.altar) events.push(this.online ? HOURS[hour][2] : `${HOURS[hour][2]} · gozo ×2`);
     if (this.prayer) events.push("El pueblo ora a la hora del incienso");
@@ -3041,6 +3206,9 @@ export class TempleWorld {
       daily: s.daily.goals.length ? { goals: s.daily.goals.map((g) => ({ ...g })), done: s.daily.done, streak: s.daily.streak } : null,
       liga: this.liga,
       copas: copas(s.logros),
+      fecha: this.fecha.texto,
+      fiesta: fh ? { id: fh.fiesta.id, nombre: fh.fiesta.nombre, icono: fh.fiesta.icono, dia: fh.dia, de: fh.fiesta.duracion, solemne: !!fh.fiesta.solemne } : null,
+      tristeza: s.tristeza || 0,
       gen: s.gen || 1,
     };
     gameStore.setHud(hud);

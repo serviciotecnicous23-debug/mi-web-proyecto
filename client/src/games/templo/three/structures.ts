@@ -1319,6 +1319,16 @@ function buildAdornos(root: THREE.Group, out: Partial<WorldVisual>) {
     for (let k = 0; k < 7; k++) s.sphere(0.11, C.oro, { x: T.porchX + 0.06, y: 7.6, z: -3 + k }, 8, 6);
     m.box(0.02, 0.02, 0.02, C.oro, { x: 0, y: -1, z: 0 });
   });
+  // enramadas de la fiesta de los tabernáculos junto a los muros del gran atrio (Levítico 23:40-42)
+  make("enramadas", (m) => {
+    for (const x of [19.6, 24.4, 29.2])
+      for (const side of [-1, 1]) {
+        const z = side * 9.85;
+        for (const dx of [-0.75, 0.75]) for (const dz of [-0.55, 0.55]) m.cyl(0.04, 0.05, 1.9, C.cedroOsc, { x: x + dx, y: 0.95, z: z + dz }, 5);
+        m.box(1.75, 0.07, 1.35, C.hoja, { x, y: 1.93, z });
+        for (let k = 0; k < 7; k++) m.cone(0.13, 0.55, k % 2 ? "#5f8f3f" : C.hoja, { x: x - 0.8 + k * 0.27, y: 2.08, z: z + (k % 2 ? 0.25 : -0.25), rz: k % 2 ? 1.2 : -1.2 }, 5);
+      }
+  });
   out.adornos = groups;
 }
 
