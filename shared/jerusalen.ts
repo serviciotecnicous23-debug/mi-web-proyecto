@@ -120,13 +120,13 @@ export const NOMBRE_LIBRE = { min: 2, max: 20 };
  * Solo raíces que no aparecen en nombres de verdad (por eso «verga» o «nazi» van como palabra entera:
  * Vergara, nazareo).
  */
-const RAICES_MALAS = [
+export const RAICES_MALAS = [
   "mierd", "pendej", "joder", "jodid", "maricon", "cabron", "zorra", "perra", "idiot", "estupid", "imbecil", "chinga", "malparid",
   "gonorrea", "hijueput", "hitler", "sexo", "porno", "fuck", "shit", "bitch", "pussy", "mamaguev", "huevon", "weon", "boludo",
   "pelotud", "cagad", "putit", "putas",
 ];
 /** Palabras que no van en un nombre (iguales a una palabra del nombre). */
-const PALABRAS_MALAS = [
+export const PALABRAS_MALAS = [
   "puta", "puto", "verga", "nazi", "culo", "pito", "polla", "caca", "tonto", "tonta", "bobo", "boba", "feo", "fea", "cono", "orto",
   "teta", "pinga",
 ];
@@ -136,7 +136,7 @@ const RESERVADOS = [
   "admin", "administrador", "administradora", "moderador", "moderadora", "ministerio", "avivando el fuego",
 ];
 
-function sinTildes(t: string): string {
+export function sinTildes(t: string): string {
   return t.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 

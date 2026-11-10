@@ -22,6 +22,8 @@ import { EstudiosDeOtro } from "./EstudiosUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
+import { BarrioView } from "./BarrioUI";
+import { useChatBarrio } from "./barrio-chat";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
@@ -64,6 +66,32 @@ function Boton({ label, onClick, children, testid, active, className = "flex" }:
       data-testid={testid}
     >
       {children}
+    </button>
+  );
+}
+
+/** El botón de tu barrio: su emblema y cuántos mensajes de la charla faltan por ver. */
+function BotonBarrio({ onClick }: { onClick: () => void }) {
+  const { city } = useContext(CiudadCtx);
+  const chat = useChatBarrio();
+  return (
+    <button
+      type="button"
+      className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-b from-amber-200 to-amber-400 text-xl shadow-lg ring-2 ring-white/60 active:scale-95"
+      onClick={() => {
+        city?.audio.click();
+        onClick();
+      }}
+      title="Tu barrio: la charla, los vecinos y el emblema (B)"
+      aria-label={`Tu barrio${chat.nuevos ? `: ${chat.nuevos} mensajes nuevos` : ""}`}
+      data-testid="button-ciudad-barrio"
+    >
+      <span aria-hidden="true">{chat.emblema?.icono ?? "🏘️"}</span>
+      {chat.nuevos > 0 && (
+        <span className="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full bg-red-600 px-1 text-center text-[11px] font-black leading-5 text-white" data-testid="ciudad-barrio-nuevos">
+          {chat.nuevos > 99 ? "99+" : chat.nuevos}
+        </span>
+      )}
     </button>
   );
 }
@@ -202,8 +230,9 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
         </div>
       </div>
 
-      {/* a la derecha, en el medio: frases rápidas y vecinos */}
+      {/* a la derecha, en el medio: tu barrio (la charla), frases rápidas y vecinos */}
       <div className="pointer-events-auto absolute top-1/2 flex -translate-y-1/2 flex-col gap-2" style={{ right: "calc(0.5rem + var(--tpl-sr, 0px))" }}>
+        <BotonBarrio onClick={() => open({ kind: "barrio" })} />
         <button
           type="button"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-amber-900 shadow-lg active:scale-95"
@@ -306,6 +335,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <VecinosView />;
     case "vecino":
       return <VecinoView id={modal.id} />;
+    case "barrio":
+      return <BarrioView pestana={modal.pestana} />;
     case "visita":
       return <VisitaView personajeId={modal.personajeId} nombre={modal.nombre} />;
     default:
@@ -998,7 +1029,7 @@ function FrasesView() {
       testid="ciudad-frases"
     >
       <div className="space-y-3 p-4 text-sm">
-        <p className="text-xs text-stone-500">Te oyen los vecinos que te ven. Para conversar, toca a un vecino en «Vecinos» y elige «Escribir».</p>
+        <p className="text-xs text-stone-500">Te oyen los vecinos que te ven. Para hablar con todo tu barrio, abre «Tu barrio» (el botón con el emblema).</p>
         {aviso && <p className="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{aviso}</p>}
         <div className="grid grid-cols-2 gap-1.5">
           {FRASES.map((f) => (

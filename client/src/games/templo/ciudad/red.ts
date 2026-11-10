@@ -5,6 +5,7 @@
  * esperando cada vez un poco más; si la pantalla queda oculta un rato, se desconecta.
  */
 import { RED_RUTA, type CasaVista, type RedEntra, type RedSale, type VecinoInfo } from "@shared/ciudad";
+import type { MensajeBarrio } from "@shared/barrio";
 
 export type EstadoRed = "conectando" | "conectado" | "fuera";
 
@@ -13,6 +14,9 @@ export type RedEventos = {
   onVecinos: (l: [number, number, number, number, number, number?][]) => void;
   onFrase: (de: number, id: string) => void;
   onBarrio: (n: number, casas: CasaVista[]) => void;
+  /** La charla del barrio: un mensaje nuevo, o uno que se borró. */
+  onChat?: (m: MensajeBarrio) => void;
+  onChatFuera?: (id: number) => void;
   onFuera: (motivo: string) => void;
   onEstado: (e: EstadoRed) => void;
 };
@@ -68,6 +72,12 @@ export class RedCiudad {
           break;
         case "barrio":
           this.ev.onBarrio(m.n, m.casas);
+          break;
+        case "chat":
+          this.ev.onChat?.(m.m);
+          break;
+        case "chat-fuera":
+          this.ev.onChatFuera?.(m.id);
           break;
         case "fuera":
           this.fuera = true;

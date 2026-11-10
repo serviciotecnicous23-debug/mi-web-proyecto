@@ -25,6 +25,8 @@ import {
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
+import { chatBarrio, textoDeMensaje } from "../barrio-chat";
+import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
 import type { ReunionesEstado } from "@shared/reuniones";
@@ -327,11 +329,16 @@ export class CiudadWorld {
       onVecinos: (l) => this.alVecinos(l),
       onFrase: (de, id) => this.alFrase(de, id),
       onBarrio: (n, casas) => this.alBarrio(n, casas),
+      onChat: (m) => this.alChat(m),
+      onChatFuera: (id) => chatBarrio.quitar(id),
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
         this.redEstado = e;
-        // al conectarse, se manda la posición enseguida
-        if (e === "conectado") this.ultimoEnvio.t = 0;
+        // al conectarse, se manda la posición enseguida (y se pone al día la charla del barrio)
+        if (e === "conectado") {
+          this.ultimoEnvio.t = 0;
+          void chatBarrio.ponerAlDia();
+        }
       },
     });
     this.red.conectar();
@@ -498,6 +505,35 @@ export class CiudadWorld {
     };
     this.barrios.set(n, { n, area: this.estado.barrio.area, casas, detalle: true });
     this.dibujarAreas();
+  }
+
+  /** Un mensaje de la charla del barrio: su burbuja sobre quien habló (si se ve) y abajo, si la charla está cerrada. */
+  private alChat(m: MensajeBarrio) {
+    chatBarrio.recibir(m);
+    const st = chatBarrio.get();
+    // en «solo frases» no se muestran los mensajes escritos de los demás
+    if (!m.mio && !m.frase && st.soloFrases) return;
+    const texto = textoDeMensaje(m);
+    const now = performance.now();
+    const dura = Math.min(9000, 3500 + texto.length * 45);
+    if (m.mio) {
+      if (!this.miBurbuja) this.miBurbuja = { el: this.overlay.make("tpl-frase mia"), hasta: 0 };
+      this.miBurbuja.el.textContent = texto;
+      this.miBurbuja.hasta = now + dura;
+      return;
+    }
+    const v = this.vecinos.get(m.de);
+    if (v) {
+      // el texto lo escribió una persona: va como texto, nunca como HTML
+      if (!v.burbuja) v.burbuja = this.overlay.make("tpl-frase");
+      v.burbuja.textContent = texto;
+      v.burbujaHasta = now + dura;
+    }
+    if (!st.abierto) {
+      this.frasesRecientes.push({ id: ++this.fraseSeq, nombre: `${st.emblema?.icono ?? "🏘️"} ${m.nombre}`, texto, hasta: now + 8000 });
+      if (this.frasesRecientes.length > 3) this.frasesRecientes.shift();
+      this.audio.blip("narrador");
+    }
   }
 
   /** Decir una frase rápida o un versículo (la oyen los vecinos que te ven). */

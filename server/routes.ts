@@ -11,6 +11,7 @@ import { registerMisionesRoutes } from "./misiones";
 import { registerMercadoRoutes } from "./mercado";
 import { registerEconomiaRoutes } from "./economia";
 import { registerCatedrasRoutes } from "./catedras";
+import { registerBarrioRoutes } from "./barrio";
 import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
@@ -3648,6 +3649,8 @@ ${urls}
   registerMercadoRoutes(app);
   registerEconomiaRoutes(app);
   registerCatedrasRoutes(app);
+  // El barrio como clan: la charla del barrio, su emblema y su lema, y sus vecinos.
+  registerBarrioRoutes(app);
   registerReunionesRoutes(app);
   registerConcursoRoutes(app);
   registerAyudaRoutes(app);

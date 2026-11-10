@@ -145,6 +145,8 @@ export type Modal =
   | { kind: "frases" }
   | { kind: "vecinos" }
   | { kind: "vecino"; id: number }
+  /** «Tu barrio»: la charla, los vecinos y el emblema y el lema (el barrio como clan). */
+  | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" }
   | { kind: "visita"; personajeId: number; nombre: string };
 
 /** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */

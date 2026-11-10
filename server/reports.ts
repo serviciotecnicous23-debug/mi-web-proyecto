@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { storage } from "./storage";
 import { DENUNCIAS_POR_DIA, MOTIVOS_DE_DENUNCIA, NOMBRE_DEL_TIPO, TIPOS_DENUNCIABLES, type TipoDenunciable } from "@shared/reports";
+import { alDenunciarMensaje } from "./barrio";
 
 // Denunciar contenido (Comunidad, comentarios, muro de oración y jugadores de la ciudad). Lo piden las normas de las
 // tiendas para contenido de usuarios y los Términos dicen que los líderes moderan.
@@ -36,7 +37,9 @@ async function autorDe(tipo: TipoDenunciable, id: number): Promise<number | null
         ? sql`SELECT user_id FROM post_comments WHERE id = ${id}`
         : tipo === "jugador"
           ? sql`SELECT user_id FROM game_characters WHERE id = ${id}`
-          : sql`SELECT user_id FROM prayer_requests WHERE id = ${id}`;
+          : tipo === "mensaje"
+            ? sql`SELECT user_id FROM game_barrio_chat WHERE id = ${id}`
+            : sql`SELECT user_id FROM prayer_requests WHERE id = ${id}`;
   const [fila] = filas<{ user_id: number }>(await db.execute(consulta));
   return fila ? fila.user_id : null;
 }
@@ -67,6 +70,8 @@ export function registerReportRoutes(app: Express, helpers: { isAdmin: (req: Req
       DO UPDATE SET reason = EXCLUDED.reason, details = EXCLUDED.details, status = 'pendiente',
                     reviewed_by = NULL, reviewed_at = NULL, created_at = now()
     `);
+    // un mensaje de la charla del barrio con varias denuncias se oculta para todos hasta que lo revisen
+    if (contentType === "mensaje") await alDenunciarMensaje(contentId).catch((err) => console.error("[denuncias] ocultar mensaje:", err));
 
     // Aviso en la campana de la administración (uno sin leer a la vez, para no llenarla).
     try {
@@ -102,8 +107,10 @@ export function registerReportRoutes(app: Express, helpers: { isAdmin: (req: Req
                rep.display_name AS "reporterName",
                COALESCE(p.content, c.content, pr.content,
                         CASE WHEN gc.id IS NOT NULL THEN 'Personaje «' || COALESCE(gc.name, au.display_name, 'sin nombre') || '» en la ciudad'
-                             || CASE WHEN gc.city_banned_at IS NOT NULL THEN ' (ya fuera de la ciudad)' ELSE '' END END) AS content,
-               COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id) AS "authorId",
+                             || CASE WHEN gc.city_banned_at IS NOT NULL THEN ' (ya fuera de la ciudad)' ELSE '' END END,
+                        CASE WHEN bm.id IS NOT NULL THEN bm.texto || CASE WHEN bm.hidden_at IS NOT NULL THEN ' (ya oculto en la charla)' ELSE '' END END) AS content,
+               COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id, bm.user_id) AS "authorId",
+               bm.character_id AS "gameCharacterId",
                au.display_name AS "authorName",
                c.post_id AS "postId",
                (SELECT count(*)::int FROM content_reports r2
@@ -114,7 +121,8 @@ export function registerReportRoutes(app: Express, helpers: { isAdmin: (req: Req
         LEFT JOIN post_comments c ON r.content_type = 'comentario' AND c.id = r.content_id
         LEFT JOIN prayer_requests pr ON r.content_type = 'oracion' AND pr.id = r.content_id
         LEFT JOIN game_characters gc ON r.content_type = 'jugador' AND gc.id = r.content_id
-        LEFT JOIN users au ON au.id = COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id)
+        LEFT JOIN game_barrio_chat bm ON r.content_type = 'mensaje' AND bm.id = r.content_id
+        LEFT JOIN users au ON au.id = COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id, bm.user_id)
         ORDER BY (r.status = 'pendiente') DESC, r.created_at DESC
         LIMIT 200
       `),

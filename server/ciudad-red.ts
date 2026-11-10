@@ -266,6 +266,30 @@ export function enLaCiudad(): number {
   return conexiones.size;
 }
 
+/**
+ * Manda algo a todos los vecinos conectados de un barrio (la charla del barrio). `armar` decide qué
+ * recibe cada uno (null = nada: por ejemplo, si bloqueó a quien escribió).
+ */
+export function difundirAlBarrio(barrio: number, armar: (c: { info: VecinoInfo; bloqueos: Set<number> }) => RedEntra | null): number {
+  let n = 0;
+  for (const c of conexiones.values()) {
+    if (c.info.barrio !== barrio) continue;
+    const msg = armar(c);
+    if (!msg) continue;
+    mandar(c, msg);
+    n++;
+  }
+  return n;
+}
+
+/** Dónde está ahora cada persona conectada (por cuenta): su canal y lo que está haciendo. */
+export function presenciaDe(cuentas: number[]): Map<number, { personajeId: number; canal: string; a: number }> {
+  const quiero = new Set(cuentas);
+  const out = new Map<number, { personajeId: number; canal: string; a: number }>();
+  for (const c of conexiones.values()) if (quiero.has(c.info.u)) out.set(c.info.u, { personajeId: c.info.id, canal: c.canal, a: c.a });
+  return out;
+}
+
 // ---------------------------------------------------------------- rutas: bloquear y sacar de la ciudad
 const MAX_BLOQUEOS = 300;
 

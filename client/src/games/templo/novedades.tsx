@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-barrio-clan",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Tu barrio, como un clan",
+    puntos: [
+      "🏘️ En la ciudad, el botón con el emblema de tu barrio abre «Tu barrio» (también con la tecla B): la charla, los vecinos y el emblema.",
+      "💬 La charla del barrio: frases, versículos y mensajes cortos para todo tu barrio. Los mensajes salen en una burbuja sobre quien habla, y el número del botón dice cuántos no has visto.",
+      "🛡️ Por cuidado de todos: sin teléfonos, correos, redes, enlaces ni direcciones, y sin malas palabras. Puedes denunciar un mensaje o bloquear a quien molesta, y en el teléfono de un niño puedes dejar «solo frases y versículos».",
+      "🦁 Los vecinos votan el emblema y el lema del barrio: el León de Judá, la paloma, la vid, el olivo… y un versículo que los una.",
+      "🟢 En «Vecinos» ves quién está en línea y dónde (en el templo, en la plaza, en el mercado), y puedes ir a su casa.",
+    ],
+  },
+  {
     id: "2026-11-10-catedra-oficios",
     fecha: "10 de noviembre de 2026",
     titulo: "Los oficios del profeta, con Miqueas",

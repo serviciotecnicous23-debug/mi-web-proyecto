@@ -303,6 +303,9 @@ export type RedEntra =
   | { t: "v"; l: [number, number, number, number, number, number?][] }
   | { t: "frase"; de: number; id: string }
   | { t: "barrio"; n: number; casas: CasaVista[] }
+  /** La charla del barrio (shared/barrio.ts): un mensaje nuevo, o uno que se borró u ocultó. */
+  | { t: "chat"; m: import("./barrio").MensajeBarrio }
+  | { t: "chat-fuera"; id: number }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
