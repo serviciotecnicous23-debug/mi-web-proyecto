@@ -169,9 +169,9 @@ export type CasaHud = {
   cambios: boolean;
   bendiciones: number;
   yaBendije: boolean;
-  /** Dentro de un edificio de la ciudad (la escuela o el palacio): sus estaciones y su maestro. */
+  /** Dentro de un edificio de la ciudad (la escuela, el palacio o la cámara): sus estaciones y su maestro. */
   edificio?: {
-    id: "escuela" | "palacio";
+    id: "escuela" | "palacio" | "camara";
     nombre: string;
     icono: string;
     maestro: string;

@@ -1,8 +1,9 @@
 /**
- * La escuela de los profetas y el palacio del rey por dentro (Jerusalén en línea): se entra por su
- * puerta en la ciudad y se camina por sus salas con el mismo motor de la casa por dentro
- * (casa/mundo-casa.ts). Cada edificio tiene su maestro que recibe (Isaías y Eliaquim), sus personas
- * trabajando y sus estaciones: círculos donde se hace cada servicio, con su nombre a la vista.
+ * La escuela de los profetas, el palacio del rey y la cámara de los sacerdotes por dentro (Jerusalén en
+ * línea): se entra por su puerta en la ciudad y se camina por sus salas con el mismo motor de la casa
+ * por dentro (casa/mundo-casa.ts). Cada edificio tiene su maestro que recibe (Isaías, Eliaquim y
+ * Eleazar), sus personas trabajando y sus estaciones: círculos donde se hace cada servicio, con su
+ * nombre a la vista.
  *
  * «Los hijos de los profetas dijeron a Eliseo: He aquí, el lugar en que moramos contigo nos es
  * estrecho.» (2 Reyes 6:1) · «…salió a ellos Eliaquim hijo de Hilcías, mayordomo, y Sebna escriba…»
@@ -13,7 +14,7 @@ import type { Abertura, Colocado, Plano } from "@shared/casa-interior";
 import type { Pose } from "../three/characters";
 import type { Line } from "../data";
 
-export type EdificioId = "escuela" | "palacio";
+export type EdificioId = "escuela" | "palacio" | "camara";
 
 export type EstacionDef = {
   id: string;
@@ -235,10 +236,89 @@ export const PALACIO: EdificioDef = {
       : `Eliaquim: «Bienvenido al palacio del rey Ezequías, ${nombre}. Aquí sirven los siervos del rey. Si quieres servir al rey, crea un siervo del rey en la sala de Jerusalén.»`,
 };
 
-export const EDIFICIOS: Record<EdificioId, EdificioDef> = { escuela: ESCUELA, palacio: PALACIO };
+// ---------------------------------------------------------------- la cámara de los sacerdotes (2 Crónicas 31:11-12)
+export const CAMARA: EdificioDef = {
+  id: "camara",
+  nombre: "La cámara de los sacerdotes",
+  icono: "🕯️",
+  camino: "sacerdocio",
+  estilo: "piedra",
+  maestro: "Eleazar",
+  plano: {
+    W: 16,
+    D: 12,
+    cuartos: [
+      { id: "aula", nombre: "La cátedra de Eleazar", x: 0, z: 0, w: 10, d: 7, piso: 0 },
+      { id: "diezmos", nombre: "La cámara de los diezmos", x: 10, z: 0, w: 6, d: 7, piso: 0 },
+      { id: "entrada", nombre: "La entrada", x: 4, z: 7, w: 7, d: 5, piso: 0 },
+      { id: "panes", nombre: "El horno de los panes", x: 11, z: 7, w: 5, d: 5, piso: 0 },
+    ],
+    aberturas: [...paso(6, 6, "S"), ...paso(9, 2, "E"), ...paso(10, 9, "E"), ...paso(12, 6, "S"), ...puertaS(7, 11)],
+    puerta: [7, 11],
+    horno: [15, 11],
+    maxMuebles: 80,
+  },
+  piezas: [
+    // el aula: el atril de Eleazar, la alfombra, los bancos de los aprendices y los rollos de la ley
+    p("atril", 4, 1),
+    p("alfombra", 4, 2),
+    p("banco-cedro", 1, 3),
+    p("banco-cedro", 1, 5),
+    p("banco-cedro", 6, 4),
+    p("estante", 7, 0),
+    p("candelero", 0, 0),
+    p("candelero", 9, 6),
+    p("brasero", 0, 6),
+    // la cámara de los diezmos: el grano, el vino, el aceite y las cosas consagradas (2 Crónicas 31:5-12)
+    p("vasijas", 10, 0),
+    p("vasijas", 12, 0),
+    p("cesta", 14, 0),
+    p("cesta", 15, 1),
+    p("tinaja", 15, 3),
+    p("tinaja", 15, 4),
+    p("arcon", 10, 6),
+    p("lampara-casa", 14, 6),
+    // la entrada: el agua para lavarse antes de servir (Éxodo 30:19) y el banco de los que esperan
+    p("tinaja", 4, 7),
+    p("banco-cedro", 4, 9, 1),
+    p("planta", 10, 11),
+    // el horno de los panes de la proposición (1 Crónicas 9:32)
+    p("mesa-pan", 12, 8),
+    p("cesta", 11, 11),
+    p("vasijas", 15, 7),
+  ],
+  personas: [
+    { nombre: "Eleazar", x: 4.5, z: 0.55, yaw: 0, pose: "idle", variante: "anciano", manto: "#efe6d2", cabeza: "#f7f2e6" },
+    { x: 1.5, z: 3.5, yaw: Math.PI, pose: "sit", variante: "hombre", manto: "#efe6d2", cabeza: "#f7f2e6" },
+    { x: 2.5, z: 5.5, yaw: Math.PI, pose: "sit", variante: "nino", manto: "#e8e0cc" },
+    { x: 6.6, z: 4.5, yaw: Math.PI, pose: "sit", variante: "hombre", manto: "#efe6d2", cabeza: "#f7f2e6" },
+    { nombre: "Conanías, el levita", x: 12.6, z: 3.3, yaw: Math.PI / 2, pose: "bow", variante: "hombre", manto: "#efe6d2", cabeza: "#1e4d8c", trabaja: true },
+    { x: 13.9, z: 9.6, yaw: 0, pose: "bow", variante: "hombre", manto: "#e8e0cc", trabaja: true },
+    { nombre: "Un levita portero", x: 9.4, z: 10.6, yaw: 0, pose: "idle", variante: "hombre", manto: "#efe6d2", cabeza: "#1e4d8c" },
+  ],
+  estaciones: [
+    { id: "catedra", nombre: "La cátedra de Eleazar", icono: "📜", x: 4.5, z: 2.9, color: "#ffd25a", para: "camino", ayuda: "Eleazar te enseña el porqué de cada servicio del templo, empezando por lo que serviste hoy." },
+    { id: "maestro", nombre: "Hablar con Eleazar", icono: "💬", x: 4.5, z: 2.9, color: "#ffd25a", para: "otros", ayuda: "Eleazar, anciano de los sacerdotes, recibe a quien entra a la cámara." },
+    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 8.0, z: 1.7, color: "#ffd166", ayuda: "Los rollos de los estudios: lee cada sección, practica y da el examen." },
+    { id: "diezmos", nombre: "La cámara de los diezmos", icono: "🧺", x: 12.5, z: 5.0, color: "#f0b45a", ayuda: "Conanías guarda aquí los diezmos y las ofrendas, fielmente (2 Crónicas 31:12): es el tesoro del templo." },
+    { id: "turnos", nombre: "Los turnos del sacerdocio", icono: "🎲", x: 6.0, z: 9.0, color: "#9ad0ff", para: "camino", ayuda: "Los cargos de la temporada y quién sirve más: los turnos se repartían por suertes (1 Crónicas 24:5)." },
+  ],
+  saludo: (nombre, camino) =>
+    camino === "sacerdocio"
+      ? `Eleazar: «Bienvenido a la cámara de los sacerdotes, ${nombre}. Frente a mi atril te enseño el porqué de lo que sirves en el templo; en la cámara del este, Conanías guarda los diezmos; en la entrada están los turnos del sacerdocio.»`
+      : `Eleazar: «Bienvenido, ${nombre}. En esta cámara se preparan los sacerdotes para servir en la casa de Jehová. Los rollos de los estudios son para todos: puedes estudiar y dar los exámenes.»`,
+};
+
+export const EDIFICIOS: Record<EdificioId, EdificioDef> = { escuela: ESCUELA, palacio: PALACIO, camara: CAMARA };
 
 /** Lo que dice el maestro a quien visita sin ser de su camino (lo orienta y lo invita). */
 export function dialogoVisita(e: EdificioDef, nombre: string): Line[] {
+  if (e.id === "camara")
+    return [
+      { quien: "eleazar", texto: `Bienvenido, ${nombre}. Soy Eleazar, anciano de los sacerdotes. Llevo el nombre de Eleazar hijo de Aarón, que tenía a su cargo el aceite del alumbrado, el incienso aromático y la ofrenda continua.`, ref: "Números 4:16" },
+      { quien: "eleazar", texto: "En esta cámara los sacerdotes aprenden el porqué de cada servicio del templo. Los rollos de los estudios son para todos: puedes estudiar y dar los exámenes aquí." },
+      { quien: "eleazar", texto: "Y si Dios te llama a servir en su casa, crea un sacerdote en la sala de Jerusalén. «Porque los labios del sacerdote han de guardar la sabiduría, y de su boca el pueblo buscará la ley».", ref: "Malaquías 2:7" },
+    ];
   if (e.id === "escuela")
     return [
       { quien: "isaias", texto: `Bienvenido, ${nombre}. En esta escuela los hijos de los profetas aprenden a escuchar a Dios, a guardar su Palabra y a llevarla al pueblo con amor.` },
@@ -263,6 +343,8 @@ export function estacionesPara(e: EdificioDef, camino: Camino): EstacionDef[] {
  */
 export function siguienteEstacion(e: EdificioDef, camino: Camino, o: { pasos: number; llevaMensaje: boolean; panes: number }): string | null {
   if (camino !== e.camino) return null;
+  // en la cámara, lo que toca es la cátedra de Eleazar
+  if (e.id === "camara") return "catedra";
   if (o.llevaMensaje || o.panes > 0) return "salir";
   if (o.pasos >= 3) return null;
   if (camino === "profecia") return o.pasos === 0 ? "memoria" : o.pasos === 1 ? "salir" : "mensaje";
