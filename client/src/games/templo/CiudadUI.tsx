@@ -37,7 +37,7 @@ function Boton({ label, onClick, children, testid, active, className = "flex" }:
         city?.audio.click();
         onClick();
       }}
-      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
+      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 pointer-coarse:h-11 pointer-coarse:w-11 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
       data-testid={testid}
     >
       {children}
@@ -204,7 +204,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           </>
         )}
         {hint && !modal && (
-          <div className="rounded-full bg-black/35 px-3 py-1 text-xs text-white/85 backdrop-blur-sm">Toca y arrastra para caminar · computadora: flechas o W A S D</div>
+          <div className="max-w-[94%] rounded-full bg-black/35 px-3 py-1 text-center text-xs text-white/85 backdrop-blur-sm">Toca el piso para ir o arrastra para caminar (más lejos para correr) · pellizca para acercar · computadora: W A S D, Mayús corre</div>
         )}
       </div>
     </div>
