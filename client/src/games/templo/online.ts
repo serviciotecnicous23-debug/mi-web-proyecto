@@ -42,6 +42,9 @@ export const casaOfrendar = (bienes: Partial<Record<Bien, number>>) =>
 /** Visitar la casa de un vecino y dejarle una bendición (una por día y casa). */
 export const verCasa = (personajeId: number) => pedir<CasaVisita & { message?: string }>(`/ciudad/casa/${personajeId}`);
 export const bendecirCasa = (personajeId: number) => pedir<CasaVisita & { message?: string }>(`/ciudad/casa/${personajeId}/bendecir`, { method: "POST" });
+/** La instrucción del sacerdote: una parte terminada (devuelve el premio la primera vez que se completa). */
+export const instruccionParte = (parte: number) =>
+  pedir<{ partes: number; premio: number; estado: JerusalenEstado; message?: string }>("/instruccion", { method: "POST", body: JSON.stringify({ parte }) });
 
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */
 export function escalonRank(e: EscalonId | null | undefined): number {
@@ -218,7 +221,12 @@ export class OnlineSession {
     const r = await pedir<JerusalenPregunta & { agotadas?: boolean; agotadasHoy?: boolean; message?: string; espera?: number }>("/pregunta", { method: "POST" });
     if (this.closed) return;
     const d = r.data;
-    if (r.status === 429) {
+    if (r.status === 403) {
+      // quien no conoce el templo primero termina la instrucción del sacerdote
+      this.qState = "espera";
+      this.qWait = 45;
+      gameStore.toast(d?.message || "Primero termina la instrucción del sacerdote", "info");
+    } else if (r.status === 429) {
       this.qState = "espera";
       this.qWait = d?.espera || 10;
     } else if (!r.ok || !d) {

@@ -20,6 +20,8 @@ export type OnlineHud = {
 };
 
 export type Hud = {
+  /** Jerusalén en línea: la instrucción del sacerdote en curso (parte, paso y si es obligatoria). */
+  instruccion: { parte: number; paso: number; de: number; lugar: string; obligatoria: boolean } | null;
   gozo: number;
   sabiduria: number;
   rank: number;
@@ -96,7 +98,8 @@ export type EdificioId = "palacio" | "escuela" | "mercado";
 export type Modal =
   | { kind: "dialog"; id: string; lines: Line[] }
   | { kind: "lesson"; lessonId: string }
-  | { kind: "quiz"; quizId: string; source: "azarias" | "pueblo" | "examen"; step?: number }
+  | { kind: "quiz"; quizId: string; source: "azarias" | "pueblo" | "examen" | "instruccion"; step?: number }
+  | { kind: "instruccion" }
   | { kind: "upgrades" }
   | { kind: "book" }
   | { kind: "help" }
@@ -123,6 +126,7 @@ export type Modal =
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
 
 const emptyHud: Hud = {
+  instruccion: null,
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
   lamps: null, lampsLit: false, bread: null, incense: null, time: 0.2, day: 1, phase: "", sabbath: false, objective: "",
   carrying: null, canDrop: false, event: null, rankReady: false, built: 0, total: 14, gloria: 0, mult: 1, finale: false,

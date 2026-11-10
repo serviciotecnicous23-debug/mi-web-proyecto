@@ -60,6 +60,10 @@ export type DeberId = "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "d
 export const DEBERES: DeberId[] = ["ofrendas", "lena", "aceite", "panes", "incienso", "diezmos", "orantes"];
 export const MERITO_DEBER: Record<DeberId, number> = { ofrendas: 2, lena: 1, aceite: 1, panes: 1, incienso: 2, diezmos: 2, orantes: 1 };
 
+/** Mérito al terminar por primera vez la instrucción del sacerdote (las tres partes). */
+export const MERITO_INSTRUCCION = 50;
+export const PARTES_INSTRUCCION = 3;
+
 /** Constancia: al cumplir 10 minutos de deberes en el día, una vez por día. */
 export const CONSTANCIA_SEGUNDOS = 600;
 export const MERITO_CONSTANCIA = 60;
@@ -119,7 +123,8 @@ export type JerusalenEstado = {
    * y `puedeSumo` si ya fue principal sacerdote en alguna temporada (requisito para ser sumo).
    */
   requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean; conoceTemplo: boolean };
-  personaje: { id: number; nombre: string; propio: boolean; creado: string } | null;
+  /** `instruccion`: partes terminadas de la instrucción del sacerdote (0 a 3). */
+  personaje: { id: number; nombre: string; propio: boolean; creado: string; instruccion: number } | null;
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
   /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
   jerusalen: { fecha: string; fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null; proxima: { nombre: string; icono: string; enMinutos: number } | null };

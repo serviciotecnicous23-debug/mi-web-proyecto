@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-instruccion",
+    fecha: "10 de noviembre de 2026",
+    titulo: "La instrucción del sacerdote",
+    puntos: [
+      "En Jerusalén en línea, Azarías te lleva por el templo lugar por lugar: qué es cada cosa, para qué sirve, el versículo y lo que nos enseña hoy.",
+      "En cada lugar haces el servicio y respondes una pregunta. Son tres partes: el atrio, el Lugar Santo y el servicio al pueblo.",
+      "Quien no conoce el templo la hace al entrar; al terminarla gana +50 de mérito y Azarías le hace las preguntas difíciles. Los demás pueden repasarla con el botón del birrete.",
+    ],
+  },
+  {
     id: "2026-11-10-controles",
     fecha: "10 de noviembre de 2026",
     titulo: "Elige tus controles",

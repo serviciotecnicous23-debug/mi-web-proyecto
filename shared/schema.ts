@@ -1984,6 +1984,9 @@ export const gameCharacters = pgTable("game_characters", {
   lastDutyAt: timestamp("last_duty_at"),
   // la administración lo sacó de la ciudad por una denuncia (sigue pudiendo servir en el templo)
   cityBannedAt: timestamp("city_banned_at"),
+  // instrucción del sacerdote: partes terminadas (0 a 3) y cuándo la completó
+  instructionParts: integer("instruction_parts").notNull().default(0),
+  instructedAt: timestamp("instructed_at"),
 });
 
 // Mérito de cada personaje por temporada, con la cuenta del día (tope diario y preguntas).

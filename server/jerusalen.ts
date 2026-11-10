@@ -16,7 +16,7 @@ import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
-  JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO,
+  JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
   NOMBRES_SACERDOTE, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, TEMPORADA_DIAS, TOPE_DIA, escalonIndice, escalonNombre,
   factorDelDia, type DeberId, type EscalonId, type JerusalenAcciones, type JerusalenEstado, type JerusalenPregunta,
   type JerusalenRespuesta, type JerusalenTitular,
@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS "game_houses" (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_houses_plot" ON "game_houses" ("game", "barrio", "plot");
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "city_banned_at" timestamp;
+ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "instruction_parts" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "instructed_at" timestamp;
 CREATE TABLE IF NOT EXISTS "user_blocks" (
   "blocker_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
   "blocked_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
@@ -206,11 +208,21 @@ export function esAdmin(req: Request): boolean {
   return req.isAuthenticated() && (role === "admin" || role === "director" || role === "staff_global");
 }
 
-export type PersonajeFila = { id: number; user_id: number; name: string | null; creado: string; dias_sin_servir: number | null; display_name: string | null; username: string | null };
+export type PersonajeFila = {
+  id: number;
+  user_id: number;
+  name: string | null;
+  creado: string;
+  dias_sin_servir: number | null;
+  display_name: string | null;
+  username: string | null;
+  /** Partes terminadas de la instrucción del sacerdote (0 a 3). */
+  instruccion: number;
+};
 
 export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
   const { rows } = await pool.query(
-    `SELECT c.id, c.user_id, c.name, u.display_name, u.username,
+    `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
             EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir
        FROM game_characters c JOIN users u ON u.id = c.user_id
@@ -220,15 +232,21 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
   );
   const r = rows[0];
   if (!r) return null;
-  return { ...r, id: Number(r.id), user_id: Number(r.user_id), dias_sin_servir: r.dias_sin_servir == null ? null : Number(r.dias_sin_servir) };
+  return {
+    ...r,
+    id: Number(r.id),
+    user_id: Number(r.user_id),
+    dias_sin_servir: r.dias_sin_servir == null ? null : Number(r.dias_sin_servir),
+    instruccion: Number(r.instruction_parts || 0),
+  };
 }
 
-async function requisitoDe(userId: number): Promise<Requisito> {
+async function requisitoDe(userId: number): Promise<Requisito & { rangoRespaldo: number }> {
   const { rows } = await pool.query(`SELECT data, backup FROM game_saves WHERE user_id = $1 AND game = $2`, [userId, JUEGO]);
-  // la partida de ahora o su respaldo (si alguien reinstaló la app y empezó otra, no pierde lo que sabe)
+  // lo de la partida de ahora; el respaldo solo cuenta para saber si conoce el templo (si alguien
+  // reinstaló la app y empezó otra, no pierde lo que sabe)
   const a = requisitoLocal(rows[0]?.data);
-  const b = requisitoLocal(rows[0]?.backup);
-  return b.rango > a.rango ? b : a;
+  return { ...a, rangoRespaldo: requisitoLocal(rows[0]?.backup).rango };
 }
 
 export const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null; user_id?: number | string }) => r.name || publicName(r);
@@ -434,6 +452,25 @@ export function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
   };
 }
 
+/** Conoce el servicio del templo: jugó la historia, ya sirvió en línea o terminó la instrucción. */
+function conoceElTemplo(requisito: Requisito & { rangoRespaldo?: number }, yaSirvio: boolean, ch: PersonajeFila | null): boolean {
+  return Math.max(requisito.rango, requisito.rangoRespaldo ?? 0) >= 1 || yaSirvio || (ch?.instruccion ?? 0) >= PARTES_INSTRUCCION;
+}
+
+/** Para las preguntas difíciles: quien no conoce el templo primero termina la instrucción. */
+async function conoceElTemploDe(ch: PersonajeFila): Promise<boolean> {
+  if (ch.instruccion >= PARTES_INSTRUCCION) return true;
+  const [req, sirvio] = await Promise.all([requisitoDe(ch.user_id), yaSirvioBastante(ch.id)]);
+  return conoceElTemplo(req, sirvio, ch);
+}
+
+/** Sacerdotes con experiencia en el templo en línea (los de antes de la instrucción): 150 deberes o más. */
+const DEBERES_EXPERIENCIA = 150;
+async function yaSirvioBastante(characterId: number): Promise<boolean> {
+  const { rows } = await pool.query(`SELECT COALESCE(SUM(duties), 0)::int AS d FROM game_season_merit WHERE character_id = $1`, [characterId]);
+  return Number(rows[0]?.d || 0) >= DEBERES_EXPERIENCIA;
+}
+
 export function escalonPorMerito(merito: number): EscalonId {
   return merito >= MERITO_TURNO ? "turno" : "sacerdote";
 }
@@ -449,10 +486,8 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
         await pool.query(`SELECT 1 FROM game_offices WHERE character_id = $1 AND office IN ('principal', 'sumo') LIMIT 1`, [ch.id])
       ).rows.length > 0
     : false;
-  // ya sirvió en el templo en línea en alguna temporada: conoce el servicio
-  const yaSirvio = ch
-    ? (await pool.query(`SELECT 1 FROM game_season_merit WHERE character_id = $1 AND duties > 0 LIMIT 1`, [ch.id])).rows.length > 0
-    : false;
+  // ya sirvió bastante en el templo en línea: conoce el servicio
+  const yaSirvio = ch ? await yaSirvioBastante(ch.id) : false;
   let mio: JerusalenEstado["mio"] = null;
   if (ch) {
     const [{ rows: m }, { rows: of }] = await Promise.all([
@@ -499,8 +534,15 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const marcar = <T extends { personajeId: number }>(x: T) => ({ ...x, isMe: !!ch && x.personajeId === ch.id });
   return {
     cuentaAprobada: user.isActive === true,
-    requisito: { ...requisito, puedeEntrar: true, puedeSumo: fuePrincipal, conoceTemplo: requisito.rango >= 1 || yaSirvio },
-    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado } : null,
+    requisito: {
+      rango: requisito.rango,
+      creible: requisito.creible,
+      motivo: requisito.motivo,
+      puedeEntrar: true,
+      puedeSumo: fuePrincipal,
+      conoceTemplo: conoceElTemplo(requisito, yaSirvio, ch),
+    },
+    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
     mio,
@@ -624,6 +666,49 @@ export function registerJerusalenRoutes(app: Express) {
     }
   }
   app.post("/api/jerusalen/personaje", (req, res) => void guardarPersonaje(req, res, true));
+
+  // La instrucción del sacerdote: una parte terminada (en orden). La primera vez que se terminan
+  // las tres se suma un poco de mérito y la comunidad lo ve en la actividad.
+  const ultimaParte = new Map<number, number>();
+  app.post("/api/jerusalen/instruccion", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const parte = Number(req.body?.parte);
+    if (!Number.isInteger(parte) || parte < 1 || parte > PARTES_INSTRUCCION) return res.status(400).json({ message: "Parte no válida" });
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      const now = Date.now();
+      if (now - (ultimaParte.get(ch.id) || 0) < 3000) return res.status(429).json({ message: "Espera un momento" });
+      ultimaParte.set(ch.id, now);
+      if (ultimaParte.size > 5000) ultimaParte.clear();
+      const { rows } = await pool.query(`SELECT instruction_parts, instructed_at FROM game_characters WHERE id = $1`, [ch.id]);
+      const antes = Number(rows[0]?.instruction_parts || 0);
+      if (parte > antes + 1) return res.status(409).json({ message: "Primero termina la parte anterior de la instrucción." });
+      const primeraVez = parte === PARTES_INSTRUCCION && !rows[0]?.instructed_at;
+      await pool.query(
+        `UPDATE game_characters
+            SET instruction_parts = GREATEST(instruction_parts, $2),
+                instructed_at = CASE WHEN $2 >= $3 THEN COALESCE(instructed_at, now()) ELSE instructed_at END
+          WHERE id = $1`,
+        [ch.id, parte, PARTES_INSTRUCCION],
+      );
+      let premio = 0;
+      if (primeraVez) {
+        premio = MERITO_INSTRUCCION;
+        await enFila(ch.id, async () => {
+          const t = temporadaDe();
+          await filaMerito(ch.id, t.n, diaClave());
+          await pool.query(`UPDATE game_season_merit SET merit = merit + $3, updated_at = now() WHERE character_id = $1 AND season = $2`, [ch.id, t.n, premio]);
+        });
+        await evento(req.user!.id, "jerusalen:instruido", "terminó la instrucción del sacerdote en el templo en línea");
+        forget("jer:");
+      }
+      res.json({ partes: Math.max(antes, parte), premio, estado: await estadoDe(req) });
+    } catch (err) {
+      console.error("[jerusalen] instrucción:", err);
+      res.sendStatus(500);
+    }
+  });
   app.patch("/api/jerusalen/personaje", (req, res) => void guardarPersonaje(req, res, false));
 
   // Deberes cumplidos desde el último envío (el teléfono los junta cada 15 s).
@@ -703,6 +788,8 @@ export function registerJerusalenRoutes(app: Express) {
       if (now - (ultimaPregunta.get(ch.id) || 0) < 1500) return res.status(429).json({ message: "Espera un momento" });
       ultimaPregunta.set(ch.id, now);
       if (ultimaPregunta.size > 5000) ultimaPregunta.clear();
+      if (!(await conoceElTemploDe(ch)))
+        return res.status(403).json({ message: "Azarías: «Primero termina la instrucción del sacerdote; después te haré las preguntas difíciles»", instruccion: true });
       const out = await enFila(ch.id, async () => {
         const t = temporadaDe();
         const hoy = diaClave();
