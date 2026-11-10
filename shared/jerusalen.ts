@@ -192,8 +192,12 @@ export type JerusalenEstado = {
     diasSinServir: number | null;
     perdio: string | null;
   } | null;
+  /** Los cargos y la tabla del camino del personaje (cada camino compite con los suyos). */
   escalera: { id: EscalonId; cupo: number | null; titulares: JerusalenTitular[] }[];
   tabla: { puesto: number; personajeId: number; nombre: string; persona: string; merito: number; isMe: boolean; camino?: "sacerdocio" | "profecia" | "realeza" }[];
+  /** Los de los tres caminos (para verlos en la temporada). */
+  escaleras?: Record<"sacerdocio" | "profecia" | "realeza", { id: EscalonId; cupo: number | null; titulares: JerusalenTitular[] }[]>;
+  tablas?: Record<"sacerdocio" | "profecia" | "realeza", { puesto: number; personajeId: number; nombre: string; persona: string; merito: number; isMe: boolean; camino?: "sacerdocio" | "profecia" | "realeza" }[]>;
   enLinea: number;
   nombres: { nombre: string; ref: string }[];
   esAdmin: boolean;
@@ -212,6 +216,8 @@ export type JerusalenAcciones = {
   /** Gozo ganado con este envío (deberes y encargos) y el que tiene ahora la persona. */
   gozo?: number;
   gozoTotal?: number;
+  /** Puesto en la tabla de su camino en esta temporada. */
+  puesto?: number | null;
 };
 
 export type JerusalenPregunta = {

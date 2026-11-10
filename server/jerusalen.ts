@@ -16,7 +16,7 @@ import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { ESTUDIO_PRINCIPAL, ESTUDIO_SUMO } from "@shared/estudios";
-import { CAMINOS, MERITO_DEBER_CAMINO, TOPE_BASE_CAMINO, TOPE_RITMO_CAMINO, caminoDe, type Camino, type DeberCamino } from "@shared/caminos";
+import { CAMINOS, MERITO_DEBER_CAMINO, TOPE_BASE_CAMINO, TOPE_RITMO_CAMINO, caminoDe, type Camino, type DeberCamino, ESTUDIOS_CARGO, PREMIO_CARGO, nombreEscalonCamino } from "@shared/caminos";
 import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
 import { sirviendoJuntos } from "./presencia-templo";
 import { avanzarMision, misionesPorDeberes } from "./misiones";
@@ -311,7 +311,7 @@ async function revisarCargos(season: number, alCerrar = false) {
     [season, DIAS_PIERDE],
   );
   const { rows } = await pool.query(
-    `SELECT o.character_id, o.can_high, o.can_mid, o.office, c.user_id, u.is_active
+    `SELECT o.character_id, o.can_high, o.can_mid, o.office, c.user_id, c.path, u.is_active
        FROM game_offices o
        JOIN game_characters c ON c.id = o.character_id
        JOIN users u ON u.id = c.user_id
@@ -319,33 +319,42 @@ async function revisarCargos(season: number, alCerrar = false) {
       ORDER BY o.position`,
     [season],
   );
-  const libres: Record<Cargo, number> = { ...CUPOS };
-  const usados = new Set<number>();
-  const cambios: { id: number; user: number; antes: Cargo | null; ahora: Cargo | null }[] = [];
+  // cada camino tiene sus cargos (1, 3 y 12): los profetas compiten entre profetas, y así
+  const libres: Record<Camino, Record<Cargo, number>> = { sacerdocio: { ...CUPOS }, profecia: { ...CUPOS }, realeza: { ...CUPOS } };
+  const usados = new Set<string>();
+  const cambios: { id: number; user: number; camino: Camino; antes: Cargo | null; ahora: Cargo | null }[] = [];
   for (const r of rows) {
     let ahora: Cargo | null = null;
     const user = Number(r.user_id);
-    // un solo cargo alto por cuenta, aunque tenga varios personajes
-    if (r.is_active === true && !usados.has(user)) {
-      if (libres.sumo > 0 && r.can_high) ahora = "sumo";
-      else if (libres.principal > 0 && r.can_mid !== false) ahora = "principal";
-      else if (libres.jefe > 0) ahora = "jefe";
+    const camino = caminoDe(r.path);
+    const quien = `${user}:${camino}`;
+    // un solo cargo por persona en cada camino, aunque tenga varios personajes
+    if (r.is_active === true && !usados.has(quien)) {
+      const l = libres[camino];
+      if (l.sumo > 0 && r.can_high) ahora = "sumo";
+      else if (l.principal > 0 && r.can_mid !== false) ahora = "principal";
+      else if (l.jefe > 0) ahora = "jefe";
       if (ahora) {
-        libres[ahora]--;
-        usados.add(user);
+        l[ahora]--;
+        usados.add(quien);
       }
     }
     const antes = (r.office as Cargo | null) || null;
-    if (antes !== ahora) cambios.push({ id: Number(r.character_id), user, antes, ahora });
+    if (antes !== ahora) cambios.push({ id: Number(r.character_id), user, camino, antes, ahora });
   }
   for (const c of cambios) await pool.query(`UPDATE game_offices SET office = $3 WHERE season = $1 AND character_id = $2`, [season, c.id, c.ahora]);
   for (const c of cambios) {
     if (!c.ahora || escalonIndice(c.ahora) <= escalonIndice(c.antes)) continue;
-    const cargo = escalonNombre(c.ahora).toLowerCase();
+    const cargo = nombreEscalonCamino(c.camino, c.ahora, escalonNombre(c.ahora)).toLowerCase();
+    // al empezar la temporada, cada cargo recibe su premio de gozo (una vez)
+    const premio = alCerrar ? PREMIO_CARGO[c.ahora] : 0;
+    if (premio) await sumarGozo(c.id, premio).catch(() => null);
     await evento(
       c.user,
-      `cargo:T${season}:${c.ahora}`,
-      alCerrar ? `recibió el cargo de ${cargo}${deprueba} para la temporada ${season} del templo en línea` : `ahora tiene el cargo de ${cargo}${deprueba} en el templo en línea`,
+      `cargo:T${season}:${c.camino}:${c.ahora}`,
+      alCerrar
+        ? `recibió el cargo de ${cargo}${deprueba} para la temporada ${season} en Jerusalén en línea${premio ? ` (+${premio} de gozo)` : ""}`
+        : `ahora tiene el cargo de ${cargo}${deprueba} en Jerusalén en línea`,
     );
   }
   forget("jer:");
@@ -376,17 +385,22 @@ async function cerrarTemporada(n: number) {
               EXISTS (SELECT 1 FROM game_offices p
                        WHERE p.character_id = m.character_id AND p.season <= $1 AND p.office IN ('principal', 'sumo')) AS fue_principal,
               EXISTS (SELECT 1 FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id
-                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.study_id = $4 AND s.approved_at IS NOT NULL) AS estudio_principal,
+                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.approved_at IS NOT NULL
+                         AND s.study_id = CASE c.path WHEN 'profecia' THEN $6 WHEN 'realeza' THEN $7 ELSE $4 END) AS estudio_principal,
               EXISTS (SELECT 1 FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id
-                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.study_id = $5 AND s.approved_at IS NOT NULL) AS estudio_sumo
+                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.approved_at IS NOT NULL
+                         AND s.study_id = CASE c.path WHEN 'profecia' THEN $8 WHEN 'realeza' THEN $9 ELSE $5 END) AS estudio_sumo
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
-        WHERE m.season = $1 AND m.merit >= $2 AND u.is_active IS TRUE AND c.path = 'sacerdocio'
+        WHERE m.season = $1 AND m.merit >= $2 AND u.is_active IS TRUE
           AND c.last_duty_at > now() - ($3::int * interval '1 day')
         ORDER BY m.merit DESC, m.updated_at ASC
-        LIMIT 500`,
-      [n, MERITO_MIN_CARGO, DIAS_ACTIVO, ESTUDIO_PRINCIPAL, ESTUDIO_SUMO],
+        LIMIT 1500`,
+      [
+        n, MERITO_MIN_CARGO, DIAS_ACTIVO, ESTUDIO_PRINCIPAL, ESTUDIO_SUMO,
+        ESTUDIOS_CARGO.profecia.medio, ESTUDIOS_CARGO.realeza.medio, ESTUDIOS_CARGO.profecia.alto, ESTUDIOS_CARGO.realeza.alto,
+      ],
     );
     for (const r of rows) {
       candidatos++;
@@ -432,10 +446,10 @@ export function revisarTemporadas(forzar = false): Promise<void> {
 type Titular = JerusalenTitular;
 type Fila = { puesto: number; nombre: string; persona: string; merito: number; personajeId: number; camino: Camino };
 
-async function escaleraDe(season: number): Promise<Record<Cargo, Titular[]>> {
+async function escaleraDe(season: number): Promise<Record<Camino, Record<Cargo, Titular[]>>> {
   return cached(`jer:escalera:${season}`, 20_000, async () => {
     const { rows } = await pool.query(
-      `SELECT o.office, o.character_id, c.name, c.user_id, u.display_name, u.username
+      `SELECT o.office, o.character_id, c.name, c.path, c.user_id, u.display_name, u.username
          FROM game_offices o
          JOIN game_characters c ON c.id = o.character_id
          JOIN users u ON u.id = c.user_id
@@ -443,27 +457,29 @@ async function escaleraDe(season: number): Promise<Record<Cargo, Titular[]>> {
         ORDER BY o.position`,
       [season],
     );
-    const out: Record<Cargo, Titular[]> = { sumo: [], principal: [], jefe: [] };
+    const vacia = (): Record<Cargo, Titular[]> => ({ sumo: [], principal: [], jefe: [] });
+    const out: Record<Camino, Record<Cargo, Titular[]>> = { sacerdocio: vacia(), profecia: vacia(), realeza: vacia() };
     for (const r of rows) {
       const cargo = r.office as Cargo;
-      if (!out[cargo]) continue;
-      out[cargo].push({ personajeId: Number(r.character_id), nombre: nombreDe(r), persona: publicName(r), isMe: false });
+      const del = out[caminoDe(r.path)];
+      if (!del[cargo]) continue;
+      del[cargo].push({ personajeId: Number(r.character_id), nombre: nombreDe(r), persona: publicName(r), isMe: false });
     }
     return out;
   });
 }
 
-async function tablaDe(season: number): Promise<Fila[]> {
-  return cached(`jer:tabla:${season}`, 20_000, async () => {
+async function tablaDe(season: number, camino: Camino): Promise<Fila[]> {
+  return cached(`jer:tabla:${season}:${camino}`, 20_000, async () => {
     const { rows } = await pool.query(
       `SELECT m.character_id, m.merit, c.name, c.path, c.user_id, u.display_name, u.username
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
-        WHERE m.season = $1 AND m.merit > 0 AND u.is_active IS NOT FALSE
+        WHERE m.season = $1 AND m.merit > 0 AND u.is_active IS NOT FALSE AND c.path = $2
         ORDER BY m.merit DESC, m.updated_at ASC
         LIMIT 10`,
-      [season],
+      [season, camino],
     );
     return rows.map((r, i) => ({ puesto: i + 1, nombre: nombreDe(r), persona: publicName(r), merito: Number(r.merit), personajeId: Number(r.character_id), camino: caminoDe(r.path) }));
   });
@@ -563,9 +579,10 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
     const [{ rows: m }, { rows: of }] = await Promise.all([
       pool.query(
         `SELECT gm.merit, gm.duties, gm.answered, gm.hits, gm.day_key, gm.day_seconds, gm.day_questions,
-                (SELECT count(*)::int + 1 FROM game_season_merit o WHERE o.season = gm.season AND o.merit > gm.merit) AS puesto
+                (SELECT count(*)::int + 1 FROM game_season_merit o JOIN game_characters oc ON oc.id = o.character_id
+                  WHERE o.season = gm.season AND o.merit > gm.merit AND oc.path = $3) AS puesto
            FROM game_season_merit gm WHERE gm.character_id = $1 AND gm.season = $2`,
-        [ch.id, t.n],
+        [ch.id, t.n, ch.camino],
       ),
       pool.query(`SELECT office, lost_at, lost_reason FROM game_offices WHERE season = $1 AND character_id = $2`, [t.n, ch.id]),
     ]);
@@ -595,13 +612,18 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
       perdio:
         o && o.office && o.lost_at
           ? o.lost_reason === "admin"
-            ? `La administración quitó tu cargo de ${escalonNombre(o.office as EscalonId).toLowerCase()}.`
-            : `Tu cargo de ${escalonNombre(o.office as EscalonId).toLowerCase()} pasó al siguiente porque pasaste ${DIAS_PIERDE} días sin servir. Puedes volver a subir en esta temporada.`
+            ? `La administración quitó tu cargo de ${nombreEscalonCamino(ch.camino, o.office, escalonNombre(o.office as EscalonId)).toLowerCase()}.`
+            : `Tu cargo de ${nombreEscalonCamino(ch.camino, o.office, escalonNombre(o.office as EscalonId)).toLowerCase()} pasó al siguiente porque pasaste ${DIAS_PIERDE} días sin servir. Puedes volver a subir en esta temporada.`
           : null,
     };
   }
-  const [escalera, tabla, enLinea] = await Promise.all([escaleraDe(t.n), tablaDe(t.n), enLineaAhora()]);
+  const [escalera, tablaS, tablaP, tablaR, enLinea] = await Promise.all([
+    escaleraDe(t.n), tablaDe(t.n, "sacerdocio"), tablaDe(t.n, "profecia"), tablaDe(t.n, "realeza"), enLineaAhora(),
+  ]);
   const marcar = <T extends { personajeId: number }>(x: T) => ({ ...x, isMe: !!ch && x.personajeId === ch.id });
+  const miCamino: Camino = ch?.camino ?? "sacerdocio";
+  const escaleraDel = (c: Camino) => (["sumo", "principal", "jefe"] as Cargo[]).map((id) => ({ id, cupo: CUPOS[id], titulares: escalera[c][id].map(marcar) }));
+  const tablas = { sacerdocio: tablaS.map(marcar), profecia: tablaP.map(marcar), realeza: tablaR.map(marcar) };
   return {
     cuentaAprobada: user.isActive === true,
     requisito: {
@@ -617,8 +639,10 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
     mio,
-    escalera: (["sumo", "principal", "jefe"] as Cargo[]).map((id) => ({ id, cupo: CUPOS[id], titulares: escalera[id].map(marcar) })),
-    tabla: tabla.map(marcar),
+    escalera: escaleraDel(miCamino),
+    tabla: tablas[miCamino],
+    escaleras: { sacerdocio: escaleraDel("sacerdocio"), profecia: escaleraDel("profecia"), realeza: escaleraDel("realeza") },
+    tablas,
     enLinea,
     nombres: NOMBRES_SACERDOTE,
     esAdmin: esAdmin(req),
@@ -902,7 +926,12 @@ export function registerJerusalenRoutes(app: Express) {
       // lo que se ganó de gozo con este envío (deberes y encargos) y cuánto tiene ahora la persona
       const gozoMisiones = misiones.reduce((a, m) => a + (Number((m as { gozo?: number }).gozo) || 0), 0);
       const { rows: gz } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
-      const gozo = { gozo: cuantos * GOZO.deber + gozoMisiones, gozoTotal: Number(gz[0]?.gozo || 0) };
+      const { rows: pu } = await pool.query(
+        `SELECT count(*)::int + 1 AS p FROM game_season_merit o JOIN game_characters oc ON oc.id = o.character_id
+          WHERE o.season = $1 AND oc.path = $2 AND o.merit > $3`,
+        [temporadaDe().n, ch.camino, out.merito],
+      );
+      const gozo = { gozo: cuantos * GOZO.deber + gozoMisiones, gozoTotal: Number(gz[0]?.gozo || 0), puesto: out.merito > 0 ? Number(pu[0]?.p || 1) : null };
       res.json(misiones.length ? { ...out, ...gozo, misiones } : { ...out, ...gozo });
     } catch (err) {
       console.error("[jerusalen] acciones:", err);

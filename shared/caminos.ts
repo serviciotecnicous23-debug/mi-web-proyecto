@@ -24,7 +24,8 @@ export type CaminoDef = {
   guia: string;
   resumen: string;
   /** Nombres del escalón por mérito: el primero al empezar, el segundo con MERITO_TURNO. */
-  escalones: [string, string];
+  /** Los cinco escalones del camino (como el sacerdocio: base, de turno y los tres cargos de la temporada). */
+  escalones: [string, string, string, string, string];
   deberes: DeberCamino[];
   nombres: { nombre: string; ref: string }[];
 };
@@ -37,7 +38,7 @@ export const CAMINOS: Record<Camino, CaminoDef> = {
     lugar: "el templo",
     guia: "Azarías, sumo sacerdote",
     resumen: "Sirve en el templo: el fuego del altar, las ofrendas del pueblo, las lámparas, los panes y el incienso.",
-    escalones: ["Sacerdote", "Sacerdote de turno"],
+    escalones: ["Sacerdote", "Sacerdote de turno", "Jefe de un turno", "Principal sacerdote", "Sumo sacerdote"],
     deberes: [],
     nombres: [],
   },
@@ -48,7 +49,7 @@ export const CAMINOS: Record<Camino, CaminoDef> = {
     lugar: "la escuela de los profetas",
     guia: "Isaías hijo de Amoz",
     resumen: "Estudia la Palabra, ora en el monte, memoriza las Escrituras y lleva mensajes de ánimo por la ciudad.",
-    escalones: ["Hijo de los profetas", "Vidente"],
+    escalones: ["Hijo de los profetas", "Vidente", "Anciano de la escuela", "Profeta del rey", "Varón de Dios"],
     deberes: ["mensaje", "oracion", "memoria", "discernir"],
     nombres: [
       { nombre: "Samuel", ref: "1 Samuel 3:20" },
@@ -71,7 +72,7 @@ export const CAMINOS: Record<Camino, CaminoDef> = {
     lugar: "el palacio del rey",
     guia: "Eliaquim hijo de Hilcías, mayordomo",
     resumen: "Sirve al rey Ezequías: audiencias con justicia, pan para los pobres y la copia de la ley.",
-    escalones: ["Siervo del rey", "Escriba del rey"],
+    escalones: ["Siervo del rey", "Escriba del rey", "Oficial del rey", "Consejero del rey", "Canciller del rey"],
     deberes: ["audiencia", "pan", "ley"],
     nombres: [
       { nombre: "José", ref: "Génesis 41:41" },
@@ -98,10 +99,28 @@ export function caminoDe(v: unknown): Camino {
 }
 
 /** El nombre del escalón (o del cargo, en el sacerdocio) según el camino. */
+const ORDEN_ESCALON = ["sacerdote", "turno", "jefe", "principal", "sumo"];
+
 export function nombreEscalonCamino(camino: Camino, escalon: string | null | undefined, nombreSacerdocio: string): string {
   if (camino === "sacerdocio") return nombreSacerdocio;
-  return escalon === "sacerdote" || !escalon ? CAMINOS[camino].escalones[0] : CAMINOS[camino].escalones[1];
+  const i = Math.max(0, ORDEN_ESCALON.indexOf(escalon || "sacerdote"));
+  return CAMINOS[camino].escalones[i];
 }
+
+/**
+ * Los cargos de la temporada en cada camino: los dos de arriba piden estudios aprobados (de la persona).
+ * El de más arriba pide además haber tenido el del medio en una temporada anterior.
+ * Profecía: «Profeta del rey» (2 Samuel 24:11: «Gad, profeta, vidente de David») y «Varón de Dios»
+ * (2 Reyes 4:9). Palacio: «Consejero del rey» (1 Crónicas 27:33) y «Canciller del rey» (2 Reyes 18:18).
+ */
+export const ESTUDIOS_CARGO: Record<Camino, { medio: string; alto: string }> = {
+  sacerdocio: { medio: "sacerdocio-aaron", alto: "expiacion" },
+  profecia: { medio: "llamado-profeta", alto: "fiestas" },
+  realeza: { medio: "rey-justo", alto: "fiestas" },
+};
+
+/** Gozo que recibe cada cargo al empezar la temporada (además del título y su lugar en la escalera). */
+export const PREMIO_CARGO: Record<"sumo" | "principal" | "jefe", number> = { sumo: 300, principal: 150, jefe: 60 };
 
 // ---------------------------------------------------------------- la escuela: discernir con las Escrituras
 /**
