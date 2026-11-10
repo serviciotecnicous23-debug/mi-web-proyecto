@@ -10,6 +10,7 @@
  * (2 Reyes 18:18)
  */
 import type { Camino } from "@shared/caminos";
+import type { CatedraArea } from "@shared/catedras";
 import type { Abertura, Colocado, Plano } from "@shared/casa-interior";
 import type { Pose } from "../three/characters";
 import type { Line } from "../data";
@@ -58,6 +59,8 @@ export type EdificioDef = {
   piezas: Colocado[];
   personas: PersonaDef[];
   estaciones: EstacionDef[];
+  /** La cátedra del maestro del edificio (la estación «catedra»). */
+  catedra?: CatedraArea;
   saludo: (nombre: string, camino: Camino) => string;
 };
 
@@ -229,10 +232,12 @@ export const PALACIO: EdificioDef = {
     { id: "maestro", nombre: "Hablar con Eliaquim", icono: "💬", x: 12.9, z: 4.2, color: "#c9a8f0", para: "otros", ayuda: "Eliaquim, el mayordomo, recibe a quien entra al palacio." },
     { id: "pan", nombre: "Tomar pan para los pobres", icono: "🍞", x: 20.0, z: 3.5, color: "#ffd166", para: "camino", ayuda: "Toma pan y repártelo a los pobres de la ciudad (hasta 3 a la vez)." },
     { id: "ley", nombre: "Copiar la ley", icono: "📜", x: 2.0, z: 5.7, color: "#9ad0ff", para: "camino", ayuda: "Junto a Sebna, el escriba, se copia la ley con cuidado (Deuteronomio 17:18)." },
+    { id: "catedra", nombre: "La cátedra de los reyes", icono: "👑", x: 12.9, z: 4.2, color: "#e2b33c", para: "camino", ayuda: "Eliaquim te enseña cómo debe gobernar un rey y la historia de los reyes, empezando por lo que serviste hoy." },
   ],
+  catedra: "reyes",
   saludo: (nombre, camino) =>
     camino === "realeza"
-      ? `Eliaquim: «Bienvenido al palacio, ${nombre}. Junto al trono se atienden las audiencias; en la despensa del este se toma el pan para los pobres; en la sala de los escribas, al oeste, se copia la ley.»`
+      ? `Eliaquim: «Bienvenido al palacio, ${nombre}. Junto al trono se atienden las audiencias y, a mi lado, te enseño en la cátedra de los reyes; en la despensa del este se toma el pan para los pobres; en la sala de los escribas, al oeste, se copia la ley.»`
       : `Eliaquim: «Bienvenido al palacio del rey Ezequías, ${nombre}. Aquí sirven los siervos del rey. Si quieres servir al rey, crea un siervo del rey en la sala de Jerusalén.»`,
 };
 
@@ -303,6 +308,7 @@ export const CAMARA: EdificioDef = {
     { id: "diezmos", nombre: "La cámara de los diezmos", icono: "🧺", x: 12.5, z: 5.0, color: "#f0b45a", ayuda: "Conanías guarda aquí los diezmos y las ofrendas, fielmente (2 Crónicas 31:12): es el tesoro del templo." },
     { id: "turnos", nombre: "Los turnos del sacerdocio", icono: "🎲", x: 6.0, z: 9.0, color: "#9ad0ff", para: "camino", ayuda: "Los cargos de la temporada y quién sirve más: los turnos se repartían por suertes (1 Crónicas 24:5)." },
   ],
+  catedra: "sacerdotal",
   saludo: (nombre, camino) =>
     camino === "sacerdocio"
       ? `Eleazar: «Bienvenido a la cámara de los sacerdotes, ${nombre}. Frente a mi atril te enseño el porqué de lo que sirves en el templo; en la cámara del este, Conanías guarda los diezmos; en la entrada están los turnos del sacerdocio.»`
@@ -346,7 +352,8 @@ export function siguienteEstacion(e: EdificioDef, camino: Camino, o: { pasos: nu
   // en la cámara, lo que toca es la cátedra de Eleazar
   if (e.id === "camara") return "catedra";
   if (o.llevaMensaje || o.panes > 0) return "salir";
-  if (o.pasos >= 3) return null;
+  // terminados los primeros pasos, lo que sigue es la cátedra del maestro (si el edificio tiene)
+  if (o.pasos >= 3) return e.catedra ? "catedra" : null;
   if (camino === "profecia") return o.pasos === 0 ? "memoria" : o.pasos === 1 ? "salir" : "mensaje";
   return o.pasos === 0 ? "audiencia" : o.pasos === 1 ? "pan" : "ley";
 }

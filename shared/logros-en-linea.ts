@@ -12,7 +12,7 @@ export const LOGROS_EN_LINEA: Record<LogroId, { nombre: string; icono: string; c
   maestro: { nombre: "Maestro en casa", icono: "📖", como: "Que 3 vecinos vengan a una reunión en tu casa" },
   campeon: { nombre: "Campeón del concurso", icono: "🏅", como: "Queda entre los tres primeros del concurso bíblico de una semana" },
   estudioso: { nombre: "Estudioso de la Palabra", icono: "📜", como: "Aprueba 3 estudios" },
-  discipulo: { nombre: "Discípulo de los maestros", icono: "🎓", como: "Aprende 30 lecciones en las cátedras (con Isaías o con Eleazar)" },
+  discipulo: { nombre: "Discípulo de los maestros", icono: "🎓", como: "Aprende 30 lecciones en las cátedras (con Isaías, Eleazar o Eliaquim)" },
   fiel: { nombre: "Fiel a su barrio", icono: "🙌", como: "Aporta a 2 ofrendas del barrio cumplidas" },
 };
 

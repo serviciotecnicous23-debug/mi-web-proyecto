@@ -1,13 +1,14 @@
 /**
  * Las cátedras de Jerusalén en línea: lecciones cortas con una pregunta, cada una con su maestro. El
  * profeta aprende con Isaías mientras ora en el monte; el sacerdote, con Eleazar en la cámara de los
- * sacerdotes, junto al templo, que le enseña el porqué de lo que sirvió hoy. Cada lección enseña algo y
+ * sacerdotes, junto al templo, que le enseña el porqué de lo que sirvió hoy; el siervo del rey, con
+ * Eliaquim en el palacio: cómo debe gobernar un rey y la historia de los reyes. Cada lección enseña algo y
  * lo prueba con la Palabra; el servidor guarda la respuesta y corrige (server/catedras-banco.ts): el
  * teléfono solo muestra. Lo aprendido es de la persona; el tope del día es por camino.
  */
 import type { Camino } from "./caminos";
 
-export type CatedraArea = "oracion" | "sacerdotal";
+export type CatedraArea = "oracion" | "sacerdotal" | "reyes";
 
 export type CatedraMeta = {
   nombre: string;
@@ -48,6 +49,17 @@ export const CATEDRAS: Record<CatedraArea, CatedraMeta> = {
     grados: ["Oyente de la cámara", "Discípulo de Eleazar", "Ayudante del altar", "Guarda del santuario", "Maestro de la cámara"],
     seguidas: true,
   },
+  reyes: {
+    nombre: "La cátedra de los reyes",
+    icono: "👑",
+    camino: "realeza",
+    maestro: "Eliaquim",
+    lugar: "el palacio del rey",
+    cierre: "👑 Gracias, Eliaquim",
+    manana: "Sigue sirviendo al rey: mañana Eliaquim te enseña más.",
+    grados: ["Oyente del palacio", "Discípulo de Eliaquim", "Lector de las crónicas", "Consejero prudente", "Maestro de los reyes"],
+    seguidas: true,
+  },
 };
 
 /** Lecciones por día en cada camino, entre todas sus cátedras (después la oración sigue contando, sin lección). */
@@ -70,6 +82,9 @@ export const GRUPOS_CATEDRA: Record<string, string> = {
   diezmos: "los diezmos",
   ofrendas: "las ofrendas del pueblo",
   orantes: "los que vienen a orar",
+  audiencia: "las audiencias del pueblo",
+  pan: "el pan para los pobres",
+  ley: "la copia de la ley",
 };
 
 export type LeccionVista = {
