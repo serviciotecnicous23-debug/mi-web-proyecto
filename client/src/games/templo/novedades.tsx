@@ -21,6 +21,8 @@ export const NOVEDADES: Novedad[] = [
       "En la plaza abrieron los cuatro puestos: el sembrador, el alfarero, el tejedor y el mercader. Cada día hay dos ofertas, y el mercader paga el doble por lo que más buscan ese día.",
       "Tu casa tiene huerto: siembra trigo, cebada u olivo, riégalo y cosecha al alfolí para ofrecerlo en el templo o venderlo.",
       "Pon adornos en tu casa (macetas, lámparas, toldos, un telar, una parra, una higuera o una palmera), dale nombre con un letrero y vístete con un manto y una faja: tus vecinos lo ven todo.",
+      "🫓 Tu casa tiene horno: prepara tortas amasadas con aceite o aceite puro para las lámparas con lo del alfolí. Valen más honra que los bienes sueltos (y en las fiestas del cereal, las tortas valen el doble).",
+      "En la ciudad ves qué hace cada vecino junto a su nombre: 🛒 en el mercado, 🏠 en su casa, 📜 estudiando, 🙏 orando, 🍞 llevando pan…",
     ],
   },
   {

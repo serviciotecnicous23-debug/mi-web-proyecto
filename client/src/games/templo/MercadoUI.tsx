@@ -6,7 +6,10 @@
 import { useEffect, useState } from "react";
 import { Loader2, ShoppingBasket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ARTICULOS, LETREROS, PUESTOS_MERCADO, SEMILLAS, articulo, precioHoy, precioVentaHoy, type MercadoEstado, type TabMercado } from "@shared/mercado";
+import {
+  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, precioHoy, precioVentaHoy, type MercadoEstado, type RecetaId, type TabMercado,
+} from "@shared/mercado";
+import type { CasaPrivada } from "@shared/ciudad";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 
@@ -56,7 +59,15 @@ function useMercado(alCambiar?: (m: MercadoEstado) => void) {
       ok?.(r.data);
     } else setError(r.data?.message || "No se pudo. Intenta de nuevo.");
   };
-  return { m, recibido, error, busy, hacer };
+  /** Vuelve a pedir el estado (después de ofrecer en el templo, que es otra ruta). */
+  const recargar = async () => {
+    const r = await pedir("/mercado");
+    if (r.ok && r.data) {
+      recibir(r.data);
+      alCambiar?.(r.data);
+    }
+  };
+  return { m, recibido, error, busy, hacer, recargar };
 }
 
 const NOMBRE_BIEN: Record<string, string> = { harina: "flor de harina", aceite: "aceite", corderos: "corderos" };
@@ -190,9 +201,15 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
   );
 }
 
-/** Lo nuevo de la casa: el huerto, los adornos, la ropa y el letrero (dentro de «Tu casa»). */
-export function CasaExtras({ alCambiar }: { alCambiar?: (m: MercadoEstado) => void }) {
-  const { m, recibido, error, busy, hacer } = useMercado(alCambiar);
+/** Lo que vuelve al ofrecer en el templo (para la casa y la ciudad). */
+export type Ofrecido = { ganado: number; doble: string | null; subio: number | null; honra: number; privada: CasaPrivada; misiones?: { titulo: string; premio: number; gozo?: number }[] };
+
+/** Lo nuevo de la casa: el huerto, el horno, los adornos, la ropa y el letrero (dentro de «Tu casa»). */
+export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void }) {
+  const { m, recibido, error, busy, hacer, recargar } = useMercado(alCambiar);
+  const [cuantas, setCuantas] = useState(1);
+  const [ofreciendo, setOfreciendo] = useState(false);
+  const [avisoHorno, setAvisoHorno] = useState<string | null>(null);
   const [semilla, setSemilla] = useState<"trigo" | "cebada" | "olivo">("trigo");
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
@@ -257,6 +274,110 @@ export function CasaExtras({ alCambiar }: { alCambiar?: (m: MercadoEstado) => vo
         </div>
         {!semillasTengo.length && <p className="text-[11px] text-stone-500">Compra semillas en el mercado de la plaza (trigo y cebada dan flor de harina; el olivo, aceite).</p>}
         <p className="text-[10px] text-stone-400">Trigo {SEMILLAS.trigo.minutos} min · cebada {SEMILLAS.cebada.minutos} min · olivo {SEMILLAS.olivo.minutos} min.</p>
+      </section>
+
+      <section className="space-y-2 rounded-xl border border-orange-200 p-3 dark:border-orange-900/60" data-testid="casa-horno">
+        <p className="flex items-baseline justify-between font-black">
+          <span>Tu horno · prepara tus ofrendas</span>
+          <span className="text-xs font-semibold text-stone-500">
+            🌾 {m.bienes.harina} · 🫒 {m.bienes.aceite}
+          </span>
+        </p>
+        <p className="text-[11px] text-stone-500">Con lo del alfolí prepara ofrendas que valen más honra que los bienes sueltos. Tardan en el horno: vuelve a sacarlas.</p>
+        {avisoHorno && <p className="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200" data-testid="horno-aviso">{avisoHorno}</p>}
+        {m.horno ? (
+          (() => {
+            const r = RECETAS[m.horno.receta];
+            const f = Math.max(0, m.horno.faltan - Math.floor((ahora - recibido) / 1000));
+            return (
+              <div className="flex items-center gap-2 rounded-lg bg-orange-50/70 p-2 dark:bg-orange-950/20" data-testid="horno-ocupado">
+                <span className="text-2xl">{r.icono}</span>
+                <span className="min-w-0 flex-1 text-xs">
+                  <b>
+                    {m.horno.cantidad} × {r.nombre}
+                  </b>
+                  <br />
+                  {f > 0 ? `En el horno: ${tiempo(f)}` : "¡Listas! Sácalas del horno."}
+                </span>
+                <Button
+                  size="sm"
+                  disabled={busy || f > 0}
+                  onClick={() => void hacer("/casa/preparar/sacar", {}, () => gameStore.toast(`Sacaste del horno: ${m.horno!.cantidad} × ${r.nombre.toLowerCase()}`, "gold"))}
+                  data-testid="horno-sacar"
+                >
+                  Sacar
+                </Button>
+              </div>
+            );
+          })()
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1 text-xs">
+              Cuántas:
+              {Array.from({ length: HORNO_MAX }, (_, i) => i + 1).map((n) => (
+                <button key={n} type="button" onClick={() => setCuantas(n)} className={`h-7 w-7 rounded-full font-bold ${cuantas === n ? "bg-orange-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`} data-testid={`horno-cuantas-${n}`}>
+                  {n}
+                </button>
+              ))}
+            </div>
+            {(Object.keys(RECETAS) as RecetaId[]).map((id) => {
+              const r = RECETAS[id];
+              const pide = Object.entries(r.pide) as ["harina" | "aceite" | "corderos", number][];
+              const alcanza = pide.every(([b, n]) => m.bienes[b] >= n * cuantas);
+              return (
+                <div key={id} className="flex items-center gap-2 rounded-lg border border-stone-200 p-2 dark:border-stone-700">
+                  <span className="text-2xl">{r.icono}</span>
+                  <span className="min-w-0 flex-1 text-xs">
+                    <b>{r.nombre}</b> · {r.minutos} min
+                    <br />
+                    Pide {pide.map(([b, n]) => `${n * cuantas} de ${NOMBRE_BIEN[b]}`).join(" y ")} · da {r.honra * cuantas} de honra
+                  </span>
+                  <Button size="sm" disabled={busy || !alcanza} onClick={() => void hacer("/casa/preparar", { receta: id, cantidad: cuantas }, () => gameStore.toast(`Al horno: ${cuantas} × ${r.nombre.toLowerCase()}`, "gold"))} data-testid={`horno-preparar-${id}`}>
+                    Preparar
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-xs">
+          <span className="min-w-0 flex-1">
+            Preparadas: {RECETAS.tortas.icono} {m.preparadas.tortas} · {RECETAS.aceitePuro.icono} {m.preparadas.aceitePuro}
+          </span>
+          <Button
+            size="sm"
+            className="bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
+            disabled={busy || ofreciendo || m.preparadas.tortas + m.preparadas.aceitePuro === 0}
+            onClick={async () => {
+              setOfreciendo(true);
+              setAvisoHorno(null);
+              try {
+                const res = await fetch("/api/jerusalen/ciudad/casa/ofrendar", {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ preparadas: m.preparadas }),
+                });
+                const d = (await res.json().catch(() => null)) as (Ofrecido & { message?: string }) | null;
+                if (res.ok && d) {
+                  alOfrecer?.(d);
+                  setAvisoHorno(`Llevaste tus ofrendas preparadas al templo: +${d.ganado} de honra para tu casa.${d.subio !== null ? " ¡Tu casa creció!" : ""}`);
+                  await recargar();
+                } else setAvisoHorno(d?.message || "No se pudo llevar. Intenta de nuevo.");
+              } catch {
+                setAvisoHorno("No se pudo llevar. Revisa tu conexión.");
+              } finally {
+                setOfreciendo(false);
+              }
+            }}
+            data-testid="horno-ofrecer"
+          >
+            Llevar al templo
+          </Button>
+        </div>
+        <p className="text-[10px] italic text-stone-400">
+          «{RECETAS.tortas.verso.text}» ({RECETAS.tortas.verso.ref})
+        </p>
       </section>
 
       <section className="space-y-2 rounded-xl border border-amber-200 p-3 dark:border-amber-900/60" data-testid="casa-adornos">

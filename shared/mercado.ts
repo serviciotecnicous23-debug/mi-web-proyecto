@@ -120,6 +120,51 @@ export function coloresDeIds(r: { manto?: string | null; faja?: string | null } 
   return out;
 }
 
+// ---------------------------------------------------------------- el horno de la casa: preparar las ofrendas
+/**
+ * Con lo del alfolí se preparan ofrendas que valen más honra que los bienes sueltos (tardan en el
+ * horno: hay que volver a sacarlas). En las fiestas del cereal, las tortas valen el doble.
+ */
+export type RecetaId = "tortas" | "aceitePuro";
+export type Preparadas = Record<RecetaId, number>;
+export const RECETAS: Record<RecetaId, { nombre: string; icono: string; pide: Partial<Record<BienMercado, number>>; minutos: number; honra: number; verso: { text: string; ref: string } }> = {
+  tortas: {
+    nombre: "Tortas amasadas con aceite",
+    icono: "🫓",
+    pide: { harina: 3, aceite: 1 },
+    minutos: 10,
+    honra: 14,
+    verso: { text: "Cuando ofrecieres ofrenda cocida en horno, será de tortas de flor de harina sin levadura amasadas con aceite, y hojaldres sin levadura untadas con aceite.", ref: "Levítico 2:4" },
+  },
+  aceitePuro: {
+    nombre: "Aceite puro para las lámparas",
+    icono: "🪔",
+    pide: { aceite: 3 },
+    minutos: 15,
+    honra: 12,
+    verso: { text: "Y mandarás a los hijos de Israel que te traigan aceite puro de olivas machacadas, para el alumbrado, para hacer arder continuamente las lámparas.", ref: "Éxodo 27:20" },
+  },
+};
+/** Cuántas a la vez caben en el horno. */
+export const HORNO_MAX = 3;
+
+/** Lo preparado y lo que está en el horno (de la columna `preparadas` de la casa). */
+export function leerPreparadas(v: unknown): { preparadas: Preparadas; horno: { receta: RecetaId; cantidad: number; listo: string } | null } {
+  const o = v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const n = (x: unknown) => Math.max(0, Math.floor(Number(x) || 0));
+  const h = o.horno && typeof o.horno === "object" && !Array.isArray(o.horno) ? (o.horno as Record<string, unknown>) : {};
+  const receta = h.receta === "tortas" || h.receta === "aceitePuro" ? h.receta : null;
+  return {
+    preparadas: { tortas: n(o.tortas), aceitePuro: n(o.aceitePuro) },
+    horno: receta && typeof h.listo === "string" ? { receta, cantidad: Math.max(1, Math.min(HORNO_MAX, n(h.cantidad))), listo: h.listo } : null,
+  };
+}
+
+/** Para guardar otra vez la columna (lo preparado y, si hay, lo del horno). */
+export function guardarPreparadas(p: Preparadas, horno: { receta: RecetaId; cantidad: number; listo: string } | null): string {
+  return JSON.stringify(horno ? { ...p, horno } : p);
+}
+
 // ---------------------------------------------------------------- respuestas de la API
 export type Parcela = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; listo: boolean; faltan: number };
 export type MercadoEstado = {
@@ -137,4 +182,7 @@ export type MercadoEstado = {
   bienes: { harina: number; aceite: number; corderos: number };
   /** Lo que el mercader paga al doble hoy. */
   demanda: BienMercado;
+  /** Las ofrendas preparadas y lo que está en el horno (`faltan` en segundos). */
+  preparadas: Preparadas;
+  horno: { receta: RecetaId; cantidad: number; faltan: number } | null;
 };

@@ -6,8 +6,8 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ARTICULOS, LETREROS, SEMILLAS, articulo, demandaDelDia, lugaresAdornos, ofertasDelDia, parcelasHuerto, precioHoy, precioVentaHoy,
-  type MercadoEstado, type Parcela,
+  ARTICULOS, HORNO_MAX, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
+  parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
@@ -24,7 +24,8 @@ ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "ropa" jsonb NOT NULL DEF
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "adornos" jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "huerto" jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "letrero" text;
-ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "tiene_letrero" boolean NOT NULL DEFAULT false;`;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "tiene_letrero" boolean NOT NULL DEFAULT false;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "preparadas" jsonb NOT NULL DEFAULT '{}'::jsonb;`;
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const objeto = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
@@ -56,12 +57,13 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }] = await Promise.all([
     pool.query(`SELECT gozo, semillas, armario, ropa FROM game_characters WHERE id = $1`, [ch.id]),
-    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods FROM game_houses WHERE character_id = $1`, [ch.id]),
+    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.id]),
   ]);
   const nivel = Number(h[0]?.level || 0);
   const semillas = objeto(c[0]?.semillas);
   const ropa = objeto(c[0]?.ropa);
   const bienes = leerBienes(h[0]?.goods);
+  const prep = leerPreparadas(h[0]?.preparadas);
   return {
     dia,
     gozo: Number(c[0]?.gozo || 0),
@@ -76,6 +78,10 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     tieneLetrero: h[0]?.tiene_letrero === true,
     bienes: { harina: Math.floor(bienes.harina), aceite: Math.floor(bienes.aceite), corderos: Math.floor(bienes.corderos) },
     demanda: demandaDelDia(dia),
+    preparadas: prep.preparadas,
+    horno: prep.horno
+      ? { receta: prep.horno.receta, cantidad: prep.horno.cantidad, faltan: Math.max(0, Math.ceil((new Date(prep.horno.listo).getTime() - Date.now()) / 1000)) }
+      : null,
   };
 }
 
@@ -238,6 +244,64 @@ export function registerMercadoRoutes(app: Express) {
       await responder(res, ch);
     } catch (err) {
       console.error("[mercado] letrero:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // el horno: preparar ofrendas con lo del alfolí (Levítico 2:4) y sacarlas cuando estén listas
+  app.post("/api/jerusalen/casa/preparar", async (req: Request, res: Response) => {
+    const receta = req.body?.receta;
+    if (receta !== "tortas" && receta !== "aceitePuro") return res.status(400).json({ message: "Elige qué preparar." });
+    const cantidad = Math.max(1, Math.min(HORNO_MAX, Math.floor(Number(req.body?.cantidad) || 1)));
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
+      // primero lo que trajeron los siervos (recoger va en su propia fila de la casa)
+      await recoger(ch.id);
+      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string }> => {
+        const { rows } = await pool.query(`SELECT goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+        const p = leerPreparadas(rows[0]?.preparadas);
+        if (p.horno) return { status: 409, message: "El horno está ocupado: saca lo que hay cuando esté listo." };
+        const bienes = leerBienes(rows[0]?.goods);
+        const r = RECETAS[receta as "tortas" | "aceitePuro"];
+        const pide = Object.entries(r.pide) as [BienMercado, number][];
+        if (pide.some(([b, n]) => Math.floor(bienes[b]) < n * cantidad)) {
+          return { status: 409, message: "Te falta en el alfolí: cosecha tu huerto o pon a tus siervos a trabajar." };
+        }
+        for (const [b, n] of pide) bienes[b] -= n * cantidad;
+        const listo = new Date(Date.now() + r.minutos * 60000).toISOString();
+        await pool.query(`UPDATE game_houses SET goods = $2::jsonb, preparadas = $3::jsonb WHERE character_id = $1`, [
+          ch.id, JSON.stringify(bienes), guardarPreparadas(p.preparadas, { receta, cantidad, listo }),
+        ]);
+        return { status: 200 };
+      });
+      if (out.status !== 200) return res.status(out.status).json({ message: out.message });
+      await responder(res, ch);
+    } catch (err) {
+      console.error("[mercado] preparar:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  app.post("/api/jerusalen/casa/preparar/sacar", async (req: Request, res: Response) => {
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
+      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string; sacado?: { receta: string; cantidad: number } }> => {
+        const { rows } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+        const p = leerPreparadas(rows[0]?.preparadas);
+        if (!p.horno) return { status: 409, message: "El horno está vacío." };
+        if (new Date(p.horno.listo).getTime() > Date.now()) return { status: 409, message: "Todavía no está listo." };
+        p.preparadas[p.horno.receta] += p.horno.cantidad;
+        await pool.query(`UPDATE game_houses SET preparadas = $2::jsonb WHERE character_id = $1`, [ch.id, guardarPreparadas(p.preparadas, null)]);
+        return { status: 200, sacado: { receta: p.horno.receta, cantidad: p.horno.cantidad } };
+      });
+      if (out.status !== 200) return res.status(out.status).json({ message: out.message });
+      await responder(res, ch, { sacado: out.sacado });
+    } catch (err) {
+      console.error("[mercado] sacar del horno:", err);
       res.sendStatus(500);
     }
   });
