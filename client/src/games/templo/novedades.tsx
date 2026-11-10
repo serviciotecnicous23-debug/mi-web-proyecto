@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-estudios",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Los estudios de Jerusalén",
+    puntos: [
+      "En la escuela de los profetas (o con el botón del pergamino) hay seis estudios bíblicos: tres del sacerdocio, uno de los profetas, uno del rey y uno de las fiestas.",
+      "Cada estudio tiene secciones para leer y practicar (+10 de mérito cada una) y un examen final de 6 preguntas que se aprueba con 5 (+100 de mérito).",
+      "Lo aprobado queda para siempre y lo ven los vecinos. Para ser principal sacerdote hay que aprobar «El sacerdocio de Aarón»; para ser sumo, «El Día de la Expiación».",
+    ],
+  },
+  {
     id: "2026-11-10-instruccion",
     fecha: "10 de noviembre de 2026",
     titulo: "La instrucción del sacerdote",

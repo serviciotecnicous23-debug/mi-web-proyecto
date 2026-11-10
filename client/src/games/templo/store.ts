@@ -100,6 +100,7 @@ export type Modal =
   | { kind: "lesson"; lessonId: string }
   | { kind: "quiz"; quizId: string; source: "azarias" | "pueblo" | "examen" | "instruccion"; step?: number }
   | { kind: "instruccion" }
+  | { kind: "estudios"; id?: string }
   | { kind: "upgrades" }
   | { kind: "book" }
   | { kind: "help" }

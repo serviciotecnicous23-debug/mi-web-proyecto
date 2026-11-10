@@ -10,6 +10,7 @@ import {
   Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap,
 } from "lucide-react";
 import { PARTES } from "./instruccion";
+import { EstudiosModal } from "./EstudiosUI";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
@@ -905,6 +906,9 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 <IconBtn label="Instrucción del sacerdote" onClick={() => open({ kind: "instruccion" })} testid="button-templo-instruccion" active={!!hud.instruccion}>
                   <GraduationCap className="h-5 w-5" />
                 </IconBtn>
+                <IconBtn label="Estudios" onClick={() => open({ kind: "estudios" })} testid="button-templo-estudios">
+                  <ScrollText className="h-5 w-5" />
+                </IconBtn>
                 <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada" className="hidden sm:flex">
                   <Trophy className="h-5 w-5" />
                 </IconBtn>
@@ -1209,6 +1213,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <QuizView quizId={modal.quizId} source={modal.source} step={modal.step ?? 0} />;
     case "instruccion":
       return <InstruccionView />;
+    case "estudios":
+      return <EstudiosModal id={modal.id} />;
     case "upgrades":
       return <UpgradesView />;
     case "book":
@@ -2435,6 +2441,10 @@ function OnlineLobby({
                   {escalonNombre(estado.mio?.escalon)}
                   {estado.mio?.cargo && t.dePrueba ? " (de prueba)" : ""} · {fmt(estado.mio?.merito || 0)} de mérito
                 </p>
+                <p className="text-[11px] text-sky-100/80" data-testid="templo-estudios-estado">
+                  <ScrollText className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" />
+                  Estudios aprobados: {p.estudios} · se estudia en la escuela de los profetas
+                </p>
                 <p className="text-[11px] text-sky-100/80" data-testid="templo-instruccion-estado">
                   <GraduationCap className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" />
                   {p.instruccion >= 3
@@ -2605,7 +2615,8 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
           <li>Constancia: 10 minutos de servicio en el día suman 60.</li>
           <li>Preguntas difíciles de Azarías: 30 por acierto, 20 segundos para responder, {PREGUNTAS_DIA} por día y sin repetirse en la temporada.</li>
           <li>La primera hora de cada día cuenta completa; las dos siguientes, la mitad; después tu turno del día termina. Así quien tiene poco tiempo también puede llegar arriba.</li>
-          <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días y juntaron al menos {MERITO_MIN_CARGO} de mérito. Para ser sumo sacerdote hay que haber sido principal sacerdote en una temporada anterior.</li>
+          <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días y juntaron al menos {MERITO_MIN_CARGO} de mérito.</li>
+          <li>Para ser principal sacerdote hay que aprobar el estudio «El sacerdocio de Aarón». Para ser sumo sacerdote, haber sido principal en una temporada anterior y aprobar «El Día de la Expiación». Los estudios aprobados son para siempre.</li>
           <li>Todos empiezan como sacerdotes nuevos, hayan jugado o no la historia del templo.</li>
           <li>Quien tiene un cargo y pasa 7 días sin servir lo pierde, y el cargo pasa al siguiente de la lista.</li>
           <li>Mientras no se abran el palacio del rey y la escuela de los profetas, los cargos son de prueba.</li>
