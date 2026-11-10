@@ -105,7 +105,7 @@ export function registerReunionesRoutes(app: Express) {
       res.status(404).json({ message: "Primero crea tu personaje." });
       return null;
     }
-    const { rows } = await pool.query(`SELECT barrio, plot FROM game_houses WHERE character_id = $1`, [ch.id]);
+    const { rows } = await pool.query(`SELECT barrio, plot FROM game_houses WHERE character_id = $1`, [ch.casa]);
     if (!rows.length) {
       res.status(409).json({ message: "Primero entra a la ciudad: allí está tu casa." });
       return null;
@@ -123,11 +123,11 @@ export function registerReunionesRoutes(app: Express) {
 
   async function estado(ch: PersonajeFila & { barrio: number }): Promise<ReunionesEstado> {
     const [mias, activas, { rows: est }] = await Promise.all([
-      reuniones(ch.id, `m.host_character_id = $1 AND m.day_key = $2`, [diaClave()]),
+      reuniones(ch.casa, `m.host_character_id = $1 AND m.day_key = $2`, [diaClave()]),
       // las de ahora, primero las de mi barrio
-      reuniones(ch.id, `m.ends_at > now() AND m.host_character_id <> $1 AND $2::int IS NOT NULL`, [ch.barrio], "m.barrio = $2 DESC, m.ends_at ASC"),
+      reuniones(ch.casa, `m.ends_at > now() AND m.host_character_id <> $1 AND $2::int IS NOT NULL`, [ch.barrio], "m.barrio = $2 DESC, m.ends_at ASC"),
       // lo estudiado es de la persona (lo guarda su primer personaje)
-      titularEstudios(ch.user_id).then((t) => pool.query(`SELECT study_id, sections FROM game_studies WHERE character_id = $1`, [t ?? ch.id])),
+      titularEstudios(ch.user_id).then((t) => pool.query(`SELECT study_id, sections FROM game_studies WHERE character_id = $1`, [t ?? ch.casa])),
     ]);
     const secciones: ReunionesEstado["secciones"] = [];
     for (const r of est) {
@@ -160,8 +160,8 @@ export function registerReunionesRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
-      const titular = (await titularEstudios(ch.user_id)) ?? ch.id;
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
+      const titular = (await titularEstudios(ch.user_id)) ?? ch.casa;
       const { rows: est } = await pool.query(`SELECT sections FROM game_studies WHERE character_id = $1 AND study_id = $2`, [titular, estudio]);
       const hechas = Array.isArray(est[0]?.sections) ? (est[0].sections as unknown[]) : [];
       if (!hechas.includes(seccion)) return res.status(409).json({ message: "Solo puedes enseñar lo que ya estudiaste: termina esa sección en la escuela." });
@@ -169,7 +169,7 @@ export function registerReunionesRoutes(app: Express) {
         `INSERT INTO game_house_meetings (host_character_id, barrio, plot, study_id, section_id, day_key, ends_at)
          VALUES ($1, $2, $3, $4, $5, $6, now() + ($7 || ' minutes')::interval)
          ON CONFLICT (host_character_id, day_key) DO NOTHING RETURNING id`,
-        [ch.id, ch.barrio, ch.plot, estudio, seccion, diaClave(), String(REUNION_MINUTOS)],
+        [ch.casa, ch.barrio, ch.plot, estudio, seccion, diaClave(), String(REUNION_MINUTOS)],
       );
       if (!rows.length) return res.status(409).json({ message: "Hoy ya abriste tu casa para una reunión. Vuelve mañana." });
       await evento(ch.user_id, `reunion:${rows[0].id}`, `abrió su casa para estudiar «${sec.s.titulo}» en Jerusalén en línea`).catch(() => null);
@@ -188,13 +188,13 @@ export function registerReunionesRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const [r] = await reuniones(ch.id, `m.id = $2`, [id]);
+      const [r] = await reuniones(ch.casa, `m.id = $2`, [id]);
       if (!r) return res.status(404).json({ message: "Esa reunión no existe." });
       if (r.mia) return res.status(409).json({ message: "Es tu reunión: tus vecinos responden la pregunta." });
       const sec = seccionDe(r.estudio, r.seccion);
       if (!sec || !sec.s.preguntas.length) return res.status(404).json({ message: "Esa reunión no existe." });
       const q = preguntaDe(id, sec.s.preguntas);
-      const { rows: yo } = await pool.query(`SELECT correct FROM game_meeting_attendance WHERE meeting_id = $1 AND character_id = $2`, [id, ch.id]);
+      const { rows: yo } = await pool.query(`SELECT correct FROM game_meeting_attendance WHERE meeting_id = $1 AND character_id = $2`, [id, ch.casa]);
       if (!yo.length && r.faltan <= 0) return res.status(409).json({ message: "Esa reunión ya terminó." });
       const leccion: ReunionLeccion = {
         id,
@@ -223,8 +223,8 @@ export function registerReunionesRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
-      const [r] = await reuniones(ch.id, `m.id = $2`, [id]);
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
+      const [r] = await reuniones(ch.casa, `m.id = $2`, [id]);
       if (!r) return res.status(404).json({ message: "Esa reunión no existe." });
       if (r.mia) return res.status(409).json({ message: "Es tu reunión: tus vecinos responden la pregunta." });
       if (r.faltan <= 0) return res.status(409).json({ message: "Esa reunión ya terminó." });
@@ -235,7 +235,7 @@ export function registerReunionesRoutes(app: Express) {
       const { rows: ins } = await pool.query(
         `INSERT INTO game_meeting_attendance (meeting_id, character_id, correct) VALUES ($1, $2, $3)
          ON CONFLICT (meeting_id, character_id) DO NOTHING RETURNING 1`,
-        [id, ch.id, correcta],
+        [id, ch.casa, correcta],
       );
       if (!ins.length) return res.status(409).json({ message: "Ya respondiste en esta reunión." });
       const out: ReunionRespuesta = { correcta, ok: q.ok, por: q.por, merito: 0, gozo: 0 };
@@ -246,11 +246,11 @@ export function registerReunionesRoutes(app: Express) {
             WHERE meeting_id = $1 AND character_id = $2
               AND (SELECT count(*) FROM game_meeting_attendance WHERE meeting_id = $1 AND rewarded) < $3
             RETURNING 1`,
-          [id, ch.id, REUNION_PREMIO.maxPremiados],
+          [id, ch.casa, REUNION_PREMIO.maxPremiados],
         );
         if (premiado.length) {
           await sumarMerito(ch.id, REUNION_PREMIO.meritoVecino);
-          await sumarGozo(ch.id, REUNION_PREMIO.gozoVecino);
+          await sumarGozo(ch.casa, REUNION_PREMIO.gozoVecino);
           await pool.query(`UPDATE game_houses SET offered = offered + $2 WHERE character_id = $1`, [r.anfitrionId, REUNION_PREMIO.honraCasa]);
           await sumarGozo(r.anfitrionId, REUNION_PREMIO.gozoCasa);
           forgetJer();

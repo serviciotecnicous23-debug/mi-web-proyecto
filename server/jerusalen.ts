@@ -11,6 +11,7 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { pool } from "./db";
+import { fusionarPersona } from "./persona";
 import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
@@ -236,6 +237,11 @@ export type PersonajeFila = {
   estudios: number;
   /** Su camino (sacerdocio, profetas o palacio). */
   camino: Camino;
+  /**
+   * El titular de la persona (su primer personaje): guarda la casa y la economía de todos sus personajes
+   * (server/persona.ts). La ropa puesta, el mérito y los encargos siguen con `id`.
+   */
+  casa: number;
 };
 
 export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
@@ -243,7 +249,8 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
     `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts, c.path,
             (SELECT count(DISTINCT s.study_id)::int FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.approved_at IS NOT NULL) AS estudios,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
-            EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir
+            EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir,
+            (SELECT MIN(c2.id) FROM game_characters c2 WHERE c2.user_id = c.user_id AND c2.game = c.game) AS casa
        FROM game_characters c JOIN users u ON u.id = c.user_id
       WHERE c.user_id = $1 AND c.game = $2
       ORDER BY c.selected_at DESC NULLS LAST, c.slot LIMIT 1`,
@@ -251,9 +258,13 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
   );
   const r = rows[0];
   if (!r) return null;
+  const casa = Number(r.casa || r.id);
+  // la primera vez, lo que cada personaje tuviera por separado se junta en el titular
+  await fusionarPersona(Number(r.user_id), casa);
   return {
     ...r,
     id: Number(r.id),
+    casa,
     user_id: Number(r.user_id),
     dias_sin_servir: r.dias_sin_servir == null ? null : Number(r.dias_sin_servir),
     instruccion: Number(r.instruction_parts || 0),

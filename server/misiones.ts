@@ -126,7 +126,12 @@ const barrioDe = new Map<number, number>();
 async function barrioDelPersonaje(personajeId: number): Promise<number | null> {
   const b = barrioDe.get(personajeId);
   if (b) return b;
-  const { rows } = await pool.query(`SELECT barrio FROM game_houses WHERE character_id = $1`, [personajeId]);
+  // la casa es de la persona: la guarda su primer personaje
+  const { rows } = await pool.query(
+    `SELECT h.barrio FROM game_houses h
+      WHERE h.character_id = (SELECT MIN(c2.id) FROM game_characters c2 JOIN game_characters c ON c.user_id = c2.user_id AND c.game = c2.game WHERE c.id = $1)`,
+    [personajeId],
+  );
   const n = rows[0] ? Number(rows[0].barrio) : null;
   if (n) {
     barrioDe.set(personajeId, n);

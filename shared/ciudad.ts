@@ -357,6 +357,8 @@ export type CasaVisita = {
 export type CiudadEstado = {
   yo: {
     personajeId: number;
+    /** El id de su casa (el titular de la persona): la casa es una sola para todos sus personajes. */
+    casaId: number;
     nombre: string;
     escalon: EscalonId;
     /** Su camino: sacerdocio, escuela de los profetas o palacio del rey. */

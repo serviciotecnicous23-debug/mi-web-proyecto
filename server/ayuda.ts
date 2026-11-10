@@ -88,7 +88,7 @@ export function registerAyudaRoutes(app: Express) {
       res.status(404).json({ message: "Primero crea tu personaje." });
       return null;
     }
-    const { rows } = await pool.query(`SELECT barrio, plot FROM game_houses WHERE character_id = $1`, [ch.id]);
+    const { rows } = await pool.query(`SELECT barrio, plot FROM game_houses WHERE character_id = $1`, [ch.casa]);
     if (!rows.length) {
       res.status(409).json({ message: "Primero entra a la ciudad: allí está tu casa." });
       return null;
@@ -107,10 +107,10 @@ export function registerAyudaRoutes(app: Express) {
   async function estado(ch: PersonajeFila & { barrio: number }): Promise<AyudaEstado> {
     const hoy = diaClave();
     const [mios, abiertos, { rows: casa }, { rows: dado }] = await Promise.all([
-      pedidos(ch.id, `r.character_id = $1 AND r.day_key = $2`, [hoy]),
-      pedidos(ch.id, `r.barrio = $2 AND r.character_id <> $1 AND r.done_at IS NULL AND r.expires_at > now()`, [ch.barrio]),
-      pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.id]),
-      pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.id, hoy]),
+      pedidos(ch.casa, `r.character_id = $1 AND r.day_key = $2`, [hoy]),
+      pedidos(ch.casa, `r.barrio = $2 AND r.character_id <> $1 AND r.done_at IS NULL AND r.expires_at > now()`, [ch.barrio]),
+      pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]),
+      pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.casa, hoy]),
     ]);
     const b = leerBienes(casa[0]?.goods);
     return {
@@ -125,7 +125,7 @@ export function registerAyudaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      await recoger(ch.id);
+      await recoger(ch.casa);
       res.setHeader("Cache-Control", "no-store");
       res.json(await estado(ch));
     } catch (err) {
@@ -144,12 +144,12 @@ export function registerAyudaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       const { rows } = await pool.query(
         `INSERT INTO game_help_requests (character_id, barrio, plot, good, amount, day_key, expires_at)
          VALUES ($1, $2, $3, $4, $5, $6, now() + ($7 || ' hours')::interval)
          ON CONFLICT (character_id, day_key) DO NOTHING RETURNING id`,
-        [ch.id, ch.barrio, ch.plot, bien, cantidad, diaClave(), String(AYUDA_HORAS)],
+        [ch.casa, ch.barrio, ch.plot, bien, cantidad, diaClave(), String(AYUDA_HORAS)],
       );
       if (!rows.length) return res.status(409).json({ message: "Hoy ya pediste ayuda al barrio. Vuelve mañana." });
       res.json(await estado(ch));
@@ -169,11 +169,11 @@ export function registerAyudaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       const { rows: pr } = await pool.query(`SELECT character_id, barrio FROM game_help_requests WHERE id = $1`, [id]);
       if (!pr.length) return res.status(404).json({ message: "Ese pedido no existe." });
       const quien = Number(pr[0].character_id);
-      if (quien === ch.id) return res.status(409).json({ message: "Es tu propio pedido." });
+      if (quien === ch.casa) return res.status(409).json({ message: "Es tu propio pedido." });
       if (Number(pr[0].barrio) !== ch.barrio) return res.status(409).json({ message: "Solo se ayuda a los vecinos del propio barrio." });
       // 1) se reserva en el pedido (así dos vecinos no dan de más)
       const { rows: reserva } = await pool.query(
@@ -186,13 +186,13 @@ export function registerAyudaRoutes(app: Express) {
       const bien = (esBien(reserva[0].good) ? reserva[0].good : "harina") as BienAyuda;
       const devolverReserva = (n: number) => pool.query(`UPDATE game_help_requests SET received = received - $2 WHERE id = $1`, [id, n]);
       // 2) se descuenta de quien da (en su fila)
-      await recoger(ch.id);
-      const tenia = await enFilaCasa(ch.id, async () => {
-        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+      await recoger(ch.casa);
+      const tenia = await enFilaCasa(ch.casa, async () => {
+        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const b = leerBienes(rows[0]?.goods);
         if (Math.floor(b[bien]) < cantidad) return false;
         b[bien] -= cantidad;
-        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(b)]);
+        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(b)]);
         return true;
       });
       if (!tenia) {
@@ -215,11 +215,11 @@ export function registerAyudaRoutes(app: Express) {
       // lo que no cupo vuelve a quien dio (y deja de contar en el pedido)
       const sobra = cantidad - entra;
       if (sobra > 0) {
-        await enFilaCasa(ch.id, async () => {
-          const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+        await enFilaCasa(ch.casa, async () => {
+          const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
           const b = leerBienes(rows[0]?.goods);
           b[bien] += sobra;
-          await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(b)]);
+          await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(b)]);
         });
         await devolverReserva(sobra);
       }
@@ -230,10 +230,10 @@ export function registerAyudaRoutes(app: Express) {
         `UPDATE game_help_requests SET done_at = now() WHERE id = $1 AND done_at IS NULL AND received >= amount RETURNING character_id`,
         [id],
       );
-      const { rows: dado } = await pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.id, hoy]);
+      const { rows: dado } = await pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.casa, hoy]);
       const gozo = Math.max(0, Math.min(entra * AYUDA_GOZO, AYUDA_GOZO_DIA - Number(dado[0]?.g || 0)));
-      await pool.query(`INSERT INTO game_help_gifts (request_id, donor_character_id, amount, gozo, day_key) VALUES ($1, $2, $3, $4, $5)`, [id, ch.id, entra, gozo, hoy]);
-      await sumarGozo(ch.id, gozo);
+      await pool.query(`INSERT INTO game_help_gifts (request_id, donor_character_id, amount, gozo, day_key) VALUES ($1, $2, $3, $4, $5)`, [id, ch.casa, entra, gozo, hoy]);
+      await sumarGozo(ch.casa, gozo);
       if (cumplido.length) {
         const { rows: u } = await pool.query(`SELECT user_id FROM game_characters WHERE id = $1`, [quien]);
         if (u[0]) await evento(Number(u[0].user_id), `ayuda:${id}`, "recibió la ayuda de su barrio para su ofrenda en Jerusalén en línea").catch(() => null);

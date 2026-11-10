@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-una-persona",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Una persona, una casa",
+    puntos: [
+      "🏠 Tu casa es una sola para todos tus personajes: entres con tu sacerdote, tu profeta o tu siervo del rey, llegas a la misma casa, con el mismo alfolí, el mismo huerto y los mismos muebles.",
+      "✨ El gozo, las semillas, el armario y el arcón también son tuyos como persona: lo que ganas con uno lo gastas con otro.",
+      "🔗 Si ya tenías cosas en varios personajes, se juntaron solas en tu casa: nada se perdió (la casa más crecida quedó, con todo lo de las otras).",
+      "🏅 Los logros en línea cuentan lo que hiciste con todos tus personajes. Cada personaje sigue con su camino, su mérito y su ropa puesta.",
+    ],
+  },
+  {
     id: "2026-11-10-escuela-palacio",
     fecha: "10 de noviembre de 2026",
     titulo: "La escuela y el palacio por dentro",

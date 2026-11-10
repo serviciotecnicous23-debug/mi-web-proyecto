@@ -2628,6 +2628,9 @@ function OnlineLobby({
         {personajes.length > 0 && !cambiar && !nuevoCamino && (
           <section className="space-y-2 rounded-2xl border border-sky-200/30 bg-black/30 p-3" data-testid="templo-personajes">
             <h3 className="text-sm font-bold">Tus personajes</h3>
+            <p className="text-[11px] text-white/75" data-testid="templo-una-persona">
+              Eres una sola persona con varios personajes: tu casa, tu gozo, tu alfolí, tus muebles, tu armario, tus estudios y tus logros son los mismos con cualquiera. Cada personaje tiene su camino, su mérito y su ropa puesta.
+            </p>
             <div className="grid gap-1.5">
               {personajes.map((x) => (
                 <button

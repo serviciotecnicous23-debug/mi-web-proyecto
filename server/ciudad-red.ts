@@ -83,7 +83,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
             COALESCE(sm.merit, 0)::int AS merito, o.office
        FROM users u
        JOIN game_characters c ON c.user_id = u.id AND c.game = $2
-       JOIN game_houses h ON h.character_id = c.id
+       JOIN game_houses h ON h.character_id = (SELECT MIN(c2.id) FROM game_characters c2 WHERE c2.user_id = u.id AND c2.game = $2)
        LEFT JOIN game_season_merit sm ON sm.character_id = c.id AND sm.season = $3
        LEFT JOIN game_offices o ON o.character_id = c.id AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
       WHERE u.id = $1

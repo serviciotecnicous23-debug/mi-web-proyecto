@@ -10,5 +10,11 @@ export { GOZO };
 
 /** Suma gozo a un personaje. */
 export async function sumarGozo(characterId: number, n: number) {
-  if (n > 0) await pool.query(`UPDATE game_characters SET gozo = gozo + $2 WHERE id = $1`, [characterId, Math.round(n)]);
+  // el gozo lo guarda el titular de la persona (su primer personaje), con cualquiera que lo gane
+  if (n > 0)
+    await pool.query(
+      `UPDATE game_characters SET gozo = gozo + $2
+        WHERE id = (SELECT MIN(c2.id) FROM game_characters c2 JOIN game_characters c ON c.user_id = c2.user_id AND c.game = c2.game WHERE c.id = $1)`,
+      [characterId, Math.round(n)],
+    );
 }

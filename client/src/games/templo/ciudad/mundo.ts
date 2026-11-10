@@ -614,6 +614,11 @@ export class CiudadWorld {
     return best ? { id: best.id, nombre: this.infos.get(best.id)?.nombre ?? "Vecino" } : null;
   }
 
+  /** El id de la casa propia (la casa es de la persona: la guarda su primer personaje). */
+  private get casaPropia(): number {
+    return this.estado.yo.casaId ?? this.estado.yo.personajeId;
+  }
+
   // ================================================================ caminos nuevos (escuela y palacio)
   /** Pasos hechos de los primeros pasos del camino (0 a 3). */
   get partesCamino(): number {
@@ -1173,7 +1178,7 @@ export class CiudadWorld {
     const p = P.cercaDeUmbral(r.x, r.z, n, 0.75);
     if (!p) return null;
     const c = b.casas.find((x) => x.parcela === p.n);
-    if (!c || c.personajeId === undefined || c.personajeId === this.estado.yo.personajeId) return null;
+    if (!c || c.personajeId === undefined || c.personajeId === this.casaPropia) return null;
     return { personajeId: c.personajeId, nombre: c.nombre ?? "un vecino", clave: `${n}:${p.n}` };
   }
 
@@ -1365,12 +1370,12 @@ export class CiudadWorld {
   /** Lo que cambió en el mercado: el gozo, la ropa (en la figura) y los adornos y el letrero de la casa. */
   alMercado(m: MercadoEstado) {
     const ropa = coloresDeIds(m.ropa);
-    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.estado.yo.personajeId ? { ...c, adornos: m.adornos, letrero: m.letrero } : c));
-    const antes = JSON.stringify(this.estado.barrio.casas.find((c) => c.personajeId === this.estado.yo.personajeId) ?? null);
+    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.casaPropia ? { ...c, adornos: m.adornos, letrero: m.letrero } : c));
+    const antes = JSON.stringify(this.estado.barrio.casas.find((c) => c.personajeId === this.casaPropia) ?? null);
     const bienes = { ...this.estado.privada.bienes, ...m.bienes };
     this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo: m.gozo, ropa }, barrio: { ...this.estado.barrio, casas }, privada: { ...this.estado.privada, bienes } };
     this.player.fig.setRopa(ropa);
-    if (antes !== JSON.stringify(casas.find((c) => c.personajeId === this.estado.yo.personajeId) ?? null)) {
+    if (antes !== JSON.stringify(casas.find((c) => c.personajeId === this.casaPropia) ?? null)) {
       this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true });
       this.dibujarAreas();
     }
@@ -1809,7 +1814,7 @@ export class CiudadWorld {
     if (area) {
       const b = this.barrios.get(this.barrioDeArea(area));
       const p = b?.detalle ? P.cercaDeUmbral(r.x, r.z, this.barrioDeArea(area), 3) : null;
-      const c = p ? b!.casas.find((x) => x.parcela === p.n && x.personajeId !== this.estado.yo.personajeId) : null;
+      const c = p ? b!.casas.find((x) => x.parcela === p.n && x.personajeId !== this.casaPropia) : null;
       if (c?.nombre) return `La casa de ${c.nombre}: párate en su puerta para visitarla`;
     }
     if (dist(r.x, r.z, P.ENTRADA_TEMPLO[0], P.ENTRADA_TEMPLO[1]) < 9) return "Sube por la escalinata para entrar al templo y servir";

@@ -157,13 +157,13 @@ async function estadoPuestos(ch: PersonajeFila): Promise<PuestosEstado> {
          JOIN game_characters c ON c.id = l.seller_character_id JOIN users u ON u.id = c.user_id
         WHERE l.closed_at IS NULL AND l.expires_at > now() AND l.seller_character_id <> $1 AND u.is_active = true
         ORDER BY l.good, l.price, l.created_at LIMIT 60`,
-      [ch.id],
+      [ch.casa],
     ),
     pool.query(
       `SELECT l.*, ${nombreSql} AS vendedor, EXTRACT(EPOCH FROM (l.expires_at - now()))::int AS quedan FROM game_market_listings l
          JOIN game_characters c ON c.id = l.seller_character_id JOIN users u ON u.id = c.user_id
         WHERE l.closed_at IS NULL AND l.seller_character_id = $1 ORDER BY l.created_at`,
-      [ch.id],
+      [ch.casa],
     ),
     // lo vendido desde el último aviso (se calcula con lo de antes y queda marcado como avisado)
     pool.query(
@@ -171,10 +171,10 @@ async function estadoPuestos(ch: PersonajeFila): Promise<PuestosEstado> {
          FROM (SELECT id, sold - notified AS n FROM game_market_listings WHERE seller_character_id = $1 AND sold > notified) v
         WHERE l.id = v.id
         RETURNING l.good, v.n, l.price`,
-      [ch.id],
+      [ch.casa],
     ),
-    pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.id]),
-    pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.id]),
+    pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]),
+    pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.casa]),
     saldoTesoro(),
     preciosMercaderHoy(),
   ]);
@@ -189,8 +189,8 @@ async function estadoPuestos(ch: PersonajeFila): Promise<PuestosEstado> {
     });
   const precios = Object.fromEntries(BIENES.map((b) => [b, { ...rangoPrecio(b), mercader: mercader[b] }])) as PuestosEstado["precios"];
   return {
-    abiertos: abiertos.map((r) => vista(r, ch.id)),
-    mios: mios.map((r) => vista(r, ch.id)),
+    abiertos: abiertos.map((r) => vista(r, ch.casa)),
+    mios: mios.map((r) => vista(r, ch.casa)),
     ventasNuevas,
     gozo: Number(c[0]?.gozo || 0),
     bienes: { harina: Math.floor(bienes.harina), aceite: Math.floor(bienes.aceite), corderos: Math.floor(bienes.corderos) },
@@ -252,7 +252,7 @@ export function registerEconomiaRoutes(app: Express) {
       res.status(404).json({ message: "Primero crea tu personaje." });
       return null;
     }
-    const { rows } = await pool.query(`SELECT 1 FROM game_houses WHERE character_id = $1`, [ch.id]);
+    const { rows } = await pool.query(`SELECT 1 FROM game_houses WHERE character_id = $1`, [ch.casa]);
     if (!rows.length) {
       res.status(409).json({ message: "Primero entra a la ciudad: ahí recibes tu casa." });
       return null;
@@ -293,20 +293,20 @@ export function registerEconomiaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       await cerrarVencidos();
-      const { rows: abiertos } = await pool.query(`SELECT count(*)::int AS n FROM game_market_listings WHERE seller_character_id = $1 AND closed_at IS NULL`, [ch.id]);
+      const { rows: abiertos } = await pool.query(`SELECT count(*)::int AS n FROM game_market_listings WHERE seller_character_id = $1 AND closed_at IS NULL`, [ch.casa]);
       if (Number(abiertos[0]?.n || 0) >= PUESTOS_MAX) return res.status(409).json({ message: `Ya tienes ${PUESTOS_MAX} puestos abiertos: espera a que se vendan o cierra uno.` });
-      await recoger(ch.id);
-      const ok = await enFilaCasa(ch.id, async () => {
-        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+      await recoger(ch.casa);
+      const ok = await enFilaCasa(ch.casa, async () => {
+        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const bienes = leerBienes(rows[0]?.goods);
         if (Math.floor(bienes[bien]) < cantidad) return false;
         bienes[bien] -= cantidad;
-        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(bienes)]);
+        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(bienes)]);
         await pool.query(
           `INSERT INTO game_market_listings (seller_character_id, good, quantity, price, expires_at) VALUES ($1, $2, $3, $4, now() + ($5 || ' hours')::interval)`,
-          [ch.id, bien, cantidad, precio, String(PUESTO_HORAS)],
+          [ch.casa, bien, cantidad, precio, String(PUESTO_HORAS)],
         );
         return true;
       });
@@ -326,15 +326,15 @@ export function registerEconomiaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       await cerrarVencidos();
       const { rows: L } = await pool.query(`SELECT seller_character_id, good, quantity FROM game_market_listings WHERE id = $1 AND closed_at IS NULL AND expires_at > now()`, [id]);
       if (!L.length) return res.status(404).json({ message: "Ese puesto ya cerró." });
-      if (Number(L[0].seller_character_id) === ch.id) return res.status(400).json({ message: "Es tu propio puesto." });
+      if (Number(L[0].seller_character_id) === ch.casa) return res.status(400).json({ message: "Es tu propio puesto." });
       const bien = L[0].good as BienMercado;
-      await recoger(ch.id);
-      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string; total?: number; n?: number; vendedor?: number }> => {
-        const { rows } = await pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+      await recoger(ch.casa);
+      const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; total?: number; n?: number; vendedor?: number }> => {
+        const { rows } = await pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const bienes = leerBienes(rows[0]?.goods);
         const libre = capacidadAlfoli(Number(rows[0]?.level || 0)) - Math.floor(bienes[bien]);
         if (libre <= 0) return { status: 409, message: "Tu alfolí está lleno de eso: lleva algo al templo o al horno primero." };
@@ -348,13 +348,13 @@ export function registerEconomiaRoutes(app: Express) {
         );
         if (!r.length) return { status: 409, message: "Ya no quedan tantos en ese puesto." };
         const total = n * Number(r[0].price);
-        const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.id, total]);
+        const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.casa, total]);
         if (!pago.length) {
           await pool.query(`UPDATE game_market_listings SET quantity = quantity + $2, sold = sold - $2, closed_at = NULL WHERE id = $1`, [id, n]);
           return { status: 409, message: `Te falta gozo: ${n} cuestan ${total}.` };
         }
         bienes[bien] += n;
-        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(bienes)]);
+        await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(bienes)]);
         return { status: 200, total, n, vendedor: Number(r[0].seller_character_id) };
       });
       if (out.status !== 200) return res.status(out.status).json({ message: out.message });
@@ -376,10 +376,10 @@ export function registerEconomiaRoutes(app: Express) {
       if (!ch) return;
       const { rows } = await pool.query(
         `UPDATE game_market_listings SET closed_at = now() WHERE id = $1 AND seller_character_id = $2 AND closed_at IS NULL RETURNING good, quantity`,
-        [id, ch.id],
+        [id, ch.casa],
       );
       if (!rows.length) return res.status(404).json({ message: "Ese puesto ya cerró." });
-      if (Number(rows[0].quantity) > 0 && esBien(rows[0].good)) await devolver(ch.id, rows[0].good, Number(rows[0].quantity));
+      if (Number(rows[0].quantity) > 0 && esBien(rows[0].good)) await devolver(ch.casa, rows[0].good, Number(rows[0].quantity));
       res.json(await estadoPuestos(ch));
     } catch (err) {
       console.error("[economia] cerrar puesto:", err);
@@ -390,8 +390,8 @@ export function registerEconomiaRoutes(app: Express) {
   // ---------------------------------------------------------------- el tesoro del templo
   async function provisionDe(ch: PersonajeFila): Promise<TesoroEstado["provision"]> {
     const [{ rows: c }, { rows: ya }] = await Promise.all([
-      pool.query(`SELECT gozo, created_at FROM game_characters WHERE id = $1`, [ch.id]),
-      pool.query(`SELECT 1 FROM game_provision WHERE character_id = $1 AND day_key = $2`, [ch.id, diaClave()]),
+      pool.query(`SELECT gozo, created_at FROM game_characters WHERE id = $1`, [ch.casa]),
+      pool.query(`SELECT 1 FROM game_provision WHERE character_id = $1 AND day_key = $2`, [ch.casa, diaClave()]),
     ]);
     const gozo = Number(c[0]?.gozo || 0);
     const dias = c[0]?.created_at ? (Date.now() - new Date(c[0].created_at).getTime()) / 86400000 : 999;
@@ -434,16 +434,16 @@ export function registerEconomiaRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id, 1200)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa, 1200)) return res.status(429).json({ message: "Espera un momento" });
       const p = await provisionDe(ch);
       if (!p.puede) return res.status(409).json({ message: p.motivo });
-      const { rows } = await pool.query(`INSERT INTO game_provision (character_id, day_key, amount) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING 1`, [ch.id, diaClave(), PROVISION.gozo]);
+      const { rows } = await pool.query(`INSERT INTO game_provision (character_id, day_key, amount) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING 1`, [ch.casa, diaClave(), PROVISION.gozo]);
       if (!rows.length) return res.status(409).json({ message: "Ya recibiste la provisión de hoy." });
-      if (!(await delTesoro("provision", ch.id, PROVISION.gozo, "Provisión para un vecino que empieza"))) {
-        await pool.query(`DELETE FROM game_provision WHERE character_id = $1 AND day_key = $2`, [ch.id, diaClave()]);
+      if (!(await delTesoro("provision", ch.casa, PROVISION.gozo, "Provisión para un vecino que empieza"))) {
+        await pool.query(`DELETE FROM game_provision WHERE character_id = $1 AND day_key = $2`, [ch.casa, diaClave()]);
         return res.status(409).json({ message: "El tesoro está vacío por ahora: el diezmo de las ventas lo vuelve a llenar." });
       }
-      await sumarGozo(ch.id, PROVISION.gozo);
+      await sumarGozo(ch.casa, PROVISION.gozo);
       res.json(await estadoTesoro(ch));
     } catch (err) {
       console.error("[economia] provisión:", err);

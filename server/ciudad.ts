@@ -28,10 +28,20 @@ const JUEGO = JERUSALEN_JUEGO;
 
 type CasaFila = { barrio: number; plot: number; level: number };
 
+/**
+ * El mérito de la temporada ($3) y el cargo que se ven en la casa: los de la persona (el mejor de sus
+ * personajes), porque la casa es una sola para todos ellos.
+ */
+const PERSONA_MERITO_CARGO = `(SELECT COALESCE(MAX(sm.merit), 0)::int FROM game_season_merit sm JOIN game_characters c3 ON c3.id = sm.character_id
+                 WHERE c3.user_id = c.user_id AND c3.game = c.game AND sm.season = $3) AS merito,
+              (SELECT o.office FROM game_offices o JOIN game_characters c4 ON c4.id = o.character_id
+                 WHERE c4.user_id = c.user_id AND c4.game = c.game AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
+                 ORDER BY CASE o.office WHEN 'sumo' THEN 0 WHEN 'principal' THEN 1 ELSE 2 END LIMIT 1) AS office`;
+
 /** La casa del personaje; si todavía no tiene, la primera parcela libre. */
 async function asegurarCasa(ch: PersonajeFila): Promise<{ casa: CasaFila; nueva: boolean }> {
   const leer = async () => {
-    const { rows } = await pool.query(`SELECT barrio, plot, level FROM game_houses WHERE character_id = $1`, [ch.id]);
+    const { rows } = await pool.query(`SELECT barrio, plot, level FROM game_houses WHERE character_id = $1`, [ch.casa]);
     return rows[0] ? { barrio: Number(rows[0].barrio), plot: Number(rows[0].plot), level: Number(rows[0].level) } : null;
   };
   const ya = await leer();
@@ -51,7 +61,7 @@ async function asegurarCasa(ch: PersonajeFila): Promise<{ casa: CasaFila; nueva:
     const { rows: hecha } = await pool.query(
       `INSERT INTO game_houses (character_id, game, barrio, plot, level) VALUES ($1, $2, $3, $4, 0)
        ON CONFLICT DO NOTHING RETURNING barrio`,
-      [ch.id, JUEGO, barrio, plot],
+      [ch.casa, JUEGO, barrio, plot],
     );
     if (hecha.length) return { casa: { barrio, plot, level: 0 }, nueva: true };
     const otra = await leer();
@@ -60,10 +70,14 @@ async function asegurarCasa(ch: PersonajeFila): Promise<{ casa: CasaFila; nueva:
   throw new Error("No se encontró una parcela libre");
 }
 
-/** La honra de un personaje: el mérito de todas sus temporadas y lo que su casa ofreció en el templo. */
+/**
+ * La honra de una persona (por el id de su casa, el titular): el mérito de todas las temporadas de todos
+ * sus personajes y lo que su casa ofreció en el templo.
+ */
 async function honraDePersonaje(characterId: number): Promise<number> {
   const { rows } = await pool.query(
-    `SELECT COALESCE((SELECT sum(merit) FROM game_season_merit WHERE character_id = $1), 0)::int AS total,
+    `SELECT COALESCE((SELECT sum(m.merit) FROM game_season_merit m JOIN game_characters c2 ON c2.id = m.character_id
+                        JOIN game_characters t ON t.user_id = c2.user_id AND t.game = c2.game WHERE t.id = $1), 0)::int AS total,
             COALESCE((SELECT offered FROM game_houses WHERE character_id = $1), 0)::int AS ofrecido`,
     [characterId],
   );
@@ -211,13 +225,13 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
     const t = temporadaDe();
     const { rows } = await pool.query(
       `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, c.name, c.user_id, u.display_name, u.username,
-              (SELECT COALESCE(sum(m.merit), 0)::int FROM game_season_merit m WHERE m.character_id = h.character_id) AS honra,
-              COALESCE(sm.merit, 0)::int AS merito, o.office
+              (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS actual,
+              (SELECT COALESCE(sum(m.merit), 0)::int FROM game_season_merit m JOIN game_characters c2 ON c2.id = m.character_id
+                WHERE c2.user_id = c.user_id AND c2.game = c.game) AS honra,
+              ${PERSONA_MERITO_CARGO}
          FROM game_houses h
          JOIN game_characters c ON c.id = h.character_id
          JOIN users u ON u.id = c.user_id
-         LEFT JOIN game_season_merit sm ON sm.character_id = h.character_id AND sm.season = $3
-         LEFT JOIN game_offices o ON o.character_id = h.character_id AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
         WHERE h.game = $1 AND h.barrio = $2 AND u.is_active IS NOT FALSE
         ORDER BY h.plot`,
       [JUEGO, barrio, t.n],
@@ -234,7 +248,8 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         parcela: Number(r.plot),
         nivel,
         personajeId: id,
-        nombre: nombreDe(r),
+        // la casa es de la persona: lleva el nombre del personaje con que juega ahora
+        nombre: nombreDe({ ...r, name: r.actual ?? r.name }),
         escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
         esMia: false,
         adornos: Array.isArray(r.adornos) ? (r.adornos as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 8) : [],
@@ -277,17 +292,19 @@ async function otrosBarrios(propio: number): Promise<CiudadEstado["otros"]> {
 async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | null, privada: CasaPrivada): Promise<CiudadEstado> {
   const t = temporadaDe();
   const [honra, casas, otros, { rows: yo }] = await Promise.all([
-    honraDePersonaje(ch.id),
+    honraDePersonaje(ch.casa),
     casasDelBarrio(casa.barrio),
     otrosBarrios(casa.barrio),
-    pool.query(`SELECT ropa, gozo FROM game_characters WHERE id = $1`, [ch.id]),
+    // la ropa es de cada personaje; el gozo, de la persona (lo guarda el titular)
+    pool.query(`SELECT (SELECT ropa FROM game_characters WHERE id = $1) AS ropa, (SELECT gozo FROM game_characters WHERE id = $2) AS gozo`, [ch.id, ch.casa]),
   ]);
-  const mia = casas.find((c) => c.personajeId === ch.id);
+  const mia = casas.find((c) => c.personajeId === ch.casa);
   const nivel = Math.max(casa.level, mia?.nivel ?? 0);
   const sig = NIVELES_CASA[nivel + 1];
   return {
     yo: {
       personajeId: ch.id,
+      casaId: ch.casa,
       nombre: nombreDe(ch),
       escalon: mia?.escalon ?? "sacerdote",
       camino: ch.camino,
@@ -305,7 +322,7 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
       n: casa.barrio,
       area: areaDeBarrio(casa.barrio),
       nombre: nombreDeBarrio(casa.barrio),
-      casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.id, nivel: c.personajeId === ch.id ? nivel : c.nivel })),
+      casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa, nivel: c.personajeId === ch.casa ? nivel : c.nivel })),
       libres: Math.max(0, CASAS_POR_BARRIO - casas.length),
     },
     otros,
@@ -343,23 +360,23 @@ export function registerCiudadRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       const now = Date.now();
-      if (now - (ultimaEntrada.get(ch.id) || 0) < 1500) return res.status(429).json({ message: "Espera un momento" });
-      ultimaEntrada.set(ch.id, now);
+      if (now - (ultimaEntrada.get(ch.casa) || 0) < 1500) return res.status(429).json({ message: "Espera un momento" });
+      ultimaEntrada.set(ch.casa, now);
       if (ultimaEntrada.size > 5000) ultimaEntrada.clear();
       const { casa, nueva } = await asegurarCasa(ch);
       if (nueva) {
         await avisarCasa(ch.user_id, casa.barrio, 0);
         olvidarBarrio(casa.barrio);
       }
-      const subio = await subirSiAlcanza(ch.id, ch.user_id, casa.barrio, casa.level, await honraDePersonaje(ch.id));
+      const subio = await subirSiAlcanza(ch.casa, ch.user_id, casa.barrio, casa.level, await honraDePersonaje(ch.casa));
       if (subio !== null) {
         casa.level = subio;
         olvidarBarrio(casa.barrio);
       }
-      const rec = await recoger(ch.id);
+      const rec = await recoger(ch.casa);
       if (!rec) return res.sendStatus(500);
       res.setHeader("Cache-Control", "no-store");
-      res.json(await estadoCiudad(ch, casa, subio, await privadaDe(ch.id, rec, true)));
+      res.json(await estadoCiudad(ch, casa, subio, await privadaDe(ch.casa, rec, true)));
     } catch (err) {
       console.error("[ciudad] entrar:", err);
       if (!res.headersSent) res.sendStatus(500);
@@ -378,7 +395,7 @@ export function registerCiudadRoutes(app: Express) {
         n,
         area: areaDeBarrio(n),
         nombre: nombreDeBarrio(n),
-        casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.id })),
+        casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa })),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(body);
@@ -406,17 +423,17 @@ export function registerCiudadRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (!frenoCasa(ch.id, res)) return;
+      if (!frenoCasa(ch.casa, res)) return;
       const lista = req.body?.siervos;
       if (!Array.isArray(lista) || lista.some((x) => typeof x !== "string" || !(x in BIEN))) return res.status(400).json({ message: "Tareas no válidas" });
       // primero se guarda lo que prepararon con las tareas de antes
-      const rec = await recoger(ch.id);
+      const rec = await recoger(ch.casa);
       if (!rec) return res.status(404).json({ message: "Primero entra a la ciudad." });
       const max = siervosPermitidos(rec.nivel);
       if (lista.length > max) return res.status(400).json({ message: `Tu casa tiene lugar para ${max} ${max === 1 ? "siervo" : "siervos"}.` });
-      await pool.query(`UPDATE game_houses SET servants = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(lista)]);
+      await pool.query(`UPDATE game_houses SET servants = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(lista)]);
       rec.siervos = lista as Bien[];
-      res.json(await privadaDe(ch.id, rec, false));
+      res.json(await privadaDe(ch.casa, rec, false));
     } catch (err) {
       console.error("[ciudad] siervos:", err);
       if (!res.headersSent) res.sendStatus(500);
@@ -428,7 +445,7 @@ export function registerCiudadRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (!frenoCasa(ch.id, res)) return;
+      if (!frenoCasa(ch.casa, res)) return;
       const pedido = req.body?.bienes ?? {};
       if (!pedido || typeof pedido !== "object" || Array.isArray(pedido)) return res.status(400).json({ message: "Ofrenda no válida" });
       const cuanto = cero();
@@ -450,11 +467,11 @@ export function registerCiudadRoutes(app: Express) {
       }
       if (cuanto.harina + cuanto.aceite + cuanto.corderos + prep.tortas + prep.aceitePuro === 0) return res.status(400).json({ message: "Elige qué llevar al templo." });
       const out = await (async () => {
-        const rec = await recoger(ch.id);
+        const rec = await recoger(ch.casa);
         if (!rec) return { status: 404, body: { message: "Primero entra a la ciudad." } };
-        return enFilaCasa(ch.id, async () => {
+        return enFilaCasa(ch.casa, async () => {
           for (const b of BIENES) if (cuanto[b.id] > Math.floor(rec.bienes[b.id])) return { status: 409, body: { message: `No tienes tanto ${b.nombre.toLowerCase()} en el alfolí.` } };
-          const { rows: pr } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+          const { rows: pr } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]);
           const lp = leerPreparadas(pr[0]?.preparadas);
           for (const k of ["tortas", "aceitePuro"] as const) {
             if (prep[k] > lp.preparadas[k]) return { status: 409, body: { message: `No tienes tantas ofrendas preparadas: ${RECETAS[k].nombre.toLowerCase()}.` } };
@@ -472,7 +489,7 @@ export function registerCiudadRoutes(app: Express) {
             ganado += prep[k] * RECETAS[k].honra * (k === "tortas" && doble === "harina" ? 2 : 1);
           }
           await pool.query(`UPDATE game_houses SET goods = $2::jsonb, offered = offered + $3, preparadas = $4::jsonb WHERE character_id = $1`, [
-            ch.id, JSON.stringify(rec.bienes), ganado, guardarPreparadas(lp.preparadas, lp.horno),
+            ch.casa, JSON.stringify(rec.bienes), ganado, guardarPreparadas(lp.preparadas, lp.horno),
           ]);
           rec.ofrecido += ganado;
           rec.recogido = cero();
@@ -482,8 +499,8 @@ export function registerCiudadRoutes(app: Express) {
       const hecho = out.body as { ganado?: number; doble?: Bien | null; rec?: Recogida; message?: string };
       if (out.status !== 200 || !hecho.rec) return res.status(out.status).json(out.body);
       const rec = hecho.rec;
-      const { rows } = await pool.query(`SELECT barrio, level FROM game_houses WHERE character_id = $1`, [ch.id]);
-      const subio = await subirSiAlcanza(ch.id, ch.user_id, Number(rows[0].barrio), Number(rows[0].level), await honraDePersonaje(ch.id));
+      const { rows } = await pool.query(`SELECT barrio, level FROM game_houses WHERE character_id = $1`, [ch.casa]);
+      const subio = await subirSiAlcanza(ch.casa, ch.user_id, Number(rows[0].barrio), Number(rows[0].level), await honraDePersonaje(ch.casa));
       if (subio !== null) {
         olvidarBarrio(Number(rows[0].barrio));
         rec.nivel = subio;
@@ -493,8 +510,8 @@ export function registerCiudadRoutes(app: Express) {
         ganado: hecho.ganado ?? 0,
         doble: hecho.doble ?? null,
         subio,
-        honra: await honraDePersonaje(ch.id),
-        privada: await privadaDe(ch.id, rec, false),
+        honra: await honraDePersonaje(ch.casa),
+        privada: await privadaDe(ch.casa, rec, false),
         ...(misiones.length ? { misiones } : {}),
       });
     } catch (err) {
@@ -516,14 +533,13 @@ export function registerCiudadRoutes(app: Express) {
     const t = temporadaDe();
     const { rows } = await pool.query(
       `SELECT h.character_id, h.barrio, h.plot, h.level, c.name, c.user_id, u.display_name, u.username, u.is_active,
-              COALESCE(sm.merit, 0)::int AS merito, o.office,
+              (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS actual,
+              ${PERSONA_MERITO_CARGO.replace(/\$3/g, () => "$4")},
               (SELECT count(*)::int FROM game_house_blessings b WHERE b.house_character_id = h.character_id) AS bendiciones,
               EXISTS (SELECT 1 FROM game_house_blessings b WHERE b.house_character_id = h.character_id AND b.visitor_user_id = $2 AND b.day_key = $3) AS ya
          FROM game_houses h
          JOIN game_characters c ON c.id = h.character_id
          JOIN users u ON u.id = c.user_id
-         LEFT JOIN game_season_merit sm ON sm.character_id = h.character_id AND sm.season = $4
-         LEFT JOIN game_offices o ON o.character_id = h.character_id AND o.season = $4 AND o.office IS NOT NULL AND o.lost_at IS NULL
         WHERE h.character_id = $1 AND h.game = $5`,
       [personajeId, yo.user_id, hoyClave(), t.n, JUEGO],
     );
@@ -533,14 +549,14 @@ export function registerCiudadRoutes(app: Express) {
       userId: Number(r.user_id),
       visita: {
         personajeId: Number(r.character_id),
-        nombre: nombreDe(r),
+        nombre: nombreDe({ ...r, name: r.actual ?? r.name }),
         escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
         barrio: Number(r.barrio),
         parcela: Number(r.plot),
         nivel: Number(r.level),
         bendiciones: Number(r.bendiciones),
         yaBendije: r.ya === true,
-        esMia: Number(r.character_id) === yo.id,
+        esMia: Number(r.character_id) === yo.casa,
       },
     };
   }
@@ -606,7 +622,7 @@ export function registerCiudadRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const d = await interiorDe(ch.id, ch);
+      const d = await interiorDe(ch.casa, ch);
       if (!d) return res.status(404).json({ message: "No encontramos tu casa." });
       res.setHeader("Cache-Control", "no-store");
       res.json(d.estado);
@@ -640,18 +656,18 @@ export function registerCiudadRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       const now = Date.now();
-      if (now - (ultimoRemodelar.get(ch.id) || 0) < 800) return res.status(429).json({ message: "Espera un momento" });
-      ultimoRemodelar.set(ch.id, now);
+      if (now - (ultimoRemodelar.get(ch.casa) || 0) < 800) return res.status(429).json({ message: "Espera un momento" });
+      ultimoRemodelar.set(ch.casa, now);
       if (ultimoRemodelar.size > 5000) ultimoRemodelar.clear();
       const { rows } = await pool.query(
         `SELECT h.level, ch.muebles FROM game_houses h JOIN game_characters ch ON ch.id = h.character_id WHERE h.character_id = $1`,
-        [ch.id],
+        [ch.casa],
       );
       if (!rows.length) return res.status(404).json({ message: "No encontramos tu casa." });
       const v = validarInterior(Number(rows[0].level || 0), req.body?.interior, leerMuebles(rows[0].muebles));
       if (!v.ok) return res.status(400).json({ message: v.error });
-      await pool.query(`UPDATE game_houses SET interior = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(v.items)]);
-      const d = await interiorDe(ch.id, ch);
+      await pool.query(`UPDATE game_houses SET interior = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(v.items)]);
+      const d = await interiorDe(ch.casa, ch);
       res.json(d!.estado);
     } catch (err) {
       console.error("[ciudad] remodelar:", err);
@@ -693,13 +709,13 @@ export function registerCiudadRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const { rows } = await pool.query(`SELECT barrio, plot, level FROM game_houses WHERE character_id = $1`, [ch.id]);
+      const { rows } = await pool.query(`SELECT barrio, plot, level FROM game_houses WHERE character_id = $1`, [ch.casa]);
       if (!rows[0]) return res.status(404).json({ message: "Todavía no tienes casa en la ciudad." });
       const casa = { barrio: Number(rows[0].barrio), plot: Number(rows[0].plot), level: Number(rows[0].level) };
-      const rec = await recoger(ch.id);
+      const rec = await recoger(ch.casa);
       if (!rec) return res.sendStatus(500);
       res.setHeader("Cache-Control", "no-store");
-      res.json(await estadoCiudad(ch, casa, null, await privadaDe(ch.id, rec, true)));
+      res.json(await estadoCiudad(ch, casa, null, await privadaDe(ch.casa, rec, true)));
     } catch (err) {
       console.error("[ciudad] estado:", err);
       if (!res.headersSent) res.sendStatus(500);
