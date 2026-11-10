@@ -13,6 +13,7 @@ import { CasaExtras, MercadoView, type Ofrecido, type ParteCasa } from "./Mercad
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
 import { ConcursoView } from "./ConcursoUI";
 import { PedidosBarrio, PedirAyuda } from "./AyudaUI";
+import { LogrosDeOtro, MisLogros } from "./LogrosUI";
 import { VERSO_MURO, type MuroEstado } from "@shared/muro";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
@@ -490,6 +491,7 @@ function CasaView() {
           ))}
         </ol>
         <SiervosPanel />
+        <MisLogros />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>
@@ -686,6 +688,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
               ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
+            <LogrosDeOtro personajeId={personajeId} />
             <ReunionVisita personajeId={personajeId} alAcertar={() => city?.audio.correct()} />
             <VerseBox text={VERSO_VISITA.text} refName={VERSO_VISITA.ref} />
             {hecho ? (
@@ -1137,6 +1140,7 @@ function VecinoView({ id }: { id: number }) {
         <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
           {escalonNombre(v.escalon)} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
         </p>
+        {paso === "ficha" && <LogrosDeOtro personajeId={v.id} />}
         {paso === "ficha" && <EstudiosDeOtro personajeId={v.id} />}
         {mensaje && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mensaje}</p>}
         {paso === "ficha" && (
