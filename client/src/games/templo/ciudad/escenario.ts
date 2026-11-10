@@ -86,6 +86,8 @@ export type CiudadVisual = {
   enramadas: THREE.Group;
   /** Fuegos de los braseros y de la puerta (de noche). */
   fuegos: THREE.Vector3[];
+  /** Los edificios grandes que se vuelven transparentes si tapan al jugador (el palacio, la escuela y su monte). */
+  ocluyentes: THREE.Group[];
   /** Donde sube el humo del altar, sobre el monte. */
   humo: THREE.Vector3;
   /** Lugares para poner letreros. */
@@ -434,9 +436,17 @@ function buildEscuela(root: THREE.Group) {
     m.cyl(0.16, 0.16, D, vary(C.cedro, 0.1), { x: x1 - 0.2, y, z: cz, rx: Math.PI / 2 }, 7);
   }
   m.box(W - 0.4, 2.7, D - 0.4, "#5e4a35", { x: cx, y: Y + 2.15, z: cz });
-  // techo de vigas con alero
-  m.box(W + 1.2, 0.25, D + 1.6, C.cedroOsc, { x: cx, y: Y + 3.75, z: cz + 0.3 });
-  for (let x = x0 - 0.4; x < x1 + 0.5; x += 0.9) m.cyl(0.09, 0.09, D + 1.8, vary(C.cedro, 0.1), { x, y: Y + 3.95, z: cz + 0.3, rx: Math.PI / 2 }, 6);
+  // techo de vigas con un alero corto (que no tape la calle ni el lugar de oración)
+  m.box(W + 0.6, 0.25, D + 0.7, C.cedroOsc, { x: cx, y: Y + 3.75, z: cz + 0.1 });
+  for (let x = x0 - 0.2; x < x1 + 0.3; x += 0.9) m.cyl(0.09, 0.09, D + 0.8, vary(C.cedro, 0.1), { x, y: Y + 3.95, z: cz + 0.1, rx: Math.PI / 2 }, 6);
+  // ventanas en el frente (la luz de la lámpara se ve de noche por ellas)
+  for (const x of [10.2, 12.8, 21.2, 23.8]) {
+    m.box(0.9, 0.7, 0.06, "#2a1d12", { x, y: Y + 2.15, z: z1 + 0.03 });
+    m.box(1.05, 0.08, 0.1, C.cedro, { x, y: Y + 1.78, z: z1 + 0.05 });
+  }
+  // un portal sobre la puerta: dos postes y su techito
+  for (const x of [15.7, 18.3]) m.cyl(0.08, 0.09, 2.6, C.cedroOsc, { x, y: Y + 1.3, z: z1 + 1.15 }, 7);
+  m.box(3.2, 0.14, 1.5, C.cedro, { x: 17, y: Y + 2.65, z: z1 + 0.62, rx: -0.12 });
   // la puerta, los bancos del frente y el estante de los rollos
   m.box(1.6, 2.4, 0.14, "#3b2a1c", { x: 17, y: Y + 1.6, z: z1 + 0.02 });
   for (const x of [11, 23]) m.box(3.2, 0.45, 0.55, C.cedro, { x, y: Y + 0.22, z: z1 + 0.9 });
@@ -738,7 +748,12 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[]): { grupo
     const mat = new THREE.Matrix4().makeRotationY(p.dir === 1 ? 0 : Math.PI).setPosition(p.x, Y, p.z);
     const g = lm.build();
     g.applyMatrix4(mat);
-    m.raw(g);
+    // cada casa en su malla: si tapa al jugador, se aclara solo esa (mundo.ts)
+    const casa = new THREE.Mesh(g, matteMat());
+    casa.castShadow = true;
+    casa.receiveShadow = true;
+    casa.userData.ocluye = true;
+    grupo.add(casa);
     if (!lv.empty) {
       const gv = lv.build();
       gv.applyMatrix4(mat);
@@ -850,8 +865,14 @@ export function buildCiudad(): CiudadVisual {
   buildMonte(root);
   buildMurallas(root, fuegos);
   buildPlaza(root, fuegos);
-  buildPalacio(root, fuegos);
-  buildEscuela(root);
+  // cada edificio grande en su grupo: si tapa al jugador, se vuelve transparente (mundo.ts)
+  const palacio = new THREE.Group();
+  palacio.name = "palacio";
+  const escuela = new THREE.Group();
+  escuela.name = "escuela";
+  root.add(palacio, escuela);
+  buildPalacio(palacio, fuegos);
+  buildEscuela(escuela);
   buildRelleno(root);
   const cielo = buildCielo();
   root.add(cielo.sky, cielo.stars, cielo.clouds);
@@ -873,6 +894,7 @@ export function buildCiudad(): CiudadVisual {
     ventanas,
     enramadas,
     fuegos,
+    ocluyentes: [palacio, escuela],
     humo: new THREE.Vector3(3.0, 1.8, 0),
     letreros: {
       templo: new THREE.Vector3(ESCALINATA.x0 + 0.6, 1.6, 0),

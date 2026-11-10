@@ -19,6 +19,7 @@ import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/merca
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { EstudiosDeOtro } from "./EstudiosUI";
+import { GananciaEnLinea } from "./GananciaUI";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
@@ -138,6 +139,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               <span className="tabular-nums">{c.gozo}</span>
             </button>
           </div>
+          <GananciaEnLinea />
           {c.fiesta && (
             <button
               type="button"

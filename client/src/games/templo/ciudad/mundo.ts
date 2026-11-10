@@ -25,8 +25,8 @@ import {
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
-import { CAMINOS, MENSAJES, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
-import { PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
+import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
+import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
 import type { ReunionesEstado } from "@shared/reuniones";
 import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
@@ -635,11 +635,48 @@ export class CiudadWorld {
     return this.panesQueLleva;
   }
 
+  /** El gozo de la persona cambió (lo dijo el servidor al recibir los deberes). */
+  ponerGozo(gozo: number) {
+    if (this.estado.yo.gozo === gozo) return;
+    this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo } };
+    this.pushHud();
+  }
+
+  /** Un texto que sube y se desvanece sobre el personaje (lo que se acaba de ganar). */
+  private flotantes: { el: HTMLDivElement; t: number }[] = [];
+  flotar(texto: string) {
+    const el = this.overlay.make("tpl-flota");
+    el.textContent = texto;
+    el.style.cssText += ";pointer-events:none;font-weight:900;font-size:13px;color:#ffe08a;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap";
+    this.flotantes.push({ el, t: 0 });
+  }
+  private updateFlotantes(dt: number) {
+    const r = this.player.rig;
+    for (const f of [...this.flotantes]) {
+      f.t += dt;
+      if (f.t > 1.8) {
+        this.overlay.remove(f.el);
+        this.flotantes.splice(this.flotantes.indexOf(f), 1);
+        continue;
+      }
+      this.overlay.place(f.el, new THREE.Vector3(r.x, r.y + 2.3 + f.t * 0.7, r.z));
+      f.el.style.opacity = String(Math.min(1, 2.2 - f.t * 1.2));
+    }
+  }
+
   /** Un deber del camino (va a la sesión en línea) y, si toca, el paso siguiente de los primeros pasos. */
   deber(kind: string, n = 1) {
     this.opts.online?.duty(kind, n);
     vibrar(15);
     this.audio.correct();
+    // lo que se gana se ve al momento (el servidor lo confirma en el siguiente envío)
+    const merito = (MERITO_DEBER_CAMINO as Record<string, number>)[kind];
+    if (merito) {
+      const texto = `+${merito * n} mérito · +${GOZO.deber * n} ✨ gozo`;
+      // dentro de un edificio la ciudad duerme: ahí se avisa abajo
+      if (this.running) this.flotar(texto);
+      else gameStore.toast(texto, "gold");
+    }
     const c = this.estado.yo.camino;
     if (c === "sacerdocio" || this.pasos >= 3) return;
     if (PASOS_CAMINO[c][this.pasos] !== kind) return;
@@ -1303,6 +1340,8 @@ export class CiudadWorld {
 
   /** Vuelve a dibujar las casas de las cuatro áreas y arma otra vez los choques y los caminos. */
   private dibujarAreas() {
+    // las casas cambian: lo que estaba aclarado vuelve a su material antes de liberarlo
+    this.reiniciarOclusion();
     for (const m of this.ventanas) {
       m.parent?.remove(m);
       m.geometry.dispose();
@@ -1644,6 +1683,8 @@ export class CiudadWorld {
     this.fx.update(dt);
     this.updateLabels(dt);
     this.letrerosDeVecinos(now);
+    this.updateFlotantes(dt);
+    this.actualizarOclusion(dt);
     this.overlay.update(now);
     this.ambiente();
     this.audio.update();
@@ -1875,8 +1916,88 @@ export class CiudadWorld {
     }
   };
 
+  // ================================================================ que nada tape al jugador
+  /** Las mallas de los edificios grandes, con su caja (para saber si quedan entre la cámara y el jugador). */
+  private cajasOcluyentes: { malla: THREE.Mesh; caja: THREE.Box3; original: THREE.Material | THREE.Material[] }[] | null = null;
+  private transparentes = new Set<THREE.Mesh>();
+  private oclusionT = 0;
+  private matTransparente: Map<THREE.Material, THREE.Material> = new Map();
+  private rayoOclusion = new THREE.Ray();
+  private puntoOclusion = new THREE.Vector3();
+
+  private actualizarOclusion(dt: number) {
+    this.oclusionT -= dt;
+    if (this.oclusionT > 0) return;
+    this.oclusionT = 0.12;
+    if (!this.cajasOcluyentes) {
+      this.cajasOcluyentes = [];
+      const agregar = (m: THREE.Mesh) => this.cajasOcluyentes!.push({ malla: m, caja: new THREE.Box3().setFromObject(m), original: m.material });
+      for (const g of this.vis.ocluyentes) {
+        g.updateMatrixWorld(true);
+        g.traverse((o) => {
+          if ((o as THREE.Mesh).isMesh) agregar(o as THREE.Mesh);
+        });
+      }
+      // y cada casa de los barrios
+      for (const g of this.vis.areas) {
+        g.updateMatrixWorld(true);
+        g.traverse((o) => {
+          if ((o as THREE.Mesh).isMesh && o.userData.ocluye) agregar(o as THREE.Mesh);
+        });
+      }
+    }
+    const r = this.player.rig;
+    const origen = this.camera.position;
+    const tapan = new Set<THREE.Mesh>();
+    const tmp = new THREE.Vector3();
+    // se mira a los pies (y al círculo donde está parado) y al pecho: si algo tapa cualquiera, se aclara
+    for (const alto of [0.15, 1.1]) {
+      const destino = this.puntoOclusion.set(r.x, r.y + alto, r.z);
+      const largo = origen.distanceTo(destino);
+      this.rayoOclusion.set(origen, destino.clone().sub(origen).normalize());
+      for (const c of this.cajasOcluyentes) {
+        // solo lo que queda antes de llegar al jugador
+        const p = this.rayoOclusion.intersectBox(c.caja, tmp);
+        if (p && origen.distanceTo(p) < largo - 0.6) tapan.add(c.malla);
+      }
+    }
+    for (const c of this.cajasOcluyentes) {
+      const tapa = tapan.has(c.malla);
+      if (tapa === this.transparentes.has(c.malla)) continue;
+      if (tapa) {
+        this.transparentes.add(c.malla);
+        c.malla.material = Array.isArray(c.original) ? c.original.map((x) => this.transparente(x)) : this.transparente(c.original);
+      } else {
+        this.transparentes.delete(c.malla);
+        c.malla.material = c.original;
+      }
+    }
+  }
+
+  /** Todo vuelve a ser opaco y las cajas se arman otra vez (al redibujar las casas). */
+  private reiniciarOclusion() {
+    for (const c of this.cajasOcluyentes ?? []) c.malla.material = c.original;
+    this.transparentes.clear();
+    this.cajasOcluyentes = null;
+  }
+
+  /** La versión transparente de un material (una sola por material). */
+  private transparente(m: THREE.Material): THREE.Material {
+    let t = this.matTransparente.get(m);
+    if (!t) {
+      t = m.clone();
+      t.transparent = true;
+      t.opacity = 0.28;
+      t.depthWrite = false;
+      this.matTransparente.set(m, t);
+    }
+    return t;
+  }
+
   // ================================================================ cierre
   destroy() {
+    for (const t of this.matTransparente.values()) t.dispose();
+    this.matTransparente.clear();
     this.running = false;
     cancelAnimationFrame(this.raf);
     const canvas = this.renderer.domElement;

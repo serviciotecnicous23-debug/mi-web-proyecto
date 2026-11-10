@@ -899,7 +899,11 @@ export function registerJerusalenRoutes(app: Express) {
         console.error("[jerusalen] misiones:", err);
         return [];
       });
-      res.json(misiones.length ? { ...out, misiones } : out);
+      // lo que se ganó de gozo con este envío (deberes y encargos) y cuánto tiene ahora la persona
+      const gozoMisiones = misiones.reduce((a, m) => a + (Number((m as { gozo?: number }).gozo) || 0), 0);
+      const { rows: gz } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
+      const gozo = { gozo: cuantos * GOZO.deber + gozoMisiones, gozoTotal: Number(gz[0]?.gozo || 0) };
+      res.json(misiones.length ? { ...out, ...gozo, misiones } : { ...out, ...gozo });
     } catch (err) {
       console.error("[jerusalen] acciones:", err);
       if (!res.headersSent) res.sendStatus(500);

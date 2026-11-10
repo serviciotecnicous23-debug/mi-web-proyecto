@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-ganancias-vista",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Ves lo que ganas, y nada te tapa",
+    puntos: [
+      "✨ Cada servicio muestra lo que ganas: «+4 mérito · +1 gozo» sube sobre tu personaje, y cuando el servidor lo confirma aparece un aviso verde junto a tu gozo (también en el templo, que ahora muestra tu gozo).",
+      "🪟 La escuela, el palacio, el monte de la oración y las casas se vuelven transparentes cuando tu personaje queda detrás: ya no te tapan.",
+      "🏫 La escuela tiene ventanas, un portal en la entrada y un techo más corto que ya no tapa el lugar de oración.",
+    ],
+  },
+  {
     id: "2026-11-10-una-persona",
     fecha: "10 de noviembre de 2026",
     titulo: "Una persona, una casa",
