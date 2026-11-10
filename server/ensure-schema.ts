@@ -10,6 +10,7 @@ import { pool } from "./db";
 import { STORED_FILES_SQL } from "./file-store";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
+import { ESTUDIOS_SQL } from "./estudios";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1057,6 +1058,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(JERUSALEN_SQL);
     } catch (err: any) {
       console.log(`  Migration note (juegos): ${err?.message}`);
+    }
+    try {
+      // Estudios de Jerusalén en línea (aprobados para siempre)
+      await pool.query(ESTUDIOS_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (estudios): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

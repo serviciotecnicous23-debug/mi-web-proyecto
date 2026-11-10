@@ -14,6 +14,7 @@ import { pool } from "./db";
 import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
+import { ESTUDIO_PRINCIPAL, ESTUDIO_SUMO } from "@shared/estudios";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
@@ -92,6 +93,7 @@ CREATE TABLE IF NOT EXISTS "game_houses" (
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_houses_plot" ON "game_houses" ("game", "barrio", "plot");
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "city_banned_at" timestamp;
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "instruction_parts" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_offices" ADD COLUMN IF NOT EXISTS "can_mid" boolean NOT NULL DEFAULT true;
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "instructed_at" timestamp;
 CREATE TABLE IF NOT EXISTS "user_blocks" (
   "blocker_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
@@ -185,13 +187,18 @@ async function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>): Prom
   if (cache.size > 200) cache.clear();
   return value;
 }
+/** Olvida lo que ven todos de Jerusalén en línea (tabla, escalera) para que se vea lo nuevo. */
+export function forgetJer() {
+  forget("jer:");
+}
+
 function forget(prefix = "") {
   for (const k of [...cache.keys()]) if (k.startsWith(prefix)) cache.delete(k);
 }
 
 /** Una cosa a la vez por personaje (deberes y preguntas tocan la misma fila de mérito). */
 const filas = new Map<number, Promise<unknown>>();
-function enFila<T>(key: number, fn: () => Promise<T>): Promise<T> {
+export function enFila<T>(key: number, fn: () => Promise<T>): Promise<T> {
   const prev = filas.get(key) || Promise.resolve();
   const next = prev.catch(() => null).then(fn);
   filas.set(key, next);
@@ -218,11 +225,14 @@ export type PersonajeFila = {
   username: string | null;
   /** Partes terminadas de la instrucción del sacerdote (0 a 3). */
   instruccion: number;
+  /** Estudios aprobados (para siempre). */
+  estudios: number;
 };
 
 export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
   const { rows } = await pool.query(
     `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts,
+            (SELECT count(*)::int FROM game_studies s WHERE s.character_id = c.id AND s.approved_at IS NOT NULL) AS estudios,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
             EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir
        FROM game_characters c JOIN users u ON u.id = c.user_id
@@ -238,6 +248,7 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
     user_id: Number(r.user_id),
     dias_sin_servir: r.dias_sin_servir == null ? null : Number(r.dias_sin_servir),
     instruccion: Number(r.instruction_parts || 0),
+    estudios: Number(r.estudios || 0),
   };
 }
 
@@ -279,7 +290,7 @@ async function revisarCargos(season: number, alCerrar = false) {
     [season, DIAS_PIERDE],
   );
   const { rows } = await pool.query(
-    `SELECT o.character_id, o.can_high, o.office, c.user_id, u.is_active
+    `SELECT o.character_id, o.can_high, o.can_mid, o.office, c.user_id, u.is_active
        FROM game_offices o
        JOIN game_characters c ON c.id = o.character_id
        JOIN users u ON u.id = c.user_id
@@ -296,7 +307,7 @@ async function revisarCargos(season: number, alCerrar = false) {
     // un solo cargo alto por cuenta, aunque tenga varios personajes
     if (r.is_active === true && !usados.has(user)) {
       if (libres.sumo > 0 && r.can_high) ahora = "sumo";
-      else if (libres.principal > 0) ahora = "principal";
+      else if (libres.principal > 0 && r.can_mid !== false) ahora = "principal";
       else if (libres.jefe > 0) ahora = "jefe";
       if (ahora) {
         libres[ahora]--;
@@ -337,11 +348,14 @@ async function cerrarTemporada(n: number) {
       return;
     }
     // Candidatos: quienes sirvieron en los últimos días y juntaron el mérito mínimo, sin importar
-    // el juego local. Solo puede ser sumo sacerdote quien ya fue principal (o sumo) en una temporada.
+    // el juego local. Principal: aprobó «El sacerdocio de Aarón». Sumo: ya fue principal (o sumo) en
+    // una temporada y aprobó «El Día de la Expiación». Los estudios aprobados son para siempre.
     const { rows } = await client.query(
       `SELECT m.character_id, m.merit,
               EXISTS (SELECT 1 FROM game_offices p
-                       WHERE p.character_id = m.character_id AND p.season <= $1 AND p.office IN ('principal', 'sumo')) AS fue_principal
+                       WHERE p.character_id = m.character_id AND p.season <= $1 AND p.office IN ('principal', 'sumo')) AS fue_principal,
+              EXISTS (SELECT 1 FROM game_studies s WHERE s.character_id = m.character_id AND s.study_id = $4 AND s.approved_at IS NOT NULL) AS estudio_principal,
+              EXISTS (SELECT 1 FROM game_studies s WHERE s.character_id = m.character_id AND s.study_id = $5 AND s.approved_at IS NOT NULL) AS estudio_sumo
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
@@ -349,13 +363,13 @@ async function cerrarTemporada(n: number) {
           AND c.last_duty_at > now() - ($3::int * interval '1 day')
         ORDER BY m.merit DESC, m.updated_at ASC
         LIMIT 500`,
-      [n, MERITO_MIN_CARGO, DIAS_ACTIVO],
+      [n, MERITO_MIN_CARGO, DIAS_ACTIVO, ESTUDIO_PRINCIPAL, ESTUDIO_SUMO],
     );
     for (const r of rows) {
       candidatos++;
       await client.query(
-        `INSERT INTO game_offices (season, character_id, position, merit, can_high) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
-        [n + 1, r.character_id, candidatos, r.merit, r.fue_principal === true],
+        `INSERT INTO game_offices (season, character_id, position, merit, can_high, can_mid) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+        [n + 1, r.character_id, candidatos, r.merit, r.fue_principal === true && r.estudio_sumo === true, r.estudio_principal === true],
       );
     }
     await client.query(`UPDATE game_seasons SET candidates = $3 WHERE game = $1 AND season = $2`, [JUEGO, n, candidatos]);
@@ -542,7 +556,7 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
       puedeSumo: fuePrincipal,
       conoceTemplo: conoceElTemplo(requisito, yaSirvio, ch),
     },
-    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion } : null,
+    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion, estudios: ch.estudios } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
     mio,
@@ -593,7 +607,7 @@ function mezclar(q: PreguntaDificil, semilla: number): string[] {
   return out;
 }
 
-async function filaMerito(characterId: number, season: number, hoy: string) {
+export async function filaMerito(characterId: number, season: number, hoy: string) {
   await pool.query(`INSERT INTO game_season_merit (character_id, season, day_key) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [characterId, season, hoy]);
   const { rows } = await pool.query(
     `SELECT merit, day_key, day_seconds, day_questions, EXTRACT(EPOCH FROM (now() - last_batch_at))::float AS desde

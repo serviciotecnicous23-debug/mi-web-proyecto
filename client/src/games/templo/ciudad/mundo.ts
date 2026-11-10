@@ -826,8 +826,11 @@ export class CiudadWorld {
           this.consejo = (this.consejo + 1) % CONSEJOS_ANCIANOS.length;
           this.abrir({ kind: "ancianos", n: this.consejo });
           break;
-        case "palacio":
         case "escuela":
+          // la escuela de los profetas: aquí se estudia
+          this.abrir({ kind: "estudios" });
+          break;
+        case "palacio":
         case "mercado":
           this.abrir({ kind: "edificio", id: z.id as EdificioId });
           break;

@@ -10,6 +10,7 @@ import {
   RotateCw, Send, Store, Trophy, Users, WifiOff,
 } from "lucide-react";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
+import { EstudiosDeOtro } from "./EstudiosUI";
 import { orientacionActual } from "./motor/controles";
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
@@ -127,6 +128,9 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           <div className="pointer-events-auto flex gap-1">
             <Boton label="Mi casa (H)" onClick={() => open({ kind: "casa" })} testid="button-ciudad-casa" className="hidden sm:flex">
               <Home className="h-5 w-5" />
+            </Boton>
+            <Boton label="Estudios" onClick={() => open({ kind: "estudios" })} testid="button-ciudad-estudios">
+              <ScrollText className="h-5 w-5" />
             </Boton>
             <Boton label="Ir a… (I)" onClick={() => open({ kind: "irA" })} testid="button-ciudad-ir">
               <MapPin className="h-5 w-5" />
@@ -931,6 +935,7 @@ function VecinoView({ id }: { id: number }) {
         <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
           {escalonNombre(v.escalon)} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
         </p>
+        {paso === "ficha" && <EstudiosDeOtro personajeId={v.id} />}
         {mensaje && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mensaje}</p>}
         {paso === "ficha" && (
           <div className="grid grid-cols-2 gap-2">

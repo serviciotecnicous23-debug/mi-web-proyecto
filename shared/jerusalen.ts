@@ -39,8 +39,8 @@ export const ESCALONES: { id: EscalonId; nombre: string; cupo: number | null; co
   { id: "sacerdote", nombre: "Sacerdote", cupo: null, como: "Al consagrarte en Jerusalén en línea (no hace falta haber jugado la historia)" },
   { id: "turno", nombre: "Sacerdote de turno", cupo: null, como: `Con ${MERITO_TURNO} de mérito en la temporada` },
   { id: "jefe", nombre: "Jefe de un turno", cupo: 12, como: "Los 12 siguientes en mérito al cerrar la temporada" },
-  { id: "principal", nombre: "Principal sacerdote", cupo: 3, como: "Los 3 siguientes en mérito al cerrar la temporada" },
-  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que ya fue principal sacerdote en una temporada anterior" },
+  { id: "principal", nombre: "Principal sacerdote", cupo: 3, como: "Los 3 siguientes en mérito que aprobaron el estudio «El sacerdocio de Aarón»" },
+  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que ya fue principal sacerdote y aprobó «El Día de la Expiación»" },
 ];
 
 export const CARGOS_CON_CUPO: EscalonId[] = ["sumo", "principal", "jefe"];
@@ -124,7 +124,7 @@ export type JerusalenEstado = {
    */
   requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean; conoceTemplo: boolean };
   /** `instruccion`: partes terminadas de la instrucción del sacerdote (0 a 3). */
-  personaje: { id: number; nombre: string; propio: boolean; creado: string; instruccion: number } | null;
+  personaje: { id: number; nombre: string; propio: boolean; creado: string; instruccion: number; estudios: number } | null;
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
   /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
   jerusalen: { fecha: string; fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null; proxima: { nombre: string; icono: string; enMinutos: number } | null };

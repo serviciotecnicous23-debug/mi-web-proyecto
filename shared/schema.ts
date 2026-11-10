@@ -1989,6 +1989,23 @@ export const gameCharacters = pgTable("game_characters", {
   instructedAt: timestamp("instructed_at"),
 });
 
+// Estudios de Jerusalén en línea (server/estudios.ts): secciones terminadas y examen. Aprobado = para siempre.
+export const gameStudies = pgTable(
+  "game_studies",
+  {
+    characterId: integer("character_id").notNull().references(() => gameCharacters.id, { onDelete: "cascade" }),
+    studyId: text("study_id").notNull(),
+    sections: jsonb("sections").notNull().default([]),
+    best: integer("best").notNull().default(0),
+    attempts: integer("attempts").notNull().default(0),
+    examIds: jsonb("exam_ids"),
+    lastExamAt: timestamp("last_exam_at"),
+    approvedAt: timestamp("approved_at"),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.characterId, t.studyId] })],
+);
+
 // Mérito de cada personaje por temporada, con la cuenta del día (tope diario y preguntas).
 export const gameSeasonMerit = pgTable(
   "game_season_merit",
