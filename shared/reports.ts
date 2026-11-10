@@ -1,6 +1,6 @@
 // Denuncias de contenido: lo que se puede denunciar y por qué (servidor y cliente).
 
-export const TIPOS_DENUNCIABLES = ["publicacion", "comentario", "oracion", "jugador"] as const;
+export const TIPOS_DENUNCIABLES = ["publicacion", "comentario", "oracion", "jugador", "mensaje"] as const;
 export type TipoDenunciable = (typeof TIPOS_DENUNCIABLES)[number];
 
 export const NOMBRE_DEL_TIPO: Record<TipoDenunciable, string> = {
@@ -8,6 +8,7 @@ export const NOMBRE_DEL_TIPO: Record<TipoDenunciable, string> = {
   comentario: "Comentario de Comunidad",
   oracion: "Petición del muro de oración",
   jugador: "Jugador de Jerusalén en línea",
+  mensaje: "Mensaje de la charla de un barrio (Jerusalén en línea)",
 };
 
 export const MOTIVOS_DE_DENUNCIA = {

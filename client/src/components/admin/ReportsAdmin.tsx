@@ -21,6 +21,8 @@ type Denuncia = {
   authorId: number | null;
   authorName: string | null;
   postId: number | null;
+  /** En los mensajes de la charla del barrio: el personaje que lo escribió. */
+  gameCharacterId?: number | null;
 };
 
 type Grupo = { clave: string; principal: Denuncia; denuncias: Denuncia[]; pendiente: boolean };
@@ -33,6 +35,8 @@ const RUTA_PARA_BORRAR: Record<TipoDenunciable, (id: number) => string> = {
   oracion: (id) => `/api/prayer-requests/${id}`,
   // un jugador no se borra: se lo saca de la ciudad (puede seguir sirviendo en el templo)
   jugador: (id) => `/api/jerusalen/admin/jugador/${id}`,
+  // un mensaje de la charla de un barrio se oculta para todos
+  mensaje: (id) => `/api/jerusalen/barrio/chat/${id}`,
 };
 
 const DONDE_VERLO: Record<TipoDenunciable, (d: Denuncia) => string> = {
@@ -40,6 +44,7 @@ const DONDE_VERLO: Record<TipoDenunciable, (d: Denuncia) => string> = {
   comentario: () => "/comunidad",
   oracion: () => "/oracion",
   jugador: () => "/juegos/aprendiz-del-templo",
+  mensaje: () => "/juegos/aprendiz-del-templo",
 };
 
 /** Agrupa las denuncias por contenido: pendientes primero. */
@@ -74,22 +79,27 @@ export function ReportsAdmin() {
   const resueltas = grupos.filter((g) => !g.pendiente);
 
   const resolver = useMutation({
-    mutationFn: async ({ grupo, accion }: { grupo: Grupo; accion: "borrar" | "descartar" }) => {
+    mutationFn: async ({ grupo, accion }: { grupo: Grupo; accion: "borrar" | "descartar" | "sacar" }) => {
       const d = grupo.principal;
-      if (accion === "borrar" && d.content !== null) {
+      if ((accion === "borrar" || accion === "sacar") && d.content !== null) {
         const r = await fetch(RUTA_PARA_BORRAR[d.contentType](d.contentId), { method: "DELETE", credentials: "include" });
         if (!r.ok && r.status !== 404) throw new Error("No se pudo borrar el contenido.");
+      }
+      // el autor de un mensaje de la charla también puede quedar fuera de la ciudad (y de la charla)
+      if (accion === "sacar" && d.gameCharacterId) {
+        const r = await fetch(`/api/jerusalen/admin/jugador/${d.gameCharacterId}`, { method: "DELETE", credentials: "include" });
+        if (!r.ok && r.status !== 404) throw new Error("No se pudo sacar al autor de la ciudad.");
       }
       const r = await fetch(`/api/admin/reports/${d.id}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: accion === "borrar" ? "revisada" : "descartada" }),
+        body: JSON.stringify({ status: accion === "descartar" ? "descartada" : "revisada" }),
       });
       if (!r.ok) throw new Error("No se pudo cerrar la denuncia.");
     },
     onSuccess: (_d, { accion }) => {
-      toast({ title: accion === "borrar" ? "Listo: se aplicó la medida" : "Denuncia descartada" });
+      toast({ title: accion === "descartar" ? "Denuncia descartada" : "Listo: se aplicó la medida" });
       queryClient.invalidateQueries({ queryKey: CLAVE_LISTA });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     },
@@ -134,7 +144,18 @@ export function ReportsAdmin() {
                   onClick={() => resolver.mutate({ grupo: g, accion: "borrar" })}
                   data-testid={`button-report-borrar-${g.clave}`}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" /> {d.contentType === "jugador" ? "Sacarlo de la ciudad" : "Eliminar el contenido"}
+                  <Trash2 className="mr-2 h-4 w-4" /> {d.contentType === "jugador" ? "Sacarlo de la ciudad" : d.contentType === "mensaje" ? "Borrar el mensaje" : "Eliminar el contenido"}
+                </Button>
+              )}
+              {d.contentType === "mensaje" && d.gameCharacterId && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={resolver.isPending}
+                  onClick={() => resolver.mutate({ grupo: g, accion: "sacar" })}
+                  data-testid={`button-report-sacar-${g.clave}`}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Borrarlo y sacar al autor de la ciudad
                 </Button>
               )}
               <Button
@@ -159,7 +180,7 @@ export function ReportsAdmin() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Flag className="h-5 w-5" /> Denuncias</CardTitle>
         <CardDescription>
-          Lo que los miembros denunciaron en Comunidad, comentarios, el muro de oración y la ciudad del juego. Revísalo pronto: las normas de la
+          Lo que los miembros denunciaron en Comunidad, comentarios, el muro de oración, la ciudad del juego y la charla de los barrios. Revísalo pronto: las normas de la
           comunidad (y las tiendas de apps) piden responder a tiempo.
         </CardDescription>
       </CardHeader>

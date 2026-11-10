@@ -15,6 +15,7 @@ import { MISIONES_SQL } from "./misiones";
 import { MERCADO_SQL } from "./mercado";
 import { ECONOMIA_SQL } from "./economia";
 import { CATEDRAS_SQL } from "./catedras";
+import { BARRIO_SQL } from "./barrio";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
 import { AYUDA_SQL } from "./ayuda";
@@ -1120,6 +1121,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CATEDRAS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (cátedras): ${err?.message}`);
+    }
+    try {
+      // El barrio como clan: su charla, su emblema y su lema
+      await pool.query(BARRIO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (barrio): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables
