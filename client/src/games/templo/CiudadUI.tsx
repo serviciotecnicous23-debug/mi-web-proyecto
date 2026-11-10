@@ -7,10 +7,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
-  RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
+  Medal, RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
 import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
+import { ConcursoView } from "./ConcursoUI";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
@@ -148,13 +149,17 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             <Boton label="Estudios" onClick={() => open({ kind: "estudios" })} testid="button-ciudad-estudios">
               <ScrollText className="h-5 w-5" />
             </Boton>
+            <Boton label="Concurso bíblico de la semana" onClick={() => open({ kind: "concurso" })} testid="button-ciudad-concurso">
+              <Medal className="h-5 w-5" />
+            </Boton>
             <Boton label="Misiones" onClick={() => open({ kind: "misiones" })} testid="button-ciudad-misiones">
               <Target className="h-5 w-5" />
             </Boton>
             <Boton label="Ir a… (I)" onClick={() => open({ kind: "irA" })} testid="button-ciudad-ir">
               <MapPin className="h-5 w-5" />
             </Boton>
-            <Boton label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-ciudad-temporada">
+            {/* en el teléfono la temporada se abre tocando la corona (así caben los botones) */}
+            <Boton label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-ciudad-temporada" className="hidden sm:flex">
               <Trophy className="h-5 w-5" />
             </Boton>
             {big && typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches && (
@@ -268,6 +273,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <EdificioView id={modal.id} />;
     case "mercado":
       return <MercadoModal tab={modal.tab} />;
+    case "concurso":
+      return <ConcursoView />;
     case "irA":
       return <IrAView />;
     case "frases":
@@ -684,6 +691,22 @@ function AnunciosView() {
             city?.irACasaDe(r.barrio, r.parcela);
           }}
         />
+
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-3 text-left dark:border-amber-800 dark:from-amber-950/30 dark:to-orange-950/20"
+          onClick={() => {
+            cerrar();
+            gameStore.push({ kind: "concurso" });
+          }}
+          data-testid="anuncios-concurso"
+        >
+          <Medal className="h-6 w-6 shrink-0 text-amber-600" />
+          <span className="min-w-0 flex-1">
+            <b>Concurso bíblico de la semana</b>
+            <span className="block text-xs text-stone-500">Las mismas 10 preguntas para todos. Los tres primeros ganan gozo y salen aquí como campeones.</span>
+          </span>
+        </button>
 
         <section>
           <p className="mb-1 font-black">

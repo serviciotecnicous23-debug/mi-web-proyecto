@@ -24,6 +24,7 @@ export const NOVEDADES: Novedad[] = [
       "🫓 Tu casa tiene horno: prepara tortas amasadas con aceite o aceite puro para las lámparas con lo del alfolí. Valen más honra que los bienes sueltos (y en las fiestas del cereal, las tortas valen el doble).",
       "En la ciudad ves qué hace cada vecino junto a su nombre: 🛒 en el mercado, 🏠 en su casa, 📜 estudiando, 🙏 orando, 🍞 llevando pan…",
       "📖 Reuniones en las casas: abre tu casa 20 minutos para enseñar una sección que ya estudiaste. Tus vecinos ven el círculo violeta en tu puerta; al llegar leen el versículo y la idea clave y responden una pregunta: si aciertan, ganan los dos.",
+      "🏅 Concurso bíblico de la semana (botón de la medalla o en el púlpito de la plaza): las mismas 10 preguntas para todos, 20 segundos cada una. Los tres primeros ganan gozo y quedan como campeones.",
     ],
   },
   {

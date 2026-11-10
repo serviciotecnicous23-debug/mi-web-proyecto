@@ -14,6 +14,7 @@ import { ESTUDIOS_SQL } from "./estudios";
 import { MISIONES_SQL } from "./misiones";
 import { MERCADO_SQL } from "./mercado";
 import { REUNIONES_SQL } from "./reuniones";
+import { CONCURSO_SQL } from "./concurso";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1085,6 +1086,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(REUNIONES_SQL);
     } catch (err: any) {
       console.log(`  Migration note (reuniones): ${err?.message}`);
+    }
+    try {
+      // El concurso bíblico de la semana
+      await pool.query(CONCURSO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (concurso): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables
