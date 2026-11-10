@@ -205,8 +205,12 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
 export type Ofrecido = { ganado: number; doble: string | null; subio: number | null; honra: number; privada: CasaPrivada; misiones?: { titulo: string; premio: number; gozo?: number }[] };
 
 /** Lo nuevo de la casa: el huerto, el horno, los adornos, la ropa y el letrero (dentro de «Tu casa»). */
-export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void }) {
+export type ParteCasa = "huerto" | "horno" | "adornos" | "ropa" | "letrero";
+
+export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void; partes?: ParteCasa[] }) {
   const { m, recibido, error, busy, hacer, recargar } = useMercado(alCambiar);
+  /** ¿Se muestra esta parte? (sin `partes`, todas) */
+  const ver = (p: ParteCasa) => !partes || partes.includes(p);
   const [cuantas, setCuantas] = useState(1);
   const [ofreciendo, setOfreciendo] = useState(false);
   const [avisoHorno, setAvisoHorno] = useState<string | null>(null);
@@ -224,6 +228,7 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
   return (
     <div className="space-y-3" data-testid="casa-extras">
       {error && <p className="rounded-xl bg-red-50 p-2 text-xs text-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p>}
+      {ver("huerto") && (
       <section className="space-y-2 rounded-xl border border-emerald-200 p-3 dark:border-emerald-900/60" data-testid="casa-huerto">
         <p className="flex items-baseline justify-between font-black">
           <span>Tu huerto</span>
@@ -275,7 +280,9 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
         {!semillasTengo.length && <p className="text-[11px] text-stone-500">Compra semillas en el mercado de la plaza (trigo y cebada dan flor de harina; el olivo, aceite).</p>}
         <p className="text-[10px] text-stone-400">Trigo {SEMILLAS.trigo.minutos} min · cebada {SEMILLAS.cebada.minutos} min · olivo {SEMILLAS.olivo.minutos} min.</p>
       </section>
+      )}
 
+      {ver("horno") && (
       <section className="space-y-2 rounded-xl border border-orange-200 p-3 dark:border-orange-900/60" data-testid="casa-horno">
         <p className="flex items-baseline justify-between font-black">
           <span>Tu horno · prepara tus ofrendas</span>
@@ -379,7 +386,9 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
           «{RECETAS.tortas.verso.text}» ({RECETAS.tortas.verso.ref})
         </p>
       </section>
+      )}
 
+      {ver("adornos") && (
       <section className="space-y-2 rounded-xl border border-amber-200 p-3 dark:border-amber-900/60" data-testid="casa-adornos">
         <p className="flex items-baseline justify-between font-black">
           <span>Adornos de tu casa</span>
@@ -409,7 +418,9 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
           <p className="text-[11px] text-stone-500">Compra adornos en el mercado: macetas, cántaros, bancos, lámparas, toldos, una parra, una higuera o una palmera. Tus vecinos los verán.</p>
         )}
       </section>
+      )}
 
+      {ver("ropa") && (
       <section className="space-y-2 rounded-xl border border-sky-200 p-3 dark:border-sky-900/60" data-testid="casa-ropa">
         <p className="font-black">Tu ropa</p>
         {mantos.length + fajas.length ? (
@@ -436,7 +447,9 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
           <p className="text-[11px] text-stone-500">Compra un manto o una faja en el mercado: tus vecinos los verán.</p>
         )}
       </section>
+      )}
 
+      {ver("letrero") && (
       <section className="space-y-2 rounded-xl border border-stone-200 p-3 dark:border-stone-700" data-testid="casa-letrero">
         <p className="font-black">El nombre de tu casa</p>
         {m.tieneLetrero ? (
@@ -451,6 +464,7 @@ export function CasaExtras({ alCambiar, alOfrecer }: { alCambiar?: (m: MercadoEs
           <p className="text-[11px] text-stone-500">Compra el letrero en el mercado y ponle nombre a tu casa: lo verán tus vecinos.</p>
         )}
       </section>
+      )}
     </div>
   );
 }
