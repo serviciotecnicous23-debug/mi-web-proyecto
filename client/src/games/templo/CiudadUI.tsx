@@ -276,9 +276,9 @@ export function CiudadModal({ modal }: { modal: Modal }) {
     case "ancianos":
       return <AncianosView n={modal.n} />;
     case "escuela":
-      return <EscuelaView />;
+      return <EscuelaView tab={modal.tab} />;
     case "palacio":
-      return <PalacioView />;
+      return <PalacioView tab={modal.tab} />;
     case "edificio":
       return <EdificioView id={modal.id} />;
     case "mercado":

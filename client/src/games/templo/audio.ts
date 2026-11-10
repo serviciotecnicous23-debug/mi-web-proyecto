@@ -19,7 +19,7 @@ const SCALE = [146.83, 174.61, 196.0, 220.0, 261.63, 293.66, 349.23, 392.0, 440.
 const BASS = [73.42, 65.41, 98.0, 73.42]; // re, do, sol, re
 /** El motivo del templo (índices de SCALE). */
 const MOTIF = [3, 5, 6, 8, 7, 10];
-const SPEAKER_NOTE: Record<Speaker, number> = { azarias: 0, ezequias: 2, conanias: 3, narrador: 5 };
+const SPEAKER_NOTE: Record<Speaker, number> = { azarias: 0, ezequias: 2, conanias: 3, narrador: 5, isaias: 1, eliaquim: 4 };
 
 export type Ambience = { crowd: number; fire: number; water: number; night: boolean; day: number };
 

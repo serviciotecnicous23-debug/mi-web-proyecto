@@ -6,6 +6,9 @@
  *
  * Se ve como una casa de muñecas: los muros del lado de la cámara son bajos para ver adentro, y el
  * piso de arriba (terrado y aposento alto) se muestra cuando se sube por la escalera del patio.
+ *
+ * El mismo motor dibuja la escuela de los profetas y el palacio del rey por dentro (opts.edificio,
+ * casa/edificios.ts): su plano, sus piezas fijas, sus personas y sus estaciones de servicio.
  */
 import * as THREE from "three";
 import { BlobShadows, Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Rig } from "../three/characters";
@@ -17,8 +20,10 @@ import { gameStore, type CasaHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
 import { relojEnLinea } from "@shared/calendario";
 import {
-  ALTURA_PISO, CELDA, abierto, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, planoDe, porQueNoCabe, type Colocado, type Cuarto, type InteriorEstado, type Plano,
+  ALTURA_PISO, CELDA, abierto, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, pieza, planoDe, porQueNoCabe, type Colocado, type Cuarto, type InteriorEstado, type Plano,
 } from "@shared/casa-interior";
+import type { Camino } from "@shared/caminos";
+import { estacionesPara, type EdificioDef, type EstacionDef } from "./edificios";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import { LLAMA, construirMueble } from "./muebles3d";
@@ -60,9 +65,17 @@ export type CasaOpts = {
   alHorno?: () => void;
   /** Entrar ya en el modo remodelar (después de comprar un mueble). */
   remodelar?: boolean;
+  /** Un edificio de la ciudad (la escuela o el palacio) en vez de una casa. */
+  edificio?: EdificioDef;
+  /** Quien entra al edificio: su nombre y su camino (para el saludo y las estaciones). */
+  quien?: { nombre: string; camino: Camino };
+  /** Se pisó una estación del edificio. */
+  alEstacion?: (id: string) => void;
+  /** La estación que toca ahora en los primeros pasos (para resaltarla), o «salir». */
+  siguiente?: () => string | null;
 };
 
-type ZonaId = "salir" | "horno" | "subir" | "bajar";
+type ZonaId = "salir" | "horno" | "subir" | "bajar" | `est:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; piso: 0 | 1; r: number; ring: Ring; inside: boolean; etiqueta: HTMLDivElement };
 type Siervo = { handle: CrowdHandle; rig: Rig; base: V2; tarea: string };
 type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number };
@@ -128,6 +141,10 @@ export class CasaWorld {
   private camPh = 0.95;
   private cuartoActual = "";
   private avisoTemporal: { texto: string; hasta: number } | null = null;
+  /** Edificio: sus estaciones para quien entra, la que toca ahora y los nombres de sus personas. */
+  private estaciones: EstacionDef[] = [];
+  private siguienteId: string | null = null;
+  private etiquetasPersonas: { el: HTMLDivElement; rig: Rig }[] = [];
 
   private raf = 0;
   private last = 0;
@@ -145,7 +162,8 @@ export class CasaWorld {
     this.estado = estado;
     this.opts = opts;
     this.audio = opts.audio;
-    this.plano = planoDe(estado.nivel);
+    this.plano = opts.edificio?.plano ?? planoDe(estado.nivel);
+    if (opts.edificio && opts.quien) this.estaciones = estacionesPara(opts.edificio, opts.quien.camino);
     this.fijas = celdasFijas(this.plano);
     this.items = estado.interior.map((c) => ({ ...c }));
     this.guardado = estado.interior.map((c) => ({ ...c }));
@@ -162,7 +180,7 @@ export class CasaWorld {
     this.renderer.shadowMap.autoUpdate = false;
     const canvas = this.renderer.domElement;
     canvas.style.cssText = "display:block;width:100%;height:100%;touch-action:none;outline:none;position:absolute;inset:0";
-    canvas.setAttribute("aria-label", estado.esMia ? "Tu casa por dentro" : `La casa de ${estado.dueno} por dentro`);
+    canvas.setAttribute("aria-label", opts.edificio ? `${opts.edificio.nombre} por dentro` : estado.esMia ? "Tu casa por dentro" : `La casa de ${estado.dueno} por dentro`);
     container.appendChild(canvas);
 
     // luz: la del cielo que entra por el patio y las ventanas, y las lámparas de la casa
@@ -221,6 +239,8 @@ export class CasaWorld {
     this.resizeObs.observe(container);
     this.resize();
     if (opts.remodelar && estado.esMia) this.remodelar(true);
+    // el maestro del edificio recibe a quien entra
+    if (opts.edificio && opts.quien) this.aviso(opts.edificio.saludo(opts.quien.nombre, opts.quien.camino), 10000);
     this.pushHud();
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
@@ -242,6 +262,7 @@ export class CasaWorld {
   }
 
   private estilo(): "tienda" | "adobe" | "piedra" {
+    if (this.opts.edificio) return this.opts.edificio.estilo;
     return this.estado.nivel === 0 ? "tienda" : this.estado.nivel === 1 ? "adobe" : "piedra";
   }
 
@@ -381,7 +402,7 @@ export class CasaWorld {
       l.glow.material.dispose();
     }
     for (const c of this.items) {
-      const mu = mueble(c.m);
+      const mu = pieza(c.m);
       const g = construirMueble(c.m);
       if (!mu || !g) {
         this.mallas.push(new THREE.Group());
@@ -411,7 +432,7 @@ export class CasaWorld {
     this.rects = [fijosR[0].slice(), fijosR[1].slice()];
     this.circles = [fijosC[0].slice(), fijosC[1].slice()];
     for (const c of this.items) {
-      const mu = mueble(c.m);
+      const mu = pieza(c.m);
       if (!mu || mu.capa === 0) continue;
       const [w, d] = medidas(mu, c.r);
       this.rects[c.p].push([this.wx(c.x) + 0.06, this.wz(c.z) + 0.06, this.wx(c.x + w) - 0.06, this.wz(c.z + d) - 0.06]);
@@ -438,6 +459,10 @@ export class CasaWorld {
 
   // ================================================================ los siervos (en tu casa)
   private crearSiervos() {
+    if (this.opts.edificio) {
+      this.crearPersonas(this.opts.edificio);
+      return;
+    }
     const tareas = this.estado.esMia ? (this.opts.siervos ?? []).slice(0, 4) : [];
     if (!tareas.length) return;
     const lugarDe = (t: string, i: number): [V2, number, Rig["pose"]] => {
@@ -467,11 +492,35 @@ export class CasaWorld {
     this.reconstruirChoques();
   }
 
+  /** Las personas del edificio (el maestro, los alumnos, el pueblo), cada una en su lugar. */
+  private crearPersonas(e: EdificioDef) {
+    for (const pd of e.personas) {
+      const base = randomVisitor();
+      const colors = { ...base.colors, robe: pd.manto, head: pd.cabeza ?? base.colors.head, hair: pd.variante === "anciano" ? "#d9d4cc" : base.colors.hair };
+      const h = this.crowd.add(pd.variante, colors);
+      if (!h) continue;
+      const x = this.wx(pd.x), z = this.wz(pd.z);
+      const rig = newRig(x, z, pd.variante === "nino" ? 0.74 : pd.variante === "anciano" ? 0.97 : 1);
+      rig.yaw = pd.yaw;
+      rig.pose = pd.pose;
+      rig.y = pd.alto ?? 0;
+      this.siervos.push({ handle: h, rig, base: [x, z], tarea: pd.trabaja ? "trabaja" : "" });
+      if (pd.nombre) {
+        const el = this.overlay.make("tpl-tag");
+        el.textContent = pd.nombre;
+        el.style.display = "none";
+        this.etiquetasPersonas.push({ el, rig });
+      }
+    }
+    this.reconstruirChoques();
+  }
+
   // ================================================================ los lugares (círculos)
   private crearZonas() {
     const pl = this.plano;
     const [px, pz] = pl.puerta;
-    const def: [ZonaId, number, number, 0 | 1, number, string, string][] = [["salir", this.wx(px + 1), this.wz(pz + 0.55), 0, 0.45, "#ffe08a", "Salir a la calle"]];
+    const def: [ZonaId, number, number, 0 | 1, number, string, string][] = [["salir", this.wx(px + 1), this.wz(pz + 0.55), 0, 0.45, "#ffe08a", this.opts.edificio ? "Salir a la ciudad" : "Salir a la calle"]];
+    for (const s of this.estaciones) def.push([`est:${s.id}`, this.wx(s.x), this.wz(s.z), 0, 0.42, s.color, `${s.icono} ${s.nombre}`]);
     if (this.estado.esMia) {
       const [hx, hz] = pl.horno;
       def.push(["horno", this.wx(hx + 0.5), this.wz(hz + 1.5), 0, 0.36, "#ffb36b", "El horno"]);
@@ -513,6 +562,18 @@ export class CasaWorld {
     if (id === "salir") this.opts.alSalir();
     else if (id === "horno") this.opts.alHorno?.();
     else if (id === "subir" || id === "bajar") this.cambiarDePiso(id === "subir" ? 1 : 0);
+    else if (id.startsWith("est:")) this.opts.alEstacion?.(id.slice(4));
+  }
+
+  /** Caminar solo hasta una estación del edificio (o hasta la puerta, con «salir»). */
+  irAEstacion(id: string) {
+    const z = this.zonas.find((zz) => zz.id === (id === "salir" ? "salir" : `est:${id}`));
+    if (!z || this.remodelando) return;
+    const r = this.player.rig;
+    this.ruta = this.nav[this.piso]?.path(r.x, r.z, z.x, z.z) ?? [[z.x, z.z]];
+    this.marca.set(z.x, this.yPiso(this.piso) + 0.02, z.z);
+    this.marca.mesh.visible = true;
+    this.marcaT = 1.4;
   }
 
   private cambiarDePiso(p: 0 | 1) {
@@ -977,9 +1038,12 @@ export class CasaWorld {
     } else {
       const r = this.player.rig;
       const mx = Math.max(0, ancho / 2 - (portrait ? 1.6 : 2.6)), mz = Math.max(0, fondo / 2 - 2.2);
-      focus = new THREE.Vector3(Math.max(-mx, Math.min(mx, r.x)), r.y, Math.max(-mz, Math.min(mz, r.z)));
-      d0 = (portrait ? 10.5 : 8.6) * this.entrada.zoom * (this.estado.nivel === 0 ? 0.85 : 1);
-      ph = 0.98;
+      // en el teléfono (vertical) el centro va un poco al sur: el muro del fondo queda arriba y no sobra cielo
+      const sur = portrait ? 1.0 : 0.3;
+      focus = new THREE.Vector3(Math.max(-mx, Math.min(mx, r.x)), r.y, Math.min(fondo / 2, Math.max(-mz, Math.min(mz, r.z)) + sur));
+      d0 = (portrait ? 10.5 : 8.6) * this.entrada.zoom * (this.opts.edificio ? 1.1 : this.estado.nivel === 0 ? 0.85 : 1);
+      // un poco más desde arriba en los edificios: sus salas son más hondas
+      ph = this.opts.edificio ? 1.02 : 0.98;
     }
     const k = 1 - Math.exp(-dt * 5);
     this.camTarget.lerp(focus, k);
@@ -992,22 +1056,42 @@ export class CasaWorld {
 
   private updateEtiquetas(dt: number) {
     const r = this.player.rig;
+    const sig = this.siguienteId;
+    const lejos = this.opts.edificio ? 6.5 : 3.2;
     for (const z of this.zonas) {
       const u = z.ring.mat.uniforms;
       const cerca = z.piso === this.piso ? Math.max(0, 1 - Math.hypot(r.x - z.x, r.z - z.z) / 4) : 0;
+      const esSig = !!sig && (z.id === `est:${sig}` || (sig === "salir" && z.id === "salir"));
       u.uTime.value = this.time;
-      u.uPulse.value += (Math.max(cerca, 0.35) - u.uPulse.value) * Math.min(1, dt * 4);
+      u.uPulse.value += (Math.max(cerca, esSig ? 0.75 + 0.25 * Math.sin(this.time * 4) : 0.35) - u.uPulse.value) * Math.min(1, dt * 4);
       u.uOpacity.value = 0.5 + 0.45 * u.uPulse.value;
-      const ver = !this.remodelando && z.piso === this.vistaPiso && Math.hypot(r.x - z.x, r.z - z.z) < 3.2;
+      const ver = !this.remodelando && z.piso === this.vistaPiso && (esSig || Math.hypot(r.x - z.x, r.z - z.z) < lejos);
       if (ver) this.overlay.place(z.etiqueta, new THREE.Vector3(z.x, this.yPiso(z.piso) + 0.9, z.z));
       else z.etiqueta.style.display = "none";
+    }
+    for (const pe of this.etiquetasPersonas) {
+      if (Math.hypot(r.x - pe.rig.x, r.z - pe.rig.z) < 7) this.overlay.place(pe.el, new THREE.Vector3(pe.rig.x, pe.rig.y + 2.1, pe.rig.z));
+      else pe.el.style.display = "none";
     }
   }
 
   // ================================================================ pantalla
-  private aviso(texto: string) {
-    this.avisoTemporal = { texto, hasta: performance.now() + 4200 };
+  private aviso(texto: string, ms = 4200) {
+    this.avisoTemporal = { texto, hasta: performance.now() + ms };
     this.pushHud();
+  }
+
+  /** Lo que se dice dentro de un edificio: la estación cercana, la puerta o el siguiente paso. */
+  private avisoEdificio(): string {
+    const r = this.player.rig;
+    const salir = this.zonas[0];
+    if (Math.hypot(r.x - salir.x, r.z - salir.z) < 1.4) return "Párate en el círculo de la puerta para salir a la ciudad";
+    const sig = this.siguienteId;
+    if (sig === "salir") return "Lo que sigue es afuera: sal a la ciudad y sigue la flecha del borde de la pantalla.";
+    for (const s of this.estaciones) if (Math.hypot(r.x - this.wx(s.x), r.z - this.wz(s.z)) < 1.3) return `${s.icono} ${s.nombre}: ${s.ayuda}`;
+    const s = sig ? this.estaciones.find((x) => x.id === sig) : null;
+    if (s) return `Tu siguiente paso: ${s.icono} ${s.nombre} (el círculo que brilla). Tócalo abajo para ir.`;
+    return "Toca el piso para caminar. Párate en un círculo para servir, o tócalo abajo para ir.";
   }
 
   private textoAviso(): string {
@@ -1016,6 +1100,7 @@ export class CasaWorld {
       if (this.sel >= 0) return "Toca el piso para moverlo, o usa «Girar» y «Guardar en el arcón».";
       return "Toca un mueble para moverlo, o saca uno del arcón (abajo).";
     }
+    if (this.opts.edificio) return this.avisoEdificio();
     const r = this.player.rig;
     const salir = this.zonas[0];
     if (this.piso === 0 && Math.hypot(r.x - salir.x, r.z - salir.z) < 1.4) return "Párate en el círculo de la puerta para salir a la calle";
@@ -1035,6 +1120,9 @@ export class CasaWorld {
     }
     const sel = this.sel >= 0 ? this.items[this.sel] : null;
     const mu = sel ? mueble(sel.m) : null;
+    const e = this.opts.edificio;
+    if (e) this.siguienteId = this.opts.siguiente?.() ?? null;
+    const sig = this.siguienteId;
     const pisos = [...new Set(this.plano.cuartos.map((c) => c.piso))].sort() as (0 | 1)[];
     const hud: CasaHud = {
       dueno: this.estado.dueno,
@@ -1054,6 +1142,16 @@ export class CasaWorld {
       cambios: this.cambios,
       bendiciones: this.estado.bendiciones,
       yaBendije: this.estado.yaBendije,
+      edificio: e
+        ? {
+            id: e.id,
+            nombre: e.nombre,
+            icono: e.icono,
+            maestro: e.maestro,
+            estaciones: this.estaciones.map((s) => ({ id: s.id, nombre: s.nombre, icono: s.icono, siguiente: s.id === sig })),
+            siguiente: sig,
+          }
+        : undefined,
     };
     gameStore.setCasa(hud);
   }
@@ -1089,6 +1187,7 @@ export class CasaWorld {
       z.ring.dispose();
       this.overlay.remove(z.etiqueta);
     }
+    for (const pe of this.etiquetasPersonas) this.overlay.remove(pe.el);
     this.marca.dispose();
     for (const s of this.siervos) this.crowd.remove(s.handle);
     this.player.fig.dispose();
