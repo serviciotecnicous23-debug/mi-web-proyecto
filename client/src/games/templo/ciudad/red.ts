@@ -10,7 +10,7 @@ export type EstadoRed = "conectando" | "conectado" | "fuera";
 
 export type RedEventos = {
   onInfo: (v: VecinoInfo) => void;
-  onVecinos: (l: [number, number, number, number, number][]) => void;
+  onVecinos: (l: [number, number, number, number, number, number?][]) => void;
   onFrase: (de: number, id: string) => void;
   onBarrio: (n: number, casas: CasaVista[]) => void;
   onFuera: (motivo: string) => void;

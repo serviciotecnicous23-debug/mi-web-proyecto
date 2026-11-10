@@ -7,8 +7,9 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
-  RotateCw, Send, Store, Trophy, Users, WifiOff,
+  RotateCw, Send, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
+import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { EstudiosDeOtro } from "./EstudiosUI";
 import { orientacionActual } from "./motor/controles";
@@ -131,6 +132,9 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             </Boton>
             <Boton label="Estudios" onClick={() => open({ kind: "estudios" })} testid="button-ciudad-estudios">
               <ScrollText className="h-5 w-5" />
+            </Boton>
+            <Boton label="Misiones" onClick={() => open({ kind: "misiones" })} testid="button-ciudad-misiones">
+              <Target className="h-5 w-5" />
             </Boton>
             <Boton label="Ir a… (I)" onClick={() => open({ kind: "irA" })} testid="button-ciudad-ir">
               <MapPin className="h-5 w-5" />
@@ -374,6 +378,7 @@ function SiervosPanel() {
     setBusy(false);
     if (r.ok && r.data) {
       guardar(r.data.privada, r.data.subio ?? undefined, r.data.honra);
+      avisarMisiones((r.data as { misiones?: { titulo: string; premio: number }[] }).misiones);
       setAviso(`Tus siervos llevaron las ofrendas al templo: +${fmt(r.data.ganado)} de honra para tu casa${r.data.doble ? ` (la ${BIEN[r.data.doble].nombre.toLowerCase()} valió el doble por la fiesta)` : ""}.${r.data.subio !== null ? ` ¡Tu casa creció: ahora es ${NIVELES_CASA[r.data.subio].nombre.toLowerCase()}!` : ""}`);
     } else setAviso(r.data?.message || "No se pudo llevar. Intenta de nuevo.");
   };
@@ -480,6 +485,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
       setCasa(r.data);
       setHecho(true);
       city?.audio.correct();
+      avisarMisiones((r.data as { misiones?: { titulo: string; premio: number }[] }).misiones);
     } else setError(r.data?.message || "No se pudo dejar la bendición.");
   };
   const nivel = casa ? NIVELES_CASA[casa.nivel] : null;

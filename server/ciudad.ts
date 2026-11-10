@@ -12,6 +12,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { diaClave, escalonPorMerito, evento, hoyEnJerusalen, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
+import { avanzarMision } from "./misiones";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { fechaDe, relojEnLinea } from "@shared/calendario";
 import {
@@ -451,7 +452,15 @@ export function registerCiudadRoutes(app: Express) {
         olvidarBarrio(Number(rows[0].barrio));
         rec.nivel = subio;
       }
-      res.json({ ganado: hecho.ganado ?? 0, doble: hecho.doble ?? null, subio, honra: await honraDePersonaje(ch.id), privada: await privadaDe(ch.id, rec, false) });
+      const misiones = (hecho.ganado ?? 0) > 0 ? await avanzarMision(ch, "alfoli", 1).catch(() => []) : [];
+      res.json({
+        ganado: hecho.ganado ?? 0,
+        doble: hecho.doble ?? null,
+        subio,
+        honra: await honraDePersonaje(ch.id),
+        privada: await privadaDe(ch.id, rec, false),
+        ...(misiones.length ? { misiones } : {}),
+      });
     } catch (err) {
       console.error("[ciudad] ofrendar:", err);
       if (!res.headersSent) res.sendStatus(500);
@@ -539,7 +548,8 @@ export function registerCiudadRoutes(app: Express) {
         [id, ch.user_id, hoyClave()],
       );
       if (!rows.length) return res.status(409).json({ message: "Ya dejaste tu bendición hoy en esta casa. Vuelve mañana." });
-      res.json({ ...c.visita, bendiciones: c.visita.bendiciones + 1, yaBendije: true });
+      const misiones = await avanzarMision(ch, "bendicion", 1).catch(() => []);
+      res.json({ ...c.visita, bendiciones: c.visita.bendiciones + 1, yaBendije: true, ...(misiones.length ? { misiones } : {}) });
     } catch (err) {
       console.error("[ciudad] bendecir:", err);
       if (!res.headersSent) res.sendStatus(500);

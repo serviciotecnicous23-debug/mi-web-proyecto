@@ -1,0 +1,60 @@
+/**
+ * Misiones de Jerusalén en línea:
+ * - Encargos del día: tres por personaje, distintos cada día (la misma semilla para todos ese día,
+ *   mezclada con el personaje). Cada uno da mérito al cumplirse; los tres juntos, un premio más.
+ * - La ofrenda del barrio: una meta semanal de deberes para todo el barrio. Al cumplirla, cada
+ *   vecino que aportó recibe mérito, y el barrio ondea sus banderas.
+ * - Los barrios compiten por la semana: la tabla de los barrios (deberes por vecino que sirve).
+ * - Servir juntos: con dos o más sacerdotes en el templo a la vez, los deberes valen un poco más.
+ * El servidor lleva las cuentas; el teléfono solo las muestra.
+ */
+
+export type TipoEncargo = "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos";
+
+export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string };
+
+/** El banco de encargos (cada día salen tres de tipos distintos). */
+export const ENCARGOS: EncargoDef[] = [
+  { id: "ofrendas6", tipo: "ofrendas", meta: 6, titulo: "Presenta 6 ofrendas del pueblo en el altar", icono: "🐑" },
+  { id: "ofrendas12", tipo: "ofrendas", meta: 12, titulo: "Presenta 12 ofrendas del pueblo en el altar", icono: "🐑" },
+  { id: "lena8", tipo: "lena", meta: 8, titulo: "Aviva el fuego del altar con 8 leños", icono: "🪵" },
+  { id: "aceite3", tipo: "aceite", meta: 3, titulo: "Llena las lámparas del candelero 3 veces", icono: "🫒" },
+  { id: "panes6", tipo: "panes", meta: 6, titulo: "Pon 6 panes en la mesa de oro", icono: "🍞" },
+  { id: "incienso2", tipo: "incienso", meta: 2, titulo: "Quema incienso 2 veces en el altar de oro", icono: "🌿" },
+  { id: "diezmos2", tipo: "diezmos", meta: 2, titulo: "Guarda 2 diezmos en las cámaras", icono: "🌾" },
+  { id: "aciertos2", tipo: "aciertos", meta: 2, titulo: "Responde bien 2 preguntas difíciles de Azarías", icono: "❓" },
+  { id: "seccion1", tipo: "seccion", meta: 1, titulo: "Termina una sección de un estudio", icono: "📜" },
+  { id: "bendicion1", tipo: "bendicion", meta: 1, titulo: "Visita la casa de un vecino y bendícela", icono: "🙌" },
+  { id: "alfoli1", tipo: "alfoli", meta: 1, titulo: "Lleva al templo lo del alfolí de tu casa", icono: "🏺" },
+  { id: "juntos10", tipo: "juntos", meta: 10, titulo: "Cumple 10 deberes sirviendo junto con otro sacerdote", icono: "🤝" },
+];
+
+export const ENCARGOS_DIA = 3;
+export const MERITO_ENCARGO = 20;
+/** Premio por cumplir los tres encargos del día. */
+export const MERITO_ENCARGOS_TODOS = 30;
+
+/** La ofrenda del barrio: deberes de todo el barrio en la semana (de lunes a domingo, hora de Texas). */
+export const META_BARRIO = 300;
+/** Para recibir el premio del barrio hay que haber aportado al menos estos deberes esa semana. */
+export const APORTE_MINIMO = 10;
+export const MERITO_BARRIO = 40;
+
+/** Servir juntos: desde 2 sacerdotes en el templo a la vez, los deberes valen ×1,2. */
+export const JUNTOS_DESDE = 2;
+export const FACTOR_JUNTOS = 1.2;
+
+// ---------------------------------------------------------------- respuestas de la API
+export type Encargo = { id: string; titulo: string; icono: string; meta: number; progreso: number; hecho: boolean };
+export type BarrioSemana = { n: number; nombre: string; deberes: number; vecinos: number; porVecino: number; cumplida: boolean };
+export type MisionesEstado = {
+  dia: string;
+  encargos: Encargo[];
+  todos: boolean;
+  barrio: { n: number; nombre: string; deberes: number; meta: number; cumplida: boolean; miAporte: number; aporteMinimo: number } | null;
+  /** La tabla de los barrios de esta semana (por deberes por vecino que sirvió). */
+  barrios: BarrioSemana[];
+  semana: string;
+};
+/** Lo que se acaba de cumplir (para avisar en el juego). */
+export type MisionCumplida = { titulo: string; premio: number };

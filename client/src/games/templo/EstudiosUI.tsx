@@ -208,6 +208,7 @@ function Seccion({ id, seccion, hecha, alTerminar }: { id: string; seccion: stri
       return;
     }
     if (r.data.premio) gameStore.toast(`Sección terminada: «${s.titulo}» · +${r.data.premio} de mérito`, "gold");
+    for (const m of (r.data as { misiones?: { titulo: string; premio: number }[] }).misiones || []) gameStore.toast(`${m.titulo} · +${m.premio} de mérito`, "gold");
     alTerminar(r.data.estado);
   };
   return (

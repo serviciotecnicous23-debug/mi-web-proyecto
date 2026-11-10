@@ -38,6 +38,9 @@ import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calen
 import { casoPorId, elegirCaso } from "./casos";
 import { Entrada, vibrar } from "./motor/entrada";
 import { lineasDe, lineasFin, lineasInicio, pasosDeParte, type PasoInst } from "./instruccion";
+import { RedCiudad } from "./ciudad/red";
+import { Presencia } from "./motor/presencia";
+import { RED_TICK_MS } from "@shared/ciudad";
 import { haciaElPiso } from "./motor/camara";
 
 // ---------------------------------------------------------------- reglas
@@ -200,6 +203,13 @@ export class TempleWorld {
   private goodFor = 0;
   private resizeObs: ResizeObserver;
   private unsub: () => void;
+
+  // Jerusalén en línea: los demás sacerdotes que sirven ahora (presencia por WebSocket)
+  private red: RedCiudad | null = null;
+  private presencia: Presencia | null = null;
+  private redEnvioT = 0;
+  private redUltimo = { x: 0, z: 0, ry: 0, a: 0, t: 0 };
+  private redInicio: ReturnType<typeof setTimeout> | null = null;
 
   // Jerusalén en línea: la instrucción del sacerdote (Azarías lleva al nuevo por el templo)
   private inst: { parte: number; pasos: PasoInst[]; i: number; fase: "inicio" | "ir" | "hablar" | "tarea" | "pregunta" | "fin" } | null = null;
@@ -370,6 +380,19 @@ export class TempleWorld {
     if (this.online) {
       gameStore.toast("Templo en línea: aquí no hay levitas que ayuden. Cada deber suma mérito.", "info");
       this.instPartes = opts.instruccion?.partes ?? 0;
+      // los demás que sirven ahora: se conecta un momento después (la ciudad cierra antes su conexión)
+      this.presencia = new Presencia(this.scene, this.overlay, this.shadows, (x, z) => floorHeight(x, z));
+      this.red = new RedCiudad({
+        onInfo: (v) => this.presencia?.alInfo(v),
+        onVecinos: (l) => this.presencia?.alVecinos(l),
+        onFrase: () => undefined,
+        onBarrio: () => undefined,
+        onFuera: (motivo) => gameStore.toast(motivo, "warn"),
+        onEstado: (e) => {
+          if (e === "conectado") this.redUltimo.t = 0;
+        },
+      });
+      this.redInicio = setTimeout(() => this.red?.conectar(), 1200);
       // quien no conoce el templo empieza (o sigue) la instrucción al entrar
       this.instPendiente = !!opts.instruccion?.obligatoria && this.instPartes < 3;
     } else {
@@ -628,6 +651,7 @@ export class TempleWorld {
 
     this.movePlayer(dt);
     this.instTick(dt);
+    this.enviarPosicion(dt);
     this.produce(dt);
     this.consume(dt);
     this.updateZones(dt);
@@ -2353,6 +2377,38 @@ export class TempleWorld {
     });
   }
 
+  // ---------------------------------------------------------------- presencia en el templo en línea
+  /** Lo que lleva en las manos, para verlo sobre su cabeza (índice de ACTIVIDADES). */
+  private actividad(): number {
+    const t = this.player.carry.items[0]?.type;
+    if (!t) return 0;
+    if (t === "lena") return 1;
+    if (t === "aceite") return 2;
+    if (t === "pan") return 3;
+    if (t === "incienso") return 4;
+    if (t === "diezmo") return 6;
+    return 5;
+  }
+
+  private enviarPosicion(dt: number) {
+    if (!this.red) return;
+    this.redEnvioT += dt;
+    if (this.redEnvioT < RED_TICK_MS / 1000) return;
+    this.redEnvioT = 0;
+    const r = this.player.rig;
+    const u = this.redUltimo;
+    const a = this.actividad();
+    const now = performance.now();
+    const movio = Math.hypot(r.x - u.x, r.z - u.z) > 0.05 || Math.abs(r.yaw - u.ry) > 0.08 || a !== u.a;
+    if (!movio && now - u.t < 4000) return;
+    this.red.enviar({ t: "pos", x: Math.round(r.x * 100) / 100, z: Math.round(r.z * 100) / 100, ry: Math.round(r.yaw * 100) / 100, m: r.moving > 0.3 ? 1 : 0, l: "templo", a });
+    u.x = r.x;
+    u.z = r.z;
+    u.ry = r.yaw;
+    u.a = a;
+    u.t = now;
+  }
+
   // ---------------------------------------------------------------- instrucción del sacerdote (por dentro)
   private instPaso(): PasoInst | null {
     return this.inst ? this.inst.pasos[this.inst.i] ?? null : null;
@@ -2990,6 +3046,7 @@ export class TempleWorld {
       this.overlay.place(a.bubble, this.headPos(a.rig).add(new THREE.Vector3(0, 0.55, 0)));
     } else a.bubble.style.display = "none";
 
+    this.presencia?.animar(dt, p.rig);
     if (this.king) {
       this.king.fig.update(this.king.rig);
       this.shadows.add(this.king.rig.x, this.king.rig.y, this.king.rig.z, 1.15);
@@ -3487,6 +3544,7 @@ export class TempleWorld {
     if (hour >= 0 && s.built.altar) events.push(this.online ? HOURS[hour][2] : `${HOURS[hour][2]} · gozo ×2`);
     if (this.prayer) events.push("El pueblo ora a la hora del incienso");
     const hud: Hud = {
+      sacerdotes: this.presencia ? this.presencia.cuantos + 1 : 0,
       instruccion: this.hudInstruccion(),
       gozo: Math.floor(s.gozo),
       sabiduria: s.sabiduria,
@@ -3583,6 +3641,9 @@ export class TempleWorld {
     if (this.opts.loggedIn) void saveRemote(this.s);
     this.unsub();
     const canvas = this.renderer.domElement;
+    if (this.redInicio) clearTimeout(this.redInicio);
+    this.red?.cerrar();
+    this.presencia?.destruir();
     this.entrada.destruir();
     this.marca?.dispose();
     document.removeEventListener("visibilitychange", this.onVisibility);

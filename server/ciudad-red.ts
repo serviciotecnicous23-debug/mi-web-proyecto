@@ -17,7 +17,7 @@ import { esAdmin, escalonPorMerito, nombreDe, personajeDe, temporadaDe } from ".
 import { casasDelBarrio } from "./ciudad";
 import { JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import {
-  FRASE_CADA_MS, FRASES_POR_MINUTO, LIMITES_CIUDAD, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
+  ACTIVIDADES, FRASE_CADA_MS, FRASES_POR_MINUTO, LIMITES_CIUDAD, LIMITES_TEMPLO, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
   type RedEntra, type VecinoInfo,
 } from "@shared/ciudad";
 
@@ -25,6 +25,8 @@ type Con = {
   ws: WebSocket;
   info: VecinoInfo;
   canal: string;
+  /** Lo que lleva en las manos en el templo (índice de ACTIVIDADES). */
+  a: number;
   x: number;
   z: number;
   ry: number;
@@ -40,6 +42,7 @@ type Con = {
 };
 
 const conexiones = new Map<number, Con>();
+import { marcarEnTemplo } from "./presencia-templo";
 const MAX_CONEXIONES = 600;
 let reloj: ReturnType<typeof setInterval> | null = null;
 let latidos: ReturnType<typeof setInterval> | null = null;
@@ -108,7 +111,7 @@ const num = (v: unknown, lo: number, hi: number, def: number) => (typeof v === "
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
 function alRecibir(c: Con, data: RawData) {
-  let msg: { t?: unknown; x?: unknown; z?: unknown; ry?: unknown; m?: unknown; id?: unknown };
+  let msg: { t?: unknown; x?: unknown; z?: unknown; ry?: unknown; m?: unknown; id?: unknown; l?: unknown; a?: unknown };
   try {
     msg = JSON.parse(String(data));
   } catch {
@@ -119,11 +122,16 @@ function alRecibir(c: Con, data: RawData) {
     // como mucho unas 7 por segundo; lo demás se ignora
     if (now - c.ultimoPos < 140) return;
     c.ultimoPos = now;
-    c.x = r2(num(msg.x, LIMITES_CIUDAD.minX, LIMITES_CIUDAD.maxX, c.x));
-    c.z = r2(num(msg.z, LIMITES_CIUDAD.minZ, LIMITES_CIUDAD.maxZ, c.z));
+    // en el templo es otro canal: allí solo se ven los que sirven
+    const templo = msg.l === "templo";
+    const lim = templo ? LIMITES_TEMPLO : LIMITES_CIUDAD;
+    c.x = r2(num(msg.x, lim.minX, lim.maxX, c.x));
+    c.z = r2(num(msg.z, lim.minZ, lim.maxZ, c.z));
     c.ry = r2(num(msg.ry, -Math.PI * 4, Math.PI * 4, c.ry));
     c.m = num(msg.m, 0, 1, 0) > 0.5 ? 1 : 0;
-    c.canal = canalDe(c.x, c.z, c.info.barrio);
+    c.a = templo ? Math.round(num(msg.a, 0, ACTIVIDADES.length - 1, 0)) : 0;
+    c.canal = templo ? "templo" : canalDe(c.x, c.z, c.info.barrio);
+    marcarEnTemplo(c.info.id, templo);
   } else if (msg.t === "frase") {
     const f = typeof msg.id === "string" ? fraseRapida(msg.id) : null;
     if (!f) return;
@@ -162,7 +170,7 @@ function repartir() {
           mandar(yo, { t: "info", v: o.info });
         }
       }
-      const l = otros.map((o) => [o.info.id, o.x, o.z, o.ry, o.m] as [number, number, number, number, number]);
+      const l = otros.map((o) => [o.info.id, o.x, o.z, o.ry, o.m, o.a] as [number, number, number, number, number, number]);
       const firma = JSON.stringify(l);
       if (firma !== yo.ultimo) {
         yo.ultimo = firma;
@@ -235,6 +243,7 @@ export function sacarDeLaCiudad(personajeId: number, motivo: string) {
   if (!c) return;
   // deja de verse ya, sin esperar a que su teléfono conteste el cierre
   conexiones.delete(personajeId);
+  marcarEnTemplo(personajeId, false);
   mandar(c, { t: "fuera", motivo });
   c.ws.close(4003, "fuera");
   setTimeout(() => c.ws.terminate(), 3000).unref?.();
@@ -396,6 +405,7 @@ export function registrarRedCiudad(server: Server, sesion: RequestHandler) {
       ws,
       info: j.info,
       canal: "comun",
+      a: 0,
       x: 41.8,
       z: 0,
       ry: 0,
@@ -416,7 +426,10 @@ export function registrarRedCiudad(server: Server, sesion: RequestHandler) {
       c.vivo = true;
     });
     ws.on("close", () => {
-      if (conexiones.get(j.info.id) === c) conexiones.delete(j.info.id);
+      if (conexiones.get(j.info.id) === c) {
+        conexiones.delete(j.info.id);
+        marcarEnTemplo(j.info.id, false);
+      }
       pararRelojesSiNoHayNadie();
     });
     ws.on("error", () => ws.terminate());

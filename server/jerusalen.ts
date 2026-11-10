@@ -15,6 +15,9 @@ import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { ESTUDIO_PRINCIPAL, ESTUDIO_SUMO } from "@shared/estudios";
+import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
+import { sirviendoJuntos } from "./presencia-templo";
+import { avanzarMision, misionesPorDeberes } from "./misiones";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
@@ -742,6 +745,10 @@ export function registerJerusalenRoutes(app: Express) {
       if (espera > 0) return res.status(429).json({ message: "Espera un momento", espera: Math.ceil(espera / 1000) });
       ultimoEnvio.set(ch.id, now);
       if (ultimoEnvio.size > 5000) ultimoEnvio.clear();
+      // servir juntos: con 2 o más sacerdotes en el templo a la vez, los deberes valen más
+      const juntos = sirviendoJuntos(ch.id);
+      const fj = juntos >= JUNTOS_DESDE ? FACTOR_JUNTOS : 1;
+      const aceptados: Partial<Record<DeberId, number>> = {};
       const out = await enFila(ch.id, async (): Promise<JerusalenAcciones> => {
         const t = temporadaDe();
         const hoy = diaClave();
@@ -754,12 +761,13 @@ export function registerJerusalenRoutes(app: Express) {
         for (const k of DEBERES) {
           const pedido = Math.max(0, Math.floor(Number(body.acciones[k] || 0)));
           const c = Math.min(pedido, Math.floor(TOPE_BASE[k] + TOPE_RITMO[k] * segundos));
+          if (c > 0) aceptados[k] = c;
           cuenta += c;
           crudo += c * MERITO_DEBER[k];
         }
         // en las fiestas de Jerusalén (el mismo reloj para todos) el servicio vale más
         const bono = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta.merito ?? 1;
-        crudo = Math.min(Math.round(crudo * bono), Math.floor(meritoMaximo(segundos) * bono));
+        crudo = Math.min(Math.round(crudo * bono * fj), Math.floor(meritoMaximo(segundos) * bono * fj));
         // el tiempo sin deberes no cuenta para la hora completa del día
         const despues = antes + (cuenta > 0 ? segundos : 0);
         let ganado = Math.round(crudo * factorTramo(antes, despues));
@@ -784,9 +792,15 @@ export function registerJerusalenRoutes(app: Express) {
           escalon: (of[0]?.office as EscalonId) || escalonPorMerito(merito),
           hoy: { segundos: Math.round(despues), factor: factorDelDia(despues) },
           ...(constancia ? { constancia } : {}),
+          ...(juntos ? { juntos } : {}),
         };
       });
-      res.json(out);
+      // los encargos del día y la ofrenda del barrio (fuera de la fila del mérito)
+      const misiones = await misionesPorDeberes(ch, aceptados, juntos >= JUNTOS_DESDE).catch((err) => {
+        console.error("[jerusalen] misiones:", err);
+        return [];
+      });
+      res.json(misiones.length ? { ...out, misiones } : out);
     } catch (err) {
       console.error("[jerusalen] acciones:", err);
       if (!res.headersSent) res.sendStatus(500);
@@ -897,6 +911,10 @@ export function registerJerusalenRoutes(app: Express) {
         const body: JerusalenRespuesta = { correcta, aTiempo, respuesta: q.correcta, explica: q.explica, ref: q.ref, ganado, merito: Number(up[0]?.merit || 0) };
         return { status: 200, body };
       });
+      if (out.status === 200 && (out.body as JerusalenRespuesta).correcta) {
+        const misiones = await avanzarMision(ch, "aciertos", 1).catch(() => []);
+        if (misiones.length) return res.json({ ...(out.body as JerusalenRespuesta), misiones });
+      }
       res.status(out.status).json(out.body);
     } catch (err) {
       console.error("[jerusalen] respuesta:", err);

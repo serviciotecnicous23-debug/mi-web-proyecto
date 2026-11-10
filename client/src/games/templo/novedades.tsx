@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-misiones",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Sirve con otros y cumple misiones",
+    puntos: [
+      "En el templo en línea ahora ves a los demás sacerdotes que sirven contigo, con su nombre y lo que llevan en las manos.",
+      "Con dos o más sirviendo a la vez, cada deber vale ×1,2: invita a tus vecinos a servir juntos.",
+      "Misiones (botón de la diana): tres encargos distintos cada día, la ofrenda semanal de tu barrio y la tabla de los barrios de la semana.",
+    ],
+  },
+  {
     id: "2026-11-10-estudios",
     fecha: "10 de noviembre de 2026",
     titulo: "Los estudios de Jerusalén",
