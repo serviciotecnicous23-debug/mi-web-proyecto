@@ -33,6 +33,7 @@ export const NOVEDADES: Novedad[] = [
       "📖 Reuniones en las casas: abre tu casa 20 minutos para enseñar una sección que ya estudiaste. Tus vecinos ven el círculo violeta en tu puerta; al llegar leen el versículo y la idea clave y responden una pregunta: si aciertan, ganan los dos.",
       "🤲 Pedidos del barrio: una vez por día pide a tus vecinos harina, aceite o corderos para tu ofrenda (desde «Tu casa»). En el púlpito de la plaza ves lo que piden ellos y les das de tu alfolí: ayudar da gozo.",
       "🏅 Concurso bíblico de la semana (botón de la medalla o en el púlpito de la plaza): las mismas 10 preguntas para todos, 20 segundos cada una. Los tres primeros ganan gozo y quedan como campeones.",
+      "🧱 El muro caído: al norte de la puerta de la ciudad hay un tramo de la muralla en el suelo. Cada deber de cualquiera (sacerdote, profeta o siervo del rey) pone una piedra, y el muro se levanta tramo por tramo para todos (2 Crónicas 32:5).",
     ],
   },
   {

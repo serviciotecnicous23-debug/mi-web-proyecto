@@ -32,7 +32,8 @@ import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
-import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
+import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
+import type { MuroEstado } from "@shared/muro";
 
 const DAWN = 0.2;
 const DUSK = 0.8;
@@ -141,6 +142,11 @@ export class CiudadWorld {
   private reuniones = new Map<string, { id: number; anfitrion: string; titulo: string; ring: Ring | null }>();
   private reunionesVistas = new Set<number>();
   private reunionesT = 27;
+  /** El muro caído: su dibujo (se rehace al cambiar) y lo último que se vio. */
+  private muroGrupo: THREE.Group | null = null;
+  private muroClave = "";
+  private muroConstruidos = -1;
+  private muroT = 59;
   // la presencia de los vecinos (WebSocket)
   private red!: RedCiudad;
   private redEstado: EstadoRed = "conectando";
@@ -891,6 +897,36 @@ export class CiudadWorld {
       void this.mirarReuniones();
     }
     for (const r of this.reuniones.values()) if (r.ring) r.ring.mat.uniforms.uTime.value = this.time;
+    // el muro caído: cada minuto se mira cuánto se levantó
+    this.muroT += dt;
+    if (this.muroT > 60) {
+      this.muroT = 0;
+      void this.mirarMuro();
+    }
+  }
+
+  /** El muro caído al norte de la puerta: se redibuja cuando crece, y avisa cuando se levanta un tramo. */
+  private async mirarMuro() {
+    const res = await fetch("/api/jerusalen/muro", { credentials: "include", cache: "no-store" }).catch(() => null);
+    if (!res?.ok || !this.running) return;
+    const m = (await res.json().catch(() => null)) as MuroEstado | null;
+    if (!m || !this.running) return;
+    if (this.muroConstruidos >= 0 && m.construidos > this.muroConstruidos) {
+      gameStore.toast(`🧱 ¡Se levantó el tramo ${m.construidos} del muro! Cada deber pone una piedra en el siguiente.`, "gold");
+      this.audio.trumpet();
+    }
+    this.muroConstruidos = m.construidos;
+    // se redibuja por tramos y de a décimos de avance (no en cada piedra)
+    const clave = `${m.construidos}:${Math.floor((m.progreso / m.meta) * 10)}`;
+    if (clave === this.muroClave) return;
+    this.muroClave = clave;
+    if (this.muroGrupo) {
+      this.vis.root.remove(this.muroGrupo);
+      liberar(this.muroGrupo);
+    }
+    this.muroGrupo = construirMuroCaido(m.construidos, m.progreso / m.meta);
+    this.vis.root.add(this.muroGrupo);
+    this.shadowDirty = true;
   }
 
   /** Las reuniones de ahora: etiqueta y círculo en cada casa abierta, y un aviso cuando abre una de tu barrio. */
@@ -1308,6 +1344,7 @@ export class CiudadWorld {
       ["La puerta de la ciudad", L.puerta, 30],
       ["El púlpito de la plaza", L.plaza, 22],
       ["El mercado", new THREE.Vector3(P.MERCADO[0], P.SUELO + 3.1, P.PUESTOS[0][1]), 20],
+      ["El muro caído: cada deber pone una piedra", new THREE.Vector3(P.MURO_ORIENTE - 1.5, P.SUELO + 6.4, 19), 26],
     ];
     for (const [t, p, r] of def) {
       const el = this.overlay.make("tpl-tag", t);

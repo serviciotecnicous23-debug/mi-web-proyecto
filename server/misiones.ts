@@ -4,6 +4,7 @@
  * existen (deberes, preguntas, estudios, bendiciones y el alfolí) llamando a `avanzarMision`.
  * Nada de esto usa `enFila` (las rutas que lo llaman ya pueden estar dentro de una fila).
  */
+import { aportarAlMuro } from "./muro";
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
@@ -198,6 +199,11 @@ export async function misionesPorDeberes(ch: { id: number; user_id: number }, ac
   }
   if (juntos && total) out.push(...(await avanzarMision(ch, "juntos", total)));
   out.push(...(await aportarAlBarrio(ch, total)));
+  // y cada deber pone una piedra en el muro caído de la ciudad
+  out.push(...(await aportarAlMuro(ch, total).catch((err) => {
+    console.error("[muro] aportar:", err);
+    return [];
+  })));
   return out;
 }
 

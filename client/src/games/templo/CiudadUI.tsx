@@ -13,6 +13,7 @@ import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
 import { ConcursoView } from "./ConcursoUI";
 import { PedidosBarrio, PedirAyuda } from "./AyudaUI";
+import { VERSO_MURO, type MuroEstado } from "@shared/muro";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
@@ -313,6 +314,47 @@ function useAlMercado() {
     });
     city?.alMercado(m);
   }, []);
+}
+
+/** El muro caído en los anuncios: cuántos tramos van, el que se levanta y quiénes más ayudan. */
+function MuroAnuncio() {
+  const [m, setM] = useState<MuroEstado | null>(null);
+  useEffect(() => {
+    void fetch("/api/jerusalen/muro", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setM(d))
+      .catch(() => null);
+  }, []);
+  if (!m) return null;
+  const listo = m.construidos >= m.tramos;
+  return (
+    <section className="rounded-xl border border-stone-300 p-3 dark:border-stone-700" data-testid="anuncios-muro">
+      <p className="flex items-baseline justify-between gap-2 font-black">
+        <span>🧱 El muro caído</span>
+        <span className="text-xs font-semibold text-stone-500">
+          {m.construidos} de {m.tramos} tramos
+        </span>
+      </p>
+      <div className="mt-1.5 flex gap-0.5" aria-hidden="true">
+        {Array.from({ length: m.tramos }, (_, i) => (
+          <span key={i} className={`h-3 flex-1 rounded-sm ${i < m.construidos ? "bg-amber-500" : i === m.construidos ? "bg-amber-200 dark:bg-amber-900" : "bg-stone-200 dark:bg-stone-800"}`} />
+        ))}
+      </div>
+      {listo ? (
+        <p className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">¡El muro está levantado! Toda la ciudad lo hizo junta.</p>
+      ) : (
+        <>
+          <p className="mt-2 text-xs">
+            Tramo {m.construidos + 1}: <b>{m.progreso}</b> de {m.meta} piedras · tus piedras: <b>{m.mias}</b>. Cada deber de cualquiera pone una; quien pone 10 o más en un tramo recibe gozo cuando se levanta.
+          </p>
+          {m.top.length > 0 && <p className="mt-1 text-[11px] text-stone-500">Los que más ayudan en este tramo: {m.top.map((t) => `${t.nombre} (${t.n})`).join(" · ")}</p>}
+        </>
+      )}
+      <p className="mt-1 text-[11px] italic text-stone-500">
+        «{VERSO_MURO.text}» ({VERSO_MURO.ref})
+      </p>
+    </section>
+  );
 }
 
 /** Los pedidos del barrio en los anuncios: lo que se da sale de tu alfolí (y se ve en tu casa). */
@@ -710,6 +752,8 @@ function AnunciosView() {
         />
 
         <PedidosBarrioConCasa />
+
+        <MuroAnuncio />
 
         <button
           type="button"
