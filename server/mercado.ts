@@ -68,11 +68,11 @@ async function mueblesUtiles(characterId: number): Promise<Set<string>> {
 async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }, precios, vendidos, utiles] = await Promise.all([
-    pool.query(`SELECT gozo, semillas, armario, ropa, muebles FROM game_characters WHERE id = $1`, [ch.id]),
-    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.id]),
+    pool.query(`SELECT t.gozo, t.semillas, t.armario, yo.ropa, t.muebles FROM game_characters t, game_characters yo WHERE t.id = $1 AND yo.id = $2`, [ch.casa, ch.casa]),
+    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]),
     preciosMercaderHoy(),
     vendidosHoy(),
-    mueblesUtiles(ch.id),
+    mueblesUtiles(ch.casa),
   ]);
   const nivel = Number(h[0]?.level || 0);
   const semillas = objeto(c[0]?.semillas);
@@ -121,7 +121,7 @@ export function registerMercadoRoutes(app: Express) {
       res.status(404).json({ message: "Primero crea tu personaje." });
       return null;
     }
-    const { rows } = await pool.query(`SELECT 1 FROM game_houses WHERE character_id = $1`, [ch.id]);
+    const { rows } = await pool.query(`SELECT 1 FROM game_houses WHERE character_id = $1`, [ch.casa]);
     if (!rows.length) {
       res.status(409).json({ message: "Primero entra a la ciudad: allí está tu casa." });
       return null;
@@ -157,53 +157,53 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       const costo = precioHoy(a, diaClave()) * cantidad;
-      const { rows: c } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.id]);
+      const { rows: c } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]);
       if ((a.categoria === "adorno" || a.categoria === "ropa") && lista(c[0]?.armario).includes(a.id)) return res.status(409).json({ message: "Ya lo tienes." });
       if (a.categoria === "letrero") {
-        const { rows: h } = await pool.query(`SELECT tiene_letrero FROM game_houses WHERE character_id = $1`, [ch.id]);
+        const { rows: h } = await pool.query(`SELECT tiene_letrero FROM game_houses WHERE character_id = $1`, [ch.casa]);
         if (h[0]?.tiene_letrero) return res.status(409).json({ message: "Tu casa ya tiene letrero." });
       }
       if (a.categoria === "mueble") {
         const mu = mueble(a.id)!;
         const [{ rows: h }, { rows: cm }] = await Promise.all([
-          pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.id]),
-          pool.query(`SELECT muebles FROM game_characters WHERE id = $1`, [ch.id]),
+          pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.casa]),
+          pool.query(`SELECT muebles FROM game_characters WHERE id = $1`, [ch.casa]),
         ]);
         if ((mu.nivelMin ?? 0) > Number(h[0]?.level || 0)) return res.status(409).json({ message: `${mu.nombre} pide una casa más grande: sirve y tu casa crecerá.` });
         if ((leerMuebles(cm[0]?.muebles)[a.id] || 0) >= MAX_POR_MUEBLE) return res.status(409).json({ message: `Ya tienes ${MAX_POR_MUEBLE} de ese mueble.` });
       }
       // se paga solo si alcanza (de una sola vez, sin carreras)
-      const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.id, costo]);
+      const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.casa, costo]);
       if (!pago.length) return res.status(409).json({ message: `Te falta gozo: cuesta ${costo}. Sirve un poco más o vende lo del alfolí.` });
       if (a.categoria === "semilla") {
         await pool.query(
           `UPDATE game_characters SET semillas = jsonb_set(semillas, ARRAY[$2::text], to_jsonb(COALESCE((semillas->>$2)::int, 0) + $3)) WHERE id = $1`,
-          [ch.id, a.id, cantidad],
+          [ch.casa, a.id, cantidad],
         );
       } else if (a.categoria === "letrero") {
-        await pool.query(`UPDATE game_houses SET tiene_letrero = true WHERE character_id = $1`, [ch.id]);
+        await pool.query(`UPDATE game_houses SET tiene_letrero = true WHERE character_id = $1`, [ch.casa]);
       } else if (a.categoria === "mueble") {
         await pool.query(
           `UPDATE game_characters SET muebles = jsonb_set(muebles, ARRAY[$2::text], to_jsonb(COALESCE((muebles->>$2)::int, 0) + 1)) WHERE id = $1`,
-          [ch.id, a.id],
+          [ch.casa, a.id],
         );
       } else {
-        await pool.query(`UPDATE game_characters SET armario = armario || to_jsonb($2::text) WHERE id = $1`, [ch.id, a.id]);
+        await pool.query(`UPDATE game_characters SET armario = armario || to_jsonb($2::text) WHERE id = $1`, [ch.casa, a.id]);
       }
       // Lo comprado ya se usa: el adorno se pone solo en la casa si queda lugar, y la ropa se la pone
       // (después se cambia en «Tu casa»). Así se ve enseguida lo que se compró.
       let colocado = false;
       let puesto = false;
       if (a.categoria === "adorno") {
-        const { rows: h } = await pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.id]);
+        const { rows: h } = await pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const cupo = lugaresAdornos(Number(h[0]?.level || 0));
         const { rows: ok } = await pool.query(
           `UPDATE game_houses SET adornos = COALESCE(adornos, '[]'::jsonb) || to_jsonb($2::text)
             WHERE character_id = $1 AND jsonb_array_length(COALESCE(adornos, '[]'::jsonb)) < $3 AND NOT (COALESCE(adornos, '[]'::jsonb) ? $2)
             RETURNING 1`,
-          [ch.id, a.id, cupo],
+          [ch.casa, a.id, cupo],
         );
         colocado = ok.length > 0;
       } else if (a.categoria === "ropa") {
@@ -215,7 +215,7 @@ export function registerMercadoRoutes(app: Express) {
         puesto = r.length > 0;
         if (puesto) refrescarFicha(ch.id, { ropa: coloresDeRopa(r[0].ropa) });
       }
-      await alTesoro("mercado", ch.id, Math.floor(costo * DIEZMO), "El 10 % de una compra en el mercado de la plaza");
+      await alTesoro("mercado", ch.casa, Math.floor(costo * DIEZMO), "El 10 % de una compra en el mercado de la plaza");
       await responder(res, ch, { comprado: a.id, costo, colocado, puesto });
     } catch (err) {
       console.error("[mercado] comprar:", err);
@@ -229,12 +229,12 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
-      await recoger(ch.id);
+      if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
+      await recoger(ch.casa);
       const precios = await preciosMercaderHoy();
       const vendidos: Partial<Record<"harina" | "aceite" | "corderos", number>> = {};
-      const ganado = await enFilaCasa(ch.id, async () => {
-        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+      const ganado = await enFilaCasa(ch.casa, async () => {
+        const { rows } = await pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const bienes = leerBienes(rows[0]?.goods);
         let g = 0;
         for (const k of ["harina", "aceite", "corderos"] as const) {
@@ -243,12 +243,12 @@ export function registerMercadoRoutes(app: Express) {
           g += n * precios[k];
           if (n > 0) vendidos[k] = n;
         }
-        if (g > 0) await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(bienes)]);
+        if (g > 0) await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(bienes)]);
         return g;
       });
       for (const [k, n] of Object.entries(vendidos)) await contarVentaMercader(k as "harina" | "aceite" | "corderos", n ?? 0);
       if (!ganado) return res.status(409).json({ message: "No hay nada para vender." });
-      await sumarGozo(ch.id, ganado);
+      await sumarGozo(ch.casa, ganado);
       await responder(res, ch, { vendido: ganado });
     } catch (err) {
       console.error("[mercado] vender:", err);
@@ -260,7 +260,7 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const { rows } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.id]);
+      const { rows } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]);
       const tiene = new Set(lista(rows[0]?.armario));
       const elegir = (v: unknown, prefijo: string) => (typeof v === "string" && v.startsWith(prefijo) && tiene.has(v) ? v : null);
       const ropa = { manto: elegir(req.body?.manto, "manto-"), faja: elegir(req.body?.faja, "faja-") };
@@ -279,14 +279,14 @@ export function registerMercadoRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       const [{ rows: c }, { rows: h }] = await Promise.all([
-        pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.id]),
-        pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.id]),
+        pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]),
+        pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.casa]),
       ]);
       const tiene = new Set(lista(c[0]?.armario));
       const pedidos = [...new Set(lista(req.body?.adornos))].filter((id) => tiene.has(id) && articulo(id)?.categoria === "adorno");
       const cupo = lugaresAdornos(Number(h[0]?.level || 0));
       if (pedidos.length > cupo) return res.status(409).json({ message: `En tu casa caben ${cupo} adornos (crece tu casa para poner más).` });
-      await pool.query(`UPDATE game_houses SET adornos = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(pedidos)]);
+      await pool.query(`UPDATE game_houses SET adornos = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(pedidos)]);
       await responder(res, ch);
     } catch (err) {
       console.error("[mercado] adornos:", err);
@@ -300,7 +300,7 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const { rows } = await pool.query(`UPDATE game_houses SET letrero = $2 WHERE character_id = $1 AND tiene_letrero = true RETURNING 1`, [ch.id, nombre]);
+      const { rows } = await pool.query(`UPDATE game_houses SET letrero = $2 WHERE character_id = $1 AND tiene_letrero = true RETURNING 1`, [ch.casa, nombre]);
       if (!rows.length) return res.status(409).json({ message: "Primero compra el letrero en el mercado." });
       await responder(res, ch);
     } catch (err) {
@@ -317,11 +317,11 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
+      if (frenar(ch.casa, 400)) return res.status(429).json({ message: "Espera un momento" });
       // primero lo que trajeron los siervos (recoger va en su propia fila de la casa)
-      await recoger(ch.id);
-      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string }> => {
-        const { rows } = await pool.query(`SELECT goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+      await recoger(ch.casa);
+      const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string }> => {
+        const { rows } = await pool.query(`SELECT goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const p = leerPreparadas(rows[0]?.preparadas);
         if (p.horno) return { status: 409, message: "El horno está ocupado: saca lo que hay cuando esté listo." };
         const bienes = leerBienes(rows[0]?.goods);
@@ -333,7 +333,7 @@ export function registerMercadoRoutes(app: Express) {
         for (const [b, n] of pide) bienes[b] -= n * cantidad;
         const listo = new Date(Date.now() + r.minutos * 60000).toISOString();
         await pool.query(`UPDATE game_houses SET goods = $2::jsonb, preparadas = $3::jsonb WHERE character_id = $1`, [
-          ch.id, JSON.stringify(bienes), guardarPreparadas(p.preparadas, { receta, cantidad, listo }),
+          ch.casa, JSON.stringify(bienes), guardarPreparadas(p.preparadas, { receta, cantidad, listo }),
         ]);
         return { status: 200 };
       });
@@ -349,14 +349,14 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
-      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string; sacado?: { receta: string; cantidad: number } }> => {
-        const { rows } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+      if (frenar(ch.casa, 400)) return res.status(429).json({ message: "Espera un momento" });
+      const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; sacado?: { receta: string; cantidad: number } }> => {
+        const { rows } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const p = leerPreparadas(rows[0]?.preparadas);
         if (!p.horno) return { status: 409, message: "El horno está vacío." };
         if (new Date(p.horno.listo).getTime() > Date.now()) return { status: 409, message: "Todavía no está listo." };
         p.preparadas[p.horno.receta] += p.horno.cantidad;
-        await pool.query(`UPDATE game_houses SET preparadas = $2::jsonb WHERE character_id = $1`, [ch.id, guardarPreparadas(p.preparadas, null)]);
+        await pool.query(`UPDATE game_houses SET preparadas = $2::jsonb WHERE character_id = $1`, [ch.casa, guardarPreparadas(p.preparadas, null)]);
         return { status: 200, sacado: { receta: p.horno.receta, cantidad: p.horno.cantidad } };
       });
       if (out.status !== 200) return res.status(out.status).json({ message: out.message });
@@ -375,9 +375,9 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
-      const out = await enFilaCasa(ch.id, async (): Promise<{ status: number; message?: string; cosecha?: { bien: string; cuanto: number } }> => {
-        const { rows: h } = await pool.query(`SELECT level, huerto, goods FROM game_houses WHERE character_id = $1`, [ch.id]);
+      if (frenar(ch.casa, 400)) return res.status(429).json({ message: "Espera un momento" });
+      const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; cosecha?: { bien: string; cuanto: number } }> => {
+        const { rows: h } = await pool.query(`SELECT level, huerto, goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const nivel = Number(h[0]?.level || 0);
         const huerto = leerHuerto(h[0]?.huerto, parcelasHuerto(nivel));
         if (!Number.isInteger(n) || n < 0 || n >= huerto.length) return { status: 400, message: "Esa parcela no existe." };
@@ -389,7 +389,7 @@ export function registerMercadoRoutes(app: Express) {
           const { rows: gasto } = await pool.query(
             `UPDATE game_characters SET semillas = jsonb_set(semillas, ARRAY[$2::text], to_jsonb(COALESCE((semillas->>$2)::int, 0) - 1))
               WHERE id = $1 AND COALESCE((semillas->>$2)::int, 0) > 0 RETURNING 1`,
-            [ch.id, s],
+            [ch.casa, s],
           );
           if (!gasto.length) return { status: 409, message: "No te quedan semillas de esas: cómpralas en el mercado." };
           huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: false };
@@ -397,13 +397,13 @@ export function registerMercadoRoutes(app: Express) {
           if (!p.semilla) return { status: 409, message: "Primero siembra." };
           if (p.regado) return { status: 409, message: "Ya la regaste." };
           if (faltan(p) === 0) return { status: 409, message: "Ya está lista: cosecha." };
-          const utiles = await mueblesUtiles(ch.id);
+          const utiles = await mueblesUtiles(ch.casa);
           huerto[n] = { ...p, regado: true, riego: utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal };
         } else {
           if (!p.semilla) return { status: 409, message: "No hay nada sembrado." };
           if (faltan(p) > 0) return { status: 409, message: "Todavía no está lista." };
           const s = SEMILLAS[p.semilla];
-          const utiles = await mueblesUtiles(ch.id);
+          const utiles = await mueblesUtiles(ch.casa);
           const extra = (s.da === "harina" && utiles.has("molino")) || (s.da === "aceite" && utiles.has("vasijas")) ? 1 : 0;
           const cuanto = s.cuanto + (p.regado ? 1 : 0) + extra;
           const bienes = leerBienes(h[0]?.goods);
@@ -411,11 +411,11 @@ export function registerMercadoRoutes(app: Express) {
           if (bienes[s.da] + cuanto > cap) return { status: 409, message: "El alfolí está lleno: lleva lo que tienes al templo o véndelo al mercader." };
           bienes[s.da] += cuanto;
           huerto[n] = { semilla: null, plantado: null, regado: false };
-          await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(bienes)]);
-          await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(huerto)]);
+          await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(bienes)]);
+          await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(huerto)]);
           return { status: 200, cosecha: { bien: s.da, cuanto } };
         }
-        await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(huerto)]);
+        await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(huerto)]);
         return { status: 200 };
       });
       if (out.status !== 200) return res.status(out.status).json({ message: out.message });

@@ -25,11 +25,11 @@ async function lleva(id: number): Promise<Record<LogroId, number>> {
     }
   };
   const [constructor, buenVecino, maestro, campeon, estudioso, fiel] = await Promise.all([
-    uno(`SELECT COALESCE(sum(n), 0)::int AS n FROM game_wall_contributions WHERE character_id = $1`, [id]),
-    uno(`SELECT count(*)::int AS n FROM game_help_gifts WHERE donor_character_id = $1`, [id]),
+    uno(`SELECT COALESCE(sum(n), 0)::int AS n FROM game_wall_contributions WHERE character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1)`, [id]),
+    uno(`SELECT count(*)::int AS n FROM game_help_gifts WHERE donor_character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1)`, [id]),
     uno(
       `SELECT COALESCE(max(c), 0)::int AS n FROM (SELECT count(a.character_id) AS c FROM game_house_meetings m
-         LEFT JOIN game_meeting_attendance a ON a.meeting_id = m.id WHERE m.host_character_id = $1 GROUP BY m.id) t`,
+         LEFT JOIN game_meeting_attendance a ON a.meeting_id = m.id WHERE m.host_character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1) GROUP BY m.id) t`,
       [id],
     ),
     uno(
@@ -47,7 +47,7 @@ async function lleva(id: number): Promise<Record<LogroId, number>> {
         WHERE yo.id = $1 AND s.approved_at IS NOT NULL`,
       [id],
     ),
-    uno(`SELECT count(*)::int AS n FROM game_barrio_aportes WHERE character_id = $1 AND premiado = true`, [id]),
+    uno(`SELECT count(*)::int AS n FROM game_barrio_aportes WHERE character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1) AND premiado = true`, [id]),
   ]);
   return { constructor, buenVecino, maestro, campeon, estudioso, fiel };
 }
