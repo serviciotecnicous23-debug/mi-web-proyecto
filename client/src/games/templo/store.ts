@@ -82,6 +82,13 @@ export type CiudadHud = {
   fiesta: { id: FiestaId; nombre: string; icono: string; dia: number; de: number; solemne: boolean; merito: number } | null;
   hora: number;
   fase: string;
+  /** Vecinos que se ven (hasta 20) y cómo va la conexión con ellos. */
+  vecinos: number;
+  red: "conectando" | "conectado" | "fuera";
+  /** Las últimas frases que dijeron los vecinos. */
+  frases: { id: number; nombre: string; texto: string }[];
+  /** El vecino que está a un par de pasos. */
+  cerca: { id: number; nombre: string } | null;
 };
 
 export type EdificioId = "palacio" | "escuela" | "mercado";
@@ -107,7 +114,10 @@ export type Modal =
   | { kind: "anuncios" }
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }
-  | { kind: "irA" };
+  | { kind: "irA" }
+  | { kind: "frases" }
+  | { kind: "vecinos" }
+  | { kind: "vecino"; id: number };
 
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
 

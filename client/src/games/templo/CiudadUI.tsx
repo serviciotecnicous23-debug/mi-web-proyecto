@@ -4,8 +4,10 @@
  * edificios que se abren en la etapa 3 y de «Ir a…». El mundo 3D está en ciudad/mundo.ts.
  */
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { Link } from "wouter";
 import {
-  CalendarDays, Check, ChevronRight, Crown, Home, Landmark, Loader2, MapPin, Maximize2, Minimize2, Pause, ScrollText, Store, Trophy, Users,
+  Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
+  Send, Store, Trophy, Users, WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
@@ -14,7 +16,11 @@ import { fetchEstado } from "./online";
 import type { CiudadWorld } from "./ciudad/mundo";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { escalonNombre, type JerusalenEstado } from "@shared/jerusalen";
-import { CONSEJOS_ANCIANOS, EDIFICIOS, NIVELES_CASA, VERSO_CASA, VERSO_HONRA, VERSO_PLAZA, VERSO_PULPITO, type CiudadEstado } from "@shared/ciudad";
+import {
+  CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_CASA, VERSO_HONRA, VERSO_PLAZA, VERSO_PULPITO, nombreDeBarrio,
+  type CiudadEstado,
+} from "@shared/ciudad";
+import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella. */
 export const CiudadCtx = createContext<{ city: CiudadWorld | null; estado: CiudadEstado | null }>({ city: null, estado: null });
@@ -134,6 +140,47 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
         </div>
       </div>
 
+      {/* a la derecha, en el medio: frases rápidas y vecinos */}
+      <div className="pointer-events-auto absolute top-1/2 flex -translate-y-1/2 flex-col gap-2" style={{ right: "calc(0.5rem + var(--tpl-sr, 0px))" }}>
+        <button
+          type="button"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-amber-900 shadow-lg active:scale-95"
+          onClick={() => open({ kind: "frases" })}
+          title="Frases rápidas y versículos"
+          aria-label="Frases rápidas y versículos"
+          data-testid="button-ciudad-frases"
+        >
+          <MessageCircle className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-lg active:scale-95"
+          onClick={() => open({ kind: "vecinos" })}
+          title="Vecinos que se ven"
+          aria-label={`Vecinos que se ven: ${c.vecinos}`}
+          data-testid="button-ciudad-vecinos"
+        >
+          <Users className="h-5 w-5" />
+          <span className="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full bg-amber-400 px-1 text-center text-[11px] font-black leading-5 text-amber-950" data-testid="ciudad-vecinos-n">
+            {c.vecinos}
+          </span>
+        </button>
+      </div>
+      {/* a la izquierda: lo último que dijeron los vecinos y si se cortó la conexión */}
+      <div className="absolute top-1/2 flex max-w-[60%] -translate-y-1/2 flex-col items-start gap-1" style={{ left: "calc(0.5rem + var(--tpl-sl, 0px))" }}>
+        {c.red !== "conectado" && (
+          <div className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold" data-testid="ciudad-red">
+            {c.red === "fuera" ? <Ban className="h-3.5 w-3.5 text-red-300" /> : <WifiOff className="h-3.5 w-3.5 text-amber-300" />}
+            {c.red === "fuera" ? "Sin vecinos" : "Buscando vecinos…"}
+          </div>
+        )}
+        {c.frases.map((f) => (
+          <div key={f.id} className={`max-w-full rounded-xl bg-white/90 px-2.5 py-1 text-[12px] leading-snug text-stone-800 shadow`} data-testid="ciudad-frase">
+            <b>{f.nombre}:</b> {f.texto}
+          </div>
+        ))}
+      </div>
+
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))" }}>
         {toasts.map((t) => (
           <div
@@ -176,6 +223,12 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <EdificioView id={modal.id} />;
     case "irA":
       return <IrAView />;
+    case "frases":
+      return <FrasesView />;
+    case "vecinos":
+      return <VecinosView />;
+    case "vecino":
+      return <VecinoView id={modal.id} />;
     default:
       return null;
   }
@@ -440,6 +493,300 @@ function EdificioView({ id }: { id: EdificioId }) {
         <Button variant="secondary" className="w-full" onClick={cerrar}>
           Volver a la calle
         </Button>
+      </div>
+    </Card>
+  );
+}
+
+/** Frases rápidas y versículos: en la ciudad no hay chat libre (cuida a los niños). */
+function FrasesView() {
+  const { city } = useContext(CiudadCtx);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const decir = (id: string) => {
+    if (city?.decir(id)) cerrar();
+    else setAviso("Espera un momento antes de decir otra frase.");
+  };
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <MessageCircle className="h-5 w-5" /> Decir a los vecinos
+        </span>
+      }
+      onClose={cerrar}
+      testid="ciudad-frases"
+    >
+      <div className="space-y-3 p-4 text-sm">
+        <p className="text-xs text-stone-500">Te oyen los vecinos que te ven. Para conversar, toca a un vecino en «Vecinos» y elige «Escribir».</p>
+        {aviso && <p className="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{aviso}</p>}
+        <div className="grid grid-cols-2 gap-1.5">
+          {FRASES.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className="rounded-xl border border-amber-200 bg-white px-2.5 py-2 text-left text-[13px] font-semibold hover:bg-amber-50 dark:border-amber-900/60 dark:bg-stone-900 dark:hover:bg-amber-950/40"
+              onClick={() => decir(f.id)}
+              data-testid={`frase-${f.id}`}
+            >
+              {f.texto}
+            </button>
+          ))}
+        </div>
+        <p className="pt-1 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Versículos</p>
+        <div className="space-y-1.5">
+          {VERSICULOS_RAPIDOS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className="w-full rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-left font-serif text-[13px] italic hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/20 dark:hover:bg-amber-950/40"
+              onClick={() => decir(f.id)}
+              data-testid={`frase-${f.id}`}
+            >
+              «{f.texto}» <span className="not-italic text-xs font-semibold text-amber-800 dark:text-amber-300">{f.ref}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+type Bloqueado = { personajeId: number | null; nombre: string };
+
+async function pedirBloqueos(metodo: "GET" | "POST" | "DELETE", personajeId?: number): Promise<{ ok: boolean; bloqueados: Bloqueado[]; message?: string }> {
+  try {
+    const url = metodo === "DELETE" ? `/api/jerusalen/ciudad/bloqueos/${personajeId}` : "/api/jerusalen/ciudad/bloqueos";
+    const res = await fetch(url, {
+      method: metodo,
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: metodo === "POST" ? JSON.stringify({ personajeId }) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, bloqueados: data.bloqueados ?? [], message: data.message };
+  } catch {
+    return { ok: false, bloqueados: [], message: "Revisa tu conexión." };
+  }
+}
+
+/** Los vecinos que se ven ahora (hasta 20) y las personas que bloqueaste. */
+function VecinosView() {
+  const { city } = useContext(CiudadCtx);
+  const { ciudad } = useGame();
+  const [lista, setLista] = useState(() => city?.listaVecinos() ?? []);
+  const [bloqueados, setBloqueados] = useState<Bloqueado[] | null>(null);
+  useEffect(() => {
+    const t = setInterval(() => setLista(city?.listaVecinos() ?? []), 1000);
+    void pedirBloqueos("GET").then((r) => setBloqueados(r.bloqueados));
+    return () => clearInterval(t);
+  }, [city]);
+  const desbloquear = async (b: Bloqueado) => {
+    if (b.personajeId === null) return;
+    const r = await pedirBloqueos("DELETE", b.personajeId);
+    if (r.ok) setBloqueados(r.bloqueados);
+  };
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Users className="h-5 w-5" /> Vecinos que se ven
+        </span>
+      }
+      onClose={cerrar}
+      testid="ciudad-vecinos"
+    >
+      <div className="space-y-3 p-4 text-sm">
+        {ciudad?.red !== "conectado" && (
+          <p className="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            {ciudad?.red === "fuera" ? "No estás conectado con los vecinos." : "Buscando a los vecinos…"}
+          </p>
+        )}
+        {lista.length ? (
+          <ul className="divide-y rounded-xl border dark:divide-stone-700 dark:border-stone-700">
+            {lista.map((v) => (
+              <li key={v.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                  onClick={() => {
+                    cerrar();
+                    gameStore.push({ kind: "vecino", id: v.id });
+                  }}
+                  data-testid={`vecino-${v.id}`}
+                >
+                  <Crown className="h-4 w-4 shrink-0 text-amber-500" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-bold">{v.nombre}</span>
+                    <span className="block text-xs text-stone-500">
+                      {escalonNombre(v.escalon)} · {v.barrio ? `${nombreDeBarrio(v.barrio)}, casa ${v.casa + 1}` : "Jerusalén"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-stone-500">{Math.round(v.distancia)} m</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="py-3 text-center text-xs text-stone-500">Ahora no hay vecinos cerca. En tu barrio y en la plaza se ven hasta 20 a la vez.</p>
+        )}
+        <details className="rounded-xl bg-stone-50 p-3 text-xs dark:bg-stone-900/40" data-testid="ciudad-bloqueados">
+          <summary className="cursor-pointer font-bold">Personas que bloqueaste ({bloqueados?.length ?? "…"})</summary>
+          {bloqueados && bloqueados.length > 0 ? (
+            <ul className="mt-2 space-y-1">
+              {bloqueados.map((b, i) => (
+                <li key={`${b.personajeId}-${i}`} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{b.nombre}</span>
+                  {b.personajeId !== null && (
+                    <Button size="sm" variant="secondary" onClick={() => void desbloquear(b)} data-testid={`button-desbloquear-${b.personajeId}`}>
+                      Desbloquear
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-stone-500">Nadie. Quien bloqueas deja de verte y de oírte en la ciudad, y tú a él.</p>
+          )}
+        </details>
+      </div>
+    </Card>
+  );
+}
+
+/** Un vecino: saludar, escribirle por la mensajería, bloquear o denunciar. */
+function VecinoView({ id }: { id: number }) {
+  const { city } = useContext(CiudadCtx);
+  const v = city?.vecinoInfo(id) ?? null;
+  const [paso, setPaso] = useState<"ficha" | "bloquear" | "denunciar" | "hecho">("ficha");
+  const [motivo, setMotivo] = useState<MotivoDeDenuncia | "">("");
+  const [detalles, setDetalles] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  if (!v) {
+    return (
+      <Card title="Vecino" onClose={cerrar}>
+        <p className="p-4 text-sm">Ese vecino ya no está cerca.</p>
+      </Card>
+    );
+  }
+  const bloquear = async () => {
+    setBusy(true);
+    const r = await pedirBloqueos("POST", v.id);
+    setBusy(false);
+    if (r.ok) {
+      city?.ocultarVecino(v.id);
+      setMensaje(`Bloqueaste a ${v.nombre}. Ya no se ven ni se oyen en la ciudad. Puedes desbloquearlo en «Vecinos».`);
+      setPaso("hecho");
+    } else setMensaje(r.message || "No se pudo bloquear.");
+  };
+  const denunciar = async () => {
+    if (!motivo) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: "jugador", contentId: v.id, reason: motivo, details: detalles.trim() || undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMensaje("Gracias. La administración revisará la denuncia. Si quieres, también puedes bloquearlo.");
+        setPaso("hecho");
+      } else setMensaje(data.message || "No se pudo enviar la denuncia.");
+    } catch {
+      setMensaje("Revisa tu conexión.");
+    }
+    setBusy(false);
+  };
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Crown className="h-5 w-5" /> {v.nombre}
+        </span>
+      }
+      onClose={cerrar}
+      testid="ciudad-vecino"
+    >
+      <div className="space-y-3 p-4 text-sm">
+        <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+          {escalonNombre(v.escalon)} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
+        </p>
+        {mensaje && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mensaje}</p>}
+        {paso === "ficha" && (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              className="rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
+              onClick={() => {
+                city?.decir("paz");
+                cerrar();
+              }}
+              data-testid="button-vecino-saludar"
+            >
+              <Hand className="mr-1 h-4 w-4" /> Saludar
+            </Button>
+            <Button asChild variant="secondary" className="rounded-full font-bold">
+              <Link href={`/mensajes?to=${v.u}`} data-testid="button-vecino-escribir">
+                <Send className="mr-1 h-4 w-4" /> Escribir
+              </Link>
+            </Button>
+            <Button variant="ghost" className="text-stone-600 dark:text-stone-300" onClick={() => setPaso("bloquear")} data-testid="button-vecino-bloquear">
+              <Ban className="mr-1 h-4 w-4" /> Bloquear
+            </Button>
+            <Button variant="ghost" className="text-red-700 dark:text-red-300" onClick={() => setPaso("denunciar")} data-testid="button-vecino-denunciar">
+              <Flag className="mr-1 h-4 w-4" /> Denunciar
+            </Button>
+            <p className="col-span-2 text-[11px] text-stone-500">«Escribir» abre la mensajería de la web (sales del juego; tu casa y tu mérito quedan guardados).</p>
+          </div>
+        )}
+        {paso === "bloquear" && (
+          <div className="space-y-2">
+            <p>¿Bloquear a {v.nombre}? Dejarán de verse y de oírse en la ciudad. Puedes desbloquearlo cuando quieras.</p>
+            <div className="flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setPaso("ficha")}>
+                Cancelar
+              </Button>
+              <Button className="flex-1 bg-stone-800 text-white hover:bg-stone-700" disabled={busy} onClick={() => void bloquear()} data-testid="button-vecino-bloquear-si">
+                {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Ban className="mr-1 h-4 w-4" />} Bloquear
+              </Button>
+            </div>
+          </div>
+        )}
+        {paso === "denunciar" && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500">¿Qué pasa con este jugador? La denuncia llega a la administración.</p>
+            <div className="space-y-1">
+              {(Object.keys(MOTIVOS_DE_DENUNCIA) as MotivoDeDenuncia[]).map((m) => (
+                <label key={m} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900">
+                  <input type="radio" name="motivo" value={m} checked={motivo === m} onChange={() => setMotivo(m)} />
+                  <span>{MOTIVOS_DE_DENUNCIA[m]}</span>
+                </label>
+              ))}
+            </div>
+            <textarea
+              className="w-full rounded-lg border border-stone-300 bg-white p-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+              rows={2}
+              maxLength={500}
+              placeholder="Detalles (opcional)"
+              value={detalles}
+              onChange={(e) => setDetalles(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setPaso("ficha")}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" className="flex-1" disabled={busy || !motivo} onClick={() => void denunciar()} data-testid="button-vecino-denunciar-si">
+                {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Flag className="mr-1 h-4 w-4" />} Denunciar
+              </Button>
+            </div>
+          </div>
+        )}
+        {paso === "hecho" && (
+          <Button variant="secondary" className="w-full" onClick={cerrar}>
+            Volver a la calle
+          </Button>
+        )}
       </div>
     </Card>
   );

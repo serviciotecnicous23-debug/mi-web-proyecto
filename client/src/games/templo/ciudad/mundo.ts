@@ -19,7 +19,11 @@ import { escalonRank } from "../online";
 import type { Circle, Rect, V2 } from "../layout";
 import type { ItemType } from "../data";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
-import { CONSEJOS_ANCIANOS, NIVELES_CASA, areaDeBarrio, nombreDeBarrio, type CasaVista, type CiudadEstado } from "@shared/ciudad";
+import {
+  CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type CasaVista, type CiudadEstado, type VecinoInfo,
+} from "@shared/ciudad";
+import type { EscalonId } from "@shared/jerusalen";
+import { RedCiudad, type EstadoRed } from "./red";
 import * as P from "./plano";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 
@@ -56,6 +60,21 @@ export type BarrioVisto = { n: number; area: number; casas: { parcela: number; n
 
 type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "mercado";
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
+
+/** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
+type Vecino = {
+  id: number;
+  fig: Figure;
+  look: FigureLook;
+  rig: Rig;
+  obj: { x: number; z: number; ry: number; m: number };
+  etiqueta: HTMLDivElement;
+  burbuja: HTMLDivElement | null;
+  burbujaHasta: number;
+};
+
+/** Un vecino para la lista de la pantalla. */
+export type VecinoVisto = { id: number; nombre: string; escalon: EscalonId; barrio: number; casa: number; u: number; distancia: number };
 
 type Npc = {
   handle: CrowdHandle;
@@ -101,6 +120,18 @@ export class CiudadWorld {
   private pidiendo = new Set<number>();
   private letreros: { el: HTMLDivElement; p: THREE.Vector3; r: number }[] = [];
   private etiquetasCasas: { el: HTMLDivElement; p: THREE.Vector3; mia: boolean }[] = [];
+  // la presencia de los vecinos (WebSocket)
+  private red!: RedCiudad;
+  private redEstado: EstadoRed = "conectando";
+  private infos = new Map<number, VecinoInfo>();
+  private vecinos = new Map<number, Vecino>();
+  private ocultos = new Set<number>();
+  private envioT = 0;
+  private ultimoEnvio = { x: 0, z: 0, ry: 0, t: 0 };
+  private frasesRecientes: { id: number; nombre: string; texto: string; hasta: number }[] = [];
+  private fraseSeq = 0;
+  private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
+  private ultimaFrase = 0;
 
   private raf = 0;
   private last = 0;
@@ -225,9 +256,246 @@ export class CiudadWorld {
     else if (opts.llegada === "templo") gameStore.toast(`Jerusalén: tu casa está en ${estado.barrio.nombre}, casa ${yo.parcela + 1}`, "info");
     const hoy = this.fiestaHoy();
     if (hoy) gameStore.toast(`${hoy.fiesta.icono} Hoy en Jerusalén: ${hoy.fiesta.nombre}`, hoy.fiesta.solemne ? "info" : "gold");
+    this.red = new RedCiudad({
+      onInfo: (v) => this.alInfo(v),
+      onVecinos: (l) => this.alVecinos(l),
+      onFrase: (de, id) => this.alFrase(de, id),
+      onBarrio: (n, casas) => this.alBarrio(n, casas),
+      onFuera: (motivo) => gameStore.toast(motivo, "warn"),
+      onEstado: (e) => {
+        this.redEstado = e;
+        // al conectarse, se manda la posición enseguida
+        if (e === "conectado") this.ultimoEnvio.t = 0;
+      },
+    });
+    this.red.conectar();
     this.pushHud();
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
+  }
+
+  // ================================================================ vecinos (presencia)
+  private alInfo(v: VecinoInfo) {
+    const antes = this.infos.get(v.id);
+    this.infos.set(v.id, v);
+    const vec = this.vecinos.get(v.id);
+    if (!vec) return;
+    vec.etiqueta.textContent = v.nombre;
+    if (!antes || antes.escalon !== v.escalon) {
+      const look = this.lookDe(v.escalon);
+      if (look !== vec.look) {
+        vec.fig.setLook(look);
+        vec.look = look;
+      }
+    }
+  }
+
+  private lookDe(e: EscalonId | undefined): FigureLook {
+    return RANK_LOOK[Math.max(1, Math.min(4, escalonRank(e ?? "sacerdote")))];
+  }
+
+  private alVecinos(l: [number, number, number, number, number][]) {
+    const vistos = new Set<number>();
+    for (const [id, x, z, ry, m] of l) {
+      if (this.ocultos.has(id)) continue;
+      vistos.add(id);
+      const v = this.vecinos.get(id) ?? this.crearVecino(id, x, z, ry);
+      v.obj.x = x;
+      v.obj.z = z;
+      v.obj.ry = ry;
+      v.obj.m = m;
+    }
+    for (const id of [...this.vecinos.keys()]) if (!vistos.has(id)) this.quitarVecino(id);
+    // quien dejó de venir en las listas ya no está oculto (por si se desbloquea)
+    for (const id of [...this.ocultos]) if (!l.some((x) => x[0] === id)) this.ocultos.delete(id);
+  }
+
+  private crearVecino(id: number, x: number, z: number, ry: number): Vecino {
+    const info = this.infos.get(id);
+    const look = this.lookDe(info?.escalon);
+    const fig = new Figure(look);
+    this.scene.add(fig.root);
+    const rig = newRig(x, z);
+    rig.y = P.alturaCiudad(x, z);
+    rig.yaw = ry;
+    // el nombre lo escribió una persona: va como texto, nunca como HTML
+    const etiqueta = this.overlay.make("tpl-tag");
+    etiqueta.textContent = info?.nombre ?? "Vecino";
+    etiqueta.style.display = "none";
+    const v: Vecino = { id, fig, look, rig, obj: { x, z, ry, m: 0 }, etiqueta, burbuja: null, burbujaHasta: 0 };
+    this.vecinos.set(id, v);
+    return v;
+  }
+
+  private quitarVecino(id: number) {
+    const v = this.vecinos.get(id);
+    if (!v) return;
+    this.scene.remove(v.fig.root);
+    v.fig.dispose();
+    this.overlay.remove(v.etiqueta);
+    this.overlay.remove(v.burbuja);
+    this.vecinos.delete(id);
+  }
+
+  private textoDeFrase(id: string): string | null {
+    const f = fraseRapida(id);
+    if (!f) return null;
+    return f.ref ? `«${f.texto}» ${f.ref}` : f.texto;
+  }
+
+  private alFrase(de: number, id: string) {
+    const texto = this.textoDeFrase(id);
+    if (!texto) return;
+    const largo = !!fraseRapida(id)?.ref;
+    const nombre = this.infos.get(de)?.nombre ?? "Un vecino";
+    const v = this.vecinos.get(de);
+    if (v) {
+      if (!v.burbuja) v.burbuja = this.overlay.make("tpl-frase");
+      v.burbuja.textContent = texto;
+      v.burbujaHasta = performance.now() + (largo ? 7000 : 4500);
+    }
+    this.frasesRecientes.push({ id: ++this.fraseSeq, nombre, texto, hasta: performance.now() + (largo ? 8000 : 6000) });
+    if (this.frasesRecientes.length > 3) this.frasesRecientes.shift();
+    this.audio.blip("narrador");
+  }
+
+  private alBarrio(n: number, casas: CasaVista[]) {
+    if (n !== this.estado.barrio.n) return;
+    const mia = casas.find((c) => c.esMia);
+    this.estado = {
+      ...this.estado,
+      yo: mia && mia.nivel > this.estado.yo.nivel ? { ...this.estado.yo, nivel: mia.nivel } : this.estado.yo,
+      barrio: { ...this.estado.barrio, casas, libres: Math.max(0, 40 - casas.length) },
+    };
+    this.barrios.set(n, { n, area: this.estado.barrio.area, casas, detalle: true });
+    this.dibujarAreas();
+  }
+
+  /** Decir una frase rápida o un versículo (la oyen los vecinos que te ven). */
+  decir(id: string): boolean {
+    const texto = this.textoDeFrase(id);
+    const now = performance.now();
+    if (!texto || now - this.ultimaFrase < FRASE_CADA_MS) return false;
+    this.ultimaFrase = now;
+    this.red.enviar({ t: "frase", id });
+    if (!this.miBurbuja) this.miBurbuja = { el: this.overlay.make("tpl-frase mia"), hasta: 0 };
+    this.miBurbuja.el.textContent = texto;
+    this.miBurbuja.hasta = now + (fraseRapida(id)?.ref ? 7000 : 4500);
+    this.audio.click();
+    return true;
+  }
+
+  /** Los vecinos que se ven ahora, del más cercano al más lejano. */
+  listaVecinos(): VecinoVisto[] {
+    const r = this.player.rig;
+    return [...this.vecinos.values()]
+      .map((v) => {
+        const i = this.infos.get(v.id);
+        return {
+          id: v.id,
+          nombre: i?.nombre ?? "Vecino",
+          escalon: i?.escalon ?? "sacerdote",
+          barrio: i?.barrio ?? 0,
+          casa: i?.casa ?? 0,
+          u: i?.u ?? 0,
+          distancia: dist(r.x, r.z, v.rig.x, v.rig.z),
+        };
+      })
+      .sort((a, b) => a.distancia - b.distancia);
+  }
+
+  /** Datos de un vecino (aunque ya no se vea). */
+  vecinoInfo(id: number): VecinoInfo | null {
+    return this.infos.get(id) ?? null;
+  }
+
+  /** Después de bloquear: deja de verse ya (el servidor tampoco lo manda más). */
+  ocultarVecino(id: number) {
+    this.ocultos.add(id);
+    this.quitarVecino(id);
+  }
+
+  /** Cómo va la conexión con los vecinos. */
+  get estadoRed(): EstadoRed {
+    return this.redEstado;
+  }
+
+  private enviarPosicion(dt: number) {
+    this.envioT += dt;
+    if (this.envioT < RED_TICK_MS / 1000) return;
+    this.envioT = 0;
+    const r = this.player.rig;
+    const u = this.ultimoEnvio;
+    const now = performance.now();
+    const movio = Math.hypot(r.x - u.x, r.z - u.z) > 0.05 || Math.abs(r.yaw - u.ry) > 0.08;
+    if (!movio && now - u.t < 4000) return;
+    this.red.enviar({ t: "pos", x: Math.round(r.x * 100) / 100, z: Math.round(r.z * 100) / 100, ry: Math.round(r.yaw * 100) / 100, m: r.moving > 0.3 ? 1 : 0 });
+    u.x = r.x;
+    u.z = r.z;
+    u.ry = r.yaw;
+    u.t = now;
+  }
+
+  private animarVecinos(dt: number) {
+    for (const v of this.vecinos.values()) {
+      const r = v.rig;
+      const dx = v.obj.x - r.x, dz = v.obj.z - r.z;
+      const d = Math.hypot(dx, dz);
+      if (d > 10) {
+        // se fue lejos de golpe (por ejemplo con «Ir a…»)
+        r.x = v.obj.x;
+        r.z = v.obj.z;
+      } else {
+        const k = Math.min(1, dt * 9);
+        r.x += dx * k;
+        r.z += dz * k;
+        r.phase += d * k * 7.2;
+      }
+      const anda = v.obj.m || d > 0.12 ? Math.min(1, 0.5 + d) : 0;
+      r.moving += (anda - r.moving) * Math.min(1, dt * 8);
+      r.yaw = turn(r.yaw, v.obj.ry, dt * 10);
+      r.y = P.alturaCiudad(r.x, r.z);
+      r.t += dt;
+      v.fig.update(r);
+      this.shadows.add(r.x, r.y, r.z, 1.05);
+    }
+  }
+
+  private letrerosDeVecinos(now: number) {
+    const r = this.player.rig;
+    for (const v of this.vecinos.values()) {
+      const cabeza = new THREE.Vector3(v.rig.x, v.rig.y + 1.95, v.rig.z);
+      const cerca = dist(r.x, r.z, v.rig.x, v.rig.z) < 16;
+      if (cerca) this.overlay.place(v.etiqueta, cabeza);
+      else v.etiqueta.style.display = "none";
+      if (v.burbuja) {
+        if (now < v.burbujaHasta) this.overlay.place(v.burbuja, cabeza.clone().add(new THREE.Vector3(0, 0.62, 0)));
+        else {
+          this.overlay.remove(v.burbuja);
+          v.burbuja = null;
+        }
+      }
+    }
+    if (this.miBurbuja) {
+      if (now < this.miBurbuja.hasta) this.overlay.place(this.miBurbuja.el, new THREE.Vector3(r.x, r.y + 2.4, r.z));
+      else this.miBurbuja.el.style.display = "none";
+    }
+    this.frasesRecientes = this.frasesRecientes.filter((f) => f.hasta > now);
+  }
+
+  /** El vecino más cercano, si está a un par de pasos. */
+  private vecinoCerca(): { id: number; nombre: string } | null {
+    const r = this.player.rig;
+    let best: Vecino | null = null;
+    let bd = 2.6;
+    for (const v of this.vecinos.values()) {
+      const d = dist(r.x, r.z, v.rig.x, v.rig.z);
+      if (d < bd) {
+        bd = d;
+        best = v;
+      }
+    }
+    return best ? { id: best.id, nombre: this.infos.get(best.id)?.nombre ?? "Vecino" } : null;
   }
 
   // ================================================================ API para la pantalla
@@ -275,6 +543,7 @@ export class CiudadWorld {
     for (const zn of this.zonas) zn.inside = dist(x, z, zn.x, zn.z) < zn.r;
     this.camTarget.set(x, r.y, z);
     this.shadowDirty = true;
+    this.ultimoEnvio.t = 0;
     this.audio.page();
   }
 
@@ -376,6 +645,7 @@ export class CiudadWorld {
       this.hora = h;
     }
     this.movePlayer(dt);
+    this.enviarPosicion(dt);
     this.updateZonas();
     this.updateGente(dt);
     this.slowT += dt;
@@ -786,12 +1056,14 @@ export class CiudadWorld {
         this.items.add(n.item, r.x + Math.sin(r.yaw) * 0.36 * r.scale, r.y + 0.6 * r.scale, r.z + Math.cos(r.yaw) * 0.36 * r.scale, r.yaw, 0.95);
       }
     }
+    this.animarVecinos(dt);
     this.crowd.flush();
     this.shadows.end();
     this.items.end();
     this.efectos(dt);
     this.fx.update(dt);
     this.updateLabels(dt);
+    this.letrerosDeVecinos(now);
     this.overlay.update(now);
     this.ambiente();
     this.audio.update();
@@ -948,6 +1220,8 @@ export class CiudadWorld {
   private aviso(): string {
     const r = this.player.rig;
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
+    const cerca = this.vecinoCerca();
+    if (cerca) return `${cerca.nombre} está cerca: salúdale con las frases rápidas`;
     if (dist(r.x, r.z, P.ENTRADA_TEMPLO[0], P.ENTRADA_TEMPLO[1]) < 9) return "Sube por la escalinata para entrar al templo y servir";
     if (dist(r.x, r.z, casa.umbral[0], casa.umbral[1]) < 7) return "Párate en el círculo de tu puerta para entrar a tu casa";
     if (dist(r.x, r.z, P.ANUNCIOS[0], P.ANUNCIOS[1]) < 6) return "El púlpito de la plaza: los anuncios de la ciudad";
@@ -987,6 +1261,10 @@ export class CiudadWorld {
       fiesta: fh && f ? { id: f.id, nombre: f.nombre, icono: f.icono, dia: fh.dia, de: f.duracion, solemne: !!f.solemne, merito: f.merito } : null,
       hora: t,
       fase: this.faseNombre(t),
+      vecinos: this.vecinos.size,
+      red: this.redEstado,
+      frases: this.frasesRecientes.map(({ id, nombre, texto }) => ({ id, nombre, texto })),
+      cerca: this.vecinoCerca(),
     };
     gameStore.setCiudad(hud);
   }
@@ -1075,6 +1353,8 @@ export class CiudadWorld {
     window.removeEventListener("blur", this.onBlur);
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();
+    this.red.cerrar();
+    for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);
     for (const z of this.zonas) z.ring.dispose();
     this.player.fig.dispose();
     this.crowd.dispose();

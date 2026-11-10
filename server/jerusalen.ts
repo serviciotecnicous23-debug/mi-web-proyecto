@@ -88,7 +88,15 @@ CREATE TABLE IF NOT EXISTS "game_houses" (
   "created_at" timestamp DEFAULT now(),
   "updated_at" timestamp DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_houses_plot" ON "game_houses" ("game", "barrio", "plot");`;
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_houses_plot" ON "game_houses" ("game", "barrio", "plot");
+ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "city_banned_at" timestamp;
+CREATE TABLE IF NOT EXISTS "user_blocks" (
+  "blocker_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "blocked_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "created_at" timestamp DEFAULT now(),
+  PRIMARY KEY ("blocker_id", "blocked_id")
+);
+CREATE INDEX IF NOT EXISTS "idx_user_blocks_blocked" ON "user_blocks" ("blocked_id");`;
 
 // ---------------------------------------------------------------- días y temporadas
 // El día del juego es el de Texas (America/Chicago): ahí está el ministerio y casi todos juegan

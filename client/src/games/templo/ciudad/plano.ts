@@ -5,13 +5,14 @@
  * palacio está al sur del monte y la escuela de los profetas al norte. Alrededor, cuatro barrios
  * de 40 parcelas: dos calles con dos filas de casas cada una.
  */
-import { AREAS, CASAS_POR_BARRIO, areaDeBarrio } from "@shared/ciudad";
+import { AREAS, AREA_RECT, CASAS_POR_BARRIO, LIMITES_CIUDAD, areaDeBarrio, areaEn as areaDeCiudad } from "@shared/ciudad";
 import type { Circle, Rect, V2 } from "../layout";
 
 /** Altura de las calles (la explanada del templo está en 0). */
 export const SUELO = -3.4;
-/** Donde se puede caminar. */
-export const LIMITES = { minX: -6, maxX: 75, minZ: -70.5, maxZ: 70.5 };
+/** Donde se puede caminar (lo comparte el servidor, que recorta la presencia a estos límites). */
+export const LIMITES = LIMITES_CIUDAD;
+export { AREA_RECT };
 
 /** El monte del templo con sus muros de contención (no se sube sino por la escalinata). */
 export const MONTE: Rect = [-17.7, -14.7, 34.7, 14.7];
@@ -41,13 +42,6 @@ export const ESCUELA: Rect = [8, -33, 26, -23];
 export const ESCUELA_PUERTA: V2 = [17, -22.2];
 export const MONTE_ORACION: Rect = [-6, -36, 3.5, -21];
 
-/** Áreas de barrio (36 × 28,5 m), en el orden de BARRIOS: SE, NE, SO, NO. */
-export const AREA_RECT: Rect[] = [
-  [38, 18, 74, 46.5],
-  [38, -46.5, 74, -18],
-  [-4, 40, 32, 68.5],
-  [-4, -68.5, 32, -40],
-];
 
 /** Una parcela: su rectángulo, el centro de la casa, hacia dónde mira la puerta y el umbral. */
 export type Parcela = {
@@ -123,13 +117,7 @@ export function casaRect(p: Parcela, nivel: number): Rect {
 }
 
 /** ¿En qué área de barrio está el punto? (0 = ninguna: plaza, calles, edificios). */
-export function areaEn(x: number, z: number): number {
-  for (let i = 0; i < AREA_RECT.length; i++) {
-    const r = AREA_RECT[i];
-    if (x >= r[0] - 0.5 && x <= r[2] + 0.5 && z >= r[1] - 0.5 && z <= r[3] + 0.5) return i + 1;
-  }
-  return 0;
-}
+export const areaEn = areaDeCiudad;
 
 const dentro = (x: number, z: number, r: Rect, pad = 0) => x > r[0] - pad && x < r[2] + pad && z > r[1] - pad && z < r[3] + pad;
 

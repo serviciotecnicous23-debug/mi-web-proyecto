@@ -90,7 +90,7 @@ function olvidarBarrio(barrio: number) {
 }
 
 /** Las casas de un barrio con su nivel, el nombre y el escalón de cada dueño (en memoria 30 s). */
-async function casasDelBarrio(barrio: number): Promise<(CasaVista & { userId: number })[]> {
+export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { userId: number })[]> {
   const hit = resumenes.get(barrio);
   if (hit && Date.now() - hit.at < RESUMEN_MS) return hit.casas;
   const enCurso = armando.get(barrio);

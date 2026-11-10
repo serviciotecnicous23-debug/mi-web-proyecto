@@ -1979,6 +1979,8 @@ export const gameCharacters = pgTable("game_characters", {
   path: text("path").notNull().default("sacerdocio"),
   createdAt: timestamp("created_at").defaultNow(),
   lastDutyAt: timestamp("last_duty_at"),
+  // la administración lo sacó de la ciudad por una denuncia (sigue pudiendo servir en el templo)
+  cityBannedAt: timestamp("city_banned_at"),
 });
 
 // Mérito de cada personaje por temporada, con la cuenta del día (tope diario y preguntas).
@@ -2046,6 +2048,18 @@ export const gameSeasons = pgTable(
 // La ciudad (etapa 2, server/ciudad.ts): la casa de cada personaje, en una parcela fija de su
 // barrio. El nivel (0 tienda … 3 aposento alto) sube con el mérito de todas las temporadas y
 // nunca baja. El índice único (juego, barrio, parcela) se crea en JERUSALEN_SQL.
+// Bloqueos entre personas (la ciudad de Jerusalén en línea los usa: quien bloquea y quien es
+// bloqueado dejan de verse y de oírse). Se crean también en JERUSALEN_SQL.
+export const userBlocks = pgTable(
+  "user_blocks",
+  {
+    blockerId: integer("blocker_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    blockedId: integer("blocked_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.blockerId, t.blockedId] })],
+);
+
 export const gameHouses = pgTable("game_houses", {
   characterId: integer("character_id").primaryKey().references(() => gameCharacters.id, { onDelete: "cascade" }),
   game: text("game").notNull(),

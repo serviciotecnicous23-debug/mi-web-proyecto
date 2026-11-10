@@ -5,7 +5,7 @@ import { db } from "./db";
 import { storage } from "./storage";
 import { DENUNCIAS_POR_DIA, MOTIVOS_DE_DENUNCIA, NOMBRE_DEL_TIPO, TIPOS_DENUNCIABLES, type TipoDenunciable } from "@shared/reports";
 
-// Denunciar contenido (Comunidad, comentarios y muro de oración). Lo piden las normas de las
+// Denunciar contenido (Comunidad, comentarios, muro de oración y jugadores de la ciudad). Lo piden las normas de las
 // tiendas para contenido de usuarios y los Términos dicen que los líderes moderan.
 //
 // - Cualquier persona con sesión puede denunciar lo de otros (no lo suyo), hasta 10 al día.
@@ -34,7 +34,9 @@ async function autorDe(tipo: TipoDenunciable, id: number): Promise<number | null
       ? sql`SELECT user_id FROM member_posts WHERE id = ${id}`
       : tipo === "comentario"
         ? sql`SELECT user_id FROM post_comments WHERE id = ${id}`
-        : sql`SELECT user_id FROM prayer_requests WHERE id = ${id}`;
+        : tipo === "jugador"
+          ? sql`SELECT user_id FROM game_characters WHERE id = ${id}`
+          : sql`SELECT user_id FROM prayer_requests WHERE id = ${id}`;
   const [fila] = filas<{ user_id: number }>(await db.execute(consulta));
   return fila ? fila.user_id : null;
 }
@@ -98,8 +100,10 @@ export function registerReportRoutes(app: Express, helpers: { isAdmin: (req: Req
         SELECT r.id, r.content_type AS "contentType", r.content_id AS "contentId", r.reason, r.details, r.status,
                r.created_at AS "createdAt", r.reviewed_at AS "reviewedAt",
                rep.display_name AS "reporterName",
-               COALESCE(p.content, c.content, pr.content) AS content,
-               COALESCE(p.user_id, c.user_id, pr.user_id) AS "authorId",
+               COALESCE(p.content, c.content, pr.content,
+                        CASE WHEN gc.id IS NOT NULL THEN 'Personaje «' || COALESCE(gc.name, au.display_name, 'sin nombre') || '» en la ciudad'
+                             || CASE WHEN gc.city_banned_at IS NOT NULL THEN ' (ya fuera de la ciudad)' ELSE '' END END) AS content,
+               COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id) AS "authorId",
                au.display_name AS "authorName",
                c.post_id AS "postId",
                (SELECT count(*)::int FROM content_reports r2
@@ -109,7 +113,8 @@ export function registerReportRoutes(app: Express, helpers: { isAdmin: (req: Req
         LEFT JOIN member_posts p ON r.content_type = 'publicacion' AND p.id = r.content_id
         LEFT JOIN post_comments c ON r.content_type = 'comentario' AND c.id = r.content_id
         LEFT JOIN prayer_requests pr ON r.content_type = 'oracion' AND pr.id = r.content_id
-        LEFT JOIN users au ON au.id = COALESCE(p.user_id, c.user_id, pr.user_id)
+        LEFT JOIN game_characters gc ON r.content_type = 'jugador' AND gc.id = r.content_id
+        LEFT JOIN users au ON au.id = COALESCE(p.user_id, c.user_id, pr.user_id, gc.user_id)
         ORDER BY (r.status = 'pendiente') DESC, r.created_at DESC
         LIMIT 200
       `),

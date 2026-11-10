@@ -5,6 +5,7 @@ import { registerChatRoutes } from "./chat";
 import { registerGameRoutes } from "./games";
 import { registerJerusalenRoutes } from "./jerusalen";
 import { registerCiudadRoutes } from "./ciudad";
+import { registerRedRoutes, registrarRedCiudad } from "./ciudad-red";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -737,21 +738,22 @@ ${urls}
   const sessionSecret = process.env.SESSION_SECRET
     || (isProduction ? randomBytes(32).toString("hex") : "dev_secret");
 
-  app.use(
-    session({
-      secret: sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      store: sessionStore,
-      proxy: isProduction, // Trust first proxy in production (Render)
-      cookie: {
-        secure: isProduction, // true in production (HTTPS via Render proxy), false in dev
-        httpOnly: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: "lax",
-      },
-    }) as RequestHandler,
-  );
+  const sessionMiddleware = session({
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    proxy: isProduction, // Trust first proxy in production (Render)
+    cookie: {
+      secure: isProduction, // true in production (HTTPS via Render proxy), false in dev
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: "lax",
+    },
+  }) as RequestHandler;
+  app.use(sessionMiddleware);
+  // La presencia de la ciudad (WebSocket) lee la misma sesión al conectarse.
+  registrarRedCiudad(httpServer, sessionMiddleware);
 
   app.use(passport.initialize() as RequestHandler);
   app.use(passport.session() as RequestHandler);
@@ -3622,6 +3624,8 @@ ${urls}
   registerJerusalenRoutes(app);
   // La ciudad (etapa 2): la casa de cada personaje y su barrio.
   registerCiudadRoutes(app);
+  // Vecinos de la ciudad: bloquear y desbloquear, y sacar a alguien de la ciudad (administración).
+  registerRedRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

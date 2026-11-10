@@ -17,6 +17,8 @@ const CSS = `
 .tpl-bub{width:30px;height:30px;border-radius:50%;background:#fff;color:#7a4b0f;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:tplBob 1.1s ease-in-out infinite}
 .tpl-bub.gold{background:linear-gradient(#ffe48a,#f2b632);color:#5a3500}
 .tpl-bub.warn{background:#fff1ee;color:#b3242f}
+.tpl-frase{max-width:210px;white-space:normal;background:#fff;color:#3b2a10;border-radius:12px;padding:4px 9px;font-size:12px;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.tpl-frase.mia{background:#fff4d6}
 .tpl-float{font-weight:900;font-size:16px;color:#ffd66b;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 8px rgba(255,180,40,.55);animation:tplFloat 1.15s ease-out forwards}
 .tpl-float.blue{color:#bfe6ff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .tpl-float.white{color:#fff}

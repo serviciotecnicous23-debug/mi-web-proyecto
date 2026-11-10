@@ -31,12 +31,15 @@ const RUTA_PARA_BORRAR: Record<TipoDenunciable, (id: number) => string> = {
   publicacion: (id) => `/api/posts/${id}`,
   comentario: (id) => `/api/post-comments/${id}`,
   oracion: (id) => `/api/prayer-requests/${id}`,
+  // un jugador no se borra: se lo saca de la ciudad (puede seguir sirviendo en el templo)
+  jugador: (id) => `/api/jerusalen/admin/jugador/${id}`,
 };
 
 const DONDE_VERLO: Record<TipoDenunciable, (d: Denuncia) => string> = {
   publicacion: () => "/comunidad",
   comentario: () => "/comunidad",
   oracion: () => "/oracion",
+  jugador: () => "/juegos/aprendiz-del-templo",
 };
 
 /** Agrupa las denuncias por contenido: pendientes primero. */
@@ -86,7 +89,7 @@ export function ReportsAdmin() {
       if (!r.ok) throw new Error("No se pudo cerrar la denuncia.");
     },
     onSuccess: (_d, { accion }) => {
-      toast({ title: accion === "borrar" ? "Contenido eliminado" : "Denuncia descartada" });
+      toast({ title: accion === "borrar" ? "Listo: se aplicó la medida" : "Denuncia descartada" });
       queryClient.invalidateQueries({ queryKey: CLAVE_LISTA });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     },
@@ -131,7 +134,7 @@ export function ReportsAdmin() {
                   onClick={() => resolver.mutate({ grupo: g, accion: "borrar" })}
                   data-testid={`button-report-borrar-${g.clave}`}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar el contenido
+                  <Trash2 className="mr-2 h-4 w-4" /> {d.contentType === "jugador" ? "Sacarlo de la ciudad" : "Eliminar el contenido"}
                 </Button>
               )}
               <Button
@@ -156,7 +159,7 @@ export function ReportsAdmin() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Flag className="h-5 w-5" /> Denuncias</CardTitle>
         <CardDescription>
-          Lo que los miembros denunciaron en Comunidad, comentarios y el muro de oración. Revísalo pronto: las normas de la
+          Lo que los miembros denunciaron en Comunidad, comentarios, el muro de oración y la ciudad del juego. Revísalo pronto: las normas de la
           comunidad (y las tiendas de apps) piden responder a tiempo.
         </CardDescription>
       </CardHeader>

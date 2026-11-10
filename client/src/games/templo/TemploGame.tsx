@@ -319,6 +319,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
         if (k === "t") gameStore.push({ kind: "temporada" });
         else if (city && k === "h") gameStore.push({ kind: "casa" });
         else if (city && k === "i") gameStore.push({ kind: "irA" });
+        else if (city && k === "f") gameStore.push({ kind: "frases" });
+        else if (city && k === "v") gameStore.push({ kind: "vecinos" });
       } else if (k === "l") gameStore.push({ kind: "book" });
       else if (k === "m") gameStore.push({ kind: "upgrades" });
       else if (k === "c") gameStore.push({ kind: "comunidad" });
@@ -1035,6 +1037,9 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "ancianos":
     case "edificio":
     case "irA":
+    case "frases":
+    case "vecinos":
+    case "vecino":
       return <CiudadModal modal={modal} />;
   }
 }
