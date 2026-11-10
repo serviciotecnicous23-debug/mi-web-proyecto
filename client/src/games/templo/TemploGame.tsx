@@ -2220,6 +2220,7 @@ function InstruccionView() {
           <Portrait who="azarias" size={28} /> Instrucción del sacerdote
         </span>
       }
+      onClose={() => gameStore.close()}
       testid="templo-instruccion"
     >
       <div className="space-y-3 p-4 text-sm">
