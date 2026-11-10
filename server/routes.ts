@@ -7,6 +7,7 @@ import { registerJerusalenRoutes } from "./jerusalen";
 import { registerCiudadRoutes } from "./ciudad";
 import { registerRedRoutes, registrarRedCiudad } from "./ciudad-red";
 import { registerEstudiosRoutes } from "./estudios";
+import { registerMisionesRoutes } from "./misiones";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3635,6 +3636,7 @@ ${urls}
   // Vecinos de la ciudad: bloquear y desbloquear, y sacar a alguien de la ciudad (administración).
   registerRedRoutes(app);
   registerEstudiosRoutes(app);
+  registerMisionesRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

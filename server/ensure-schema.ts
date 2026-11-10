@@ -11,6 +11,7 @@ import { STORED_FILES_SQL } from "./file-store";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
 import { ESTUDIOS_SQL } from "./estudios";
+import { MISIONES_SQL } from "./misiones";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1064,6 +1065,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(ESTUDIOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (estudios): ${err?.message}`);
+    }
+    try {
+      // Misiones: encargos del día y la ofrenda semanal de los barrios
+      await pool.query(MISIONES_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (misiones): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

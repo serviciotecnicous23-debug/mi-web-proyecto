@@ -11,6 +11,7 @@ import {
 } from "@shared/estudios";
 import { EXAMENES, type FilaExamen } from "./estudios-examen";
 import { diaClave, enFila, esAdmin, evento, filaMerito, forgetJer, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
+import { avanzarMision } from "./misiones";
 
 export const ESTUDIOS_SQL = `
 CREATE TABLE IF NOT EXISTS "game_studies" (
@@ -160,11 +161,13 @@ export function registerEstudiosRoutes(app: Express) {
       );
       const nueva = !lista(rows[0]?.antes).includes(seccion);
       let premio = 0;
+      let misiones: { titulo: string; premio: number }[] = [];
       if (nueva) {
         premio = MERITO_SECCION;
         await sumarMerito(ch, premio);
+        misiones = await avanzarMision(ch, "seccion", 1).catch(() => []);
       }
-      res.json({ premio, estado: await estadoDe(ch.id) });
+      res.json({ premio, estado: await estadoDe(ch.id), ...(misiones.length ? { misiones } : {}) });
     } catch (err) {
       console.error("[estudios] sección:", err);
       res.sendStatus(500);

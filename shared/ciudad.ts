@@ -278,13 +278,22 @@ export type VecinoInfo = {
 };
 
 /** Del teléfono al servidor. */
-export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number } | { t: "frase"; id: string };
+/**
+ * Lo que manda el teléfono. En el templo en línea la posición lleva `l: "templo"` (otro canal: allí
+ * solo se ven los que sirven) y `a`, lo que lleva en las manos (ACTIVIDADES).
+ */
+export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number; l?: "templo"; a?: number } | { t: "frase"; id: string };
+
+/** Lo que lleva en las manos quien sirve en el templo (para verlo sobre su cabeza). */
+export const ACTIVIDADES = ["", "🪵", "🫒", "🍞", "🌿", "🐑", "🌾"] as const;
+/** Los límites del templo en línea (en las mismas coordenadas que la ciudad). */
+export const LIMITES_TEMPLO = { minX: -17, maxX: 41, minZ: -14, maxZ: 14 };
 
 /** Del servidor al teléfono. `l` = [id, x, z, giro, se mueve] de los vecinos que se ven (hasta 20). */
 export type RedEntra =
   | { t: "hola"; yo: number; tick: number }
   | { t: "info"; v: VecinoInfo }
-  | { t: "v"; l: [number, number, number, number, number][] }
+  | { t: "v"; l: [number, number, number, number, number, number?][] }
   | { t: "frase"; de: number; id: string }
   | { t: "barrio"; n: number; casas: CasaVista[] }
   | { t: "fuera"; motivo: string };

@@ -17,9 +17,13 @@ export type OnlineHud = {
   factor: number;
   pregunta: "lista" | "espera" | "cargando" | "abierta" | "agotada";
   enviando: boolean;
+  /** Sacerdotes sirviendo juntos según el servidor (con 2 o más, mérito ×1,2). */
+  juntos: number;
 };
 
 export type Hud = {
+  /** Jerusalén en línea: cuántos sacerdotes se ven ahora en el templo, contándote (con 2 o más, sirven juntos). */
+  sacerdotes: number;
   /** Jerusalén en línea: la instrucción del sacerdote en curso (parte, paso y si es obligatoria). */
   instruccion: { parte: number; paso: number; de: number; lugar: string; obligatoria: boolean } | null;
   gozo: number;
@@ -101,6 +105,7 @@ export type Modal =
   | { kind: "quiz"; quizId: string; source: "azarias" | "pueblo" | "examen" | "instruccion"; step?: number }
   | { kind: "instruccion" }
   | { kind: "estudios"; id?: string }
+  | { kind: "misiones" }
   | { kind: "upgrades" }
   | { kind: "book" }
   | { kind: "help" }
@@ -127,6 +132,7 @@ export type Modal =
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
 
 const emptyHud: Hud = {
+  sacerdotes: 0,
   instruccion: null,
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
   lamps: null, lampsLit: false, bread: null, incense: null, time: 0.2, day: 1, phase: "", sabbath: false, objective: "",

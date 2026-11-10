@@ -46,6 +46,11 @@ export const bendecirCasa = (personajeId: number) => pedir<CasaVisita & { messag
 export const instruccionParte = (parte: number) =>
   pedir<{ partes: number; premio: number; estado: JerusalenEstado; message?: string }>("/instruccion", { method: "POST", body: JSON.stringify({ parte }) });
 
+/** Avisa en el juego los encargos o la ofrenda del barrio que se acaban de cumplir. */
+export function avisarMisiones(m: { titulo: string; premio: number }[] | undefined) {
+  for (const x of m || []) gameStore.toast(`${x.titulo} · +${x.premio} de mérito`, "gold");
+}
+
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */
 export function escalonRank(e: EscalonId | null | undefined): number {
   switch (e) {
@@ -122,6 +127,7 @@ export class OnlineSession {
   private escalon: EscalonId;
   private hoySeg: number;
   private factor: number;
+  private juntos = 0;
   private closed = false;
   readonly hooks: OnlineHooks;
 
@@ -197,6 +203,8 @@ export class OnlineSession {
         if (subio && !this.closed) gameStore.toast(d.escalon === "turno" ? "¡Ahora eres sacerdote de turno en esta temporada!" : "Tu escalón cambió", "gold");
       }
       if (d.constancia && !this.closed) gameStore.toast(`Constancia: 10 minutos de servicio hoy · +${d.constancia} de mérito`, "gold");
+      this.juntos = d.juntos ?? 0;
+      if (!this.closed) avisarMisiones(d.misiones);
     } else {
       for (const [k, v] of Object.entries(acciones)) this.pend[k as DeberId] = (this.pend[k as DeberId] || 0) + (v || 0);
       this.live += segundos;
@@ -248,6 +256,7 @@ export class OnlineSession {
     if (r.ok && r.data) {
       this.merito = r.data.merito;
       if (r.data.ganado) this.ganado = r.data.ganado;
+      avisarMisiones((r.data as JerusalenRespuesta & { misiones?: { titulo: string; premio: number }[] }).misiones);
     }
     this.qState = q.quedanHoy > 0 ? "espera" : "agotada";
     this.qWait = ESPERA_PREGUNTA;
@@ -273,6 +282,7 @@ export class OnlineSession {
       factor: this.factor,
       pregunta: this.qState,
       enviando: this.sending,
+      juntos: this.juntos,
     });
   }
 

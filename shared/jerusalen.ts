@@ -153,6 +153,10 @@ export type JerusalenAcciones = {
   escalon: EscalonId;
   hoy: { segundos: number; factor: number };
   constancia?: number;
+  /** Sacerdotes sirviendo ahora en el templo (con 2 o más, los deberes valen ×1,2). */
+  juntos?: number;
+  /** Encargos o la ofrenda del barrio que se cumplieron con este envío. */
+  misiones?: { titulo: string; premio: number }[];
 };
 
 export type JerusalenPregunta = {

@@ -42,6 +42,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["game_house_blessings", (id) => sql`visitor_user_id = ${id} OR house_character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_houses", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_studies", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
+  ["game_barrio_aportes", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["user_blocks", (id) => sql`blocker_id = ${id} OR blocked_id = ${id}`],
   ["game_characters", (id) => sql`user_id = ${id}`],
 ];

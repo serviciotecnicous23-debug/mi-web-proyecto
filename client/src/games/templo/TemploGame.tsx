@@ -7,10 +7,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap, Target,
 } from "lucide-react";
 import { PARTES } from "./instruccion";
 import { EstudiosModal } from "./EstudiosUI";
+import { MisionesModal } from "./MisionesUI";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
@@ -843,6 +844,15 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                   <Crown className="h-4 w-4 text-amber-400" />
                   {escalonNombre(oh?.escalon)}
                 </button>
+                {hud.sacerdotes >= 2 && (
+                  <div
+                    className="flex items-center gap-1 rounded-full bg-emerald-600/85 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
+                    title="Con dos o más sacerdotes sirviendo a la vez, los deberes valen ×1,2"
+                    data-testid="templo-juntos"
+                  >
+                    🤝 {hud.sacerdotes} sirviendo juntos · ×1,2
+                  </div>
+                )}
                 {hud.instruccion && (
                   <button
                     type="button"
@@ -908,6 +918,9 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 </IconBtn>
                 <IconBtn label="Estudios" onClick={() => open({ kind: "estudios" })} testid="button-templo-estudios">
                   <ScrollText className="h-5 w-5" />
+                </IconBtn>
+                <IconBtn label="Misiones" onClick={() => open({ kind: "misiones" })} testid="button-templo-misiones">
+                  <Target className="h-5 w-5" />
                 </IconBtn>
                 <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada" className="hidden sm:flex">
                   <Trophy className="h-5 w-5" />
@@ -1215,6 +1228,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <InstruccionView />;
     case "estudios":
       return <EstudiosModal id={modal.id} />;
+    case "misiones":
+      return <MisionesModal />;
     case "upgrades":
       return <UpgradesView />;
     case "book":

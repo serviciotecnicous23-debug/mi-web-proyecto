@@ -309,7 +309,7 @@ export class CiudadWorld {
     return RANK_LOOK[Math.max(1, Math.min(4, escalonRank(e ?? "sacerdote")))];
   }
 
-  private alVecinos(l: [number, number, number, number, number][]) {
+  private alVecinos(l: [number, number, number, number, number, number?][]) {
     const vistos = new Set<number>();
     for (const [id, x, z, ry, m] of l) {
       if (this.ocultos.has(id)) continue;
