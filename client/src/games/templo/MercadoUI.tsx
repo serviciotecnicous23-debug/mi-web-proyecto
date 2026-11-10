@@ -11,6 +11,8 @@ import {
 } from "@shared/mercado";
 import type { CasaPrivada } from "@shared/ciudad";
 import { MAX_POR_MUEBLE, mueble } from "@shared/casa-interior";
+import { AYUDA_MUEBLES } from "@shared/economia";
+import { PuestosView } from "./EconomiaUI";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 
@@ -142,7 +144,18 @@ function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; coloc
 }
 
 /** El mercado de la plaza (los mercaderes de los puestos); `tab` es el puesto donde se entró. */
-export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: TabMercado; alCambiar?: (m: MercadoEstado) => void; alEntrarACasa?: () => void }) {
+export function MercadoView({
+  tab: inicial,
+  alCambiar,
+  alEntrarACasa,
+  alCambiarBienes,
+}: {
+  tab?: TabMercado;
+  alCambiar?: (m: MercadoEstado) => void;
+  alEntrarACasa?: () => void;
+  /** Lo que cambió al comprar o vender entre vecinos (gozo y alfolí). */
+  alCambiarBienes?: (d: { gozo: number; bienes: { harina: number; aceite: number; corderos: number } }) => void;
+}) {
   const { m, error, busy, hacer } = useMercado(alCambiar);
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
   // lo que se acaba de comprar: qué hacer ahora con eso
@@ -155,6 +168,7 @@ export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: 
     ["ropa", "Ropa"],
     ["letrero", "Letrero"],
     ["vender", "Vender"],
+    ["vecinos", "Vecinos"],
   ];
   return (
     <Card
@@ -200,8 +214,10 @@ export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: 
                 </button>
               ))}
             </div>
-            {tab !== "vender" && <p className="rounded-lg bg-stone-50 px-2.5 py-1.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300" data-testid="mercado-donde">{DONDE_SE_USA[tab]}</p>}
-            {tab !== "vender" ? (
+            {tab !== "vender" && tab !== "vecinos" && <p className="rounded-lg bg-stone-50 px-2.5 py-1.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300" data-testid="mercado-donde">{DONDE_SE_USA[tab]}</p>}
+            {tab === "vecinos" ? (
+              <PuestosView alCambiar={alCambiarBienes} />
+            ) : tab !== "vender" ? (
               <ul className="space-y-1.5">
                 {ARTICULOS.filter((a) => a.categoria === tab).map((a) => {
                   const precio = precioHoy(a, m.dia);
@@ -224,6 +240,12 @@ export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: 
                           {a.detalle}
                           {a.categoria === "semilla" && ` Tienes ${m.semillas[a.id] || 0}.`}
                           {a.categoria === "mueble" && ` Tienes ${m.muebles[a.id] || 0}.`}
+                          {a.categoria === "mueble" && AYUDA_MUEBLES[a.id] && (
+                            <span className="mt-0.5 block font-semibold text-emerald-700 dark:text-emerald-300">
+                              {m.ayudas.includes(a.id) ? "✓ Ya te ayuda: " : "⚙️ "}
+                              {AYUDA_MUEBLES[a.id]}
+                            </span>
+                          )}
                         </span>
                       </span>
                       <span className="shrink-0 text-right">
@@ -249,14 +271,19 @@ export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: 
               </ul>
             ) : (
               <div className="space-y-2" data-testid="mercado-vender">
-                <p className="text-xs text-stone-500">Los mercaderes compran lo del alfolí de tu casa (lo que dan el huerto y tus siervos). Ofrecerlo en el templo da honra a tu casa; venderlo te da gozo. Piénsalo bien: cada día buscan una cosa y la pagan al doble.</p>
+                <p className="text-xs text-stone-500">Los mercaderes compran lo del alfolí de tu casa (lo que dan el huerto y tus siervos). Ofrecerlo en el templo da honra a tu casa; venderlo te da gozo. Piénsalo bien: cada día buscan una cosa y la pagan al doble, y lo que ya compraron mucho en la ciudad lo pagan menos. En «Vecinos» puedes venderlo a otros jugadores al precio que elijas.</p>
                 <p className="rounded-xl bg-emerald-50 p-2 text-xs font-bold text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" data-testid="mercado-demanda">
                   Hoy buscan {NOMBRE_BIEN[m.demanda]}: pagan el doble.
                 </p>
                 {(["harina", "aceite", "corderos"] as const).map((b) => (
                   <div key={b} className={`flex items-center gap-2 rounded-xl border p-2.5 ${m.demanda === b ? "border-emerald-300 dark:border-emerald-800" : "border-stone-200 dark:border-stone-700"}`}>
                     <span className="min-w-0 flex-1">
-                      <b>{mayuscula(NOMBRE_BIEN[b])}</b>: tienes {m.bienes[b]} · ✨ {precioVentaHoy(b, m.dia)} cada uno{m.demanda === b ? " (¡doble!)" : ""}
+                      <b>{mayuscula(NOMBRE_BIEN[b])}</b>: tienes {m.bienes[b]} · ✨ {m.precios[b]} cada uno{m.demanda === b ? " (¡lo buscan hoy!)" : ""}
+                      {m.vendidosHoy[b] > 0 && (
+                        <span className="block text-[11px] text-stone-500">
+                          Hoy ya le vendieron {m.vendidosHoy[b]} en la ciudad{m.precios[b] < precioVentaHoy(b, m.dia) ? `: antes pagaba ✨ ${precioVentaHoy(b, m.dia)}` : ""}.
+                        </span>
+                      )}
                     </span>
                     <Button
                       size="sm"

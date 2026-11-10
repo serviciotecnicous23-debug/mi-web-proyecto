@@ -24,6 +24,7 @@ import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
+import { TesoroView } from "./EconomiaUI";
 import { Card, VerseBox, fmt, hace } from "./ui";
 import { bendecirCasa, casaOfrendar, casaSiervos, fetchEstado, verCasa } from "./online";
 import type { CiudadWorld } from "./ciudad/mundo";
@@ -284,6 +285,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <MercadoModal tab={modal.tab} />;
     case "concurso":
       return <ConcursoView />;
+    case "tesoro":
+      return <TesoroView />;
     case "irA":
       return <IrAView />;
     case "frases":
@@ -381,8 +384,19 @@ function PedidosBarrioConCasa() {
 
 function MercadoModal({ tab }: { tab?: TabMercado }) {
   const alCambiar = useAlMercado();
-  const { entrarACasa } = useContext(CiudadCtx);
-  return <MercadoView tab={tab} alCambiar={alCambiar} alEntrarACasa={entrarACasa ? () => entrarACasa({ remodelar: true }) : undefined} />;
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  // comprar o vender entre vecinos: el gozo y el alfolí se ven enseguida en la ciudad
+  const alCambiarBienes = useCallback((d: { gozo: number; bienes: { harina: number; aceite: number; corderos: number } }) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const privada = { ...estado.privada, bienes: { ...estado.privada.bienes, ...d.bienes } };
+    setEstado?.({ ...estado, yo: { ...estado.yo, gozo: d.gozo }, privada });
+    city?.actualizarPrivada(privada);
+  }, []);
+  const { entrarACasa } = ctx;
+  return <MercadoView tab={tab} alCambiar={alCambiar} alEntrarACasa={entrarACasa ? () => entrarACasa({ remodelar: true }) : undefined} alCambiarBienes={alCambiarBienes} />;
 }
 
 function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
@@ -806,6 +820,13 @@ function AnunciosView() {
         <PedidosBarrioConCasa />
 
         <MuroAnuncio />
+        <button type="button" onClick={() => gameStore.push({ kind: "tesoro" })} className="flex w-full items-center gap-2 rounded-xl border border-amber-200 p-3 text-left dark:border-amber-900/60" data-testid="anuncios-tesoro">
+          <span className="text-2xl">🏛️</span>
+          <span className="min-w-0 flex-1">
+            <b>El tesoro del templo</b>
+            <span className="block text-[11px] text-stone-500">El diezmo de las ventas, la provisión para los que empiezan y las casas más bendecidas de la semana.</span>
+          </span>
+        </button>
 
         <button
           type="button"

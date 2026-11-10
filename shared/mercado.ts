@@ -13,7 +13,7 @@
 import { MUEBLES } from "./casa-interior";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
-export type TabMercado = Categoria | "vender";
+export type TabMercado = Categoria | "vender" | "vecinos";
 export type Articulo = { id: string; categoria: Categoria; nombre: string; icono: string; precio: number; detalle: string; color?: string };
 
 export const ARTICULOS: Articulo[] = [
@@ -93,6 +93,8 @@ export function precioHoy(a: Articulo, dia: string): number {
 }
 
 export type BienMercado = "harina" | "aceite" | "corderos";
+/** El nombre de cada bien en una frase («de flor de harina»). */
+export const BIEN_MERCADO_NOMBRE: Record<BienMercado, string> = { harina: "flor de harina", aceite: "aceite", corderos: "corderos" };
 
 /** Lo que más buscan hoy los mercaderes (lo pagan al doble): el mismo para todos. Conviene pensar si venderlo u ofrecerlo. */
 export function demandaDelDia(dia: string): BienMercado {
@@ -111,7 +113,7 @@ export const PUESTOS_MERCADO: { tab: Categoria | "vender"; nombre: string; icono
   { tab: "semilla", nombre: "El sembrador", icono: "🌾", dice: "Semillas de trigo y cebada, y brotes de olivo para tu huerto." },
   { tab: "adorno", nombre: "El alfarero", icono: "🏺", dice: "Macetas, cántaros, lámparas, y muebles para amueblar tu casa por dentro." },
   { tab: "ropa", nombre: "El tejedor", icono: "🧵", dice: "Mantos y fajas teñidos: tus vecinos los verán." },
-  { tab: "vender", nombre: "El mercader", icono: "⚖️", dice: "Te compro lo de tu alfolí con pesa cabal." },
+  { tab: "vender", nombre: "El mercader", icono: "⚖️", dice: "Te compro lo de tu alfolí con pesa cabal. Si quieres más, véndeselo a tus vecinos en «Vecinos»." },
 ];
 
 /** Los colores de la ropa elegida (para dibujarla). */
@@ -190,6 +192,12 @@ export type MercadoEstado = {
   muebles: Record<string, number>;
   /** Lo que el mercader paga al doble hoy. */
   demanda: BienMercado;
+  /** Lo que paga hoy el mercader por cada uno (baja cuando ya compró mucho en la ciudad). */
+  precios: Record<BienMercado, number>;
+  /** Cuánto le compró hoy el mercader a toda la ciudad. */
+  vendidosHoy: Record<BienMercado, number>;
+  /** Los muebles útiles puestos dentro de la casa (molino, vasijas, tinaja). */
+  ayudas: string[];
   /** Las ofrendas preparadas y lo que está en el horno (`faltan` en segundos). */
   preparadas: Preparadas;
   horno: { receta: RecetaId; cantidad: number; faltan: number } | null;
