@@ -523,12 +523,16 @@ export class TempleWorld {
     this.leaving = false;
   }
 
-  /** Devuelve la leña, el aceite, los panes o el incienso que llevas (no las ofrendas del pueblo). */
+  /**
+   * Devuelve lo que llevas: la leña, el aceite, los panes o el incienso vuelven a su lugar, y las
+   * ofrendas del pueblo vuelven a sus familias (esperan otra vez en la puerta). Así nunca se queda
+   * trabado: si el fuego se apagó con ofrendas en las manos, se devuelven, se trae leña y se reciben de nuevo.
+   */
   dropCarry() {
     const c = this.player.carry;
     if (!c.items.length) return;
     if (isOffering(c.items[0].type)) {
-      gameStore.toast("Las ofrendas del pueblo se presentan en el altar", "warn");
+      this.devolverOfrendas();
       return;
     }
     const from = this.playerChest();
@@ -542,6 +546,42 @@ export class TempleWorld {
     c.items = [];
     c.hidden = 0;
     this.audio.drop();
+    this.pushHud();
+  }
+
+  /** Las ofrendas vuelven a sus familias: vuelven a la fila de la puerta con su ofrenda. */
+  private devolverOfrendas() {
+    const c = this.player.carry;
+    const from = this.playerChest();
+    let devueltas = 0;
+    // en orden inverso, para que la fila quede como llegaron
+    for (const it of [...c.items].reverse()) {
+      const v = this.visitors.find((x) => x.id === it.vid);
+      if (!v || (v.state !== "waiting" && v.state !== "toWait")) continue;
+      if (v.wait >= 0) {
+        this.waitTaken[v.wait] = null;
+        v.wait = -1;
+      }
+      v.item = it.type;
+      v.rig.pose = "idle";
+      v.state = "toQueue";
+      this.queue.unshift(v);
+      const [qx, qz] = queueSlot(0);
+      v.path = this.nav.path(v.rig.x, v.rig.z, qx, qz);
+      this.flyers.push({ kind: "item", type: it.type, from: from.clone(), to: this.headPos(v.rig), t: 0, dur: 0.45, arc: 1.1 });
+      devueltas++;
+    }
+    c.items = [];
+    c.hidden = 0;
+    this.audio.drop();
+    gameStore.toast(
+      this.s.altarFuel <= 0
+        ? "Devolviste las ofrendas: las familias esperan en la puerta. Trae leña de la leñera, enciende el fuego y vuelve a recibirlas."
+        : devueltas
+          ? "Devolviste las ofrendas: las familias esperan en la puerta para volver a dártelas."
+          : "Esas familias ya se habían ido.",
+      "info",
+    );
     this.pushHud();
   }
 
@@ -1319,7 +1359,7 @@ export class TempleWorld {
     if (s.altarFuel <= 0) {
       if (this.timers.fireWarn <= 0) {
         this.timers.fireWarn = 4;
-        gameStore.toast("El fuego está apagado: trae leña de la leñera", "warn");
+        gameStore.toast("El fuego está apagado: toca «Devolver» (las familias esperan en la puerta), trae leña de la leñera y enciende el fuego", "warn");
       }
       return;
     }
@@ -3565,7 +3605,7 @@ export class TempleWorld {
       sabbath: this.isSabbath(),
       objective: this.objective.text,
       carrying: c.items.length ? { type: c.items[0].type, count: c.items.length, cap: c.cap } : null,
-      canDrop: c.items.length > 0 && !isOffering(c.items[0].type),
+      canDrop: c.items.length > 0,
       event: events.length ? events.join(" · ") : null,
       rankReady: this.rankReady(),
       built: STATION_IDS.filter((id) => s.built[id]).length,
