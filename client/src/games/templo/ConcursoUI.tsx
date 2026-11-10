@@ -142,6 +142,9 @@ export function ConcursoView() {
             <p className="text-[13px] leading-relaxed">
               Las mismas {CONCURSO_PREGUNTAS} preguntas para todos esta semana, con {CONCURSO_SEGUNDOS} segundos cada una. Gana quien más acierta; si empatan, quien respondió más rápido. Al cerrar la semana, los tres primeros reciben {CONCURSO_PREMIOS.join(", ")} de gozo.
             </p>
+            <p className="rounded-xl bg-stone-50 p-2.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300">
+              Se da una vez por semana por persona (con cualquiera de tus personajes): si se pudiera repetir, quien conoce las preguntas tendría ventaja y la tabla no sería justa. Para practicar todo lo que quieras, usa la práctica de abajo: trae otras preguntas y no cuenta para la tabla.
+            </p>
             {e.campeones && (
               <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30" data-testid="concurso-campeones">
                 🏆 Campeones de la semana pasada: <b>{e.campeones.nombres.join(" · ")}</b>
@@ -180,10 +183,107 @@ export function ConcursoView() {
                 <p className="text-xs text-stone-500">Todavía nadie terminó esta semana. ¡Sé el primero!</p>
               )}
             </div>
+            {!e.mio?.esperando && <Practica />}
             <VerseBox text={VERSO_CONCURSO.text} refName={VERSO_CONCURSO.ref} />
           </>
         ) : null}
       </div>
     </Card>
+  );
+}
+
+type PreguntaPractica = { id: string; texto: string; opciones: string[]; correcta: string; explica: string; ref: string };
+
+/** La práctica del concurso: otras preguntas del banco, con la respuesta al momento. No cuenta para la tabla. */
+function Practica() {
+  const [ps, setPs] = useState<PreguntaPractica[] | null>(null);
+  const [i, setI] = useState(0);
+  const [elegida, setElegida] = useState<string | null>(null);
+  const [aciertos, setAciertos] = useState(0);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const empezar = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/jerusalen/concurso/practica", { credentials: "include", cache: "no-store" });
+      const d = (await r.json().catch(() => null)) as { preguntas?: PreguntaPractica[]; message?: string } | null;
+      if (r.ok && d?.preguntas?.length) {
+        setPs(d.preguntas);
+        setI(0);
+        setElegida(null);
+        setAciertos(0);
+      } else setError(d?.message || "No se pudo traer la práctica.");
+    } catch {
+      setError("No se pudo traer la práctica. Revisa tu conexión.");
+    } finally {
+      setCargando(false);
+    }
+  };
+  if (!ps)
+    return (
+      <div className="space-y-1.5" data-testid="concurso-practica">
+        {error && <p className="text-xs text-red-700 dark:text-red-300">{error}</p>}
+        <Button variant="secondary" className="w-full rounded-full" disabled={cargando} onClick={() => void empezar()} data-testid="concurso-practicar">
+          {cargando ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null} Practicar con otras preguntas (no cuenta para la tabla)
+        </Button>
+      </div>
+    );
+  const q = ps[i];
+  if (!q)
+    return (
+      <div className="space-y-2 rounded-xl border border-stone-200 p-3 text-center dark:border-stone-700" data-testid="concurso-practica-fin">
+        <p className="font-black">
+          Práctica: {aciertos} de {ps.length}
+        </p>
+        <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={cargando} onClick={() => void empezar()}>
+          Otra práctica con preguntas nuevas
+        </Button>
+      </div>
+    );
+  return (
+    <div className="space-y-2 rounded-xl border border-stone-200 p-3 dark:border-stone-700" data-testid="concurso-practica-pregunta">
+      <p className="text-xs font-bold text-stone-500">
+        Práctica · pregunta {i + 1} de {ps.length}
+      </p>
+      <p className="font-bold leading-snug">{q.texto}</p>
+      <div className="grid gap-1.5">
+        {q.opciones.map((o) => {
+          const estado = elegida === null ? "" : o === q.correcta ? "bien" : o === elegida ? "mal" : "";
+          return (
+            <button
+              key={o}
+              type="button"
+              disabled={elegida !== null}
+              onClick={() => {
+                setElegida(o);
+                if (o === q.correcta) setAciertos((a) => a + 1);
+              }}
+              className={`rounded-lg border px-3 py-2 text-left text-sm ${estado === "bien" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30" : estado === "mal" ? "border-red-400 bg-red-50 dark:bg-red-950/30" : "border-stone-300 bg-white hover:border-amber-400 dark:border-stone-700 dark:bg-stone-900"}`}
+            >
+              {o}
+            </button>
+          );
+        })}
+      </div>
+      {elegida !== null && (
+        <>
+          <p className={`text-xs ${elegida === q.correcta ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
+            {elegida === q.correcta ? "¡Bien! " : `Era: ${q.correcta}. `}
+            {q.explica} ({q.ref})
+          </p>
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              setI((x) => x + 1);
+              setElegida(null);
+            }}
+          >
+            {i + 1 >= ps.length ? "Ver cómo te fue" : "Siguiente"}
+          </Button>
+        </>
+      )}
+    </div>
   );
 }

@@ -241,7 +241,7 @@ export type PersonajeFila = {
 export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
   const { rows } = await pool.query(
     `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts, c.path,
-            (SELECT count(*)::int FROM game_studies s WHERE s.character_id = c.id AND s.approved_at IS NOT NULL) AS estudios,
+            (SELECT count(DISTINCT s.study_id)::int FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.approved_at IS NOT NULL) AS estudios,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
             EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir
        FROM game_characters c JOIN users u ON u.id = c.user_id
@@ -364,8 +364,10 @@ async function cerrarTemporada(n: number) {
       `SELECT m.character_id, m.merit,
               EXISTS (SELECT 1 FROM game_offices p
                        WHERE p.character_id = m.character_id AND p.season <= $1 AND p.office IN ('principal', 'sumo')) AS fue_principal,
-              EXISTS (SELECT 1 FROM game_studies s WHERE s.character_id = m.character_id AND s.study_id = $4 AND s.approved_at IS NOT NULL) AS estudio_principal,
-              EXISTS (SELECT 1 FROM game_studies s WHERE s.character_id = m.character_id AND s.study_id = $5 AND s.approved_at IS NOT NULL) AS estudio_sumo
+              EXISTS (SELECT 1 FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id
+                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.study_id = $4 AND s.approved_at IS NOT NULL) AS estudio_principal,
+              EXISTS (SELECT 1 FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id
+                       WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.study_id = $5 AND s.approved_at IS NOT NULL) AS estudio_sumo
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id

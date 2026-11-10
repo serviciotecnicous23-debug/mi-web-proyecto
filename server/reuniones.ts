@@ -4,6 +4,7 @@
  * respondan la pregunta. El servidor corrige y reparte el premio (el teléfono solo pide).
  */
 import type { Express, Request, Response } from "express";
+import { titularEstudios } from "./estudios";
 import { pool } from "./db";
 import { ESTUDIOS } from "@shared/estudios";
 import { REUNION_MINUTOS, REUNION_PREMIO, type ReunionesEstado, type ReunionLeccion, type ReunionRespuesta, type ReunionVista } from "@shared/reuniones";
@@ -125,7 +126,8 @@ export function registerReunionesRoutes(app: Express) {
       reuniones(ch.id, `m.host_character_id = $1 AND m.day_key = $2`, [diaClave()]),
       // las de ahora, primero las de mi barrio
       reuniones(ch.id, `m.ends_at > now() AND m.host_character_id <> $1 AND $2::int IS NOT NULL`, [ch.barrio], "m.barrio = $2 DESC, m.ends_at ASC"),
-      pool.query(`SELECT study_id, sections FROM game_studies WHERE character_id = $1`, [ch.id]),
+      // lo estudiado es de la persona (lo guarda su primer personaje)
+      titularEstudios(ch.user_id).then((t) => pool.query(`SELECT study_id, sections FROM game_studies WHERE character_id = $1`, [t ?? ch.id])),
     ]);
     const secciones: ReunionesEstado["secciones"] = [];
     for (const r of est) {
@@ -159,7 +161,8 @@ export function registerReunionesRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
-      const { rows: est } = await pool.query(`SELECT sections FROM game_studies WHERE character_id = $1 AND study_id = $2`, [ch.id, estudio]);
+      const titular = (await titularEstudios(ch.user_id)) ?? ch.id;
+      const { rows: est } = await pool.query(`SELECT sections FROM game_studies WHERE character_id = $1 AND study_id = $2`, [titular, estudio]);
       const hechas = Array.isArray(est[0]?.sections) ? (est[0].sections as unknown[]) : [];
       if (!hechas.includes(seccion)) return res.status(409).json({ message: "Solo puedes enseñar lo que ya estudiaste: termina esa sección en la escuela." });
       const { rows } = await pool.query(

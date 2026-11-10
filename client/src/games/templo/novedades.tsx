@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-examenes-por-persona",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Tus estudios son tuyos, con cualquier personaje",
+    puntos: [
+      "🎓 Lo que estudias y apruebas vale para todos tus personajes: si diste el examen con tu profeta, tu sacerdote también lo tiene aprobado. Es una sola persona.",
+      "🔁 Si no apruebas, tienes 5 intentos seguidos y cada uno trae preguntas que todavía no te salieron (cada estudio tiene 30). Con 5 de 6 apruebas; con 6 de 6 es ⭐ perfecto.",
+      "📜 Tu registro (mejor nota, intentos y ⭐) lo ven tus vecinos en tu perfil.",
+      "❓ El concurso de la semana sigue siendo una vez por persona (las mismas preguntas para todos, así es justo), y ahora tiene «Practicar con otras preguntas»: no cuenta para la tabla y te explica cada respuesta.",
+      "🙏 El profeta ora al pie del monte, en el círculo violeta, y una flecha te guía a cada paso de tu camino.",
+    ],
+  },
+  {
     id: "2026-11-10-economia",
     fecha: "10 de noviembre de 2026",
     titulo: "El gozo circula: puestos, diezmo y tesoro",
