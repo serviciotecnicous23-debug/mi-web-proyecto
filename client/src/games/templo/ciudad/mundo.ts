@@ -25,6 +25,7 @@ import {
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
+import { CAMINOS, MENSAJES, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
@@ -56,7 +57,16 @@ export type CiudadOpts = {
   llegada: "templo" | "casa";
   /** Pide entrar al templo (la pantalla cambia de mundo). */
   alTemplo: () => void;
+  /** Los deberes de los caminos nuevos van a la sesión en línea (se mandan juntos cada 15 s). */
+  online?: { duty: (kind: string, n: number) => void; tick: (dt: number) => void };
+  /** Avisa al servidor que se completó un paso de los primeros pasos del camino. */
+  alPaso?: (parte: number) => Promise<boolean>;
 };
+
+/** Los primeros pasos de cada camino nuevo: qué deber completa cada paso. */
+const PASOS_CAMINO: Record<"profecia" | "realeza", string[]> = { profecia: ["memoria", "oracion", "mensaje"], realeza: ["audiencia", "pan", "ley"] };
+/** Donde esperan los pobres de la ciudad (junto a la puerta y en la plaza). */
+const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 
 /** Otro barrio que se ve: sus casas (de lejos, siluetas; al entrar en su área, completo). */
 export type BarrioVisto = { n: number; area: number; casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string }[]; detalle: boolean };
@@ -135,6 +145,13 @@ export class CiudadWorld {
   private fraseSeq = 0;
   private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
   private ultimaFrase = 0;
+  // los caminos nuevos: el mensaje que lleva el profeta, el pan del siervo del rey y la oración en el monte
+  private mensaje: { x: number; z: number; text: string; ref: string; ring: Ring } | null = null;
+  private panesQueLleva = 0;
+  private oracionT = 0;
+  private oracionEspera = 0;
+  private pobres: { at: V2; label: HTMLDivElement; espera: number }[] = [];
+  private pasos = 0;
   // tus siervos (solo los ves tú) y la casa del vecino que se visita
   private siervos: Npc[] = [];
   private visitaParcela: string | null = null;
@@ -229,7 +246,7 @@ export class CiudadWorld {
     this.dibujarAreas();
 
     // el aprendiz con su vestidura según su escalón
-    const look = RANK_LOOK[Math.max(1, Math.min(4, escalonRank(estado.yo.escalon)))];
+    const look = this.lookDe(estado.yo.escalon, estado.yo.camino);
     const pf = new Figure(look);
     const casa = P.parcelaDe(estado.barrio.n, estado.yo.parcela);
     const [sx, sz] = opts.llegada === "templo" ? P.LLEGADA_TEMPLO : casa.umbral;
@@ -284,6 +301,26 @@ export class CiudadWorld {
       },
     });
     this.red.conectar();
+    this.pasos = estado.yo.pasos ?? 0;
+    // el guía del camino recibe al nuevo
+    if (estado.yo.camino !== "sacerdocio" && this.pasos < 3 && opts.llegada === "casa") {
+      const guia = estado.yo.camino === "profecia" ? "Isaías hijo de Amoz" : "Eliaquim hijo de Hilcías, mayordomo del palacio";
+      const lugar = CAMINOS[estado.yo.camino].lugar;
+      gameStore.push({
+        kind: "dialog",
+        id: "camino:inicio",
+        lines: [
+          { quien: "narrador", texto: `${guia} te recibe en Jerusalén: «Bienvenido, ${estado.yo.nombre}. Tu servicio está en ${lugar}.»` },
+          {
+            quien: "narrador",
+            texto:
+              estado.yo.camino === "profecia"
+                ? "«El profeta escucha a Dios, guarda su Palabra y la lleva al pueblo con amor. Ven a la escuela: te enseñaré tus primeros pasos.»"
+                : "«El siervo del rey juzga con verdad, cuida a los pobres y guarda la ley. Ven al palacio: te enseñaré tus primeros pasos.»",
+          },
+        ],
+      });
+    }
     this.pushHud();
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
@@ -296,8 +333,8 @@ export class CiudadWorld {
     const vec = this.vecinos.get(v.id);
     if (!vec) return;
     vec.etiqueta.textContent = v.nombre;
-    if (!antes || antes.escalon !== v.escalon) {
-      const look = this.lookDe(v.escalon);
+    if (!antes || antes.escalon !== v.escalon || antes.camino !== v.camino) {
+      const look = this.lookDe(v.escalon, v.camino);
       if (look !== vec.look) {
         vec.fig.setLook(look);
         vec.look = look;
@@ -305,7 +342,9 @@ export class CiudadWorld {
     }
   }
 
-  private lookDe(e: EscalonId | undefined): FigureLook {
+  private lookDe(e: EscalonId | undefined, camino?: Camino): FigureLook {
+    if (camino === "profecia") return "profeta";
+    if (camino === "realeza") return "oficial";
     return RANK_LOOK[Math.max(1, Math.min(4, escalonRank(e ?? "sacerdote")))];
   }
 
@@ -327,7 +366,7 @@ export class CiudadWorld {
 
   private crearVecino(id: number, x: number, z: number, ry: number): Vecino {
     const info = this.infos.get(id);
-    const look = this.lookDe(info?.escalon);
+    const look = this.lookDe(info?.escalon, info?.camino);
     const fig = new Figure(look);
     this.scene.add(fig.root);
     const rig = newRig(x, z);
@@ -514,6 +553,138 @@ export class CiudadWorld {
     return best ? { id: best.id, nombre: this.infos.get(best.id)?.nombre ?? "Vecino" } : null;
   }
 
+  // ================================================================ caminos nuevos (escuela y palacio)
+  /** Pasos hechos de los primeros pasos del camino (0 a 3). */
+  get partesCamino(): number {
+    return this.pasos;
+  }
+
+  /** ¿Lleva un mensaje para entregar? */
+  get mensajeEnCurso(): boolean {
+    return !!this.mensaje;
+  }
+
+  /** Panes que lleva para los pobres. */
+  get panes(): number {
+    return this.panesQueLleva;
+  }
+
+  /** Un deber del camino (va a la sesión en línea) y, si toca, el paso siguiente de los primeros pasos. */
+  deber(kind: string, n = 1) {
+    this.opts.online?.duty(kind, n);
+    vibrar(15);
+    this.audio.correct();
+    const c = this.estado.yo.camino;
+    if (c === "sacerdocio" || this.pasos >= 3) return;
+    if (PASOS_CAMINO[c][this.pasos] !== kind) return;
+    const parte = this.pasos + 1;
+    this.pasos = parte;
+    void this.opts.alPaso?.(parte);
+    gameStore.toast(parte >= 3 ? "¡Completaste tus primeros pasos! (+50 de mérito)" : `Primer paso ${parte} de 3 cumplido`, "gold");
+    this.pushHud();
+  }
+
+  /** El profeta toma un mensaje en la escuela: se marca una casa de la ciudad para llevarlo. */
+  tomarMensaje() {
+    if (this.mensaje) return;
+    const barrio = 1 + Math.floor(Math.random() * 4);
+    const casa = P.parcelaDe(barrio, Math.floor(Math.random() * 40));
+    const m = MENSAJES[Math.floor(Math.random() * MENSAJES.length)];
+    const ring = new Ring(0.9, "#ffd25a", false);
+    ring.set(casa.umbral[0], P.alturaCiudad(casa.umbral[0], casa.umbral[1]), casa.umbral[1]);
+    this.scene.add(ring.mesh);
+    this.mensaje = { x: casa.umbral[0], z: casa.umbral[1], text: m.text, ref: m.ref, ring };
+    gameStore.toast(`Isaías: «Lleva este mensaje a la casa marcada en ${nombreDeBarrio(barrio)}»`, "info");
+    this.pushHud();
+  }
+
+  /** El siervo del rey toma pan del palacio para los pobres (hasta 3). */
+  tomarPan() {
+    this.panesQueLleva = 3;
+    this.player.rig.carrying = true;
+    gameStore.toast("Eliaquim: «Lleva este pan a los pobres que esperan junto a la puerta y en la plaza»", "info");
+    this.pushHud();
+  }
+
+  private crearPobres() {
+    if (this.estado.yo.camino !== "realeza" || this.pobres.length) return;
+    for (const at of POBRES) {
+      const n = this.npc("paseo", at, { yaw: Math.PI / 2, sit: true });
+      if (n) n.wait = 1e9;
+      const label = this.overlay.make("tpl-tag");
+      label.textContent = "🙏";
+      this.pobres.push({ at, label, espera: 0 });
+    }
+  }
+
+  private updateCaminos(dt: number) {
+    const c = this.estado.yo.camino;
+    if (c === "sacerdocio") return;
+    const r = this.player.rig;
+    // el mensaje: se entrega al llegar a la puerta marcada
+    // (aunque se abra la visita de esa casa: el mensaje se entrega al llegar a su puerta)
+    if (this.mensaje && dist(r.x, r.z, this.mensaje.x, this.mensaje.z) < 1.6) {
+      const m = this.mensaje;
+      this.scene.remove(m.ring.mesh);
+      m.ring.dispose();
+      this.mensaje = null;
+      this.fx.sparkle(new THREE.Vector3(r.x, r.y + 1.2, r.z), 20, 0.5);
+      gameStore.toast(`Entregaste el mensaje: «${m.text}» (${m.ref})`, "gold");
+      this.deber("mensaje");
+    }
+    // la oración en el monte (solo el profeta)
+    if (c === "profecia") {
+      if (this.oracionEspera > 0) this.oracionEspera -= dt;
+      const enMonte = r.x > P.MONTE_ORACION[0] && r.x < P.MONTE_ORACION[2] && r.z > P.MONTE_ORACION[1] && r.z < P.MONTE_ORACION[3];
+      const quieto = Math.hypot(this.player.vx, this.player.vz) < 0.3;
+      if (enMonte && quieto && this.oracionEspera <= 0 && !gameStore.busy) {
+        this.oracionT += dt;
+        if (this.oracionT >= ORACION_SEGUNDOS) {
+          this.oracionT = 0;
+          this.oracionEspera = 20;
+          this.fx.sparkle(new THREE.Vector3(r.x, r.y + 1.8, r.z), 26, 0.6);
+          gameStore.toast("Oraste en el monte de la oración · +2 de mérito", "gold");
+          this.deber("oracion");
+        }
+      } else if (!enMonte || !quieto) this.oracionT = 0;
+    }
+    // el pan para los pobres (solo el siervo del rey)
+    if (c === "realeza") {
+      this.crearPobres();
+      for (const p of this.pobres) {
+        if (p.espera > 0) p.espera -= dt;
+        const cabeza = new THREE.Vector3(p.at[0], P.alturaCiudad(p.at[0], p.at[1]) + 1.7, p.at[1]);
+        if (dist(r.x, r.z, p.at[0], p.at[1]) < 16) this.overlay.place(p.label, cabeza);
+        else p.label.style.display = "none";
+        if (this.panesQueLleva > 0 && p.espera <= 0 && dist(r.x, r.z, p.at[0], p.at[1]) < 1.8 && !gameStore.busy) {
+          this.panesQueLleva--;
+          p.espera = 25;
+          if (!this.panesQueLleva) r.carrying = false;
+          this.fx.sparkle(cabeza, 14, 0.4);
+          gameStore.toast("Diste pan a un pobre: «El ojo misericordioso será bendito» (Proverbios 22:9) · +2", "gold");
+          this.deber("pan");
+        }
+      }
+    }
+  }
+
+  /** El aviso de los caminos nuevos (lo que toca hacer ahora), o null. */
+  private avisoCamino(): string | null {
+    const c = this.estado.yo.camino;
+    if (c === "sacerdocio") return null;
+    if (this.mensaje) return `Lleva el mensaje a la casa marcada con el círculo dorado`;
+    if (this.panesQueLleva) return `Llevas ${this.panesQueLleva} ${this.panesQueLleva === 1 ? "pan" : "panes"}: dáselos a los pobres (🙏) de la puerta y la plaza`;
+    if (c === "profecia" && this.oracionT > 0) return `Orando en el monte… ${Math.ceil(ORACION_SEGUNDOS - this.oracionT)} s`;
+    if (this.pasos < 3) {
+      const t =
+        c === "profecia"
+          ? ["Ve a la escuela de los profetas y memoriza un versículo", "Ora en el monte de la oración, al sur de la escuela (quédate quieto)", "Toma un mensaje en la escuela y llévalo a la casa marcada"]
+          : ["Ve al palacio del rey y atiende una audiencia", "Toma pan en el palacio y dáselo a un pobre de la ciudad", "Copia la ley en el palacio"];
+      return `Primeros pasos ${this.pasos + 1}/3: ${t[this.pasos]}`;
+    }
+    return c === "profecia" ? "Sirve como profeta: memoriza en la escuela, ora en el monte y lleva mensajes" : "Sirve al rey: audiencias, pan para los pobres y la copia de la ley";
+  }
+
   // ================================================================ API para la pantalla
   setMuted(m: boolean) {
     this.audio.setMuted(m);
@@ -662,8 +833,10 @@ export class CiudadWorld {
       this.hora = h;
     }
     this.movePlayer(dt);
+    this.opts.online?.tick(dt);
     this.enviarPosicion(dt);
     this.updateZonas();
+    this.updateCaminos(dt);
     this.updateGente(dt);
     this.slowT += dt;
     if (this.slowT > 0.5) {
@@ -810,6 +983,10 @@ export class CiudadWorld {
       this.audio.page();
       switch (z.id) {
         case "templo":
+          if (this.estado.yo.camino !== "sacerdocio") {
+            gameStore.toast(`Solo los sacerdotes sirven dentro del templo. Tu servicio está en ${CAMINOS[this.estado.yo.camino].lugar}.`, "info");
+            break;
+          }
           if (!this.entrando) {
             this.entrando = true;
             this.audio.trumpet();
@@ -827,10 +1004,12 @@ export class CiudadWorld {
           this.abrir({ kind: "ancianos", n: this.consejo });
           break;
         case "escuela":
-          // la escuela de los profetas: aquí se estudia
-          this.abrir({ kind: "estudios" });
+          // la escuela de los profetas: los profetas tienen su servicio; los demás, los estudios
+          this.abrir(this.estado.yo.camino === "profecia" ? { kind: "escuela" } : { kind: "estudios" });
           break;
         case "palacio":
+          this.abrir(this.estado.yo.camino === "realeza" ? { kind: "palacio" } : { kind: "edificio", id: "palacio" });
+          break;
         case "mercado":
           this.abrir({ kind: "edificio", id: z.id as EdificioId });
           break;
@@ -1324,6 +1503,8 @@ export class CiudadWorld {
   }
 
   private aviso(): string {
+    const camino = this.avisoCamino();
+    if (camino) return camino;
     const r = this.player.rig;
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const cerca = this.vecinoCerca();
@@ -1370,6 +1551,7 @@ export class CiudadWorld {
       nivel: e.yo.nivel,
       lugar: this.lugar(),
       aviso: this.aviso(),
+      camino: this.estado.yo.camino,
       fecha: this.fecha.texto,
       fiesta: fh && f ? { id: f.id, nombre: f.nombre, icono: f.icono, dia: fh.dia, de: f.duracion, solemne: !!f.solemne, merito: f.merito } : null,
       hora: t,
@@ -1402,6 +1584,11 @@ export class CiudadWorld {
     this.resizeObs.disconnect();
     this.red.cerrar();
     for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);
+    if (this.mensaje) {
+      this.scene.remove(this.mensaje.ring.mesh);
+      this.mensaje.ring.dispose();
+    }
+    for (const p of this.pobres) this.overlay.remove(p.label);
     for (const z of this.zonas) z.ring.dispose();
     this.player.fig.dispose();
     this.crowd.dispose();

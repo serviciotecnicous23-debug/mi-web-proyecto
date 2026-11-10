@@ -280,6 +280,8 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
       personajeId: ch.id,
       nombre: nombreDe(ch),
       escalon: mia?.escalon ?? "sacerdote",
+      camino: ch.camino,
+      pasos: ch.instruccion,
       barrio: casa.barrio,
       parcela: casa.plot,
       nivel,

@@ -34,8 +34,9 @@ import {
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import {
-  OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCiudad, escalonRank, fetchEstado, instruccionParte, onlineSave, renombrarPersonaje,
+  OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, elegirPersonaje, entrarCiudad, escalonRank, fetchEstado, instruccionParte, onlineSave, renombrarPersonaje,
 } from "./online";
+import { CAMINOS, CAMINOS_LISTA, nombreEscalonCamino, type Camino } from "@shared/caminos";
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
@@ -267,7 +268,23 @@ export default function TemploGame({ game }: { game: GameDef }) {
       cityRef.current?.destroy();
       gameStore.reset();
       if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
-      const c = new mod.CiudadWorld(boxRef.current, r.data, { muted, music, audio: audioRef.current, llegada, alTemplo: () => void irAlTemploRef.current() });
+      const sesion = ses;
+      const c = new mod.CiudadWorld(boxRef.current, r.data, {
+        muted,
+        music,
+        audio: audioRef.current,
+        llegada,
+        alTemplo: () => void irAlTemploRef.current(),
+        // los deberes de la escuela de los profetas y del palacio van a la misma sesión en línea
+        online: sesion ? { duty: (k, n) => sesion.hooks.duty(k, n), tick: (dt) => sesion.hooks.tick(dt) } : undefined,
+        alPaso: async (parte) => {
+          const rr = await instruccionParte(parte);
+          if (!rr.ok || !rr.data) return false;
+          if (sesion) sesion.estado = rr.data.estado;
+          setEstado(rr.data.estado);
+          return true;
+        },
+      });
       c.verOtros(r.data.otros);
       c.audio.ensure();
       // solo en desarrollo: acceso para revisar la ciudad desde la consola
@@ -1265,6 +1282,8 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "vecinos":
     case "vecino":
     case "visita":
+    case "escuela":
+    case "palacio":
       return <CiudadModal modal={modal} />;
   }
 }
@@ -2365,20 +2384,35 @@ function OnlineLobby({
   const t = estado.temporada;
   const [nombre, setNombre] = useState(NOMBRE_PROPIO);
   const [cambiar, setCambiar] = useState(false);
+  // crear otro personaje: primero el camino, después el nombre
+  const [nuevoCamino, setNuevoCamino] = useState<Camino | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const starting = phase === "starting";
+  const personajes = estado.personajes ?? [];
+  const libres = CAMINOS_LISTA.filter((c) => !personajes.some((x) => x.camino === c));
+  const caminoForm: Camino = nuevoCamino ?? (p ? p.camino : "sacerdocio");
+  const listaNombres = caminoForm === "sacerdocio" ? estado.nombres : CAMINOS[caminoForm].nombres;
   const guardar = async () => {
     setBusy(true);
     setError(null);
-    const r = p ? await renombrarPersonaje(nombre) : await crearPersonaje(nombre);
+    const r = p && !nuevoCamino ? await renombrarPersonaje(nombre) : await crearPersonaje(nombre, caminoForm);
     setBusy(false);
     if (r.ok && r.data) {
       onEstado(r.data);
       setCambiar(false);
+      setNuevoCamino(null);
     } else setError(r.data?.message || "No se pudo guardar. Intenta de nuevo.");
   };
-  const ref = estado.nombres.find((x) => x.nombre === nombre)?.ref;
+  const elegir = async (id: number) => {
+    setBusy(true);
+    setError(null);
+    const r = await elegirPersonaje(id);
+    setBusy(false);
+    if (r.ok && r.data) onEstado(r.data);
+    else setError(r.data?.message || "No se pudo elegir. Intenta de nuevo.");
+  };
+  const ref = listaNombres.find((x) => x.nombre === nombre)?.ref;
   return (
     <div
       className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#21436b_0%,#18233a_45%,#0c0a08_100%)] text-white"
@@ -2418,14 +2452,96 @@ function OnlineLobby({
             Sirve en el templo junto con la comunidad y vive en Jerusalén: tienes una casa en un barrio que crece con tu servicio. En el templo no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
           </p>
           <p className="mx-auto mt-1.5 max-w-md text-xs text-sky-100/85">No hace falta haber jugado la historia del templo: todos empiezan desde el primer escalón.</p>
+          <p className="mx-auto mt-1 max-w-md text-xs text-amber-100/90" data-testid="templo-tres-caminos">
+            Tres caminos: 🔥 sacerdote en el templo, 📯 profeta en la escuela de los profetas y 👑 siervo del rey en el palacio. Puedes tener un personaje en cada uno.
+          </p>
         </header>
-        {!p || cambiar ? (
+        {personajes.length > 0 && !cambiar && !nuevoCamino && (
+          <section className="space-y-2 rounded-2xl border border-sky-200/30 bg-black/30 p-3" data-testid="templo-personajes">
+            <h3 className="text-sm font-bold">Tus personajes</h3>
+            <div className="grid gap-1.5">
+              {personajes.map((x) => (
+                <button
+                  key={x.id}
+                  type="button"
+                  disabled={busy || x.activo}
+                  onClick={() => void elegir(x.id)}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm ${x.activo ? "bg-amber-400/25 ring-1 ring-amber-300" : "bg-white/10 hover:bg-white/20"}`}
+                  data-testid={`personaje-${x.camino}`}
+                >
+                  <span className="text-xl">{CAMINOS[x.camino].icono}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold">{x.nombre}</span>
+                    <span className="block text-[11px] text-white/70">
+                      {CAMINOS[x.camino].nombre} · {nombreEscalonCamino(x.camino, x.escalon, escalonNombre(x.escalon))} · {fmt(x.merito)} de mérito
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] font-bold">{x.activo ? "Jugando" : "Elegir"}</span>
+                </button>
+              ))}
+            </div>
+            {libres.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[11px] text-white/70">Puedes tener un personaje en cada camino. Nuevo personaje:</p>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {libres.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setNuevoCamino(c);
+                        setNombre(NOMBRE_PROPIO);
+                      }}
+                      className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-left text-xs hover:bg-white/10"
+                      data-testid={`nuevo-${c}`}
+                    >
+                      <span className="block text-sm font-bold">
+                        {CAMINOS[c].icono} {CAMINOS[c].nombre}
+                      </span>
+                      <span className="block text-white/70">{CAMINOS[c].resumen}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+        {!p || cambiar || nuevoCamino ? (
           <section className="space-y-2.5 rounded-2xl border border-sky-200/30 bg-black/30 p-4" data-testid="templo-personaje-nuevo">
-            <h3 className="font-bold">{p ? "Cambia el nombre de tu sacerdote" : "Tu sacerdote en línea"}</h3>
-            <p className="text-xs text-white/70">Elige el nombre de un sacerdote fiel de la Biblia o usa el de tu cuenta. Así te verá la comunidad.</p>
+            <h3 className="font-bold">
+              {p && !nuevoCamino ? "Cambia el nombre de tu personaje" : nuevoCamino ? `Nuevo personaje: ${CAMINOS[nuevoCamino].nombre}` : "Tu sacerdote en línea"}
+            </h3>
+            {!p && !nuevoCamino && (
+              <div className="grid gap-1.5 sm:grid-cols-3" data-testid="elegir-camino">
+                {CAMINOS_LISTA.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      setNuevoCamino(c === "sacerdocio" ? null : c);
+                      setNombre(NOMBRE_PROPIO);
+                    }}
+                    className={`rounded-xl border px-2.5 py-2 text-left text-[11px] ${caminoForm === c ? "border-amber-300 bg-amber-400/20" : "border-white/15 bg-white/5 hover:bg-white/10"}`}
+                    data-testid={`camino-${c}`}
+                  >
+                    <span className="block text-sm font-bold">
+                      {CAMINOS[c].icono} {CAMINOS[c].nombre}
+                    </span>
+                    <span className="block text-white/70">{CAMINOS[c].resumen}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-white/70">
+              {caminoForm === "sacerdocio"
+                ? "Elige el nombre de un sacerdote fiel de la Biblia o usa el de tu cuenta. Así te verá la comunidad."
+                : caminoForm === "profecia"
+                  ? "Elige el nombre de un profeta o profetisa de la Biblia, o usa el de tu cuenta. Te recibirá Isaías en la escuela."
+                  : "Elige el nombre de un siervo fiel de un rey en la Biblia, o usa el de tu cuenta. Te recibirá Eliaquim en el palacio."}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               <NameChip label="Mi nombre" active={nombre === NOMBRE_PROPIO} onClick={() => setNombre(NOMBRE_PROPIO)} />
-              {estado.nombres.map((n) => (
+              {listaNombres.map((n) => (
                 <NameChip key={n.nombre} label={n.nombre} title={n.ref} active={nombre === n.nombre} onClick={() => setNombre(n.nombre)} />
               ))}
             </div>
@@ -2436,13 +2552,20 @@ function OnlineLobby({
             )}
             {error && <p className="rounded-lg bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>}
             <div className="flex gap-2">
-              {p && (
-                <Button variant="secondary" onClick={() => setCambiar(false)}>
+              {(p || nuevoCamino) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setCambiar(false);
+                    setNuevoCamino(null);
+                  }}
+                >
                   Cancelar
                 </Button>
               )}
               <Button className="flex-1 rounded-full bg-sky-300 font-bold text-sky-950 hover:bg-sky-200" disabled={busy} onClick={() => void guardar()} data-testid="button-personaje-guardar">
-                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />} {p ? "Guardar" : "Consagrarme como sacerdote"}
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}{" "}
+                {p && !nuevoCamino ? "Guardar" : caminoForm === "profecia" ? "Entrar a la escuela de los profetas" : caminoForm === "realeza" ? "Entrar al servicio del rey" : "Consagrarme como sacerdote"}
               </Button>
             </div>
           </section>
@@ -2453,7 +2576,7 @@ function OnlineLobby({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-lg font-black">{p.nombre}</p>
                 <p className="text-xs text-sky-100">
-                  {escalonNombre(estado.mio?.escalon)}
+                  {CAMINOS[p.camino].icono} {nombreEscalonCamino(p.camino, estado.mio?.escalon, escalonNombre(estado.mio?.escalon))}
                   {estado.mio?.cargo && t.dePrueba ? " (de prueba)" : ""} · {fmt(estado.mio?.merito || 0)} de mérito
                 </p>
                 <p className="text-[11px] text-sky-100/80" data-testid="templo-estudios-estado">
@@ -2462,11 +2585,15 @@ function OnlineLobby({
                 </p>
                 <p className="text-[11px] text-sky-100/80" data-testid="templo-instruccion-estado">
                   <GraduationCap className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" />
-                  {p.instruccion >= 3
-                    ? "Instruido en el servicio del templo"
-                    : estado.requisito.conoceTemplo
-                      ? `Instrucción del sacerdote: ${p.instruccion} de 3 (opcional)`
-                      : `Instrucción del sacerdote: ${p.instruccion} de 3 · Azarías te espera en el templo`}
+                  {p.camino !== "sacerdocio"
+                    ? p.instruccion >= 3
+                      ? "Primeros pasos completos"
+                      : `Primeros pasos: ${p.instruccion} de 3 · ${CAMINOS[p.camino].guia.split(",")[0]} te espera`
+                    : p.instruccion >= 3
+                      ? "Instruido en el servicio del templo"
+                      : estado.requisito.conoceTemplo
+                        ? `Instrucción del sacerdote: ${p.instruccion} de 3 (opcional)`
+                        : `Instrucción del sacerdote: ${p.instruccion} de 3 · Azarías te espera en el templo`}
                 </p>
               </div>
               <button
@@ -2485,7 +2612,9 @@ function OnlineLobby({
             </Button>
             <p className="text-center text-[11px] text-white/70">
               <Home className="-mt-0.5 mr-1 inline h-3.5 w-3.5" />
-              Llegas a la puerta de tu casa. El templo está subiendo la escalinata (o en «Ir a…»).
+              {p.camino === "sacerdocio"
+              ? "Llegas a la puerta de tu casa. El templo está subiendo la escalinata (o en «Ir a…»)."
+              : `Llegas a la puerta de tu casa. Tu servicio está en ${CAMINOS[p.camino].lugar}.`}
             </p>
             {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100">🔥 {estado.enLinea} sirviendo en el templo en línea ahora</p>}
           </section>
@@ -2633,6 +2762,7 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
           <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días y juntaron al menos {MERITO_MIN_CARGO} de mérito.</li>
           <li>Para ser principal sacerdote hay que aprobar el estudio «El sacerdocio de Aarón». Para ser sumo sacerdote, haber sido principal en una temporada anterior y aprobar «El Día de la Expiación». Los estudios aprobados son para siempre.</li>
           <li>Todos empiezan como sacerdotes nuevos, hayan jugado o no la historia del templo.</li>
+          <li>Los cargos con cupo son del sacerdocio. En la escuela de los profetas y en el palacio del rey se sube de escalón con el mérito: Vidente y Escriba del rey con {MERITO_TURNO}.</li>
           <li>Quien tiene un cargo y pasa 7 días sin servir lo pierde, y el cargo pasa al siguiente de la lista.</li>
           <li>Mientras no se abran el palacio del rey y la escuela de los profetas, los cargos son de prueba.</li>
         </ul>
