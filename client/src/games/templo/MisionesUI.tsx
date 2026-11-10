@@ -7,6 +7,7 @@ import { Loader2, Target } from "lucide-react";
 import { FACTOR_JUNTOS, JUNTOS_DESDE, MERITO_BARRIO, MERITO_ENCARGO, MERITO_ENCARGOS_TODOS, type MisionesEstado } from "@shared/misiones";
 import { gameStore } from "./store";
 import { Card } from "./ui";
+import { ParaHoy } from "./ParaHoyUI";
 
 export async function traerMisiones(): Promise<{ ok: boolean; data: (MisionesEstado & { message?: string }) | null }> {
   try {
@@ -54,6 +55,7 @@ export function MisionesModal() {
         )}
         {m && (
           <>
+            <ParaHoy misiones={m} />
             <section className="space-y-2" data-testid="misiones-encargos">
               <p className="font-black">Encargos de hoy</p>
               <p className="text-xs text-stone-500">

@@ -34,6 +34,7 @@ export const NOVEDADES: Novedad[] = [
       "🤲 Pedidos del barrio: una vez por día pide a tus vecinos harina, aceite o corderos para tu ofrenda (desde «Tu casa»). En el púlpito de la plaza ves lo que piden ellos y les das de tu alfolí: ayudar da gozo.",
       "🏅 Concurso bíblico de la semana (botón de la medalla o en el púlpito de la plaza): las mismas 10 preguntas para todos, 20 segundos cada una. Los tres primeros ganan gozo y quedan como campeones.",
       "🧱 El muro caído: al norte de la puerta de la ciudad hay un tramo de la muralla en el suelo. Cada deber de cualquiera (sacerdote, profeta o siervo del rey) pone una piedra, y el muro se levanta tramo por tramo para todos (2 Crónicas 32:5).",
+      "🗓️ «Para hoy» (arriba de las Misiones): lo que puedes hacer ahora, junto y con su botón: el concurso, tu huerto y tu horno, las reuniones abiertas, los pedidos de tus vecinos y el muro.",
       "🏆 Logros en Jerusalén: constructor del muro, buen vecino, maestro en casa, campeón del concurso, estudioso de la Palabra y fiel a su barrio. Los tuyos están en «Tu casa»; los de tus vecinos se ven al visitar su casa o tocarlos en la calle.",
     ],
   },
