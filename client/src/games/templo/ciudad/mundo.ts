@@ -25,7 +25,7 @@ import {
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
-import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
+import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
 import type { ReunionesEstado } from "@shared/reuniones";
 import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
@@ -723,6 +723,29 @@ export class CiudadWorld {
     this.pushHud();
   }
 
+  /** La cátedra de la oración está abierta (la oración se cumple al responder). */
+  private catedraAbierta = false;
+
+  /** Terminó la cátedra: la oración se cumple (el deber de orar, como siempre). */
+  terminarOracion() {
+    const r = this.player.rig;
+    this.catedraAbierta = false;
+    this.oracionT = 0;
+    this.oracionEspera = 20;
+    r.pose = "idle";
+    this.fx.sparkle(new THREE.Vector3(r.x, r.y + 1.8, r.z), 26, 0.6);
+    gameStore.toast("Oraste en el monte de la oración", "gold");
+    this.deber("oracion");
+  }
+
+  /** Cerró la cátedra sin responder: puede volver a arrodillarse. */
+  cancelarOracion() {
+    this.catedraAbierta = false;
+    this.oracionT = 0;
+    this.oracionEspera = 3;
+    this.player.rig.pose = "idle";
+  }
+
   /** El círculo y el letrero del lugar de oración (solo se ven si eres profeta). */
   private lugarOracion: { ring: Ring; etiqueta: HTMLDivElement } | null = null;
   private crearLugarOracion() {
@@ -830,17 +853,14 @@ export class CiudadWorld {
         this.oracionT += dt;
         r.pose = "kneel";
         r.yaw = turn(r.yaw, -Math.PI / 2, dt * 4);
-        if (this.oracionT >= ORACION_SEGUNDOS) {
-          this.oracionT = 0;
-          this.oracionEspera = 20;
-          r.pose = "idle";
-          this.fx.sparkle(new THREE.Vector3(r.x, r.y + 1.8, r.z), 26, 0.6);
-          gameStore.toast("Oraste en el monte de la oración · +2 de mérito", "gold");
-          this.deber("oracion");
+        // arrodillado, Isaías le da la cátedra de la oración: aprende mientras ora
+        if (this.oracionT >= 1.2 && !this.catedraAbierta) {
+          this.catedraAbierta = true;
+          gameStore.push({ kind: "catedra", area: "oracion" });
         }
       } else {
-        if (r.pose === "kneel") r.pose = "idle";
-        if (!enMonte || !quieto) this.oracionT = 0;
+        if (r.pose === "kneel" && !this.catedraAbierta) r.pose = "idle";
+        if ((!enMonte || !quieto) && !this.catedraAbierta) this.oracionT = 0;
       }
       if (this.lugarOracion) {
         const cerca = dist(r.x, r.z, ox, oz) < 14;
@@ -878,11 +898,11 @@ export class CiudadWorld {
     if (c === "sacerdocio") return null;
     if (this.mensaje) return `Lleva el mensaje a la casa marcada con el círculo dorado`;
     if (this.panesQueLleva) return `Llevas ${this.panesQueLleva} ${this.panesQueLleva === 1 ? "pan" : "panes"}: dáselos a los pobres (🙏) de la puerta y la plaza`;
-    if (c === "profecia" && this.oracionT > 0) return `Orando en el monte… ${Math.ceil(ORACION_SEGUNDOS - this.oracionT)} s`;
+    if (c === "profecia" && this.oracionT > 0) return this.catedraAbierta ? "Orando en el monte: Isaías te enseña a orar" : "Orando en el monte… quédate quieto";
     if (this.pasos < 3) {
       const t =
         c === "profecia"
-          ? ["Entra a la escuela de los profetas y memoriza un versículo en el atril de Isaías", "Ora al pie del monte, junto a la escuela: quédate quieto en el círculo violeta", "Toma un mensaje en la entrada de la escuela y llévalo a la casa marcada"]
+          ? ["Entra a la escuela de los profetas y memoriza un versículo en el atril de Isaías", "Ora al pie del monte, junto a la escuela: arrodíllate en el círculo violeta y aprende con Isaías", "Toma un mensaje en la entrada de la escuela y llévalo a la casa marcada"]
           : ["Entra al palacio del rey y atiende una audiencia junto al trono", "Toma pan en la despensa del palacio y dáselo a un pobre de la ciudad", "Copia la ley en la sala de los escribas del palacio"];
       // la flecha del borde de la pantalla señala adónde ir
       return `Primeros pasos ${this.pasos + 1}/3: ${t[this.pasos]}`;
