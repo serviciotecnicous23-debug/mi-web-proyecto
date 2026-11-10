@@ -46,7 +46,9 @@ import { girarPantalla, orientacionActual } from "./motor/controles";
 import { AvisoVersionNueva, NovedadesAviso } from "./novedades";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
+import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
+import { CasaHudLayer } from "./CasaUI";
 import type { CiudadEstado } from "@shared/ciudad";
 import { GOZO } from "@shared/mercado";
 
@@ -110,7 +112,17 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const audioRef = useRef<TempleAudio | null>(null);
   const irACiudadRef = useRef<(llegada: "templo" | "casa", e?: JerusalenEstado) => Promise<boolean>>(async () => false);
   const irAlTemploRef = useRef<() => Promise<void>>(async () => undefined);
-  const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado, setEstado: setCiudadEstado }), [city, ciudadEstado]);
+  // La casa por dentro: se entra desde la ciudad (que queda dormida) y se vuelve a la misma puerta.
+  const casaMod = useRef<Promise<typeof import("./casa/mundo-casa")> | null>(null);
+  const [casaW, setCasaW] = useState<CasaWorld | null>(null);
+  const casaRef = useRef<CasaWorld | null>(null);
+  casaRef.current = casaW;
+  const ciudadEstadoRef = useRef<CiudadEstado | null>(null);
+  ciudadEstadoRef.current = ciudadEstado;
+  const entrarACasaRef = useRef<(o?: { personajeId?: number; remodelar?: boolean }) => Promise<void>>(async () => undefined);
+  const salirDeCasaRef = useRef<() => void>(() => undefined);
+  const entrarACasa = useCallback((o?: { personajeId?: number; remodelar?: boolean }) => void entrarACasaRef.current(o), []);
+  const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado, setEstado: setCiudadEstado, entrarACasa }), [city, ciudadEstado, entrarACasa]);
 
   // Se busca la partida (en el teléfono y, con cuenta, en el servidor) y se descarga el mundo.
   useEffect(() => {
@@ -268,6 +280,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
       worldRef.current?.destroy();
       worldRef.current = null;
       setWorld(null);
+      casaRef.current?.destroy();
+      casaRef.current = null;
+      setCasaW(null);
       cityRef.current?.destroy();
       gameStore.reset();
       if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
@@ -278,6 +293,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
         audio: audioRef.current,
         llegada,
         alTemplo: () => void irAlTemploRef.current(),
+        alEntrarCasa: () => void entrarACasaRef.current(),
         // los deberes de la escuela de los profetas y del palacio van a la misma sesión en línea
         online: sesion ? { duty: (k, n) => sesion.hooks.duty(k, n), tick: (dt) => sesion.hooks.tick(dt) } : undefined,
         alPaso: async (parte) => {
@@ -318,6 +334,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
       c?.volverAPermitirTemplo();
       return;
     }
+    casaRef.current?.destroy();
+    casaRef.current = null;
+    setCasaW(null);
     c?.destroy();
     cityRef.current = null;
     setCity(null);
@@ -330,6 +349,52 @@ export default function TemploGame({ game }: { game: GameDef }) {
   }, [crearTemplo]);
   irAlTemploRef.current = irAlTemplo;
 
+  /** Entrar a la casa (la tuya o la de un vecino): la ciudad se duerme y la casa se dibuja encima. */
+  const entrarACasaReal = useCallback(async (o?: { personajeId?: number; remodelar?: boolean }) => {
+    const c = cityRef.current;
+    if (!c || !boxRef.current || casaRef.current) return;
+    setCambio(o?.personajeId ? "Entrando a la casa del vecino…" : "Entrando a tu casa…");
+    if (!casaMod.current) casaMod.current = import("./casa/mundo-casa");
+    const [r, mod] = await Promise.all([
+      fetch(`/api/jerusalen/casa/interior${o?.personajeId ? `/${o.personajeId}` : ""}`, { credentials: "include", cache: "no-store" })
+        .then(async (res) => ({ ok: res.ok, data: (await res.json().catch(() => null)) as (import("@shared/casa-interior").InteriorEstado & { message?: string }) | null }))
+        .catch(() => ({ ok: false, data: null })),
+      casaMod.current.catch(() => null),
+    ]);
+    if (!r.ok || !r.data || !mod || !boxRef.current || cityRef.current !== c) {
+      setCambio(null);
+      gameStore.toast(r.data?.message || "No se pudo entrar a la casa. Revisa tu conexión.", "warn");
+      return;
+    }
+    gameStore.close();
+    c.dormir(true);
+    const e = ciudadEstadoRef.current;
+    const w = new mod.CasaWorld(boxRef.current, r.data, {
+      audio: c.audio,
+      look: c.lookJugador(),
+      ropa: e?.yo.ropa,
+      siervos: e?.privada.siervos,
+      alSalir: () => salirDeCasaRef.current(),
+      alHorno: () => gameStore.push({ kind: "casa", pestana: "huerto" }),
+      remodelar: o?.remodelar,
+    });
+    if (import.meta.env.DEV) (window as unknown as { __casa?: CasaWorld }).__casa = w;
+    casaRef.current = w;
+    setCasaW(w);
+    setCambio(null);
+  }, []);
+  entrarACasaRef.current = entrarACasaReal;
+
+  const salirDeCasa = useCallback(() => {
+    const w = casaRef.current;
+    if (!w) return;
+    w.destroy();
+    casaRef.current = null;
+    setCasaW(null);
+    cityRef.current?.dormir(false);
+  }, []);
+  salirDeCasaRef.current = salirDeCasa;
+
   // Salir de Jerusalén en línea: se mandan los deberes que faltan y se vuelve a la sala.
   const exitOnline = useCallback(() => {
     sessionRef.current?.close();
@@ -338,6 +403,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
     worldRef.current?.destroy();
     worldRef.current = null;
     setWorld(null);
+    casaRef.current?.destroy();
+    casaRef.current = null;
+    setCasaW(null);
     cityRef.current?.destroy();
     cityRef.current = null;
     setCity(null);
@@ -369,6 +437,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
       setPaused(next);
       world?.setPaused(next);
       city?.setPaused(next);
+      casaRef.current?.setPaused(next);
       (world ?? city)?.audio.click();
     },
     [paused, world, city],
@@ -475,7 +544,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
         >
           <div ref={boxRef} className="absolute inset-0" />
           {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
-          {phase === "playing" && city && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
+          {phase === "playing" && city && !casaW && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
+          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} />}
           {phase === "playing" && paused && (
             <PauseMenu
               onResume={() => togglePause(false)}
