@@ -30,6 +30,7 @@ import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCi
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
+import { setVibracion, vibracionActiva } from "./motor/entrada";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
@@ -847,7 +848,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
         )}
         {hint && !modal && (
           <div className="rounded-full bg-black/35 px-3 py-1 text-xs text-white/85 backdrop-blur-sm">
-            Toca y arrastra para caminar · computadora: flechas o W A S D
+            Toca el piso para ir o arrastra para caminar (más lejos para correr) · pellizca para acercar · computadora: W A S D, Mayús corre
           </div>
         )}
       </div>
@@ -866,7 +867,7 @@ function IconBtn({ label, onClick, children, testid, active, className = "flex" 
         world?.audio.click();
         onClick();
       }}
-      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
+      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 pointer-coarse:h-11 pointer-coarse:w-11 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
       data-testid={testid}
     >
       {children}
@@ -890,6 +891,8 @@ function PauseMenu(props: {
   onExitOnline: () => void;
 }) {
   const [askGen, setAskGen] = useState(false);
+  const [vibra, setVibra] = useState(() => vibracionActiva());
+  const puedeVibrar = typeof navigator !== "undefined" && "vibrate" in navigator;
   const margen = {
     paddingTop: "calc(0.75rem + var(--tpl-st, 0px))",
     paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))",
@@ -938,6 +941,19 @@ function PauseMenu(props: {
           <Button variant="secondary" onClick={props.onMusic} className={props.music ? "" : "opacity-60"}>
             <Music className="mr-1 h-4 w-4" /> {props.music ? "Música" : "Sin música"}
           </Button>
+          {puedeVibrar && (
+            <Button
+              variant="secondary"
+              className={`col-span-2 ${vibra ? "" : "opacity-60"}`}
+              onClick={() => {
+                setVibracion(!vibra);
+                setVibra(!vibra);
+              }}
+              data-testid="button-pausa-vibrar"
+            >
+              {vibra ? "Vibración: sí" : "Vibración: no"}
+            </Button>
+          )}
           <Button variant="secondary" className="col-span-2" onClick={() => gameStore.push({ kind: "help" })}>
             <CircleHelp className="mr-1 h-4 w-4" /> Ayuda
           </Button>

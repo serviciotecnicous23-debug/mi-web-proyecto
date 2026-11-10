@@ -25,6 +25,8 @@ import {
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
+import { Entrada, vibrar } from "../motor/entrada";
+import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 
@@ -168,9 +170,12 @@ export class CiudadWorld {
   private camPh = 0.98;
   private skyTmp = { a: new THREE.Color(), b: new THREE.Color(), c: new THREE.Color() };
 
-  // entrada
-  private keys = new Set<string>();
-  private joy = { on: false, id: -1, ox: 0, oy: 0, x: 0, y: 0 };
+  // entrada (toques, ratón y teclado: motor/entrada.ts) y el camino al punto tocado
+  private entrada!: Entrada;
+  private ruta: V2[] = [];
+  private rutaAtasco = 0;
+  private marca: Ring | null = null;
+  private marcaT = 0;
 
   constructor(container: HTMLElement, estado: CiudadEstado, opts: CiudadOpts) {
     this.container = container;
@@ -243,13 +248,10 @@ export class CiudadWorld {
     this.hoyDia = this.fecha.numero;
     this.syncFiesta();
 
-    canvas.addEventListener("pointerdown", this.onPointerDown);
-    window.addEventListener("pointermove", this.onPointerMove);
-    window.addEventListener("pointerup", this.onPointerUp);
-    window.addEventListener("pointercancel", this.onPointerUp);
-    window.addEventListener("keydown", this.onKeyDown);
-    window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("blur", this.onBlur);
+    this.entrada = new Entrada(container, canvas, this.overlay, { ocupado: () => gameStore.busy, alPrimerToque: () => this.audio.ensure() });
+    this.marca = new Ring(0.55, "#ffffff", false);
+    this.marca.mesh.visible = false;
+    this.scene.add(this.marca.mesh);
     document.addEventListener("visibilitychange", this.onVisibility);
     this.resizeObs = new ResizeObserver(() => this.resize());
     this.resizeObs.observe(container);
@@ -391,6 +393,7 @@ export class CiudadWorld {
     if (!texto || now - this.ultimaFrase < FRASE_CADA_MS) return false;
     this.ultimaFrase = now;
     this.red.enviar({ t: "frase", id });
+    vibrar(10);
     if (!this.miBurbuja) this.miBurbuja = { el: this.overlay.make("tpl-frase mia"), hasta: 0 };
     this.miBurbuja.el.textContent = texto;
     this.miBurbuja.hasta = now + (fraseRapida(id)?.ref ? 7000 : 4500);
@@ -552,6 +555,7 @@ export class CiudadWorld {
     r.y = P.alturaCiudad(x, z);
     r.yaw = yaw;
     this.player.vx = this.player.vz = 0;
+    this.ruta = [];
     // el círculo donde aparece no se dispara solo
     for (const zn of this.zonas) zn.inside = dist(x, z, zn.x, zn.z) < zn.r;
     this.camTarget.set(x, r.y, z);
@@ -669,35 +673,61 @@ export class CiudadWorld {
   }
 
   // ---------------------------------------------------------------- el aprendiz
-  private inputVector(): [number, number] {
-    let x = 0, y = 0;
-    if (this.keys.has("arrowleft") || this.keys.has("a")) x -= 1;
-    if (this.keys.has("arrowright") || this.keys.has("d")) x += 1;
-    if (this.keys.has("arrowup") || this.keys.has("w")) y += 1;
-    if (this.keys.has("arrowdown") || this.keys.has("s")) y -= 1;
-    if (this.joy.on) {
-      x += this.joy.x;
-      y += this.joy.y;
+  /** Un toque corto en el piso: el aprendiz va caminando solo hasta ahí (por el camino más corto). */
+  private irAlToque() {
+    const t = this.entrada.tomarToque();
+    if (!t) return;
+    const r = this.player.rig;
+    const u = t.x / this.w, v = t.y / this.h;
+    let p = haciaElPiso(this.camera, u, v, P.SUELO);
+    if (!p) return;
+    // segunda vuelta con la altura del piso tocado (el monte y la escalinata están más arriba)
+    p = haciaElPiso(this.camera, u, v, P.alturaCiudad(p[0], p[1])) ?? p;
+    let [x, z] = p;
+    if (!P.caminable(x, z)) return;
+    [x, z] = collide(x, z, PLAYER_R, this.rects, this.circles);
+    this.ruta = this.nav.path(r.x, r.z, x, z);
+    this.rutaAtasco = 0;
+    if (this.marca) {
+      this.marca.set(x, P.alturaCiudad(x, z), z);
+      this.marca.mesh.visible = true;
+      this.marcaT = 0.9;
     }
-    const m = Math.hypot(x, y);
-    if (m > 1) {
-      x /= m;
-      y /= m;
-    }
-    return [x, y];
   }
 
   private movePlayer(dt: number) {
     const p = this.player;
     const r = p.rig;
-    const [ix, iy] = this.inputVector();
-    const th = 0.36;
-    const fx = -Math.cos(th), fz = -Math.sin(th);
-    const rx = -fz, rz = fx;
-    const dx = rx * ix + fx * iy;
-    const dz = rz * ix + fz * iy;
-    const sp = 5.4;
-    const k = Math.min(1, dt * 12);
+    this.irAlToque();
+    const [ix, iy] = this.entrada.vector();
+    let dx = 0, dz = 0;
+    if (Math.hypot(ix, iy) > 0.01) {
+      // el joystick o el teclado mandan (y cortan el camino al punto tocado)
+      this.ruta = [];
+      const th = 0.36;
+      const fx = -Math.cos(th), fz = -Math.sin(th);
+      const rx = -fz, rz = fx;
+      dx = rx * ix + fx * iy;
+      dz = rz * ix + fz * iy;
+    } else if (this.ruta.length) {
+      const [tx, tz] = this.ruta[0];
+      const ex = tx - r.x, ez = tz - r.z;
+      const d = Math.hypot(ex, ez);
+      if (d < 0.3) this.ruta.shift();
+      else {
+        dx = ex / d;
+        dz = ez / d;
+      }
+      this.rutaAtasco = Math.hypot(p.vx, p.vz) < 0.4 ? this.rutaAtasco + dt : 0;
+      if (this.rutaAtasco > 1.2) this.ruta = [];
+    }
+    if (this.marca && this.marcaT > 0) {
+      this.marcaT -= dt;
+      if (this.marcaT <= 0 || !this.ruta.length) this.marca.mesh.visible = false;
+    }
+    // la ciudad es grande: un poco más rápido que en el templo, y se puede correr
+    const sp = 5.6 * (this.entrada.corre ? 1.3 : 1);
+    const k = Math.min(1, dt * 14);
     p.vx += (dx * sp - p.vx) * k;
     p.vz += (dz * sp - p.vz) * k;
     const ox = r.x, oz = r.z;
@@ -806,9 +836,9 @@ export class CiudadWorld {
   }
 
   private abrir(m: Modal) {
-    this.keys.clear();
-    this.joy.on = false;
-    this.overlay.joystick(false);
+    this.entrada.soltar();
+    this.ruta = [];
+    vibrar(12);
     gameStore.push(m);
   }
 
@@ -1197,7 +1227,7 @@ export class CiudadWorld {
   private updateCamera(dt: number) {
     const r = this.player.rig;
     const portrait = this.camera.aspect < 0.85;
-    const d0 = portrait ? 24 : this.camera.aspect < 1.2 ? 22 : 20.5;
+    const d0 = (portrait ? 19.5 : this.camera.aspect < 1.2 ? 18.5 : 17) * this.entrada.zoom;
     const focus = new THREE.Vector3(r.x + this.player.vx * 0.22, r.y, r.z + this.player.vz * 0.22);
     const k = 1 - Math.exp(-dt * 5);
     this.camTarget.lerp(focus, k);
@@ -1349,68 +1379,7 @@ export class CiudadWorld {
     gameStore.setCiudad(hud);
   }
 
-  // ================================================================ entrada
-  private onPointerDown = (e: PointerEvent) => {
-    this.audio.ensure();
-    if (e.button !== 0 && e.pointerType === "mouse") return;
-    const rect = this.container.getBoundingClientRect();
-    this.joy.on = true;
-    this.joy.id = e.pointerId;
-    this.joy.ox = e.clientX - rect.left;
-    this.joy.oy = e.clientY - rect.top;
-    this.joy.x = 0;
-    this.joy.y = 0;
-    this.overlay.joystick(true, this.joy.ox, this.joy.oy, this.joy.ox, this.joy.oy);
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    e.preventDefault();
-  };
-
-  private onPointerMove = (e: PointerEvent) => {
-    if (!this.joy.on || e.pointerId !== this.joy.id) return;
-    const rect = this.container.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    let dx = x - this.joy.ox, dy = y - this.joy.oy;
-    const R = 52;
-    const m = Math.hypot(dx, dy);
-    if (m > R) {
-      dx = (dx / m) * R;
-      dy = (dy / m) * R;
-    }
-    const dead = 6;
-    this.joy.x = m < dead ? 0 : dx / R;
-    this.joy.y = m < dead ? 0 : -dy / R;
-    this.overlay.joystick(true, this.joy.ox, this.joy.oy, this.joy.ox + dx, this.joy.oy + dy);
-  };
-
-  private onPointerUp = (e: PointerEvent) => {
-    if (e.pointerId !== this.joy.id) return;
-    this.joy.on = false;
-    this.joy.x = this.joy.y = 0;
-    this.overlay.joystick(false);
-  };
-
-  private onKeyDown = (e: KeyboardEvent) => {
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    const k = e.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
-      if (gameStore.busy) return;
-      this.keys.add(k);
-      this.audio.ensure();
-      e.preventDefault();
-    }
-  };
-
-  private onKeyUp = (e: KeyboardEvent) => {
-    this.keys.delete(e.key.toLowerCase());
-  };
-
-  private onBlur = () => {
-    this.keys.clear();
-    this.joy.on = false;
-    this.overlay.joystick(false);
-  };
-
+  // ================================================================ entrada (motor/entrada.ts)
   private onVisibility = () => {
     if (document.hidden) this.audio.suspend();
     else {
@@ -1424,13 +1393,8 @@ export class CiudadWorld {
     this.running = false;
     cancelAnimationFrame(this.raf);
     const canvas = this.renderer.domElement;
-    canvas.removeEventListener("pointerdown", this.onPointerDown);
-    window.removeEventListener("pointermove", this.onPointerMove);
-    window.removeEventListener("pointerup", this.onPointerUp);
-    window.removeEventListener("pointercancel", this.onPointerUp);
-    window.removeEventListener("keydown", this.onKeyDown);
-    window.removeEventListener("keyup", this.onKeyUp);
-    window.removeEventListener("blur", this.onBlur);
+    this.entrada.destruir();
+    this.marca?.dispose();
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();
     this.red.cerrar();

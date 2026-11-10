@@ -36,6 +36,8 @@ import type { DeberId } from "@shared/jerusalen";
 import type { OnlineHooks } from "./online";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import { casoPorId, elegirCaso } from "./casos";
+import { Entrada, vibrar } from "./motor/entrada";
+import { haciaElPiso } from "./motor/camara";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -193,9 +195,12 @@ export class TempleWorld {
   private resizeObs: ResizeObserver;
   private unsub: () => void;
 
-  // entrada
-  private keys = new Set<string>();
-  private joy = { on: false, id: -1, ox: 0, oy: 0, x: 0, y: 0 };
+  // entrada (toques, ratón y teclado: motor/entrada.ts) y el camino al punto tocado
+  private entrada!: Entrada;
+  private ruta: V2[] = [];
+  private rutaAtasco = 0;
+  private marca: Ring | null = null;
+  private marcaT = 0;
 
   // tiempos
   private timers = { hud: 0, save: 0, remote: 0, score: 0, slow: 0, spawn: 2.5, pick: 0, hand: 0, present: 0, pay: 0, payOrb: 0, quizCool: 20, examCool: 0, fireWarn: 0, purityWarn: 0, carryWarn: 0, wash: 0, collect: 0, question: 25, caso: 150 };
@@ -337,13 +342,10 @@ export class TempleWorld {
     this.refreshPads();
 
     // entrada y tamaño
-    canvas.addEventListener("pointerdown", this.onPointerDown);
-    window.addEventListener("pointermove", this.onPointerMove);
-    window.addEventListener("pointerup", this.onPointerUp);
-    window.addEventListener("pointercancel", this.onPointerUp);
-    window.addEventListener("keydown", this.onKeyDown);
-    window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("blur", this.onBlur);
+    this.entrada = new Entrada(container, canvas, this.overlay, { ocupado: () => gameStore.busy, alPrimerToque: () => this.audio.ensure() });
+    this.marca = new Ring(0.55, "#ffffff", false);
+    this.marca.mesh.visible = false;
+    this.scene.add(this.marca.mesh);
     document.addEventListener("visibilitychange", this.onVisibility);
     window.addEventListener("pagehide", this.onPageHide);
     this.resizeObs = new ResizeObserver(() => this.resize());
@@ -394,6 +396,7 @@ export class TempleWorld {
     else if (this.s.quizzes[quizId] !== true) this.s.quizzes[quizId] = false;
     const p = this.playerChest();
     if (correct) {
+      vibrar(15);
       this.audio.correct();
       if (first) {
         this.s.sabiduria += 1;
@@ -425,6 +428,7 @@ export class TempleWorld {
     this.s.gozo -= cost;
     this.s.upgrades[id] = lvl + 1;
     this.applyCapacity();
+    vibrar([25, 40, 25]);
     this.audio.build();
     this.fx.sparkle(this.playerChest(), 30, 0.6);
     this.persist();
@@ -767,7 +771,8 @@ export class TempleWorld {
   }
 
   private speed() {
-    return 4.0 + 0.45 * (this.s.upgrades.paso || 0);
+    // arranque más ágil y casi el mismo tope (estudio de 2026-11-09: 4,4 + 0,35 por nivel)
+    return 4.4 + 0.35 * (this.s.upgrades.paso || 0);
   }
 
   private applyCapacity() {
@@ -802,22 +807,27 @@ export class TempleWorld {
   }
 
   // ---------------------------------------------------------------- jugador
-  private inputVector(): [number, number] {
-    let x = 0, y = 0;
-    if (this.keys.has("arrowleft") || this.keys.has("a")) x -= 1;
-    if (this.keys.has("arrowright") || this.keys.has("d")) x += 1;
-    if (this.keys.has("arrowup") || this.keys.has("w")) y += 1;
-    if (this.keys.has("arrowdown") || this.keys.has("s")) y -= 1;
-    if (this.joy.on) {
-      x += this.joy.x;
-      y += this.joy.y;
+  /** Un toque corto en el piso: el aprendiz va caminando solo hasta ahí (por el camino más corto). */
+  private irAlToque() {
+    const t = this.entrada.tomarToque();
+    if (!t || this.finale || this.ceremony > 0) return;
+    const r = this.player.rig;
+    const u = t.x / this.w, v = t.y / this.h;
+    let p = haciaElPiso(this.camera, u, v, r.y);
+    if (!p) return;
+    // segunda vuelta con la altura del piso tocado (la escalinata y las gradas no están a la misma altura)
+    p = haciaElPiso(this.camera, u, v, floorHeight(p[0], p[1])) ?? p;
+    let [x, z] = p;
+    if (!walkableArea(x, z)) return;
+    const o = this.obstacles();
+    [x, z] = collide(x, z, PLAYER_R, o.rects, o.circles);
+    this.ruta = this.nav.path(r.x, r.z, x, z);
+    this.rutaAtasco = 0;
+    if (this.marca) {
+      this.marca.set(x, floorHeight(x, z), z);
+      this.marca.mesh.visible = true;
+      this.marcaT = 0.9;
     }
-    const m = Math.hypot(x, y);
-    if (m > 1) {
-      x /= m;
-      y /= m;
-    }
-    return [x, y];
   }
 
   private camBasis(): { fx: number; fz: number; rx: number; rz: number } {
@@ -827,7 +837,9 @@ export class TempleWorld {
   }
 
   private obstacles(): { rects: Rect[]; circles: typeof STATIC_CIRCLES } {
-    const rects = [...STATIC_RECTS, OUTER_BLOCK];
+    // En el juego local la puerta del gran atrio no deja bajar la escalinata. En Jerusalén en línea
+    // la escalinata lleva a la ciudad: quien vuelve aparece arriba y tiene que poder entrar.
+    const rects = this.online?.toCity ? [...STATIC_RECTS] : [...STATIC_RECTS, OUTER_BLOCK];
     if (!this.s.built.santuario) rects.push(DOOR_RECT);
     if (!this.s.finale) rects.push(VEIL_RECT);
     if (!this.s.built.puertas) rects.push(GATE_RECT);
@@ -845,13 +857,38 @@ export class TempleWorld {
   private movePlayer(dt: number) {
     const p = this.player;
     const r = p.rig;
-    let [ix, iy] = this.inputVector();
-    if (this.finale || this.ceremony > 0) ix = iy = 0;
-    const b = this.camBasis();
-    const dx = b.rx * ix + b.fx * iy;
-    const dz = b.rz * ix + b.fz * iy;
-    const sp = this.speed();
-    const k = Math.min(1, dt * 12);
+    this.irAlToque();
+    let [ix, iy] = this.entrada.vector();
+    if (this.finale || this.ceremony > 0) {
+      ix = iy = 0;
+      this.ruta = [];
+    }
+    let dx = 0, dz = 0;
+    if (Math.hypot(ix, iy) > 0.01) {
+      // el joystick o el teclado mandan (y cortan el camino al punto tocado)
+      this.ruta = [];
+      const b = this.camBasis();
+      dx = b.rx * ix + b.fx * iy;
+      dz = b.rz * ix + b.fz * iy;
+    } else if (this.ruta.length) {
+      const [tx, tz] = this.ruta[0];
+      const ex = tx - r.x, ez = tz - r.z;
+      const d = Math.hypot(ex, ez);
+      if (d < 0.3) this.ruta.shift();
+      else {
+        dx = ex / d;
+        dz = ez / d;
+      }
+      // si algo lo traba más de un segundo, deja de insistir
+      this.rutaAtasco = Math.hypot(p.vx, p.vz) < 0.4 ? this.rutaAtasco + dt : 0;
+      if (this.rutaAtasco > 1.2) this.ruta = [];
+    }
+    if (this.marca && this.marcaT > 0) {
+      this.marcaT -= dt;
+      if (this.marcaT <= 0 || !this.ruta.length) this.marca.mesh.visible = false;
+    }
+    const sp = this.speed() * (this.entrada.corre ? 1.35 : 1);
+    const k = Math.min(1, dt * 14);
     p.vx += (dx * sp - p.vx) * k;
     p.vz += (dz * sp - p.vz) * k;
     const ox = r.x, oz = r.z;
@@ -1160,6 +1197,7 @@ export class TempleWorld {
     const from = new THREE.Vector3(v.rig.x + Math.sin(v.rig.yaw) * 0.35, v.rig.y + 0.75, v.rig.z + Math.cos(v.rig.yaw) * 0.35);
     this.flyers.push({ kind: "item", type: item, from, to: () => this.stackTop(c, rig), t: 0, dur: 0.32, arc: 0.7, onArrive: () => (c.hidden = Math.max(0, c.hidden - 1)) });
     if (isPlayer || dist(rig.x, rig.z, this.player.rig.x, this.player.rig.z) < 8) {
+      vibrar(10);
       this.audio.pickup(c.items.length, "ofrenda");
       if (item === "cordero" && Math.random() < 0.7) this.audio.bleat(isPlayer ? 1 : 0.5);
       else if (item === "palomas" && Math.random() < 0.7) this.audio.coo(isPlayer ? 1 : 0.5);
@@ -1185,6 +1223,7 @@ export class TempleWorld {
       const wasOut = s.altarFuel <= 0;
       s.altarFuel = Math.min(this.fuelMax(), s.altarFuel + 1);
       this.flyers.push({ kind: "item", type: "lena", from: this.stackTop(c, this.player.rig), to: ALTAR_TOP.clone(), t: 0, dur: 0.35, arc: 1.2, onArrive: () => this.fx.burst(ALTAR_TOP, 0.4) });
+      vibrar(10);
       this.audio.pickup(c.items.length + 1, "lena");
       this.track("lena");
       if (wasOut) {
@@ -1246,6 +1285,7 @@ export class TempleWorld {
       kind: "item", type: it.type, from, to: ALTAR_TOP.clone(), t: 0, dur: 0.38, arc: 1.4,
       onArrive: () => {
         this.fx.burst(ALTAR_TOP, 1);
+        vibrar(18);
         this.audio.offering(it.type);
         this.overlay.float(`+${amount}`, ALTAR_TOP.clone().add(new THREE.Vector3(0, 0.8, 0)));
         this.emitGozo(ALTAR_TOP.clone().add(new THREE.Vector3(0, 0.5, 0)), amount, "basin");
@@ -1276,6 +1316,7 @@ export class TempleWorld {
     c.hidden++;
     const [px, pz] = this.pileSpot(id);
     this.flyers.push({ kind: "item", type: id, from: new THREE.Vector3(px, 0.3, pz), to: () => this.stackTop(c, rig), t: 0, dur: 0.26, arc: 0.6, onArrive: () => (c.hidden = Math.max(0, c.hidden - 1)) });
+    vibrar(10);
     this.audio.pickup(c.items.length, id);
   }
 
@@ -1291,6 +1332,7 @@ export class TempleWorld {
     c.items.push({ type: "diezmo", vid: 0 });
     c.hidden++;
     this.flyers.push({ kind: "item", type: "diezmo", from: new THREE.Vector3(POS.diezmoPile[0], 0.4, POS.diezmoPile[1]), to: () => this.stackTop(c, rig), t: 0, dur: 0.28, arc: 0.6, onArrive: () => (c.hidden = Math.max(0, c.hidden - 1)) });
+    vibrar(10);
     this.audio.pickup(c.items.length, "diezmo");
   }
 
@@ -1317,7 +1359,10 @@ export class TempleWorld {
     this.track(type === "aceite" ? "aceite" : type === "pan" ? "panes" : type === "incienso" ? "incienso" : "diezmos");
     if (type === "aceite") this.audio.lamp();
     else if (type === "diezmo") this.audio.sack();
-    else if (type === "incienso") this.audio.pickup(c.items.length + 2, "incienso");
+    else if (type === "incienso") {
+      vibrar(10);
+      this.audio.pickup(c.items.length + 2, "incienso");
+    }
     else this.audio.drop();
   }
 
@@ -1329,6 +1374,7 @@ export class TempleWorld {
     this.timers.wash = 1.2;
     this.fx.splash(new THREE.Vector3(r.x, r.y + 0.6, r.z), 34);
     this.fx.splash(this.vis.stations.fuente.anchors.water, 16);
+    vibrar(8);
     this.audio.water();
     this.overlay.float("Pureza llena", this.headPos(r), "blue");
     this.track("lavar");
@@ -1471,6 +1517,7 @@ export class TempleWorld {
     st.built.scale.y = 0.01;
     this.fx.dust(center, 2.2, 50);
     this.fx.sparkle(center.clone().add(new THREE.Vector3(0, 0.6, 0)), 50, 1.4, 2);
+    vibrar([25, 40, 25]);
     this.audio.build();
     this.shadowDirty = true;
     if (id === "puertas" || id === "santuario") {
@@ -1490,6 +1537,7 @@ export class TempleWorld {
     this.spawnHelper(id, n, [at.x, at.z]);
     const def = HELPERS.find((h) => h.id === id)!;
     this.fx.sparkle(at.clone().add(new THREE.Vector3(0, 0.5, 0)), 40, 0.8, 2);
+    vibrar([20, 30, 20]);
     this.audio.hire();
     gameStore.toast(`Llegó: ${def.nombre}. ${def.tarea}`, "gold");
     if (id === "cantor") this.audio.layers.cantores = s.helpers.cantor || 0;
@@ -1899,6 +1947,7 @@ export class TempleWorld {
     s.story[`rango${next}`] = true;
     this.player.fig.setLook(RANK_LOOK[next]);
     this.ceremony = 1;
+    vibrar([30, 60, 30, 60, 60]);
     this.audio.rank();
     this.fx.sparkle(this.playerChest(), 80, 1.0, 2.4);
     this.dialog(`rango${next}`);
@@ -2554,6 +2603,7 @@ export class TempleWorld {
     const premio = Math.round(500 * (1 + genBonus(s)));
     s.lifetimeGozo += premio;
     this.giveGozo(premio, this.playerChest());
+    vibrar([30, 60, 30, 60, 60]);
     this.audio.rank();
     this.fx.sparkle(this.playerChest(), 80, 1.0, 2.4);
     gameStore.push({
@@ -2581,6 +2631,7 @@ export class TempleWorld {
       gozo = Math.round((40 + 25 * s.rank) * (clave ? 1.5 : 1) * (1 + genBonus(s)));
       s.lifetimeGozo += gozo;
       this.giveGozo(gozo, this.playerChest());
+      vibrar(15);
       this.audio.correct();
       this.fx.sparkle(this.playerChest(), 30, 0.6);
       s.story[`caso:${c.id}`] = true;
@@ -2604,6 +2655,7 @@ export class TempleWorld {
     this.player.fig.setLook("lino");
     this.fx.splash(new THREE.Vector3(r.x, r.y + 0.8, r.z), 40);
     this.fx.sparkle(this.playerChest(), 60, 0.7, 2);
+    vibrar(8);
     this.audio.water();
     this.dialog("expiacion");
   }
@@ -3020,7 +3072,8 @@ export class TempleWorld {
   private updateCamera(dt: number) {
     const r = this.player.rig;
     const portrait = this.camera.aspect < 0.85;
-    let dist = (portrait ? 23 : this.camera.aspect < 1.2 ? 21 : 19.5) * (insideTemple(r.x, r.z) ? 0.8 : 1);
+    // más cerca que antes (el aprendiz se ve el doble en el teléfono) y con el acercamiento del jugador
+    let dist = (portrait ? 18.5 : this.camera.aspect < 1.2 ? 17.5 : 16) * (insideTemple(r.x, r.z) ? 0.8 : 1) * this.entrada.zoom;
     let th = 0.36, ph = 0.98;
     const focus = new THREE.Vector3(r.x + this.player.vx * 0.22, r.y, r.z + this.player.vz * 0.22);
     if (this.ceremony > 0) {
@@ -3258,68 +3311,7 @@ export class TempleWorld {
     gameStore.setHud(hud);
   }
 
-  // ================================================================ entrada
-  private onPointerDown = (e: PointerEvent) => {
-    this.audio.ensure();
-    if (e.button !== 0 && e.pointerType === "mouse") return;
-    const rect = this.container.getBoundingClientRect();
-    this.joy.on = true;
-    this.joy.id = e.pointerId;
-    this.joy.ox = e.clientX - rect.left;
-    this.joy.oy = e.clientY - rect.top;
-    this.joy.x = 0;
-    this.joy.y = 0;
-    this.overlay.joystick(true, this.joy.ox, this.joy.oy, this.joy.ox, this.joy.oy);
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    e.preventDefault();
-  };
-
-  private onPointerMove = (e: PointerEvent) => {
-    if (!this.joy.on || e.pointerId !== this.joy.id) return;
-    const rect = this.container.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    let dx = x - this.joy.ox, dy = y - this.joy.oy;
-    const R = 52;
-    const m = Math.hypot(dx, dy);
-    if (m > R) {
-      dx = (dx / m) * R;
-      dy = (dy / m) * R;
-    }
-    const dead = 6;
-    this.joy.x = m < dead ? 0 : dx / R;
-    this.joy.y = m < dead ? 0 : -dy / R;
-    this.overlay.joystick(true, this.joy.ox, this.joy.oy, this.joy.ox + dx, this.joy.oy + dy);
-  };
-
-  private onPointerUp = (e: PointerEvent) => {
-    if (e.pointerId !== this.joy.id) return;
-    this.joy.on = false;
-    this.joy.x = this.joy.y = 0;
-    this.overlay.joystick(false);
-  };
-
-  private onKeyDown = (e: KeyboardEvent) => {
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    const k = e.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
-      if (gameStore.busy) return;
-      this.keys.add(k);
-      this.audio.ensure();
-      e.preventDefault();
-    }
-  };
-
-  private onKeyUp = (e: KeyboardEvent) => {
-    this.keys.delete(e.key.toLowerCase());
-  };
-
-  private onBlur = () => {
-    this.keys.clear();
-    this.joy.on = false;
-    this.overlay.joystick(false);
-  };
-
+  // ================================================================ entrada (motor/entrada.ts)
   private onVisibility = () => {
     if (document.hidden) {
       this.persist();
@@ -3373,13 +3365,8 @@ export class TempleWorld {
     if (this.opts.loggedIn) void saveRemote(this.s);
     this.unsub();
     const canvas = this.renderer.domElement;
-    canvas.removeEventListener("pointerdown", this.onPointerDown);
-    window.removeEventListener("pointermove", this.onPointerMove);
-    window.removeEventListener("pointerup", this.onPointerUp);
-    window.removeEventListener("pointercancel", this.onPointerUp);
-    window.removeEventListener("keydown", this.onKeyDown);
-    window.removeEventListener("keyup", this.onKeyUp);
-    window.removeEventListener("blur", this.onBlur);
+    this.entrada.destruir();
+    this.marca?.dispose();
     document.removeEventListener("visibilitychange", this.onVisibility);
     window.removeEventListener("pagehide", this.onPageHide);
     this.resizeObs.disconnect();
