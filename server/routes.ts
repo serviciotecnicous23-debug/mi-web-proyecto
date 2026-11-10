@@ -752,6 +752,13 @@ ${urls}
     },
   }) as RequestHandler;
   app.use(sessionMiddleware);
+
+  // La versión publicada (Render pone el commit en cada despliegue): el juego avisa cuando hay una nueva.
+  const versionPublicada = (process.env.RENDER_GIT_COMMIT || "").slice(0, 12) || `local-${Date.now().toString(36)}`;
+  app.get("/api/version", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ version: versionPublicada });
+  });
   // La presencia de la ciudad (WebSocket) lee la misma sesión al conectarse.
   registrarRedCiudad(httpServer, sessionMiddleware);
 

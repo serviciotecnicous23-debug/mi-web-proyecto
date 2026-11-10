@@ -1,7 +1,8 @@
 /**
- * Jerusalén en línea, etapa 1 («Templo en línea»): personajes guardados en el servidor, el
- * requisito del modo local, las preguntas difíciles corregidas aquí, el mérito por temporada y
- * el cierre que reparte los cargos del sacerdocio.
+ * Jerusalén en línea, etapa 1 («Templo en línea»): personajes guardados en el servidor, las
+ * preguntas difíciles corregidas aquí, el mérito por temporada y el cierre que reparte los cargos
+ * del sacerdocio. Desde el 10 de noviembre de 2026 no depende del juego local: toda cuenta
+ * aprobada entra y empieza desde el primer escalón.
  *
  * Nada del templo se simula en el servidor: el teléfono juega y manda sus deberes juntos cada
  * 15 s; aquí se revisan con topes creíbles y se suma el mérito. Lo que ven todos (la escalera de
@@ -138,8 +139,9 @@ export function temporadaDe(d = new Date()) {
   return { n, inicio: claveDe(inicio), fin: claveDe(fin), diasRestantes: Math.max(1, fin - hoy + 1) };
 }
 
-// ---------------------------------------------------------------- requisito del modo local
-// La partida local la guarda el teléfono, así que se revisa que el cargo sea creíble: tiempo
+// ---------------------------------------------------------------- lo que dice el modo local
+// Ya no cierra la entrada ni da cargos: solo dice si la persona conoce el servicio del templo (para
+// no pedirle la instrucción). La partida la guarda el teléfono; se revisa que sea creíble: tiempo
 // jugado, días de servicio, los cargos anteriores en la historia, sabiduría y ofrendas. Vale
 // también para las nuevas generaciones (la historia vuelve a empezar, pero quedan los logros,
 // las cuentas y el cargo más alto).
@@ -313,25 +315,26 @@ async function cerrarTemporada(n: number) {
       await client.query("ROLLBACK");
       return;
     }
+    // Candidatos: quienes sirvieron en los últimos días y juntaron el mérito mínimo, sin importar
+    // el juego local. Solo puede ser sumo sacerdote quien ya fue principal (o sumo) en una temporada.
     const { rows } = await client.query(
-      `SELECT m.character_id, m.merit, s.data
+      `SELECT m.character_id, m.merit,
+              EXISTS (SELECT 1 FROM game_offices p
+                       WHERE p.character_id = m.character_id AND p.season <= $1 AND p.office IN ('principal', 'sumo')) AS fue_principal
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
-         LEFT JOIN game_saves s ON s.user_id = c.user_id AND s.game = $1
-        WHERE m.season = $2 AND m.merit >= $3 AND u.is_active IS TRUE
-          AND c.last_duty_at > now() - ($4::int * interval '1 day')
+        WHERE m.season = $1 AND m.merit >= $2 AND u.is_active IS TRUE
+          AND c.last_duty_at > now() - ($3::int * interval '1 day')
         ORDER BY m.merit DESC, m.updated_at ASC
         LIMIT 500`,
-      [JUEGO, n, MERITO_MIN_CARGO, DIAS_ACTIVO],
+      [n, MERITO_MIN_CARGO, DIAS_ACTIVO],
     );
     for (const r of rows) {
-      const req = requisitoLocal(r.data);
-      if (!req.creible || req.rango < 1) continue;
       candidatos++;
       await client.query(
         `INSERT INTO game_offices (season, character_id, position, merit, can_high) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
-        [n + 1, r.character_id, candidatos, r.merit, req.rango >= 4],
+        [n + 1, r.character_id, candidatos, r.merit, r.fue_principal === true],
       );
     }
     await client.query(`UPDATE game_seasons SET candidates = $3 WHERE game = $1 AND season = $2`, [JUEGO, n, candidatos]);
@@ -437,6 +440,12 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const t = temporadaDe();
   const hoy = diaClave();
   const [requisito, ch] = await Promise.all([requisitoDe(user.id), personajeDe(user.id)]);
+  // para ser sumo sacerdote hay que haber sido principal (o sumo) en alguna temporada
+  const fuePrincipal = ch
+    ? (
+        await pool.query(`SELECT 1 FROM game_offices WHERE character_id = $1 AND office IN ('principal', 'sumo') LIMIT 1`, [ch.id])
+      ).rows.length > 0
+    : false;
   let mio: JerusalenEstado["mio"] = null;
   if (ch) {
     const [{ rows: m }, { rows: of }] = await Promise.all([
@@ -483,7 +492,7 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const marcar = <T extends { personajeId: number }>(x: T) => ({ ...x, isMe: !!ch && x.personajeId === ch.id });
   return {
     cuentaAprobada: user.isActive === true,
-    requisito: { ...requisito, puedeEntrar: requisito.creible && requisito.rango >= 1, puedeSumo: requisito.creible && requisito.rango >= 4 },
+    requisito: { ...requisito, puedeEntrar: true, puedeSumo: fuePrincipal, conoceTemplo: requisito.rango >= 1 },
     personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
@@ -589,16 +598,13 @@ export function registerJerusalenRoutes(app: Express) {
       const actual = await personajeDe(me);
       if (crear) {
         if (actual) return res.status(409).json({ message: "Ya tienes tu personaje en línea." });
-        const req2 = await requisitoDe(me);
-        if (req2.rango < 1) return res.status(403).json({ message: "Primero llega a sacerdote en la historia del templo." });
-        if (!req2.creible) return res.status(403).json({ message: req2.motivo || "No se pudo comprobar tu partida." });
         const { rows: cuenta } = await pool.query(`SELECT count(*)::int AS n FROM game_characters WHERE user_id = $1 AND game = $2`, [me, JUEGO]);
         if (Number(cuenta[0]?.n || 0) >= MAX_PERSONAJES) return res.status(409).json({ message: "Ya tienes tu personaje en línea." });
         await pool.query(
           `INSERT INTO game_characters (user_id, game, slot, name, path) VALUES ($1, $2, 1, $3, 'sacerdocio') ON CONFLICT DO NOTHING`,
           [me, JUEGO, nombre === NOMBRE_PROPIO ? null : nombre],
         );
-        await evento(me, "jerusalen:entrada", "entró al templo en línea como sacerdote");
+        await evento(me, "jerusalen:entrada", "se consagró como sacerdote en Jerusalén en línea");
       } else {
         if (!actual) return res.status(404).json({ message: "Primero crea tu personaje." });
         await pool.query(`UPDATE game_characters SET name = $2 WHERE id = $1`, [actual.id, nombre === NOMBRE_PROPIO ? null : nombre]);

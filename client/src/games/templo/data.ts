@@ -524,7 +524,7 @@ export const DIALOGUES: Record<string, Line[]> = {
 };
 
 export const HOW_TO: string[] = [
-  "Toca la pantalla y arrastra: aparece un joystick y el aprendiz camina. En la computadora, flechas o W A S D.",
+  "Toca el piso para ir caminando, o toca y arrastra: aparece un joystick (más lejos, corres). Pellizca para acercar. En la computadora, W A S D y Mayús para correr.",
   "No hay botón para servir: al pararte en un lugar, el servicio se hace solo.",
   "Carga leña, aceite, panes, incienso y las ofrendas del pueblo; llevas un solo tipo a la vez.",
   "Recibe las ofrendas en el atrio y preséntalas en el altar. El fuego debe estar encendido.",

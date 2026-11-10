@@ -23,7 +23,7 @@ import { Portrait, TemploCover } from "./Portrait";
 import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } from "./progress";
 import type { TempleWorld } from "./world";
 import {
-  ESCALONES, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
+  ESCALONES, MERITO_MIN_CARGO, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCiudad, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
@@ -31,6 +31,7 @@ import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId }
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
 import { setVibracion, vibracionActiva } from "./motor/entrada";
+import { AvisoVersionNueva, NovedadesAviso } from "./novedades";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
@@ -297,6 +298,16 @@ export default function TemploGame({ game }: { game: GameDef }) {
     });
   }, []);
 
+  // Hay una versión nueva publicada: se mandan los deberes, se guarda la partida y se recarga.
+  const actualizarVersion = useCallback(() => {
+    void sessionRef.current?.flush(true);
+    worldRef.current?.destroy();
+    worldRef.current = null;
+    cityRef.current?.destroy();
+    cityRef.current = null;
+    window.location.reload();
+  }, []);
+
   const togglePause = useCallback(
     (p?: boolean) => {
       const next = p ?? !paused;
@@ -421,6 +432,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
             />
           )}
           {phase === "playing" && (world || city) && <ModalLayer />}
+          <AvisoVersionNueva alActualizar={actualizarVersion} />
           {cambio && (
             <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0c0a08]/90 text-white" data-testid="templo-cambio">
               <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
@@ -433,7 +445,6 @@ export default function TemploGame({ game }: { game: GameDef }) {
                 estado={estado}
                 phase={phase}
                 onBack={() => setLobby(false)}
-                onEnter={(e) => void start(false, undefined, e)}
                 onCiudad={(e) => void irACiudad("casa", e)}
                 onEstado={setEstado}
               />
@@ -537,6 +548,7 @@ function TitleScreen(props: {
             )}
           </div>
         )}
+        {phase === "title" && !confirmNew && <NovedadesAviso primeraVez={!has && !props.estado?.personaje} />}
         {phase === "title" && !confirmNew && loggedIn && props.estado && <EnLineaEntrada estado={props.estado} onOnline={props.onOnline} />}
         {ahora !== null && ahora > 0 && (
           <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-100">
@@ -2021,8 +2033,7 @@ function ComunidadView() {
 // ================================================================ Jerusalén en línea
 /** En la portada: la entrada al templo en línea, o por qué todavía no se abre. */
 function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnline: () => void }) {
-  const r = estado.requisito;
-  if (estado.cuentaAprobada && r.puedeEntrar)
+  if (estado.cuentaAprobada)
     return (
       <button
         type="button"
@@ -2034,7 +2045,7 @@ function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnlin
         <span className="min-w-0 flex-1">
           <span className="block font-bold">Jerusalén en línea</span>
           <span className="block text-[11px] text-white/75">
-            El templo y la ciudad · temporada {estado.temporada.n}
+            La ciudad y el templo · temporada {estado.temporada.n}
             {estado.temporada.dePrueba ? " (de prueba)" : ""}
             {estado.enLinea > 0 ? ` · ${estado.enLinea} sirviendo ahora` : ""}
           </span>
@@ -2042,11 +2053,7 @@ function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnlin
         <ChevronRight className="h-5 w-5 shrink-0" />
       </button>
     );
-  const texto = !estado.cuentaAprobada
-    ? "Jerusalén en línea se abre cuando tu cuenta esté aprobada."
-    : r.rango < 1
-      ? "Jerusalén en línea se abre cuando llegues a sacerdote en la historia."
-      : `Jerusalén en línea: ${r.motivo || "no se pudo comprobar tu partida."}`;
+  const texto = "Jerusalén en línea se abre cuando tu cuenta esté aprobada.";
   return (
     <p className="flex max-w-xs items-start gap-1.5 text-left text-[11px] text-white/65" data-testid="templo-en-linea-cerrado">
       <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {texto}
@@ -2073,14 +2080,12 @@ function OnlineLobby({
   estado,
   phase,
   onBack,
-  onEnter,
   onCiudad,
   onEstado,
 }: {
   estado: JerusalenEstado;
   phase: Phase;
   onBack: () => void;
-  onEnter: (e: JerusalenEstado) => void;
   onCiudad: (e: JerusalenEstado) => void;
   onEstado: (e: JerusalenEstado) => void;
 }) {
@@ -2140,6 +2145,7 @@ function OnlineLobby({
           <p className="mx-auto mt-2 max-w-md text-sm text-white/80">
             Sirve en el templo junto con la comunidad y vive en Jerusalén: tienes una casa en un barrio que crece con tu servicio. En el templo no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
           </p>
+          <p className="mx-auto mt-1.5 max-w-md text-xs text-sky-100/85">No hace falta haber jugado la historia del templo: todos empiezan desde el primer escalón.</p>
         </header>
         {!p || cambiar ? (
           <section className="space-y-2.5 rounded-2xl border border-sky-200/30 bg-black/30 p-4" data-testid="templo-personaje-nuevo">
@@ -2190,12 +2196,13 @@ function OnlineLobby({
                 Cambiar nombre
               </button>
             </div>
-            <Button size="lg" className="w-full rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" disabled={starting} onClick={() => onEnter(estado)} data-testid="button-en-linea-entrar">
-              {starting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5 fill-current" />} Entrar al templo
+            <Button size="lg" className="w-full rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" disabled={starting} onClick={() => onCiudad(estado)} data-testid="button-en-linea-ciudad">
+              {starting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5 fill-current" />} Entrar a Jerusalén
             </Button>
-            <Button size="lg" variant="secondary" className="w-full rounded-full font-bold" disabled={starting} onClick={() => onCiudad(estado)} data-testid="button-en-linea-ciudad">
-              <Home className="mr-2 h-5 w-5" /> Ir a mi casa en la ciudad
-            </Button>
+            <p className="text-center text-[11px] text-white/70">
+              <Home className="-mt-0.5 mr-1 inline h-3.5 w-3.5" />
+              Llegas a la puerta de tu casa. El templo está subiendo la escalinata (o en «Ir a…»).
+            </p>
             {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100">🔥 {estado.enLinea} sirviendo en el templo en línea ahora</p>}
           </section>
         )}
@@ -2339,7 +2346,8 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
           <li>Constancia: 10 minutos de servicio en el día suman 60.</li>
           <li>Preguntas difíciles de Azarías: 30 por acierto, 20 segundos para responder, {PREGUNTAS_DIA} por día y sin repetirse en la temporada.</li>
           <li>La primera hora de cada día cuenta completa; las dos siguientes, la mitad; después tu turno del día termina. Así quien tiene poco tiempo también puede llegar arriba.</li>
-          <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días. Para ser sumo sacerdote hay que haberlo sido en la historia.</li>
+          <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días y juntaron al menos {MERITO_MIN_CARGO} de mérito. Para ser sumo sacerdote hay que haber sido principal sacerdote en una temporada anterior.</li>
+          <li>Todos empiezan como sacerdotes nuevos, hayan jugado o no la historia del templo.</li>
           <li>Quien tiene un cargo y pasa 7 días sin servir lo pierde, y el cargo pasa al siguiente de la lista.</li>
           <li>Mientras no se abran el palacio del rey y la escuela de los profetas, los cargos son de prueba.</li>
         </ul>
