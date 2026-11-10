@@ -469,6 +469,7 @@ export class TempleWorld {
     const pasos = pasosDeParte(parte);
     if (!pasos.length) return;
     this.instPendiente = false;
+    this.instDeber = false;
     this.inst = { parte, pasos, i: 0, fase: "inicio" };
     gameStore.push({ kind: "dialog", id: `inst:inicio:${parte}`, lines: lineasInicio(parte, this.opts.instruccion?.nombre || "sacerdote") });
     this.updateObjective();
@@ -2457,7 +2458,6 @@ export class TempleWorld {
       if (!p) return;
       if (p.tarea && !this.instTareaHecha(p)) {
         it.fase = "tarea";
-        this.instDeber = false;
         this.instHacerLugar(p);
       } else this.instPreguntar();
     }
@@ -2475,6 +2475,7 @@ export class TempleWorld {
       return;
     }
     it.i++;
+    this.instDeber = false;
     if (it.i >= it.pasos.length) {
       void this.instTerminarParte();
       return;
@@ -2579,7 +2580,7 @@ export class TempleWorld {
   /** Cuenta algo que pasó: avanza la jornada, el desafío del día y las cuentas de los logros. */
   private track(kind: GoalKind | StatKey, n = 1, byPlayer = true) {
     const s = this.s;
-    if (byPlayer && this.inst?.fase === "tarea" && this.instPaso()?.tarea?.deber === kind) this.instDeber = true;
+    if (byPlayer && this.inst && this.inst.fase !== "pregunta" && this.instPaso()?.tarea?.deber === kind) this.instDeber = true;
     if (this.online) {
       const deber = DEBER_DE[kind];
       if (deber && byPlayer) this.online.duty(deber, n);

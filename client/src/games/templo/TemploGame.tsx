@@ -7,8 +7,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap,
 } from "lucide-react";
+import { PARTES } from "./instruccion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
@@ -30,7 +31,9 @@ import {
   ESCALONES, MERITO_MIN_CARGO, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
-import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCiudad, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
+import {
+  OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCiudad, escalonRank, fetchEstado, instruccionParte, onlineSave, renombrarPersonaje,
+} from "./online";
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
@@ -160,8 +163,27 @@ export default function TemploGame({ game }: { game: GameDef }) {
       sessionRef.current = ses;
       ses.hooks.toCity = () => void irACiudadRef.current("templo");
       if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
+      const e = ses.estado ?? enLinea;
+      const partes = e.personaje?.instruccion ?? 0;
       const w = new mod.TempleWorld(boxRef.current, onlineSave(ses.hooks.rank), {
         loggedIn: false, muted, music, online: ses.hooks, audio: audioRef.current, spawn: desdeCiudad ? "ciudad" : undefined,
+        instruccion: {
+          partes,
+          // quien no conoce el templo hace la instrucción al entrar (y la sigue hasta terminarla)
+          obligatoria: !e.requisito.conoceTemplo && partes < 3,
+          nombre: e.personaje?.nombre || "sacerdote",
+          alTerminarParte: async (parte) => {
+            const r = await instruccionParte(parte);
+            if (!r.ok || !r.data) {
+              gameStore.toast(r.data?.message || "No se pudo guardar la instrucción. Revisa tu conexión.", "warn");
+              return false;
+            }
+            ses.estado = r.data.estado;
+            setEstado(r.data.estado);
+            if (r.data.premio) gameStore.toast(`¡Terminaste la instrucción del sacerdote! +${r.data.premio} de mérito`, "gold");
+            return true;
+          },
+        },
       });
       setSession(ses);
       setLobby(false);
@@ -820,6 +842,18 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                   <Crown className="h-4 w-4 text-amber-400" />
                   {escalonNombre(oh?.escalon)}
                 </button>
+                {hud.instruccion && (
+                  <button
+                    type="button"
+                    className="pointer-events-auto flex items-center gap-1 rounded-full bg-sky-600/85 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
+                    onClick={() => open({ kind: "instruccion" })}
+                    title={`Instrucción del sacerdote: ${hud.instruccion.lugar}`}
+                    data-testid="templo-instruccion-chip"
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    Instrucción {hud.instruccion.parte}/3 · {hud.instruccion.paso} de {hud.instruccion.de}
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -867,6 +901,9 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
               <>
                 <IconBtn label="Salir a la ciudad" onClick={() => world?.salirACiudad()} testid="button-templo-ciudad">
                   <Home className="h-5 w-5" />
+                </IconBtn>
+                <IconBtn label="Instrucción del sacerdote" onClick={() => open({ kind: "instruccion" })} testid="button-templo-instruccion" active={!!hud.instruccion}>
+                  <GraduationCap className="h-5 w-5" />
                 </IconBtn>
                 <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada" className="hidden sm:flex">
                   <Trophy className="h-5 w-5" />
@@ -1170,6 +1207,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <LessonView lessonId={modal.lessonId} />;
     case "quiz":
       return <QuizView quizId={modal.quizId} source={modal.source} step={modal.step ?? 0} />;
+    case "instruccion":
+      return <InstruccionView />;
     case "upgrades":
       return <UpgradesView />;
     case "book":
@@ -1312,7 +1351,7 @@ function LessonView({ lessonId }: { lessonId: string }) {
   );
 }
 
-function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" | "pueblo" | "examen"; step: number }) {
+function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" | "pueblo" | "examen" | "instruccion"; step: number }) {
   const world = useWorld();
   const q = quizById(quizId);
   const [picked, setPicked] = useState<number | null>(null);
@@ -1327,7 +1366,8 @@ function QuizView({ quizId, source, step }: { quizId: string; source: "azarias" 
     return o;
   }, [quizId]);
   if (!q) return null;
-  const title = source === "azarias" ? "Azarías te pregunta" : source === "pueblo" ? "Alguien del pueblo pregunta" : `Examen del sumo sacerdote · ${step + 1} de 3`;
+  const title =
+    source === "azarias" ? "Azarías te pregunta" : source === "instruccion" ? "Azarías te enseña" : source === "pueblo" ? "Alguien del pueblo pregunta" : `Examen del sumo sacerdote · ${step + 1} de 3`;
   const choose = (k: number) => {
     if (picked !== null || !world) return;
     setPicked(k);
@@ -2166,6 +2206,80 @@ function ComunidadView() {
   );
 }
 
+/** La instrucción del sacerdote: sus tres partes, cuáles terminó y empezar o repasar cada una. */
+function InstruccionView() {
+  const world = useWorld();
+  const { hud } = useGame();
+  const partes = world?.partesInstruccion ?? 0;
+  const obligatoria = world?.instruccionObligatoria ?? false;
+  const enCurso = hud.instruccion;
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Portrait who="azarias" size={28} /> Instrucción del sacerdote
+        </span>
+      }
+      testid="templo-instruccion"
+    >
+      <div className="space-y-3 p-4 text-sm">
+        <p>
+          Azarías te enseña el servicio del templo lugar por lugar: qué es cada cosa, para qué sirve, el versículo y lo que nos enseña hoy. En cada lugar harás el servicio y
+          responderás una pregunta.
+        </p>
+        {obligatoria && (
+          <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">
+            Como todavía no conoces el templo, termina la instrucción para responder las preguntas difíciles de Azarías. Al terminarla ganas +50 de mérito.
+          </p>
+        )}
+        <ol className="space-y-2">
+          {PARTES.map((p) => {
+            const hecha = partes >= p.n;
+            const abierta = p.n <= partes + 1;
+            const ahora = enCurso?.parte === p.n;
+            return (
+              <li key={p.n} className={`flex items-center gap-3 rounded-xl border p-2.5 ${ahora ? "border-sky-400 bg-sky-50 dark:bg-sky-950/30" : "border-stone-200 dark:border-stone-700"}`}>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">
+                    {hecha ? "✓ " : ""}Parte {p.n}: {p.titulo}
+                  </p>
+                  <p className="text-xs text-stone-500">{ahora ? `Ahora: ${enCurso?.lugar} (paso ${enCurso?.paso} de ${enCurso?.de})` : p.texto}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant={hecha ? "secondary" : "default"}
+                  disabled={!abierta || !!enCurso}
+                  onClick={() => {
+                    gameStore.close();
+                    world?.empezarInstruccion(p.n);
+                  }}
+                  data-testid={`button-instruccion-${p.n}`}
+                >
+                  {hecha ? "Repasar" : "Empezar"}
+                </Button>
+              </li>
+            );
+          })}
+        </ol>
+        {enCurso && !enCurso.obligatoria && (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => {
+              world?.dejarInstruccion();
+              gameStore.close();
+            }}
+            data-testid="button-instruccion-dejar"
+          >
+            Dejar la instrucción por ahora
+          </Button>
+        )}
+        {partes >= 3 && <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">✓ Ya terminaste la instrucción. Puedes repasar cualquier parte cuando quieras.</p>}
+      </div>
+    </Card>
+  );
+}
+
 // ================================================================ Jerusalén en línea
 /** En la portada: la entrada al templo en línea, o por qué todavía no se abre. */
 function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnline: () => void }) {
@@ -2319,6 +2433,14 @@ function OnlineLobby({
                 <p className="text-xs text-sky-100">
                   {escalonNombre(estado.mio?.escalon)}
                   {estado.mio?.cargo && t.dePrueba ? " (de prueba)" : ""} · {fmt(estado.mio?.merito || 0)} de mérito
+                </p>
+                <p className="text-[11px] text-sky-100/80" data-testid="templo-instruccion-estado">
+                  <GraduationCap className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" />
+                  {p.instruccion >= 3
+                    ? "Instruido en el servicio del templo"
+                    : estado.requisito.conoceTemplo
+                      ? `Instrucción del sacerdote: ${p.instruccion} de 3 (opcional)`
+                      : `Instrucción del sacerdote: ${p.instruccion} de 3 · Azarías te espera en el templo`}
                 </p>
               </div>
               <button

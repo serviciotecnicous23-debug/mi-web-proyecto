@@ -78,7 +78,7 @@ export const PASOS: PasoInst[] = [
       "Este es el altar de bronce, frente al templo. Su fuego debe arder siempre: es la señal de que el camino a Dios sigue abierto para el pueblo.",
       "Sobre él se presentan las ofrendas. Si el fuego se apaga, no se puede ofrecer nada.",
     ],
-    tarea: { texto: "Pon la leña en el altar", deber: "lena" },
+    tarea: { texto: "Trae leña de la leñera y ponla en el altar", deber: "lena" },
   },
   {
     id: "ofrendas",
