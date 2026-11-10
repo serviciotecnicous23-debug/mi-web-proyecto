@@ -1,0 +1,147 @@
+/**
+ * Avisos de cada actualización del juego:
+ * - «Hay una actualización»: mientras se juega, si se publicó una versión nueva de la web, un aviso
+ *   explica cómo tenerla (el botón guarda el avance y recarga).
+ * - Novedades: después de actualizar, la portada muestra una sola vez qué cambió.
+ * Cada publicación que cambie el juego agrega su novedad al principio de NOVEDADES.
+ */
+import { useEffect, useState } from "react";
+import { RefreshCw, Sparkles } from "lucide-react";
+
+export type Novedad = { id: string; fecha: string; titulo: string; puntos: string[] };
+
+/** La más nueva primero. */
+export const NOVEDADES: Novedad[] = [
+  {
+    id: "2026-11-10-abierta",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Jerusalén en línea abierta a todos",
+    puntos: [
+      "Ya no hace falta haber jugado la historia del templo: toda cuenta aprobada puede consagrar su sacerdote y empezar desde el primer escalón.",
+      "Se entra directo a la ciudad, a la puerta de tu casa. El templo está subiendo la escalinata (o en «Ir a…», El templo).",
+      "Toca el piso para ir caminando, arrastra más lejos para correr y pellizca (o usa la rueda del ratón) para acercar la cámara.",
+      "Para ser sumo sacerdote ahora hay que haber sido principal sacerdote en una temporada anterior.",
+    ],
+  },
+];
+
+const CLAVE = "templo-novedades-visto";
+
+function vista(): string | null {
+  try {
+    return localStorage.getItem(CLAVE);
+  } catch {
+    return null;
+  }
+}
+
+function marcarVista(id: string) {
+  try {
+    localStorage.setItem(CLAVE, id);
+  } catch {
+    /* modo privado */
+  }
+}
+
+/** Las novedades que todavía no vio, en la portada. Quien juega por primera vez no las ve: ya empieza con todo. */
+export function NovedadesAviso({ primeraVez }: { primeraVez: boolean }) {
+  const ultima = NOVEDADES[0];
+  const [ver, setVer] = useState(() => !!ultima && vista() !== ultima.id);
+  useEffect(() => {
+    if (primeraVez && ultima && vista() !== ultima.id) {
+      marcarVista(ultima.id);
+      setVer(false);
+    }
+  }, [primeraVez, ultima]);
+  if (!ver || !ultima) return null;
+  return (
+    <section className="w-full max-w-sm rounded-2xl border border-amber-300/40 bg-black/40 p-3 text-left text-xs text-white shadow-lg" data-testid="templo-novedades">
+      <p className="flex items-center gap-1.5 font-bold text-amber-200">
+        <Sparkles className="h-4 w-4" /> Novedades: {ultima.titulo}
+      </p>
+      <p className="mt-0.5 text-[11px] text-white/60">{ultima.fecha}</p>
+      <ul className="mt-2 space-y-1">
+        {ultima.puntos.map((p) => (
+          <li key={p} className="flex gap-1.5">
+            <span className="text-amber-300">✦</span> <span>{p}</span>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        className="mt-2.5 w-full rounded-full bg-amber-400 px-3 py-1.5 font-bold text-amber-950 hover:bg-amber-300"
+        onClick={() => {
+          marcarVista(ultima.id);
+          setVer(false);
+        }}
+        data-testid="button-novedades-entendido"
+      >
+        Entendido
+      </button>
+    </section>
+  );
+}
+
+/** Revisa cada pocos minutos (y al volver a la pestaña) si se publicó una versión nueva de la web. */
+export function useVersionNueva(): boolean {
+  const [nueva, setNueva] = useState(false);
+  useEffect(() => {
+    let inicial: string | null = null;
+    let vivo = true;
+    const revisar = async () => {
+      try {
+        const r = await fetch("/api/version", { cache: "no-store" });
+        if (!r.ok) return;
+        const { version } = (await r.json()) as { version?: string };
+        if (!vivo || !version) return;
+        if (inicial === null) inicial = version;
+        else if (version !== inicial) setNueva(true);
+      } catch {
+        /* sin conexión: se revisa después */
+      }
+    };
+    void revisar();
+    const id = window.setInterval(() => void revisar(), 3 * 60_000);
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void revisar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      vivo = false;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, []);
+  return nueva;
+}
+
+/** El aviso de que hay una versión nueva, con el botón para tenerla (guarda el avance y recarga). */
+export function AvisoVersionNueva({ alActualizar }: { alActualizar: () => void }) {
+  const nueva = useVersionNueva();
+  const [oculto, setOculto] = useState(false);
+  if (!nueva || oculto) return null;
+  return (
+    <div
+      className="absolute inset-x-2 top-2 z-[75] mx-auto flex max-w-md items-start gap-2 rounded-xl border border-amber-300/50 bg-[#1f1608]/95 p-3 text-xs text-amber-50 shadow-2xl"
+      style={{ marginTop: "var(--tpl-st, 0px)" }}
+      role="status"
+      data-testid="templo-version-nueva"
+    >
+      <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+      <div className="min-w-0 flex-1">
+        <p className="font-bold">Hay una actualización del juego</p>
+        <p className="mt-0.5 text-amber-100/85">
+          Toca «Actualizar» para tenerla: tu avance queda guardado. Si juegas desde la app instalada, también puedes cerrarla y volver a abrirla.
+        </p>
+        <div className="mt-2 flex gap-2">
+          <button type="button" className="rounded-full bg-amber-400 px-3 py-1 font-bold text-amber-950 hover:bg-amber-300" onClick={alActualizar} data-testid="button-version-actualizar">
+            Actualizar
+          </button>
+          <button type="button" className="rounded-full bg-white/10 px-3 py-1 hover:bg-white/20" onClick={() => setOculto(true)}>
+            Después
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

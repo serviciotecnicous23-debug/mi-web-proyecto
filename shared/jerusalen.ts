@@ -36,11 +36,11 @@ export type EscalonId = "sacerdote" | "turno" | "jefe" | "principal" | "sumo";
 
 /** La escalera del sacerdocio, de abajo hacia arriba. */
 export const ESCALONES: { id: EscalonId; nombre: string; cupo: number | null; como: string }[] = [
-  { id: "sacerdote", nombre: "Sacerdote", cupo: null, como: "Al entrar al templo en línea" },
+  { id: "sacerdote", nombre: "Sacerdote", cupo: null, como: "Al consagrarte en Jerusalén en línea (no hace falta haber jugado la historia)" },
   { id: "turno", nombre: "Sacerdote de turno", cupo: null, como: `Con ${MERITO_TURNO} de mérito en la temporada` },
   { id: "jefe", nombre: "Jefe de un turno", cupo: 12, como: "Los 12 siguientes en mérito al cerrar la temporada" },
   { id: "principal", nombre: "Principal sacerdote", cupo: 3, como: "Los 3 siguientes en mérito al cerrar la temporada" },
-  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que también fue sumo sacerdote en la historia" },
+  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que ya fue principal sacerdote en una temporada anterior" },
 ];
 
 export const CARGOS_CON_CUPO: EscalonId[] = ["sumo", "principal", "jefe"];
@@ -113,8 +113,12 @@ export type JerusalenTitular = { personajeId: number; nombre: string; persona: s
 export type JerusalenEstado = {
   /** La cuenta está aprobada (solo las aprobadas juegan en línea). */
   cuentaAprobada: boolean;
-  /** Lo que muestra la partida local guardada en la cuenta. */
-  requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean };
+  /**
+   * Lo que muestra la partida local guardada en la cuenta. Ya no cierra la entrada: toda cuenta
+   * aprobada entra. `conoceTemplo` dice si ya conoce el servicio (llegó a sacerdote en la historia)
+   * y `puedeSumo` si ya fue principal sacerdote en alguna temporada (requisito para ser sumo).
+   */
+  requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean; conoceTemplo: boolean };
   personaje: { id: number; nombre: string; propio: boolean; creado: string } | null;
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
   /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
