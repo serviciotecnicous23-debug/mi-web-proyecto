@@ -37,6 +37,7 @@ import type { OnlineHooks } from "./online";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import { casoPorId, elegirCaso } from "./casos";
 import { Entrada, vibrar } from "./motor/entrada";
+import { lineasDe, lineasFin, lineasInicio, pasosDeParte, type PasoInst } from "./instruccion";
 import { haciaElPiso } from "./motor/camara";
 
 // ---------------------------------------------------------------- reglas
@@ -116,6 +117,11 @@ export type WorldOptions = {
   spawn?: "ciudad";
   /** El sonido compartido con la ciudad (no se cierra al salir del templo). */
   audio?: TempleAudio;
+  /**
+   * Jerusalén en línea: la instrucción del sacerdote (partes terminadas, si es obligatoria porque
+   * no conoce el templo, el nombre para Azarías y cómo avisar al servidor de cada parte).
+   */
+  instruccion?: { partes: number; obligatoria: boolean; nombre: string; alTerminarParte: (parte: number) => Promise<boolean> };
 };
 
 /** Jerusalén en línea: al pie de la escalinata se sale a la ciudad; quien vuelve aparece arriba. */
@@ -194,6 +200,14 @@ export class TempleWorld {
   private goodFor = 0;
   private resizeObs: ResizeObserver;
   private unsub: () => void;
+
+  // Jerusalén en línea: la instrucción del sacerdote (Azarías lleva al nuevo por el templo)
+  private inst: { parte: number; pasos: PasoInst[]; i: number; fase: "inicio" | "ir" | "hablar" | "tarea" | "pregunta" | "fin" } | null = null;
+  private instPartes = 0;
+  private instPendiente = false;
+  private instOk = false;
+  private instDeber = false;
+  private azaRuta: V2[] = [];
 
   // entrada (toques, ratón y teclado: motor/entrada.ts) y el camino al punto tocado
   private entrada!: Entrada;
@@ -355,6 +369,9 @@ export class TempleWorld {
 
     if (this.online) {
       gameStore.toast("Templo en línea: aquí no hay levitas que ayuden. Cada deber suma mérito.", "info");
+      this.instPartes = opts.instruccion?.partes ?? 0;
+      // quien no conoce el templo empieza (o sigue) la instrucción al entrar
+      this.instPendiente = !!opts.instruccion?.obligatoria && this.instPartes < 3;
     } else {
       // al volver: lo que hicieron los levitas mientras tanto
       const off = applyOffline(this.s);
@@ -388,7 +405,7 @@ export class TempleWorld {
   }
 
   /** Respuesta a una pregunta (la pantalla muestra la explicación). */
-  answer(quizId: string, choice: number, source: "azarias" | "pueblo" | "examen", step = 0): boolean {
+  answer(quizId: string, choice: number, source: "azarias" | "pueblo" | "examen" | "instruccion", step = 0): boolean {
     const q = quizById(quizId);
     const correct = !!q && q.correcta === choice;
     const first = correct && this.s.quizzes[quizId] !== true;
@@ -404,7 +421,7 @@ export class TempleWorld {
       }
       this.track("preguntas");
       if (source === "pueblo") this.track("pueblo");
-      const bonus = source === "pueblo" ? 15 + 6 * this.s.rank : source === "azarias" ? 8 + 4 * this.s.rank : 0;
+      const bonus = this.online ? 0 : source === "pueblo" ? 15 + 6 * this.s.rank : source === "azarias" ? 8 + 4 * this.s.rank : 0;
       if (bonus) this.giveGozo(bonus, p);
       this.fx.sparkle(p, 18, 0.5);
     } else this.audio.wrong();
@@ -413,6 +430,7 @@ export class TempleWorld {
       this.timers.quizCool = correct ? 55 : 22;
     }
     if (source === "examen") this.examOk[step] = correct;
+    if (source === "instruccion") this.instOk = correct;
     this.persist();
     this.pushHud();
     return correct;
@@ -442,6 +460,38 @@ export class TempleWorld {
     this.leaving = true;
     this.audio.page();
     this.online.toCity();
+  }
+
+  // ---------------------------------------------------------------- instrucción del sacerdote
+  /** Empieza (o repasa) una parte de la instrucción del sacerdote. */
+  empezarInstruccion(parte = Math.min(3, this.instPartes + 1)) {
+    if (!this.online || this.finale) return;
+    const pasos = pasosDeParte(parte);
+    if (!pasos.length) return;
+    this.instPendiente = false;
+    this.inst = { parte, pasos, i: 0, fase: "inicio" };
+    gameStore.push({ kind: "dialog", id: `inst:inicio:${parte}`, lines: lineasInicio(parte, this.opts.instruccion?.nombre || "sacerdote") });
+    this.updateObjective();
+    this.pushHud();
+  }
+
+  /** Deja la instrucción (solo si no es obligatoria; Azarías vuelve a su lugar). */
+  dejarInstruccion() {
+    if (!this.inst) return;
+    this.inst = null;
+    this.azaVolver();
+    this.updateObjective();
+    this.pushHud();
+  }
+
+  /** Partes terminadas de la instrucción (0 a 3). */
+  get partesInstruccion(): number {
+    return this.instPartes;
+  }
+
+  /** ¿La instrucción es obligatoria para este sacerdote? */
+  get instruccionObligatoria(): boolean {
+    return !!this.opts.instruccion?.obligatoria && this.instPartes < 3;
   }
 
   /** Si no se pudo llegar a la ciudad, se puede volver a intentar. */
@@ -576,6 +626,7 @@ export class TempleWorld {
     }
 
     this.movePlayer(dt);
+    this.instTick(dt);
     this.produce(dt);
     this.consume(dt);
     this.updateZones(dt);
@@ -2301,6 +2352,153 @@ export class TempleWorld {
     });
   }
 
+  // ---------------------------------------------------------------- instrucción del sacerdote (por dentro)
+  private instPaso(): PasoInst | null {
+    return this.inst ? this.inst.pasos[this.inst.i] ?? null : null;
+  }
+
+  /** Azarías camina al lugar del paso y espera a un costado. */
+  private instGuiar() {
+    const p = this.instPaso();
+    if (!p) return;
+    const a = this.azarias.rig;
+    let [x, z] = [p.donde[0] - 1.1, p.donde[1] + (p.donde[1] >= 0 ? -1.0 : 1.0)];
+    if (!walkableArea(x, z)) [x, z] = p.donde;
+    this.azaRuta = this.nav.path(a.x, a.z, x, z);
+  }
+
+  private azaVolver() {
+    const a = this.azarias.rig;
+    this.azaRuta = this.nav.path(a.x, a.z, POS.azarias[0], POS.azarias[1]);
+  }
+
+  /** Dónde se hace la tarea del paso (según lo que lleva el aprendiz). */
+  private instDondeTarea(p: PasoInst): V2 {
+    const lleva = this.player.carry.items[0]?.type;
+    switch (p.tarea?.deber ?? p.tarea?.cargar) {
+      case "lena":
+        return p.tarea?.deber && lleva === "lena" ? POS.altar : POS.lenaPile;
+      case "ofrendas":
+        return lleva && isOffering(lleva) ? POS.altar : POS.reception;
+      case "aceite":
+        return lleva === "aceite" ? POS.candeleroSpot : POS.prensaPile;
+      case "panes":
+        return lleva === "pan" ? POS.mesaSpot : POS.hornoPile;
+      case "incienso":
+        return lleva === "incienso" ? POS.altarInciensoSpot : POS.camInciensoPile;
+      default:
+        return p.donde;
+    }
+  }
+
+  /** Antes de pedir un servicio, se hace lugar (las lámparas llenas no reciben más aceite). */
+  private instHacerLugar(p: PasoInst) {
+    const s = this.s;
+    switch (p.tarea?.deber) {
+      case "lena":
+        if (s.altarFuel > this.fuelMax() - 1) s.altarFuel = Math.max(0, this.fuelMax() - 2);
+        break;
+      case "aceite":
+        if (s.lampOil > LAMPS - 1) s.lampOil = LAMPS - 2;
+        break;
+      case "panes":
+        if (s.bread > BREAD - 1) s.bread = BREAD - 2;
+        break;
+      case "incienso":
+        if (s.incense > INCENSE_MAX - 1) s.incense = INCENSE_MAX - 2;
+        break;
+    }
+  }
+
+  private instTareaHecha(p: PasoInst): boolean {
+    if (p.tarea?.cargar) return this.player.carry.items[0]?.type === p.tarea.cargar;
+    return this.instDeber;
+  }
+
+  private instTick(dt: number) {
+    if (this.azaRuta.length && this.walk(this.azarias.rig, this.azaRuta, 3.8, dt)) this.azaRuta = [];
+    const it = this.inst;
+    const p = this.instPaso();
+    if (!it || !p || gameStore.busy) return;
+    const r = this.player.rig;
+    if (it.fase === "ir" && dist(r.x, r.z, p.donde[0], p.donde[1]) < 2.6) {
+      it.fase = "hablar";
+      this.audio.page();
+      gameStore.push({ kind: "dialog", id: `inst:paso:${p.id}`, lines: lineasDe(p) });
+    } else if (it.fase === "tarea" && this.instTareaHecha(p)) this.instPreguntar();
+  }
+
+  private instPreguntar() {
+    const it = this.inst;
+    const p = this.instPaso();
+    if (!it || !p) return;
+    it.fase = "pregunta";
+    this.instOk = false;
+    gameStore.push({ kind: "quiz", quizId: p.pregunta, source: "instruccion" });
+  }
+
+  private instDialogoCerrado(id: string) {
+    const it = this.inst;
+    if (id.startsWith("inst:fin:")) {
+      const parte = Number(id.slice(9));
+      this.inst = null;
+      // quien está obligado sigue con la parte siguiente; quien repasa, termina aquí
+      if (this.opts.instruccion?.obligatoria && parte < 3) this.empezarInstruccion(parte + 1);
+      else this.azaVolver();
+      this.pushHud();
+      return;
+    }
+    if (!it) return;
+    if (id.startsWith("inst:inicio:")) {
+      it.fase = "ir";
+      this.instGuiar();
+    } else if (id.startsWith("inst:paso:")) {
+      const p = this.instPaso();
+      if (!p) return;
+      if (p.tarea && !this.instTareaHecha(p)) {
+        it.fase = "tarea";
+        this.instDeber = false;
+        this.instHacerLugar(p);
+      } else this.instPreguntar();
+    }
+    this.updateObjective();
+    this.pushHud();
+  }
+
+  private instPreguntaCerrada() {
+    const it = this.inst;
+    if (!it || it.fase !== "pregunta") return;
+    if (!this.instOk) {
+      // se lee la explicación y se responde otra vez
+      gameStore.toast("Azarías: «Léelo con calma y responde otra vez»", "info");
+      this.instPreguntar();
+      return;
+    }
+    it.i++;
+    if (it.i >= it.pasos.length) {
+      void this.instTerminarParte();
+      return;
+    }
+    it.fase = "ir";
+    this.instGuiar();
+    this.updateObjective();
+    this.pushHud();
+  }
+
+  private async instTerminarParte() {
+    const it = this.inst;
+    if (!it) return;
+    it.fase = "fin";
+    const parte = it.parte;
+    const ok = (await this.opts.instruccion?.alTerminarParte(parte)) ?? false;
+    if (ok) this.instPartes = Math.max(this.instPartes, parte);
+    vibrar([25, 40, 25]);
+    this.audio.rank();
+    this.fx.sparkle(this.playerChest(), 30, 0.6);
+    gameStore.push({ kind: "dialog", id: `inst:fin:${parte}`, lines: lineasFin(parte, this.opts.instruccion?.nombre || "sacerdote") });
+    this.pushHud();
+  }
+
   // ---------------------------------------------------------------- historia
   private dialog(id: string) {
     const lines = DIALOGUES[id];
@@ -2319,6 +2517,7 @@ export class TempleWorld {
   private storyTriggers() {
     const s = this.s;
     if (this.online) {
+      if (this.instPendiente && !gameStore.busy && this.timers.slow === 0 && this.s.playSeconds > 2.5) this.empezarInstruccion();
       this.audio.layers.night = this.isNight();
       this.audio.setRadio(document.documentElement.classList.contains("radio-mini-open"));
       this.audio.layers.event = this.hourIndex() >= 0 || this.fiestaFestiva();
@@ -2356,6 +2555,8 @@ export class TempleWorld {
   }
 
   private onModalClosed = (m: Modal) => {
+    if (m.kind === "dialog" && m.id.startsWith("inst:")) this.instDialogoCerrado(m.id);
+    if (m.kind === "quiz" && m.source === "instruccion") this.instPreguntaCerrada();
     if (m.kind === "quiz" && m.source === "examen" && m.step === 2) this.finishExam();
     if (m.kind === "quiz" && m.source === "pueblo") this.finishQuestioner();
     if (m.kind === "juicio") this.finishQuestioner(this.ultimoJuicio);
@@ -2378,6 +2579,7 @@ export class TempleWorld {
   /** Cuenta algo que pasó: avanza la jornada, el desafío del día y las cuentas de los logros. */
   private track(kind: GoalKind | StatKey, n = 1, byPlayer = true) {
     const s = this.s;
+    if (byPlayer && this.inst?.fase === "tarea" && this.instPaso()?.tarea?.deber === kind) this.instDeber = true;
     if (this.online) {
       const deber = DEBER_DE[kind];
       if (deber && byPlayer) this.online.duty(deber, n);
@@ -2693,6 +2895,12 @@ export class TempleWorld {
     const padFor = (key: string) => this.pads.find((p) => p.key === key);
     const carrying = c.items.length ? c.items[0].type : null;
     if (this.finale) return set("El Día de la Expiación", null);
+    if (this.inst) {
+      const it = this.inst;
+      const p = this.instPaso();
+      if (p && it.fase === "ir") return set(`Instrucción ${it.parte}/3: sigue a Azarías a ${p.lugar}`, p.donde, null);
+      if (p && it.fase === "tarea" && p.tarea) return set(`Instrucción: ${p.tarea.texto}`, this.instDondeTarea(p), null);
+    }
     if (!s.built.puertas) return set("Párate en el círculo dorado de la puerta para abrir el templo", POS.reception, null, "st:puertas");
     if (!s.built.lenera) return set("Restaura la leñera: párate en su círculo dorado", STATIONS[1].pad, null, "st:lenera");
     if (!s.built.altar) return set("Restaura el altar de bronce", STATIONS[2].pad, null, "st:altar");
@@ -2771,7 +2979,7 @@ export class TempleWorld {
     const a = this.azarias;
     a.rig.t += dt;
     const dA = dist(a.rig.x, a.rig.z, p.rig.x, p.rig.z);
-    this.face(a.rig, dA < 7 ? Math.atan2(p.rig.x - a.rig.x, p.rig.z - a.rig.z) : Math.PI / 2, dt);
+    if (!this.azaRuta.length) this.face(a.rig, dA < 7 ? Math.atan2(p.rig.x - a.rig.x, p.rig.z - a.rig.z) : Math.PI / 2, dt);
     a.rig.pose = this.rankReady() ? "offer" : "idle";
     a.fig.update(a.rig);
     this.shadows.add(a.rig.x, a.rig.y, a.rig.z, 1.1);
@@ -3255,6 +3463,14 @@ export class TempleWorld {
   }
 
   // ================================================================ marcador
+  /** Lo que la pantalla muestra de la instrucción en curso. */
+  private hudInstruccion() {
+    const it = this.inst;
+    const p = this.instPaso();
+    if (!it || !p) return null;
+    return { parte: it.parte, paso: it.i + 1, de: it.pasos.length, lugar: p.lugar, obligatoria: this.instruccionObligatoria };
+  }
+
   private pushHud() {
     const s = this.s;
     const c = this.player.carry;
@@ -3270,6 +3486,7 @@ export class TempleWorld {
     if (hour >= 0 && s.built.altar) events.push(this.online ? HOURS[hour][2] : `${HOURS[hour][2]} · gozo ×2`);
     if (this.prayer) events.push("El pueblo ora a la hora del incienso");
     const hud: Hud = {
+      instruccion: this.hudInstruccion(),
       gozo: Math.floor(s.gozo),
       sabiduria: s.sabiduria,
       rank: s.rank,
