@@ -1,7 +1,30 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { type InsertUser } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { enLaRadio } from "@/lib/incrustado";
+
+/**
+ * Dentro de la radio: ¿el navegador guardó la sesión? Si la radio está en otro sitio (su dirección
+ * antigua) o el navegador bloquea las cookies del marco, la cuenta no quedaría guardada y el juego
+ * cargaría sin avance ni Jerusalén en línea: se avisa en vez de mostrar una sesión que no existe.
+ */
+async function comprobarSesionEnLaRadio(queryClient: QueryClient, toast: ReturnType<typeof useToast>["toast"]) {
+  if (!enLaRadio()) return;
+  try {
+    const res = await fetch(api.auth.me.path, { credentials: "include", cache: "no-store" });
+    if (res.status !== 401) return;
+  } catch {
+    return;
+  }
+  queryClient.setQueryData([api.auth.me.path], null);
+  toast({
+    title: "Tu navegador no guardó la sesión aquí",
+    description: "Abre los juegos desde la radio oficial (radio.ministerioavivandoelfuego.com) o desde la web del ministerio: ahí sí se guardan tu cuenta y tu avance.",
+    variant: "destructive",
+    duration: 12000,
+  });
+}
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -36,6 +59,7 @@ export function useAuth() {
     onSuccess: (data) => {
       queryClient.setQueryData([api.auth.me.path], data);
       toast({ title: "¡Bienvenido!", description: `Sesión iniciada como ${data.username}` });
+      void comprobarSesionEnLaRadio(queryClient, toast);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -69,6 +93,7 @@ export function useAuth() {
       } else {
         toast({ title: "Bienvenido!", description: "Cuenta creada exitosamente" });
       }
+      void comprobarSesionEnLaRadio(queryClient, toast);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

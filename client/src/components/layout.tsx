@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { InstallAppButton } from "@/components/InstallAppButton";
-import { enLaRadio } from "@/lib/incrustado";
+import { enLaRadio, radioDeOtroSitio, RADIO_OFICIAL_CON_JUEGOS } from "@/lib/incrustado";
 import { loginUrl } from "@/lib/login-redirect";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1044,24 +1044,33 @@ function EmailVerifyBanner() {
 /** Dentro de la radio: solo «Juegos» y la cuenta (la radio pone su barra con la música y el ministerio). */
 function BarraDeLaRadio() {
   const { user } = useAuth();
+  const otroSitio = radioDeOtroSitio();
   return (
-    <header
-      className="sticky top-0 z-40 flex items-center gap-2 border-b border-orange-500/30 bg-[#13062a] px-3 py-2 text-white"
-      data-testid="barra-radio"
-    >
-      <Link href="/juegos" className="flex min-w-0 items-center gap-1.5 font-bold" data-testid="barra-radio-juegos">
-        <Gamepad2 className="h-5 w-5 shrink-0 text-amber-300" />
-        <span className="truncate">Juegos · Avivando el Fuego</span>
-      </Link>
-      <span className="flex-1" />
-      {user ? (
-        <span className="max-w-[40vw] truncate text-xs text-white/80" data-testid="barra-radio-usuario">
-          {user.displayName || user.username}
-        </span>
-      ) : (
-        <Link href={loginUrl()} className="shrink-0 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-950" data-testid="barra-radio-entrar">
-          Entrar o crear cuenta
+    <header className="sticky top-0 z-40 border-b border-orange-500/30 bg-[#13062a] text-white" data-testid="barra-radio">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <Link href="/juegos" className="flex min-w-0 items-center gap-1.5 font-bold" data-testid="barra-radio-juegos">
+          <Gamepad2 className="h-5 w-5 shrink-0 text-amber-300" />
+          <span className="truncate">Juegos · Avivando el Fuego</span>
         </Link>
+        <span className="flex-1" />
+        {user ? (
+          <span className="max-w-[40vw] truncate text-xs text-white/80" data-testid="barra-radio-usuario">
+            {user.displayName || user.username}
+          </span>
+        ) : otroSitio ? null : (
+          <Link href={loginUrl()} className="shrink-0 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-950" data-testid="barra-radio-entrar">
+            Entrar o crear cuenta
+          </Link>
+        )}
+      </div>
+      {otroSitio && (
+        // La radio por su dirección antigua: el navegador no guarda aquí la sesión de la web.
+        <div className="flex items-center gap-2 bg-amber-300 px-3 py-2 text-xs text-amber-950" data-testid="barra-radio-otro-sitio">
+          <span className="min-w-0 flex-1">Esta es la dirección antigua de la radio: aquí no se guardan tu cuenta ni tu avance.</span>
+          <a href={RADIO_OFICIAL_CON_JUEGOS} target="_top" className="shrink-0 rounded-full bg-amber-950 px-3 py-1 font-bold text-amber-50" data-testid="barra-radio-oficial">
+            Abrir la radio oficial
+          </a>
+        </div>
       )}
     </header>
   );
