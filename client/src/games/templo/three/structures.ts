@@ -68,7 +68,7 @@ function wedge(w: number, h: number, d: number): THREE.BufferGeometry {
 }
 
 /** Piso de baldosas con tonos variados. */
-function tiles(minX: number, minZ: number, maxX: number, maxZ: number, size: number, palette: string[], y: number, gap: number, jitter: number) {
+export function tiles(minX: number, minZ: number, maxX: number, maxZ: number, size: number, palette: string[], y: number, gap: number, jitter: number) {
   const nx = Math.max(1, Math.round((maxX - minX) / size));
   const nz = Math.max(1, Math.round((maxZ - minZ) / size));
   const sx = (maxX - minX) / nx, sz = (maxZ - minZ) / nz;
@@ -100,9 +100,9 @@ function tiles(minX: number, minZ: number, maxX: number, maxZ: number, size: num
   return g;
 }
 
-type Course = { h: number; color: string; len: number; inset?: number };
+export type Course = { h: number; color: string; len: number; inset?: number };
 /** Muro de sillares: hileras de bloques con juntas alternadas. Corre a lo largo de x o de z. */
-function blockWall(b: GeoBuilder, axis: "x" | "z", from: number, to: number, at: number, thick: number, courses: Course[], y0 = 0) {
+export function blockWall(b: GeoBuilder, axis: "x" | "z", from: number, to: number, at: number, thick: number, courses: Course[], y0 = 0) {
   const L = to - from;
   let y = y0;
   courses.forEach((c, ci) => {
@@ -171,7 +171,7 @@ function log(b: GeoBuilder, x: number, y: number, z: number, len: number, r: num
   b.cyl(r * 0.92, r * 0.92, 0.012, "#d2a679", { x: x - (cx * len) / 2, y, z: z - (sz * len) / 2, rz: Math.PI / 2, ry }, 7);
 }
 
-function jar(b: GeoBuilder, x: number, y: number, z: number, s = 1, color: string = "#b8673a") {
+export function jar(b: GeoBuilder, x: number, y: number, z: number, s = 1, color: string = "#b8673a") {
   b.lathe(
     [[0, 0], [0.09 * s, 0], [0.15 * s, 0.08 * s], [0.17 * s, 0.2 * s], [0.13 * s, 0.32 * s], [0.07 * s, 0.38 * s], [0.08 * s, 0.42 * s], [0, 0.42 * s]],
     vary(color, 0.08),
@@ -331,13 +331,13 @@ function buildTerrain(root: THREE.Group) {
   addMeshes(root, hills, null, { cast: false, receive: false });
 }
 
-function oliveTree(b: GeoBuilder, x: number, y: number, z: number, s: number) {
+export function oliveTree(b: GeoBuilder, x: number, y: number, z: number, s: number) {
   b.cyl(0.1 * s, 0.18 * s, 1.1 * s, "#6e5a43", { x, y: y + 0.55 * s, z, rz: rr(-0.15, 0.15) }, 6);
   for (let k = 0; k < 3; k++)
     b.add(new THREE.IcosahedronGeometry(0.55 * s, 0), vary("#7b8a5c", 0.1), { x: x + rr(-0.4, 0.4) * s, y: y + (1.2 + rr(0, 0.4)) * s, z: z + rr(-0.4, 0.4) * s, sy: 0.7 });
 }
 
-function palmTree(b: GeoBuilder, x: number, y: number, z: number, s: number) {
+export function palmTree(b: GeoBuilder, x: number, y: number, z: number, s: number) {
   const lean = rr(-0.18, 0.18);
   for (let k = 0; k < 6; k++) b.cyl(0.11 * s, 0.13 * s, 0.6 * s, k % 2 ? "#8a6d4a" : "#7a5f3f", { x: x + lean * k * 0.6 * s, y: y + (0.3 + k * 0.58) * s, z, rz: -lean }, 7);
   const tx = x + lean * 6 * 0.6 * s, ty = y + 3.6 * s;
@@ -1368,6 +1368,38 @@ export function buildWorld(): WorldVisual {
   root.add(out.clouds!);
   out.root = root;
   return out as WorldVisual;
+}
+
+/** El cielo, las estrellas y las nubes (los usa también la ciudad de Jerusalén en línea). */
+export function buildCielo(): Pick<WorldVisual, "sky" | "skyUniforms" | "stars" | "clouds"> {
+  const out: Partial<WorldVisual> = {};
+  buildSky(out);
+  return { sky: out.sky!, skyUniforms: out.skyUniforms!, stars: out.stars!, clouds: out.clouds! };
+}
+
+/**
+ * El templo restaurado tal como se ve desde la ciudad (Jerusalén en línea): los atrios, la casa
+ * de Jehová y sus lugares de servicio, con las puertas abiertas. Va en las mismas coordenadas
+ * que el templo, así que la escalinata termina donde empieza la plaza.
+ */
+export function buildTemploParaCiudad(): THREE.Group {
+  rnd = mulberry32(715);
+  const root = new THREE.Group();
+  const out: Partial<WorldVisual> = {};
+  buildCourts(root, out);
+  buildTemple(root, out);
+  const lugares = [
+    buildPuertas(), buildLenera(), buildAltar(), buildSea(out), buildSantuario(), buildPrensa(out), buildHorno(out),
+    buildCamIncienso(), buildCamaras(out), buildCoro(), buildEnsenanza(),
+  ];
+  for (const st of lugares) {
+    root.add(st.built);
+    st.ruin.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
+  }
+  // las puertas del atrio y del Lugar Santo están abiertas
+  out.gateDoors?.forEach((d, i) => (d.rotation.y = -(i === 0 ? -1 : 1) * (Math.PI / 2)));
+  out.holyDoors?.forEach((d, i) => (d.rotation.y = -(i === 0 ? -1 : 1) * (Math.PI / 2) * 0.92));
+  return root;
 }
 
 export function disposeWorld(w: WorldVisual) {

@@ -2043,6 +2043,19 @@ export const gameSeasons = pgTable(
   (t) => [primaryKey({ columns: [t.game, t.season] })],
 );
 
+// La ciudad (etapa 2, server/ciudad.ts): la casa de cada personaje, en una parcela fija de su
+// barrio. El nivel (0 tienda … 3 aposento alto) sube con el mérito de todas las temporadas y
+// nunca baja. El índice único (juego, barrio, parcela) se crea en JERUSALEN_SQL.
+export const gameHouses = pgTable("game_houses", {
+  characterId: integer("character_id").primaryKey().references(() => gameCharacters.id, { onDelete: "cascade" }),
+  game: text("game").notNull(),
+  barrio: integer("barrio").notNull(),
+  plot: integer("plot").notNull(),
+  level: integer("level").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const PRAYER_CATEGORIES = {
   salud: "Salud",
   familia: "Familia",

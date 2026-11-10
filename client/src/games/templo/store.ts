@@ -66,6 +66,26 @@ export type Hud = {
   tristeza: number;
 };
 
+/** Marcador de la ciudad (Jerusalén en línea, etapa 2). */
+export type CiudadHud = {
+  nombre: string;
+  escalon: EscalonId;
+  /** Nombre del barrio y número de la casa (desde 1). */
+  barrio: string;
+  casa: number;
+  nivel: number;
+  /** Dónde está ahora («La plaza», «Ciudad de David», «Escalinata del templo»...). */
+  lugar: string;
+  /** Lo que hay cerca o lo que conviene hacer. */
+  aviso: string;
+  fecha: string;
+  fiesta: { id: FiestaId; nombre: string; icono: string; dia: number; de: number; solemne: boolean; merito: number } | null;
+  hora: number;
+  fase: string;
+};
+
+export type EdificioId = "palacio" | "escuela" | "mercado";
+
 export type Modal =
   | { kind: "dialog"; id: string; lines: Line[] }
   | { kind: "lesson"; lessonId: string }
@@ -82,9 +102,14 @@ export type Modal =
   | { kind: "temporada" }
   | { kind: "dificil"; q: JerusalenPregunta }
   | { kind: "fiesta"; id: FiestaId }
-  | { kind: "juicio"; casoId: string };
+  | { kind: "juicio"; casoId: string }
+  | { kind: "casa" }
+  | { kind: "anuncios" }
+  | { kind: "ancianos"; n: number }
+  | { kind: "edificio"; id: EdificioId }
+  | { kind: "irA" };
 
-type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null };
+type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
 
 const emptyHud: Hud = {
   gozo: 0, sabiduria: 0, rank: 0, fuel: 0, fuelMax: 6, fireUnlocked: false, purity: 5, purityMax: 5, purityUnlocked: false,
@@ -94,7 +119,7 @@ const emptyHud: Hud = {
 };
 
 class GameStore {
-  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null };
+  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null, ciudad: null };
   private queue: Modal[] = [];
   private listeners = new Set<() => void>();
   private closeHandlers = new Set<(m: Modal) => void>();
@@ -118,6 +143,11 @@ class GameStore {
 
   setOnline(online: OnlineHud | null) {
     this.snap = { ...this.snap, online };
+    this.emit();
+  }
+
+  setCiudad(ciudad: CiudadHud | null) {
+    this.snap = { ...this.snap, ciudad };
     this.emit();
   }
 
@@ -167,7 +197,7 @@ class GameStore {
   reset() {
     this.queue = [];
     this.closeHandlers.clear();
-    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online };
+    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online, ciudad: null };
     this.emit();
   }
 }
