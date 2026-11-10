@@ -41,6 +41,8 @@ export const PALACIO_PUERTA: V2 = [17, 21.2];
 export const ESCUELA: Rect = [8, -33, 26, -23];
 export const ESCUELA_PUERTA: V2 = [17, -22.2];
 export const MONTE_ORACION: Rect = [-6, -36, 3.5, -21];
+/** El lugar de oración: al pie del monte, del lado de la escuela (el monte no se camina). */
+export const ORACION_PUNTO: V2 = [5.4, -28.5];
 
 
 /** Una parcela: su rectángulo, el centro de la casa, hacia dónde mira la puerta y el umbral. */
