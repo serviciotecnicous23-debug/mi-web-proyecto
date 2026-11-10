@@ -653,6 +653,37 @@ export class CiudadWorld {
     this.pushHud();
   }
 
+  /** El círculo y el letrero del lugar de oración (solo se ven si eres profeta). */
+  private lugarOracion: { ring: Ring; etiqueta: HTMLDivElement } | null = null;
+  private crearLugarOracion() {
+    if (this.lugarOracion) return;
+    const [ox, oz] = P.ORACION_PUNTO;
+    const ring = new Ring(1.1, "#c9b6ff", false);
+    ring.set(ox, P.alturaCiudad(ox, oz), oz);
+    this.scene.add(ring.mesh);
+    const etiqueta = this.overlay.make("tpl-pad", "🙏 Lugar de oración<small>Quédate quieto en el círculo</small>");
+    this.lugarOracion = { ring, etiqueta };
+  }
+
+  /**
+   * Adónde ir ahora en el camino (para la flecha del borde): el paso que toca de los primeros pasos,
+   * el mensaje que se lleva o el pobre más cercano si se lleva pan.
+   */
+  private objetivoCamino(): THREE.Vector3 | null {
+    const c = this.estado.yo.camino;
+    if (c === "sacerdocio") return null;
+    const r = this.player.rig;
+    const v = (p: V2) => new THREE.Vector3(p[0], P.alturaCiudad(p[0], p[1]) + 1, p[1]);
+    if (this.mensaje) return v([this.mensaje.x, this.mensaje.z]);
+    if (this.panesQueLleva > 0 && this.pobres.length) {
+      const p = [...this.pobres].filter((x) => x.espera <= 0).sort((a, b) => dist(r.x, r.z, a.at[0], a.at[1]) - dist(r.x, r.z, b.at[0], b.at[1]))[0];
+      if (p) return v(p.at);
+    }
+    if (this.pasos >= 3) return null;
+    if (c === "profecia") return v(this.pasos === 1 ? P.ORACION_PUNTO : P.ESCUELA_PUERTA);
+    return v(P.PALACIO_PUERTA);
+  }
+
   private crearPobres() {
     if (this.estado.yo.camino !== "realeza" || this.pobres.length) return;
     for (const at of POBRES) {
@@ -679,21 +710,38 @@ export class CiudadWorld {
       gameStore.toast(`Entregaste el mensaje: «${m.text}» (${m.ref})`, "gold");
       this.deber("mensaje");
     }
-    // la oración en el monte (solo el profeta)
+    // la oración al pie del monte (solo el profeta): quieto en el círculo, se arrodilla y ora
     if (c === "profecia") {
       if (this.oracionEspera > 0) this.oracionEspera -= dt;
-      const enMonte = r.x > P.MONTE_ORACION[0] && r.x < P.MONTE_ORACION[2] && r.z > P.MONTE_ORACION[1] && r.z < P.MONTE_ORACION[3];
+      this.crearLugarOracion();
+      const [ox, oz] = P.ORACION_PUNTO;
+      const enMonte = dist(r.x, r.z, ox, oz) < 1.25;
       const quieto = Math.hypot(this.player.vx, this.player.vz) < 0.3;
       if (enMonte && quieto && this.oracionEspera <= 0 && !gameStore.busy) {
         this.oracionT += dt;
+        r.pose = "kneel";
+        r.yaw = turn(r.yaw, -Math.PI / 2, dt * 4);
         if (this.oracionT >= ORACION_SEGUNDOS) {
           this.oracionT = 0;
           this.oracionEspera = 20;
+          r.pose = "idle";
           this.fx.sparkle(new THREE.Vector3(r.x, r.y + 1.8, r.z), 26, 0.6);
           gameStore.toast("Oraste en el monte de la oración · +2 de mérito", "gold");
           this.deber("oracion");
         }
-      } else if (!enMonte || !quieto) this.oracionT = 0;
+      } else {
+        if (r.pose === "kneel") r.pose = "idle";
+        if (!enMonte || !quieto) this.oracionT = 0;
+      }
+      if (this.lugarOracion) {
+        const cerca = dist(r.x, r.z, ox, oz) < 14;
+        if (cerca) this.overlay.place(this.lugarOracion.etiqueta, new THREE.Vector3(ox, P.alturaCiudad(ox, oz) + 1.6, oz));
+        else this.lugarOracion.etiqueta.style.display = "none";
+        const u = this.lugarOracion.ring.mat.uniforms;
+        u.uTime.value = this.time;
+        u.uPulse.value = this.oracionT > 0 ? 1 : 0.55;
+        u.uOpacity.value = this.oracionEspera > 0 ? 0.25 : 0.85;
+      }
     }
     // el pan para los pobres (solo el siervo del rey)
     if (c === "realeza") {
@@ -725,8 +773,9 @@ export class CiudadWorld {
     if (this.pasos < 3) {
       const t =
         c === "profecia"
-          ? ["Ve a la escuela de los profetas y memoriza un versículo", "Ora en el monte de la oración, al sur de la escuela (quédate quieto)", "Toma un mensaje en la escuela y llévalo a la casa marcada"]
+          ? ["Ve a la escuela de los profetas y memoriza un versículo", "Ora al pie del monte, junto a la escuela: quédate quieto en el círculo violeta", "Toma un mensaje en la escuela y llévalo a la casa marcada"]
           : ["Ve al palacio del rey y atiende una audiencia", "Toma pan en el palacio y dáselo a un pobre de la ciudad", "Copia la ley en el palacio"];
+      // la flecha del borde de la pantalla señala adónde ir
       return `Primeros pasos ${this.pasos + 1}/3: ${t[this.pasos]}`;
     }
     return c === "profecia" ? "Sirve como profeta: memoriza en la escuela, ora en el monte y lleva mensajes" : "Sirve al rey: audiencias, pan para los pobres y la copia de la ley";
@@ -1714,7 +1763,9 @@ export class CiudadWorld {
     // la flecha del borde señala tu casa cuando no se ve (la primera vez y desde lejos)
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const lejos = dist(r.x, r.z, casa.x, casa.z) > 16 && !gameStore.busy && this.time < 40 && this.opts.llegada === "templo";
-    this.overlay.pointTo(lejos ? new THREE.Vector3(casa.x, P.SUELO + 1, casa.z) : null);
+    const obj = this.objetivoCamino();
+    const lejosObj = obj && dist(r.x, r.z, obj.x, obj.z) > 6 && !gameStore.busy;
+    this.overlay.pointTo(lejosObj ? obj : lejos ? new THREE.Vector3(casa.x, P.SUELO + 1, casa.z) : null);
   }
 
   // ================================================================ marcador

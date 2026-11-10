@@ -13,7 +13,7 @@ import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
 import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
 import type { SkyUniforms } from "../three/structures";
 import {
-  AREA_RECT, ARBOLES, CALLES_DE_AREA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, PALACIO,
+  AREA_RECT, ARBOLES, CALLES_DE_AREA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, ORACION_PUNTO, PALACIO,
   PALACIO_PORTICO, PARCELAS, PLAZA, POZO, PUERTA, PUESTOS, PULPITO, SUELO, rellenoDeCasas, type Parcela,
 } from "./plano";
 
@@ -452,6 +452,10 @@ function buildEscuela(root: THREE.Group) {
   h.add(new THREE.IcosahedronGeometry(1, 2), vary("#9c9064", 0.05), { x: hx, y: Y - 0.4, z: hz, sx: (hx1 - hx0) / 2 + 1, sy: 3.2, sz: (hz1 - hz0) / 2 + 1 });
   h.add(new THREE.IcosahedronGeometry(0.9, 0), "#a89678", { x: hx + 0.6, y: Y + 2.6, z: hz + 0.5, sx: 1.3, sy: 0.7 });
   for (const [dx, dz] of [[-2.2, -4], [2.6, -3], [-2.6, 3.6], [2.2, 4.6]] as [number, number][]) oliveTree(h, hx + dx, Y + 1.4, hz + dz, 1.05);
+  // el lugar de oración al pie del monte: una piedra plana y una estera para arrodillarse
+  const [ox, oz] = ORACION_PUNTO;
+  h.add(new THREE.IcosahedronGeometry(0.55, 1), "#b3a587", { x: ox - 0.95, y: Y + 0.12, z: oz, sx: 1.2, sy: 0.35, sz: 0.9 });
+  h.box(0.9, 0.03, 0.55, "#a8874c", { x: ox - 0.1, y: Y + 0.02, z: oz });
   meshes(root, h, null, true);
 }
 
