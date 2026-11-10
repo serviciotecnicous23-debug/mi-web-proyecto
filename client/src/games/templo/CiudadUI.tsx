@@ -20,6 +20,7 @@ import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { EstudiosDeOtro } from "./EstudiosUI";
 import { GananciaEnLinea } from "./GananciaUI";
+import { MapaView, MiniMapa } from "./MapaUI";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
@@ -86,6 +87,7 @@ function Reloj({ hora, fecha, fase }: { hora: number; fecha: string; fase: strin
 /** El marcador de la ciudad: quién eres, dónde está tu casa, el día y la fiesta, y qué hay cerca. */
 export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: () => void; big: boolean; onFull: () => void }) {
   const { ciudad: c, toasts, modal } = useGame();
+  const { city } = useContext(CiudadCtx);
   const controles = useControles();
   const reserva = useReservaControles();
   const [hint, setHint] = useState(true);
@@ -195,6 +197,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             </Boton>
           </div>
           <Reloj hora={c.hora} fecha={c.fecha} fase={c.fase} />
+          {!modal && <MiniMapa city={city} />}
         </div>
       </div>
 
@@ -292,6 +295,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <TesoroView />;
     case "irA":
       return <IrAView />;
+    case "mapa":
+      return <MapaModal />;
     case "frases":
       return <FrasesView />;
     case "vecinos":
@@ -1326,13 +1331,20 @@ function MeritoCamino({ camino }: { camino: "sacerdocio" | "profecia" | "realeza
   return (
     <button
       type="button"
-      className="pointer-events-auto flex w-fit items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-0.5 pl-1.5 pr-2.5 text-[11px] font-black text-amber-950 shadow-lg"
+      className="pointer-events-auto flex w-fit items-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-0.5 pl-1.5 pr-2.5 text-[11px] font-black text-amber-950 shadow-lg"
       onClick={() => gameStore.push({ kind: "temporada" })}
-      title="Tu mérito de la temporada y tu puesto entre los de tu camino: al cerrar la temporada se reparten los cargos"
+      title={`Tu mérito de la temporada${online.puesto ? ` y tu puesto entre los ${quien}` : ""}: al cerrar la temporada se reparten los cargos`}
+      aria-label={`Mérito ${online.merito}${online.puesto ? `, puesto ${online.puesto} entre los ${quien}` : ""}`}
       data-testid="ciudad-merito"
     >
-      🏅 <span className="tabular-nums">{online.merito}</span> de mérito
-      {online.puesto ? <span className="font-bold">· {online.puesto}.º de los {quien}</span> : null}
+      🏅 <span className="tabular-nums">{online.merito}</span> mérito
+      {online.puesto ? <span className="font-bold">· {online.puesto}.º</span> : null}
     </button>
   );
+}
+
+/** El mapa grande (con la ciudad del contexto). */
+function MapaModal() {
+  const { city } = useContext(CiudadCtx);
+  return <MapaView city={city} />;
 }

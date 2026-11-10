@@ -96,6 +96,19 @@ type Vecino = {
 };
 
 /** Un vecino para la lista de la pantalla. */
+/** Lo que muestra el minimapa (y el mapa grande). */
+export type MapaVista = {
+  x: number;
+  z: number;
+  /** Hacia dónde mira el personaje. */
+  yaw: number;
+  /** Hacia dónde mira la cámara (ese rumbo queda arriba en el mapa, como en la pantalla). */
+  giro: number;
+  casa: { x: number; z: number };
+  objetivo: { x: number; z: number; texto: string } | null;
+  vecinos: { x: number; z: number }[];
+};
+
 export type VecinoVisto = { id: number; nombre: string; escalon: EscalonId; barrio: number; casa: number; u: number; distancia: number; camino?: Camino };
 
 type Npc = {
@@ -726,6 +739,45 @@ export class CiudadWorld {
    * Adónde ir ahora en el camino (para la flecha del borde): el paso que toca de los primeros pasos,
    * el mensaje que se lleva o el pobre más cercano si se lleva pan.
    */
+  /** Lo que muestra el minimapa: el jugador, el rumbo de la cámara, su casa, los vecinos y el objetivo. */
+  mapa(): MapaVista {
+    const r = this.player.rig;
+    const cam = this.camera.position;
+    const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
+    return {
+      x: r.x,
+      z: r.z,
+      yaw: r.yaw,
+      giro: Math.atan2(r.x - cam.x, r.z - cam.z),
+      casa: { x: casa.umbral[0], z: casa.umbral[1] },
+      objetivo: this.objetivoMapa(),
+      vecinos: [...this.vecinos.values()].map((v) => ({ x: v.rig.x, z: v.rig.z })),
+    };
+  }
+
+  /** El objetivo de ahora, con su nombre (para el mapa): la misión en curso o el siguiente primer paso. */
+  private objetivoMapa(): { x: number; z: number; texto: string } | null {
+    const c = this.estado.yo.camino;
+    const r = this.player.rig;
+    if (this.mensaje) return { x: this.mensaje.x, z: this.mensaje.z, texto: "La casa del mensaje" };
+    if (this.panesQueLleva > 0 && this.pobres.length) {
+      const p = [...this.pobres].filter((x) => x.espera <= 0).sort((a, b) => dist(r.x, r.z, a.at[0], a.at[1]) - dist(r.x, r.z, b.at[0], b.at[1]))[0];
+      if (p) return { x: p.at[0], z: p.at[1], texto: "Un pobre que espera pan" };
+    }
+    if (c === "sacerdocio") return { x: P.ENTRADA_TEMPLO[0], z: P.ENTRADA_TEMPLO[1], texto: "El templo: tu servicio" };
+    if (c === "profecia") {
+      if (this.pasos === 1) return { x: P.ORACION_PUNTO[0], z: P.ORACION_PUNTO[1], texto: "El lugar de oración" };
+      return { x: P.ESCUELA_PUERTA[0], z: P.ESCUELA_PUERTA[1], texto: "La escuela de los profetas" };
+    }
+    return { x: P.PALACIO_PUERTA[0], z: P.PALACIO_PUERTA[1], texto: "El palacio del rey" };
+  }
+
+  /** Caminar solo hasta un punto (desde el mapa). */
+  caminarA(x: number, z: number) {
+    const r = this.player.rig;
+    this.ruta = this.nav.path(r.x, r.z, x, z);
+  }
+
   private objetivoCamino(): THREE.Vector3 | null {
     const c = this.estado.yo.camino;
     if (c === "sacerdocio") return null;

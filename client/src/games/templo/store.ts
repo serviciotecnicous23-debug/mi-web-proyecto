@@ -140,6 +140,7 @@ export type Modal =
   | { kind: "escuela"; tab?: "memoria" | "discernir" }
   | { kind: "palacio"; tab?: "audiencia" | "ley" }
   | { kind: "irA" }
+  | { kind: "mapa" }
   | { kind: "frases" }
   | { kind: "vecinos" }
   | { kind: "vecino"; id: number }
