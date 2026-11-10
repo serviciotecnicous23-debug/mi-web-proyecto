@@ -14,7 +14,7 @@ export type Camino = "sacerdocio" | "profecia" | "realeza";
 export const CAMINOS_LISTA: Camino[] = ["sacerdocio", "profecia", "realeza"];
 
 /** Deberes de los caminos nuevos (los del sacerdocio están en shared/jerusalen.ts). */
-export type DeberCamino = "mensaje" | "oracion" | "memoria" | "audiencia" | "pan" | "ley";
+export type DeberCamino = "mensaje" | "oracion" | "memoria" | "discernir" | "audiencia" | "pan" | "ley";
 
 export type CaminoDef = {
   id: Camino;
@@ -49,7 +49,7 @@ export const CAMINOS: Record<Camino, CaminoDef> = {
     guia: "Isaías hijo de Amoz",
     resumen: "Estudia la Palabra, ora en el monte, memoriza las Escrituras y lleva mensajes de ánimo por la ciudad.",
     escalones: ["Hijo de los profetas", "Vidente"],
-    deberes: ["mensaje", "oracion", "memoria"],
+    deberes: ["mensaje", "oracion", "memoria", "discernir"],
     nombres: [
       { nombre: "Samuel", ref: "1 Samuel 3:20" },
       { nombre: "Natán", ref: "2 Samuel 12:1" },
@@ -86,9 +86,9 @@ export const CAMINOS: Record<Camino, CaminoDef> = {
 };
 
 /** Mérito de cada deber de los caminos nuevos, y su tope por envío (un poco de golpe más un ritmo por segundo). */
-export const MERITO_DEBER_CAMINO: Record<DeberCamino, number> = { mensaje: 3, oracion: 2, memoria: 4, audiencia: 4, pan: 2, ley: 4 };
-export const TOPE_BASE_CAMINO: Record<DeberCamino, number> = { mensaje: 1, oracion: 1, memoria: 1, audiencia: 1, pan: 2, ley: 1 };
-export const TOPE_RITMO_CAMINO: Record<DeberCamino, number> = { mensaje: 0.03, oracion: 0.06, memoria: 0.04, audiencia: 0.04, pan: 0.06, ley: 0.04 };
+export const MERITO_DEBER_CAMINO: Record<DeberCamino, number> = { mensaje: 3, oracion: 2, memoria: 4, discernir: 4, audiencia: 4, pan: 2, ley: 4 };
+export const TOPE_BASE_CAMINO: Record<DeberCamino, number> = { mensaje: 1, oracion: 1, memoria: 1, discernir: 1, audiencia: 1, pan: 2, ley: 1 };
+export const TOPE_RITMO_CAMINO: Record<DeberCamino, number> = { mensaje: 0.03, oracion: 0.06, memoria: 0.04, discernir: 0.04, audiencia: 0.04, pan: 0.06, ley: 0.04 };
 
 /** Segundos de oración en el monte para que cuente una. */
 export const ORACION_SEGUNDOS = 15;
@@ -102,6 +102,93 @@ export function nombreEscalonCamino(camino: Camino, escalon: string | null | und
   if (camino === "sacerdocio") return nombreSacerdocio;
   return escalon === "sacerdote" || !escalon ? CAMINOS[camino].escalones[0] : CAMINOS[camino].escalones[1];
 }
+
+// ---------------------------------------------------------------- la escuela: discernir con las Escrituras
+/**
+ * Lo que se oye en la plaza: el profeta lo prueba con la Palabra (1 Juan 4:1; Isaías 8:20). No todo
+ * es falso: también hay llamados verdaderos que hay que recibir.
+ */
+export type Discernimiento = { id: string; dice: string; opciones: [string, string, string]; correcta: 0 | 1 | 2; explica: string; verso: { text: string; ref: string } };
+
+export const VERSO_DISCERNIR = {
+  text: "Amados, no creáis a todo espíritu, sino probad los espíritus si son de Dios; porque muchos falsos profetas han salido por el mundo.",
+  ref: "1 Juan 4:1",
+};
+
+export const DISCERNIMIENTOS: Discernimiento[] = [
+  {
+    id: "muertos",
+    dice: "Un hombre en la plaza susurra que puede hablar con los muertos y que trae un mensaje de tu abuelo.",
+    opciones: ["Escucharlo: si sabe el nombre del abuelo, será verdad", "Apartarse: el pueblo consulta a su Dios, no a los muertos", "Pagarle para que diga más"],
+    correcta: 1,
+    explica: "Dios no habla por medio de los que consultan a los muertos: el pueblo de Dios pregunta a su Dios.",
+    verso: { text: "Y si os dijeren: Preguntad a los encantadores y a los adivinos, que susurran hablando, responded: ¿No consultará el pueblo a su Dios? ¿Consultará a los muertos por los vivos?", ref: "Isaías 8:19" },
+  },
+  {
+    id: "nocumplio",
+    dice: "Una mujer anunció en nombre de Jehová que hoy llovería fuego sobre la puerta. No pasó nada, pero dice que igual hay que temerle.",
+    opciones: ["No temerla: lo que no se cumple, Jehová no lo habló", "Temerla por si acaso", "Esperar otro anuncio suyo antes de decidir"],
+    correcta: 0,
+    explica: "La palabra que viene de Dios se cumple. Si no se cumple, se habló con presunción y no hay que temer.",
+    verso: { text: "si el profeta hablare en nombre de Jehová, y no se cumpliere lo que dijo, ni aconteciere, es palabra que Jehová no ha hablado; con presunción la habló el tal profeta; no tengas temor de él.", ref: "Deuteronomio 18:22" },
+  },
+  {
+    id: "sinley",
+    dice: "Un maestro nuevo dice: «Ya no hace falta leer la ley de Moisés; basta con lo que yo les enseñe».",
+    opciones: ["Seguirlo porque habla bonito", "Callar para no discutir", "Comparar lo que dice con la ley y el testimonio"],
+    correcta: 2,
+    explica: "Toda enseñanza se prueba con la Palabra escrita: lo que no concuerda con ella no trae luz.",
+    verso: { text: "¡A la ley y al testimonio! Si no dijeren conforme a esto, es porque no les ha amanecido.", ref: "Isaías 8:20" },
+  },
+  {
+    id: "senal",
+    dice: "Un soñador hizo una señal asombrosa delante de todos y ahora dice: «Vamos tras los dioses de los vecinos».",
+    opciones: ["Seguirlo: la señal prueba que tiene poder", "No darle oído: ninguna señal vale para dejar a Jehová", "Seguirlo solo un tiempo para ver qué pasa"],
+    correcta: 1,
+    explica: "Una señal no hace verdadero a un mensaje que aparta de Dios: es una prueba de si lo amamos con todo el corazón.",
+    verso: { text: "no darás oído a las palabras de tal profeta, ni al tal soñador de sueños; porque Jehová vuestro Dios os está probando, para saber si amáis a Jehová vuestro Dios con todo vuestro corazón, y con toda vuestra alma.", ref: "Deuteronomio 13:3" },
+  },
+  {
+    id: "pazpaz",
+    dice: "Mientras muchos viven en pecado, un profeta del palacio repite: «Paz, paz; no pasará nada malo».",
+    opciones: ["Decir lo mismo para que todos estén contentos", "Llamar al pueblo a volverse a Dios: no hay paz en el pecado", "No decir nada: no es asunto tuyo"],
+    correcta: 1,
+    explica: "Calmar al pueblo con palabras dulces sin llamar al arrepentimiento es curar la herida a la ligera.",
+    verso: { text: "Y curan la herida de mi pueblo con liviandad, diciendo: Paz, paz; y no hay paz.", ref: "Jeremías 6:14" },
+  },
+  {
+    id: "adivino",
+    dice: "En el mercado, un adivino promete decirte tu futuro echando suertes, por dos monedas.",
+    opciones: ["Probar una vez, no pasa nada", "Pedirle que adivine solo cosas buenas", "No consultarlo: contamina y aparta de Dios"],
+    correcta: 2,
+    explica: "Dios pide que su pueblo no se vuelva a los adivinos: el futuro está en las manos de Jehová.",
+    verso: { text: "No os volváis a los encantadores ni a los adivinos; no los consultéis, contaminándoos con ellos. Yo Jehová vuestro Dios.", ref: "Levítico 19:31" },
+  },
+  {
+    id: "todolocree",
+    dice: "Un joven de la escuela cree cada rumor que corre por la ciudad y lo repite como si fuera palabra de Dios.",
+    opciones: ["Enseñarle a examinar antes de creer", "Repetir los rumores también", "Burlarse de él delante de todos"],
+    correcta: 0,
+    explica: "El profeta no cree todo lo que oye: examina con cuidado antes de hablar en nombre de Dios.",
+    verso: { text: "El simple todo lo cree; Mas el avisado mira bien sus pasos.", ref: "Proverbios 14:15" },
+  },
+  {
+    id: "pordinero",
+    dice: "Un vidente dice que solo profetiza a quien le paga, y que con plata Dios dará buenas noticias.",
+    opciones: ["Pagarle para recibir buenas noticias", "Rechazar ese negocio: la palabra de Dios no se vende", "Regatear el precio"],
+    correcta: 1,
+    explica: "Los profetas que adivinan por dinero se apoyan en Jehová con la boca, pero no hablan de su parte.",
+    verso: { text: "Sus jefes juzgan por cohecho, y sus sacerdotes enseñan por precio, y sus profetas adivinan por dinero; y se apoyan en Jehová, diciendo: ¿No está Jehová entre nosotros? No vendrá mal sobre nosotros.", ref: "Miqueas 3:11" },
+  },
+  {
+    id: "llamado",
+    dice: "Una anciana del barrio llama a todos a volverse a Dios con todo el corazón, con ayuno y oración.",
+    opciones: ["Recibir su llamado: concuerda con la Palabra", "Ignorarla porque no es sacerdote", "Pedirle una señal antes de escucharla"],
+    correcta: 0,
+    explica: "Discernir también es reconocer lo que viene de Dios: este llamado dice lo mismo que la Palabra.",
+    verso: { text: "Por eso pues, ahora, dice Jehová, convertíos a mí con todo vuestro corazón, con ayuno y lloro y lamento.", ref: "Joel 2:12" },
+  },
+];
 
 // ---------------------------------------------------------------- el palacio: audiencias
 export type Audiencia = { id: string; caso: string; opciones: [string, string, string]; correcta: 0 | 1 | 2; explica: string; verso: { text: string; ref: string } };

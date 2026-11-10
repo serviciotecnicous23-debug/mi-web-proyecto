@@ -11,7 +11,7 @@
 
 export type TipoEncargo =
   | "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos"
-  | "mensaje" | "oracion" | "memoria" | "audiencia" | "pan" | "ley" | "reunion" | "anfitrion";
+  | "mensaje" | "oracion" | "memoria" | "discernir" | "audiencia" | "pan" | "ley" | "reunion" | "anfitrion";
 
 /** `caminos`: para quién es (sin él, para el sacerdocio). Los de todos llevan los tres caminos. */
 export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string; caminos?: ("sacerdocio" | "profecia" | "realeza")[] };
@@ -38,6 +38,7 @@ export const ENCARGOS: EncargoDef[] = [
   { id: "mensaje2", tipo: "mensaje", meta: 2, titulo: "Lleva 2 mensajes de ánimo por la ciudad", icono: "📯", caminos: ["profecia"] },
   { id: "oracion2", tipo: "oracion", meta: 2, titulo: "Ora 2 veces en el monte de la oración", icono: "🙏", caminos: ["profecia"] },
   { id: "memoria2", tipo: "memoria", meta: 2, titulo: "Memoriza 2 versículos en la escuela", icono: "📖", caminos: ["profecia"] },
+  { id: "discernir2", tipo: "discernir", meta: 2, titulo: "Discierne con las Escrituras 2 palabras de la plaza", icono: "🔎", caminos: ["profecia"] },
   // palacio del rey
   { id: "audiencia2", tipo: "audiencia", meta: 2, titulo: "Atiende 2 audiencias con justicia", icono: "⚖️", caminos: ["realeza"] },
   { id: "pan5", tipo: "pan", meta: 5, titulo: "Reparte 5 panes a los pobres de la ciudad", icono: "🍞", caminos: ["realeza"] },
