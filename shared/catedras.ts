@@ -1,6 +1,7 @@
 /**
  * Las cátedras de Jerusalén en línea: lecciones cortas con una pregunta, cada una con su maestro. El
- * profeta aprende con Isaías mientras ora en el monte; el sacerdote, con Eleazar en la cámara de los
+ * profeta aprende con Isaías mientras ora en el monte y con Miqueas de Moreset los oficios del profeta,
+ * en la escuela; el sacerdote, con Eleazar en la cámara de los
  * sacerdotes, junto al templo, que le enseña el porqué de lo que sirvió hoy; el siervo del rey, con
  * Eliaquim en el palacio: cómo debe gobernar un rey y la historia de los reyes. Cada lección enseña algo y
  * lo prueba con la Palabra; el servidor guarda la respuesta y corrige (server/catedras-banco.ts): el
@@ -8,7 +9,7 @@
  */
 import type { Camino } from "./caminos";
 
-export type CatedraArea = "oracion" | "sacerdotal" | "reyes";
+export type CatedraArea = "oracion" | "sacerdotal" | "reyes" | "oficios";
 
 export type CatedraMeta = {
   nombre: string;
@@ -60,6 +61,17 @@ export const CATEDRAS: Record<CatedraArea, CatedraMeta> = {
     grados: ["Oyente del palacio", "Discípulo de Eliaquim", "Lector de las crónicas", "Consejero prudente", "Maestro de los reyes"],
     seguidas: true,
   },
+  oficios: {
+    nombre: "La cátedra de los oficios del profeta",
+    icono: "📯",
+    camino: "profecia",
+    maestro: "Miqueas",
+    lugar: "la escuela de los profetas",
+    cierre: "📯 Gracias, Miqueas",
+    manana: "Mañana Miqueas te enseña más; tu oración en el monte igual cuenta.",
+    grados: ["Oyente de la escuela", "Discípulo de Miqueas", "Mensajero fiel", "Voz que clama", "Maestro de los profetas"],
+    seguidas: true,
+  },
 };
 
 /** Lecciones por día en cada camino, entre todas sus cátedras (después la oración sigue contando, sin lección). */
@@ -85,6 +97,9 @@ export const GRUPOS_CATEDRA: Record<string, string> = {
   audiencia: "las audiencias del pueblo",
   pan: "el pan para los pobres",
   ley: "la copia de la ley",
+  mensaje: "los mensajes al pueblo",
+  memoria: "memorizar la Palabra",
+  discernir: "discernir con las Escrituras",
 };
 
 export type LeccionVista = {

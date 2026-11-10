@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-catedra-oficios",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Los oficios del profeta, con Miqueas",
+    puntos: [
+      "📯 En la sala de los rollos de la escuela te espera Miqueas de Moreset, profeta en los días de Ezequías (Jeremías 26:18): la cátedra de los oficios del profeta.",
+      "📜 30 lecciones: escuchar a Dios, decir solo lo que él dice, consolar y edificar, ser atalaya, guardar la Palabra, discernir a los falsos profetas, y la historia de Samuel, Natán, Elías, Eliseo, Micaías, Amós, Jonás y Joel, hasta Jesús, por quien Dios nos habló.",
+      "🔥 Miqueas enseña primero sobre lo que acabas de servir (los mensajes, memorizar o discernir). Varias lecciones seguidas, +3 de mérito y +3 de gozo por cada respuesta buena, y grados de «Oyente de la escuela» a «Maestro de los profetas».",
+      "⚖️ Para que los tres caminos ganen lo mismo, las 8 lecciones del día del profeta se reparten entre la oración del monte y los oficios con Miqueas.",
+    ],
+  },
+  {
     id: "2026-11-10-catedra-reyes",
     fecha: "10 de noviembre de 2026",
     titulo: "La cátedra de los reyes",

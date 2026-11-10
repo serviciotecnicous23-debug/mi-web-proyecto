@@ -461,7 +461,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
           case "rollos":
             gameStore.push({ kind: "estudios" });
             break;
-          // la cátedra del maestro (Eleazar en la cámara, Eliaquim en el palacio), los diezmos (el tesoro) y los turnos
+          // la cátedra del maestro (Eleazar en la cámara, Eliaquim en el palacio, Miqueas en la escuela), los diezmos y los turnos
           case "catedra":
             if (def.catedra) gameStore.push({ kind: "catedra", area: def.catedra });
             break;

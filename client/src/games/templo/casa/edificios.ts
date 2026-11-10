@@ -138,7 +138,7 @@ export const ESCUELA: EdificioDef = {
     { x: 4.2, z: 6.5, yaw: Math.PI, pose: "sit", variante: "hombre", manto: "#6a5a3a" },
     { x: 10.2, z: 5.5, yaw: Math.PI, pose: "sit", variante: "hombre", manto: "#8a6a4a" },
     { x: 13.5, z: 5.5, yaw: Math.PI, pose: "sit", variante: "hombre", manto: "#7a6a4a" },
-    { x: 15.2, z: 1.0, yaw: Math.PI, pose: "idle", variante: "anciano", manto: "#6a5a7a" },
+    { nombre: "Miqueas de Moreset", x: 13.0, z: 1.15, yaw: 0, pose: "idle", variante: "anciano", manto: "#6b4a2e", cabeza: "#d9d4cc" },
     { nombre: "Un hijo de los profetas", x: 10.0, z: 8.45, yaw: 0, pose: "idle", variante: "hombre", manto: "#8a7a5a" },
     { x: 16.5, z: 12.3, yaw: Math.PI, pose: "bow", variante: "mujer", manto: "#9a6a3a", trabaja: true },
   ],
@@ -148,10 +148,12 @@ export const ESCUELA: EdificioDef = {
     { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 15.0, z: 2.2, color: "#ffd166", ayuda: "Los rollos de los estudios: lee cada sección, practica y da el examen." },
     { id: "discernir", nombre: "Discernir con las Escrituras", icono: "🔎", x: 18.0, z: 6.6, color: "#9ad0ff", para: "camino", ayuda: "Escucha lo que dicen y examínalo con las Escrituras (1 Juan 4:1)." },
     { id: "mensaje", nombre: "Tomar un mensaje", icono: "✉️", x: 10.0, z: 10.7, color: "#ffb36b", para: "camino", ayuda: "Toma un mensaje de ánimo y llévalo a la casa marcada: la flecha te guía." },
+    { id: "catedra", nombre: "Los oficios del profeta", icono: "📯", x: 13.0, z: 2.6, color: "#c9a8f0", para: "camino", ayuda: "Miqueas de Moreset te enseña qué hace un profeta y la historia de los profetas, empezando por lo que serviste hoy." },
   ],
+  catedra: "oficios",
   saludo: (nombre, camino) =>
     camino === "profecia"
-      ? `Isaías: «Bienvenido, ${nombre}. Aquí aprendemos a escuchar a Dios. En mi atril memorizamos la Palabra; en la sala de los rollos están los estudios y el discernimiento; en la entrada se toman los mensajes para el pueblo.»`
+      ? `Isaías: «Bienvenido, ${nombre}. Aquí aprendemos a escuchar a Dios. En mi atril memorizamos la Palabra; en la sala de los rollos están los estudios, el discernimiento y Miqueas de Moreset, que enseña los oficios del profeta; en la entrada se toman los mensajes para el pueblo.»`
       : `Isaías: «Bienvenido, ${nombre}. Aquí estudian los hijos de los profetas. Los rollos de los estudios están en la sala del este: puedes estudiar y dar los exámenes.»`,
 };
 
