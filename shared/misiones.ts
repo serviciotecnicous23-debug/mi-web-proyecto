@@ -11,7 +11,7 @@
 
 export type TipoEncargo =
   | "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos"
-  | "mensaje" | "oracion" | "memoria" | "discernir" | "audiencia" | "pan" | "ley" | "reunion" | "anfitrion";
+  | "mensaje" | "oracion" | "memoria" | "discernir" | "audiencia" | "pan" | "ley" | "reunion" | "anfitrion" | "ayuda";
 
 /** `caminos`: para quién es (sin él, para el sacerdocio). Los de todos llevan los tres caminos. */
 export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string; caminos?: ("sacerdocio" | "profecia" | "realeza")[] };
@@ -33,6 +33,7 @@ export const ENCARGOS: EncargoDef[] = [
   { id: "alfoli1", tipo: "alfoli", meta: 1, titulo: "Lleva al templo lo del alfolí de tu casa", icono: "🏺", caminos: TODOS },
   { id: "reunion1", tipo: "reunion", meta: 1, titulo: "Ve a una reunión en la casa de un vecino y responde bien", icono: "📖", caminos: TODOS },
   { id: "anfitrion1", tipo: "anfitrion", meta: 1, titulo: "Abre tu casa para enseñar lo que estudiaste", icono: "🏠", caminos: TODOS },
+  { id: "ayuda1", tipo: "ayuda", meta: 1, titulo: "Ayuda a un vecino con lo de tu alfolí", icono: "🤲", caminos: TODOS },
   { id: "juntos10", tipo: "juntos", meta: 10, titulo: "Cumple 10 deberes sirviendo junto con otro sacerdote", icono: "🤝" },
   // escuela de los profetas
   { id: "mensaje2", tipo: "mensaje", meta: 2, titulo: "Lleva 2 mensajes de ánimo por la ciudad", icono: "📯", caminos: ["profecia"] },

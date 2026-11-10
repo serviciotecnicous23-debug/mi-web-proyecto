@@ -22,9 +22,24 @@ export const NOVEDADES: Novedad[] = [
       "Tu casa tiene huerto: siembra trigo, cebada u olivo, riégalo y cosecha al alfolí para ofrecerlo en el templo o venderlo.",
       "Pon adornos en tu casa (macetas, lámparas, toldos, un telar, una parra, una higuera o una palmera), dale nombre con un letrero y vístete con un manto y una faja: tus vecinos lo ven todo.",
       "🫓 Tu casa tiene horno: prepara tortas amasadas con aceite o aceite puro para las lámparas con lo del alfolí. Valen más honra que los bienes sueltos (y en las fiestas del cereal, las tortas valen el doble).",
+    ],
+  },
+  {
+    id: "2026-11-10-comunidad",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Vecinos, reuniones y el concurso de la semana",
+    puntos: [
       "En la ciudad ves qué hace cada vecino junto a su nombre: 🛒 en el mercado, 🏠 en su casa, 📜 estudiando, 🙏 orando, 🍞 llevando pan…",
       "📖 Reuniones en las casas: abre tu casa 20 minutos para enseñar una sección que ya estudiaste. Tus vecinos ven el círculo violeta en tu puerta; al llegar leen el versículo y la idea clave y responden una pregunta: si aciertan, ganan los dos.",
+      "🤲 Pedidos del barrio: una vez por día pide a tus vecinos harina, aceite o corderos para tu ofrenda (desde «Tu casa»). En el púlpito de la plaza ves lo que piden ellos y les das de tu alfolí: ayudar da gozo.",
       "🏅 Concurso bíblico de la semana (botón de la medalla o en el púlpito de la plaza): las mismas 10 preguntas para todos, 20 segundos cada una. Los tres primeros ganan gozo y quedan como campeones.",
+    ],
+  },
+  {
+    id: "2026-11-10-escuela",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Más para el profeta y el siervo del rey",
+    puntos: [
       "🔎 En la escuela de los profetas, «Discernir con las Escrituras»: oyes lo que se dice en la plaza y eliges lo que concuerda con la Palabra (1 Juan 4:1). Hay falsos profetas, adivinos… y también llamados verdaderos.",
       "👑 El palacio tiene seis audiencias nuevas: el salario del jornalero, las pesas falsas, el extranjero, el único testigo, el lindero corrido y el manto del pobre.",
     ],
@@ -122,11 +137,11 @@ function marcarVista(id: string) {
   }
 }
 
-/** Las que todavía no vio (hasta 3; si nunca vio ninguna, las 2 últimas). */
+/** Las que todavía no vio (hasta 4; si nunca vio ninguna, las 2 últimas). */
 function sinVer(): Novedad[] {
   const v = vista();
   const i = v ? NOVEDADES.findIndex((n) => n.id === v) : -1;
-  return i === -1 ? NOVEDADES.slice(0, 2) : NOVEDADES.slice(0, Math.min(i, 3));
+  return i === -1 ? NOVEDADES.slice(0, 2) : NOVEDADES.slice(0, Math.min(i, 4));
 }
 
 /** Las novedades que todavía no vio, en la portada. Quien juega por primera vez no las ve: ya empieza con todo. */

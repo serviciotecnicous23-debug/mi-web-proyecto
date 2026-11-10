@@ -12,6 +12,7 @@ import {
 import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
 import { ConcursoView } from "./ConcursoUI";
+import { PedidosBarrio, PedirAyuda } from "./AyudaUI";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
@@ -314,6 +315,21 @@ function useAlMercado() {
   }, []);
 }
 
+/** Los pedidos del barrio en los anuncios: lo que se da sale de tu alfolí (y se ve en tu casa). */
+function PedidosBarrioConCasa() {
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  const alDar = useCallback((bienes: { harina: number; aceite: number; corderos: number }) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const privada = { ...estado.privada, bienes: { ...estado.privada.bienes, ...bienes } };
+    setEstado?.({ ...estado, privada });
+    city?.actualizarPrivada(privada);
+  }, []);
+  return <PedidosBarrio alDar={alDar} />;
+}
+
 function MercadoModal({ tab }: { tab?: TabMercado }) {
   const alCambiar = useAlMercado();
   return <MercadoView tab={tab} alCambiar={alCambiar} />;
@@ -401,6 +417,7 @@ function CasaView() {
         <SiervosPanel />
         <CasaExtrasConMundo />
         <ReunionCasa />
+        <PedirAyuda />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>
@@ -691,6 +708,8 @@ function AnunciosView() {
             city?.irACasaDe(r.barrio, r.parcela);
           }}
         />
+
+        <PedidosBarrioConCasa />
 
         <button
           type="button"
