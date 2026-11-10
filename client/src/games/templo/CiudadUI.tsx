@@ -263,7 +263,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
 export function CiudadModal({ modal }: { modal: Modal }) {
   switch (modal.kind) {
     case "casa":
-      return <CasaView />;
+      return <CasaView inicial={modal.pestana} />;
     case "anuncios":
       return <AnunciosView />;
     case "ancianos":
@@ -397,7 +397,12 @@ function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
     city?.actualizarPrivada(r.privada, nivel);
     avisarMisiones(r.misiones);
   }, []);
-  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} />;
+  // lo que falta se compra en el mercado: se llega sin caminar todo el trayecto
+  const alIrAlMercado = useCallback(() => {
+    gameStore.close();
+    ultimo.current.city?.irA("mercado");
+  }, []);
+  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} alIrAlMercado={alIrAlMercado} />;
 }
 
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */
@@ -409,9 +414,9 @@ const PESTANAS_CASA: [string, string][] = [
   ["vecinos", "📖 Vecinos"],
 ];
 
-function CasaView() {
+function CasaView({ inicial }: { inicial?: string }) {
   const { estado, city } = useContext(CiudadCtx);
-  const [pestana, setPestana] = useState("casa");
+  const [pestana, setPestana] = useState(inicial ?? "casa");
   if (!estado) return null;
   const yo = estado.yo;
   const nivel = NIVELES_CASA[yo.nivel];
@@ -1228,6 +1233,7 @@ function IrAView() {
     { id: "casa", nombre: "Mi casa", nota: "La puerta de tu casa" },
     { id: "templo", nombre: "El templo", nota: "Al pie de la escalinata" },
     { id: "plaza", nombre: "La plaza", nota: "El pozo, el púlpito y el mercado" },
+    { id: "mercado", nombre: "El mercado", nota: "Los cuatro mercaderes: semillas, cosas para la casa, ropa y quien te compra" },
     { id: "puerta", nombre: "La puerta de la ciudad", nota: "Los ancianos sentados a la puerta" },
     { id: "palacio", nombre: "El palacio del rey", nota: "Al sur del monte" },
     { id: "escuela", nombre: "La escuela de los profetas", nota: "Al norte del monte" },

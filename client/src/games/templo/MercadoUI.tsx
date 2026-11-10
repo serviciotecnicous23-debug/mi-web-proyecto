@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 import { Loader2, ShoppingBasket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, precioHoy, precioVentaHoy, type MercadoEstado, type RecetaId, type TabMercado,
+  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, precioHoy, precioVentaHoy, type Articulo, type Categoria, type MercadoEstado, type RecetaId, type TabMercado,
 } from "@shared/mercado";
 import type { CasaPrivada } from "@shared/ciudad";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 
-async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: (MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number }) | null }> {
+type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean };
+
+async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: RespuestaMercado | null }> {
   try {
     const res = await fetch(`/api/jerusalen${path}`, {
       method: body === undefined ? "GET" : "POST",
@@ -78,10 +80,65 @@ function tiempo(s: number) {
   return m >= 1 ? `${m} min` : `${s} s`;
 }
 
+/** Dónde se usa lo de cada puesto (para que no quede la duda después de comprar). */
+const DONDE_SE_USA: Record<Categoria, string> = {
+  semilla: "Las semillas se siembran en el huerto de tu casa: Tu casa → 🌾 Huerto y horno.",
+  adorno: "Al comprarlo, el adorno se pone solo en la puerta de tu casa si queda lugar: tus vecinos lo ven. Lo cambias en Tu casa → 🪔 Adornos y ropa.",
+  ropa: "Al comprarla te la pones enseguida y tus vecinos te ven con ella. La cambias en Tu casa → 🪔 Adornos y ropa.",
+  letrero: "Después de comprarlo eliges el nombre de tu casa en Tu casa → 🪔 Adornos y ropa.",
+};
+
+/** Después de comprar: qué pasó con lo comprado y un botón para ir a usarlo. */
+function SiguientePaso({ s, onCerrar }: { s: { a: Articulo; colocado?: boolean; puesto?: boolean }; onCerrar: () => void }) {
+  const irA = (pestana: "huerto" | "adornos") => {
+    gameStore.close();
+    gameStore.push({ kind: "casa", pestana });
+  };
+  const paso: Record<Categoria, { texto: string; boton: string; pestana: "huerto" | "adornos" }> = {
+    semilla: {
+      texto: "Ahora siémbrala: en tu huerto elige la semilla y toca «Sembrar». Riégala una vez y, cuando esté lista, cosecha: va al alfolí para ofrecerla en el templo, prepararla en el horno o venderla.",
+      boton: "Ir a sembrar",
+      pestana: "huerto",
+    },
+    adorno: {
+      texto: s.colocado ? "Ya está en la puerta de tu casa: tus vecinos lo ven al pasar." : "Tu casa no tiene lugar libre para otro adorno: quita uno o haz crecer tu casa sirviendo.",
+      boton: "Ver mis adornos",
+      pestana: "adornos",
+    },
+    ropa: {
+      texto: s.puesto ? "Ya lo llevas puesto: tus vecinos te ven con él en la ciudad." : "Está en tu armario: póntelo en tu casa.",
+      boton: "Cambiar mi ropa",
+      pestana: "adornos",
+    },
+    letrero: { texto: "Ahora elige el nombre de tu casa: tus vecinos lo verán sobre la puerta.", boton: "Poner el nombre", pestana: "adornos" },
+  };
+  const p = paso[s.a.categoria];
+  return (
+    <div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-[13px] text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100" data-testid="mercado-siguiente">
+      <p>
+        <b>
+          {s.a.icono} {s.a.nombre}: ¿y ahora?
+        </b>{" "}
+        {p.texto}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" className="bg-emerald-600 font-bold hover:bg-emerald-500" onClick={() => irA(p.pestana)} data-testid="mercado-siguiente-ir">
+          {p.boton}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCerrar}>
+          Seguir comprando
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** El mercado de la plaza (los mercaderes de los puestos); `tab` es el puesto donde se entró. */
 export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alCambiar?: (m: MercadoEstado) => void }) {
   const { m, error, busy, hacer } = useMercado(alCambiar);
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
+  // lo que se acaba de comprar: qué hacer ahora con eso
+  const [siguiente, setSiguiente] = useState<{ a: Articulo; colocado?: boolean; puesto?: boolean } | null>(null);
   const puesto = PUESTOS_MERCADO.find((p) => p.tab === inicial);
   const tabs: [TabMercado, string][] = [
     ["semilla", "Semillas"],
@@ -119,6 +176,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
           </p>
         )}
         {error && <p className="rounded-xl bg-red-50 p-2.5 text-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p>}
+        {siguiente && <SiguientePaso s={siguiente} onCerrar={() => setSiguiente(null)} />}
         {!m && !error && (
           <p className="flex items-center gap-2 text-stone-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abriendo los puestos…
@@ -133,6 +191,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                 </button>
               ))}
             </div>
+            {tab !== "vender" && <p className="rounded-lg bg-stone-50 px-2.5 py-1.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300" data-testid="mercado-donde">{DONDE_SE_USA[tab]}</p>}
             {tab !== "vender" ? (
               <ul className="space-y-1.5">
                 {ARTICULOS.filter((a) => a.categoria === tab).map((a) => {
@@ -161,7 +220,12 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                       <Button
                         size="sm"
                         disabled={busy || tiene || yaLetrero || m.gozo < precio}
-                        onClick={() => void hacer("/mercado/comprar", { articulo: a.id, cantidad: 1 }, () => gameStore.toast(`Compraste: ${a.nombre}`, "gold"))}
+                        onClick={() =>
+                          void hacer("/mercado/comprar", { articulo: a.id, cantidad: 1 }, (d) => {
+                            gameStore.toast(`Compraste: ${a.nombre}`, "gold");
+                            setSiguiente({ a, colocado: d.colocado, puesto: d.puesto });
+                          })
+                        }
                         data-testid={`comprar-${a.id}`}
                       >
                         {tiene || yaLetrero ? "Tuyo" : "Comprar"}
@@ -207,7 +271,7 @@ export type Ofrecido = { ganado: number; doble: string | null; subio: number | n
 /** Lo nuevo de la casa: el huerto, el horno, los adornos, la ropa y el letrero (dentro de «Tu casa»). */
 export type ParteCasa = "huerto" | "horno" | "adornos" | "ropa" | "letrero";
 
-export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void; partes?: ParteCasa[] }) {
+export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void; partes?: ParteCasa[]; alIrAlMercado?: () => void }) {
   const { m, recibido, error, busy, hacer, recargar } = useMercado(alCambiar);
   /** ¿Se muestra esta parte? (sin `partes`, todas) */
   const ver = (p: ParteCasa) => !partes || partes.includes(p);
@@ -234,7 +298,13 @@ export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: M
           <span>Tu huerto</span>
           <span className="text-xs font-semibold text-stone-500">✨ {m.gozo} de gozo</span>
         </p>
-        <p className="text-[11px] text-stone-500">Siembra, riega una vez (crece 25 % más rápido y da uno más) y cosecha al alfolí: para ofrecerlo en el templo o venderlo.</p>
+        <ol className="grid grid-cols-4 gap-1 text-center text-[10px] leading-tight text-stone-600 dark:text-stone-300" data-testid="huerto-como">
+          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🛒<br />Compra semillas en la plaza</li>
+          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🌱<br />Siembra en una parcela vacía</li>
+          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">💧<br />Riégala una vez: crece más rápido y da uno más</li>
+          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🌾<br />Cosecha: va al alfolí</li>
+        </ol>
+        <p className="text-[11px] text-stone-500">Lo del alfolí se ofrece en el templo (honra para tu casa), se prepara en el horno (vale más) o se vende al mercader (gozo).</p>
         {semillasTengo.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 text-xs">
             Semilla:
@@ -277,7 +347,16 @@ export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: M
             );
           })}
         </div>
-        {!semillasTengo.length && <p className="text-[11px] text-stone-500">Compra semillas en el mercado de la plaza (trigo y cebada dan flor de harina; el olivo, aceite).</p>}
+        {!semillasTengo.length && (
+          <div className="flex items-center gap-2 rounded-lg bg-stone-50 p-2 dark:bg-stone-800/60">
+            <p className="min-w-0 flex-1 text-[11px] text-stone-500">No tienes semillas: cómpralas al sembrador del mercado (trigo y cebada dan flor de harina; el olivo, aceite).</p>
+            {alIrAlMercado && (
+              <Button size="sm" variant="secondary" className="shrink-0" onClick={alIrAlMercado} data-testid="huerto-ir-mercado">
+                Ir al mercado
+              </Button>
+            )}
+          </div>
+        )}
         <p className="text-[10px] text-stone-400">Trigo {SEMILLAS.trigo.minutos} min · cebada {SEMILLAS.cebada.minutos} min · olivo {SEMILLAS.olivo.minutos} min.</p>
       </section>
       )}
@@ -396,6 +475,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: M
             {m.adornos.length} de {m.lugares}
           </span>
         </p>
+        <p className="text-[11px] text-stone-500">Los que tienen ✓ se ven en la puerta de tu casa en la ciudad. Toca uno para ponerlo o quitarlo.</p>
         {adornosTengo.length ? (
           <div className="flex flex-wrap gap-1.5">
             {adornosTengo.map((id) => {
@@ -415,7 +495,14 @@ export function CasaExtras({ alCambiar, alOfrecer, partes }: { alCambiar?: (m: M
             })}
           </div>
         ) : (
-          <p className="text-[11px] text-stone-500">Compra adornos en el mercado: macetas, cántaros, bancos, lámparas, toldos, una parra, una higuera o una palmera. Tus vecinos los verán.</p>
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 text-[11px] text-stone-500">Compra adornos al alfarero del mercado: macetas, cántaros, bancos, lámparas, toldos, una parra, una higuera o una palmera. Tus vecinos los verán.</p>
+            {alIrAlMercado && (
+              <Button size="sm" variant="secondary" className="shrink-0" onClick={alIrAlMercado}>
+                Ir al mercado
+              </Button>
+            )}
+          </div>
         )}
       </section>
       )}

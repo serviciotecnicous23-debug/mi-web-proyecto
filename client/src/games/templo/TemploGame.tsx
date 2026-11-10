@@ -31,7 +31,7 @@ import { Portrait, TemploCover } from "./Portrait";
 import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } from "./progress";
 import type { TempleWorld } from "./world";
 import {
-  ESCALONES, MERITO_MIN_CARGO, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
+  ESCALONES, MERITO_MIN_CARGO, MERITO_TURNO, NOMBRE_LIBRE, NOMBRE_PROPIO, PREGUNTAS_DIA, errorNombreLibre, SEGUNDOS_PREGUNTA, escalonNombre,
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import {
@@ -2418,6 +2418,9 @@ function OnlineLobby({
     else setError(r.data?.message || "No se pudo elegir. Intenta de nuevo.");
   };
   const ref = listaNombres.find((x) => x.nombre === nombre)?.ref;
+  // «Otro nombre»: el que cada uno prefiera (se revisa aquí y en el servidor)
+  const esLibre = nombre !== NOMBRE_PROPIO && !listaNombres.some((x) => x.nombre === nombre);
+  const errorLibre = esLibre ? errorNombreLibre(nombre) : null;
   return (
     <div
       className="absolute inset-0 z-30 overflow-y-auto bg-[radial-gradient(ellipse_at_50%_0%,#21436b_0%,#18233a_45%,#0c0a08_100%)] text-white"
@@ -2549,7 +2552,26 @@ function OnlineLobby({
               {listaNombres.map((n) => (
                 <NameChip key={n.nombre} label={n.nombre} title={n.ref} active={nombre === n.nombre} onClick={() => setNombre(n.nombre)} />
               ))}
+              <NameChip label="✏️ Otro nombre" title="Escribe el nombre que prefieras" active={esLibre} onClick={() => !esLibre && setNombre("")} />
             </div>
+            {esLibre && (
+              <div className="space-y-1" data-testid="nombre-libre">
+                <input
+                  type="text"
+                  value={nombre}
+                  maxLength={NOMBRE_LIBRE.max}
+                  autoFocus
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Escribe el nombre que prefieras"
+                  className="w-full rounded-xl border border-sky-200/40 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                  aria-label="Nombre del personaje"
+                  data-testid="input-nombre-libre"
+                />
+                <p className={`text-[11px] ${errorLibre && nombre.trim() ? "text-red-200" : "text-white/60"}`}>
+                  {errorLibre && nombre.trim() ? errorLibre : `De ${NOMBRE_LIBRE.min} a ${NOMBRE_LIBRE.max} letras. Así te verá la comunidad: que honre al Señor.`}
+                </p>
+              </div>
+            )}
             {nombre !== NOMBRE_PROPIO && ref && (
               <p className="text-[11px] text-sky-100/85">
                 {nombre}: {ref}
@@ -2568,7 +2590,7 @@ function OnlineLobby({
                   Cancelar
                 </Button>
               )}
-              <Button className="flex-1 rounded-full bg-sky-300 font-bold text-sky-950 hover:bg-sky-200" disabled={busy} onClick={() => void guardar()} data-testid="button-personaje-guardar">
+              <Button className="flex-1 rounded-full bg-sky-300 font-bold text-sky-950 hover:bg-sky-200" disabled={busy || !!errorLibre} onClick={() => void guardar()} data-testid="button-personaje-guardar">
                 {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}{" "}
                 {p && !nuevoCamino ? "Guardar" : caminoForm === "profecia" ? "Entrar a la escuela de los profetas" : caminoForm === "realeza" ? "Entrar al servicio del rey" : "Consagrarme como sacerdote"}
               </Button>
