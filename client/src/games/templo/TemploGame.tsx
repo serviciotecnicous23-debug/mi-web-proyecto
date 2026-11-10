@@ -47,6 +47,7 @@ import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import type { CiudadEstado } from "@shared/ciudad";
+import { GOZO } from "@shared/mercado";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -1284,6 +1285,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "visita":
     case "escuela":
     case "palacio":
+    case "mercado":
       return <CiudadModal modal={modal} />;
   }
 }
@@ -2923,8 +2925,8 @@ function DificilView({ q }: { q: JerusalenPregunta }) {
             <p className="font-bold">
               {res.correcta
                 ? res.ganado
-                  ? `¡Correcto! +${res.ganado} de mérito`
-                  : "¡Correcto! Tu turno de hoy ya terminó: mañana vuelve a sumar mérito."
+                  ? `¡Correcto! +${res.ganado} de mérito · +${GOZO.acierto} de gozo`
+                  : `¡Correcto! +${GOZO.acierto} de gozo. Tu turno de hoy ya terminó: mañana vuelve a sumar mérito.`
                 : tarde || !res.aTiempo
                   ? `Se acabó el tiempo. La respuesta era: ${res.respuesta}`
                   : `La respuesta es: ${res.respuesta}`}

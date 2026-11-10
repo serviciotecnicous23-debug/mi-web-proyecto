@@ -26,6 +26,7 @@ import {
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
 import { CAMINOS, MENSAJES, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
+import { PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
@@ -69,9 +70,9 @@ const PASOS_CAMINO: Record<"profecia" | "realeza", string[]> = { profecia: ["mem
 const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 
 /** Otro barrio que se ve: sus casas (de lejos, siluetas; al entrar en su área, completo). */
-export type BarrioVisto = { n: number; area: number; casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string }[]; detalle: boolean };
+export type BarrioVisto = { n: number; area: number; casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[]; detalle: boolean };
 
-type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "mercado";
+type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3";
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
 
 /** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
@@ -95,7 +96,7 @@ type Npc = {
   path: V2[];
   speed: number;
   wait: number;
-  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "peregrino" | "siervo";
+  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "peregrino" | "siervo" | "mercader";
   item?: ItemType;
   home?: V2;
   yaw?: number;
@@ -151,6 +152,8 @@ export class CiudadWorld {
   private oracionT = 0;
   private oracionEspera = 0;
   private pobres: { at: V2; label: HTMLDivElement; espera: number }[] = [];
+  /** Las etiquetas de los cuatro mercaderes de la plaza. */
+  private mercaderes: { el: HTMLDivElement; p: THREE.Vector3 }[] = [];
   private pasos = 0;
   // tus siervos (solo los ves tú) y la casa del vecino que se visita
   private siervos: Npc[] = [];
@@ -248,6 +251,7 @@ export class CiudadWorld {
     // el aprendiz con su vestidura según su escalón
     const look = this.lookDe(estado.yo.escalon, estado.yo.camino);
     const pf = new Figure(look);
+    pf.setRopa(estado.yo.ropa);
     const casa = P.parcelaDe(estado.barrio.n, estado.yo.parcela);
     const [sx, sz] = opts.llegada === "templo" ? P.LLEGADA_TEMPLO : casa.umbral;
     const pr = newRig(sx, sz);
@@ -340,6 +344,7 @@ export class CiudadWorld {
         vec.look = look;
       }
     }
+    vec.fig.setRopa(v.ropa);
   }
 
   private lookDe(e: EscalonId | undefined, camino?: Camino): FigureLook {
@@ -368,6 +373,7 @@ export class CiudadWorld {
     const info = this.infos.get(id);
     const look = this.lookDe(info?.escalon, info?.camino);
     const fig = new Figure(look);
+    fig.setRopa(info?.ropa);
     this.scene.add(fig.root);
     const rig = newRig(x, z);
     rig.y = P.alturaCiudad(x, z);
@@ -702,7 +708,9 @@ export class CiudadWorld {
   actualizar(estado: CiudadEstado) {
     const antes = this.barrios.get(estado.barrio.n);
     this.estado = estado;
-    const cambio = !antes || JSON.stringify(antes.casas.map((c) => [c.parcela, c.nivel])) !== JSON.stringify(estado.barrio.casas.map((c) => [c.parcela, c.nivel]));
+    this.player.fig.setRopa(estado.yo.ropa);
+    const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null]));
+    const cambio = !antes || firma(antes.casas) !== firma(estado.barrio.casas);
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true });
     if (cambio) this.dibujarAreas();
     this.pushHud();
@@ -942,6 +950,8 @@ export class CiudadWorld {
       ["palacio", P.PALACIO_PUERTA, 1.2, "#c9a8f0"],
       ["escuela", P.ESCUELA_PUERTA, 1.2, "#8fe08a"],
       ["mercado", P.MERCADO, 1.0, "#f0b45a"],
+      // delante de cada puesto: su mercader
+      ...P.PUESTOS.map(([x, z], i) => [`puesto${i}` as ZonaId, [x, z - 1.75] as V2, 0.75, "#f0b45a"] as [ZonaId, V2, number, string]),
     ];
     for (const [id, [x, z], r, color] of def) {
       const ring = new Ring(r, color, false);
@@ -1011,8 +1021,16 @@ export class CiudadWorld {
           this.abrir(this.estado.yo.camino === "realeza" ? { kind: "palacio" } : { kind: "edificio", id: "palacio" });
           break;
         case "mercado":
-          this.abrir({ kind: "edificio", id: z.id as EdificioId });
+          this.abrir({ kind: "mercado" });
           break;
+        case "puesto0":
+        case "puesto1":
+        case "puesto2":
+        case "puesto3": {
+          const pu = PUESTOS_MERCADO[Number(z.id.slice(6))];
+          this.abrir({ kind: "mercado", tab: pu.tab });
+          break;
+        }
       }
     }
   }
@@ -1059,7 +1077,7 @@ export class CiudadWorld {
       const b = this.barrios.get(n);
       const casas = b?.casas ?? [];
       if (b?.detalle) {
-        const dib: CasaDibujo[] = casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela }));
+        const dib: CasaDibujo[] = casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero }));
         const { grupo, ventanas } = construirAreaDetalle(area, dib);
         g.add(grupo);
         if (ventanas) {
@@ -1102,6 +1120,21 @@ export class CiudadWorld {
   }
 
   /** Lo de tu casa cambió (siervos, alfolí u ofrendas). */
+  /** Lo que cambió en el mercado: el gozo, la ropa (en la figura) y los adornos y el letrero de la casa. */
+  alMercado(m: MercadoEstado) {
+    const ropa = coloresDeIds(m.ropa);
+    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.estado.yo.personajeId ? { ...c, adornos: m.adornos, letrero: m.letrero } : c));
+    const antes = JSON.stringify(this.estado.barrio.casas.find((c) => c.personajeId === this.estado.yo.personajeId) ?? null);
+    const bienes = { ...this.estado.privada.bienes, ...m.bienes };
+    this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo: m.gozo, ropa }, barrio: { ...this.estado.barrio, casas }, privada: { ...this.estado.privada, bienes } };
+    this.player.fig.setRopa(ropa);
+    if (antes !== JSON.stringify(casas.find((c) => c.personajeId === this.estado.yo.personajeId) ?? null)) {
+      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true });
+      this.dibujarAreas();
+    }
+    this.pushHud();
+  }
+
   actualizarPrivada(p: CasaPrivada, nivel?: number) {
     const antes = this.estado.privada?.siervos.join(",");
     this.estado = { ...this.estado, privada: p, yo: nivel !== undefined ? { ...this.estado.yo, nivel } : this.estado.yo };
@@ -1153,7 +1186,7 @@ export class CiudadWorld {
       for (const c of b.casas) {
         const p = P.PARCELAS[area - 1][c.parcela];
         const mia = b.n === this.estado.barrio.n && c.parcela === this.estado.yo.parcela;
-        const nombre = mia ? "Tu casa" : c.nombre ? `Casa de ${c.nombre}` : null;
+        const nombre = mia ? (c.letrero ? `Tu casa · ${c.letrero}` : "Tu casa") : c.nombre ? (c.letrero ? `${c.letrero} · ${c.nombre}` : `Casa de ${c.nombre}`) : null;
         if (!nombre) continue;
         const [, , hh] = P.CASA_MEDIDA[Math.max(0, Math.min(3, c.nivel))];
         // el nombre lo escribió una persona: va como texto, nunca como HTML
@@ -1174,6 +1207,7 @@ export class CiudadWorld {
       ["La escuela de los profetas", L.escuela, 30],
       ["La puerta de la ciudad", L.puerta, 30],
       ["El púlpito de la plaza", L.plaza, 22],
+      ["El mercado", new THREE.Vector3(P.MERCADO[0], P.SUELO + 3.1, P.PUESTOS[0][1]), 20],
     ];
     for (const [t, p, r] of def) {
       const el = this.overlay.make("tpl-tag", t);
@@ -1197,6 +1231,15 @@ export class CiudadWorld {
     for (const x of [10.2, 11.8, 23.4]) this.npc("alumno", [x, -22.05], { yaw: 0, sit: true });
     // gente que pasea por la plaza y las calles
     for (let i = 0; i < 7; i++) this.npc("paseo", P.PASEO[i * 3 % P.PASEO.length], {});
+    // los mercaderes, detrás de sus puestos, mirando a la plaza
+    P.PUESTOS.forEach(([x, z], i) => {
+      const n = this.npc("mercader", [x, z + 0.35], { yaw: Math.PI });
+      if (n) n.wait = 1e9;
+      const el = this.overlay.make("tpl-tag");
+      el.textContent = `${PUESTOS_MERCADO[i].icono} ${PUESTOS_MERCADO[i].nombre}`;
+      el.style.display = "none";
+      this.mercaderes.push({ el, p: new THREE.Vector3(x, P.SUELO + 2.0, z + 0.35) });
+    });
   }
 
   private npc(kind: Npc["kind"], at: V2, o: { yaw?: number; sit?: boolean }) {
@@ -1205,6 +1248,7 @@ export class CiudadWorld {
     if (kind === "nino") look = { variant: "nino", colors: randomVisitor().colors, scale: 0.74 };
     if (kind === "guardia") look = { variant: "hombre", colors: { robe: "#7a2f2f", accent: "#b8763b", head: "#5b3a2a", skin: randomVisitor().colors.skin, hair: "#2b1d14" }, scale: 1.04 };
     if (kind === "alumno") look = { variant: "hombre", colors: { robe: "#8a7a5a", accent: "#4a3a2a", head: "#d8c8a6", skin: randomVisitor().colors.skin, hair: "#3b2a1e" }, scale: 1 };
+    if (kind === "mercader") look = { variant: "hombre", colors: { ...randomVisitor().colors, robe: ["#9a6a3a", "#5a6a8a", "#8a4a5a", "#6a7a4a"][this.mercaderes.length % 4], head: "#e8dcc0" }, scale: 1.02 };
     const handle = this.crowd.add(look.variant, look.colors);
     if (!handle) return null;
     const rig = newRig(at[0], at[1], look.scale);
@@ -1484,6 +1528,10 @@ export class CiudadWorld {
       if (d < (e.mia ? 30 : 7)) this.overlay.place(e.el, e.p);
       else e.el.style.display = "none";
     }
+    for (const mc of this.mercaderes) {
+      if (dist(r.x, r.z, mc.p.x, mc.p.z) < 9) this.overlay.place(mc.el, mc.p);
+      else mc.el.style.display = "none";
+    }
     // la flecha del borde señala tu casa cuando no se ve (la primera vez y desde lejos)
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const lejos = dist(r.x, r.z, casa.x, casa.z) > 16 && !gameStore.busy && this.time < 40 && this.opts.llegada === "templo";
@@ -1560,6 +1608,7 @@ export class CiudadWorld {
       red: this.redEstado,
       frases: this.frasesRecientes.map(({ id, nombre, texto }) => ({ id, nombre, texto })),
       cerca: this.vecinoCerca(),
+      gozo: e.yo.gozo ?? 0,
     };
     gameStore.setCiudad(hud);
   }
@@ -1589,6 +1638,7 @@ export class CiudadWorld {
       this.mensaje.ring.dispose();
     }
     for (const p of this.pobres) this.overlay.remove(p.label);
+    for (const mc of this.mercaderes) this.overlay.remove(mc.el);
     for (const z of this.zonas) z.ring.dispose();
     this.player.fig.dispose();
     this.crowd.dispose();

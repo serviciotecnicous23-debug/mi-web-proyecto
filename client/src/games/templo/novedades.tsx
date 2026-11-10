@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-mercado",
+    fecha: "10 de noviembre de 2026",
+    titulo: "El gozo, el mercado y tu casa",
+    puntos: [
+      "✨ Ahora ganas gozo en Jerusalén en línea: por cada deber, cada acierto, cada encargo, cada estudio y la ofrenda de tu barrio. Lo ves arriba, junto a tu casa.",
+      "En la plaza abrieron los cuatro puestos: el sembrador, el alfarero, el tejedor y el mercader. Cada día hay dos ofertas, y el mercader paga el doble por lo que más buscan ese día.",
+      "Tu casa tiene huerto: siembra trigo, cebada u olivo, riégalo y cosecha al alfolí para ofrecerlo en el templo o venderlo.",
+      "Pon adornos en tu casa (macetas, lámparas, toldos, un telar, una parra, una higuera o una palmera), dale nombre con un letrero y vístete con un manto y una faja: tus vecinos lo ven todo.",
+    ],
+  },
+  {
     id: "2026-11-10-caminos",
     fecha: "10 de noviembre de 2026",
     titulo: "Tres caminos: sacerdote, profeta y siervo del rey",

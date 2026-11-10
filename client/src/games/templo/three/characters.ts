@@ -610,6 +610,8 @@ export class Figure {
   private footL = new THREE.Group();
   private footR = new THREE.Group();
   look: FigureLook | null = null;
+  private ropa: { manto?: string; faja?: string } | null = null;
+  private ropaG: THREE.Group | null = null;
 
   constructor(look: FigureLook) {
     this.root.add(this.body, this.footL, this.footR);
@@ -629,6 +631,43 @@ export class Figure {
     this.setLook(look);
   }
 
+  /**
+   * La ropa que compró en el mercado de la ciudad: un manto abierto por delante y una faja. En el
+   * templo no se usa (se sirve con las vestiduras sagradas, Éxodo 28:2).
+   */
+  setRopa(ropa: { manto?: string; faja?: string } | null | undefined) {
+    const r = ropa && (ropa.manto || ropa.faja) ? { manto: ropa.manto, faja: ropa.faja } : null;
+    if (JSON.stringify(r) === JSON.stringify(this.ropa)) return;
+    this.ropa = r;
+    this.ponerRopa(r);
+  }
+
+  private ponerRopa(r: { manto?: string; faja?: string } | null) {
+    if (this.ropaG) {
+      this.body.remove(this.ropaG);
+      this.ropaG.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
+      this.ropaG = null;
+    }
+    if (!r) return;
+    const b = new GeoBuilder();
+    if (r.manto) {
+      // el manto cae de los hombros y queda abierto por delante
+      const perfil = [[0.245, 0.24], [0.238, 0.42], [0.218, 0.58], [0.2, 0.7], [0.14, 0.768], [0.07, 0.785]].map(([x, y]) => new THREE.Vector2(x, y));
+      b.add(new THREE.LatheGeometry(perfil, 18, 0.75, Math.PI * 2 - 1.5), r.manto);
+    }
+    if (r.faja) {
+      b.torus(0.213, 0.026, r.faja, { y: 0.43, rx: Math.PI / 2 }, 5, 18);
+      b.box(0.05, 0.24, 0.016, r.faja, { x: -0.08, y: 0.31, z: 0.205, rz: -0.05 });
+    }
+    if (b.empty) return;
+    const g = new THREE.Group();
+    const mesh = new THREE.Mesh(b.build(), matteFor());
+    mesh.castShadow = true;
+    g.add(mesh);
+    this.ropaG = g;
+    this.body.add(g);
+  }
+
   setLook(look: FigureLook) {
     if (this.look === look) return;
     this.look = look;
@@ -645,6 +684,9 @@ export class Figure {
       if (!sb.empty) g.add(new THREE.Mesh(sb.build(), shinyMat()));
     };
     put(this.body, p.m, p.s);
+    // la ropa del mercado se vuelve a poner sobre la vestidura nueva
+    this.ropaG = null;
+    if (this.ropa) this.ponerRopa(this.ropa);
     put(this.armR, p.armM, p.armS);
     put(this.armL, p.armLM, p.armLS);
     this.root.traverse((o) => {

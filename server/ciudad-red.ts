@@ -43,6 +43,7 @@ type Con = {
 
 const conexiones = new Map<number, Con>();
 import { marcarEnTemplo } from "./presencia-templo";
+import { coloresDeRopa } from "./ropa";
 const MAX_CONEXIONES = 600;
 let reloj: ReturnType<typeof setInterval> | null = null;
 let latidos: ReturnType<typeof setInterval> | null = null;
@@ -78,7 +79,7 @@ type Jugador = { info: VecinoInfo; bloqueos: Set<number>; suspendido: boolean };
 async function cargarJugador(userId: number): Promise<Jugador | null> {
   const t = temporadaDe();
   const { rows } = await pool.query(
-    `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.path, c.city_banned_at, h.barrio, h.plot,
+    `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.path, c.ropa, c.city_banned_at, h.barrio, h.plot,
             COALESCE(sm.merit, 0)::int AS merito, o.office
        FROM users u
        JOIN game_characters c ON c.user_id = u.id AND c.game = $2
@@ -102,6 +103,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
       casa: Number(r.plot),
       u: Number(r.user_id),
       camino: r.path === "profecia" || r.path === "realeza" ? r.path : "sacerdocio",
+      ropa: coloresDeRopa(r.ropa),
     },
     bloqueos,
     suspendido: !!r.city_banned_at,
@@ -188,7 +190,7 @@ async function mandarResumenes() {
     try {
       const casas = await casasDelBarrio(n);
       const lista = casas.map(({ userId, ...c }) => c);
-      const hash = JSON.stringify(lista.map((c) => [c.parcela, c.nivel, c.personajeId, c.nombre, c.escalon]));
+      const hash = JSON.stringify(lista.map((c) => [c.parcela, c.nivel, c.personajeId, c.nombre, c.escalon, c.adornos, c.letrero]));
       for (const c of conexiones.values()) {
         if (c.info.barrio !== n || c.barrioHash === hash) continue;
         const primera = !c.barrioHash;
@@ -252,6 +254,14 @@ export function sacarDeLaCiudad(personajeId: number, motivo: string) {
 }
 
 /** Cuántos están en la ciudad ahora. */
+/** Cambió su ficha (la ropa, por ejemplo): los que lo ven la reciben otra vez. */
+export function refrescarFicha(personajeId: number, cambio: Partial<VecinoInfo>) {
+  for (const c of conexiones.values()) {
+    if (c.info.id === personajeId) Object.assign(c.info, cambio);
+    c.conocidos.delete(personajeId);
+  }
+}
+
 export function enLaCiudad(): number {
   return conexiones.size;
 }

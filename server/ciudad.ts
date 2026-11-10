@@ -13,6 +13,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { diaClave, escalonPorMerito, evento, hoyEnJerusalen, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
+import { coloresDeRopa } from "./ropa";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { fechaDe, relojEnLinea } from "@shared/calendario";
 import {
@@ -92,7 +93,7 @@ async function subirSiAlcanza(characterId: number, userId: number, barrio: numbe
 // ---------------------------------------------------------------- tus siervos y tu alfolí
 /** Una cosa a la vez por casa (recoger, cambiar siervos y ofrecer tocan la misma fila). */
 const filasCasa = new Map<number, Promise<unknown>>();
-function enFilaCasa<T>(key: number, fn: () => Promise<T>): Promise<T> {
+export function enFilaCasa<T>(key: number, fn: () => Promise<T>): Promise<T> {
   const prev = filasCasa.get(key) || Promise.resolve();
   const next = prev.catch(() => null).then(fn);
   filasCasa.set(key, next);
@@ -105,7 +106,7 @@ function enFilaCasa<T>(key: number, fn: () => Promise<T>): Promise<T> {
 }
 
 const cero = (): Record<Bien, number> => ({ harina: 0, aceite: 0, corderos: 0 });
-function leerBienes(v: unknown): Record<Bien, number> {
+export function leerBienes(v: unknown): Record<Bien, number> {
   const o = v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
   const out = cero();
   for (const b of BIENES) {
@@ -124,7 +125,7 @@ type Recogida = { nivel: number; siervos: Bien[]; bienes: Record<Bien, number>; 
  * Lo que prepararon los siervos desde la última vez, con el tope de los levitas: como mucho 2 h
  * por salida y 3 h por día, y la segunda hora rinde la mitad. Se guarda en el alfolí (con su tope).
  */
-async function recoger(characterId: number): Promise<Recogida | null> {
+export async function recoger(characterId: number): Promise<Recogida | null> {
   return enFilaCasa(characterId, async () => {
     const { rows } = await pool.query(
       `SELECT level, servants, goods, prod_day, prod_seconds, offered,
@@ -207,7 +208,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
   const p = (async () => {
     const t = temporadaDe();
     const { rows } = await pool.query(
-      `SELECT h.character_id, h.plot, h.level, h.offered, c.name, c.user_id, u.display_name, u.username,
+      `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, c.name, c.user_id, u.display_name, u.username,
               (SELECT COALESCE(sum(m.merit), 0)::int FROM game_season_merit m WHERE m.character_id = h.character_id) AS honra,
               COALESCE(sm.merit, 0)::int AS merito, o.office
          FROM game_houses h
@@ -234,6 +235,8 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         nombre: nombreDe(r),
         escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
         esMia: false,
+        adornos: Array.isArray(r.adornos) ? (r.adornos as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 8) : [],
+        letrero: (r.letrero as string | null) ?? null,
         userId,
       });
     }
@@ -271,7 +274,12 @@ async function otrosBarrios(propio: number): Promise<CiudadEstado["otros"]> {
 
 async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | null, privada: CasaPrivada): Promise<CiudadEstado> {
   const t = temporadaDe();
-  const [honra, casas, otros] = await Promise.all([honraDePersonaje(ch.id), casasDelBarrio(casa.barrio), otrosBarrios(casa.barrio)]);
+  const [honra, casas, otros, { rows: yo }] = await Promise.all([
+    honraDePersonaje(ch.id),
+    casasDelBarrio(casa.barrio),
+    otrosBarrios(casa.barrio),
+    pool.query(`SELECT ropa, gozo FROM game_characters WHERE id = $1`, [ch.id]),
+  ]);
   const mia = casas.find((c) => c.personajeId === ch.id);
   const nivel = Math.max(casa.level, mia?.nivel ?? 0);
   const sig = NIVELES_CASA[nivel + 1];
@@ -282,6 +290,8 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
       escalon: mia?.escalon ?? "sacerdote",
       camino: ch.camino,
       pasos: ch.instruccion,
+      ropa: coloresDeRopa(yo[0]?.ropa),
+      gozo: Number(yo[0]?.gozo || 0),
       barrio: casa.barrio,
       parcela: casa.plot,
       nivel,

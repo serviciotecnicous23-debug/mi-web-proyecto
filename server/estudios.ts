@@ -12,6 +12,7 @@ import {
 import { EXAMENES, type FilaExamen } from "./estudios-examen";
 import { diaClave, enFila, esAdmin, evento, filaMerito, forgetJer, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
+import { GOZO, sumarGozo } from "./gozo";
 
 export const ESTUDIOS_SQL = `
 CREATE TABLE IF NOT EXISTS "game_studies" (
@@ -165,6 +166,7 @@ export function registerEstudiosRoutes(app: Express) {
       if (nueva) {
         premio = MERITO_SECCION;
         await sumarMerito(ch, premio);
+        await sumarGozo(ch.id, GOZO.seccion);
         misiones = await avanzarMision(ch, "seccion", 1).catch(() => []);
       }
       res.json({ premio, estado: await estadoDe(ch.id), ...(misiones.length ? { misiones } : {}) });
@@ -234,6 +236,7 @@ export function registerEstudiosRoutes(app: Express) {
       if (out.primeraVez) {
         // el mérito va aparte de la fila (enFila no se anida)
         await sumarMerito(ch, out.premio);
+        await sumarGozo(ch.id, GOZO.estudio);
         await evento(req.user!.id, `estudio:${e.id}`, `aprobó el estudio «${e.titulo}» en Jerusalén en línea`);
         out.estado = await estadoDe(ch.id);
       }

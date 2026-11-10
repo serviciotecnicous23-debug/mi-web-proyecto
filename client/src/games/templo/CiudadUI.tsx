@@ -3,12 +3,14 @@
  * del púlpito de la plaza (los anuncios de la ciudad), de los ancianos de la puerta, de los
  * edificios que se abren en la etapa 3 y de «Ir a…». El mundo 3D está en ciudad/mundo.ts.
  */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
-  RotateCw, Send, Store, Target, Trophy, Users, WifiOff,
+  RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
+import { CasaExtras, MercadoView } from "./MercadoUI";
+import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { EstudiosDeOtro } from "./EstudiosUI";
@@ -112,6 +114,16 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               <span className="min-w-0 truncate">
                 {c.barrio} · casa {c.casa}
               </span>
+            </button>
+            <button
+              type="button"
+              className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
+              onClick={() => open({ kind: "mercado" })}
+              title="Tu gozo de Jerusalén en línea: se gana sirviendo y se gasta en el mercado de la plaza"
+              data-testid="ciudad-gozo"
+            >
+              <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
+              <span className="tabular-nums">{c.gozo}</span>
             </button>
           </div>
           {c.fiesta && (
@@ -253,6 +265,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <PalacioView />;
     case "edificio":
       return <EdificioView id={modal.id} />;
+    case "mercado":
+      return <MercadoModal tab={modal.tab} />;
     case "irA":
       return <IrAView />;
     case "frases":
@@ -270,6 +284,36 @@ export function CiudadModal({ modal }: { modal: Modal }) {
 
 function cerrar() {
   gameStore.close();
+}
+
+/** Lo que cambió en el mercado llega a la pantalla (alfolí, gozo) y al mundo (ropa, adornos, letrero). */
+function useAlMercado() {
+  // con lo último de la ciudad (la respuesta puede llegar después de otros cambios)
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  return useCallback((m: MercadoEstado) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const casas = estado.barrio.casas.map((c) => (c.esMia ? { ...c, adornos: m.adornos, letrero: m.letrero } : c));
+    setEstado?.({
+      ...estado,
+      yo: { ...estado.yo, gozo: m.gozo, ropa: coloresDeIds(m.ropa) },
+      barrio: { ...estado.barrio, casas },
+      privada: { ...estado.privada, bienes: { ...estado.privada.bienes, ...m.bienes } },
+    });
+    city?.alMercado(m);
+  }, []);
+}
+
+function MercadoModal({ tab }: { tab?: TabMercado }) {
+  const alCambiar = useAlMercado();
+  return <MercadoView tab={tab} alCambiar={alCambiar} />;
+}
+
+function CasaExtrasConMundo() {
+  const alCambiar = useAlMercado();
+  return <CasaExtras alCambiar={alCambiar} />;
 }
 
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */
@@ -330,6 +374,7 @@ function CasaView() {
           ))}
         </ol>
         <SiervosPanel />
+        <CasaExtrasConMundo />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>

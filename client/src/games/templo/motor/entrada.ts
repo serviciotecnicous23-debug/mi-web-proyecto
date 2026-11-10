@@ -60,6 +60,9 @@ export function setVibracion(on: boolean) {
 /** Una vibración corta (10 a 30 ms) donde el teléfono la permite. */
 export function vibrar(ms: number | number[]) {
   if (!vibracionActiva()) return;
+  // el navegador no deja vibrar hasta que la persona toque la página (y lo anota como error)
+  const activo = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+  if (activo && !activo.hasBeenActive) return;
   try {
     navigator.vibrate?.(ms);
   } catch {

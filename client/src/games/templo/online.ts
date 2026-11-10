@@ -50,8 +50,8 @@ export const instruccionParte = (parte: number) =>
   pedir<{ partes: number; premio: number; estado: JerusalenEstado; message?: string }>("/instruccion", { method: "POST", body: JSON.stringify({ parte }) });
 
 /** Avisa en el juego los encargos o la ofrenda del barrio que se acaban de cumplir. */
-export function avisarMisiones(m: { titulo: string; premio: number }[] | undefined) {
-  for (const x of m || []) gameStore.toast(`${x.titulo} · +${x.premio} de mérito`, "gold");
+export function avisarMisiones(m: { titulo: string; premio: number; gozo?: number }[] | undefined) {
+  for (const x of m || []) gameStore.toast(`${x.titulo} · +${x.premio} de mérito${x.gozo ? ` · +${x.gozo} de gozo` : ""}`, "gold");
 }
 
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */

@@ -12,6 +12,7 @@ import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
 import { ESTUDIOS_SQL } from "./estudios";
 import { MISIONES_SQL } from "./misiones";
+import { MERCADO_SQL } from "./mercado";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1071,6 +1072,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(MISIONES_SQL);
     } catch (err: any) {
       console.log(`  Migration note (misiones): ${err?.message}`);
+    }
+    try {
+      // El gozo, el mercado, el huerto, los adornos, la ropa y el letrero de la casa
+      await pool.query(MERCADO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (mercado): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables
