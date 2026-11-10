@@ -9,7 +9,7 @@ import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
   Medal, RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
-import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
+import { CasaExtras, MercadoView, type Ofrecido, type ParteCasa } from "./MercadoUI";
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
 import { ConcursoView } from "./ConcursoUI";
 import { PedidosBarrio, PedirAyuda } from "./AyudaUI";
@@ -377,7 +377,7 @@ function MercadoModal({ tab }: { tab?: TabMercado }) {
   return <MercadoView tab={tab} alCambiar={alCambiar} />;
 }
 
-function CasaExtrasConMundo() {
+function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
   const alCambiar = useAlMercado();
   const ctx = useContext(CiudadCtx);
   const ultimo = useRef(ctx);
@@ -396,12 +396,21 @@ function CasaExtrasConMundo() {
     city?.actualizarPrivada(r.privada, nivel);
     avisarMisiones(r.misiones);
   }, []);
-  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} />;
+  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} />;
 }
 
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */
+/** Las pestañas de «Tu casa» (en el teléfono la ventana quedaba muy larga). */
+const PESTANAS_CASA: [string, string][] = [
+  ["casa", "🏠 Tu casa"],
+  ["huerto", "🌾 Huerto y horno"],
+  ["adornos", "🪔 Adornos y ropa"],
+  ["vecinos", "📖 Vecinos"],
+];
+
 function CasaView() {
   const { estado, city } = useContext(CiudadCtx);
+  const [pestana, setPestana] = useState("casa");
   if (!estado) return null;
   const yo = estado.yo;
   const nivel = NIVELES_CASA[yo.nivel];
@@ -421,6 +430,30 @@ function CasaView() {
         <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
           {estado.barrio.nombre} · casa {yo.parcela + 1} de 40
         </p>
+        <div className="flex flex-wrap gap-1" role="group" aria-label="Partes de tu casa">
+          {PESTANAS_CASA.map(([id, nombre]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={pestana === id}
+              onClick={() => setPestana(id)}
+              className={`rounded-full px-3 py-1 text-xs font-bold ${pestana === id ? "bg-amber-400 text-amber-950" : "bg-stone-100 dark:bg-stone-800"}`}
+              data-testid={`casa-pestana-${id}`}
+            >
+              {nombre}
+            </button>
+          ))}
+        </div>
+        {pestana === "huerto" && <CasaExtrasConMundo partes={["huerto", "horno"]} />}
+        {pestana === "adornos" && <CasaExtrasConMundo partes={["adornos", "ropa", "letrero"]} />}
+        {pestana === "vecinos" && (
+          <>
+            <ReunionCasa />
+            <PedirAyuda />
+          </>
+        )}
+        {pestana === "casa" && (
+        <>
         <div>
           <p className="font-serif text-2xl font-black" data-testid="ciudad-casa-nivel">
             {nivel.nombre}
@@ -457,12 +490,11 @@ function CasaView() {
           ))}
         </ol>
         <SiervosPanel />
-        <CasaExtrasConMundo />
-        <ReunionCasa />
-        <PedirAyuda />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>
+        </>
+        )}
         <Button
           className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400"
           onClick={() => {
