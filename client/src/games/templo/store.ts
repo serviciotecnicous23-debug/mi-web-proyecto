@@ -141,6 +141,7 @@ export type Modal =
   | { kind: "palacio"; tab?: "audiencia" | "ley" }
   | { kind: "irA" }
   | { kind: "mapa" }
+  | { kind: "catedra"; area: import("@shared/catedras").CatedraArea }
   | { kind: "frases" }
   | { kind: "vecinos" }
   | { kind: "vecino"; id: number }

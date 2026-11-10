@@ -21,6 +21,7 @@ import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControl
 import { EstudiosDeOtro } from "./EstudiosUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import { MapaView, MiniMapa } from "./MapaUI";
+import { CatedraView } from "./CatedraUI";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
@@ -297,6 +298,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <IrAView />;
     case "mapa":
       return <MapaModal />;
+    case "catedra":
+      return <CatedraView area={modal.area} />;
     case "frases":
       return <FrasesView />;
     case "vecinos":

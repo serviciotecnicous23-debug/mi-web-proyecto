@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-catedra-oracion",
+    fecha: "10 de noviembre de 2026",
+    titulo: "La cátedra de la oración",
+    puntos: [
+      "🙏 Cuando el profeta se arrodilla en el círculo violeta del monte, Isaías le da una lección de oración mientras ora: una enseñanza corta y una pregunta con su cita de la Biblia.",
+      "📖 30 lecciones: qué es la oración, por qué y cómo orar, el Padre nuestro, la intercesión, la oración de guerra, la perseverancia, el ayuno, orar en el nombre de Jesús y conforme a su voluntad, y los grandes intercesores (Abraham, Moisés, Elías, Daniel, Ana, Epafras).",
+      "✨ Al responder, tu oración se cumple. Si aciertas: +3 de mérito y +3 de gozo. Hasta 8 lecciones por día, sin repetir las que ya aprendiste.",
+    ],
+  },
+  {
     id: "2026-11-10-mapa",
     fecha: "10 de noviembre de 2026",
     titulo: "El mapa de Jerusalén",

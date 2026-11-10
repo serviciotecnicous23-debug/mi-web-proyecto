@@ -1457,6 +1457,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "edificio":
     case "irA":
     case "mapa":
+    case "catedra":
     case "frases":
     case "vecinos":
     case "vecino":

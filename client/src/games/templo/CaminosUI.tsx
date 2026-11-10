@@ -283,7 +283,7 @@ export function EscuelaView({ tab: inicial }: { tab?: "memoria" | "discernir" } 
                 <ScrollText className="mr-2 h-4 w-4" /> Estudios
               </Button>
             </div>
-            <p className="text-xs text-stone-500">También puedes orar al pie del monte, junto a la escuela: quédate quieto {15} segundos en el círculo violeta (+2).</p>
+            <p className="text-xs text-stone-500">También puedes orar al pie del monte, junto a la escuela: arrodíllate en el círculo violeta y aprende con la cátedra de la oración (+2 de mérito al orar, y +3 más si respondes bien).</p>
           </>
         ) : tab === "discernir" ? (
           <>
