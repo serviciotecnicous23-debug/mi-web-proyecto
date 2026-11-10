@@ -96,7 +96,7 @@ type Vecino = {
 };
 
 /** Un vecino para la lista de la pantalla. */
-export type VecinoVisto = { id: number; nombre: string; escalon: EscalonId; barrio: number; casa: number; u: number; distancia: number };
+export type VecinoVisto = { id: number; nombre: string; escalon: EscalonId; barrio: number; casa: number; u: number; distancia: number; camino?: Camino };
 
 type Npc = {
   handle: CrowdHandle;
@@ -490,6 +490,7 @@ export class CiudadWorld {
           casa: i?.casa ?? 0,
           u: i?.u ?? 0,
           distancia: dist(r.x, r.z, v.rig.x, v.rig.z),
+          camino: i?.camino,
         };
       })
       .sort((a, b) => a.distancia - b.distancia);

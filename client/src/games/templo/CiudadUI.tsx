@@ -139,6 +139,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               <span className="tabular-nums">{c.gozo}</span>
             </button>
           </div>
+          <MeritoCamino camino={c.camino} />
           <GananciaEnLinea />
           {c.fiesta && (
             <button
@@ -769,7 +770,12 @@ function AnunciosView() {
     return { f, fiesta: f.fiestas[0] ?? null, proxima: p ? { ...p, enMinutos: Math.max(1, Math.round(((p.enDias - reloj.hora) * SEGUNDOS_DIA) / 60)) } : null };
   }, []);
   const prueba = e?.temporada.dePrueba ? " (de prueba)" : "";
-  const titulares = e?.escalera.flatMap((x) => x.titulares.map((t) => ({ ...t, cargo: escalonNombre(x.id) }))) ?? [];
+  // los cargos de los tres caminos (cada uno con su nombre: sumo sacerdote, varón de Dios, canciller del rey…)
+  const titulares = e
+    ? (["sacerdocio", "profecia", "realeza"] as const).flatMap((cam) =>
+        (e.escaleras?.[cam] ?? (cam === "sacerdocio" ? e.escalera : [])).flatMap((x) => x.titulares.map((t) => ({ ...t, cargo: nombreEscalonCamino(cam, x.id, escalonNombre(x.id)) }))),
+      )
+    : [];
   return (
     <Card
       title={
@@ -1085,7 +1091,7 @@ function VecinosView() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold">{v.nombre}</span>
                     <span className="block text-xs text-stone-500">
-                      {escalonNombre(v.escalon)} · {v.barrio ? `${nombreDeBarrio(v.barrio)}, casa ${v.casa + 1}` : "Jerusalén"}
+                      {nombreEscalonCamino(v.camino ?? "sacerdocio", v.escalon, escalonNombre(v.escalon))} · {v.barrio ? `${nombreDeBarrio(v.barrio)}, casa ${v.casa + 1}` : "Jerusalén"}
                     </span>
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-stone-500">{Math.round(v.distancia)} m</span>
@@ -1178,7 +1184,7 @@ function VecinoView({ id }: { id: number }) {
     >
       <div className="space-y-3 p-4 text-sm">
         <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-          {escalonNombre(v.escalon)} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
+          {nombreEscalonCamino(v.camino ?? "sacerdocio", v.escalon, escalonNombre(v.escalon))} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
         </p>
         {paso === "ficha" && <LogrosDeOtro personajeId={v.id} />}
         {paso === "ficha" && <EstudiosDeOtro personajeId={v.id} />}
@@ -1306,5 +1312,27 @@ function IrAView() {
         ))}
       </ul>
     </Card>
+  );
+}
+
+/**
+ * El mérito de la temporada y el puesto en la tabla de su camino (los profetas compiten entre profetas,
+ * los siervos del rey entre ellos): al tocarlo se abre la temporada con la escalera y los cargos.
+ */
+function MeritoCamino({ camino }: { camino: "sacerdocio" | "profecia" | "realeza" }) {
+  const { online } = useGame();
+  if (!online) return null;
+  const quien = camino === "profecia" ? "profetas" : camino === "realeza" ? "siervos del rey" : "sacerdotes";
+  return (
+    <button
+      type="button"
+      className="pointer-events-auto flex w-fit items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-0.5 pl-1.5 pr-2.5 text-[11px] font-black text-amber-950 shadow-lg"
+      onClick={() => gameStore.push({ kind: "temporada" })}
+      title="Tu mérito de la temporada y tu puesto entre los de tu camino: al cerrar la temporada se reparten los cargos"
+      data-testid="ciudad-merito"
+    >
+      🏅 <span className="tabular-nums">{online.merito}</span> de mérito
+      {online.puesto ? <span className="font-bold">· {online.puesto}.º de los {quien}</span> : null}
+    </button>
   );
 }

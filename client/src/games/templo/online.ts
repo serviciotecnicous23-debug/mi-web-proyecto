@@ -134,6 +134,7 @@ export class OnlineSession {
   private factor: number;
   private juntos = 0;
   private gozoTotal: number | null = null;
+  private puesto: number | null = null;
   private ultimo: { merito: number; gozo: number; at: number } | null = null;
   private closed = false;
   readonly hooks: OnlineHooks;
@@ -141,6 +142,7 @@ export class OnlineSession {
   constructor(estado: JerusalenEstado) {
     this.estado = estado;
     this.merito = estado.mio?.merito || 0;
+    this.puesto = estado.mio?.puesto ?? null;
     this.escalon = estado.mio?.escalon || "sacerdote";
     this.hoySeg = estado.mio?.hoy.segundos || 0;
     this.factor = estado.mio?.hoy.factor ?? 1;
@@ -212,6 +214,7 @@ export class OnlineSession {
       }
       if (d.constancia && !this.closed) gameStore.toast(`Constancia: 10 minutos de servicio hoy · +${d.constancia} de mérito`, "gold");
       this.juntos = d.juntos ?? 0;
+      if (d.puesto !== undefined) this.puesto = d.puesto;
       // lo ganado se ve enseguida: el aviso «+mérito · +gozo» y el contador de gozo
       if ((d.ganado || 0) > 0 || (d.gozo || 0) > 0) this.ultimo = { merito: d.ganado || 0, gozo: d.gozo || 0, at: Date.now() };
       if (typeof d.gozoTotal === "number" && d.gozoTotal !== this.gozoTotal) {
@@ -298,6 +301,7 @@ export class OnlineSession {
       enviando: this.sending,
       juntos: this.juntos,
       gozoTotal: this.gozoTotal,
+      puesto: this.puesto,
       ultimo: this.ultimo,
     });
   }

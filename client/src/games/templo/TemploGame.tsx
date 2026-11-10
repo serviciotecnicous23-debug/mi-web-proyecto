@@ -32,12 +32,13 @@ import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } fro
 import type { TempleWorld } from "./world";
 import {
   ESCALONES, MERITO_MIN_CARGO, MERITO_TURNO, NOMBRE_LIBRE, NOMBRE_PROPIO, PREGUNTAS_DIA, errorNombreLibre, SEGUNDOS_PREGUNTA, escalonNombre,
-  type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
+  type EscalonId, type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import {
   OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, elegirPersonaje, entrarCiudad, escalonRank, fetchEstado, instruccionParte, onlineSave, renombrarPersonaje,
 } from "./online";
-import { CAMINOS, CAMINOS_LISTA, nombreEscalonCamino, type Camino } from "@shared/caminos";
+import { CAMINOS, CAMINOS_LISTA, ESTUDIOS_CARGO, PREMIO_CARGO, nombreEscalonCamino, type Camino } from "@shared/caminos";
+import { estudioPorId } from "@shared/estudios";
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
@@ -2857,6 +2858,21 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
   };
   const min = Math.floor((mio?.hoy.segundos || 0) / 60);
   const f = mio?.hoy.factor ?? 1;
+  // cada camino tiene su escalera, sus cargos y su tabla: se ve el propio y se pueden mirar los otros
+  const camino: Camino = estado.personaje?.camino ?? "sacerdocio";
+  const [ver, setVer] = useState<Camino>(camino);
+  const quienes = (c: Camino) => (c === "profecia" ? "profetas" : c === "realeza" ? "siervos del rey" : "sacerdotes");
+  const nombreDe = (c: Camino, id: EscalonId) => nombreEscalonCamino(c, id, escalonNombre(id));
+  const titulo = (id: string) => estudioPorId(id)?.titulo ?? id;
+  const como = (c: Camino, id: EscalonId): string => {
+    if (id === "sacerdote") return c === "sacerdocio" ? ESCALONES[0].como : "Al empezar en este camino";
+    if (id === "turno") return `Con ${MERITO_TURNO} de mérito en la temporada`;
+    if (id === "jefe") return `Los 12 siguientes en mérito al cerrar la temporada · +${PREMIO_CARGO.jefe} de gozo`;
+    if (id === "principal") return `Los 3 siguientes en mérito que aprobaron «${titulo(ESTUDIOS_CARGO[c].medio)}» · +${PREMIO_CARGO.principal} de gozo`;
+    return `El de más mérito que ya fue ${nombreDe(c, "principal").toLowerCase()} y aprobó «${titulo(ESTUDIOS_CARGO[c].alto)}» · +${PREMIO_CARGO.sumo} de gozo`;
+  };
+  const escaleraVer = estado.escaleras?.[ver] ?? (ver === camino ? estado.escalera : []);
+  const tablaVer = estado.tablas?.[ver] ?? (ver === camino ? estado.tabla : []);
   return (
     <div className="space-y-3 text-sm" data-testid="templo-temporada-panel">
       {mio ? (
@@ -2866,10 +2882,10 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
               <p className="text-lg font-black" data-testid="temporada-merito">{fmt(mio.merito)}</p>mérito
             </div>
             <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
-              <p className="text-lg font-black">{mio.puesto ? `${mio.puesto}.º` : "—"}</p>puesto
+              <p className="text-lg font-black">{mio.puesto ? `${mio.puesto}.º` : "—"}</p>de los {quienes(camino)}
             </div>
             <div className="rounded-xl bg-amber-50 p-2 dark:bg-amber-950/30">
-              <p className="text-sm font-black leading-tight">{escalonNombre(mio.escalon)}</p>
+              <p className="text-sm font-black leading-tight">{nombreDe(camino, mio.escalon)}</p>
               {mio.cargo ? `cargo${prueba}` : "escalón"}
             </div>
           </div>
@@ -2895,17 +2911,33 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
         <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">Consagra a tu sacerdote para empezar a sumar mérito en esta temporada.</p>
       )}
 
+      <div className="flex flex-wrap gap-1" role="group" aria-label="Camino" data-testid="temporada-caminos">
+        {(["sacerdocio", "profecia", "realeza"] as Camino[]).map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={ver === c}
+            onClick={() => setVer(c)}
+            className={`rounded-full px-3 py-1 text-xs font-bold ${ver === c ? "bg-amber-400 text-amber-950" : "bg-stone-100 dark:bg-stone-800"}`}
+            data-testid={`temporada-camino-${c}`}
+          >
+            {CAMINOS[c].icono} {quienes(c).charAt(0).toUpperCase() + quienes(c).slice(1)}
+            {c === camino ? " (tú)" : ""}
+          </button>
+        ))}
+      </div>
+
       <div>
-        <p className="mb-1 font-black">La escalera del sacerdocio</p>
+        <p className="mb-1 font-black">La escalera de los {quienes(ver)}</p>
         <ol className="space-y-1.5">
           {[...ESCALONES].reverse().map((e) => {
-            const fila = estado.escalera.find((x) => x.id === e.id);
-            const yo = mio?.escalon === e.id;
+            const fila = escaleraVer.find((x) => x.id === e.id);
+            const yo = ver === camino && mio?.escalon === e.id;
             return (
               <li key={e.id} className={`rounded-xl border p-2.5 ${yo ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`} data-testid={`escalon-${e.id}`}>
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="font-bold">
-                    {e.nombre}
+                    {nombreDe(ver, e.id)}
                     {e.cupo ? prueba : ""} {yo && <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">(tú)</span>}
                   </p>
                   <span className="shrink-0 text-[11px] text-stone-500">{e.cupo ? `${fila?.titulares.length || 0} de ${e.cupo}` : "sin cupo"}</span>
@@ -2926,10 +2958,10 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-0.5 text-xs text-stone-500">Vacante: se reparte al cerrar la temporada.</p>
+                    <p className="mt-0.5 text-xs text-stone-500">Vacante: se reparte al cerrar la temporada. {como(ver, e.id)}.</p>
                   )
                 ) : (
-                  <p className="mt-0.5 text-xs text-stone-500">{e.como}</p>
+                  <p className="mt-0.5 text-xs text-stone-500">{como(ver, e.id)}</p>
                 )}
               </li>
             );
@@ -2938,10 +2970,10 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
       </div>
 
       <div>
-        <p className="mb-1 font-black">Mérito de la temporada</p>
-        {estado.tabla.length ? (
+        <p className="mb-1 font-black">Mérito de la temporada: los {quienes(ver)}</p>
+        {tablaVer.length ? (
           <ol className="divide-y rounded-lg border dark:divide-stone-700 dark:border-stone-700" data-testid="temporada-tabla">
-            {estado.tabla.map((r) => (
+            {tablaVer.map((r) => (
               <li key={r.personajeId} className={`flex items-center gap-2 px-3 py-1.5 text-sm ${r.isMe ? "bg-amber-50 font-semibold dark:bg-amber-950/30" : ""}`}>
                 <span className={`w-6 text-center font-black ${r.puesto === 1 ? "text-yellow-500" : r.puesto === 2 ? "text-slate-400" : r.puesto === 3 ? "text-amber-700" : "text-stone-400"}`}>{r.puesto}</span>
                 <span className="min-w-0 flex-1 truncate">
@@ -2967,7 +2999,14 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
           <li>Con {MERITO_TURNO} de mérito eres sacerdote de turno. Al cerrar la temporada se reparten los cargos: 1 sumo sacerdote, 3 principales y 12 jefes de turno, entre quienes sirvieron en los últimos 7 días y juntaron al menos {MERITO_MIN_CARGO} de mérito.</li>
           <li>Para ser principal sacerdote hay que aprobar el estudio «El sacerdocio de Aarón». Para ser sumo sacerdote, haber sido principal en una temporada anterior y aprobar «El Día de la Expiación». Los estudios aprobados son para siempre.</li>
           <li>Todos empiezan como sacerdotes nuevos, hayan jugado o no la historia del templo.</li>
-          <li>Los cargos con cupo son del sacerdocio. En la escuela de los profetas y en el palacio del rey se sube de escalón con el mérito: Vidente y Escriba del rey con {MERITO_TURNO}.</li>
+          <li>
+            Cada camino compite con los suyos y tiene sus cargos: los profetas (Anciano de la escuela, Profeta del rey y Varón de Dios) suman mérito memorizando, discerniendo, orando y llevando
+            mensajes; los siervos del rey (Oficial, Consejero y Canciller del rey) atendiendo audiencias, repartiendo pan y copiando la ley.
+          </li>
+          <li>
+            Al empezar cada temporada, los cargos reciben gozo: {PREMIO_CARGO.sumo} el de más arriba, {PREMIO_CARGO.principal} los tres siguientes y {PREMIO_CARGO.jefe} los doce. Tu mérito de
+            todas las temporadas también da honra a tu casa, y la casa crece con la honra.
+          </li>
           <li>Quien tiene un cargo y pasa 7 días sin servir lo pierde, y el cargo pasa al siguiente de la lista.</li>
           <li>Mientras no se abran el palacio del rey y la escuela de los profetas, los cargos son de prueba.</li>
         </ul>
@@ -2999,7 +3038,7 @@ function TemporadaView() {
     <Card
       title={
         <span className="flex items-center gap-2">
-          <Trophy className="h-5 w-5" /> Temporada sacerdotal {estado ? estado.temporada.n : ""}
+          <Trophy className="h-5 w-5" /> Temporada {estado ? estado.temporada.n : ""} de Jerusalén en línea
         </span>
       }
       onClose={() => gameStore.close()}

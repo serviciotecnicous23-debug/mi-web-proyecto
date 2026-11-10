@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-cargos-caminos",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Profetas y siervos del rey también compiten",
+    puntos: [
+      "🏅 En la ciudad ves tu mérito de la temporada y tu puesto entre los de tu camino («12.º de los profetas»). Tócalo para ver la temporada.",
+      "📯 Los profetas tienen su escalera: Hijo de los profetas, Vidente, Anciano de la escuela, Profeta del rey y Varón de Dios.",
+      "👑 Los siervos del rey también: Siervo del rey, Escriba del rey, Oficial del rey, Consejero del rey y Canciller del rey.",
+      "🎁 Al cerrar cada temporada se reparten los cargos de cada camino (1, 3 y 12), con los estudios de su camino, y cada cargo recibe gozo: 300, 150 o 60. Tu mérito de todas las temporadas también hace crecer tu casa.",
+    ],
+  },
+  {
     id: "2026-11-10-ganancias-vista",
     fecha: "10 de noviembre de 2026",
     titulo: "Ves lo que ganas, y nada te tapa",

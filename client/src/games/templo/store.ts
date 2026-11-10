@@ -22,6 +22,8 @@ export type OnlineHud = {
   juntos: number;
   /** El gozo de la persona según el último envío (null hasta el primero). */
   gozoTotal: number | null;
+  /** Puesto en la tabla de su camino (null si todavía no tiene mérito). */
+  puesto: number | null;
   /** Lo ganado en el último envío de servicio (para el aviso «+mérito · +gozo»). */
   ultimo: { merito: number; gozo: number; at: number } | null;
 };
