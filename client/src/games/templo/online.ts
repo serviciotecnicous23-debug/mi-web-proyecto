@@ -112,6 +112,8 @@ export type OnlineHooks = {
   ready: () => boolean;
   /** Salir a la ciudad por la escalinata (la pantalla cambia de mundo). */
   toCity?: () => void;
+  /** El gozo de la persona cambió con un envío (la ciudad actualiza su contador). */
+  alGozo?: (gozo: number) => void;
 };
 
 type Pregunta = OnlineHud extends infer H ? (H extends { pregunta: infer P } ? P : never) : never;
@@ -131,6 +133,8 @@ export class OnlineSession {
   private hoySeg: number;
   private factor: number;
   private juntos = 0;
+  private gozoTotal: number | null = null;
+  private ultimo: { merito: number; gozo: number; at: number } | null = null;
   private closed = false;
   readonly hooks: OnlineHooks;
 
@@ -208,6 +212,12 @@ export class OnlineSession {
       }
       if (d.constancia && !this.closed) gameStore.toast(`Constancia: 10 minutos de servicio hoy · +${d.constancia} de mérito`, "gold");
       this.juntos = d.juntos ?? 0;
+      // lo ganado se ve enseguida: el aviso «+mérito · +gozo» y el contador de gozo
+      if ((d.ganado || 0) > 0 || (d.gozo || 0) > 0) this.ultimo = { merito: d.ganado || 0, gozo: d.gozo || 0, at: Date.now() };
+      if (typeof d.gozoTotal === "number" && d.gozoTotal !== this.gozoTotal) {
+        this.gozoTotal = d.gozoTotal;
+        this.hooks.alGozo?.(d.gozoTotal);
+      }
       if (!this.closed) avisarMisiones(d.misiones);
     } else {
       for (const [k, v] of Object.entries(acciones)) this.pend[k as DeberId] = (this.pend[k as DeberId] || 0) + (v || 0);
@@ -287,6 +297,8 @@ export class OnlineSession {
       pregunta: this.qState,
       enviando: this.sending,
       juntos: this.juntos,
+      gozoTotal: this.gozoTotal,
+      ultimo: this.ultimo,
     });
   }
 

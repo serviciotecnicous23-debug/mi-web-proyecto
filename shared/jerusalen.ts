@@ -209,6 +209,9 @@ export type JerusalenAcciones = {
   juntos?: number;
   /** Encargos o la ofrenda del barrio que se cumplieron con este envío. */
   misiones?: { titulo: string; premio: number }[];
+  /** Gozo ganado con este envío (deberes y encargos) y el que tiene ahora la persona. */
+  gozo?: number;
+  gozoTotal?: number;
 };
 
 export type JerusalenPregunta = {

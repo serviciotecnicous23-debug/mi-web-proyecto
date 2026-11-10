@@ -20,6 +20,10 @@ export type OnlineHud = {
   enviando: boolean;
   /** Sacerdotes sirviendo juntos según el servidor (con 2 o más, mérito ×1,2). */
   juntos: number;
+  /** El gozo de la persona según el último envío (null hasta el primero). */
+  gozoTotal: number | null;
+  /** Lo ganado en el último envío de servicio (para el aviso «+mérito · +gozo»). */
+  ultimo: { merito: number; gozo: number; at: number } | null;
 };
 
 export type Hud = {

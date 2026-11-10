@@ -49,6 +49,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { CasaHudLayer } from "./CasaUI";
+import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
 import { GOZO } from "@shared/mercado";
 
@@ -277,6 +278,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
       }
       if (ses) {
         ses.hooks.toCity = () => void irACiudadRef.current("templo");
+        // el gozo que dice el servidor llega al contador de la ciudad
+        ses.hooks.alGozo = (g) => cityRef.current?.ponerGozo(g);
         // lo que falte de los deberes del templo se manda ya
         void ses.flush(true);
       }
@@ -1014,6 +1017,16 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                   <Award className="h-4 w-4" />
                   <span className="tabular-nums">{fmt(oh?.merito ?? 0)}</span>
                 </div>
+                {oh?.gozoTotal != null && (
+                  <div
+                    className="flex items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
+                    title="Tu gozo de Jerusalén en línea: se gana sirviendo y se gasta en el mercado de la plaza"
+                    data-testid="templo-gozo-en-linea"
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-300" />
+                    <span className="tabular-nums">{oh.gozoTotal}</span>
+                  </div>
+                )}
                 <button
                   type="button"
                   className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
@@ -1033,6 +1046,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                     🤝 {hud.sacerdotes} sirviendo juntos · ×1,2
                   </div>
                 )}
+                <GananciaEnLinea />
                 {hud.instruccion && (
                   <button
                     type="button"
