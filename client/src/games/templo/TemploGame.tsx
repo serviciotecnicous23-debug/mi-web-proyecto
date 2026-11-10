@@ -18,7 +18,11 @@ import {
   HELPERS, HOW_TO, ITEMS, LESSONS, LESSON_ORDER, QUIZZES, RANKS, SPEAKERS, STATIONS, UPGRADES, quizById, upgradeCost, type Line,
 } from "./data";
 import { gameStore, useGame, type Hud, type Modal } from "./store";
-import { GAME_SLUG, clearLocal, gloria, loadLocal, loadRemote, newSave, progressView, saveRemote, type SaveData } from "./state";
+import {
+  GAME_SLUG, clearLocal, elegirPartida, gloria, loadLocal, loadRemote, newSave, progressView, recuperarRespaldo, saveLocal, saveRemote, textoPartida,
+  type Respaldo, type SaveData,
+} from "./state";
+import { resumenPartida } from "@shared/partida";
 import { Portrait, TemploCover } from "./Portrait";
 import { ADORNOS, COPA, LOGROS, goalDef, logroNivel, parSeconds, type Goal } from "./progress";
 import type { TempleWorld } from "./world";
@@ -75,6 +79,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const [full, setFull] = useState(false);
   const [immersive, setImmersive] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  // La partida de la cuenta: dos partidas jugadas por separado (hay que elegir) o un respaldo más avanzado
+  const [dosPartidas, setDosPartidas] = useState<{ local: SaveData; cuenta: SaveData } | null>(null);
+  const [respaldo, setRespaldo] = useState<Respaldo | null>(null);
   // Jerusalén en línea: el estado de la cuenta, la sala y la sesión mientras se juega en línea
   const [estado, setEstado] = useState<JerusalenEstado | null>(null);
   const [lobby, setLobby] = useState(false);
@@ -102,19 +109,21 @@ export default function TemploGame({ game }: { game: GameDef }) {
     worldMod.current.catch(() => !cancelled && setPhase("error"));
     (async () => {
       const local = loadLocal();
-      const remote = user ? await loadRemote() : null;
+      const cuenta = user ? await loadRemote() : { save: null, respaldo: null };
       if (cancelled) return;
-      let chosen = local;
-      if (remote && (!local || remote.savedAt > local.savedAt + 1000)) chosen = remote;
-      setSave(chosen);
+      // Con cuenta, la partida vive en la cuenta: nunca se pisa la más avanzada (por ejemplo, al
+      // reinstalar la app y empezar otra antes de iniciar sesión).
+      const e = user ? elegirPartida(local, cuenta.save) : { cargar: local, subir: false, preguntar: false };
+      setSave(e.cargar);
+      if (e.cargar && e.cargar !== local) saveLocal(e.cargar);
+      setDosPartidas(e.preguntar && local && cuenta.save ? { local, cuenta: cuenta.save } : null);
+      setRespaldo(cuenta.respaldo);
       setPhase("title");
       if (!user) {
         setEstado(null);
         return;
       }
-      // El servidor revisa el cargo de la historia con la partida de la cuenta: si la de este
-      // teléfono es más nueva, se guarda primero para que cuente.
-      if (local && (!remote || local.savedAt > remote.savedAt + 1000)) await saveRemote(local);
+      if (e.subir && e.cargar) await saveRemote(e.cargar);
       const r = await fetchEstado();
       if (!cancelled && r.ok && r.data) setEstado(r.data);
     })();
@@ -461,6 +470,24 @@ export default function TemploGame({ game }: { game: GameDef }) {
                 onMute={toggleMute}
                 estado={estado}
                 onOnline={() => setLobby(true)}
+                dosPartidas={dosPartidas}
+                onElegir={(s) => {
+                  // la elegida queda en el teléfono y en la cuenta (la otra, si era más avanzada, queda de respaldo)
+                  saveLocal(s);
+                  void saveRemote(s).then(() => loadRemote().then((c) => setRespaldo(c.respaldo)));
+                  setSave(s);
+                  setDosPartidas(null);
+                }}
+                respaldo={respaldo}
+                onRecuperar={async () => {
+                  const s = await recuperarRespaldo();
+                  if (!s) return false;
+                  saveLocal(s);
+                  setSave(s);
+                  setRespaldo(null);
+                  setDosPartidas(null);
+                  return true;
+                }}
               />
             ))}
         </div>
@@ -483,6 +510,10 @@ function TitleScreen(props: {
   onMute: () => void;
   estado: JerusalenEstado | null;
   onOnline: () => void;
+  dosPartidas: { local: SaveData; cuenta: SaveData } | null;
+  onElegir: (s: SaveData) => void;
+  respaldo: Respaldo | null;
+  onRecuperar: () => Promise<boolean>;
 }) {
   const { game, phase, save, loggedIn, confirmNew, setConfirmNew, onStart } = props;
   const has = !!save && (save.ofrendas > 0 || Object.keys(save.built).length > 0 || (save.gen || 1) > 1 || (save.stats.jornadas || 0) > 0);
@@ -548,6 +579,8 @@ function TitleScreen(props: {
             )}
           </div>
         )}
+        {phase === "title" && !confirmNew && props.dosPartidas && <DosPartidas {...props.dosPartidas} onElegir={props.onElegir} />}
+        {phase === "title" && !confirmNew && !props.dosPartidas && props.respaldo && <RecuperarPartida respaldo={props.respaldo} onRecuperar={props.onRecuperar} />}
         {phase === "title" && !confirmNew && <NovedadesAviso primeraVez={!has && !props.estado?.personaje} />}
         {phase === "title" && !confirmNew && loggedIn && props.estado && <EnLineaEntrada estado={props.estado} onOnline={props.onOnline} />}
         {ahora !== null && ahora > 0 && (
@@ -566,15 +599,95 @@ function TitleScreen(props: {
           <button type="button" onClick={props.onMute} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 hover:bg-white/20">
             {props.muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {props.muted ? "Sin sonido" : "Con sonido (mejor con audífonos)"}
           </button>
-          <span>{loggedIn ? "Tu avance se guarda en este teléfono y en tu cuenta." : "Tu avance se guarda en este teléfono."}</span>
+          <span>{loggedIn ? "Tu avance se guarda en tu cuenta: lo recuperas en otro teléfono o al reinstalar la app." : "Tu avance se guarda solo en este teléfono."}</span>
           {!loggedIn && (
             <Link href={loginUrl()} className="font-semibold text-amber-300 underline">
-              Inicia sesión para guardarlo en tu cuenta
+              Inicia sesión para guardarlo en tu cuenta (no se pierde al cambiar de teléfono)
             </Link>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+/** Dos partidas jugadas por separado (este teléfono y la cuenta): se elige con cuál seguir. */
+function DosPartidas({ local, cuenta, onElegir }: { local: SaveData; cuenta: SaveData; onElegir: (s: SaveData) => void }) {
+  const rangos = RANKS.map((r) => r.nombre);
+  const rl = resumenPartida(local), rc = resumenPartida(cuenta);
+  if (!rl || !rc) return null;
+  const opcion = (titulo: string, s: SaveData, texto: string, mejor: boolean, id: string) => (
+    <div className={`rounded-xl border p-2.5 ${mejor ? "border-amber-300/70 bg-amber-400/10" : "border-white/15 bg-white/5"}`}>
+      <p className="font-bold">
+        {titulo} {mejor && <span className="text-[11px] font-semibold text-amber-200">(la más avanzada)</span>}
+      </p>
+      <p className="mt-0.5 text-[11px] text-white/75">{texto}</p>
+      <button type="button" className="mt-2 w-full rounded-full bg-amber-400 px-3 py-1 font-bold text-amber-950 hover:bg-amber-300" onClick={() => onElegir(s)} data-testid={id}>
+        Seguir con esta
+      </button>
+    </div>
+  );
+  return (
+    <section className="w-full max-w-sm space-y-2 rounded-2xl border border-amber-300/40 bg-black/45 p-3 text-left text-xs text-white shadow-lg" data-testid="templo-dos-partidas">
+      <p className="font-bold text-amber-200">Encontramos dos partidas</p>
+      <p className="text-white/75">Se jugaron por separado. Elige con cuál seguir; la otra, si está más avanzada, queda guardada en tu cuenta para recuperarla.</p>
+      {opcion("La de tu cuenta", cuenta, textoPartida(rc, rangos), rc.peso >= rl.peso, "button-partida-cuenta")}
+      {opcion("La de este teléfono", local, textoPartida(rl, rangos), rl.peso > rc.peso, "button-partida-telefono")}
+    </section>
+  );
+}
+
+/** La cuenta guarda una partida más avanzada que la de ahora (por ejemplo, después de empezar otra): se puede recuperar. */
+function RecuperarPartida({ respaldo, onRecuperar }: { respaldo: Respaldo; onRecuperar: () => Promise<boolean> }) {
+  const clave = `templo-respaldo-visto:${respaldo.at || respaldo.peso}`;
+  const [oculto, setOculto] = useState(() => {
+    try {
+      return localStorage.getItem(clave) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  if (oculto) return null;
+  return (
+    <section className="w-full max-w-sm rounded-2xl border border-sky-200/40 bg-black/45 p-3 text-left text-xs text-white shadow-lg" data-testid="templo-recuperar">
+      <p className="font-bold text-sky-100">Tu cuenta guarda una partida más avanzada</p>
+      <p className="mt-0.5 text-white/75">{textoPartida(respaldo, RANKS.map((r) => r.nombre))}</p>
+      <p className="mt-1 text-white/60">Si empezaste otra sin querer (por ejemplo, al reinstalar la app), puedes volver a ella. La de ahora queda guardada por si cambias de idea.</p>
+      {error && <p className="mt-1 rounded bg-red-500/20 px-2 py-1 text-red-100">No se pudo recuperar. Intenta de nuevo.</p>}
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          className="flex-1 rounded-full bg-sky-300 px-3 py-1 font-bold text-sky-950 hover:bg-sky-200 disabled:opacity-60"
+          onClick={async () => {
+            setBusy(true);
+            setError(false);
+            const ok = await onRecuperar();
+            setBusy(false);
+            if (!ok) setError(true);
+          }}
+          data-testid="button-partida-recuperar"
+        >
+          {busy ? "Recuperando…" : "Recuperar esa partida"}
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-white/10 px-3 py-1 hover:bg-white/20"
+          onClick={() => {
+            try {
+              localStorage.setItem(clave, "1");
+            } catch {
+              /* modo privado */
+            }
+            setOculto(true);
+          }}
+        >
+          No, gracias
+        </button>
+      </div>
+    </section>
   );
 }
 

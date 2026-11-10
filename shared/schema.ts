@@ -1964,6 +1964,9 @@ export const gameSaves = pgTable("game_saves", {
   game: text("game").notNull(),
   data: jsonb("data").notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // la partida más avanzada que fue reemplazada por una menos avanzada (se puede recuperar)
+  backup: jsonb("backup"),
+  backupAt: timestamp("backup_at"),
 });
 
 // ========== JERUSALÉN EN LÍNEA (modo en línea del templo, server/jerusalen.ts) ==========

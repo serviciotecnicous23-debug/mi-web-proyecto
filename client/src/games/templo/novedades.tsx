@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-partida",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Tu partida vive en tu cuenta",
+    puntos: [
+      "Si reinstalas la app o cambias de teléfono, al iniciar sesión sigues con tu partida: una partida nueva ya no reemplaza a la más avanzada.",
+      "Si jugaste en dos teléfonos por separado, el juego te pregunta con cuál seguir.",
+      "Si empezaste otra sin querer, la portada te ofrece recuperar tu partida más avanzada.",
+    ],
+  },
+  {
     id: "2026-11-10-abierta",
     fecha: "10 de noviembre de 2026",
     titulo: "Jerusalén en línea abierta a todos",
@@ -43,36 +53,47 @@ function marcarVista(id: string) {
   }
 }
 
+/** Las que todavía no vio (hasta 3; si nunca vio ninguna, las 2 últimas). */
+function sinVer(): Novedad[] {
+  const v = vista();
+  const i = v ? NOVEDADES.findIndex((n) => n.id === v) : -1;
+  return i === -1 ? NOVEDADES.slice(0, 2) : NOVEDADES.slice(0, Math.min(i, 3));
+}
+
 /** Las novedades que todavía no vio, en la portada. Quien juega por primera vez no las ve: ya empieza con todo. */
 export function NovedadesAviso({ primeraVez }: { primeraVez: boolean }) {
   const ultima = NOVEDADES[0];
-  const [ver, setVer] = useState(() => !!ultima && vista() !== ultima.id);
+  const [nuevas, setNuevas] = useState<Novedad[]>(() => (ultima && vista() !== ultima.id ? sinVer() : []));
   useEffect(() => {
     if (primeraVez && ultima && vista() !== ultima.id) {
       marcarVista(ultima.id);
-      setVer(false);
+      setNuevas([]);
     }
   }, [primeraVez, ultima]);
-  if (!ver || !ultima) return null;
+  if (!nuevas.length || !ultima) return null;
   return (
     <section className="w-full max-w-sm rounded-2xl border border-amber-300/40 bg-black/40 p-3 text-left text-xs text-white shadow-lg" data-testid="templo-novedades">
-      <p className="flex items-center gap-1.5 font-bold text-amber-200">
-        <Sparkles className="h-4 w-4" /> Novedades: {ultima.titulo}
-      </p>
-      <p className="mt-0.5 text-[11px] text-white/60">{ultima.fecha}</p>
-      <ul className="mt-2 space-y-1">
-        {ultima.puntos.map((p) => (
-          <li key={p} className="flex gap-1.5">
-            <span className="text-amber-300">✦</span> <span>{p}</span>
-          </li>
-        ))}
-      </ul>
+      {nuevas.map((n, i) => (
+        <div key={n.id} className={i ? "mt-3 border-t border-white/10 pt-2" : ""}>
+          <p className="flex items-center gap-1.5 font-bold text-amber-200">
+            <Sparkles className="h-4 w-4 shrink-0" /> Novedades: {n.titulo}
+          </p>
+          <p className="mt-0.5 text-[11px] text-white/60">{n.fecha}</p>
+          <ul className="mt-2 space-y-1">
+            {n.puntos.map((p) => (
+              <li key={p} className="flex gap-1.5">
+                <span className="text-amber-300">✦</span> <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
       <button
         type="button"
         className="mt-2.5 w-full rounded-full bg-amber-400 px-3 py-1.5 font-bold text-amber-950 hover:bg-amber-300"
         onClick={() => {
           marcarVista(ultima.id);
-          setVer(false);
+          setNuevas([]);
         }}
         data-testid="button-novedades-entendido"
       >

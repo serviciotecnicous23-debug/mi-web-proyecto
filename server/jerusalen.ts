@@ -224,8 +224,11 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
 }
 
 async function requisitoDe(userId: number): Promise<Requisito> {
-  const { rows } = await pool.query(`SELECT data FROM game_saves WHERE user_id = $1 AND game = $2`, [userId, JUEGO]);
-  return requisitoLocal(rows[0]?.data);
+  const { rows } = await pool.query(`SELECT data, backup FROM game_saves WHERE user_id = $1 AND game = $2`, [userId, JUEGO]);
+  // la partida de ahora o su respaldo (si alguien reinstaló la app y empezó otra, no pierde lo que sabe)
+  const a = requisitoLocal(rows[0]?.data);
+  const b = requisitoLocal(rows[0]?.backup);
+  return b.rango > a.rango ? b : a;
 }
 
 export const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null; user_id?: number | string }) => r.name || publicName(r);
@@ -446,6 +449,10 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
         await pool.query(`SELECT 1 FROM game_offices WHERE character_id = $1 AND office IN ('principal', 'sumo') LIMIT 1`, [ch.id])
       ).rows.length > 0
     : false;
+  // ya sirvió en el templo en línea en alguna temporada: conoce el servicio
+  const yaSirvio = ch
+    ? (await pool.query(`SELECT 1 FROM game_season_merit WHERE character_id = $1 AND duties > 0 LIMIT 1`, [ch.id])).rows.length > 0
+    : false;
   let mio: JerusalenEstado["mio"] = null;
   if (ch) {
     const [{ rows: m }, { rows: of }] = await Promise.all([
@@ -492,7 +499,7 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const marcar = <T extends { personajeId: number }>(x: T) => ({ ...x, isMe: !!ch && x.personajeId === ch.id });
   return {
     cuentaAprobada: user.isActive === true,
-    requisito: { ...requisito, puedeEntrar: true, puedeSumo: fuePrincipal, conoceTemplo: requisito.rango >= 1 },
+    requisito: { ...requisito, puedeEntrar: true, puedeSumo: fuePrincipal, conoceTemplo: requisito.rango >= 1 || yaSirvio },
     personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),

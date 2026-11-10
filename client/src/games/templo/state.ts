@@ -1,8 +1,11 @@
 /**
  * La partida guardada: lo que el jugador logró. Se guarda en el navegador para todos y, con
- * cuenta, también en el servidor (para seguir en otro equipo). Todo número que llega de afuera
- * se limpia antes de usarse.
+ * cuenta, también en el servidor (para seguir en otro equipo o al reinstalar la app). Al abrir se
+ * compara la del teléfono con la de la cuenta y nunca se pisa la más avanzada (shared/partida.ts);
+ * el servidor además guarda un respaldo de la más avanzada. Todo número que llega de afuera se
+ * limpia antes de usarse.
  */
+import { compararPartidas, resumenPartida, type ResumenPartida } from "@shared/partida";
 import { HELPERS, STATIONS, UPGRADES, type HelperId, type ProgressView, type StationId, type UpgradeId } from "./data";
 import { GOALS, LOGROS, copas, todayKey, type Goal, type Stats, type StatKey } from "./progress";
 
@@ -361,15 +364,56 @@ export function clearLocal() {
 }
 
 // ---------------------------------------------------------------- servidor (solo con cuenta)
-export async function loadRemote(): Promise<SaveData | null> {
+/** El respaldo que guarda el servidor: una partida más avanzada que fue reemplazada. */
+export type Respaldo = ResumenPartida & { at: string | null };
+
+export async function loadRemote(): Promise<{ save: SaveData | null; respaldo: Respaldo | null }> {
   try {
-    const res = await fetch(`/api/juegos/${GAME_SLUG}/partida`, { credentials: "include" });
+    const res = await fetch(`/api/juegos/${GAME_SLUG}/partida`, { credentials: "include", cache: "no-store" });
+    if (!res.ok) return { save: null, respaldo: null };
+    const body = await res.json();
+    return { save: body?.data ? sanitize(body.data) : null, respaldo: body?.respaldo ?? null };
+  } catch {
+    return { save: null, respaldo: null };
+  }
+}
+
+/** Vuelve a la partida del respaldo (la de ahora queda de respaldo). */
+export async function recuperarRespaldo(): Promise<SaveData | null> {
+  try {
+    const res = await fetch(`/api/juegos/${GAME_SLUG}/partida/recuperar`, { method: "POST", credentials: "include" });
     if (!res.ok) return null;
     const body = await res.json();
     return body?.data ? sanitize(body.data) : null;
   } catch {
     return null;
   }
+}
+
+/** Resumen corto para mostrar una partida: «Día 140 · Sumo sacerdote · 14 lugares · 2.ª generación». */
+export function textoPartida(r: ResumenPartida, rangos: string[]): string {
+  const partes = [`Día ${r.dia}`, rangos[r.rango] || "Aprendiz", `${r.lugares} ${r.lugares === 1 ? "lugar" : "lugares"}`];
+  if (r.gen > 1) partes.push(`${r.gen}.ª generación`);
+  partes.push(`${Math.round(r.segundos / 60)} min jugados`);
+  return partes.join(" · ");
+}
+
+/**
+ * Cuál partida cargar al abrir el juego con cuenta.
+ * - Si una sigue a la otra, la más avanzada (y si es la del teléfono, se sube a la cuenta).
+ * - Si se jugaron por separado, hay que preguntar.
+ */
+export function elegirPartida(local: SaveData | null, remota: SaveData | null): { cargar: SaveData | null; subir: boolean; preguntar: boolean } {
+  if (!local) return { cargar: remota, subir: false, preguntar: false };
+  if (!remota) return { cargar: local, subir: true, preguntar: false };
+  const rl = resumenPartida(local), rr = resumenPartida(remota);
+  if (!rl || !rr) return { cargar: remota, subir: false, preguntar: false };
+  const c = compararPartidas(rl, rr);
+  if (c === "a") return { cargar: local, subir: true, preguntar: false };
+  if (c === "b") return { cargar: remota, subir: false, preguntar: false };
+  if (c === "igual") return local.savedAt > remota.savedAt + 1000 ? { cargar: local, subir: true, preguntar: false } : { cargar: remota, subir: false, preguntar: false };
+  // se jugaron por separado: mientras tanto se muestra la más avanzada
+  return { cargar: rr.peso >= rl.peso ? remota : local, subir: false, preguntar: true };
 }
 
 export async function saveRemote(s: SaveData): Promise<boolean> {
