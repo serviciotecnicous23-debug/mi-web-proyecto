@@ -17,7 +17,7 @@ import { esAdmin, escalonPorMerito, nombreDe, personajeDe, temporadaDe } from ".
 import { casasDelBarrio } from "./ciudad";
 import { JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import {
-  ACTIVIDADES, FRASE_CADA_MS, FRASES_POR_MINUTO, LIMITES_CIUDAD, LIMITES_TEMPLO, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
+  ACTIVIDADES, ACTIVIDADES_CIUDAD, FRASE_CADA_MS, FRASES_POR_MINUTO, LIMITES_CIUDAD, LIMITES_TEMPLO, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
   type RedEntra, type VecinoInfo,
 } from "@shared/ciudad";
 
@@ -132,7 +132,7 @@ function alRecibir(c: Con, data: RawData) {
     c.z = r2(num(msg.z, lim.minZ, lim.maxZ, c.z));
     c.ry = r2(num(msg.ry, -Math.PI * 4, Math.PI * 4, c.ry));
     c.m = num(msg.m, 0, 1, 0) > 0.5 ? 1 : 0;
-    c.a = templo ? Math.round(num(msg.a, 0, ACTIVIDADES.length - 1, 0)) : 0;
+    c.a = Math.round(num(msg.a, 0, (templo ? ACTIVIDADES : ACTIVIDADES_CIUDAD).length - 1, 0));
     c.canal = templo ? "templo" : canalDe(c.x, c.z, c.info.barrio);
     marcarEnTemplo(c.info.id, templo);
   } else if (msg.t === "frase") {

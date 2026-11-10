@@ -290,6 +290,9 @@ export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number; l
 
 /** Lo que lleva en las manos quien sirve en el templo (para verlo sobre su cabeza). */
 export const ACTIVIDADES = ["", "🪵", "🫒", "🍞", "🌿", "🐑", "🌾"] as const;
+/** Lo que está haciendo cada vecino en la ciudad (se ve junto a su nombre). */
+export const ACTIVIDADES_CIUDAD = ["", "🛒", "🏠", "📜", "📯", "👑", "🙏", "🍞", "✉️"] as const;
+export const ACTIVIDAD_CIUDAD_TEXTO = ["", "en el mercado", "en su casa", "estudiando", "en la escuela", "en el palacio", "orando", "lleva pan", "lleva un mensaje"] as const;
 /** Los límites del templo en línea (en las mismas coordenadas que la ciudad). */
 export const LIMITES_TEMPLO = { minX: -17, maxX: 41, minZ: -14, maxZ: 14 };
 

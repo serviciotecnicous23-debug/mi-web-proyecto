@@ -14,6 +14,7 @@ import { pool } from "./db";
 import { diaClave, escalonPorMerito, evento, hoyEnJerusalen, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
 import { coloresDeRopa } from "./ropa";
+import { RECETAS, guardarPreparadas, leerPreparadas, type Preparadas } from "@shared/mercado";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { fechaDe, relojEnLinea } from "@shared/calendario";
 import {
@@ -427,7 +428,7 @@ export function registerCiudadRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       if (!frenoCasa(ch.id, res)) return;
-      const pedido = req.body?.bienes;
+      const pedido = req.body?.bienes ?? {};
       if (!pedido || typeof pedido !== "object" || Array.isArray(pedido)) return res.status(400).json({ message: "Ofrenda no válida" });
       const cuanto = cero();
       for (const b of BIENES) {
@@ -436,12 +437,27 @@ export function registerCiudadRoutes(app: Express) {
         if (!Number.isInteger(n) || n < 0 || n > 1000) return res.status(400).json({ message: "Ofrenda no válida" });
         cuanto[b.id] = n;
       }
-      if (cuanto.harina + cuanto.aceite + cuanto.corderos === 0) return res.status(400).json({ message: "Elige qué llevar al templo." });
+      // y lo preparado en el horno (tortas, aceite puro)
+      const pedidoPrep = req.body?.preparadas ?? {};
+      if (!pedidoPrep || typeof pedidoPrep !== "object" || Array.isArray(pedidoPrep)) return res.status(400).json({ message: "Ofrenda no válida" });
+      const prep: Preparadas = { tortas: 0, aceitePuro: 0 };
+      for (const k of ["tortas", "aceitePuro"] as const) {
+        const n = pedidoPrep[k];
+        if (n === undefined) continue;
+        if (!Number.isInteger(n) || n < 0 || n > 100) return res.status(400).json({ message: "Ofrenda no válida" });
+        prep[k] = n;
+      }
+      if (cuanto.harina + cuanto.aceite + cuanto.corderos + prep.tortas + prep.aceitePuro === 0) return res.status(400).json({ message: "Elige qué llevar al templo." });
       const out = await (async () => {
         const rec = await recoger(ch.id);
         if (!rec) return { status: 404, body: { message: "Primero entra a la ciudad." } };
         return enFilaCasa(ch.id, async () => {
           for (const b of BIENES) if (cuanto[b.id] > Math.floor(rec.bienes[b.id])) return { status: 409, body: { message: `No tienes tanto ${b.nombre.toLowerCase()} en el alfolí.` } };
+          const { rows: pr } = await pool.query(`SELECT preparadas FROM game_houses WHERE character_id = $1`, [ch.id]);
+          const lp = leerPreparadas(pr[0]?.preparadas);
+          for (const k of ["tortas", "aceitePuro"] as const) {
+            if (prep[k] > lp.preparadas[k]) return { status: 409, body: { message: `No tienes tantas ofrendas preparadas: ${RECETAS[k].nombre.toLowerCase()}.` } };
+          }
           const fiesta = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta;
           const doble = bienDeFiesta(fiesta?.ofrenda);
           let ganado = 0;
@@ -449,7 +465,14 @@ export function registerCiudadRoutes(app: Express) {
             rec.bienes[b.id] -= cuanto[b.id];
             ganado += cuanto[b.id] * b.honra * (b.id === doble ? 2 : 1);
           }
-          await pool.query(`UPDATE game_houses SET goods = $2::jsonb, offered = offered + $3 WHERE character_id = $1`, [ch.id, JSON.stringify(rec.bienes), ganado]);
+          // lo preparado vale más; en las fiestas del cereal, las tortas valen el doble
+          for (const k of ["tortas", "aceitePuro"] as const) {
+            lp.preparadas[k] -= prep[k];
+            ganado += prep[k] * RECETAS[k].honra * (k === "tortas" && doble === "harina" ? 2 : 1);
+          }
+          await pool.query(`UPDATE game_houses SET goods = $2::jsonb, offered = offered + $3, preparadas = $4::jsonb WHERE character_id = $1`, [
+            ch.id, JSON.stringify(rec.bienes), ganado, guardarPreparadas(lp.preparadas, lp.horno),
+          ]);
           rec.ofrecido += ganado;
           rec.recogido = cero();
           return { status: 200, body: { ganado, doble: doble && cuanto[doble] > 0 ? doble : null, rec } };

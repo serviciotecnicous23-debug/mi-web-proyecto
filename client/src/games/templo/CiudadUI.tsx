@@ -9,7 +9,7 @@ import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
   RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
-import { CasaExtras, MercadoView } from "./MercadoUI";
+import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
@@ -313,7 +313,24 @@ function MercadoModal({ tab }: { tab?: TabMercado }) {
 
 function CasaExtrasConMundo() {
   const alCambiar = useAlMercado();
-  return <CasaExtras alCambiar={alCambiar} />;
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  // lo que se ofreció en el templo: la honra, el alfolí y, si creció, la casa
+  const alOfrecer = useCallback((r: Ofrecido) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const nivel = r.subio ?? undefined;
+    const yo = { ...estado.yo, honra: r.honra, ...(nivel !== undefined ? { nivel } : {}) };
+    if (nivel !== undefined) {
+      const sig = NIVELES_CASA[nivel + 1];
+      yo.siguiente = sig ? { nivel: sig.nivel, honra: sig.honra } : null;
+    }
+    setEstado?.({ ...estado, privada: r.privada, yo });
+    city?.actualizarPrivada(r.privada, nivel);
+    avisarMisiones(r.misiones);
+  }, []);
+  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} />;
 }
 
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */

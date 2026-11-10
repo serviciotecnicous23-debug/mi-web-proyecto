@@ -27,6 +27,7 @@ import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
 import { CAMINOS, MENSAJES, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
 import { PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
+import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
@@ -81,7 +82,8 @@ type Vecino = {
   fig: Figure;
   look: FigureLook;
   rig: Rig;
-  obj: { x: number; z: number; ry: number; m: number };
+  /** Dónde está, hacia dónde mira, si anda y qué hace (índice de ACTIVIDADES_CIUDAD). */
+  obj: { x: number; z: number; ry: number; m: number; a?: number };
   etiqueta: HTMLDivElement;
   burbuja: HTMLDivElement | null;
   burbujaHasta: number;
@@ -141,7 +143,7 @@ export class CiudadWorld {
   private vecinos = new Map<number, Vecino>();
   private ocultos = new Set<number>();
   private envioT = 0;
-  private ultimoEnvio = { x: 0, z: 0, ry: 0, t: 0 };
+  private ultimoEnvio = { x: 0, z: 0, ry: 0, t: 0, a: 0 };
   private frasesRecientes: { id: number; nombre: string; texto: string; hasta: number }[] = [];
   private fraseSeq = 0;
   private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
@@ -355,7 +357,7 @@ export class CiudadWorld {
 
   private alVecinos(l: [number, number, number, number, number, number?][]) {
     const vistos = new Set<number>();
-    for (const [id, x, z, ry, m] of l) {
+    for (const [id, x, z, ry, m, a] of l) {
       if (this.ocultos.has(id)) continue;
       vistos.add(id);
       const v = this.vecinos.get(id) ?? this.crearVecino(id, x, z, ry);
@@ -363,6 +365,7 @@ export class CiudadWorld {
       v.obj.z = z;
       v.obj.ry = ry;
       v.obj.m = m;
+      v.obj.a = a ?? 0;
     }
     for (const id of [...this.vecinos.keys()]) if (!vistos.has(id)) this.quitarVecino(id);
     // quien dejó de venir en las listas ya no está oculto (por si se desbloquea)
@@ -488,13 +491,29 @@ export class CiudadWorld {
     const r = this.player.rig;
     const u = this.ultimoEnvio;
     const now = performance.now();
-    const movio = Math.hypot(r.x - u.x, r.z - u.z) > 0.05 || Math.abs(r.yaw - u.ry) > 0.08;
+    const a = this.actividad();
+    const movio = Math.hypot(r.x - u.x, r.z - u.z) > 0.05 || Math.abs(r.yaw - u.ry) > 0.08 || a !== u.a;
     if (!movio && now - u.t < 4000) return;
-    this.red.enviar({ t: "pos", x: Math.round(r.x * 100) / 100, z: Math.round(r.z * 100) / 100, ry: Math.round(r.yaw * 100) / 100, m: r.moving > 0.3 ? 1 : 0 });
+    this.red.enviar({ t: "pos", x: Math.round(r.x * 100) / 100, z: Math.round(r.z * 100) / 100, ry: Math.round(r.yaw * 100) / 100, m: r.moving > 0.3 ? 1 : 0, a });
     u.x = r.x;
     u.z = r.z;
     u.ry = r.yaw;
     u.t = now;
+    u.a = a;
+  }
+
+  /** Lo que estoy haciendo (índice de ACTIVIDADES_CIUDAD): lo ven los vecinos junto a mi nombre. */
+  private actividad(): number {
+    const m = gameStore.getSnapshot().modal;
+    if (m?.kind === "mercado") return 1;
+    if (m?.kind === "casa") return 2;
+    if (m?.kind === "estudios") return 3;
+    if (m?.kind === "escuela") return 4;
+    if (m?.kind === "palacio") return 5;
+    if (this.oracionT > 0) return 6;
+    if (this.panesQueLleva > 0) return 7;
+    if (this.mensaje) return 8;
+    return 0;
   }
 
   private animarVecinos(dt: number) {
@@ -527,8 +546,17 @@ export class CiudadWorld {
     for (const v of this.vecinos.values()) {
       const cabeza = new THREE.Vector3(v.rig.x, v.rig.y + 1.95, v.rig.z);
       const cerca = dist(r.x, r.z, v.rig.x, v.rig.z) < 16;
-      if (cerca) this.overlay.place(v.etiqueta, cabeza);
-      else v.etiqueta.style.display = "none";
+      if (cerca) {
+        // el nombre y lo que está haciendo (el nombre lo escribió una persona: siempre como texto)
+        const info = this.infos.get(v.id);
+        const icono = ACTIVIDADES_CIUDAD[v.obj.a ?? 0] ?? "";
+        const texto = `${info?.nombre ?? "Vecino"}${icono ? ` ${icono}` : ""}`;
+        if (v.etiqueta.textContent !== texto) {
+          v.etiqueta.textContent = texto;
+          v.etiqueta.title = icono ? ACTIVIDAD_CIUDAD_TEXTO[v.obj.a ?? 0] : "";
+        }
+        this.overlay.place(v.etiqueta, cabeza);
+      } else v.etiqueta.style.display = "none";
       if (v.burbuja) {
         if (now < v.burbujaHasta) this.overlay.place(v.burbuja, cabeza.clone().add(new THREE.Vector3(0, 0.62, 0)));
         else {
