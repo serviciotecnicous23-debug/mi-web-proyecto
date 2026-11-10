@@ -100,12 +100,25 @@ type Flyer = {
 
 type ZoneId =
   | "reception" | "basin" | "altar" | "lena" | "fuente" | "aceite" | "pan" | "incienso" | "candelero" | "mesa"
-  | "altarIncienso" | "diezmo" | "camaras" | "ensenanza" | "azarias" | "expiacion";
+  | "altarIncienso" | "diezmo" | "camaras" | "ensenanza" | "azarias" | "expiacion" | "ciudad";
 type Zone = { id: ZoneId; x: number; z: number; r: number; color: string; ring: Ring | null; on: boolean; inside: boolean };
 
 type Pad = { key: string; kind: "station" | "helper"; id: string; cost: number; x: number; z: number; name: string; ring: Ring; label: HTMLDivElement; pop: number };
 
-export type WorldOptions = { loggedIn: boolean; muted: boolean; music: boolean; online?: OnlineHooks };
+export type WorldOptions = {
+  loggedIn: boolean;
+  muted: boolean;
+  music: boolean;
+  online?: OnlineHooks;
+  /** Jerusalén en línea: aparece arriba de la escalinata (viene de la ciudad). */
+  spawn?: "ciudad";
+  /** El sonido compartido con la ciudad (no se cierra al salir del templo). */
+  audio?: TempleAudio;
+};
+
+/** Jerusalén en línea: al pie de la escalinata se sale a la ciudad; quien vuelve aparece arriba. */
+const SALIDA_CIUDAD: V2 = [39.4, 0];
+const LLEGADA_CIUDAD: V2 = [36.0, 0];
 
 /** En el templo en línea, lo que cuenta como deber para el mérito. */
 const DEBER_DE: Partial<Record<string, DeberId>> = { ofrendas: "ofrendas", lena: "lena", aceite: "aceite", panes: "panes", incienso: "incienso", diezmos: "diezmos", orantes: "orantes" };
@@ -227,6 +240,9 @@ export class TempleWorld {
   private primicia = -1;
   private enramadas = false;
   private ultimoJuicio = true;
+  // Jerusalén en línea: el letrero de la salida a la ciudad y si ya se está saliendo
+  private cityTag: HTMLDivElement | null = null;
+  private leaving = false;
 
   constructor(container: HTMLElement, save: SaveData, opts: WorldOptions) {
     this.container = container;
@@ -278,11 +294,14 @@ export class TempleWorld {
     this.navObstacles = this.navRects();
     this.nav = new NavGrid(this.navObstacles, STATIC_CIRCLES);
     this.overlay = new Overlay(container, this.camera);
-    this.audio = new TempleAudio(opts.muted, opts.music);
+    this.audio = opts.audio ?? new TempleAudio(opts.muted, opts.music);
 
     const pf = new Figure(RANK_LOOK[this.s.rank]);
-    const pr = newRig(POS.start[0], POS.start[1]);
+    const inicio = opts.spawn === "ciudad" ? LLEGADA_CIUDAD : POS.start;
+    const pr = newRig(inicio[0], inicio[1]);
+    pr.y = floorHeight(inicio[0], inicio[1]);
     pr.yaw = -Math.PI / 2;
+    this.camTarget.set(inicio[0], 0, inicio[1]);
     this.player = { fig: pf, rig: pr, carry: { items: [], hidden: 0, cap: 3 }, vx: 0, vz: 0, step: 0 };
     this.scene.add(pf.root);
     const af = new Figure("azarias");
@@ -306,6 +325,8 @@ export class TempleWorld {
       el.style.display = "none";
       return el;
     });
+    this.cityTag = this.overlay.make("tpl-tag", "Salir a la ciudad");
+    this.cityTag.style.display = "none";
 
     this.zones = this.makeZones();
     for (const k of Object.keys(this.piles)) this.piles[k] = this.s.piles[k as PileId] || 0;
@@ -409,6 +430,19 @@ export class TempleWorld {
     this.persist();
     this.pushHud();
     return true;
+  }
+
+  /** Jerusalén en línea: salir a la ciudad (con el botón del marcador o por la escalinata). */
+  salirACiudad() {
+    if (this.leaving || !this.online?.toCity) return;
+    this.leaving = true;
+    this.audio.page();
+    this.online.toCity();
+  }
+
+  /** Si no se pudo llegar a la ciudad, se puede volver a intentar. */
+  permitirSalida() {
+    this.leaving = false;
   }
 
   /** Devuelve la leña, el aceite, los panes o el incienso que llevas (no las ofrendas del pueblo). */
@@ -956,6 +990,7 @@ export class TempleWorld {
       ensenanza: z("ensenanza", POS.ensenanzaSpot, 0.95, "#8fe08a"),
       azarias: z("azarias", POS.azarias, 1.7, "#ffffff", false),
       expiacion: z("expiacion", POS.expiacionSpot, 0.85, "#ffffff"),
+      ciudad: z("ciudad", SALIDA_CIUDAD, 1.2, "#ffe08a"),
     };
   }
 
@@ -996,6 +1031,8 @@ export class TempleWorld {
         if (this.online || s.rank < 4 || this.finale) return false;
         if (!s.finale) return !!s.story.rango4;
         return this.fiestaHoy()?.fiesta.id === "expiacion" && !s.story[`expiacion${this.fecha.anio}`];
+      case "ciudad":
+        return !!this.online?.toCity;
     }
   }
 
@@ -1068,6 +1105,9 @@ export class TempleWorld {
             if (this.s.finale) this.expiacionAnual();
             else this.startFinale();
           }
+          break;
+        case "ciudad":
+          if (entered) this.salirACiudad();
           break;
       }
     }
@@ -3133,6 +3173,10 @@ export class TempleWorld {
     } else this.heapLabel.style.display = "none";
     // Jaquín y Boaz (al acercarse)
     const r = this.player.rig;
+    if (this.cityTag) {
+      if (this.zones.ciudad.on && dist(r.x, r.z, SALIDA_CIUDAD[0], SALIDA_CIUDAD[1]) < 9) this.overlay.place(this.cityTag, new THREE.Vector3(SALIDA_CIUDAD[0], floorHeight(SALIDA_CIUDAD[0], 0) + 1.3, 0));
+      else this.cityTag.style.display = "none";
+    }
     const near = dist(r.x, r.z, -2.95, 0) < 5.5 && !this.finale;
     [this.vis.pillarLabels.jaquin, this.vis.pillarLabels.boaz].forEach((pos, i) => {
       if (near) this.overlay.place(this.pillarTags[i], pos);
@@ -3355,7 +3399,8 @@ export class TempleWorld {
     (this.gozoHeap.material as THREE.Material).dispose();
     disposeWorld(this.vis);
     this.overlay.dispose();
-    this.audio.dispose();
+    // el sonido compartido con la ciudad lo cierra la pantalla
+    if (!this.opts.audio) this.audio.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     canvas.remove();

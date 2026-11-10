@@ -4,6 +4,7 @@ import { storage, type CourseChildKind } from "./storage";
 import { registerChatRoutes } from "./chat";
 import { registerGameRoutes } from "./games";
 import { registerJerusalenRoutes } from "./jerusalen";
+import { registerCiudadRoutes } from "./ciudad";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3619,6 +3620,8 @@ ${urls}
 
   // ========== JERUSALÉN EN LÍNEA (modo en línea del templo: personajes, temporada y cargos) ==========
   registerJerusalenRoutes(app);
+  // La ciudad (etapa 2): la casa de cada personaje y su barrio.
+  registerCiudadRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

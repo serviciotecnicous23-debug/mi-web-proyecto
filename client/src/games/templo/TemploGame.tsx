@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, X, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,9 +26,14 @@ import {
   ESCALONES, MERITO_TURNO, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, escalonNombre,
   type JerusalenEstado, type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
-import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
+import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCiudad, escalonRank, fetchEstado, onlineSave, renombrarPersonaje } from "./online";
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
+import { Card, VerseBox, fmt, hace } from "./ui";
+import { TempleAudio } from "./audio";
+import type { CiudadWorld } from "./ciudad/mundo";
+import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
+import type { CiudadEstado } from "@shared/ciudad";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -75,6 +80,18 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const sessionRef = useRef<OnlineSession | null>(null);
   sessionRef.current = session;
   const online = !!session;
+  // La ciudad (etapa 2): su mundo, lo último que dijo el servidor y el aviso mientras se cambia
+  // de lugar. El sonido es uno solo para el templo y la ciudad (la música no se corta).
+  const cityMod = useRef<Promise<typeof import("./ciudad/mundo")> | null>(null);
+  const [city, setCity] = useState<CiudadWorld | null>(null);
+  const cityRef = useRef<CiudadWorld | null>(null);
+  cityRef.current = city;
+  const [ciudadEstado, setCiudadEstado] = useState<CiudadEstado | null>(null);
+  const [cambio, setCambio] = useState<string | null>(null);
+  const audioRef = useRef<TempleAudio | null>(null);
+  const irACiudadRef = useRef<(llegada: "templo" | "casa", e?: JerusalenEstado) => Promise<boolean>>(async () => false);
+  const irAlTemploRef = useRef<() => Promise<void>>(async () => undefined);
+  const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado }), [city, ciudadEstado]);
 
   // Se busca la partida (en el teléfono y, con cuenta, en el servidor) y se descarga el mundo.
   useEffect(() => {
@@ -112,9 +129,34 @@ export default function TemploGame({ game }: { game: GameDef }) {
       sessionRef.current?.close();
       worldRef.current?.destroy();
       worldRef.current = null;
+      cityRef.current?.destroy();
+      cityRef.current = null;
+      audioRef.current?.dispose();
+      audioRef.current = null;
       gameStore.reset();
     };
   }, []);
+
+  /** El templo en línea: desde la sala o al volver de la ciudad (aparece arriba de la escalinata). */
+  const crearTemplo = useCallback(
+    async (enLinea: JerusalenEstado, desdeCiudad: boolean): Promise<TempleWorld | null> => {
+      if (!boxRef.current || !worldMod.current) return null;
+      const mod = await worldMod.current;
+      if (!boxRef.current) return null;
+      gameStore.reset();
+      const ses = sessionRef.current ?? new OnlineSession(enLinea);
+      sessionRef.current = ses;
+      ses.hooks.toCity = () => void irACiudadRef.current("templo");
+      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
+      const w = new mod.TempleWorld(boxRef.current, onlineSave(ses.hooks.rank), {
+        loggedIn: false, muted, music, online: ses.hooks, audio: audioRef.current, spawn: desdeCiudad ? "ciudad" : undefined,
+      });
+      setSession(ses);
+      setLobby(false);
+      return w;
+    },
+    [muted, music],
+  );
 
   const start = useCallback(
     async (fresh: boolean, given?: SaveData, enLinea?: JerusalenEstado) => {
@@ -126,10 +168,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
         let w: TempleWorld;
         if (enLinea) {
           // el templo en línea: ya restaurado, sin levitas y sin tocar la partida local
-          const ses = new OnlineSession(enLinea);
-          w = new mod.TempleWorld(boxRef.current, onlineSave(ses.hooks.rank), { loggedIn: false, muted, music, online: ses.hooks });
-          setSession(ses);
-          setLobby(false);
+          const t = await crearTemplo(enLinea, false);
+          if (!t) return;
+          w = t;
         } else {
           if (fresh) clearLocal();
           const s = given ?? (fresh || !save ? newSave() : save);
@@ -146,7 +187,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
         setPhase("error");
       }
     },
-    [save, user, muted, music],
+    [save, user, muted, music, crearTemplo],
   );
 
   // Nueva generación: el mundo guarda la partida nueva y el templo se levanta otra vez desde las ruinas.
@@ -160,12 +201,92 @@ export default function TemploGame({ game }: { game: GameDef }) {
     void start(false, next);
   }, [world, start]);
 
-  // Salir del templo en línea: se mandan los deberes que faltan y se vuelve a la sala.
+  // Jerusalén en línea: del templo a la ciudad por la escalinata, o desde la sala a la puerta de tu casa.
+  const irACiudad = useCallback(
+    async (llegada: "templo" | "casa", enLinea?: JerusalenEstado): Promise<boolean> => {
+      if (!boxRef.current) return false;
+      setCambio(llegada === "templo" ? "Saliendo a la ciudad…" : "Llegando a Jerusalén…");
+      if (!cityMod.current) cityMod.current = import("./ciudad/mundo");
+      const [r, mod] = await Promise.all([entrarCiudad(), cityMod.current.catch(() => null)]);
+      if (!r.ok || !r.data || !mod || !boxRef.current) {
+        setCambio(null);
+        gameStore.toast(r.data?.message || "No se pudo llegar a la ciudad. Revisa tu conexión.", "warn");
+        worldRef.current?.permitirSalida();
+        return false;
+      }
+      let ses = sessionRef.current;
+      if (!ses && enLinea) {
+        ses = new OnlineSession(enLinea);
+        sessionRef.current = ses;
+        setSession(ses);
+      }
+      if (ses) {
+        ses.hooks.toCity = () => void irACiudadRef.current("templo");
+        // lo que falte de los deberes del templo se manda ya
+        void ses.flush(true);
+      }
+      worldRef.current?.destroy();
+      worldRef.current = null;
+      setWorld(null);
+      cityRef.current?.destroy();
+      gameStore.reset();
+      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
+      const c = new mod.CiudadWorld(boxRef.current, r.data, { muted, music, audio: audioRef.current, llegada, alTemplo: () => void irAlTemploRef.current() });
+      c.verOtros(r.data.otros);
+      c.audio.ensure();
+      // solo en desarrollo: acceso para revisar la ciudad desde la consola
+      if (import.meta.env.DEV) (window as unknown as { __ciudad?: CiudadWorld }).__ciudad = c;
+      cityRef.current = c;
+      setCity(c);
+      setCiudadEstado(r.data);
+      setPaused(false);
+      setLobby(false);
+      setPhase("playing");
+      setCambio(null);
+      return true;
+    },
+    [muted, music],
+  );
+  irACiudadRef.current = irACiudad;
+
+  // De la ciudad al templo por la escalinata: el mismo sacerdote y la misma sesión.
+  const irAlTemplo = useCallback(async () => {
+    const e = sessionRef.current?.estado;
+    if (!e) return;
+    setCambio("Entrando al templo…");
+    const c = cityRef.current;
+    const w = await crearTemplo(e, true);
+    if (!w) {
+      setCambio(null);
+      c?.volverAPermitirTemplo();
+      return;
+    }
+    c?.destroy();
+    cityRef.current = null;
+    setCity(null);
+    w.audio.ensure();
+    if (import.meta.env.DEV) (window as unknown as { __templo?: TempleWorld }).__templo = w;
+    worldRef.current = w;
+    setWorld(w);
+    setPaused(false);
+    setCambio(null);
+  }, [crearTemplo]);
+  irAlTemploRef.current = irAlTemplo;
+
+  // Salir de Jerusalén en línea: se mandan los deberes que faltan y se vuelve a la sala.
   const exitOnline = useCallback(() => {
     sessionRef.current?.close();
+    sessionRef.current = null;
     setSession(null);
-    world?.destroy();
+    worldRef.current?.destroy();
+    worldRef.current = null;
     setWorld(null);
+    cityRef.current?.destroy();
+    cityRef.current = null;
+    setCity(null);
+    setCiudadEstado(null);
+    audioRef.current?.dispose();
+    audioRef.current = null;
     setPaused(false);
     gameStore.reset();
     setPhase("title");
@@ -173,16 +294,17 @@ export default function TemploGame({ game }: { game: GameDef }) {
     void fetchEstado().then((r) => {
       if (r.ok && r.data) setEstado(r.data);
     });
-  }, [world]);
+  }, []);
 
   const togglePause = useCallback(
     (p?: boolean) => {
       const next = p ?? !paused;
       setPaused(next);
       world?.setPaused(next);
-      world?.audio.click();
+      city?.setPaused(next);
+      (world ?? city)?.audio.click();
     },
-    [paused, world],
+    [paused, world, city],
   );
 
   // teclado: P o Esc pausa; L abre el libro; M las mejoras; en línea, T la temporada
@@ -195,6 +317,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
       else if (paused) return;
       else if (online) {
         if (k === "t") gameStore.push({ kind: "temporada" });
+        else if (city && k === "h") gameStore.push({ kind: "casa" });
+        else if (city && k === "i") gameStore.push({ kind: "irA" });
       } else if (k === "l") gameStore.push({ kind: "book" });
       else if (k === "m") gameStore.push({ kind: "upgrades" });
       else if (k === "c") gameStore.push({ kind: "comunidad" });
@@ -202,7 +326,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, paused, togglePause, online]);
+  }, [phase, paused, togglePause, online, city]);
 
   useEffect(() => {
     const onFs = () => setFull(!!document.fullscreenElement);
@@ -228,12 +352,14 @@ export default function TemploGame({ game }: { game: GameDef }) {
     setMuted(n);
     writePref("juegos-silencio", n);
     world?.setMuted(n);
+    city?.setMuted(n);
   };
   const toggleMusic = () => {
     const n = !music;
     setMusic(n);
     writePref("templo-musica", n);
     world?.setMusic(n);
+    city?.setMusic(n);
   };
   const toggleFull = async () => {
     try {
@@ -263,6 +389,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
   return (
     <WorldCtx.Provider value={world}>
       <SessionCtx.Provider value={session}>
+       <CiudadCtx.Provider value={ciudadCtx}>
         <div
           ref={wrapRef}
           className={`select-none overflow-hidden bg-[#1a1408] ${big ? "fixed inset-0 z-[60] rounded-none" : "relative w-full rounded-2xl border border-amber-500/30 shadow-2xl shadow-amber-950/30"}`}
@@ -272,6 +399,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
         >
           <div ref={boxRef} className="absolute inset-0" />
           {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
+          {phase === "playing" && city && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
           {phase === "playing" && paused && (
             <PauseMenu
               onResume={() => togglePause(false)}
@@ -289,10 +417,23 @@ export default function TemploGame({ game }: { game: GameDef }) {
               onExitOnline={exitOnline}
             />
           )}
-          {phase === "playing" && world && <ModalLayer />}
+          {phase === "playing" && (world || city) && <ModalLayer />}
+          {cambio && (
+            <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0c0a08]/90 text-white" data-testid="templo-cambio">
+              <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
+              <p className="font-serif text-lg font-bold">{cambio}</p>
+            </div>
+          )}
           {phase !== "playing" &&
             (lobby && estado ? (
-              <OnlineLobby estado={estado} phase={phase} onBack={() => setLobby(false)} onEnter={(e) => void start(false, undefined, e)} onEstado={setEstado} />
+              <OnlineLobby
+                estado={estado}
+                phase={phase}
+                onBack={() => setLobby(false)}
+                onEnter={(e) => void start(false, undefined, e)}
+                onCiudad={(e) => void irACiudad("casa", e)}
+                onEstado={setEstado}
+              />
             ) : (
               <TitleScreen
                 game={game}
@@ -309,6 +450,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
               />
             ))}
         </div>
+       </CiudadCtx.Provider>
       </SessionCtx.Provider>
     </WorldCtx.Provider>
   );
@@ -422,8 +564,6 @@ function TitleScreen(props: {
 }
 
 // ================================================================ marcador
-const fmt = (n: number) => Math.floor(n).toLocaleString("es-419");
-
 function Meter({ icon, label, value, max, color, testid }: { icon: React.ReactNode; label: string; value: number; max: number; color: string; testid?: string }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
   const low = pct < 25;
@@ -585,9 +725,14 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <div className="pointer-events-auto flex gap-1">
             {online ? (
-              <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada">
-                <Trophy className="h-5 w-5" />
-              </IconBtn>
+              <>
+                <IconBtn label="Salir a la ciudad" onClick={() => world?.salirACiudad()} testid="button-templo-ciudad">
+                  <Home className="h-5 w-5" />
+                </IconBtn>
+                <IconBtn label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-templo-temporada" className="hidden sm:flex">
+                  <Trophy className="h-5 w-5" />
+                </IconBtn>
+              </>
             ) : (
               <>
                 <IconBtn label="Comunidad (C)" onClick={() => open({ kind: "comunidad" })} testid="button-templo-comunidad">
@@ -708,7 +853,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
   );
 }
 
-function IconBtn({ label, onClick, children, testid, active }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean }) {
+function IconBtn({ label, onClick, children, testid, active, className = "flex" }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean; className?: string }) {
   const world = useWorld();
   return (
     <button
@@ -719,7 +864,7 @@ function IconBtn({ label, onClick, children, testid, active }: { label: string; 
         world?.audio.click();
         onClick();
       }}
-      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
+      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
       data-testid={testid}
     >
       {children}
@@ -807,7 +952,7 @@ function PauseMenu(props: {
           <>
             <p className="text-xs text-white/60">Tus deberes se mandan solos cada 15 segundos. Tu partida de la historia no cambia.</p>
             <Button variant="ghost" className="w-full text-white/80 hover:text-white" onClick={props.onExitOnline} data-testid="button-en-linea-salir">
-              <LogOut className="mr-1 h-4 w-4" /> Salir del templo en línea
+              <LogOut className="mr-1 h-4 w-4" /> Salir de Jerusalén en línea
             </Button>
           </>
         ) : (
@@ -885,37 +1030,13 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <FiestaView id={modal.id} />;
     case "juicio":
       return <JuicioView casoId={modal.casoId} />;
+    case "casa":
+    case "anuncios":
+    case "ancianos":
+    case "edificio":
+    case "irA":
+      return <CiudadModal modal={modal} />;
   }
-}
-
-function Card({ children, title, onClose, wide, testid }: { children: React.ReactNode; title?: React.ReactNode; onClose?: () => void; wide?: boolean; testid?: string }) {
-  return (
-    <div
-      className={`relative flex max-h-full w-full ${wide ? "max-w-2xl" : "max-w-md"} flex-col overflow-hidden rounded-2xl border border-amber-300/40 bg-[#fffaf0] text-stone-800 shadow-2xl dark:bg-[#1f1a12] dark:text-stone-100`}
-      data-testid={testid}
-    >
-      {title && (
-        <div className="flex items-center justify-between gap-2 border-b border-amber-200/60 bg-gradient-to-r from-amber-100 to-amber-50 px-4 py-2.5 dark:border-amber-900/50 dark:from-amber-950/60 dark:to-transparent">
-          <div className="font-serif text-lg font-bold text-amber-900 dark:text-amber-200">{title}</div>
-          {onClose && (
-            <button type="button" onClick={onClose} className="rounded-full p-1 hover:bg-black/10" aria-label="Cerrar">
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      )}
-      <div className="overflow-y-auto">{children}</div>
-    </div>
-  );
-}
-
-function VerseBox({ text, refName }: { text: string; refName: string }) {
-  return (
-    <blockquote className="rounded-xl border-l-4 border-amber-400 bg-amber-50 px-3 py-2 font-serif text-[15px] italic leading-relaxed text-stone-700 dark:bg-amber-950/30 dark:text-stone-200">
-      «{text}»
-      <footer className="mt-1 text-xs font-semibold not-italic text-amber-800 dark:text-amber-300">{refName} (RVR1960)</footer>
-    </blockquote>
-  );
 }
 
 function DialogView({ lines }: { lines: Line[] }) {
@@ -1722,16 +1843,6 @@ type BoardRow = { rank: number; name: string; avatarUrl: string | null; score: n
 type BoardData = { top: BoardRow[]; mine: { best: number; rank: number } | null; week?: string };
 type ActivityItem = { id: number; game: string; name: string; avatarUrl: string | null; text: string; createdAt: string; cheers: number; cheeredByMe: boolean; isMine: boolean };
 
-function hace(iso: string) {
-  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (m < 1) return "ahora";
-  if (m < 60) return `hace ${m} min`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `hace ${h} h`;
-  const d = Math.round(h / 24);
-  return `hace ${d} ${d === 1 ? "día" : "días"}`;
-}
-
 function ComunidadView() {
   const { user } = useAuth();
   const world = useWorld();
@@ -1901,7 +2012,7 @@ function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnlin
         <span className="min-w-0 flex-1">
           <span className="block font-bold">Jerusalén en línea</span>
           <span className="block text-[11px] text-white/75">
-            Templo en línea · temporada {estado.temporada.n}
+            El templo y la ciudad · temporada {estado.temporada.n}
             {estado.temporada.dePrueba ? " (de prueba)" : ""}
             {estado.enLinea > 0 ? ` · ${estado.enLinea} sirviendo ahora` : ""}
           </span>
@@ -1941,12 +2052,14 @@ function OnlineLobby({
   phase,
   onBack,
   onEnter,
+  onCiudad,
   onEstado,
 }: {
   estado: JerusalenEstado;
   phase: Phase;
   onBack: () => void;
   onEnter: (e: JerusalenEstado) => void;
+  onCiudad: (e: JerusalenEstado) => void;
   onEstado: (e: JerusalenEstado) => void;
 }) {
   const p = estado.personaje;
@@ -2001,9 +2114,9 @@ function OnlineLobby({
         )}
         <header className="text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>
-          <h2 className="mt-1 font-serif text-3xl font-black">Templo en línea</h2>
+          <h2 className="mt-1 font-serif text-3xl font-black">El templo y la ciudad</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-white/80">
-            Sirve en el templo junto con la comunidad. Aquí no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
+            Sirve en el templo junto con la comunidad y vive en Jerusalén: tienes una casa en un barrio que crece con tu servicio. En el templo no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
           </p>
         </header>
         {!p || cambiar ? (
@@ -2057,6 +2170,9 @@ function OnlineLobby({
             </div>
             <Button size="lg" className="w-full rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" disabled={starting} onClick={() => onEnter(estado)} data-testid="button-en-linea-entrar">
               {starting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5 fill-current" />} Entrar al templo
+            </Button>
+            <Button size="lg" variant="secondary" className="w-full rounded-full font-bold" disabled={starting} onClick={() => onCiudad(estado)} data-testid="button-en-linea-ciudad">
+              <Home className="mr-2 h-5 w-5" /> Ir a mi casa en la ciudad
             </Button>
             {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100">🔥 {estado.enLinea} sirviendo en el templo en línea ahora</p>}
           </section>

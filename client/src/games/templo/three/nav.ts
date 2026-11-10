@@ -5,18 +5,29 @@
  */
 import { COURT, GATE, OUTER, OUTER_GATE, STAIRS_X, insideRect, type Circle, type Rect, type V2 } from "../layout";
 
+/** Otra zona para caminar (la ciudad): sus límites, el tamaño de la celda y dónde se puede pisar. */
+export type NavArea = { minX: number; maxX: number; minZ: number; maxZ: number; cell: number; walkable: (x: number, z: number) => boolean };
+
 export class NavGrid {
-  readonly minX = COURT.minX - 0.5;
-  readonly maxX = STAIRS_X + 6;
-  readonly minZ = COURT.minZ - 0.5;
-  readonly maxZ = COURT.maxZ + 0.5;
-  readonly cell = 0.5;
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minZ: number;
+  readonly maxZ: number;
+  readonly cell: number;
   readonly nx: number;
   readonly nz: number;
   private blocked: Uint8Array;
   private cache = new Map<string, V2[]>();
+  private walkable: (x: number, z: number) => boolean;
 
-  constructor(rects: Rect[], circles: Circle[], pad = 0.34) {
+  /** Sin `area` es el monte del templo. */
+  constructor(rects: Rect[], circles: Circle[], pad = 0.34, area?: NavArea) {
+    this.minX = area?.minX ?? COURT.minX - 0.5;
+    this.maxX = area?.maxX ?? STAIRS_X + 6;
+    this.minZ = area?.minZ ?? COURT.minZ - 0.5;
+    this.maxZ = area?.maxZ ?? COURT.maxZ + 0.5;
+    this.cell = area?.cell ?? 0.5;
+    this.walkable = area?.walkable ?? walkableArea;
     this.nx = Math.ceil((this.maxX - this.minX) / this.cell);
     this.nz = Math.ceil((this.maxZ - this.minZ) / this.cell);
     this.blocked = new Uint8Array(this.nx * this.nz);
@@ -29,7 +40,7 @@ export class NavGrid {
       for (let j = 0; j < this.nz; j++) {
         const x = this.minX + (i + 0.5) * this.cell;
         const z = this.minZ + (j + 0.5) * this.cell;
-        let b = !walkableArea(x, z);
+        let b = !this.walkable(x, z);
         if (!b) for (const r of rects) if (insideRect(x, z, r, pad)) { b = true; break; }
         if (!b) for (const c of circles) if ((x - c[0]) ** 2 + (z - c[1]) ** 2 < (c[2] + pad) ** 2) { b = true; break; }
         this.blocked[j * this.nx + i] = b ? 1 : 0;

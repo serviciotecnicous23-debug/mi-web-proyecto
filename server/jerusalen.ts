@@ -78,7 +78,17 @@ CREATE TABLE IF NOT EXISTS "game_seasons" (
   "closed_at" timestamp DEFAULT now(),
   "candidates" integer NOT NULL DEFAULT 0,
   PRIMARY KEY ("game", "season")
-);`;
+);
+CREATE TABLE IF NOT EXISTS "game_houses" (
+  "character_id" integer PRIMARY KEY REFERENCES "game_characters"("id") ON DELETE CASCADE,
+  "game" text NOT NULL,
+  "barrio" integer NOT NULL,
+  "plot" integer NOT NULL,
+  "level" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp DEFAULT now(),
+  "updated_at" timestamp DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_houses_plot" ON "game_houses" ("game", "barrio", "plot");`;
 
 // ---------------------------------------------------------------- días y temporadas
 // El día del juego es el de Texas (America/Chicago): ahí está el ministerio y casi todos juegan
@@ -166,14 +176,14 @@ function enFila<T>(key: number, fn: () => Promise<T>): Promise<T> {
   return next;
 }
 
-function esAdmin(req: Request): boolean {
+export function esAdmin(req: Request): boolean {
   const role = req.user?.role;
   return req.isAuthenticated() && (role === "admin" || role === "director" || role === "staff_global");
 }
 
-type PersonajeFila = { id: number; user_id: number; name: string | null; creado: string; dias_sin_servir: number | null; display_name: string | null; username: string | null };
+export type PersonajeFila = { id: number; user_id: number; name: string | null; creado: string; dias_sin_servir: number | null; display_name: string | null; username: string | null };
 
-async function personajeDe(userId: number): Promise<PersonajeFila | null> {
+export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
   const { rows } = await pool.query(
     `SELECT c.id, c.user_id, c.name, u.display_name, u.username,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
@@ -193,9 +203,9 @@ async function requisitoDe(userId: number): Promise<Requisito> {
   return requisitoLocal(rows[0]?.data);
 }
 
-const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null; user_id?: number | string }) => r.name || publicName(r);
+export const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null; user_id?: number | string }) => r.name || publicName(r);
 
-async function evento(userId: number, key: string, text: string) {
+export async function evento(userId: number, key: string, text: string) {
   await pool.query(
     `INSERT INTO game_events (user_id, game, key, text) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, game, key) DO NOTHING`,
     [userId, JUEGO, key, text],
@@ -383,7 +393,7 @@ async function enLineaAhora(): Promise<number> {
 }
 
 /** La fecha y la fiesta de Jerusalén en línea ahora (y la próxima, en minutos de reloj). */
-function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
+export function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
   const reloj = relojEnLinea();
   const f = fechaDe(reloj.dia);
   const h = f.fiestas[0];
@@ -395,7 +405,7 @@ function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
   };
 }
 
-function escalonPorMerito(merito: number): EscalonId {
+export function escalonPorMerito(merito: number): EscalonId {
   return merito >= MERITO_TURNO ? "turno" : "sacerdote";
 }
 

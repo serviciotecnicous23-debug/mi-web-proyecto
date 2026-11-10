@@ -11,6 +11,7 @@ import {
   type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import { relojEnLinea } from "@shared/calendario";
+import type { CiudadEstado } from "@shared/ciudad";
 import { STATIONS } from "./data";
 import { newSave, type SaveData } from "./state";
 import { gameStore, type OnlineHud } from "./store";
@@ -32,6 +33,8 @@ export const crearPersonaje = (nombre: string) => pedir<JerusalenEstado & { mess
 export const renombrarPersonaje = (nombre: string) => pedir<JerusalenEstado & { message?: string }>("/personaje", { method: "PATCH", body: JSON.stringify({ nombre }) });
 export const adminRevisar = () => pedir<JerusalenEstado>("/admin/revisar", { method: "POST" });
 export const adminQuitarCargo = (personajeId: number) => pedir<JerusalenEstado & { message?: string }>("/admin/quitar-cargo", { method: "POST", body: JSON.stringify({ personajeId }) });
+/** La ciudad (etapa 2): entrar da la parcela la primera vez y trae el barrio. */
+export const entrarCiudad = () => pedir<CiudadEstado & { message?: string }>("/ciudad/entrar", { method: "POST" });
 
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */
 export function escalonRank(e: EscalonId | null | undefined): number {
@@ -89,6 +92,8 @@ export type OnlineHooks = {
   ask: () => void;
   /** Azarías tiene una pregunta difícil lista (muestra el «?»). */
   ready: () => boolean;
+  /** Salir a la ciudad por la escalinata (la pantalla cambia de mundo). */
+  toCity?: () => void;
 };
 
 type Pregunta = OnlineHud extends infer H ? (H extends { pregunta: infer P } ? P : never) : never;
