@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-camara-sacerdotes",
+    fecha: "10 de noviembre de 2026",
+    titulo: "La cámara de los sacerdotes y la cátedra de Eleazar",
+    puntos: [
+      "🕯️ Al pie de la escalinata del templo, del lado norte, se abrió la cámara de los sacerdotes (2 Crónicas 31:11). Adentro te recibe Eleazar, anciano de los sacerdotes.",
+      "📜 La cátedra sacerdotal: 30 lecciones sobre el porqué de cada servicio del templo (la leña y el fuego del altar, el aceite de las lámparas, los panes, el incienso, las ofrendas, los diezmos y los que vienen a orar), la santidad, la bendición, la enseñanza y Jesús, nuestro sumo sacerdote.",
+      "🔥 Eleazar te enseña primero sobre lo que acabas de servir en el templo. Puedes tomar varias lecciones seguidas (hasta 8 por día en tu camino): cada respuesta buena da +3 de mérito y +3 de gozo, y vas subiendo de grado, de «Oyente de la cámara» a «Maestro de la cámara».",
+      "🧺 En la cámara también están los diezmos que guarda Conanías (el tesoro del templo), los turnos del sacerdocio (la escalera de la temporada) y los rollos de los estudios, abiertos para todos.",
+      "🎓 Nuevo logro: «Discípulo de los maestros», al aprender 30 lecciones en las cátedras (con Isaías o con Eleazar).",
+    ],
+  },
+  {
     id: "2026-11-10-catedra-oracion",
     fecha: "10 de noviembre de 2026",
     titulo: "La cátedra de la oración",

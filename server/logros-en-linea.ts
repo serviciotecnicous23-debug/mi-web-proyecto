@@ -1,6 +1,6 @@
 /**
  * Los logros de Jerusalén en línea (shared/logros-en-linea.ts): se calculan de las tablas que ya
- * existen (muro, pedidos, reuniones, concurso, estudios y ofrenda del barrio). Los ve cualquiera con
+ * existen (muro, pedidos, reuniones, concurso, estudios, cátedras y ofrenda del barrio). Los ve cualquiera con
  * sesión al visitar una casa o tocar a un vecino.
  */
 import type { Express, Request, Response } from "express";
@@ -9,7 +9,7 @@ import { ORDEN_LOGROS, type LogroId, type LogrosDe } from "@shared/logros-en-lin
 import { esAdmin, personajeDe } from "./jerusalen";
 import { semanaClave } from "./misiones";
 
-const PIDE: Record<LogroId, number> = { constructor: 30, buenVecino: 5, maestro: 3, campeon: 1, estudioso: 3, fiel: 2 };
+const PIDE: Record<LogroId, number> = { constructor: 30, buenVecino: 5, maestro: 3, campeon: 1, estudioso: 3, discipulo: 30, fiel: 2 };
 
 const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null }) =>
   (r.name && r.name !== "__propio__" ? r.name : null) || r.display_name || r.username || "Un vecino";
@@ -24,7 +24,7 @@ async function lleva(id: number): Promise<Record<LogroId, number>> {
       return 0;
     }
   };
-  const [constructor, buenVecino, maestro, campeon, estudioso, fiel] = await Promise.all([
+  const [constructor, buenVecino, maestro, campeon, estudioso, discipulo, fiel] = await Promise.all([
     uno(`SELECT COALESCE(sum(n), 0)::int AS n FROM game_wall_contributions WHERE character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1)`, [id]),
     uno(`SELECT count(*)::int AS n FROM game_help_gifts WHERE donor_character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1)`, [id]),
     uno(
@@ -47,9 +47,11 @@ async function lleva(id: number): Promise<Record<LogroId, number>> {
         WHERE yo.id = $1 AND s.approved_at IS NOT NULL`,
       [id],
     ),
+    // las lecciones distintas aprendidas en todas las cátedras (las guarda el titular de la persona)
+    uno(`SELECT COALESCE(sum(jsonb_array_length(seen)), 0)::int AS n FROM game_catedras WHERE character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1)`, [id]),
     uno(`SELECT count(*)::int AS n FROM game_barrio_aportes WHERE character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1) AND premiado = true`, [id]),
   ]);
-  return { constructor, buenVecino, maestro, campeon, estudioso, fiel };
+  return { constructor, buenVecino, maestro, campeon, estudioso, discipulo, fiel };
 }
 
 export async function logrosDe(id: number, nombre: string): Promise<LogrosDe> {

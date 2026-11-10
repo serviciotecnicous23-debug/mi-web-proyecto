@@ -2,7 +2,7 @@
  * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango.
  */
 import type { ReactElement } from "react";
-type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
+type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
@@ -102,6 +102,24 @@ export function Portrait({ who, size = 64 }: { who: Who; size?: number }) {
           <Face skin="#c48a5e" beard="#ece8e0" brows="#f2efe8" />
           <path d="M20 22 C20 11 44 11 44 22 C40 16 24 16 20 22Z" fill="#ece8e0" />
           <rect x="45" y="50" width="12" height="5" rx="2.5" fill="#efe1bd" stroke="#b88a1e" strokeWidth="0.7" />
+        </>
+      );
+      break;
+    case "eleazar":
+      // el anciano sacerdote: túnica y tiara de lino, el cinto de colores (Éxodo 39:29) y una lamparilla de aceite
+      bg = "#f1ead8";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#efe6d2" />
+          <path d="M14 55.6 H50" stroke="#2a4fbf" strokeWidth="2" />
+          <path d="M14 58 H50" stroke="#7d3c98" strokeWidth="1.5" />
+          <path d="M14 60 H50" stroke="#b3242f" strokeWidth="1.5" />
+          <Face skin="#c48a5e" beard="#ece8e0" brows="#f2efe8" />
+          <path d="M20 22.5 C19.5 10.5 44.5 10.5 44 22.5 C40 18.5 24 18.5 20 22.5Z" fill="#f7f2e6" stroke="#d9cfb8" strokeWidth="0.6" />
+          <path d="M20.6 20.2 C26 18.4 38 18.4 43.4 20.2" stroke="#d9cfb8" strokeWidth="0.8" fill="none" />
+          <ellipse cx="50.5" cy="52.5" rx="5" ry="2.2" fill="#b0643a" />
+          <path d="M55 51.6 q2.2 -0.6 2.6 -2" stroke="#b0643a" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          <path d="M57.6 48.8 q-1.4 -2.6 0.2 -4.8 q1.6 2.2 -0.2 4.8Z" fill="#ffb347" />
         </>
       );
       break;

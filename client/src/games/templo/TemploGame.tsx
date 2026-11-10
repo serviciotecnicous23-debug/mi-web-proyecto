@@ -122,7 +122,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const ciudadEstadoRef = useRef<CiudadEstado | null>(null);
   ciudadEstadoRef.current = ciudadEstado;
   const entrarACasaRef = useRef<(o?: { personajeId?: number; remodelar?: boolean }) => Promise<void>>(async () => undefined);
-  const entrarAEdificioRef = useRef<(id: "escuela" | "palacio") => Promise<void>>(async () => undefined);
+  const entrarAEdificioRef = useRef<(id: "escuela" | "palacio" | "camara") => Promise<void>>(async () => undefined);
   /** «Hablar con el maestro» del edificio donde se está (la pantalla de adentro lo llama). */
   const maestroRef = useRef<() => void>(() => undefined);
   const salirDeCasaRef = useRef<() => void>(() => undefined);
@@ -398,11 +398,11 @@ export default function TemploGame({ game }: { game: GameDef }) {
    * con el motor de la casa por dentro (casa/edificios.ts): su maestro recibe y cada estación abre su
    * servicio. Los deberes y los primeros pasos siguen yendo a la ciudad (la misma sesión en línea).
    */
-  const entrarAEdificioReal = useCallback(async (id: "escuela" | "palacio") => {
+  const entrarAEdificioReal = useCallback(async (id: "escuela" | "palacio" | "camara") => {
     const c = cityRef.current;
     const e = ciudadEstadoRef.current;
     if (!c || !e || !boxRef.current || casaRef.current) return;
-    setCambio(id === "escuela" ? "Entrando a la escuela de los profetas…" : "Entrando al palacio del rey…");
+    setCambio(id === "escuela" ? "Entrando a la escuela de los profetas…" : id === "camara" ? "Entrando a la cámara de los sacerdotes…" : "Entrando al palacio del rey…");
     if (!casaMod.current) casaMod.current = import("./casa/mundo-casa");
     const [mod, ed] = await Promise.all([casaMod.current.catch(() => null), import("./casa/edificios").catch(() => null)]);
     if (!mod || !ed || !boxRef.current || cityRef.current !== c) {
@@ -414,7 +414,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
     const camino = e.yo.camino;
     // el maestro: a los de su camino les abre su servicio; a los demás les habla y los orienta
     const hablarConMaestro = () => {
-      if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : { kind: "palacio" });
+      if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : id === "camara" ? { kind: "catedra", area: "sacerdotal" } : { kind: "palacio" });
       else gameStore.push({ kind: "dialog", id: `visita-${id}`, lines: ed.dialogoVisita(def, e.yo.nombre) });
     };
     maestroRef.current = hablarConMaestro;
@@ -460,6 +460,16 @@ export default function TemploGame({ game }: { game: GameDef }) {
             break;
           case "rollos":
             gameStore.push({ kind: "estudios" });
+            break;
+          // la cámara de los sacerdotes: la cátedra de Eleazar, los diezmos (el tesoro) y los turnos
+          case "catedra":
+            gameStore.push({ kind: "catedra", area: "sacerdotal" });
+            break;
+          case "diezmos":
+            gameStore.push({ kind: "tesoro" });
+            break;
+          case "turnos":
+            gameStore.push({ kind: "temporada" });
             break;
           case "mensaje":
             if (cc?.mensajeEnCurso) gameStore.toast("Ya llevas un mensaje: sal a la ciudad y entrégalo en la casa marcada.", "info");

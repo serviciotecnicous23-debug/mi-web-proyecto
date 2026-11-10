@@ -13,7 +13,7 @@ import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
 import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
 import type { SkyUniforms } from "../three/structures";
 import {
-  AREA_RECT, ARBOLES, CALLES_DE_AREA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, ORACION_PUNTO, PALACIO,
+  AREA_RECT, ARBOLES, CALLES_DE_AREA, CAMARA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, ORACION_PUNTO, PALACIO,
   PALACIO_PORTICO, PARCELAS, PLAZA, POZO, PUERTA, PUESTOS, PULPITO, SUELO, rellenoDeCasas, type Parcela,
 } from "./plano";
 
@@ -86,12 +86,12 @@ export type CiudadVisual = {
   enramadas: THREE.Group;
   /** Fuegos de los braseros y de la puerta (de noche). */
   fuegos: THREE.Vector3[];
-  /** Los edificios grandes que se vuelven transparentes si tapan al jugador (el palacio, la escuela y su monte). */
+  /** Los edificios grandes que se vuelven transparentes si tapan al jugador (el palacio, la escuela y su monte, la cámara). */
   ocluyentes: THREE.Group[];
   /** Donde sube el humo del altar, sobre el monte. */
   humo: THREE.Vector3;
   /** Lugares para poner letreros. */
-  letreros: { templo: THREE.Vector3; palacio: THREE.Vector3; escuela: THREE.Vector3; puerta: THREE.Vector3; plaza: THREE.Vector3 };
+  letreros: { templo: THREE.Vector3; palacio: THREE.Vector3; escuela: THREE.Vector3; camara: THREE.Vector3; puerta: THREE.Vector3; plaza: THREE.Vector3 };
 };
 
 // ---------------------------------------------------------------- terreno
@@ -467,6 +467,49 @@ function buildEscuela(root: THREE.Group) {
   h.add(new THREE.IcosahedronGeometry(0.55, 1), "#b3a587", { x: ox - 0.95, y: Y + 0.12, z: oz, sx: 1.2, sy: 0.35, sz: 0.9 });
   h.box(0.9, 0.03, 0.55, "#a8874c", { x: ox - 0.1, y: Y + 0.02, z: oz });
   meshes(root, h, null, true);
+}
+
+// ---------------------------------------------------------------- la cámara de los sacerdotes (2 Crónicas 31:11)
+function buildCamara(root: THREE.Group, fuegos: THREE.Vector3[]) {
+  const m = new GeoBuilder();
+  const [x0, z0, x1, z1] = CAMARA;
+  const W = x1 - x0, D = z1 - z0;
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+  const H = 3.1;
+  // muros de piedra labrada contra el muro del monte, con sus hiladas
+  m.box(W, H, D, vary(C.piedraClara, 0.02), { x: cx, y: Y + H / 2, z: cz });
+  for (let k = 1; k < 6; k++) m.box(W + 0.02, 0.03, D + 0.02, vary(C.junta, 0.04), { x: cx, y: Y + (H * k) / 6, z: cz });
+  m.box(W + 0.12, 0.3, D + 0.12, C.piedraOsc, { x: cx, y: Y + 0.15, z: cz });
+  // techo plano de cedro con su pretil (Deuteronomio 22:8)
+  m.box(W + 0.3, 0.16, D + 0.3, C.cedroOsc, { x: cx, y: Y + H + 0.08, z: cz });
+  for (const sg of [-1, 1]) {
+    m.box(W + 0.3, 0.34, 0.14, C.piedra, { x: cx, y: Y + H + 0.33, z: cz + sg * (D / 2 + 0.08) });
+    m.box(0.14, 0.34, D + 0.3, C.piedra, { x: cx + sg * (W / 2 + 0.08), y: Y + H + 0.33, z: cz });
+  }
+  // el frente que mira a la plaza: la puerta, dos ventanas altas y el pórtico de dos pilares
+  m.box(1.4, 2.3, 0.1, "#3b2a1c", { x: x1 + 0.03, y: Y + 1.15, z: cz, ry: Math.PI / 2 });
+  m.box(1.7, 0.18, 0.16, C.cedro, { x: x1 + 0.06, y: Y + 2.4, z: cz, ry: Math.PI / 2 });
+  for (const dz of [-2.4, 2.4]) {
+    m.box(0.8, 0.6, 0.06, "#2a1d12", { x: x1 + 0.03, y: Y + 2.05, z: cz + dz, ry: Math.PI / 2 });
+    m.box(0.95, 0.08, 0.1, C.cedro, { x: x1 + 0.05, y: Y + 1.72, z: cz + dz, ry: Math.PI / 2 });
+  }
+  for (const dz of [-1.3, 1.3]) {
+    m.cyl(0.16, 0.19, 2.75, C.piedra, { x: x1 + 1.0, y: Y + 1.375, z: cz + dz }, 10);
+    m.box(0.42, 0.14, 0.42, C.piedraOsc, { x: x1 + 1.0, y: Y + 2.8, z: cz + dz });
+  }
+  m.box(1.25, 0.18, 3.2, C.cedroOsc, { x: x1 + 0.55, y: Y + 2.95, z: cz });
+  m.box(1.05, 0.05, 2.9, "#d7c7a2", { x: x1 + 0.52, y: Y + 0.03, z: cz });
+  // las tinajas del aceite y del agua para lavarse, a los lados del pórtico
+  jar(m, x1 + 0.45, Y, z0 + 0.55, 1.25, "#a85f35");
+  jar(m, x1 + 0.4, Y, z1 - 0.55, 1.15);
+  jar(m, x1 + 0.85, Y, z1 - 0.95, 0.9, "#b8673a");
+  // dos lamparillas de aceite junto a la puerta: de noche se ven encendidas
+  for (const dz of [-0.95, 0.95]) {
+    m.box(0.3, 0.05, 0.2, C.cedro, { x: x1 + 0.12, y: Y + 1.95, z: cz + dz });
+    m.lathe([[0, 0], [0.07, 0.005], [0.09, 0.04], [0.06, 0.06], [0, 0.055]], "#b0643a", { x: x1 + 0.14, y: Y + 1.98, z: cz + dz, sx: 1.4 }, 10);
+    fuegos.push(new THREE.Vector3(x1 + 0.16, Y + 2.1, cz + dz));
+  }
+  meshes(root, m, null, true);
 }
 
 // ---------------------------------------------------------------- las casas
@@ -870,9 +913,12 @@ export function buildCiudad(): CiudadVisual {
   palacio.name = "palacio";
   const escuela = new THREE.Group();
   escuela.name = "escuela";
-  root.add(palacio, escuela);
+  const camara = new THREE.Group();
+  camara.name = "camara";
+  root.add(palacio, escuela, camara);
   buildPalacio(palacio, fuegos);
   buildEscuela(escuela);
+  buildCamara(camara, fuegos);
   buildRelleno(root);
   const cielo = buildCielo();
   root.add(cielo.sky, cielo.stars, cielo.clouds);
@@ -894,12 +940,13 @@ export function buildCiudad(): CiudadVisual {
     ventanas,
     enramadas,
     fuegos,
-    ocluyentes: [palacio, escuela],
+    ocluyentes: [palacio, escuela, camara],
     humo: new THREE.Vector3(3.0, 1.8, 0),
     letreros: {
       templo: new THREE.Vector3(ESCALINATA.x0 + 0.6, 1.6, 0),
       palacio: new THREE.Vector3(17, Y + 9.6, 28),
       escuela: new THREE.Vector3(17, Y + 5.2, -28),
+      camara: new THREE.Vector3((CAMARA[0] + CAMARA[2]) / 2 + 1, Y + 4.6, (CAMARA[1] + CAMARA[3]) / 2),
       puerta: new THREE.Vector3(MURO_ORIENTE, Y + 9.0, 0),
       plaza: new THREE.Vector3(PULPITO[0], Y + 3.2, PULPITO[1]),
     },

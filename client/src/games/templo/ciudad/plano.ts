@@ -43,6 +43,12 @@ export const ESCUELA_PUERTA: V2 = [17, -22.2];
 export const MONTE_ORACION: Rect = [-6, -36, 3.5, -21];
 /** El lugar de oración: al pie del monte, del lado de la escuela (el monte no se camina). */
 export const ORACION_PUNTO: V2 = [5.4, -28.5];
+/**
+ * La cámara de los sacerdotes (2 Crónicas 31:11): al pie del monte, junto a la escalinata, del lado
+ * norte (así no tapa a quien baja del templo). Su puerta mira a la plaza.
+ */
+export const CAMARA: Rect = [35.0, -11.6, 40.0, -4.4];
+export const CAMARA_PUERTA: V2 = [41.2, -8.0];
 
 
 /** Una parcela: su rectángulo, el centro de la casa, hacia dónde mira la puerta y el umbral. */
@@ -148,6 +154,7 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
   const rects: Rect[] = [
     PALACIO,
     ESCUELA,
+    CAMARA,
     // barandas de la escalinata: se sube y se baja por el frente
     [ESCALINATA.x0, -ESCALINATA.half - 0.35, ESCALINATA.x1, -ESCALINATA.half],
     [ESCALINATA.x0, ESCALINATA.half, ESCALINATA.x1, ESCALINATA.half + 0.35],
@@ -174,7 +181,7 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
 
 /** Árboles en las calles y en la plaza. */
 export const ARBOLES: V2[] = [
-  [41.5, 7.5], [41.5, -7.5], [69.5, 7.5], [69.5, -7.5], [35, 30], [35, -30], [35, 55], [35, -55], [-1, 17.5], [1, -18.5],
+  [41.5, 7.5], [44.6, -11.2], [69.5, 7.5], [69.5, -7.5], [35, 30], [35, -30], [35, 55], [35, -55], [-1, 17.5], [1, -18.5],
 ];
 
 /** Lugares por donde pasea la gente de la ciudad (de uno a otro, por los caminos). */

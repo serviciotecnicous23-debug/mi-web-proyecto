@@ -15,6 +15,7 @@ import type { Bien, CasaPrivada, CasaVisita, CiudadEstado } from "@shared/ciudad
 import { STATIONS } from "./data";
 import { newSave, type SaveData } from "./state";
 import { gameStore, type OnlineHud } from "./store";
+import { anotarServido } from "./servido";
 
 const API = "/api/jerusalen";
 
@@ -152,6 +153,8 @@ export class OnlineSession {
       duty: (kind, n) => {
         const k = kind as DeberId;
         this.pend[k] = (this.pend[k] || 0) + n;
+        // el maestro de la cátedra enseña sobre lo que se sirvió hace poco
+        anotarServido(this.estado.personaje?.id, String(kind));
       },
       tick: (dt) => this.tick(dt),
       ask: () => void this.ask(),

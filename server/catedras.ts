@@ -1,7 +1,8 @@
 /**
  * Las cátedras de Jerusalén en línea (shared/catedras.ts): el servidor da una lección sin la respuesta
- * (primero las que la persona todavía no aprendió), guarda cuál se pidió y corrige la respuesta. Con la
- * correcta: mérito de la temporada para el personaje y gozo para la persona. Hay un tope por día.
+ * (primero las que la persona todavía no aprendió y, de esas, las que tratan de lo que sirvió hace poco),
+ * guarda cuál se pidió y corrige la respuesta. Con la correcta: mérito de la temporada para el personaje
+ * y gozo para la persona. Hay un tope por día en cada camino (entre todas sus cátedras).
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
@@ -91,33 +92,56 @@ export function registerCatedrasRoutes(app: Express) {
     return {
       vistas: lista(r?.seen),
       aciertos: Number(r?.aciertos || 0),
-      hoy: r?.day_key === hoy ? Number(r?.day_count || 0) : 0,
       pendiente: r?.pending && r?.pasados != null && Number(r.pasados) < VALE_MINUTOS * 60 ? String(r.pending) : null,
     };
   }
 
-  // Una lección (sin la respuesta): si ya hay una pedida, la misma; si no, una que todavía no aprendió.
+  /** Las lecciones de hoy en el camino de la cátedra (entre todas las cátedras de ese camino). */
+  async function hoyDelCamino(ch: PersonajeFila, area: CatedraArea): Promise<number> {
+    const areas = (Object.keys(CATEDRAS) as CatedraArea[]).filter((a) => CATEDRAS[a].camino === CATEDRAS[area].camino);
+    const { rows } = await pool.query(
+      `SELECT COALESCE(SUM(day_count), 0)::int AS n FROM game_catedras WHERE character_id = $1 AND area = ANY($2::text[]) AND day_key = $3`,
+      [ch.casa, areas, diaClave()],
+    );
+    return Number(rows[0]?.n || 0);
+  }
+
+  const agotada = (area: CatedraArea) => `Por hoy ya aprendiste las ${CATEDRA_POR_DIA} lecciones del día. ${CATEDRAS[area].manana}`;
+
+  // Una lección (sin la respuesta): si ya hay una pedida, la misma; si no, una que todavía no aprendió y,
+  // de esas, primero una de lo que sirvió hace poco («pista»: los deberes, del más reciente al más viejo).
   app.post("/api/jerusalen/catedra/:area/leccion", async (req: Request, res: Response) => {
     const area = String(req.params.area);
     if (!esArea(area)) return res.status(404).json({ message: "Esa cátedra no existe." });
+    const pista: string[] = Array.isArray(req.body?.pista)
+      ? (req.body.pista as unknown[]).filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 20).slice(0, 8)
+      : [];
     try {
       const ch = await jugador(req, res, area);
       if (!ch) return;
       if (frenar(`l:${ch.casa}:${area}`)) return res.status(429).json({ message: "Espera un momento" });
       const banco = BANCO_CATEDRAS[area];
       const f = await filaDe(ch, area);
-      const base = { hoy: f.hoy, max: CATEDRA_POR_DIA, aprendidas: new Set(f.vistas).size, total: banco.length };
-      if (f.hoy >= CATEDRA_POR_DIA) {
-        return res.json({ agotada: true, ...base, message: `Por hoy ya aprendiste ${CATEDRA_POR_DIA} lecciones en ${CATEDRAS[area].nombre.toLowerCase()}. Tu oración igual cuenta: vuelve mañana por más.` });
-      }
+      const hoy = await hoyDelCamino(ch, area);
+      const base = { hoy, max: CATEDRA_POR_DIA, aprendidas: new Set(f.vistas).size, total: banco.length };
+      if (hoy >= CATEDRA_POR_DIA) return res.json({ agotada: true, ...base, message: agotada(area) });
       let fila: FilaCatedra | undefined = f.pendiente ? banco.find((x) => x.id === f.pendiente) : undefined;
       if (!fila) {
         const vistas = new Set(f.vistas);
         const nuevas = banco.filter((x) => !vistas.has(x.id));
-        fila = mezclar(nuevas.length ? nuevas : banco)[0];
+        const opciones = nuevas.length ? nuevas : banco;
+        for (const g of pista) {
+          const de = opciones.filter((x) => x.grupo === g);
+          if (de.length) {
+            fila = mezclar(de)[0];
+            break;
+          }
+        }
+        if (!fila) fila = mezclar(opciones)[0];
         await pool.query(`UPDATE game_catedras SET pending = $3, pending_at = now(), updated_at = now() WHERE character_id = $1 AND area = $2`, [ch.casa, area, fila.id]);
       }
-      const vista: LeccionVista = { id: fila.id, tema: fila.tema, ensena: fila.ensena, pregunta: fila.pregunta, opciones: mezclar([fila.correcta, ...fila.falsas]), ...base };
+      const sobre = fila.grupo && fila.grupo !== "general" && pista.includes(fila.grupo) ? fila.grupo : null;
+      const vista: LeccionVista = { id: fila.id, tema: fila.tema, ensena: fila.ensena, pregunta: fila.pregunta, opciones: mezclar([fila.correcta, ...fila.falsas]), ...base, sobre };
       res.setHeader("Cache-Control", "no-store");
       res.json(vista);
     } catch (err) {
@@ -140,6 +164,11 @@ export function registerCatedrasRoutes(app: Express) {
         const f = await filaDe(ch, area);
         const fila = f.pendiente ? banco.find((x) => x.id === f.pendiente) : undefined;
         if (!fila) return { error: 409, message: "Primero pide la lección." };
+        // el tope es del camino: una lección pedida en otra cátedra del mismo camino no lo pasa
+        if ((await hoyDelCamino(ch, area)) >= CATEDRA_POR_DIA) {
+          await pool.query(`UPDATE game_catedras SET pending = NULL, pending_at = NULL WHERE character_id = $1 AND area = $2`, [ch.casa, area]);
+          return { error: 409, message: agotada(area) };
+        }
         const correcta = opcion === fila.correcta;
         const hoy = diaClave();
         const { rows } = await pool.query(
@@ -159,7 +188,7 @@ export function registerCatedrasRoutes(app: Express) {
           explica: fila.explica,
           ref: fila.ref,
           premio: correcta ? { merito: CATEDRA_MERITO, gozo: GOZO.acierto } : { merito: 0, gozo: 0 },
-          hoy: Number(rows[0]?.day_count || 0),
+          hoy: rows[0] ? await hoyDelCamino(ch, area) : 0,
           max: CATEDRA_POR_DIA,
           aprendidas: lista(rows[0]?.seen).length,
           total: banco.length,
@@ -170,7 +199,8 @@ export function registerCatedrasRoutes(app: Express) {
         await sumarMerito(ch, CATEDRA_MERITO);
         await sumarGozo(ch.id, GOZO.acierto);
       }
-      res.json(out);
+      const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
+      res.json({ ...out, gozoTotal: g[0] ? Number(g[0].gozo) : undefined });
     } catch (err) {
       console.error("[catedras] respuesta:", err);
       res.sendStatus(500);
