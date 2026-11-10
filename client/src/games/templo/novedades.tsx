@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-catedra-reyes",
+    fecha: "10 de noviembre de 2026",
+    titulo: "La cátedra de los reyes",
+    puntos: [
+      "👑 En el palacio, junto al trono, Eliaquim enseña a los siervos del rey: las funciones del rey, cómo debe gobernar (juzgar sin soborno, cuidar al pobre, leer la ley cada día) y cómo se corrompieron los reyes.",
+      "📜 30 lecciones con la historia de los reyes: Saúl, David, Salomón, Roboam, Acab y la viña de Nabot, Joás, Uzías, Ezequías, Manasés y Josías, hasta Jesús, el Rey de reyes que enseñó que gobernar es servir.",
+      "🔥 Como Eleazar, Eliaquim enseña primero sobre lo que acabas de servir (las audiencias, el pan para los pobres o la copia de la ley). Varias lecciones seguidas, hasta 8 por día: +3 de mérito y +3 de gozo por cada respuesta buena, y grados de «Oyente del palacio» a «Maestro de los reyes».",
+      "🧭 Entra por la estación junto a Eliaquim o por el botón «La cátedra de los reyes» de la ventana del palacio.",
+    ],
+  },
+  {
     id: "2026-11-10-camara-sacerdotes",
     fecha: "10 de noviembre de 2026",
     titulo: "La cámara de los sacerdotes y la cátedra de Eleazar",

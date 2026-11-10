@@ -347,6 +347,17 @@ export function PalacioView({ tab: inicial }: { tab?: "audiencia" | "ley" } = {}
               <Button variant="secondary" className="justify-start rounded-xl" onClick={() => setTab("ley")} data-testid="button-palacio-ley">
                 <ScrollText className="mr-2 h-4 w-4" /> Copiar la ley (+4)
               </Button>
+              <Button
+                variant="secondary"
+                className="justify-start rounded-xl"
+                onClick={() => {
+                  gameStore.close();
+                  gameStore.push({ kind: "catedra", area: "reyes" });
+                }}
+                data-testid="button-palacio-catedra"
+              >
+                <Crown className="mr-2 h-4 w-4" /> La cátedra de los reyes (+3 por lección)
+              </Button>
             </div>
           </>
         )}

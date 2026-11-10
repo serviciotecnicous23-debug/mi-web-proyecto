@@ -1,7 +1,7 @@
 /**
  * Una cátedra de Jerusalén en línea (shared/catedras.ts): la enseñanza corta, la pregunta y, al responder,
  * la corrección con la cita. En la oración del profeta, responder cumple la oración; en la cámara de los
- * sacerdotes se aprenden varias seguidas (hasta el tope del día). El maestro enseña primero sobre lo que
+ * sacerdotes y en el palacio se aprenden varias seguidas (hasta el tope del día). El maestro enseña primero sobre lo que
  * se sirvió hace poco, y quien aprende sube de grado.
  */
 import { useContext, useEffect, useRef, useState } from "react";

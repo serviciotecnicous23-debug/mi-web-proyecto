@@ -461,9 +461,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
           case "rollos":
             gameStore.push({ kind: "estudios" });
             break;
-          // la cámara de los sacerdotes: la cátedra de Eleazar, los diezmos (el tesoro) y los turnos
+          // la cátedra del maestro (Eleazar en la cámara, Eliaquim en el palacio), los diezmos (el tesoro) y los turnos
           case "catedra":
-            gameStore.push({ kind: "catedra", area: "sacerdotal" });
+            if (def.catedra) gameStore.push({ kind: "catedra", area: def.catedra });
             break;
           case "diezmos":
             gameStore.push({ kind: "tesoro" });
