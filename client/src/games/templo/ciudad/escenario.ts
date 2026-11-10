@@ -7,6 +7,7 @@
  * casa con aposento alto. El barrio propio (y el que se visita) va completo; los demás, de lejos,
  * como siluetas.
  */
+import { MURO_DESDE_Z, MURO_TRAMOS, MURO_TRAMO_LARGO } from "@shared/muro";
 import * as THREE from "three";
 import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
 import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
@@ -204,7 +205,8 @@ function buildMurallas(root: THREE.Group, fuegos: THREE.Vector3[]) {
   const b = new GeoBuilder(), s = new GeoBuilder();
   const N = -72, S = 72, O = -21, E = MURO_ORIENTE;
   muro(b, "z", N, -PUERTA.half - 4, E);
-  muro(b, "z", PUERTA.half + 4, S, E);
+  // al norte de la puerta, el tramo caído se dibuja aparte (construirMuroCaido) y crece con el servicio de todos
+  muro(b, "z", MURO_DESDE_Z + MURO_TRAMOS * MURO_TRAMO_LARGO, S, E);
   muro(b, "x", O, E + 0.6, N);
   muro(b, "x", O, E + 0.6, S);
   muro(b, "z", N, S, O);
@@ -233,6 +235,40 @@ function buildMurallas(root: THREE.Group, fuegos: THREE.Vector3[]) {
     s.lathe([[0, 0], [0.07, 0], [0.16, 0.1], [0.18, 0.16], [0.15, 0.16], [0, 0.08]], C.bronce, { x: E - 1.6, y: Y + 3.33, z: sg * (PUERTA.half + 0.3) }, 10);
   }
   meshes(root, b, s, true);
+}
+
+/**
+ * El muro caído al norte de la puerta (shared/muro.ts): los tramos levantados, el que se está
+ * levantando (con su andamio, más alto según las piedras) y los caídos (escombros).
+ */
+export function construirMuroCaido(construidos: number, progreso: number): THREE.Group {
+  const grupo = new THREE.Group();
+  const b = new GeoBuilder();
+  const E = MURO_ORIENTE, alto = 5.2, grueso = 1.2;
+  rnd = mulberry32(3205);
+  for (let i = 0; i < MURO_TRAMOS; i++) {
+    const z0 = MURO_DESDE_Z + i * MURO_TRAMO_LARGO, zc = z0 + MURO_TRAMO_LARGO / 2;
+    if (i < construidos) {
+      // levantado: piedra nueva, un poco más clara, con su almena
+      b.box(grueso, alto, MURO_TRAMO_LARGO + 0.02, vary("#d8c9a6", 0.03), { x: E, y: Y + alto / 2, z: zc });
+      b.box(grueso + 0.06, 0.9, MURO_TRAMO_LARGO + 0.04, C.piedraOsc, { x: E, y: Y + 0.45, z: zc });
+      b.box(grueso, 0.7, 1.0, vary(C.piedraClara, 0.04), { x: E, y: Y + alto + 0.35, z: zc });
+    } else if (i === construidos) {
+      // en obra: tan alto como las piedras juntadas, con andamio de cedro y piedras listas al pie
+      const h = 1.0 + (alto - 1.0) * Math.max(0, Math.min(1, progreso));
+      b.box(grueso, h, MURO_TRAMO_LARGO, vary(C.piedra, 0.03), { x: E, y: Y + h / 2, z: zc });
+      for (const dz of [-0.9, 0.9]) for (const dx of [-1.0, -2.2]) b.cyl(0.06, 0.07, alto + 0.6, C.cedroOsc, { x: E + dx, y: Y + (alto + 0.6) / 2, z: zc + dz }, 5);
+      for (let k = 1; k <= 3; k++) b.box(1.5, 0.08, MURO_TRAMO_LARGO + 0.4, C.cedro, { x: E - 1.6, y: Y + k * 1.7, z: zc });
+      for (let k = 0; k < 6; k++) b.box(0.5, 0.35, 0.35, vary(C.piedra, 0.06), { x: E - 2.6 - rr(0, 1.2), y: Y + 0.18, z: zc + rr(-1, 1), ry: rr(0, 1) });
+      b.cyl(0.25, 0.3, 0.4, "#8a6a42", { x: E - 3.2, y: Y + 0.2, z: zc + 0.6 }, 8); // el cesto de la mezcla
+    } else {
+      // caído: lo que queda del muro y las piedras rodadas
+      b.box(grueso, 1.0, MURO_TRAMO_LARGO, vary(C.piedraOsc, 0.05), { x: E, y: Y + 0.5, z: zc });
+      for (let k = 0; k < 5; k++) b.box(rr(0.4, 0.8), rr(0.3, 0.6), rr(0.4, 0.8), vary(C.piedra, 0.07), { x: E - rr(0.8, 2.2), y: Y + 0.2, z: zc + rr(-0.9, 0.9), rx: rr(0, 0.6), ry: rr(0, 1.5) });
+    }
+  }
+  meshes(grupo, b, null, true);
+  return grupo;
 }
 
 // ---------------------------------------------------------------- la plaza
