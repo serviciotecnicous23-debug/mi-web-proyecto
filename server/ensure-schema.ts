@@ -13,6 +13,7 @@ import { JERUSALEN_SQL } from "./jerusalen";
 import { ESTUDIOS_SQL } from "./estudios";
 import { MISIONES_SQL } from "./misiones";
 import { MERCADO_SQL } from "./mercado";
+import { REUNIONES_SQL } from "./reuniones";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1078,6 +1079,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(MERCADO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (mercado): ${err?.message}`);
+    }
+    try {
+      // Las reuniones de estudio en las casas
+      await pool.query(REUNIONES_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (reuniones): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

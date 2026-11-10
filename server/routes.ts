@@ -9,6 +9,7 @@ import { registerRedRoutes, registrarRedCiudad } from "./ciudad-red";
 import { registerEstudiosRoutes } from "./estudios";
 import { registerMisionesRoutes } from "./misiones";
 import { registerMercadoRoutes } from "./mercado";
+import { registerReunionesRoutes } from "./reuniones";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3639,6 +3640,7 @@ ${urls}
   registerEstudiosRoutes(app);
   registerMisionesRoutes(app);
   registerMercadoRoutes(app);
+  registerReunionesRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

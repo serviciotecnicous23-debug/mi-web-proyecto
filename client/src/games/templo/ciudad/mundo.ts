@@ -27,6 +27,7 @@ import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
 import { CAMINOS, MENSAJES, ORACION_SEGUNDOS, type Camino } from "@shared/caminos";
 import { PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
+import type { ReunionesEstado } from "@shared/reuniones";
 import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
@@ -135,7 +136,11 @@ export class CiudadWorld {
   private enramadasArea: THREE.Group | null = null;
   private pidiendo = new Set<number>();
   private letreros: { el: HTMLDivElement; p: THREE.Vector3; r: number }[] = [];
-  private etiquetasCasas: { el: HTMLDivElement; p: THREE.Vector3; mia: boolean }[] = [];
+  private etiquetasCasas: { el: HTMLDivElement; p: THREE.Vector3; mia: boolean; reunion?: boolean }[] = [];
+  /** Las reuniones de ahora (clave «barrio:parcela»): su etiqueta y un círculo violeta en la puerta. */
+  private reuniones = new Map<string, { id: number; anfitrion: string; titulo: string; ring: Ring | null }>();
+  private reunionesVistas = new Set<number>();
+  private reunionesT = 27;
   // la presencia de los vecinos (WebSocket)
   private red!: RedCiudad;
   private redEstado: EstadoRed = "conectando";
@@ -879,6 +884,70 @@ export class CiudadWorld {
       this.slowT = 0;
       this.mirarAreas();
     }
+    // las reuniones en las casas: cada 30 s se mira cuáles hay
+    this.reunionesT += dt;
+    if (this.reunionesT > 30) {
+      this.reunionesT = 0;
+      void this.mirarReuniones();
+    }
+    for (const r of this.reuniones.values()) if (r.ring) r.ring.mat.uniforms.uTime.value = this.time;
+  }
+
+  /** Las reuniones de ahora: etiqueta y círculo en cada casa abierta, y un aviso cuando abre una de tu barrio. */
+  private async mirarReuniones() {
+    const res = await fetch("/api/jerusalen/reuniones", { credentials: "include", cache: "no-store" }).catch(() => null);
+    if (!res?.ok || !this.running) return;
+    const d = (await res.json().catch(() => null)) as ReunionesEstado | null;
+    if (!d || !this.running) return;
+    const ahora = new Map<string, { id: number; anfitrion: string; titulo: string; barrio: number; parcela: number }>();
+    for (const r of d.activas) if (r.faltan > 0) ahora.set(`${r.barrio}:${r.parcela}`, r);
+    let cambio = false;
+    for (const [k, v] of this.reuniones) {
+      if (ahora.has(k)) continue;
+      if (v.ring) {
+        this.scene.remove(v.ring.mesh);
+        v.ring.dispose();
+      }
+      this.reuniones.delete(k);
+      cambio = true;
+    }
+    for (const [k, r] of ahora) {
+      if (this.reuniones.has(k)) continue;
+      const p = P.parcelaDe(r.barrio, r.parcela);
+      const ring = new Ring(0.85, "#b98cff", false);
+      ring.set(p.umbral[0], P.alturaCiudad(p.umbral[0], p.umbral[1]), p.umbral[1]);
+      ring.mat.uniforms.uOpacity.value = 0.85;
+      this.scene.add(ring.mesh);
+      this.reuniones.set(k, { id: r.id, anfitrion: r.anfitrion, titulo: r.titulo, ring });
+      cambio = true;
+      // un vecino de tu barrio acaba de abrir su casa (se avisa una vez, y no al entrar a la ciudad)
+      if (!this.reunionesVistas.has(r.id)) {
+        this.reunionesVistas.add(r.id);
+        if (r.barrio === this.estado.barrio.n && this.time > 5) {
+          gameStore.toast(`📖 ${r.anfitrion} abrió su casa para estudiar «${r.titulo}». Ve a su puerta (círculo violeta).`, "gold");
+        }
+      }
+    }
+    if (cambio) this.crearEtiquetasCasas();
+  }
+
+  /** Lleva a la puerta de la casa de un vecino (para ir a su reunión): al llegar se abre la visita. */
+  irACasaDe(barrio: number, parcela: number) {
+    const p = P.parcelaDe(barrio, parcela);
+    const [x, z] = p.umbral;
+    const r = this.player.rig;
+    r.x = x;
+    r.z = z;
+    r.y = P.alturaCiudad(x, z);
+    r.yaw = p.dir === 1 ? Math.PI : 0;
+    this.player.vx = this.player.vz = 0;
+    this.ruta = [];
+    for (const zn of this.zonas) zn.inside = dist(x, z, zn.x, zn.z) < zn.r;
+    this.visitaParcela = null;
+    this.camTarget.set(x, r.y, z);
+    this.shadowDirty = true;
+    this.ultimoEnvio.t = 0;
+    this.audio.page();
   }
 
   // ---------------------------------------------------------------- el aprendiz
@@ -1214,7 +1283,9 @@ export class CiudadWorld {
       for (const c of b.casas) {
         const p = P.PARCELAS[area - 1][c.parcela];
         const mia = b.n === this.estado.barrio.n && c.parcela === this.estado.yo.parcela;
-        const nombre = mia ? (c.letrero ? `Tu casa · ${c.letrero}` : "Tu casa") : c.nombre ? (c.letrero ? `${c.letrero} · ${c.nombre}` : `Casa de ${c.nombre}`) : null;
+        const base = mia ? (c.letrero ? `Tu casa · ${c.letrero}` : "Tu casa") : c.nombre ? (c.letrero ? `${c.letrero} · ${c.nombre}` : `Casa de ${c.nombre}`) : null;
+        const reunion = this.reuniones.has(`${b.n}:${c.parcela}`);
+        const nombre = base && reunion ? `📖 ${base} · reunión` : base;
         if (!nombre) continue;
         const [, , hh] = P.CASA_MEDIDA[Math.max(0, Math.min(3, c.nivel))];
         // el nombre lo escribió una persona: va como texto, nunca como HTML
@@ -1222,7 +1293,8 @@ export class CiudadWorld {
         el.textContent = nombre;
         el.style.display = "none";
         if (mia) el.style.background = "rgba(180,120,10,.85)";
-        this.etiquetasCasas.push({ el, p: new THREE.Vector3(p.x, P.SUELO + hh + (c.nivel >= 3 ? 2.2 : 0.9), p.z), mia });
+        if (reunion) el.style.background = "rgba(109,59,190,.9)";
+        this.etiquetasCasas.push({ el, p: new THREE.Vector3(p.x, P.SUELO + hh + (c.nivel >= 3 ? 2.2 : 0.9), p.z), mia, reunion });
       }
     }
   }
@@ -1553,7 +1625,7 @@ export class CiudadWorld {
     }
     for (const e of this.etiquetasCasas) {
       const d = dist(r.x, r.z, e.p.x, e.p.z);
-      if (d < (e.mia ? 30 : 7)) this.overlay.place(e.el, e.p);
+      if (d < (e.mia ? 30 : e.reunion ? 24 : 7)) this.overlay.place(e.el, e.p);
       else e.el.style.display = "none";
     }
     for (const mc of this.mercaderes) {
@@ -1666,6 +1738,7 @@ export class CiudadWorld {
       this.mensaje.ring.dispose();
     }
     for (const p of this.pobres) this.overlay.remove(p.label);
+    for (const r of this.reuniones.values()) if (r.ring) r.ring.dispose();
     for (const mc of this.mercaderes) this.overlay.remove(mc.el);
     for (const z of this.zonas) z.ring.dispose();
     this.player.fig.dispose();
