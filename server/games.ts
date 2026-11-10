@@ -9,6 +9,7 @@ import { z } from "zod";
 import { pool } from "./db";
 import { aliasPublico } from "./private-fields";
 import { GAMES, copaText, eventText, isGameSlug, weekKey, TEMPLO_LOGROS_NOMBRES } from "@shared/games";
+import { resumenPartida } from "@shared/partida";
 
 export const GAME_SCORES_SQL = `
 CREATE TABLE IF NOT EXISTS "game_scores" (
@@ -58,7 +59,9 @@ CREATE TABLE IF NOT EXISTS "game_saves" (
   "data" jsonb NOT NULL,
   "updated_at" timestamp DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_saves_user_game" ON "game_saves" ("user_id", "game");`;
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_saves_user_game" ON "game_saves" ("user_id", "game");
+ALTER TABLE "game_saves" ADD COLUMN IF NOT EXISTS "backup" jsonb;
+ALTER TABLE "game_saves" ADD COLUMN IF NOT EXISTS "backup_at" timestamp;`;
 
 /** Una partida guardada no pasa de 32 KB (la del templo pesa unos 4 KB). */
 const MAX_SAVE_BYTES = 32 * 1024;
@@ -231,9 +234,17 @@ export function registerGameRoutes(app: Express) {
     const slug = String(req.params.slug);
     if (!isGameSlug(slug) || !GAMES[slug].saves) return res.sendStatus(404);
     try {
-      const { rows } = await pool.query(`SELECT data, updated_at FROM game_saves WHERE user_id = $1 AND game = $2`, [req.user!.id, slug]);
+      const { rows } = await pool.query(`SELECT data, updated_at, backup, backup_at FROM game_saves WHERE user_id = $1 AND game = $2`, [req.user!.id, slug]);
+      const r = rows[0];
+      // el respaldo se ofrece solo si está más avanzado que la partida de ahora
+      const actual = resumenPartida(r?.data);
+      const respaldo = resumenPartida(r?.backup);
       res.setHeader("Cache-Control", "no-store");
-      res.json({ data: rows[0]?.data ?? null, updatedAt: rows[0]?.updated_at ?? null });
+      res.json({
+        data: r?.data ?? null,
+        updatedAt: r?.updated_at ?? null,
+        respaldo: respaldo && (!actual || respaldo.peso > actual.peso) ? { ...respaldo, at: r?.backup_at ?? null } : null,
+      });
     } catch (err) {
       console.error("[juegos] leer partida:", err);
       res.sendStatus(500);
@@ -256,14 +267,52 @@ export function registerGameRoutes(app: Express) {
     lastSave.set(key, now);
     if (lastSave.size > 5000) lastSave.clear();
     try {
+      // Si llega una partida menos avanzada que la guardada (otro teléfono, la app reinstalada,
+      // «Empezar de nuevo»), la guardada pasa a ser el respaldo: nunca se pierde la más avanzada.
+      const { rows } = await pool.query(`SELECT data, backup FROM game_saves WHERE user_id = $1 AND game = $2`, [me, slug]);
+      let respaldar = false;
+      if (rows[0]) {
+        const nueva = resumenPartida(data)?.peso ?? 0;
+        const guardada = resumenPartida(rows[0].data)?.peso ?? 0;
+        const respaldo = resumenPartida(rows[0].backup)?.peso ?? -1;
+        respaldar = nueva < guardada && guardada > respaldo;
+      }
       await pool.query(
         `INSERT INTO game_saves (user_id, game, data, updated_at) VALUES ($1, $2, $3::jsonb, now())
-         ON CONFLICT (user_id, game) DO UPDATE SET data = EXCLUDED.data, updated_at = now()`,
-        [me, slug, json],
+         ON CONFLICT (user_id, game) DO UPDATE SET
+           backup = CASE WHEN $4::boolean THEN game_saves.data ELSE game_saves.backup END,
+           backup_at = CASE WHEN $4::boolean THEN now() ELSE game_saves.backup_at END,
+           data = EXCLUDED.data, updated_at = now()`,
+        [me, slug, json, respaldar],
       );
-      res.json({ ok: true });
+      res.json({ ok: true, respaldo: respaldar });
     } catch (err) {
       console.error("[juegos] guardar partida:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // Recuperar el respaldo: la partida más avanzada vuelve a ser la de la cuenta (y la de ahora queda de respaldo).
+  app.post("/api/juegos/:slug/partida/recuperar", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const slug = String(req.params.slug);
+    if (!isGameSlug(slug) || !GAMES[slug].saves) return res.sendStatus(404);
+    const me = req.user!.id;
+    const key = `${me}:${slug}`;
+    const now = Date.now();
+    if (now - (lastSave.get(key) || 0) < 2000) return res.status(429).json({ message: "Espera un momento" });
+    lastSave.set(key, now);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE game_saves SET data = backup, backup = data, backup_at = now(), updated_at = now()
+          WHERE user_id = $1 AND game = $2 AND backup IS NOT NULL
+          RETURNING data`,
+        [me, slug],
+      );
+      if (!rows[0]) return res.status(404).json({ message: "No hay una partida anterior para recuperar." });
+      res.json({ data: rows[0].data });
+    } catch (err) {
+      console.error("[juegos] recuperar partida:", err);
       res.sendStatus(500);
     }
   });
