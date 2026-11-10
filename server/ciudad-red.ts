@@ -78,7 +78,7 @@ type Jugador = { info: VecinoInfo; bloqueos: Set<number>; suspendido: boolean };
 async function cargarJugador(userId: number): Promise<Jugador | null> {
   const t = temporadaDe();
   const { rows } = await pool.query(
-    `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.city_banned_at, h.barrio, h.plot,
+    `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.path, c.city_banned_at, h.barrio, h.plot,
             COALESCE(sm.merit, 0)::int AS merito, o.office
        FROM users u
        JOIN game_characters c ON c.user_id = u.id AND c.game = $2
@@ -86,7 +86,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
        LEFT JOIN game_season_merit sm ON sm.character_id = c.id AND sm.season = $3
        LEFT JOIN game_offices o ON o.character_id = c.id AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
       WHERE u.id = $1
-      ORDER BY c.slot LIMIT 1`,
+      ORDER BY c.selected_at DESC NULLS LAST, c.slot LIMIT 1`,
     [userId, JERUSALEN_JUEGO, t.n],
   );
   const r = rows[0];
@@ -101,6 +101,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
       barrio: Number(r.barrio),
       casa: Number(r.plot),
       u: Number(r.user_id),
+      camino: r.path === "profecia" || r.path === "realeza" ? r.path : "sacerdocio",
     },
     bloqueos,
     suspendido: !!r.city_banned_at,

@@ -9,9 +9,14 @@
  * El servidor lleva las cuentas; el teléfono solo las muestra.
  */
 
-export type TipoEncargo = "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos";
+export type TipoEncargo =
+  | "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos"
+  | "mensaje" | "oracion" | "memoria" | "audiencia" | "pan" | "ley";
 
-export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string };
+/** `caminos`: para quién es (sin él, para el sacerdocio). Los de todos llevan los tres caminos. */
+export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string; caminos?: ("sacerdocio" | "profecia" | "realeza")[] };
+
+const TODOS: ("sacerdocio" | "profecia" | "realeza")[] = ["sacerdocio", "profecia", "realeza"];
 
 /** El banco de encargos (cada día salen tres de tipos distintos). */
 export const ENCARGOS: EncargoDef[] = [
@@ -23,10 +28,18 @@ export const ENCARGOS: EncargoDef[] = [
   { id: "incienso2", tipo: "incienso", meta: 2, titulo: "Quema incienso 2 veces en el altar de oro", icono: "🌿" },
   { id: "diezmos2", tipo: "diezmos", meta: 2, titulo: "Guarda 2 diezmos en las cámaras", icono: "🌾" },
   { id: "aciertos2", tipo: "aciertos", meta: 2, titulo: "Responde bien 2 preguntas difíciles de Azarías", icono: "❓" },
-  { id: "seccion1", tipo: "seccion", meta: 1, titulo: "Termina una sección de un estudio", icono: "📜" },
-  { id: "bendicion1", tipo: "bendicion", meta: 1, titulo: "Visita la casa de un vecino y bendícela", icono: "🙌" },
-  { id: "alfoli1", tipo: "alfoli", meta: 1, titulo: "Lleva al templo lo del alfolí de tu casa", icono: "🏺" },
+  { id: "seccion1", tipo: "seccion", meta: 1, titulo: "Termina una sección de un estudio", icono: "📜", caminos: TODOS },
+  { id: "bendicion1", tipo: "bendicion", meta: 1, titulo: "Visita la casa de un vecino y bendícela", icono: "🙌", caminos: TODOS },
+  { id: "alfoli1", tipo: "alfoli", meta: 1, titulo: "Lleva al templo lo del alfolí de tu casa", icono: "🏺", caminos: TODOS },
   { id: "juntos10", tipo: "juntos", meta: 10, titulo: "Cumple 10 deberes sirviendo junto con otro sacerdote", icono: "🤝" },
+  // escuela de los profetas
+  { id: "mensaje2", tipo: "mensaje", meta: 2, titulo: "Lleva 2 mensajes de ánimo por la ciudad", icono: "📯", caminos: ["profecia"] },
+  { id: "oracion2", tipo: "oracion", meta: 2, titulo: "Ora 2 veces en el monte de la oración", icono: "🙏", caminos: ["profecia"] },
+  { id: "memoria2", tipo: "memoria", meta: 2, titulo: "Memoriza 2 versículos en la escuela", icono: "📖", caminos: ["profecia"] },
+  // palacio del rey
+  { id: "audiencia2", tipo: "audiencia", meta: 2, titulo: "Atiende 2 audiencias con justicia", icono: "⚖️", caminos: ["realeza"] },
+  { id: "pan5", tipo: "pan", meta: 5, titulo: "Reparte 5 panes a los pobres de la ciudad", icono: "🍞", caminos: ["realeza"] },
+  { id: "ley2", tipo: "ley", meta: 2, titulo: "Copia la ley 2 veces en el palacio", icono: "📜", caminos: ["realeza"] },
 ];
 
 export const ENCARGOS_DIA = 3;

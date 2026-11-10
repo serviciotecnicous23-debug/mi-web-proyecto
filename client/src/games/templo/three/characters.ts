@@ -458,7 +458,7 @@ export function nobleColors(): CrowdColors {
 }
 
 // ---------------------------------------------------------------- personajes con vestiduras propias
-export type FigureLook = "aprendiz" | "sacerdote" | "turno" | "principal" | "sumo" | "lino" | "azarias" | "rey";
+export type FigureLook = "aprendiz" | "sacerdote" | "turno" | "principal" | "sumo" | "lino" | "azarias" | "rey" | "profeta" | "oficial";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
@@ -469,7 +469,7 @@ function figureParts(look: FigureLook) {
   const skin = look === "azarias" ? "#c48a5e" : look === "rey" ? "#bf8457" : "#d39a6c";
   const hair = look === "azarias" ? "#ece8e0" : look === "rey" ? "#2b1d14" : "#3b2a1e";
   const old = look === "azarias";
-  const priestly = look !== "aprendiz" && look !== "rey";
+  const priestly = look !== "aprendiz" && look !== "rey" && look !== "profeta" && look !== "oficial";
   const high = look === "sumo" || look === "azarias";
   const linen = look === "lino" ? "#ffffff" : "#fbf8ef";
   const headY = 0.97, r = 0.2;
@@ -479,6 +479,9 @@ function figureParts(look: FigureLook) {
   let robeCol: string = linen;
   if (look === "aprendiz") robeCol = "#e2d3b4";
   if (look === "rey") robeCol = C.purpura;
+  // el profeta: vestido de pelo (2 Reyes 1:8); el siervo del rey: túnica azul
+  if (look === "profeta") robeCol = "#6b4f35";
+  if (look === "oficial") robeCol = "#2f5f8a";
   lathe([[0, 0.05], [0.26, 0.05], [0.25, 0.2], [0.22, 0.42], [0.19, 0.58], [0.18, 0.68], [0.12, 0.75], [0, 0.76]], robeCol);
   if (high) {
     // manto del efod, todo de azul, con campanillas de oro y granadas en el borde (Éxodo 28:31-35)
@@ -512,6 +515,14 @@ function figureParts(look: FigureLook) {
   } else if (look === "aprendiz") {
     m.torus(0.206, 0.022, "#8a6a42", { y: 0.43, rx: Math.PI / 2 }, 5, 16);
     m.box(0.03, 0.2, 0.02, "#8a6a42", { x: 0.09, y: 0.33, z: 0.2 });
+  } else if (look === "profeta") {
+    // cinto de cuero y manto sobre los hombros
+    m.torus(0.208, 0.024, "#4a2f1a", { y: 0.43, rx: Math.PI / 2 }, 5, 16);
+    lathe([[0.235, 0.36], [0.225, 0.5], [0.205, 0.62], [0.19, 0.7], [0.13, 0.76], [0.06, 0.775]], "#8b6b47");
+  } else if (look === "oficial") {
+    // cinto bordado de oro y una franja clara
+    s.torus(0.21, 0.02, C.oro, { y: 0.43, rx: Math.PI / 2 }, 5, 18);
+    m.box(0.05, 0.3, 0.015, "#e8d9b0", { x: 0.0, y: 0.27, z: 0.215 });
   } else if (look === "rey") {
     // manto carmesí con orla de oro
     lathe([[0.27, 0.12], [0.25, 0.4], [0.225, 0.58], [0.2, 0.7], [0.14, 0.77], [0.1, 0.78]], C.carmesi);
@@ -550,6 +561,9 @@ function figureParts(look: FigureLook) {
     // tiara de lino (Éxodo 28:40)
     for (let k = 0; k < 2; k++) m.torus(r + 0.015 - k * 0.02, 0.04, linen, { y: headY + 0.135 + k * 0.055, rx: Math.PI / 2 }, 6, 18);
     m.sphere(r * 0.9, linen, { y: headY + 0.16 }, 14, 8, Math.PI * 2, 1.35);
+  } else if (look === "oficial") {
+    // cinta en la frente
+    m.torus(r + 0.012, 0.022, "#e8d9b0", { y: headY + 0.1, rx: Math.PI / 2 }, 5, 18);
   } else if (look === "rey") {
     s.cyl(r + 0.03, r + 0.02, 0.08, C.oro, { y: headY + 0.13 }, 16, true);
     for (let k = 0; k < 8; k++) {
@@ -577,6 +591,9 @@ function figureParts(look: FigureLook) {
     armLS.lathe([[0, 0], [0.05, 0.005], [0.07, 0.05], [0.065, 0.07], [0, 0.05]], C.oro, { y: -0.62 }, 10);
   }
   if (look === "rey") armS.cyl(0.012, 0.012, 0.7, C.oro, { y: -0.4, z: 0.08, rx: 0.2 }, 6);
+  // el cayado del profeta y el rollo del siervo del rey
+  if (look === "profeta") armS.cyl(0.016, 0.016, 1.05, "#7a5a3a", { y: -0.5, z: 0.07, rx: 0.12 }, 6);
+  if (look === "oficial") armLS.cyl(0.032, 0.032, 0.2, "#efe3c2", { y: -0.36, z: 0.08, rz: Math.PI / 2 }, 8);
   return { m, s, armM, armS, armLM, armLS };
 }
 

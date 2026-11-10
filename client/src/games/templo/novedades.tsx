@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-caminos",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Tres caminos: sacerdote, profeta y siervo del rey",
+    puntos: [
+      "Ahora puedes tener un personaje en cada camino y elegir con cuál jugar en la sala de Jerusalén en línea.",
+      "📯 Escuela de los profetas, con Isaías: memoriza la Palabra (arma el versículo palabra por palabra), ora en el monte y lleva mensajes de ánimo a las casas.",
+      "👑 Palacio del rey, con Eliaquim: atiende audiencias con justicia, reparte pan a los pobres de la ciudad y copia la ley.",
+      "Cada camino tiene sus primeros pasos (+50 de mérito), sus encargos del día y su vestidura.",
+    ],
+  },
+  {
     id: "2026-11-10-misiones",
     fecha: "10 de noviembre de 2026",
     titulo: "Sirve con otros y cumple misiones",

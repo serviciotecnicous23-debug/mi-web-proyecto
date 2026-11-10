@@ -29,7 +29,10 @@ async function pedir<T>(path: string, init?: RequestInit): Promise<{ ok: boolean
 }
 
 export const fetchEstado = () => pedir<JerusalenEstado>("/estado");
-export const crearPersonaje = (nombre: string) => pedir<JerusalenEstado & { message?: string }>("/personaje", { method: "POST", body: JSON.stringify({ nombre }) });
+export const crearPersonaje = (nombre: string, camino: "sacerdocio" | "profecia" | "realeza" = "sacerdocio") =>
+  pedir<JerusalenEstado & { message?: string }>("/personaje", { method: "POST", body: JSON.stringify({ nombre, camino }) });
+/** Elegir con qué personaje jugar (uno por camino). */
+export const elegirPersonaje = (id: number) => pedir<JerusalenEstado & { message?: string }>("/personaje/elegir", { method: "POST", body: JSON.stringify({ id }) });
 export const renombrarPersonaje = (nombre: string) => pedir<JerusalenEstado & { message?: string }>("/personaje", { method: "PATCH", body: JSON.stringify({ nombre }) });
 export const adminRevisar = () => pedir<JerusalenEstado>("/admin/revisar", { method: "POST" });
 export const adminQuitarCargo = (personajeId: number) => pedir<JerusalenEstado & { message?: string }>("/admin/quitar-cargo", { method: "POST", body: JSON.stringify({ personajeId }) });
@@ -99,8 +102,8 @@ export function onlineSave(rank: number): SaveData {
 export type OnlineHooks = {
   /** Escalón del sacerdocio para la ropa (1 sacerdote … 4 sumo sacerdote). */
   rank: number;
-  /** Un deber cumplido. */
-  duty: (kind: DeberId, n: number) => void;
+  /** Un deber cumplido (del templo, o de los caminos nuevos en la ciudad). */
+  duty: (kind: DeberId | string, n: number) => void;
   /** Segundos de juego (solo mientras se juega, no en pausa ni con ventanas abiertas). */
   tick: (dt: number) => void;
   /** El aprendiz llegó adonde Azarías. */
@@ -141,7 +144,8 @@ export class OnlineSession {
     this.hooks = {
       rank: escalonRank(this.escalon),
       duty: (kind, n) => {
-        this.pend[kind] = (this.pend[kind] || 0) + n;
+        const k = kind as DeberId;
+        this.pend[k] = (this.pend[k] || 0) + n;
       },
       tick: (dt) => this.tick(dt),
       ask: () => void this.ask(),

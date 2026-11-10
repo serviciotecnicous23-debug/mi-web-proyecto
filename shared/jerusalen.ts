@@ -16,8 +16,8 @@ export const JERUSALEN_JUEGO = "aprendiz-del-templo";
 /** Días de cada temporada, como los turnos de los sacerdotes (1 Crónicas 24:1-19). */
 export const TEMPORADA_DIAS = 28;
 
-/** Personajes en línea por cuenta en esta etapa (la tabla ya admite más para la ciudad). */
-export const MAX_PERSONAJES = 1;
+/** Personajes en línea por cuenta: uno por camino (sacerdocio, profetas y palacio), desde la etapa 3. */
+export const MAX_PERSONAJES = 3;
 
 /** Mientras no estén abiertos los tres caminos, los cargos se anuncian «de prueba». */
 export const CARGOS_DE_PRUEBA = true;
@@ -123,8 +123,10 @@ export type JerusalenEstado = {
    * y `puedeSumo` si ya fue principal sacerdote en alguna temporada (requisito para ser sumo).
    */
   requisito: { rango: number; creible: boolean; motivo: string | null; puedeEntrar: boolean; puedeSumo: boolean; conoceTemplo: boolean };
-  /** `instruccion`: partes terminadas de la instrucción del sacerdote (0 a 3). */
-  personaje: { id: number; nombre: string; propio: boolean; creado: string; instruccion: number; estudios: number } | null;
+  /** `instruccion`: partes terminadas de la instrucción (del sacerdote, o los primeros pasos de los otros caminos). */
+  personaje: { id: number; nombre: string; propio: boolean; creado: string; instruccion: number; estudios: number; camino: "sacerdocio" | "profecia" | "realeza" } | null;
+  /** Todos los personajes de la cuenta (uno por camino); `activo` es con el que se juega. */
+  personajes: { id: number; nombre: string; camino: "sacerdocio" | "profecia" | "realeza"; escalon: EscalonId; merito: number; activo: boolean }[];
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
   /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
   jerusalen: { fecha: string; fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null; proxima: { nombre: string; icono: string; enMinutos: number } | null };
@@ -141,7 +143,7 @@ export type JerusalenEstado = {
     perdio: string | null;
   } | null;
   escalera: { id: EscalonId; cupo: number | null; titulares: JerusalenTitular[] }[];
-  tabla: { puesto: number; personajeId: number; nombre: string; persona: string; merito: number; isMe: boolean }[];
+  tabla: { puesto: number; personajeId: number; nombre: string; persona: string; merito: number; isMe: boolean; camino?: "sacerdocio" | "profecia" | "realeza" }[];
   enLinea: number;
   nombres: { nombre: string; ref: string }[];
   esAdmin: boolean;

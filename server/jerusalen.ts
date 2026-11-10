@@ -15,6 +15,7 @@ import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { ESTUDIO_PRINCIPAL, ESTUDIO_SUMO } from "@shared/estudios";
+import { CAMINOS, MERITO_DEBER_CAMINO, TOPE_BASE_CAMINO, TOPE_RITMO_CAMINO, caminoDe, type Camino, type DeberCamino } from "@shared/caminos";
 import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
 import { sirviendoJuntos } from "./presencia-templo";
 import { avanzarMision, misionesPorDeberes } from "./misiones";
@@ -40,6 +41,8 @@ CREATE TABLE IF NOT EXISTS "game_characters" (
   "last_duty_at" timestamp
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_characters_slot" ON "game_characters" ("user_id", "game", "slot");
+ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "selected_at" timestamp;
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_game_characters_camino" ON "game_characters" ("user_id", "game", "path");
 CREATE INDEX IF NOT EXISTS "idx_game_characters_duty" ON "game_characters" ("game", "last_duty_at");
 CREATE TABLE IF NOT EXISTS "game_season_merit" (
   "character_id" integer NOT NULL REFERENCES "game_characters"("id") ON DELETE CASCADE,
@@ -230,17 +233,19 @@ export type PersonajeFila = {
   instruccion: number;
   /** Estudios aprobados (para siempre). */
   estudios: number;
+  /** Su camino (sacerdocio, profetas o palacio). */
+  camino: Camino;
 };
 
 export async function personajeDe(userId: number): Promise<PersonajeFila | null> {
   const { rows } = await pool.query(
-    `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts,
+    `SELECT c.id, c.user_id, c.name, u.display_name, u.username, c.instruction_parts, c.path,
             (SELECT count(*)::int FROM game_studies s WHERE s.character_id = c.id AND s.approved_at IS NOT NULL) AS estudios,
             to_char(c.created_at, 'YYYY-MM-DD') AS creado,
             EXTRACT(EPOCH FROM (now() - c.last_duty_at))::float / 86400 AS dias_sin_servir
        FROM game_characters c JOIN users u ON u.id = c.user_id
       WHERE c.user_id = $1 AND c.game = $2
-      ORDER BY c.slot LIMIT 1`,
+      ORDER BY c.selected_at DESC NULLS LAST, c.slot LIMIT 1`,
     [userId, JUEGO],
   );
   const r = rows[0];
@@ -252,6 +257,7 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
     dias_sin_servir: r.dias_sin_servir == null ? null : Number(r.dias_sin_servir),
     instruccion: Number(r.instruction_parts || 0),
     estudios: Number(r.estudios || 0),
+    camino: caminoDe(r.path),
   };
 }
 
@@ -362,7 +368,7 @@ async function cerrarTemporada(n: number) {
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
-        WHERE m.season = $1 AND m.merit >= $2 AND u.is_active IS TRUE
+        WHERE m.season = $1 AND m.merit >= $2 AND u.is_active IS TRUE AND c.path = 'sacerdocio'
           AND c.last_duty_at > now() - ($3::int * interval '1 day')
         ORDER BY m.merit DESC, m.updated_at ASC
         LIMIT 500`,
@@ -410,7 +416,7 @@ export function revisarTemporadas(forzar = false): Promise<void> {
 
 // ---------------------------------------------------------------- lo que ven todos
 type Titular = JerusalenTitular;
-type Fila = { puesto: number; nombre: string; persona: string; merito: number; personajeId: number };
+type Fila = { puesto: number; nombre: string; persona: string; merito: number; personajeId: number; camino: Camino };
 
 async function escaleraDe(season: number): Promise<Record<Cargo, Titular[]>> {
   return cached(`jer:escalera:${season}`, 20_000, async () => {
@@ -436,7 +442,7 @@ async function escaleraDe(season: number): Promise<Record<Cargo, Titular[]>> {
 async function tablaDe(season: number): Promise<Fila[]> {
   return cached(`jer:tabla:${season}`, 20_000, async () => {
     const { rows } = await pool.query(
-      `SELECT m.character_id, m.merit, c.name, c.user_id, u.display_name, u.username
+      `SELECT m.character_id, m.merit, c.name, c.path, c.user_id, u.display_name, u.username
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
@@ -445,7 +451,7 @@ async function tablaDe(season: number): Promise<Fila[]> {
         LIMIT 10`,
       [season],
     );
-    return rows.map((r, i) => ({ puesto: i + 1, nombre: nombreDe(r), persona: publicName(r), merito: Number(r.merit), personajeId: Number(r.character_id) }));
+    return rows.map((r, i) => ({ puesto: i + 1, nombre: nombreDe(r), persona: publicName(r), merito: Number(r.merit), personajeId: Number(r.character_id), camino: caminoDe(r.path) }));
   });
 }
 
@@ -486,6 +492,31 @@ const DEBERES_EXPERIENCIA = 150;
 async function yaSirvioBastante(characterId: number): Promise<boolean> {
   const { rows } = await pool.query(`SELECT COALESCE(SUM(duties), 0)::int AS d FROM game_season_merit WHERE character_id = $1`, [characterId]);
   return Number(rows[0]?.d || 0) >= DEBERES_EXPERIENCIA;
+}
+
+/** Todos los personajes de una cuenta (uno por camino), con su escalón de esta temporada. */
+async function personajesDe(userId: number, activo: number | null, season: number): Promise<JerusalenEstado["personajes"]> {
+  const { rows } = await pool.query(
+    `SELECT c.id, c.name, c.path, c.user_id, u.display_name, u.username, COALESCE(m.merit, 0)::int AS merito, o.office
+       FROM game_characters c JOIN users u ON u.id = c.user_id
+       LEFT JOIN game_season_merit m ON m.character_id = c.id AND m.season = $3
+       LEFT JOIN game_offices o ON o.character_id = c.id AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
+      WHERE c.user_id = $1 AND c.game = $2 ORDER BY c.slot`,
+    [userId, JUEGO, season],
+  );
+  return rows.map((r) => ({
+    id: Number(r.id),
+    nombre: nombreDe(r),
+    camino: caminoDe(r.path),
+    escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
+    merito: Number(r.merito),
+    activo: Number(r.id) === activo,
+  }));
+}
+
+/** Los nombres que se pueden elegir en cada camino. */
+function nombresDe(camino: Camino): { nombre: string; ref: string }[] {
+  return camino === "sacerdocio" ? NOMBRES_SACERDOTE : CAMINOS[camino].nombres;
 }
 
 export function escalonPorMerito(merito: number): EscalonId {
@@ -559,7 +590,8 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
       puedeSumo: fuePrincipal,
       conoceTemplo: conoceElTemplo(requisito, yaSirvio, ch),
     },
-    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion, estudios: ch.estudios } : null,
+    personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion, estudios: ch.estudios, camino: ch.camino } : null,
+    personajes: await personajesDe(user.id, ch?.id ?? null, t.n),
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
     mio,
@@ -658,21 +690,32 @@ export function registerJerusalenRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.user!.isActive) return res.status(403).json({ message: "Tu cuenta debe estar aprobada para jugar en línea." });
     const nombre = typeof req.body?.nombre === "string" ? req.body.nombre : "";
-    if (nombre !== NOMBRE_PROPIO && !NOMBRES_SACERDOTE.some((x) => x.nombre === nombre)) return res.status(400).json({ message: "Elige un nombre de la lista." });
     const me = req.user!.id;
     try {
       const actual = await personajeDe(me);
       if (crear) {
-        if (actual) return res.status(409).json({ message: "Ya tienes tu personaje en línea." });
-        const { rows: cuenta } = await pool.query(`SELECT count(*)::int AS n FROM game_characters WHERE user_id = $1 AND game = $2`, [me, JUEGO]);
-        if (Number(cuenta[0]?.n || 0) >= MAX_PERSONAJES) return res.status(409).json({ message: "Ya tienes tu personaje en línea." });
+        // uno por camino: sacerdocio, escuela de los profetas o palacio del rey
+        const camino = caminoDe(req.body?.camino);
+        if (nombre !== NOMBRE_PROPIO && !nombresDe(camino).some((x) => x.nombre === nombre)) return res.status(400).json({ message: "Elige un nombre de la lista." });
+        const { rows: suyos } = await pool.query(`SELECT slot, path FROM game_characters WHERE user_id = $1 AND game = $2`, [me, JUEGO]);
+        if (suyos.some((r) => caminoDe(r.path) === camino)) return res.status(409).json({ message: "Ya tienes un personaje en ese camino." });
+        if (suyos.length >= MAX_PERSONAJES) return res.status(409).json({ message: "Ya tienes un personaje en cada camino." });
+        const usados = new Set(suyos.map((r) => Number(r.slot)));
+        const slot = [1, 2, 3].find((n) => !usados.has(n)) ?? 1;
         await pool.query(
-          `INSERT INTO game_characters (user_id, game, slot, name, path) VALUES ($1, $2, 1, $3, 'sacerdocio') ON CONFLICT DO NOTHING`,
-          [me, JUEGO, nombre === NOMBRE_PROPIO ? null : nombre],
+          `INSERT INTO game_characters (user_id, game, slot, name, path, selected_at) VALUES ($1, $2, $3, $4, $5, now()) ON CONFLICT DO NOTHING`,
+          [me, JUEGO, slot, nombre === NOMBRE_PROPIO ? null : nombre, camino],
         );
-        await evento(me, "jerusalen:entrada", "se consagró como sacerdote en Jerusalén en línea");
+        const texto =
+          camino === "profecia"
+            ? "entró a la escuela de los profetas en Jerusalén en línea"
+            : camino === "realeza"
+              ? "entró al servicio del palacio del rey en Jerusalén en línea"
+              : "se consagró como sacerdote en Jerusalén en línea";
+        await evento(me, `jerusalen:entrada${camino === "sacerdocio" ? "" : `:${camino}`}`, texto);
       } else {
         if (!actual) return res.status(404).json({ message: "Primero crea tu personaje." });
+        if (nombre !== NOMBRE_PROPIO && !nombresDe(actual.camino).some((x) => x.nombre === nombre)) return res.status(400).json({ message: "Elige un nombre de la lista." });
         await pool.query(`UPDATE game_characters SET name = $2 WHERE id = $1`, [actual.id, nombre === NOMBRE_PROPIO ? null : nombre]);
       }
       forget("jer:");
@@ -683,6 +726,23 @@ export function registerJerusalenRoutes(app: Express) {
     }
   }
   app.post("/api/jerusalen/personaje", (req, res) => void guardarPersonaje(req, res, true));
+
+  // Elegir con qué personaje jugar (uno por camino).
+  app.post("/api/jerusalen/personaje/elegir", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.user!.isActive) return res.status(403).json({ message: "Tu cuenta debe estar aprobada para jugar en línea." });
+    const id = Number(req.body?.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ message: "Personaje no válido" });
+    try {
+      const { rows } = await pool.query(`UPDATE game_characters SET selected_at = now() WHERE id = $1 AND user_id = $2 AND game = $3 RETURNING id`, [id, req.user!.id, JUEGO]);
+      if (!rows.length) return res.status(404).json({ message: "Ese personaje no es tuyo." });
+      forget("jer:");
+      res.json(await estadoDe(req));
+    } catch (err) {
+      console.error("[jerusalen] elegir:", err);
+      res.sendStatus(500);
+    }
+  });
 
   // La instrucción del sacerdote: una parte terminada (en orden). La primera vez que se terminan
   // las tres se suma un poco de mérito y la comunidad lo ve en la actividad.
@@ -717,7 +777,13 @@ export function registerJerusalenRoutes(app: Express) {
           await filaMerito(ch.id, t.n, diaClave());
           await pool.query(`UPDATE game_season_merit SET merit = merit + $3, updated_at = now() WHERE character_id = $1 AND season = $2`, [ch.id, t.n, premio]);
         });
-        await evento(req.user!.id, "jerusalen:instruido", "terminó la instrucción del sacerdote en el templo en línea");
+        const texto =
+          ch.camino === "profecia"
+            ? "terminó sus primeros pasos en la escuela de los profetas"
+            : ch.camino === "realeza"
+              ? "terminó sus primeros pasos en el palacio del rey"
+              : "terminó la instrucción del sacerdote en el templo en línea";
+        await evento(req.user!.id, `jerusalen:instruido${ch.camino === "sacerdocio" ? "" : `:${ch.camino}`}`, texto);
         forget("jer:");
       }
       res.json({ partes: Math.max(antes, parte), premio, estado: await estadoDe(req) });
@@ -758,12 +824,18 @@ export function registerJerusalenRoutes(app: Express) {
         const segundos = Math.max(0, Math.min(body.segundos, 30, desde + 2));
         let crudo = 0;
         let cuenta = 0;
-        for (const k of DEBERES) {
+        // cada camino tiene sus deberes: el sacerdocio en el templo, los otros en la ciudad
+        const lista: string[] = ch.camino === "sacerdocio" ? DEBERES : CAMINOS[ch.camino].deberes;
+        for (const k of lista) {
+          const kc = k as DeberCamino;
+          const base = ch.camino === "sacerdocio" ? TOPE_BASE[k as DeberId] : TOPE_BASE_CAMINO[kc];
+          const ritmo = ch.camino === "sacerdocio" ? TOPE_RITMO[k as DeberId] : TOPE_RITMO_CAMINO[kc];
+          const vale = ch.camino === "sacerdocio" ? MERITO_DEBER[k as DeberId] : MERITO_DEBER_CAMINO[kc];
           const pedido = Math.max(0, Math.floor(Number(body.acciones[k] || 0)));
-          const c = Math.min(pedido, Math.floor(TOPE_BASE[k] + TOPE_RITMO[k] * segundos));
-          if (c > 0) aceptados[k] = c;
+          const c = Math.min(pedido, Math.floor(base + ritmo * segundos));
+          if (c > 0) (aceptados as Record<string, number>)[k] = c;
           cuenta += c;
-          crudo += c * MERITO_DEBER[k];
+          crudo += c * vale;
         }
         // en las fiestas de Jerusalén (el mismo reloj para todos) el servicio vale más
         const bono = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta.merito ?? 1;

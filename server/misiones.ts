@@ -47,9 +47,9 @@ function semilla(texto: string): number {
   return x || 1;
 }
 
-/** Los tres encargos del día de un personaje: de tipos distintos, fijos para ese día. */
-export function encargosDelDia(dia: string, personajeId: number): string[] {
-  const lista = [...ENCARGOS];
+/** Los tres encargos del día de un personaje: de tipos distintos y de su camino, fijos para ese día. */
+export function encargosDelDia(dia: string, personajeId: number, camino: "sacerdocio" | "profecia" | "realeza" = "sacerdocio"): string[] {
+  const lista = ENCARGOS.filter((e) => (e.caminos ?? ["sacerdocio"]).includes(camino));
   let x = semilla(`${dia}:${personajeId}`);
   for (let i = lista.length - 1; i > 0; i--) {
     x ^= x << 13;
@@ -74,10 +74,11 @@ type Guardados = { dia: string; lista: { id: string; prog: number; hecho: boolea
 
 async function leerEncargos(personajeId: number): Promise<Guardados> {
   const dia = diaClave();
-  const { rows } = await pool.query(`SELECT encargos FROM game_characters WHERE id = $1`, [personajeId]);
+  const { rows } = await pool.query(`SELECT encargos, path FROM game_characters WHERE id = $1`, [personajeId]);
   const g = rows[0]?.encargos as Guardados | null;
   if (g && g.dia === dia && Array.isArray(g.lista)) return g;
-  return { dia, lista: encargosDelDia(dia, personajeId).map((id) => ({ id, prog: 0, hecho: false })), todos: false };
+  const camino = rows[0]?.path === "profecia" || rows[0]?.path === "realeza" ? rows[0].path : "sacerdocio";
+  return { dia, lista: encargosDelDia(dia, personajeId, camino).map((id) => ({ id, prog: 0, hecho: false })), todos: false };
 }
 
 async function sumarMerito(personajeId: number, n: number) {

@@ -74,6 +74,8 @@ export type Hud = {
 
 /** Marcador de la ciudad (Jerusalén en línea, etapa 2). */
 export type CiudadHud = {
+  /** El camino del personaje (para el nombre del escalón). */
+  camino: "sacerdocio" | "profecia" | "realeza";
   nombre: string;
   escalon: EscalonId;
   /** Nombre del barrio y número de la casa (desde 1). */
@@ -123,6 +125,8 @@ export type Modal =
   | { kind: "anuncios" }
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }
+  | { kind: "escuela" }
+  | { kind: "palacio" }
   | { kind: "irA" }
   | { kind: "frases" }
   | { kind: "vecinos" }

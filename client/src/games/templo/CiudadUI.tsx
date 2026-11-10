@@ -12,6 +12,8 @@ import {
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { EstudiosDeOtro } from "./EstudiosUI";
+import { EscuelaView, PalacioView } from "./CaminosUI";
+import { nombreEscalonCamino } from "@shared/caminos";
 import { orientacionActual } from "./motor/controles";
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
@@ -92,12 +94,12 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               type="button"
               className="pointer-events-auto flex min-w-0 max-w-full items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 text-xs font-black text-amber-950 shadow-lg"
               onClick={() => open({ kind: "temporada" })}
-              title={`${c.nombre} · ${escalonNombre(c.escalon)}`}
+              title={`${c.nombre} · ${nombreEscalonCamino(c.camino, c.escalon, escalonNombre(c.escalon))}`}
               data-testid="ciudad-escalon"
             >
               <Crown className="h-4 w-4 shrink-0" />
               <span className="min-w-0 truncate">{c.nombre}</span>
-              <span className="hidden shrink-0 font-semibold opacity-80 sm:inline">· {escalonNombre(c.escalon)}</span>
+              <span className="hidden shrink-0 font-semibold opacity-80 sm:inline">· {nombreEscalonCamino(c.camino, c.escalon, escalonNombre(c.escalon))}</span>
             </button>
             <button
               type="button"
@@ -245,6 +247,10 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <AnunciosView />;
     case "ancianos":
       return <AncianosView n={modal.n} />;
+    case "escuela":
+      return <EscuelaView />;
+    case "palacio":
+      return <PalacioView />;
     case "edificio":
       return <EdificioView id={modal.id} />;
     case "irA":

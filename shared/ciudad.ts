@@ -275,6 +275,8 @@ export type VecinoInfo = {
   casa: number;
   /** La cuenta, solo para «Escribir» (abre la mensajería). */
   u: number;
+  /** Su camino (la vestidura y el nombre del escalón). */
+  camino?: "sacerdocio" | "profecia" | "realeza";
 };
 
 /** Del teléfono al servidor. */
@@ -349,6 +351,10 @@ export type CiudadEstado = {
     personajeId: number;
     nombre: string;
     escalon: EscalonId;
+    /** Su camino: sacerdocio, escuela de los profetas o palacio del rey. */
+    camino: "sacerdocio" | "profecia" | "realeza";
+    /** Primeros pasos de su camino (0 a 3; en el sacerdocio, la instrucción). */
+    pasos: number;
     barrio: number;
     parcela: number;
     nivel: number;

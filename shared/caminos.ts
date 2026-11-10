@@ -1,0 +1,195 @@
+/**
+ * Etapa 3 de Jerusalén en línea: los tres caminos. Cada cuenta puede tener hasta tres personajes,
+ * uno por camino, y elige con cuál jugar:
+ * - Sacerdocio: sirve en el templo (lo de siempre), con Azarías.
+ * - Escuela de los profetas: estudia, ora en el monte, memoriza la Palabra y lleva mensajes por la
+ *   ciudad, con Isaías hijo de Amoz (Isaías 1:1), profeta en los días de Ezequías.
+ * - Palacio del rey: atiende audiencias con justicia, reparte pan a los pobres y copia la ley, con
+ *   Eliaquim hijo de Hilcías, mayordomo del palacio (2 Reyes 18:18).
+ * Los deberes de cada camino van al mismo mérito de la temporada. Los versículos son de la RV1960,
+ * comprobados con la Biblia del sitio.
+ */
+
+export type Camino = "sacerdocio" | "profecia" | "realeza";
+export const CAMINOS_LISTA: Camino[] = ["sacerdocio", "profecia", "realeza"];
+
+/** Deberes de los caminos nuevos (los del sacerdocio están en shared/jerusalen.ts). */
+export type DeberCamino = "mensaje" | "oracion" | "memoria" | "audiencia" | "pan" | "ley";
+
+export type CaminoDef = {
+  id: Camino;
+  nombre: string;
+  icono: string;
+  lugar: string;
+  guia: string;
+  resumen: string;
+  /** Nombres del escalón por mérito: el primero al empezar, el segundo con MERITO_TURNO. */
+  escalones: [string, string];
+  deberes: DeberCamino[];
+  nombres: { nombre: string; ref: string }[];
+};
+
+export const CAMINOS: Record<Camino, CaminoDef> = {
+  sacerdocio: {
+    id: "sacerdocio",
+    nombre: "Sacerdocio",
+    icono: "🔥",
+    lugar: "el templo",
+    guia: "Azarías, sumo sacerdote",
+    resumen: "Sirve en el templo: el fuego del altar, las ofrendas del pueblo, las lámparas, los panes y el incienso.",
+    escalones: ["Sacerdote", "Sacerdote de turno"],
+    deberes: [],
+    nombres: [],
+  },
+  profecia: {
+    id: "profecia",
+    nombre: "Escuela de los profetas",
+    icono: "📯",
+    lugar: "la escuela de los profetas",
+    guia: "Isaías hijo de Amoz",
+    resumen: "Estudia la Palabra, ora en el monte, memoriza las Escrituras y lleva mensajes de ánimo por la ciudad.",
+    escalones: ["Hijo de los profetas", "Vidente"],
+    deberes: ["mensaje", "oracion", "memoria"],
+    nombres: [
+      { nombre: "Samuel", ref: "1 Samuel 3:20" },
+      { nombre: "Natán", ref: "2 Samuel 12:1" },
+      { nombre: "Gad", ref: "2 Samuel 24:11" },
+      { nombre: "Eliseo", ref: "2 Reyes 2:15" },
+      { nombre: "Miqueas", ref: "Miqueas 1:1" },
+      { nombre: "Oseas", ref: "Oseas 1:1" },
+      { nombre: "Joel", ref: "Joel 1:1" },
+      { nombre: "Amós", ref: "Amós 1:1" },
+      { nombre: "Hulda", ref: "2 Reyes 22:14" },
+      { nombre: "Débora", ref: "Jueces 4:4" },
+      { nombre: "Ana", ref: "Lucas 2:36" },
+    ],
+  },
+  realeza: {
+    id: "realeza",
+    nombre: "Palacio del rey",
+    icono: "👑",
+    lugar: "el palacio del rey",
+    guia: "Eliaquim hijo de Hilcías, mayordomo",
+    resumen: "Sirve al rey Ezequías: audiencias con justicia, pan para los pobres y la copia de la ley.",
+    escalones: ["Siervo del rey", "Escriba del rey"],
+    deberes: ["audiencia", "pan", "ley"],
+    nombres: [
+      { nombre: "José", ref: "Génesis 41:41" },
+      { nombre: "Daniel", ref: "Daniel 1:6" },
+      { nombre: "Nehemías", ref: "Nehemías 1:11" },
+      { nombre: "Abdías", ref: "1 Reyes 18:3" },
+      { nombre: "Mardoqueo", ref: "Ester 10:3" },
+      { nombre: "Joa", ref: "2 Reyes 18:18" },
+      { nombre: "Ester", ref: "Ester 10:3" },
+    ],
+  },
+};
+
+/** Mérito de cada deber de los caminos nuevos, y su tope por envío (un poco de golpe más un ritmo por segundo). */
+export const MERITO_DEBER_CAMINO: Record<DeberCamino, number> = { mensaje: 3, oracion: 2, memoria: 4, audiencia: 4, pan: 2, ley: 4 };
+export const TOPE_BASE_CAMINO: Record<DeberCamino, number> = { mensaje: 1, oracion: 1, memoria: 1, audiencia: 1, pan: 2, ley: 1 };
+export const TOPE_RITMO_CAMINO: Record<DeberCamino, number> = { mensaje: 0.03, oracion: 0.06, memoria: 0.04, audiencia: 0.04, pan: 0.06, ley: 0.04 };
+
+/** Segundos de oración en el monte para que cuente una. */
+export const ORACION_SEGUNDOS = 15;
+
+export function caminoDe(v: unknown): Camino {
+  return v === "profecia" || v === "realeza" ? v : "sacerdocio";
+}
+
+/** El nombre del escalón (o del cargo, en el sacerdocio) según el camino. */
+export function nombreEscalonCamino(camino: Camino, escalon: string | null | undefined, nombreSacerdocio: string): string {
+  if (camino === "sacerdocio") return nombreSacerdocio;
+  return escalon === "sacerdote" || !escalon ? CAMINOS[camino].escalones[0] : CAMINOS[camino].escalones[1];
+}
+
+// ---------------------------------------------------------------- el palacio: audiencias
+export type Audiencia = { id: string; caso: string; opciones: [string, string, string]; correcta: 0 | 1 | 2; explica: string; verso: { text: string; ref: string } };
+
+export const AUDIENCIAS: Audiencia[] = [
+  {
+    id: "buey",
+    caso: "Dos vecinos discuten por un buey perdido. El más rico te promete un regalo si fallas a su favor.",
+    opciones: ["Aceptar el regalo y fallar por el rico", "Escuchar a los dos y juzgar con verdad, sin aceptar regalos", "Mandarlos a casa sin juzgar"],
+    correcta: 1,
+    explica: "El juez justo no recibe soborno: escucha a los dos y busca la verdad.",
+    verso: { text: "No tuerzas el derecho; no hagas acepción de personas, ni tomes soborno; porque el soborno ciega los ojos de los sabios, y pervierte las palabras de los justos.", ref: "Deuteronomio 16:19" },
+  },
+  {
+    id: "viuda",
+    caso: "Una viuda pobre y un mercader importante, amigo del palacio, piden justicia en el mismo pleito.",
+    opciones: ["Favorecer al mercader porque es importante", "Favorecer a la viuda solo porque es pobre", "Juzgar con justicia, sin favorecer a ninguno por quién es"],
+    correcta: 2,
+    explica: "La justicia de Dios no mira la cara: ni favorece al pobre por ser pobre ni al grande por ser grande.",
+    verso: { text: "No harás injusticia en el juicio, ni favoreciendo al pobre ni complaciendo al grande; con justicia juzgarás a tu prójimo.", ref: "Levítico 19:15" },
+  },
+  {
+    id: "primero",
+    caso: "El primero en hablar cuenta su versión y parece tener toda la razón.",
+    opciones: ["Fallar enseguida a su favor", "Escuchar también al otro antes de juzgar", "Pedir un pago para seguir escuchando"],
+    correcta: 1,
+    explica: "Antes de juzgar hay que oír a las dos partes: la primera versión no siempre es toda la verdad.",
+    verso: { text: "Justo parece el primero que aboga por su causa; Pero viene su adversario, y le descubre.", ref: "Proverbios 18:17" },
+  },
+  {
+    id: "mendigo",
+    caso: "Un mendigo está perdiendo su pleito porque nadie habla por él.",
+    opciones: ["Escucharlo y defender su derecho", "Ignorarlo porque no paga tributo", "Sacarlo del palacio"],
+    correcta: 0,
+    explica: "El rey y sus siervos defienden a quien no tiene quién lo defienda.",
+    verso: { text: "No pervertirás el derecho de tu mendigo en su pleito.", ref: "Éxodo 23:6" },
+  },
+  {
+    id: "granero",
+    caso: "Hay hambre en un barrio de la ciudad y el granero del palacio está lleno.",
+    opciones: ["Guardarlo todo para el rey", "Abrir la mano al pobre y repartir pan", "Venderlo caro a los que tienen hambre"],
+    correcta: 1,
+    explica: "Dios manda abrir la mano al pobre: el que comparte su pan es bendito.",
+    verso: { text: "Porque no faltarán menesterosos en medio de la tierra; por eso yo te mando, diciendo: Abrirás tu mano a tu hermano, al pobre y al menesteroso en tu tierra.", ref: "Deuteronomio 15:11" },
+  },
+  {
+    id: "sacrificios",
+    caso: "Un consejero propone ofrecer muchos sacrificios para tapar una injusticia que cometió el palacio.",
+    opciones: ["Ofrecer los sacrificios y no corregir nada", "Esconder el asunto", "Corregir la injusticia: hacer justicia agrada más a Dios"],
+    correcta: 2,
+    explica: "Los sacrificios no tapan la injusticia: Dios pide primero hacer justicia.",
+    verso: { text: "Hacer justicia y juicio es a Jehová Más agradable que sacrificio.", ref: "Proverbios 21:3" },
+  },
+  {
+    id: "herencia",
+    caso: "Dos hermanos pelean por la herencia de su padre y ya no se hablan.",
+    opciones: ["Juzgar conforme a la verdad y animarlos a la misericordia entre hermanos", "Darle todo al mayor sin escuchar", "Quedarse el palacio con la herencia"],
+    correcta: 0,
+    explica: "El juicio verdadero también busca la paz y la misericordia entre hermanos.",
+    verso: { text: "Así habló Jehová de los ejércitos, diciendo: Juzgad conforme a la verdad, y haced misericordia y piedad cada cual con su hermano;", ref: "Zacarías 7:9" },
+  },
+  {
+    id: "asiria",
+    caso: "El rey de Asiria amenaza a Jerusalén y el pueblo tiene miedo.",
+    opciones: ["Rendirse y entregar todo el oro", "Animar al pueblo a confiar en Dios, como Ezequías", "Huir de la ciudad de noche"],
+    correcta: 1,
+    explica: "Ezequías animó al pueblo: con el rey de Asiria iba un brazo de carne, pero con Judá estaba Jehová.",
+    verso: { text: "Esforzaos y animaos; no temáis, ni tengáis miedo del rey de Asiria, ni de toda la multitud que con él viene; porque más hay con nosotros que con él. Con él es el brazo de carne, mas con nosotros está Jehová nuestro Dios para ayudarnos, y pelear nuestras batallas. Y el pueblo tuvo confianza en las palabras de Ezequías rey de Judá.", ref: "2 Crónicas 32:7-8" },
+  },
+];
+
+// ---------------------------------------------------------------- memorizar la Palabra / copiar la ley
+/** Versículos para ordenar palabra por palabra (la escuela memoriza; el escriba copia la ley). */
+export const VERSOS_MEMORIA: { text: string; ref: string; camino: "profecia" | "realeza" | "ambos" }[] = [
+  { text: "Después oí la voz del Señor, que decía: ¿A quién enviaré, y quién irá por nosotros? Entonces respondí yo: Heme aquí, envíame a mí.", ref: "Isaías 6:8", camino: "profecia" },
+  { text: "Y extendió Jehová su mano y tocó mi boca, y me dijo Jehová: He aquí he puesto mis palabras en tu boca.", ref: "Jeremías 1:9", camino: "profecia" },
+  { text: "Porque no hará nada Jehová el Señor, sin que revele su secreto a sus siervos los profetas.", ref: "Amós 3:7", camino: "profecia" },
+  { text: "El fuego arderá continuamente en el altar; no se apagará.", ref: "Levítico 6:13", camino: "ambos" },
+  { text: "Oh hombre, él te ha declarado lo que es bueno, y qué pide Jehová de ti: solamente hacer justicia, y amar misericordia, y humillarte ante tu Dios.", ref: "Miqueas 6:8", camino: "ambos" },
+  { text: "Misericordia y verdad guardan al rey, Y con clemencia se sustenta su trono.", ref: "Proverbios 20:28", camino: "realeza" },
+  { text: "Del rey que juzga con verdad a los pobres, El trono será firme para siempre.", ref: "Proverbios 29:14", camino: "realeza" },
+  { text: "No pervertirás el derecho de tu mendigo en su pleito.", ref: "Éxodo 23:6", camino: "realeza" },
+];
+
+/** Los mensajes de ánimo que lleva el profeta por la ciudad. */
+export const MENSAJES: { text: string; ref: string }[] = [
+  { text: "Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo en dondequiera que vayas.", ref: "Josué 1:9" },
+  { text: "Este es el día que hizo Jehová; Nos gozaremos y alegraremos en él.", ref: "Salmo 118:24" },
+  { text: "Alabad a Jehová, porque él es bueno, Porque para siempre es su misericordia.", ref: "Salmo 136:1" },
+  { text: "Jehová te bendiga, y te guarde;", ref: "Números 6:24" },
+];
