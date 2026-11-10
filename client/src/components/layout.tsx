@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { enLaRadio } from "@/lib/incrustado";
+import { loginUrl } from "@/lib/login-redirect";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "motion/react";
@@ -1039,11 +1041,38 @@ function EmailVerifyBanner() {
   );
 }
 
+/** Dentro de la radio: solo «Juegos» y la cuenta (la radio pone su barra con la música y el ministerio). */
+function BarraDeLaRadio() {
+  const { user } = useAuth();
+  return (
+    <header
+      className="sticky top-0 z-40 flex items-center gap-2 border-b border-orange-500/30 bg-[#13062a] px-3 py-2 text-white"
+      data-testid="barra-radio"
+    >
+      <Link href="/juegos" className="flex min-w-0 items-center gap-1.5 font-bold" data-testid="barra-radio-juegos">
+        <Gamepad2 className="h-5 w-5 shrink-0 text-amber-300" />
+        <span className="truncate">Juegos · Avivando el Fuego</span>
+      </Link>
+      <span className="flex-1" />
+      {user ? (
+        <span className="max-w-[40vw] truncate text-xs text-white/80" data-testid="barra-radio-usuario">
+          {user.displayName || user.username}
+        </span>
+      ) : (
+        <Link href={loginUrl()} className="shrink-0 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-950" data-testid="barra-radio-entrar">
+          Entrar o crear cuenta
+        </Link>
+      )}
+    </header>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const fireRef = useRef<Fire3DSceneHandle>(null);
-  // En /radio la radio original ocupa la pantalla: sin pie ni botón de subir.
-  const immersive = location === "/radio";
+  const radio = enLaRadio();
+  // En /radio la radio original ocupa la pantalla: sin pie ni botón de subir (y dentro de la radio, tampoco).
+  const immersive = location === "/radio" || radio;
 
   // ── Fire state bridge: Hero (intense) at home-top → Ember (drifting) elsewhere ──
   useEffect(() => {
@@ -1102,8 +1131,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         Saltar al contenido principal
       </a>
       <ScrollToTop />
-      <Navbar />
-      <EmailVerifyBanner />
+      {radio ? <BarraDeLaRadio /> : <Navbar />}
+      {!radio && <EmailVerifyBanner />}
       <AnimatePresence mode="wait">
         <motion.main
           key={location}

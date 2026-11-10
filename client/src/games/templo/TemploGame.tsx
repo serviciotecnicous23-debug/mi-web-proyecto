@@ -3,6 +3,7 @@
  * preguntas, mejoras, Libro del aprendiz, ceremonia de cada rango y final.
  * El mundo 3D (world.ts) se descarga al abrir el juego y corre en el navegador.
  */
+import { enLaRadio } from "@/lib/incrustado";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
@@ -83,7 +84,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const [save, setSave] = useState<SaveData | null>(null);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(() => readPref("juegos-silencio", false));
-  const [music, setMusic] = useState(() => readPref("templo-musica", true));
+  // dentro de la radio, sin la música del juego (se oye la radio) hasta que la persona la encienda
+  const [music, setMusic] = useState(() => readPref("templo-musica", !enLaRadio()));
   const [full, setFull] = useState(false);
   const [immersive, setImmersive] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);

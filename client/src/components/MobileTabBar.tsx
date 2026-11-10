@@ -1,3 +1,4 @@
+import { enLaRadio } from "@/lib/incrustado";
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { BookOpen, Gamepad2, GraduationCap, Home, Menu, Radio, Video } from "lucide-react";
@@ -41,7 +42,8 @@ export function MobileTabBar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const tabs = user ? MEMBER_TABS : VISITOR_TABS;
-  const oculta = SIN_BARRA.some((p) => location === p || location.startsWith(p + "/"));
+  // dentro de la radio la barra sobra (la radio pone la suya)
+  const oculta = enLaRadio() || SIN_BARRA.some((p) => location === p || location.startsWith(p + "/"));
 
   // html.has-tabbar: la página deja sitio abajo solo cuando la barra se ve.
   useEffect(() => {
