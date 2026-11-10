@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-compras",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Lo que compras ya se usa, y tu nombre como quieras",
+    puntos: [
+      "🛒 Después de comprar, el mercado te dice qué hacer y te lleva: «Ir a sembrar», «Ver mis adornos» o «Cambiar mi ropa».",
+      "🏺 Los adornos se ponen solos en la puerta de tu casa si queda lugar, y la ropa te la pones al comprarla: tus vecinos la ven enseguida.",
+      "🗺️ En «Ir a…» está el mercado, y tu huerto tiene un botón para ir a comprar semillas cuando no tienes.",
+      "✏️ El nombre de tu personaje en línea puede ser uno de la Biblia, el de tu cuenta u «Otro nombre», el que tú prefieras.",
+    ],
+  },
+  {
     id: "2026-11-10-mercado",
     fecha: "10 de noviembre de 2026",
     titulo: "El gozo, el mercado y tu casa",

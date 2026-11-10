@@ -756,12 +756,14 @@ export class CiudadWorld {
   }
 
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
-  irA(lugar: "casa" | "templo" | "plaza" | "puerta" | "palacio" | "escuela") {
+  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela") {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const destinos: Record<typeof lugar, [V2, number]> = {
       casa: [casa.umbral, casa.dir === 1 ? 0 : Math.PI],
       templo: [P.LLEGADA_TEMPLO, -Math.PI / 2],
       plaza: [[54, 0], -Math.PI / 2],
+      // frente al sembrador (el primer puesto), fuera de su círculo, mirando al puesto
+      mercado: [[P.PUESTOS[0][0], P.PUESTOS[0][1] - 3.8], 0],
       puerta: [[70.5, 0], Math.PI / 2],
       palacio: [[17, 17.4], 0],
       escuela: [[17, -19], Math.PI],

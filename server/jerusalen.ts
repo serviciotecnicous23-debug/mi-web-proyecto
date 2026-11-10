@@ -23,7 +23,7 @@ import { GOZO, sumarGozo } from "./gozo";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
-  NOMBRES_SACERDOTE, NOMBRE_PROPIO, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, TEMPORADA_DIAS, TOPE_DIA, escalonIndice, escalonNombre,
+  NOMBRES_SACERDOTE, NOMBRE_PROPIO, errorNombreLibre, limpiarNombreLibre, PREGUNTAS_DIA, SEGUNDOS_PREGUNTA, TEMPORADA_DIAS, TOPE_DIA, escalonIndice, escalonNombre,
   factorDelDia, type DeberId, type EscalonId, type JerusalenAcciones, type JerusalenEstado, type JerusalenPregunta,
   type JerusalenRespuesta, type JerusalenTitular,
 } from "@shared/jerusalen";
@@ -520,6 +520,14 @@ function nombresDe(camino: Camino): { nombre: string; ref: string }[] {
   return camino === "sacerdocio" ? NOMBRES_SACERDOTE : CAMINOS[camino].nombres;
 }
 
+/** El nombre que se guarda: el de la cuenta (null), uno de la lista o el que cada uno prefiera (revisado). */
+function nombreElegido(nombre: string, camino: Camino): { valor: string | null } | { error: string } {
+  if (nombre === NOMBRE_PROPIO) return { valor: null };
+  if (nombresDe(camino).some((x) => x.nombre === nombre)) return { valor: nombre };
+  const error = errorNombreLibre(nombre);
+  return error ? { error } : { valor: limpiarNombreLibre(nombre) };
+}
+
 export function escalonPorMerito(merito: number): EscalonId {
   return merito >= MERITO_TURNO ? "turno" : "sacerdote";
 }
@@ -697,7 +705,8 @@ export function registerJerusalenRoutes(app: Express) {
       if (crear) {
         // uno por camino: sacerdocio, escuela de los profetas o palacio del rey
         const camino = caminoDe(req.body?.camino);
-        if (nombre !== NOMBRE_PROPIO && !nombresDe(camino).some((x) => x.nombre === nombre)) return res.status(400).json({ message: "Elige un nombre de la lista." });
+        const elegido = nombreElegido(nombre, camino);
+        if ("error" in elegido) return res.status(400).json({ message: elegido.error });
         const { rows: suyos } = await pool.query(`SELECT slot, path FROM game_characters WHERE user_id = $1 AND game = $2`, [me, JUEGO]);
         if (suyos.some((r) => caminoDe(r.path) === camino)) return res.status(409).json({ message: "Ya tienes un personaje en ese camino." });
         if (suyos.length >= MAX_PERSONAJES) return res.status(409).json({ message: "Ya tienes un personaje en cada camino." });
@@ -705,7 +714,7 @@ export function registerJerusalenRoutes(app: Express) {
         const slot = [1, 2, 3].find((n) => !usados.has(n)) ?? 1;
         await pool.query(
           `INSERT INTO game_characters (user_id, game, slot, name, path, selected_at) VALUES ($1, $2, $3, $4, $5, now()) ON CONFLICT DO NOTHING`,
-          [me, JUEGO, slot, nombre === NOMBRE_PROPIO ? null : nombre, camino],
+          [me, JUEGO, slot, elegido.valor, camino],
         );
         const texto =
           camino === "profecia"
@@ -716,8 +725,9 @@ export function registerJerusalenRoutes(app: Express) {
         await evento(me, `jerusalen:entrada${camino === "sacerdocio" ? "" : `:${camino}`}`, texto);
       } else {
         if (!actual) return res.status(404).json({ message: "Primero crea tu personaje." });
-        if (nombre !== NOMBRE_PROPIO && !nombresDe(actual.camino).some((x) => x.nombre === nombre)) return res.status(400).json({ message: "Elige un nombre de la lista." });
-        await pool.query(`UPDATE game_characters SET name = $2 WHERE id = $1`, [actual.id, nombre === NOMBRE_PROPIO ? null : nombre]);
+        const elegido = nombreElegido(nombre, actual.camino);
+        if ("error" in elegido) return res.status(400).json({ message: elegido.error });
+        await pool.query(`UPDATE game_characters SET name = $2 WHERE id = $1`, [actual.id, elegido.valor]);
       }
       forget("jer:");
       res.json(await estadoDe(req));

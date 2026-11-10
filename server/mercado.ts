@@ -158,7 +158,30 @@ export function registerMercadoRoutes(app: Express) {
       } else {
         await pool.query(`UPDATE game_characters SET armario = armario || to_jsonb($2::text) WHERE id = $1`, [ch.id, a.id]);
       }
-      await responder(res, ch, { comprado: a.id, costo });
+      // Lo comprado ya se usa: el adorno se pone solo en la casa si queda lugar, y la ropa se la pone
+      // (después se cambia en «Tu casa»). Así se ve enseguida lo que se compró.
+      let colocado = false;
+      let puesto = false;
+      if (a.categoria === "adorno") {
+        const { rows: h } = await pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.id]);
+        const cupo = lugaresAdornos(Number(h[0]?.level || 0));
+        const { rows: ok } = await pool.query(
+          `UPDATE game_houses SET adornos = COALESCE(adornos, '[]'::jsonb) || to_jsonb($2::text)
+            WHERE character_id = $1 AND jsonb_array_length(COALESCE(adornos, '[]'::jsonb)) < $3 AND NOT (COALESCE(adornos, '[]'::jsonb) ? $2)
+            RETURNING 1`,
+          [ch.id, a.id, cupo],
+        );
+        colocado = ok.length > 0;
+      } else if (a.categoria === "ropa") {
+        const campo = a.id.startsWith("manto-") ? "manto" : "faja";
+        const { rows: r } = await pool.query(
+          `UPDATE game_characters SET ropa = jsonb_set(COALESCE(ropa, '{}'::jsonb), ARRAY[$2::text], to_jsonb($3::text)) WHERE id = $1 RETURNING ropa`,
+          [ch.id, campo, a.id],
+        );
+        puesto = r.length > 0;
+        if (puesto) refrescarFicha(ch.id, { ropa: coloresDeRopa(r[0].ropa) });
+      }
+      await responder(res, ch, { comprado: a.id, costo, colocado, puesto });
     } catch (err) {
       console.error("[mercado] comprar:", err);
       res.sendStatus(500);

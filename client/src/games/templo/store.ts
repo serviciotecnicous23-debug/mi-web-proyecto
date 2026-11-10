@@ -124,7 +124,7 @@ export type Modal =
   | { kind: "dificil"; q: JerusalenPregunta }
   | { kind: "fiesta"; id: FiestaId }
   | { kind: "juicio"; casoId: string }
-  | { kind: "casa" }
+  | { kind: "casa"; pestana?: "casa" | "huerto" | "adornos" | "vecinos" }
   | { kind: "anuncios" }
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }

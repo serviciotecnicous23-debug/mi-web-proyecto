@@ -111,6 +111,56 @@ export const NOMBRES_SACERDOTE: { nombre: string; ref: string }[] = [
 /** Valor especial para usar el nombre de la cuenta. */
 export const NOMBRE_PROPIO = "__propio__";
 
+// ---------------------------------------------------------------- el nombre que cada uno prefiera
+/** Largo del nombre libre del personaje. */
+export const NOMBRE_LIBRE = { min: 2, max: 20 };
+
+/**
+ * Raíces de groserías e insultos (se buscan dentro del nombre, sin tildes ni letras repetidas).
+ * Solo raíces que no aparecen en nombres de verdad (por eso «verga» o «nazi» van como palabra entera:
+ * Vergara, nazareo).
+ */
+const RAICES_MALAS = [
+  "mierd", "pendej", "joder", "jodid", "maricon", "cabron", "zorra", "perra", "idiot", "estupid", "imbecil", "chinga", "malparid",
+  "gonorrea", "hijueput", "hitler", "sexo", "porno", "fuck", "shit", "bitch", "pussy", "mamaguev", "huevon", "weon", "boludo",
+  "pelotud", "cagad", "putit", "putas",
+];
+/** Palabras que no van en un nombre (iguales a una palabra del nombre). */
+const PALABRAS_MALAS = [
+  "puta", "puto", "verga", "nazi", "culo", "pito", "polla", "caca", "tonto", "tonta", "bobo", "boba", "feo", "fea", "cono", "orto",
+  "teta", "pinga",
+];
+/** Nombres que no son para un personaje del juego (Dios, el adversario, la administración). */
+const RESERVADOS = [
+  "dios", "jehova", "jesus", "jesucristo", "cristo", "mesias", "espiritu santo", "satanas", "satan", "diablo", "lucifer", "belcebu", "demonio",
+  "admin", "administrador", "administradora", "moderador", "moderadora", "ministerio", "avivando el fuego",
+];
+
+function sinTildes(t: string): string {
+  return t.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+/** El nombre limpio: sin espacios de más. */
+export function limpiarNombreLibre(nombre: string): string {
+  return nombre.replace(/\s+/g, " ").trim();
+}
+
+/** Por qué no sirve un nombre libre (o null si sirve). Lo usan la pantalla y el servidor. */
+export function errorNombreLibre(nombre: string): string | null {
+  const n = limpiarNombreLibre(nombre);
+  if (n.length < NOMBRE_LIBRE.min || n.length > NOMBRE_LIBRE.max) return `El nombre debe tener entre ${NOMBRE_LIBRE.min} y ${NOMBRE_LIBRE.max} letras.`;
+  if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]*$/.test(n)) return "Usa solo letras y espacios (sin números, correos ni signos).";
+  const plano = sinTildes(n.toLowerCase()).replace(/[^a-zñ ]/g, " ").replace(/\s+/g, " ").trim();
+  const juntar = (t: string) => t.replace(/ /g, "").replace(/(.)\1+/g, "$1");
+  const pegado = juntar(plano);
+  // palabra por palabra: tal cual, o sin letras repetidas («putooo»), solo contra las que no tienen dobles («polla» ≠ «Pola»)
+  const sinDobles = PALABRAS_MALAS.filter((m) => !/(.)\1/.test(m));
+  const palabraMala = (p: string) => PALABRAS_MALAS.includes(p) || sinDobles.includes(p.replace(/(.)\1+/g, "$1"));
+  if (RAICES_MALAS.some((r) => pegado.includes(juntar(r))) || plano.split(" ").some(palabraMala)) return "Ese nombre no se puede usar. Elige otro.";
+  if (RESERVADOS.some((r) => plano === r || (` ${plano} `).includes(` ${r} `))) return "Ese nombre no es para un personaje. Elige otro.";
+  return null;
+}
+
 // ---------------------------------------------------------------- respuestas de la API
 export type JerusalenTitular = { personajeId: number; nombre: string; persona: string; isMe: boolean };
 
