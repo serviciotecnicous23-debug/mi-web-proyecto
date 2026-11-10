@@ -11,6 +11,7 @@ import { registerMisionesRoutes } from "./misiones";
 import { registerMercadoRoutes } from "./mercado";
 import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
+import { registerAyudaRoutes } from "./ayuda";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3643,6 +3644,7 @@ ${urls}
   registerMercadoRoutes(app);
   registerReunionesRoutes(app);
   registerConcursoRoutes(app);
+  registerAyudaRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

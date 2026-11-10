@@ -15,6 +15,7 @@ import { MISIONES_SQL } from "./misiones";
 import { MERCADO_SQL } from "./mercado";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
+import { AYUDA_SQL } from "./ayuda";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1092,6 +1093,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CONCURSO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (concurso): ${err?.message}`);
+    }
+    try {
+      // Los pedidos del barrio (ayuda entre vecinos)
+      await pool.query(AYUDA_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (ayuda): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables
