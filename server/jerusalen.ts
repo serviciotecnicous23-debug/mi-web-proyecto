@@ -241,12 +241,12 @@ export async function personajeDe(userId: number): Promise<PersonajeFila | null>
   };
 }
 
-async function requisitoDe(userId: number): Promise<Requisito> {
+async function requisitoDe(userId: number): Promise<Requisito & { rangoRespaldo: number }> {
   const { rows } = await pool.query(`SELECT data, backup FROM game_saves WHERE user_id = $1 AND game = $2`, [userId, JUEGO]);
-  // la partida de ahora o su respaldo (si alguien reinstaló la app y empezó otra, no pierde lo que sabe)
+  // lo de la partida de ahora; el respaldo solo cuenta para saber si conoce el templo (si alguien
+  // reinstaló la app y empezó otra, no pierde lo que sabe)
   const a = requisitoLocal(rows[0]?.data);
-  const b = requisitoLocal(rows[0]?.backup);
-  return b.rango > a.rango ? b : a;
+  return { ...a, rangoRespaldo: requisitoLocal(rows[0]?.backup).rango };
 }
 
 export const nombreDe = (r: { name?: string | null; display_name?: string | null; username?: string | null; user_id?: number | string }) => r.name || publicName(r);
@@ -453,8 +453,8 @@ export function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
 }
 
 /** Conoce el servicio del templo: jugó la historia, ya sirvió en línea o terminó la instrucción. */
-function conoceElTemplo(requisito: Requisito, yaSirvio: boolean, ch: PersonajeFila | null): boolean {
-  return requisito.rango >= 1 || yaSirvio || (ch?.instruccion ?? 0) >= PARTES_INSTRUCCION;
+function conoceElTemplo(requisito: Requisito & { rangoRespaldo?: number }, yaSirvio: boolean, ch: PersonajeFila | null): boolean {
+  return Math.max(requisito.rango, requisito.rangoRespaldo ?? 0) >= 1 || yaSirvio || (ch?.instruccion ?? 0) >= PARTES_INSTRUCCION;
 }
 
 /** Para las preguntas difíciles: quien no conoce el templo primero termina la instrucción. */
@@ -534,7 +534,14 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const marcar = <T extends { personajeId: number }>(x: T) => ({ ...x, isMe: !!ch && x.personajeId === ch.id });
   return {
     cuentaAprobada: user.isActive === true,
-    requisito: { ...requisito, puedeEntrar: true, puedeSumo: fuePrincipal, conoceTemplo: conoceElTemplo(requisito, yaSirvio, ch) },
+    requisito: {
+      rango: requisito.rango,
+      creible: requisito.creible,
+      motivo: requisito.motivo,
+      puedeEntrar: true,
+      puedeSumo: fuePrincipal,
+      conoceTemplo: conoceElTemplo(requisito, yaSirvio, ch),
+    },
     personaje: ch ? { id: ch.id, nombre: nombreDe(ch), propio: !ch.name, creado: ch.creado, instruccion: ch.instruccion } : null,
     temporada: { ...t, dePrueba: CARGOS_DE_PRUEBA },
     jerusalen: hoyEnJerusalen(),
