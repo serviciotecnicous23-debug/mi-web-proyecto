@@ -45,7 +45,40 @@ export function nombreDeBarrio(n: number): string {
   return vuelta ? `${b.nombre} ${vuelta + 1}` : b.nombre;
 }
 
-// ---------------------------------------------------------------- las casas
+// ---------------------------------------------------------------- el mapa que comparten el servidor y el teléfono
+/** Donde se puede caminar (la presencia se recorta a estos límites). */
+export const LIMITES_CIUDAD = { minX: -6, maxX: 75, minZ: -70.5, maxZ: 70.5 };
+
+/** Áreas de barrio (36 × 28,5 m: minX, minZ, maxX, maxZ), en el orden de BARRIOS: SE, NE, SO, NO. */
+export const AREA_RECT: [number, number, number, number][] = [
+  [38, 18, 74, 46.5],
+  [38, -46.5, 74, -18],
+  [-4, 40, 32, 68.5],
+  [-4, -68.5, 32, -40],
+];
+
+/** ¿En qué área de barrio está el punto? (0 = ninguna: plaza, calles, casas principales). */
+export function areaEn(x: number, z: number): number {
+  for (let i = 0; i < AREA_RECT.length; i++) {
+    const r = AREA_RECT[i];
+    if (x >= r[0] - 0.5 && x <= r[2] + 0.5 && z >= r[1] - 0.5 && z <= r[3] + 0.5) return i + 1;
+  }
+  return 0;
+}
+
+/**
+ * Canal de presencia: quien está en el área de un barrio ve a los que están en ese barrio; quien
+ * está en la plaza, las calles o junto a las casas principales ve a todos los que también están ahí.
+ * Desde el quinto barrio las áreas se repiten: en el área del barrio propio se ve el barrio propio;
+ * en las otras, el primero de esa área.
+ */
+export function canalDe(x: number, z: number, barrioPropio: number): string {
+  const area = areaEn(x, z);
+  if (!area) return "comun";
+  return `barrio:${areaDeBarrio(barrioPropio) === area ? barrioPropio : area}`;
+}
+
+// ---------------------------------------------------------------- la casa de cada uno
 export type NivelCasa = { nivel: number; nombre: string; honra: number; texto: string; verso: Verso };
 
 /**
@@ -148,6 +181,70 @@ export const VERSO_ENRAMADAS: Verso = {
   text: "Salió, pues, el pueblo, y trajeron ramas e hicieron tabernáculos, cada uno sobre su terrado, en sus patios, en los patios de la casa de Dios, en la plaza de la puerta de las Aguas, y en la plaza de la puerta de Efraín.",
   ref: "Nehemías 8:16",
 };
+
+// ---------------------------------------------------------------- vecinos: frases rápidas, sin chat libre
+/**
+ * En la ciudad no hay chat libre: solo frases fijas y versículos (no hay nada que moderar y cuida
+ * a los niños). Para conversar, «Escribir» abre la mensajería de la web.
+ */
+export type FraseRapida = { id: string; texto: string; ref?: string };
+export const FRASES: FraseRapida[] = [
+  { id: "paz", texto: "La paz sea contigo" },
+  { id: "bendiga", texto: "Dios te bendiga" },
+  { id: "gloria", texto: "¡Gloria a Dios!" },
+  { id: "amen", texto: "¡Amén!" },
+  { id: "altar", texto: "¿Me ayudas en el altar?" },
+  { id: "templo", texto: "¡Vamos al templo!" },
+  { id: "gusto", texto: "¡Qué gusto verte en Jerusalén!" },
+  { id: "orare", texto: "Oraré por ti" },
+  { id: "gracias", texto: "¡Muchas gracias!" },
+  { id: "casa", texto: "Ven a visitar mi casa" },
+];
+export const VERSICULOS_RAPIDOS: FraseRapida[] = [
+  { id: "v-casa", texto: "Yo me alegré con los que me decían: A la casa de Jehová iremos.", ref: "Salmo 122:1" },
+  { id: "v-hermanos", texto: "¡Mirad cuán bueno y cuán delicioso es Habitar los hermanos juntos en armonía!", ref: "Salmo 133:1" },
+  { id: "v-bendiga", texto: "Jehová te bendiga, y te guarde;", ref: "Números 6:24" },
+  { id: "v-dia", texto: "Este es el día que hizo Jehová; Nos gozaremos y alegraremos en él.", ref: "Salmo 118:24" },
+  { id: "v-regocijaos", texto: "Regocijaos en el Señor siempre. Otra vez digo: ¡Regocijaos!", ref: "Filipenses 4:4" },
+  { id: "v-paz", texto: "Pedid por la paz de Jerusalén; Sean prosperados los que te aman.", ref: "Salmo 122:6" },
+  { id: "v-valiente", texto: "Mira que te mando que te esfuerces y seas valiente;", ref: "Josué 1:9" },
+  { id: "v-alabad", texto: "Alabad a Jehová, porque él es bueno, Porque para siempre es su misericordia.", ref: "Salmo 136:1" },
+];
+export function fraseRapida(id: string): FraseRapida | null {
+  return FRASES.find((f) => f.id === id) ?? VERSICULOS_RAPIDOS.find((f) => f.id === id) ?? null;
+}
+/** Una frase cada 2,5 s y como mucho 12 por minuto. */
+export const FRASE_CADA_MS = 2500;
+export const FRASES_POR_MINUTO = 12;
+
+// ---------------------------------------------------------------- la presencia (WebSocket)
+/** Dirección del WebSocket de la ciudad (la presencia viaja solo en memoria, nunca en la base). */
+export const RED_RUTA = "/api/jerusalen/ciudad/red";
+/** Cada cuánto manda el servidor las posiciones de los vecinos (y el teléfono la suya, si se movió). */
+export const RED_TICK_MS = 250;
+
+/** Lo que se sabe de un vecino (llega una vez, cuando aparece). */
+export type VecinoInfo = {
+  id: number;
+  nombre: string;
+  escalon: EscalonId;
+  barrio: number;
+  casa: number;
+  /** La cuenta, solo para «Escribir» (abre la mensajería). */
+  u: number;
+};
+
+/** Del teléfono al servidor. */
+export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number } | { t: "frase"; id: string };
+
+/** Del servidor al teléfono. `l` = [id, x, z, giro, se mueve] de los vecinos que se ven (hasta 20). */
+export type RedEntra =
+  | { t: "hola"; yo: number; tick: number }
+  | { t: "info"; v: VecinoInfo }
+  | { t: "v"; l: [number, number, number, number, number][] }
+  | { t: "frase"; de: number; id: string }
+  | { t: "barrio"; n: number; casas: CasaVista[] }
+  | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
 /** Una casa del barrio tal como la ven todos (sin siervos ni bienes: eso solo lo ve el dueño). */
