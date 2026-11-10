@@ -2,6 +2,7 @@
  * Puente entre el mundo 3D y la pantalla (React). El mundo publica aquí el marcador unas diez
  * veces por segundo y pide ventanas (diálogos, lecciones, preguntas...). La pantalla se suscribe.
  */
+import type { TabMercado } from "@shared/mercado";
 import { useSyncExternalStore } from "react";
 import type { EscalonId, JerusalenPregunta } from "@shared/jerusalen";
 import type { FiestaId } from "@shared/calendario";
@@ -97,6 +98,8 @@ export type CiudadHud = {
   frases: { id: number; nombre: string; texto: string }[];
   /** El vecino que está a un par de pasos. */
   cerca: { id: number; nombre: string } | null;
+  /** El gozo de Jerusalén en línea (se gana sirviendo aquí y se gasta en el mercado). */
+  gozo: number;
 };
 
 export type EdificioId = "palacio" | "escuela" | "mercado";
@@ -125,6 +128,7 @@ export type Modal =
   | { kind: "anuncios" }
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }
+  | { kind: "mercado"; tab?: TabMercado }
   | { kind: "escuela" }
   | { kind: "palacio" }
   | { kind: "irA" }

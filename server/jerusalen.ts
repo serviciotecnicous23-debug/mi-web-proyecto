@@ -19,6 +19,7 @@ import { CAMINOS, MERITO_DEBER_CAMINO, TOPE_BASE_CAMINO, TOPE_RITMO_CAMINO, cami
 import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
 import { sirviendoJuntos } from "./presencia-templo";
 import { avanzarMision, misionesPorDeberes } from "./misiones";
+import { GOZO, sumarGozo } from "./gozo";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
@@ -867,6 +868,9 @@ export function registerJerusalenRoutes(app: Express) {
           ...(juntos ? { juntos } : {}),
         };
       });
+      // el gozo: uno por cada deber aceptado
+      const cuantos = Object.values(aceptados).reduce((a, b) => a + Number(b || 0), 0);
+      await sumarGozo(ch.id, cuantos * GOZO.deber).catch(() => null);
       // los encargos del día y la ofrenda del barrio (fuera de la fila del mérito)
       const misiones = await misionesPorDeberes(ch, aceptados, juntos >= JUNTOS_DESDE).catch((err) => {
         console.error("[jerusalen] misiones:", err);
@@ -984,6 +988,7 @@ export function registerJerusalenRoutes(app: Express) {
         return { status: 200, body };
       });
       if (out.status === 200 && (out.body as JerusalenRespuesta).correcta) {
+        await sumarGozo(ch.id, GOZO.acierto).catch(() => null);
         const misiones = await avanzarMision(ch, "aciertos", 1).catch(() => []);
         if (misiones.length) return res.json({ ...(out.body as JerusalenRespuesta), misiones });
       }

@@ -10,6 +10,8 @@ import {
   CAMINOS_ESTUDIO, ESTUDIOS, EXAMEN_APRUEBA, MERITO_ESTUDIO, MERITO_SECCION, estudioPorId,
   type CaminoEstudio, type EstudiosDe, type EstudiosEstado, type ExamenResultado, type MiEstudio, type PreguntaExamen, type SeccionEstudio,
 } from "@shared/estudios";
+import { GOZO } from "@shared/mercado";
+import { avisarMisiones } from "./online";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
 
@@ -207,8 +209,8 @@ function Seccion({ id, seccion, hecha, alTerminar }: { id: string; seccion: stri
       setError(r.data?.message || "No se pudo guardar. Intenta de nuevo.");
       return;
     }
-    if (r.data.premio) gameStore.toast(`Sección terminada: «${s.titulo}» · +${r.data.premio} de mérito`, "gold");
-    for (const m of (r.data as { misiones?: { titulo: string; premio: number }[] }).misiones || []) gameStore.toast(`${m.titulo} · +${m.premio} de mérito`, "gold");
+    if (r.data.premio) gameStore.toast(`Sección terminada: «${s.titulo}» · +${r.data.premio} de mérito · +${GOZO.seccion} de gozo`, "gold");
+    avisarMisiones((r.data as { misiones?: { titulo: string; premio: number; gozo?: number }[] }).misiones);
     alTerminar(r.data.estado);
   };
   return (
@@ -281,7 +283,7 @@ function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: Estudi
     }
     setResultado(r.data);
     alTerminar(r.data.estado);
-    if (r.data.aprobado) gameStore.toast(r.data.primeraVez ? `¡Aprobaste «${estudioPorId(id)?.titulo}»! +${r.data.premio} de mérito` : "¡Aprobado otra vez!", "gold");
+    if (r.data.aprobado) gameStore.toast(r.data.primeraVez ? `¡Aprobaste «${estudioPorId(id)?.titulo}»! +${r.data.premio} de mérito · +${GOZO.estudio} de gozo` : "¡Aprobado otra vez!", "gold");
   };
   if (error)
     return (

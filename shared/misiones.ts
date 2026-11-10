@@ -70,4 +70,4 @@ export type MisionesEstado = {
   semana: string;
 };
 /** Lo que se acaba de cumplir (para avisar en el juego). */
-export type MisionCumplida = { titulo: string; premio: number };
+export type MisionCumplida = { titulo: string; premio: number; gozo?: number };
