@@ -12,18 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
 import { Card, VerseBox, fmt, hace } from "./ui";
-import { fetchEstado } from "./online";
+import { bendecirCasa, casaOfrendar, casaSiervos, fetchEstado, verCasa } from "./online";
 import type { CiudadWorld } from "./ciudad/mundo";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { escalonNombre, type JerusalenEstado } from "@shared/jerusalen";
 import {
-  CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_CASA, VERSO_HONRA, VERSO_PLAZA, VERSO_PULPITO, nombreDeBarrio,
-  type CiudadEstado,
+  BIEN, BIENES, CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
+  VERSO_PLAZA, VERSO_PULPITO, VERSO_SIERVOS, VERSO_VISITA, bienDeFiesta, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVisita, type CiudadEstado,
 } from "@shared/ciudad";
+import { FIESTA } from "@shared/calendario";
 import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 
-/** La ciudad que corre y lo último que dijo el servidor de ella. */
-export const CiudadCtx = createContext<{ city: CiudadWorld | null; estado: CiudadEstado | null }>({ city: null, estado: null });
+/** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
+export const CiudadCtx = createContext<{ city: CiudadWorld | null; estado: CiudadEstado | null; setEstado?: (e: CiudadEstado) => void }>({ city: null, estado: null });
 
 function Boton({ label, onClick, children, testid, active, className = "flex" }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean; className?: string }) {
   const { city } = useContext(CiudadCtx);
@@ -229,6 +230,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <VecinosView />;
     case "vecino":
       return <VecinoView id={modal.id} />;
+    case "visita":
+      return <VisitaView personajeId={modal.personajeId} nombre={modal.nombre} />;
     default:
       return null;
   }
@@ -295,6 +298,7 @@ function CasaView() {
             </li>
           ))}
         </ol>
+        <SiervosPanel />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>
@@ -307,6 +311,203 @@ function CasaView() {
           data-testid="button-ciudad-casa-templo"
         >
           <Landmark className="mr-1 h-4 w-4" /> Ir a servir al templo
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+/** Tus siervos (solo los ves tú), tu alfolí y llevar las ofrendas de tu casa al templo. */
+function SiervosPanel() {
+  const { estado, city, setEstado } = useContext(CiudadCtx);
+  const [busy, setBusy] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+  if (!estado) return null;
+  const p = estado.privada;
+  const fiesta = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta;
+  const doble = bienDeFiesta(fiesta?.ofrenda);
+  const guardar = (privada: CasaPrivada, nivel?: number, honra?: number) => {
+    const yo = nivel !== undefined || honra !== undefined ? { ...estado.yo, ...(nivel !== undefined ? { nivel } : {}), ...(honra !== undefined ? { honra } : {}) } : estado.yo;
+    if (nivel !== undefined) {
+      const sig = NIVELES_CASA[nivel + 1];
+      yo.siguiente = sig ? { nivel: sig.nivel, honra: sig.honra } : null;
+    }
+    const e = { ...estado, privada, yo };
+    setEstado?.(e);
+    city?.actualizarPrivada(privada, nivel);
+  };
+  const cambiar = async (lista: Bien[]) => {
+    setBusy(true);
+    setAviso(null);
+    const r = await casaSiervos(lista);
+    setBusy(false);
+    if (r.ok && r.data) guardar(r.data);
+    else setAviso(r.data?.message || "No se pudo cambiar. Intenta de nuevo.");
+  };
+  const ofrendar = async () => {
+    const bienes = { harina: p.bienes.harina, aceite: p.bienes.aceite, corderos: p.bienes.corderos };
+    if (!bienes.harina && !bienes.aceite && !bienes.corderos) return;
+    setBusy(true);
+    setAviso(null);
+    const r = await casaOfrendar(bienes);
+    setBusy(false);
+    if (r.ok && r.data) {
+      guardar(r.data.privada, r.data.subio ?? undefined, r.data.honra);
+      setAviso(`Tus siervos llevaron las ofrendas al templo: +${fmt(r.data.ganado)} de honra para tu casa${r.data.doble ? ` (la ${BIEN[r.data.doble].nombre.toLowerCase()} valió el doble por la fiesta)` : ""}.${r.data.subio !== null ? ` ¡Tu casa creció: ahora es ${NIVELES_CASA[r.data.subio].nombre.toLowerCase()}!` : ""}`);
+    } else setAviso(r.data?.message || "No se pudo llevar. Intenta de nuevo.");
+  };
+  const hay = p.bienes.harina + p.bienes.aceite + p.bienes.corderos > 0;
+  const libres = p.maxSiervos - p.siervos.length;
+  return (
+    <section className="space-y-2.5 rounded-xl border border-amber-200 p-3 dark:border-amber-900/60" data-testid="ciudad-siervos">
+      <p className="flex items-baseline justify-between gap-2 font-black">
+        <span>Tus siervos</span>
+        <span className="text-xs font-semibold text-stone-500">
+          {p.siervos.length} de {p.maxSiervos} · solo los ves tú
+        </span>
+      </p>
+      <p className="text-xs text-stone-500">Preparan harina, aceite y corderos mientras no juegas: hasta 2 horas seguidas y 3 por día (la segunda hora rinde la mitad). No sirven en el templo ni ganan mérito por ti. Hoy trabajaron {p.minutosHoy} de 180 minutos.</p>
+      {aviso && <p className="rounded-lg bg-amber-50 px-2 py-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200" data-testid="ciudad-siervos-aviso">{aviso}</p>}
+      <ul className="space-y-1.5">
+        {p.siervos.map((tarea, i) => (
+          <li key={i} className="flex items-center gap-2 rounded-lg bg-amber-50/70 px-2 py-1.5 dark:bg-amber-950/20">
+            <span className="w-5 text-center">{BIEN[tarea].icono}</span>
+            <span className="min-w-0 flex-1 text-[13px]">
+              <b>Siervo {i + 1}:</b> {BIEN[tarea].tarea.toLowerCase()} ({BIEN[tarea].porHora.toLocaleString("es-419")} por hora)
+            </span>
+            <select
+              className="rounded-md border border-stone-300 bg-white px-1 py-0.5 text-xs dark:border-stone-700 dark:bg-stone-900"
+              value={tarea}
+              disabled={busy}
+              onChange={(e) => void cambiar(p.siervos.map((t, k) => (k === i ? (e.target.value as Bien) : t)))}
+              aria-label={`Tarea del siervo ${i + 1}`}
+              data-testid={`siervo-tarea-${i}`}
+            >
+              {BIENES.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre}
+                </option>
+              ))}
+            </select>
+          </li>
+        ))}
+      </ul>
+      {libres > 0 ? (
+        <Button size="sm" variant="secondary" className="w-full" disabled={busy} onClick={() => void cambiar([...p.siervos, "harina"])} data-testid="button-siervo-llamar">
+          Llamar un siervo ({libres} {libres === 1 ? "lugar libre" : "lugares libres"})
+        </Button>
+      ) : p.maxSiervos < 4 ? (
+        <p className="text-center text-xs text-stone-500">Cuando tu casa crezca habrá lugar para otro siervo.</p>
+      ) : null}
+      <p className="pt-1 font-black">Tu alfolí</p>
+      <div className="grid grid-cols-3 gap-1.5 text-center" data-testid="ciudad-alfoli">
+        {BIENES.map((b) => (
+          <div key={b.id} className={`rounded-lg p-1.5 ${doble === b.id ? "bg-amber-200/70 dark:bg-amber-800/40" : "bg-stone-100 dark:bg-stone-800"}`}>
+            <p className="text-lg leading-none">{b.icono}</p>
+            <p className="text-sm font-black tabular-nums">
+              {p.bienes[b.id]}
+              <span className="text-[10px] font-semibold text-stone-500">/{p.capacidad}</span>
+            </p>
+            <p className="text-[10px] text-stone-500">{b.nombre}</p>
+          </div>
+        ))}
+      </div>
+      <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={busy || !hay} onClick={() => void ofrendar()} data-testid="button-siervos-ofrendar">
+        {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null} Llevar todo al templo (honra para tu casa)
+      </Button>
+      <p className="text-[11px] text-stone-500">
+        Cada harina da 2 de honra, cada aceite 3 y cada cordero 10{doble ? `; hoy, por ${FIESTA[fiesta!.id].nombre.toLowerCase()}, ${BIEN[doble].nombre.toLowerCase()} vale el doble` : ""}. Tu casa ya recibió {fmt(p.ofrecido)} de honra por sus ofrendas.
+      </p>
+      <VerseBox text={VERSO_ALFOLI.text} refName={VERSO_ALFOLI.ref} />
+      <p className="text-center text-xs italic text-stone-500">
+        «{VERSO_SIERVOS.text}» — {VERSO_SIERVOS.ref}
+      </p>
+      <p className="pt-1 font-black">Bendiciones</p>
+      <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="ciudad-bendiciones">
+        {p.bendiciones === 0 ? "Todavía nadie dejó una bendición en tu casa. Invita a tus vecinos con «Ven a visitar mi casa»." : `Tus vecinos dejaron ${fmt(p.bendiciones)} ${p.bendiciones === 1 ? "bendición" : "bendiciones"} en tu casa.`}
+      </p>
+      <p className="text-center text-xs italic text-stone-500">
+        «{VERSO_DADOR.text}» — {VERSO_DADOR.ref}
+      </p>
+    </section>
+  );
+}
+
+/** La casa de un vecino: se ve sin tocar nada y se deja una bendición (una por día). */
+function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: string }) {
+  const { city } = useContext(CiudadCtx);
+  const [casa, setCasa] = useState<CasaVisita | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [hecho, setHecho] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    void verCasa(personajeId).then((r) => {
+      if (!vivo) return;
+      if (r.ok && r.data) setCasa(r.data);
+      else setError(r.data?.message || "No se pudo abrir la casa.");
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [personajeId]);
+  const bendecir = async () => {
+    setBusy(true);
+    const r = await bendecirCasa(personajeId);
+    setBusy(false);
+    if (r.ok && r.data) {
+      setCasa(r.data);
+      setHecho(true);
+      city?.audio.correct();
+    } else setError(r.data?.message || "No se pudo dejar la bendición.");
+  };
+  const nivel = casa ? NIVELES_CASA[casa.nivel] : null;
+  return (
+    <Card
+      title={
+        <span className="flex items-center gap-2">
+          <Home className="h-5 w-5" /> La casa de {casa?.nombre ?? nombre}
+        </span>
+      }
+      onClose={cerrar}
+      testid="ciudad-visita"
+    >
+      <div className="space-y-3 p-4 text-sm">
+        {!casa && !error && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        )}
+        {error && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{error}</p>}
+        {casa && nivel && (
+          <>
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              {escalonNombre(casa.escalon)} · {nombreDeBarrio(casa.barrio)}, casa {casa.parcela + 1}
+            </p>
+            <div>
+              <p className="font-serif text-xl font-black">{nivel.nombre}</p>
+              <p className="text-[15px] leading-relaxed text-stone-600 dark:text-stone-300">{nivel.texto}</p>
+            </div>
+            <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
+              ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
+            </p>
+            <VerseBox text={VERSO_VISITA.text} refName={VERSO_VISITA.ref} />
+            {hecho ? (
+              <p className="rounded-xl bg-emerald-50 p-2.5 text-center text-sm font-bold text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">Dejaste tu bendición: «Paz sea a esta casa». Vuelve mañana para dejar otra.</p>
+            ) : casa.yaBendije ? (
+              <p className="rounded-xl bg-stone-100 p-2.5 text-center text-xs dark:bg-stone-800">Hoy ya dejaste tu bendición en esta casa. Vuelve mañana.</p>
+            ) : (
+              <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={busy} onClick={() => void bendecir()} data-testid="button-visita-bendecir">
+                {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null} Dejar una bendición
+              </Button>
+            )}
+            <p className="text-center text-xs italic text-stone-500">
+              «{VERSO_HOSPEDAJE.text}» — {VERSO_HOSPEDAJE.ref}
+            </p>
+          </>
+        )}
+        <Button variant="secondary" className="w-full" onClick={cerrar}>
+          Volver a la calle
         </Button>
       </div>
     </Card>

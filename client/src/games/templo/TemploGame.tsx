@@ -91,7 +91,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const audioRef = useRef<TempleAudio | null>(null);
   const irACiudadRef = useRef<(llegada: "templo" | "casa", e?: JerusalenEstado) => Promise<boolean>>(async () => false);
   const irAlTemploRef = useRef<() => Promise<void>>(async () => undefined);
-  const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado }), [city, ciudadEstado]);
+  const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado, setEstado: setCiudadEstado }), [city, ciudadEstado]);
 
   // Se busca la partida (en el teléfono y, con cuenta, en el servidor) y se descarga el mundo.
   useEffect(() => {
@@ -1040,6 +1040,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "frases":
     case "vecinos":
     case "vecino":
+    case "visita":
       return <CiudadModal modal={modal} />;
   }
 }

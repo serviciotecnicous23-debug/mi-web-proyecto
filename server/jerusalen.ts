@@ -96,7 +96,22 @@ CREATE TABLE IF NOT EXISTS "user_blocks" (
   "created_at" timestamp DEFAULT now(),
   PRIMARY KEY ("blocker_id", "blocked_id")
 );
-CREATE INDEX IF NOT EXISTS "idx_user_blocks_blocked" ON "user_blocks" ("blocked_id");`;
+CREATE INDEX IF NOT EXISTS "idx_user_blocks_blocked" ON "user_blocks" ("blocked_id");
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "servants" jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "goods" jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "collected_at" timestamp;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "prod_day" text;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "prod_seconds" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "offered" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "blessings_seen_at" timestamp;
+CREATE TABLE IF NOT EXISTS "game_house_blessings" (
+  "house_character_id" integer NOT NULL REFERENCES "game_characters"("id") ON DELETE CASCADE,
+  "visitor_user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "day_key" text NOT NULL,
+  "created_at" timestamp DEFAULT now(),
+  PRIMARY KEY ("house_character_id", "visitor_user_id", "day_key")
+);
+CREATE INDEX IF NOT EXISTS "idx_game_house_blessings_house" ON "game_house_blessings" ("house_character_id", "created_at");`;
 
 // ---------------------------------------------------------------- días y temporadas
 // El día del juego es el de Texas (America/Chicago): ahí está el ministerio y casi todos juegan

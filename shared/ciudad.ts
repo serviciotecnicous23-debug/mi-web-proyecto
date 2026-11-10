@@ -82,8 +82,8 @@ export function canalDe(x: number, z: number, barrioPropio: number): string {
 export type NivelCasa = { nivel: number; nombre: string; honra: number; texto: string; verso: Verso };
 
 /**
- * La casa crece con la honra: el mérito de todas las temporadas (Proverbios 3:9-10). Nunca baja,
- * aunque cada temporada el mérito vuelva a empezar en cero.
+ * La casa crece con la honra: el mérito de todas las temporadas y lo que la casa ofrece en el
+ * templo (Proverbios 3:9-10). Nunca baja, aunque cada temporada el mérito vuelva a empezar en cero.
  */
 export const NIVELES_CASA: NivelCasa[] = [
   {
@@ -132,10 +132,53 @@ export function nivelPorHonra(honra: number): number {
   return n;
 }
 
-/** Honra de una casa: el mérito de todas las temporadas. */
-export function honraDe(meritoTotal: number): number {
-  return Math.max(0, Math.floor(meritoTotal));
+/** Honra de una casa: el mérito de todas las temporadas más lo que la casa ofreció en el templo. */
+export function honraDe(meritoTotal: number, ofrecido = 0): number {
+  return Math.max(0, Math.floor(meritoTotal) + Math.floor(ofrecido));
 }
+
+// ---------------------------------------------------------------- tus siervos y tu alfolí (solo los ve el dueño)
+/**
+ * Cada casa tiene hasta 4 siervos que solo ve su dueño. Preparan harina, aceite y corderos
+ * mientras no juegas, con el mismo tope de los levitas del modo local: 2 horas por salida y 3 por
+ * día, y la segunda hora rinde la mitad. No trabajan en el templo ni ganan mérito: lo que
+ * preparan se guarda en el alfolí de la casa y, llevado al templo, da honra a la casa.
+ */
+export type Bien = "harina" | "aceite" | "corderos";
+export const BIENES: { id: Bien; nombre: string; icono: string; porHora: number; honra: number; tarea: string }[] = [
+  { id: "harina", nombre: "Harina", icono: "🌾", porHora: 6, honra: 2, tarea: "Muele el trigo" },
+  { id: "aceite", nombre: "Aceite", icono: "🫒", porHora: 4, honra: 3, tarea: "Prensa las olivas" },
+  { id: "corderos", nombre: "Corderos", icono: "🐑", porHora: 1.5, honra: 10, tarea: "Cuida el rebaño" },
+];
+export const BIEN = Object.fromEntries(BIENES.map((b) => [b.id, b])) as Record<Bien, (typeof BIENES)[number]>;
+export const MAX_SIERVOS = 4;
+/** Siervos según la casa: uno en la tienda y uno más por cada nivel (hasta 4). */
+export function siervosPermitidos(nivel: number): number {
+  return Math.max(1, Math.min(MAX_SIERVOS, Math.floor(nivel) + 1));
+}
+/** Lo que cabe de cada bien en el alfolí de la casa. */
+export function capacidadAlfoli(nivel: number): number {
+  return 20 + 20 * Math.max(0, Math.min(3, Math.floor(nivel)));
+}
+/** Como los levitas del modo local: 2 h por salida y 3 h por día. */
+export const SIERVOS_SALIDA = 2 * 3600;
+export const SIERVOS_DIA = 3 * 3600;
+/** Horas que rinden: la primera completa y la segunda a la mitad. */
+export function horasEfectivas(segundos: number): number {
+  const t = Math.max(0, Math.min(segundos, SIERVOS_SALIDA));
+  return (Math.min(t, 3600) + Math.max(0, t - 3600) * 0.5) / 3600;
+}
+/** En la fiesta, la ofrenda que más traen vale el doble: corderos en la Pascua, harina en los panes y las primicias. */
+export function bienDeFiesta(ofrenda: "cordero" | "cereal" | "palomas" | undefined | null): Bien | null {
+  return ofrenda === "cordero" ? "corderos" : ofrenda === "cereal" ? "harina" : null;
+}
+
+export const VERSO_SIERVOS: Verso = { text: "Y su señor le dijo: Bien, buen siervo y fiel; sobre poco has sido fiel, sobre mucho te pondré; entra en el gozo de tu señor.", ref: "Mateo 25:21" };
+export const VERSO_ALFOLI: Verso = { text: "Traed todos los diezmos al alfolí y haya alimento en mi casa;", ref: "Malaquías 3:10" };
+export const VERSO_DADOR: Verso = { text: "Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre.", ref: "2 Corintios 9:7" };
+/** Al visitar una casa (la bendición que se deja). */
+export const VERSO_VISITA: Verso = { text: "En cualquier casa donde entréis, primeramente decid: Paz sea a esta casa.", ref: "Lucas 10:5" };
+export const VERSO_HOSPEDAJE: Verso = { text: "Hospedaos los unos a los otros sin murmuraciones.", ref: "1 Pedro 4:9" };
 
 // ---------------------------------------------------------------- los edificios principales
 /** Lo que se lee al acercarse al palacio y a la escuela (sus caminos se abren en la etapa 3). */
@@ -260,6 +303,38 @@ export type CasaVista = {
 /** Un barrio completo (al entrar en su área). */
 export type BarrioEstado = { n: number; area: number; nombre: string; casas: CasaVista[] };
 
+/** Lo de tu casa que solo ves tú: siervos, alfolí y bendiciones. */
+export type CasaPrivada = {
+  siervos: Bien[];
+  maxSiervos: number;
+  /** Lo guardado (enteros: lo que se puede ofrecer). */
+  bienes: Record<Bien, number>;
+  capacidad: number;
+  /** Lo que prepararon desde la última vez (null si nada). */
+  recogido: Record<Bien, number> | null;
+  /** Minutos de trabajo de hoy (de 180). */
+  minutosHoy: number;
+  /** Honra que dio lo que tu casa ofreció en el templo. */
+  ofrecido: number;
+  bendiciones: number;
+  /** Quiénes dejaron una bendición desde la última vez. */
+  nuevasBendiciones: string[];
+};
+
+/** Una casa al visitarla. */
+export type CasaVisita = {
+  personajeId: number;
+  nombre: string;
+  escalon: EscalonId;
+  barrio: number;
+  parcela: number;
+  nivel: number;
+  bendiciones: number;
+  /** Ya dejaste tu bendición hoy. */
+  yaBendije: boolean;
+  esMia: boolean;
+};
+
 export type CiudadEstado = {
   yo: {
     personajeId: number;
@@ -279,4 +354,6 @@ export type CiudadEstado = {
   otros: { n: number; area: number; casas: { parcela: number; nivel: number }[] }[];
   jerusalen: JerusalenEstado["jerusalen"];
   temporada: { n: number; dePrueba: boolean; diasRestantes: number };
+  /** Tus siervos, tu alfolí y tus bendiciones (solo los ves tú). */
+  privada: CasaPrivada;
 };

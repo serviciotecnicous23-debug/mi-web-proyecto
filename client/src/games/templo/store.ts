@@ -117,7 +117,8 @@ export type Modal =
   | { kind: "irA" }
   | { kind: "frases" }
   | { kind: "vecinos" }
-  | { kind: "vecino"; id: number };
+  | { kind: "vecino"; id: number }
+  | { kind: "visita"; personajeId: number; nombre: string };
 
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
 
