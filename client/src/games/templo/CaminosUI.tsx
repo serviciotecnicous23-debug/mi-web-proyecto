@@ -260,6 +260,16 @@ export function EscuelaView({ tab: inicial }: { tab?: "memoria" | "discernir" } 
                 <Search className="mr-2 h-4 w-4" /> Discernir con las Escrituras (+4)
               </Button>
               <Button
+                className="justify-start rounded-xl"
+                onClick={() => {
+                  gameStore.close();
+                  gameStore.push({ kind: "catedra", area: "oficios" });
+                }}
+                data-testid="button-escuela-oficios"
+              >
+                <Megaphone className="mr-2 h-4 w-4" /> Los oficios del profeta, con Miqueas (+3 por lección)
+              </Button>
+              <Button
                 variant="secondary"
                 className="justify-start rounded-xl"
                 disabled={!!city?.mensajeEnCurso}
