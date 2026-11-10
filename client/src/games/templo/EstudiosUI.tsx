@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Check, GraduationCap, Loader2, Lock, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  CAMINOS_ESTUDIO, ESTUDIOS, EXAMEN_APRUEBA, MERITO_ESTUDIO, MERITO_SECCION, estudioPorId,
+  CAMINOS_ESTUDIO, ESTUDIOS, EXAMEN_APRUEBA, EXAMEN_INTENTOS, EXAMEN_PREGUNTAS, MERITO_ESTUDIO, MERITO_SECCION, estudioPorId,
   type CaminoEstudio, type EstudiosDe, type EstudiosEstado, type ExamenResultado, type MiEstudio, type PreguntaExamen, type SeccionEstudio,
 } from "@shared/estudios";
 import { GOZO } from "@shared/mercado";
@@ -98,7 +98,7 @@ function Lista({ estado, abrir }: { estado: EstudiosEstado; abrir: (id: string) 
     <>
       <p>
         Estudios bíblicos por camino. Cada uno tiene secciones para leer y practicar, y un examen final. <b>Lo aprobado queda para siempre</b>: lo ve la comunidad y algunos cargos lo
-        piden.
+        piden. Tus estudios son tuyos como persona: valen para todos tus personajes.
       </p>
       <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30" data-testid="estudios-aprobados">
         <GraduationCap className="-mt-0.5 mr-1 inline h-4 w-4" />
@@ -129,7 +129,7 @@ function Lista({ estado, abrir }: { estado: EstudiosEstado; abrir: (id: string) 
                         <span className="block font-bold">{e.titulo}</span>
                         <span className="block text-[11px] text-stone-500">
                           {m?.aprobado
-                            ? `✓ Aprobado el ${m.aprobado}`
+                            ? `✓ Aprobado el ${m.aprobado} · ${m.perfecto ? "⭐ 6 de 6" : `${m.mejor} de ${EXAMEN_PREGUNTAS}`}`
                             : bloqueado
                               ? `Primero aprueba «${estudioPorId(e.requiere!)?.titulo}»`
                               : `${m?.secciones.length || 0} de ${e.secciones.length} secciones${m?.puedeExamen ? " · examen listo" : ""}`}
@@ -177,17 +177,48 @@ function Detalle({ id, mio, estado, leer, examen }: { id: string; mio?: MiEstudi
           );
         })}
       </ol>
-      {mio?.aprobado ? (
+      {mio?.aprobado && (
         <p className="rounded-xl bg-emerald-50 p-2.5 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" data-testid="estudio-aprobado">
-          ✓ Aprobado el {mio.aprobado} ({mio.mejor} de 6). Es tuyo para siempre.
+          {mio.perfecto ? "⭐ ¡Perfecto! 6 de 6." : `✓ Aprobado con ${mio.mejor} de ${EXAMEN_PREGUNTAS}.`} Aprobado el {mio.aprobado}: es tuyo para siempre.
         </p>
-      ) : (
+      )}
+      {mio && mio.historial.length > 0 && (
+        <div className="rounded-xl bg-stone-50 p-2.5 text-xs dark:bg-stone-800/60" data-testid="estudio-historial">
+          <p className="font-bold">
+            Tus intentos: {mio.intentos <= EXAMEN_INTENTOS ? `${mio.intentos} de ${EXAMEN_INTENTOS}` : `${mio.intentos} (los ${EXAMEN_INTENTOS} seguidos ya pasaron: puedes volver cada 30 minutos)`}
+          </p>
+          <p className="mt-0.5 flex flex-wrap gap-1.5">
+            {mio.historial.map((h, i) => (
+              <span key={i} className={`rounded-full px-2 py-0.5 font-semibold ${h.aciertos >= h.de ? "bg-amber-200 text-amber-900" : h.aciertos >= EXAMEN_APRUEBA ? "bg-emerald-100 text-emerald-900" : "bg-stone-200 text-stone-700 dark:bg-stone-700 dark:text-stone-200"}`}>
+                {i + 1}.º {h.aciertos}/{h.de}
+                {h.aciertos >= h.de ? " ⭐" : ""}
+              </span>
+            ))}
+          </p>
+        </div>
+      )}
+      {!mio?.perfecto && (mio?.puedeExamen || mio?.esperaExamen || !mio?.aprobado) ? (
         <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={!mio?.puedeExamen} onClick={examen} data-testid="button-estudio-examen">
           <GraduationCap className="mr-1 h-4 w-4" />
-          {mio?.esperaExamen ? `Examen en ${mio.esperaExamen} s` : mio?.puedeExamen ? "Dar el examen final" : "Examen final (termina las secciones)"}
+          {mio?.esperaExamen
+            ? `Otro intento en ${mio.esperaExamen > 90 ? `${Math.ceil(mio.esperaExamen / 60)} min` : `${mio.esperaExamen} s`}`
+            : mio?.puedeExamen
+              ? mio.aprobado
+                ? `Buscar el 6 de 6: otro intento con preguntas nuevas (quedan ${EXAMEN_INTENTOS - mio.intentos})`
+                : mio.intentos
+                  ? `Otro intento con preguntas nuevas (${mio.intentos + 1}.º)`
+                  : "Dar el examen final"
+              : "Examen final (termina las secciones)"}
         </Button>
+      ) : null}
+      {mio?.aprobado && !mio.perfecto && !mio.puedeExamen && !mio.esperaExamen && mio.intentos >= EXAMEN_INTENTOS && (
+        <p className="text-center text-[11px] text-stone-500">Usaste los {EXAMEN_INTENTOS} intentos: tu registro quedó con {mio.mejor} de {EXAMEN_PREGUNTAS}.</p>
       )}
-      {!mio?.aprobado && <p className="text-center text-[11px] text-stone-500">El examen tiene 6 preguntas; se aprueba con {EXAMEN_APRUEBA}.</p>}
+      {!mio?.aprobado && (
+        <p className="text-center text-[11px] text-stone-500">
+          El examen tiene {EXAMEN_PREGUNTAS} preguntas; se aprueba con {EXAMEN_APRUEBA} y con {EXAMEN_PREGUNTAS} es perfecto. Tienes {EXAMEN_INTENTOS} intentos seguidos, cada uno con preguntas nuevas.
+        </p>
+      )}
     </>
   );
 }
@@ -262,17 +293,32 @@ function Seccion({ id, seccion, hecha, alTerminar }: { id: string; seccion: stri
 }
 
 function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: EstudiosEstado) => void; volver: () => void }) {
+  const [vez, setVez] = useState(0);
+  return <ExamenIntento key={vez} id={id} alTerminar={alTerminar} volver={volver} otraVez={() => setVez((v) => v + 1)} />;
+}
+
+function ExamenIntento({ id, alTerminar, volver, otraVez }: { id: string; alTerminar: (e: EstudiosEstado) => void; volver: () => void; otraVez: () => void }) {
   const [preguntas, setPreguntas] = useState<PreguntaExamen[] | null>(null);
+  const [intento, setIntento] = useState<{ n: number; de: number } | null>(null);
+  const [espera, setEspera] = useState(0);
   const [resp, setResp] = useState<Record<string, string>>({});
   const [resultado, setResultado] = useState<ExamenResultado | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    void pedir<{ preguntas: PreguntaExamen[]; message?: string }>(`/estudios/${id}/examen`, { method: "POST" }).then((r) => {
-      if (r.ok && r.data) setPreguntas(r.data.preguntas);
-      else setError(r.data?.message || "No se pudo traer el examen.");
+    void pedir<{ preguntas: PreguntaExamen[]; intento?: number; de?: number; message?: string }>(`/estudios/${id}/examen`, { method: "POST" }).then((r) => {
+      if (r.ok && r.data) {
+        setPreguntas(r.data.preguntas);
+        if (r.data.intento) setIntento({ n: r.data.intento, de: r.data.de ?? EXAMEN_INTENTOS });
+      } else setError(r.data?.message || "No se pudo traer el examen.");
     });
   }, [id]);
+  // la cuenta para el siguiente intento (después de leer las correcciones)
+  useEffect(() => {
+    if (espera <= 0) return;
+    const t = setTimeout(() => setEspera((s) => Math.max(0, s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [espera]);
   const entregar = async () => {
     setBusy(true);
     const r = await pedir<ExamenResultado & { message?: string }>(`/estudios/${id}/examen/respuestas`, { method: "POST", body: JSON.stringify({ respuestas: resp }) });
@@ -283,6 +329,8 @@ function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: Estudi
     }
     setResultado(r.data);
     alTerminar(r.data.estado);
+    const m = r.data.estado.mios.find((x) => x.id === id);
+    if (m && !m.perfecto && m.esperaExamen > 0 && m.esperaExamen <= 90) setEspera(m.esperaExamen);
     if (r.data.aprobado) gameStore.toast(r.data.primeraVez ? `¡Aprobaste «${estudioPorId(id)?.titulo}»! +${r.data.premio} de mérito · +${GOZO.estudio} de gozo` : "¡Aprobado otra vez!", "gold");
   };
   if (error)
@@ -304,8 +352,24 @@ function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: Estudi
     return (
       <div className="space-y-2" data-testid="examen-resultado">
         <p className={`rounded-xl p-3 text-center font-black ${resultado.aprobado ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" : "bg-amber-50 dark:bg-amber-950/30"}`}>
-          {resultado.aciertos} de {resultado.de} · {resultado.aprobado ? "¡Aprobado! Este estudio es tuyo para siempre." : `Te faltó poco: se aprueba con ${EXAMEN_APRUEBA}. Repasa y vuelve a intentarlo en 2 minutos.`}
+          {resultado.aciertos} de {resultado.de} ·{" "}
+          {resultado.aciertos >= resultado.de
+            ? "⭐ ¡Perfecto! Lo sabes todo."
+            : resultado.aprobado
+              ? "¡Aprobado! Este estudio es tuyo para siempre."
+              : resultado.aciertos >= EXAMEN_APRUEBA - 1
+                ? `¡Te faltó poco! Se aprueba con ${EXAMEN_APRUEBA}.`
+                : `Todavía no: se aprueba con ${EXAMEN_APRUEBA}. Lee las correcciones y repasa las secciones.`}
         </p>
+        {intento && (
+          <p className="text-center text-[11px] text-stone-500">
+            {intento.n < intento.de
+              ? `Intento ${intento.n} de ${intento.de}. Lee las correcciones: el siguiente intento trae preguntas que todavía no te salieron.`
+              : resultado.aprobado
+                ? `Intento ${intento.n}: este es tu registro.`
+                : `Intento ${intento.n}. Repasa las secciones con calma: puedes volver a intentarlo en 30 minutos.`}
+          </p>
+        )}
         <ul className="space-y-1.5">
           {resultado.correcciones.map((c) => {
             const p = preguntas.find((x) => x.id === c.id);
@@ -322,6 +386,23 @@ function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: Estudi
             );
           })}
         </ul>
+        {(() => {
+          const m = resultado.estado.mios.find((x) => x.id === id);
+          if (!m || m.perfecto || (m.intentos >= EXAMEN_INTENTOS && m.aprobado)) return null;
+          const larga = m.esperaExamen > 90;
+          return (
+            <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={espera > 0 || larga} onClick={otraVez} data-testid="button-examen-otro">
+              <GraduationCap className="mr-1 h-4 w-4" />
+              {larga
+                ? `Repasa: otro intento en ${Math.ceil(m.esperaExamen / 60)} min`
+                : espera > 0
+                  ? `Otro intento con preguntas nuevas en ${espera} s`
+                  : m.aprobado
+                    ? "Buscar el 6 de 6 con preguntas nuevas"
+                    : "Otro intento con preguntas nuevas"}
+            </Button>
+          );
+        })()}
         <Button className="w-full" variant="secondary" onClick={volver} data-testid="button-examen-volver">
           Volver al estudio
         </Button>
@@ -330,7 +411,9 @@ function Examen({ id, alTerminar, volver }: { id: string; alTerminar: (e: Estudi
   const completas = preguntas.every((p) => resp[p.id]);
   return (
     <div className="space-y-3" data-testid="estudio-examen">
-      <p className="text-xs text-stone-500">Responde las {preguntas.length} preguntas y entrega. Se aprueba con {EXAMEN_APRUEBA}.</p>
+      <p className="text-xs text-stone-500">
+        {intento ? (intento.n <= intento.de ? `Intento ${intento.n} de ${intento.de}. ` : `Intento ${intento.n}. `) : ""}Responde las {preguntas.length} preguntas y entrega. Se aprueba con {EXAMEN_APRUEBA}; con {preguntas.length} es perfecto.
+      </p>
       {preguntas.map((p, i) => (
         <div key={p.id} className="space-y-1.5 rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
           <p className="font-semibold">
@@ -368,11 +451,19 @@ export function EstudiosDeOtro({ personajeId }: { personajeId: number }) {
       <p className="font-bold">
         <GraduationCap className="-mt-0.5 mr-1 inline h-4 w-4" /> Estudios aprobados: {d.aprobados.length}
       </p>
-      {d.aprobados.length > 0 && (
-        <ul className="mt-1 space-y-0.5">
-          {d.aprobados.map((a) => (
+      {d.registros.length > 0 && (
+        <ul className="mt-1 space-y-0.5" data-testid="vecino-registros">
+          {d.registros.map((a) => (
             <li key={a.id}>
-              {a.icono} {a.titulo} <span className="text-stone-500">· {a.fecha}</span>
+              {a.icono} {a.titulo} ·{" "}
+              <b>
+                {a.mejor}/{a.de}
+              </b>
+              {a.perfecto ? " ⭐" : a.aprobado ? " ✓" : ""}
+              <span className="text-stone-500">
+                {" "}
+                · {a.intentos} {a.intentos === 1 ? "intento" : "intentos"}
+              </span>
             </li>
           ))}
         </ul>

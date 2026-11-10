@@ -36,10 +36,17 @@ async function lleva(id: number): Promise<Record<LogroId, number>> {
       `SELECT count(*)::int AS n FROM (
          SELECT character_id, rank() OVER (PARTITION BY week_key ORDER BY correct DESC, ms ASC, finished_at ASC) AS r
            FROM game_contest_entries WHERE finished_at IS NOT NULL AND week_key < $2) t
-        WHERE t.character_id = $1 AND t.r <= 3`,
+        WHERE t.character_id IN (SELECT c2.id FROM game_characters c2 JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game WHERE yo.id = $1) AND t.r <= 3`,
       [id, semanaClave()],
     ),
-    uno(`SELECT count(*)::int AS n FROM game_studies WHERE character_id = $1 AND approved_at IS NOT NULL`, [id]),
+    // los estudios son de la persona (cualquiera de sus personajes)
+    uno(
+      `SELECT count(DISTINCT s.study_id)::int AS n FROM game_studies s
+         JOIN game_characters c2 ON c2.id = s.character_id
+         JOIN game_characters yo ON yo.user_id = c2.user_id AND yo.game = c2.game
+        WHERE yo.id = $1 AND s.approved_at IS NOT NULL`,
+      [id],
+    ),
     uno(`SELECT count(*)::int AS n FROM game_barrio_aportes WHERE character_id = $1 AND premiado = true`, [id]),
   ]);
   return { constructor, buenVecino, maestro, campeon, estudioso, fiel };

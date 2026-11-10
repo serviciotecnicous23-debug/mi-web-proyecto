@@ -4,6 +4,7 @@
  * de cada pregunta, corrige y lleva el tiempo; el teléfono solo muestra.
  */
 import type { Express, Request, Response } from "express";
+import { titularEstudios } from "./estudios";
 import { pool } from "./db";
 import { BANCO } from "./jerusalen-banco";
 import { CONCURSO_PREGUNTAS, CONCURSO_PREMIOS, CONCURSO_SEGUNDOS, type ConcursoEstado, type ConcursoRespuesta } from "@shared/concurso";
@@ -137,6 +138,12 @@ async function estadoDe(ch: PersonajeFila): Promise<ConcursoEstado> {
   };
 }
 
+/** La persona detrás del personaje: el concurso se guarda en su primer personaje (uno por cuenta). */
+async function deLaPersona(req: Request, ch: PersonajeFila): Promise<PersonajeFila> {
+  const t = await titularEstudios(req.user!.id);
+  return t && t !== ch.id ? { ...ch, id: t } : ch;
+}
+
 export function registerConcursoRoutes(app: Express) {
   async function jugador(req: Request, res: Response): Promise<PersonajeFila | null> {
     if (!req.isAuthenticated()) {
@@ -163,10 +170,34 @@ export function registerConcursoRoutes(app: Express) {
     return false;
   };
 
-  app.get("/api/jerusalen/concurso", async (req: Request, res: Response) => {
+  // Práctica: preguntas del mismo banco, pero ninguna de las de esta semana. No cuenta para la tabla
+  // (el concurso es una vez por semana e igual para todos: así es justo).
+  app.get("/api/jerusalen/concurso/practica", async (req: Request, res: Response) => {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
+      // (freno aparte del concurso: practicar no debe frenar una respuesta del concurso)
+      if (frenar(-ch.id, 800)) return res.status(429).json({ message: "Espera un momento" });
+      const semana = semanaClave();
+      const deLaSemana = new Set(preguntasDe(semana).map((q) => q.id));
+      const otras = BANCO.filter((q) => !deLaSemana.has(q.id));
+      const elegidas = mezclar(otras, (Date.now() ^ (ch.id * 2654435761)) >>> 0).slice(0, 5);
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        preguntas: elegidas.map((q) => ({ id: q.id, texto: q.pregunta, opciones: mezclar([q.correcta, ...q.falsas], (Date.now() + q.id.length * 977) >>> 0), correcta: q.correcta, explica: q.explica, ref: q.ref })),
+      });
+    } catch (err) {
+      console.error("[concurso] práctica:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  app.get("/api/jerusalen/concurso", async (req: Request, res: Response) => {
+    try {
+      const ch0 = await jugador(req, res);
+      if (!ch0) return;
+      // el concurso es de la persona: una sola participación por semana con cualquiera de sus personajes
+      const ch = await deLaPersona(req, ch0);
       res.setHeader("Cache-Control", "no-store");
       res.json(await estadoDe(ch));
     } catch (err) {
@@ -178,14 +209,16 @@ export function registerConcursoRoutes(app: Express) {
   // empezar (una vez por semana): la primera pregunta corre desde ahora
   app.post("/api/jerusalen/concurso/empezar", async (req: Request, res: Response) => {
     try {
-      const ch = await jugador(req, res);
-      if (!ch) return;
+      const ch0 = await jugador(req, res);
+      if (!ch0) return;
+      // el concurso es de la persona: una sola participación por semana con cualquiera de sus personajes
+      const ch = await deLaPersona(req, ch0);
       if (frenar(ch.id)) return res.status(429).json({ message: "Espera un momento" });
       const { rows } = await pool.query(
         `INSERT INTO game_contest_entries (week_key, character_id, asked_at) VALUES ($1, $2, now()) ON CONFLICT DO NOTHING RETURNING 1`,
         [semanaClave(), ch.id],
       );
-      if (!rows.length) return res.status(409).json({ message: "Ya empezaste el concurso de esta semana." });
+      if (!rows.length) return res.status(409).json({ message: "Ya participaste en el concurso de esta semana (con alguno de tus personajes). Vuelve el lunes: es una vez por semana, igual para todos." });
       res.json(await estadoDe(ch));
     } catch (err) {
       console.error("[concurso] empezar:", err);
@@ -196,8 +229,10 @@ export function registerConcursoRoutes(app: Express) {
   // pedir la siguiente pregunta: su reloj empieza ahora (no mientras se lee la explicación de la anterior)
   app.post("/api/jerusalen/concurso/siguiente", async (req: Request, res: Response) => {
     try {
-      const ch = await jugador(req, res);
-      if (!ch) return;
+      const ch0 = await jugador(req, res);
+      if (!ch0) return;
+      // el concurso es de la persona: una sola participación por semana con cualquiera de sus personajes
+      const ch = await deLaPersona(req, ch0);
       await pool.query(
         `UPDATE game_contest_entries SET asked_at = now() WHERE week_key = $1 AND character_id = $2 AND finished_at IS NULL AND asked_at IS NULL`,
         [semanaClave(), ch.id],
@@ -213,8 +248,10 @@ export function registerConcursoRoutes(app: Express) {
   app.post("/api/jerusalen/concurso/responder", async (req: Request, res: Response) => {
     const opcion = typeof req.body?.opcion === "string" ? req.body.opcion : "";
     try {
-      const ch = await jugador(req, res);
-      if (!ch) return;
+      const ch0 = await jugador(req, res);
+      if (!ch0) return;
+      // el concurso es de la persona: una sola participación por semana con cualquiera de sus personajes
+      const ch = await deLaPersona(req, ch0);
       if (frenar(ch.id, 400)) return res.status(429).json({ message: "Espera un momento" });
       const semana = semanaClave();
       const { rows } = await pool.query(

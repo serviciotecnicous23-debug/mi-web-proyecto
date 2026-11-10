@@ -48,8 +48,16 @@ export const MERITO_ESTUDIO = 100;
 /** Preguntas del examen y cuántas hay que acertar. */
 export const EXAMEN_PREGUNTAS = 6;
 export const EXAMEN_APRUEBA = 5;
-/** Espera para volver a dar el examen si no se aprobó (segundos). */
-export const EXAMEN_ESPERA = 120;
+/** Espera corta entre un intento y el siguiente (segundos): para leer las correcciones. */
+export const EXAMEN_ESPERA = 15;
+/**
+ * Intentos por estudio (de la persona, no de cada personaje). Cada intento trae preguntas que todavía
+ * no le salieron. Con 5 de 6 se aprueba; se puede seguir intentando hasta sacar 6 de 6 (perfecto) o
+ * hasta usar los intentos: lo que quede es su registro, y la comunidad lo ve.
+ */
+export const EXAMEN_INTENTOS = 5;
+/** Si después de los intentos todavía no aprobó, puede volver a intentarlo cada tanto (segundos): nadie queda trabado. */
+export const EXAMEN_ESPERA_LARGA = 1800;
 
 /** Los estudios que piden los cargos de la temporada. */
 export const ESTUDIO_PRINCIPAL = "sacerdocio-aaron";
@@ -522,7 +530,20 @@ export function estudioPorId(id: string): Estudio | undefined {
 }
 
 // ---------------------------------------------------------------- respuestas de la API
-export type MiEstudio = { id: string; secciones: string[]; aprobado: string | null; mejor: number; puedeExamen: boolean; esperaExamen: number };
+export type IntentoExamen = { aciertos: number; de: number; fecha: string };
+export type MiEstudio = {
+  id: string;
+  secciones: string[];
+  aprobado: string | null;
+  mejor: number;
+  puedeExamen: boolean;
+  esperaExamen: number;
+  /** Intentos usados (de EXAMEN_INTENTOS). */
+  intentos: number;
+  /** Sacó 6 de 6. */
+  perfecto: boolean;
+  historial: IntentoExamen[];
+};
 export type EstudiosEstado = { mios: MiEstudio[]; aprobados: number };
 export type PreguntaExamen = { id: string; pregunta: string; opciones: string[] };
 export type ExamenResultado = {
@@ -534,5 +555,11 @@ export type ExamenResultado = {
   correcciones: { id: string; correcta: string; explica: string; ref: string; bien: boolean }[];
   estado: EstudiosEstado;
 };
-/** Lo que ve la comunidad de un personaje: sus estudios aprobados. */
-export type EstudiosDe = { personajeId: number; nombre: string; aprobados: { id: string; titulo: string; icono: string; fecha: string }[] };
+/** Lo que ve la comunidad de una persona (con cualquiera de sus personajes): sus estudios y su registro. */
+export type EstudiosDe = {
+  personajeId: number;
+  nombre: string;
+  aprobados: { id: string; titulo: string; icono: string; fecha: string }[];
+  /** El registro de cada examen dado: la mejor nota, los intentos y si fue perfecto. */
+  registros: { id: string; titulo: string; icono: string; mejor: number; de: number; intentos: number; aprobado: boolean; perfecto: boolean }[];
+};
