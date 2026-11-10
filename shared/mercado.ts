@@ -10,7 +10,9 @@
  * «El peso falso es abominación a Jehová; Mas la pesa cabal le agrada» (Proverbios 11:1): precios fijos.
  */
 
-export type Categoria = "semilla" | "adorno" | "ropa" | "letrero";
+import { MUEBLES } from "./casa-interior";
+
+export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
 export type TabMercado = Categoria | "vender";
 export type Articulo = { id: string; categoria: Categoria; nombre: string; icono: string; precio: number; detalle: string; color?: string };
 
@@ -39,6 +41,8 @@ export const ARTICULOS: Articulo[] = [
   { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
   // el letrero de la casa
   { id: "letrero", categoria: "letrero", nombre: "Letrero de la casa", icono: "🪧", precio: 40, detalle: "Ponle nombre a tu casa: lo ven los vecinos." },
+  // los muebles de la casa por dentro (shared/casa-interior.ts)
+  ...MUEBLES,
 ];
 
 export function articulo(id: string): Articulo | undefined {
@@ -105,7 +109,7 @@ export function precioVentaHoy(b: BienMercado, dia: string): number {
 /** Los cuatro puestos de la plaza (de oeste a este) y lo que vende cada mercader. */
 export const PUESTOS_MERCADO: { tab: Categoria | "vender"; nombre: string; icono: string; dice: string }[] = [
   { tab: "semilla", nombre: "El sembrador", icono: "🌾", dice: "Semillas de trigo y cebada, y brotes de olivo para tu huerto." },
-  { tab: "adorno", nombre: "El alfarero", icono: "🏺", dice: "Macetas, cántaros, lámparas y todo para tu casa." },
+  { tab: "adorno", nombre: "El alfarero", icono: "🏺", dice: "Macetas, cántaros, lámparas, y muebles para amueblar tu casa por dentro." },
   { tab: "ropa", nombre: "El tejedor", icono: "🧵", dice: "Mantos y fajas teñidos: tus vecinos los verán." },
   { tab: "vender", nombre: "El mercader", icono: "⚖️", dice: "Te compro lo de tu alfolí con pesa cabal." },
 ];
@@ -180,6 +184,10 @@ export type MercadoEstado = {
   letrero: string | null;
   tieneLetrero: boolean;
   bienes: { harina: number; aceite: number; corderos: number };
+  /** El nivel de la casa (algunos muebles piden una casa más grande). */
+  nivel: number;
+  /** Cuántos tiene de cada mueble (los pone en la casa por dentro). */
+  muebles: Record<string, number>;
   /** Lo que el mercader paga al doble hoy. */
   demanda: BienMercado;
   /** Las ofrendas preparadas y lo que está en el horno (`faltan` en segundos). */

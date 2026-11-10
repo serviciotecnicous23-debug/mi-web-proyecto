@@ -37,7 +37,13 @@ import { FIESTA } from "@shared/calendario";
 import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
-export const CiudadCtx = createContext<{ city: CiudadWorld | null; estado: CiudadEstado | null; setEstado?: (e: CiudadEstado) => void }>({ city: null, estado: null });
+export const CiudadCtx = createContext<{
+  city: CiudadWorld | null;
+  estado: CiudadEstado | null;
+  setEstado?: (e: CiudadEstado) => void;
+  /** Entrar a la casa por dentro (la tuya, o la de un vecino con su personajeId). */
+  entrarACasa?: (o?: { personajeId?: number; remodelar?: boolean }) => void;
+}>({ city: null, estado: null });
 
 function Boton({ label, onClick, children, testid, active, className = "flex" }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean; className?: string }) {
   const { city } = useContext(CiudadCtx);
@@ -375,7 +381,8 @@ function PedidosBarrioConCasa() {
 
 function MercadoModal({ tab }: { tab?: TabMercado }) {
   const alCambiar = useAlMercado();
-  return <MercadoView tab={tab} alCambiar={alCambiar} />;
+  const { entrarACasa } = useContext(CiudadCtx);
+  return <MercadoView tab={tab} alCambiar={alCambiar} alEntrarACasa={entrarACasa ? () => entrarACasa({ remodelar: true }) : undefined} />;
 }
 
 function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
@@ -636,7 +643,7 @@ function SiervosPanel() {
 
 /** La casa de un vecino: se ve sin tocar nada y se deja una bendición (una por día). */
 function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: string }) {
-  const { city } = useContext(CiudadCtx);
+  const { city, entrarACasa } = useContext(CiudadCtx);
   const [casa, setCasa] = useState<CasaVisita | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -693,6 +700,11 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
               ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
+            {entrarACasa && (
+              <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => entrarACasa({ personajeId })} data-testid="button-visita-entrar">
+                <Home className="mr-1 h-4 w-4" /> Entrar a ver su casa por dentro
+              </Button>
+            )}
             <LogrosDeOtro personajeId={personajeId} />
             <ReunionVisita personajeId={personajeId} alAcertar={() => city?.audio.correct()} />
             <VerseBox text={VERSO_VISITA.text} refName={VERSO_VISITA.ref} />

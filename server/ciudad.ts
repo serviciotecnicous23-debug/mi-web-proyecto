@@ -22,6 +22,7 @@ import {
   horasEfectivas, nivelPorHonra, nombreDeBarrio, siervosPermitidos, type BarrioEstado, type Bien, type CasaPrivada, type CasaVista, type CasaVisita,
   type CiudadEstado,
 } from "@shared/ciudad";
+import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
 
 const JUEGO = JERUSALEN_JUEGO;
 
@@ -558,6 +559,102 @@ export function registerCiudadRoutes(app: Express) {
       res.json(c.visita);
     } catch (err) {
       console.error("[ciudad] visita:", err);
+      if (!res.headersSent) res.sendStatus(500);
+    }
+  });
+
+  // ---------------------------------------------------------------- la casa por dentro (shared/casa-interior.ts)
+  /** La casa por dentro: la tuya (con tus muebles para remodelar) o la de un vecino (solo para verla). */
+  async function interiorDe(personajeId: number, yo: PersonajeFila): Promise<{ estado: InteriorEstado; userId: number } | null> {
+    const c = await casaVisita(personajeId, yo);
+    if (!c) return null;
+    const { rows } = await pool.query(
+      `SELECT h.interior, h.letrero, ch.muebles, ch.gozo FROM game_houses h JOIN game_characters ch ON ch.id = h.character_id WHERE h.character_id = $1`,
+      [personajeId],
+    );
+    const r = rows[0] || {};
+    const esMia = c.visita.esMia;
+    const nivel = c.visita.nivel;
+    let interior = leerInterior(r.interior);
+    // si la casa creció (otro plano), lo que ya no cabe vuelve al arcón: queda lo que sigue cabiendo
+    const plano = planoDe(nivel);
+    const caben: Colocado[] = [];
+    for (const it of interior) if (caben.length < plano.maxMuebles && !porQueNoCabe(plano, nivel, it, caben)) caben.push(it);
+    if (caben.length !== interior.length) {
+      interior = caben;
+      if (esMia) await pool.query(`UPDATE game_houses SET interior = $2::jsonb WHERE character_id = $1`, [personajeId, JSON.stringify(caben)]);
+    }
+    return {
+      userId: c.userId,
+      estado: {
+        personajeId,
+        dueno: c.visita.nombre,
+        esMia,
+        nivel,
+        nombreNivel: NIVELES_CASA[nivel]?.nombre ?? "",
+        letrero: (r.letrero as string | null) ?? null,
+        interior,
+        muebles: esMia ? leerMuebles(r.muebles) : {},
+        bendiciones: c.visita.bendiciones,
+        yaBendije: c.visita.yaBendije,
+        gozo: esMia ? Number(r.gozo || 0) : 0,
+      },
+    };
+  }
+
+  app.get("/api/jerusalen/casa/interior", async (req: Request, res: Response) => {
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      const d = await interiorDe(ch.id, ch);
+      if (!d) return res.status(404).json({ message: "No encontramos tu casa." });
+      res.setHeader("Cache-Control", "no-store");
+      res.json(d.estado);
+    } catch (err) {
+      console.error("[ciudad] interior:", err);
+      if (!res.headersSent) res.sendStatus(500);
+    }
+  });
+
+  app.get("/api/jerusalen/casa/interior/:personajeId", async (req: Request, res: Response) => {
+    const id = Number(req.params.personajeId);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ message: "Casa no válida" });
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      const d = await interiorDe(id, ch);
+      if (!d) return res.status(404).json({ message: "Esa casa ya no está en Jerusalén." });
+      if (!d.estado.esMia && (await bloqueados(ch.user_id, d.userId))) return res.status(403).json({ message: "No puedes visitar esta casa." });
+      res.setHeader("Cache-Control", "no-store");
+      res.json(d.estado);
+    } catch (err) {
+      console.error("[ciudad] interior de un vecino:", err);
+      if (!res.headersSent) res.sendStatus(500);
+    }
+  });
+
+  // Remodelar: se guarda cómo quedaron los muebles (el servidor revisa que quepan y que sean tuyos).
+  const ultimoRemodelar = new Map<number, number>();
+  app.post("/api/jerusalen/casa/interior", async (req: Request, res: Response) => {
+    try {
+      const ch = await jugador(req, res);
+      if (!ch) return;
+      const now = Date.now();
+      if (now - (ultimoRemodelar.get(ch.id) || 0) < 800) return res.status(429).json({ message: "Espera un momento" });
+      ultimoRemodelar.set(ch.id, now);
+      if (ultimoRemodelar.size > 5000) ultimoRemodelar.clear();
+      const { rows } = await pool.query(
+        `SELECT h.level, ch.muebles FROM game_houses h JOIN game_characters ch ON ch.id = h.character_id WHERE h.character_id = $1`,
+        [ch.id],
+      );
+      if (!rows.length) return res.status(404).json({ message: "No encontramos tu casa." });
+      const v = validarInterior(Number(rows[0].level || 0), req.body?.interior, leerMuebles(rows[0].muebles));
+      if (!v.ok) return res.status(400).json({ message: v.error });
+      await pool.query(`UPDATE game_houses SET interior = $2::jsonb WHERE character_id = $1`, [ch.id, JSON.stringify(v.items)]);
+      const d = await interiorDe(ch.id, ch);
+      res.json(d!.estado);
+    } catch (err) {
+      console.error("[ciudad] remodelar:", err);
       if (!res.headersSent) res.sendStatus(500);
     }
   });

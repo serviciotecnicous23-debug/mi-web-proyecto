@@ -61,6 +61,8 @@ export type CiudadOpts = {
   llegada: "templo" | "casa";
   /** Pide entrar al templo (la pantalla cambia de mundo). */
   alTemplo: () => void;
+  /** Pide entrar a tu casa por dentro (la ciudad se duerme mientras tanto). */
+  alEntrarCasa?: () => void;
   /** Los deberes de los caminos nuevos van a la sesión en línea (se mandan juntos cada 15 s). */
   online?: { duty: (kind: string, n: number) => void; tick: (dt: number) => void };
   /** Avisa al servidor que se completó un paso de los primeros pasos del camino. */
@@ -1139,7 +1141,13 @@ export class CiudadWorld {
           }
           break;
         case "casa":
-          this.abrir({ kind: "casa" });
+          // la puerta de tu casa: se entra (lo demás de la casa está en «Huerto, horno y más» adentro)
+          if (this.opts.alEntrarCasa) {
+            this.entrada.soltar();
+            this.ruta = [];
+            vibrar(12);
+            this.opts.alEntrarCasa();
+          } else this.abrir({ kind: "casa" });
           break;
         case "anuncios":
           this.abrir({ kind: "anuncios" });
@@ -1180,6 +1188,38 @@ export class CiudadWorld {
   /** La pantalla vuelve a dejar entrar al templo (si falló el cambio de mundo). */
   volverAPermitirTemplo() {
     this.entrando = false;
+  }
+
+  /** La figura con la que se ve el jugador (para la casa por dentro). */
+  lookJugador(): FigureLook {
+    return this.lookDe(this.estado.yo.escalon, this.estado.yo.camino);
+  }
+
+  /**
+   * Mientras se está dentro de una casa, la ciudad se duerme: no se dibuja, no se mueve y no se ve
+   * (la conexión con los vecinos sigue abierta). Al salir, despierta en la misma puerta.
+   */
+  dormir(on: boolean) {
+    const canvas = this.renderer.domElement;
+    if (on) {
+      if (!this.running) return;
+      this.running = false;
+      cancelAnimationFrame(this.raf);
+      this.entrada.soltar();
+      this.ruta = [];
+      canvas.style.display = "none";
+      this.overlay.layer.style.display = "none";
+    } else {
+      if (this.running) return;
+      canvas.style.display = "block";
+      this.overlay.layer.style.display = "";
+      this.running = true;
+      this.last = performance.now();
+      this.shadowDirty = true;
+      this.ultimoEnvio.t = 0;
+      this.raf = requestAnimationFrame(this.frame);
+      this.pushHud();
+    }
   }
 
   // ---------------------------------------------------------------- las casas de cada área

@@ -138,7 +138,31 @@ export type Modal =
   | { kind: "vecino"; id: number }
   | { kind: "visita"; personajeId: number; nombre: string };
 
-type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null };
+/** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */
+export type CasaHud = {
+  dueno: string;
+  esMia: boolean;
+  nivel: number;
+  nombreNivel: string;
+  letrero: string | null;
+  /** El cuarto donde está el personaje. */
+  lugar: string;
+  aviso: string;
+  remodelando: boolean;
+  /** El mueble elegido en el modo remodelar. */
+  seleccion: { m: string; nombre: string; icono: string } | null;
+  colocados: number;
+  max: number;
+  /** Cuántos quedan en el arcón de cada mueble (los que se tienen y no están puestos). */
+  disponibles: Record<string, number>;
+  piso: 0 | 1;
+  pisos: (0 | 1)[];
+  cambios: boolean;
+  bendiciones: number;
+  yaBendije: boolean;
+};
+
+type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null; casa: CasaHud | null };
 
 const emptyHud: Hud = {
   sacerdotes: 0,
@@ -150,7 +174,7 @@ const emptyHud: Hud = {
 };
 
 class GameStore {
-  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null, ciudad: null };
+  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null, ciudad: null, casa: null };
   private queue: Modal[] = [];
   private listeners = new Set<() => void>();
   private closeHandlers = new Set<(m: Modal) => void>();
@@ -179,6 +203,11 @@ class GameStore {
 
   setCiudad(ciudad: CiudadHud | null) {
     this.snap = { ...this.snap, ciudad };
+    this.emit();
+  }
+
+  setCasa(casa: CasaHud | null) {
+    this.snap = { ...this.snap, casa };
     this.emit();
   }
 
@@ -228,7 +257,7 @@ class GameStore {
   reset() {
     this.queue = [];
     this.closeHandlers.clear();
-    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online, ciudad: null };
+    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online, ciudad: null, casa: null };
     this.emit();
   }
 }

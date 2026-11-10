@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-casa-por-dentro",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Tu casa por dentro",
+    puntos: [
+      "🏠 Ahora entras a tu casa: párate en el círculo de tu puerta y caminas por sus cuartos. La tienda tiene un espacio, la casa de adobe suma la despensa y la casa de piedra trae patio con higuera, cuatro cuartos y escalera al terrado. Con aposento alto, el aposento está arriba (2 Reyes 4:10).",
+      "🛠️ Toca «Remodelar»: saca los muebles de tu arcón, tócalos para moverlos, gíralos o guárdalos, y toca «Listo». Las alfombras van debajo de los muebles.",
+      "🪑 El alfarero vende 20 muebles nuevos (pestaña «Muebles»): mesa, silla, lecho, telar, molino, estante de rollos, candelero, brasero y más. Las lámparas y el brasero alumbran de noche.",
+      "🙏 Puedes entrar a ver la casa de un vecino desde su puerta, y dejarle una bendición adentro.",
+    ],
+  },
+  {
     id: "2026-11-10-compras",
     fecha: "10 de noviembre de 2026",
     titulo: "Lo que compras ya se usa, y tu nombre como quieras",

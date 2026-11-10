@@ -10,6 +10,7 @@ import {
   ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, precioHoy, precioVentaHoy, type Articulo, type Categoria, type MercadoEstado, type RecetaId, type TabMercado,
 } from "@shared/mercado";
 import type { CasaPrivada } from "@shared/ciudad";
+import { MAX_POR_MUEBLE, mueble } from "@shared/casa-interior";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 
@@ -82,6 +83,7 @@ function tiempo(s: number) {
 
 /** Dónde se usa lo de cada puesto (para que no quede la duda después de comprar). */
 const DONDE_SE_USA: Record<Categoria, string> = {
+  mueble: "Los muebles van dentro de tu casa: entra por tu puerta, toca «Remodelar» y ponlos donde quieras. Tus vecinos pueden entrar a verlos.",
   semilla: "Las semillas se siembran en el huerto de tu casa: Tu casa → 🌾 Huerto y horno.",
   adorno: "Al comprarlo, el adorno se pone solo en la puerta de tu casa si queda lugar: tus vecinos lo ven. Lo cambias en Tu casa → 🪔 Adornos y ropa.",
   ropa: "Al comprarla te la pones enseguida y tus vecinos te ven con ella. La cambias en Tu casa → 🪔 Adornos y ropa.",
@@ -89,12 +91,18 @@ const DONDE_SE_USA: Record<Categoria, string> = {
 };
 
 /** Después de comprar: qué pasó con lo comprado y un botón para ir a usarlo. */
-function SiguientePaso({ s, onCerrar }: { s: { a: Articulo; colocado?: boolean; puesto?: boolean }; onCerrar: () => void }) {
-  const irA = (pestana: "huerto" | "adornos") => {
+function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; colocado?: boolean; puesto?: boolean }; onCerrar: () => void; alEntrarACasa?: () => void }) {
+  const irA = (pestana: "huerto" | "adornos" | "adentro") => {
     gameStore.close();
-    gameStore.push({ kind: "casa", pestana });
+    if (pestana === "adentro" && alEntrarACasa) alEntrarACasa();
+    else gameStore.push({ kind: "casa", pestana: pestana === "adentro" ? "casa" : pestana });
   };
-  const paso: Record<Categoria, { texto: string; boton: string; pestana: "huerto" | "adornos" }> = {
+  const paso: Record<Categoria, { texto: string; boton: string; pestana: "huerto" | "adornos" | "adentro" }> = {
+    mueble: {
+      texto: "Está en el arcón de tu casa. Entra, toca «Remodelar» y ponlo donde quieras: tus vecinos lo verán cuando te visiten.",
+      boton: "Entrar a mi casa",
+      pestana: "adentro",
+    },
     semilla: {
       texto: "Ahora siémbrala: en tu huerto elige la semilla y toca «Sembrar». Riégala una vez y, cuando esté lista, cosecha: va al alfolí para ofrecerla en el templo, prepararla en el horno o venderla.",
       boton: "Ir a sembrar",
@@ -134,7 +142,7 @@ function SiguientePaso({ s, onCerrar }: { s: { a: Articulo; colocado?: boolean; 
 }
 
 /** El mercado de la plaza (los mercaderes de los puestos); `tab` es el puesto donde se entró. */
-export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alCambiar?: (m: MercadoEstado) => void }) {
+export function MercadoView({ tab: inicial, alCambiar, alEntrarACasa }: { tab?: TabMercado; alCambiar?: (m: MercadoEstado) => void; alEntrarACasa?: () => void }) {
   const { m, error, busy, hacer } = useMercado(alCambiar);
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
   // lo que se acaba de comprar: qué hacer ahora con eso
@@ -143,6 +151,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
   const tabs: [TabMercado, string][] = [
     ["semilla", "Semillas"],
     ["adorno", "Casa"],
+    ["mueble", "Muebles"],
     ["ropa", "Ropa"],
     ["letrero", "Letrero"],
     ["vender", "Vender"],
@@ -176,7 +185,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
           </p>
         )}
         {error && <p className="rounded-xl bg-red-50 p-2.5 text-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p>}
-        {siguiente && <SiguientePaso s={siguiente} onCerrar={() => setSiguiente(null)} />}
+        {siguiente && <SiguientePaso s={siguiente} onCerrar={() => setSiguiente(null)} alEntrarACasa={alEntrarACasa} />}
         {!m && !error && (
           <p className="flex items-center gap-2 text-stone-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abriendo los puestos…
@@ -198,6 +207,9 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                   const precio = precioHoy(a, m.dia);
                   const tiene = (a.categoria === "adorno" || a.categoria === "ropa") && m.armario.includes(a.id);
                   const yaLetrero = a.categoria === "letrero" && m.tieneLetrero;
+                  const mu = a.categoria === "mueble" ? mueble(a.id) : undefined;
+                  const pideCasa = !!mu && (mu.nivelMin ?? 0) > m.nivel;
+                  const tantos = !!mu && (m.muebles[a.id] || 0) >= MAX_POR_MUEBLE;
                   return (
                     <li key={a.id} className="flex items-center gap-2.5 rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
                       <span className="text-2xl" style={a.color ? { filter: "drop-shadow(0 0 0 transparent)" } : undefined}>
@@ -211,6 +223,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                         <span className="block text-[11px] text-stone-500">
                           {a.detalle}
                           {a.categoria === "semilla" && ` Tienes ${m.semillas[a.id] || 0}.`}
+                          {a.categoria === "mueble" && ` Tienes ${m.muebles[a.id] || 0}.`}
                         </span>
                       </span>
                       <span className="shrink-0 text-right">
@@ -219,7 +232,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                       </span>
                       <Button
                         size="sm"
-                        disabled={busy || tiene || yaLetrero || m.gozo < precio}
+                        disabled={busy || tiene || yaLetrero || pideCasa || tantos || m.gozo < precio}
                         onClick={() =>
                           void hacer("/mercado/comprar", { articulo: a.id, cantidad: 1 }, (d) => {
                             gameStore.toast(`Compraste: ${a.nombre}`, "gold");
@@ -228,7 +241,7 @@ export function MercadoView({ tab: inicial, alCambiar }: { tab?: TabMercado; alC
                         }
                         data-testid={`comprar-${a.id}`}
                       >
-                        {tiene || yaLetrero ? "Tuyo" : "Comprar"}
+                        {tiene || yaLetrero ? "Tuyo" : pideCasa ? "Casa mayor" : "Comprar"}
                       </Button>
                     </li>
                   );

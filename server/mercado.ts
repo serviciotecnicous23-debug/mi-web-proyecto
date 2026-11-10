@@ -10,6 +10,7 @@ import {
   parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
+import { MAX_POR_MUEBLE, leerMuebles, mueble } from "@shared/casa-interior";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
 import { sumarGozo } from "./gozo";
@@ -25,7 +26,9 @@ ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "adornos" jsonb NOT NULL DEFA
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "huerto" jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "letrero" text;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "tiene_letrero" boolean NOT NULL DEFAULT false;
-ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "preparadas" jsonb NOT NULL DEFAULT '{}'::jsonb;`;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "preparadas" jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "muebles" jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "interior" jsonb NOT NULL DEFAULT '[]'::jsonb;`;
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const objeto = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
@@ -56,7 +59,7 @@ function vistaParcela(p: Plantio): Parcela {
 async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }] = await Promise.all([
-    pool.query(`SELECT gozo, semillas, armario, ropa FROM game_characters WHERE id = $1`, [ch.id]),
+    pool.query(`SELECT gozo, semillas, armario, ropa, muebles FROM game_characters WHERE id = $1`, [ch.id]),
     pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.id]),
   ]);
   const nivel = Number(h[0]?.level || 0);
@@ -77,6 +80,8 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     letrero: (h[0]?.letrero as string | null) ?? null,
     tieneLetrero: h[0]?.tiene_letrero === true,
     bienes: { harina: Math.floor(bienes.harina), aceite: Math.floor(bienes.aceite), corderos: Math.floor(bienes.corderos) },
+    nivel,
+    muebles: leerMuebles(c[0]?.muebles),
     demanda: demandaDelDia(dia),
     preparadas: prep.preparadas,
     horno: prep.horno
@@ -145,6 +150,15 @@ export function registerMercadoRoutes(app: Express) {
         const { rows: h } = await pool.query(`SELECT tiene_letrero FROM game_houses WHERE character_id = $1`, [ch.id]);
         if (h[0]?.tiene_letrero) return res.status(409).json({ message: "Tu casa ya tiene letrero." });
       }
+      if (a.categoria === "mueble") {
+        const mu = mueble(a.id)!;
+        const [{ rows: h }, { rows: cm }] = await Promise.all([
+          pool.query(`SELECT level FROM game_houses WHERE character_id = $1`, [ch.id]),
+          pool.query(`SELECT muebles FROM game_characters WHERE id = $1`, [ch.id]),
+        ]);
+        if ((mu.nivelMin ?? 0) > Number(h[0]?.level || 0)) return res.status(409).json({ message: `${mu.nombre} pide una casa más grande: sirve y tu casa crecerá.` });
+        if ((leerMuebles(cm[0]?.muebles)[a.id] || 0) >= MAX_POR_MUEBLE) return res.status(409).json({ message: `Ya tienes ${MAX_POR_MUEBLE} de ese mueble.` });
+      }
       // se paga solo si alcanza (de una sola vez, sin carreras)
       const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.id, costo]);
       if (!pago.length) return res.status(409).json({ message: `Te falta gozo: cuesta ${costo}. Sirve un poco más o vende lo del alfolí.` });
@@ -155,6 +169,11 @@ export function registerMercadoRoutes(app: Express) {
         );
       } else if (a.categoria === "letrero") {
         await pool.query(`UPDATE game_houses SET tiene_letrero = true WHERE character_id = $1`, [ch.id]);
+      } else if (a.categoria === "mueble") {
+        await pool.query(
+          `UPDATE game_characters SET muebles = jsonb_set(muebles, ARRAY[$2::text], to_jsonb(COALESCE((muebles->>$2)::int, 0) + 1)) WHERE id = $1`,
+          [ch.id, a.id],
+        );
       } else {
         await pool.query(`UPDATE game_characters SET armario = armario || to_jsonb($2::text) WHERE id = $1`, [ch.id, a.id]);
       }
