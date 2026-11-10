@@ -1,3 +1,4 @@
+import { enLaRadio } from "@/lib/incrustado";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +58,12 @@ function useOnAir(stationUrl: string | undefined, enabled: boolean) {
 }
 
 export function RadioDock() {
+  // dentro de la página de la radio ya suena la radio: aquí no hace falta otra
+  if (enLaRadio()) return null;
+  return <RadioDockWeb />;
+}
+
+function RadioDockWeb() {
   const [location] = useLocation();
   const onRadio = location === RADIO_PATH;
   const [alive, setAlive] = useState(onRadio);

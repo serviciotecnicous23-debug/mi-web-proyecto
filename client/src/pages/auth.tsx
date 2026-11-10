@@ -5,6 +5,13 @@ import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { postLoginPath } from "@/lib/login-redirect";
+import { enLaRadio } from "@/lib/incrustado";
+
+/** El enlace a entrar o a registrarse conserva a dónde volver (?redirect=). */
+function conVuelta(ruta: string): string {
+  const r = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("redirect");
+  return r ? `${ruta}?redirect=${encodeURIComponent(r)}` : ruta;
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -162,12 +169,12 @@ export function LoginPage() {
         <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
           <div>
             ¿No tienes cuenta?{" "}
-            <Link href="/registro" className="text-primary hover:underline font-medium" data-testid="link-to-register">
+            <Link href={conVuelta("/registro")} className="text-primary hover:underline font-medium" data-testid="link-to-register">
               Regístrate
             </Link>
           </div>
-          <Link href="/" className="text-xs hover:text-foreground">
-            Volver al inicio
+          <Link href={enLaRadio() ? "/juegos" : "/"} className="text-xs hover:text-foreground">
+            {enLaRadio() ? "Volver a los juegos" : "Volver al inicio"}
           </Link>
         </CardFooter>
       </Card>
@@ -201,8 +208,9 @@ export function RegisterPage() {
   });
 
   // Redirección segura: fuera del render para no romper los hooks de React.
+  // Como al entrar, vuelve a la página de la que vino (?redirect=), si era de la propia web.
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation(postLoginPath());
   }, [user, setLocation]);
 
   if (user) return null;
@@ -370,12 +378,12 @@ export function RegisterPage() {
         <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
           <div>
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-to-login">
+            <Link href={conVuelta("/login")} className="text-primary hover:underline font-medium" data-testid="link-to-login">
               Inicia sesión
             </Link>
           </div>
-          <Link href="/" className="text-xs hover:text-foreground">
-            Volver al inicio
+          <Link href={enLaRadio() ? "/juegos" : "/"} className="text-xs hover:text-foreground">
+            {enLaRadio() ? "Volver a los juegos" : "Volver al inicio"}
           </Link>
         </CardFooter>
       </Card>

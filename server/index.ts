@@ -139,6 +139,11 @@ const radioFrameSources = [DEFAULT_AZURACAST_STATION_URL, LEGACY_AZURACAST_BASE_
   })
   .filter((origin): origin is string => !!origin);
 const frameSources = Array.from(new Set([...videoFrameSources, ...radioFrameSources]));
+// Quién puede mostrar la web en un marco: ella misma y la página de la radio (botón «Juegos»).
+// En desarrollo, también el banco de pruebas del tema de la radio (localhost:8137).
+const frameAncestors = Array.from(
+  new Set(["'self'", ...radioFrameSources, ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:8137", "http://127.0.0.1:8137"])]),
+);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -152,8 +157,11 @@ app.use(helmet({
       frameSrc: frameSources,
       childSrc: frameSources,
       workerSrc: ["'self'", "blob:"],
+      frameAncestors,
     },
   },
+  // frame-ancestors ya dice quién puede enmarcar la web (X-Frame-Options no admite una lista)
+  xFrameOptions: false,
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy: false,
