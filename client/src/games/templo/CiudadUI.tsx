@@ -7,8 +7,10 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
-  Send, Store, Trophy, Users, WifiOff,
+  RotateCw, Send, Store, Trophy, Users, WifiOff,
 } from "lucide-react";
+import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
+import { orientacionActual } from "./motor/controles";
 import { Button } from "@/components/ui/button";
 import { gameStore, useGame, type EdificioId, type Modal } from "./store";
 import { Card, VerseBox, fmt, hace } from "./ui";
@@ -65,6 +67,8 @@ function Reloj({ hora, fecha, fase }: { hora: number; fecha: string; fase: strin
 /** El marcador de la ciudad: quién eres, dónde está tu casa, el día y la fiesta, y qué hay cerca. */
 export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boolean; onPause: () => void; big: boolean; onFull: () => void }) {
   const { ciudad: c, toasts, modal } = useGame();
+  const controles = useControles();
+  const reserva = useReservaControles();
   const [hint, setHint] = useState(true);
   useEffect(() => {
     const t = setTimeout(() => setHint(false), 14000);
@@ -130,6 +134,18 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             <Boton label="Temporada (T)" onClick={() => open({ kind: "temporada" })} testid="button-ciudad-temporada">
               <Trophy className="h-5 w-5" />
             </Boton>
+            {big && typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches && (
+              <Boton
+                label="Girar la pantalla"
+                onClick={async () => {
+                  const aviso = await elegirOrientacion(orientacionActual() === "horizontal" ? "vertical" : "horizontal");
+                  if (aviso) gameStore.toast(aviso, "info");
+                }}
+                testid="button-ciudad-girar"
+              >
+                <RotateCw className="h-5 w-5" />
+              </Boton>
+            )}
             <Boton label={big ? "Salir de pantalla completa" : "Pantalla completa"} onClick={onFull} testid="button-ciudad-pantalla" active={big}>
               {big ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
             </Boton>
@@ -182,7 +198,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
         ))}
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))" }}>
+      <Cruceta oculto={!!modal || paused} />
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))", ...reserva }}>
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -204,7 +221,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           </>
         )}
         {hint && !modal && (
-          <div className="max-w-[94%] rounded-full bg-black/35 px-3 py-1 text-center text-xs text-white/85 backdrop-blur-sm">Toca el piso para ir o arrastra para caminar (más lejos para correr) · pellizca para acercar · computadora: W A S D, Mayús corre</div>
+          <div className="max-w-[94%] rounded-full bg-black/35 px-3 py-1 text-center text-xs text-white/85 backdrop-blur-sm">{textoAyuda(controles)}</div>
         )}
       </div>
     </div>

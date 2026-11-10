@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-controles",
+    fecha: "10 de noviembre de 2026",
+    titulo: "Elige tus controles",
+    puntos: [
+      "En la pausa, «Controles»: joystick donde toques (el de siempre), joystick fijo en la esquina, botones de flechas con «Correr», o solo tocar para ir.",
+      "Opciones para zurdos, botones más grandes y tocar el piso para ir.",
+      "Funciona con mando (Bluetooth o cable): palanca para caminar, B para correr, LB y RB para acercar y Start para la pausa.",
+      "En pantalla completa puedes girar a horizontal o vertical (en Android desde el juego; en el iPhone, girando el teléfono).",
+    ],
+  },
+  {
     id: "2026-11-10-partida",
     fecha: "10 de noviembre de 2026",
     titulo: "Tu partida vive en tu cuenta",
