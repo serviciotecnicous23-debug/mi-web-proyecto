@@ -1,22 +1,29 @@
 /**
- * Motor común del templo y la ciudad: la entrada (toques, ratón y teclado).
+ * Motor común del templo y la ciudad: la entrada (toques, ratón, teclado y mandos).
  *
- * - Joystick flotante: se apoya el dedo en cualquier lugar y se arrastra. Si se arrastra más allá
- *   del borde, el aprendiz corre.
- * - Tocar para ir: un toque corto (sin arrastrar) marca un punto del piso; el mundo busca el
- *   camino y el aprendiz va solo hasta ahí.
- * - Pellizcar con dos dedos (o la rueda del ratón) acerca y aleja la cámara.
- * - Teclado: flechas o W A S D; Mayús para correr.
- * - Vibración corta en las acciones, donde el teléfono la permite (se puede apagar).
+ * Cada jugador elige en la pausa cómo moverse (motor/controles.ts):
+ * - «Joystick donde toques»: se apoya el dedo en cualquier lugar y se arrastra; más allá del
+ *   borde, el aprendiz corre.
+ * - «Joystick fijo»: siempre en la esquina de abajo (a la derecha para zurdos).
+ * - «Botones de flechas»: las flechas de la pantalla mandan las mismas teclas que el teclado.
+ * - «Solo tocar para ir»: sin joystick.
+ * En todos: un toque corto en el piso lleva al aprendiz hasta ahí (se puede apagar), pellizcar con
+ * dos dedos o la rueda del ratón acercan la cámara, el teclado (flechas o W A S D, Mayús para
+ * correr, + y − para acercar) y los mandos (palanca o cruceta para caminar; B, gatillo derecho o
+ * apretar la palanca para correr; LB y RB para acercar; Start para la pausa).
+ * Vibración corta en las acciones, donde el teléfono la permite (se puede apagar).
  */
 import type { Overlay } from "../three/overlay";
+import { alCambiarControles, leerControles, type Controles } from "./controles";
 
 export type Toque = { x: number; y: number };
 
 const RADIO = 56;
+const RADIO_GRANDE = 72;
 const MUERTA = 8;
 const TOQUE_MS = 260;
 const TOQUE_PX = 12;
+const MANDO_MUERTA = 0.18;
 export const ZOOM_MIN = 0.7;
 export const ZOOM_MAX = 1.4;
 
@@ -60,12 +67,18 @@ export function vibrar(ms: number | number[]) {
   }
 }
 
+/** Un dedo (o el ratón) apoyado: dónde empezó, dónde está y cuándo se apoyó. */
 type Dedo = { id: number; x0: number; y0: number; x: number; y: number; t0: number };
 
 export class Entrada {
   private teclas = new Set<string>();
   private dedos = new Map<number, Dedo>();
+  /** El dedo que mueve el joystick, y el centro del joystick (el dedo o la esquina fija). */
   private joy: Dedo | null = null;
+  private ox = 0;
+  private oy = 0;
+  /** Un dedo que solo puede ser un toque corto (sin joystick en ese esquema o fuera del fijo). */
+  private soloToque: Dedo | null = null;
   private pellizco: { d0: number; z0: number } | null = null;
   private toque: Toque | null = null;
   /** Acercamiento de la cámara (menos = más cerca). Se recuerda entre partidas. */
@@ -74,6 +87,15 @@ export class Entrada {
   private corriendo = false;
   private jx = 0;
   private jy = 0;
+  private c: Controles = leerControles();
+  private quitarOyente: () => void;
+  private obs: ResizeObserver | null = null;
+  private w = 0;
+  private h = 0;
+  // mando
+  private mandoCorre = false;
+  private mandoStart = false;
+  private mandoT = 0;
 
   constructor(
     private contenedor: HTMLElement,
@@ -89,6 +111,48 @@ export class Entrada {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("blur", this.soltar);
+    this.quitarOyente = alCambiarControles((c) => {
+      this.c = c;
+      this.soltar();
+    });
+    const r = contenedor.getBoundingClientRect();
+    this.w = r.width;
+    this.h = r.height;
+    if (typeof ResizeObserver !== "undefined") {
+      this.obs = new ResizeObserver(() => {
+        const rr = this.contenedor.getBoundingClientRect();
+        this.w = rr.width;
+        this.h = rr.height;
+        if (!this.joy) this.dibujarReposo();
+      });
+      this.obs.observe(contenedor);
+    }
+    this.dibujarReposo();
+  }
+
+  /** Los controles que eligió el jugador. */
+  get controles(): Controles {
+    return this.c;
+  }
+
+  private radio() {
+    return this.c.grande ? RADIO_GRANDE : RADIO;
+  }
+
+  /** Centro del joystick fijo: en la esquina de abajo, a la izquierda (o a la derecha para zurdos). */
+  private baseFija(): [number, number] {
+    const m = this.radio() * 1.55 + 14;
+    return [this.c.zurdo ? this.w - m : m, this.h - m];
+  }
+
+  /** El joystick fijo se ve siempre, más tenue cuando no se usa. */
+  private dibujarReposo() {
+    if (this.c.esquema !== "fijo") {
+      this.overlay.joystick(false);
+      return;
+    }
+    const [bx, by] = this.baseFija();
+    this.overlay.joystick(true, bx, by, bx, by, 0.45, this.radio() / RADIO);
   }
 
   /** Hacia dónde empuja el jugador: (x, y) en la pantalla, largo hasta 1. */
@@ -101,17 +165,58 @@ export class Entrada {
     if (this.teclas.has("arrowdown") || this.teclas.has("s")) y -= 1;
     x += this.jx;
     y += this.jy;
-    const m = Math.hypot(x, y);
-    if (m > 1) {
-      x /= m;
-      y /= m;
+    const m = this.leerMando();
+    if (m) {
+      x += m[0];
+      y += m[1];
+    }
+    const largo = Math.hypot(x, y);
+    if (largo > 1) {
+      x /= largo;
+      y /= largo;
     }
     return [x, y];
   }
 
-  /** ¿Corre? (Mayús, o el dedo más allá del borde del joystick). */
+  /** El mando (si hay uno): palanca izquierda o cruceta, correr, acercar y pausa. */
+  private leerMando(): [number, number] | null {
+    let pads: (Gamepad | null)[] = [];
+    try {
+      pads = navigator.getGamepads ? [...navigator.getGamepads()] : [];
+    } catch {
+      return null;
+    }
+    const g = pads.find((p) => p && p.connected);
+    const ahora = performance.now();
+    const dt = this.mandoT ? Math.min(0.1, (ahora - this.mandoT) / 1000) : 0;
+    this.mandoT = ahora;
+    if (!g) {
+      this.mandoCorre = false;
+      return null;
+    }
+    const b = (i: number) => !!g.buttons[i]?.pressed;
+    let x = g.axes[0] || 0,
+      y = -(g.axes[1] || 0);
+    if (Math.hypot(x, y) < MANDO_MUERTA) x = y = 0;
+    if (b(12)) y += 1;
+    if (b(13)) y -= 1;
+    if (b(14)) x -= 1;
+    if (b(15)) x += 1;
+    this.mandoCorre = b(1) || b(7) || b(10);
+    if (!this.opciones.ocupado()) {
+      if (b(4)) this.ponerZoom(this.zoom / (1 + 0.6 * dt));
+      if (b(5)) this.ponerZoom(this.zoom * (1 + 0.6 * dt));
+    }
+    const start = b(9);
+    if (start && !this.mandoStart) window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    this.mandoStart = start;
+    if (x || y) this.opciones.alPrimerToque?.();
+    return [x, y];
+  }
+
+  /** ¿Corre? (Mayús, el dedo más allá del borde del joystick o el botón del mando). */
   get corre(): boolean {
-    return this.teclas.has("shift") || this.corriendo;
+    return this.teclas.has("shift") || this.corriendo || this.mandoCorre;
   }
 
   /** ¿Hay alguien empujando (para cortar el «ir solo»)? */
@@ -148,16 +253,43 @@ export class Entrada {
       // dos dedos: pellizcar (se suelta el joystick)
       const [a, b] = [...this.dedos.values()];
       this.pellizco = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: this.zoom };
+      this.soloToque = null;
       this.soltarJoystick();
       return;
     }
-    if (this.dedos.size === 1) {
+    if (this.dedos.size !== 1) return;
+    this.jx = this.jy = 0;
+    this.corriendo = false;
+    if (this.c.esquema === "flotante") {
       this.joy = d;
-      this.jx = this.jy = 0;
-      this.corriendo = false;
-      this.overlay.joystick(true, x, y, x, y);
-    }
+      this.ox = x;
+      this.oy = y;
+      this.overlay.joystick(true, x, y, x, y, 1, this.radio() / RADIO);
+    } else if (this.c.esquema === "fijo") {
+      const [bx, by] = this.baseFija();
+      if (Math.hypot(x - bx, y - by) <= this.radio() * 1.9) {
+        this.joy = d;
+        this.ox = bx;
+        this.oy = by;
+        this.moverJoystick(d);
+      } else this.soloToque = d;
+    } else this.soloToque = d;
   };
+
+  private moverJoystick(d: Dedo) {
+    const R = this.radio();
+    let dx = d.x - this.ox,
+      dy = d.y - this.oy;
+    const m = Math.hypot(dx, dy);
+    this.corriendo = m > R * 1.45;
+    if (m > R) {
+      dx = (dx / m) * R;
+      dy = (dy / m) * R;
+    }
+    this.jx = m < MUERTA ? 0 : dx / R;
+    this.jy = m < MUERTA ? 0 : -dy / R;
+    this.overlay.joystick(true, this.ox, this.oy, this.ox + dx, this.oy + dy, 1, R / RADIO);
+  }
 
   private onMove = (e: PointerEvent) => {
     const d = this.dedos.get(e.pointerId);
@@ -171,18 +303,7 @@ export class Entrada {
       this.ponerZoom(this.pellizco.z0 * (this.pellizco.d0 / dist));
       return;
     }
-    if (this.joy !== d) return;
-    let dx = x - d.x0,
-      dy = y - d.y0;
-    const m = Math.hypot(dx, dy);
-    this.corriendo = m > RADIO * 1.45;
-    if (m > RADIO) {
-      dx = (dx / m) * RADIO;
-      dy = (dy / m) * RADIO;
-    }
-    this.jx = m < MUERTA ? 0 : dx / RADIO;
-    this.jy = m < MUERTA ? 0 : -dy / RADIO;
-    this.overlay.joystick(true, d.x0, d.y0, d.x0 + dx, d.y0 + dy);
+    if (this.joy === d) this.moverJoystick(d);
   };
 
   private onUp = (e: PointerEvent) => {
@@ -196,16 +317,22 @@ export class Entrada {
       }
       return;
     }
+    const corto = performance.now() - d.t0 < TOQUE_MS && Math.hypot(d.x - d.x0, d.y - d.y0) < TOQUE_PX;
+    const puedeIr = (this.c.esquema === "tocar" || this.c.tocarParaIr) && !this.opciones.ocupado();
     if (this.joy === d) {
-      const corto = performance.now() - d.t0 < TOQUE_MS && Math.hypot(d.x - d.x0, d.y - d.y0) < TOQUE_PX;
-      if (corto && !this.opciones.ocupado()) this.toque = { x: d.x, y: d.y };
+      // en el joystick fijo, tocarlo sin arrastrar no es «ir al punto»
+      if (corto && puedeIr && this.c.esquema === "flotante") this.toque = { x: d.x, y: d.y };
       this.soltarJoystick();
+    } else if (this.soloToque === d) {
+      if (corto && puedeIr) this.toque = { x: d.x, y: d.y };
+      this.soloToque = null;
     }
   };
 
   private onCancel = (e: PointerEvent) => {
     this.dedos.delete(e.pointerId);
     if (this.dedos.size < 2) this.pellizco = null;
+    if (this.soloToque?.id === e.pointerId) this.soloToque = null;
     if (this.joy?.id === e.pointerId) this.soltarJoystick();
   };
 
@@ -223,7 +350,7 @@ export class Entrada {
     this.joy = null;
     this.jx = this.jy = 0;
     this.corriendo = false;
-    this.overlay.joystick(false);
+    this.dibujarReposo();
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -244,11 +371,12 @@ export class Entrada {
     this.teclas.delete(e.key.toLowerCase());
   };
 
-  /** Suelta todo (al perder el foco, al abrir una ventana). */
+  /** Suelta todo (al perder el foco, al abrir una ventana, al cambiar los controles). */
   soltar = () => {
     this.teclas.clear();
     this.dedos.clear();
     this.pellizco = null;
+    this.soloToque = null;
     this.soltarJoystick();
   };
 
@@ -261,5 +389,7 @@ export class Entrada {
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("keyup", this.onKeyUp);
     window.removeEventListener("blur", this.soltar);
+    this.quitarOyente();
+    this.obs?.disconnect();
   }
 }

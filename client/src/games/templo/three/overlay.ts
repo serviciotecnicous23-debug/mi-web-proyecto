@@ -143,15 +143,17 @@ export class Overlay {
     }
   }
 
-  joystick(active: boolean, ox = 0, oy = 0, kx = 0, ky = 0) {
-    const o = active ? "1" : "0";
+  /** El joystick: `alpha` más bajo en reposo (el joystick fijo se ve siempre) y `escala` para los botones grandes. */
+  joystick(active: boolean, ox = 0, oy = 0, kx = 0, ky = 0, alpha = 1, escala = 1) {
+    const o = active ? String(alpha) : "0";
     if (this.joy.style.opacity !== o) {
       this.joy.style.opacity = o;
       this.knob.style.opacity = o;
     }
     if (!active) return;
-    this.joy.style.transform = `translate3d(${ox}px,${oy}px,0)`;
-    this.knob.style.transform = `translate3d(${kx}px,${ky}px,0)`;
+    const e = escala !== 1 ? ` scale(${escala.toFixed(3)})` : "";
+    this.joy.style.transform = `translate3d(${ox}px,${oy}px,0)${e}`;
+    this.knob.style.transform = `translate3d(${kx}px,${ky}px,0)${e}`;
   }
 
   dispose() {

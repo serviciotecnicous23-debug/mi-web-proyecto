@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,7 +34,8 @@ import { OnlineSession, adminQuitarCargo, adminRevisar, crearPersonaje, entrarCi
 import { FIESTA, FIESTAS, fechaDe, fechaDeFiesta, proximaFiesta, type FiestaId } from "@shared/calendario";
 import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
-import { setVibracion, vibracionActiva } from "./motor/entrada";
+import { Cruceta, PanelControles, elegirOrientacion, orientacionGuardada, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
+import { girarPantalla, orientacionActual } from "./motor/controles";
 import { AvisoVersionNueva, NovedadesAviso } from "./novedades";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
@@ -254,6 +255,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
       setLobby(false);
       setPhase("playing");
       setCambio(null);
+      wrapRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
       return true;
     },
     [muted, music],
@@ -352,7 +354,14 @@ export default function TemploGame({ game }: { game: GameDef }) {
   }, [phase, paused, togglePause, online, city]);
 
   useEffect(() => {
-    const onFs = () => setFull(!!document.fullscreenElement);
+    const onFs = () => {
+      const fs = !!document.fullscreenElement;
+      setFull(fs);
+      if (fs) {
+        const o = orientacionGuardada();
+        if (o !== "auto") void elegirOrientacion(o);
+      } else void girarPantalla("auto");
+    };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
@@ -743,6 +752,8 @@ function DayClock({ hud }: { hud: Hud }) {
 function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; onPause: () => void; big: boolean; onFull: () => void; online: boolean }) {
   const { hud, toasts, modal, online: oh } = useGame();
   const world = useWorld();
+  const controles = useControles();
+  const reserva = useReservaControles();
   const [hint, setHint] = useState(true);
   const [fsHint, setFsHint] = useState(false);
   const score = online ? oh?.merito ?? 0 : hud.gozo;
@@ -874,6 +885,11 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 </IconBtn>
               </>
             )}
+            {big && coarsePointer() && (
+              <IconBtn label="Girar la pantalla" onClick={() => void girarDesdeElMarcador()} testid="button-templo-girar">
+                <RotateCw className="h-5 w-5" />
+              </IconBtn>
+            )}
             <IconBtn label={big ? "Salir de pantalla completa" : "Pantalla completa"} onClick={onFull} testid="button-templo-pantalla" active={big}>
               {big ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
             </IconBtn>
@@ -931,7 +947,8 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
 
       {/* abajo: avisos (lo que hace el aprendiz, la hora del sacrificio, la jornada), lo que llevas y ayuda.
           Van abajo y transparentes para no tapar el templo. */}
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))" }} data-testid="templo-hud-abajo">
+      <Cruceta oculto={!!modal || paused} />
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1" style={{ ...lados, paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))", ...reserva }} data-testid="templo-hud-abajo">
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -972,13 +989,22 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
           </div>
         )}
         {hint && !modal && (
-          <div className="rounded-full bg-black/35 px-3 py-1 text-xs text-white/85 backdrop-blur-sm">
-            Toca el piso para ir o arrastra para caminar (más lejos para correr) · pellizca para acercar · computadora: W A S D, Mayús corre
-          </div>
+          <div className="max-w-[94%] rounded-full bg-black/35 px-3 py-1 text-center text-xs text-white/85 backdrop-blur-sm">{textoAyuda(controles)}</div>
         )}
       </div>
     </div>
   );
+}
+
+/** ¿Se juega con el dedo? */
+function coarsePointer(): boolean {
+  return typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+}
+
+/** El botón de girar del marcador (solo en pantalla completa): alterna horizontal y vertical. */
+async function girarDesdeElMarcador() {
+  const aviso = await elegirOrientacion(orientacionActual() === "horizontal" ? "vertical" : "horizontal");
+  if (aviso) gameStore.toast(aviso, "info");
 }
 
 function IconBtn({ label, onClick, children, testid, active, className = "flex" }: { label: string; onClick: () => void; children: React.ReactNode; testid?: string; active?: boolean; className?: string }) {
@@ -1016,8 +1042,7 @@ function PauseMenu(props: {
   onExitOnline: () => void;
 }) {
   const [askGen, setAskGen] = useState(false);
-  const [vibra, setVibra] = useState(() => vibracionActiva());
-  const puedeVibrar = typeof navigator !== "undefined" && "vibrate" in navigator;
+  const [verControles, setVerControles] = useState(false);
   const margen = {
     paddingTop: "calc(0.75rem + var(--tpl-st, 0px))",
     paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))",
@@ -1052,6 +1077,14 @@ function PauseMenu(props: {
       </div>
     );
   }
+  if (verControles)
+    return (
+      <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={margen}>
+        <div className="max-h-full w-full max-w-sm overflow-y-auto rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-white shadow-2xl">
+          <PanelControles big={props.big} onVolver={() => setVerControles(false)} />
+        </div>
+      </div>
+    );
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={margen}>
       <div className="max-h-full w-full max-w-xs space-y-3 overflow-y-auto rounded-2xl border border-amber-300/30 bg-[#20160a]/95 p-5 text-center text-white shadow-2xl" data-testid="templo-pausa">
@@ -1066,19 +1099,9 @@ function PauseMenu(props: {
           <Button variant="secondary" onClick={props.onMusic} className={props.music ? "" : "opacity-60"}>
             <Music className="mr-1 h-4 w-4" /> {props.music ? "Música" : "Sin música"}
           </Button>
-          {puedeVibrar && (
-            <Button
-              variant="secondary"
-              className={`col-span-2 ${vibra ? "" : "opacity-60"}`}
-              onClick={() => {
-                setVibracion(!vibra);
-                setVibra(!vibra);
-              }}
-              data-testid="button-pausa-vibrar"
-            >
-              {vibra ? "Vibración: sí" : "Vibración: no"}
-            </Button>
-          )}
+          <Button variant="secondary" className="col-span-2" onClick={() => setVerControles(true)} data-testid="button-pausa-controles">
+            <Gamepad2 className="mr-1 h-4 w-4" /> Controles{props.big ? " y pantalla" : ""}
+          </Button>
           <Button variant="secondary" className="col-span-2" onClick={() => gameStore.push({ kind: "help" })}>
             <CircleHelp className="mr-1 h-4 w-4" /> Ayuda
           </Button>
