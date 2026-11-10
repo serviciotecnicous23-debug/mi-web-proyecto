@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-mapa",
+    fecha: "10 de noviembre de 2026",
+    titulo: "El mapa de Jerusalén",
+    puntos: [
+      "🗺️ Arriba a la derecha tienes un minimapa: tú eres la flecha blanca, 🏠 tu casa, 🔵 tus vecinos y 🟡 tu objetivo (si queda lejos, una flecha dorada en el borde te dice hacia dónde ir).",
+      "🎯 Debajo dice tu objetivo de ahora: la casa del mensaje, un pobre que espera pan, el lugar de oración, la escuela, el palacio o el templo.",
+      "👣 Toca el minimapa para ver toda la ciudad: con «Caminar hasta allá» tu personaje va solo hasta el objetivo, y hay botones para ir a tu casa, el templo, la plaza, el mercado, la escuela o el palacio.",
+    ],
+  },
+  {
     id: "2026-11-10-cargos-caminos",
     fecha: "10 de noviembre de 2026",
     titulo: "Profetas y siervos del rey también compiten",
