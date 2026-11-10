@@ -2068,7 +2068,28 @@ export const gameHouses = pgTable("game_houses", {
   level: integer("level").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // siervos (tareas: harina, aceite, corderos), alfolí y el tope de trabajo del día
+  servants: jsonb("servants").notNull().default([]),
+  goods: jsonb("goods").notNull().default({}),
+  collectedAt: timestamp("collected_at"),
+  prodDay: text("prod_day"),
+  prodSeconds: integer("prod_seconds").notNull().default(0),
+  // honra que dio lo que la casa ofreció en el templo
+  offered: integer("offered").notNull().default(0),
+  blessingsSeenAt: timestamp("blessings_seen_at"),
 });
+
+// Bendiciones que deja quien visita una casa: una por día y casa (como los aplausos).
+export const gameHouseBlessings = pgTable(
+  "game_house_blessings",
+  {
+    houseCharacterId: integer("house_character_id").notNull().references(() => gameCharacters.id, { onDelete: "cascade" }),
+    visitorUserId: integer("visitor_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    dayKey: text("day_key").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.houseCharacterId, t.visitorUserId, t.dayKey] })],
+);
 
 export const PRAYER_CATEGORIES = {
   salud: "Salud",

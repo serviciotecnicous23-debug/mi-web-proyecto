@@ -20,7 +20,8 @@ import type { Circle, Rect, V2 } from "../layout";
 import type { ItemType } from "../data";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import {
-  CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type CasaVista, type CiudadEstado, type VecinoInfo,
+  BIEN, CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVista,
+  type CiudadEstado, type VecinoInfo,
 } from "@shared/ciudad";
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
@@ -82,7 +83,7 @@ type Npc = {
   path: V2[];
   speed: number;
   wait: number;
-  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "peregrino";
+  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "peregrino" | "siervo";
   item?: ItemType;
   home?: V2;
   yaw?: number;
@@ -132,6 +133,9 @@ export class CiudadWorld {
   private fraseSeq = 0;
   private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
   private ultimaFrase = 0;
+  // tus siervos (solo los ves tú) y la casa del vecino que se visita
+  private siervos: Npc[] = [];
+  private visitaParcela: string | null = null;
 
   private raf = 0;
   private last = 0;
@@ -252,6 +256,15 @@ export class CiudadWorld {
     this.resize();
 
     const yo = estado.yo;
+    const pv = estado.privada;
+    if (pv.recogido) {
+      const partes = (Object.keys(pv.recogido) as Bien[]).filter((b) => pv.recogido![b] > 0).map((b) => `${pv.recogido![b]} de ${BIEN[b].nombre.toLowerCase()}`);
+      if (partes.length) gameStore.toast(`Mientras no estabas, tus siervos prepararon ${partes.join(", ")}`, "gold");
+    }
+    if (pv.nuevasBendiciones.length) {
+      const n = pv.nuevasBendiciones;
+      gameStore.toast(`${n.slice(0, 2).join(" y ")}${n.length > 2 ? ` y ${n.length - 2} más` : ""} ${n.length === 1 ? "dejó" : "dejaron"} una bendición en tu casa`, "gold");
+    }
     if (yo.subio !== null) gameStore.toast(`¡Tu casa creció! Ahora es ${NIVELES_CASA[yo.subio].nombre.toLowerCase()}`, "gold");
     else if (opts.llegada === "templo") gameStore.toast(`Jerusalén: tu casa está en ${estado.barrio.nombre}, casa ${yo.parcela + 1}`, "info");
     const hoy = this.fiestaHoy();
@@ -736,8 +749,29 @@ export class CiudadWorld {
     }
   }
 
+  /** La casa del vecino en cuyo umbral está parado (para visitarla). */
+  private visitaCerca(): { personajeId: number; nombre: string; clave: string } | null {
+    const r = this.player.rig;
+    const area = P.areaEn(r.x, r.z);
+    if (!area) return null;
+    const n = this.barrioDeArea(area);
+    const b = this.barrios.get(n);
+    if (!b?.detalle) return null;
+    const p = P.cercaDeUmbral(r.x, r.z, n, 0.75);
+    if (!p) return null;
+    const c = b.casas.find((x) => x.parcela === p.n);
+    if (!c || c.personajeId === undefined || c.personajeId === this.estado.yo.personajeId) return null;
+    return { personajeId: c.personajeId, nombre: c.nombre ?? "un vecino", clave: `${n}:${p.n}` };
+  }
+
   private updateZonas() {
     const r = this.player.rig;
+    const v = this.visitaCerca();
+    if (v && v.clave !== this.visitaParcela && !gameStore.busy) {
+      this.audio.page();
+      this.abrir({ kind: "visita", personajeId: v.personajeId, nombre: v.nombre });
+    }
+    this.visitaParcela = v?.clave ?? null;
     for (const z of this.zonas) {
       const inside = dist(r.x, r.z, z.x, z.z) < z.r;
       const entered = inside && !z.inside;
@@ -831,8 +865,40 @@ export class CiudadWorld {
     this.circles = this.fijos.circles;
     this.nav = new NavGrid(this.rects, this.circles, 0.3, { ...P.LIMITES, cell: 1, walkable: P.caminable });
     this.crearEtiquetasCasas();
+    this.dibujarSiervos();
     this.shadowDirty = true;
     this.syncNoche(true);
+  }
+
+  /** Tus siervos trabajan en el patio de tu casa: solo los ves tú (los vecinos ven la casa, nunca a los siervos). */
+  private dibujarSiervos() {
+    if (!this.player) return;
+    for (const s of this.siervos) this.quitarNpc(s);
+    this.siervos = [];
+    const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
+    const lista = this.estado.privada?.siervos ?? [];
+    lista.forEach((tarea, i) => {
+      // en fila en el patio, entre la casa y la calle, mirando a la casa
+      const x = casa.x - 1.25 + (i % 4) * 0.85;
+      const z = casa.z + casa.dir * 3.35;
+      const n = this.npc("siervo", [x, z], { yaw: casa.dir === 1 ? Math.PI : 0 });
+      if (!n) return;
+      n.rig.pose = tarea === "harina" ? "kneel" : tarea === "aceite" ? "bow" : "idle";
+      n.item = tarea === "corderos" ? "cordero" : tarea === "aceite" ? "aceite" : "cereal";
+      this.siervos.push(n);
+    });
+  }
+
+  /** Lo de tu casa cambió (siervos, alfolí u ofrendas). */
+  actualizarPrivada(p: CasaPrivada, nivel?: number) {
+    const antes = this.estado.privada?.siervos.join(",");
+    this.estado = { ...this.estado, privada: p, yo: nivel !== undefined ? { ...this.estado.yo, nivel } : this.estado.yo };
+    if (nivel !== undefined) {
+      const b = this.barrios.get(this.estado.barrio.n);
+      if (b) b.casas = b.casas.map((c) => (c.parcela === this.estado.yo.parcela ? { ...c, nivel } : c));
+      this.dibujarAreas();
+    } else if (antes !== p.siervos.join(",")) this.dibujarSiervos();
+    this.pushHud();
   }
 
   /** Al entrar en el área de otro barrio, se piden sus casas para verlas completas. */
@@ -996,6 +1062,12 @@ export class CiudadWorld {
       const r = n.rig;
       r.t += dt;
       switch (n.kind) {
+        case "siervo":
+          r.moving = 0;
+          if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
+          if (r.pose === "bow" && Math.sin(r.t * 1.6) > 0.96) r.pose = "offer";
+          else if (r.pose === "offer" && Math.sin(r.t * 1.6) < 0.2) r.pose = "bow";
+          break;
         case "anciano":
         case "alumno":
         case "guardia":
@@ -1053,7 +1125,8 @@ export class CiudadWorld {
       this.shadows.add(n.rig.x, n.rig.y, n.rig.z, n.rig.scale);
       if (n.item) {
         const r = n.rig;
-        this.items.add(n.item, r.x + Math.sin(r.yaw) * 0.36 * r.scale, r.y + 0.6 * r.scale, r.z + Math.cos(r.yaw) * 0.36 * r.scale, r.yaw, 0.95);
+        if (n.kind === "siervo") this.items.add(n.item, r.x + Math.sin(r.yaw) * 0.55, r.y + 0.02, r.z + Math.cos(r.yaw) * 0.55, r.yaw + 0.6, 1.1);
+        else this.items.add(n.item, r.x + Math.sin(r.yaw) * 0.36 * r.scale, r.y + 0.6 * r.scale, r.z + Math.cos(r.yaw) * 0.36 * r.scale, r.yaw, 0.95);
       }
     }
     this.animarVecinos(dt);
@@ -1222,6 +1295,13 @@ export class CiudadWorld {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const cerca = this.vecinoCerca();
     if (cerca) return `${cerca.nombre} está cerca: salúdale con las frases rápidas`;
+    const area = P.areaEn(r.x, r.z);
+    if (area) {
+      const b = this.barrios.get(this.barrioDeArea(area));
+      const p = b?.detalle ? P.cercaDeUmbral(r.x, r.z, this.barrioDeArea(area), 3) : null;
+      const c = p ? b!.casas.find((x) => x.parcela === p.n && x.personajeId !== this.estado.yo.personajeId) : null;
+      if (c?.nombre) return `La casa de ${c.nombre}: párate en su puerta para visitarla`;
+    }
     if (dist(r.x, r.z, P.ENTRADA_TEMPLO[0], P.ENTRADA_TEMPLO[1]) < 9) return "Sube por la escalinata para entrar al templo y servir";
     if (dist(r.x, r.z, casa.umbral[0], casa.umbral[1]) < 7) return "Párate en el círculo de tu puerta para entrar a tu casa";
     if (dist(r.x, r.z, P.ANUNCIOS[0], P.ANUNCIOS[1]) < 6) return "El púlpito de la plaza: los anuncios de la ciudad";

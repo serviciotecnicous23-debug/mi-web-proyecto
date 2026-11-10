@@ -11,7 +11,7 @@ import {
   type JerusalenPregunta, type JerusalenRespuesta,
 } from "@shared/jerusalen";
 import { relojEnLinea } from "@shared/calendario";
-import type { CiudadEstado } from "@shared/ciudad";
+import type { Bien, CasaPrivada, CasaVisita, CiudadEstado } from "@shared/ciudad";
 import { STATIONS } from "./data";
 import { newSave, type SaveData } from "./state";
 import { gameStore, type OnlineHud } from "./store";
@@ -35,6 +35,13 @@ export const adminRevisar = () => pedir<JerusalenEstado>("/admin/revisar", { met
 export const adminQuitarCargo = (personajeId: number) => pedir<JerusalenEstado & { message?: string }>("/admin/quitar-cargo", { method: "POST", body: JSON.stringify({ personajeId }) });
 /** La ciudad (etapa 2): entrar da la parcela la primera vez y trae el barrio. */
 export const entrarCiudad = () => pedir<CiudadEstado & { message?: string }>("/ciudad/entrar", { method: "POST" });
+/** Tus siervos (la tarea de cada uno) y llevar al templo lo del alfolí. */
+export const casaSiervos = (siervos: Bien[]) => pedir<CasaPrivada & { message?: string }>("/ciudad/casa/siervos", { method: "POST", body: JSON.stringify({ siervos }) });
+export const casaOfrendar = (bienes: Partial<Record<Bien, number>>) =>
+  pedir<{ ganado: number; doble: Bien | null; subio: number | null; honra: number; privada: CasaPrivada; message?: string }>("/ciudad/casa/ofrendar", { method: "POST", body: JSON.stringify({ bienes }) });
+/** Visitar la casa de un vecino y dejarle una bendición (una por día y casa). */
+export const verCasa = (personajeId: number) => pedir<CasaVisita & { message?: string }>(`/ciudad/casa/${personajeId}`);
+export const bendecirCasa = (personajeId: number) => pedir<CasaVisita & { message?: string }>(`/ciudad/casa/${personajeId}/bendecir`, { method: "POST" });
 
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */
 export function escalonRank(e: EscalonId | null | undefined): number {
