@@ -7,9 +7,9 @@
  * Los deberes se cuentan en el mundo de la ciudad (city.deber) y van al mérito de la temporada.
  */
 import { useContext, useMemo, useState } from "react";
-import { Check, Crown, Megaphone, RefreshCw, ScrollText, Wheat } from "lucide-react";
+import { Check, Crown, Megaphone, RefreshCw, ScrollText, Search, Wheat } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AUDIENCIAS, CAMINOS, VERSOS_MEMORIA, type Camino } from "@shared/caminos";
+import { AUDIENCIAS, CAMINOS, DISCERNIMIENTOS, VERSOS_MEMORIA, VERSO_DISCERNIR, type Camino } from "@shared/caminos";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
@@ -154,6 +154,61 @@ function AudienciaView({ alTerminar }: { alTerminar: (justa: boolean) => void })
   );
 }
 
+/** Discernir con las Escrituras (la escuela de los profetas): lo que se oye, tres respuestas y la Palabra. */
+function DiscernirView({ alTerminar }: { alTerminar: (bien: boolean) => void }) {
+  const [k, setK] = useState(() => Math.floor(Math.random() * DISCERNIMIENTOS.length));
+  const d = DISCERNIMIENTOS[k % DISCERNIMIENTOS.length];
+  const [elegida, setElegida] = useState<number | null>(null);
+  const orden = useMemo(() => mezclar([0, 1, 2]), [k]);
+  return (
+    <div className="space-y-2.5" data-testid="discernir">
+      <p className="font-black">Lo que se oye en la plaza</p>
+      <p className="rounded-xl bg-stone-50 p-2.5 italic dark:bg-stone-900/40">{d.dice}</p>
+      <p className="text-xs text-stone-500">¿Qué dice la Palabra? Elige lo que haría un profeta de Dios.</p>
+      {orden.map((i) => {
+        const estado = elegida === null ? "" : i === d.correcta ? "bien" : elegida === i ? "mal" : "";
+        return (
+          <button
+            key={i}
+            type="button"
+            disabled={elegida !== null}
+            onClick={() => {
+              setElegida(i);
+              alTerminar(i === d.correcta);
+            }}
+            className={`block w-full rounded-xl border-2 px-3 py-2 text-left text-[14px] font-semibold ${
+              estado === "bien" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30" : estado === "mal" ? "border-red-400 bg-red-50 dark:bg-red-950/30" : "border-amber-200 hover:bg-amber-50 dark:border-amber-900 dark:hover:bg-amber-950/20"
+            }`}
+            data-testid={`discernir-${i}`}
+          >
+            {d.opciones[i]}
+          </button>
+        );
+      })}
+      {elegida !== null && (
+        <>
+          <p className={`text-sm font-bold ${elegida === d.correcta ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
+            {elegida === d.correcta ? "¡Bien discernido!" : "Eso no concuerda con la Palabra."}
+          </p>
+          <p className="text-sm">{d.explica}</p>
+          <VerseBox text={d.verso.text} refName={d.verso.ref} />
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => {
+              setK(k + 1);
+              setElegida(null);
+            }}
+            data-testid="button-discernir-otra"
+          >
+            Oír otra palabra
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Primeros pasos de un camino (la instrucción de su guía), con lo hecho marcado. */
 function PrimerosPasos({ camino, partes }: { camino: Camino; partes: number }) {
   const pasos =
@@ -178,7 +233,7 @@ function PrimerosPasos({ camino, partes }: { camino: Camino; partes: number }) {
 /** La escuela de los profetas (solo para el camino de los profetas). */
 export function EscuelaView() {
   const { city } = useContext(CiudadCtx);
-  const [tab, setTab] = useState<"inicio" | "memoria">("inicio");
+  const [tab, setTab] = useState<"inicio" | "memoria" | "discernir">("inicio");
   const partes = city?.partesCamino ?? 0;
   return (
     <Card
@@ -200,6 +255,9 @@ export function EscuelaView() {
             <div className="grid gap-2">
               <Button className="justify-start rounded-xl" onClick={() => setTab("memoria")} data-testid="button-escuela-memoria">
                 <ScrollText className="mr-2 h-4 w-4" /> Memorizar la Palabra (+4 de mérito)
+              </Button>
+              <Button className="justify-start rounded-xl" onClick={() => setTab("discernir")} data-testid="button-escuela-discernir">
+                <Search className="mr-2 h-4 w-4" /> Discernir con las Escrituras (+4)
               </Button>
               <Button
                 variant="secondary"
@@ -226,6 +284,16 @@ export function EscuelaView() {
               </Button>
             </div>
             <p className="text-xs text-stone-500">También puedes orar en el monte de la oración, al sur de la escuela: quédate quieto {15} segundos (+2).</p>
+          </>
+        ) : tab === "discernir" ? (
+          <>
+            <p className="text-xs italic text-stone-500">
+              «{VERSO_DISCERNIR.text}» ({VERSO_DISCERNIR.ref})
+            </p>
+            <DiscernirView alTerminar={(bien) => bien && city?.deber("discernir")} />
+            <Button variant="ghost" className="w-full" onClick={() => setTab("inicio")}>
+              Volver
+            </Button>
           </>
         ) : (
           <>
