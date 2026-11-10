@@ -10,6 +10,7 @@ import {
   RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
 import { CasaExtras, MercadoView, type Ofrecido } from "./MercadoUI";
+import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
 import { coloresDeIds, type MercadoEstado, type TabMercado } from "@shared/mercado";
 import { avisarMisiones } from "./online";
 import { Cruceta, elegirOrientacion, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
@@ -392,6 +393,7 @@ function CasaView() {
         </ol>
         <SiervosPanel />
         <CasaExtrasConMundo />
+        <ReunionCasa />
         <p className="text-center font-serif text-sm italic text-stone-600 dark:text-stone-300">
           «{VERSO_CASA.text}» <span className="not-italic text-xs font-semibold">— {VERSO_CASA.ref}</span>
         </p>
@@ -586,6 +588,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
               ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
+            <ReunionVisita personajeId={personajeId} alAcertar={() => city?.audio.correct()} />
             <VerseBox text={VERSO_VISITA.text} refName={VERSO_VISITA.ref} />
             {hecho ? (
               <p className="rounded-xl bg-emerald-50 p-2.5 text-center text-sm font-bold text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">Dejaste tu bendición: «Paz sea a esta casa». Vuelve mañana para dejar otra.</p>
@@ -611,7 +614,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
 
 /** El púlpito de la plaza: el día y la fiesta, la temporada con sus cargos y lo último de la ciudad. */
 function AnunciosView() {
-  const { estado } = useContext(CiudadCtx);
+  const { estado, city } = useContext(CiudadCtx);
   const [e, setE] = useState<JerusalenEstado | null>(null);
   const [actividad, setActividad] = useState<{ id: number; name: string; text: string; createdAt: string }[] | null>(null);
   useEffect(() => {
@@ -674,6 +677,13 @@ function AnunciosView() {
             </p>
           ) : null}
         </section>
+
+        <ReunionesAnuncios
+          alIr={(r) => {
+            cerrar();
+            city?.irACasaDe(r.barrio, r.parcela);
+          }}
+        />
 
         <section>
           <p className="mb-1 font-black">
