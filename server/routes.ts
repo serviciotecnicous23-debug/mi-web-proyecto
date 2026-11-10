@@ -9,6 +9,7 @@ import { registerRedRoutes, registrarRedCiudad } from "./ciudad-red";
 import { registerEstudiosRoutes } from "./estudios";
 import { registerMisionesRoutes } from "./misiones";
 import { registerMercadoRoutes } from "./mercado";
+import { registerEconomiaRoutes } from "./economia";
 import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
@@ -3644,6 +3645,7 @@ ${urls}
   registerEstudiosRoutes(app);
   registerMisionesRoutes(app);
   registerMercadoRoutes(app);
+  registerEconomiaRoutes(app);
   registerReunionesRoutes(app);
   registerConcursoRoutes(app);
   registerAyudaRoutes(app);

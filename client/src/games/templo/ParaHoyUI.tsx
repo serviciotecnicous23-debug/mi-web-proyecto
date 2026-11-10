@@ -10,6 +10,7 @@ import type { MercadoEstado } from "@shared/mercado";
 import type { ReunionesEstado } from "@shared/reuniones";
 import type { AyudaEstado } from "@shared/ayuda";
 import type { MuroEstado } from "@shared/muro";
+import type { TesoroEstado } from "@shared/economia";
 import type { MisionesEstado } from "@shared/misiones";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
@@ -27,7 +28,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -36,7 +37,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<ReunionesEstado>("/reuniones"),
       traer<AyudaEstado>("/ayuda"),
       traer<MuroEstado>("/muro"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro }));
+      traer<TesoroEstado>("/tesoro"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro }));
     return () => {
       vivo = false;
     };
@@ -77,6 +79,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   // los pedidos del barrio
   const pedidos = d.ayuda?.pedidos.length ?? 0;
   if (pedidos) lineas.push({ id: "ayuda", icono: "🤲", texto: `${pedidos === 1 ? "Un vecino pide" : `${pedidos} vecinos piden`} ayuda para su ofrenda`, boton: city ? { texto: "Ver", hacer: () => abrir({ kind: "anuncios" }) } : undefined });
+  // la provisión del tesoro (para los que empiezan)
+  if (d.tesoro?.provision.puede) lineas.push({ id: "provision", icono: "🏛️", texto: `El tesoro del templo tiene tu provisión de hoy: +${d.tesoro.provision.gozo} de gozo`, boton: { texto: "Recibir", hacer: () => abrir({ kind: "tesoro" }) } });
   // el muro de todos
   const w = d.muro;
   if (w && w.construidos < w.tramos) lineas.push({ id: "muro", icono: "🧱", texto: `El muro caído: tramo ${w.construidos + 1} de ${w.tramos}, ${w.progreso} de ${w.meta} piedras (tus piedras: ${w.mias}). Cada deber pone una.` });

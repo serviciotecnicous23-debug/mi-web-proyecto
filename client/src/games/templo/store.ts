@@ -129,6 +129,7 @@ export type Modal =
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }
   | { kind: "mercado"; tab?: TabMercado }
+  | { kind: "tesoro" }
   | { kind: "concurso" }
   | { kind: "escuela" }
   | { kind: "palacio" }

@@ -1359,6 +1359,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "palacio":
     case "mercado":
     case "concurso":
+    case "tesoro":
       return <CiudadModal modal={modal} />;
   }
 }

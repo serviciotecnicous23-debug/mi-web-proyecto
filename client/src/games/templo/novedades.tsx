@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-economia",
+    fecha: "10 de noviembre de 2026",
+    titulo: "El gozo circula: puestos, diezmo y tesoro",
+    puntos: [
+      "🏪 En el mercado, pestaña «Vecinos»: vende lo de tu alfolí (harina, aceite, corderos) a otros jugadores al precio que elijas, o cómprales lo que necesitas para el horno o las ofrendas.",
+      "🏛️ El 10 % de cada venta y de cada compra en la plaza es el diezmo: va al tesoro del templo (Malaquías 3:10). Del tesoro sale la provisión para los que empiezan y el premio semanal a las tres casas más bendecidas.",
+      "⚖️ El mercader paga menos lo que ya compró mucho ese día en toda la ciudad: piensa cuándo y a quién vender.",
+      "⚙️ Muebles que ayudan puestos en tu casa: el molino y las vasijas dan uno más en la cosecha, y la tinaja hace rendir el riego.",
+    ],
+  },
+  {
     id: "2026-11-10-casa-por-dentro",
     fecha: "10 de noviembre de 2026",
     titulo: "Tu casa por dentro",
