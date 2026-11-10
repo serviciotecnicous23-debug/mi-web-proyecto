@@ -2,7 +2,7 @@
  * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango.
  */
 import type { ReactElement } from "react";
-type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
+type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
@@ -89,6 +89,34 @@ export function Portrait({ who, size = 64 }: { who: Who; size?: number }) {
           <Face skin="#b97a4f" beard="#3b2a1e" />
           <path d="M20.5 24 C20 11 44 11 43.5 24 C40 19 24 19 20.5 24Z" fill="#3b2a1e" />
           <path d="M20.8 21.5 H43.2" stroke="#1e4d8c" strokeWidth="2.4" />
+        </>
+      );
+      break;
+    case "isaias":
+      // el profeta: manto oscuro de pelo, barba canosa y un rollo en la mano
+      bg = "#e3dcef";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#4a3b6a" />
+          <path d="M20 64 C21 52 25 46 32 45 C39 46 43 52 44 64" fill="#6b5a3e" />
+          <Face skin="#c48a5e" beard="#ece8e0" brows="#f2efe8" />
+          <path d="M20 22 C20 11 44 11 44 22 C40 16 24 16 20 22Z" fill="#ece8e0" />
+          <rect x="45" y="50" width="12" height="5" rx="2.5" fill="#efe1bd" stroke="#b88a1e" strokeWidth="0.7" />
+        </>
+      );
+      break;
+    case "eliaquim":
+      // el mayordomo: túnica azul, faja y la llave sobre el hombro (Isaías 22:21-22)
+      bg = "#dbe2f2";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#27468f" />
+          <path d="M14 57 H50" stroke="#e2b33c" strokeWidth="2.4" />
+          <Face skin="#bf8457" beard="#3b2a1e" />
+          <path d="M20.5 22 C20 11 44 11 43.5 22 C40 17 24 17 20.5 22Z" fill="#efe6d2" />
+          <path d="M42 46 L52 40" stroke="#b88a1e" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="53.5" cy="39" r="2.4" fill="none" stroke="#b88a1e" strokeWidth="1.6" />
+          <path d="M44.5 45 l1.6 2.2 M46.8 43.6 l1.6 2.2" stroke="#b88a1e" strokeWidth="1.3" strokeLinecap="round" />
         </>
       );
       break;

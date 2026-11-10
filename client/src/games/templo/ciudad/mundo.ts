@@ -63,6 +63,8 @@ export type CiudadOpts = {
   alTemplo: () => void;
   /** Pide entrar a tu casa por dentro (la ciudad se duerme mientras tanto). */
   alEntrarCasa?: () => void;
+  /** Pide entrar a la escuela de los profetas o al palacio del rey por dentro. */
+  alEntrarEdificio?: (id: "escuela" | "palacio") => void;
   /** Los deberes de los caminos nuevos van a la sesión en línea (se mandan juntos cada 15 s). */
   online?: { duty: (kind: string, n: number) => void; tick: (dt: number) => void };
   /** Avisa al servidor que se completó un paso de los primeros pasos del camino. */
@@ -321,24 +323,36 @@ export class CiudadWorld {
     });
     this.red.conectar();
     this.pasos = estado.yo.pasos ?? 0;
-    // el guía del camino recibe al nuevo
-    if (estado.yo.camino !== "sacerdocio" && this.pasos < 3 && opts.llegada === "casa") {
-      const guia = estado.yo.camino === "profecia" ? "Isaías hijo de Amoz" : "Eliaquim hijo de Hilcías, mayordomo del palacio";
+    // el guía del camino recibe al nuevo una sola vez por personaje (después lo guían la flecha y su edificio)
+    const claveBienvenida = `jer-bienvenida-${estado.yo.personajeId}`;
+    let yaRecibido = false;
+    try {
+      yaRecibido = localStorage.getItem(claveBienvenida) === "1";
+    } catch {
+      /* sin almacenamiento: se recibe igual */
+    }
+    if (estado.yo.camino !== "sacerdocio" && this.pasos < 3 && opts.llegada === "casa" && !yaRecibido) {
+      const quien = estado.yo.camino === "profecia" ? "isaias" : "eliaquim";
       const lugar = CAMINOS[estado.yo.camino].lugar;
       gameStore.push({
         kind: "dialog",
         id: "camino:inicio",
         lines: [
-          { quien: "narrador", texto: `${guia} te recibe en Jerusalén: «Bienvenido, ${estado.yo.nombre}. Tu servicio está en ${lugar}.»` },
+          { quien, texto: `Bienvenido a Jerusalén, ${estado.yo.nombre}. Tu servicio está en ${lugar}.` },
           {
-            quien: "narrador",
+            quien,
             texto:
               estado.yo.camino === "profecia"
-                ? "«El profeta escucha a Dios, guarda su Palabra y la lleva al pueblo con amor. Ven a la escuela: te enseñaré tus primeros pasos.»"
-                : "«El siervo del rey juzga con verdad, cuida a los pobres y guarda la ley. Ven al palacio: te enseñaré tus primeros pasos.»",
+                ? "El profeta escucha a Dios, guarda su Palabra y la lleva al pueblo con amor. Entra a la escuela: te enseñaré tus primeros pasos. La flecha del borde de la pantalla te lleva."
+                : "El siervo del rey juzga con verdad, cuida a los pobres y guarda la ley. Entra al palacio: te enseñaré tus primeros pasos. La flecha del borde de la pantalla te lleva.",
           },
         ],
       });
+      try {
+        localStorage.setItem(claveBienvenida, "1");
+      } catch {
+        /* sin almacenamiento */
+      }
     }
     this.pushHud();
     this.last = performance.now();
@@ -773,8 +787,8 @@ export class CiudadWorld {
     if (this.pasos < 3) {
       const t =
         c === "profecia"
-          ? ["Ve a la escuela de los profetas y memoriza un versículo", "Ora al pie del monte, junto a la escuela: quédate quieto en el círculo violeta", "Toma un mensaje en la escuela y llévalo a la casa marcada"]
-          : ["Ve al palacio del rey y atiende una audiencia", "Toma pan en el palacio y dáselo a un pobre de la ciudad", "Copia la ley en el palacio"];
+          ? ["Entra a la escuela de los profetas y memoriza un versículo en el atril de Isaías", "Ora al pie del monte, junto a la escuela: quédate quieto en el círculo violeta", "Toma un mensaje en la entrada de la escuela y llévalo a la casa marcada"]
+          : ["Entra al palacio del rey y atiende una audiencia junto al trono", "Toma pan en la despensa del palacio y dáselo a un pobre de la ciudad", "Copia la ley en la sala de los escribas del palacio"];
       // la flecha del borde de la pantalla señala adónde ir
       return `Primeros pasos ${this.pasos + 1}/3: ${t[this.pasos]}`;
     }
@@ -1206,11 +1220,15 @@ export class CiudadWorld {
           this.abrir({ kind: "ancianos", n: this.consejo });
           break;
         case "escuela":
-          // la escuela de los profetas: los profetas tienen su servicio; los demás, los estudios
-          this.abrir(this.estado.yo.camino === "profecia" ? { kind: "escuela" } : { kind: "estudios" });
-          break;
         case "palacio":
-          this.abrir(this.estado.yo.camino === "realeza" ? { kind: "palacio" } : { kind: "edificio", id: "palacio" });
+          // se entra al edificio: adentro están el maestro, las salas y las estaciones de servicio
+          if (this.opts.alEntrarEdificio) {
+            this.entrada.soltar();
+            this.ruta = [];
+            vibrar(12);
+            this.opts.alEntrarEdificio(z.id);
+          } else if (z.id === "escuela") this.abrir(this.estado.yo.camino === "profecia" ? { kind: "escuela" } : { kind: "estudios" });
+          else this.abrir(this.estado.yo.camino === "realeza" ? { kind: "palacio" } : { kind: "edificio", id: "palacio" });
           break;
         case "mercado":
           this.abrir({ kind: "mercado" });

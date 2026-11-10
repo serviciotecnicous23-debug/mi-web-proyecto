@@ -2,9 +2,12 @@
  * La pantalla de la casa por dentro (casa/mundo-casa.ts): el nombre de la casa y el cuarto donde se
  * está, salir a la calle, y para el dueño «Remodelar» (sacar muebles del arcón, moverlos, girarlos,
  * guardarlos y «Listo»). Los vecinos que visitan pueden dejar una bendición.
+ *
+ * Dentro de la escuela de los profetas o del palacio: el nombre del edificio, hablar con su maestro y
+ * un botón por estación para ir caminando (la que toca en los primeros pasos, resaltada).
  */
 import { useState } from "react";
-import { Check, ChevronRight, DoorOpen, Hammer, Home, Loader2, MapPin, Package, RotateCw, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, DoorOpen, Hammer, Home, Loader2, MapPin, MessageCircle, Package, RotateCw, Sparkles, X } from "lucide-react";
 import { MUEBLES, VERSO_CAMARAS, type InteriorEstado } from "@shared/casa-interior";
 import { gameStore, useGame } from "./store";
 import { avisarMisiones } from "./online";
@@ -28,7 +31,7 @@ async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; da
   }
 }
 
-export function CasaHudLayer({ mundo, onSalir }: { mundo: CasaWorld; onSalir: () => void }) {
+export function CasaHudLayer({ mundo, onSalir, onMaestro }: { mundo: CasaWorld; onSalir: () => void; onMaestro?: () => void }) {
   const { casa: c, toasts, modal } = useGame();
   const [guardando, setGuardando] = useState(false);
   const [bendiciendo, setBendiciendo] = useState(false);
@@ -69,7 +72,8 @@ export function CasaHudLayer({ mundo, onSalir }: { mundo: CasaWorld; onSalir: ()
   };
 
   const enArcon = MUEBLES.filter((m) => (c.disponibles[m.id] || 0) > 0);
-  const titulo = c.esMia ? c.letrero || "Tu casa" : `La casa de ${c.dueno}`;
+  const ed = c.edificio;
+  const titulo = ed ? ed.nombre : c.esMia ? c.letrero || "Tu casa" : `La casa de ${c.dueno}`;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 text-white" data-testid="casa-hud">
@@ -80,13 +84,15 @@ export function CasaHudLayer({ mundo, onSalir }: { mundo: CasaWorld; onSalir: ()
       >
         <div className="flex min-w-0 flex-col items-start gap-1">
           <span className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 text-xs font-black text-amber-950 shadow-lg" data-testid="casa-titulo">
-            <Home className="h-4 w-4 shrink-0" />
+            {ed ? <span className="text-sm leading-none">{ed.icono}</span> : <Home className="h-4 w-4 shrink-0" />}
             <span className="min-w-0 truncate">{titulo}</span>
           </span>
-          <span className={`rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold ${sombra}`}>
-            {c.nombreNivel}
-            {c.bendiciones > 0 ? ` · 🙏 ${c.bendiciones} ${c.bendiciones === 1 ? "bendición" : "bendiciones"}` : ""}
-          </span>
+          {!ed && (
+            <span className={`rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold ${sombra}`}>
+              {c.nombreNivel}
+              {c.bendiciones > 0 ? ` · 🙏 ${c.bendiciones} ${c.bendiciones === 1 ? "bendición" : "bendiciones"}` : ""}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -94,7 +100,7 @@ export function CasaHudLayer({ mundo, onSalir }: { mundo: CasaWorld; onSalir: ()
           className="pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-amber-950 shadow-lg active:scale-95"
           data-testid="casa-salir"
         >
-          <DoorOpen className="h-4 w-4" /> Salir a la calle
+          <DoorOpen className="h-4 w-4" /> {ed ? "Salir a la ciudad" : "Salir a la calle"}
         </button>
       </div>
 
@@ -156,7 +162,46 @@ export function CasaHudLayer({ mundo, onSalir }: { mundo: CasaWorld; onSalir: ()
           </div>
         )}
 
-        {!modal && !c.esMia && (
+        {!modal && ed && (
+          <div className="pointer-events-auto flex w-full max-w-xl flex-col items-center gap-1.5" data-testid="edificio-estaciones">
+            <div className="flex max-w-full gap-1.5 overflow-x-auto pb-0.5">
+              {ed.siguiente === "salir" && (
+                <button
+                  type="button"
+                  onClick={() => mundo.irAEstacion("salir")}
+                  className="flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-3 py-1.5 text-xs font-bold text-amber-950 shadow-lg ring-2 ring-white/80 active:scale-95"
+                  data-testid="edificio-ir-salir"
+                >
+                  <DoorOpen className="h-3.5 w-3.5" /> Lo que sigue es afuera
+                </button>
+              )}
+              {ed.estaciones
+                // «Hablar con el maestro» ya tiene su botón abajo
+                .filter((s) => s.id !== "maestro")
+                .map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => mundo.irAEstacion(s.id)}
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95 ${s.siguiente ? "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-2 ring-white/80" : "bg-black/55 text-white"}`}
+                    data-testid={`edificio-ir-${s.id}`}
+                  >
+                    <span className="text-sm leading-none">{s.icono}</span> {s.nombre}
+                  </button>
+                ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => onMaestro?.()}
+              className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-amber-950 shadow-lg active:scale-95"
+              data-testid="edificio-maestro"
+            >
+              <MessageCircle className="h-4 w-4" /> Hablar con {ed.maestro}
+            </button>
+          </div>
+        )}
+
+        {!modal && !c.esMia && !ed && (
           <button
             type="button"
             onClick={() => void bendecir()}

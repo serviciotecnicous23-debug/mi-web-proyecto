@@ -6,7 +6,7 @@
  */
 import * as THREE from "three";
 import { C, GeoBuilder, meshPair } from "../three/builder";
-import { CELDA, mueble } from "@shared/casa-interior";
+import { CELDA, pieza } from "@shared/casa-interior";
 
 const MADERA = "#8a5a32";
 const MADERA_OSC = "#5e3a1f";
@@ -16,7 +16,7 @@ const LINO = "#ece3cf";
 const PIEDRA = "#8f8a82";
 
 /** Dónde queda la llama de cada mueble que alumbra (para su luz y su brillo). */
-export const LLAMA: Record<string, number> = { "lampara-casa": 0.42, candelero: 1.22, brasero: 0.5 };
+export const LLAMA: Record<string, number> = { "lampara-casa": 0.42, candelero: 1.22, brasero: 0.5, olla: 0.18 };
 
 function patas(g: GeoBuilder, w: number, d: number, h: number, color: string, grosor = 0.05) {
   const x = w / 2 - grosor, z = d / 2 - grosor;
@@ -35,7 +35,7 @@ function vasija(g: GeoBuilder, alto: number, ancho: number, color: string, t: { 
 
 /** Arma un mueble. Devuelve null si no existe. */
 export function construirMueble(id: string): THREE.Group | null {
-  const mu = mueble(id);
+  const mu = pieza(id);
   if (!mu) return null;
   const W = mu.w * CELDA, D = mu.d * CELDA;
   const g = new GeoBuilder();
@@ -187,6 +187,61 @@ export function construirMueble(id: string): THREE.Group | null {
         const a = i * 2.4;
         g.sphere(0.045, i % 2 ? "#ff7a1a" : "#ffb347", { x: Math.cos(a) * 0.09 * (i % 3), y: 0.44, z: Math.sin(a) * 0.09 * (i % 3) }, 6, 5);
       }
+      break;
+    }
+    // ---- las piezas de los edificios (no se venden)
+    case "atril": {
+      // pie de cedro y la tabla inclinada con el rollo abierto
+      g.box(0.1, 0.95, 0.1, MADERA_OSC, { y: 0.475 });
+      g.box(0.36, 0.04, 0.3, MADERA_OSC, { y: 0.02 });
+      g.box(0.5, 0.035, 0.36, MADERA, { y: 1.0, rx: -0.42 });
+      g.box(0.42, 0.012, 0.26, "#efe1bd", { y: 1.03, z: 0.01, rx: -0.42 });
+      for (const sx of [-1, 1]) g.cyl(0.035, 0.035, 0.3, "#efe1bd", { x: sx * 0.22, y: 1.04, z: 0.01, rx: Math.PI / 2 - 0.42 }, 8);
+      break;
+    }
+    case "trono": {
+      // gradas, el asiento de marfil cubierto de oro, el respaldo redondo y dos leones junto a los brazos
+      g.box(W - 0.02, 0.12, D - 0.02, C.piedraClara, { y: 0.06 });
+      g.box(W - 0.24, 0.12, D - 0.3, C.piedraOsc, { y: 0.18, z: -0.06 });
+      g.box(W - 0.46, 0.12, D - 0.58, C.piedraClara, { y: 0.3, z: -0.14 });
+      brillo.box(0.62, 0.42, 0.52, C.oro, { y: 0.57, z: -0.18 });
+      g.box(0.56, 0.06, 0.46, "#f3ead6", { y: 0.8, z: -0.16 });
+      brillo.box(0.62, 0.95, 0.1, C.oro, { y: 1.15, z: -0.42 });
+      brillo.cyl(0.31, 0.31, 0.1, C.oro, { y: 1.62, z: -0.42, rx: Math.PI / 2 }, 16);
+      g.box(0.5, 0.7, 0.04, C.purpura, { y: 1.12, z: -0.36 });
+      for (const sx of [-1, 1]) {
+        brillo.box(0.08, 0.2, 0.46, C.oroOsc, { x: sx * 0.34, y: 0.86, z: -0.16 });
+        // un león echado junto al brazo
+        brillo.sphere(0.13, C.oroOsc, { x: sx * 0.52, y: 0.5, z: 0.0, sx: 0.9, sy: 0.8, sz: 1.3 }, 8, 6);
+        brillo.sphere(0.1, C.oroOsc, { x: sx * 0.52, y: 0.64, z: 0.15 }, 8, 6);
+      }
+      break;
+    }
+    case "columna": {
+      g.box(0.5, 0.18, 0.5, C.piedraClara, { y: 0.09 });
+      g.cyl(0.17, 0.2, 2.5, C.cedro, { y: 1.42 }, 12);
+      brillo.box(0.46, 0.16, 0.46, C.oroOsc, { y: 2.74 });
+      g.box(0.56, 0.1, 0.56, C.cedroOsc, { y: 2.87 });
+      break;
+    }
+    case "pupitre": {
+      g.box(W - 0.14, 0.05, D - 0.2, MADERA, { y: 0.56 });
+      patas(g, W - 0.2, D - 0.26, 0.54, MADERA_OSC);
+      for (let i = 0; i < 3; i++) g.cyl(0.05, 0.05, 0.28, "#efe1bd", { x: 0.32 + i * 0.12, y: 0.62, z: -0.05, rx: Math.PI / 2 }, 8);
+      g.box(0.46, 0.008, 0.3, "#efe1bd", { x: -0.25, y: 0.59 });
+      vasija(g, 0.07, 0.04, "#2a1d12", { x: 0.05, z: 0.08 });
+      g.cyl(0.006, 0.006, 0.2, "#d9c49a", { x: 0.08, y: 0.68, z: 0.08, rz: 0.4 }, 4);
+      break;
+    }
+    case "olla": {
+      // tres piedras, las brasas y la olla grande de bronce
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        g.sphere(0.09, PIEDRA, { x: Math.cos(a) * 0.17, y: 0.06, z: Math.sin(a) * 0.17 }, 6, 5);
+      }
+      for (let i = 0; i < 5; i++) g.sphere(0.04, i % 2 ? C.brasa : "#ffb347", { x: Math.cos(i * 2.4) * 0.06, y: 0.05, z: Math.sin(i * 2.4) * 0.06 }, 6, 5);
+      brillo.lathe([[0, 0.12], [0.16, 0.13], [0.24, 0.24], [0.25, 0.36], [0.22, 0.44], [0.23, 0.46], [0.2, 0.46]], C.bronce, {}, 14);
+      g.cyl(0.19, 0.19, 0.02, "#8a6a3a", { y: 0.43 }, 14);
       break;
     }
     default:

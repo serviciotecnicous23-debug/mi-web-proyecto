@@ -131,8 +131,8 @@ export type Modal =
   | { kind: "mercado"; tab?: TabMercado }
   | { kind: "tesoro" }
   | { kind: "concurso" }
-  | { kind: "escuela" }
-  | { kind: "palacio" }
+  | { kind: "escuela"; tab?: "memoria" | "discernir" }
+  | { kind: "palacio"; tab?: "audiencia" | "ley" }
   | { kind: "irA" }
   | { kind: "frases" }
   | { kind: "vecinos" }
@@ -161,6 +161,16 @@ export type CasaHud = {
   cambios: boolean;
   bendiciones: number;
   yaBendije: boolean;
+  /** Dentro de un edificio de la ciudad (la escuela o el palacio): sus estaciones y su maestro. */
+  edificio?: {
+    id: "escuela" | "palacio";
+    nombre: string;
+    icono: string;
+    maestro: string;
+    estaciones: { id: string; nombre: string; icono: string; siguiente: boolean }[];
+    /** La estación que toca en los primeros pasos, o «salir» si lo que sigue es afuera. */
+    siguiente: string | null;
+  };
 };
 
 type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null; casa: CasaHud | null };

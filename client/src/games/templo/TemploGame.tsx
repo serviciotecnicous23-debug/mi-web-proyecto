@@ -120,6 +120,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const ciudadEstadoRef = useRef<CiudadEstado | null>(null);
   ciudadEstadoRef.current = ciudadEstado;
   const entrarACasaRef = useRef<(o?: { personajeId?: number; remodelar?: boolean }) => Promise<void>>(async () => undefined);
+  const entrarAEdificioRef = useRef<(id: "escuela" | "palacio") => Promise<void>>(async () => undefined);
+  /** «Hablar con el maestro» del edificio donde se está (la pantalla de adentro lo llama). */
+  const maestroRef = useRef<() => void>(() => undefined);
   const salirDeCasaRef = useRef<() => void>(() => undefined);
   const entrarACasa = useCallback((o?: { personajeId?: number; remodelar?: boolean }) => void entrarACasaRef.current(o), []);
   const ciudadCtx = useMemo(() => ({ city, estado: ciudadEstado, setEstado: setCiudadEstado, entrarACasa }), [city, ciudadEstado, entrarACasa]);
@@ -294,6 +297,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
         llegada,
         alTemplo: () => void irAlTemploRef.current(),
         alEntrarCasa: () => void entrarACasaRef.current(),
+        alEntrarEdificio: (id) => void entrarAEdificioRef.current(id),
         // los deberes de la escuela de los profetas y del palacio van a la misma sesión en línea
         online: sesion ? { duty: (k, n) => sesion.hooks.duty(k, n), tick: (dt) => sesion.hooks.tick(dt) } : undefined,
         alPaso: async (parte) => {
@@ -384,6 +388,92 @@ export default function TemploGame({ game }: { game: GameDef }) {
     setCambio(null);
   }, []);
   entrarACasaRef.current = entrarACasaReal;
+
+  /**
+   * Entrar a la escuela de los profetas o al palacio del rey: la ciudad se duerme y el edificio se dibuja
+   * con el motor de la casa por dentro (casa/edificios.ts): su maestro recibe y cada estación abre su
+   * servicio. Los deberes y los primeros pasos siguen yendo a la ciudad (la misma sesión en línea).
+   */
+  const entrarAEdificioReal = useCallback(async (id: "escuela" | "palacio") => {
+    const c = cityRef.current;
+    const e = ciudadEstadoRef.current;
+    if (!c || !e || !boxRef.current || casaRef.current) return;
+    setCambio(id === "escuela" ? "Entrando a la escuela de los profetas…" : "Entrando al palacio del rey…");
+    if (!casaMod.current) casaMod.current = import("./casa/mundo-casa");
+    const [mod, ed] = await Promise.all([casaMod.current.catch(() => null), import("./casa/edificios").catch(() => null)]);
+    if (!mod || !ed || !boxRef.current || cityRef.current !== c) {
+      setCambio(null);
+      gameStore.toast("No se pudo entrar. Revisa tu conexión.", "warn");
+      return;
+    }
+    const def = ed.EDIFICIOS[id];
+    const camino = e.yo.camino;
+    // el maestro: a los de su camino les abre su servicio; a los demás les habla y los orienta
+    const hablarConMaestro = () => {
+      if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : { kind: "palacio" });
+      else gameStore.push({ kind: "dialog", id: `visita-${id}`, lines: ed.dialogoVisita(def, e.yo.nombre) });
+    };
+    maestroRef.current = hablarConMaestro;
+    gameStore.close();
+    c.dormir(true);
+    const estado: import("@shared/casa-interior").InteriorEstado = {
+      personajeId: 0,
+      dueno: def.nombre,
+      esMia: false,
+      nivel: def.estilo === "piedra" ? 2 : 1,
+      nombreNivel: def.nombre,
+      letrero: null,
+      interior: def.piezas,
+      muebles: {},
+      bendiciones: 0,
+      yaBendije: true,
+      gozo: 0,
+    };
+    const w = new mod.CasaWorld(boxRef.current, estado, {
+      audio: c.audio,
+      look: c.lookJugador(),
+      ropa: e.yo.ropa,
+      alSalir: () => salirDeCasaRef.current(),
+      edificio: def,
+      quien: { nombre: e.yo.nombre, camino },
+      siguiente: () => {
+        const cc = cityRef.current;
+        return cc ? ed.siguienteEstacion(def, camino, { pasos: cc.partesCamino, llevaMensaje: cc.mensajeEnCurso, panes: cc.panes }) : null;
+      },
+      alEstacion: (est) => {
+        const cc = cityRef.current;
+        switch (est) {
+          case "memoria":
+          case "discernir":
+            gameStore.push({ kind: "escuela", tab: est });
+            break;
+          case "audiencia":
+          case "ley":
+            gameStore.push({ kind: "palacio", tab: est });
+            break;
+          case "maestro":
+            hablarConMaestro();
+            break;
+          case "rollos":
+            gameStore.push({ kind: "estudios" });
+            break;
+          case "mensaje":
+            if (cc?.mensajeEnCurso) gameStore.toast("Ya llevas un mensaje: sal a la ciudad y entrégalo en la casa marcada.", "info");
+            else cc?.tomarMensaje();
+            break;
+          case "pan":
+            if ((cc?.panes ?? 0) > 0) gameStore.toast("Ya llevas pan: sal a la ciudad y dáselo a los pobres.", "info");
+            else cc?.tomarPan();
+            break;
+        }
+      },
+    });
+    if (import.meta.env.DEV) (window as unknown as { __casa?: CasaWorld }).__casa = w;
+    casaRef.current = w;
+    setCasaW(w);
+    setCambio(null);
+  }, []);
+  entrarAEdificioRef.current = entrarAEdificioReal;
 
   const salirDeCasa = useCallback(() => {
     const w = casaRef.current;
@@ -545,7 +635,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
           <div ref={boxRef} className="absolute inset-0" />
           {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
           {phase === "playing" && city && !casaW && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
-          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} />}
+          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} onMaestro={() => maestroRef.current()} />}
           {phase === "playing" && paused && (
             <PauseMenu
               onResume={() => togglePause(false)}

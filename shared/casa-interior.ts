@@ -58,6 +58,23 @@ export function mueble(id: string): Mueble | undefined {
   return MUEBLES.find((m) => m.id === id);
 }
 
+/**
+ * Piezas que solo hay en los edificios de la ciudad (la escuela de los profetas y el palacio del rey):
+ * no se venden ni se ponen en las casas. Se dibujan con el mismo sistema que los muebles.
+ */
+export const PIEZAS_EDIFICIO: Mueble[] = [
+  { id: "atril", categoria: "mueble", nombre: "Atril del maestro", icono: "📖", precio: 0, w: 1, d: 1, capa: 1, detalle: "Donde el maestro abre el rollo para enseñar." },
+  { id: "trono", categoria: "mueble", nombre: "El trono del rey", icono: "👑", precio: 0, w: 2, d: 2, capa: 1, detalle: "Un gran trono de marfil cubierto de oro, con sus gradas (1 Reyes 10:18-19)." },
+  { id: "columna", categoria: "mueble", nombre: "Columna de cedro", icono: "🏛️", precio: 0, w: 1, d: 1, capa: 1, detalle: "El pórtico de columnas (1 Reyes 7:6)." },
+  { id: "pupitre", categoria: "mueble", nombre: "Mesa del escriba", icono: "✒️", precio: 0, w: 2, d: 1, capa: 1, detalle: "Rollos, tinta y cálamo para copiar la ley." },
+  { id: "olla", categoria: "mueble", nombre: "La olla grande", icono: "🍲", precio: 0, w: 1, d: 1, capa: 1, luz: true, detalle: "«Pon una olla grande, y haz potaje para los hijos de los profetas» (2 Reyes 4:38)." },
+];
+
+/** Un mueble de las casas o una pieza de los edificios (para dibujarlos). */
+export function pieza(id: string): Mueble | undefined {
+  return mueble(id) ?? PIEZAS_EDIFICIO.find((m) => m.id === id);
+}
+
 /** Cuántos se pueden tener de un mismo mueble. */
 export const MAX_POR_MUEBLE = 12;
 

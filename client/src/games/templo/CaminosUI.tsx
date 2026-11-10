@@ -231,9 +231,9 @@ function PrimerosPasos({ camino, partes }: { camino: Camino; partes: number }) {
 }
 
 /** La escuela de los profetas (solo para el camino de los profetas). */
-export function EscuelaView() {
+export function EscuelaView({ tab: inicial }: { tab?: "memoria" | "discernir" } = {}) {
   const { city } = useContext(CiudadCtx);
-  const [tab, setTab] = useState<"inicio" | "memoria" | "discernir">("inicio");
+  const [tab, setTab] = useState<"inicio" | "memoria" | "discernir">(inicial ?? "inicio");
   const partes = city?.partesCamino ?? 0;
   return (
     <Card
@@ -283,7 +283,7 @@ export function EscuelaView() {
                 <ScrollText className="mr-2 h-4 w-4" /> Estudios
               </Button>
             </div>
-            <p className="text-xs text-stone-500">También puedes orar en el monte de la oración, al sur de la escuela: quédate quieto {15} segundos (+2).</p>
+            <p className="text-xs text-stone-500">También puedes orar al pie del monte, junto a la escuela: quédate quieto {15} segundos en el círculo violeta (+2).</p>
           </>
         ) : tab === "discernir" ? (
           <>
@@ -309,9 +309,9 @@ export function EscuelaView() {
 }
 
 /** El palacio del rey (solo para el camino del palacio). */
-export function PalacioView() {
+export function PalacioView({ tab: inicial }: { tab?: "audiencia" | "ley" } = {}) {
   const { city } = useContext(CiudadCtx);
-  const [tab, setTab] = useState<"inicio" | "audiencia" | "ley">("inicio");
+  const [tab, setTab] = useState<"inicio" | "audiencia" | "ley">(inicial ?? "inicio");
   const partes = city?.partesCamino ?? 0;
   return (
     <Card

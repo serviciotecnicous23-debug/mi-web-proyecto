@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-10-escuela-palacio",
+    fecha: "10 de noviembre de 2026",
+    titulo: "La escuela y el palacio por dentro",
+    puntos: [
+      "📜 Ahora se entra a la escuela de los profetas: Isaías te recibe en su aula, los alumnos estudian en sus bancos, en la sala de los rollos están los estudios y el discernimiento, en la entrada se toman los mensajes y en el patio está la olla grande (2 Reyes 4:38).",
+      "👑 Y al palacio del rey: Ezequías en su trono, Eliaquim el mayordomo, el pueblo que espera audiencia, la despensa del pan y la sala de Sebna, el escriba.",
+      "✨ Cada servicio tiene su círculo con nombre. Abajo hay un botón por estación que te lleva caminando, y el paso que te toca brilla en dorado.",
+      "🤝 Si no es tu camino, igual puedes entrar: el maestro te recibe y te orienta, y en la escuela puedes estudiar.",
+    ],
+  },
+  {
     id: "2026-11-10-examenes-por-persona",
     fecha: "10 de noviembre de 2026",
     titulo: "Tus estudios son tuyos, con cualquier personaje",
