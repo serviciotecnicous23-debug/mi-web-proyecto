@@ -74,16 +74,42 @@ así que nadie puede adelantar el reloj.
 ### Las seis estaciones
 | Estación | Meses hebreos | Lluvia | Crece más rápido | Mercado |
 |---|---|---|---|---|
-| 🍇 La cosecha de las uvas y las olivas | Etanim | poca | los olivos | sobra aceite |
-| 🌱 La siembra y la lluvia temprana | Bul | a veces | — | sobra aceite |
-| 🌧️ El invierno | Quisleu, Tebet, Sebat | seguido (todo crece ×1,15 más lento) | — | escasean la harina y los corderos |
-| 🌾 La siega de la cebada | Adar (y Adar segundo), Abib | a veces | la cebada | sobran corderos |
+| 🍇 La fiesta de la cosecha | Etanim | poca | los olivos | sobra aceite |
+| 🌱 La lluvia temprana y la siembra | Bul | a veces | — | sobra aceite |
+| 🌧️ El invierno de las lluvias | Quisleu, Tebet, Sebat | seguido (todo crece ×1,15 más lento) | — | escasean la harina y los corderos |
+| 🌾 La lluvia tardía y la siega de la cebada | Adar (y Adar segundo), Abib | a veces | la cebada | sobran corderos |
 | 🌾 La siega del trigo | Zif, Siván | casi nunca | el trigo | sobra harina |
-| ☀️ El verano | mes cuarto, mes quinto, Elul | nunca | — | escasea el aceite |
+| ☀️ El verano: higos y uvas | mes cuarto, mes quinto, Elul | nunca | — | escasea el aceite |
 
 - **La lluvia** se sortea por día con una semilla fija (la misma para todos): si llueve el día en que se
-  siembra, la parcela queda regada (crece más rápido y da uno de más).
-- En la ciudad se ve la lluvia, el cielo gris y, en invierno, los braseros encendidos.
+  siembra, la parcela queda regada (crece más rápido y da uno de más). Como ya está decidida, el calendario da
+  **el pronóstico de mañana** y la gente de la calle lo comenta.
+- En la ciudad se ve la lluvia, el cielo gris y, en invierno, los braseros encendidos; en la siega de la cebada
+  caen **pétalos de almendro** (Jeremías 1:11) y en Navidad y año nuevo hay **lámparas en las calles**.
+
+### La ropa de cada tiempo
+Cada estación y cada fiesta grande trae su prenda, que solo se vende en esos días (`ROPA_DEL_ANIO`,
+`shared/mercado.ts`). Quien la compra, la guarda para siempre; el mercado dice cuántos días quedan y cuándo vuelve
+cada una.
+
+| Prenda | Cuándo se vende | Gozo |
+|---|---|---|
+| 🍇 Manto del lagar | La fiesta de la cosecha | 70 |
+| 🌦️ Faja de la lluvia temprana | La lluvia temprana y la siembra | 40 |
+| 🧣 Manto de lana gruesa | El invierno de las lluvias | 70 |
+| 🌸 Faja de flor de almendro | La siega de la cebada | 40 |
+| 🌾 Manto de trigo dorado | La siega del trigo | 70 |
+| ☀️ Faja color higo | El verano | 40 |
+| 🌙 Faja de la luna nueva | El primer día de cada mes hebreo | 30 |
+| 🐑 Faja de la Pascua | La Pascua y los panes sin levadura | 50 |
+| 🌅 Manto del alba | La Semana Santa | 90 |
+| 🌿 Faja de ramas de palma | Los tabernáculos y la santa convocación | 50 |
+| ⭐ Manto de la profecía | 24 y 25 de diciembre | 90 |
+| 🎉 Faja del año nuevo | 1 de enero | 40 |
+
+### Mientras no estabas
+Quien vuelve después de dos días o más encuentra en la entrada de Jerusalén en línea qué fiestas pasaron, si
+cambió la estación, la fecha de hoy y la próxima fiesta grande (`client/src/games/templo/RegresoUI.tsx`).
 
 ### Los eventos del año
 | Evento | Cuándo | Efecto | Encargo de la fiesta |
@@ -151,18 +177,22 @@ también a `FRASES_EVENTO` en `client/src/games/templo/ciudad/frases.ts`. Y se p
 | **Animal Crossing: New Horizons** | El reloj y el calendario reales; eventos de temporada; los vecinos hablan de lo que viene | El año real, la gente que comenta la estación y la fiesta, los anuncios |
 | **Stardew Valley** | Estaciones con cultivos propios, festivales en días fijos, la lluvia que riega | Cultivo de la estación, la lluvia que riega el huerto, el calendario con lo que viene |
 | **Pokémon GO** | Horas especiales con bonos, rachas, el clima real que cambia el juego | La hora de las trompetas (×1,5), la racha de servicio, la lluvia |
-| **Adopt Me! (Roblox)** | Actualizaciones semanales y cosas de tiempo limitado | Las novedades del juego; queda pendiente: artículos de temporada |
+| **Adopt Me! (Roblox)** | Actualizaciones semanales y cosas de tiempo limitado | Las novedades del juego y la ropa de cada tiempo, que solo se vende en su estación o su fiesta |
 | **Club Penguin** | Fiestas mensuales, el periódico que anuncia lo que viene, colectas solidarias | Los anuncios de la ciudad, los avisos al teléfono, la ofrenda del barrio |
 
 ## 7. Lo que sigue (la fase final de Jerusalén en línea)
 
-1. **Artículos de temporada** en el mercado (solo en su estación o en su fiesta) y un regalo por fiesta.
-2. **«Mientras no estabas»**: al volver tras días, qué hizo el barrio y un regalo de regreso.
-3. **La ciudad según la estación**: almendros en flor, campos dorados, enramadas en los tabernáculos y lámparas
-   en Navidad.
-4. **El pronóstico**: «mañana llueve» en el calendario.
-5. **Colecciones visibles** (álbum de muebles, ropa y dichos) y **mentores** para los nuevos.
-6. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
+Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
+pronóstico, «Mientras no estabas», los pétalos de almendro y las lámparas de fiesta.
+
+Lo que queda:
+1. **Un regalo de regreso** (gozo) para quien vuelve después de varios días, contado en el servidor.
+2. **«Mientras no estabas» con el barrio**: qué hizo tu barrio, en qué puesto va la copa y quién bendijo tu casa.
+3. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
+4. **Colecciones visibles** (álbum de muebles, ropa y dichos) y **mentores** para los nuevos.
+5. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
+6. **Una historia nueva para la temporada 2** (`ARCOS` en `shared/capitulos.ts`); mientras tanto se repite la de
+   Ezequías y Senaquerib.
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base
 (cuentas, gozo, calendario y avisos).

@@ -5,7 +5,8 @@
  */
 import { useEffect, useState } from "react";
 import { CalendarDays, CloudRain, Sun } from "lucide-react";
-import { ESTACIONES, VERSO_DEL_ANIO, bonoDelMomento, diaEnJerusalen, proximosEventos, type DiaJerusalen, type EventoProximo } from "@shared/anio";
+import { ESTACIONES, VERSO_DEL_ANIO, bonoDelMomento, diaEnJerusalen, mananaEnJerusalen, proximosEventos, type DiaJerusalen, type EventoProximo } from "@shared/anio";
+import { ARTICULOS, enTemporada } from "@shared/mercado";
 import { MESES } from "@shared/calendario";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
@@ -31,6 +32,9 @@ export function CalendarioView() {
   }, []);
   const b = bonoDelMomento(Date.now(), d);
   const e = d.estacion;
+  // el pronóstico (la lluvia de mañana ya está decidida) y la ropa que solo se vende en este tiempo
+  const manana = mananaEnJerusalen(d);
+  const ropaHoy = ARTICULOS.filter((a) => a.deTemporada && enTemporada(a, d));
   const sube = Object.entries(e.precios).filter(([, f]) => (f ?? 1) > 1).map(([k]) => BIEN[k]);
   const baja = Object.entries(e.precios).filter(([, f]) => (f ?? 1) < 1).map(([k]) => BIEN[k]);
   return (
@@ -55,6 +59,7 @@ export function CalendarioView() {
             <span className="text-xl">{e.icono}</span> {e.nombre}
             <span className="ml-auto flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold">
               {d.llueve ? <CloudRain className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />} {d.llueve ? "hoy llueve" : "hoy no llueve"}
+              <span className="opacity-80" data-testid="calendario-manana">· mañana {manana.llueve ? "🌧️ llueve" : "☀️ no llueve"}</span>
             </span>
           </p>
           <p className="mt-1 text-[13px] leading-snug text-white/85">{e.texto}</p>
@@ -65,7 +70,7 @@ export function CalendarioView() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">🌱 En tu huerto</p>
             <p className="mt-0.5 leading-snug">
               {e.cultivo ? <>Crece más rápido {SEMILLA[e.cultivo]} (un cuarto menos de espera).</> : e.lento > 1 ? <>Con el frío, todo tarda un poco más.</> : <>Todo crece a su ritmo.</>}
-              {d.llueve ? " Hoy llueve: lo que siembres hoy queda regado." : e.lluvia === 0 ? " No llueve: hay que regar." : ""}
+              {d.llueve ? " Hoy llueve: lo que siembres hoy queda regado." : manana.llueve ? " Mañana llueve: lo que siembres mañana quedará regado." : e.lluvia === 0 ? " No llueve: hay que regar." : ""}
             </p>
           </div>
           <div className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
@@ -74,6 +79,7 @@ export function CalendarioView() {
               {sube.length ? <>Los mercaderes buscan más {sube.join(" y ")}. </> : null}
               {baja.length ? <>Hay abundancia de {baja.join(" y ")}: la buscan menos.</> : null}
               {!sube.length && !baja.length ? "Los mercaderes buscan de todo por igual." : null}
+              {ropaHoy.length ? <span className="mt-1 block font-semibold text-purple-700 dark:text-purple-300" data-testid="calendario-ropa">Solo en este tiempo, en el puesto de ropa: {ropaHoy.map((a) => `${a.icono} ${a.nombre}`).join(", ")}.</span> : null}
             </p>
           </div>
           <div className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">

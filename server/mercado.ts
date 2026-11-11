@@ -6,7 +6,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ARTICULOS, HORNO_MAX, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
+  ARTICULOS, HORNO_MAX, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
   parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
@@ -164,6 +164,7 @@ export function registerMercadoRoutes(app: Express) {
     const a = articulo(String(req.body?.articulo || ""));
     const cantidad = a?.categoria === "semilla" ? Math.max(1, Math.min(10, Math.floor(Number(req.body?.cantidad) || 1))) : 1;
     if (!a) return res.status(400).json({ message: "Ese artículo no está en el mercado." });
+    if (!enTemporada(a)) return res.status(409).json({ message: "Esa prenda es de temporada: hoy no se vende. En el calendario ves cuándo vuelve." });
     if (a.exclusivo)
       return res.status(403).json({
         message: a.exclusivo === "temporada" ? "Esa prenda no se vende: se gana con la historia de la temporada." : "Los trajes de los sabios no se venden: se ganan en la casa de la sabiduría.",

@@ -54,6 +54,7 @@ import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { AvisosView } from "./AvisosUI";
 import { CalendarioView } from "./CalendarioUI";
+import { MientrasNoEstabas } from "./RegresoUI";
 import { CapitulosView } from "./CapitulosUI";
 import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
@@ -2796,6 +2797,7 @@ function OnlineLobby({
             ) : null}
           </div>
         )}
+        <MientrasNoEstabas personajeId={estado.personaje?.id} />
         <header className="flex flex-col items-center text-center">
           <EmblemaJerusalen className="mb-1 h-16 w-16 drop-shadow-[0_6px_14px_rgba(0,0,0,.55)]" />
           <p className="tpl-lema text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>

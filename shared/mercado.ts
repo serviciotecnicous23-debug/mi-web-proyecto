@@ -13,7 +13,7 @@
 import { MUEBLES } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
-import { diaEnJerusalen, factorPrecio, mediodiaDe } from "./anio";
+import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
 export type TabMercado = Categoria | "vender" | "vecinos";
@@ -30,7 +30,25 @@ export type Articulo = {
    * las prendas de la historia de la temporada (shared/capitulos.ts).
    */
   exclusivo?: "sabio" | "temporada";
+  /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
+  deTemporada?: { estacion: EstacionId } | { eventos: string[] };
 };
+
+/** La ropa del año: cada estación y cada fiesta grande trae su prenda, que solo se vende en su tiempo. */
+export const ROPA_DEL_ANIO: Articulo[] = [
+  { id: "manto-lagar", categoria: "ropa", nombre: "Manto del lagar", icono: "🍇", precio: 70, detalle: "Color vino nuevo, de la cosecha de las uvas.", color: "#6d2a4a", deTemporada: { estacion: "cosecha" } },
+  { id: "faja-lluvia-temprana", categoria: "ropa", nombre: "Faja de la lluvia temprana", icono: "🌦️", precio: 40, detalle: "Gris azul, como las nubes del tiempo de la siembra.", color: "#6f93ab", deTemporada: { estacion: "siembra" } },
+  { id: "manto-invierno", categoria: "ropa", nombre: "Manto de lana gruesa", icono: "🧣", precio: 70, detalle: "Abriga en el frío del invierno de Jerusalén.", color: "#4a4f63", deTemporada: { estacion: "invierno" } },
+  { id: "faja-almendro", categoria: "ropa", nombre: "Faja de flor de almendro", icono: "🌸", precio: 40, detalle: "Rosa pálido, como el almendro, que florece primero (Jeremías 1:11).", color: "#efc7d6", deTemporada: { estacion: "cebada" } },
+  { id: "manto-trigo", categoria: "ropa", nombre: "Manto de trigo dorado", icono: "🌾", precio: 70, detalle: "Dorado como los campos en la siega del trigo.", color: "#d6ad52", deTemporada: { estacion: "trigo" } },
+  { id: "faja-higo", categoria: "ropa", nombre: "Faja color higo", icono: "☀️", precio: 40, detalle: "Morada, como los higos maduros del verano.", color: "#6e3b5c", deTemporada: { estacion: "verano" } },
+  { id: "faja-luna-nueva", categoria: "ropa", nombre: "Faja de la luna nueva", icono: "🌙", precio: 30, detalle: "Plateada. Solo el primer día de cada mes hebreo.", color: "#b9c2cf", deTemporada: { eventos: ["lunaNueva"] } },
+  { id: "faja-pascua", categoria: "ropa", nombre: "Faja de la Pascua", icono: "🐑", precio: 50, detalle: "Roja, en memoria del cordero de la Pascua. En la Pascua y los panes sin levadura.", color: "#a3243b", deTemporada: { eventos: ["pascua", "panes"] } },
+  { id: "manto-alba", categoria: "ropa", nombre: "Manto del alba", icono: "🌅", precio: 90, detalle: "Color del amanecer del domingo de Resurrección. Solo en la Semana Santa.", color: "#f2a65a", deTemporada: { eventos: ["semanaSanta"] } },
+  { id: "faja-palmas", categoria: "ropa", nombre: "Faja de ramas de palma", icono: "🌿", precio: 50, detalle: "Verde, como las enramadas de la fiesta (Levítico 23:40). En los tabernáculos.", color: "#4f7d3a", deTemporada: { eventos: ["tabernaculos", "asamblea"] } },
+  { id: "manto-profecia", categoria: "ropa", nombre: "Manto de la profecía", icono: "⭐", precio: 90, detalle: "Marfil, para celebrar la profecía del niño (Isaías 9:6). Solo el 24 y el 25 de diciembre.", color: "#efe6cf", deTemporada: { eventos: ["navidad"] } },
+  { id: "faja-anio-nuevo", categoria: "ropa", nombre: "Faja del año nuevo", icono: "🎉", precio: 40, detalle: "Turquesa, para empezar el año. Solo el 1 de enero.", color: "#3aa3a0", deTemporada: { eventos: ["anioNuevo"] } },
+];
 
 export const ARTICULOS: Articulo[] = [
   // semillas
@@ -55,6 +73,8 @@ export const ARTICULOS: Articulo[] = [
   { id: "faja-ocre", categoria: "ropa", nombre: "Faja ocre", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, ocre.", color: "#c98a2b" },
   { id: "faja-azul", categoria: "ropa", nombre: "Faja azul", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, azul.", color: "#2f5aa8" },
   { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
+  // la ropa del año: solo en su estación o en su fiesta
+  ...ROPA_DEL_ANIO,
   // los trajes de los sabios: no se venden, se ganan en «¿Quién es sabio?» (shared/sabio.ts, TRAJES_SABIOS)
   ...TRAJES_SABIOS.map((t): Articulo => ({
     id: t.id,
@@ -85,6 +105,39 @@ export const ARTICULOS: Articulo[] = [
 
 export function articulo(id: string): Articulo | undefined {
   return ARTICULOS.find((a) => a.id === id);
+}
+
+/** ¿Se vende hoy? La ropa de temporada solo en su estación o en los días de sus eventos. */
+export function enTemporada(a: Articulo, d: DiaJerusalen = diaEnJerusalen()): boolean {
+  const t = a.deTemporada;
+  if (!t) return true;
+  return "estacion" in t ? d.estacion.id === t.estacion : d.eventos.some((e) => t.eventos.includes(e.evento.id));
+}
+
+export type TiempoDeVenta = { hoy: boolean; /** si hoy se vende: días que quedan, contando hoy */ quedan: number | null; /** si no: en cuántos días vuelve */ vuelve: number | null };
+
+/** Cuándo se vende cada prenda de temporada (una sola vuelta por los días que vienen). */
+export function calendarioDeTemporada(t = Date.now(), hasta = 400): Record<string, TiempoDeVenta> {
+  const de = ARTICULOS.filter((a) => a.deTemporada);
+  const out: Record<string, TiempoDeVenta> = {};
+  const base = mediodiaDe(diaEnJerusalen(t).iso);
+  for (let i = 0; i <= hasta; i++) {
+    const d = diaEnJerusalen(base + i * 86_400_000);
+    let falta = false;
+    for (const a of de) {
+      const si = enTemporada(a, d);
+      const o = (out[a.id] ??= { hoy: si, quedan: null, vuelve: null });
+      if (o.hoy && o.quedan === null) {
+        if (!si) o.quedan = i;
+        else falta = true;
+      } else if (!o.hoy && o.vuelve === null) {
+        if (si) o.vuelve = i;
+        else falta = true;
+      }
+    }
+    if (!falta) break;
+  }
+  return out;
 }
 
 /** Nombres para el letrero (de la lista, para que todos sean buenos). */
@@ -120,7 +173,8 @@ export function lugaresAdornos(nivel: number): number {
 export function ofertasDelDia(dia: string): string[] {
   let x = 2166136261;
   for (const ch of dia) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
-  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo);
+  // la ropa de temporada no entra en las ofertas (las ofertas de cada día quedan como antes)
+  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo && !a.deTemporada);
   const a = x % lista.length;
   const b = (a + 1 + ((x >>> 8) % (lista.length - 1))) % lista.length;
   return [lista[a].id, lista[b].id];

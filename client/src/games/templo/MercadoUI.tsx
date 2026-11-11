@@ -3,11 +3,11 @@
  * el letrero; vender lo del alfolí; el huerto (sembrar, regar y cosechar); poner los adornos, vestirse
  * y nombrar la casa. El servidor lleva las cuentas (server/mercado.ts).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, ShoppingBasket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, precioHoy, precioVentaHoy, type Articulo, type Categoria, type MercadoEstado, type RecetaId, type TabMercado,
+  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, calendarioDeTemporada, precioHoy, precioVentaHoy, type Articulo, type Categoria, type MercadoEstado, type RecetaId, type TabMercado, type TiempoDeVenta,
 } from "@shared/mercado";
 import type { CasaPrivada } from "@shared/ciudad";
 import { MAX_POR_MUEBLE, mueble } from "@shared/casa-interior";
@@ -178,6 +178,45 @@ function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; coloc
 }
 
 /** El mercado de la plaza (los mercaderes de los puestos); `tab` es el puesto donde se entró. */
+/** La etiqueta de la ropa de temporada: cuántos días quedan para comprarla. */
+function EtiquetaTemporada({ t }: { t?: TiempoDeVenta }) {
+  if (!t) return null;
+  return (
+    <span className="mt-0.5 block font-semibold text-purple-700 dark:text-purple-300">
+      🗓️ De temporada:{" "}
+      {t.hoy ? (t.quedan === 1 ? "hoy es el último día para comprarla" : t.quedan ? `quedan ${t.quedan} días para comprarla` : "se vende en este tiempo") : "ya pasó su tiempo; la guardas para siempre"}
+    </span>
+  );
+}
+
+/** La ropa de temporada que hoy no se vende: cuándo vuelve. */
+function RopaQueVuelve({ temporadas, armario }: { temporadas: Record<string, TiempoDeVenta>; armario: string[] }) {
+  const lista = ARTICULOS.filter((a) => a.deTemporada && !temporadas[a.id]?.hoy && !armario.includes(a.id)).sort(
+    (a, b) => (temporadas[a.id]?.vuelve ?? 999) - (temporadas[b.id]?.vuelve ?? 999),
+  );
+  if (!lista.length) return null;
+  return (
+    <li className="rounded-xl border border-dashed border-purple-300 p-2.5 text-xs dark:border-purple-800" data-testid="ropa-que-vuelve">
+      <p className="font-bold text-purple-800 dark:text-purple-200">🗓️ La ropa de temporada que vuelve en su tiempo</p>
+      <p className="text-[11px] text-stone-500">Cada estación y cada fiesta grande trae su prenda: solo se vende en esos días. Quien la compra, la guarda para siempre.</p>
+      <ul className="mt-1.5 space-y-1">
+        {lista.map((a) => {
+          const v = temporadas[a.id]?.vuelve;
+          return (
+            <li key={a.id} className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 shrink-0 rounded-full ring-1 ring-black/20" style={{ background: a.color }} />
+              <span className="min-w-0 flex-1 truncate">
+                {a.icono} {a.nombre}
+              </span>
+              <span className="shrink-0 font-semibold text-stone-500">{v == null ? "más adelante" : v === 1 ? "mañana" : `en ${v} días`}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </li>
+  );
+}
+
 export function MercadoView({
   tab: inicial,
   alCambiar,
@@ -192,6 +231,8 @@ export function MercadoView({
 }) {
   const { m, error, busy, hacer } = useMercado(alCambiar);
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
+  // la ropa de temporada: cuándo se vende cada prenda (una vez por día)
+  const temporadas = useMemo(() => calendarioDeTemporada(), [m?.dia]);
   // lo que se acaba de comprar: qué hacer ahora con eso
   const [siguiente, setSiguiente] = useState<{ a: Articulo; colocado?: boolean; puesto?: boolean } | null>(null);
   // la foto en grande de un artículo (al tocar su foto)
@@ -271,7 +312,7 @@ export function MercadoView({
               <PuestosView alCambiar={alCambiarBienes} />
             ) : tab !== "vender" ? (
               <ul className="space-y-1.5">
-                {ARTICULOS.filter((a) => a.categoria === tab && !a.exclusivo).map((a) => {
+                {ARTICULOS.filter((a) => a.categoria === tab && !a.exclusivo && (!a.deTemporada || temporadas[a.id]?.hoy || m.armario.includes(a.id))).map((a) => {
                   const precio = precioHoy(a, m.dia);
                   const tiene = (a.categoria === "adorno" || a.categoria === "ropa") && m.armario.includes(a.id);
                   const yaLetrero = a.categoria === "letrero" && m.tieneLetrero;
@@ -289,6 +330,7 @@ export function MercadoView({
                         <span className="block text-[11px] text-stone-500">
                           {a.detalle}
                           {a.categoria === "semilla" && ` Tienes ${m.semillas[a.id] || 0}.`}
+                          {a.deTemporada && <EtiquetaTemporada t={temporadas[a.id]} />}
                           {a.categoria === "mueble" && ` Tienes ${m.muebles[a.id] || 0}.`}
                           {a.categoria === "mueble" && AYUDA_MUEBLES[a.id] && (
                             <span className="mt-0.5 block font-semibold text-emerald-700 dark:text-emerald-300">
@@ -318,6 +360,7 @@ export function MercadoView({
                     </li>
                   );
                 })}
+                {tab === "ropa" && <RopaQueVuelve temporadas={temporadas} armario={m.armario} />}
               </ul>
             ) : (
               <div className="space-y-2" data-testid="mercado-vender">
