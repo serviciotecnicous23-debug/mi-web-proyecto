@@ -23,6 +23,7 @@ import { GananciaEnLinea } from "./GananciaUI";
 import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
 import { BarrioView } from "./BarrioUI";
+import { JuntosChip } from "./BarrioCopa";
 import { useChatBarrio } from "./barrio-chat";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
@@ -284,6 +285,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
         ))}
         {!modal && !paused && (
           <>
+            {/* la misión del barrio de hoy: cuántos vecinos hay en el lugar y cuánto falta (BarrioCopa.tsx) */}
+            <JuntosChip />
             <div className={`rounded-full bg-sky-500/30 px-3 py-0.5 text-center text-[11px] font-bold leading-tight text-sky-50 backdrop-blur-[2px] ${sombra}`} data-testid="ciudad-lugar">
               <MapPin className="-mt-0.5 mr-0.5 inline h-3 w-3" />
               {c.lugar}
@@ -1319,6 +1322,7 @@ function IrAView() {
     { id: "escuela", nombre: "La escuela de los profetas", nota: "Al norte del monte" },
     { id: "camara", nombre: "La cámara de los sacerdotes", nota: "Junto a la escalinata, del lado norte" },
     { id: "sabiduria", nombre: "La casa de la sabiduría", nota: "Junto a la escalinata, del lado sur: «¿Quién es sabio?»" },
+    { id: "oracion", nombre: "El monte de la oración", nota: "El lugar de oración, al norte del monte del templo" },
   ];
   return (
     <Card

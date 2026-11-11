@@ -15,6 +15,7 @@ import { nombreDeBarrio } from "@shared/ciudad";
 import type { DeberId } from "@shared/jerusalen";
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { GOZO, sumarGozo } from "./gozo";
+import { sumarALaCopa } from "./barrio-juntos";
 
 export const MISIONES_SQL = `
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "encargos" jsonb;
@@ -111,6 +112,10 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
     cumplidas.push({ titulo: "¡Cumpliste los tres encargos del día!", premio: MERITO_ENCARGOS_TODOS, gozo: GOZO.encargosTodos });
   }
   await pool.query(`UPDATE game_characters SET encargos = $2::jsonb WHERE id = $1`, [ch.id, JSON.stringify(g)]);
+  // la copa de los barrios: cada encargo cumplido (y los tres del día) suma para el barrio
+  const encargosHechos = cumplidas.filter((c) => c.premio === MERITO_ENCARGO).length;
+  if (encargosHechos) await sumarALaCopa(ch.id, "encargo", encargosHechos);
+  if (cumplidas.some((c) => c.premio === MERITO_ENCARGOS_TODOS)) await sumarALaCopa(ch.id, "encargosTodos");
   const premio = cumplidas.reduce((a, c) => a + c.premio, 0);
   if (premio) {
     await sumarMerito(ch.id, premio);
@@ -204,6 +209,8 @@ export async function misionesPorDeberes(ch: { id: number; user_id: number }, ac
   }
   if (juntos && total) out.push(...(await avanzarMision(ch, "juntos", total)));
   out.push(...(await aportarAlBarrio(ch, total)));
+  // y a la copa de los barrios
+  await sumarALaCopa(ch.id, "deber", total);
   // y cada deber pone una piedra en el muro caído de la ciudad
   out.push(...(await aportarAlMuro(ch, total).catch((err) => {
     console.error("[muro] aportar:", err);

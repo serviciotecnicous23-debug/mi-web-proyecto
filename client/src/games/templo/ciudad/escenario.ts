@@ -823,8 +823,64 @@ function suelosDeArea(m: GeoBuilder, area: number) {
   for (const [a, b] of CALLES_DE_AREA) m.box(x1 - x0, 0.02, b - a - 0.3, vary("#c7b38a", 0.03), { x: (x0 + x1) / 2, y: Y + 0.0, z: z0 + (a + b) / 2 });
 }
 
-/** Las casas de un área, completas: cada parcela con su casa (o libre) y las ventanas de noche. */
-export function construirAreaDetalle(area: number, casas: CasaDibujo[]): { grupo: THREE.Group; ventanas: THREE.Mesh | null } {
+/**
+ * Lo que el barrio gana con su nivel en la copa de los barrios (shared/barrio-juntos.ts), en sus calles: 1 lámparas
+ * encendidas (de noche brillan), 2 olivos en los extremos, 3 una fuente, 4 estandartes y 5 un arco de piedra a la
+ * entrada (del lado de la plaza). Solo se ven; no estorban el paso.
+ */
+function adornosDeBarrio(m: GeoBuilder, v: GeoBuilder, area: number, nivel: number) {
+  if (nivel <= 0) return;
+  const [x0, z0, x1] = AREA_RECT[area - 1];
+  // la entrada desde la plaza: las áreas del oriente (1 y 2) la tienen al poniente; las otras, al oriente
+  const entrada = area <= 2 ? x0 : x1;
+  const haciaDentro = area <= 2 ? 1 : -1;
+  CALLES_DE_AREA.forEach(([a, b], k) => {
+    const za = z0 + a, zb = z0 + b, zc = (za + zb) / 2;
+    // 1: lámparas a los dos lados de la calle
+    for (let x = x0 + 3; x <= x1 - 3; x += 9) {
+      adorno(m, v, "lampara", x, Y, za + 0.35, 0, 1.25);
+      adorno(m, v, "lampara", x + 4.5, Y, zb - 0.35, Math.PI, 1.25);
+    }
+    // 2: olivos en los extremos de la calle (junto a las orillas: el medio queda libre)
+    if (nivel >= 2) for (const x of [x0 + 1.2, x1 - 1.2]) for (const z of [za + 0.6, zb - 0.6]) oliveTree(m, x, Y, z, 0.62);
+    // 3: la fuente, en medio de la segunda calle
+    if (nivel >= 3 && k === 1) {
+      const fx = (x0 + x1) / 2;
+      m.cyl(0.95, 1.0, 0.42, vary(C.piedraClara, 0.03), { x: fx, y: Y + 0.21, z: zc }, 16);
+      m.cyl(0.8, 0.8, 0.05, "#5fa7c9", { x: fx, y: Y + 0.4, z: zc }, 16);
+      m.cyl(0.14, 0.18, 0.9, C.piedra, { x: fx, y: Y + 0.75, z: zc }, 10);
+      m.cyl(0.38, 0.3, 0.12, C.piedraClara, { x: fx, y: Y + 1.2, z: zc }, 12);
+      m.cyl(0.3, 0.3, 0.03, "#7cc0de", { x: fx, y: Y + 1.27, z: zc }, 12);
+      v.sphere(0.06, "#bfe8ff", { x: fx, y: Y + 1.4, z: zc }, 6, 5);
+    }
+    // 4: estandartes cerca de las dos puntas de la calle (más adentro que el arco y los olivos)
+    if (nivel >= 4)
+      for (const x of [x0 + 2.6, x1 - 2.6])
+        for (const z of [za + 0.25, zb - 0.25]) {
+          m.cyl(0.045, 0.055, 2.7, C.cedroOsc, { x, y: Y + 1.35, z }, 6);
+          m.box(0.6, 0.05, 0.05, C.cedroOsc, { x, y: Y + 2.62, z });
+          m.box(0.55, 1.05, 0.03, k === 0 ? C.purpura : C.azul, { x, y: Y + 2.05, z });
+          m.box(0.55, 0.12, 0.035, C.oro, { x, y: Y + 1.5, z });
+          m.sphere(0.07, C.oro, { x, y: Y + 2.75, z }, 6, 5);
+        }
+    // 5: el arco de piedra sobre la primera calle, a la entrada del barrio
+    if (nivel >= 5 && k === 0) {
+      const x = entrada + haciaDentro * 0.45;
+      for (const z of [za + 0.1, zb - 0.1]) {
+        m.box(0.7, 3.3, 0.7, vary(C.piedraClara, 0.03), { x, y: Y + 1.65, z });
+        m.box(0.85, 0.2, 0.85, C.piedra, { x, y: Y + 0.1, z });
+      }
+      m.box(0.8, 0.55, zb - za + 0.6, vary(C.piedraClara, 0.03), { x, y: Y + 3.55, z: zc });
+      m.box(0.9, 0.14, zb - za + 0.8, C.piedra, { x, y: Y + 3.9, z: zc });
+      m.box(0.82, 0.1, zb - za - 0.6, C.oro, { x, y: Y + 3.3, z: zc });
+      v.sphere(0.07, "#ffcf7a", { x: x + haciaDentro * 0.5, y: Y + 3.1, z: za + 0.6 }, 6, 5);
+      v.sphere(0.07, "#ffcf7a", { x: x + haciaDentro * 0.5, y: Y + 3.1, z: zb - 0.6 }, 6, 5);
+    }
+  });
+}
+
+/** Las casas de un área, completas: cada parcela con su casa (o libre), las ventanas de noche y los adornos del barrio. */
+export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBarrio = 0): { grupo: THREE.Group; ventanas: THREE.Mesh | null } {
   const grupo = new THREE.Group();
   const m = new GeoBuilder();
   const v = new GeoBuilder();
@@ -857,6 +913,7 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[]): { grupo
       v.raw(gv);
     }
   }
+  adornosDeBarrio(m, v, area, nivelBarrio);
   meshes(grupo, m, null, true);
   let ventanas: THREE.Mesh | null = null;
   if (!v.empty) {

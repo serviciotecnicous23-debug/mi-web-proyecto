@@ -290,6 +290,22 @@ export function presenciaDe(cuentas: number[]): Map<number, { personajeId: numbe
   return out;
 }
 
+/**
+ * Dónde está ahora cada vecino conectado, por barrio (el de su casa): para la misión del barrio de hoy
+ * (server/barrio-juntos.ts). Solo los que están en la ciudad (no en el templo).
+ */
+export function posicionesPorBarrio(): Map<number, { u: number; personajeId: number; x: number; z: number; canal: string }[]> {
+  const out = new Map<number, { u: number; personajeId: number; x: number; z: number; canal: string }[]>();
+  for (const c of conexiones.values()) {
+    if (c.canal === "templo" || c.ws.readyState !== 1) continue;
+    const l = out.get(c.info.barrio);
+    const g = { u: c.info.u, personajeId: c.info.id, x: c.x, z: c.z, canal: c.canal };
+    if (l) l.push(g);
+    else out.set(c.info.barrio, [g]);
+  }
+  return out;
+}
+
 /** Manda algo a una persona conectada (por su cuenta). Devuelve si estaba en la ciudad o en el templo. */
 export function avisarA(cuenta: number, msg: RedEntra): boolean {
   let n = 0;

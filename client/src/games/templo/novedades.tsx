@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-barrio-juntos",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La misión del barrio y la copa de los barrios",
+    puntos: [
+      "🤝 Cada día tu barrio tiene una misión para hacer juntos: orar en el monte, reunirse junto al pozo, ir a la casa de la sabiduría… Cuando los vecinos pedidos están juntos en el lugar 20 segundos, la cumplen: mérito, gozo y puntos para el barrio. Mírala en «Tu barrio», en la pestaña «Copa», con «Ir allí» y «Avisar al barrio».",
+      "🏆 La copa de los barrios: los deberes, los encargos, el concurso, los duelos, los consejos y las misiones juntos suman puntos para tu barrio. Los tres primeros de la semana reciben gozo para cada vecino que aportó.",
+      "🏮 Tu barrio sube de nivel con sus puntos de siempre y se ve en sus calles: lámparas, olivos, una fuente, estandartes y un arco de piedra a la entrada.",
+    ],
+  },
+  {
     id: "2026-11-11-duelo-de-sabios",
     fecha: "11 de noviembre de 2026",
     titulo: "El duelo de sabios",
