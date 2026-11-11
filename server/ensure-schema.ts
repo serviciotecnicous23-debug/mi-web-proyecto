@@ -25,6 +25,7 @@ import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
 import { AYUDA_SQL } from "./ayuda";
 import { MURO_SQL } from "./muro";
+import { CAPITULOS_SQL } from "./capitulos";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1157,6 +1158,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(RACHA_SQL);
     } catch (err: any) {
       console.log(`  Migration note (personajes): ${err?.message}`);
+    }
+    try {
+      // La historia de la temporada: los capítulos, lo que aporta cada persona y la fiesta final
+      await pool.query(CAPITULOS_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (capítulos): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

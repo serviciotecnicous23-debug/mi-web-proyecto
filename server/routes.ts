@@ -23,6 +23,7 @@ import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
 import { registerMuroRoutes } from "./muro";
+import { registerCapitulosRoutes } from "./capitulos";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
@@ -3674,6 +3675,8 @@ ${urls}
   registerConcursoRoutes(app);
   registerAyudaRoutes(app);
   registerMuroRoutes(app);
+  // la historia de la temporada: un capítulo por semana y la fiesta final
+  registerCapitulosRoutes(app);
   registerLogrosEnLineaRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========

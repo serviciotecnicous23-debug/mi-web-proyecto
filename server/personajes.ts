@@ -12,6 +12,9 @@ import { sumarGozo } from "./gozo";
 import { avisoDeRacha, marcarServicio, type RachaMarcada } from "./racha";
 import { ubicacionDe } from "./ciudad-red";
 import { semanaClave } from "./misiones";
+import { aportarAlCapitulo, capituloDeHoy, noticiaDelCapitulo } from "./capitulos";
+import { PUNTOS_CAPITULO } from "@shared/capitulos";
+import type { MisionCumplida } from "@shared/misiones";
 import { nombreDeBarrio } from "@shared/ciudad";
 import { RECADO_CERCA, RECADO_GOZO, RECADO_MERITO, personajeCiudad, recadoDelDia, type ChismesVista, type RecadoEstado } from "@shared/personajes";
 
@@ -66,6 +69,12 @@ async function armarChismes(): Promise<string[]> {
     if (rows[0]) noticias.push(`El muro del norte ya tiene ${Number(rows[0].built)} de 12 tramos levantados. Cada deber en el templo pone una piedra.`);
   } catch {
     /* sin muro */
+  }
+  try {
+    const n = await noticiaDelCapitulo();
+    if (n) noticias.unshift(n);
+  } catch {
+    /* sin historia todavía */
   }
   try {
     const { rows } = await pool.query(`SELECT count(*)::int AS n FROM game_houses WHERE created_at > now() - interval '1 day'`);
@@ -133,12 +142,18 @@ export function registerPersonajesRoutes(app: Express) {
           [ch.casa, diaClave(), paso],
         );
         let racha: RachaMarcada | null = null;
+        let capitulo: MisionCumplida[] = [];
         if (fin) {
           await sumarGozo(ch.casa, RECADO_GOZO);
           await sumarMerito(ch.id, RECADO_MERITO);
           racha = await marcarServicio(ch.id);
+          // y diez para la meta de la ciudad del capítulo de esta semana
+          capitulo = await aportarAlCapitulo(ch, PUNTOS_CAPITULO.recado).catch((err) => {
+            console.error("[capitulos] recado:", err);
+            return [];
+          });
         }
-        return { dice: e.recado.dice[e.paso], fin, racha };
+        return { dice: e.recado.dice[e.paso], fin, racha, capitulo };
       });
       if ("error" in out) return res.status(out.error as number).json({ message: out.message });
       const estado = await estadoRecado(ch.casa);
@@ -147,7 +162,7 @@ export function registerPersonajesRoutes(app: Express) {
         const { rows } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
         gozoTotal = Number(rows[0]?.gozo ?? 0);
       }
-      res.json({ estado, dice: out.dice, fin: out.fin, gozoTotal, racha: out.racha ? avisoDeRacha(out.racha) : null });
+      res.json({ estado, dice: out.dice, fin: out.fin, gozoTotal, racha: out.racha ? avisoDeRacha(out.racha) : null, capitulo: out.capitulo });
     } catch (err) {
       console.error("[recado] hablar:", err);
       if (!res.headersSent) res.sendStatus(500);
@@ -159,7 +174,8 @@ export function registerPersonajesRoutes(app: Express) {
     try {
       const ch = await persona(req, res);
       if (!ch) return;
-      res.json({ noticias: await armarChismes() } satisfies ChismesVista);
+      const h = capituloDeHoy();
+      res.json({ noticias: await armarChismes(), temporada: h.temporada, capitulo: h.capitulo, fiesta: h.fiesta?.momento ?? null } satisfies ChismesVista);
     } catch (err) {
       console.error("[chismes]", err);
       if (!res.headersSent) res.sendStatus(500);

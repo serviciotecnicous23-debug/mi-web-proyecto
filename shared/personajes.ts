@@ -6,6 +6,7 @@
  * casa a otra. Las citas son literales de la RVR1960.
  */
 import type { Verso } from "./ciudad";
+import { capituloDelDia, type CapituloId, type MomentoFiesta } from "./capitulos";
 
 export type PersonajeId = "azarias" | "eleazar" | "conanias" | "isaias" | "miqueas" | "eliaquim" | "etan";
 
@@ -262,9 +263,21 @@ function semilla(texto: string): number {
   return x;
 }
 
-/** El recado del día de cada persona (cambia cada día y no es el mismo para todos). */
+/** Desde este día, los recados de la historia de la temporada (shared/capitulos.ts) se mezclan con los de siempre. */
+export const RECADOS_CAPITULO_DESDE = "2026-11-12";
+
+/**
+ * El recado del día de cada persona (cambia cada día y no es el mismo para todos). Desde el 12 de noviembre de 2026, la
+ * mitad de los días es uno de los recados del capítulo de esa semana; los otros días, el mismo de siempre (así el recado
+ * de quien ya iba por la mitad el día de la publicación no cambió).
+ */
 export function recadoDelDia(dia: string, titular: number): Recado {
-  return RECADOS[semilla(`recado:${dia}:${titular}`) % RECADOS.length];
+  const s = semilla(`recado:${dia}:${titular}`);
+  if (dia >= RECADOS_CAPITULO_DESDE) {
+    const cap = capituloDelDia(dia)?.capitulo;
+    if (cap?.recados.length && ((s >>> 3) & 1) === 0) return cap.recados[(s >>> 4) % cap.recados.length];
+  }
+  return RECADOS[s % RECADOS.length];
 }
 
 export type RecadoEstado = {
@@ -275,5 +288,8 @@ export type RecadoEstado = {
   premio: { gozo: number; merito: number };
 };
 
-/** Lo que pasa en el juego, para que los personajes lo cuenten (los chismes de verdad). */
-export type ChismesVista = { noticias: string[] };
+/**
+ * Lo que pasa en el juego, para que los personajes lo cuenten (los chismes de verdad), el capítulo de la historia de
+ * esta semana y cómo va la fiesta final (para lo que dice la gente de la calle).
+ */
+export type ChismesVista = { noticias: string[]; temporada?: number; capitulo?: CapituloId | null; fiesta?: MomentoFiesta | null };

@@ -17,6 +17,8 @@ import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type
 import { GOZO, sumarGozo } from "./gozo";
 import { avisoDeRacha, marcarServicio } from "./racha";
 import { sumarALaCopa } from "./barrio-juntos";
+import { aportarAlCapitulo } from "./capitulos";
+import { PUNTOS_CAPITULO } from "@shared/capitulos";
 
 export const MISIONES_SQL = `
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "encargos" jsonb;
@@ -133,6 +135,13 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
       forgetJer();
     }
   }
+  // la historia de la temporada: cada encargo cumplido suma a la meta de la ciudad de esta semana (va después de
+  // sumar el gozo de los encargos: el premio del capítulo ya lo da aportarAlCapitulo y aquí solo se avisa)
+  if (encargosHechos)
+    cumplidas.push(...(await aportarAlCapitulo(ch, encargosHechos * PUNTOS_CAPITULO.encargo).catch((err) => {
+      console.error("[capitulos] encargo:", err);
+      return [];
+    })));
   return cumplidas;
 }
 
@@ -223,6 +232,11 @@ export async function misionesPorDeberes(ch: { id: number; user_id: number }, ac
   // y cada deber pone una piedra en el muro caído de la ciudad
   out.push(...(await aportarAlMuro(ch, total).catch((err) => {
     console.error("[muro] aportar:", err);
+    return [];
+  })));
+  // y suma a la meta de la ciudad del capítulo de esta semana (la historia de la temporada)
+  out.push(...(await aportarAlCapitulo(ch, total * PUNTOS_CAPITULO.deber).catch((err) => {
+    console.error("[capitulos] deberes:", err);
     return [];
   })));
   return out;

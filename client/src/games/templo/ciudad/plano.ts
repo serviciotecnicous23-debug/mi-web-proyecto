@@ -61,6 +61,28 @@ export const SABIDURIA_PUERTA: V2 = [42.7, 8.0];
 /** Las siete columnas de su pórtico. */
 export const SABIDURIA_COLUMNAS: V2[] = Array.from({ length: 7 }, (_, i) => [40.95, 4.65 + (i * 6.7) / 6] as V2);
 
+// ---------------------------------------------------------------- la historia de la temporada (shared/capitulos.ts)
+/**
+ * Las tres torres nuevas del muro oriental (2 Crónicas 32:5): dónde está cada una a lo largo del muro (z), en el orden
+ * en que se levantan (primero la de la Ciudad de David, el barrio que se llena primero).
+ */
+export const TORRES_NUEVAS: number[] = [40, -27, -51];
+/** Medio lado de cada torre nueva y su centro en x (sale un poco hacia afuera del muro). */
+export const TORRE_MEDIO = 1.9;
+export const TORRE_X = 76.6;
+/**
+ * El conducto de Ezequías (2 Reyes 20:20): entra por el muro del oriente desde la fuente de Gihón, va por la calle
+ * entre la Ciudad de David y la calle de los siervos, y baja por la calle del poniente hasta el estanque de Siloé.
+ */
+export const CONDUCTO: V2[] = [[75.2, 48.0], [36.8, 48.0], [36.8, 64.6]];
+export const GIHON: V2 = [80.6, 48.0];
+/** El estanque de Siloé, en el rincón del sur (al occidente de la Ciudad de David). */
+export const ESTANQUE: Rect = [32.8, 64.8, 37.4, 70.2];
+/** Donde está el Rabsaces con los suyos, afuera de la puerta (se ve por la puerta abierta). */
+export const RABSACES: V2 = [82.5, 0.4];
+/** Donde ora el rey Ezequías: arriba de la escalinata, ante la casa de Jehová. */
+export const REY_ORA: V2 = [33.4, 0];
+
 
 /** Una parcela: su rectángulo, el centro de la casa, hacia dónde mira la puerta y el umbral. */
 export type Parcela = {
@@ -181,6 +203,9 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
     // torres de la puerta
     [74.6, PUERTA.half, 78, PUERTA.half + 4],
     [74.6, -PUERTA.half - 4, 78, -PUERTA.half],
+    // las torres nuevas del muro (se ven desde sus cimientos) y el estanque de Siloé
+    ...TORRES_NUEVAS.map((z) => [TORRE_X - TORRE_MEDIO, z - TORRE_MEDIO, TORRE_X + TORRE_MEDIO, z + TORRE_MEDIO] as Rect),
+    ESTANQUE,
   ];
   const circles: Circle[] = [
     [POZO[0], POZO[1], 1.15],
