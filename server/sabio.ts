@@ -80,10 +80,46 @@ ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "consejos" integer NOT NULL DE
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "consejos_buenos" integer NOT NULL DEFAULT 0;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "llamadas" boolean NOT NULL DEFAULT true;
 ALTER TABLE "game_sabio_partidas" ADD COLUMN IF NOT EXISTS "llamada" jsonb;
-ALTER TABLE "game_sabio_partidas" ADD COLUMN IF NOT EXISTS "ultima" jsonb;`;
+ALTER TABLE "game_sabio_partidas" ADD COLUMN IF NOT EXISTS "ultima" jsonb;
+CREATE TABLE IF NOT EXISTS "game_sabio_duelos" (
+  "id" serial PRIMARY KEY,
+  "a_id" integer NOT NULL REFERENCES "game_characters"("id") ON DELETE CASCADE,
+  "b_id" integer NOT NULL REFERENCES "game_characters"("id") ON DELETE CASCADE,
+  "a_user" integer NOT NULL,
+  "b_user" integer NOT NULL,
+  "a_jugador" integer NOT NULL,
+  "b_jugador" integer NOT NULL,
+  "estado" text NOT NULL DEFAULT 'invitado',
+  "ronda" integer NOT NULL DEFAULT 0,
+  "preguntas" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "opciones" jsonb,
+  "servida" bigint,
+  "revelada" bigint,
+  "resp" jsonb NOT NULL DEFAULT '{}'::jsonb,
+  "historial" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "pa" integer NOT NULL DEFAULT 0,
+  "pb" integer NOT NULL DEFAULT 0,
+  "creado" bigint NOT NULL,
+  "ganador" integer,
+  "abandono" integer,
+  "gozo_a" integer NOT NULL DEFAULT 0,
+  "gozo_b" integer NOT NULL DEFAULT 0,
+  "premio_a" text,
+  "premio_b" text,
+  "semana" text NOT NULL,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "finished_at" timestamp
+);
+CREATE INDEX IF NOT EXISTS "idx_game_sabio_duelos_a" ON "game_sabio_duelos" ("a_id", "estado");
+CREATE INDEX IF NOT EXISTS "idx_game_sabio_duelos_b" ON "game_sabio_duelos" ("b_id", "estado");
+CREATE INDEX IF NOT EXISTS "idx_game_sabio_duelos_semana" ON "game_sabio_duelos" ("semana", "estado");
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_ganados" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_dia" text;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_hoy" integer NOT NULL DEFAULT 0;`;
 
-const PREGUNTA = new Map(BANCO_SABIO.map((q) => [q.id, q]));
-const POR_GRADA = new Map<number, FilaSabio[]>();
+export const PREGUNTA = new Map(BANCO_SABIO.map((q) => [q.id, q]));
+export const POR_GRADA = new Map<number, FilaSabio[]>();
 for (const q of BANCO_SABIO) POR_GRADA.set(q.n, [...(POR_GRADA.get(q.n) ?? []), q]);
 
 /**
@@ -101,8 +137,8 @@ const PARTIDA_ABANDONADA_MIN = 30;
 /** Para la tabla de lo que responde el pueblo hacen falta al menos estas respuestas. */
 const MINIMO_PUEBLO = 12;
 
-const lista = <T = string>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
-function mezclar<T>(arr: T[]): T[] {
+export const lista = <T = string>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+export function mezclar<T>(arr: T[]): T[] {
   const out = [...arr];
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -139,7 +175,7 @@ type FilaPartida = {
   pasados: number | null;
   quieto: number | null;
 };
-type FilaSabioPersona = {
+export type FilaSabioPersona = {
   vistas: Record<string, string[]>;
   partidas: number;
   mejor: number;
@@ -154,6 +190,10 @@ type FilaSabioPersona = {
   consejos: number;
   consejos_buenos: number;
   llamadas: boolean;
+  duelos: number;
+  duelos_ganados: number;
+  /** Duelos empezados hoy (tienen su propio tope por día). */
+  duelos_hoy: number;
 };
 
 /**
@@ -168,7 +208,7 @@ const llamadaDe = (p: FilaPartida): Llamada | null => (p.llamada && typeof p.lla
 const consejoDe = (p: FilaPartida): ConsejoGuardado | null => (p.amigo && typeof p.amigo === "object" ? (p.amigo as ConsejoGuardado) : null);
 const LETRAS = ["A", "B", "C", "D"];
 
-async function filaPersona(titular: number): Promise<FilaSabioPersona> {
+export async function filaPersona(titular: number): Promise<FilaSabioPersona> {
   await pool.query(`INSERT INTO game_sabio (character_id) VALUES ($1) ON CONFLICT (character_id) DO NOTHING`, [titular]);
   const { rows } = await pool.query(`SELECT * FROM game_sabio WHERE character_id = $1`, [titular]);
   const r = rows[0];
@@ -189,6 +229,9 @@ async function filaPersona(titular: number): Promise<FilaSabioPersona> {
     consejos: Number(r.consejos || 0),
     consejos_buenos: Number(r.consejos_buenos || 0),
     llamadas: r.llamadas !== false,
+    duelos: Number(r.duelos || 0),
+    duelos_ganados: Number(r.duelos_ganados || 0),
+    duelos_hoy: r.duelos_dia === hoy ? Number(r.duelos_hoy || 0) : 0,
   };
 }
 
@@ -337,10 +380,10 @@ async function premioDeLaSemanaPasada(titular: number): Promise<{ puesto: number
 }
 
 // ================================================================ con amigos: a quién llamar, el consejo y el público
-type Relaciones = { vecinos: Set<number>; amigos: Set<number>; bloqueados: Set<number> };
+export type Relaciones = { vecinos: Set<number>; amigos: Set<number>; bloqueados: Set<number> };
 
 /** Los vecinos de su barrio, sus amigos de la web y los bloqueos (en los dos sentidos) de una persona. */
-async function relacionesDe(titular: number, cuenta: number): Promise<Relaciones> {
+export async function relacionesDe(titular: number, cuenta: number): Promise<Relaciones> {
   const { rows: h } = await pool.query(`SELECT barrio FROM game_houses WHERE character_id = $1`, [titular]);
   const vecinos = new Set<number>();
   if (h[0]) for (const c of await casasDelBarrio(Number(h[0].barrio))) vecinos.add(c.userId);
@@ -363,10 +406,10 @@ const relacionCon = (r: Relaciones, u: number): Relacion | null =>
 const ORDEN_RELACION: Record<Relacion, number> = { ambos: 0, amigo: 1, vecino: 2 };
 
 /**
- * A quién se le puede pedir consejo ahora: amigos y vecinos que están en la ciudad o en el templo, sin bloqueos,
- * que reciben llamadas y que no están jugando ni contestando otra llamada.
+ * A quién se le puede pedir consejo (o retar a un duelo) ahora: amigos y vecinos que están en la ciudad o en el
+ * templo, sin bloqueos, que reciben llamadas y retos, y que no están jugando, en un duelo ni contestando otra llamada.
  */
-async function amigosPosibles(titular: number, cuenta: number): Promise<(AmigoPosible & { t: number; u: number })[]> {
+export async function amigosPosibles(titular: number, cuenta: number): Promise<(AmigoPosible & { t: number; u: number })[]> {
   const r = await relacionesDe(titular, cuenta);
   const cuentas = [...new Set([...r.vecinos, ...r.amigos])].filter((u) => u !== cuenta && !r.bloqueados.has(u));
   if (!cuentas.length) return [];
@@ -375,8 +418,10 @@ async function amigosPosibles(titular: number, cuenta: number): Promise<(AmigoPo
   if (!ids.length) return [];
   const { rows } = await pool.query(
     `SELECT t.user_id, t.titular, COALESCE(s.llamadas, true) AS llamadas,
-            EXISTS (SELECT 1 FROM game_sabio_partidas p WHERE p.character_id = t.titular AND p.estado = 'jugando'
-                     AND COALESCE(p.servida_at, p.created_at) > now() - interval '5 minutes') AS jugando
+            (EXISTS (SELECT 1 FROM game_sabio_partidas p WHERE p.character_id = t.titular AND p.estado = 'jugando'
+                      AND COALESCE(p.servida_at, p.created_at) > now() - interval '5 minutes')
+             OR EXISTS (SELECT 1 FROM game_sabio_duelos d WHERE (d.a_id = t.titular OR d.b_id = t.titular) AND d.estado IN ('invitado', 'jugando')
+                      AND d.created_at > now() - interval '30 minutes')) AS jugando
        FROM (SELECT user_id, MIN(id) AS titular FROM game_characters WHERE user_id = ANY($1::int[]) AND game = $2 GROUP BY user_id) t
        LEFT JOIN game_sabio s ON s.character_id = t.titular`,
     [ids, JERUSALEN_JUEGO],

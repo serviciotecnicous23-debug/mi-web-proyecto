@@ -85,6 +85,9 @@ export class RedCiudad {
         case "sabio-llamada-fin":
         case "sabio-consejo":
         case "sabio-gracias":
+        case "duelo-reto":
+        case "duelo-reto-fin":
+        case "duelo":
           this.ev.onSabio?.(m);
           break;
         case "fuera":
