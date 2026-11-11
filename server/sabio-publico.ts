@@ -17,6 +17,8 @@ type Sala = {
   /** La cuenta de quien juega (para que solo esa persona lea su público). */
   duenio: number | null;
   mirando: Map<number, number>;
+  /** El nombre con que se ve cada uno (su personaje), para sentarlo en el estudio. */
+  nombres: Map<number, string>;
   aplausos: { tipo: AplausoId; at: number }[];
   ultimoDe: Map<number, number>;
   ultimo: number;
@@ -29,7 +31,7 @@ const TIPOS = new Set<string>(APLAUSOS.map((a) => a.id));
 function sala(partida: number): Sala {
   let s = salas.get(partida);
   if (!s) {
-    s = { duenio: null, mirando: new Map(), aplausos: [], ultimoDe: new Map(), ultimo: 0, tocada: Date.now() };
+    s = { duenio: null, mirando: new Map(), nombres: new Map(), aplausos: [], ultimoDe: new Map(), ultimo: 0, tocada: Date.now() };
     salas.set(partida, s);
   }
   s.tocada = Date.now();
@@ -37,7 +39,11 @@ function sala(partida: number): Sala {
 }
 
 function limpiar(s: Sala, ahora: number) {
-  for (const [u, t] of s.mirando) if (ahora - t > MIRANDO_MS) s.mirando.delete(u);
+  for (const [u, t] of s.mirando)
+    if (ahora - t > MIRANDO_MS) {
+      s.mirando.delete(u);
+      s.nombres.delete(u);
+    }
   while (s.aplausos.length && ahora - s.aplausos[0].at > APLAUSO_MS) s.aplausos.shift();
 }
 
@@ -50,8 +56,10 @@ export function duenioDe(partida: number): number | null {
 }
 
 /** Alguien está mirando la partida (vuelve a pedirla cada segundo y medio). */
-export function marcarMirando(partida: number, cuenta: number) {
-  sala(partida).mirando.set(cuenta, Date.now());
+export function marcarMirando(partida: number, cuenta: number, nombre?: string) {
+  const s = sala(partida);
+  s.mirando.set(cuenta, Date.now());
+  if (nombre) s.nombres.set(cuenta, nombre);
 }
 
 export function publicoDe(partida: number): PublicoVista {
@@ -61,7 +69,8 @@ export function publicoDe(partida: number): PublicoVista {
   limpiar(s, ahora);
   const aplausos: Partial<Record<AplausoId, number>> = {};
   for (const a of s.aplausos) aplausos[a.tipo] = (aplausos[a.tipo] ?? 0) + 1;
-  return { mirando: s.mirando.size, aplausos, ultimo: s.ultimo };
+  const nombres = [...s.mirando.keys()].map((u) => s.nombres.get(u)).filter((n): n is string => !!n).slice(0, 12);
+  return { mirando: s.mirando.size, aplausos, ultimo: s.ultimo, nombres };
 }
 
 /** Un aplauso del público. Solo puede aplaudir quien está mirando, y no muy seguido. */

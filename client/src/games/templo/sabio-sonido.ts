@@ -71,8 +71,110 @@ function cuerno(freq: number, inicio: number, dur: number, vol = 0.2) {
   o.stop(t + dur + 0.05);
 }
 
+/** Un ruido blanco de unos segundos, guardado (para el público). */
+let ruido: AudioBuffer | null = null;
+function ruidoBlanco(c: AudioContext): AudioBuffer {
+  if (ruido && ruido.sampleRate === c.sampleRate) return ruido;
+  const n = c.sampleRate * 2;
+  ruido = c.createBuffer(1, n, c.sampleRate);
+  const d = ruido.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  return ruido;
+}
+
+/** Muchas palmas a la vez: golpes cortos de ruido filtrado, cada uno en su momento. */
+function palmas(dur: number, densidad: number, vol: number) {
+  const c = audio();
+  if (!c || !master) return;
+  const buf = ruidoBlanco(c);
+  const t0 = c.currentTime;
+  const n = Math.round(dur * densidad);
+  for (let i = 0; i < n; i++) {
+    const t = t0 + Math.random() * dur;
+    const s = c.createBufferSource();
+    s.buffer = buf;
+    const f = c.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 900 + Math.random() * 1800;
+    f.Q.value = 0.9;
+    const g = c.createGain();
+    // las palmas bajan al final (el aplauso se apaga)
+    const caida = 1 - Math.max(0, (t - t0) / dur - 0.6) * 2.2;
+    g.gain.setValueAtTime(vol * Math.max(0.15, caida) * (0.6 + Math.random() * 0.4), t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    s.connect(f);
+    f.connect(g);
+    g.connect(master);
+    s.start(t, Math.random() * 1.5, 0.06);
+  }
+}
+
 export const sonido = {
   activo: () => !apagado,
+  /** El murmullo de la sala llena (sigue hasta que se llama a lo que devuelve). */
+  murmullo(): () => void {
+    const c = audio();
+    if (!c || !master) return () => undefined;
+    const s = c.createBufferSource();
+    s.buffer = ruidoBlanco(c);
+    s.loop = true;
+    const f = c.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 420;
+    f.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.value = 0.0001;
+    g.gain.exponentialRampToValueAtTime(0.035, c.currentTime + 1.5);
+    // sube y baja despacio, como la gente que conversa
+    const lfo = c.createOscillator();
+    lfo.frequency.value = 0.23;
+    const lg = c.createGain();
+    lg.gain.value = 0.012;
+    lfo.connect(lg);
+    lg.connect(g.gain);
+    s.connect(f);
+    f.connect(g);
+    g.connect(master);
+    s.start();
+    lfo.start();
+    return () => {
+      const t = c.currentTime;
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+      s.stop(t + 0.7);
+      lfo.stop(t + 0.7);
+    };
+  },
+  /** La ovación del público: un aplauso largo y fuerte. */
+  ovacion(seg = 2.6, fuerza = 1) {
+    palmas(seg, 70 * fuerza, 0.05);
+  },
+  /** El «¡oh!» del público cuando se falla: voces que bajan. */
+  oh() {
+    const c = audio();
+    if (!c || !master) return;
+    const t = c.currentTime;
+    for (let k = 0; k < 7; k++) {
+      const o = c.createOscillator();
+      o.type = "sawtooth";
+      const f0 = 170 + Math.random() * 140;
+      o.frequency.setValueAtTime(f0 * 1.12, t);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.82, t + 1.1);
+      const f = c.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 650;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.018, t + 0.12);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+      o.connect(f);
+      f.connect(g);
+      g.connect(master);
+      o.start(t + Math.random() * 0.08);
+      o.stop(t + 1.3);
+    }
+  },
   alternar(): boolean {
     apagado = !apagado;
     try {

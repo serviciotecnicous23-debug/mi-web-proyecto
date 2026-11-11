@@ -12,8 +12,10 @@ import { CiudadCtx } from "./CiudadUI";
 import { sonido } from "./sabio-sonido";
 import { sabioRed } from "./sabio-red";
 import { ICONO_CAMINO } from "./barrio-chat";
-import { LETRAS, Presentador, RELACION, Reloj, miles, pedir, primerNombre } from "./sabio-comun";
+import { LETRAS, LogoSabio, Presentador, RELACION, Reloj, miles, pedir, primerNombre, useVertical } from "./sabio-comun";
 import { DuelosLobby, DueloView } from "./SabioDuelo";
+import { EstudioSabio3D } from "./estudio/EstudioSabio3D";
+import type { EstudioSabio } from "./estudio/estudio-sabio";
 import {
   APLAUSOS, COMODINES, CONSEJOS_FAJA, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, NOMBRE_CONCURSO, ORDEN_COMODINES,
   PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, segundosGrada,
@@ -25,17 +27,17 @@ import {
 const azar = <T,>(l: T[]) => l[Math.floor(Math.random() * l.length)];
 
 /** Los aplausos que llegan flotan sobre la pantalla un momento. */
-type Flota = { id: number; icono: string; x: number };
+type Flota = { id: number; icono: string; x: number; tipo: AplausoId };
 let flotaId = 0;
 function nuevosAplausos(antes: PublicoVista | null, ahora: PublicoVista): Flota[] {
   if (!antes || ahora.ultimo <= antes.ultimo) return [];
   const out: Flota[] = [];
   for (const a of APLAUSOS) {
     const n = Math.max(0, (ahora.aplausos[a.id] ?? 0) - (antes.aplausos[a.id] ?? 0));
-    for (let k = 0; k < Math.min(4, n); k++) out.push({ id: ++flotaId, icono: a.icono, x: 8 + Math.random() * 84 });
+    for (let k = 0; k < Math.min(4, n); k++) out.push({ id: ++flotaId, icono: a.icono, x: 8 + Math.random() * 84, tipo: a.id });
   }
   // si los conteos no subieron (se fueron los viejos), igual se ve que alguien aplaudió
-  if (!out.length) out.push({ id: ++flotaId, icono: "👏", x: 8 + Math.random() * 84 });
+  if (!out.length) out.push({ id: ++flotaId, icono: "👏", x: 8 + Math.random() * 84, tipo: "aplauso" });
   return out;
 }
 
@@ -73,6 +75,10 @@ export function SabioView() {
   const finTiempo = useRef<number>(0);
   const finLlamada = useRef<number>(0);
   const vivo = useRef(true);
+  // el estudio 3D detrás de la pantalla (si el equipo puede)
+  const estudio = useRef<EstudioSabio | null>(null);
+  const [hay3d, setHay3d] = useState(false);
+  const vertical = useVertical();
 
   const cargar = useCallback(async () => {
     const r = await pedir<SabioEstado>("");
@@ -110,6 +116,12 @@ export function SabioView() {
       pararSuspenso.current();
     };
   }, [cargar]);
+
+  // con el estudio en 3D, la sala tiene su murmullo
+  useEffect(() => {
+    if (!hay3d || !conSonido) return;
+    return sonido.murmullo();
+  }, [hay3d, conSonido]);
 
   // se aceptó un reto (en la tarjeta de arriba): a la pantalla del duelo
   useEffect(
@@ -193,8 +205,10 @@ export function SabioView() {
       const nuevos = nuevosAplausos(ultimoPublico.current, r.data.publico);
       ultimoPublico.current = r.data.publico;
       setPublico(r.data.publico);
+      estudio.current?.setMirando(r.data.publico.nombres ?? []);
       if (nuevos.length) {
         sonido.aplauso();
+        for (const n of nuevos.slice(0, 3)) estudio.current?.aplauso(n.tipo);
         setFlotan((f) => [...f, ...nuevos].slice(-12));
         setTimeout(() => setFlotan((f) => f.filter((x) => !nuevos.some((n) => n.id === x.id))), 2400);
       }
@@ -306,6 +320,8 @@ export function SabioView() {
     const correcta = opciones.indexOf(d.respuesta);
     setRevelado({ elegida: elegidaI, correcta, bien: d.correcta, explica: d.explica, ref: d.ref, respuesta: d.respuesta });
     const subio = d.partida?.grada ?? (d.fin?.estado === "gano" ? GRADAS : 0);
+    if (d.correcta) sonido.ovacion(d.fin?.estado === "gano" ? 6 : 2.6, d.fin?.estado === "gano" ? 1.6 : 1);
+    else sonido.oh();
     if (d.correcta) {
       if (d.fin?.estado === "gano") {
         sonido.ganar();
@@ -421,8 +437,74 @@ export function SabioView() {
     if (r.ok && r.data) setEstado((e) => (e ? { ...e, yo: { ...e.yo, llamadas: r.data!.llamadas } } : e));
   }
 
+  // el estudio sigue lo que pasa en el programa: tomas, luces, público y la pantalla grande
+  const pintarPregunta = useCallback(
+    (e: EstudioSabio) => {
+      if (!qVista) return;
+      e.mostrarPregunta({
+        n: qVista.n,
+        texto: qVista.texto,
+        opciones: qVista.opciones,
+        quitadas: qVista.quitadas,
+        elegida: revelado ? null : elegida,
+        correcta: revelado ? revelado.correcta : null,
+        mala: revelado && !revelado.bien && revelado.elegida >= 0 ? revelado.elegida : null,
+      });
+    },
+    [qVista, elegida, revelado],
+  );
+  useEffect(() => {
+    const e = estudio.current;
+    if (!e) return;
+    const grada = partida?.grada ?? 0;
+    if (fase === "entre" && partida) {
+      e.setFase("entre", { grada });
+      e.mostrarGrada(grada + 1);
+    } else if ((fase === "pregunta" || fase === "confirmar" || fase === "suspenso") && qVista) {
+      e.setFase(fase, { grada: qVista.n - 1 });
+      pintarPregunta(e);
+    } else if (fase === "revelado" && revelado && qVista) {
+      const gano = fin?.estado === "gano";
+      const segura = revelado.bien && (GRADAS_SEGURAS as readonly number[]).includes(grada);
+      e.setFase(revelado.bien ? (gano ? "gano" : segura ? "segura" : "bien") : "mal", { grada: gano ? GRADAS : revelado.bien ? grada : qVista.n - 1 });
+      pintarPregunta(e);
+    } else if (fase === "fin" && fin) {
+      e.setFase(fin.estado === "gano" ? "gano" : "fin", { grada: fin.estado === "gano" ? GRADAS : fin.grada });
+      e.mostrarMensaje(
+        fin.estado === "gano" ? "¡Sabio de las quince gradas!" : `${miles(fin.puntos)} puntos`,
+        fin.estado === "retiro" ? "Se retiró con lo ganado" : fin.estado === "gano" ? "Santiago 3:13" : `Se queda en la grada ${fin.grada}`,
+      );
+    } else if (fase === "portada" || fase === "cargando" || fase === "duelos" || fase === "error") {
+      e.setFase("portada", { grada: 0 });
+      e.mostrarLogo();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hay3d, fase, qVista, elegida, revelado, fin, partida?.grada]);
+  // la llamada a un amigo se ve en la pantalla grande; al llegar el consejo vuelve la pregunta
+  const llamando = partida?.llamada && !revelado && (fase === "pregunta" || fase === "confirmar") ? partida.llamada.nombre : null;
+  useEffect(() => {
+    const e = estudio.current;
+    if (!e) return;
+    if (llamando) e.mostrarLlamada(llamando, restaLlamada);
+    else if (fase === "pregunta" || fase === "confirmar") pintarPregunta(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llamando, restaLlamada]);
+  // el consejo de los ancianos: el público levanta la mano y la pantalla muestra lo que dijeron
+  const ancianos = partida?.ancianos && !revelado ? partida.ancianos.join(",") : null;
+  useEffect(() => {
+    const e = estudio.current;
+    if (!e || !ancianos || !qVista) return;
+    e.mostrarAncianos(ancianos.split(",").map(Number), qVista.quitadas);
+    const t = setTimeout(() => {
+      if (estudio.current && faseRef.current === "pregunta") pintarPregunta(estudio.current);
+    }, 6000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ancianos]);
+
   const q = qVista;
   const n = q?.n ?? (partida ? partida.grada + 1 : 1);
+  const enJuego = fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado";
   const luces = fase === "suspenso" ? "opacity-40" : fase === "revelado" && revelado ? (revelado.bien ? "opacity-100" : "opacity-60") : "opacity-80";
   return (
     <div
@@ -431,20 +513,32 @@ export function SabioView() {
       data-testid="sabio"
     >
       <style>{ESTILOS}</style>
-      {/* el escenario: fondo, columnas y luces */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,#3a2a7c_0%,#170f38_42%,#05030d_100%)]" />
-      <div className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${luces}`}>
-        <div className="sabio-foco sabio-foco-a" />
-        <div className="sabio-foco sabio-foco-b" />
-      </div>
-      <Columnas />
+      {/* el escenario: el estudio en 3D (o, si el equipo no puede, el fondo con sus luces) */}
+      <EstudioSabio3D
+        onListo={(e) => {
+          estudio.current = e;
+          setHay3d(!!e);
+        }}
+        foco={vertical ? (enJuego ? 0.24 : 0.3) : enJuego ? 0.36 : 0.42}
+        concursante={null}
+      />
+      {!hay3d && (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,#3a2a7c_0%,#170f38_42%,#05030d_100%)]" />
+          <div className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${luces}`}>
+            <div className="sabio-foco sabio-foco-a" />
+            <div className="sabio-foco sabio-foco-b" />
+          </div>
+          <Columnas />
+        </>
+      )}
       {fase === "revelado" && revelado?.bien && <div className="sabio-destello pointer-events-none absolute inset-0" />}
 
       {/* cabecera */}
       <div className="relative z-10 flex items-center justify-between gap-2 px-3 pt-2">
         <div className="min-w-0">
-          <p className="sabio-titulo truncate font-serif text-lg font-black leading-none sm:text-2xl" data-testid="sabio-titulo">{NOMBRE_CONCURSO}</p>
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/70">La casa de la sabiduría</p>
+          <LogoSabio />
+          <span className="sr-only" data-testid="sabio-titulo">{NOMBRE_CONCURSO}</span>
         </div>
         <div className="flex shrink-0 gap-1.5">
           <button
@@ -462,7 +556,7 @@ export function SabioView() {
         </div>
       </div>
 
-      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-3">
         {fase === "cargando" && (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
@@ -482,6 +576,7 @@ export function SabioView() {
               city?.audio.click();
               setFase("duelos");
             }}
+            hay3d={hay3d}
           />
         )}
         {fase === "duelos" && (
@@ -494,11 +589,11 @@ export function SabioView() {
           />
         )}
         {fase === "duelo" && dueloId !== null && <DueloView id={dueloId} onSalir={() => setFase("duelos")} onCambiar={(id) => setDueloId(id)} />}
-        {fase === "mirando" && mirandoId !== null && <MirarView id={mirandoId} onSalir={() => void volverAPortada()} />}
+        {fase === "mirando" && mirandoId !== null && <MirarView id={mirandoId} onSalir={() => void volverAPortada()} estudio={() => estudio.current} />}
         {(fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") && partida && (
-          <div className="mx-auto flex max-w-4xl gap-4 pt-2">
+          <div className={`mx-auto flex w-full max-w-4xl gap-4 pt-2 ${hay3d ? "sabio-panel mt-auto rounded-t-3xl px-2 pb-1" : ""}`}>
             <div className="min-w-0 flex-1 space-y-2.5">
-              <Presentador dice={dice} />
+              <Presentador dice={dice} compacto={hay3d} />
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200/80" data-testid="sabio-grada">
@@ -524,7 +619,7 @@ export function SabioView() {
                   Gradas
                 </button>
               </div>
-              <MiniEscalera grada={partida.grada} />
+              {!hay3d && <MiniEscalera grada={partida.grada} />}
               {fase === "entre" && (
                 <button type="button" className="sabio-boton w-full" onClick={() => void siguiente()} data-testid="sabio-seguir">
                   Subir a la grada {partida.grada + 1}
@@ -532,10 +627,10 @@ export function SabioView() {
               )}
               {q && (
                 <>
-                  <div className="sabio-pregunta rounded-2xl px-4 py-3.5 text-center font-serif text-[16px] font-semibold leading-snug sm:text-lg" data-testid="sabio-pregunta">
+                  <div className={`sabio-pregunta rounded-2xl text-center font-serif font-semibold leading-snug sm:text-lg ${hay3d ? "px-3 py-2.5 text-[15px]" : "px-4 py-3.5 text-[16px]"}`} data-testid="sabio-pregunta">
                     {q.texto}
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className={`grid gap-2 ${hay3d ? "grid-cols-2" : "sm:grid-cols-2"}`}>
                     {q.opciones.map((o, i) => {
                       const quitada = q.quitadas.includes(i);
                       const esElegida = elegida === i;
@@ -558,7 +653,7 @@ export function SabioView() {
                           type="button"
                           disabled={quitada || !!revelado || fase === "suspenso"}
                           onClick={() => elegir(i)}
-                          className={`flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 text-left text-[14px] font-semibold transition ${clase} ${quitada ? "invisible" : ""}`}
+                          className={`flex min-h-[44px] items-center gap-2 rounded-xl text-left font-semibold transition ${hay3d ? "px-2.5 py-1.5 text-[13px] leading-tight" : "px-3 py-2 text-[14px]"} ${clase} ${quitada ? "invisible" : ""}`}
                           data-testid={`sabio-opcion-${i}`}
                         >
                           <span className="font-black text-amber-300">{LETRAS[i]}:</span>
@@ -892,6 +987,7 @@ function Portada({
   onMirar,
   onLlamadas,
   onDuelos,
+  hay3d = false,
 }: {
   estado: SabioEstado;
   onEmpezar: () => void;
@@ -901,6 +997,8 @@ function Portada({
   onMirar: (id: number) => void;
   onLlamadas: (si: boolean) => void;
   onDuelos: () => void;
+  /** Con el estudio en 3D detrás: la portada empieza más abajo para que se vea el escenario. */
+  hay3d?: boolean;
 }) {
   const [tab, setTab] = useState<"vivo" | "semana" | "siempre" | "trajes" | "reglas">(estado.enVivo.length ? "vivo" : "semana");
   const [enVivo, setEnVivo] = useState<EnVivo[]>(estado.enVivo);
@@ -920,7 +1018,7 @@ function Portada({
   }, []);
   const primero = enVivo[0];
   return (
-    <div className="mx-auto max-w-2xl space-y-3 pt-2" data-testid="sabio-portada">
+    <div className={`mx-auto w-full max-w-2xl space-y-3 pt-2 ${hay3d ? "sabio-panel mt-[24vh] rounded-t-3xl px-2.5 pt-3" : ""}`} data-testid="sabio-portada">
       {estado.premioSemana && (
         <div className="rounded-2xl bg-gradient-to-r from-amber-300 to-amber-500 p-3 text-center text-sm font-black text-amber-950 shadow-lg" data-testid="sabio-premio-semana">
           🏆 Quedaste en el puesto {estado.premioSemana.puesto} de la semana pasada: +{estado.premioSemana.gozo} de gozo
@@ -943,7 +1041,22 @@ function Portada({
           </span>
         </button>
       )}
-      <Presentador dice={dice} />
+      <Presentador dice={dice} compacto={hay3d} />
+      <button type="button" className="sabio-boton w-full py-3.5 text-base" disabled={ocupado || quedan <= 0} onClick={onEmpezar} data-testid="sabio-empezar">
+        {ocupado ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : quedan > 0 ? "Subir al atril" : "Mañana hay más entradas"}
+      </button>
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-800/80 to-indigo-800/80 py-3 text-sm font-black ring-1 ring-sky-300/50 hover:ring-sky-200"
+        onClick={onDuelos}
+        data-testid="sabio-duelos-abrir"
+      >
+        ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo o con alguien que busque</span>
+      </button>
+      <p className="text-center text-[11px] text-amber-100/70" data-testid="sabio-entradas">
+        Entradas de hoy: {quedan} de {ENTRADAS_DIA} · gozo de hoy {y.gozoHoy} de {GOZO_SABIO_DIA}
+      </p>
+      {aviso && <p className="rounded-xl bg-red-950/70 px-3 py-2 text-center text-xs">{aviso}</p>}
       <div className="sabio-pregunta rounded-2xl p-3 text-center">
         <p className="font-serif text-[13px] italic text-amber-100/90">«{VERSO_CASA.text}»</p>
         <p className="text-[11px] font-semibold text-amber-300">{VERSO_CASA.ref}</p>
@@ -965,21 +1078,6 @@ function Portada({
           Recibir llamadas e invitaciones
         </label>
       </div>
-      <button type="button" className="sabio-boton w-full py-3.5 text-base" disabled={ocupado || quedan <= 0} onClick={onEmpezar} data-testid="sabio-empezar">
-        {ocupado ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : quedan > 0 ? "Subir al atril" : "Mañana hay más entradas"}
-      </button>
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-800/80 to-indigo-800/80 py-3 text-sm font-black ring-1 ring-sky-300/50 hover:ring-sky-200"
-        onClick={onDuelos}
-        data-testid="sabio-duelos-abrir"
-      >
-        ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo o con alguien que busque</span>
-      </button>
-      <p className="text-center text-[11px] text-amber-100/70" data-testid="sabio-entradas">
-        Entradas de hoy: {quedan} de {ENTRADAS_DIA} · gozo de hoy {y.gozoHoy} de {GOZO_SABIO_DIA}
-      </p>
-      {aviso && <p className="rounded-xl bg-red-950/70 px-3 py-2 text-center text-xs">{aviso}</p>}
       <div className="grid grid-cols-5 gap-0.5 rounded-full bg-black/30 p-1">
         {(
           [
@@ -1150,7 +1248,7 @@ function EnVivoLista({ enVivo, onMirar }: { enVivo: EnVivo[]; onMirar: (id: numb
  * Mirar en vivo una partida: la pregunta, el reloj, los comodines y, al responder, si acertó (con su cita). El
  * público anima con aplausos que ve quien juega. Se pregunta al servidor cada segundo y medio.
  */
-function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
+function MirarView({ id, onSalir, estudio }: { id: number; onSalir: () => void; estudio: () => EstudioSabio | null }) {
   const [v, setV] = useState<MirarVista | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [restan, setRestan] = useState(0);
@@ -1159,6 +1257,37 @@ function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
   const finTiempo = useRef(0);
   const ultimaVista = useRef<number | null>(null);
   const ultimoPublico = useRef<PublicoVista | null>(null);
+  const claveEstudio = useRef("");
+
+  // en el estudio se sienta quien juega (con la vestidura de su camino) y se ve lo mismo que en su pantalla
+  useEffect(() => () => estudio()?.setConcursante(null), [estudio]);
+  function moverEstudio(d: MirarVista) {
+    const e = estudio();
+    if (!e) return;
+    e.setConcursante(d.camino === "profecia" ? "profeta" : d.camino === "realeza" ? "oficial" : "sacerdote");
+    e.setMirando(d.publico.nombres ?? []);
+    const u = d.ultima;
+    const reciente = u && Date.now() - u.at < 9000;
+    const clave = d.estado !== "jugando" ? `fin-${d.estado}` : reciente ? `u-${u!.at}` : d.pregunta ? `p-${d.pregunta.texto}-${d.pregunta.quitadas.join()}` : `e-${d.grada}`;
+    if (d.llamada) e.mostrarLlamada(d.llamada.nombre, d.llamada.restantes);
+    if (clave === claveEstudio.current) return;
+    claveEstudio.current = clave;
+    if (d.estado !== "jugando") {
+      e.setFase(d.estado === "gano" ? "gano" : "fin", { grada: d.grada });
+      e.mostrarMensaje(d.estado === "gano" ? "¡Sabio de las quince gradas!" : `${miles(d.puntos)} puntos`, d.nombre);
+    } else if (reciente && u) {
+      const segura = u.bien && (GRADAS_SEGURAS as readonly number[]).includes(d.grada);
+      e.setFase(u.bien ? (segura ? "segura" : "bien") : "mal", { grada: d.grada });
+      e.mostrarPregunta({ n: u.n, texto: u.texto, opciones: u.opciones, quitadas: [], correcta: u.opciones.indexOf(u.correcta), mala: u.bien || !u.elegida ? null : u.opciones.indexOf(u.elegida) });
+    } else if (d.pregunta) {
+      e.setFase("pregunta", { grada: d.grada });
+      if (d.ancianos) e.mostrarAncianos(d.ancianos, d.pregunta.quitadas);
+      else if (!d.llamada) e.mostrarPregunta({ n: d.pregunta.n, texto: d.pregunta.texto, opciones: d.pregunta.opciones, quitadas: d.pregunta.quitadas });
+    } else {
+      e.setFase("entre", { grada: d.grada });
+      e.mostrarGrada(d.grada + 1);
+    }
+  }
 
   useEffect(() => {
     let parar = false;
@@ -1179,7 +1308,9 @@ function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
       if (nuevos.length) {
         setFlotan((f) => [...f, ...nuevos].slice(-12));
         setTimeout(() => setFlotan((f) => f.filter((x) => !nuevos.some((n) => n.id === x.id))), 2400);
+        for (const n of nuevos.slice(0, 3)) estudio()?.aplauso(n.tipo);
       }
+      moverEstudio(d);
       setV(d);
     };
     void leer();
@@ -1196,7 +1327,8 @@ function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
     if (espera) return;
     setEspera(true);
     const icono = APLAUSOS.find((a) => a.id === tipo)?.icono ?? "👏";
-    const mio = { id: ++flotaId, icono, x: 10 + Math.random() * 80 };
+    const mio: Flota = { id: ++flotaId, icono, x: 10 + Math.random() * 80, tipo };
+    estudio()?.aplauso(tipo);
     setFlotan((f) => [...f, mio].slice(-12));
     setTimeout(() => setFlotan((f) => f.filter((x) => x.id !== mio.id)), 2400);
     sonido.aplauso();
@@ -1419,6 +1551,7 @@ const ESTILOS = `
 @keyframes sabioLatido{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .sabio-destello{background:radial-gradient(circle at 50% 40%,rgba(255,236,170,.35),transparent 60%);animation:sabioDestello 1.2s ease-out forwards}
 @keyframes sabioDestello{from{opacity:1}to{opacity:0}}
+.sabio-panel{background:linear-gradient(180deg,rgba(6,4,18,.15) 0%,rgba(6,4,18,.82) 14%,rgba(6,4,18,.94) 100%);box-shadow:0 -18px 40px rgba(6,4,18,.55);backdrop-filter:blur(2px)}
 .sabio-barra{animation:sabioBarra .8s ease-out}
 @keyframes sabioBarra{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
 .sabio-flota{animation:sabioFlota 2.3s ease-out forwards;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
