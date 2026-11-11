@@ -153,6 +153,8 @@ export type Modal =
   | { kind: "personaje"; id: string }
   /** La historia de la temporada (shared/capitulos.ts). */
   | { kind: "capitulos" }
+  /** El libro de la restauración (shared/restauracion.ts). */
+  | { kind: "libro" }
   | { kind: "visita"; personajeId: number; nombre: string };
 
 /** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */
@@ -186,6 +188,8 @@ export type CasaHud = {
     estaciones: { id: string; nombre: string; icono: string; siguiente: boolean }[];
     /** La estación que toca en los primeros pasos, o «salir» si lo que sigue es afuera. */
     siguiente: string | null;
+    /** La gran restauración: las salas nuevas del edificio, cómo va cada una y sus círculos (para tocarlos e ir). */
+    resto?: { id: string; nombre: string; icono: string; hecha: boolean; abierta: boolean; hechos: number; total: number; zonas: { id: string; nombre: string; icono: string; hecho: boolean; guia: boolean }[] }[];
   };
 };
 

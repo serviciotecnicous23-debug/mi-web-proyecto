@@ -26,6 +26,8 @@ import { CONCURSO_SQL } from "./concurso";
 import { AYUDA_SQL } from "./ayuda";
 import { MURO_SQL } from "./muro";
 import { CAPITULOS_SQL } from "./capitulos";
+import { RESTAURACION_SQL } from "./restauracion";
+import { CAMINO_SQL } from "./camino-dia";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1164,6 +1166,13 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CAPITULOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (capítulos): ${err?.message}`);
+    }
+    try {
+      // La gran restauración (las salas en ruinas de los edificios) y el camino de hoy
+      await pool.query(RESTAURACION_SQL);
+      await pool.query(CAMINO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (restauración): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

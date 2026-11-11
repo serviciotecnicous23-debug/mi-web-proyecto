@@ -164,6 +164,33 @@ export function CasaHudLayer({ mundo, onSalir, onMaestro }: { mundo: CasaWorld; 
 
         {!modal && ed && (
           <div className="pointer-events-auto flex w-full max-w-xl flex-col items-center gap-1.5" data-testid="edificio-estaciones">
+            {(ed.resto ?? []).some((r) => r.zonas.some((z) => !z.hecho)) && (
+              <div className="flex max-w-full flex-col items-center gap-1" data-testid="edificio-restauracion">
+                {(ed.resto ?? [])
+                  .filter((r) => r.zonas.some((z) => !z.hecho))
+                  .slice(0, 2)
+                  .map((r) => (
+                    <div key={r.id} className="flex max-w-full items-center gap-1.5 overflow-x-auto pb-0.5">
+                      <span className="shrink-0 rounded-full bg-sky-900/70 px-2.5 py-1 text-[11px] font-black text-sky-50 shadow">
+                        {r.icono} {r.hecha ? r.nombre : `${r.nombre}: ${r.hechos}/${r.total}`}
+                      </span>
+                      {r.zonas
+                        .filter((z) => !z.hecho)
+                        .map((z) => (
+                          <button
+                            key={z.id}
+                            type="button"
+                            onClick={() => mundo.irAZona(z.id)}
+                            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95 ${z.guia ? "bg-gradient-to-b from-sky-300 to-sky-500 text-sky-950 ring-2 ring-white/80" : "bg-sky-950/70 text-white"}`}
+                            data-testid={`edificio-zona-${z.id}`}
+                          >
+                            <span className="text-sm leading-none">{z.icono}</span> {z.nombre}
+                          </button>
+                        ))}
+                    </div>
+                  ))}
+              </div>
+            )}
             <div className="flex max-w-full gap-1.5 overflow-x-auto pb-0.5">
               {ed.siguiente === "salir" && (
                 <button

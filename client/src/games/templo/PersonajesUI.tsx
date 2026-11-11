@@ -88,6 +88,8 @@ export function PersonajeView({ id }: { id: string }) {
       }
       // la historia de la temporada: diez más para la meta de la ciudad (y el premio, si se cumplió)
       for (const c of r.data.capitulo ?? []) gameStore.toast(c.gozo ? `${c.titulo} · +${c.gozo} de gozo` : c.titulo, "gold");
+      // el camino de hoy: ayudar está cumplido
+      window.dispatchEvent(new Event("jer-camino"));
       if (r.data.gozoTotal != null) city?.ponerGozo(r.data.gozoTotal);
     }
   }

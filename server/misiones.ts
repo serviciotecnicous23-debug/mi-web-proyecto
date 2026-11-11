@@ -18,6 +18,7 @@ import { GOZO, sumarGozo } from "./gozo";
 import { avisoDeRacha, marcarServicio } from "./racha";
 import { sumarALaCopa } from "./barrio-juntos";
 import { aportarAlCapitulo } from "./capitulos";
+import { anotarCamino } from "./camino-dia";
 import { PUNTOS_CAPITULO } from "@shared/capitulos";
 
 export const MISIONES_SQL = `
@@ -96,6 +97,9 @@ async function sumarMerito(personajeId: number, n: number) {
 /** Avanza los encargos del día de este tipo. Devuelve lo que se cumplió ahora (para avisar). */
 export async function avanzarMision(ch: { id: number; user_id: number }, tipo: TipoEncargo, n = 1): Promise<MisionCumplida[]> {
   if (n <= 0) return [];
+  // el camino de hoy: aprender (preguntas difíciles y estudios) y ayudar (bendiciones, ayudas, reuniones y el alfolí)
+  if (tipo === "aciertos" || tipo === "seccion") void anotarCamino(ch.id, "aprender");
+  else if (tipo === "bendicion" || tipo === "ayuda" || tipo === "reunion" || tipo === "anfitrion" || tipo === "alfoli") void anotarCamino(ch.id, "ayudar");
   const g = await leerEncargos(ch.id);
   const cumplidas: MisionCumplida[] = [];
   let cambio = false;

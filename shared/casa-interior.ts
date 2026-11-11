@@ -68,6 +68,18 @@ export const PIEZAS_EDIFICIO: Mueble[] = [
   { id: "columna", categoria: "mueble", nombre: "Columna de cedro", icono: "🏛️", precio: 0, w: 1, d: 1, capa: 1, detalle: "El pórtico de columnas (1 Reyes 7:6)." },
   { id: "pupitre", categoria: "mueble", nombre: "Mesa del escriba", icono: "✒️", precio: 0, w: 2, d: 1, capa: 1, detalle: "Rollos, tinta y cálamo para copiar la ley." },
   { id: "olla", categoria: "mueble", nombre: "La olla grande", icono: "🍲", precio: 0, w: 1, d: 1, capa: 1, luz: true, detalle: "«Pon una olla grande, y haz potaje para los hijos de los profetas» (2 Reyes 4:38)." },
+  // las salas en ruinas (shared/restauracion.ts): lo que se quita al restaurarlas
+  { id: "escombros", categoria: "mueble", nombre: "Escombros", icono: "🪨", precio: 0, w: 1, d: 1, capa: 1, detalle: "Piedras y tierra del techo caído." },
+  { id: "viga-caida", categoria: "mueble", nombre: "Viga caída", icono: "🪵", precio: 0, w: 2, d: 1, capa: 1, detalle: "Una viga del techo, en el piso." },
+  { id: "estante-roto", categoria: "mueble", nombre: "Estante roto", icono: "🪚", precio: 0, w: 2, d: 1, capa: 1, detalle: "Un estante caído, con las tablas sueltas." },
+  { id: "vasija-rota", categoria: "mueble", nombre: "Vasija rota", icono: "🏺", precio: 0, w: 1, d: 1, capa: 0, detalle: "Pedazos de barro por el piso." },
+  { id: "rollos-tirados", categoria: "mueble", nombre: "Rollos tirados", icono: "📜", precio: 0, w: 1, d: 1, capa: 0, detalle: "Rollos y tablillas fuera de su lugar." },
+  { id: "polvo", categoria: "mueble", nombre: "Polvo", icono: "💨", precio: 0, w: 2, d: 2, capa: 0, detalle: "Tierra y polvo de mucho tiempo." },
+  // y lo que se pone
+  { id: "arpa", categoria: "mueble", nombre: "Arpa de los levitas", icono: "🪕", precio: 0, w: 1, d: 1, capa: 1, detalle: "«Alabadle con salterio y arpa» (Salmo 150:3)." },
+  { id: "pila", categoria: "mueble", nombre: "Fuente de bronce", icono: "⛲", precio: 0, w: 1, d: 1, capa: 1, detalle: "«Harás también una fuente de bronce, con su base de bronce, para lavar» (Éxodo 30:18)." },
+  { id: "pozo-patio", categoria: "mueble", nombre: "Pozo del patio", icono: "🪣", precio: 0, w: 2, d: 2, capa: 1, detalle: "Un pozo con su brocal de piedra y su roldana." },
+  { id: "sacos", categoria: "mueble", nombre: "Sacos de grano", icono: "🌾", precio: 0, w: 1, d: 1, capa: 1, detalle: "Las rentas del grano, guardadas en los depósitos del rey." },
 ];
 
 /** Un mueble de las casas o una pieza de los edificios (para dibujarlos). */

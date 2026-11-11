@@ -115,10 +115,15 @@ export async function aportarAlCapitulo(ch: { id: number; user_id: number }, pun
      RETURNING puntos, premiado_at`,
     [t, cap.n, titular, Math.round(puntos)],
   );
-  const { rows: fila } = await pool.query(
-    `UPDATE game_capitulos SET puntos = puntos + $3 WHERE season = $1 AND capitulo = $2 RETURNING puntos, meta, done_at`,
-    [t, cap.n, Math.round(puntos)],
-  );
+  const sumar = () =>
+    pool.query(`UPDATE game_capitulos SET puntos = puntos + $3 WHERE season = $1 AND capitulo = $2 RETURNING puntos, meta, done_at`, [t, cap.n, Math.round(puntos)]);
+  let { rows: fila } = await sumar();
+  if (!fila.length) {
+    // la fila no está (se borró): se vuelve a crear y se suma igual, para no perder lo aportado
+    filasHechas.delete(`${t}:${cap.n}`);
+    await asegurarCapitulo(t, cap.n);
+    ({ rows: fila } = await sumar());
+  }
   const c = fila[0];
   if (!c) return [];
   const out: MisionCumplida[] = [];

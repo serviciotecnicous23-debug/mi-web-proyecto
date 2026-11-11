@@ -24,6 +24,7 @@ import {
 } from "@shared/casa-interior";
 import type { Camino } from "@shared/caminos";
 import { estacionesPara, type EdificioDef, type EstacionDef } from "./edificios";
+import type { SalaDef, SalaEstado } from "@shared/restauracion";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import { LLAMA, construirMueble } from "./muebles3d";
@@ -71,11 +72,23 @@ export type CasaOpts = {
   quien?: { nombre: string; camino: Camino };
   /** Se pisó una estación del edificio. */
   alEstacion?: (id: string) => void;
+  /**
+   * La gran restauración (shared/restauracion.ts): las salas nuevas del edificio, cómo va cada una para esta persona,
+   * y qué hacer al terminar un trabajo (el servidor lo cuenta) o al pisar lo de cada día de una sala restaurada.
+   * `guia`: la sala que toca en el tutorial del primer día (la primera del edificio de tu camino, si falta).
+   */
+  restauracion?: {
+    salas: SalaDef[];
+    estado: SalaEstado[];
+    guia: string | null;
+    trabajar: (sala: string, trabajo: string) => Promise<SalaEstado[] | null>;
+    diario: (sala: string) => void;
+  };
   /** La estación que toca ahora en los primeros pasos (para resaltarla), o «salir». */
   siguiente?: () => string | null;
 };
 
-type ZonaId = "salir" | "horno" | "subir" | "bajar" | `est:${string}`;
+type ZonaId = "salir" | "horno" | "subir" | "bajar" | `est:${string}` | `trab:${string}` | `diar:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; piso: 0 | 1; r: number; ring: Ring; inside: boolean; etiqueta: HTMLDivElement };
 type Siervo = { handle: CrowdHandle; rig: Rig; base: V2; tarea: string };
 type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number };
@@ -115,7 +128,7 @@ export class CasaWorld {
   private mallas: THREE.Group[] = [];
   private items: Colocado[];
   private guardado: Colocado[];
-  private crowd = new Crowd(8);
+  private crowd = new Crowd(16);
   private sombras = new BlobShadows(12);
   private overlay: Overlay;
   private entrada: Entrada;
@@ -145,6 +158,14 @@ export class CasaWorld {
   private estaciones: EstacionDef[] = [];
   private siguienteId: string | null = null;
   private etiquetasPersonas: { el: HTMLDivElement; rig: Rig }[] = [];
+  /** La restauración: las salas del edificio y cómo van, lo fijo del edificio y el trabajo que se está haciendo. */
+  private resto: { salas: SalaDef[]; estado: Map<string, SalaEstado> } | null = null;
+  private base: Colocado[] = [];
+  private trabajando: { zona: string; sala: string; trabajo: string; desde: number; segundos: number } | null = null;
+  private esperandoTrabajo = false;
+  /** Al caminar solo hasta un círculo (con su botón), los otros círculos del camino no se disparan. */
+  private destinoZona: string | null = null;
+  private personasResto: { handle: import("../three/characters").CrowdHandle; rig: Rig }[] = [];
 
   private raf = 0;
   private last = 0;
@@ -167,6 +188,12 @@ export class CasaWorld {
     this.fijas = celdasFijas(this.plano);
     this.items = estado.interior.map((c) => ({ ...c }));
     this.guardado = estado.interior.map((c) => ({ ...c }));
+    // la restauración: lo fijo del edificio más lo que hay en cada sala nueva (ruinas o restaurado, según vaya)
+    if (opts.edificio && opts.restauracion) {
+      this.resto = { salas: opts.restauracion.salas, estado: new Map(opts.restauracion.estado.map((e) => [e.id, e])) };
+      this.base = this.items.map((c) => ({ ...c }));
+      this.items = [...this.base, ...this.piezasResto()];
+    }
 
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
@@ -229,8 +256,10 @@ export class CasaWorld {
     this.marca.mesh.visible = false;
     this.scene.add(this.marca.mesh);
     this.crearZonas();
+    this.crearZonasResto();
     this.dibujarMuebles();
     this.crearSiervos();
+    this.ponerPersonasResto();
     this.mostrarPiso(0);
 
     this.entrada = new Entrada(container, canvas, this.overlay, { ocupado: () => gameStore.busy, alPrimerToque: () => this.audio.ensure() });
@@ -551,7 +580,11 @@ export class CasaWorld {
       const dentro = z.piso === this.piso && Math.hypot(r.x - z.x, r.z - z.z) < z.r;
       if (dentro && !z.inside) {
         z.inside = true;
-        this.alPisar(z.id);
+        // caminando solo hacia otro círculo, este no se dispara (se pasa por encima)
+        if (!this.destinoZona || this.destinoZona === z.id) {
+          this.destinoZona = null;
+          this.alPisar(z.id);
+        }
       } else if (!dentro) z.inside = false;
     }
   }
@@ -563,6 +596,166 @@ export class CasaWorld {
     else if (id === "horno") this.opts.alHorno?.();
     else if (id === "subir" || id === "bajar") this.cambiarDePiso(id === "subir" ? 1 : 0);
     else if (id.startsWith("est:")) this.opts.alEstacion?.(id.slice(4));
+    else if (id.startsWith("trab:")) this.empezarTrabajo(id);
+    else if (id.startsWith("diar:")) this.opts.restauracion?.diario(id.slice(5));
+  }
+
+  // ================================================================ la restauración (shared/restauracion.ts)
+  /** Lo que se ve en cada sala: si está restaurada, todo lo puesto; si no, lo que falta quitar y lo ya puesto. */
+  private piezasResto(): Colocado[] {
+    if (!this.resto) return [];
+    const out: Colocado[] = [];
+    for (const s of this.resto.salas) {
+      const e = this.resto.estado.get(s.id);
+      if (e?.hecha) {
+        for (const t of s.trabajos) out.push(...t.pone);
+        out.push(...s.extra);
+        continue;
+      }
+      for (const t of s.trabajos) {
+        const n = Math.min(t.veces, e?.progreso[t.id] ?? 0);
+        out.push(...t.quita.slice(Math.round((t.quita.length * n) / t.veces)));
+        out.push(...t.pone.slice(0, Math.round((t.pone.length * n) / t.veces)));
+      }
+    }
+    return out.map((c) => ({ ...c }));
+  }
+
+  /** La sala que toca en el tutorial y su primer trabajo sin hacer (para que brille). */
+  private zonaGuia(): string | null {
+    const id = this.opts.restauracion?.guia;
+    if (!this.resto || !id) return null;
+    const s = this.resto.salas.find((x) => x.id === id);
+    const e = this.resto.estado.get(id);
+    if (!s || !e || e.hecha || !e.abierta) return null;
+    const t = s.trabajos.find((x) => (e.progreso[x.id] ?? 0) < x.veces);
+    return t ? `trab:${s.id}:${t.id}` : null;
+  }
+
+  /** Los círculos de los trabajos (en las salas abiertas) y lo de cada día (en las restauradas). */
+  private crearZonasResto() {
+    if (!this.resto) return;
+    for (const z of this.zonas.filter((zz) => zz.id.startsWith("trab:") || zz.id.startsWith("diar:"))) {
+      this.scene.remove(z.ring.mesh);
+      z.ring.dispose();
+      this.overlay.remove(z.etiqueta);
+    }
+    this.zonas = this.zonas.filter((zz) => !zz.id.startsWith("trab:") && !zz.id.startsWith("diar:"));
+    const r = this.player.rig;
+    for (const s of this.resto.salas) {
+      const e = this.resto.estado.get(s.id);
+      if (!e?.abierta) continue;
+      const lista: [ZonaId, number, number, string, string][] = [];
+      if (e.hecha) lista.push([`diar:${s.id}`, s.diario.x, s.diario.z, e.diarioHoy ? "#b9b0a0" : "#ffd25a", `${s.diario.icono} ${s.diario.nombre}${e.diarioHoy ? " ✓" : ""}`]);
+      else
+        for (const t of s.trabajos) {
+          const n = e.progreso[t.id] ?? 0;
+          if (n >= t.veces) continue;
+          lista.push([`trab:${s.id}:${t.id}`, t.x, t.z, "#7fd0ff", `${t.icono} ${t.nombre} (${n}/${t.veces})`]);
+        }
+      for (const [id, cx, cz, color, texto] of lista) {
+        const x = this.wx(cx), z = this.wz(cz);
+        const ring = new Ring(0.42, color, true);
+        ring.set(x, 0.02, z);
+        this.scene.add(ring.mesh);
+        const etiqueta = this.overlay.make("tpl-pad", texto);
+        this.zonas.push({ id, x, z, piso: 0, r: 0.42, ring, inside: Math.hypot(r.x - x, r.z - z) < 0.72, etiqueta });
+      }
+    }
+  }
+
+  /** La gente que vuelve a trabajar en las salas restauradas. */
+  private ponerPersonasResto() {
+    if (!this.resto) return;
+    for (const p of this.personasResto) {
+      this.crowd.remove(p.handle);
+      const i = this.siervos.findIndex((x) => x.handle === p.handle);
+      if (i >= 0) this.siervos.splice(i, 1);
+    }
+    this.personasResto = [];
+    for (const s of this.resto.salas) {
+      if (!this.resto.estado.get(s.id)?.hecha) continue;
+      for (const pd of s.personas) {
+        const look = randomVisitor();
+        const h = this.crowd.add(pd.variante, { ...look.colors, robe: pd.manto, hair: pd.variante === "anciano" ? "#d9d4cc" : look.colors.hair });
+        if (!h) continue;
+        const x = this.wx(pd.x), z = this.wz(pd.z);
+        const rig = newRig(x, z, pd.variante === "nino" ? 0.74 : pd.variante === "anciano" ? 0.97 : 1);
+        rig.yaw = pd.yaw;
+        rig.pose = pd.pose;
+        this.siervos.push({ handle: h, rig, base: [x, z], tarea: pd.trabaja ? "trabaja" : "" });
+        this.personasResto.push({ handle: h, rig });
+      }
+    }
+    this.reconstruirChoques();
+  }
+
+  /** Llega lo que dice el servidor de las salas: se redibuja lo que cambió. */
+  ponerRestauracion(estado: SalaEstado[]) {
+    if (!this.resto) return;
+    const antes = new Map(this.resto.estado);
+    this.resto.estado = new Map(estado.map((e) => [e.id, e]));
+    this.items = [...this.base, ...this.piezasResto()];
+    this.dibujarMuebles();
+    this.crearZonasResto();
+    const nuevaHecha = estado.some((e) => e.hecha && !antes.get(e.id)?.hecha);
+    if (nuevaHecha) {
+      this.ponerPersonasResto();
+      this.audio.trumpet?.(true);
+    }
+    this.pushHud();
+  }
+
+  private empezarTrabajo(zona: string) {
+    if (!this.resto || this.esperandoTrabajo) return;
+    const [, sala, trabajo] = zona.split(":");
+    const s = this.resto.salas.find((x) => x.id === sala);
+    const t = s?.trabajos.find((x) => x.id === trabajo);
+    if (!t) return;
+    this.ruta = [];
+    this.player.vx = this.player.vz = 0;
+    this.trabajando = { zona, sala, trabajo, desde: performance.now(), segundos: t.segundos };
+  }
+
+  /** Mientras se trabaja: hay que quedarse en el círculo; al cumplir el tiempo, el servidor cuenta la vez. */
+  private updateTrabajo(now: number) {
+    const tr = this.trabajando;
+    if (!tr) return;
+    const z = this.zonas.find((zz) => zz.id === tr.zona);
+    const r = this.player.rig;
+    if (!z || Math.hypot(r.x - z.x, r.z - z.z) > z.r + 0.2) {
+      this.trabajando = null;
+      r.pose = "idle";
+      this.aviso("Te moviste: el trabajo se detuvo. Vuelve al círculo para seguir.", 2600);
+      return;
+    }
+    // trabaja con las manos
+    r.pose = Math.sin(now * 0.008) > 0 ? "kneel" : "offer";
+    if (now - tr.desde < tr.segundos * 1000) return;
+    this.trabajando = null;
+    this.esperandoTrabajo = true;
+    r.pose = "idle";
+    void this.opts.restauracion!.trabajar(tr.sala, tr.trabajo).then((estado) => {
+      this.esperandoTrabajo = false;
+      if (!this.running || !estado) return;
+      this.ponerRestauracion(estado);
+      vibrar(25);
+      // si sigue en el mismo círculo y falta, sigue trabajando solo
+      const zz = this.zonas.find((x) => x.id === tr.zona);
+      if (zz && Math.hypot(this.player.rig.x - zz.x, this.player.rig.z - zz.z) < zz.r) this.empezarTrabajo(tr.zona);
+    });
+  }
+
+  /** Caminar solo hasta un círculo cualquiera (los de la restauración incluidos). */
+  irAZona(id: string) {
+    const z = this.zonas.find((zz) => zz.id === id);
+    if (!z || this.remodelando) return;
+    const r = this.player.rig;
+    this.ruta = this.nav[this.piso]?.path(r.x, r.z, z.x, z.z) ?? [[z.x, z.z]];
+    this.destinoZona = z.id;
+    this.marca.set(z.x, this.yPiso(this.piso) + 0.02, z.z);
+    this.marca.mesh.visible = true;
+    this.marcaT = 1.4;
   }
 
   /** Caminar solo hasta una estación del edificio (o hasta la puerta, con «salir»). */
@@ -571,6 +764,7 @@ export class CasaWorld {
     if (!z || this.remodelando) return;
     const r = this.player.rig;
     this.ruta = this.nav[this.piso]?.path(r.x, r.z, z.x, z.z) ?? [[z.x, z.z]];
+    this.destinoZona = z.id;
     this.marca.set(z.x, this.yPiso(this.piso) + 0.02, z.z);
     this.marca.mesh.visible = true;
     this.marcaT = 1.4;
@@ -868,6 +1062,7 @@ export class CasaWorld {
     [x, z] = collide(x, z, PLAYER_R, this.rects[this.piso], this.circles[this.piso]);
     const r = this.player.rig;
     this.ruta = this.nav[this.piso]?.path(r.x, r.z, x, z) ?? [[x, z]];
+    this.destinoZona = null;
     this.marca.set(x, this.yPiso(this.piso) + 0.02, z);
     this.marca.mesh.visible = true;
     this.marcaT = 0.9;
@@ -882,6 +1077,7 @@ export class CasaWorld {
     if (Math.hypot(ix, iy) > 0.01) {
       // la cámara mira desde el sur: adelante es el norte
       this.ruta = [];
+      this.destinoZona = null;
       dx = ix;
       dz = -iy;
     } else if (this.ruta.length) {
@@ -943,8 +1139,10 @@ export class CasaWorld {
     const live = !this.paused && !gameStore.busy;
     if (live) {
       if (this.remodelando) this.toqueRemodelar();
-      else this.movePlayer(dt);
+      else if (!this.trabajando) this.movePlayer(dt);
+      else this.entrada.tomarToque();
       this.updateZonas();
+      this.updateTrabajo(now);
     } else this.entrada.tomarToque();
     this.animate(dt, now);
     this.renderer.render(this.scene, this.camera);
@@ -1062,7 +1260,8 @@ export class CasaWorld {
     for (const z of this.zonas) {
       const u = z.ring.mat.uniforms;
       const cerca = z.piso === this.piso ? Math.max(0, 1 - Math.hypot(r.x - z.x, r.z - z.z) / 4) : 0;
-      const esSig = !!sig && (z.id === `est:${sig}` || (sig === "salir" && z.id === "salir"));
+      const guia = this.zonaGuia();
+      const esSig = guia ? z.id === guia : !!sig && (z.id === `est:${sig}` || (sig === "salir" && z.id === "salir"));
       u.uTime.value = this.time;
       u.uPulse.value += (Math.max(cerca, esSig ? 0.75 + 0.25 * Math.sin(this.time * 4) : 0.35) - u.uPulse.value) * Math.min(1, dt * 4);
       u.uOpacity.value = 0.5 + 0.45 * u.uPulse.value;
@@ -1087,6 +1286,21 @@ export class CasaWorld {
     const r = this.player.rig;
     const salir = this.zonas[0];
     if (Math.hypot(r.x - salir.x, r.z - salir.z) < 1.4) return "Párate en el círculo de la puerta para salir a la ciudad";
+    const tr = this.trabajando;
+    if (tr) {
+      const s = this.resto?.salas.find((x) => x.id === tr.sala);
+      const t = s?.trabajos.find((x) => x.id === tr.trabajo);
+      const pct = Math.min(100, Math.round(((performance.now() - tr.desde) / (tr.segundos * 1000)) * 100));
+      return `${t?.icono ?? "🧱"} ${t?.nombre ?? "Trabajando"}… ${pct} % (quédate en el círculo)`;
+    }
+    if (this.esperandoTrabajo) return "Listo: guardando tu trabajo…";
+    const guia = this.zonaGuia();
+    if (guia) {
+      const [, sala, trabajo] = guia.split(":");
+      const s = this.resto!.salas.find((x) => x.id === sala)!;
+      const t = s.trabajos.find((x) => x.id === trabajo)!;
+      return `${s.icono} Restaura ${s.nombre.toLowerCase()}: ${t.icono} ${t.nombre} (el círculo azul que brilla). Párate en él unos segundos.`;
+    }
     const sig = this.siguienteId;
     if (sig === "salir") return "Lo que sigue es afuera: sal a la ciudad y sigue la flecha del borde de la pantalla.";
     for (const s of this.estaciones) if (Math.hypot(r.x - this.wx(s.x), r.z - this.wz(s.z)) < 1.3) return `${s.icono} ${s.nombre}: ${s.ayuda}`;
@@ -1151,10 +1365,37 @@ export class CasaWorld {
             maestro: e.maestro,
             estaciones: this.estaciones.map((s) => ({ id: s.id, nombre: s.nombre, icono: s.icono, siguiente: s.id === sig })),
             siguiente: sig,
+            resto: this.hudResto(),
           }
         : undefined,
     };
     gameStore.setCasa(hud);
+  }
+
+  /** Las salas de la restauración para la pantalla: cómo va cada una y sus círculos para ir. */
+  private hudResto(): NonNullable<CasaHud["edificio"]>["resto"] {
+    if (!this.resto) return undefined;
+    const guia = this.zonaGuia();
+    return this.resto.salas.map((s) => {
+      const e = this.resto!.estado.get(s.id);
+      const hechos = s.trabajos.reduce((a, t) => a + Math.min(t.veces, e?.progreso[t.id] ?? 0), 0);
+      return {
+        id: s.id,
+        nombre: s.nombre,
+        icono: s.icono,
+        hecha: !!e?.hecha,
+        abierta: !!e?.abierta,
+        hechos,
+        total: s.trabajos.reduce((a, t) => a + t.veces, 0),
+        zonas: e?.hecha
+          ? [{ id: `diar:${s.id}`, nombre: s.diario.nombre, icono: s.diario.icono, hecho: !!e.diarioHoy, guia: false }]
+          : e?.abierta
+            ? s.trabajos
+                .filter((t) => (e.progreso[t.id] ?? 0) < t.veces)
+                .map((t) => ({ id: `trab:${s.id}:${t.id}`, nombre: `${t.nombre} (${e.progreso[t.id] ?? 0}/${t.veces})`, icono: t.icono, hecho: false, guia: `trab:${s.id}:${t.id}` === guia }))
+            : [],
+      };
+    });
   }
 
   // ================================================================ tamaño, pausa y cierre
@@ -1191,6 +1432,8 @@ export class CasaWorld {
     for (const pe of this.etiquetasPersonas) this.overlay.remove(pe.el);
     this.marca.dispose();
     for (const s of this.siervos) this.crowd.remove(s.handle);
+    this.personasResto = [];
+    this.trabajando = null;
     this.player.fig.dispose();
     this.crowd.dispose();
     this.sombras.dispose();
