@@ -137,13 +137,14 @@ export function registerPuebloRoutes(app: Express) {
   const ultimo = new Map<number, number>();
   // Dar de mi alfolí a una familia del pueblo de mi barrio.
   app.post("/api/jerusalen/pueblo/:parcela/dar", async (req: Request, res: Response) => {
-    const parcela = Math.floor(Number(req.params.parcela));
-    const cantidad = Math.floor(Number(req.body?.cantidad));
-    if (!Number.isInteger(parcela) || parcela < 0 || parcela >= CASAS_POR_BARRIO || !Number.isInteger(cantidad) || cantidad < 1 || cantidad > PUEBLO_MAX)
-      return res.status(400).json({ message: "Cantidad no válida" });
     try {
+      // primero la sesión (como las demás rutas: sin sesión, 401), después lo que se pide
       const v = await vecino(req, res);
       if (!v) return;
+      const parcela = Math.floor(Number(req.params.parcela));
+      const cantidad = Math.floor(Number(req.body?.cantidad));
+      if (!Number.isInteger(parcela) || parcela < 0 || parcela >= CASAS_POR_BARRIO || !Number.isInteger(cantidad) || cantidad < 1 || cantidad > PUEBLO_MAX)
+        return res.status(400).json({ message: "Cantidad no válida" });
       const ahora = Date.now();
       if (ahora - (ultimo.get(v.casa) ?? 0) < 800) return res.status(429).json({ message: "Espera un momento" });
       ultimo.set(v.casa, ahora);
