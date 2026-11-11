@@ -9,6 +9,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { diaClave, enFila, filaMerito, nombreDe, personajeDe, temporadaDe } from "./jerusalen";
 import { sumarGozo } from "./gozo";
+import { avisoDeRacha, marcarServicio, type RachaMarcada } from "./racha";
 import { ubicacionDe } from "./ciudad-red";
 import { semanaClave } from "./misiones";
 import { nombreDeBarrio } from "@shared/ciudad";
@@ -131,11 +132,13 @@ export function registerPersonajesRoutes(app: Express) {
            ON CONFLICT (titular, dia) DO UPDATE SET paso = $3, done_at = ${fin ? "now()" : "game_recados.done_at"}`,
           [ch.casa, diaClave(), paso],
         );
+        let racha: RachaMarcada | null = null;
         if (fin) {
           await sumarGozo(ch.casa, RECADO_GOZO);
           await sumarMerito(ch.id, RECADO_MERITO);
+          racha = await marcarServicio(ch.id);
         }
-        return { dice: e.recado.dice[e.paso], fin };
+        return { dice: e.recado.dice[e.paso], fin, racha };
       });
       if ("error" in out) return res.status(out.error as number).json({ message: out.message });
       const estado = await estadoRecado(ch.casa);
@@ -144,7 +147,7 @@ export function registerPersonajesRoutes(app: Express) {
         const { rows } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
         gozoTotal = Number(rows[0]?.gozo ?? 0);
       }
-      res.json({ estado, dice: out.dice, fin: out.fin, gozoTotal });
+      res.json({ estado, dice: out.dice, fin: out.fin, gozoTotal, racha: out.racha ? avisoDeRacha(out.racha) : null });
     } catch (err) {
       console.error("[recado] hablar:", err);
       if (!res.headersSent) res.sendStatus(500);

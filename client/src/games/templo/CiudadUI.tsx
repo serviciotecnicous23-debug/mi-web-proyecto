@@ -24,6 +24,7 @@ import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
 import { BarrioView } from "./BarrioUI";
 import { PersonajeView } from "./PersonajesUI";
+import { RachaPill } from "./RachaUI";
 import { JuntosChip } from "./BarrioCopa";
 import { SiguiendoChip, seguirVecino } from "./Acompanar";
 import { useChatBarrio } from "./barrio-chat";
@@ -154,7 +155,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               data-testid="ciudad-escalon"
             >
               <Crown className="h-4 w-4 shrink-0" />
-              <span className="min-w-0 truncate">{c.nombre}</span>
+              {/* en un teléfono angosto, solo la corona (el nombre está sobre tu figura) */}
+              <span className="hidden min-w-0 truncate min-[430px]:inline">{c.nombre}</span>
               <span className="hidden shrink-0 font-semibold opacity-80 sm:inline">· {nombreEscalonCamino(c.camino, c.escalon, escalonNombre(c.escalon))}</span>
             </button>
             <button
@@ -166,7 +168,10 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             >
               <Home className="h-4 w-4 shrink-0 text-amber-300" />
               <span className="min-w-0 truncate">
-                {c.barrio} · casa {c.casa}
+                <span className="hidden min-[430px]:inline">
+                  {c.barrio} · casa {c.casa}
+                </span>
+                <span className="tabular-nums min-[430px]:hidden">{c.casa}</span>
               </span>
             </button>
             <button
@@ -179,6 +184,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               <Sparkles className="h-4 w-4 shrink-0 text-amber-300" />
               <span className="tabular-nums">{c.gozo}</span>
             </button>
+            <RachaPill onOpen={() => open({ kind: "misiones" })} />
           </div>
           <MeritoCamino camino={c.camino} />
           <GananciaEnLinea />

@@ -15,6 +15,8 @@ import type { TesoroEstado } from "@shared/economia";
 import type { MisionesEstado } from "@shared/misiones";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
+import { lineasDeRacha } from "./RachaUI";
+import type { RachaVista } from "@shared/racha";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -29,7 +31,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -40,7 +42,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<MuroEstado>("/muro"),
       traer<TesoroEstado>("/tesoro"),
       traer<{ estado: RecadoEstado }>("/recado"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado }));
+      traer<RachaVista>("/racha"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha }));
     return () => {
       vivo = false;
     };
@@ -51,6 +54,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
     gameStore.push(m);
   };
   const lineas: Linea[] = [];
+  // la racha de servicio va primero: es lo que se pierde si no se sirve hoy
+  if (d.racha) lineas.push(...lineasDeRacha(d.racha).filter((l) => l.id === "racha"));
   const hechos = misiones.encargos.filter((e) => e.hecho).length;
   if (hechos < misiones.encargos.length) lineas.push({ id: "encargos", icono: "🎯", texto: `Encargos de hoy: ${hechos} de ${misiones.encargos.length} (abajo los ves)` });
   // el concurso de la semana
@@ -106,6 +111,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   // el muro de todos
   const w = d.muro;
   if (w && w.construidos < w.tramos) lineas.push({ id: "muro", icono: "🧱", texto: `El muro caído: tramo ${w.construidos + 1} de ${w.tramos}, ${w.progreso} de ${w.meta} piedras (tus piedras: ${w.mias}). Cada deber pone una.` });
+  // y lo que espera mañana
+  if (d.racha) lineas.push(...lineasDeRacha(d.racha).filter((l) => l.id === "manana"));
   if (!lineas.length) return null;
   return (
     <section className="space-y-1.5 rounded-xl border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-800 dark:bg-amber-950/20" data-testid="para-hoy">

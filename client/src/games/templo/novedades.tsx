@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-racha",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La racha de servicio 🔥",
+    puntos: [
+      "🔥 Cada día que cumples un encargo del día o el recado de la calle de los siervos, tu racha sube: +2 de gozo el primer día, 2 más cada día seguido (hasta +14), y premios grandes a los 7, 30 y 100 días.",
+      "🕊️ El día de reposo (el sábado) no la rompe: «Acuérdate del día de reposo para santificarlo» (Éxodo 20:8). Si sirves en sábado, también cuenta.",
+      "🌅 En «Para hoy» ves tu racha, si está por perderse y quién tendrá un recado para ti mañana. La llama está en el marcador de la ciudad.",
+      "📱 En teléfonos angostos, el marcador muestra solo la corona y el número de tu casa para que nada quede tapado.",
+    ],
+  },
+  {
     id: "2026-11-11-diseno-nuevo",
     fecha: "11 de noviembre de 2026",
     titulo: "Diseño nuevo: portada, emblemas, retratos y medallas",
