@@ -147,6 +147,8 @@ export type Modal =
   | { kind: "vecino"; id: number }
   /** «Tu barrio»: la charla, los vecinos y el emblema y el lema (el barrio como clan). */
   | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" }
+  /** «¿Quién es sabio?», el concurso de la casa de la sabiduría (pantalla completa). */
+  | { kind: "sabio" }
   | { kind: "visita"; personajeId: number; nombre: string };
 
 /** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */

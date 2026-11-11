@@ -11,10 +11,21 @@
  */
 
 import { MUEBLES } from "./casa-interior";
+import { TRAJES_SABIOS } from "./sabio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
 export type TabMercado = Categoria | "vender" | "vecinos";
-export type Articulo = { id: string; categoria: Categoria; nombre: string; icono: string; precio: number; detalle: string; color?: string };
+export type Articulo = {
+  id: string;
+  categoria: Categoria;
+  nombre: string;
+  icono: string;
+  precio: number;
+  detalle: string;
+  color?: string;
+  /** No se vende: se gana (los trajes de los sabios, en la casa de la sabiduría; shared/sabio.ts). */
+  exclusivo?: "sabio";
+};
 
 export const ARTICULOS: Articulo[] = [
   // semillas
@@ -39,6 +50,17 @@ export const ARTICULOS: Articulo[] = [
   { id: "faja-ocre", categoria: "ropa", nombre: "Faja ocre", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, ocre.", color: "#c98a2b" },
   { id: "faja-azul", categoria: "ropa", nombre: "Faja azul", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, azul.", color: "#2f5aa8" },
   { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
+  // los trajes de los sabios: no se venden, se ganan en «¿Quién es sabio?» (shared/sabio.ts, TRAJES_SABIOS)
+  ...TRAJES_SABIOS.map((t): Articulo => ({
+    id: t.id,
+    categoria: "ropa",
+    nombre: t.nombre,
+    icono: t.id.startsWith("manto") ? "🥻" : "🎖️",
+    precio: 0,
+    detalle: `Traje de los sabios: ${t.requisito.toLowerCase()} en la casa de la sabiduría.`,
+    color: t.color,
+    exclusivo: "sabio",
+  })),
   // el letrero de la casa
   { id: "letrero", categoria: "letrero", nombre: "Letrero de la casa", icono: "🪧", precio: 40, detalle: "Ponle nombre a tu casa: lo ven los vecinos." },
   // los muebles de la casa por dentro (shared/casa-interior.ts)
@@ -82,7 +104,7 @@ export function lugaresAdornos(nivel: number): number {
 export function ofertasDelDia(dia: string): string[] {
   let x = 2166136261;
   for (const ch of dia) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
-  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero");
+  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo);
   const a = x % lista.length;
   const b = (a + 1 + ((x >>> 8) % (lista.length - 1))) % lista.length;
   return [lista[a].id, lista[b].id];

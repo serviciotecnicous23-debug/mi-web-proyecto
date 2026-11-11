@@ -406,7 +406,7 @@ export function quizById(id: string): Quiz | undefined {
 }
 
 // ---------------------------------------------------------------- diálogos
-export type Speaker = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar";
+export type Speaker = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar" | "etan" | "husai";
 export type Line = { quien: Speaker; texto: string; ref?: string };
 
 export const SPEAKERS: Record<Speaker, string> = {
@@ -417,6 +417,8 @@ export const SPEAKERS: Record<Speaker, string> = {
   isaias: "Isaías hijo de Amoz, profeta",
   eliaquim: "Eliaquim hijo de Hilcías, mayordomo",
   eleazar: "Eleazar, anciano de los sacerdotes",
+  etan: "Etán ezraíta, el sabio de la casa de la sabiduría",
+  husai: "Husai, el amigo del rey",
 };
 
 export const DIALOGUES: Record<string, Line[]> = {

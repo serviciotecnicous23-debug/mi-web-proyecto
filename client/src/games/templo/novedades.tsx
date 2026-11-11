@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-quien-es-sabio",
+    fecha: "11 de noviembre de 2026",
+    titulo: "¿Quién es sabio?, el gran concurso",
+    puntos: [
+      "🏛️ La casa de la sabiduría abre sus puertas (Proverbios 9:1): ábrela desde el botón del concurso (la medalla). Te recibe Etán ezraíta, el sabio de 1 Reyes 4:31.",
+      "🪜 Quince gradas, una pregunta por grada y cada vez más difícil. Las gradas 5 y 10 son seguras, puedes retirarte con lo ganado y el reloj corre: «¿Es tu última palabra?».",
+      "🌾 Cuatro comodines: el aventador quita dos respuestas, los ancianos de la puerta dicen qué respondió el pueblo, Husai el amigo del rey te aconseja y, desde la grada 10, otro rollo cambia la pregunta.",
+      "📜 750 preguntas comprobadas con la Reina-Valera 1960, 50 por grada: no se te repiten hasta que veas todas las de esa grada.",
+      "🏆 Siete entradas por día, tablas de la semana y de siempre (los tres primeros de la semana ganan gozo), títulos de Oyente a Corazón sabio y entendido, y los trajes de los sabios: mantos y fajas que solo se ganan aquí.",
+    ],
+  },
+  {
     id: "2026-11-11-barrio-clan",
     fecha: "11 de noviembre de 2026",
     titulo: "Tu barrio, como un clan",

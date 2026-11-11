@@ -16,6 +16,7 @@ import { MERCADO_SQL } from "./mercado";
 import { ECONOMIA_SQL } from "./economia";
 import { CATEDRAS_SQL } from "./catedras";
 import { BARRIO_SQL } from "./barrio";
+import { SABIO_SQL } from "./sabio";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
 import { AYUDA_SQL } from "./ayuda";
@@ -1127,6 +1128,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(BARRIO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (barrio): ${err?.message}`);
+    }
+    try {
+      // «¿Quién es sabio?», el concurso de la casa de la sabiduría
+      await pool.query(SABIO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (sabio): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

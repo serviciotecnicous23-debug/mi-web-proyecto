@@ -154,6 +154,7 @@ export function registerMercadoRoutes(app: Express) {
     const a = articulo(String(req.body?.articulo || ""));
     const cantidad = a?.categoria === "semilla" ? Math.max(1, Math.min(10, Math.floor(Number(req.body?.cantidad) || 1))) : 1;
     if (!a) return res.status(400).json({ message: "Ese artículo no está en el mercado." });
+    if (a.exclusivo) return res.status(403).json({ message: "Los trajes de los sabios no se venden: se ganan en la casa de la sabiduría." });
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
