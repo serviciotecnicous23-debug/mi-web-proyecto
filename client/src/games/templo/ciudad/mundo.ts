@@ -1685,7 +1685,7 @@ export class CiudadWorld {
     this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo: m.gozo, ropa }, barrio: { ...this.estado.barrio, casas }, privada: { ...this.estado.privada, bienes } };
     this.player.fig.setRopa(ropa);
     if (antes !== JSON.stringify(casas.find((c) => c.personajeId === this.casaPropia) ?? null)) {
-      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true });
+      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true, nivelBarrio: this.barrios.get(this.estado.barrio.n)?.nivelBarrio });
       this.dibujarAreas();
     }
     this.pushHud();
