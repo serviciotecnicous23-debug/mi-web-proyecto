@@ -66,7 +66,7 @@ export function PuebloDelBarrio() {
             ? `🙏 La familia de ${p.familia.nombre}: «${d.dio.gracias}»`
             : `Diste ${d.dio?.cantidad ?? cantidad} ${(d.dio?.cantidad ?? cantidad) === 1 ? uno : varios} a la familia de ${p.familia.nombre}${d.dio?.gozo ? ` (+${d.dio.gozo} de gozo)` : ""}.`,
         );
-        for (const m of d.misiones ?? []) gameStore.toast(`${m.titulo} +${m.premio} de mérito`, "gold");
+        for (const m of d.misiones ?? []) gameStore.toast(`${m.titulo}${m.premio ? ` +${m.premio} de mérito` : ""}${m.gozo ? ` · +${m.gozo} de gozo` : ""}`, "gold");
       } else setAviso(d?.message || "No se pudo dar.");
     } catch {
       setAviso("No se pudo dar. Revisa tu conexión.");

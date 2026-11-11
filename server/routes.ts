@@ -16,6 +16,7 @@ import { registerBarrioJuntosRoutes } from "./barrio-juntos";
 import { registerAcompanarRoutes } from "./acompanar";
 import { registerPuebloRoutes } from "./pueblo";
 import { registerPersonajesRoutes } from "./personajes";
+import { registerRachaRoutes } from "./racha";
 import { registerSabioRoutes } from "./sabio";
 import { registerSabioDueloRoutes } from "./sabio-duelo";
 import { registerReunionesRoutes } from "./reuniones";
@@ -3664,6 +3665,7 @@ ${urls}
   // las casas del pueblo y sus pedidos en el barrio
   registerPuebloRoutes(app);
   registerPersonajesRoutes(app);
+  registerRachaRoutes(app);
   // «¿Quién es sabio?»: el concurso de la casa de la sabiduría.
   registerSabioRoutes(app);
   // el duelo de sabios (dos personas, las mismas preguntas a la vez)

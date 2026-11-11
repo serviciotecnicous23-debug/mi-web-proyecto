@@ -15,6 +15,7 @@ import { nombreDeBarrio } from "@shared/ciudad";
 import type { DeberId } from "@shared/jerusalen";
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { GOZO, sumarGozo } from "./gozo";
+import { avisoDeRacha, marcarServicio } from "./racha";
 import { sumarALaCopa } from "./barrio-juntos";
 
 export const MISIONES_SQL = `
@@ -124,6 +125,14 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
     forgetJer();
   }
   if (g.todos && cumplidas.some((c) => c.premio === MERITO_ENCARGOS_TODOS)) await evento(ch.user_id, `encargos:${g.dia}`, "cumplió los tres encargos del día en Jerusalén en línea");
+  // la racha de servicio: el primer encargo cumplido del día suma un día (su gozo ya lo da marcarServicio)
+  if (encargosHechos) {
+    const r = await marcarServicio(ch.id);
+    if (r) {
+      cumplidas.push(avisoDeRacha(r));
+      forgetJer();
+    }
+  }
   return cumplidas;
 }
 

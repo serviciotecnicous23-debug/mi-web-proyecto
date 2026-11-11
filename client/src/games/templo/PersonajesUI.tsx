@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CiudadCtx } from "./CiudadUI";
 import { Portrait } from "./Portrait";
 import { gameStore } from "./store";
+import { avisarRacha } from "./online";
 import { Card, VerseBox } from "./ui";
 import { PERSONAJES_CIUDAD, personajeCiudad, type Chisme, type ChismesVista, type RecadoEstado } from "@shared/personajes";
 
@@ -58,7 +59,7 @@ export function PersonajeView({ id }: { id: string }) {
     if (!p) return;
     setOcupado(true);
     setAviso(null);
-    const r = await pedir<{ estado: RecadoEstado; dice: string; fin: boolean; gozoTotal?: number }>("/recado/hablar", { con: p.id });
+    const r = await pedir<{ estado: RecadoEstado; dice: string; fin: boolean; gozoTotal?: number; racha?: { titulo: string; gozo: number } | null }>("/recado/hablar", { con: p.id });
     setOcupado(false);
     if (!r.ok || !r.data) {
       setAviso(r.data?.message || "No se pudo. Revisa tu conexión.");
@@ -69,6 +70,10 @@ export function PersonajeView({ id }: { id: string }) {
     city?.audio.click();
     if (r.data.fin) {
       gameStore.toast(`📜 Recado cumplido: ${r.data.estado.recado.titulo} (+${r.data.estado.premio.merito} de mérito, +${r.data.estado.premio.gozo} de gozo)`, "gold");
+      if (r.data.racha) {
+        gameStore.toast(`${r.data.racha.titulo} · +${r.data.racha.gozo} de gozo`, "gold");
+        avisarRacha();
+      }
       if (r.data.gozoTotal != null) city?.ponerGozo(r.data.gozoTotal);
     }
   }

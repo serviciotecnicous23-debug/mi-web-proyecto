@@ -50,9 +50,17 @@ export const bendecirCasa = (personajeId: number) => pedir<CasaVisita & { messag
 export const instruccionParte = (parte: number) =>
   pedir<{ partes: number; premio: number; estado: JerusalenEstado; message?: string }>("/instruccion", { method: "POST", body: JSON.stringify({ parte }) });
 
+/** La racha de servicio cambió: la pastilla del marcador y «Para hoy» la vuelven a pedir. */
+export function avisarRacha() {
+  window.dispatchEvent(new Event("jer-racha"));
+}
+
 /** Avisa en el juego los encargos o la ofrenda del barrio que se acaban de cumplir. */
 export function avisarMisiones(m: { titulo: string; premio: number; gozo?: number }[] | undefined) {
-  for (const x of m || []) gameStore.toast(`${x.titulo} · +${x.premio} de mérito${x.gozo ? ` · +${x.gozo} de gozo` : ""}`, "gold");
+  for (const x of m || []) {
+    gameStore.toast(`${x.titulo}${x.premio ? ` · +${x.premio} de mérito` : ""}${x.gozo ? ` · +${x.gozo} de gozo` : ""}`, "gold");
+    if (x.titulo.startsWith("🔥")) avisarRacha();
+  }
 }
 
 /** Ropa del personaje según su escalón (el mundo usa los cinco rangos del modo local). */
