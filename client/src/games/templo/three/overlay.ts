@@ -19,6 +19,9 @@ const CSS = `
 .tpl-bub.warn{background:#fff1ee;color:#b3242f}
 .tpl-frase{max-width:210px;white-space:normal;background:#fff;color:#3b2a10;border-radius:12px;padding:4px 9px;font-size:12px;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .tpl-frase.mia{background:#fff4d6}
+.tpl-frase.npc{background:#fdf6e3;color:#4a3214;box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 0 0 1px rgba(180,130,40,.35)}
+.tpl-habla{display:inline-block;animation:tplHabla .28s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes tplHabla{from{opacity:0;transform:translateY(5px) scale(.85)}}
 .tpl-float{font-weight:900;font-size:16px;color:#ffd66b;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 8px rgba(255,180,40,.55);animation:tplFloat 1.15s ease-out forwards}
 .tpl-float.blue{color:#bfe6ff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .tpl-float.white{color:#fff}

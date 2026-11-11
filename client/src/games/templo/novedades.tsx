@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-la-gente-habla",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La gente de la ciudad habla",
+    puntos: [
+      "💬 Acércate a cualquiera en la calle: los niños del pozo, los guardias, los levitas, los alumnos de los profetas, los peregrinos, los mercaderes y los vecinos te dicen algo, cada uno según quién es.",
+      "🗣️ Muchos hablan de los siervos de la calle de los siervos (Azarías, Conanías, Isaías, Miqueas, Eliaquim, Etán), de quién busca a alguien para el recado de hoy y de lo que de verdad pasa en Jerusalén (el barrio que va primero, quién subió más alto en «¿Quién es sabio?»…).",
+      "🕊️ Las palomas que rondan cerca ahora tienen un tamaño más natural.",
+    ],
+  },
+  {
     id: "2026-11-11-racha",
     fecha: "11 de noviembre de 2026",
     titulo: "La racha de servicio 🔥",
