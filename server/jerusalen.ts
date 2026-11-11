@@ -14,7 +14,7 @@ import { pool } from "./db";
 import { fusionarPersona } from "./persona";
 import { forgetGameCache, publicName } from "./games";
 import { BANCO, preguntaPorId, type PreguntaDificil } from "./jerusalen-banco";
-import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
+import { bonoDelMomento, diaEnJerusalen, proximaFiestaGrande } from "@shared/anio";
 import { ESTUDIO_PRINCIPAL, ESTUDIO_SUMO } from "@shared/estudios";
 import { CAMINOS, MERITO_DEBER_CAMINO, TOPE_BASE_CAMINO, TOPE_RITMO_CAMINO, caminoDe, type Camino, type DeberCamino, ESTUDIOS_CARGO, PREMIO_CARGO, nombreEscalonCamino } from "@shared/caminos";
 import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
@@ -492,16 +492,23 @@ async function enLineaAhora(): Promise<number> {
   });
 }
 
-/** La fecha y la fiesta de Jerusalén en línea ahora (y la próxima, en minutos de reloj). */
+/** El día de Jerusalén en línea con el calendario real (shared/anio.ts): la fecha hebrea, la fiesta, la estación, si
+ * llueve, los eventos de hoy, la hora especial y la próxima fiesta grande. */
 export function hoyEnJerusalen(): JerusalenEstado["jerusalen"] {
-  const reloj = relojEnLinea();
-  const f = fechaDe(reloj.dia);
-  const h = f.fiestas[0];
-  const p = proximaFiesta(reloj.dia);
+  const d = diaEnJerusalen();
+  const h = d.fecha.fiestas[0];
+  const p = proximaFiestaGrande();
+  const b = bonoDelMomento(Date.now(), d);
   return {
-    fecha: f.texto,
+    fecha: d.hebreo.texto,
     fiesta: h ? { id: h.fiesta.id, nombre: h.fiesta.nombre, icono: h.fiesta.icono, merito: h.fiesta.merito, dia: h.dia, de: h.fiesta.duracion } : null,
-    proxima: p ? { nombre: p.fiesta.nombre, icono: p.fiesta.icono, enMinutos: Math.max(1, Math.round(((p.enDias - reloj.hora) * SEGUNDOS_DIA) / 60)) } : null,
+    proxima: p ? { nombre: p.evento.nombre, icono: p.evento.icono, enMinutos: p.enDias * 1440, enDias: p.enDias, fecha: p.texto } : null,
+    civil: d.civilTexto,
+    estacion: { id: d.estacion.id, nombre: d.estacion.nombre, icono: d.estacion.icono },
+    llueve: d.llueve,
+    eventos: d.eventos.map((a) => ({ id: a.evento.id, nombre: a.evento.nombre, icono: a.evento.icono, corto: a.evento.corto, dia: a.dia, de: a.de })),
+    hora: b.hora,
+    meritoAhora: b.merito,
   };
 }
 
@@ -885,8 +892,8 @@ export function registerJerusalenRoutes(app: Express) {
           cuenta += c;
           crudo += c * vale;
         }
-        // en las fiestas de Jerusalén (el mismo reloj para todos) el servicio vale más
-        const bono = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta.merito ?? 1;
+        // en las fiestas y los eventos del año (el calendario real, el mismo para todos) el servicio vale más
+        const bono = bonoDelMomento().merito;
         crudo = Math.min(Math.round(crudo * bono * fj), Math.floor(meritoMaximo(segundos) * bono * fj));
         // el tiempo sin deberes no cuenta para la hora completa del día
         const despues = antes + (cuenta > 0 ? segundos : 0);

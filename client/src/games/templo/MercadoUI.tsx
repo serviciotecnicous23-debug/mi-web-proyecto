@@ -16,6 +16,7 @@ import { PuestosView } from "./EconomiaUI";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 import { vistaDe } from "./casa/vistas3d";
+import { EstacionDelHuerto } from "./CalendarioUI";
 
 type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean };
 
@@ -394,6 +395,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
           <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🌾<br />Cosecha: va al alfolí</li>
         </ol>
         <p className="text-[11px] text-stone-500">Lo del alfolí se ofrece en el templo (honra para tu casa), se prepara en el horno (vale más) o se vende al mercader (gozo).</p>
+        <EstacionDelHuerto />
         {semillasTengo.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 text-xs">
             Semilla:
@@ -412,7 +414,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
             return (
               <div key={i} className="rounded-lg border border-stone-200 p-2 text-center text-xs dark:border-stone-700" data-testid={`parcela-${i}`}>
                 <p className="text-xl">{p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : "🟫"}</p>
-                <p className="font-semibold">{p.semilla ? (listo ? "¡Lista!" : `${tiempo(f)}${p.regado ? " · regada" : ""}`) : "Vacía"}</p>
+                <p className="font-semibold">{p.semilla ? (listo ? "¡Lista!" : `${tiempo(f)}${p.regado ? (p.lluvia ? " · 🌧️ la regó la lluvia" : " · regada") : ""}`) : "Vacía"}</p>
                 {!p.semilla ? (
                   <Button size="sm" className="mt-1 h-7 w-full" disabled={busy || !semillasTengo.includes(semilla)} onClick={() => void hacer("/casa/huerto/sembrar", { parcela: i, semilla })} data-testid={`sembrar-${i}`}>
                     Sembrar
@@ -429,7 +431,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
                   </Button>
                 ) : (
                   <Button size="sm" variant="secondary" className="mt-1 h-7 w-full" disabled={busy || p.regado} onClick={() => void hacer("/casa/huerto/regar", { parcela: i })} data-testid={`regar-${i}`}>
-                    {p.regado ? "Regada" : "Regar"}
+                    {p.regado ? (p.lluvia ? "🌧️ Regada" : "Regada") : "Regar"}
                   </Button>
                 )}
               </div>

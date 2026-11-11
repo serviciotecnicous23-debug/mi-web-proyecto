@@ -36,6 +36,7 @@ import { TempleAudio } from "./audio";
 import type { DeberId } from "@shared/jerusalen";
 import type { OnlineHooks } from "./online";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
+import { diaEnJerusalen } from "@shared/anio";
 import { casoPorId, elegirCaso } from "./casos";
 import { Entrada, vibrar } from "./motor/entrada";
 import { lineasDe, lineasFin, lineasInicio, pasosDeParte, type PasoInst } from "./instruccion";
@@ -268,6 +269,8 @@ export class TempleWorld {
   private time = 0;
   // calendario hebreo y fiestas (shared/calendario.ts) y juicios del sacerdote (casos.ts)
   private fecha!: Fecha;
+  /** Cuándo se miró por última vez la fecha real (en línea). */
+  private fechaRevisada = 0;
   private primicia = -1;
   private enramadas = false;
   private ultimoJuicio = true;
@@ -280,7 +283,8 @@ export class TempleWorld {
     this.s = save;
     this.opts = opts;
     this.online = opts.online || null;
-    this.fecha = fechaDe(save.day);
+    // en línea, la fecha y sus fiestas son las del año de Jerusalén (el calendario real); en el modo local, las del juego
+    this.fecha = this.online ? diaEnJerusalen().fecha : fechaDe(save.day);
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
     this.maxRatio = Math.min(window.devicePixelRatio || 1, coarse ? 1.75 : 2);
@@ -683,7 +687,18 @@ export class TempleWorld {
         s.day += 1;
       }
     }
-    if (s.day !== this.fecha.numero) {
+    if (this.online) {
+      // cada 20 segundos se mira si cambió el día de verdad (a medianoche de Texas)
+      const ahoraMs = performance.now();
+      if (ahoraMs - this.fechaRevisada > 20000) {
+        this.fechaRevisada = ahoraMs;
+        const f = diaEnJerusalen().fecha;
+        if (f.numero !== this.fecha.numero) {
+          this.fecha = f;
+          this.syncEnramadas();
+        }
+      }
+    } else if (s.day !== this.fecha.numero) {
       this.fecha = fechaDe(s.day);
       this.syncEnramadas();
     }

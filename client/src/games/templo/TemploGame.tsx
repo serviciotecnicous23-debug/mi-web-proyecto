@@ -53,6 +53,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { AvisosView } from "./AvisosUI";
+import { CalendarioView } from "./CalendarioUI";
 import { CapitulosView } from "./CapitulosUI";
 import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
@@ -1624,6 +1625,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <CiudadModal modal={modal} />;
     case "avisos":
       return <AvisosView />;
+    case "calendario":
+      return <CalendarioView />;
   }
 }
 
@@ -2785,7 +2788,11 @@ function OnlineLobby({
                 {estado.jerusalen.fiesta.merito > 1.01 ? ` · el servicio vale ×${estado.jerusalen.fiesta.merito.toLocaleString("es-419")}` : ""}
               </>
             ) : estado.jerusalen.proxima ? (
-              <> · {estado.jerusalen.proxima.icono} {estado.jerusalen.proxima.nombre} en {estado.jerusalen.proxima.enMinutos} min</>
+              <>
+                {" "}
+                · {estado.jerusalen.proxima.icono} {estado.jerusalen.proxima.nombre}{" "}
+                {estado.jerusalen.proxima.enDias != null ? (estado.jerusalen.proxima.enDias === 1 ? "mañana" : `en ${estado.jerusalen.proxima.enDias} días`) : `en ${estado.jerusalen.proxima.enMinutos} min`}
+              </>
             ) : null}
           </div>
         )}

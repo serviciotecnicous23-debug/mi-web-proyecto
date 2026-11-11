@@ -8,7 +8,7 @@ import { aportarAlMuro } from "./muro";
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  APORTE_MINIMO, ENCARGOS, ENCARGOS_DIA, MERITO_BARRIO, MERITO_ENCARGO, MERITO_ENCARGOS_TODOS, META_BARRIO,
+  APORTE_MINIMO, ENCARGOS, ENCARGOS_DIA, encargoDef, esEncargoDeFiesta, MERITO_BARRIO, MERITO_ENCARGO, MERITO_ENCARGOS_TODOS, META_BARRIO,
   type BarrioSemana, type Encargo, type MisionCumplida, type MisionesEstado, type TipoEncargo,
 } from "@shared/misiones";
 import { nombreDeBarrio } from "@shared/ciudad";
@@ -16,6 +16,7 @@ import type { DeberId } from "@shared/jerusalen";
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { GOZO, sumarGozo } from "./gozo";
 import { avisoDeRacha, marcarServicio } from "./racha";
+import { EVENTOS_DEL_ANIO, bonoDelMomento, encargoDeFiesta } from "@shared/anio";
 import { sumarALaCopa } from "./barrio-juntos";
 import { aportarAlCapitulo } from "./capitulos";
 import { anotarCamino } from "./camino-dia";
@@ -54,9 +55,10 @@ function semilla(texto: string): number {
   return x || 1;
 }
 
-/** Los tres encargos del día de un personaje: de tipos distintos y de su camino, fijos para ese día. */
-export function encargosDelDia(dia: string, personajeId: number, camino: "sacerdocio" | "profecia" | "realeza" = "sacerdocio"): string[] {
-  const lista = ENCARGOS.filter((e) => (e.caminos ?? ["sacerdocio"]).includes(camino));
+/** Los tres encargos del día de un personaje: de tipos distintos y de su camino, fijos para ese día. Los días de fiesta
+ * no repiten el tipo del encargo de la fiesta (`sinTipo`), que va aparte. */
+export function encargosDelDia(dia: string, personajeId: number, camino: "sacerdocio" | "profecia" | "realeza" = "sacerdocio", sinTipo?: TipoEncargo): string[] {
+  const lista = ENCARGOS.filter((e) => (e.caminos ?? ["sacerdocio"]).includes(camino) && e.tipo !== sinTipo);
   let x = semilla(`${dia}:${personajeId}`);
   for (let i = lista.length - 1; i > 0; i--) {
     x ^= x << 13;
@@ -83,9 +85,16 @@ async function leerEncargos(personajeId: number): Promise<Guardados> {
   const dia = diaClave();
   const { rows } = await pool.query(`SELECT encargos, path FROM game_characters WHERE id = $1`, [personajeId]);
   const g = rows[0]?.encargos as Guardados | null;
-  if (g && g.dia === dia && Array.isArray(g.lista)) return g;
+  // el encargo de la fiesta de hoy (shared/anio.ts): se agrega también a los encargos que ya estaban guardados
+  const fiesta = encargoDeFiesta(dia);
+  if (g && g.dia === dia && Array.isArray(g.lista)) {
+    if (fiesta && !g.lista.some((e) => e.id === fiesta.id)) g.lista.push({ id: fiesta.id, prog: 0, hecho: false });
+    return g;
+  }
   const camino = rows[0]?.path === "profecia" || rows[0]?.path === "realeza" ? rows[0].path : "sacerdocio";
-  return { dia, lista: encargosDelDia(dia, personajeId, camino).map((id) => ({ id, prog: 0, hecho: false })), todos: false };
+  const ids = encargosDelDia(dia, personajeId, camino, fiesta?.evento.encargo?.tipo);
+  if (fiesta) ids.push(fiesta.id);
+  return { dia, lista: ids.map((id) => ({ id, prog: 0, hecho: false })), todos: false };
 }
 
 async function sumarMerito(personajeId: number, n: number) {
@@ -104,17 +113,17 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
   const cumplidas: MisionCumplida[] = [];
   let cambio = false;
   for (const e of g.lista) {
-    const def = ENCARGOS.find((x) => x.id === e.id);
+    const def = encargoDef(e.id);
     if (!def || def.tipo !== tipo || e.hecho) continue;
     e.prog = Math.min(def.meta, e.prog + n);
     cambio = true;
     if (e.prog >= def.meta) {
       e.hecho = true;
-      cumplidas.push({ titulo: `Encargo cumplido: ${def.titulo}`, premio: MERITO_ENCARGO, gozo: GOZO.encargo });
+      cumplidas.push({ titulo: `Encargo cumplido: ${def.titulo}`, premio: MERITO_ENCARGO, gozo: esEncargoDeFiesta(e.id) ? GOZO.encargo * 2 : GOZO.encargo });
     }
   }
   if (!cambio) return [];
-  if (!g.todos && g.lista.every((e) => e.hecho)) {
+  if (!g.todos && g.lista.filter((e) => !esEncargoDeFiesta(e.id)).every((e) => e.hecho)) {
     g.todos = true;
     cumplidas.push({ titulo: "¡Cumpliste los tres encargos del día!", premio: MERITO_ENCARGOS_TODOS, gozo: GOZO.encargosTodos });
   }
@@ -126,7 +135,9 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
   const premio = cumplidas.reduce((a, c) => a + c.premio, 0);
   if (premio) {
     await sumarMerito(ch.id, premio);
-    // también gozo: por cada encargo y por los tres
+    // también gozo: por cada encargo y por los tres (más en los eventos del año que lo dan: shared/anio.ts)
+    const bonoGozo = bonoDelMomento().gozo;
+    if (bonoGozo > 1) for (const c of cumplidas) if (c.gozo) c.gozo = Math.round(c.gozo * bonoGozo);
     await sumarGozo(ch.id, cumplidas.reduce((a, c) => a + (c.gozo || 0), 0));
     forgetJer();
   }
@@ -261,8 +272,9 @@ async function tablaDeBarrios(semana: string): Promise<BarrioSemana[]> {
 export async function misionesDe(ch: PersonajeFila): Promise<MisionesEstado> {
   const g = await leerEncargos(ch.id);
   const encargos: Encargo[] = g.lista.map((e) => {
-    const def = ENCARGOS.find((x) => x.id === e.id)!;
-    return { id: e.id, titulo: def.titulo, icono: def.icono, meta: def.meta, progreso: e.prog, hecho: e.hecho };
+    const def = encargoDef(e.id)!;
+    const fiesta = esEncargoDeFiesta(e.id) ? EVENTOS_DEL_ANIO.find((x) => `ev-${x.id}` === e.id)?.nombre : undefined;
+    return { id: e.id, titulo: def.titulo, icono: def.icono, meta: def.meta, progreso: e.prog, hecho: e.hecho, ...(fiesta ? { fiesta } : {}) };
   });
   const semana = semanaClave();
   const barrio = await barrioDelPersonaje(ch.id);
