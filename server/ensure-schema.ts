@@ -20,6 +20,7 @@ import { BARRIO_JUNTOS_SQL } from "./barrio-juntos";
 import { PUEBLO_SQL } from "./pueblo";
 import { PERSONAJES_SQL } from "./personajes";
 import { RACHA_SQL } from "./racha";
+import { AVISOS_SQL } from "./avisos-juego";
 import { SABIO_SQL } from "./sabio";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
@@ -1158,6 +1159,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
       // La calle de los siervos: el recado del día
       await pool.query(PERSONAJES_SQL);
       await pool.query(RACHA_SQL);
+      await pool.query(AVISOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (personajes): ${err?.message}`);
     }
