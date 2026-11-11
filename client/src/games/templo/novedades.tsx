@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-calle-siervos",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La calle de los siervos de Dios: recados y chismes",
+    puntos: [
+      "🏛️ Al sur de la ciudad, pasando el barrio del sudeste, está la calle de los siervos: las casas de Azarías, Eleazar, Conanías, Isaías, Miqueas, Eliaquim y Etán. Cada uno te espera en su puerta («Ir a…» → «La calle de los siervos»).",
+      "🗣️ Cada uno cuenta lo que se dice en Jerusalén: lo de la Escritura (con su cita) y lo que pasa en el juego, como el barrio que va primero en la copa o quién subió más alto en «¿Quién es sabio?».",
+      "📜 Cada día uno de ellos tiene un recado para ti: lleva un rollo, el aceite de las lámparas o la cuenta de los diezmos de una casa a otra. Al cumplirlo: mérito y gozo. Lo ves también en «Para hoy».",
+    ],
+  },
+  {
     id: "2026-11-11-casas-vistas",
     fecha: "11 de noviembre de 2026",
     titulo: "Mira cada cosa antes de comprarla, y casas con más vida",

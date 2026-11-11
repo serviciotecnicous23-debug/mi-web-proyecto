@@ -7,7 +7,8 @@
  */
 import * as THREE from "three";
 import { GeoBuilder, meshPair } from "../three/builder";
-import { AREA_RECT, CALLES_DE_AREA, ESCUELA, PALACIO, PLAZA, alturaCiudad, caminable, obstaculosFijos } from "./plano";
+import { AREA_RECT, CALLES_DE_AREA, ESCUELA, PALACIO, PLAZA, alturaCiudad, caminable, obstaculosFijos, rectsDeSiervos } from "./plano";
+import { CALLE_SIERVOS } from "@shared/personajes";
 import type { Rect } from "../layout";
 
 const ALTO = 2.05;
@@ -15,6 +16,7 @@ const ALTO = 2.05;
 /** Dónde van las antorchas: el borde de la plaza, las calles de los barrios y los caminos entre ellos. */
 export function lugaresAntorchas(): THREE.Vector3[] {
   const fijos = obstaculosFijos();
+  fijos.rects.push(...rectsDeSiervos());
   const lejosDe = (x: number, z: number, r: Rect, pad: number) => x < r[0] - pad || x > r[2] + pad || z < r[1] - pad || z > r[3] + pad;
   const puntos: [number, number][] = [];
   const pon = (x: number, z: number) => {
@@ -42,6 +44,11 @@ export function lugaresAntorchas(): THREE.Vector3[] {
         pon(x0 + k * 3.6 + 0.4, z0 + a + 0.45);
         pon(x0 + k * 3.6 + 3.6, z0 + b - 0.45);
       }
+  // la calle de los siervos de Dios: a los dos lados, en zigzag
+  for (let x = CALLE_SIERVOS.x0 + 1.5; x <= CALLE_SIERVOS.x1 - 1; x += 6) {
+    pon(x, CALLE_SIERVOS.z - CALLE_SIERVOS.ancho / 2 + 0.35);
+    pon(x + 3, CALLE_SIERVOS.z + CALLE_SIERVOS.ancho / 2 - 0.35);
+  }
   // los caminos entre la plaza y los barrios, y el camino del poniente (al pie del monte)
   for (let x = 41; x <= 73; x += 7) {
     pon(x, 15);

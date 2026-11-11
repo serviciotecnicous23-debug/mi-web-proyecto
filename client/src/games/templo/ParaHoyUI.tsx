@@ -3,6 +3,7 @@
  * su botón para ir. Junta lo que ya dicen el concurso, el mercado (huerto y horno), las reuniones,
  * los pedidos del barrio y el muro. En el templo (sin la ciudad) solo se informa.
  */
+import { personajeCiudad, type RecadoEstado } from "@shared/personajes";
 import { useContext, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CONCURSO_PREGUNTAS, type ConcursoEstado } from "@shared/concurso";
@@ -28,7 +29,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -38,7 +39,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<AyudaEstado>("/ayuda"),
       traer<MuroEstado>("/muro"),
       traer<TesoroEstado>("/tesoro"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro }));
+      traer<{ estado: RecadoEstado }>("/recado"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado }));
     return () => {
       vivo = false;
     };
@@ -75,6 +77,26 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       texto: `${r.anfitrion} enseña «${r.titulo}» en su casa ahora`,
       boton: city ? { texto: "Ir", hacer: () => (gameStore.close(), city.irACasaDe(r.barrio, r.parcela)) } : undefined,
     });
+  }
+  // el recado del día en la calle de los siervos
+  const rc = d.recado?.estado;
+  if (rc && !rc.hecho) {
+    const toca = personajeCiudad(rc.recado.cadena[rc.paso]);
+    if (toca)
+      lineas.push({
+        id: "recado",
+        icono: "📜",
+        texto: rc.paso === 0 ? `${toca.nombre} tiene un recado para ti: «${rc.recado.titulo}»` : `Lleva ${rc.recado.lleva[rc.paso - 1]} a ${toca.nombre} (paso ${rc.paso + 1} de 3)`,
+        boton: city
+          ? {
+              texto: "Ir",
+              hacer: () => {
+                gameStore.close();
+                setTimeout(() => city.irAPersonaje(toca.id), 60);
+              },
+            }
+          : undefined,
+      });
   }
   // los pedidos del barrio
   const pedidos = d.ayuda?.pedidos.length ?? 0;

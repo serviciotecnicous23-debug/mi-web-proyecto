@@ -7,6 +7,7 @@
  */
 import { AREAS, AREA_RECT, CASAS_POR_BARRIO, LIMITES_CIUDAD, areaDeBarrio, areaEn as areaDeCiudad } from "@shared/ciudad";
 import type { Circle, Rect, V2 } from "../layout";
+import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS } from "@shared/personajes";
 
 /** Altura de las calles (la explanada del templo está en 0). */
 export const SUELO = -3.4;
@@ -229,6 +230,8 @@ export function rellenoDeCasas(): { x: number; z: number; w: number; d: number; 
     const rr: Rect = [x - w / 2 - 0.6, z - d / 2 - 0.6, x + w / 2 + 0.6, z + d / 2 + 0.6];
     const toca = (q: Rect) => rr[0] < q[2] && rr[2] > q[0] && rr[1] < q[3] && rr[3] > q[1];
     if (out.some((o) => toca([o.x - o.w / 2, o.z - o.d / 2, o.x + o.w / 2, o.z + o.d / 2]))) return false;
+    // la calle de los siervos de Dios y sus casas quedan libres
+    if (toca(ZONA_SIERVOS)) return false;
     return true;
   };
   // franjas junto a los muros de la ciudad: entre los barrios del oriente y en los bordes del sur y del norte
@@ -245,6 +248,25 @@ export function rellenoDeCasas(): { x: number; z: number; w: number; d: number; 
   }
   return out;
 }
+
+/** Las casas de la calle de los siervos chocan: la casa, los muros de su patio y la abertura del patio libre. */
+export function rectsDeSiervos(): Rect[] {
+  const out: Rect[] = [];
+  for (const p of PERSONAJES_CIUDAD) {
+    const [w, d] = CASA_MEDIDA[p.casa.nivel];
+    const { x, z, dir } = p.casa;
+    out.push([x - w / 2, z - d / 2, x + w / 2, z + d / 2]);
+    const za = z + dir * (d / 2), zb = z + dir * (d / 2 + 1.15);
+    const z0 = Math.min(za, zb), z1 = Math.max(za, zb);
+    for (const sg of [-1, 1]) out.push([x + sg * (w / 2 - 0.05) - 0.12, z0, x + sg * (w / 2 - 0.05) + 0.12, z1]);
+    const largo = w * 0.34;
+    out.push([x - w / 2, zb - 0.12, x - w / 2 + largo, zb + 0.12]);
+    out.push([x + w / 2 - largo, zb - 0.12, x + w / 2, zb + 0.12]);
+  }
+  return out;
+}
+/** Adonde lleva «Ir a… la calle de los siervos». */
+export const CALLE_SIERVOS_PUNTO: V2 = [(CALLE_SIERVOS.x0 + CALLE_SIERVOS.x1) / 2, CALLE_SIERVOS.z];
 
 /** El relleno de casas también choca. */
 export function rectsDeRelleno(lista: { x: number; z: number; w: number; d: number }[]): Rect[] {
