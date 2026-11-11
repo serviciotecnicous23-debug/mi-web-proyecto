@@ -23,6 +23,7 @@ import { GananciaEnLinea } from "./GananciaUI";
 import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
 import { BarrioView } from "./BarrioUI";
+import { PersonajeView } from "./PersonajesUI";
 import { JuntosChip } from "./BarrioCopa";
 import { SiguiendoChip, seguirVecino } from "./Acompanar";
 import { useChatBarrio } from "./barrio-chat";
@@ -372,6 +373,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <TesoroView />;
     case "irA":
       return <IrAView />;
+    case "personaje":
+      return <PersonajeView id={modal.id} />;
     case "mapa":
       return <MapaModal />;
     case "catedra":
@@ -1383,6 +1386,7 @@ function IrAView() {
     { id: "camara", nombre: "La cámara de los sacerdotes", nota: "Junto a la escalinata, del lado norte" },
     { id: "sabiduria", nombre: "La casa de la sabiduría", nota: "Junto a la escalinata, del lado sur: «¿Quién es sabio?»" },
     { id: "oracion", nombre: "El monte de la oración", nota: "El lugar de oración, al norte del monte del templo" },
+    { id: "siervos", nombre: "La calle de los siervos", nota: "Las casas de Azarías, Eleazar, Conanías, Isaías, Miqueas, Eliaquim y Etán: recados y chismes" },
   ];
   return (
     <Card

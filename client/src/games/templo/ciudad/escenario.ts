@@ -8,6 +8,7 @@
  * como siluetas.
  */
 import { MURO_DESDE_Z, MURO_TRAMOS, MURO_TRAMO_LARGO } from "@shared/muro";
+import { CALLE_SIERVOS, PERSONAJES_CIUDAD } from "@shared/personajes";
 import * as THREE from "three";
 import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
 import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
@@ -83,6 +84,8 @@ export type CiudadVisual = {
   areas: THREE.Group[];
   /** Las ventanas encendidas de las casas (se ven de noche). */
   ventanas: THREE.Group;
+  /** Las ventanas y lamparitas de la calle de los siervos (se ven de noche). */
+  ventanasSiervos: THREE.Mesh | null;
   /** Enramadas de la fiesta de los tabernáculos (Nehemías 8:16). */
   enramadas: THREE.Group;
   /** Fuegos de los braseros y de la puerta (de noche). */
@@ -1058,6 +1061,43 @@ function buildRelleno(root: THREE.Group) {
   meshes(root, m, null, false);
 }
 
+/**
+ * La calle de los siervos de Dios (shared/personajes.ts): el empedrado con sus bordillos, las siete casas de piedra
+ * con su patio (las de Azarías y Eliaquim con aposento alto), bancos de piedra y olivos. Devuelve las ventanas y las
+ * lamparitas, que se encienden de noche.
+ */
+function buildCalleSiervos(root: THREE.Group): THREE.Mesh | null {
+  const m = new GeoBuilder();
+  const luz = new GeoBuilder();
+  rnd = mulberry32(4071);
+  const { x0, x1, z, ancho } = CALLE_SIERVOS;
+  m.raw(tiles(x0, z - ancho / 2, x1, z + ancho / 2, 0.9, ["#d8c7a2", "#cdb994", "#e0d0ae", "#c9b48c"], Y + 0.02, 0.03, 0.06));
+  for (const sg of [-1, 1]) m.box(x1 - x0, 0.1, 0.18, C.piedraOsc, { x: (x0 + x1) / 2, y: Y + 0.05, z: z + sg * (ancho / 2) });
+  for (const p of PERSONAJES_CIUDAD) {
+    const lm = new GeoBuilder(), lv = new GeoBuilder();
+    casaLocal(lm, lv, p.casa.nivel, 9100 + Math.round(p.casa.x * 13));
+    const mat = new THREE.Matrix4().makeRotationY(p.casa.dir === 1 ? 0 : Math.PI).setPosition(p.casa.x, Y, p.casa.z);
+    const g = lm.build();
+    g.applyMatrix4(mat);
+    m.raw(g);
+    if (!lv.empty) {
+      const gv = lv.build();
+      gv.applyMatrix4(mat);
+      luz.raw(gv);
+    }
+  }
+  rnd = mulberry32(4072);
+  // bancos de piedra en los huecos del lado sur, mirando a la calle
+  for (const bx of [51, 59]) {
+    m.box(1.6, 0.12, 0.42, C.piedraClara, { x: bx, y: Y + 0.44, z: z + ancho / 2 + 0.35 });
+    for (const dx of [-0.6, 0.6]) m.box(0.22, 0.4, 0.36, C.piedraOsc, { x: bx + dx, y: Y + 0.2, z: z + ancho / 2 + 0.35 });
+  }
+  // olivos en los huecos del lado norte
+  for (const ox of [47, 63]) oliveTree(m, ox, Y, z - ancho / 2 - 2.2, 0.9);
+  meshes(root, m, null, true);
+  return luz.empty ? null : new THREE.Mesh(luz.build(), ventanaMat());
+}
+
 /** Enramadas sobre los terrados y en la plaza (Nehemías 8:16); solo se ven en la fiesta. */
 export function construirEnramadas(area: number, casas: CasaDibujo[]): THREE.Group {
   const g = new THREE.Group();
@@ -1116,6 +1156,11 @@ export function buildCiudad(): CiudadVisual {
   buildCamara(camara, fuegos);
   buildSabiduria(sabiduria, fuegos);
   buildRelleno(root);
+  const ventanasSiervos = buildCalleSiervos(root);
+  if (ventanasSiervos) {
+    ventanasSiervos.visible = false;
+    root.add(ventanasSiervos);
+  }
   const cielo = buildCielo();
   root.add(cielo.sky, cielo.stars, cielo.clouds);
   const areas = AREA_RECT.map(() => {
@@ -1134,6 +1179,7 @@ export function buildCiudad(): CiudadVisual {
     ...cielo,
     areas,
     ventanas,
+    ventanasSiervos,
     enramadas,
     fuegos,
     ocluyentes: [palacio, escuela, camara, sabiduria],

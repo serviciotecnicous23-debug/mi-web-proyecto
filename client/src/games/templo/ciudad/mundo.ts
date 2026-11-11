@@ -42,6 +42,7 @@ import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
 import { Antorchas, lugaresAntorchas } from "./antorchas";
 import { Palomas } from "./palomas";
+import { PERSONAJES_CIUDAD, type PersonajeCiudad } from "@shared/personajes";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 
@@ -96,7 +97,7 @@ export type BarrioVisto = {
   nivelBarrio?: number;
 };
 
-type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3";
+type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3" | `personaje:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
 
 /** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
@@ -171,7 +172,9 @@ export class CiudadWorld {
   private rects: Rect[] = [];
   private circles: Circle[] = [];
   private fijos = P.obstaculosFijos();
-  private relleno = P.rectsDeRelleno(P.rellenoDeCasas());
+  private relleno = [...P.rectsDeRelleno(P.rellenoDeCasas()), ...P.rectsDeSiervos()];
+  /** Los personajes de la calle de los siervos, cada uno en su puerta. */
+  private calle: { p: PersonajeCiudad; fig: Figure; rig: Rig; etiqueta: HTMLDivElement }[] = [];
 
   private player: { fig: Figure; rig: Rig; vx: number; vz: number; step: number };
   private npcs: Npc[] = [];
@@ -336,6 +339,7 @@ export class CiudadWorld {
     this.crearZonas();
     this.crearLetreros();
     this.crearGente();
+    this.crearSiervos();
 
     this.fecha = fechaDe(relojEnLinea().dia);
     this.hoyDia = this.fecha.numero;
@@ -992,6 +996,65 @@ export class CiudadWorld {
     return v(P.PALACIO_PUERTA);
   }
 
+  /** Los personajes principales, cada uno de pie delante de su patio en la calle de los siervos, con su nombre. */
+  private crearSiervos() {
+    for (const p of PERSONAJES_CIUDAD) {
+      const fig = new Figure(p.look as FigureLook);
+      fig.setRopa(p.ropa ?? null);
+      const rig = newRig(p.puerta[0], p.puerta[1] + (p.casa.dir === 1 ? -0.55 : 0.55));
+      rig.yaw = p.casa.dir === 1 ? 0 : Math.PI;
+      rig.y = P.alturaCiudad(rig.x, rig.z);
+      this.scene.add(fig.root);
+      const etiqueta = this.overlay.make("tpl-tag");
+      etiqueta.textContent = `${p.nombre} · ${p.titulo.split(",")[0]}`;
+      this.calle.push({ p, fig, rig, etiqueta });
+    }
+  }
+
+  /** Te miran cuando pasas, te saludan de lejos y te hablan cuando llegas a su puerta. */
+  private animarSiervos(dt: number) {
+    const j = this.player.rig;
+    for (const s of this.calle) {
+      const r = s.rig;
+      r.t += dt;
+      const d = dist(j.x, j.z, r.x, r.z);
+      const base = s.p.casa.dir === 1 ? 0 : Math.PI;
+      r.yaw = turn(r.yaw, d < 9 ? Math.atan2(j.x - r.x, j.z - r.z) : base, dt * 3);
+      r.pose = d < 3.2 ? "talk" : d < 10 && Math.sin(r.t * 0.8 + r.x) > 0.6 ? "wave" : "idle";
+      s.fig.update(r);
+      this.shadows.add(r.x, r.y, r.z, 1);
+      if (d < 18) this.overlay.place(s.etiqueta, new THREE.Vector3(r.x, r.y + 1.95, r.z));
+      else s.etiqueta.style.display = "none";
+    }
+  }
+
+  /**
+   * Para el recado: lleva al jugador a la puerta de un personaje de la calle de los siervos (un paso dentro de la calle,
+   * mirándolo), avisa su lugar a la red enseguida (el servidor mira que esté ahí) y abre la charla con él.
+   */
+  irAPersonaje(id: string): boolean {
+    const p = PERSONAJES_CIUDAD.find((x) => x.id === id);
+    if (!p) return false;
+    this.dejarDeSeguir();
+    const [x, z0] = p.puerta;
+    const z = z0 + (p.casa.dir === 1 ? 0.3 : -0.3);
+    const r = this.player.rig;
+    r.x = x;
+    r.z = z;
+    r.y = P.alturaCiudad(x, z);
+    r.yaw = p.casa.dir === 1 ? Math.PI : 0;
+    this.player.vx = this.player.vz = 0;
+    this.ruta = [];
+    for (const zn of this.zonas) zn.inside = dist(x, z, zn.x, zn.z) < zn.r;
+    this.visitaParcela = null;
+    this.camTarget.set(x, r.y, z);
+    this.shadowDirty = true;
+    this.enviarPosicionYa();
+    this.audio.page();
+    this.abrir({ kind: "personaje", id: p.id });
+    return true;
+  }
+
   private crearPobres() {
     if (this.estado.yo.camino !== "realeza" || this.pobres.length) return;
     for (const at of POBRES) {
@@ -1174,7 +1237,7 @@ export class CiudadWorld {
   }
 
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
-  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion") {
+  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion" | "siervos") {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const destinos: Record<typeof lugar, [V2, number]> = {
       casa: [casa.umbral, casa.dir === 1 ? 0 : Math.PI],
@@ -1189,6 +1252,8 @@ export class CiudadWorld {
       sabiduria: [[P.SABIDURIA_PUERTA[0] + 1.9, P.SABIDURIA_PUERTA[1]], -Math.PI / 2],
       // junto al lugar de oración del monte, mirándolo
       oracion: [[P.ORACION_PUNTO[0] + 2.2, P.ORACION_PUNTO[1]], -Math.PI / 2],
+      // al principio de la calle de los siervos, mirando a lo largo de ella
+      siervos: [[P.CALLE_SIERVOS_PUNTO[0] - 13, P.CALLE_SIERVOS_PUNTO[1]], Math.PI / 2],
     };
     const [[x, z], yaw] = destinos[lugar];
     this.dejarDeSeguir();
@@ -1535,6 +1600,8 @@ export class CiudadWorld {
       ["mercado", P.MERCADO, 1.0, "#f0b45a"],
       // delante de cada puesto: su mercader
       ...P.PUESTOS.map(([x, z], i) => [`puesto${i}` as ZonaId, [x, z - 1.75] as V2, 0.75, "#f0b45a"] as [ZonaId, V2, number, string]),
+      // la puerta de cada personaje de la calle de los siervos
+      ...PERSONAJES_CIUDAD.map((p) => [`personaje:${p.id}` as ZonaId, p.puerta, 1.05, "#ffe2a0"] as [ZonaId, V2, number, string]),
     ];
     for (const [id, [x, z], r, color] of def) {
       const ring = new Ring(r, color, false);
@@ -1624,6 +1691,14 @@ export class CiudadWorld {
           break;
         case "mercado":
           this.abrir({ kind: "mercado" });
+          break;
+        default:
+          // la puerta de un personaje de la calle de los siervos
+          if (z.id.startsWith("personaje:")) {
+            this.entrada.soltar();
+            this.ruta = [];
+            this.abrir({ kind: "personaje", id: z.id.slice("personaje:".length) });
+          }
           break;
         case "puesto0":
         case "puesto1":
@@ -2129,6 +2204,7 @@ export class CiudadWorld {
       }
     }
     this.animarVecinos(dt);
+    this.animarSiervos(dt);
     this.crowd.flush();
     this.shadows.end();
     this.items.end();
@@ -2159,6 +2235,7 @@ export class CiudadWorld {
     if (!force && encendidas === this.nocheAntes) return;
     this.nocheAntes = encendidas;
     for (const m of this.ventanas) m.visible = encendidas;
+    if (this.vis.ventanasSiervos) this.vis.ventanasSiervos.visible = encendidas;
     this.audio.layers.night = this.noche();
   }
 
@@ -2479,6 +2556,10 @@ export class CiudadWorld {
     for (const r of this.reuniones.values()) if (r.ring) r.ring.dispose();
     for (const mc of this.mercaderes) this.overlay.remove(mc.el);
     for (const z of this.zonas) z.ring.dispose();
+    for (const sv of this.calle) {
+      sv.fig.dispose();
+      this.overlay.remove(sv.etiqueta);
+    }
     this.player.fig.dispose();
     this.crowd.dispose();
     this.shadows.dispose();

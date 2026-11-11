@@ -2,7 +2,7 @@
  * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango.
  */
 import type { ReactElement } from "react";
-type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar" | "etan" | "husai" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
+type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "miqueas" | "eliaquim" | "eleazar" | "etan" | "husai" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
@@ -102,6 +102,20 @@ export function Portrait({ who, size = 64 }: { who: Who; size?: number }) {
           <Face skin="#c48a5e" beard="#ece8e0" brows="#f2efe8" />
           <path d="M20 22 C20 11 44 11 44 22 C40 16 24 16 20 22Z" fill="#ece8e0" />
           <rect x="45" y="50" width="12" height="5" rx="2.5" fill="#efe1bd" stroke="#b88a1e" strokeWidth="0.7" />
+        </>
+      );
+      break;
+    case "miqueas":
+      // Miqueas de Moreset: un campesino profeta, más joven, barba castaña, manto verde oliva y una espiga
+      bg = "#e4ead8";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#5f6f3a" />
+          <path d="M20 64 C21 52 25 46 32 45 C39 46 43 52 44 64" fill="#c9b48a" />
+          <Face skin="#c08458" beard="#6b4a2c" brows="#4a3220" />
+          <path d="M20 22 C20 12 44 12 44 22 C40 17 24 17 20 22Z" fill="#4a3220" />
+          <path d="M47 62 L50 44" stroke="#b88a1e" strokeWidth="1.4" strokeLinecap="round" />
+          <ellipse cx="50.5" cy="42" rx="2.2" ry="4.5" fill="#d9b44a" />
         </>
       );
       break;
