@@ -16,6 +16,7 @@ import { diaClave } from "./jerusalen";
 import { faltan, leerHuerto } from "./mercado";
 import { esReposo, gozoDeRacha, rachaViva } from "@shared/racha";
 import { diaEnJerusalen } from "@shared/anio";
+import { ROPA_DEL_ANIO } from "@shared/mercado";
 import { HORA_RACHA, SILENCIO, type AvisosVista, type TipoAviso } from "@shared/avisos";
 
 export const AVISOS_SQL = `
@@ -118,7 +119,12 @@ export async function revisarAvisos(ahora = new Date()): Promise<AvisoSalido[]> 
       if (e.hora) {
         if (h >= e.hora.desde && h < e.hora.hasta) aviso = { titulo: `🎺 ${e.hora.titulo}: hasta las ${e.hora.hasta === 21 ? "9" : e.hora.hasta} de la noche`, cuerpo: `${e.nombre} en Jerusalén: el servicio en el templo vale ×${e.hora.merito.toLocaleString("es-419")} durante la hora especial.` };
       } else if (!aviso) {
-        aviso = { titulo: `${e.icono} Hoy en Jerusalén: ${e.nombre}`, cuerpo: `${e.corto}. Mérito ×${e.merito.toLocaleString("es-419")} en el templo mientras dure.` };
+        // la ropa de esa fiesta (shared/mercado.ts): solo se vende en estos días
+        const prenda = ROPA_DEL_ANIO.find((p) => p.deTemporada && "eventos" in p.deTemporada && p.deTemporada.eventos.includes(e.id));
+        aviso = {
+          titulo: `${e.icono} Hoy en Jerusalén: ${e.nombre}`,
+          cuerpo: `${e.corto}. Mérito ×${e.merito.toLocaleString("es-419")} en el templo mientras dure.${prenda ? ` En el mercado: ${prenda.nombre.charAt(0).toLowerCase()}${prenda.nombre.slice(1)}, solo en estos días.` : ""}`,
+        };
       }
     }
     if (aviso) {

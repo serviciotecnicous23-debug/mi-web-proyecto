@@ -16,7 +16,7 @@ import type { MisionesEstado } from "@shared/misiones";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
 import { lineasDeRacha } from "./RachaUI";
-import { diaEnJerusalen } from "@shared/anio";
+import { diaEnJerusalen, mananaEnJerusalen } from "@shared/anio";
 import type { RachaVista } from "@shared/racha";
 import { arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type CapitulosVista } from "@shared/capitulos";
 
@@ -71,7 +71,7 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
     lineas.push({
       id: "estacion",
       icono: dj.llueve ? "🌧️" : dj.estacion.icono,
-      texto: `${dj.hebreo.texto}: ${dj.estacion.nombre.charAt(0).toLowerCase()}${dj.estacion.nombre.slice(1)}${dj.llueve ? ". Hoy llueve: lo que siembres hoy queda regado" : ""}${semilla ? `. Crece más rápido ${semilla}` : ""}.`,
+      texto: `${dj.hebreo.texto}: ${dj.estacion.nombre.charAt(0).toLowerCase()}${dj.estacion.nombre.slice(1)}${dj.llueve ? ". Hoy llueve: lo que siembres hoy queda regado" : mananaEnJerusalen(dj).llueve ? ". Mañana llueve: lo que siembres mañana quedará regado" : ""}${semilla ? `. Crece más rápido ${semilla}` : ""}.`,
       boton: { texto: "Calendario", hacer: () => abrir({ kind: "calendario" }) },
     });
   }

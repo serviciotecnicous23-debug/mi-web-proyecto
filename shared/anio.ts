@@ -445,3 +445,46 @@ export function encargoDeFiesta(dia: string): { id: string; evento: EventoAnio }
   const a = d.eventos.find((x) => x.evento.encargo);
   return a ? { id: `ev-${a.evento.id}`, evento: a.evento } : null;
 }
+
+export type LoQuePaso = {
+  /** Días desde la última visita. */
+  dias: number;
+  /** Los eventos de los días de en medio (sin la última visita ni hoy), en orden, con cuántos días duró cada uno. */
+  eventos: { evento: EventoAnio; dias: number; desde: string }[];
+  antes: Estacion;
+  ahora: Estacion;
+  /** Fue más largo que lo que se cuenta (solo se cuentan los últimos `max` días). */
+  largo: boolean;
+};
+
+/** Lo que pasó en Jerusalén entre la última visita y hoy: las fiestas (con cuántos días) y si cambió la estación. */
+export function loQuePaso(desdeIso: string, hastaIso: string, max = 120): LoQuePaso {
+  const a = mediodiaDe(desdeIso);
+  const b = mediodiaDe(hastaIso);
+  const dias = Math.max(0, Math.round((b - a) / 86_400_000));
+  const vistos = new Map<string, { evento: EventoAnio; dias: number; desde: string }>();
+  const n = Math.min(dias - 1, max);
+  // hacia atrás desde ayer: si fue muy largo, se cuenta lo más reciente
+  for (let i = 1; i <= n; i++) {
+    const d = diaEnJerusalen(b - i * 86_400_000);
+    for (const e of d.eventos) {
+      const v = vistos.get(e.evento.id);
+      if (v) {
+        v.dias++;
+        v.desde = d.iso;
+      } else vistos.set(e.evento.id, { evento: e.evento, dias: 1, desde: d.iso });
+    }
+  }
+  return {
+    dias,
+    eventos: [...vistos.values()].sort((x, y) => x.desde.localeCompare(y.desde)),
+    antes: diaEnJerusalen(a).estacion,
+    ahora: diaEnJerusalen(b).estacion,
+    largo: dias - 1 > max,
+  };
+}
+
+/** El día de mañana en Jerusalén (para el pronóstico: si va a llover). */
+export function mananaEnJerusalen(d: DiaJerusalen = diaEnJerusalen()): DiaJerusalen {
+  return diaEnJerusalen(mediodiaDe(d.iso) + 86_400_000);
+}

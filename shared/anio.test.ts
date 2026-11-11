@@ -1,7 +1,8 @@
 // Las reglas del año de Jerusalén (shared/anio.ts) con fechas reales conocidas.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { EVENTOS_DEL_ANIO, bonoDelMomento, diaEnJerusalen, domingoDeResurreccion, encargoDeFiesta, factorCrecimiento, factorPrecio, mediodiaDe, proximaFiestaGrande, proximosEventos } from "./anio";
+import { EVENTOS_DEL_ANIO, bonoDelMomento, diaEnJerusalen, domingoDeResurreccion, encargoDeFiesta, factorCrecimiento, factorPrecio, loQuePaso, mananaEnJerusalen, mediodiaDe, proximaFiestaGrande, proximosEventos } from "./anio";
+import { ARTICULOS, ROPA_DEL_ANIO, articulo, calendarioDeTemporada, enTemporada, ofertasDelDia } from "./mercado";
 import { ENCARGOS, ENCARGOS_DE_FIESTA, encargoDef, esEncargoDeFiesta } from "./misiones";
 
 const dia = (iso: string) => diaEnJerusalen(mediodiaDe(iso));
@@ -107,4 +108,46 @@ test("el encargo de la fiesta", () => {
   assert.equal(encargoDeFiesta("2026-12-24")?.id, "ev-navidad");
   assert.equal(encargoDeFiesta("2027-01-01")?.id, "ev-anioNuevo");
   assert.equal(encargoDeFiesta("2027-03-26")?.id, "ev-semanaSanta");
+});
+
+test("mientras no estabas y el pronóstico", () => {
+  const p = loQuePaso("2026-11-08", "2026-11-15");
+  assert.equal(p.dias, 7);
+  assert.deepEqual(p.eventos.map((e) => `${e.evento.id}:${e.dias}`), ["lunaNueva:1", "reposo:1"]);
+  assert.equal(p.antes.id, "siembra");
+  assert.equal(p.ahora.id, "invierno");
+  assert.equal(loQuePaso("2026-11-10", "2026-11-11").eventos.length, 0);
+  // los tabernáculos de 2027 (15 al 21 de Etanim) cuentan sus días
+  const t = loQuePaso("2027-10-10", "2027-10-30");
+  assert.equal(t.eventos.find((e) => e.evento.id === "tabernaculos")?.dias, 7);
+  assert.equal(mananaEnJerusalen(dia("2026-11-11")).iso, "2026-11-12");
+  assert.equal(mananaEnJerusalen(dia("2026-12-31")).iso, "2027-01-01");
+});
+
+test("la ropa de temporada", () => {
+  const ids = ARTICULOS.map((a) => a.id);
+  assert.equal(new Set(ids).size, ids.length, "ids repetidos");
+  for (const a of ROPA_DEL_ANIO) {
+    assert.ok(a.categoria === "ropa" && a.color && /^(manto|faja)-/.test(a.id) && a.precio > 0 && !a.exclusivo, a.id);
+    // cada evento nombrado existe
+    if (a.deTemporada && "eventos" in a.deTemporada) for (const e of a.deTemporada.eventos) assert.ok(EVENTOS_DEL_ANIO.some((x) => x.id === e), `${a.id}: ${e}`);
+  }
+  const prenda = (id: string) => articulo(id)!;
+  assert.ok(enTemporada(prenda("manto-invierno"), dia("2026-11-20")));
+  assert.ok(!enTemporada(prenda("manto-invierno"), dia("2027-05-20")));
+  assert.ok(enTemporada(prenda("manto-trigo"), dia("2027-05-20")));
+  assert.ok(enTemporada(prenda("faja-luna-nueva"), dia("2026-11-11")));
+  assert.ok(!enTemporada(prenda("faja-luna-nueva"), dia("2026-11-12")));
+  assert.ok(enTemporada(prenda("manto-profecia"), dia("2026-12-25")) && !enTemporada(prenda("manto-profecia"), dia("2026-12-26")));
+  assert.ok(enTemporada(prenda("manto-lana")), "la ropa de siempre se vende siempre");
+  const c = calendarioDeTemporada(mediodiaDe("2026-11-11"));
+  assert.deepEqual(c["faja-luna-nueva"], { hoy: true, quedan: 1, vuelve: null });
+  assert.ok(c["manto-invierno"].hoy && (c["manto-invierno"].quedan ?? 0) > 60, JSON.stringify(c["manto-invierno"]));
+  assert.deepEqual(c["manto-profecia"], { hoy: false, quedan: null, vuelve: 43 });
+  assert.ok(Object.values(c).every((x) => x.quedan !== null || x.vuelve !== null), "todas tienen fecha");
+  // las ofertas del día no traen ropa de temporada
+  for (let i = 0; i < 60; i++) {
+    const iso = new Date(Date.UTC(2026, 10, 11 + i)).toISOString().slice(0, 10);
+    for (const id of ofertasDelDia(iso)) assert.ok(!articulo(id)?.deTemporada, `${iso}: ${id}`);
+  }
 });

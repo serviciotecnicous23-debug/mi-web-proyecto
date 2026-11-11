@@ -5,7 +5,7 @@
  * Son frases propias, sin citas: las citas literales están en las ventanas, con su referencia.
  */
 import type { CapituloId, MomentoFiesta } from "@shared/capitulos";
-import { diaEnJerusalen, type EstacionId } from "@shared/anio";
+import { diaEnJerusalen, mananaEnJerusalen, type EstacionId } from "@shared/anio";
 
 export type GenteQueHabla = "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
 
@@ -145,13 +145,14 @@ const NOCHE = ["Las antorchas ya están encendidas. Que descanses, vecino.", "De
 /** Una frase para esta persona de la calle. */
 /** Lo que se dice en cada estación del año de Jerusalén (shared/anio.ts). */
 const FRASES_ESTACION: Record<EstacionId, string[]> = {
-  cosecha: ["Ya se pisan las uvas en el lagar. ¡Se acercan los tabernáculos!", "Este año las olivas vienen cargadas: habrá aceite para todos.", "¿Ya hiciste tu enramada para la fiesta de los tabernáculos?"],
-  siembra: ["Cayó la lluvia temprana: a arar y a sembrar.", "Mi padre ya sembró la cebada. Ahora a esperar que llueva.", "La tierra está blanda con la lluvia: es tiempo de sembrar."],
-  invierno: ["¡Qué frío! Dicen que el rey ya encendió el brasero de la casa de invierno.", "Con tanta lluvia, el estanque se llena.", "En invierno la harina escasea: los mercaderes la buscan mucho.", "Abrígate, vecino: este invierno viene fuerte."],
-  cebada: ["¡Los almendros ya florecieron! Pronto la siega de la cebada.", "La primera gavilla de cebada se presenta en la fiesta de las primicias.", "Nacieron los corderos: hay muchos en el mercado."],
-  trigo: ["¡A la siega del trigo! Hasta la fiesta de las semanas no se para.", "Hay tanta harina que los mercaderes casi no la buscan.", "Los campos están dorados: da gusto verlos."],
-  verano: ["Qué calor… guarda aceite en tu alfolí, que antes de la cosecha sube.", "Los higos ya están dulces. ¿Quieres uno?", "No ha llovido en semanas: hay que regar el huerto."],
+  cosecha: ["En el puesto de ropa venden el manto del lagar, color vino nuevo. ¡Solo en la cosecha!", "Ya se pisan las uvas en el lagar. ¡Se acercan los tabernáculos!", "Este año las olivas vienen cargadas: habrá aceite para todos.", "¿Ya hiciste tu enramada para la fiesta de los tabernáculos?"],
+  siembra: ["¿Viste la faja de la lluvia temprana en el mercado? Solo se vende en la siembra.", "Cayó la lluvia temprana: a arar y a sembrar.", "Mi padre ya sembró la cebada. Ahora a esperar que llueva.", "La tierra está blanda con la lluvia: es tiempo de sembrar."],
+  invierno: ["En el mercado ya venden el manto de lana gruesa: solo en invierno.", "¡Qué frío! Dicen que el rey ya encendió el brasero de la casa de invierno.", "Con tanta lluvia, el estanque se llena.", "En invierno la harina escasea: los mercaderes la buscan mucho.", "Abrígate, vecino: este invierno viene fuerte."],
+  cebada: ["La faja de flor de almendro llegó al mercado: se acaba cuando termine la siega de la cebada.", "¡Los almendros ya florecieron! Pronto la siega de la cebada.", "La primera gavilla de cebada se presenta en la fiesta de las primicias.", "Nacieron los corderos: hay muchos en el mercado."],
+  trigo: ["El manto de trigo dorado está en el mercado: solo mientras dura la siega del trigo.", "¡A la siega del trigo! Hasta la fiesta de las semanas no se para.", "Hay tanta harina que los mercaderes casi no la buscan.", "Los campos están dorados: da gusto verlos."],
+  verano: ["La faja color higo solo se vende en verano. ¡Corre al mercado!", "Qué calor… guarda aceite en tu alfolí, que antes de la cosecha sube.", "Los higos ya están dulces. ¿Quieres uno?", "No ha llovido en semanas: hay que regar el huerto."],
 };
+const FRASES_MANANA_LLUEVE = ["Se ven nubes en el poniente: mañana llueve.", "Mañana llueve: guarda tus semillas para sembrarlas mañana, que se riegan solas.", "Mi abuelo dice que mañana llueve: le duelen las rodillas."];
 const FRASES_LLUVIA = ["¡Qué aguacero! Por lo menos el huerto se riega solo.", "Con esta lluvia nadie sale… menos los que sirven en el templo.", "La lluvia es bendición: lo que siembres hoy, queda regado."];
 const FRASES_EVENTO: Record<string, string> = {
   lunaNueva: "Esta noche, de 7 a 9, tocan las trompetas de la luna nueva. ¡El servicio vale la mitad más!",
@@ -184,6 +185,7 @@ export function fraseDeGente(kind: GenteQueHabla, ctx: ContextoFrases, azar: () 
     const ev = dj.eventos[0]?.evento;
     if (ev && ra < 0.2) return FRASES_EVENTO[ev.id] ?? `¡Hoy es ${ev.nombre}! ${ev.corto}.`;
     if (dj.llueve && ra < 0.3) return elegir(FRASES_LLUVIA);
+    if (!dj.llueve && ra < 0.3 && mananaEnJerusalen(dj).llueve) return elegir(FRASES_MANANA_LLUEVE);
     if (ra < 0.38) return elegir(FRASES_ESTACION[dj.estacion.id]);
   }
   // el capítulo de la semana: de eso habla la ciudad

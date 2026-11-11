@@ -21,7 +21,7 @@ import type { Circle, Rect, V2 } from "../layout";
 import type { ItemType } from "../data";
 import { relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import { diaEnJerusalen } from "@shared/anio";
-import { Lluvia } from "./clima";
+import { Lamparas, Lluvia, Petalos } from "./clima";
 import {
   BIEN, CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVista,
   type CiudadEstado, type VecinoInfo,
@@ -173,6 +173,9 @@ export class CiudadWorld {
   private palomas!: Palomas;
   /** La lluvia de los días que llueve (shared/anio.ts) y cuándo se miró la fecha por última vez. */
   private lluvia!: Lluvia;
+  /** Lo que cambia con el año: pétalos de almendro (siega de la cebada) y lámparas de fiesta (Navidad y año nuevo). */
+  private petalos!: Petalos;
+  private lamparas!: Lamparas;
   private fechaRevisada = 0;
   /** En el invierno los braseros arden también de día (Jeremías 36:22). */
   private invierno = false;
@@ -353,6 +356,10 @@ export class CiudadWorld {
     this.scene.add(this.palomas.group);
     this.lluvia = new Lluvia(coarse, P.SUELO);
     this.scene.add(this.lluvia.group);
+    this.petalos = new Petalos(coarse, P.SUELO);
+    this.scene.add(this.petalos.group);
+    this.lamparas = new Lamparas([...P.ARBOLES, ...P.PASEO], P.SUELO);
+    this.scene.add(this.lamparas.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
     // la historia de la temporada: las torres, el conducto de Siloé, el campamento de Asiria y la fiesta
@@ -387,6 +394,7 @@ export class CiudadWorld {
       this.fecha = d.fecha;
       this.lluvia.setLluvia(d.llueve);
       this.invierno = d.estacion.id === "invierno";
+      this.conElAnio(d);
     }
     this.hoyDia = this.fecha.numero;
     this.syncFiesta();
@@ -1404,6 +1412,7 @@ export class CiudadWorld {
     if (otroDia) {
       this.lluvia.setLluvia(otroDia.llueve);
       this.invierno = otroDia.estacion.id === "invierno";
+      this.conElAnio(otroDia);
     }
     if (otroDia && otroDia.fecha.numero !== this.hoyDia) {
       this.hoyDia = otroDia.fecha.numero;
@@ -2192,6 +2201,12 @@ export class CiudadWorld {
     return undefined;
   }
 
+  /** La ciudad según el año (shared/anio.ts): pétalos de almendro y lámparas de fiesta. */
+  private conElAnio(d: ReturnType<typeof diaEnJerusalen>) {
+    this.petalos.setActivo(d.estacion.id === "cebada");
+    this.lamparas.setActivo(d.eventos.some((e) => e.evento.id === "navidad" || e.evento.id === "anioNuevo"));
+  }
+
   private syncFiesta() {
     const f = this.fiestaHoy()?.fiesta;
     this.vis.enramadas.visible = f?.id === "tabernaculos";
@@ -2438,6 +2453,8 @@ export class CiudadWorld {
     this.antorchas.update(dt, t > 0.5 ? tarde : manana, this.camTarget.x, this.camTarget.z);
     this.palomas.update(dt, this.noche() ? 0 : 1, this.camTarget.x, this.camTarget.z);
     this.lluvia.update(dt, this.camTarget.x, this.camTarget.z);
+    this.petalos.update(dt, this.camTarget.x, this.camTarget.z);
+    this.lamparas.update(dt, this.noche());
     if (this.invierno || t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos
       const r = this.player.rig;
@@ -2818,6 +2835,8 @@ export class CiudadWorld {
     this.antorchas.dispose();
     this.palomas.dispose();
     this.lluvia.dispose();
+    this.petalos.dispose();
+    this.lamparas.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();
     gameStore.setCiudad(null);

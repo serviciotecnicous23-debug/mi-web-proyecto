@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-ropa-de-temporada",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La ropa de cada tiempo y la ciudad según el año",
+    puntos: [
+      "🧣 Ropa de temporada: cada estación y cada fiesta grande trae su prenda, que solo se vende en esos días (hoy, el manto de lana gruesa del invierno y la faja plateada de la luna nueva). Quien la compra, la guarda para siempre.",
+      "🌦️ El pronóstico: el calendario dice si mañana llueve. Si llueve, lo que siembres ese día queda regado.",
+      "👋 Mientras no estabas: al volver después de unos días, la entrada te cuenta qué fiestas pasaron, si cambió la estación y qué viene.",
+      "🌸 La ciudad cambia con el año: pétalos de almendro en la siega de la cebada y lámparas en las calles en Navidad y Año Nuevo.",
+    ],
+  },
+  {
     id: "2026-11-11-anio-de-jerusalen",
     fecha: "11 de noviembre de 2026",
     titulo: "El año de Jerusalén: el juego sigue el calendario real",
@@ -26,7 +37,7 @@ export const NOVEDADES: Novedad[] = [
   },
   {
     id: "2026-11-12-mapa-conectado",
-    fecha: "12 de noviembre de 2026",
+    fecha: "11 de noviembre de 2026",
     titulo: "El mapa al día y todo conectado",
     puntos: [
       "🗺️ El mapa de Jerusalén muestra la calle de los siervos con sus siete puertas, un 📜 que late en la puerta de quien tiene tu recado de hoy y las obras del capítulo de la semana (las torres del muro, el conducto hasta el estanque de Siloé…). Desde el mapa vas directo a tu recado o al lugar del capítulo.",
