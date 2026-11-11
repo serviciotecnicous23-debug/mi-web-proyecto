@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-casas-vistas",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Mira cada cosa antes de comprarla, y casas con más vida",
+    puntos: [
+      "🖼️ En el mercado cada mueble, adorno y prenda tiene su foto en 3D (la ropa, puesta en un personaje). Tócala para verla en grande: así sabes cómo queda la alfombra, el lecho, el estante de rollos o el toldo antes de comprar.",
+      "🏠 Las casas tienen más detalles, distintos en cada una: alfombras puestas a airear sobre el pretil, ropa tendida en el terrado, lino secándose, leña apilada, contraventanas, macetas, el odre colgado en las tiendas y una lamparita encendida junto a la puerta cuando cae la noche.",
+    ],
+  },
+  {
     id: "2026-11-11-gestos",
     fecha: "11 de noviembre de 2026",
     titulo: "Gestos para tus vecinos y una ciudad con más vida",

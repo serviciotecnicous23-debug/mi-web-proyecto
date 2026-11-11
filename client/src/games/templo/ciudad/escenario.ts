@@ -573,6 +573,62 @@ const PIEDRAS = ["#ddd0b0", "#d6c7a4", "#e3d7b8", "#cfc09c"];
 const TELAS_TIENDA = ["#3b2f2a", "#4a3a2e", "#43352b", "#2f2723"];
 
 /** Una casa en coordenadas propias (la puerta mira a +z, el centro en 0). */
+/**
+ * Lo que dice que en la casa vive gente (pedido de Luis: que se vean más los detalles, las cosas pequeñas). Cambia de
+ * casa en casa (con su semilla): la alfombra puesta a airear sobre el pretil, la ropa tendida en el terrado, el lino
+ * secándose (Josué 2:6), la leña apilada, la contraventana abierta, los desagües del techo, una maceta en la puerta y,
+ * de noche, una lamparita encendida junto a la puerta.
+ */
+function vidaDeCasa(m: GeoBuilder, v: GeoBuilder, w: number, d: number, h: number, muro: string) {
+  const techo = h + 0.14;
+  // desagües de madera en el borde del techo (atrás y a un costado)
+  m.box(0.08, 0.06, 0.32, C.cedroOsc, { x: rr(-w / 3, w / 3), y: h + 0.02, z: -d / 2 - 0.16 });
+  if (rnd() < 0.6) m.box(0.32, 0.06, 0.08, C.cedroOsc, { x: (rnd() < 0.5 ? -1 : 1) * (w / 2 + 0.16), y: h + 0.02, z: rr(-d / 4, d / 4) });
+  // una alfombra a airear sobre el pretil del frente
+  if (rnd() < 0.55) {
+    const x = rr(-w / 4, w / 4), col = pick([C.carmesi, "#8f5a3a", C.azul, "#c98a2b", "#5b2a6e"]);
+    m.box(0.95, 0.62, 0.03, col, { x, y: h + 0.16, z: d / 2 + 0.1 });
+    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h - 0.08, z: d / 2 + 0.1 });
+    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h + 0.36, z: d / 2 + 0.1 });
+    m.box(0.2, 0.2, 0.036, "#e2c27a", { x, y: h + 0.14, z: d / 2 + 0.1, rz: Math.PI / 4 });
+  }
+  // la ropa tendida en el terrado
+  if (rnd() < 0.45) {
+    const z = rr(-d / 4, d / 6), x0 = -w / 2 + 0.3, x1 = w / 2 - 0.3;
+    for (const x of [x0, x1]) m.cyl(0.025, 0.025, 1.0, C.cedroOsc, { x, y: techo + 0.5, z }, 5);
+    m.box(x1 - x0, 0.015, 0.015, "#cdbb95", { x: (x0 + x1) / 2, y: techo + 0.96, z });
+    const n = 2 + Math.floor(rnd() * 2);
+    for (let k = 0; k < n; k++) {
+      const x = x0 + ((k + 0.7) / (n + 0.4)) * (x1 - x0);
+      m.box(0.34, rr(0.38, 0.55), 0.02, pick([C.lino, "#d9c7a0", "#7fb2d9", "#c98a2b", "#8a2f3a"]), { x, y: techo + 0.72, z });
+    }
+  }
+  // lino secándose en manojos sobre el terrado (Josué 2:6)
+  if (rnd() < 0.3) for (let k = 0; k < 4; k++) m.box(0.42, 0.07, 0.12, "#d8c27a", { x: rr(-w / 2 + 0.4, w / 2 - 0.4), y: techo + 0.05, z: rr(-d / 2 + 0.3, -0.1), ry: rr(-0.4, 0.4) });
+  // leña apilada contra un costado
+  if (rnd() < 0.5) {
+    const sx = rnd() < 0.5 ? -1 : 1, z = rr(-d / 4, d / 5);
+    for (let k = 0; k < 7; k++) {
+      const fila = k < 4 ? 0 : k < 6 ? 1 : 2;
+      const enFila = fila === 0 ? k : fila === 1 ? k - 4 : 0;
+      m.cyl(0.06, 0.06, 0.62, k % 2 ? "#7a5634" : "#8f6a42", { x: sx * (w / 2 + 0.2), y: 0.06 + fila * 0.11, z: z - 0.2 + enFila * 0.13 + fila * 0.06, rx: Math.PI / 2 }, 6);
+    }
+  }
+  // la contraventana de la ventana, abierta
+  if (rnd() < 0.55) m.box(0.22, 0.42, 0.03, C.cedro, { x: w * 0.26 + 0.33, y: h * 0.62, z: d / 2 + 0.12, ry: 0.65 });
+  // una maceta con hierbas junto a la puerta
+  if (rnd() < 0.5) {
+    const x = -w * 0.18 - 0.62;
+    m.lathe([[0, 0], [0.1, 0], [0.13, 0.2], [0.11, 0.22], [0, 0.21]], vary("#b0643a", 0.06), { x, z: d / 2 + 0.22 });
+    for (let k = 0; k < 4; k++) m.cone(0.05, 0.28, pick([C.hoja, C.hojaClara]), { x: x + rr(-0.05, 0.05), y: 0.32, z: d / 2 + 0.22 + rr(-0.05, 0.05), rz: rr(-0.3, 0.3) }, 5);
+  }
+  // de noche, una lamparita en un nicho junto a la puerta
+  if (rnd() < 0.5) {
+    m.box(0.22, 0.2, 0.08, vary(muro, 0.05), { x: -w * 0.18 + 0.58, y: 1.25, z: d / 2 + 0.05 });
+    v.sphere(0.06, "#ffcf7a", { x: -w * 0.18 + 0.58, y: 1.27, z: d / 2 + 0.1 }, 6, 5);
+  }
+}
+
 function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
   rnd = mulberry32(seed);
   const [w, d, h] = CASA_MEDIDA[nivel];
@@ -604,6 +660,15 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
     m.box(1.3, 0.03, 0.8, pick([C.carmesi, "#8f5a3a", C.azul]), { y: 0.02, z: fr + 0.55 });
     for (let k = 0; k < 6; k++) m.box(0.15, 0.12, 0.15, C.piedraOsc, { x: 0.95 + Math.cos(k) * 0.26, y: 0.06, z: fr + 1.05 + Math.sin(k) * 0.26 });
     jar(m, -1.0, 0, fr + 0.75, 0.9);
+    // lo de cada día en la tienda: el odre colgado de la vara, una cesta con frutos, leña y, de noche, la lámpara
+    if (rnd() < 0.6) m.sphere(0.13, "#6e4a2c", { x: -(w / 2 - 0.08), y: alto - 0.95, z: fr + 0.32, sy: 1.4, sz: 0.8 }, 7, 6);
+    if (rnd() < 0.6) {
+      const cx = rr(-0.4, 0.3), cz = fr + 0.95;
+      m.lathe([[0, 0], [0.16, 0.02], [0.2, 0.16], [0.18, 0.18], [0, 0.17]], "#c9a96a", { x: cx, z: cz }, 10);
+      for (let k = 0; k < 5; k++) m.sphere(0.055, pick(["#6b3a5a", "#7a8a4a", "#b3242f", "#d9a03a"]), { x: cx + rr(-0.09, 0.09), y: 0.19, z: cz + rr(-0.09, 0.09) }, 6, 5);
+    }
+    if (rnd() < 0.5) for (let k = 0; k < 5; k++) m.cyl(0.05, 0.05, 0.55, k % 2 ? "#7a5634" : "#8f6a42", { x: w / 2 + 0.3, y: 0.05 + (k > 2 ? 0.1 : 0), z: fr - 0.2 + (k % 3) * 0.12, rx: Math.PI / 2 }, 6);
+    if (rnd() < 0.55) v.sphere(0.06, "#ffcf7a", { x: rr(-0.4, 0.4), y: 0.32, z: -0.1 }, 6, 5);
     return;
   }
   const piedra = nivel >= 2;
@@ -624,6 +689,7 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
   v.box(0.36, 0.33, 0.02, "#ffcf7a", { x: w * 0.26, y: h * 0.62, z: d / 2 + 0.05 });
   if (piedra) for (let k = 0; k < 3; k++) m.box(0.03, 0.42, 0.06, C.cedroOsc, { x: w * 0.26 - 0.12 + k * 0.12, y: h * 0.62, z: d / 2 + 0.06 }); // celosía
   jar(m, w * 0.42, 0, d / 2 + 0.3, 1.0);
+  vidaDeCasa(m, v, w, d, h, muro);
   if (!piedra) {
     // escalera de mano al terrado
     for (const dz of [-0.22, 0.22]) m.box(0.06, h + 0.5, 0.06, C.cedroOsc, { x: w / 2 + 0.18, y: (h + 0.5) / 2, z: dz, rz: -0.08 });
@@ -688,6 +754,16 @@ function adornosDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, ids: string[
     // un árbol que no cupo en el suelo va en una maceta grande en el terrado
     adorno(m, v, id, l.x, y, l.z, l.ry, l.alto > 0 && (id === "higuera" || id === "palmera" || id === "parra") ? 0.55 : 1);
   }
+}
+
+/** Un adorno suelto, en el origen y mirando a +z (para la foto del mercado): lo de barro y madera, y su luz. */
+export function construirAdornoSuelto(id: string): THREE.Group {
+  const m = new GeoBuilder(), v = new GeoBuilder();
+  adorno(m, v, id, 0, 0, 0, 0, 1);
+  const g = new THREE.Group();
+  if (!m.empty) g.add(new THREE.Mesh(m.build(), matteMat()));
+  if (!v.empty) g.add(new THREE.Mesh(v.build(), ventanaMat()));
+  return g;
 }
 
 function adorno(m: GeoBuilder, v: GeoBuilder, id: string, x: number, y: number, z: number, ry: number, s: number) {

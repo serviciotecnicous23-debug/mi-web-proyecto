@@ -15,6 +15,7 @@ import { AYUDA_MUEBLES } from "@shared/economia";
 import { PuestosView } from "./EconomiaUI";
 import { gameStore } from "./store";
 import { Card } from "./ui";
+import { vistaDe } from "./casa/vistas3d";
 
 type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean };
 
@@ -77,6 +78,38 @@ function useMercado(alCambiar?: (m: MercadoEstado) => void) {
 
 const NOMBRE_BIEN: Record<string, string> = { harina: "flor de harina", aceite: "aceite", corderos: "corderos" };
 const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * La foto en 3D de un artículo (casa/vistas3d.ts): mientras se saca, se ve su dibujo; al tocarla, se ve en grande.
+ * Así se sabe cómo queda cada cosa antes de comprarla.
+ */
+function VistaArticulo({ a, onVer }: { a: Articulo; onVer: (url: string) => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (a.categoria === "mueble" || a.categoria === "adorno" || a.categoria === "ropa") void vistaDe(a.id).then((u) => vivo && setUrl(u));
+    return () => {
+      vivo = false;
+    };
+  }, [a.id, a.categoria]);
+  if (!url)
+    return (
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-2xl dark:bg-stone-800" aria-hidden="true">
+        {a.icono}
+      </span>
+    );
+  return (
+    <button
+      type="button"
+      onClick={() => onVer(url)}
+      className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gradient-to-b from-amber-50 to-stone-200 ring-1 ring-stone-200 active:scale-95 dark:from-stone-700 dark:to-stone-900 dark:ring-stone-700"
+      aria-label={`Ver cómo se ve: ${a.nombre}`}
+      data-testid={`vista-${a.id}`}
+    >
+      <img src={url} alt="" className="h-full w-full object-contain" draggable={false} />
+    </button>
+  );
+}
 
 function tiempo(s: number) {
   const m = Math.floor(s / 60);
@@ -160,6 +193,8 @@ export function MercadoView({
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
   // lo que se acaba de comprar: qué hacer ahora con eso
   const [siguiente, setSiguiente] = useState<{ a: Articulo; colocado?: boolean; puesto?: boolean } | null>(null);
+  // la foto en grande de un artículo (al tocar su foto)
+  const [viendo, setViendo] = useState<{ a: Articulo; url: string } | null>(null);
   const puesto = PUESTOS_MERCADO.find((p) => p.tab === inicial);
   const tabs: [TabMercado, string][] = [
     ["semilla", "Semillas"],
@@ -200,6 +235,22 @@ export function MercadoView({
         )}
         {error && <p className="rounded-xl bg-red-50 p-2.5 text-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p>}
         {siguiente && <SiguientePaso s={siguiente} onCerrar={() => setSiguiente(null)} alEntrarACasa={alEntrarACasa} />}
+        {viendo && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-6 backdrop-blur-sm" onClick={() => setViendo(null)} role="dialog" aria-label={`Así se ve: ${viendo.a.nombre}`} data-testid="mercado-vista-grande">
+            <div className="w-full max-w-xs rounded-3xl bg-white p-4 text-center shadow-2xl dark:bg-stone-900" onClick={(e) => e.stopPropagation()}>
+              <div className="mx-auto aspect-square w-full max-w-[16rem] rounded-2xl bg-gradient-to-b from-amber-50 to-stone-200 dark:from-stone-700 dark:to-stone-900">
+                <img src={viendo.url} alt={viendo.a.nombre} className="h-full w-full object-contain" />
+              </div>
+              <p className="mt-3 font-black">
+                {viendo.a.icono} {viendo.a.nombre}
+              </p>
+              <p className="mt-1 text-[12px] text-stone-500">{viendo.a.detalle}</p>
+              <Button className="mt-3 w-full" variant="secondary" onClick={() => setViendo(null)}>
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        )}
         {!m && !error && (
           <p className="flex items-center gap-2 text-stone-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abriendo los puestos…
@@ -228,9 +279,7 @@ export function MercadoView({
                   const tantos = !!mu && (m.muebles[a.id] || 0) >= MAX_POR_MUEBLE;
                   return (
                     <li key={a.id} className="flex items-center gap-2.5 rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
-                      <span className="text-2xl" style={a.color ? { filter: "drop-shadow(0 0 0 transparent)" } : undefined}>
-                        {a.icono}
-                      </span>
+                      <VistaArticulo a={a} onVer={(url) => setViendo({ a, url })} />
                       <span className="min-w-0 flex-1">
                         <span className="block font-bold">
                           {a.nombre}
