@@ -14,6 +14,7 @@ import { ubicacionDe } from "./ciudad-red";
 import { semanaClave } from "./misiones";
 import { aportarAlCapitulo, capituloDeHoy, noticiaDelCapitulo } from "./capitulos";
 import { anotarCamino } from "./camino-dia";
+import { sumarALaCopa } from "./barrio-juntos";
 import { PUNTOS_CAPITULO } from "@shared/capitulos";
 import type { MisionCumplida } from "@shared/misiones";
 import { nombreDeBarrio } from "@shared/ciudad";
@@ -149,6 +150,8 @@ export function registerPersonajesRoutes(app: Express) {
           await sumarMerito(ch.id, RECADO_MERITO);
           racha = await marcarServicio(ch.id);
           void anotarCamino(ch.id, "ayudar");
+          // y cinco para la copa de su barrio
+          await sumarALaCopa(ch.id, "recado").catch((err) => console.error("[copa] recado:", err));
           // y diez para la meta de la ciudad del capítulo de esta semana
           capitulo = await aportarAlCapitulo(ch, PUNTOS_CAPITULO.recado).catch((err) => {
             console.error("[capitulos] recado:", err);

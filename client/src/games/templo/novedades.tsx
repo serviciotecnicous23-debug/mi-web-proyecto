@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-mapa-conectado",
+    fecha: "12 de noviembre de 2026",
+    titulo: "El mapa al día y todo conectado",
+    puntos: [
+      "🗺️ El mapa de Jerusalén muestra la calle de los siervos con sus siete puertas, un 📜 que late en la puerta de quien tiene tu recado de hoy y las obras del capítulo de la semana (las torres del muro, el conducto hasta el estanque de Siloé…). Desde el mapa vas directo a tu recado o al lugar del capítulo.",
+      "🏆 Cada recado cumplido suma 5 puntos a la copa de tu barrio.",
+      "🏅 Dos logros nuevos: «Siervo fiel» (7 días seguidos de racha) y «Mensajero de los siervos» (10 recados).",
+      "⚡ La web entera carga más rápido: el código que baja cada página pesa la mitad.",
+    ],
+  },
+  {
     id: "2026-11-12-avisos-telefono",
     fecha: "12 de noviembre de 2026",
     titulo: "Avisos al teléfono 🔔",

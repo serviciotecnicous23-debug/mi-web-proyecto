@@ -20,6 +20,16 @@ export function serveStatic(app: Express) {
     // página: si no, el navegador y el service worker guardaban HTML como si fuera .js/.css.
     fallthrough: false,
   }));
+  // Un archivo de /assets que no existe (de una versión anterior, o robots que prueban rutas como
+  // assets/config.json) responde 404 corto y sin anotarse como error en el registro.
+  app.use("/assets", (err: { status?: number; statusCode?: number; code?: string }, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const status = err?.status ?? err?.statusCode;
+    if (status === 404 || err?.code === "ENOENT") {
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(404).type("text/plain").send("No encontrado");
+    }
+    next(err);
+  });
 
   // Serve icons, manifest, SW with moderate caching
   app.use("/icons", express.static(path.join(distPath, "icons"), {

@@ -11,7 +11,7 @@ import {
   Church, Shield, Award, LogIn, UserPlus, Headphones, ArrowRight,
   ChevronDown, Sparkles, Smartphone,
 } from "lucide-react";
-import { PublicDonationSection } from "@/pages/finanzas";
+import { PublicDonationSection } from "@/components/PublicDonationSection";
 import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
 import { RADIO_OFFICIAL_URL } from "@shared/radio";
