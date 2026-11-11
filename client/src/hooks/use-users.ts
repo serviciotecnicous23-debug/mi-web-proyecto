@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import { type UpdateUser, type InsertEvent, type UpdateEvent, type InsertEventRsvp, type UpdateSiteContent, type InsertCourse, type UpdateCourse, type InsertCourseMaterial, type UpdateCourseMaterial, type InsertCourseSession, type UpdateCourseSession, type UpdateEnrollment, type UpdateTeacherRequest, type InsertCourseAnnouncement, type UpdateCourseAnnouncement, type InsertCourseSchedule, type UpdateCourseSchedule, type InsertBibleHighlight, type InsertBibleNote, type InsertReadingPlan, type InsertReadingPlanItem, type InsertReadingClubPost, type InsertReadingClubComment, type InsertLibraryResource, type InsertCarteleraAnnouncement, type UpdateCarteleraAnnouncement } from "@shared/schema";
+import type { UpdateUser, InsertEvent, UpdateEvent, InsertEventRsvp, UpdateSiteContent, InsertCourse, UpdateCourse, InsertCourseMaterial, UpdateCourseMaterial, InsertCourseSession, UpdateCourseSession, UpdateEnrollment, UpdateTeacherRequest, InsertCourseAnnouncement, UpdateCourseAnnouncement, InsertCourseSchedule, UpdateCourseSchedule, InsertBibleHighlight, InsertBibleNote, InsertReadingPlan, InsertReadingPlanItem, InsertReadingClubPost, InsertReadingClubComment, InsertLibraryResource, InsertCarteleraAnnouncement, UpdateCarteleraAnnouncement } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 // Wrapper around fetch that always includes credentials for auth cookies

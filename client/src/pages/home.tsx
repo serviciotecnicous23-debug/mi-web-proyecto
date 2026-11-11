@@ -4,7 +4,7 @@ import { MemberToday } from "@/components/home/MemberToday";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEvents } from "@/hooks/use-users";
+import { useEvents } from "@/hooks/use-portada";
 import { motion } from "motion/react";
 import {
   Flame, Radio, BookOpen, Heart, Globe, Users, Video, Signal,

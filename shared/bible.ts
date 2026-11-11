@@ -1,4 +1,4 @@
-import { BIBLE_BOOKS } from "./schema";
+import { BIBLE_BOOKS } from "./libros-biblia";
 
 // Los nombres de BIBLE_BOOKS van sin tilde porque así están GUARDADOS en notas,
 // resaltados y planes de lectura: no cambiarlos. Para mostrarlos, bibleBookLabel().

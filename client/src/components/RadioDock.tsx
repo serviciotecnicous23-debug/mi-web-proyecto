@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Radio, X } from "lucide-react";
-import { api } from "@shared/routes";
+import { RUTAS } from "@shared/rutas-livianas";
 import {
   AZURACAST_STATION_SHORTCODE,
   DEFAULT_AZURACAST_STATION_URL,
@@ -30,7 +30,7 @@ function useStationUrl(enabled: boolean) {
     staleTime: Infinity,
     retry: 1,
     queryFn: async (): Promise<string> => {
-      const res = await fetch(api.radio.station.path);
+      const res = await fetch(RUTAS.radio.station);
       if (!res.ok) throw new Error("No se pudo leer la emisora");
       const data: RadioStationPayload = await res.json();
       return data.provider?.stationUrl || DEFAULT_AZURACAST_STATION_URL;
