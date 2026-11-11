@@ -146,7 +146,7 @@ export type Modal =
   | { kind: "vecinos" }
   | { kind: "vecino"; id: number }
   /** «Tu barrio»: la charla, los vecinos y el emblema y el lema (el barrio como clan). */
-  | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" | "copa" }
+  | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" | "copa" | "pueblo" }
   /** «¿Quién es sabio?», el concurso de la casa de la sabiduría (pantalla completa). */
   | { kind: "sabio" }
   | { kind: "visita"; personajeId: number; nombre: string };

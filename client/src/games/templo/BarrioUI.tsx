@@ -4,7 +4,7 @@
  * en línea y dónde, y el emblema y el lema que eligen los vecinos con su voto.
  */
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Ban, Flag, Footprints, Home, Loader2, Megaphone, MessageCircle, MoreHorizontal, Send, Shield, Trash2, Trophy, Users } from "lucide-react";
+import { Ban, Flag, Footprints, Home, Loader2, Megaphone, MessageCircle, MoreHorizontal, Send, Shield, Store, Trash2, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, hace } from "./ui";
 import { gameStore } from "./store";
@@ -16,9 +16,10 @@ import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { escalonNombre } from "@shared/jerusalen";
 import { CopaDelBarrio } from "./BarrioCopa";
+import { PuebloDelBarrio } from "./BarrioPueblo";
 import { invitarVecino, irConVecino } from "./Acompanar";
 
-type Pestana = "charla" | "vecinos" | "emblema" | "copa";
+type Pestana = "charla" | "vecinos" | "emblema" | "copa" | "pueblo";
 
 const cerrar = () => gameStore.close();
 
@@ -83,13 +84,14 @@ export function BarrioView({ pestana }: { pestana?: Pestana }) {
               «{vista.lema.text}» <span className="not-italic text-[11px] font-semibold text-amber-800 dark:text-amber-300">{vista.lema.ref}</span>
             </p>
           )}
-          <div className="grid grid-cols-4 gap-1 rounded-full bg-amber-100/70 p-1 dark:bg-amber-950/40">
+          <div className="grid grid-cols-5 gap-0.5 rounded-full bg-amber-100/70 p-1 dark:bg-amber-950/40">
             {(
               [
                 ["charla", "Charla", MessageCircle],
                 ["vecinos", "Vecinos", Users],
                 ["emblema", "Emblema", Shield],
                 ["copa", "Copa", Trophy],
+                ["pueblo", "Pueblo", Store],
               ] as const
             ).map(([id, nombre, Icono]) => (
               <button
@@ -100,7 +102,7 @@ export function BarrioView({ pestana }: { pestana?: Pestana }) {
                 className={`flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 py-1.5 text-xs font-bold ${tab === id ? "bg-white text-amber-900 shadow dark:bg-stone-800 dark:text-amber-200" : "text-amber-900/70 dark:text-amber-200/70"}`}
                 data-testid={`barrio-tab-${id}`}
               >
-                <Icono className="hidden h-3.5 w-3.5 shrink-0 min-[380px]:inline" /> {nombre}
+                <Icono className="hidden h-3.5 w-3.5 shrink-0 sm:inline" /> {nombre}
               </button>
             ))}
           </div>
@@ -125,6 +127,7 @@ export function BarrioView({ pestana }: { pestana?: Pestana }) {
           {tab === "vecinos" && <Vecinos vista={vista} propio={propio} />}
           {tab === "emblema" && <EmblemaYLema vista={vista} propio={propio} onVista={setVista} />}
           {tab === "copa" && <CopaDelBarrio />}
+          {tab === "pueblo" && <PuebloDelBarrio />}
         </div>
       )}
     </Card>

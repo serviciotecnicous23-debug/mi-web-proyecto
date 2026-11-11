@@ -70,7 +70,8 @@ function ventanaMat() {
 const Y = SUELO;
 
 // ---------------------------------------------------------------- tipos públicos
-export type CasaDibujo = { parcela: number; nivel: number; personajeId: number; adornos?: string[]; letrero?: boolean };
+/** `pueblo`: la casa es de una familia del pueblo (shared/pueblo.ts), no de un vecino. */
+export type CasaDibujo = { parcela: number; nivel: number; personajeId: number; adornos?: string[]; letrero?: boolean; pueblo?: boolean };
 
 export type CiudadVisual = {
   root: THREE.Group;
@@ -897,6 +898,11 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel);
     // lo que compró en el mercado: los adornos y el letrero (los ven los vecinos)
     if (c.adornos?.length) adornosDeCasa(lm, lv, nivel, c.adornos);
+    // la familia del pueblo tiene su cántaro junto a la puerta (en el primer lugar de adorno del suelo)
+    if (c.pueblo) {
+      const l = LUGARES_ADORNO[nivel].find((x) => x.alto === 0);
+      if (l) adorno(lm, lv, "cantaro", l.x, 0, l.z, l.ry, 1);
+    }
     if (c.letrero) letreroDeCasa(lm, nivel);
     const mat = new THREE.Matrix4().makeRotationY(p.dir === 1 ? 0 : Math.PI).setPosition(p.x, Y, p.z);
     const g = lm.build();

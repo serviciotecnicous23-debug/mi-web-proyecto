@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-casas-del-pueblo",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Las casas del pueblo y sus pedidos",
+    puntos: [
+      "🏘️ En las parcelas que todavía no tienen dueño ahora viven familias del pueblo de Jerusalén: el alfarero, la tejedora, el pastor, la viuda… Así ningún barrio se ve vacío. Cuando llega un vecino nuevo, la familia le deja su lugar.",
+      "🏺 Cada día alguna familia del pueblo pide harina, aceite o un cordero: la verás esperando en su puerta con un letrero. Dale de tu alfolí desde «Tu barrio», pestaña «Pueblo» (o tocando su letrero).",
+      "🙏 Ayudar da gozo, cumple tu encargo de ayudar y suma para la copa de tu barrio; al completar el pedido, la familia te da las gracias. «Sobrellevad los unos las cargas de los otros» (Gálatas 6:2).",
+    ],
+  },
+  {
     id: "2026-11-11-acompanar",
     fecha: "11 de noviembre de 2026",
     titulo: "Acompaña a tus vecinos por la ciudad",

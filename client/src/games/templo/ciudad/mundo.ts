@@ -29,6 +29,8 @@ import { chatBarrio, textoDeMensaje } from "../barrio-chat";
 import { sabioRed } from "../sabio-red";
 import { juntos } from "../juntos";
 import { acompanar } from "../acompanar-red";
+import { casaDelPueblo, type PuebloEstado } from "@shared/pueblo";
+import { CASAS_POR_BARRIO } from "@shared/ciudad";
 import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
@@ -129,7 +131,7 @@ type Npc = {
   path: V2[];
   speed: number;
   wait: number;
-  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader";
+  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
   item?: ItemType;
   home?: V2;
   yaw?: number;
@@ -169,6 +171,10 @@ export class CiudadWorld {
   private etiquetasCasas: { el: HTMLDivElement; p: THREE.Vector3; mia: boolean; reunion?: boolean }[] = [];
   /** Las reuniones de ahora (clave «barrio:parcela»): su etiqueta y un círculo violeta en la puerta. */
   private reuniones = new Map<string, { id: number; anfitrion: string; titulo: string; ring: Ring | null }>();
+  /** Los pedidos de hoy de las familias del pueblo de mi barrio (shared/pueblo.ts) y quién espera en su puerta. */
+  private pueblo: PuebloEstado | null = null;
+  private puebloT = 59;
+  private familias: Npc[] = [];
   private reunionesVistas = new Set<number>();
   private reunionesT = 27;
   /** El muro caído: su dibujo (se rehace al cambiar) y lo último que se vio. */
@@ -1254,6 +1260,12 @@ export class CiudadWorld {
       this.mirarAreas();
     }
     // las reuniones en las casas: cada 30 s se mira cuáles hay
+    // las familias del pueblo: cada minuto se mira quién pide algo hoy
+    this.puebloT += dt;
+    if (this.puebloT > 60) {
+      this.puebloT = 0;
+      void this.mirarPueblo();
+    }
     this.reunionesT += dt;
     if (this.reunionesT > 30) {
       this.reunionesT = 0;
@@ -1632,8 +1644,18 @@ export class CiudadWorld {
       const n = this.barrioDeArea(area);
       const b = this.barrios.get(n);
       const casas = b?.casas ?? [];
+      // en las parcelas libres viven familias del pueblo (siempre las mismas para cada barrio)
+      const ocupadas = new Set(casas.map((c) => c.parcela));
+      const delPueblo: { parcela: number; nivel: number }[] = [];
+      for (let k = 0; k < CASAS_POR_BARRIO; k++) {
+        const fp = ocupadas.has(k) ? null : casaDelPueblo(n, k);
+        if (fp) delPueblo.push({ parcela: k, nivel: fp.nivel });
+      }
       if (b?.detalle) {
-        const dib: CasaDibujo[] = casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero }));
+        const dib: CasaDibujo[] = [
+          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero })),
+          ...delPueblo.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: 1_000_000 + n * 100 + c.parcela, pueblo: true })),
+        ];
         const { grupo, ventanas } = construirAreaDetalle(area, dib, b.nivelBarrio ?? 0);
         g.add(grupo);
         if (ventanas) {
@@ -1641,19 +1663,50 @@ export class CiudadWorld {
           this.ventanas.push(ventanas);
         }
         if (n === this.estado.barrio.n) {
-          this.enramadasArea = construirEnramadas(area, dib);
+          this.enramadasArea = construirEnramadas(area, dib.filter((c) => !c.pueblo));
           this.vis.enramadas.add(this.enramadasArea);
         }
-      } else g.add(construirAreaSilueta(area, casas));
-      for (const c of casas) casasRects.push(P.casaRect(P.PARCELAS[area - 1][c.parcela], c.nivel));
+      } else g.add(construirAreaSilueta(area, [...casas, ...delPueblo]));
+      for (const c of [...casas, ...delPueblo]) casasRects.push(P.casaRect(P.PARCELAS[area - 1][c.parcela], c.nivel));
     }
     this.rects = [...this.fijos.rects, ...this.relleno, ...casasRects];
     this.circles = this.fijos.circles;
     this.nav = new NavGrid(this.rects, this.circles, 0.3, { ...P.LIMITES, cell: 1, walkable: P.caminable });
     this.crearEtiquetasCasas();
     this.dibujarSiervos();
+    this.dibujarFamilias();
     this.shadowDirty = true;
     this.syncNoche(true);
+  }
+
+  /** Los pedidos de hoy de las familias del pueblo de mi barrio (también lo llama la pestaña «Pueblo» al dar). */
+  async mirarPueblo() {
+    try {
+      const res = await fetch("/api/jerusalen/pueblo", { credentials: "include" });
+      if (!res.ok || !this.running) return;
+      const antes = JSON.stringify(this.pueblo?.pedidos.map((p) => [p.parcela, p.cumplido]) ?? null);
+      this.pueblo = (await res.json()) as PuebloEstado;
+      if (JSON.stringify(this.pueblo.pedidos.map((p) => [p.parcela, p.cumplido])) !== antes) {
+        this.crearEtiquetasCasas();
+        this.dibujarFamilias();
+      }
+    } catch {
+      /* sin red: se mira la próxima vez */
+    }
+  }
+
+  /** Quien pide algo hoy espera en la puerta de su casa del pueblo (en mi barrio). */
+  private dibujarFamilias() {
+    if (!this.player) return;
+    for (const f of this.familias) this.quitarNpc(f);
+    this.familias = [];
+    for (const p of this.pueblo?.pedidos ?? []) {
+      if (p.cumplido) continue;
+      const casa = P.parcelaDe(this.estado.barrio.n, p.parcela);
+      const [ux, uz] = casa.umbral;
+      const n = this.npc("pueblo", [ux + 0.7, uz + casa.dir * 0.9], { yaw: casa.dir === 1 ? 0 : Math.PI });
+      if (n) this.familias.push(n);
+    }
   }
 
   /** Tus siervos trabajan en el patio de tu casa: solo los ves tú (los vecinos ven la casa, nunca a los siervos). */
@@ -1754,6 +1807,22 @@ export class CiudadWorld {
         if (mia) el.style.background = "rgba(180,120,10,.85)";
         if (reunion) el.style.background = "rgba(109,59,190,.9)";
         this.etiquetasCasas.push({ el, p: new THREE.Vector3(p.x, P.SUELO + hh + (c.nivel >= 3 ? 2.2 : 0.9), p.z), mia, reunion });
+      }
+      // las familias del pueblo que piden algo hoy (en mi barrio): tocar el letrero abre el tablero del barrio
+      if (b.n !== this.estado.barrio.n) continue;
+      for (const pp of this.pueblo?.pedidos ?? []) {
+        if (pp.cumplido) continue;
+        const p = P.PARCELAS[area - 1][pp.parcela];
+        const fp = casaDelPueblo(b.n, pp.parcela);
+        const [, , hh] = P.CASA_MEDIDA[Math.max(0, Math.min(3, fp?.nivel ?? 1))];
+        const el = this.overlay.make("tpl-tag");
+        el.textContent = `${pp.familia.icono} ${pp.familia.nombre} pide ${pp.bien === "corderos" ? "un cordero" : pp.bien}`;
+        el.style.display = "none";
+        el.style.background = "rgba(13,120,110,.9)";
+        el.style.pointerEvents = "auto";
+        el.style.cursor = "pointer";
+        el.addEventListener("click", () => gameStore.push({ kind: "barrio", pestana: "pueblo" }));
+        this.etiquetasCasas.push({ el, p: new THREE.Vector3(p.x, P.SUELO + hh + 0.9, p.z), mia: false, reunion: true });
       }
     }
   }
@@ -1895,6 +1964,7 @@ export class CiudadWorld {
         case "alumno":
         case "levita":
         case "guardia":
+        case "pueblo":
           r.moving = 0;
           if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
           break;

@@ -21,6 +21,7 @@ const COMO: { icono: string; texto: string; puntos: string }[] = [
   { icono: "🏛️", texto: "Cada grada en «¿Quién es sabio?»", puntos: `${COPA_PUNTOS.grada}` },
   { icono: "⚔️", texto: "Jugar un duelo de sabios (y ganarlo)", puntos: `${COPA_PUNTOS.duelo} y ${COPA_PUNTOS.dueloGanado}` },
   { icono: "💬", texto: "Un consejo acertado a un vecino", puntos: `${COPA_PUNTOS.consejo}` },
+  { icono: "🏺", texto: "Cada cosa dada a una familia del pueblo", puntos: `${COPA_PUNTOS.pueblo}` },
 ];
 
 export function CopaDelBarrio() {

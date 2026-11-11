@@ -147,6 +147,8 @@ export const COPA_PUNTOS = {
   dueloGanado: 5,
   consejo: 3,
   juntos: 10,
+  /** Por cada cosa dada a una familia del pueblo (shared/pueblo.ts). */
+  pueblo: 2,
 } as const;
 export type FuenteCopa = keyof typeof COPA_PUNTOS;
 
