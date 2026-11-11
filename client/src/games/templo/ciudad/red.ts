@@ -19,6 +19,8 @@ export type RedEventos = {
   onChatFuera?: (id: number) => void;
   /** «¿Quién es sabio?»: llamadas para pedir consejo y sus avisos (sabio-red.ts). */
   onSabio?: (m: RedEntra) => void;
+  /** Un amigo o vecino te invita a venir (acompanar.ts). */
+  onInvitacion?: (i: import("@shared/acompanar").Invitacion) => void;
   /** La misión del barrio de hoy (juntos.ts): cómo va y cuando se cumple. */
   onJuntos?: (m: Extract<RedEntra, { t: "juntos" | "juntos-hecho" }>) => void;
   onFuera: (motivo: string) => void;
@@ -95,6 +97,9 @@ export class RedCiudad {
         case "juntos":
         case "juntos-hecho":
           this.ev.onJuntos?.(m);
+          break;
+        case "invitacion":
+          this.ev.onInvitacion?.(m.i);
           break;
         case "fuera":
           this.fuera = true;

@@ -212,7 +212,9 @@ export function JuntosChip() {
       <span aria-hidden="true">{m?.icono ?? "🤝"}</span>
       <span className="min-w-0 truncate">
         {p!.hecha
-          ? `Ya la cumpliste: ayudas a tus vecinos (${p!.aqui} aquí)`
+          ? p!.aqui > 1
+            ? `Ya la cumpliste: ayudas a tus vecinos (${p!.aqui} aquí)`
+            : "Ya cumpliste la misión del barrio de hoy"
           : faltan > 0
             ? `Misión del barrio: ${p!.aqui} de ${p!.minimo} vecinos aquí · faltan ${faltan}`
             : `¡Juntos! ${p!.segundos} s más y la cumplen`}

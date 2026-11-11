@@ -962,7 +962,7 @@ function Portada({
         </span>
         <label className="flex cursor-pointer items-center gap-1.5 font-bold">
           <input type="checkbox" checked={y.llamadas} onChange={(e) => onLlamadas(e.target.checked)} className="h-4 w-4 accent-amber-400" data-testid="sabio-llamadas" />
-          Recibir llamadas
+          Recibir llamadas e invitaciones
         </label>
       </div>
       <button type="button" className="sabio-boton w-full py-3.5 text-base" disabled={ocupado || quedan <= 0} onClick={onEmpezar} data-testid="sabio-empezar">

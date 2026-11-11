@@ -6,7 +6,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
-  Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
+  Ban, CalendarDays, Check, ChevronRight, Crown, Flag, Footprints, Hand, Home, Landmark, Loader2, MapPin, Maximize2, MessageCircle, Minimize2, Pause, ScrollText,
   Medal, RotateCw, Send, Sparkles, Store, Target, Trophy, Users, WifiOff,
 } from "lucide-react";
 import { CasaExtras, MercadoView, type Ofrecido, type ParteCasa } from "./MercadoUI";
@@ -24,6 +24,7 @@ import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
 import { BarrioView } from "./BarrioUI";
 import { JuntosChip } from "./BarrioCopa";
+import { SiguiendoChip, seguirVecino } from "./Acompanar";
 import { useChatBarrio } from "./barrio-chat";
 import { EscuelaView, PalacioView } from "./CaminosUI";
 import { nombreEscalonCamino } from "@shared/caminos";
@@ -287,6 +288,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           <>
             {/* la misión del barrio de hoy: cuántos vecinos hay en el lugar y cuánto falta (BarrioCopa.tsx) */}
             <JuntosChip />
+            {/* a quién se sigue caminando (Acompanar.tsx) */}
+            <SiguiendoChip />
             <div className={`rounded-full bg-sky-500/30 px-3 py-0.5 text-center text-[11px] font-bold leading-tight text-sky-50 backdrop-blur-[2px] ${sombra}`} data-testid="ciudad-lugar">
               <MapPin className="-mt-0.5 mr-0.5 inline h-3 w-3" />
               {c.lugar}
@@ -1247,6 +1250,22 @@ function VecinoView({ id }: { id: number }) {
               <Link href={`/mensajes?to=${v.u}`} data-testid="button-vecino-escribir">
                 <Send className="mr-1 h-4 w-4" /> Escribir
               </Link>
+            </Button>
+            <Button
+              variant="secondary"
+              className="col-span-2 rounded-full font-bold"
+              disabled={busy || !city}
+              onClick={async () => {
+                if (!city) return;
+                setBusy(true);
+                const aviso = await seguirVecino(city, v.id);
+                setBusy(false);
+                if (aviso) setMensaje(aviso);
+                else cerrar();
+              }}
+              data-testid="button-vecino-seguir"
+            >
+              <Footprints className="mr-1 h-4 w-4" /> Seguir a {v.nombre}
             </Button>
             <Button variant="ghost" className="text-stone-600 dark:text-stone-300" onClick={() => setPaso("bloquear")} data-testid="button-vecino-bloquear">
               <Ban className="mr-1 h-4 w-4" /> Bloquear

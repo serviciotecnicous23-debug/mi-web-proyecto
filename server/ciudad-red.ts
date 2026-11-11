@@ -39,6 +39,8 @@ type Con = {
   frases: number[];
   vivo: boolean;
   barrioHash: string;
+  /** Ya mandó su primera posición (antes de eso está en el punto de llegada, que no es donde está de verdad). */
+  posReal: boolean;
 };
 
 const conexiones = new Map<number, Con>();
@@ -125,6 +127,7 @@ function alRecibir(c: Con, data: RawData) {
     // como mucho unas 7 por segundo; lo demás se ignora
     if (now - c.ultimoPos < 140) return;
     c.ultimoPos = now;
+    c.posReal = true;
     // en el templo es otro canal: allí solo se ven los que sirven
     const templo = msg.l === "templo";
     const lim = templo ? LIMITES_TEMPLO : LIMITES_CIUDAD;
@@ -297,13 +300,20 @@ export function presenciaDe(cuentas: number[]): Map<number, { personajeId: numbe
 export function posicionesPorBarrio(): Map<number, { u: number; personajeId: number; x: number; z: number; canal: string }[]> {
   const out = new Map<number, { u: number; personajeId: number; x: number; z: number; canal: string }[]>();
   for (const c of conexiones.values()) {
-    if (c.canal === "templo" || c.ws.readyState !== 1) continue;
+    if (c.canal === "templo" || c.ws.readyState !== 1 || !c.posReal) continue;
     const l = out.get(c.info.barrio);
     const g = { u: c.info.u, personajeId: c.info.id, x: c.x, z: c.z, canal: c.canal };
     if (l) l.push(g);
     else out.set(c.info.barrio, [g]);
   }
   return out;
+}
+
+/** Dónde está ahora un personaje conectado (para ir con él o invitarlo; server/acompanar.ts). */
+export function ubicacionDe(personajeId: number): { u: number; x: number; z: number; canal: string; a: number; nombre: string } | null {
+  const c = conexiones.get(personajeId);
+  if (!c || c.ws.readyState !== 1 || !c.posReal) return null;
+  return { u: c.info.u, x: c.x, z: c.z, canal: c.canal, a: c.a, nombre: c.info.nombre };
 }
 
 /** Manda algo a una persona conectada (por su cuenta). Devuelve si estaba en la ciudad o en el templo. */
@@ -479,6 +489,7 @@ export function registrarRedCiudad(server: Server, sesion: RequestHandler) {
       frases: [],
       vivo: true,
       barrioHash: "",
+      posReal: false,
     };
     conexiones.set(j.info.id, c);
     arrancarRelojes();

@@ -13,6 +13,7 @@ import { registerEconomiaRoutes } from "./economia";
 import { registerCatedrasRoutes } from "./catedras";
 import { registerBarrioRoutes } from "./barrio";
 import { registerBarrioJuntosRoutes } from "./barrio-juntos";
+import { registerAcompanarRoutes } from "./acompanar";
 import { registerSabioRoutes } from "./sabio";
 import { registerSabioDueloRoutes } from "./sabio-duelo";
 import { registerReunionesRoutes } from "./reuniones";
@@ -3656,6 +3657,8 @@ ${urls}
   registerBarrioRoutes(app);
   // la misión del barrio de hoy y la copa de los barrios
   registerBarrioJuntosRoutes(app);
+  // acompañar a los vecinos: ir con él e invitarlo a venir
+  registerAcompanarRoutes(app);
   // «¿Quién es sabio?»: el concurso de la casa de la sabiduría.
   registerSabioRoutes(app);
   // el duelo de sabios (dos personas, las mismas preguntas a la vez)

@@ -4,7 +4,7 @@
  * en línea y dónde, y el emblema y el lema que eligen los vecinos con su voto.
  */
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Ban, Flag, Home, Loader2, MessageCircle, MoreHorizontal, Send, Shield, Trash2, Trophy, Users } from "lucide-react";
+import { Ban, Flag, Footprints, Home, Loader2, Megaphone, MessageCircle, MoreHorizontal, Send, Shield, Trash2, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, hace } from "./ui";
 import { gameStore } from "./store";
@@ -16,6 +16,7 @@ import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { nombreEscalonCamino } from "@shared/caminos";
 import { escalonNombre } from "@shared/jerusalen";
 import { CopaDelBarrio } from "./BarrioCopa";
+import { invitarVecino, irConVecino } from "./Acompanar";
 
 type Pestana = "charla" | "vecinos" | "emblema" | "copa";
 
@@ -513,6 +514,23 @@ function DenunciarMensaje({ m, onListo }: { m: MensajeBarrio; onListo: (quitado:
 function Vecinos({ vista, propio }: { vista: BarrioVista; propio: boolean }) {
   const { city } = useContext(CiudadCtx);
   const enLinea = vista.miembros.filter((m) => m.enLinea).length;
+  const [ocupado, setOcupado] = useState<number | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  // ir adonde está (y seguirlo), o invitarlo a venir adonde estás (Acompanar.tsx)
+  const irCon = async (personajeId: number) => {
+    if (!city) return;
+    setOcupado(personajeId);
+    const r = await irConVecino(city, personajeId, true);
+    setOcupado(null);
+    if (r) setAviso(r);
+    else cerrar();
+  };
+  const invitar = async (personajeId: number) => {
+    setOcupado(personajeId);
+    const r = await invitarVecino(personajeId);
+    setOcupado(null);
+    setAviso(r.texto);
+  };
   return (
     <div className="space-y-2">
       <p className="text-xs text-stone-500" data-testid="barrio-cuantos">
@@ -531,6 +549,28 @@ function Vecinos({ vista, propio }: { vista: BarrioVista; propio: boolean }) {
                 {nombreEscalonCamino(m.camino, m.escalon, escalonNombre(m.escalon))} · casa {m.parcela + 1}
               </span>
               {m.donde && <span className="block truncate text-xs font-semibold text-emerald-700 dark:text-emerald-300">{m.donde}</span>}
+              {!m.esYo && propio && city && m.enLinea && (
+                <span className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    disabled={ocupado !== null}
+                    onClick={() => void irCon(m.personajeId)}
+                    className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+                    data-testid={`barrio-ir-con-${m.casaId}`}
+                  >
+                    {ocupado === m.personajeId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Footprints className="h-3 w-3" />} Ir con {m.nombre.split(" ")[0]}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={ocupado !== null}
+                    onClick={() => void invitar(m.personajeId)}
+                    className="inline-flex items-center gap-1 rounded-full bg-sky-600 px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+                    data-testid={`barrio-invitar-${m.casaId}`}
+                  >
+                    <Megaphone className="h-3 w-3" /> Invitar a venir
+                  </button>
+                </span>
+              )}
             </span>
             {!m.esYo && propio && city && (
               <Button
@@ -549,6 +589,12 @@ function Vecinos({ vista, propio }: { vista: BarrioVista; propio: boolean }) {
           </li>
         ))}
       </ul>
+      {aviso && (
+        <p className="rounded-lg bg-amber-50 px-2 py-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200" data-testid="barrio-acompanar-aviso">
+          {aviso}
+        </p>
+      )}
+      <p className="text-[11px] text-stone-500">«Ir con…» te lleva adonde está tu vecino y lo sigues caminando. Quien apaga «Recibir llamadas e invitaciones» en la casa de la sabiduría no las recibe.</p>
     </div>
   );
 }
