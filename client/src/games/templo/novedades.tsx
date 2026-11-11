@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-casa-sabiduria",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La casa de la sabiduría ya está en la ciudad",
+    puntos: [
+      "🏛️ Al pie de la escalinata, del lado sur (frente a la cámara de los sacerdotes), se levanta la casa de la sabiduría con sus siete columnas (Proverbios 9:1).",
+      "🚪 Sube su grada y párate en el círculo de la puerta para entrar a «¿Quién es sabio?». También la encuentras en el mapa y en «Ir a…».",
+    ],
+  },
+  {
     id: "2026-11-11-quien-es-sabio",
     fecha: "11 de noviembre de 2026",
     titulo: "¿Quién es sabio?, el gran concurso",

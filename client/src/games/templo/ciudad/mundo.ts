@@ -81,7 +81,7 @@ const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 /** Otro barrio que se ve: sus casas (de lejos, siluetas; al entrar en su área, completo). */
 export type BarrioVisto = { n: number; area: number; casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[]; detalle: boolean };
 
-type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3";
+type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3";
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
 
 /** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
@@ -998,7 +998,7 @@ export class CiudadWorld {
   }
 
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
-  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara") {
+  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria") {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const destinos: Record<typeof lugar, [V2, number]> = {
       casa: [casa.umbral, casa.dir === 1 ? 0 : Math.PI],
@@ -1010,6 +1010,7 @@ export class CiudadWorld {
       palacio: [[17, 17.4], 0],
       escuela: [[17, -19], Math.PI],
       camara: [[P.CAMARA_PUERTA[0] + 1.9, P.CAMARA_PUERTA[1]], -Math.PI / 2],
+      sabiduria: [[P.SABIDURIA_PUERTA[0] + 1.9, P.SABIDURIA_PUERTA[1]], -Math.PI / 2],
     };
     const [[x, z], yaw] = destinos[lugar];
     const r = this.player.rig;
@@ -1328,6 +1329,7 @@ export class CiudadWorld {
       ["palacio", P.PALACIO_PUERTA, 1.2, "#c9a8f0"],
       ["escuela", P.ESCUELA_PUERTA, 1.2, "#8fe08a"],
       ["camara", P.CAMARA_PUERTA, 1.15, "#ffd25a"],
+      ["sabiduria", P.SABIDURIA_PUERTA, 1.2, "#c9a8ff"],
       ["mercado", P.MERCADO, 1.0, "#f0b45a"],
       // delante de cada puesto: su mercader
       ...P.PUESTOS.map(([x, z], i) => [`puesto${i}` as ZonaId, [x, z - 1.75] as V2, 0.75, "#f0b45a"] as [ZonaId, V2, number, string]),
@@ -1410,6 +1412,13 @@ export class CiudadWorld {
           } else if (z.id === "escuela") this.abrir(this.estado.yo.camino === "profecia" ? { kind: "escuela" } : { kind: "estudios" });
           else if (z.id === "camara") this.abrir(this.estado.yo.camino === "sacerdocio" ? { kind: "catedra", area: "sacerdotal" } : { kind: "estudios" });
           else this.abrir(this.estado.yo.camino === "realeza" ? { kind: "palacio" } : { kind: "edificio", id: "palacio" });
+          break;
+        case "sabiduria":
+          // la casa de la sabiduría: adentro se juega «¿Quién es sabio?» (SabioUI.tsx)
+          this.entrada.soltar();
+          this.ruta = [];
+          vibrar(12);
+          this.abrir({ kind: "sabio" });
           break;
         case "mercado":
           this.abrir({ kind: "mercado" });
@@ -1634,6 +1643,7 @@ export class CiudadWorld {
       ["El palacio del rey", L.palacio, 34],
       ["La escuela de los profetas", L.escuela, 30],
       ["La cámara de los sacerdotes", L.camara, 24],
+      ["La casa de la sabiduría · ¿Quién es sabio?", L.sabiduria, 26],
       ["La puerta de la ciudad", L.puerta, 30],
       ["El púlpito de la plaza", L.plaza, 22],
       ["El mercado", new THREE.Vector3(P.MERCADO[0], P.SUELO + 3.1, P.PUESTOS[0][1]), 20],
@@ -1661,6 +1671,8 @@ export class CiudadWorld {
     for (const x of [10.2, 11.8, 23.4]) this.npc("alumno", [x, -22.05], { yaw: 0, sit: true });
     // un levita a la puerta de la cámara de los sacerdotes (1 Crónicas 9:26-27)
     this.npc("levita", [P.CAMARA[2] + 1.45, P.CAMARA[1] + 0.9], { yaw: Math.PI / 2 });
+    // un sabio recibe a la entrada de la casa de la sabiduría (a un lado de la grada)
+    this.npc("anciano", [P.SABIDURIA_GRADA[2] + 0.9, P.SABIDURIA_GRADA[3] + 0.7], { yaw: Math.PI / 2 });
     // gente que pasea por la plaza y las calles
     for (let i = 0; i < 7; i++) this.npc("paseo", P.PASEO[i * 3 % P.PASEO.length], {});
     // los mercaderes, detrás de sus puestos, mirando a la plaza
@@ -1983,6 +1995,7 @@ export class CiudadWorld {
     const area = P.areaEn(r.x, r.z);
     if (area) return nombreDeBarrio(this.barrioDeArea(area));
     if (P.cercaDe(r.x, r.z, P.CAMARA, 3.3)) return "La cámara de los sacerdotes";
+    if (P.cercaDe(r.x, r.z, P.SABIDURIA_GRADA, 3.3) || P.cercaDe(r.x, r.z, P.SABIDURIA, 2)) return "La casa de la sabiduría";
     if (P.cercaDe(r.x, r.z, P.PLAZA, 0)) return r.x > 70 ? "La puerta de la ciudad" : "La plaza";
     if (P.cercaDe(r.x, r.z, P.PALACIO, 4)) return "El palacio del rey";
     if (P.cercaDe(r.x, r.z, P.ESCUELA, 4)) return "La escuela de los profetas";
@@ -2005,6 +2018,7 @@ export class CiudadWorld {
     }
     if (dist(r.x, r.z, P.ENTRADA_TEMPLO[0], P.ENTRADA_TEMPLO[1]) < 9) return "Sube por la escalinata para entrar al templo y servir";
     if (dist(r.x, r.z, casa.umbral[0], casa.umbral[1]) < 7) return "Párate en el círculo de tu puerta para entrar a tu casa";
+    if (dist(r.x, r.z, P.SABIDURIA_PUERTA[0], P.SABIDURIA_PUERTA[1]) < 5) return "La casa de la sabiduría: entra a jugar «¿Quién es sabio?»";
     if (dist(r.x, r.z, P.ANUNCIOS[0], P.ANUNCIOS[1]) < 6) return "El púlpito de la plaza: los anuncios de la ciudad";
     if (dist(r.x, r.z, P.ANCIANOS[0], P.ANCIANOS[1]) < 6) return "Los ancianos de la ciudad están sentados a la puerta";
     const t = this.reloj().hora;
