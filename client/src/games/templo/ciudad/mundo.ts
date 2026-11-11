@@ -28,6 +28,7 @@ import { RedCiudad, type EstadoRed } from "./red";
 import { chatBarrio, textoDeMensaje } from "../barrio-chat";
 import { sabioRed } from "../sabio-red";
 import { juntos } from "../juntos";
+import { acompanar } from "../acompanar-red";
 import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
@@ -235,6 +236,8 @@ export class CiudadWorld {
   private entrada!: Entrada;
   private ruta: V2[] = [];
   private rutaAtasco = 0;
+  /** El vecino que se sigue caminando detrás (solo en esta pantalla): cuánto hace que no se ve y cuándo se recalcula. */
+  private siguiendo: { id: number; nombre: string; perdido: number; recalc: number } | null = null;
   private marca: Ring | null = null;
   private marcaT = 0;
 
@@ -344,6 +347,11 @@ export class CiudadWorld {
         sabioRed.recibir(m);
         if (m.t === "sabio-gracias" && m.gozoTotal != null) this.ponerGozo(m.gozoTotal);
       },
+      // un amigo o vecino te invita a venir (Acompanar.tsx)
+      onInvitacion: (i) => {
+        acompanar.recibir(i);
+        this.audio.page();
+      },
       // la misión del barrio de hoy (shared/barrio-juntos.ts)
       onJuntos: (m) => {
         if (m.t === "juntos") {
@@ -366,6 +374,8 @@ export class CiudadWorld {
         // al conectarse, se manda la posición enseguida (y se pone al día la charla del barrio)
         if (e === "conectado") {
           this.ultimoEnvio.t = 0;
+          // la posición sale ya (aunque haya una ventana abierta): así el servidor sabe dónde estás de verdad
+          this.enviarPosicionYa();
           void chatBarrio.ponerAlDia();
         }
       },
@@ -614,6 +624,19 @@ export class CiudadWorld {
   /** Cómo va la conexión con los vecinos. */
   get estadoRed(): EstadoRed {
     return this.redEstado;
+  }
+
+  /** Manda la posición ahora mismo (al conectarse). */
+  private enviarPosicionYa() {
+    const r = this.player.rig;
+    const a = this.actividad();
+    this.red.enviar({ t: "pos", x: Math.round(r.x * 100) / 100, z: Math.round(r.z * 100) / 100, ry: Math.round(r.yaw * 100) / 100, m: 0, a });
+    const u = this.ultimoEnvio;
+    u.x = r.x;
+    u.z = r.z;
+    u.ry = r.yaw;
+    u.t = performance.now();
+    u.a = a;
   }
 
   private enviarPosicion(dt: number) {
@@ -1026,6 +1049,68 @@ export class CiudadWorld {
     this.pushHud();
   }
 
+  /** Lleva al aprendiz junto a un punto de la ciudad (al lado de un vecino, sin caer dentro de una pared). */
+  irAPunto(x: number, z: number) {
+    this.dejarDeSeguir();
+    let px = x,
+      pz = z;
+    for (const [dx, dz] of [[1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2], [0, 0]] as V2[]) {
+      if (!P.caminable(x + dx, z + dz)) continue;
+      [px, pz] = collide(x + dx, z + dz, PLAYER_R, this.rects, this.circles);
+      break;
+    }
+    const r = this.player.rig;
+    r.x = px;
+    r.z = pz;
+    r.y = P.alturaCiudad(px, pz);
+    this.player.vx = this.player.vz = 0;
+    this.ruta = [];
+    for (const zn of this.zonas) zn.inside = dist(px, pz, zn.x, zn.z) < zn.r;
+    this.visitaParcela = null;
+    this.camTarget.set(px, r.y, pz);
+    this.shadowDirty = true;
+    this.ultimoEnvio.t = 0;
+    this.audio.page();
+  }
+
+  /** Seguir caminando detrás de un amigo o vecino que se ve (en esta pantalla; a él no se le avisa). */
+  seguir(id: number, nombre: string) {
+    this.siguiendo = { id, nombre, perdido: 0, recalc: 0 };
+    acompanar.ponerSiguiendo({ id, nombre });
+  }
+
+  dejarDeSeguir(aviso?: string) {
+    if (!this.siguiendo) return;
+    this.siguiendo = null;
+    this.ruta = [];
+    acompanar.ponerSiguiendo(null);
+    if (aviso) gameStore.toast(aviso, "info");
+  }
+
+  /** Mientras se sigue a alguien: camino hacia él (sin pisarle los talones); si se pierde de vista un rato, se deja. */
+  private pasoSeguir(dt: number) {
+    const s = this.siguiendo;
+    if (!s) return;
+    const v = this.vecinos.get(s.id);
+    if (!v) {
+      s.perdido += dt;
+      if (s.perdido > 6) this.dejarDeSeguir(`${s.nombre} se fue de la vista: dejaste de seguirlo.`);
+      return;
+    }
+    s.perdido = 0;
+    const r = this.player.rig;
+    if (dist(r.x, r.z, v.obj.x, v.obj.z) < 1.8) {
+      this.ruta = [];
+      return;
+    }
+    s.recalc -= dt;
+    if (s.recalc <= 0 || !this.ruta.length) {
+      s.recalc = 0.6;
+      this.ruta = this.nav.path(r.x, r.z, v.obj.x, v.obj.z);
+      this.rutaAtasco = 0;
+    }
+  }
+
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
   irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion") {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
@@ -1044,6 +1129,7 @@ export class CiudadWorld {
       oracion: [[P.ORACION_PUNTO[0] + 2.2, P.ORACION_PUNTO[1]], -Math.PI / 2],
     };
     const [[x, z], yaw] = destinos[lugar];
+    this.dejarDeSeguir();
     const r = this.player.rig;
     r.x = x;
     r.z = z;
@@ -1277,6 +1363,8 @@ export class CiudadWorld {
     let [x, z] = p;
     if (!P.caminable(x, z)) return;
     [x, z] = collide(x, z, PLAYER_R, this.rects, this.circles);
+    // tocar el piso para ir a otro lado deja de seguir al vecino
+    this.dejarDeSeguir();
     this.ruta = this.nav.path(r.x, r.z, x, z);
     this.rutaAtasco = 0;
     if (this.marca) {
@@ -1292,8 +1380,11 @@ export class CiudadWorld {
     this.irAlToque();
     const [ix, iy] = this.entrada.vector();
     let dx = 0, dz = 0;
-    if (Math.hypot(ix, iy) > 0.01) {
-      // el joystick o el teclado mandan (y cortan el camino al punto tocado)
+    const mandaElJugador = Math.hypot(ix, iy) > 0.01;
+    if (!mandaElJugador) this.pasoSeguir(dt);
+    if (mandaElJugador) {
+      // el joystick o el teclado mandan (y cortan el camino al punto tocado, y el seguir a alguien)
+      this.dejarDeSeguir();
       this.ruta = [];
       const th = 0.36;
       const fx = -Math.cos(th), fz = -Math.sin(th);
@@ -2196,6 +2287,8 @@ export class CiudadWorld {
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();
     this.red.cerrar();
+    acompanar.ponerSiguiendo(null);
+    acompanar.cerrarInvitacion();
     for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);
     if (this.mensaje) {
       this.scene.remove(this.mensaje.ring.mesh);

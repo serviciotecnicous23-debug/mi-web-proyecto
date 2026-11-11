@@ -321,6 +321,8 @@ export type RedEntra =
   /** La misión del barrio de hoy (shared/barrio-juntos.ts): cómo va mientras estás en el lugar, y cuando se cumple. */
   | { t: "juntos"; p: import("./barrio-juntos").JuntosProgreso }
   | { t: "juntos-hecho"; titulo: string; gozo: number; merito: number; ayudo: boolean; juntos: number; gozoTotal?: number }
+  /** Un amigo o vecino te invita a venir adonde está (shared/acompanar.ts). */
+  | { t: "invitacion"; i: import("./acompanar").Invitacion }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API

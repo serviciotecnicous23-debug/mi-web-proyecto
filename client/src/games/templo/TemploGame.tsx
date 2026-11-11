@@ -51,6 +51,7 @@ import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { SabioView } from "./SabioUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
+import { InvitacionEntrante } from "./Acompanar";
 import { CasaHudLayer } from "./CasaUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
@@ -676,6 +677,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
             <>
               <LlamadaEntrante />
               <RetoEntrante />
+              {city && <InvitacionEntrante />}
             </>
           )}
           <AvisoVersionNueva alActualizar={actualizarVersion} />

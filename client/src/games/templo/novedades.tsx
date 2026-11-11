@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-acompanar",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Acompaña a tus vecinos por la ciudad",
+    puntos: [
+      "👣 En «Tu barrio», pestaña «Vecinos», los que están en línea tienen «Ir con…»: te lleva adonde está tu vecino y lo sigues caminando detrás de él. Para dejar de seguirlo, toca «Dejar de seguir» o camina tú.",
+      "📣 «Invitar a venir»: a tu amigo o vecino le llega tu invitación arriba de la pantalla, con un botón para ir contigo.",
+      "🧭 Al tocar a un vecino en la calle, ahora también puedes seguirlo. Solo entre amigos y vecinos del barrio, nunca con quien bloqueaste; quien apaga «Recibir llamadas e invitaciones» en la casa de la sabiduría no las recibe.",
+    ],
+  },
+  {
     id: "2026-11-11-barrio-juntos",
     fecha: "11 de noviembre de 2026",
     titulo: "La misión del barrio y la copa de los barrios",
