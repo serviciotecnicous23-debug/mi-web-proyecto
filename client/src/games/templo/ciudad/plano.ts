@@ -30,7 +30,8 @@ export const POZO: V2 = [56, 3.2];
 export const PULPITO: V2 = [58, -8.6];
 export const ANUNCIOS: V2 = [58, -6.1];
 export const ANCIANOS: V2 = [72.4, 0];
-export const PUESTOS: V2[] = [[45.5, 9.4], [50.5, 9.4], [61.5, 9.4], [66.5, 9.4]];
+/** Los cuatro puestos del mercado, a los dos lados del pozo (dejan libre la entrada de la casa de la sabiduría). */
+export const PUESTOS: V2[] = [[48.0, 9.4], [52.5, 9.4], [59.5, 9.4], [64.0, 9.4]];
 export const MERCADO: V2 = [56, 8.6];
 
 /** El palacio del rey (1 Reyes 7:1-12): el cuerpo, el pórtico de columnas y la puerta. */
@@ -49,6 +50,15 @@ export const ORACION_PUNTO: V2 = [5.4, -28.5];
  */
 export const CAMARA: Rect = [35.0, -11.6, 40.0, -4.4];
 export const CAMARA_PUERTA: V2 = [41.2, -8.0];
+/**
+ * La casa de la sabiduría (Proverbios 9:1), donde se juega «¿Quién es sabio?»: del otro lado de la
+ * escalinata, frente a la cámara. La sala, la grada con sus escalones y las siete columnas miran a la plaza.
+ */
+export const SABIDURIA: Rect = [35.0, 4.4, 40.0, 11.6];
+export const SABIDURIA_GRADA: Rect = [40.0, 4.0, 41.7, 12.0];
+export const SABIDURIA_PUERTA: V2 = [42.7, 8.0];
+/** Las siete columnas de su pórtico. */
+export const SABIDURIA_COLUMNAS: V2[] = Array.from({ length: 7 }, (_, i) => [40.95, 4.65 + (i * 6.7) / 6] as V2);
 
 
 /** Una parcela: su rectángulo, el centro de la casa, hacia dónde mira la puerta y el umbral. */
@@ -155,6 +165,8 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
     PALACIO,
     ESCUELA,
     CAMARA,
+    SABIDURIA,
+    SABIDURIA_GRADA,
     // barandas de la escalinata: se sube y se baja por el frente
     [ESCALINATA.x0, -ESCALINATA.half - 0.35, ESCALINATA.x1, -ESCALINATA.half],
     [ESCALINATA.x0, ESCALINATA.half, ESCALINATA.x1, ESCALINATA.half + 0.35],
@@ -181,7 +193,7 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
 
 /** Árboles en las calles y en la plaza. */
 export const ARBOLES: V2[] = [
-  [41.5, 7.5], [44.6, -11.2], [69.5, 7.5], [69.5, -7.5], [35, 30], [35, -30], [35, 55], [35, -55], [-1, 17.5], [1, -18.5],
+  [44.6, 11.2], [44.6, -11.2], [69.5, 7.5], [69.5, -7.5], [35, 30], [35, -30], [35, 55], [35, -55], [-1, 17.5], [1, -18.5],
 ];
 
 /** Lugares por donde pasea la gente de la ciudad (de uno a otro, por los caminos). */

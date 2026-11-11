@@ -14,7 +14,7 @@ import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree,
 import type { SkyUniforms } from "../three/structures";
 import {
   AREA_RECT, ARBOLES, CALLES_DE_AREA, CAMARA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, ORACION_PUNTO, PALACIO,
-  PALACIO_PORTICO, PARCELAS, PLAZA, POZO, PUERTA, PUESTOS, PULPITO, SUELO, rellenoDeCasas, type Parcela,
+  PALACIO_PORTICO, PARCELAS, PLAZA, POZO, PUERTA, PUESTOS, PULPITO, SABIDURIA, SABIDURIA_COLUMNAS, SUELO, rellenoDeCasas, type Parcela,
 } from "./plano";
 
 // ---------------------------------------------------------------- utilidades
@@ -91,7 +91,7 @@ export type CiudadVisual = {
   /** Donde sube el humo del altar, sobre el monte. */
   humo: THREE.Vector3;
   /** Lugares para poner letreros. */
-  letreros: { templo: THREE.Vector3; palacio: THREE.Vector3; escuela: THREE.Vector3; camara: THREE.Vector3; puerta: THREE.Vector3; plaza: THREE.Vector3 };
+  letreros: { templo: THREE.Vector3; palacio: THREE.Vector3; escuela: THREE.Vector3; camara: THREE.Vector3; sabiduria: THREE.Vector3; puerta: THREE.Vector3; plaza: THREE.Vector3 };
 };
 
 // ---------------------------------------------------------------- terreno
@@ -512,6 +512,60 @@ function buildCamara(root: THREE.Group, fuegos: THREE.Vector3[]) {
   meshes(root, m, null, true);
 }
 
+// ---------------------------------------------------------------- la casa de la sabiduría (Proverbios 9:1)
+function buildSabiduria(root: THREE.Group, fuegos: THREE.Vector3[]) {
+  const m = new GeoBuilder();
+  const [x0, z0, x1, z1] = SABIDURIA;
+  const W = x1 - x0, D = z1 - z0;
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+  const H = 3.9;
+  const ORO = "#d9a72b", MARMOL = "#efe7d6", PURPURA = "#4b2a7a";
+  // la sala, de piedra clara con sus hiladas y una franja de oro arriba
+  m.box(W, H, D, vary(C.piedraClara, 0.02), { x: cx, y: Y + H / 2, z: cz });
+  for (let k = 1; k < 7; k++) m.box(W + 0.02, 0.03, D + 0.02, vary(C.junta, 0.04), { x: cx, y: Y + (H * k) / 7, z: cz });
+  m.box(W + 0.06, 0.22, D + 0.06, ORO, { x: cx, y: Y + H - 0.45, z: cz });
+  m.box(W + 0.12, 0.32, D + 0.12, C.piedraOsc, { x: cx, y: Y + 0.16, z: cz });
+  // techo plano de cedro con su pretil (Deuteronomio 22:8)
+  m.box(W + 0.3, 0.16, D + 0.3, C.cedroOsc, { x: cx, y: Y + H + 0.08, z: cz });
+  for (const sg of [-1, 1]) {
+    m.box(W + 0.3, 0.34, 0.14, C.piedra, { x: cx, y: Y + H + 0.33, z: cz + sg * (D / 2 + 0.08) });
+    m.box(0.14, 0.34, D + 0.3, C.piedra, { x: cx + sg * (W / 2 + 0.08), y: Y + H + 0.33, z: cz });
+  }
+  // la grada con tres escalones que suben desde la plaza
+  for (let s = 0; s < 3; s++) {
+    const w = 1.7 - s * 0.42;
+    m.box(w, 0.15, D + 0.8 - s * 0.2, vary(C.piedra, 0.02), { x: x1 + w / 2, y: Y + 0.075 + s * 0.15, z: cz });
+  }
+  const top = Y + 0.45;
+  // las siete columnas de mármol, con basa y capitel de oro
+  for (const [xc, zc] of SABIDURIA_COLUMNAS) {
+    m.box(0.42, 0.12, 0.42, ORO, { x: xc, y: top + 0.06, z: zc });
+    m.cyl(0.15, 0.18, 3.1, MARMOL, { x: xc, y: top + 0.12 + 1.55, z: zc }, 12);
+    m.box(0.46, 0.16, 0.46, ORO, { x: xc, y: top + 3.3, z: zc });
+  }
+  // el arquitrabe y el remate escalonado sobre las columnas
+  m.box(1.5, 0.3, D + 0.3, MARMOL, { x: x1 + 0.75, y: top + 3.53, z: cz });
+  m.box(1.52, 0.1, D + 0.32, ORO, { x: x1 + 0.75, y: top + 3.72, z: cz });
+  m.box(1.2, 0.35, D - 0.8, MARMOL, { x: x1 + 0.6, y: top + 3.95, z: cz });
+  m.box(0.8, 0.3, D - 2.4, MARMOL, { x: x1 + 0.4, y: top + 4.27, z: cz });
+  // la puerta grande, de cedro con chapas de oro
+  m.box(1.7, 2.7, 0.1, "#3b2a1c", { x: x1 + 0.03, y: top + 1.35, z: cz, ry: Math.PI / 2 });
+  for (const dz of [-0.42, 0.42]) m.box(0.62, 2.4, 0.04, "#5a3d22", { x: x1 + 0.07, y: top + 1.3, z: cz + dz, ry: Math.PI / 2 });
+  m.box(1.9, 0.18, 0.16, ORO, { x: x1 + 0.06, y: top + 2.8, z: cz, ry: Math.PI / 2 });
+  // dos estandartes de púrpura con su orla de oro, a los extremos del pórtico
+  for (const zz of [z0 + 0.75, z1 - 0.75]) {
+    m.box(0.05, 1.7, 0.62, PURPURA, { x: x1 + 0.08, y: top + 2.0, z: zz });
+    m.box(0.06, 0.09, 0.64, ORO, { x: x1 + 0.09, y: top + 1.2, z: zz });
+  }
+  // dos candeleros altos junto a la puerta: de noche se ven encendidos
+  for (const dz of [-1.3, 1.3]) {
+    m.cyl(0.04, 0.07, 1.5, ORO, { x: x1 + 0.42, y: top + 0.75, z: cz + dz }, 8);
+    m.lathe([[0, 0], [0.1, 0.01], [0.14, 0.06], [0.1, 0.09], [0, 0.08]], ORO, { x: x1 + 0.42, y: top + 1.5, z: cz + dz }, 10);
+    fuegos.push(new THREE.Vector3(x1 + 0.42, top + 1.66, cz + dz));
+  }
+  meshes(root, m, null, true);
+}
+
 // ---------------------------------------------------------------- las casas
 const ADOBES = ["#c9a06a", "#c29563", "#d1a874", "#bf9a68"];
 const PIEDRAS = ["#ddd0b0", "#d6c7a4", "#e3d7b8", "#cfc09c"];
@@ -915,10 +969,13 @@ export function buildCiudad(): CiudadVisual {
   escuela.name = "escuela";
   const camara = new THREE.Group();
   camara.name = "camara";
-  root.add(palacio, escuela, camara);
+  const sabiduria = new THREE.Group();
+  sabiduria.name = "sabiduria";
+  root.add(palacio, escuela, camara, sabiduria);
   buildPalacio(palacio, fuegos);
   buildEscuela(escuela);
   buildCamara(camara, fuegos);
+  buildSabiduria(sabiduria, fuegos);
   buildRelleno(root);
   const cielo = buildCielo();
   root.add(cielo.sky, cielo.stars, cielo.clouds);
@@ -940,13 +997,14 @@ export function buildCiudad(): CiudadVisual {
     ventanas,
     enramadas,
     fuegos,
-    ocluyentes: [palacio, escuela, camara],
+    ocluyentes: [palacio, escuela, camara, sabiduria],
     humo: new THREE.Vector3(3.0, 1.8, 0),
     letreros: {
       templo: new THREE.Vector3(ESCALINATA.x0 + 0.6, 1.6, 0),
       palacio: new THREE.Vector3(17, Y + 9.6, 28),
       escuela: new THREE.Vector3(17, Y + 5.2, -28),
       camara: new THREE.Vector3((CAMARA[0] + CAMARA[2]) / 2 + 1, Y + 4.6, (CAMARA[1] + CAMARA[3]) / 2),
+      sabiduria: new THREE.Vector3(SABIDURIA[2] + 0.8, Y + 5.9, (SABIDURIA[1] + SABIDURIA[3]) / 2),
       puerta: new THREE.Vector3(MURO_ORIENTE, Y + 9.0, 0),
       plaza: new THREE.Vector3(PULPITO[0], Y + 3.2, PULPITO[1]),
     },

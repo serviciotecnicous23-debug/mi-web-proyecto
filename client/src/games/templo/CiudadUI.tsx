@@ -1317,6 +1317,8 @@ function IrAView() {
     { id: "puerta", nombre: "La puerta de la ciudad", nota: "Los ancianos sentados a la puerta" },
     { id: "palacio", nombre: "El palacio del rey", nota: "Al sur del monte" },
     { id: "escuela", nombre: "La escuela de los profetas", nota: "Al norte del monte" },
+    { id: "camara", nombre: "La cámara de los sacerdotes", nota: "Junto a la escalinata, del lado norte" },
+    { id: "sabiduria", nombre: "La casa de la sabiduría", nota: "Junto a la escalinata, del lado sur: «¿Quién es sabio?»" },
   ];
   return (
     <Card
