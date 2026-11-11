@@ -5,22 +5,26 @@
  * El servidor corrige: aquí nunca está la respuesta antes de contestar.
  */
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Crown, ListOrdered, Loader2, Lock, ScrollText, Shirt, Trophy, Volume2, VolumeX, X } from "lucide-react";
+import { Crown, Eye, ListOrdered, Loader2, Lock, PhoneCall, ScrollText, Shirt, Trophy, Volume2, VolumeX, X } from "lucide-react";
 import { Portrait } from "./Portrait";
 import { gameStore } from "./store";
 import { CiudadCtx } from "./CiudadUI";
 import { sonido } from "./sabio-sonido";
+import { sabioRed } from "./sabio-red";
+import { ICONO_CAMINO } from "./barrio-chat";
 import {
-  COMODINES, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, NOMBRE_CONCURSO, ORDEN_COMODINES, PREMIO_SEMANA, PUNTOS_GRADA,
-  TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_TRAJES, canticoGrada, segundosGrada,
-  type Comodin, type FilaTabla, type FinPartida, type PartidaVista, type PreguntaVista, type RespuestaSabio, type SabioEstado,
+  APLAUSOS, COMODINES, CONSEJOS_FAJA, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, NOMBRE_CONCURSO, ORDEN_COMODINES,
+  PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, segundosGrada,
+  type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PreguntaVista,
+  type PublicoVista, type Relacion, type RespuestaSabio, type SabioEstado,
 } from "@shared/sabio";
 
 const API = "/api/jerusalen/sabio";
+/** Pedir algo al servidor: GET sin cuerpo (`leer`) o POST con cuerpo. */
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: (T & { message?: string }) | null }> {
   try {
     const res = await fetch(`${API}${path}`, {
-      method: body === undefined && path === "" ? "GET" : "POST",
+      method: body === undefined ? "GET" : "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -34,8 +38,25 @@ async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; st
 const miles = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const LETRAS = ["A", "B", "C", "D"];
 const azar = <T,>(l: T[]) => l[Math.floor(Math.random() * l.length)];
+const primerNombre = (s: string) => s.split(/[\s,]+/)[0] || s;
+const RELACION: Record<Relacion, string> = { amigo: "tu amigo", vecino: "tu vecino", ambos: "tu amigo y vecino" };
 
-type Fase = "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "revelado" | "fin" | "error";
+/** Los aplausos que llegan flotan sobre la pantalla un momento. */
+type Flota = { id: number; icono: string; x: number };
+let flotaId = 0;
+function nuevosAplausos(antes: PublicoVista | null, ahora: PublicoVista): Flota[] {
+  if (!antes || ahora.ultimo <= antes.ultimo) return [];
+  const out: Flota[] = [];
+  for (const a of APLAUSOS) {
+    const n = Math.max(0, (ahora.aplausos[a.id] ?? 0) - (antes.aplausos[a.id] ?? 0));
+    for (let k = 0; k < Math.min(4, n); k++) out.push({ id: ++flotaId, icono: a.icono, x: 8 + Math.random() * 84 });
+  }
+  // si los conteos no subieron (se fueron los viejos), igual se ve que alguien aplaudió
+  if (!out.length) out.push({ id: ++flotaId, icono: "👏", x: 8 + Math.random() * 84 });
+  return out;
+}
+
+type Fase = "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "revelado" | "fin" | "mirando" | "error";
 type Revelado = { elegida: number; correcta: number; bien: boolean; explica: string; ref: string; respuesta: string };
 
 export function SabioView() {
@@ -56,8 +77,16 @@ export function SabioView() {
   const [verEscalera, setVerEscalera] = useState(false);
   const [retirar, setRetirar] = useState(false);
   const [restan, setRestan] = useState(0);
+  // con amigos: a quién llamar, la llamada en curso, el público y la partida que se mira
+  const [elegirAmigo, setElegirAmigo] = useState(false);
+  const [amigos, setAmigos] = useState<AmigoPosible[] | null>(null);
+  const [restaLlamada, setRestaLlamada] = useState(0);
+  const [publico, setPublico] = useState<PublicoVista | null>(null);
+  const [flotan, setFlotan] = useState<Flota[]>([]);
+  const [mirandoId, setMirandoId] = useState<number | null>(null);
   const pararSuspenso = useRef<() => void>(() => undefined);
   const finTiempo = useRef<number>(0);
+  const finLlamada = useRef<number>(0);
   const vivo = useRef(true);
 
   const cargar = useCallback(async () => {
@@ -108,9 +137,81 @@ export function SabioView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fase, qVista?.texto]);
 
+  // la llamada a un amigo o vecino: se cuenta su tiempo y se pregunta al servidor hasta que llegue el consejo
+  const faseRef = useRef(fase);
+  faseRef.current = fase;
+  const llamadaPendiente = useRef(false);
+  const llamadaId = partida?.llamada && (fase === "pregunta" || fase === "confirmar") ? partida.id : null;
+  const traerPartida = useCallback(async () => {
+    const r = await pedir<{ partida: PartidaVista | null }>("/partida");
+    // si ya respondió mientras tanto, lo que llega es viejo
+    if (!vivo.current || !r.ok || !r.data?.partida || (faseRef.current !== "pregunta" && faseRef.current !== "confirmar")) return;
+    const p = r.data.partida;
+    setPartida(p);
+    if (p.pregunta) {
+      finTiempo.current = Date.now() + p.pregunta.restantes * 1000;
+      setQVista(p.pregunta);
+    }
+    if (!p.llamada && llamadaPendiente.current) {
+      llamadaPendiente.current = false;
+      sonido.comodin();
+      setDice(p.amigo?.vecino ? `¡Llegó el consejo de ${p.amigo.quien}!` : "Husai, el amigo del rey, te manda decir…");
+    }
+  }, []);
+  // si se acaba el tiempo con la lista abierta, se cierra
+  useEffect(() => {
+    if (fase !== "pregunta") setElegirAmigo(false);
+  }, [fase]);
+  useEffect(() => {
+    if (llamadaId === null) return;
+    const t = setInterval(() => {
+      setRestaLlamada(Math.max(0, Math.ceil((finLlamada.current - Date.now()) / 1000)));
+    }, 250);
+    const sondeo = setInterval(() => void traerPartida(), 2000);
+    const quitar = sabioRed.onConsejo((id) => {
+      if (id === llamadaId) void traerPartida();
+    });
+    return () => {
+      clearInterval(t);
+      clearInterval(sondeo);
+      quitar();
+    };
+  }, [llamadaId, traerPartida]);
+
+  // quien juega ve cuántos lo miran y los aplausos del público
+  const jugandoId = partida && (fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") ? partida.id : null;
+  const ultimoPublico = useRef<PublicoVista | null>(null);
+  useEffect(() => {
+    if (jugandoId === null) return;
+    ultimoPublico.current = null;
+    let parar = false;
+    const leerPublico = async () => {
+      const r = await pedir<{ publico: PublicoVista }>(`/publico?id=${jugandoId}`);
+      if (parar || !vivo.current || !r.ok || !r.data?.publico) return;
+      const nuevos = nuevosAplausos(ultimoPublico.current, r.data.publico);
+      ultimoPublico.current = r.data.publico;
+      setPublico(r.data.publico);
+      if (nuevos.length) {
+        sonido.aplauso();
+        setFlotan((f) => [...f, ...nuevos].slice(-12));
+        setTimeout(() => setFlotan((f) => f.filter((x) => !nuevos.some((n) => n.id === x.id))), 2400);
+      }
+    };
+    void leerPublico();
+    const t = setInterval(() => void leerPublico(), 3000);
+    return () => {
+      parar = true;
+      clearInterval(t);
+    };
+  }, [jugandoId]);
+
   function mostrarPregunta(p: PartidaVista, retomada = false) {
     const q = p.pregunta!;
     finTiempo.current = Date.now() + q.restantes * 1000;
+    if (p.llamada) {
+      finLlamada.current = Date.now() + p.llamada.restantes * 1000;
+      llamadaPendiente.current = true;
+    }
     setRestan(q.restantes);
     setPartida(p);
     setQVista(q);
@@ -226,18 +327,40 @@ export function SabioView() {
     setFase("revelado");
   }
 
-  async function comodin(tipo: Comodin) {
+  async function abrirAmigos() {
+    if (ocupado || fase !== "pregunta") return;
+    setElegirAmigo(true);
+    setAmigos(null);
+    const r = await pedir<{ amigos: AmigoPosible[] }>("/amigos");
+    if (!vivo.current) return;
+    setAmigos(r.ok && r.data?.amigos ? r.data.amigos : []);
+  }
+
+  async function comodin(tipo: Comodin, a?: number) {
     if (ocupado || fase !== "pregunta") return;
     setOcupado(true);
     setAviso(null);
-    const r = await pedir<{ partida: PartidaVista }>("/comodin", { tipo });
+    const r = await pedir<{ partida: PartidaVista }>("/comodin", a ? { tipo, a } : { tipo });
     setOcupado(false);
     if (!r.ok || !r.data?.partida) {
       setAviso(r.data?.message || "No se pudo usar el comodín.");
+      // quien se llamó ya no puede: se vuelve a mirar la lista
+      if (tipo === "amigo" && a && r.status === 409) void abrirAmigos();
       return;
     }
+    setElegirAmigo(false);
     sonido.comodin();
     const p = r.data.partida;
+    if (p.llamada) {
+      finLlamada.current = Date.now() + p.llamada.restantes * 1000;
+      llamadaPendiente.current = true;
+      setRestaLlamada(p.llamada.restantes);
+      finTiempo.current = Date.now() + (p.pregunta?.restantes ?? 0) * 1000;
+      setPartida(p);
+      setQVista(p.pregunta);
+      setDice(`Llamamos a ${p.llamada.nombre}… ¡Tiene ${LLAMADA_S} segundos! Esos segundos se suman a tu reloj.`);
+      return;
+    }
     if (tipo === "rollo") {
       mostrarPregunta(p);
       setDice("Desenrollamos otro rollo: aquí va otra pregunta de la misma grada.");
@@ -251,7 +374,9 @@ export function SabioView() {
         ? "El aventador limpia la era: se van dos respuestas."
         : tipo === "ancianos"
           ? "Los ancianos de la puerta dan su consejo…"
-          : "Husai, el amigo del rey, te manda decir…",
+          : p.amigo?.vecino
+            ? `${p.amigo.quien} te manda decir…`
+            : "Husai, el amigo del rey, te manda decir…",
     );
   }
 
@@ -276,9 +401,22 @@ export function SabioView() {
     setFin(null);
     setPartida(null);
     setQVista(null);
+    setMirandoId(null);
+    setPublico(null);
     setFase("cargando");
     setDice(FRASES_PRESENTADOR.bienvenida);
     await cargar();
+  }
+
+  function mirar(id: number) {
+    city?.audio.click();
+    setMirandoId(id);
+    setFase("mirando");
+  }
+
+  async function cambiarLlamadas(si: boolean) {
+    const r = await pedir<{ llamadas: boolean }>("/llamadas", { si });
+    if (r.ok && r.data) setEstado((e) => (e ? { ...e, yo: { ...e.yo, llamadas: r.data!.llamadas } } : e));
   }
 
   const q = qVista;
@@ -329,7 +467,10 @@ export function SabioView() {
           </div>
         )}
         {fase === "error" && <p className="mt-10 rounded-xl bg-red-950/60 p-4 text-center text-sm">{error}</p>}
-        {fase === "portada" && estado && <Portada estado={estado} onEmpezar={() => void empezar()} ocupado={ocupado} aviso={aviso} dice={dice} />}
+        {fase === "portada" && estado && (
+          <Portada estado={estado} onEmpezar={() => void empezar()} ocupado={ocupado} aviso={aviso} dice={dice} onMirar={mirar} onLlamadas={(si) => void cambiarLlamadas(si)} />
+        )}
+        {fase === "mirando" && mirandoId !== null && <MirarView id={mirandoId} onSalir={() => void volverAPortada()} />}
         {(fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") && partida && (
           <div className="mx-auto flex max-w-4xl gap-4 pt-2">
             <div className="min-w-0 flex-1 space-y-2.5">
@@ -343,6 +484,11 @@ export function SabioView() {
                     Por {miles(PUNTOS_GRADA[Math.min(GRADAS, n)])} <span className="font-semibold text-amber-200/70">· seguro {miles(partida.seguro)}</span>
                   </p>
                 </div>
+                {publico && publico.mirando > 0 && (
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px] font-bold" data-testid="sabio-publico" title="Te están mirando en vivo">
+                    <Eye className="h-3.5 w-3.5" /> {publico.mirando}
+                  </span>
+                )}
                 {q && (fase === "pregunta" || fase === "confirmar") && <Reloj restan={restan} total={q.segundos} />}
                 <button
                   type="button"
@@ -393,20 +539,25 @@ export function SabioView() {
                         >
                           <span className="font-black text-amber-300">{LETRAS[i]}:</span>
                           <span className="min-w-0 flex-1">{o}</span>
-                          {partida.amigo?.opcion === i && !revelado && <span className="rounded-full bg-sky-400/30 px-1.5 text-[10px] font-bold text-sky-100">Husai</span>}
+                          {partida.amigo?.opcion === i && !revelado && (
+                            <span className="max-w-[6rem] truncate rounded-full bg-sky-400/30 px-1.5 text-[10px] font-bold text-sky-100">{partida.amigo.vecino ? primerNombre(partida.amigo.quien) : "Husai"}</span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
                   {partida.ancianos && !revelado && <Ancianos pct={partida.ancianos} quitadas={q.quitadas} />}
-                  {partida.amigo && !revelado && (
-                    <div className="flex items-start gap-2 rounded-xl bg-sky-950/60 p-2.5 text-[13px]" data-testid="sabio-amigo">
-                      <Portrait who="husai" size={36} />
-                      <p>
-                        <b>{partida.amigo.quien}:</b> {partida.amigo.dice}
+                  {partida.llamada && !revelado && (
+                    <div className="flex items-center gap-2 rounded-xl bg-emerald-950/60 p-2.5 text-[13px]" data-testid="sabio-llamando">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/80">
+                        <PhoneCall className="h-4 w-4 animate-pulse" />
+                      </span>
+                      <p className="min-w-0 flex-1">
+                        Llamando a <b>{partida.llamada.nombre}</b>… le quedan <b className="tabular-nums">{restaLlamada}</b> segundos para darte su consejo.
                       </p>
                     </div>
                   )}
+                  {partida.amigo && !revelado && <ConsejoVisto amigo={partida.amigo} />}
                   {fase === "confirmar" && (
                     <div className="grid grid-cols-2 gap-2" data-testid="sabio-confirmar">
                       <button type="button" className="sabio-boton" onClick={() => void confirmar()} data-testid="sabio-si">
@@ -447,7 +598,7 @@ export function SabioView() {
                               key={c}
                               type="button"
                               disabled={usado || cerrado || ocupado || fase !== "pregunta"}
-                              onClick={() => void comodin(c)}
+                              onClick={() => (c === "amigo" ? void abrirAmigos() : void comodin(c))}
                               className={`relative flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold leading-tight ${usado || cerrado ? "bg-white/5 text-amber-50/40" : "bg-white/10 hover:bg-white/20"}`}
                               title={`${COMODINES[c].nombre}: ${COMODINES[c].texto}`}
                               data-testid={`sabio-comodin-${c}`}
@@ -489,6 +640,30 @@ export function SabioView() {
         )}
         {fase === "fin" && fin && <Fin fin={fin} estado={estado} onOtra={() => void empezar()} onPortada={() => void volverAPortada()} ocupado={ocupado} aviso={aviso} />}
       </div>
+
+      {flotan.length > 0 && (
+        <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden="true">
+          {flotan.map((f) => (
+            <span key={f.id} className="sabio-flota absolute bottom-16 text-3xl" style={{ left: `${f.x}%` }}>
+              {f.icono}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {elegirAmigo && partida && (
+        <ElegirAmigo
+          amigos={amigos}
+          ocupado={ocupado}
+          aviso={aviso}
+          onHusai={() => void comodin("amigo")}
+          onLlamar={(a) => void comodin("amigo", a)}
+          onCerrar={() => {
+            setElegirAmigo(false);
+            setAviso(null);
+          }}
+        />
+      )}
 
       {verEscalera && partida && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-4" onClick={() => setVerEscalera(false)}>
@@ -612,17 +787,165 @@ function Ancianos({ pct, quitadas }: { pct: number[]; quitadas: number[] }) {
   );
 }
 
+/** El consejo que llegó: el retrato de Husai, o el del amigo o vecino (con el ícono de su camino). */
+function ConsejoVisto({ amigo }: { amigo: ConsejoAmigo }) {
+  return (
+    <div className="flex items-start gap-2 rounded-xl bg-sky-950/60 p-2.5 text-[13px]" data-testid="sabio-amigo">
+      {amigo.vecino ? (
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-400/30 text-lg ring-2 ring-sky-300/60" aria-hidden="true">
+          {ICONO_CAMINO[amigo.vecino.camino]}
+        </span>
+      ) : (
+        <Portrait who="husai" size={36} />
+      )}
+      <p>
+        <b>{amigo.quien}</b>
+        {amigo.vecino ? <span className="text-sky-200/80"> ({RELACION[amigo.vecino.relacion]})</span> : null}: {amigo.dice}
+      </p>
+    </div>
+  );
+}
+
+/** El comodín «Un amigo»: a quién llamar (amigos y vecinos que están ahora en la ciudad o en el templo) o Husai. */
+function ElegirAmigo({
+  amigos,
+  ocupado,
+  aviso,
+  onHusai,
+  onLlamar,
+  onCerrar,
+}: {
+  amigos: AmigoPosible[] | null;
+  ocupado: boolean;
+  aviso: string | null;
+  onHusai: () => void;
+  onLlamar: (personajeId: number) => void;
+  onCerrar: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-20 flex items-end justify-center bg-black/70 p-3 sm:items-center" onClick={onCerrar} data-testid="sabio-elegir-amigo">
+      <div className="max-h-full w-full max-w-md overflow-y-auto rounded-2xl border border-amber-300/50 bg-[#150e36] p-3" onClick={(e) => e.stopPropagation()}>
+        <p className="font-serif text-lg font-black text-amber-200">🤝 ¿A quién llamas?</p>
+        <p className="text-[12px] text-amber-100/75">
+          Un amigo o vecino que esté ahora en la ciudad tiene {LLAMADA_S} segundos para darte su consejo (y te los sumamos al reloj). El reloj sigue corriendo mientras eliges.
+        </p>
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={onHusai}
+          className="mt-2 flex w-full items-center gap-2 rounded-xl bg-white/10 p-2 text-left hover:bg-white/20 disabled:opacity-50"
+          data-testid="sabio-amigo-husai"
+        >
+          <Portrait who="husai" size={36} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-black">Husai, el amigo del rey</span>
+            <span className="block text-[11px] text-amber-100/70">Contesta enseguida. «{COMODINES.amigo.verso.text}» ({COMODINES.amigo.verso.ref})</span>
+          </span>
+        </button>
+        <p className="mb-1 mt-3 text-[11px] font-bold uppercase tracking-wider text-amber-200/80">Tus amigos y vecinos en línea</p>
+        {amigos === null ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-amber-300" />
+          </div>
+        ) : amigos.length === 0 ? (
+          <p className="rounded-xl bg-white/5 p-3 text-center text-[12px] text-amber-100/75" data-testid="sabio-amigos-vacio">
+            Ahora ninguno de tus amigos ni vecinos está en la ciudad (o están jugando). Husai siempre contesta.
+          </p>
+        ) : (
+          <ul className="space-y-1.5" data-testid="sabio-amigos">
+            {amigos.map((a) => (
+              <li key={a.personajeId}>
+                <button
+                  type="button"
+                  disabled={ocupado}
+                  onClick={() => onLlamar(a.personajeId)}
+                  className="flex w-full items-center gap-2 rounded-xl bg-emerald-900/40 p-2 text-left ring-1 ring-emerald-400/30 hover:bg-emerald-900/70 disabled:opacity-50"
+                  data-testid={`sabio-amigo-${a.personajeId}`}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-lg" aria-hidden="true">
+                    {ICONO_CAMINO[a.camino]}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-black">{a.nombre}</span>
+                    <span className="block truncate text-[11px] text-amber-100/70">
+                      {RELACION[a.relacion]} · {a.donde}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-black text-emerald-950">
+                    <PhoneCall className="h-3.5 w-3.5" /> Llamar
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {aviso && <p className="mt-2 rounded-xl bg-red-950/70 px-3 py-2 text-center text-xs">{aviso}</p>}
+        <button type="button" className="mt-3 w-full rounded-xl bg-white/10 py-2 text-sm font-bold hover:bg-white/20" onClick={onCerrar} data-testid="sabio-amigo-volver">
+          Volver a la pregunta
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ================================================================ portada
-function Portada({ estado, onEmpezar, ocupado, aviso, dice }: { estado: SabioEstado; onEmpezar: () => void; ocupado: boolean; aviso: string | null; dice: string }) {
-  const [tab, setTab] = useState<"semana" | "siempre" | "trajes" | "reglas">("semana");
+function Portada({
+  estado,
+  onEmpezar,
+  ocupado,
+  aviso,
+  dice,
+  onMirar,
+  onLlamadas,
+}: {
+  estado: SabioEstado;
+  onEmpezar: () => void;
+  ocupado: boolean;
+  aviso: string | null;
+  dice: string;
+  onMirar: (id: number) => void;
+  onLlamadas: (si: boolean) => void;
+}) {
+  const [tab, setTab] = useState<"vivo" | "semana" | "siempre" | "trajes" | "reglas">(estado.enVivo.length ? "vivo" : "semana");
+  const [enVivo, setEnVivo] = useState<EnVivo[]>(estado.enVivo);
   const y = estado.yo;
   const quedan = Math.max(0, ENTRADAS_DIA - y.entradasHoy);
+  // quién juega ahora: se refresca solo
+  useEffect(() => {
+    let parar = false;
+    const t = setInterval(async () => {
+      const r = await pedir<{ enVivo: EnVivo[] }>("/en-vivo");
+      if (!parar && r.ok && r.data?.enVivo) setEnVivo(r.data.enVivo);
+    }, 10_000);
+    return () => {
+      parar = true;
+      clearInterval(t);
+    };
+  }, []);
+  const primero = enVivo[0];
   return (
     <div className="mx-auto max-w-2xl space-y-3 pt-2" data-testid="sabio-portada">
       {estado.premioSemana && (
         <div className="rounded-2xl bg-gradient-to-r from-amber-300 to-amber-500 p-3 text-center text-sm font-black text-amber-950 shadow-lg" data-testid="sabio-premio-semana">
           🏆 Quedaste en el puesto {estado.premioSemana.puesto} de la semana pasada: +{estado.premioSemana.gozo} de gozo
         </div>
+      )}
+      {primero && (
+        <button
+          type="button"
+          onClick={() => onMirar(primero.id)}
+          className="flex w-full items-center gap-2 rounded-2xl bg-red-950/60 p-2.5 text-left ring-1 ring-red-400/50 hover:bg-red-950/80"
+          data-testid="sabio-envivo-banner"
+        >
+          <span className="sabio-latido h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" aria-hidden="true" />
+          <span className="min-w-0 flex-1 text-[12.5px]">
+            <b>En vivo:</b> {primero.nombre} va por la grada {primero.grada + 1}
+            {enVivo.length > 1 ? ` (y ${enVivo.length - 1} más)` : ""}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-black">
+            <Eye className="h-3.5 w-3.5" /> Mirar
+          </span>
+        </button>
       )}
       <Presentador dice={dice} />
       <div className="sabio-pregunta rounded-2xl p-3 text-center">
@@ -636,6 +959,16 @@ function Portada({ estado, onEmpezar, ocupado, aviso, dice }: { estado: SabioEst
         <Dato titulo="Sabiduría" valor={miles(y.total)} />
       </div>
       {y.siguiente && <p className="text-center text-[11px] text-amber-100/70">Siguiente título: {y.siguiente.icono} {y.siguiente.nombre} — {y.siguiente.requisito.toLowerCase()}.</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-[11.5px]" data-testid="sabio-consejos">
+        <span>
+          🤝 Consejos dados: <b>{y.consejos}</b> · acertados: <b>{y.consejosBuenos}</b>
+          {y.consejosBuenos < CONSEJOS_FAJA ? ` (faltan ${CONSEJOS_FAJA - y.consejosBuenos} para la faja del buen consejero)` : " · ¡ya tienes la faja!"}
+        </span>
+        <label className="flex cursor-pointer items-center gap-1.5 font-bold">
+          <input type="checkbox" checked={y.llamadas} onChange={(e) => onLlamadas(e.target.checked)} className="h-4 w-4 accent-amber-400" data-testid="sabio-llamadas" />
+          Recibir llamadas
+        </label>
+      </div>
       <button type="button" className="sabio-boton w-full py-3.5 text-base" disabled={ocupado || quedan <= 0} onClick={onEmpezar} data-testid="sabio-empezar">
         {ocupado ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : quedan > 0 ? "Subir al atril" : "Mañana hay más entradas"}
       </button>
@@ -643,9 +976,10 @@ function Portada({ estado, onEmpezar, ocupado, aviso, dice }: { estado: SabioEst
         Entradas de hoy: {quedan} de {ENTRADAS_DIA} · gozo de hoy {y.gozoHoy} de {GOZO_SABIO_DIA}
       </p>
       {aviso && <p className="rounded-xl bg-red-950/70 px-3 py-2 text-center text-xs">{aviso}</p>}
-      <div className="grid grid-cols-4 gap-1 rounded-full bg-black/30 p-1">
+      <div className="grid grid-cols-5 gap-0.5 rounded-full bg-black/30 p-1">
         {(
           [
+            ["vivo", "En vivo", Eye],
             ["semana", "Semana", Trophy],
             ["siempre", "Siempre", Crown],
             ["trajes", "Trajes", Shirt],
@@ -657,13 +991,14 @@ function Portada({ estado, onEmpezar, ocupado, aviso, dice }: { estado: SabioEst
             type="button"
             aria-pressed={tab === id}
             onClick={() => setTab(id)}
-            className={`flex items-center justify-center gap-1 rounded-full px-1.5 py-1.5 text-[11px] font-bold ${tab === id ? "bg-amber-400 text-amber-950" : "text-amber-100/80"}`}
+            className={`flex items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[10.5px] font-bold leading-none ${tab === id ? "bg-amber-400 text-amber-950" : "text-amber-100/80"}`}
             data-testid={`sabio-tab-${id}`}
           >
-            <Icono className="h-3.5 w-3.5" /> {nombre}
+            <Icono className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{nombre}</span>
           </button>
         ))}
       </div>
+      {tab === "vivo" && <EnVivoLista enVivo={enVivo} onMirar={onMirar} />}
       {tab === "semana" && (
         <Tabla
           filas={estado.tablaSemana}
@@ -753,8 +1088,244 @@ function Reglas() {
           </p>
         ))}
       </div>
+      <p>
+        • Con «Un amigo» llamas de verdad a un amigo o vecino que esté en la ciudad: le llega tu pregunta y tiene {LLAMADA_S} segundos. Si acierta, gana {GOZO_CONSEJO} de gozo; con {CONSEJOS_FAJA} consejos acertados gana la faja azul del buen consejero. <span className="italic text-amber-200/80">«{VERSO_CONSEJO.text}» {VERSO_CONSEJO.ref}</span>
+      </p>
+      <p>
+        • El público: en «En vivo» miras las partidas que se juegan ahora y animas con 👏 🙏 🔥 (quien juega lo ve). <span className="italic text-amber-200/80">«{VERSO_PUBLICO.text}» {VERSO_PUBLICO.ref}</span>
+      </p>
       <p>• {ENTRADAS_DIA} entradas por día (las siete columnas). Las preguntas no se te repiten hasta que veas todas las de esa grada.</p>
       <p>• Ganas puntos de sabiduría, gozo (hasta {GOZO_SABIO_DIA} por día), títulos ({TITULOS.map((t) => t.nombre).join(", ")}) y los trajes de los sabios.</p>
+    </div>
+  );
+}
+
+// ================================================================ el público
+function EnVivoLista({ enVivo, onMirar }: { enVivo: EnVivo[]; onMirar: (id: number) => void }) {
+  return (
+    <div className="space-y-1.5" data-testid="sabio-envivo">
+      {enVivo.length === 0 ? (
+        <p className="rounded-2xl bg-black/30 py-4 text-center text-xs text-amber-100/70">Ahora no hay nadie en el atril. Cuando alguien juegue, aquí lo puedes mirar en vivo y animarlo.</p>
+      ) : (
+        <ul className="divide-y divide-white/10 rounded-2xl bg-black/30">
+          {enVivo.map((v) => (
+            <li key={v.id} className="flex items-center gap-2 px-3 py-2 text-[13px]">
+              <span className="text-lg" aria-hidden="true">
+                {ICONO_CAMINO[v.camino]}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold">{v.nombre}</span>
+                <span className="block truncate text-[11px] text-amber-200/70">
+                  grada {v.grada + 1} · {miles(v.puntos)} puntos{v.relacion ? ` · ${RELACION[v.relacion]}` : ""}
+                </span>
+              </span>
+              {v.mirando > 0 && (
+                <span className="flex items-center gap-0.5 text-[11px] text-amber-100/70">
+                  <Eye className="h-3 w-3" /> {v.mirando}
+                </span>
+              )}
+              <button type="button" className="rounded-full bg-amber-400 px-3 py-1 text-[11px] font-black text-amber-950" onClick={() => onMirar(v.id)} data-testid={`sabio-mirar-${v.id}`}>
+                Mirar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-center font-serif text-[11.5px] italic text-amber-100/70">
+        «{VERSO_PUBLICO.text}» <span className="not-italic font-semibold text-amber-300">{VERSO_PUBLICO.ref}</span>
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Mirar en vivo una partida: la pregunta, el reloj, los comodines y, al responder, si acertó (con su cita). El
+ * público anima con aplausos que ve quien juega. Se pregunta al servidor cada segundo y medio.
+ */
+function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
+  const [v, setV] = useState<MirarVista | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [restan, setRestan] = useState(0);
+  const [espera, setEspera] = useState(false);
+  const [flotan, setFlotan] = useState<Flota[]>([]);
+  const finTiempo = useRef(0);
+  const ultimaVista = useRef<number | null>(null);
+  const ultimoPublico = useRef<PublicoVista | null>(null);
+
+  useEffect(() => {
+    let parar = false;
+    const leer = async () => {
+      const r = await pedir<MirarVista>(`/mirar/${id}`);
+      if (parar) return;
+      if (!r.ok || !r.data) {
+        if (r.status === 404 || r.status === 403) setError(r.data?.message || "Esa partida ya no está.");
+        return;
+      }
+      const d = r.data;
+      if (d.pregunta) finTiempo.current = Date.now() + d.pregunta.restantes * 1000;
+      // la respuesta que se acaba de dar: suena como en el atril
+      if (d.ultima && ultimaVista.current !== null && d.ultima.at !== ultimaVista.current) (d.ultima.bien ? sonido.bien : sonido.mal)();
+      ultimaVista.current = d.ultima?.at ?? 0;
+      const nuevos = nuevosAplausos(ultimoPublico.current, d.publico);
+      ultimoPublico.current = d.publico;
+      if (nuevos.length) {
+        setFlotan((f) => [...f, ...nuevos].slice(-12));
+        setTimeout(() => setFlotan((f) => f.filter((x) => !nuevos.some((n) => n.id === x.id))), 2400);
+      }
+      setV(d);
+    };
+    void leer();
+    const t = setInterval(() => void leer(), 1500);
+    const reloj = setInterval(() => setRestan(Math.max(0, Math.ceil((finTiempo.current - Date.now()) / 1000))), 250);
+    return () => {
+      parar = true;
+      clearInterval(t);
+      clearInterval(reloj);
+    };
+  }, [id]);
+
+  async function aplaudir(tipo: AplausoId) {
+    if (espera) return;
+    setEspera(true);
+    const icono = APLAUSOS.find((a) => a.id === tipo)?.icono ?? "👏";
+    const mio = { id: ++flotaId, icono, x: 10 + Math.random() * 80 };
+    setFlotan((f) => [...f, mio].slice(-12));
+    setTimeout(() => setFlotan((f) => f.filter((x) => x.id !== mio.id)), 2400);
+    sonido.aplauso();
+    await pedir(`/mirar/${id}/aplauso`, { tipo });
+    setTimeout(() => setEspera(false), 2600);
+  }
+
+  if (error)
+    return (
+      <div className="mx-auto max-w-md space-y-3 pt-8 text-center" data-testid="sabio-mirar">
+        <p className="rounded-xl bg-white/5 p-4 text-sm">{error}</p>
+        <button type="button" className="sabio-boton w-full" onClick={onSalir} data-testid="sabio-mirar-salir">
+          Volver a la casa de la sabiduría
+        </button>
+      </div>
+    );
+  if (!v)
+    return (
+      <div className="flex h-full items-center justify-center" data-testid="sabio-mirar">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
+      </div>
+    );
+  const q = v.pregunta;
+  const u = v.ultima;
+  const termino = v.estado !== "jugando";
+  const n = q?.n ?? v.grada + 1;
+  const dice = termino
+    ? v.estado === "gano"
+      ? `¡${v.nombre} subió las quince gradas!`
+      : v.estado === "retiro"
+        ? `${v.nombre} se retiró con ${miles(v.puntos)} puntos de sabiduría.`
+        : `${v.nombre} se queda en la grada ${v.grada} con ${miles(v.puntos)} puntos.`
+    : v.llamada
+      ? `${v.nombre} llama a ${v.llamada.nombre} para pedirle consejo…`
+      : q
+        ? `Grada ${q.n}, el ${canticoGrada(q.n)}… ${v.nombre} lo piensa.`
+        : u
+          ? u.bien
+            ? `¡Sabia respuesta de ${v.nombre}!`
+            : u.elegida
+              ? `Lo siento… ${v.nombre} no acertó.`
+              : `A ${v.nombre} se le acabó el tiempo…`
+          : `${v.nombre} está por subir a la grada ${n}.`;
+  return (
+    <div className="relative mx-auto max-w-2xl space-y-2.5 pt-2" data-testid="sabio-mirar">
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-[12px] font-bold uppercase tracking-wider text-amber-200/80">
+          <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500 align-middle" aria-hidden="true" /> En vivo · {ICONO_CAMINO[v.camino]} {v.nombre}
+        </p>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px] font-bold" data-testid="sabio-mirar-publico">
+          <Eye className="h-3.5 w-3.5" /> {v.publico.mirando}
+        </span>
+      </div>
+      <Presentador dice={dice} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200/80" data-testid="sabio-mirar-grada">
+            Grada {Math.min(GRADAS, n)} de {GRADAS} · {canticoGrada(Math.min(GRADAS, n))}
+          </p>
+          <p className="text-sm font-black text-amber-100">
+            {miles(v.puntos)} puntos <span className="font-semibold text-amber-200/70">· seguro {miles(v.seguro)}</span>
+          </p>
+        </div>
+        {q && !termino && <Reloj restan={restan} total={q.segundos} />}
+      </div>
+      <MiniEscalera grada={v.grada} />
+      {q && !termino ? (
+        <>
+          <div className="sabio-pregunta rounded-2xl px-4 py-3.5 text-center font-serif text-[16px] font-semibold leading-snug" data-testid="sabio-mirar-pregunta">
+            {q.texto}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {q.opciones.map((o, i) => (
+              <div key={i} className={`sabio-op flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold ${q.quitadas.includes(i) ? "invisible" : ""}`}>
+                <span className="font-black text-amber-300">{LETRAS[i]}:</span>
+                <span className="min-w-0 flex-1">{o}</span>
+                {v.amigo?.opcion === i && <span className="max-w-[6rem] truncate rounded-full bg-sky-400/30 px-1.5 text-[10px] font-bold text-sky-100">{v.amigo.vecino ? primerNombre(v.amigo.quien) : "Husai"}</span>}
+              </div>
+            ))}
+          </div>
+          {v.ancianos && <Ancianos pct={v.ancianos} quitadas={q.quitadas} />}
+          {v.amigo && <ConsejoVisto amigo={v.amigo} />}
+        </>
+      ) : u && !(termino && v.estado === "retiro" && !u.elegida) ? (
+        <>
+          <div className="sabio-pregunta rounded-2xl px-4 py-3 text-center font-serif text-[15px] font-semibold leading-snug" data-testid="sabio-mirar-ultima">
+            {u.texto}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {u.opciones.map((o, i) => {
+              const clase = o === u.correcta ? "sabio-op-bien" : o === u.elegida ? "sabio-op-mal" : "sabio-op opacity-60";
+              return (
+                <div key={i} className={`flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[13.5px] font-semibold ${clase}`}>
+                  <span className="font-black">{LETRAS[i]}:</span>
+                  <span className="min-w-0 flex-1">{o}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className={`rounded-2xl p-3 text-[13px] leading-snug ${u.bien ? "bg-emerald-950/60" : "bg-red-950/60"}`}>
+            {u.explica} <span className="font-semibold text-amber-300">({u.ref})</span>
+          </p>
+        </>
+      ) : null}
+      {!termino ? (
+        <div className="grid grid-cols-3 gap-1.5 pt-1" data-testid="sabio-aplausos">
+          {APLAUSOS.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              disabled={espera}
+              onClick={() => void aplaudir(a.id)}
+              className="flex flex-col items-center rounded-xl bg-white/10 py-1.5 text-[11px] font-bold hover:bg-white/20 disabled:opacity-50"
+              data-testid={`sabio-aplauso-${a.id}`}
+            >
+              <span className="text-xl leading-none">{a.icono}</span>
+              {a.texto}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-xl bg-amber-400/15 p-3 text-center text-sm font-black" data-testid="sabio-mirar-fin">
+          {dice}
+        </p>
+      )}
+      <button type="button" className="w-full rounded-xl bg-white/10 py-2.5 text-sm font-bold hover:bg-white/20" onClick={onSalir} data-testid="sabio-mirar-salir">
+        {termino ? "Volver a la casa de la sabiduría" : "Dejar de mirar"}
+      </button>
+      {flotan.length > 0 && (
+        <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden" aria-hidden="true">
+          {flotan.map((f) => (
+            <span key={f.id} className="sabio-flota absolute bottom-16 text-3xl" style={{ left: `${f.x}%` }}>
+              {f.icono}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -842,6 +1413,8 @@ const ESTILOS = `
 @keyframes sabioDestello{from{opacity:1}to{opacity:0}}
 .sabio-barra{animation:sabioBarra .8s ease-out}
 @keyframes sabioBarra{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
-@media (prefers-reduced-motion: reduce){.sabio-foco,.sabio-op-elegida,.sabio-op-bien,.sabio-latido,.sabio-destello,.sabio-barra{animation:none!important}}
+.sabio-flota{animation:sabioFlota 2.3s ease-out forwards;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+@keyframes sabioFlota{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1;transform:translateY(-20px) scale(1.1)}100%{transform:translateY(-260px) scale(1);opacity:0}}
+@media (prefers-reduced-motion: reduce){.sabio-foco,.sabio-op-elegida,.sabio-op-bien,.sabio-latido,.sabio-destello,.sabio-barra,.sabio-flota{animation:none!important}}
 `;
 

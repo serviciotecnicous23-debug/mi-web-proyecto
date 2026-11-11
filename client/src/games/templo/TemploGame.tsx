@@ -50,6 +50,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { SabioView } from "./SabioUI";
+import { LlamadaEntrante } from "./SabioLlamada";
 import { CasaHudLayer } from "./CasaUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
@@ -670,6 +671,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
             />
           )}
           {phase === "playing" && (world || city) && <ModalLayer />}
+          {/* la llamada de un amigo o vecino que juega «¿Quién es sabio?» y pide consejo (SabioLlamada.tsx) */}
+          {phase === "playing" && (city || (world && online)) && <LlamadaEntrante />}
           <AvisoVersionNueva alActualizar={actualizarVersion} />
           {cambio && (
             <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0c0a08]/90 text-white" data-testid="templo-cambio">

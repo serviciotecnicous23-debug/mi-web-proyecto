@@ -165,4 +165,15 @@ export const sonido = {
     melodia.forEach((f, i) => cuerno(f, i * 0.16, 0.5, 0.15));
     [261.63, 329.63, 392, 523.25].forEach((f) => nota(f, 1.1, 2.4, "triangle", 0.09));
   },
+  /** El timbre de la llamada de un amigo o vecino: dos tonos que se repiten. */
+  llamada() {
+    for (let k = 0; k < 3; k++) {
+      nota(880, k * 0.55, 0.16, "sine", 0.13);
+      nota(1174.66, k * 0.55 + 0.18, 0.16, "sine", 0.13);
+    }
+  },
+  /** Un aplauso del público: unas palmadas cortas. */
+  aplauso() {
+    [0, 0.08, 0.15, 0.24].forEach((t) => nota(1800 + Math.random() * 900, t, 0.035, "square", 0.025));
+  },
 };

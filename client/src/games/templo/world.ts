@@ -39,6 +39,7 @@ import { casoPorId, elegirCaso } from "./casos";
 import { Entrada, vibrar } from "./motor/entrada";
 import { lineasDe, lineasFin, lineasInicio, pasosDeParte, type PasoInst } from "./instruccion";
 import { RedCiudad } from "./ciudad/red";
+import { sabioRed } from "./sabio-red";
 import { Presencia } from "./motor/presencia";
 import { RED_TICK_MS } from "@shared/ciudad";
 import { haciaElPiso } from "./motor/camara";
@@ -387,6 +388,8 @@ export class TempleWorld {
         onVecinos: (l) => this.presencia?.alVecinos(l),
         onFrase: () => undefined,
         onBarrio: () => undefined,
+        // en el templo también llegan las llamadas de los amigos y vecinos que juegan «¿Quién es sabio?»
+        onSabio: (m) => sabioRed.recibir(m),
         onFuera: (motivo) => gameStore.toast(motivo, "warn"),
         onEstado: (e) => {
           if (e === "conectado") this.redUltimo.t = 0;
