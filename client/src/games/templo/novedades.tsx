@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-duelo-de-sabios",
+    fecha: "11 de noviembre de 2026",
+    titulo: "El duelo de sabios",
+    puntos: [
+      "⚔️ En la casa de la sabiduría, toca «Duelo de sabios»: reta a un amigo o vecino que esté en línea, o busca a alguien que también quiera un duelo.",
+      "⏱️ Los dos responden a la vez las mismas 10 preguntas (de la grada 1 a la 10), con 20 segundos cada una. Acertar vale 100 puntos y hasta 100 más si respondes rápido; al cerrar cada ronda ves lo que respondió el otro.",
+      "🏆 Gana quien sume más: gozo, la tabla de duelos de la semana, el manto azul de los vencedores (5 victorias) y el logro «Vencedor de duelos». «Hierro con hierro se aguza» (Proverbios 27:17).",
+    ],
+  },
+  {
     id: "2026-11-11-sabio-con-amigos",
     fecha: "11 de noviembre de 2026",
     titulo: "¿Quién es sabio? con tus amigos y vecinos",

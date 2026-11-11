@@ -1,13 +1,16 @@
 /**
- * La llamada de «¿Quién es sabio?» que le llega a un amigo o vecino (sabio-red.ts): está en la ciudad o en el
- * templo, y alguien que juega le pide consejo. Ve la pregunta y las respuestas (nunca cuál es la buena), elige una,
- * dice qué tan seguro está y la manda; o dice que no puede. Tiene 30 segundos.
+ * Los avisos de «¿Quién es sabio?» que le llegan a un amigo o vecino (sabio-red.ts): la llamada para pedir consejo
+ * y, más abajo, el reto de un duelo de sabios.
+ *
+ * La llamada: el amigo o vecino está en la ciudad o en el templo, y alguien que juega le pide consejo. Ve la
+ * pregunta y las respuestas (nunca cuál es la buena), elige una, dice qué tan seguro está y la manda; o dice que no
+ * puede. Tiene 30 segundos.
  */
 import { useEffect, useRef, useState } from "react";
-import { Loader2, PhoneCall, X } from "lucide-react";
-import { CONFIANZAS, LLAMADA_S, VERSO_CONSEJO, type Confianza } from "@shared/sabio";
+import { Loader2, PhoneCall, Swords, X } from "lucide-react";
+import { CONFIANZAS, DUELO_RETO_S, DUELO_RONDAS, LLAMADA_S, VERSO_CONSEJO, VERSO_DUELO, type Confianza } from "@shared/sabio";
 import { ICONO_CAMINO } from "./barrio-chat";
-import { sabioRed, useLlamadaEntrante } from "./sabio-red";
+import { sabioRed, useLlamadaEntrante, useRetoEntrante } from "./sabio-red";
 
 const LETRAS = ["A", "B", "C", "D"];
 
@@ -155,6 +158,113 @@ export function LlamadaEntrante() {
           </p>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * El reto de un duelo de sabios que le llega a un amigo o vecino (sabio-red.ts): acepta (se abre el duelo en la
+ * casa de la sabiduría) o dice «Ahora no». Tiene 45 segundos. Si a la vez llega una llamada, primero la llamada.
+ */
+export function RetoEntrante() {
+  const r = useRetoEntrante();
+  const llamada = useLlamadaEntrante();
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [restan, setRestan] = useState(DUELO_RETO_S);
+  const ocupada = useRef(false);
+  ocupada.current = enviando || !!aviso;
+
+  useEffect(() => {
+    setEnviando(false);
+    setAviso(null);
+  }, [r?.id]);
+
+  useEffect(() => {
+    if (!r) return;
+    const t = setInterval(() => {
+      setRestan(Math.max(0, Math.ceil((r.hasta - Date.now()) / 1000)));
+      if (Date.now() - r.hasta > 2500 && !ocupada.current) {
+        clearInterval(t);
+        sabioRed.cerrarReto(r.id);
+      }
+    }, 250);
+    return () => clearInterval(t);
+  }, [r]);
+
+  if (!r || llamada) return null;
+  const id = r.id;
+
+  async function contestar(acepta: boolean) {
+    if (enviando) return;
+    setEnviando(true);
+    let ok = false;
+    let mensaje = "";
+    try {
+      const res = await fetch(`/api/jerusalen/sabio/duelo/${id}/${acepta ? "aceptar" : "rechazar"}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      ok = res.ok;
+      if (!ok) mensaje = ((await res.json().catch(() => null)) as { message?: string } | null)?.message || "";
+    } catch {
+      mensaje = "No se pudo. Revisa tu conexión.";
+    }
+    setEnviando(false);
+    if (ok) {
+      sabioRed.cerrarReto(id);
+      if (acepta) sabioRed.abrirDuelo(id);
+      return;
+    }
+    setAviso(mensaje || "Ese reto ya terminó.");
+    setTimeout(() => sabioRed.cerrarReto(id), 2600);
+  }
+
+  const urgente = restan <= 10;
+  return (
+    <div className="pointer-events-auto absolute inset-x-2 top-2 z-[65] mx-auto max-w-md rounded-2xl border border-sky-300/70 bg-gradient-to-b from-[#16306b] to-[#0b1433] p-3 text-amber-50 shadow-2xl shadow-black/60" data-testid="sabio-reto" role="dialog" aria-label={`${r.de} te reta a un duelo de sabios`}>
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500/90 text-white shadow-lg">
+          <Swords className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sky-200">Duelo de sabios</p>
+          <p className="text-[13px] leading-snug">
+            <b>
+              {ICONO_CAMINO[r.camino]} {r.de}
+            </b>{" "}
+            te reta: las mismas {DUELO_RONDAS} preguntas a la vez; gana quien sepa más (y más rápido).
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-sm font-black tabular-nums ${urgente ? "bg-red-500/80 text-white" : "bg-white/15"}`} aria-label={`Quedan ${restan} segundos`}>
+          {restan}
+        </span>
+      </div>
+      {aviso ? (
+        <p className="mt-3 rounded-xl bg-white/10 p-3 text-center text-sm font-bold" data-testid="sabio-reto-aviso">
+          {aviso}
+        </p>
+      ) : (
+        <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-2">
+          <button
+            type="button"
+            disabled={enviando}
+            onClick={() => void contestar(true)}
+            className="rounded-xl bg-gradient-to-b from-[#ffe28a] to-[#e0a91c] px-3 py-2.5 text-sm font-black text-amber-950 disabled:opacity-50"
+            data-testid="sabio-reto-aceptar"
+          >
+            {enviando ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "⚔️ Aceptar el duelo"}
+          </button>
+          <button type="button" disabled={enviando} onClick={() => void contestar(false)} className="rounded-xl bg-white/10 px-3 py-2.5 text-xs font-bold hover:bg-white/20" data-testid="sabio-reto-no">
+            Ahora no
+          </button>
+        </div>
+      )}
+      <p className="mt-2 text-center font-serif text-[11px] italic text-amber-100/70">
+        «{VERSO_DUELO.text}» <span className="not-italic font-semibold text-amber-300">{VERSO_DUELO.ref}</span>
+      </p>
     </div>
   );
 }

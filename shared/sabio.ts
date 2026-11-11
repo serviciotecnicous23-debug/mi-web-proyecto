@@ -127,6 +127,7 @@ export const TRAJES_SABIOS: PremioSabio[] = [
   { id: "manto-consejero", nombre: "Manto de grana del consejero", requisito: "Gana 3 veces", color: "#a3122a" },
   { id: "faja-tres-dobleces", nombre: "Faja de tres dobleces", requisito: "Llega a la grada 10 en tres partidas seguidas", color: "#2c6e5f" },
   { id: "faja-consejero", nombre: "Faja azul del buen consejero", requisito: "Da 5 consejos acertados a tus amigos y vecinos", color: "#2f6fb8" },
+  { id: "manto-vencedores", nombre: "Manto azul de los vencedores", requisito: "Gana 5 duelos de sabios", color: "#1f4e9c" },
 ];
 export const VERSO_TRAJES: Verso = { text: "Adorno de gracia dará a tu cabeza; Corona de hermosura te entregará.", ref: "Proverbios 4:9" };
 
@@ -304,4 +305,78 @@ export type MirarVista = {
   llamada: { nombre: string; restantes: number } | null;
   ultima: UltimaRespuesta | null;
   publico: PublicoVista;
+};
+
+// ================================================================ el duelo de sabios
+/**
+ * El duelo de sabios (Proverbios 27:17): dos personas responden a la vez las mismas diez preguntas, de la grada 1 a
+ * la 10. Acertar suma 100 puntos y hasta 100 más por la rapidez; gana quien sume más. Se reta a un amigo o vecino
+ * que esté en línea, o se busca a alguien que también quiera un duelo. El servidor lleva el reloj de cada ronda,
+ * corrige y pasa a la siguiente: nada se simula. El juego principal sigue siendo subir las quince gradas solo.
+ */
+export const DUELO_RONDAS = 10;
+export const DUELO_SEGUNDOS = 20;
+/** Segundos que se ve la respuesta de cada ronda antes de la siguiente. */
+export const DUELO_REVELAR_S = 6;
+/** Segundos para prepararse antes de la primera pregunta. */
+export const DUELO_PREPARAR_S = 4;
+/** Segundos que tiene el retado para aceptar. */
+export const DUELO_RETO_S = 45;
+export const DUELOS_DIA = 10;
+/** Gozo al terminar (dentro del tope de gozo del concurso); quien abandona no gana nada. */
+export const GOZO_DUELO = { gana: 12, empate: 6, pierde: 3 } as const;
+/** Duelos ganados para el manto de los vencedores. */
+export const DUELOS_MANTO = 5;
+export const VERSO_DUELO: Verso = { text: "Hierro con hierro se aguza; Y así el hombre aguza el rostro de su amigo.", ref: "Proverbios 27:17" };
+
+/** Los puntos de una respuesta buena: 100, y hasta 100 más según lo rápido que se respondió. */
+export function puntosDuelo(msUsados: number): number {
+  const total = DUELO_SEGUNDOS * 1000;
+  return 100 + Math.round((100 * Math.max(0, total - Math.max(0, msUsados))) / total);
+}
+
+export type EstadoDuelo = "invitado" | "jugando" | "terminado" | "rechazado" | "vencido" | "cancelado";
+export type DueloLado = { nombre: string; camino: Camino; puntos: number; respondio: boolean };
+/** Lo que se respondió en la ronda que se acaba de cerrar (la del rival solo se ve aquí, ya cerrada). */
+export type DueloRevelado = {
+  n: number;
+  texto: string;
+  opciones: string[];
+  correcta: string;
+  explica: string;
+  ref: string;
+  mia: string | null;
+  suya: string | null;
+  misPuntos: number;
+  susPuntos: number;
+};
+export type DueloVista = {
+  id: number;
+  estado: EstadoDuelo;
+  /** Fui yo quien retó (o quien esperaba en la búsqueda). */
+  reto: boolean;
+  yo: DueloLado;
+  rival: DueloLado;
+  /** El personaje del rival (para pedirle la revancha). */
+  rivalId: number;
+  ronda: number;
+  pregunta: { n: number; texto: string; opciones: string[]; segundos: number; restantes: number } | null;
+  /** Lo que respondí en la ronda abierta (mientras espero al otro). */
+  miRespuesta: string | null;
+  revelado: DueloRevelado | null;
+  /** Segundos para lo que viene: que acepte el reto, que empiece la primera pregunta o la ronda siguiente. */
+  espera: number;
+  fin: { gane: boolean; empate: boolean; abandono: boolean; meFui: boolean; gozo: number; premio: string | null } | null;
+};
+/** El reto que le llega a quien retaron. */
+export type RetoDuelo = { id: number; de: string; camino: Camino; restantes: number };
+export type FilaDuelo = { puesto: number; nombre: string; ganados: number; jugados: number; esYo: boolean };
+export type DuelosEstado = {
+  rivales: AmigoPosible[];
+  hoy: number;
+  jugados: number;
+  ganados: number;
+  tabla: FilaDuelo[];
+  semana: string;
+  buscando: boolean;
 };

@@ -13,6 +13,7 @@ import { registerEconomiaRoutes } from "./economia";
 import { registerCatedrasRoutes } from "./catedras";
 import { registerBarrioRoutes } from "./barrio";
 import { registerSabioRoutes } from "./sabio";
+import { registerSabioDueloRoutes } from "./sabio-duelo";
 import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
@@ -3654,6 +3655,8 @@ ${urls}
   registerBarrioRoutes(app);
   // «¿Quién es sabio?»: el concurso de la casa de la sabiduría.
   registerSabioRoutes(app);
+  // el duelo de sabios (dos personas, las mismas preguntas a la vez)
+  registerSabioDueloRoutes(app);
   registerReunionesRoutes(app);
   registerConcursoRoutes(app);
   registerAyudaRoutes(app);

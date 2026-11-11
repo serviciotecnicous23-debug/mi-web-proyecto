@@ -172,6 +172,12 @@ export const sonido = {
       nota(1174.66, k * 0.55 + 0.18, 0.16, "sine", 0.13);
     }
   },
+  /** El reto de un duelo: dos toques de cuerno. */
+  reto() {
+    cuerno(392, 0, 0.35, 0.16);
+    cuerno(523.25, 0.3, 0.35, 0.16);
+    cuerno(659.25, 0.6, 0.7, 0.16);
+  },
   /** Un aplauso del público: unas palmadas cortas. */
   aplauso() {
     [0, 0.08, 0.15, 0.24].forEach((t) => nota(1800 + Math.random() * 900, t, 0.035, "square", 0.025));

@@ -12,34 +12,17 @@ import { CiudadCtx } from "./CiudadUI";
 import { sonido } from "./sabio-sonido";
 import { sabioRed } from "./sabio-red";
 import { ICONO_CAMINO } from "./barrio-chat";
+import { LETRAS, Presentador, RELACION, Reloj, miles, pedir, primerNombre } from "./sabio-comun";
+import { DuelosLobby, DueloView } from "./SabioDuelo";
 import {
   APLAUSOS, COMODINES, CONSEJOS_FAJA, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, NOMBRE_CONCURSO, ORDEN_COMODINES,
   PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, segundosGrada,
-  type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PreguntaVista,
-  type PublicoVista, type Relacion, type RespuestaSabio, type SabioEstado,
+  DUELO_RONDAS, DUELOS_MANTO,
+  type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type DueloVista, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PreguntaVista,
+  type PublicoVista, type RespuestaSabio, type SabioEstado,
 } from "@shared/sabio";
 
-const API = "/api/jerusalen/sabio";
-/** Pedir algo al servidor: GET sin cuerpo (`leer`) o POST con cuerpo. */
-async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: (T & { message?: string }) | null }> {
-  try {
-    const res = await fetch(`${API}${path}`, {
-      method: body === undefined ? "GET" : "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    return { ok: res.ok, status: res.status, data: (await res.json().catch(() => null)) as (T & { message?: string }) | null };
-  } catch {
-    return { ok: false, status: 0, data: null };
-  }
-}
-
-const miles = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-const LETRAS = ["A", "B", "C", "D"];
 const azar = <T,>(l: T[]) => l[Math.floor(Math.random() * l.length)];
-const primerNombre = (s: string) => s.split(/[\s,]+/)[0] || s;
-const RELACION: Record<Relacion, string> = { amigo: "tu amigo", vecino: "tu vecino", ambos: "tu amigo y vecino" };
 
 /** Los aplausos que llegan flotan sobre la pantalla un momento. */
 type Flota = { id: number; icono: string; x: number };
@@ -56,7 +39,7 @@ function nuevosAplausos(antes: PublicoVista | null, ahora: PublicoVista): Flota[
   return out;
 }
 
-type Fase = "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "revelado" | "fin" | "mirando" | "error";
+type Fase = "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "revelado" | "fin" | "mirando" | "duelos" | "duelo" | "error";
 type Revelado = { elegida: number; correcta: number; bien: boolean; explica: string; ref: string; respuesta: string };
 
 export function SabioView() {
@@ -84,6 +67,8 @@ export function SabioView() {
   const [publico, setPublico] = useState<PublicoVista | null>(null);
   const [flotan, setFlotan] = useState<Flota[]>([]);
   const [mirandoId, setMirandoId] = useState<number | null>(null);
+  // el duelo de sabios (SabioDuelo.tsx)
+  const [dueloId, setDueloId] = useState<number | null>(null);
   const pararSuspenso = useRef<() => void>(() => undefined);
   const finTiempo = useRef<number>(0);
   const finLlamada = useRef<number>(0);
@@ -98,6 +83,13 @@ export function SabioView() {
       return;
     }
     setEstado(r.data);
+    const dr = await pedir<{ duelo: DueloVista | null }>("/duelo");
+    if (!vivo.current) return;
+    if (dr.ok && dr.data?.duelo && (dr.data.duelo.estado === "jugando" || dr.data.duelo.estado === "invitado")) {
+      setDueloId(dr.data.duelo.id);
+      setFase("duelo");
+      return;
+    }
     if (r.data.partida) {
       setPartida(r.data.partida);
       if (r.data.partida.pregunta) mostrarPregunta(r.data.partida, true);
@@ -118,6 +110,16 @@ export function SabioView() {
       pararSuspenso.current();
     };
   }, [cargar]);
+
+  // se aceptó un reto (en la tarjeta de arriba): a la pantalla del duelo
+  useEffect(
+    () =>
+      sabioRed.onAbrirDuelo((id) => {
+        setDueloId(id);
+        setFase("duelo");
+      }),
+    [],
+  );
 
   // el reloj de la pregunta
   useEffect(() => {
@@ -468,8 +470,30 @@ export function SabioView() {
         )}
         {fase === "error" && <p className="mt-10 rounded-xl bg-red-950/60 p-4 text-center text-sm">{error}</p>}
         {fase === "portada" && estado && (
-          <Portada estado={estado} onEmpezar={() => void empezar()} ocupado={ocupado} aviso={aviso} dice={dice} onMirar={mirar} onLlamadas={(si) => void cambiarLlamadas(si)} />
+          <Portada
+            estado={estado}
+            onEmpezar={() => void empezar()}
+            ocupado={ocupado}
+            aviso={aviso}
+            dice={dice}
+            onMirar={mirar}
+            onLlamadas={(si) => void cambiarLlamadas(si)}
+            onDuelos={() => {
+              city?.audio.click();
+              setFase("duelos");
+            }}
+          />
         )}
+        {fase === "duelos" && (
+          <DuelosLobby
+            onEntrar={(id) => {
+              setDueloId(id);
+              setFase("duelo");
+            }}
+            onVolver={() => void volverAPortada()}
+          />
+        )}
+        {fase === "duelo" && dueloId !== null && <DueloView id={dueloId} onSalir={() => setFase("duelos")} onCambiar={(id) => setDueloId(id)} />}
         {fase === "mirando" && mirandoId !== null && <MirarView id={mirandoId} onSalir={() => void volverAPortada()} />}
         {(fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") && partida && (
           <div className="mx-auto flex max-w-4xl gap-4 pt-2">
@@ -700,36 +724,6 @@ function Columnas() {
   );
 }
 
-function Presentador({ dice }: { dice: string }) {
-  return (
-    <div className="flex items-start gap-2.5" data-testid="sabio-presentador">
-      <Portrait who="etan" size={44} />
-      <div className="relative min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-white/10 px-3 py-2 text-[13px] leading-snug shadow-inner backdrop-blur-sm">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Etán ezraíta</p>
-        <p className="font-serif italic">{dice}</p>
-      </div>
-    </div>
-  );
-}
-
-function Reloj({ restan, total }: { restan: number; total: number }) {
-  const r = 18;
-  const c = 2 * Math.PI * r;
-  const frac = Math.max(0, Math.min(1, restan / Math.max(1, total)));
-  const color = restan <= 5 ? "#f87171" : restan <= 10 ? "#fbbf24" : "#fde68a";
-  return (
-    <div className={`relative h-12 w-12 shrink-0 ${restan <= 5 ? "sabio-latido" : ""}`} aria-label={`Quedan ${restan} segundos`} data-testid="sabio-reloj">
-      <svg viewBox="0 0 44 44" className="h-12 w-12 -rotate-90">
-        <circle cx="22" cy="22" r={r} fill="rgba(0,0,0,.35)" stroke="rgba(255,255,255,.15)" strokeWidth="4" />
-        <circle cx="22" cy="22" r={r} fill="none" stroke={color} strokeWidth="4" strokeDasharray={c} strokeDashoffset={c * (1 - frac)} strokeLinecap="round" style={{ transition: "stroke-dashoffset .25s linear" }} />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-sm font-black tabular-nums" style={{ color }}>
-        {restan}
-      </span>
-    </div>
-  );
-}
-
 function MiniEscalera({ grada }: { grada: number }) {
   return (
     <div className="flex gap-0.5 lg:hidden" aria-hidden="true">
@@ -897,6 +891,7 @@ function Portada({
   dice,
   onMirar,
   onLlamadas,
+  onDuelos,
 }: {
   estado: SabioEstado;
   onEmpezar: () => void;
@@ -905,6 +900,7 @@ function Portada({
   dice: string;
   onMirar: (id: number) => void;
   onLlamadas: (si: boolean) => void;
+  onDuelos: () => void;
 }) {
   const [tab, setTab] = useState<"vivo" | "semana" | "siempre" | "trajes" | "reglas">(estado.enVivo.length ? "vivo" : "semana");
   const [enVivo, setEnVivo] = useState<EnVivo[]>(estado.enVivo);
@@ -971,6 +967,14 @@ function Portada({
       </div>
       <button type="button" className="sabio-boton w-full py-3.5 text-base" disabled={ocupado || quedan <= 0} onClick={onEmpezar} data-testid="sabio-empezar">
         {ocupado ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : quedan > 0 ? "Subir al atril" : "Mañana hay más entradas"}
+      </button>
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-800/80 to-indigo-800/80 py-3 text-sm font-black ring-1 ring-sky-300/50 hover:ring-sky-200"
+        onClick={onDuelos}
+        data-testid="sabio-duelos-abrir"
+      >
+        ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo o con alguien que busque</span>
       </button>
       <p className="text-center text-[11px] text-amber-100/70" data-testid="sabio-entradas">
         Entradas de hoy: {quedan} de {ENTRADAS_DIA} · gozo de hoy {y.gozoHoy} de {GOZO_SABIO_DIA}
@@ -1094,6 +1098,9 @@ function Reglas() {
       </p>
       <p>
         • El público: en «En vivo» miras las partidas que se juegan ahora y animas con 👏 🙏 🔥 (quien juega lo ve). <span className="italic text-amber-200/80">«{VERSO_PUBLICO.text}» {VERSO_PUBLICO.ref}</span>
+      </p>
+      <p>
+        • ⚔️ El duelo de sabios: reta a un amigo o vecino en línea (o busca a alguien). Los dos responden a la vez las mismas {DUELO_RONDAS} preguntas; acertar rápido vale más. Con {DUELOS_MANTO} duelos ganados, el manto azul de los vencedores.
       </p>
       <p>• {ENTRADAS_DIA} entradas por día (las siete columnas). Las preguntas no se te repiten hasta que veas todas las de esa grada.</p>
       <p>• Ganas puntos de sabiduría, gozo (hasta {GOZO_SABIO_DIA} por día), títulos ({TITULOS.map((t) => t.nombre).join(", ")}) y los trajes de los sabios.</p>

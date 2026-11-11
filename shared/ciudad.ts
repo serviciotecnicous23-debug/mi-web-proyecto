@@ -313,6 +313,10 @@ export type RedEntra =
   | { t: "sabio-consejo"; id: number }
   /** A quien aconsejó: cómo le fue a su vecino con el consejo. */
   | { t: "sabio-gracias"; de: string; bien: boolean; gozo: number; gozoTotal: number | null; premio: string | null }
+  /** El duelo de sabios: te retan, el reto se cerró, o algo cambió en tu duelo (que vuelva a pedirlo). */
+  | { t: "duelo-reto"; r: import("./sabio").RetoDuelo }
+  | { t: "duelo-reto-fin"; id: number; motivo: string }
+  | { t: "duelo"; id: number }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
