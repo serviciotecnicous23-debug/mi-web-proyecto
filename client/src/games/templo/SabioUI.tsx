@@ -18,7 +18,7 @@ import { EstudioSabio3D } from "./estudio/EstudioSabio3D";
 import type { EstudioSabio } from "./estudio/estudio-sabio";
 import {
   APLAUSOS, COMODINES, CONSEJOS_FAJA, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, NOMBRE_CONCURSO, ORDEN_COMODINES,
-  PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, segundosGrada,
+  PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, dificultadGrada, segundosGrada,
   DUELO_RONDAS, DUELOS_MANTO,
   type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type DueloVista, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PreguntaVista,
   type PublicoVista, type RespuestaSabio, type SabioEstado,
@@ -596,8 +596,13 @@ export function SabioView() {
               <Presentador dice={dice} compacto={hay3d} />
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200/80" data-testid="sabio-grada">
-                    Grada {n} de {GRADAS} · {canticoGrada(n)}
+                  <p className="flex flex-wrap items-center gap-x-1.5 text-[11px] font-bold uppercase tracking-widest text-amber-200/80" data-testid="sabio-grada">
+                    <span>
+                      Grada {n} de {GRADAS} · {canticoGrada(n)}
+                    </span>
+                    <span className="rounded-full px-1.5 py-px text-[9.5px] font-black tracking-wider text-black" style={{ background: dificultadGrada(n).color }} data-testid="sabio-dificultad">
+                      {dificultadGrada(n).nombre}
+                    </span>
                   </p>
                   <p className="text-sm font-black text-amber-100">
                     Por {miles(PUNTOS_GRADA[Math.min(GRADAS, n)])} <span className="font-semibold text-amber-200/70">· seguro {miles(partida.seguro)}</span>
@@ -843,15 +848,20 @@ function Escalera({ grada }: { grada: number }) {
         const segura = (GRADAS_SEGURAS as readonly number[]).includes(g) || g === GRADAS;
         const actual = g === grada + 1;
         const pasada = g <= grada;
+        const nivel = dificultadGrada(g);
+        // el nombre del nivel va en la grada más alta de cada tramo de tres
+        const tramo = nivel.hasta === g;
         return (
           <li
             key={g}
-            className={`flex items-center justify-between rounded-lg px-2 py-[3px] text-[12px] tabular-nums ${actual ? "bg-amber-400 font-black text-amber-950" : pasada ? "text-amber-200/60" : segura ? "font-black text-amber-200" : "text-amber-50/80"}`}
+            className={`flex items-center justify-between gap-1 rounded-lg px-2 py-[3px] text-[12px] tabular-nums ${actual ? "bg-amber-400 font-black text-amber-950" : pasada ? "text-amber-200/60" : segura ? "font-black text-amber-200" : "text-amber-50/80"}`}
+            style={{ boxShadow: `inset 3px 0 0 ${nivel.color}` }}
           >
             <span>
               {g} {pasada ? "✓" : ""}
             </span>
-            <span>{miles(PUNTOS_GRADA[g])}</span>
+            {tramo && <span className="truncate text-[9px] font-black uppercase tracking-wider" style={{ color: actual ? "#3a2400" : nivel.color }}>{nivel.nombre}</span>}
+            <span className="ml-auto">{miles(PUNTOS_GRADA[g])}</span>
           </li>
         );
       })}
@@ -1181,7 +1191,7 @@ function Trajes({ premios }: { premios: string[] }) {
 function Reglas() {
   return (
     <div className="space-y-2 rounded-2xl bg-black/30 p-3 text-[12.5px] leading-snug" data-testid="sabio-reglas">
-      <p>• Quince gradas, una pregunta por grada, cada vez más difícil. Las gradas <b>5</b> y <b>10</b> son seguras: si fallas después, te quedas con ellas.</p>
+      <p>• Quince gradas, una pregunta por grada, cada vez más difícil: fácil (1 a 3), media (4 a 6), difícil (7 a 9), muy difícil (10 a 12) y, en la cima, solo para expertos (13 a 15). Las gradas <b>5</b> y <b>10</b> son seguras: si fallas después, te quedas con ellas.</p>
       <p>• Tienes {segundosGrada(1)} segundos en las gradas 1 a 5, {segundosGrada(6)} en la 6 a la 10 y {segundosGrada(11)} en las últimas. Puedes retirarte con lo ganado antes de responder.</p>
       <p>• Antes de corregir, el presentador te pregunta si es tu última palabra.</p>
       <div className="space-y-1.5">

@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GeoBuilder } from "../three/builder";
 import { Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
-import { GRADAS, GRADAS_SEGURAS, PUNTOS_GRADA, canticoGrada } from "@shared/sabio";
+import { GRADAS, GRADAS_SEGURAS, PUNTOS_GRADA, canticoGrada, dificultadGrada } from "@shared/sabio";
 
 // ---------------------------------------------------------------- tipos públicos
 export type FaseEstudio = "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "bien" | "mal" | "segura" | "gano" | "fin" | "mirando";
@@ -210,7 +210,10 @@ class Pantalla {
       g.fillText(`Grada ${n}`, W / 2, H * 0.47);
       g.font = sans(H * 0.11, "900");
       g.fillStyle = "#ffffff";
-      g.fillText(`${miles(PUNTOS_GRADA[n])} puntos`, W / 2, H * 0.74);
+      g.fillText(`${miles(PUNTOS_GRADA[n])} puntos`, W / 2, H * 0.68);
+      g.font = sans(H * 0.06, "900");
+      g.fillStyle = dificultadGrada(n).color;
+      g.fillText(dificultadGrada(n).nombre.toUpperCase(), W / 2, H * 0.79);
       // las quince marcas abajo
       const y = H * 0.89, paso = W * 0.045, x0 = W / 2 - paso * 7;
       for (let i = 1; i <= GRADAS; i++) {
@@ -224,7 +227,7 @@ class Pantalla {
       const p = c.p;
       g.font = sans(H * 0.055, "800");
       g.fillStyle = "rgba(255,236,190,0.85)";
-      g.fillText(`GRADA ${p.n}  ·  ${miles(PUNTOS_GRADA[p.n])} PUNTOS`, W / 2, H * 0.09);
+      g.fillText(`GRADA ${p.n}  ·  ${miles(PUNTOS_GRADA[p.n])} PUNTOS  ·  ${dificultadGrada(p.n).nombre.toUpperCase()}`, W / 2, H * 0.09);
       // la pregunta, partida en renglones
       g.font = serif(H * 0.075, "700");
       const lineas = partir(g, p.texto, W * 0.86, 3);
