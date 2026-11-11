@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-sabio-con-amigos",
+    fecha: "11 de noviembre de 2026",
+    titulo: "¿Quién es sabio? con tus amigos y vecinos",
+    puntos: [
+      "🤝 El comodín «Un amigo» ahora llama de verdad: elige a un amigo o vecino de tu barrio que esté en la ciudad (o en el templo). Le llega tu pregunta y tiene 30 segundos para darte su consejo; si no puede, contesta Husai.",
+      "📞 Si te llaman a ti, verás la pregunta arriba de la pantalla: elige la respuesta, di qué tan seguro estás y mándala. Si aciertas, ganas gozo; con 5 consejos acertados, la faja azul del buen consejero y el logro «Buen consejero».",
+      "📺 «En vivo»: mira las partidas que se juegan ahora en la casa de la sabiduría y anima con 👏 🙏 🔥. Quien juega ve cuántos lo miran y sus aplausos.",
+    ],
+  },
+  {
     id: "2026-11-11-casa-sabiduria",
     fecha: "11 de noviembre de 2026",
     titulo: "La casa de la sabiduría ya está en la ciudad",

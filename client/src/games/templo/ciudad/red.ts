@@ -17,6 +17,8 @@ export type RedEventos = {
   /** La charla del barrio: un mensaje nuevo, o uno que se borró. */
   onChat?: (m: MensajeBarrio) => void;
   onChatFuera?: (id: number) => void;
+  /** «¿Quién es sabio?»: llamadas para pedir consejo y sus avisos (sabio-red.ts). */
+  onSabio?: (m: RedEntra) => void;
   onFuera: (motivo: string) => void;
   onEstado: (e: EstadoRed) => void;
 };
@@ -78,6 +80,12 @@ export class RedCiudad {
           break;
         case "chat-fuera":
           this.ev.onChatFuera?.(m.id);
+          break;
+        case "sabio-llamada":
+        case "sabio-llamada-fin":
+        case "sabio-consejo":
+        case "sabio-gracias":
+          this.ev.onSabio?.(m);
           break;
         case "fuera":
           this.fuera = true;

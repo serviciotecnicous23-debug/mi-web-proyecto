@@ -26,6 +26,7 @@ import {
 import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
 import { chatBarrio, textoDeMensaje } from "../barrio-chat";
+import { sabioRed } from "../sabio-red";
 import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
@@ -331,6 +332,10 @@ export class CiudadWorld {
       onBarrio: (n, casas) => this.alBarrio(n, casas),
       onChat: (m) => this.alChat(m),
       onChatFuera: (id) => chatBarrio.quitar(id),
+      onSabio: (m) => {
+        sabioRed.recibir(m);
+        if (m.t === "sabio-gracias" && m.gozoTotal != null) this.ponerGozo(m.gozoTotal);
+      },
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
         this.redEstado = e;

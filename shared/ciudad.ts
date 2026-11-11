@@ -306,6 +306,13 @@ export type RedEntra =
   /** La charla del barrio (shared/barrio.ts): un mensaje nuevo, o uno que se borró u ocultó. */
   | { t: "chat"; m: import("./barrio").MensajeBarrio }
   | { t: "chat-fuera"; id: number }
+  /** «¿Quién es sabio?» (shared/sabio.ts): un vecino te llama para pedir consejo, o la llamada terminó. */
+  | { t: "sabio-llamada"; l: import("./sabio").LlamadaSabio }
+  | { t: "sabio-llamada-fin"; id: number; motivo: string }
+  /** A quien llamó: llegó el consejo (que vuelva a pedir la partida). */
+  | { t: "sabio-consejo"; id: number }
+  /** A quien aconsejó: cómo le fue a su vecino con el consejo. */
+  | { t: "sabio-gracias"; de: string; bien: boolean; gozo: number; gozoTotal: number | null; premio: string | null }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API

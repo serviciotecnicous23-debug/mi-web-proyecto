@@ -163,7 +163,7 @@ async function identidadDe(barrio: number): Promise<Identidad> {
 }
 
 // ---------------------------------------------------------------- los vecinos
-function dondeEsta(canal: string, a: number): string {
+export function dondeEsta(canal: string, a: number): string {
   const que = a > 0 && ACTIVIDAD_CIUDAD_TEXTO[a] ? ` · ${ACTIVIDAD_CIUDAD_TEXTO[a]}` : "";
   if (canal === "templo") return "En el templo";
   if (canal.startsWith("barrio:")) return `En ${nombreDeBarrio(Number(canal.slice(7)))}${que}`;

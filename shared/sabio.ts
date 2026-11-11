@@ -18,6 +18,7 @@
  * Las citas entre comillas son textuales de la Reina-Valera 1960.
  */
 import type { Verso } from "./ciudad";
+import type { Camino } from "./caminos";
 
 export const NOMBRE_CONCURSO = "¿Quién es sabio?";
 export const VERSO_CONCURSO: Verso = { text: "¿Quién es sabio y avisado entre vosotros? muestre por buena conversación sus obras en mansedumbre de sabiduría.", ref: "Santiago 3:13" };
@@ -75,7 +76,7 @@ export const COMODINES: Record<Comodin, { nombre: string; icono: string; texto: 
   amigo: {
     nombre: "Un amigo",
     icono: "🤝",
-    texto: "Husai, el amigo del rey, te da su consejo.",
+    texto: "Llama a un amigo o vecino de tu barrio que esté en la ciudad (tiene 30 segundos), o a Husai, el amigo del rey.",
     verso: { text: "Así vino Husai amigo de David a la ciudad;", ref: "2 Samuel 15:37" },
   },
   rollo: {
@@ -125,6 +126,7 @@ export const TRAJES_SABIOS: PremioSabio[] = [
   { id: "faja-salomon", nombre: "Faja de oro de Salomón", requisito: "Gana sin usar ningún comodín", color: "#d6a21e" },
   { id: "manto-consejero", nombre: "Manto de grana del consejero", requisito: "Gana 3 veces", color: "#a3122a" },
   { id: "faja-tres-dobleces", nombre: "Faja de tres dobleces", requisito: "Llega a la grada 10 en tres partidas seguidas", color: "#2c6e5f" },
+  { id: "faja-consejero", nombre: "Faja azul del buen consejero", requisito: "Da 5 consejos acertados a tus amigos y vecinos", color: "#2f6fb8" },
 ];
 export const VERSO_TRAJES: Verso = { text: "Adorno de gracia dará a tu cabeza; Corona de hermosura te entregará.", ref: "Proverbios 4:9" };
 
@@ -165,7 +167,9 @@ export type PartidaVista = {
   /** El comodín «otro rollo» está abierto para esta persona. */
   rolloAbierto: boolean;
   ancianos: number[] | null;
-  amigo: { quien: string; opcion: number; dice: string } | null;
+  amigo: ConsejoAmigo | null;
+  /** Se está llamando a un amigo o vecino: a quién y cuántos segundos le quedan para contestar. */
+  llamada: { nombre: string; restantes: number } | null;
 };
 
 export type FinPartida = {
@@ -211,11 +215,93 @@ export type SabioEstado = {
     entradasHoy: number;
     gozoHoy: number;
     rolloAbierto: boolean;
+    /** Consejos que dio a sus amigos y vecinos, y cuántos eran la respuesta correcta. */
+    consejos: number;
+    consejosBuenos: number;
+    /** Recibe las llamadas de sus amigos y vecinos que juegan. */
+    llamadas: boolean;
   };
+  /** Quién está jugando ahora en la casa de la sabiduría (para mirar). */
+  enVivo: EnVivo[];
   semana: string;
   tablaSemana: FilaTabla[];
   tablaSiempre: FilaTabla[];
   miPuestoSemana: number | null;
   /** Premio de la semana pasada que se acaba de entregar. */
   premioSemana: { puesto: number; gozo: number } | null;
+};
+
+// ================================================================ con amigos: el consejo de un vecino y el público
+/**
+ * El comodín «Un amigo» llama de verdad a un amigo (de la web) o a un vecino de tu barrio que esté ahora en la
+ * ciudad o en el templo: le llega la pregunta y tiene 30 segundos para dar su consejo (a quien llama se le suman
+ * esos segundos al reloj). Si no contesta, o no puede, aconseja Husai. Quien acierta un consejo gana gozo.
+ *
+ * El público: cualquiera puede mirar en vivo las partidas de la casa de la sabiduría (no las de quien bloqueó o
+ * lo bloqueó) y animar con aplausos que ve quien juega. Nada se simula: el público y los consejos son personas.
+ */
+export const LLAMADA_S = 30;
+/** Gozo para quien dio un consejo acertado (dentro del tope de gozo del concurso). */
+export const GOZO_CONSEJO = 3;
+/** Consejos acertados para la faja del buen consejero. */
+export const CONSEJOS_FAJA = 5;
+export const VERSO_CONSEJO: Verso = { text: "El ungüento y el perfume alegran el corazón, Y el cordial consejo del amigo, al hombre.", ref: "Proverbios 27:9" };
+export const VERSO_PUBLICO: Verso = { text: "teniendo en derredor nuestro tan grande nube de testigos,", ref: "Hebreos 12:1" };
+
+export type Relacion = "amigo" | "vecino" | "ambos";
+export type Confianza = "seguro" | "creo" | "adivino";
+export const CONFIANZAS: { id: Confianza; texto: string }[] = [
+  { id: "seguro", texto: "Estoy seguro" },
+  { id: "creo", texto: "Creo que es esta" },
+  { id: "adivino", texto: "No sé… adivino" },
+];
+
+/** Lo que dice el consejo, según qué tan seguro está quien lo da. */
+export function textoDeConsejo(confianza: Confianza, letra: string, opcion: string): string {
+  return confianza === "seguro"
+    ? `Estoy seguro: es la ${letra}, «${opcion}».`
+    : confianza === "creo"
+      ? `Creo que es la ${letra}, «${opcion}».`
+      : `No estoy seguro… pero yo diría la ${letra}, «${opcion}».`;
+}
+
+/** El consejo que llegó: de Husai o de un amigo o vecino (con su camino, para su retrato). */
+export type ConsejoAmigo = { quien: string; opcion: number; dice: string; vecino?: { camino: Camino; relacion: Relacion } };
+
+/** A quién se le puede pedir consejo ahora. */
+export type AmigoPosible = { personajeId: number; nombre: string; camino: Camino; donde: string; relacion: Relacion };
+
+/** La llamada que le llega al amigo o vecino (sin la respuesta, claro). */
+export type LlamadaSabio = { id: number; de: string; camino: Camino; n: number; texto: string; opciones: string[]; quitadas: number[]; restantes: number };
+
+export const APLAUSOS = [
+  { id: "aplauso", icono: "👏", texto: "¡Bien!" },
+  { id: "oracion", icono: "🙏", texto: "Orando" },
+  { id: "animo", icono: "🔥", texto: "¡Ánimo!" },
+] as const;
+export type AplausoId = (typeof APLAUSOS)[number]["id"];
+/** Cuántos miran y los aplausos de los últimos segundos (`ultimo` cambia con cada aplauso nuevo). */
+export type PublicoVista = { mirando: number; aplausos: Partial<Record<AplausoId, number>>; ultimo: number };
+
+export type EnVivo = { id: number; nombre: string; camino: Camino; grada: number; puntos: number; mirando: number; relacion: Relacion | null };
+
+/** La última pregunta que se respondió (para que el público vea si acertó). */
+export type UltimaRespuesta = { n: number; texto: string; opciones: string[]; elegida: string | null; correcta: string; bien: boolean; explica: string; ref: string; at: number };
+
+/** Lo que ve el público de una partida: lo mismo que quien juega, nunca la respuesta antes de tiempo. */
+export type MirarVista = {
+  id: number;
+  nombre: string;
+  camino: Camino;
+  estado: "jugando" | FinPartida["estado"];
+  grada: number;
+  puntos: number;
+  seguro: number;
+  pregunta: PreguntaVista | null;
+  usados: Comodin[];
+  ancianos: number[] | null;
+  amigo: ConsejoAmigo | null;
+  llamada: { nombre: string; restantes: number } | null;
+  ultima: UltimaRespuesta | null;
+  publico: PublicoVista;
 };
