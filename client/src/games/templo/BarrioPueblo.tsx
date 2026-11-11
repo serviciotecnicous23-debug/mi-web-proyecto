@@ -82,11 +82,17 @@ export function PuebloDelBarrio() {
     );
   return (
     <div className="space-y-3" data-testid="barrio-pueblo">
-      <p className="text-xs text-stone-600 dark:text-stone-300">
-        En las casas que todavía no tienen dueño viven <b>{e.familias}</b> {e.familias === 1 ? "familia" : "familias"} del pueblo de Jerusalén. Cada día alguna pide algo; dales de tu alfolí.
+      <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="barrio-pueblo-familias">
+        {e.familias > 0 ? (
+          <>
+            En las casas que todavía no tienen dueño viven <b>{e.familias}</b> {e.familias === 1 ? "familia" : "familias"} del pueblo de Jerusalén. Cada día alguna pide algo; dales de tu alfolí.
+          </>
+        ) : (
+          <>🏘️ Todas las casas de tu barrio ya tienen dueño, así que aquí no quedan familias del pueblo: ¡tu barrio está lleno de vecinos! Lo que ellos piden para su ofrenda está en los «Anuncios de la ciudad».</>
+        )}
       </p>
       {e.pedidos.length === 0 ? (
-        <p className="rounded-xl bg-stone-50 p-3 text-center text-xs text-stone-500 dark:bg-stone-900/40">Hoy nadie del pueblo pide nada en tu barrio. ¡Vuelve mañana!</p>
+        e.familias > 0 && <p className="rounded-xl bg-stone-50 p-3 text-center text-xs text-stone-500 dark:bg-stone-900/40">Hoy nadie del pueblo pide nada en tu barrio. ¡Vuelve mañana!</p>
       ) : (
         <ul className="space-y-2" data-testid="barrio-pueblo-pedidos">
           {e.pedidos.map((p) => {

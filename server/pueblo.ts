@@ -49,10 +49,12 @@ async function libresDe(barrio: number): Promise<number[]> {
 /** Los pedidos del pueblo de hoy en un barrio, con lo que ya recibieron y lo que dio cada uno. */
 async function pedidosDe(barrio: number, titular: number): Promise<PedidoPuebloVista[]> {
   const dia = diaClave();
-  const hoy = pedidosDelPuebloHoy(dia, barrio, await libresDe(barrio));
-  if (!hoy.length) return [];
   const { rows } = await pool.query(`SELECT parcela, recibido, done_at FROM game_pueblo_pedidos WHERE dia = $1 AND barrio = $2`, [dia, barrio]);
   const guardados = new Map(rows.map((r) => [Number(r.parcela), r]));
+  // los que ya recibieron algo hoy siguen a la vista aunque cambien las parcelas libres del barrio
+  const conAvance = rows.filter((r) => Number(r.recibido) > 0).map((r) => Number(r.parcela));
+  const hoy = pedidosDelPuebloHoy(dia, barrio, await libresDe(barrio), conAvance);
+  if (!hoy.length) return [];
   const { rows: mios } = await pool.query(
     `SELECT parcela, COALESCE(sum(cantidad), 0)::int AS n FROM game_pueblo_dones WHERE dia = $1 AND barrio = $2 AND titular = $3 GROUP BY parcela`,
     [dia, barrio, titular],
@@ -137,13 +139,14 @@ export function registerPuebloRoutes(app: Express) {
   const ultimo = new Map<number, number>();
   // Dar de mi alfolí a una familia del pueblo de mi barrio.
   app.post("/api/jerusalen/pueblo/:parcela/dar", async (req: Request, res: Response) => {
-    const parcela = Math.floor(Number(req.params.parcela));
-    const cantidad = Math.floor(Number(req.body?.cantidad));
-    if (!Number.isInteger(parcela) || parcela < 0 || parcela >= CASAS_POR_BARRIO || !Number.isInteger(cantidad) || cantidad < 1 || cantidad > PUEBLO_MAX)
-      return res.status(400).json({ message: "Cantidad no válida" });
     try {
+      // primero la sesión (como las demás rutas: sin sesión, 401), después lo que se pide
       const v = await vecino(req, res);
       if (!v) return;
+      const parcela = Math.floor(Number(req.params.parcela));
+      const cantidad = Math.floor(Number(req.body?.cantidad));
+      if (!Number.isInteger(parcela) || parcela < 0 || parcela >= CASAS_POR_BARRIO || !Number.isInteger(cantidad) || cantidad < 1 || cantidad > PUEBLO_MAX)
+        return res.status(400).json({ message: "Cantidad no válida" });
       const ahora = Date.now();
       if (ahora - (ultimo.get(v.casa) ?? 0) < 800) return res.status(429).json({ message: "Espera un momento" });
       ultimo.set(v.casa, ahora);
