@@ -120,6 +120,18 @@ ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_dia" text;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_hoy" integer NOT NULL DEFAULT 0;`;
 
 export const PREGUNTA = new Map(BANCO_SABIO.map((q) => [q.id, q]));
+/** El nombre con que se ve una cuenta (su personaje), guardado un rato: el público pide la partida cada segundo y medio. */
+const nombresCuenta = new Map<number, { n: string; at: number }>();
+async function nombreDeCuenta(cuenta: number): Promise<string> {
+  const c = nombresCuenta.get(cuenta);
+  if (c && Date.now() - c.at < 5 * 60_000) return c.n;
+  const ch = await personajeDe(cuenta);
+  const n = ch ? nombreDe(ch) : "";
+  if (nombresCuenta.size > 2000) nombresCuenta.clear();
+  nombresCuenta.set(cuenta, { n, at: Date.now() });
+  return n;
+}
+
 export const POR_GRADA = new Map<number, FilaSabio[]>();
 for (const q of BANCO_SABIO) POR_GRADA.set(q.n, [...(POR_GRADA.get(q.n) ?? []), q]);
 
@@ -1100,7 +1112,7 @@ export function registerSabioRoutes(app: Express) {
       const r = rows[0];
       const duenio = r ? Number(r.user_id) : null;
       if (!r || (duenio !== me && (await seBloquearon(me, duenio!)))) return res.status(404).json({ message: "Esa partida ya no está." });
-      if (duenio !== me) marcarMirando(id, me);
+      if (duenio !== me) marcarMirando(id, me, await nombreDeCuenta(me));
       res.setHeader("Cache-Control", "no-store");
       res.json(mirarVista(r));
     }),

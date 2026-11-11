@@ -2,6 +2,7 @@
  * Piezas que comparten la pantalla de «¿Quién es sabio?» (SabioUI.tsx) y el duelo de sabios (SabioDuelo.tsx):
  * pedir al servidor, los números con punto de miles, las letras de las respuestas, el presentador y el reloj.
  */
+import { useEffect, useState } from "react";
 import type { Relacion } from "@shared/sabio";
 import { Portrait } from "./Portrait";
 
@@ -27,7 +28,64 @@ export const LETRAS = ["A", "B", "C", "D"];
 export const primerNombre = (s: string) => s.split(/[\s,]+/)[0] || s;
 export const RELACION: Record<Relacion, string> = { amigo: "tu amigo", vecino: "tu vecino", ambos: "tu amigo y vecino" };
 
-export function Presentador({ dice }: { dice: string }) {
+/** Si la pantalla está en vertical (teléfono): el estudio deja más lugar abajo para las preguntas. */
+export function useVertical(): boolean {
+  const [v, setV] = useState(() => typeof window !== "undefined" && window.innerHeight > window.innerWidth);
+  useEffect(() => {
+    const f = () => setV(window.innerHeight > window.innerWidth);
+    window.addEventListener("resize", f);
+    return () => window.removeEventListener("resize", f);
+  }, []);
+  return v;
+}
+
+/** El logo del concurso: las siete columnas de la casa de la sabiduría (Proverbios 9:1) y el nombre en oro. */
+export function LogoSabio({ grande = false }: { grande?: boolean }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2" aria-label="¿Quién es sabio? La casa de la sabiduría">
+      <svg viewBox="0 0 64 48" className={grande ? "h-14 w-auto shrink-0" : "h-9 w-auto shrink-0"} aria-hidden="true">
+        <defs>
+          <linearGradient id="sabio-oro" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff3c4" />
+            <stop offset=".55" stopColor="#f3c95a" />
+            <stop offset="1" stopColor="#b9801a" />
+          </linearGradient>
+          <radialGradient id="sabio-halo" cx=".5" cy=".55" r=".6">
+            <stop offset="0" stopColor="#5b6cff" stopOpacity=".55" />
+            <stop offset="1" stopColor="#5b6cff" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="32" cy="27" r="24" fill="url(#sabio-halo)" />
+        <path d="M6 15 L32 3 L58 15 Z" fill="url(#sabio-oro)" />
+        <rect x="6" y="15.5" width="52" height="3" rx="1" fill="url(#sabio-oro)" />
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <g key={i}>
+            <rect x={8.4 + i * 7.6} y="20" width="3.6" height="19" rx="1" fill="url(#sabio-oro)" />
+            <rect x={7.6 + i * 7.6} y="38.5" width="5.2" height="2" rx=".6" fill="url(#sabio-oro)" />
+          </g>
+        ))}
+        <rect x="4" y="41.5" width="56" height="3.2" rx="1.2" fill="url(#sabio-oro)" />
+        <circle cx="32" cy="10.4" r="2.2" fill="#fff8de" />
+      </svg>
+      <div className="min-w-0 leading-none">
+        <p className={`sabio-titulo truncate font-serif font-black ${grande ? "text-3xl" : "text-lg sm:text-2xl"}`}>¿Quién es sabio?</p>
+        <p className="mt-0.5 truncate text-[9.5px] font-bold uppercase tracking-[0.24em] text-amber-200/75">La casa de la sabiduría</p>
+      </div>
+    </div>
+  );
+}
+
+export function Presentador({ dice, compacto = false }: { dice: string; compacto?: boolean }) {
+  if (compacto)
+    return (
+      <div className="flex items-center gap-2 rounded-2xl bg-black/35 px-2.5 py-1.5 backdrop-blur-sm" data-testid="sabio-presentador">
+        <Portrait who="etan" size={28} />
+        <p className="min-w-0 flex-1 text-[12.5px] leading-snug">
+          <b className="mr-1 text-[10px] uppercase tracking-wider text-amber-300">Etán:</b>
+          <span className="font-serif italic">{dice}</span>
+        </p>
+      </div>
+    );
   return (
     <div className="flex items-start gap-2.5" data-testid="sabio-presentador">
       <Portrait who="etan" size={44} />

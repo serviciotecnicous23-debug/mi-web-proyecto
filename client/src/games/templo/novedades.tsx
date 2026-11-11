@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-estudio-sabio",
+    fecha: "11 de noviembre de 2026",
+    titulo: "«¿Quién es sabio?» ahora es un programa de verdad",
+    puntos: [
+      "🎬 La casa de la sabiduría tiene su estudio en 3D: escenario redondo con aro de luz, tu asiento frente a Etán ezraíta, las siete columnas, una pantalla gigante con la pregunta y las quince gradas que se encienden a medida que subes.",
+      "👏 El público está sentado en sus gradas y reacciona: contiene el aliento en el suspenso, aplaude cuando aciertas, dice «¡oh!» cuando fallas y se pone de pie si llegas a la cima. Quienes te miran en vivo aparecen con su nombre en la primera fila.",
+      "🎥 Las cámaras cambian de toma como en la televisión, los focos se mueven y la pantalla muestra la llamada a tu amigo y el consejo de los ancianos de la puerta.",
+    ],
+  },
+  {
     id: "2026-11-11-casas-del-pueblo",
     fecha: "11 de noviembre de 2026",
     titulo: "Las casas del pueblo y sus pedidos",

@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { C, GeoBuilder, matrixOf, shinyMat, type Tf } from "./builder";
 
 // ---------------------------------------------------------------- pose y animación
-export type Pose = "idle" | "walk" | "cheer" | "kneel" | "play" | "sit" | "bow" | "offer";
+export type Pose = "idle" | "walk" | "cheer" | "kneel" | "play" | "sit" | "bow" | "offer" | "clap" | "gasp" | "talk" | "think" | "wave" | "point";
 
 export type Rig = {
   x: number;
@@ -22,6 +22,8 @@ export type Rig = {
   t: number; // reloj propio (para que no se muevan todos igual)
   scale: number;
   hunch?: number;
+  /** Sentado (en un banco o una silla): las poses de brazos se hacen sentado, sin saltar. */
+  seated?: boolean;
 };
 
 export function newRig(x = 0, z = 0, scale = 1): Rig {
@@ -87,8 +89,55 @@ export function computePose(r: Rig): PoseOut {
       po.armL = po.armR = -1.9;
       po.outL = po.outR = -0.05;
       break;
+    case "clap": {
+      // aplaudir: los brazos al frente y las manos que se juntan
+      const c = Math.sin(r.t * 15);
+      po.armL = po.armR = -1.2 + Math.sin(r.t * 2.3) * 0.05;
+      po.outL = po.outR = -0.22 - c * 0.16;
+      po.bob += Math.abs(c) * 0.008;
+      break;
+    }
+    case "gasp":
+      // asombro: las manos a los lados de la cabeza (sin taparse la cara)
+      po.armL = po.armR = -2.85 + Math.sin(r.t * 5) * 0.04;
+      po.outL = po.outR = 0.2 + Math.sin(r.t * 7) * 0.03;
+      po.tilt = -0.08 + Math.sin(r.t * 9) * 0.015;
+      break;
+    case "talk":
+      // hablar con las manos (el presentador, los vecinos que conversan)
+      po.armR = -0.95 + Math.sin(r.t * 3.1) * 0.38;
+      po.outR = 0.16 + Math.sin(r.t * 2.3) * 0.12;
+      po.armL = -0.35 + Math.sin(r.t * 2.2 + 1.1) * 0.22;
+      po.outL = 0.1 + Math.max(0, Math.sin(r.t * 1.7)) * 0.1;
+      po.tilt += Math.sin(r.t * 2.6) * 0.025;
+      break;
+    case "think":
+      // pensar: una mano en la barbilla y el cuerpo un poco adelante
+      po.armR = -2.15;
+      po.outR = -0.52;
+      po.armL = -0.62;
+      po.outL = -0.42;
+      po.tilt = 0.08 + Math.sin(r.t * 0.8) * 0.02;
+      break;
+    case "wave":
+      // saludar con la mano en alto
+      po.armR = -2.65;
+      po.outR = 0.35 + Math.sin(r.t * 9) * 0.32;
+      break;
+    case "point":
+      // señalar al frente
+      po.armR = -1.5;
+      po.outR = 0.06;
+      break;
     default:
       break;
+  }
+  if (r.seated && r.pose !== "sit" && r.pose !== "kneel") {
+    // sentado: el cuerpo baja, no se salta y las piernas no caminan
+    po.drop = Math.max(po.drop, 0.24);
+    po.bob = Math.min(po.bob, 0.03);
+    po.footL = po.footR = 0.06;
+    po.liftL = po.liftR = 0;
   }
   return po;
 }
@@ -594,7 +643,7 @@ function figureParts(look: FigureLook) {
   // el cayado del profeta y el rollo del siervo del rey
   if (look === "profeta") armS.cyl(0.016, 0.016, 1.05, "#7a5a3a", { y: -0.5, z: 0.07, rx: 0.12 }, 6);
   if (look === "oficial") armLS.cyl(0.032, 0.032, 0.2, "#efe3c2", { y: -0.36, z: 0.08, rz: Math.PI / 2 }, 8);
-  return { m, s, armM, armS, armLM, armLS };
+  return { m, s, armM, armS, armLM, armLS, robe: robeCol };
 }
 
 function pick3(k: number) {
@@ -612,6 +661,8 @@ export class Figure {
   look: FigureLook | null = null;
   private ropa: { manto?: string; faja?: string } | null = null;
   private ropaG: THREE.Group | null = null;
+  /** El regazo con la túnica (se ve cuando está sentado). */
+  private regazo: THREE.Mesh | null = null;
 
   constructor(look: FigureLook) {
     this.root.add(this.body, this.footL, this.footR);
@@ -679,6 +730,7 @@ export class Figure {
       }
     }
     const p = figureParts(look);
+    this.ponerRegazo(p.robe);
     const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder) => {
       if (!mb.empty) g.add(new THREE.Mesh(mb.build(), matteFor()));
       if (!sb.empty) g.add(new THREE.Mesh(sb.build(), shinyMat()));
@@ -695,9 +747,25 @@ export class Figure {
     });
   }
 
+  /** Las rodillas cubiertas por la túnica hacia adelante: así se ve sentado y no de pie. */
+  private ponerRegazo(color: string) {
+    if (this.regazo) {
+      this.body.remove(this.regazo);
+      this.regazo.geometry.dispose();
+    }
+    const b = new GeoBuilder();
+    b.box(0.36, 0.13, 0.34, color, { y: 0.27, z: 0.17 });
+    b.cyl(0.07, 0.065, 0.24, color, { x: -0.09, y: 0.12, z: 0.32 }, 8);
+    b.cyl(0.07, 0.065, 0.24, color, { x: 0.09, y: 0.12, z: 0.32 }, 8);
+    this.regazo = new THREE.Mesh(b.build(), matteFor());
+    this.regazo.visible = false;
+    this.body.add(this.regazo);
+  }
+
   update(r: Rig) {
     const p = computePose(r);
     const s = r.scale;
+    if (this.regazo) this.regazo.visible = !!r.seated || r.pose === "sit";
     this.root.position.set(r.x, r.y, r.z);
     this.root.rotation.y = r.yaw;
     this.root.scale.setScalar(s);

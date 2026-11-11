@@ -1586,6 +1586,16 @@ export class CiudadWorld {
     return this.lookDe(this.estado.yo.escalon, this.estado.yo.camino);
   }
 
+  /** Para el estudio del concurso: su vestidura, la ropa del mercado y su nombre. */
+  figuraJugador(): { look: FigureLook; ropa: { manto?: string; faja?: string } | null; nombre: string } {
+    return { look: this.lookJugador(), ropa: this.estado.yo.ropa ?? null, nombre: this.estado.yo.nombre };
+  }
+
+  /** Si la ciudad se está dibujando (no duerme dentro de una casa o de un estudio). */
+  get despierta(): boolean {
+    return this.running;
+  }
+
   /**
    * Mientras se está dentro de una casa, la ciudad se duerme: no se dibuja, no se mueve y no se ve
    * (la conexión con los vecinos sigue abierta). Al salir, despierta en la misma puerta.

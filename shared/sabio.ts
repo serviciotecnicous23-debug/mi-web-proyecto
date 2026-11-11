@@ -282,7 +282,13 @@ export const APLAUSOS = [
 ] as const;
 export type AplausoId = (typeof APLAUSOS)[number]["id"];
 /** Cuántos miran y los aplausos de los últimos segundos (`ultimo` cambia con cada aplauso nuevo). */
-export type PublicoVista = { mirando: number; aplausos: Partial<Record<AplausoId, number>>; ultimo: number };
+export type PublicoVista = {
+  mirando: number;
+  aplausos: Partial<Record<AplausoId, number>>;
+  ultimo: number;
+  /** Los nombres de quienes miran (sus personajes, como se ven en la ciudad), para sentarlos en el estudio. */
+  nombres?: string[];
+};
 
 export type EnVivo = { id: number; nombre: string; camino: Camino; grada: number; puntos: number; mirando: number; relacion: Relacion | null };
 
