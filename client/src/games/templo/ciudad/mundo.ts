@@ -39,6 +39,7 @@ import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
+import { Antorchas, lugaresAntorchas } from "./antorchas";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 
@@ -148,6 +149,8 @@ export class CiudadWorld {
   private sun = new THREE.DirectionalLight("#fff3d6", 2.6);
   private hemi = new THREE.HemisphereLight("#cfe3ff", "#b9a27a", 1.2);
   private fireLight = new THREE.PointLight("#ff9a4a", 0, 16, 1.4);
+  /** Las antorchas de las calles (se encienden al caer la noche). */
+  private antorchas!: Antorchas;
   private vis: CiudadVisual;
   private crowd = new Crowd(40);
   private shadows = new BlobShadows(80);
@@ -291,6 +294,8 @@ export class CiudadWorld {
     }
     this.vis = buildCiudad();
     this.scene.add(this.vis.root, this.crowd.group, this.shadows.mesh, this.items.group, this.fx.group);
+    this.antorchas = new Antorchas(lugaresAntorchas(), coarse ? 4 : 6);
+    this.scene.add(this.antorchas.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
 
@@ -1220,6 +1225,7 @@ export class CiudadWorld {
     this.overlay.resize(this.w, this.h);
     const px = (this.h * this.ratio) / (2 * Math.tan((this.camera.fov * Math.PI) / 360));
     this.fx.setScale(px);
+    this.antorchas?.setPantalla(px);
   }
 
   private reloj() {
@@ -2072,6 +2078,10 @@ export class CiudadWorld {
     this.fx.incense("humo", this.vis.humo, dt, 1.2);
     this.syncNoche();
     const t = this.reloj().hora;
+    // las antorchas se encienden al atardecer y se apagan al amanecer
+    const tarde = THREE.MathUtils.smoothstep(t, DUSK - 0.07, DUSK);
+    const manana = 1 - THREE.MathUtils.smoothstep(t, DAWN - 0.01, DAWN + 0.05);
+    this.antorchas.update(dt, t > 0.5 ? tarde : manana, this.camTarget.x, this.camTarget.z);
     if (t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos
       const r = this.player.rig;
@@ -2143,10 +2153,11 @@ export class CiudadWorld {
     (this.scene.fog as THREE.Fog).color.copy(a);
     (this.vis.stars.material as THREE.PointsMaterial).opacity = Math.max(0, 1 - day * 1.6);
     this.sun.color.set("#fff3d6").lerp(b.set("#ffb066"), warm * day).lerp(c.set("#9db4ff"), 1 - day);
-    this.sun.intensity = 0.55 + 2.35 * day;
-    this.hemi.color.set("#40507e").lerp(b.set("#cfe3ff"), day);
-    this.hemi.groundColor.set("#2a2620").lerp(b.set("#b9a27a"), day);
-    this.hemi.intensity = 0.75 + 0.6 * day;
+    // de noche la luna alumbra un poco más (que se vea por dónde se camina) y las antorchas ponen lo cálido
+    this.sun.intensity = 0.72 + 2.18 * day;
+    this.hemi.color.set("#4d5f94").lerp(b.set("#cfe3ff"), day);
+    this.hemi.groundColor.set("#3a3226").lerp(b.set("#b9a27a"), day);
+    this.hemi.intensity = 0.95 + 0.4 * day;
     this.renderer.toneMappingExposure = 0.95 + 0.12 * day;
     const gx = Math.round(this.camTarget.x / 2) * 2, gz = Math.round(this.camTarget.z / 2) * 2;
     this.sun.target.position.set(gx, P.SUELO, gz);
@@ -2383,6 +2394,7 @@ export class CiudadWorld {
     this.shadows.dispose();
     this.items.dispose();
     this.fx.dispose();
+    this.antorchas.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();
     gameStore.setCiudad(null);

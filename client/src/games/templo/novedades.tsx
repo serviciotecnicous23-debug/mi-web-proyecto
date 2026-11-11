@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-antorchas",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Antorchas en toda la ciudad",
+    puntos: [
+      "🔥 Al caer la noche se encienden más de 150 antorchas: en el borde y en el centro de la plaza, alrededor del pozo, al pie de la escalinata, en las puertas de los edificios, en los caminos y en las calles de cada barrio. Sus llamas titilan y dejan un círculo de luz cálida en el piso.",
+      "🌙 La luna también alumbra un poco más: de noche ya se ve por dónde se camina. Al amanecer las antorchas se apagan solas.",
+    ],
+  },
+  {
     id: "2026-11-11-gradas-dificiles",
     fecha: "11 de noviembre de 2026",
     titulo: "Cuanto más subes, más difícil",
