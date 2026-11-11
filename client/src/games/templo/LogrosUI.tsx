@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from "react";
 import { Award } from "lucide-react";
+import { Medalla } from "./medalla";
 import { LOGROS_EN_LINEA, type LogrosDe } from "@shared/logros-en-linea";
 
 async function traer(path: string): Promise<LogrosDe | null> {
@@ -37,8 +38,8 @@ export function MisLogros() {
         {l.logros.map((x) => {
           const d = LOGROS_EN_LINEA[x.id];
           return (
-            <li key={x.id} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs ${x.tiene ? "bg-amber-100 dark:bg-amber-900/40" : "bg-stone-50 opacity-80 dark:bg-stone-800/50"}`} data-testid={`logro-${x.id}`}>
-              <span className={`text-xl ${x.tiene ? "" : "grayscale"}`}>{d.icono}</span>
+            <li key={x.id} className={`flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-xs ${x.tiene ? "bg-gradient-to-r from-amber-100 to-amber-50 shadow-sm dark:from-amber-900/40 dark:to-transparent" : "bg-stone-50 dark:bg-stone-800/50"}`} data-testid={`logro-${x.id}`}>
+              <Medalla icono={d.icono} metal={x.tiene ? 3 : 0} progreso={x.pide ? x.lleva / x.pide : 0} size={40} />
               <span className="min-w-0 flex-1">
                 <b>{d.nombre}</b>
                 <span className="block text-[11px] text-stone-500">{x.tiene ? "¡Logrado! Tus vecinos lo ven." : `${d.como} (${x.lleva} de ${x.pide})`}</span>

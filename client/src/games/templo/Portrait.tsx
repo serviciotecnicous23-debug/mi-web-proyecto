@@ -1,18 +1,44 @@
 /**
- * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango.
+ * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango. Cada retrato lleva luz de estudio: la cara
+ * con volumen (luz arriba a la izquierda, sombra bajo la barbilla), un foco detrás de la cabeza y un aro de oro con
+ * brillo. La portada y el emblema del juego están en portada.tsx.
  */
-import type { ReactElement } from "react";
+import { createContext, useContext, useId, type ReactElement } from "react";
+export { TemploCover } from "./portada";
+
+/** El prefijo de los degradados de este retrato (para que dos retratos en pantalla no se mezclen). */
+const IdCtx = createContext("pr");
+
+/** Mezcla dos colores (#rrggbb): t = 0 da el primero, t = 1 el segundo. */
+function mezcla(hex: string, otro: string, t: number) {
+  const a = parseInt(hex.slice(1), 16);
+  const b = parseInt(otro.slice(1), 16);
+  const c = (sh: number) => Math.round(((a >> sh) & 255) * (1 - t) + ((b >> sh) & 255) * t);
+  return `#${((1 << 24) | (c(16) << 16) | (c(8) << 8) | c(0)).toString(16).slice(1)}`;
+}
 type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "miqueas" | "eliaquim" | "eleazar" | "etan" | "husai" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
 function Face({ skin, beard, brows = "#3b2a1e" }: { skin: string; beard?: string; brows?: string }) {
+  const p = useContext(IdCtx);
   return (
     <>
+      <path d="M27.6 35 H36.4 V41.6 Q32 43.6 27.6 41.6 Z" fill={mezcla(skin, "#000000", 0.22)} />
+      <circle cx="20.6" cy="28.5" r="2.2" fill={mezcla(skin, "#000000", 0.12)} />
+      <circle cx="43.4" cy="28.5" r="2.2" fill={mezcla(skin, "#000000", 0.18)} />
       <circle cx="32" cy="28" r="11.5" fill={skin} />
-      <circle cx="20.6" cy="28.5" r="2.2" fill={skin} />
-      <circle cx="43.4" cy="28.5" r="2.2" fill={skin} />
-      {beard && <path d="M20.8 28.5 C21.5 44 42.5 44 43.2 28.5 C40 35.5 24 35.5 20.8 28.5Z" fill={beard} />}
+      <circle cx="32" cy="28" r="11.5" fill={`url(#${p}piel)`} />
+      <path d="M21.3 24.5 A11.5 11.5 0 0 1 27 17.6" stroke="#fff" strokeWidth=".8" fill="none" opacity=".35" strokeLinecap="round" />
+      <path d="M32.7 28.6 q1.1 2.2 -0.7 2.9" stroke="#000" strokeWidth=".6" fill="none" opacity=".2" strokeLinecap="round" />
+      {beard && (
+        <>
+          <path d="M20.8 28.5 C21.5 44 42.5 44 43.2 28.5 C40 35.5 24 35.5 20.8 28.5Z" fill={beard} />
+          <path d="M20.8 28.5 C21.5 44 42.5 44 43.2 28.5 C40 35.5 24 35.5 20.8 28.5Z" fill={`url(#${p}barba)`} />
+          <path d="M26 37.6 q2 1.6 3.4 1.2 M34.6 38.8 q1.4 .4 3.4 -1.2" stroke="#000" strokeWidth=".5" fill="none" opacity=".18" strokeLinecap="round" />
+        </>
+      )}
+      <path d="M25.9 25.7 q1.7 -1.1 3.4 0 M34.7 25.7 q1.7 -1.1 3.4 0" stroke="#1d1a17" strokeWidth=".45" fill="none" opacity=".55" />
       <ellipse cx="27.6" cy="27.2" rx="1.5" ry="1.8" fill="#1d1a17" />
       <ellipse cx="36.4" cy="27.2" rx="1.5" ry="1.8" fill="#1d1a17" />
       <circle cx="27.1" cy="26.6" r="0.5" fill="#fff" />
@@ -232,69 +258,50 @@ export function Portrait({ who, size = 64 }: { who: Who; size?: number }) {
       );
     }
   }
+  const p = `pr${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (
-    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" className="shrink-0 rounded-full shadow-md ring-2 ring-amber-300/70">
-      <clipPath id={`clip-${who}`}>
-        <circle cx="32" cy="32" r="32" />
-      </clipPath>
-      <g clipPath={`url(#clip-${who})`}>
-        <rect width="64" height="64" fill={bg} />
-        {body}
-      </g>
-    </svg>
-  );
-}
-
-/** Portada del juego (la sala de juegos y la pantalla de inicio). */
-export function TemploCover({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 320 180" className={className} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" className="shrink-0 rounded-full shadow-[0_3px_10px_rgba(0,0,0,.35)]">
       <defs>
-        <linearGradient id="tc-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2b2a6e" />
-          <stop offset="0.55" stopColor="#c96b4f" />
-          <stop offset="1" stopColor="#f3c27a" />
-        </linearGradient>
-        <linearGradient id="tc-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fff1a8" />
-          <stop offset="1" stopColor="#e2b33c" />
-        </linearGradient>
-        <radialGradient id="tc-fire" cx="0.5" cy="0.9" r="0.7">
-          <stop offset="0" stopColor="#fff1a8" />
-          <stop offset="0.45" stopColor="#ff8a2a" />
-          <stop offset="1" stopColor="#ff5a12" stopOpacity="0" />
+        <clipPath id={`${p}clip`}>
+          <circle cx="32" cy="32" r="32" />
+        </clipPath>
+        <radialGradient id={`${p}fondo`} cx=".5" cy=".38" r=".7">
+          <stop offset="0" stopColor={mezcla(bg, "#ffffff", 0.45)} />
+          <stop offset=".55" stopColor={bg} />
+          <stop offset="1" stopColor={mezcla(bg, "#000000", 0.32)} />
         </radialGradient>
+        <radialGradient id={`${p}piel`} cx=".36" cy=".3" r=".78">
+          <stop offset="0" stopColor="#fff" stopOpacity=".3" />
+          <stop offset=".5" stopColor="#fff" stopOpacity="0" />
+          <stop offset=".78" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity=".26" />
+        </radialGradient>
+        <linearGradient id={`${p}barba`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity=".22" />
+          <stop offset=".6" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity=".22" />
+        </linearGradient>
+        <radialGradient id={`${p}luz`} cx=".28" cy=".18" r="1">
+          <stop offset="0" stopColor="#fff" stopOpacity=".75" />
+          <stop offset=".45" stopColor="#fff" stopOpacity="0" />
+          <stop offset=".75" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity=".6" />
+        </radialGradient>
+        <linearGradient id={`${p}aro`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fff3c4" />
+          <stop offset=".35" stopColor="#e9b949" />
+          <stop offset=".65" stopColor="#8a5a0c" />
+          <stop offset="1" stopColor="#f3c95a" />
+        </linearGradient>
       </defs>
-      <rect width="320" height="180" fill="url(#tc-sky)" />
-      <circle cx="250" cy="52" r="16" fill="#ffe6a8" opacity="0.85" />
-      {/* monte y muro */}
-      <path d="M0 150 L320 150 L320 180 L0 180Z" fill="#c9b07a" />
-      <path d="M0 132 H320 V150 H0Z" fill="#e3d5b6" />
-      <path d="M0 132 H320" stroke="#8a5a32" strokeWidth="3" />
-      {/* la casa */}
-      <rect x="92" y="58" width="136" height="76" fill="#efe4c9" />
-      <rect x="92" y="58" width="136" height="6" fill="#8a5a32" />
-      <rect x="132" y="38" width="56" height="96" fill="#e3d5b6" />
-      <rect x="128" y="34" width="64" height="7" fill="#e2b33c" />
-      <rect x="150" y="84" width="20" height="50" rx="2" fill="url(#tc-gold)" />
-      {/* Jaquín y Boaz */}
-      {[138, 182].map((x) => (
-        <g key={x}>
-          <rect x={x - 4} y="66" width="8" height="68" fill="#b8763b" />
-          <ellipse cx={x} cy="64" rx="8" ry="5" fill="#b8763b" />
-          <circle cx={x - 4} cy="63" r="1.5" fill="#a3452e" />
-          <circle cx={x + 4} cy="63" r="1.5" fill="#a3452e" />
-        </g>
-      ))}
-      {/* altar con fuego */}
-      <rect x="138" y="140" width="44" height="18" fill="#b8763b" />
-      <rect x="136" y="137" width="48" height="4" fill="#7d4a22" />
-      <ellipse cx="160" cy="128" rx="20" ry="18" fill="url(#tc-fire)" />
-      <path d="M160 112 C163 120 170 124 168 132 C166 138 154 138 152 132 C150 125 157 121 160 112Z" fill="#ffd66b" />
-      {/* luces de gozo */}
-      {[[60, 90], [262, 104], [84, 118], [240, 128], [110, 30], [210, 26]].map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={i % 2 ? 2.4 : 3.2} fill="#ffe6a8" opacity="0.9" />
-      ))}
+      <g clipPath={`url(#${p}clip)`}>
+        <rect width="64" height="64" fill={`url(#${p}fondo)`} />
+        <IdCtx.Provider value={p}>{body}</IdCtx.Provider>
+        <rect width="64" height="64" fill={`url(#${p}luz)`} style={{ mixBlendMode: "soft-light" }} />
+      </g>
+      <circle cx="32" cy="32" r="31" fill="none" stroke={`url(#${p}aro)`} strokeWidth="2" />
+      <circle cx="32" cy="32" r="29.8" fill="none" stroke="#000" strokeOpacity=".22" strokeWidth=".5" />
+      <path d="M7.5 23 A26 26 0 0 1 23 7.5" stroke="#fff" strokeWidth="1.1" fill="none" opacity=".55" strokeLinecap="round" />
     </svg>
   );
 }

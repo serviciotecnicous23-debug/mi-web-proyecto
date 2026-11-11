@@ -8,7 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from "wouter";
 import {
   ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
-  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, Landmark, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap, Target,
+  Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap, Target,
 } from "lucide-react";
 import { PARTES } from "./instruccion";
 import { EstudiosModal } from "./EstudiosUI";
@@ -45,6 +45,9 @@ import { Card, VerseBox, fmt, hace } from "./ui";
 import { Cruceta, PanelControles, elegirOrientacion, orientacionGuardada, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { girarPantalla, orientacionActual } from "./motor/controles";
 import { AvisoVersionNueva, NovedadesAviso } from "./novedades";
+import { EmblemaJerusalen, EmblemaTemplo } from "./portada";
+import { Medalla } from "./medalla";
+import "./templo.css";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
@@ -645,7 +648,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
        <CiudadCtx.Provider value={ciudadCtx}>
         <div
           ref={wrapRef}
-          className={`select-none overflow-hidden bg-[#1a1408] ${big ? "fixed inset-0 z-[60] rounded-none" : "relative w-full rounded-2xl border border-amber-500/30 shadow-2xl shadow-amber-950/30"}`}
+          className={`tpl-juego select-none overflow-hidden bg-[#1a1408] ${big ? "fixed inset-0 z-[60] rounded-none" : "relative w-full rounded-2xl border border-amber-500/30 shadow-2xl shadow-amber-950/30"}`}
           style={big ? safe : { ...safe, height: GAME_HEIGHT, minHeight: 460, scrollMarginTop: "calc(var(--app-nav-h, 64px) + 8px)" }}
           data-testid="templo-box"
           data-pantalla={big ? "completa" : "normal"}
@@ -770,10 +773,11 @@ function TitleScreen(props: {
       style={{ paddingTop: "var(--tpl-st, 0px)", paddingBottom: "var(--tpl-sb, 0px)" }}
     >
       <div className="mx-auto flex min-h-full max-w-lg flex-col items-center justify-center gap-4 px-5 py-6 text-center">
-        <TemploCover className="w-full max-w-sm rounded-2xl shadow-2xl ring-1 ring-amber-300/40" />
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-amber-300">{game.tagline}</p>
-          <h2 className="mt-1 font-serif text-3xl font-black tracking-tight sm:text-4xl">{game.title}</h2>
+        <TemploCover className="w-full max-w-sm rounded-2xl shadow-2xl shadow-black/60 ring-1 ring-amber-300/40" />
+        <div className="flex flex-col items-center" data-testid="templo-logo">
+          <EmblemaTemplo className="-mt-14 h-20 w-20 drop-shadow-[0_6px_14px_rgba(0,0,0,.6)]" />
+          <p className="tpl-lema mt-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-amber-300">{game.tagline}</p>
+          <h2 className="tpl-logo-titulo mt-1 font-serif text-[2.15rem] font-black leading-tight tracking-tight sm:text-5xl">{game.title}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-white/80">{game.description}</p>
         </div>
         {phase === "loading" || phase === "starting" ? (
@@ -801,7 +805,7 @@ function TitleScreen(props: {
           <div className="flex w-full max-w-xs flex-col gap-2">
             {has && save ? (
               <>
-                <Button size="lg" className="rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" onClick={() => onStart(false)} data-testid="button-templo-continue">
+                <Button size="lg" className="tpl-btn-oro rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" onClick={() => onStart(false)} data-testid="button-templo-continue">
                   <Play className="mr-2 h-5 w-5 fill-current" /> Continuar
                 </Button>
                 <p className="text-xs text-amber-100/90">
@@ -812,7 +816,7 @@ function TitleScreen(props: {
                 </button>
               </>
             ) : (
-              <Button size="lg" className="rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" onClick={() => onStart(false)} data-testid="button-templo-start">
+              <Button size="lg" className="tpl-btn-oro rounded-full bg-amber-500 text-lg font-bold text-amber-950 hover:bg-amber-400" onClick={() => onStart(false)} data-testid="button-templo-start">
                 <Play className="mr-2 h-5 w-5 fill-current" /> Comenzar
               </Button>
             )}
@@ -830,7 +834,7 @@ function TitleScreen(props: {
         <ul className="max-w-sm space-y-1 text-left text-xs text-white/75">
           {HOW_TO.slice(0, 4).map((h) => (
             <li key={h} className="flex gap-2">
-              <span className="text-amber-300">✦</span> {h}
+              <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rotate-45 rounded-[2px] bg-amber-300 shadow-[0_0_6px_rgba(252,211,77,.7)]" /> {h}
             </li>
           ))}
         </ul>
@@ -935,7 +939,7 @@ function Meter({ icon, label, value, max, color, testid }: { icon: React.ReactNo
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
   const low = pct < 25;
   return (
-    <div className={`flex items-center gap-1.5 rounded-full bg-black/45 py-0.5 pl-1 pr-2 backdrop-blur-sm ${low ? "ring-1 ring-red-400/80" : ""}`} title={label} data-testid={testid}>
+    <div className={`flex items-center gap-1.5 rounded-full bg-black/45 tpl-vidrio py-0.5 pl-1 pr-2 backdrop-blur-sm ${low ? "ring-1 ring-red-400/80" : ""}`} title={label} data-testid={testid}>
       <span className={`flex h-5 w-5 items-center justify-center rounded-full ${low ? "animate-pulse" : ""}`} style={{ background: color }}>
         {icon}
       </span>
@@ -948,7 +952,7 @@ function Meter({ icon, label, value, max, color, testid }: { icon: React.ReactNo
 
 function Dots({ icon, label, value, max, color, lit }: { icon: React.ReactNode; label: string; value: number; max: number; color: string; lit?: boolean }) {
   return (
-    <div className="flex items-center gap-1 rounded-full bg-black/45 py-0.5 pl-1 pr-2 backdrop-blur-sm" title={label}>
+    <div className="flex items-center gap-1 rounded-full bg-black/45 tpl-vidrio py-0.5 pl-1 pr-2 backdrop-blur-sm" title={label}>
       <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: color }}>
         {icon}
       </span>
@@ -965,7 +969,7 @@ function DayClock({ hud }: { hud: Hud }) {
   const night = hud.time < 0.2 || hud.time > 0.8;
   const a = hud.time * Math.PI * 2 - Math.PI / 2;
   return (
-    <div className="flex items-center gap-1.5 rounded-full bg-black/45 py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-white backdrop-blur-sm" data-testid="templo-clock">
+    <div className="flex items-center gap-1.5 rounded-full bg-black/45 tpl-vidrio py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-white backdrop-blur-sm" data-testid="templo-clock">
       <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
         <circle cx="12" cy="12" r="11" fill={night ? "#1b2140" : "#7fb5e6"} />
         <path d="M1 12 A11 11 0 0 0 23 12 Z" fill={night ? "#0d1022" : "#d9c49a"} opacity="0.85" />
@@ -1042,7 +1046,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 </div>
                 {oh?.gozoTotal != null && (
                   <div
-                    className="flex items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
+                    className="flex items-center gap-1 rounded-full bg-black/50 tpl-vidrio py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
                     title="Tu gozo de Jerusalén en línea: se gana sirviendo y se gasta en el mercado de la plaza"
                     data-testid="templo-gozo-en-linea"
                   >
@@ -1052,7 +1056,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 )}
                 <button
                   type="button"
-                  className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
+                  className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/50 tpl-vidrio py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
                   onClick={() => open({ kind: "temporada" })}
                   title="Tu escalón en la temporada"
                   data-testid="templo-escalon"
@@ -1113,7 +1117,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
             {hud.purityUnlocked && <Meter icon={<Droplets className="h-3 w-3" />} label="Pureza (lávate en el mar de bronce)" value={hud.purity} max={hud.purityMax} color="#38bdf8" testid="templo-pureza" />}
             {hud.lamps !== null && <Dots icon={<Sun className="h-3 w-3" />} label="Aceite de las siete lámparas" value={hud.lamps} max={7} color="#eab308" lit={hud.lampsLit} />}
             {hud.bread !== null && (
-              <div className="flex items-center gap-1 rounded-full bg-black/45 py-0.5 pl-1 pr-2 text-[11px] font-bold backdrop-blur-sm" title="Panes en la mesa">
+              <div className="flex items-center gap-1 rounded-full bg-black/45 tpl-vidrio py-0.5 pl-1 pr-2 text-[11px] font-bold backdrop-blur-sm" title="Panes en la mesa">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-700">
                   <Wheat className="h-3 w-3" />
                 </span>
@@ -1176,7 +1180,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
           <DayClock hud={hud} />
           {online ? (
             <div
-              className="rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm"
+              className="rounded-full bg-black/45 tpl-vidrio px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm"
               title="La primera hora de deberes del día cuenta completa; las dos siguientes, la mitad"
               data-testid="templo-hoy"
             >
@@ -1184,7 +1188,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
             </div>
           ) : (
             <>
-              <div className="rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm" title="Gloria del templo (tu puntaje)">
+              <div className="rounded-full bg-black/45 tpl-vidrio px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm" title="Gloria del templo (tu puntaje)">
                 <Trophy className="mr-1 inline h-3 w-3 text-amber-300" />
                 {fmt(hud.gloria)}
                 {hud.mult > 1.05 && <span className="ml-1 text-amber-300">· gozo ×{hud.mult.toLocaleString("es-419")}</span>}
@@ -1201,7 +1205,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
               {hud.liga && (hud.liga.lider || hud.liga.puesto) && (
                 <button
                   type="button"
-                  className="pointer-events-auto rounded-full bg-black/45 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm hover:bg-black/60"
+                  className="pointer-events-auto rounded-full bg-black/45 tpl-vidrio px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm hover:bg-black/60"
                   onClick={() => open({ kind: "comunidad" })}
                   title="Tabla de la semana"
                   data-testid="templo-liga"
@@ -1223,7 +1227,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`max-w-[92%] rounded-xl px-3 py-1.5 text-center text-[13px] font-semibold shadow-lg sm:max-w-lg ${t.tone === "gold" ? "bg-gradient-to-r from-amber-300 to-amber-400 text-amber-950" : t.tone === "warn" ? "bg-red-50 text-red-900" : "bg-white/95 text-stone-800"}`}
+            className={`tpl-aviso max-w-[92%] rounded-xl px-3 py-1.5 text-center text-[13px] font-semibold shadow-lg sm:max-w-lg ${t.tone === "gold" ? "bg-gradient-to-r from-amber-300 to-amber-400 text-amber-950" : t.tone === "warn" ? "bg-red-50 text-red-900" : "bg-white/95 text-stone-800"}`}
           >
             {t.text}
           </div>
@@ -1245,7 +1249,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
           </>
         )}
         {c && (
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 py-1 pl-2 pr-1 text-sm font-bold backdrop-blur" data-testid="templo-carga">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 tpl-vidrio py-1 pl-2 pr-1 text-sm font-bold backdrop-blur" data-testid="templo-carga">
             <span className="text-lg">{ITEMS[c.type].icono}</span>
             <span className="tabular-nums">
               {c.count}/{c.cap}
@@ -1289,7 +1293,7 @@ function IconBtn({ label, onClick, children, testid, active, className = "flex" 
         world?.audio.click();
         onClick();
       }}
-      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 pointer-coarse:h-11 pointer-coarse:w-11 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "bg-black/50 text-white hover:bg-black/70"}`}
+      className={`${className} h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur active:scale-95 pointer-coarse:h-11 pointer-coarse:w-11 ${active ? "bg-amber-400 text-amber-950 ring-2 ring-white/70 hover:bg-amber-300" : "tpl-vidrio bg-black/50 text-white hover:bg-black/70"}`}
       data-testid={testid}
     >
       {children}
@@ -2267,7 +2271,6 @@ function LogrosTab() {
   if (!world) return null;
   const s = world.s;
   const story = (id: string) => (id === "puertas" ? !!s.built.puertas : !!s.story[id]);
-  const cup = ["#cd7f32", "#c0c0c8", "#f2b632"];
   let got = 0;
   for (const d of LOGROS) if ((s.logros[d.id] || 0) > 0) got++;
   return (
@@ -2282,10 +2285,13 @@ function LogrosTab() {
           const next = d.niveles && lv < 3 ? d.niveles[lv] : null;
           return (
             <li key={d.id} className={`flex items-center gap-3 rounded-xl border p-2.5 ${lv ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`}>
-              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl" style={{ background: lv ? cup[(d.historia ? 3 : lv) - 1] + "33" : "rgba(120,120,120,.12)" }}>
-                {d.icono}
-                {lv > 0 && <Trophy className="absolute -bottom-1 -right-1 h-5 w-5 drop-shadow" style={{ color: cup[(d.historia ? 3 : lv) - 1] }} fill="currentColor" />}
-              </span>
+              <Medalla
+                icono={d.icono}
+                metal={(lv ? (d.historia ? 3 : Math.min(3, lv)) : 0) as 0 | 1 | 2 | 3}
+                progreso={next ? Math.min(v, next) / next : 0}
+                size={46}
+                titulo={lv ? `Copa de ${COPA[(d.historia ? 3 : lv) - 1] ?? "oro"}` : "Sin copa"}
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold">{d.nombre}</p>
                 <p className="text-[11px] text-stone-600 dark:text-stone-400">{d.texto}</p>
@@ -2548,7 +2554,7 @@ function EnLineaEntrada({ estado, onOnline }: { estado: JerusalenEstado; onOnlin
         className="flex w-full max-w-xs items-center gap-3 rounded-2xl border border-sky-200/40 bg-sky-400/15 px-4 py-2.5 text-left shadow-lg backdrop-blur hover:bg-sky-400/25"
         data-testid="button-templo-en-linea"
       >
-        <Landmark className="h-6 w-6 shrink-0 text-sky-200" />
+        <EmblemaJerusalen className="h-10 w-10 shrink-0 drop-shadow-[0_3px_8px_rgba(0,0,0,.5)]" />
         <span className="min-w-0 flex-1">
           <span className="block font-bold">Jerusalén en línea</span>
           <span className="block text-[11px] text-white/75">
@@ -2664,9 +2670,10 @@ function OnlineLobby({
             ) : null}
           </div>
         )}
-        <header className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>
-          <h2 className="mt-1 font-serif text-3xl font-black">El templo y la ciudad</h2>
+        <header className="flex flex-col items-center text-center">
+          <EmblemaJerusalen className="mb-1 h-16 w-16 drop-shadow-[0_6px_14px_rgba(0,0,0,.55)]" />
+          <p className="tpl-lema text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">Jerusalén en línea</p>
+          <h2 className="tpl-logo-titulo mt-1 font-serif text-3xl font-black">El templo y la ciudad</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-white/80">
             Sirve en el templo junto con la comunidad y vive en Jerusalén: tienes una casa en un barrio que crece con tu servicio. En el templo no hay levitas que trabajen por ti, las preguntas son más difíciles y los cargos del sacerdocio se ganan por mérito en cada temporada.
           </p>

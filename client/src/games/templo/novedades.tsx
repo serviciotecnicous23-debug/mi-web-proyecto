@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-diseno-nuevo",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Diseño nuevo: portada, emblemas, retratos y medallas",
+    puntos: [
+      "🎨 Portada nueva que se mueve: el atardecer sobre Jerusalén, el sol tras el monte, las puertas de oro encendidas, el fuego del altar con brasas y humo, sacerdotes sirviendo y palomas cruzando el cielo.",
+      "🏛️ Emblema propio del juego (el arco de oro con el fuego del altar y dos ramas de olivo) y medallón de «Jerusalén en línea» con la ciudad amurallada; los nombres van en letras de oro con un brillo que pasa.",
+      "🙂 Los retratos de los personajes tienen luz y volumen, y un aro de oro brillante.",
+      "🪟 Las ventanas tienen cabecera de noche y oro, papel con textura y una entrada suave; los botones principales son de oro con relieve, y el marcador es de vidrio.",
+      "🏅 Los logros son medallas de bronce, plata u oro con su cinta, y un anillo muestra cuánto te falta para la siguiente.",
+    ],
+  },
+  {
     id: "2026-11-11-calle-siervos",
     fecha: "11 de noviembre de 2026",
     titulo: "La calle de los siervos de Dios: recados y chismes",
