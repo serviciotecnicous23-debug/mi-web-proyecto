@@ -53,6 +53,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { CapitulosView } from "./CapitulosUI";
+import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
 import { InvitacionEntrante } from "./Acompanar";
@@ -419,6 +420,22 @@ export default function TemploGame({ game }: { game: GameDef }) {
     }
     const def = ed.EDIFICIOS[id];
     const camino = e.yo.camino;
+    // la gran restauración: cómo van las salas nuevas de este edificio para esta persona
+    const [restoMod, restoVista] = await Promise.all([
+      import("@shared/restauracion").catch(() => null),
+      fetch("/api/jerusalen/restauracion", { credentials: "include", cache: "no-store" })
+        .then((r) => (r.ok ? (r.json() as Promise<{ vista: import("@shared/restauracion").RestauracionVista }>) : null))
+        .catch(() => null),
+    ]);
+    if (!boxRef.current || cityRef.current !== c || casaRef.current) {
+      setCambio(null);
+      return;
+    }
+    const salasDelEdificio = restoMod ? restoMod.salasDe(id) : [];
+    const delEdificio = (v: import("@shared/restauracion").RestauracionVista) => v.salas.filter((x) => salasDelEdificio.some((sd) => sd.id === x.id));
+    // el tutorial del primer día: la primera sala del edificio de tu camino, si falta
+    const primera = salasDelEdificio[0];
+    const guia = restoMod && primera && restoMod.EDIFICIO_DE_CAMINO[camino] === id && !restoVista?.vista.salas.find((x) => x.id === primera.id)?.hecha ? primera.id : null;
     // el maestro: a los de su camino les abre su servicio; a los demás les habla y los orienta
     const hablarConMaestro = () => {
       if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : id === "camara" ? { kind: "catedra", area: "sacerdotal" } : { kind: "palacio" });
@@ -488,7 +505,88 @@ export default function TemploGame({ game }: { game: GameDef }) {
             break;
         }
       },
+      restauracion:
+        restoMod && restoVista && salasDelEdificio.length
+          ? {
+              salas: salasDelEdificio,
+              estado: delEdificio(restoVista.vista),
+              guia,
+              trabajar: async (sala, trabajo) => {
+                try {
+                  const r = await fetch("/api/jerusalen/restauracion/trabajo", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sala, trabajo }) });
+                  const d = (await r.json().catch(() => null)) as (import("@shared/restauracion").TrabajoRespuesta & { message?: string }) | null;
+                  if (!r.ok || !d) {
+                    gameStore.toast(d?.message || "No se pudo guardar el trabajo. Revisa tu conexión.", "warn");
+                    return null;
+                  }
+                  for (const a of d.avisos) gameStore.toast(a.gozo ? `${a.titulo} · +${a.gozo} de gozo` : a.titulo, "gold");
+                  if (!d.fin) {
+                    const sd = salasDelEdificio.find((x) => x.id === sala);
+                    const t = sd?.trabajos.find((x) => x.id === trabajo);
+                    const n = d.vista.salas.find((x) => x.id === sala)?.progreso[trabajo] ?? 0;
+                    if (t) gameStore.toast(`${t.icono} ${t.nombre}: ${n} de ${t.veces} · +${d.gozo} de gozo`, "info");
+                  }
+                  cityRef.current?.ponerGozo(d.gozoTotal);
+                  window.dispatchEvent(new Event("jer-camino"));
+                  return delEdificio(d.vista);
+                } catch {
+                  gameStore.toast("No se pudo guardar el trabajo. Revisa tu conexión.", "warn");
+                  return null;
+                }
+              },
+              diario: (sala) => {
+                const sd = salasDelEdificio.find((x) => x.id === sala);
+                if (!sd) return;
+                void fetch("/api/jerusalen/restauracion/diario", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sala }) })
+                  .then(async (r) => {
+                    const d = (await r.json().catch(() => null)) as (import("@shared/restauracion").DiarioRespuesta & { message?: string }) | null;
+                    if (!r.ok || !d) {
+                      gameStore.toast(d?.message || "No se pudo. Revisa tu conexión.", "warn");
+                      return;
+                    }
+                    casaRef.current?.ponerRestauracion(delEdificio(d.vista));
+                    cityRef.current?.ponerGozo(d.gozoTotal);
+                    window.dispatchEvent(new Event("jer-camino"));
+                    gameStore.push({
+                      kind: "dialog",
+                      id: `diario-${sala}`,
+                      lines: [
+                        { quien: sd.quien, texto: `${sd.diario.icono} ${sd.diario.nombre}. +${d.gozo} de gozo.` },
+                        { quien: sd.quien, texto: d.lectura.text, ref: d.lectura.ref },
+                      ],
+                    });
+                  })
+                  .catch(() => gameStore.toast("No se pudo. Revisa tu conexión.", "warn"));
+              },
+            }
+          : undefined,
     });
+    // la primera vez, el maestro pide ayuda para restaurar la primera sala (el tutorial del primer día)
+    if (guia && primera) {
+      const clave = `jer-resto-${e.yo.personajeId}-${primera.id}`;
+      let visto = false;
+      try {
+        visto = localStorage.getItem(clave) === "1";
+      } catch {
+        /* sin almacenamiento: se cuenta igual */
+      }
+      if (!visto) {
+        gameStore.push({
+          kind: "dialog",
+          id: `resto-${primera.id}`,
+          lines: [
+            { quien: primera.quien, texto: `${e.yo.nombre}, antes de empezar te pido una ayuda. ${primera.historia}` },
+            { quien: primera.quien, texto: "Párate en un círculo azul y quédate quieto unos segundos: cada trabajo quita escombros y pone lo nuevo. Así aprendes a servir aquí adentro. Al terminar, la sala vuelve a la vida." },
+            { quien: primera.quien, texto: primera.verso.text, ref: primera.verso.ref },
+          ],
+        });
+        try {
+          localStorage.setItem(clave, "1");
+        } catch {
+          /* sin almacenamiento */
+        }
+      }
+    }
     if (import.meta.env.DEV) (window as unknown as { __casa?: CasaWorld }).__casa = w;
     casaRef.current = w;
     setCasaW(w);
@@ -1483,6 +1581,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <TemporadaView />;
     case "capitulos":
       return <CapitulosView />;
+    case "libro":
+      return <LibroView />;
     case "dificil":
       return <DificilView q={modal.q} />;
     case "fiesta":

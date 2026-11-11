@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-gran-restauracion",
+    fecha: "12 de noviembre de 2026",
+    titulo: "La gran restauración y el camino de hoy",
+    puntos: [
+      "🏛️ La escuela de los profetas, el palacio del rey y la cámara de los sacerdotes crecieron: cada uno tiene tres salas nuevas que están en ruinas, como la biblioteca de los profetas, el archivo del reino o la cámara de los cantores.",
+      "🧱 Entra, párate en un círculo azul y quédate unos segundos: cada trabajo quita escombros y pone lo nuevo. Al terminar la sala, vuelve la gente a trabajar ahí, ganas gozo y mérito, y cada día hay algo que hacer en ella (leer el rollo del día, orar, cantar con los levitas…).",
+      "🌅 Tu primer día: la primera sala del edificio de tu camino te enseña a servir adentro, y da un premio especial.",
+      "➡️ Arriba de la ciudad verás siempre tu siguiente paso, con un botón para ir. El camino de hoy tiene cuatro pasos (servir, aprender, ayudar y restaurar); al cumplirlos, abres el cofre del día y cuenta para tu racha.",
+      "📔 El libro de la restauración, en «Para hoy», muestra las nueve salas y cómo vas.",
+    ],
+  },
+  {
     id: "2026-11-11-historia-temporada",
     fecha: "11 de noviembre de 2026",
     titulo: "La historia de la temporada: la amenaza de Senaquerib",

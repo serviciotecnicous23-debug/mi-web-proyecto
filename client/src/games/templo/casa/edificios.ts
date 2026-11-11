@@ -73,7 +73,7 @@ const paso = (x: number, z: number, lado: Abertura["lado"], n = 2): Abertura[] =
 const p = (m: string, x: number, z: number, r: 0 | 1 | 2 | 3 = 0): Colocado => ({ m, x, z, r, p: 0 });
 
 // ---------------------------------------------------------------- la escuela de los profetas
-export const ESCUELA: EdificioDef = {
+const ESCUELA_BASE: EdificioDef = {
   id: "escuela",
   nombre: "La escuela de los profetas",
   icono: "📜",
@@ -158,7 +158,7 @@ export const ESCUELA: EdificioDef = {
 };
 
 // ---------------------------------------------------------------- el palacio del rey (1 Reyes 7:1-12)
-export const PALACIO: EdificioDef = {
+const PALACIO_BASE: EdificioDef = {
   id: "palacio",
   nombre: "El palacio del rey",
   icono: "👑",
@@ -244,7 +244,7 @@ export const PALACIO: EdificioDef = {
 };
 
 // ---------------------------------------------------------------- la cámara de los sacerdotes (2 Crónicas 31:11-12)
-export const CAMARA: EdificioDef = {
+const CAMARA_BASE: EdificioDef = {
   id: "camara",
   nombre: "La cámara de los sacerdotes",
   icono: "🕯️",
@@ -316,6 +316,75 @@ export const CAMARA: EdificioDef = {
       ? `Eleazar: «Bienvenido a la cámara de los sacerdotes, ${nombre}. Frente a mi atril te enseño el porqué de lo que sirves en el templo; en la cámara del este, Conanías guarda los diezmos; en la entrada están los turnos del sacerdocio.»`
       : `Eleazar: «Bienvenido, ${nombre}. En esta cámara se preparan los sacerdotes para servir en la casa de Jehová. Los rollos de los estudios son para todos: puedes estudiar y dar los exámenes.»`,
 };
+
+// ---------------------------------------------------------------- los edificios crecieron (la gran restauración)
+/**
+ * Los tres edificios crecieron (pedido de Luis: se veían chicos comparados con el templo). Lo de antes se corre para
+ * dejar lugar a tres salas nuevas en cada uno, que están en ruinas para cada persona y se restauran con trabajos
+ * (shared/restauracion.ts): la escuela pasa de 20 × 14 a 28 × 22 celdas, el palacio de 22 × 16 a 30 × 24 y la cámara
+ * de 16 × 12 a 22 × 19.
+ */
+function correr<T extends { x: number; z: number }>(l: T[], dx: number, dz: number): T[] {
+  return l.map((o) => ({ ...o, x: o.x + dx, z: o.z + dz }));
+}
+const par = (v: [number, number], dx: number, dz: number): [number, number] => [v[0] + dx, v[1] + dz];
+
+function ampliar(base: EdificioDef, dx: number, dz: number, mas: { W: number; D: number; cuartos: Plano["cuartos"]; aberturas: Abertura[] }): EdificioDef {
+  const pl = base.plano;
+  return {
+    ...base,
+    plano: {
+      ...pl,
+      W: mas.W,
+      D: mas.D,
+      cuartos: [...correr(pl.cuartos, dx, dz), ...mas.cuartos],
+      aberturas: [...correr(pl.aberturas, dx, dz), ...mas.aberturas],
+      puerta: par(pl.puerta, dx, dz),
+      horno: par(pl.horno, dx, dz),
+      arbol: pl.arbol ? par(pl.arbol, dx, dz) : undefined,
+      maxMuebles: 160,
+    },
+    piezas: correr(base.piezas, dx, dz),
+    personas: correr(base.personas, dx, dz),
+    estaciones: correr(base.estaciones, dx, dz),
+  };
+}
+
+/** La escuela: la biblioteca y el aposento de oración al norte, el patio del pozo al poniente. */
+export const ESCUELA: EdificioDef = ampliar(ESCUELA_BASE, 8, 8, {
+  W: 28,
+  D: 22,
+  cuartos: [
+    { id: "biblioteca", nombre: "La biblioteca de los profetas", x: 8, z: 0, w: 12, d: 8, piso: 0 },
+    { id: "aposento", nombre: "El aposento de oración", x: 20, z: 0, w: 8, d: 8, piso: 0 },
+    { id: "pozo", nombre: "El patio del pozo", x: 0, z: 8, w: 8, d: 8, piso: 0, cielo: true },
+  ],
+  aberturas: [...paso(13, 8, "N"), ...paso(23, 8, "N"), ...paso(8, 11, "O")],
+});
+
+/** El palacio: el archivo del reino y los depósitos al norte, el huerto del rey al oriente. */
+export const PALACIO: EdificioDef = ampliar(PALACIO_BASE, 0, 8, {
+  W: 30,
+  D: 24,
+  cuartos: [
+    { id: "archivo", nombre: "El archivo del reino", x: 0, z: 0, w: 11, d: 8, piso: 0 },
+    { id: "depositos", nombre: "Los depósitos del rey", x: 11, z: 0, w: 11, d: 8, piso: 0 },
+    { id: "huerto", nombre: "El huerto del rey", x: 22, z: 8, w: 8, d: 11, piso: 0, cielo: true },
+  ],
+  aberturas: [...paso(1, 8, "N"), ...paso(19, 8, "N"), ...paso(21, 12, "E")],
+});
+
+/** La cámara: la de los utensilios y la de los cantores al norte, el patio de la fuente al poniente. */
+export const CAMARA: EdificioDef = ampliar(CAMARA_BASE, 6, 7, {
+  W: 22,
+  D: 19,
+  cuartos: [
+    { id: "utensilios", nombre: "La cámara de los utensilios", x: 6, z: 0, w: 8, d: 7, piso: 0 },
+    { id: "cantores", nombre: "La cámara de los cantores", x: 14, z: 0, w: 8, d: 7, piso: 0 },
+    { id: "lavatorio", nombre: "El patio de la fuente", x: 0, z: 7, w: 6, d: 7, piso: 0, cielo: true },
+  ],
+  aberturas: [...paso(9, 7, "N"), ...paso(18, 7, "N"), ...paso(6, 10, "O")],
+});
 
 export const EDIFICIOS: Record<EdificioId, EdificioDef> = { escuela: ESCUELA, palacio: PALACIO, camara: CAMARA };
 

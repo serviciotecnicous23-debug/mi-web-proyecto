@@ -10,6 +10,7 @@ import { CATEDRAS, CATEDRA_MERITO, CATEDRA_POR_DIA, type CatedraArea, type Cated
 import { BANCO_CATEDRAS, type FilaCatedra } from "./catedras-banco";
 import { diaClave, enFila, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { GOZO, sumarGozo } from "./gozo";
+import { anotarCamino } from "./camino-dia";
 
 export const CATEDRAS_SQL = `
 CREATE TABLE IF NOT EXISTS "game_catedras" (
@@ -199,6 +200,8 @@ export function registerCatedrasRoutes(app: Express) {
         await sumarMerito(ch, CATEDRA_MERITO);
         await sumarGozo(ch.id, GOZO.acierto);
       }
+      // el camino de hoy: una lección con el maestro es aprender
+      void anotarCamino(ch.id, "aprender");
       const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
       res.json({ ...out, gozoTotal: g[0] ? Number(g[0].gozo) : undefined });
     } catch (err) {

@@ -24,6 +24,8 @@ import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
 import { registerMuroRoutes } from "./muro";
 import { registerCapitulosRoutes } from "./capitulos";
+import { registerRestauracionRoutes } from "./restauracion";
+import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
@@ -3677,6 +3679,9 @@ ${urls}
   registerMuroRoutes(app);
   // la historia de la temporada: un capítulo por semana y la fiesta final
   registerCapitulosRoutes(app);
+  // la gran restauración de los edificios y el camino de hoy (el motor del juego)
+  registerRestauracionRoutes(app);
+  registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========

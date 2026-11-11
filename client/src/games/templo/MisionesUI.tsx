@@ -8,6 +8,7 @@ import { FACTOR_JUNTOS, JUNTOS_DESDE, MERITO_BARRIO, MERITO_ENCARGO, MERITO_ENCA
 import { gameStore } from "./store";
 import { Card } from "./ui";
 import { ParaHoy } from "./ParaHoyUI";
+import { CaminoHoyBloque } from "./CaminoHoyUI";
 
 export async function traerMisiones(): Promise<{ ok: boolean; data: (MisionesEstado & { message?: string }) | null }> {
   try {
@@ -55,6 +56,7 @@ export function MisionesModal() {
         )}
         {m && (
           <>
+            <CaminoHoyBloque />
             <ParaHoy misiones={m} />
             <section className="space-y-2" data-testid="misiones-encargos">
               <p className="font-black">Encargos de hoy</p>

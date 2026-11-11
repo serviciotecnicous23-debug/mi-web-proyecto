@@ -45,6 +45,7 @@ import {
 } from "@shared/ciudad";
 import { FIESTA } from "@shared/calendario";
 import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
+import { SiguientePaso } from "./CaminoHoyUI";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
 export const CiudadCtx = createContext<{
@@ -188,6 +189,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           </div>
           <MeritoCamino camino={c.camino} />
           <GananciaEnLinea />
+          {/* el camino de hoy: un solo siguiente paso, con su botón para ir (shared/camino.ts) */}
+          {!modal && <SiguientePaso />}
           {c.fiesta && (
             <button
               type="button"

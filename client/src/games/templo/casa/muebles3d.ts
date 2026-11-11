@@ -244,6 +244,91 @@ export function construirMueble(id: string): THREE.Group | null {
       g.cyl(0.19, 0.19, 0.02, "#8a6a3a", { y: 0.43 }, 14);
       break;
     }
+    // ---- las salas en ruinas: lo que se quita al restaurarlas (shared/restauracion.ts)
+    case "escombros": {
+      // un montón de piedras y tierra del techo caído
+      g.add(new THREE.IcosahedronGeometry(0.24, 0), "#9c8f78", { y: 0.1, sx: 1.3, sy: 0.55, sz: 1.1 });
+      for (const [x, z, r] of [[-0.14, 0.1, 0.09], [0.15, -0.06, 0.08], [0.02, -0.16, 0.07], [0.17, 0.14, 0.06], [-0.18, -0.12, 0.06]] as [number, number, number][])
+        g.add(new THREE.IcosahedronGeometry(r, 0), PIEDRA, { x, y: r * 0.6, z, ry: x * 9 });
+      g.box(0.22, 0.04, 0.05, MADERA_OSC, { x: -0.05, y: 0.2, z: 0.05, ry: 0.6, rz: 0.2 });
+      break;
+    }
+    case "viga-caida": {
+      // una viga del techo tirada en diagonal, con un poco de tierra
+      g.box(W - 0.15, 0.13, 0.15, MADERA_OSC, { y: 0.09, ry: 0.22, rz: 0.06 });
+      g.add(new THREE.IcosahedronGeometry(0.12, 0), "#9c8f78", { x: W / 2 - 0.25, y: 0.05, z: 0.12, sy: 0.5 });
+      g.add(new THREE.IcosahedronGeometry(0.09, 0), PIEDRA, { x: -W / 2 + 0.3, y: 0.05, z: -0.1 });
+      break;
+    }
+    case "estante-roto": {
+      // el estante caído hacia atrás, con dos tablas sueltas en el piso
+      g.box(0.05, 1.1, 0.26, MADERA_OSC, { x: -(W / 2 - 0.1), y: 0.5, z: -0.06, rz: -0.35 });
+      g.box(0.05, 0.7, 0.26, MADERA_OSC, { x: W / 2 - 0.12, y: 0.32, z: -0.06, rz: 0.2 });
+      g.box(W - 0.3, 0.04, 0.26, MADERA, { y: 0.4, z: -0.05, rz: -0.25 });
+      g.box(W * 0.45, 0.03, 0.2, MADERA, { x: 0.15, y: 0.02, z: 0.16, ry: 0.4 });
+      g.box(W * 0.35, 0.03, 0.18, MADERA, { x: -0.25, y: 0.02, z: 0.12, ry: -0.3 });
+      break;
+    }
+    case "vasija-rota": {
+      // pedazos de barro en el piso (se camina por encima)
+      for (const [x, z, ry] of [[-0.12, 0.05, 0.3], [0.1, -0.08, 1.2], [0.05, 0.14, 2.1], [-0.08, -0.15, 2.8]] as [number, number, number][])
+        g.sphere(0.09, BARRO, { x, y: 0.02, z, ry, sy: 0.35 }, 7, 4, Math.PI, Math.PI / 2);
+      g.cyl(0.07, 0.1, 0.12, BARRO_CLARO, { x: 0.02, y: 0.06, z: -0.02, rz: 1.3 }, 8, true);
+      break;
+    }
+    case "rollos-tirados": {
+      for (const [x, z, ry] of [[-0.1, 0.05, 0.4], [0.12, -0.06, -0.8], [0.0, 0.16, 1.5]] as [number, number, number][]) {
+        g.cyl(0.04, 0.04, 0.26, "#efe1bd", { x, y: 0.04, z, rx: Math.PI / 2, rz: ry }, 8);
+        g.cyl(0.012, 0.012, 0.32, MADERA_OSC, { x, y: 0.04, z, rx: Math.PI / 2, rz: ry }, 5);
+      }
+      g.box(0.16, 0.03, 0.11, "#b89a72", { x: 0.12, y: 0.015, z: 0.14, ry: 0.5 });
+      break;
+    }
+    case "polvo": {
+      // manchas de tierra y polvo en el piso
+      g.cyl(W * 0.42, W * 0.42, 0.01, "#9a8566", { y: 0.006, sx: 1, sz: 0.8 }, 14);
+      g.cyl(W * 0.22, W * 0.22, 0.012, "#8a7556", { x: 0.2, y: 0.008, z: -0.15 }, 10);
+      g.cyl(W * 0.16, W * 0.16, 0.012, "#a89274", { x: -0.25, y: 0.008, z: 0.22 }, 10);
+      break;
+    }
+    // ---- lo que se pone al restaurarlas
+    case "arpa": {
+      // el arpa de los levitas: marco en triángulo con sus cuerdas, sobre su pie
+      g.box(0.22, 0.06, 0.18, MADERA_OSC, { y: 0.03 });
+      g.box(0.05, 0.8, 0.05, MADERA, { x: -0.1, y: 0.45, rz: 0.08 });
+      g.box(0.05, 0.62, 0.05, MADERA, { x: 0.06, y: 0.4, rz: -0.38 });
+      g.box(0.3, 0.05, 0.05, MADERA, { x: -0.02, y: 0.82, rz: -0.25 });
+      for (let i = 0; i < 6; i++) brillo.box(0.006, 0.42 + i * 0.05, 0.006, "#e8d9a8", { x: -0.07 + i * 0.03, y: 0.36 + i * 0.03 });
+      break;
+    }
+    case "pila": {
+      // la fuente de bronce con su base, llena de agua (Éxodo 30:18)
+      brillo.lathe([[0, 0], [0.16, 0], [0.13, 0.06], [0.07, 0.12], [0.06, 0.42], [0.1, 0.46]], C.bronceOsc, {}, 14);
+      brillo.lathe([[0.06, 0.46], [0.24, 0.5], [0.3, 0.62], [0.31, 0.7], [0.27, 0.7]], C.bronce, {}, 18);
+      g.cyl(0.27, 0.27, 0.02, C.agua, { y: 0.67 }, 18);
+      break;
+    }
+    case "pozo-patio": {
+      // brocal de piedra, el agua, dos postes y la roldana
+      g.cyl(0.44, 0.48, 0.55, PIEDRA, { y: 0.275 }, 16, true);
+      g.cyl(0.4, 0.4, 0.02, C.agua, { y: 0.4 }, 16);
+      g.cyl(0.46, 0.46, 0.06, C.piedraClara, { y: 0.56 }, 16);
+      for (const sx of [-1, 1]) g.box(0.07, 0.9, 0.07, MADERA_OSC, { x: sx * 0.42, y: 1.0 });
+      g.box(0.92, 0.07, 0.07, MADERA_OSC, { y: 1.45 });
+      g.cyl(0.07, 0.07, 0.12, MADERA, { y: 1.36, rz: Math.PI / 2 }, 10);
+      vasija(g, 0.16, 0.08, BARRO, { x: 0.18, z: 0.3 });
+      break;
+    }
+    case "sacos": {
+      // dos sacos de grano atados y uno abierto
+      for (const [x, z] of [[-0.09, -0.05], [0.1, 0.03]] as [number, number][]) {
+        g.sphere(0.15, "#c9b48a", { x, y: 0.17, z, sy: 1.3 }, 10, 8);
+        g.cyl(0.05, 0.07, 0.07, "#b39a6e", { x, y: 0.38, z }, 8);
+      }
+      g.cyl(0.1, 0.12, 0.16, "#d4bf94", { x: 0.0, y: 0.08, z: 0.16 }, 10, true);
+      g.cyl(0.095, 0.095, 0.01, "#e8d7a0", { x: 0.0, y: 0.15, z: 0.16 }, 10);
+      break;
+    }
     default:
       g.box(W * 0.7, 0.4, D * 0.7, MADERA, { y: 0.2 });
   }

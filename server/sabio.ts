@@ -24,6 +24,7 @@ import {
   type AmigoPosible, type Comodin, type Confianza, type ConsejoAmigo, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PremioSabio,
   type Relacion, type RespuestaSabio, type SabioEstado, type UltimaRespuesta,
 } from "@shared/sabio";
+import { anotarCamino } from "./camino-dia";
 
 export const SABIO_SQL = `
 CREATE TABLE IF NOT EXISTS "game_sabio" (
@@ -621,6 +622,8 @@ export function registerSabioRoutes(app: Express) {
 
   /** Cierra la partida: suma lo ganado, el gozo (con tope), los premios y el título. */
   async function terminar(p: FilaPartida, estado: FinPartida["estado"], pr: Persona, ultima: FilaSabio | null): Promise<FinPartida> {
+    // el camino de hoy: una partida de «¿Quién es sabio?» es aprender
+    void anotarCamino(pr.titular, "aprender");
     const fila = await filaPersona(pr.titular);
     const antes = tituloDe(fila);
     const grada = estado === "perdio" || estado === "tiempo" ? gradaSegura(p.grada) : p.grada;
