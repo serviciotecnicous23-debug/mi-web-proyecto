@@ -49,10 +49,12 @@ async function libresDe(barrio: number): Promise<number[]> {
 /** Los pedidos del pueblo de hoy en un barrio, con lo que ya recibieron y lo que dio cada uno. */
 async function pedidosDe(barrio: number, titular: number): Promise<PedidoPuebloVista[]> {
   const dia = diaClave();
-  const hoy = pedidosDelPuebloHoy(dia, barrio, await libresDe(barrio));
-  if (!hoy.length) return [];
   const { rows } = await pool.query(`SELECT parcela, recibido, done_at FROM game_pueblo_pedidos WHERE dia = $1 AND barrio = $2`, [dia, barrio]);
   const guardados = new Map(rows.map((r) => [Number(r.parcela), r]));
+  // los que ya recibieron algo hoy siguen a la vista aunque cambien las parcelas libres del barrio
+  const conAvance = rows.filter((r) => Number(r.recibido) > 0).map((r) => Number(r.parcela));
+  const hoy = pedidosDelPuebloHoy(dia, barrio, await libresDe(barrio), conAvance);
+  if (!hoy.length) return [];
   const { rows: mios } = await pool.query(
     `SELECT parcela, COALESCE(sum(cantidad), 0)::int AS n FROM game_pueblo_dones WHERE dia = $1 AND barrio = $2 AND titular = $3 GROUP BY parcela`,
     [dia, barrio, titular],

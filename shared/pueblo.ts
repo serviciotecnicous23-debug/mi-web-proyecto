@@ -118,23 +118,47 @@ export const PUEBLO_MAX = 6;
 export const GOZO_PUEBLO = 1;
 export const VERSO_PUEBLO: Verso = { text: "Sobrellevad los unos las cargas de los otros, y cumplid así la ley de Cristo.", ref: "Gálatas 6:2" };
 
-/** Los pedidos del pueblo de hoy en un barrio: qué familia (de sus casas del pueblo), qué pide y cuánto. */
-export function pedidosDelPuebloHoy(dia: string, barrio: number, libres: number[]): { parcela: number; familia: FamiliaPueblo; def: number; cantidad: number }[] {
-  const casas = libres.map((p) => ({ p, c: casaDelPueblo(barrio, p) })).filter((x) => x.c);
-  if (!casas.length) return [];
-  const out: { parcela: number; familia: FamiliaPueblo; def: number; cantidad: number }[] = [];
-  const s = semilla(`pedidos:${dia}:${barrio}`);
-  // dos familias distintas (de nombre y de casa), empezando por una casa que cambia cada día
-  for (let i = 0; i < casas.length && out.length < PEDIDOS_PUEBLO_DIA; i++) {
-    const k = out.length;
-    const x = casas[(s + i * 7919) % casas.length];
-    if (out.some((o) => o.parcela === x.p || o.familia.nombre === x.c!.familia.nombre)) continue;
-    let def = (s >>> (3 + k * 5)) % PEDIDOS_PUEBLO.length;
-    // y que no pidan lo mismo
-    if (out.some((o) => o.def === def)) def = (def + 1) % PEDIDOS_PUEBLO.length;
-    out.push({ parcela: x.p, familia: x.c!.familia, def, cantidad: PUEBLO_MIN + ((s >>> (7 + k * 3)) % (PUEBLO_MAX - PUEBLO_MIN + 1)) });
+/** Una mezcla final del número de cada casa, para que casas vecinas (la 7 y la 8) no queden con turnos parecidos. */
+function mezclar(h: number): number {
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+export type PedidoPuebloDia = { parcela: number; familia: FamiliaPueblo; def: number; cantidad: number };
+
+/**
+ * Los pedidos del pueblo de hoy en un barrio: qué familia (de sus casas del pueblo), qué pide y cuánto.
+ * Cada casa tiene su turno, su pedido y su cantidad del día, que no dependen de cuántas parcelas libres quedan: si un
+ * vecino nuevo se muda al barrio, los otros pedidos siguen iguales (solo se va el de la familia que le dejó el lugar).
+ * `conAvance`: las parcelas que ya recibieron algo hoy; su pedido se sigue mostrando aunque ya no le toque el turno,
+ * para que lo dado no se pierda de vista.
+ */
+export function pedidosDelPuebloHoy(dia: string, barrio: number, libres: number[], conAvance: number[] = []): PedidoPuebloDia[] {
+  const casas = libres
+    .map((p) => ({ p, c: casaDelPueblo(barrio, p), h: mezclar(semilla(`pedido:${dia}:${barrio}:${p}`)) }))
+    .filter((x) => x.c)
+    .sort((a, b) => a.h - b.h || a.p - b.p);
+  const pedidoDe = (x: (typeof casas)[number]): PedidoPuebloDia => ({
+    parcela: x.p,
+    familia: x.c!.familia,
+    def: (x.h >>> 3) % PEDIDOS_PUEBLO.length,
+    cantidad: PUEBLO_MIN + ((x.h >>> 9) % (PUEBLO_MAX - PUEBLO_MIN + 1)),
+  });
+  const out: PedidoPuebloDia[] = [];
+  // en el turno del día: dos familias distintas (de nombre) que no piden lo mismo
+  for (const x of casas) {
+    if (out.length >= PEDIDOS_PUEBLO_DIA) break;
+    const p = pedidoDe(x);
+    if (out.some((o) => o.familia.nombre === p.familia.nombre || o.def === p.def)) continue;
+    out.push(p);
   }
-  return out;
+  const avance = new Set(conAvance);
+  for (const x of casas) if (avance.has(x.p) && !out.some((o) => o.parcela === x.p)) out.push(pedidoDe(x));
+  return out.sort((a, b) => a.parcela - b.parcela);
 }
 
 // ---------------------------------------------------------------- respuestas de la API
