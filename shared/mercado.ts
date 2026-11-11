@@ -13,6 +13,7 @@
 import { MUEBLES } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
+import { diaEnJerusalen, factorPrecio, mediodiaDe } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
 export type TabMercado = Categoria | "vender" | "vecinos";
@@ -133,11 +134,23 @@ export type BienMercado = "harina" | "aceite" | "corderos";
 /** El nombre de cada bien en una frase («de flor de harina»). */
 export const BIEN_MERCADO_NOMBRE: Record<BienMercado, string> = { harina: "flor de harina", aceite: "aceite", corderos: "corderos" };
 
-/** Lo que más buscan hoy los mercaderes (lo pagan al doble): el mismo para todos. Conviene pensar si venderlo u ofrecerlo. */
+/**
+ * Lo que más buscan hoy los mercaderes (lo pagan al doble): el mismo para todos. Depende de la estación del año
+ * (shared/anio.ts): lo que escasea se busca más seguido (la harina en invierno, el aceite en verano) y lo que abunda,
+ * menos (la harina en la siega del trigo). Conviene guardar en el alfolí y vender cuando lo buscan.
+ */
 export function demandaDelDia(dia: string): BienMercado {
   let x = 2166136261;
   for (const ch of `demanda:${dia}`) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
-  return (["harina", "aceite", "corderos"] as const)[x % 3];
+  const bienes = ["harina", "aceite", "corderos"] as const;
+  const d = diaEnJerusalen(mediodiaDe(dia));
+  const pesos = bienes.map((b) => factorPrecio(b, d) ** 4);
+  let r = ((x % 100000) / 100000) * pesos.reduce((a, p) => a + p, 0);
+  for (let i = 0; i < bienes.length; i++) {
+    r -= pesos[i];
+    if (r < 0) return bienes[i];
+  }
+  return bienes[bienes.length - 1];
 }
 
 /** Lo que paga hoy el mercader por cada uno. */
@@ -209,7 +222,7 @@ export function guardarPreparadas(p: Preparadas, horno: { receta: RecetaId; cant
 }
 
 // ---------------------------------------------------------------- respuestas de la API
-export type Parcela = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; listo: boolean; faltan: number };
+export type Parcela = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; listo: boolean; faltan: number; /** la regó la lluvia del día en que se sembró */ lluvia?: boolean };
 export type MercadoEstado = {
   dia: string;
   gozo: number;

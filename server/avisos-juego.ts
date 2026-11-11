@@ -15,7 +15,7 @@ import { isPushConfigured, sendPushToMany } from "./push";
 import { diaClave } from "./jerusalen";
 import { faltan, leerHuerto } from "./mercado";
 import { esReposo, gozoDeRacha, rachaViva } from "@shared/racha";
-import { SEGUNDOS_DIA, proximaFiesta, relojEnLinea } from "@shared/calendario";
+import { diaEnJerusalen } from "@shared/anio";
 import { HORA_RACHA, SILENCIO, type AvisosVista, type TipoAviso } from "@shared/avisos";
 
 export const AVISOS_SQL = `
@@ -108,19 +108,23 @@ export async function revisarAvisos(ahora = new Date()): Promise<AvisoSalido[]> 
     }
   }
 
-  // las fiestas grandes, unos 10 minutos antes (una por día como mucho)
+  // los eventos del año (shared/anio.ts): el primer día de cada fiesta grande, y la hora de las trompetas de la luna nueva
   {
-    const reloj = relojEnLinea(ahora.getTime());
-    const p = proximaFiesta(reloj.dia);
-    if (p && p.fiesta.merito >= 1.5) {
-      const min = ((p.enDias - reloj.hora) * SEGUNDOS_DIA) / 60;
-      if (min >= 4 && min <= 16) {
-        const { rows } = await pool.query(quienes("fiestas"));
-        const titulo = `${p.fiesta.icono} En ${Math.round(min)} minutos: ${p.fiesta.nombre}`;
-        const cuerpo = `Empieza en Jerusalén: mérito ×${p.fiesta.merito.toLocaleString("es-419")} en el templo. ¡Sube a servir!`;
-        for (const r of rows)
-          if (await avisar(Number(r.user_id), "fiestas", hoy, titulo, cuerpo, 20 * 60)) salieron.push({ tipo: "fiestas", userId: Number(r.user_id), titulo });
+    const d = diaEnJerusalen(ahora.getTime());
+    let aviso: { titulo: string; cuerpo: string } | null = null;
+    for (const a of d.eventos) {
+      const e = a.evento;
+      if (!e.avisar || a.dia !== 1) continue;
+      if (e.hora) {
+        if (h >= e.hora.desde && h < e.hora.hasta) aviso = { titulo: `🎺 ${e.hora.titulo}: hasta las ${e.hora.hasta === 21 ? "9" : e.hora.hasta} de la noche`, cuerpo: `${e.nombre} en Jerusalén: el servicio en el templo vale ×${e.hora.merito.toLocaleString("es-419")} durante la hora especial.` };
+      } else if (!aviso) {
+        aviso = { titulo: `${e.icono} Hoy en Jerusalén: ${e.nombre}`, cuerpo: `${e.corto}. Mérito ×${e.merito.toLocaleString("es-419")} en el templo mientras dure.` };
       }
+    }
+    if (aviso) {
+      const { rows } = await pool.query(quienes("fiestas"));
+      for (const r of rows)
+        if (await avisar(Number(r.user_id), "fiestas", hoy, aviso.titulo, aviso.cuerpo, 6 * 3600)) salieron.push({ tipo: "fiestas", userId: Number(r.user_id), titulo: aviso.titulo });
     }
   }
   return salieron;

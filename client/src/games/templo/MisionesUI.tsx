@@ -64,10 +64,16 @@ export function MisionesModal() {
               <p className="font-black">Encargos de hoy</p>
               <p className="text-xs text-stone-500">
                 Cambian cada día. Cada uno da +{MERITO_ENCARGO} de mérito; los tres, +{MERITO_ENCARGOS_TODOS} más.
+                {m.encargos.some((e) => e.fiesta) ? " Los días de fiesta hay uno más, el de la fiesta, con el doble de gozo." : ""}
               </p>
               <ul className="space-y-2">
                 {m.encargos.map((e) => (
-                  <li key={e.id} className={`rounded-xl border p-2.5 ${e.hecho ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20" : "border-stone-200 dark:border-stone-700"}`} data-testid={`encargo-${e.id}`}>
+                  <li
+                    key={e.id}
+                    className={`rounded-xl border p-2.5 ${e.hecho ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20" : e.fiesta ? "border-amber-300 bg-gradient-to-r from-amber-50 to-purple-50 dark:border-amber-800 dark:from-amber-950/30 dark:to-purple-950/30" : "border-stone-200 dark:border-stone-700"}`}
+                    data-testid={`encargo-${e.id}`}
+                  >
+                    {e.fiesta && <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Encargo de la fiesta · {e.fiesta} · el doble de gozo</p>}
                     <p className="flex items-start gap-2 font-semibold">
                       <span className="text-lg leading-none">{e.icono}</span>
                       <span className="min-w-0 flex-1">{e.titulo}</span>

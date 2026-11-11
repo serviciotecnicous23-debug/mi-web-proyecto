@@ -179,7 +179,19 @@ export type JerusalenEstado = {
   personajes: { id: number; nombre: string; camino: "sacerdocio" | "profecia" | "realeza"; escalon: EscalonId; merito: number; activo: boolean }[];
   temporada: { n: number; inicio: string; fin: string; diasRestantes: number; dePrueba: boolean };
   /** Hoy en Jerusalén en línea (el mismo reloj para todos): la fecha hebrea y la fiesta, si la hay. */
-  jerusalen: { fecha: string; fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null; proxima: { nombre: string; icono: string; enMinutos: number } | null };
+  jerusalen: {
+    fecha: string;
+    fiesta: { id: string; nombre: string; icono: string; merito: number; dia: number; de: number } | null;
+    /** La próxima fiesta grande del calendario real (enMinutos se guarda por compatibilidad; enDias es lo que cuenta). */
+    proxima: { nombre: string; icono: string; enMinutos: number; enDias?: number; fecha?: string } | null;
+    /** El año de Jerusalén (shared/anio.ts): la fecha civil, la estación, si llueve, los eventos de hoy y la hora especial. */
+    civil?: string;
+    estacion?: { id: string; nombre: string; icono: string };
+    llueve?: boolean;
+    eventos?: { id: string; nombre: string; icono: string; corto: string; dia: number; de: number }[];
+    hora?: string | null;
+    meritoAhora?: number;
+  };
   mio: {
     merito: number;
     puesto: number | null;

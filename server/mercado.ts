@@ -10,11 +10,12 @@ import {
   parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
+import { diaEnJerusalen, factorCrecimiento } from "@shared/anio";
 import { MAX_POR_MUEBLE, leerInterior, leerMuebles, mueble } from "@shared/casa-interior";
 import { AYUDA_MUEBLES, DIEZMO, RIEGO } from "@shared/economia";
 import { alTesoro, contarVentaMercader, preciosMercaderHoy, vendidosHoy } from "./economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
-import { enFilaCasa, leerBienes, recoger } from "./ciudad";
+import { enFilaCasa, leerBienes, olvidarBarrio, recoger } from "./ciudad";
 import { sumarGozo } from "./gozo";
 import { coloresDeRopa } from "./ropa";
 import { refrescarFicha } from "./ciudad-red";
@@ -50,13 +51,22 @@ export function leerHuerto(v: unknown, n: number): Plantio[] {
 /** ¿Cuánto le falta (en segundos) a una parcela? Regada crece 25 % más rápido (35 % con la tinaja en casa). */
 export function faltan(p: Plantio, ahora = Date.now()): number {
   if (!p.semilla || !p.plantado) return 0;
-  const dur = SEMILLAS[p.semilla].minutos * 60 * (p.regado ? (p.riego ?? RIEGO.normal) : 1);
+  // la estación del día en que se sembró (shared/anio.ts): su cultivo crece más rápido; si ese día llovió, quedó regado
+  const d = diaEnJerusalen(new Date(p.plantado).getTime());
+  const regado = p.regado || d.llueve;
+  const dur = SEMILLAS[p.semilla].minutos * 60 * (regado ? (p.riego ?? RIEGO.normal) : 1) * factorCrecimiento(p.semilla, d);
   return Math.max(0, Math.ceil((new Date(p.plantado).getTime() + dur * 1000 - ahora) / 1000));
+}
+
+/** ¿Llovió el día en que se sembró? Entonces la parcela quedó regada (shared/anio.ts). */
+function llovio(p: Plantio): boolean {
+  return !!p.semilla && !!p.plantado && diaEnJerusalen(new Date(p.plantado).getTime()).llueve;
 }
 
 function vistaParcela(p: Plantio): Parcela {
   const f = faltan(p);
-  return { semilla: p.semilla, plantado: p.plantado, regado: p.regado, listo: !!p.semilla && f === 0, faltan: f };
+  const lluvia = !p.regado && llovio(p);
+  return { semilla: p.semilla, plantado: p.plantado, regado: p.regado || lluvia, listo: !!p.semilla && f === 0, faltan: f, ...(lluvia ? { lluvia: true } : {}) };
 }
 
 /** Los muebles útiles puestos dentro de la casa (shared/economia.ts: AYUDA_MUEBLES). */
@@ -290,7 +300,8 @@ export function registerMercadoRoutes(app: Express) {
       const pedidos = [...new Set(lista(req.body?.adornos))].filter((id) => tiene.has(id) && articulo(id)?.categoria === "adorno");
       const cupo = lugaresAdornos(Number(h[0]?.level || 0));
       if (pedidos.length > cupo) return res.status(409).json({ message: `En tu casa caben ${cupo} adornos (crece tu casa para poner más).` });
-      await pool.query(`UPDATE game_houses SET adornos = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(pedidos)]);
+      const { rows: b } = await pool.query(`UPDATE game_houses SET adornos = $2::jsonb WHERE character_id = $1 RETURNING barrio`, [ch.casa, JSON.stringify(pedidos)]);
+      if (b.length) olvidarBarrio(Number(b[0].barrio));
       await responder(res, ch);
     } catch (err) {
       console.error("[mercado] adornos:", err);
@@ -304,8 +315,9 @@ export function registerMercadoRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
-      const { rows } = await pool.query(`UPDATE game_houses SET letrero = $2 WHERE character_id = $1 AND tiene_letrero = true RETURNING 1`, [ch.casa, nombre]);
+      const { rows } = await pool.query(`UPDATE game_houses SET letrero = $2 WHERE character_id = $1 AND tiene_letrero = true RETURNING barrio`, [ch.casa, nombre]);
       if (!rows.length) return res.status(409).json({ message: "Primero compra el letrero en el mercado." });
+      olvidarBarrio(Number(rows[0].barrio));
       await responder(res, ch);
     } catch (err) {
       console.error("[mercado] letrero:", err);
@@ -400,6 +412,7 @@ export function registerMercadoRoutes(app: Express) {
         } else if (accion === "regar") {
           if (!p.semilla) return { status: 409, message: "Primero siembra." };
           if (p.regado) return { status: 409, message: "Ya la regaste." };
+          if (llovio(p)) return { status: 409, message: "La lluvia ya la regó." };
           if (faltan(p) === 0) return { status: 409, message: "Ya está lista: cosecha." };
           const utiles = await mueblesUtiles(ch.casa);
           huerto[n] = { ...p, regado: true, riego: utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal };
@@ -409,7 +422,7 @@ export function registerMercadoRoutes(app: Express) {
           const s = SEMILLAS[p.semilla];
           const utiles = await mueblesUtiles(ch.casa);
           const extra = (s.da === "harina" && utiles.has("molino")) || (s.da === "aceite" && utiles.has("vasijas")) ? 1 : 0;
-          const cuanto = s.cuanto + (p.regado ? 1 : 0) + extra;
+          const cuanto = s.cuanto + (p.regado || llovio(p) ? 1 : 0) + extra;
           const bienes = leerBienes(h[0]?.goods);
           const cap = capacidadAlfoli(nivel);
           if (bienes[s.da] + cuanto > cap) return { status: 409, message: "El alfolí está lleno: lleva lo que tienes al templo o véndelo al mercader." };

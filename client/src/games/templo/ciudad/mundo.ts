@@ -19,7 +19,9 @@ import { gameStore, type CiudadHud, type EdificioId, type Modal } from "../store
 import { escalonRank } from "../online";
 import type { Circle, Rect, V2 } from "../layout";
 import type { ItemType } from "../data";
-import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
+import { relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
+import { diaEnJerusalen } from "@shared/anio";
+import { Lluvia } from "./clima";
 import {
   BIEN, CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVista,
   type CiudadEstado, type VecinoInfo,
@@ -169,6 +171,11 @@ export class CiudadWorld {
   private antorchas!: Antorchas;
   /** Palomas que vuelan sobre el monte del templo y la plaza (de día). */
   private palomas!: Palomas;
+  /** La lluvia de los días que llueve (shared/anio.ts) y cuándo se miró la fecha por última vez. */
+  private lluvia!: Lluvia;
+  private fechaRevisada = 0;
+  /** En el invierno los braseros arden también de día (Jeremías 36:22). */
+  private invierno = false;
   private vis: CiudadVisual;
   private crowd = new Crowd(40);
   private shadows = new BlobShadows(80);
@@ -344,6 +351,8 @@ export class CiudadWorld {
       { x: 5, z: -4, r: 9, y: P.SUELO + 6.2, n: coarse ? 6 : 9, sigue: true },
     ]);
     this.scene.add(this.palomas.group);
+    this.lluvia = new Lluvia(coarse, P.SUELO);
+    this.scene.add(this.lluvia.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
     // la historia de la temporada: las torres, el conducto de Siloé, el campamento de Asiria y la fiesta
@@ -372,7 +381,13 @@ export class CiudadWorld {
     this.crearGente();
     this.crearSiervos();
 
-    this.fecha = fechaDe(relojEnLinea().dia);
+    // la fecha es la del año de Jerusalén (el calendario real); el día y la noche siguen el reloj de 4 minutos
+    {
+      const d = diaEnJerusalen();
+      this.fecha = d.fecha;
+      this.lluvia.setLluvia(d.llueve);
+      this.invierno = d.estacion.id === "invierno";
+    }
     this.hoyDia = this.fecha.numero;
     this.syncFiesta();
 
@@ -1383,9 +1398,16 @@ export class CiudadWorld {
 
   private simulate(dt: number) {
     const reloj = this.reloj();
-    if (reloj.dia !== this.hoyDia) {
-      this.hoyDia = reloj.dia;
-      this.fecha = fechaDe(reloj.dia);
+    // el año de Jerusalén: cada 20 segundos se mira si cambió el día de verdad (a medianoche de Texas)
+    const ahoraMs = performance.now();
+    const otroDia = ahoraMs - this.fechaRevisada > 20000 ? ((this.fechaRevisada = ahoraMs), diaEnJerusalen()) : null;
+    if (otroDia) {
+      this.lluvia.setLluvia(otroDia.llueve);
+      this.invierno = otroDia.estacion.id === "invierno";
+    }
+    if (otroDia && otroDia.fecha.numero !== this.hoyDia) {
+      this.hoyDia = otroDia.fecha.numero;
+      this.fecha = otroDia.fecha;
       this.syncFiesta();
       const f = this.fiestaHoy();
       if (f && f.dia === 1) {
@@ -2415,7 +2437,8 @@ export class CiudadWorld {
     const manana = 1 - THREE.MathUtils.smoothstep(t, DAWN - 0.01, DAWN + 0.05);
     this.antorchas.update(dt, t > 0.5 ? tarde : manana, this.camTarget.x, this.camTarget.z);
     this.palomas.update(dt, this.noche() ? 0 : 1, this.camTarget.x, this.camTarget.z);
-    if (t < DAWN + 0.02 || t > DUSK - 0.05) {
+    this.lluvia.update(dt, this.camTarget.x, this.camTarget.z);
+    if (this.invierno || t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos
       const r = this.player.rig;
       let near = 0;
@@ -2536,6 +2559,14 @@ export class CiudadWorld {
     this.hemi.color.set("#4d5f94").lerp(b.set("#cfe3ff"), day);
     this.hemi.groundColor.set("#3a3226").lerp(b.set("#b9a27a"), day);
     this.hemi.intensity = 0.95 + 0.4 * day;
+    // cuando llueve, el cielo se nubla y el sol baja (shared/anio.ts dice qué días llueve)
+    const ll = this.lluvia?.intensidad ?? 0;
+    if (ll > 0) {
+      this.sun.intensity *= 1 - 0.45 * ll;
+      u.top.value.lerp(c.set("#6d7887"), 0.6 * ll * day);
+      u.horizon.value.lerp(c.set("#a3abb4"), 0.55 * ll * day);
+      (this.scene.fog as THREE.Fog).color.copy(u.horizon.value);
+    }
     this.renderer.toneMappingExposure = 0.95 + 0.12 * day;
     const gx = Math.round(this.camTarget.x / 2) * 2, gz = Math.round(this.camTarget.z / 2) * 2;
     this.sun.target.position.set(gx, P.SUELO, gz);
@@ -2786,6 +2817,7 @@ export class CiudadWorld {
     this.fx.dispose();
     this.antorchas.dispose();
     this.palomas.dispose();
+    this.lluvia.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();
     gameStore.setCiudad(null);

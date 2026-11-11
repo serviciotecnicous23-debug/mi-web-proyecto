@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-anio-de-jerusalen",
+    fecha: "11 de noviembre de 2026",
+    titulo: "El año de Jerusalén: el juego sigue el calendario real",
+    puntos: [
+      "📅 La fecha de Jerusalén en línea es la hebrea de verdad (hoy, 1 de Quisleu: luna nueva) y las fiestas de Levítico 23 llegan en sus días reales: la Pascua el 21 de abril de 2027, Pentecostés el 11 de junio y los Tabernáculos el 16 de octubre.",
+      "🌧️ Seis estaciones de la tierra de Israel: en invierno llueve seguido (lo que siembras un día de lluvia queda regado), cada estación hace crecer más rápido un cultivo (la cebada, el trigo o los olivos) y los mercaderes buscan más lo que escasea: guarda en tu alfolí y vende a tiempo.",
+      "🎺 Cada luna nueva, la hora de las trompetas: de 7 a 9 de la noche (hora de Texas) el servicio en el templo vale ×1,5. Cada sábado, el día de reposo.",
+      "⭐ Fiestas del ministerio contadas con las profecías de Isaías: la Navidad, el Año Nuevo y la Semana Santa.",
+      "👆 Toca la fecha del marcador de la ciudad para ver el calendario: hoy, la estación, lo que cambia y lo que viene.",
+    ],
+  },
+  {
     id: "2026-11-12-mapa-conectado",
     fecha: "12 de noviembre de 2026",
     titulo: "El mapa al día y todo conectado",

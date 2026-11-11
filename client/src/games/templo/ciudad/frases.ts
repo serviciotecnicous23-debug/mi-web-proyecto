@@ -5,6 +5,7 @@
  * Son frases propias, sin citas: las citas literales están en las ventanas, con su referencia.
  */
 import type { CapituloId, MomentoFiesta } from "@shared/capitulos";
+import { diaEnJerusalen, type EstacionId } from "@shared/anio";
 
 export type GenteQueHabla = "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
 
@@ -142,6 +143,32 @@ const FRASES: Record<GenteQueHabla, string[]> = {
 const NOCHE = ["Las antorchas ya están encendidas. Que descanses, vecino.", "De noche la ciudad se ve hermosa con tantas luces.", "Mañana temprano hay que volver a servir."];
 
 /** Una frase para esta persona de la calle. */
+/** Lo que se dice en cada estación del año de Jerusalén (shared/anio.ts). */
+const FRASES_ESTACION: Record<EstacionId, string[]> = {
+  cosecha: ["Ya se pisan las uvas en el lagar. ¡Se acercan los tabernáculos!", "Este año las olivas vienen cargadas: habrá aceite para todos.", "¿Ya hiciste tu enramada para la fiesta de los tabernáculos?"],
+  siembra: ["Cayó la lluvia temprana: a arar y a sembrar.", "Mi padre ya sembró la cebada. Ahora a esperar que llueva.", "La tierra está blanda con la lluvia: es tiempo de sembrar."],
+  invierno: ["¡Qué frío! Dicen que el rey ya encendió el brasero de la casa de invierno.", "Con tanta lluvia, el estanque se llena.", "En invierno la harina escasea: los mercaderes la buscan mucho.", "Abrígate, vecino: este invierno viene fuerte."],
+  cebada: ["¡Los almendros ya florecieron! Pronto la siega de la cebada.", "La primera gavilla de cebada se presenta en la fiesta de las primicias.", "Nacieron los corderos: hay muchos en el mercado."],
+  trigo: ["¡A la siega del trigo! Hasta la fiesta de las semanas no se para.", "Hay tanta harina que los mercaderes casi no la buscan.", "Los campos están dorados: da gusto verlos."],
+  verano: ["Qué calor… guarda aceite en tu alfolí, que antes de la cosecha sube.", "Los higos ya están dulces. ¿Quieres uno?", "No ha llovido en semanas: hay que regar el huerto."],
+};
+const FRASES_LLUVIA = ["¡Qué aguacero! Por lo menos el huerto se riega solo.", "Con esta lluvia nadie sale… menos los que sirven en el templo.", "La lluvia es bendición: lo que siembres hoy, queda regado."];
+const FRASES_EVENTO: Record<string, string> = {
+  lunaNueva: "Esta noche, de 7 a 9, tocan las trompetas de la luna nueva. ¡El servicio vale la mitad más!",
+  reposo: "Hoy es día de reposo: en el templo se ofrecen dos corderos más.",
+  navidad: "Isaías dice que un niño nos es nacido… ¡la ciudad está llena de lámparas!",
+  anioNuevo: "¡Año nuevo! Nuevas son cada mañana sus misericordias.",
+  semanaSanta: "Isaías enseña la profecía del siervo herido por nosotros. ¡Ve a escucharlo!",
+  pascua: "Hoy se come la Pascua: cada familia con su cordero.",
+  panes: "Siete días sin levadura: ¡ni una miga en las casas!",
+  primicias: "Hoy se presenta la primera gavilla de la cosecha.",
+  pentecostes: "¡La fiesta de las semanas! El templo se llena de peregrinos.",
+  trompetas: "¿Oíste las trompetas? Hoy empieza el mes séptimo.",
+  expiacion: "Hoy es el día de la expiación: un día solemne, de silencio y oración.",
+  tabernaculos: "¡Toda la ciudad vive en enramadas! Siete días de alegría.",
+  asamblea: "El último día de la fiesta, el gran día: santa convocación.",
+};
+
 export function fraseDeGente(kind: GenteQueHabla, ctx: ContextoFrases, azar: () => number = Math.random): string {
   const r = azar();
   const elegir = (l: string[]) => l[Math.floor(azar() * l.length)];
@@ -150,6 +177,15 @@ export function fraseDeGente(kind: GenteQueHabla, ctx: ContextoFrases, azar: () 
   if (ctx.fiestaFinal === "fiesta" && r < 0.4) return elegir(FRASES_FIESTA);
   if (ctx.fiesta && r < 0.18) return `¡Hoy es ${ctx.fiesta}! Toda la ciudad sube al templo.`;
   if (ctx.noche && r < 0.26) return elegir(NOCHE);
+  // el año de Jerusalén: lo que se celebra hoy, la lluvia y la estación (con su propio sorteo)
+  {
+    const ra = azar();
+    const dj = diaEnJerusalen();
+    const ev = dj.eventos[0]?.evento;
+    if (ev && ra < 0.2) return FRASES_EVENTO[ev.id] ?? `¡Hoy es ${ev.nombre}! ${ev.corto}.`;
+    if (dj.llueve && ra < 0.3) return elegir(FRASES_LLUVIA);
+    if (ra < 0.38) return elegir(FRASES_ESTACION[dj.estacion.id]);
+  }
   // el capítulo de la semana: de eso habla la ciudad
   if (ctx.capitulo && r < 0.5) {
     const f = FRASES_CAPITULO[ctx.capitulo];

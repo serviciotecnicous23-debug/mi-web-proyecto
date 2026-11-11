@@ -8,6 +8,7 @@
  * - Servir juntos: con dos o más sacerdotes en el templo a la vez, los deberes valen un poco más.
  * El servidor lleva las cuentas; el teléfono solo las muestra.
  */
+import { EVENTOS_DEL_ANIO } from "./anio";
 
 export type TipoEncargo =
   | "ofrendas" | "lena" | "aceite" | "panes" | "incienso" | "diezmos" | "aciertos" | "seccion" | "bendicion" | "alfoli" | "juntos"
@@ -17,6 +18,10 @@ export type TipoEncargo =
 export type EncargoDef = { id: string; tipo: TipoEncargo; meta: number; titulo: string; icono: string; caminos?: ("sacerdocio" | "profecia" | "realeza")[] };
 
 const TODOS: ("sacerdocio" | "profecia" | "realeza")[] = ["sacerdocio", "profecia", "realeza"];
+
+/** Los encargos de las fiestas del año (shared/anio.ts): id «ev-…», para los tres caminos. No se sortean: salen solos el día del evento. */
+export const ENCARGOS_DE_FIESTA: EncargoDef[] = EVENTOS_DEL_ANIO.filter((e) => e.encargo).map((e) => ({ id: `ev-${e.id}`, tipo: e.encargo!.tipo, meta: e.encargo!.meta, titulo: e.encargo!.titulo, icono: e.encargo!.icono, caminos: TODOS }));
+export const esEncargoDeFiesta = (id: string) => id.startsWith("ev-");
 
 /** El banco de encargos (cada día salen tres de tipos distintos). */
 export const ENCARGOS: EncargoDef[] = [
@@ -47,6 +52,8 @@ export const ENCARGOS: EncargoDef[] = [
 ];
 
 export const ENCARGOS_DIA = 3;
+/** Buscar la definición de un encargo (los del banco o los de las fiestas). */
+export const encargoDef = (id: string): EncargoDef | undefined => ENCARGOS.find((x) => x.id === id) ?? ENCARGOS_DE_FIESTA.find((x) => x.id === id);
 export const MERITO_ENCARGO = 20;
 /** Premio por cumplir los tres encargos del día. */
 export const MERITO_ENCARGOS_TODOS = 30;
@@ -62,7 +69,7 @@ export const JUNTOS_DESDE = 2;
 export const FACTOR_JUNTOS = 1.2;
 
 // ---------------------------------------------------------------- respuestas de la API
-export type Encargo = { id: string; titulo: string; icono: string; meta: number; progreso: number; hecho: boolean };
+export type Encargo = { id: string; titulo: string; icono: string; meta: number; progreso: number; hecho: boolean; /** el encargo de la fiesta de hoy (shared/anio.ts): su nombre */ fiesta?: string };
 export type BarrioSemana = { n: number; nombre: string; deberes: number; vecinos: number; porVecino: number; cumplida: boolean };
 export type MisionesEstado = {
   dia: string;

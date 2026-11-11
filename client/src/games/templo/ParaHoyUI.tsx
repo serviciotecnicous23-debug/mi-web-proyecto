@@ -16,6 +16,7 @@ import type { MisionesEstado } from "@shared/misiones";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
 import { lineasDeRacha } from "./RachaUI";
+import { diaEnJerusalen } from "@shared/anio";
 import type { RachaVista } from "@shared/racha";
 import { arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type CapitulosVista } from "@shared/capitulos";
 
@@ -58,6 +59,22 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const lineas: Linea[] = [];
   // la racha de servicio va primero: es lo que se pierde si no se sirve hoy
   if (d.racha) lineas.push(...lineasDeRacha(d.racha).filter((l) => l.id === "racha"));
+  // el año de Jerusalén (shared/anio.ts): lo que se celebra hoy y la estación (con la lluvia)
+  {
+    const dj = diaEnJerusalen();
+    const verCalendario = { texto: "Ver", hacer: () => abrir({ kind: "calendario" }) };
+    for (const a of dj.eventos.slice(0, 2)) {
+      const h = a.evento.hora;
+      lineas.push({ id: `evento-${a.evento.id}`, icono: a.evento.icono, texto: `Hoy: ${a.evento.corto}${a.de > 1 ? ` (día ${a.dia} de ${a.de})` : ""}${h ? ` · ${h.titulo}, de ${h.desde - 12} a ${h.hasta - 12} de la noche: ×${h.merito.toLocaleString("es-419")}` : ""}`, boton: verCalendario });
+    }
+    const semilla = dj.estacion.cultivo ? { trigo: "el trigo", cebada: "la cebada", olivo: "los olivos" }[dj.estacion.cultivo] : null;
+    lineas.push({
+      id: "estacion",
+      icono: dj.llueve ? "🌧️" : dj.estacion.icono,
+      texto: `${dj.hebreo.texto}: ${dj.estacion.nombre.charAt(0).toLowerCase()}${dj.estacion.nombre.slice(1)}${dj.llueve ? ". Hoy llueve: lo que siembres hoy queda regado" : ""}${semilla ? `. Crece más rápido ${semilla}` : ""}.`,
+      boton: { texto: "Calendario", hacer: () => abrir({ kind: "calendario" }) },
+    });
+  }
   // la historia de la temporada: la fiesta final (se anuncia desde el capítulo 3) y la meta de la ciudad de esta semana
   const hv = d.capitulos;
   const arco = hv ? arcoDeTemporada(hv.temporada) : null;

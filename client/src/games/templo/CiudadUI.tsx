@@ -37,7 +37,7 @@ import { TesoroView } from "./EconomiaUI";
 import { Card, VerseBox, fmt, hace } from "./ui";
 import { bendecirCasa, casaOfrendar, casaSiervos, fetchEstado, verCasa } from "./online";
 import type { CiudadWorld } from "./ciudad/mundo";
-import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
+import { diaEnJerusalen, proximaFiestaGrande } from "@shared/anio";
 import { escalonNombre, type JerusalenEstado } from "@shared/jerusalen";
 import {
   BIEN, BIENES, CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, GESTOS, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
@@ -101,7 +101,7 @@ function BotonBarrio({ onClick }: { onClick: () => void }) {
   );
 }
 
-function Reloj({ hora, fecha, fase }: { hora: number; fecha: string; fase: string }) {
+function Reloj({ hora, fecha, fase, icono }: { hora: number; fecha: string; fase: string; icono?: string }) {
   const night = hora < 0.2 || hora > 0.8;
   const a = hora * Math.PI * 2 - Math.PI / 2;
   return (
@@ -112,6 +112,7 @@ function Reloj({ hora, fecha, fase }: { hora: number; fecha: string; fase: strin
         <circle cx={12 + Math.cos(a + Math.PI) * 7} cy={12 + Math.sin(a + Math.PI) * 7} r="3" fill={night ? "#e8ecff" : "#ffd66b"} />
       </svg>
       <span className="min-w-0 truncate">
+        {icono ? `${icono} ` : ""}
         {fecha} · {fase}
       </span>
     </div>
@@ -136,6 +137,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
     const t = setTimeout(() => setVerGestos(false), 8000);
     return () => clearTimeout(t);
   }, [verGestos]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const iconoEstacion = useMemo(() => diaEnJerusalen().estacion.icono, [c?.fecha]);
   if (!c) return null;
   const open = (m: Modal) => gameStore.push(m);
   const lados = { paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))", paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))" };
@@ -244,7 +247,9 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               <Pause className="h-5 w-5" />
             </Boton>
           </div>
-          <Reloj hora={c.hora} fecha={c.fecha} fase={c.fase} />
+          <button type="button" className="pointer-events-auto rounded-full" onClick={() => open({ kind: "calendario" })} title="El calendario de Jerusalén: la fecha, la estación y lo que viene" data-testid="ciudad-abrir-calendario">
+            <Reloj hora={c.hora} fecha={c.fecha} fase={c.fase} icono={iconoEstacion} />
+          </button>
           {!modal && <MiniMapa city={city} />}
         </div>
       </div>
@@ -646,7 +651,7 @@ function SiervosPanel() {
   const [aviso, setAviso] = useState<string | null>(null);
   if (!estado) return null;
   const p = estado.privada;
-  const fiesta = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta;
+  const fiesta = diaEnJerusalen().fecha.fiestas[0]?.fiesta;
   const doble = bienDeFiesta(fiesta?.ofrenda);
   const guardar = (privada: CasaPrivada, nivel?: number, honra?: number) => {
     const yo = nivel !== undefined || honra !== undefined ? { ...estado.yo, ...(nivel !== undefined ? { nivel } : {}), ...(honra !== undefined ? { honra } : {}) } : estado.yo;
@@ -862,10 +867,9 @@ function AnunciosView() {
     };
   }, []);
   const hoy = useMemo(() => {
-    const reloj = relojEnLinea();
-    const f = fechaDe(reloj.dia);
-    const p = proximaFiesta(reloj.dia);
-    return { f, fiesta: f.fiestas[0] ?? null, proxima: p ? { ...p, enMinutos: Math.max(1, Math.round(((p.enDias - reloj.hora) * SEGUNDOS_DIA) / 60)) } : null };
+    // el año de Jerusalén: la fecha real y la próxima fiesta grande (shared/anio.ts)
+    const d = diaEnJerusalen();
+    return { f: d.fecha, fiesta: d.fecha.fiestas[0] ?? null, proxima: proximaFiestaGrande() };
   }, []);
   const prueba = e?.temporada.dePrueba ? " (de prueba)" : "";
   // los cargos de los tres caminos (cada uno con su nombre: sumo sacerdote, varón de Dios, canciller del rey…)
@@ -911,7 +915,10 @@ function AnunciosView() {
             </div>
           ) : hoy.proxima ? (
             <p className="mt-1">
-              Próxima fiesta: {hoy.proxima.fiesta.icono} <b>{hoy.proxima.fiesta.nombre}</b>, el {hoy.proxima.fecha.texto} (en {hoy.proxima.enMinutos} min de reloj).
+              Próxima fiesta: {hoy.proxima.evento.icono} <b>{hoy.proxima.evento.nombre}</b>, el {hoy.proxima.texto} ({hoy.proxima.enDias === 1 ? "mañana" : `en ${hoy.proxima.enDias} días`}).{" "}
+              <button type="button" className="font-bold text-amber-700 underline-offset-2 hover:underline dark:text-amber-300" onClick={() => gameStore.push({ kind: "calendario" })} data-testid="anuncios-calendario">
+                Ver el calendario
+              </button>
             </p>
           ) : null}
         </section>

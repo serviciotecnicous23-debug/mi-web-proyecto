@@ -17,7 +17,7 @@ import { coloresDeRopa } from "./ropa";
 import { RECETAS, guardarPreparadas, leerPreparadas, type Preparadas } from "@shared/mercado";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { nivelBarrio } from "./barrio-juntos";
-import { fechaDe, relojEnLinea } from "@shared/calendario";
+import { diaEnJerusalen } from "@shared/anio";
 import {
   AREAS, BIEN, BIENES, CASAS_POR_BARRIO, NIVELES_CASA, SIERVOS_DIA, SIERVOS_SALIDA, areaDeBarrio, bienDeFiesta, capacidadAlfoli, honraDe,
   horasEfectivas, nivelPorHonra, nombreDeBarrio, siervosPermitidos, type BarrioEstado, type Bien, type CasaPrivada, type CasaVista, type CasaVisita,
@@ -210,9 +210,15 @@ async function privadaDe(characterId: number, r: Recogida, marcar: boolean): Pro
 const resumenes = new Map<number, { at: number; casas: (CasaVista & { userId: number })[] }>();
 const armando = new Map<number, Promise<(CasaVista & { userId: number })[]>>();
 const RESUMEN_MS = 30_000;
+/** Cuántas veces se borró la memoria de cada barrio: una consulta que ya estaba en camino no guarda lo viejo. */
+const borrados = new Map<number, number>();
 
-function olvidarBarrio(barrio: number) {
+/** Borrar la memoria de las casas de un barrio (cambió una casa: su nivel, sus adornos o su letrero). */
+export function olvidarBarrio(barrio: number) {
   resumenes.delete(barrio);
+  armando.delete(barrio);
+  borrados.set(barrio, (borrados.get(barrio) ?? 0) + 1);
+  if (borrados.size > 2000) borrados.clear();
   siluetas = null;
 }
 
@@ -222,6 +228,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
   if (hit && Date.now() - hit.at < RESUMEN_MS) return hit.casas;
   const enCurso = armando.get(barrio);
   if (enCurso) return enCurso;
+  const vez = borrados.get(barrio) ?? 0;
   const p = (async () => {
     const t = temporadaDe();
     const { rows } = await pool.query(
@@ -258,7 +265,8 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         userId,
       });
     }
-    resumenes.set(barrio, { at: Date.now(), casas });
+    // si mientras tanto alguien cambió su casa, esto ya es viejo: se devuelve, pero no se guarda
+    if ((borrados.get(barrio) ?? 0) === vez) resumenes.set(barrio, { at: Date.now(), casas });
     if (resumenes.size > 500) resumenes.clear();
     return casas;
   })();
@@ -266,7 +274,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
   try {
     return await p;
   } finally {
-    armando.delete(barrio);
+    if (armando.get(barrio) === p) armando.delete(barrio);
   }
 }
 
@@ -479,7 +487,7 @@ export function registerCiudadRoutes(app: Express) {
           for (const k of ["tortas", "aceitePuro"] as const) {
             if (prep[k] > lp.preparadas[k]) return { status: 409, body: { message: `No tienes tantas ofrendas preparadas: ${RECETAS[k].nombre.toLowerCase()}.` } };
           }
-          const fiesta = fechaDe(relojEnLinea().dia).fiestas[0]?.fiesta;
+          const fiesta = diaEnJerusalen().fecha.fiestas[0]?.fiesta;
           const doble = bienDeFiesta(fiesta?.ofrenda);
           let ganado = 0;
           for (const b of BIENES) {
