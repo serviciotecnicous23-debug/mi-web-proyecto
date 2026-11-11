@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-texturas",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Piedra, madera y oro que se sienten de verdad",
+    puntos: [
+      "🧱 Todo el juego tiene textura: la piedra caliza de la plaza y del templo con sus vetas, manchas y relieve, la arena con su grano, la madera con su veta, las hojas de los árboles y huertos, y el oro y el bronce martillados.",
+      "📱 Está hecha en la tarjeta de video, sin imágenes que bajar, así que el juego carga igual de rápido; en teléfonos modestos va más simple.",
+    ],
+  },
+  {
     id: "2026-11-11-antorchas",
     fecha: "11 de noviembre de 2026",
     titulo: "Antorchas en toda la ciudad",

@@ -132,17 +132,126 @@ export class GeoBuilder {
   }
 }
 
-// Materiales compartidos: mate (Lambert) y brillante para el oro y el bronce (Phong).
+// ---------------------------------------------------------------- textura de las superficies
+/**
+ * La textura de todo lo que se arma con GeoBuilder, calculada en la tarjeta de video (sin imágenes que bajar): según
+ * el color de cada cara se sabe si es piedra o estuco (vetas, manchas y relieve), madera (veta), hojas, tela (trama)
+ * o metal (cepillado). Se mira la posición en el mundo, así que no hacen falta coordenadas de textura, y se apaga de
+ * a poco a lo lejos (para que no titile). En equipos modestos va más simple y sin relieve.
+ */
+let detalleBajo = (() => {
+  try {
+    const nucleos = navigator.hardwareConcurrency || 4;
+    const memoria = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 4;
+    const tactil = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    return tactil && (nucleos <= 4 || memoria <= 3);
+  } catch {
+    return false;
+  }
+})();
+export function configurarDetalle(bajo: boolean) {
+  detalleBajo = bajo;
+}
+
+const DETALLE_PARS = `
+varying vec3 vMundo;
+float dHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float dRuido(vec3 x) {
+  vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(dHash(i), dHash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(dHash(i + vec3(0.0, 1.0, 0.0)), dHash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(dHash(i + vec3(0.0, 0.0, 1.0)), dHash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(dHash(i + vec3(0.0, 1.0, 1.0)), dHash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+}
+`;
+
+const DETALLE_COLOR = `
+#include <color_fragment>
+float dLejos = 1.0 - smoothstep(22.0, 70.0, length(vViewPosition)) * 0.8;
+// el color como se ve (los colores de las caras están en espacio lineal)
+vec3 dc = sqrt(max(diffuseColor.rgb, vec3(0.0)));
+float dMx = max(dc.r, max(dc.g, dc.b));
+float dMn = min(dc.r, min(dc.g, dc.b));
+float dSat = (dMx - dMn) / max(dMx, 0.001);
+float dLum = dot(dc, vec3(0.299, 0.587, 0.114));
+#ifdef DETALLE_METAL
+float dVerde = 0.0; float dMadera = 0.0; float dPiedra = 0.0; float dTela = 0.0; float dMetal = 1.0;
+#else
+float dVerde = step(dc.r * 1.04, dc.g) * step(dc.b, dc.g) * step(0.12, dSat);
+// madera: marrón anaranjado, no muy clara
+float dMadera = (1.0 - dVerde) * step(0.3, dSat) * step(dLum, 0.5) * step(dc.r * 0.42, dc.g) * step(dc.g, dc.r * 0.88) * step(dc.b, dc.g * 0.85);
+float dPiedra = (1.0 - dVerde) * (1.0 - dMadera) * step(dSat, 0.42) * step(0.25, dLum);
+float dTela = (1.0 - dVerde) * (1.0 - dMadera) * (1.0 - dPiedra);
+float dMetal = 0.0;
+#endif
+vec3 dp = vMundo;
+#ifdef DETALLE_BAJO
+float dH = dRuido(dp * 2.1);
+#else
+float dH = dPiedra * (dRuido(dp * 0.9) * 0.65 + dRuido(dp * 3.2) * 0.35)
+         + dMadera * (dRuido(dp * vec3(1.4, 5.5, 1.4)) * 0.55 + dRuido(dp * vec3(5.5, 1.0, 5.5)) * 0.45)
+         + dVerde * dRuido(dp * 5.5)
+         + dTela * dRuido(dp * 11.0)
+         + dMetal * dRuido(dp * vec3(22.0, 1.5, 22.0));
+#endif
+float dAmp = (dPiedra * 0.15 + dMadera * 0.17 + dVerde * 0.24 + dTela * 0.06 + dMetal * 0.1) * dLejos;
+diffuseColor.rgb *= 1.0 + (dH - 0.5) * dAmp;
+// manchas de tiempo y de lluvia en la piedra
+diffuseColor.rgb *= 1.0 - dPiedra * smoothstep(0.62, 0.94, dRuido(dp * 0.3 + 3.7)) * 0.1 * dLejos;
+`;
+
+const DETALLE_RELIEVE = `
+#include <normal_fragment_maps>
+#ifndef DETALLE_BAJO
+{
+  vec3 dPv = -vViewPosition;
+  vec3 dPx = dFdx(dPv);
+  vec3 dPy = dFdy(dPv);
+  float dHx = dFdx(dH);
+  float dHy = dFdy(dH);
+  vec3 dR1 = cross(dPy, normal);
+  vec3 dR2 = cross(normal, dPx);
+  float dDet = dot(dPx, dR1);
+  vec3 dGrad = sign(dDet) * (dHx * dR1 + dHy * dR2);
+  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 + dMetal * 0.1) * dLejos;
+  normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
+}
+#endif
+`;
+
+function conDetalle<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, metal: boolean): M {
+  mat.onBeforeCompile = (shader) => {
+    if (metal) shader.defines = { ...(shader.defines ?? {}), DETALLE_METAL: "" };
+    if (detalleBajo) shader.defines = { ...(shader.defines ?? {}), DETALLE_BAJO: "" };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vMundo;")
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+vec4 dMundo = vec4(transformed, 1.0);
+#ifdef USE_INSTANCING
+dMundo = instanceMatrix * dMundo;
+#endif
+vMundo = (modelMatrix * dMundo).xyz;`,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", `#include <common>\n${DETALLE_PARS}`)
+      .replace("#include <color_fragment>", DETALLE_COLOR)
+      .replace("#include <normal_fragment_maps>", DETALLE_RELIEVE);
+  };
+  mat.customProgramCacheKey = () => `templo-detalle-${metal ? "metal" : "mate"}-${detalleBajo ? "bajo" : "alto"}`;
+  return mat;
+}
+
+// Materiales compartidos: mate (Lambert) y brillante para el oro y el bronce (Phong), los dos con textura.
 let matte: THREE.MeshLambertMaterial | null = null;
 let shiny: THREE.MeshPhongMaterial | null = null;
 
 export function matteMat() {
-  if (!matte) matte = new THREE.MeshLambertMaterial({ vertexColors: true });
+  if (!matte) matte = conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false);
   return matte;
 }
 
 export function shinyMat() {
-  if (!shiny) shiny = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") });
+  if (!shiny) shiny = conDetalle(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") }), true);
   return shiny;
 }
 
