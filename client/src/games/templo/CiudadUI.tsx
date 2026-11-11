@@ -103,7 +103,7 @@ function Reloj({ hora, fecha, fase }: { hora: number; fecha: string; fase: strin
   const night = hora < 0.2 || hora > 0.8;
   const a = hora * Math.PI * 2 - Math.PI / 2;
   return (
-    <div className="flex max-w-[11rem] items-center gap-1.5 rounded-full bg-black/45 py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-white backdrop-blur-sm sm:max-w-none" data-testid="ciudad-reloj">
+    <div className="flex max-w-[11rem] items-center gap-1.5 rounded-full bg-black/45 tpl-vidrio py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-white backdrop-blur-sm sm:max-w-none" data-testid="ciudad-reloj">
       <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
         <circle cx="12" cy="12" r="11" fill={night ? "#1b2140" : "#7fb5e6"} />
         <path d="M1 12 A11 11 0 0 0 23 12 Z" fill={night ? "#0d1022" : "#d9c49a"} opacity="0.85" />
@@ -159,7 +159,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             </button>
             <button
               type="button"
-              className="pointer-events-auto flex min-w-0 max-w-full items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
+              className="pointer-events-auto flex min-w-0 max-w-full items-center gap-1 rounded-full bg-black/50 tpl-vidrio py-1 pl-1.5 pr-3 text-xs font-bold text-white shadow-lg"
               onClick={() => open({ kind: "casa" })}
               title={`Tu casa: ${c.barrio}, casa ${c.casa}`}
               data-testid="ciudad-casa"
@@ -171,7 +171,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
             </button>
             <button
               type="button"
-              className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
+              className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-full bg-black/50 tpl-vidrio py-1 pl-1.5 pr-2.5 text-xs font-black text-amber-200 shadow-lg"
               onClick={() => open({ kind: "mercado" })}
               title="Tu gozo de Jerusalén en línea: se gana sirviendo y se gasta en el mercado de la plaza"
               data-testid="ciudad-gozo"
@@ -289,7 +289,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
         </button>
         <button
           type="button"
-          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-lg active:scale-95"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-black/55 tpl-vidrio text-white shadow-lg active:scale-95"
           onClick={() => open({ kind: "vecinos" })}
           title="Vecinos que se ven"
           aria-label={`Vecinos que se ven: ${c.vecinos}`}
@@ -304,7 +304,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
       {/* a la izquierda: lo último que dijeron los vecinos y si se cortó la conexión */}
       <div className="absolute top-1/2 flex max-w-[60%] -translate-y-1/2 flex-col items-start gap-1" style={{ left: "calc(0.5rem + var(--tpl-sl, 0px))" }}>
         {c.red !== "conectado" && (
-          <div className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold" data-testid="ciudad-red">
+          <div className="flex items-center gap-1 rounded-full bg-black/55 tpl-vidrio px-2.5 py-0.5 text-[11px] font-semibold" data-testid="ciudad-red">
             {c.red === "fuera" ? <Ban className="h-3.5 w-3.5 text-red-300" /> : <WifiOff className="h-3.5 w-3.5 text-amber-300" />}
             {c.red === "fuera" ? "Sin vecinos" : "Buscando vecinos…"}
           </div>

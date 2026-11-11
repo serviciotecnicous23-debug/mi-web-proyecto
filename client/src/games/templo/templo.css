@@ -1,0 +1,198 @@
+/*
+ * Diseño de «El aprendiz del templo»: el nombre del juego en oro, los botones de oro con relieve, las ventanas
+ * (cabecera de noche y oro sobre papel con textura), el vidrio del marcador y los avisos que entran.
+ * Todo es CSS liviano; lo que se mueve se queda quieto si el teléfono pide menos movimiento.
+ */
+
+/* El nombre del juego en oro, con un brillo que lo cruza cada tanto */
+.tpl-logo-titulo {
+  background: linear-gradient(100deg, #fff1c2 0%, #f5cf6a 28%, #fffbea 42%, #e7ac3c 58%, #fff0bd 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(80, 36, 6, 0.75)) drop-shadow(0 8px 22px rgba(245, 180, 70, 0.35));
+  animation: tpl-brillo 7s ease-in-out infinite;
+}
+@keyframes tpl-brillo {
+  0%,
+  55% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+/* El lema entre dos líneas de oro */
+.tpl-lema {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.tpl-lema::before,
+.tpl-lema::after {
+  content: "";
+  height: 1px;
+  width: 2.2rem;
+  background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.9));
+}
+.tpl-lema::after {
+  transform: scaleX(-1);
+}
+
+/* El botón principal: oro con relieve y un brillo que pasa */
+.tpl-btn-oro {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(180deg, #ffe7a0 0%, #f7c04a 42%, #e39c1f 58%, #c97f14 100%) !important;
+  color: #3a2004 !important;
+  border: 1px solid rgba(110, 60, 6, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -3px 0 rgba(120, 60, 0, 0.28),
+    0 6px 18px rgba(240, 160, 40, 0.38),
+    0 1px 0 rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+.tpl-btn-oro:hover {
+  filter: brightness(1.06);
+}
+.tpl-btn-oro:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(120, 60, 0, 0.3),
+    0 2px 8px rgba(240, 160, 40, 0.3);
+}
+.tpl-btn-oro::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 30%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  transform: translateX(-160%) skewX(-20deg);
+  animation: tpl-pasa 4.8s ease-in-out infinite;
+}
+@keyframes tpl-pasa {
+  0%,
+  68% {
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(420%) skewX(-20deg);
+  }
+}
+
+/* Los demás botones principales del juego, con un poco de brillo y relieve */
+.tpl-juego button.bg-primary {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 52%, rgba(0, 0, 0, 0.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 3px 10px rgba(0, 0, 0, 0.18);
+}
+
+/* El vidrio de las pastillas y botones del marcador */
+.tpl-vidrio {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 55%, rgba(0, 0, 0, 0.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+/* Las ventanas: papel con textura, cabecera de noche y oro, y una entrada suave */
+.tpl-ventana {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #fffbf2 0%, #fbf1dc 100%);
+  box-shadow:
+    0 0 0 1px rgba(243, 201, 90, 0.35),
+    0 24px 60px -12px rgba(20, 10, 30, 0.55),
+    0 0 40px -10px rgba(243, 201, 90, 0.25);
+  animation: tpl-entrar 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.dark .tpl-ventana {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .85 0 0 0 0 .6 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #241c13 0%, #17120c 100%);
+}
+@keyframes tpl-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.965);
+  }
+}
+.tpl-ventana-cabeza {
+  position: relative;
+  background: linear-gradient(135deg, #24123a 0%, #43204f 55%, #6a2c4c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.tpl-ventana-cabeza::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(243, 201, 90, 0), #f3c95a 30%, #fff1c2 50%, #f3c95a 70%, rgba(243, 201, 90, 0));
+}
+.tpl-ventana-titulo {
+  color: #f8dc8a;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 0 14px rgba(243, 201, 90, 0.28);
+}
+.tpl-ventana-cerrar {
+  color: #f8dc8a;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(243, 201, 90, 0.35);
+  transition: background 0.15s ease;
+}
+.tpl-ventana-cerrar:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* El versículo, como papel bueno */
+.tpl-verso {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 60%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 3px rgba(120, 80, 20, 0.14);
+}
+.dark .tpl-verso {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Los avisos que bajan con un pequeño salto */
+.tpl-aviso {
+  animation: tpl-aviso 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 6px 18px rgba(0, 0, 0, 0.28);
+}
+@keyframes tpl-aviso {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpl-logo-titulo,
+  .tpl-btn-oro::after,
+  .tpl-ventana,
+  .tpl-aviso {
+    animation: none !important;
+  }
+}
