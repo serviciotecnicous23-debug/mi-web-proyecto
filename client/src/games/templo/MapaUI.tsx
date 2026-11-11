@@ -205,7 +205,7 @@ export function MiniMapa({ city }: { city: CiudadWorld | null }) {
   );
 }
 
-const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria"; nombre: string }[] = [
+const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria" | "oracion"; nombre: string }[] = [
   { id: "casa", nombre: "🏠 Mi casa" },
   { id: "templo", nombre: "🔥 El templo" },
   { id: "plaza", nombre: "⛲ La plaza" },
@@ -214,6 +214,7 @@ const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" 
   { id: "palacio", nombre: "👑 El palacio" },
   { id: "camara", nombre: "🕯️ La cámara de los sacerdotes" },
   { id: "sabiduria", nombre: "🏛️ La casa de la sabiduría" },
+  { id: "oracion", nombre: "⛰️ El monte de la oración" },
 ];
 
 /** El mapa de toda la ciudad, con el objetivo y los botones para ir. */

@@ -16,6 +16,7 @@ import { MERCADO_SQL } from "./mercado";
 import { ECONOMIA_SQL } from "./economia";
 import { CATEDRAS_SQL } from "./catedras";
 import { BARRIO_SQL } from "./barrio";
+import { BARRIO_JUNTOS_SQL } from "./barrio-juntos";
 import { SABIO_SQL } from "./sabio";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
@@ -1134,6 +1135,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(SABIO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (sabio): ${err?.message}`);
+    }
+    try {
+      // El barrio juntos: la misión del barrio de hoy y la copa de los barrios
+      await pool.query(BARRIO_JUNTOS_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (barrio juntos): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

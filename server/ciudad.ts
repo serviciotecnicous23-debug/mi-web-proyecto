@@ -16,6 +16,7 @@ import { avanzarMision } from "./misiones";
 import { coloresDeRopa } from "./ropa";
 import { RECETAS, guardarPreparadas, leerPreparadas, type Preparadas } from "@shared/mercado";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
+import { nivelBarrio } from "./barrio-juntos";
 import { fechaDe, relojEnLinea } from "@shared/calendario";
 import {
   AREAS, BIEN, BIENES, CASAS_POR_BARRIO, NIVELES_CASA, SIERVOS_DIA, SIERVOS_SALIDA, areaDeBarrio, bienDeFiesta, capacidadAlfoli, honraDe,
@@ -324,6 +325,7 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
       nombre: nombreDeBarrio(casa.barrio),
       casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa, nivel: c.personajeId === ch.casa ? nivel : c.nivel })),
       libres: Math.max(0, CASAS_POR_BARRIO - casas.length),
+      nivelBarrio: await nivelBarrio(casa.barrio).catch(() => 0),
     },
     otros,
     jerusalen: hoyEnJerusalen(),
@@ -396,6 +398,7 @@ export function registerCiudadRoutes(app: Express) {
         area: areaDeBarrio(n),
         nombre: nombreDeBarrio(n),
         casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa })),
+        nivelBarrio: await nivelBarrio(n).catch(() => 0),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(body);

@@ -27,6 +27,7 @@ import type { EscalonId } from "@shared/jerusalen";
 import { RedCiudad, type EstadoRed } from "./red";
 import { chatBarrio, textoDeMensaje } from "../barrio-chat";
 import { sabioRed } from "../sabio-red";
+import { juntos } from "../juntos";
 import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
@@ -80,7 +81,14 @@ const PASOS_CAMINO: Record<"profecia" | "realeza", string[]> = { profecia: ["mem
 const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 
 /** Otro barrio que se ve: sus casas (de lejos, siluetas; al entrar en su área, completo). */
-export type BarrioVisto = { n: number; area: number; casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[]; detalle: boolean };
+export type BarrioVisto = {
+  n: number;
+  area: number;
+  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[];
+  detalle: boolean;
+  /** El nivel del barrio en la copa de los barrios (lámparas, olivos, fuente, estandartes, arco). */
+  nivelBarrio?: number;
+};
 
 type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3";
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
@@ -278,7 +286,7 @@ export class CiudadWorld {
     this.overlay = new Overlay(container, this.camera);
 
     // mi barrio completo; los otros, siluetas hasta que se entra en su área
-    this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true });
+    this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio });
     this.dibujarAreas();
 
     // el aprendiz con su vestidura según su escalón
@@ -335,6 +343,22 @@ export class CiudadWorld {
       onSabio: (m) => {
         sabioRed.recibir(m);
         if (m.t === "sabio-gracias" && m.gozoTotal != null) this.ponerGozo(m.gozoTotal);
+      },
+      // la misión del barrio de hoy (shared/barrio-juntos.ts)
+      onJuntos: (m) => {
+        if (m.t === "juntos") {
+          juntos.recibir(m.p);
+          return;
+        }
+        juntos.cumplida(m.titulo);
+        this.audio.trumpet(true);
+        gameStore.toast(
+          m.ayudo
+            ? `🤝 Ayudaste a tus vecinos a cumplir «${m.titulo}» (ya la habías cumplido hoy).`
+            : `🙌 ¡Misión del barrio cumplida: ${m.titulo}! +${m.merito} de mérito, +${m.gozo} de gozo y +10 para la copa del barrio.`,
+          "gold",
+        );
+        if (m.gozoTotal != null) this.ponerGozo(m.gozoTotal);
       },
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
@@ -508,7 +532,7 @@ export class CiudadWorld {
       yo: mia && mia.nivel > this.estado.yo.nivel ? { ...this.estado.yo, nivel: mia.nivel } : this.estado.yo,
       barrio: { ...this.estado.barrio, casas, libres: Math.max(0, 40 - casas.length) },
     };
-    this.barrios.set(n, { n, area: this.estado.barrio.area, casas, detalle: true });
+    this.barrios.set(n, { n, area: this.estado.barrio.area, casas, detalle: true, nivelBarrio: this.barrios.get(n)?.nivelBarrio });
     this.dibujarAreas();
   }
 
@@ -997,13 +1021,13 @@ export class CiudadWorld {
     this.player.fig.setRopa(estado.yo.ropa);
     const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null]));
     const cambio = !antes || firma(antes.casas) !== firma(estado.barrio.casas);
-    this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true });
+    this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio });
     if (cambio) this.dibujarAreas();
     this.pushHud();
   }
 
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
-  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria") {
+  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion") {
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const destinos: Record<typeof lugar, [V2, number]> = {
       casa: [casa.umbral, casa.dir === 1 ? 0 : Math.PI],
@@ -1016,6 +1040,8 @@ export class CiudadWorld {
       escuela: [[17, -19], Math.PI],
       camara: [[P.CAMARA_PUERTA[0] + 1.9, P.CAMARA_PUERTA[1]], -Math.PI / 2],
       sabiduria: [[P.SABIDURIA_PUERTA[0] + 1.9, P.SABIDURIA_PUERTA[1]], -Math.PI / 2],
+      // junto al lugar de oración del monte, mirándolo
+      oracion: [[P.ORACION_PUNTO[0] + 2.2, P.ORACION_PUNTO[1]], -Math.PI / 2],
     };
     const [[x, z], yaw] = destinos[lugar];
     const r = this.player.rig;
@@ -1517,7 +1543,7 @@ export class CiudadWorld {
       const casas = b?.casas ?? [];
       if (b?.detalle) {
         const dib: CasaDibujo[] = casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero }));
-        const { grupo, ventanas } = construirAreaDetalle(area, dib);
+        const { grupo, ventanas } = construirAreaDetalle(area, dib, b.nivelBarrio ?? 0);
         g.add(grupo);
         if (ventanas) {
           this.vis.ventanas.add(ventanas);
@@ -1596,9 +1622,9 @@ export class CiudadWorld {
     this.pidiendo.add(n);
     void fetch(`/api/jerusalen/ciudad/barrio/${n}`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { n: number; area: number; casas: CasaVista[] } | null) => {
+      .then((data: { n: number; area: number; casas: CasaVista[]; nivelBarrio?: number } | null) => {
         if (!this.running) return;
-        this.barrios.set(n, { n, area, casas: data?.casas ?? [], detalle: true });
+        this.barrios.set(n, { n, area, casas: data?.casas ?? [], detalle: true, nivelBarrio: data?.nivelBarrio });
         this.dibujarAreas();
       })
       .catch(() => null)

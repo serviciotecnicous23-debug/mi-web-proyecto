@@ -14,6 +14,7 @@ import { diaClave, enFila, nombreDe, personajeDe, type PersonajeFila } from "./j
 import { semanaClave } from "./misiones";
 import { sumarGozo } from "./gozo";
 import { avisarA } from "./ciudad-red";
+import { sumarALaCopa } from "./barrio-juntos";
 import { POR_GRADA, PREGUNTA, amigosPosibles, filaPersona, lista, mezclar } from "./sabio";
 import { caminoDe, type Camino } from "@shared/caminos";
 import {
@@ -214,6 +215,9 @@ async function terminarDuelo(d: Fila, ausente: Lado | null, ahora: number): Prom
         [t, ganados, diaClave(), f.gozo_hoy + gozo, f.entradas_hoy, JSON.stringify([...premios])],
       );
       if (gozo) await sumarGozo(t, gozo);
+      // la copa de los barrios: jugar el duelo (y ganarlo) suma para el barrio; quien lo deja, nada
+      if (ausente !== lado) await sumarALaCopa(t, "duelo");
+      if (gano) await sumarALaCopa(t, "dueloGanado");
       return { gozo, premio };
     });
   };

@@ -242,6 +242,7 @@ export const FRASES: FraseRapida[] = [
   { id: "orare", texto: "Oraré por ti" },
   { id: "gracias", texto: "¡Muchas gracias!" },
   { id: "casa", texto: "Ven a visitar mi casa" },
+  { id: "juntos", texto: "¡Vengan a la misión del barrio de hoy!" },
 ];
 export const VERSICULOS_RAPIDOS: FraseRapida[] = [
   { id: "v-casa", texto: "Yo me alegré con los que me decían: A la casa de Jehová iremos.", ref: "Salmo 122:1" },
@@ -317,6 +318,9 @@ export type RedEntra =
   | { t: "duelo-reto"; r: import("./sabio").RetoDuelo }
   | { t: "duelo-reto-fin"; id: number; motivo: string }
   | { t: "duelo"; id: number }
+  /** La misión del barrio de hoy (shared/barrio-juntos.ts): cómo va mientras estás en el lugar, y cuando se cumple. */
+  | { t: "juntos"; p: import("./barrio-juntos").JuntosProgreso }
+  | { t: "juntos-hecho"; titulo: string; gozo: number; merito: number; ayudo: boolean; juntos: number; gozoTotal?: number }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
@@ -334,7 +338,8 @@ export type CasaVista = {
 };
 
 /** Un barrio completo (al entrar en su área). */
-export type BarrioEstado = { n: number; area: number; nombre: string; casas: CasaVista[] };
+/** `nivelBarrio`: el nivel del barrio en la copa de los barrios (shared/barrio-juntos.ts), que se ve en sus calles. */
+export type BarrioEstado = { n: number; area: number; nombre: string; casas: CasaVista[]; nivelBarrio?: number };
 
 /** Lo de tu casa que solo ves tú: siervos, alfolí y bendiciones. */
 export type CasaPrivada = {
@@ -392,7 +397,7 @@ export type CiudadEstado = {
     /** Si la casa acaba de crecer al entrar: el nivel nuevo. */
     subio: number | null;
   };
-  barrio: { n: number; area: number; nombre: string; casas: CasaVista[]; libres: number };
+  barrio: { n: number; area: number; nombre: string; casas: CasaVista[]; libres: number; nivelBarrio?: number };
   /** Los barrios de las otras áreas, de lejos: solo dónde hay casas y de qué nivel. */
   otros: { n: number; area: number; casas: { parcela: number; nivel: number }[] }[];
   jerusalen: JerusalenEstado["jerusalen"];

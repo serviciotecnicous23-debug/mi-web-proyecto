@@ -14,6 +14,7 @@ import { sumarGozo } from "./gozo";
 import { casasDelBarrio } from "./ciudad";
 import { avisarA, presenciaDe } from "./ciudad-red";
 import { dondeEsta } from "./barrio";
+import { sumarALaCopa } from "./barrio-juntos";
 import { aplaudir, duenioDe, marcarMirando, publicoDe, registrarDuenio } from "./sabio-publico";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { caminoDe, type Camino } from "@shared/caminos";
@@ -531,6 +532,7 @@ async function premiarConsejo(c: { t: number; u: number; bien: boolean; de: stri
         [c.t, buenos, diaClave(), fila.gozo_hoy + gozo, fila.entradas_hoy, JSON.stringify([...premios])],
       );
       if (gozo) await sumarGozo(c.t, gozo);
+      await sumarALaCopa(c.t, "consejo");
     }
     const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [c.t]);
     avisarA(c.u, { t: "sabio-gracias", de: c.de, bien: c.bien, gozo, gozoTotal: g[0] ? Number(g[0].gozo) : null, premio });
@@ -656,6 +658,8 @@ export function registerSabioRoutes(app: Express) {
         );
     }
     if (gozo) await sumarGozo(pr.titular, gozo);
+    // la copa de los barrios: cada grada con que se queda suma para su barrio
+    if (grada) await sumarALaCopa(pr.ch.id, "grada", grada);
     if (gano) await evento(pr.ch.user_id, `sabio:${p.id}`, "subió las quince gradas de «¿Quién es sabio?» en la casa de la sabiduría");
     const despues = tituloDe(nueva);
     const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [pr.titular]);
