@@ -13,6 +13,8 @@ export type RedEventos = {
   onInfo: (v: VecinoInfo) => void;
   onVecinos: (l: [number, number, number, number, number, number?][]) => void;
   onFrase: (de: number, id: string) => void;
+  /** Un vecino hizo un gesto (saludar, aplaudir…). */
+  onGesto?: (de: number, id: string) => void;
   onBarrio: (n: number, casas: CasaVista[]) => void;
   /** La charla del barrio: un mensaje nuevo, o uno que se borró. */
   onChat?: (m: MensajeBarrio) => void;
@@ -75,6 +77,9 @@ export class RedCiudad {
           break;
         case "frase":
           this.ev.onFrase(m.de, m.id);
+          break;
+        case "gesto":
+          this.ev.onGesto?.(m.de, m.id);
           break;
         case "barrio":
           this.ev.onBarrio(m.n, m.casas);

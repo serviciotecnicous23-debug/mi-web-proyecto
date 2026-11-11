@@ -14,7 +14,7 @@ import * as THREE from "three";
 import { BlobShadows, Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Rig } from "../three/characters";
 import { NavGrid, collide } from "../three/nav";
 import { Overlay, Ring } from "../three/overlay";
-import { C, GeoBuilder, disposeGroup, meshPair } from "../three/builder";
+import { C, GeoBuilder, disposeGroup, meshPair, avanzarMateriales } from "../three/builder";
 import type { TempleAudio } from "../audio";
 import { gameStore, type CasaHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
@@ -939,6 +939,7 @@ export class CasaWorld {
     const dt = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
     this.last = now;
     this.time += dt;
+    avanzarMateriales(dt);
     const live = !this.paused && !gameStore.busy;
     if (live) {
       if (this.remodelando) this.toqueRemodelar();

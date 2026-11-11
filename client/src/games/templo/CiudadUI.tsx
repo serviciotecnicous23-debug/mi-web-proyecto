@@ -38,7 +38,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import { SEGUNDOS_DIA, fechaDe, proximaFiesta, relojEnLinea } from "@shared/calendario";
 import { escalonNombre, type JerusalenEstado } from "@shared/jerusalen";
 import {
-  BIEN, BIENES, CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
+  BIEN, BIENES, CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, GESTOS, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
   VERSO_PLAZA, VERSO_PULPITO, VERSO_SIERVOS, VERSO_VISITA, bienDeFiesta, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVisita, type CiudadEstado,
 } from "@shared/ciudad";
 import { FIESTA } from "@shared/calendario";
@@ -122,10 +122,17 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
   const controles = useControles();
   const reserva = useReservaControles();
   const [hint, setHint] = useState(true);
+  // los gestos (saludar, aplaudir…): una tira de botones junto a la columna, sin abrir ventana (el mundo sigue)
+  const [verGestos, setVerGestos] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setHint(false), 14000);
     return () => clearTimeout(t);
   }, []);
+  useEffect(() => {
+    if (!verGestos) return;
+    const t = setTimeout(() => setVerGestos(false), 8000);
+    return () => clearTimeout(t);
+  }, [verGestos]);
   if (!c) return null;
   const open = (m: Modal) => gameStore.push(m);
   const lados = { paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))", paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))" };
@@ -235,6 +242,40 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
       {/* a la derecha, en el medio: tu barrio (la charla), frases rápidas y vecinos */}
       <div className="pointer-events-auto absolute top-1/2 flex -translate-y-1/2 flex-col gap-2" style={{ right: "calc(0.5rem + var(--tpl-sr, 0px))" }}>
         <BotonBarrio onClick={() => open({ kind: "barrio" })} />
+        <div className="relative">
+          <button
+            type="button"
+            className={`flex h-11 w-11 items-center justify-center rounded-full shadow-lg active:scale-95 ${verGestos ? "bg-amber-400 text-amber-950" : "bg-white/90 text-amber-900"}`}
+            onClick={() => setVerGestos((v) => !v)}
+            title="Gestos: saludar, aplaudir, orar…"
+            aria-label="Gestos para tus vecinos"
+            aria-expanded={verGestos}
+            data-testid="button-ciudad-gestos"
+          >
+            <Hand className="h-5 w-5" />
+          </button>
+          {verGestos && (
+            <div className="absolute right-[3.25rem] top-1/2 grid w-max -translate-y-1/2 grid-cols-4 gap-1.5 rounded-2xl bg-black/60 p-1.5 shadow-xl backdrop-blur-sm" role="menu" data-testid="ciudad-gestos">
+              {GESTOS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  role="menuitem"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl shadow active:scale-90"
+                  title={g.texto}
+                  aria-label={g.texto}
+                  onClick={() => {
+                    city?.gesto(g.id);
+                    setVerGestos(false);
+                  }}
+                  data-testid={`ciudad-gesto-${g.id}`}
+                >
+                  <span aria-hidden="true">{g.icono}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           type="button"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-amber-900 shadow-lg active:scale-95"

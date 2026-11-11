@@ -6,8 +6,9 @@
  * letreros y sonido). El servidor no simula nada: solo da la casa y el resumen del barrio.
  * Todos viven el mismo día y la misma hora (el reloj común) y las mismas fiestas.
  */
+import { avanzarMateriales } from "../three/builder";
 import * as THREE from "three";
-import { BlobShadows, Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Rig } from "../three/characters";
+import { BlobShadows, Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
 import { ItemRenderer } from "../three/items";
 import { Fx } from "../three/fx";
 import { NavGrid, collide } from "../three/nav";
@@ -35,11 +36,12 @@ import type { MensajeBarrio } from "@shared/barrio";
 import { CAMINOS, MENSAJES, MERITO_DEBER_CAMINO, type Camino } from "@shared/caminos";
 import { GOZO, PUESTOS_MERCADO, coloresDeIds, type MercadoEstado } from "@shared/mercado";
 import type { ReunionesEstado } from "@shared/reuniones";
-import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO } from "@shared/ciudad";
+import { ACTIVIDADES_CIUDAD, ACTIVIDAD_CIUDAD_TEXTO, GESTO_CADA_MS, GESTO_DURA_MS, gestoDe } from "@shared/ciudad";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
 import { Antorchas, lugaresAntorchas } from "./antorchas";
+import { Palomas } from "./palomas";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 
@@ -108,6 +110,8 @@ type Vecino = {
   etiqueta: HTMLDivElement;
   burbuja: HTMLDivElement | null;
   burbujaHasta: number;
+  /** El gesto que está haciendo (saludar, aplaudir…), hasta cuándo. */
+  gesto?: { pose: Pose; hasta: number };
 };
 
 /** Un vecino para la lista de la pantalla. */
@@ -136,6 +140,10 @@ type Npc = {
   item?: ItemType;
   home?: V2;
   yaw?: number;
+  /** Está sentado (los ancianos de la puerta): sus gestos los hace sentado. */
+  sentado?: boolean;
+  /** Lo que hace mientras espera (conversar, pensar o nada). */
+  gestoEspera?: Pose;
 };
 
 export class CiudadWorld {
@@ -151,6 +159,8 @@ export class CiudadWorld {
   private fireLight = new THREE.PointLight("#ff9a4a", 0, 16, 1.4);
   /** Las antorchas de las calles (se encienden al caer la noche). */
   private antorchas!: Antorchas;
+  /** Palomas que vuelan sobre el monte del templo y la plaza (de día). */
+  private palomas!: Palomas;
   private vis: CiudadVisual;
   private crowd = new Crowd(40);
   private shadows = new BlobShadows(80);
@@ -296,6 +306,13 @@ export class CiudadWorld {
     this.scene.add(this.vis.root, this.crowd.group, this.shadows.mesh, this.items.group, this.fx.group);
     this.antorchas = new Antorchas(lugaresAntorchas(), coarse ? 4 : 6);
     this.scene.add(this.antorchas.group);
+    this.palomas = new Palomas([
+      // sobre el monte del templo
+      { x: 9, z: 0, r: 12, y: 5.5, n: coarse ? 5 : 8 },
+      // una bandada que ronda cerca de donde estás (dx, dz: un poco delante y a un lado)
+      { x: 5, z: -4, r: 9, y: P.SUELO + 6.2, n: coarse ? 6 : 9, sigue: true },
+    ]);
+    this.scene.add(this.palomas.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
 
@@ -351,6 +368,7 @@ export class CiudadWorld {
       onInfo: (v) => this.alInfo(v),
       onVecinos: (l) => this.alVecinos(l),
       onFrase: (de, id) => this.alFrase(de, id),
+      onGesto: (de, id) => this.alGesto(de, id),
       onBarrio: (n, casas) => this.alBarrio(n, casas),
       onChat: (m) => this.alChat(m),
       onChatFuera: (id) => chatBarrio.quitar(id),
@@ -545,6 +563,33 @@ export class CiudadWorld {
     this.audio.blip("narrador");
   }
 
+  /** Un vecino hizo un gesto: se ve en su personaje unos segundos (si está quieto). */
+  private alGesto(de: number, id: string) {
+    const g = gestoDe(id);
+    const v = this.vecinos.get(de);
+    if (!g || !v) return;
+    v.gesto = { pose: g.pose as Pose, hasta: performance.now() + GESTO_DURA_MS };
+    if (g.id === "aplaudir" || g.id === "alegria") this.audio.blip("narrador");
+  }
+
+  /** El jugador hace un gesto: lo ven sus vecinos (y él mismo, en su personaje). */
+  private miGesto: { pose: Pose; hasta: number } | null = null;
+  private ultimoGesto = 0;
+  gesto(id: string): boolean {
+    const g = gestoDe(id);
+    const now = performance.now();
+    if (!g || now - this.ultimoGesto < GESTO_CADA_MS) return false;
+    this.ultimoGesto = now;
+    this.miGesto = { pose: g.pose as Pose, hasta: now + GESTO_DURA_MS };
+    // para hacerlo se queda quieto donde está
+    this.ruta = [];
+    this.entrada.soltar();
+    this.red.enviar({ t: "gesto", id: g.id });
+    vibrar(10);
+    this.audio.click();
+    return true;
+  }
+
   private alBarrio(n: number, casas: CasaVista[]) {
     if (n !== this.estado.barrio.n) return;
     const mia = casas.find((c) => c.esMia);
@@ -702,6 +747,12 @@ export class CiudadWorld {
       r.yaw = turn(r.yaw, v.obj.ry, dt * 10);
       r.y = P.alturaCiudad(r.x, r.z);
       r.t += dt;
+      // su gesto, mientras está quieto
+      if (v.gesto && performance.now() < v.gesto.hasta && r.moving < 0.35) r.pose = v.gesto.pose;
+      else {
+        if (v.gesto) v.gesto = undefined;
+        r.pose = "idle";
+      }
       v.fig.update(r);
       this.shadows.add(r.x, r.y, r.z, 1.05);
     }
@@ -1168,6 +1219,7 @@ export class CiudadWorld {
     const dt = Math.min(0.05, raw);
     this.last = now;
     this.time += dt;
+    avanzarMateriales(dt);
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
@@ -1255,6 +1307,16 @@ export class CiudadWorld {
       this.hora = h;
     }
     this.movePlayer(dt);
+    // el gesto del jugador: se ve mientras está quieto (si camina, se termina)
+    if (this.miGesto) {
+      const r = this.player.rig;
+      const quieto = Math.hypot(this.player.vx, this.player.vz) < 0.3;
+      if (performance.now() < this.miGesto.hasta && quieto) r.pose = this.miGesto.pose;
+      else {
+        if (r.pose === this.miGesto.pose) r.pose = "idle";
+        this.miGesto = null;
+      }
+    }
     this.opts.online?.tick(dt);
     this.enviarPosicion(dt);
     this.updateZonas();
@@ -1966,9 +2028,11 @@ export class CiudadWorld {
 
   private updateGente(dt: number) {
     const solemne = !!this.fiestaHoy()?.fiesta.solemne;
+    const jx = this.player.rig.x, jz = this.player.rig.z;
     for (const n of this.npcs) {
       const r = n.rig;
       r.t += dt;
+      const cerca = (m: number) => dist(jx, jz, r.x, r.z) < m;
       switch (n.kind) {
         case "siervo":
           r.moving = 0;
@@ -1976,11 +2040,31 @@ export class CiudadWorld {
           if (r.pose === "bow" && Math.sin(r.t * 1.6) > 0.96) r.pose = "offer";
           else if (r.pose === "offer" && Math.sin(r.t * 1.6) < 0.2) r.pose = "bow";
           break;
-        case "anciano":
+        case "anciano": {
+          // los ancianos de la puerta conversan entre ellos; si llegas, te hablan
+          r.moving = 0;
+          if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
+          if (n.sentado === undefined) n.sentado = r.pose === "sit";
+          r.seated = n.sentado;
+          const charla = cerca(7) || Math.sin(r.t * 0.35 + r.x * 1.7) > 0.55;
+          r.pose = charla ? "talk" : n.sentado ? "sit" : "idle";
+          break;
+        }
+        case "pueblo":
+          // la familia que pide algo te saluda desde su puerta cuando te acercas
+          r.moving = 0;
+          if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
+          r.pose = cerca(8) ? "wave" : "idle";
+          break;
+        case "mercader":
+          // el mercader ofrece lo suyo con las manos; a veces señala su puesto
+          r.moving = 0;
+          if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
+          r.pose = cerca(6) ? "talk" : Math.sin(r.t * 0.5 + r.z) > 0.92 ? "point" : "idle";
+          break;
         case "alumno":
         case "levita":
         case "guardia":
-        case "pueblo":
           r.moving = 0;
           if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
           break;
@@ -2006,7 +2090,12 @@ export class CiudadWorld {
           if (n.wait > 0) {
             n.wait -= dt;
             r.moving = Math.max(0, r.moving - dt * 6);
+            // mientras espera, a veces conversa o se queda pensando
+            if (n.gestoEspera === undefined) n.gestoEspera = n.item ? "idle" : Math.random() < 0.35 ? "talk" : Math.random() < 0.2 ? "think" : "idle";
+            if (r.moving < 0.2) r.pose = n.gestoEspera;
             if (n.wait <= 0) {
+              n.gestoEspera = undefined;
+              r.pose = "idle";
               // en las fiestas con ofrenda, muchos suben al templo con su ofrenda
               const alTemplo = !!n.item && Math.random() < 0.5;
               const [tx, tz] = alTemplo ? [P.LLEGADA_TEMPLO[0] + 0.6, (Math.random() - 0.5) * 3] : P.PASEO[Math.floor(Math.random() * P.PASEO.length)];
@@ -2082,6 +2171,7 @@ export class CiudadWorld {
     const tarde = THREE.MathUtils.smoothstep(t, DUSK - 0.07, DUSK);
     const manana = 1 - THREE.MathUtils.smoothstep(t, DAWN - 0.01, DAWN + 0.05);
     this.antorchas.update(dt, t > 0.5 ? tarde : manana, this.camTarget.x, this.camTarget.z);
+    this.palomas.update(dt, this.noche() ? 0 : 1, this.camTarget.x, this.camTarget.z);
     if (t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos
       const r = this.player.rig;
@@ -2395,6 +2485,7 @@ export class CiudadWorld {
     this.items.dispose();
     this.fx.dispose();
     this.antorchas.dispose();
+    this.palomas.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();
     gameStore.setCiudad(null);
