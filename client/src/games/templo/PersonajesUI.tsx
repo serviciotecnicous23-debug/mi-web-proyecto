@@ -12,6 +12,7 @@ import { gameStore } from "./store";
 import { avisarRacha } from "./online";
 import { Card, VerseBox } from "./ui";
 import { PERSONAJES_CIUDAD, personajeCiudad, type Chisme, type ChismesVista, type RecadoEstado } from "@shared/personajes";
+import { arcoDeTemporada, type CapituloId } from "@shared/capitulos";
 
 const API = "/api/jerusalen";
 
@@ -36,6 +37,7 @@ export function PersonajeView({ id }: { id: string }) {
   const p = personajeCiudad(id);
   const [recado, setRecado] = useState<RecadoEstado | null>(null);
   const [noticias, setNoticias] = useState<string[]>([]);
+  const [semana, setSemana] = useState<{ temporada: number; capitulo: CapituloId } | null>(null);
   const [chismeI, setChismeI] = useState(() => Math.floor(Math.random() * 100));
   const [dice, setDice] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -44,14 +46,24 @@ export function PersonajeView({ id }: { id: string }) {
   useEffect(() => {
     let vivo = true;
     void pedir<{ estado: RecadoEstado }>("/recado").then((r) => vivo && r.ok && r.data && setRecado(r.data.estado));
-    void pedir<ChismesVista>("/chismes").then((r) => vivo && r.ok && r.data && setNoticias(r.data.noticias));
+    void pedir<ChismesVista>("/chismes").then((r) => {
+      if (!vivo || !r.ok || !r.data) return;
+      setNoticias(r.data.noticias);
+      if (r.data.capitulo && r.data.temporada) {
+        setSemana({ temporada: r.data.temporada, capitulo: r.data.capitulo });
+        // lo primero que cuenta es lo de esta semana
+        setChismeI(0);
+      }
+    });
     return () => {
       vivo = false;
     };
   }, []);
 
   if (!p) return null;
-  const chismes: Chisme[] = [...p.chismes, ...noticias.map((texto) => ({ texto }))];
+  const cap = semana ? arcoDeTemporada(semana.temporada)?.capitulos.find((c) => c.id === semana.capitulo) : undefined;
+  const deLaSemana: Chisme[] = cap?.chismes[p.id] ?? [];
+  const chismes: Chisme[] = [...deLaSemana, ...p.chismes, ...noticias.map((texto) => ({ texto }))];
   const chisme = chismes[chismeI % chismes.length];
   const toca = recado && !recado.hecho ? recado.recado.cadena[recado.paso] : null;
 
@@ -59,7 +71,7 @@ export function PersonajeView({ id }: { id: string }) {
     if (!p) return;
     setOcupado(true);
     setAviso(null);
-    const r = await pedir<{ estado: RecadoEstado; dice: string; fin: boolean; gozoTotal?: number; racha?: { titulo: string; gozo: number } | null }>("/recado/hablar", { con: p.id });
+    const r = await pedir<{ estado: RecadoEstado; dice: string; fin: boolean; gozoTotal?: number; racha?: { titulo: string; gozo: number } | null; capitulo?: { titulo: string; gozo?: number }[] }>("/recado/hablar", { con: p.id });
     setOcupado(false);
     if (!r.ok || !r.data) {
       setAviso(r.data?.message || "No se pudo. Revisa tu conexión.");
@@ -74,6 +86,8 @@ export function PersonajeView({ id }: { id: string }) {
         gameStore.toast(`${r.data.racha.titulo} · +${r.data.racha.gozo} de gozo`, "gold");
         avisarRacha();
       }
+      // la historia de la temporada: diez más para la meta de la ciudad (y el premio, si se cumplió)
+      for (const c of r.data.capitulo ?? []) gameStore.toast(c.gozo ? `${c.titulo} · +${c.gozo} de gozo` : c.titulo, "gold");
       if (r.data.gozoTotal != null) city?.ponerGozo(r.data.gozoTotal);
     }
   }
@@ -108,8 +122,23 @@ export function PersonajeView({ id }: { id: string }) {
           </div>
         </div>
 
+        {cap && (
+          <button
+            type="button"
+            onClick={() => (gameStore.close(), gameStore.push({ kind: "capitulos" }))}
+            className="flex w-full items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-left text-xs dark:border-amber-800 dark:bg-amber-950/30"
+            data-testid="personaje-capitulo"
+          >
+            <span className="text-lg">{cap.icono}</span>
+            <span className="min-w-0 flex-1">
+              Esta semana, en la historia de la temporada: <b>«{cap.titulo}»</b>
+              {cap.guia === p.id ? ` · ${p.nombre} guía este capítulo` : ""}
+            </span>
+            <span className="font-bold text-amber-700 dark:text-amber-300">Ver</span>
+          </button>
+        )}
         <section className="space-y-2 rounded-xl border border-stone-200 p-3 dark:border-stone-700" data-testid="personaje-chisme">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">Lo que se cuenta</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">{chismeI % chismes.length < deLaSemana.length ? "Lo que se cuenta esta semana" : "Lo que se cuenta"}</p>
           <p className="leading-snug">{chisme.texto}</p>
           {chisme.verso && <VerseBox text={chisme.verso.text} refName={chisme.verso.ref} />}
           <button type="button" className="text-xs font-bold text-amber-700 underline-offset-2 hover:underline dark:text-amber-300" onClick={() => setChismeI((i) => i + 1)} data-testid="personaje-otro-chisme">

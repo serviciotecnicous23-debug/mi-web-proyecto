@@ -42,7 +42,7 @@ function vary(hex: string, amt = 0.06): THREE.Color {
   return c;
 }
 
-function meshes(parent: THREE.Object3D, m: GeoBuilder | null, s?: GeoBuilder | null, cast = true, receive = true) {
+export function meshes(parent: THREE.Object3D, m: GeoBuilder | null, s?: GeoBuilder | null, cast = true, receive = true) {
   const out: THREE.Mesh[] = [];
   if (m && !m.empty) {
     const mesh = new THREE.Mesh(m.build(), matteMat());
@@ -99,7 +99,8 @@ export type CiudadVisual = {
 };
 
 // ---------------------------------------------------------------- terreno
-function alturaTerreno(x: number, z: number): number {
+/** La altura del terreno de afuera de la ciudad (el valle del Cedrón y el monte de los Olivos). */
+export function alturaTerreno(x: number, z: number): number {
   const dx = Math.max(0, LIMITES.minX - 16 - x, x - (MURO_ORIENTE + 3));
   const dz = Math.max(0, Math.abs(z) - (LIMITES.maxZ + 3));
   const d = Math.hypot(dx, dz);

@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS "game_racha" (
   "updated_at" timestamp NOT NULL DEFAULT now()
 );`;
 
-async function titularDe(characterId: number): Promise<number> {
+/** El titular de la persona (su primer personaje): guarda su casa, su gozo y su racha. */
+export async function titularDe(characterId: number): Promise<number> {
   const { rows } = await pool.query(
     `SELECT MIN(c2.id) AS t FROM game_characters c2 JOIN game_characters c ON c.user_id = c2.user_id AND c.game = c2.game WHERE c.id = $1`,
     [characterId],

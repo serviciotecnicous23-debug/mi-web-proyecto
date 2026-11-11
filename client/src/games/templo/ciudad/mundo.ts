@@ -46,6 +46,8 @@ import { PERSONAJES_CIUDAD, personajeCiudad, type PersonajeCiudad } from "@share
 import { fraseDeGente, type ContextoFrases, type GenteQueHabla } from "./frases";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
+import { EscenaHistoria, estadoDeHistoria } from "./capitulos3d";
+import { arcoDeTemporada, type CapituloId, type CapitulosVista, type MomentoFiesta } from "@shared/capitulos";
 
 const DAWN = 0.2;
 const DUSK = 0.8;
@@ -203,6 +205,18 @@ export class CiudadWorld {
   private muroClave = "";
   private muroConstruidos = -1;
   private muroT = 59;
+  /** La historia de la temporada (shared/capitulos.ts): lo que se dibuja, lo último que dijo el servidor y las trompetas de la fiesta. */
+  private historia!: EscenaHistoria;
+  private historiaT = 0;
+  private historiaVista: CapitulosVista | null = null;
+  private trompetaFiesta = 0;
+  /**
+   * La cámara de cine: va a un lugar y mira hacia otro unos segundos (la cámara de siempre mira al poniente, al
+   * templo, y así se ve lo que la historia pone al oriente: las torres, el Rabsaces y el campamento). Moverse la termina.
+   */
+  private cine: { objetivo: THREE.Vector3; mira: THREE.Vector3; hasta: number; alto: number } | null = null;
+  /** Al cerrar la ventana del comienzo de un capítulo, la cámara muestra su lugar. */
+  private escenaPendiente: number | null = null;
   // la presencia de los vecinos (WebSocket)
   private red!: RedCiudad;
   private redEstado: EstadoRed = "conectando";
@@ -215,7 +229,13 @@ export class CiudadWorld {
   private fraseSeq = 0;
   private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
   /** Lo que la gente de la calle sabe para hablar (los chismes y el recado de hoy) y cuándo se pidió. */
-  private saberGente: { noticias: string[]; recadoQuien: string | null; pedido: number } = { noticias: [], recadoQuien: null, pedido: -1e9 };
+  private saberGente: { noticias: string[]; recadoQuien: string | null; capitulo: CapituloId | null; fiestaFinal: MomentoFiesta | null; pedido: number } = {
+    noticias: [],
+    recadoQuien: null,
+    capitulo: null,
+    fiestaFinal: null,
+    pedido: -1e9,
+  };
   private ultimaFraseGente = 0;
   private ultimaFrase = 0;
   // los caminos nuevos: el mensaje que lleva el profeta, el pan del siervo del rey y la oración en el monte
@@ -326,6 +346,9 @@ export class CiudadWorld {
     this.scene.add(this.palomas.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
+    // la historia de la temporada: las torres, el conducto de Siloé, el campamento de Asiria y la fiesta
+    this.historia = new EscenaHistoria(this.overlay, (x, y, z, s) => this.shadows.add(x, y, z, s), () => this.abrir({ kind: "capitulos" }));
+    this.scene.add(this.historia.group);
 
     // mi barrio completo; los otros, siluetas hasta que se entra en su área
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio });
@@ -422,6 +445,7 @@ export class CiudadWorld {
       },
     });
     this.red.conectar();
+    void this.mirarHistoria();
     this.pasos = estado.yo.pasos ?? 0;
     // el guía del camino recibe al nuevo una sola vez por personaje (después lo guían la flecha y su edificio)
     const claveBienvenida = `jer-bienvenida-${estado.yo.personajeId}`;
@@ -1420,6 +1444,80 @@ export class CiudadWorld {
       this.muroT = 0;
       void this.mirarMuro();
     }
+    // al cerrar el comienzo de un capítulo, la cámara muestra su lugar
+    if (this.escenaPendiente !== null) {
+      this.verCapitulo(this.escenaPendiente);
+      this.escenaPendiente = null;
+    }
+    // la historia de la temporada: cada minuto, cómo va la meta de la ciudad
+    this.historiaT += dt;
+    if (this.historiaT > 60) {
+      this.historiaT = 0;
+      void this.mirarHistoria();
+    }
+    // en la gran alabanza suenan las trompetas cada tanto (2 Crónicas 29:27)
+    if (this.historiaVista?.fiesta.momento === "vivo") {
+      this.trompetaFiesta -= dt;
+      if (this.trompetaFiesta <= 0) {
+        this.trompetaFiesta = 150;
+        this.audio.trumpet(true);
+      }
+    }
+  }
+
+  /** La historia de la temporada: se redibuja lo que cambió y se avisa lo nuevo (capítulo cumplido, fiesta, gran alabanza). */
+  private async mirarHistoria() {
+    const res = await fetch("/api/jerusalen/capitulos", { credentials: "include", cache: "no-store" }).catch(() => null);
+    if (!res?.ok || !this.running) return;
+    const d = (await res.json().catch(() => null)) as { vista: CapitulosVista | null } | null;
+    if (!d || !this.running) return;
+    const v = d.vista;
+    const antes = this.historiaVista;
+    this.historiaVista = v;
+    if (this.historia.poner(estadoDeHistoria(v))) this.shadowDirty = true;
+    if (this.historia.torresNuevas) {
+      this.historia.torresNuevas = false;
+      this.reiniciarOclusion();
+    }
+    const arco = v ? arcoDeTemporada(v.temporada) : null;
+    if (!v || !arco) return;
+    if (antes && antes.temporada === v.temporada) {
+      // la ciudad cumplió la meta de un capítulo mientras jugabas
+      for (const c of v.capitulos) {
+        const a = antes.capitulos.find((x) => x.n === c.n);
+        const cap = arco.capitulos.find((x) => x.n === c.n);
+        if (a && cap && !a.cumplido && c.cumplido) {
+          gameStore.toast(`${cap.icono} ${cap.alCumplir}`, "gold");
+          this.audio.trumpet(true);
+        }
+      }
+      if (antes.fiesta.momento !== "vivo" && v.fiesta.momento === "vivo") {
+        gameStore.toast(`🎺 ¡Empieza la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad.`, "gold");
+        this.trompetaFiesta = 0;
+      } else if (antes.fiesta.momento === "antes" && v.fiesta.momento === "fiesta") gameStore.toast(`🎺 ¡Empieza ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias.`, "gold");
+    } else if (v.fiesta.momento === "fiesta" || v.fiesta.momento === "vivo") {
+      gameStore.toast(v.fiesta.momento === "vivo" ? `🎺 ¡Es la gran alabanza en la plaza! Ve y da gracias con toda la ciudad.` : `🎺 Hoy es ${arco.fiesta.titulo.toLowerCase()}: toda la ciudad da gracias en la plaza.`, "gold");
+    }
+    // al empezar un capítulo, se cuenta su comienzo (una vez por personaje)
+    const cap = v.hoy ? arco.capitulos.find((x) => x.n === v.hoy!.n) : undefined;
+    if (cap) {
+      const clave = `jer-capitulo-${this.estado.yo.personajeId}-${v.temporada}-${cap.n}`;
+      let visto = false;
+      try {
+        visto = localStorage.getItem(clave) === "1";
+      } catch {
+        /* sin almacenamiento: se cuenta igual */
+      }
+      if (!visto) {
+        gameStore.push({ kind: "dialog", id: `capitulo:${v.temporada}:${cap.n}`, lines: cap.dialogo.map((l) => ({ quien: l.quien, texto: l.texto, ref: l.ref })) });
+        this.escenaPendiente = cap.n;
+        try {
+          localStorage.setItem(clave, "1");
+        } catch {
+          /* sin almacenamiento */
+        }
+      }
+    }
   }
 
   /** El muro caído al norte de la puerta: se redibuja cuando crece, y avisa cuando se levanta un tramo. */
@@ -2120,6 +2218,9 @@ export class CiudadWorld {
         .catch(() => null);
     void traer("/chismes").then((d) => {
       if (d && Array.isArray(d.noticias)) this.saberGente.noticias = (d.noticias as string[]).slice(0, 12);
+      // el capítulo de la historia de esta semana y la fiesta final: de eso habla la gente
+      this.saberGente.capitulo = (d?.capitulo as CapituloId | null | undefined) ?? null;
+      this.saberGente.fiestaFinal = (d?.fiesta as MomentoFiesta | null | undefined) ?? null;
     });
     void traer("/recado").then((d) => {
       const e = d?.estado;
@@ -2144,7 +2245,14 @@ export class CiudadWorld {
         continue;
       }
       if (d > 2.4 || now < (n.fraseLista ?? 0) || now - this.ultimaFraseGente < 1600 || gameStore.busy) continue;
-      const ctx: ContextoFrases = { noche: this.noche(), fiesta: this.fiestaHoy()?.fiesta.nombre ?? null, recadoQuien: this.saberGente.recadoQuien, noticias: this.saberGente.noticias };
+      const ctx: ContextoFrases = {
+        noche: this.noche(),
+        fiesta: this.fiestaHoy()?.fiesta.nombre ?? null,
+        recadoQuien: this.saberGente.recadoQuien,
+        noticias: this.saberGente.noticias,
+        capitulo: this.saberGente.capitulo,
+        fiestaFinal: this.historiaVista?.fiesta.momento ?? this.saberGente.fiestaFinal,
+      };
       const el = this.overlay.make("tpl-frase npc");
       const span = document.createElement("span");
       span.className = "tpl-habla";
@@ -2262,6 +2370,7 @@ export class CiudadWorld {
     }
     this.animarVecinos(dt);
     this.animarSiervos(dt);
+    this.historia.animar(dt, now, p.rig.x, p.rig.z, this.noche());
     this.crowd.flush();
     this.shadows.end();
     this.items.end();
@@ -2334,8 +2443,53 @@ export class CiudadWorld {
     this.audio.ambience({ crowd, fire: 0, water, night: this.noche(), day: this.hoyDia });
   }
 
+  /** La cámara de cine va a (x, z) y mira hacia (mx, mz) unos segundos; `alto` es cuánto se inclina (más, para ver por encima del muro). */
+  verEscena(x: number, z: number, mx: number, mz: number, segundos = 7, alto = 0.42) {
+    this.cine = { objetivo: new THREE.Vector3(x, P.alturaCiudad(x, z), z), mira: new THREE.Vector3(mx, P.SUELO + 1.5, mz), hasta: performance.now() + segundos * 1000, alto };
+  }
+
+  /** Muestra en la ciudad el lugar de un capítulo de la historia de la temporada. */
+  verCapitulo(n: number) {
+    const v = this.historiaVista;
+    if (n === 1) {
+      // la torre que se está levantando (o la primera, si ya están todas)
+      const c = v?.capitulos.find((x) => x.n === 1);
+      const f = !c ? 0 : c.cumplido ? 1 : c.meta ? c.puntos / c.meta : 0;
+      const z = P.TORRES_NUEVAS[f >= 1 ? 0 : Math.min(P.TORRES_NUEVAS.length - 1, Math.floor(f * P.TORRES_NUEVAS.length))];
+      this.verEscena(70, z, 78, z);
+    }
+    else if (n === 2) {
+      const c = v?.capitulos.find((x) => x.n === 2);
+      // si ya llegó el agua (o casi), el estanque; si no, la zanja desde la calle
+      if (c && (c.cumplido || (c.meta && c.puntos / c.meta > 0.7))) this.verEscena(41, 60, 35, 67.5);
+      else this.verEscena(52, 46, 70, 48);
+    } else if (n === 3) this.verEscena(71, 0, 100, 0, 9, 0.6);
+    else this.verEscena(57, -1, 44, -3);
+  }
+
   private updateCamera(dt: number) {
     const r = this.player.rig;
+    if (this.cine && (performance.now() > this.cine.hasta || Math.hypot(this.player.vx, this.player.vz) > 0.5 || this.ruta.length > 0)) this.cine = null;
+    if (this.cine) {
+      const c = this.cine;
+      const k = 1 - Math.exp(-dt * 2.2);
+      this.camTarget.lerp(c.objetivo, k);
+      // la cámara se pone del otro lado del lugar y baja para mirar lejos
+      this.camTh = turn(this.camTh, Math.atan2(c.objetivo.z - c.mira.z, c.objetivo.x - c.mira.x), k);
+      this.camPh += (c.alto - this.camPh) * k;
+      this.camDist += (15 - this.camDist) * k;
+      const d = this.camDist;
+      this.camera.position.set(
+        this.camTarget.x + Math.cos(this.camTh) * Math.cos(this.camPh) * d,
+        this.camTarget.y + Math.sin(this.camPh) * d,
+        this.camTarget.z + Math.sin(this.camTh) * Math.cos(this.camPh) * d,
+      );
+      const t = this.camTarget;
+      this.camera.lookAt(t.x + (c.mira.x - t.x) * 0.35, t.y + 1.5, t.z + (c.mira.z - t.z) * 0.35);
+      this.vis.sky.position.copy(this.camera.position);
+      this.vis.stars.position.copy(this.camera.position);
+      return;
+    }
     const portrait = this.camera.aspect < 0.85;
     const d0 = (portrait ? 19.5 : this.camera.aspect < 1.2 ? 18.5 : 17) * this.entrada.zoom;
     const focus = new THREE.Vector3(r.x + this.player.vx * 0.22, r.y, r.z + this.player.vz * 0.22);
@@ -2534,6 +2688,13 @@ export class CiudadWorld {
           if ((o as THREE.Mesh).isMesh) agregar(o as THREE.Mesh);
         });
       }
+      // las torres nuevas del muro (la historia de la temporada)
+      for (const g of this.historia.ocluyentes()) {
+        g.updateMatrixWorld(true);
+        g.traverse((o) => {
+          if ((o as THREE.Mesh).isMesh && o.userData.ocluye) agregar(o as THREE.Mesh);
+        });
+      }
       // y cada casa de los barrios
       for (const g of this.vis.areas) {
         g.updateMatrixWorld(true);
@@ -2602,6 +2763,7 @@ export class CiudadWorld {
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();
     this.red.cerrar();
+    this.historia.destroy();
     acompanar.ponerSiguiendo(null);
     acompanar.cerrarInvitacion();
     for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);

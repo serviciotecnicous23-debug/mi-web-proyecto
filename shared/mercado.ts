@@ -12,6 +12,7 @@
 
 import { MUEBLES } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
+import { PRENDAS_CAPITULOS } from "./capitulos";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
 export type TabMercado = Categoria | "vender" | "vecinos";
@@ -23,8 +24,11 @@ export type Articulo = {
   precio: number;
   detalle: string;
   color?: string;
-  /** No se vende: se gana (los trajes de los sabios, en la casa de la sabiduría; shared/sabio.ts). */
-  exclusivo?: "sabio";
+  /**
+   * No se vende: se gana. «sabio»: los trajes de los sabios, en la casa de la sabiduría (shared/sabio.ts); «temporada»:
+   * las prendas de la historia de la temporada (shared/capitulos.ts).
+   */
+  exclusivo?: "sabio" | "temporada";
 };
 
 export const ARTICULOS: Articulo[] = [
@@ -60,6 +64,17 @@ export const ARTICULOS: Articulo[] = [
     detalle: `Traje de los sabios: ${t.requisito.toLowerCase()} en la casa de la sabiduría.`,
     color: t.color,
     exclusivo: "sabio",
+  })),
+  // las prendas de la historia de la temporada: tampoco se venden (shared/capitulos.ts, PRENDAS_CAPITULOS)
+  ...PRENDAS_CAPITULOS.map((t): Articulo => ({
+    id: t.id,
+    categoria: "ropa",
+    nombre: t.nombre,
+    icono: t.id.startsWith("manto") ? "🥻" : "🎖️",
+    precio: 0,
+    detalle: `De la historia de la temporada: ${t.requisito.toLowerCase()}.`,
+    color: t.color,
+    exclusivo: "temporada",
   })),
   // el letrero de la casa
   { id: "letrero", categoria: "letrero", nombre: "Letrero de la casa", icono: "🪧", precio: 40, detalle: "Ponle nombre a tu casa: lo ven los vecinos." },

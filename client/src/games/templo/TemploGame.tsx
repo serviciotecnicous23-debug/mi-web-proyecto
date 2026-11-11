@@ -52,6 +52,7 @@ import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
+import { CapitulosView } from "./CapitulosUI";
 import { SabioView } from "./SabioUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
 import { InvitacionEntrante } from "./Acompanar";
@@ -1480,6 +1481,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <ComunidadView />;
     case "temporada":
       return <TemporadaView />;
+    case "capitulos":
+      return <CapitulosView />;
     case "dificil":
       return <DificilView q={modal.q} />;
     case "fiesta":
@@ -3088,6 +3091,18 @@ function TemporadaView() {
       testid="templo-temporada"
     >
       <div className="p-3">
+        <button
+          type="button"
+          onClick={() => (gameStore.close(), gameStore.push({ kind: "capitulos" }))}
+          className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-100 to-yellow-50 p-3 text-left shadow-sm transition hover:border-amber-500 dark:border-amber-800 dark:from-amber-950/50 dark:to-stone-900"
+          data-testid="temporada-historia"
+        >
+          <BookOpen className="h-7 w-7 shrink-0 text-amber-700 dark:text-amber-300" />
+          <span className="min-w-0">
+            <span className="block font-serif text-base font-black">La historia de esta temporada</span>
+            <span className="block text-xs text-stone-600 dark:text-stone-300">Un capítulo cada semana, una meta de toda la ciudad y una fiesta al final.</span>
+          </span>
+        </button>
         {estado ? (
           <TemporadaPanel estado={estado} onEstado={setEstado} />
         ) : error ? (

@@ -151,6 +151,8 @@ export type Modal =
   | { kind: "sabio" }
   /** Un personaje de la calle de los siervos (shared/personajes.ts): su charla, sus chismes y el recado del día. */
   | { kind: "personaje"; id: string }
+  /** La historia de la temporada (shared/capitulos.ts). */
+  | { kind: "capitulos" }
   | { kind: "visita"; personajeId: number; nombre: string };
 
 /** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */

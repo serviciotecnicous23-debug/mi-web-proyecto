@@ -4,6 +4,8 @@
  * Eliaquim, Etán), del recado de hoy y de lo que de verdad está pasando en el juego (los chismes del servidor).
  * Son frases propias, sin citas: las citas literales están en las ventanas, con su referencia.
  */
+import type { CapituloId, MomentoFiesta } from "@shared/capitulos";
+
 export type GenteQueHabla = "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
 
 export type ContextoFrases = {
@@ -14,7 +16,61 @@ export type ContextoFrases = {
   recadoQuien: string | null;
   /** Lo que está pasando en el juego (de /api/jerusalen/chismes). */
   noticias: string[];
+  /** El capítulo de la historia de la temporada de esta semana (shared/capitulos.ts) y cómo va la fiesta final. */
+  capitulo?: CapituloId | null;
+  fiestaFinal?: MomentoFiesta | null;
 };
+
+/** Lo que dice la gente de cada capítulo de la historia de la temporada (la amenaza de Senaquerib). */
+const FRASES_CAPITULO: Record<CapituloId, Partial<Record<GenteQueHabla, string[]>> & { todos: string[] }> = {
+  muro: {
+    todos: ["Dicen que el rey habló al corazón del pueblo en la plaza de la puerta.", "Cada encargo que cumples pone cinco piedras en el muro, dicen.", "¿Ya viste las torres nuevas del muro del oriente? ¡Suben cada día!"],
+    nino: ["¡Mi papá carga piedras para las torres nuevas!", "Cuando terminen las torres, ¡quiero subir a ver lejos!"],
+    guardia: ["Desde las torres nuevas veremos venir a cualquier ejército.", "El rey Ezequías mandó levantar los muros caídos. ¡Ayuda con tus deberes!"],
+    anciano: ["Senaquerib ya tomó las ciudades fortificadas de Judá. Jerusalén tiene que estar lista.", "En mis días nadie reparaba estos muros. ¡Hoy trabaja toda la ciudad!"],
+    levita: ["Después del servicio, los levitas vamos a cargar piedras al muro."],
+    mercader: ["Los que edifican compran mucho pan. ¡Esta semana se vende todo!"],
+    alumno: ["Isaías dice que no confiemos en las piedras, sino en el que hizo todo."],
+    peregrino: ["En el camino vi los pueblos de Judá vacíos. ¡Qué bueno llegar a una ciudad con muros!"],
+    siervo: ["Eliaquim lleva la cuenta de cada piedra del muro."],
+  },
+  canal: {
+    todos: ["El conducto pasa por la calle del sur, junto a la calle de los siervos. ¡Ve a verlo!", "Dicen que cuando el agua llegue a Siloé habrá fiesta en el barrio.", "Cada deber cava un codo del conducto. ¡Ya falta menos!"],
+    nino: ["¡Fui a ver la zanja del agua! Empieza en el muro del oriente.", "¿Ya viste el estanque de Siloé? ¡Cuando se llene quiero mojarme los pies!"],
+    guardia: ["Cubrieron las fuentes de afuera: los asirios no hallarán agua.", "El agua de Gihón va a entrar por debajo del muro. ¡Qué ingenio el del rey!"],
+    anciano: ["Agua dentro de los muros… eso es lo que salva a una ciudad.", "Mi abuelo bajaba a la fuente de Gihón con su cántaro. Ahora el agua vendrá a nosotros."],
+    levita: ["Bajamos a ayudar a los que cavan, y subimos a cantar al anochecer."],
+    mercader: ["Los que cavan compran mucho aceite para sus lámparas. ¡Buena semana!"],
+    alumno: ["Isaías habló de las aguas de Siloé, que corren mansamente."],
+    peregrino: ["Allá afuera las fuentes están tapadas. ¡Menos mal que aquí adentro habrá agua!"],
+    siervo: ["El rey baja cada tarde a ver cómo avanza el conducto."],
+  },
+  rabsaces: {
+    todos: ["Sigo sirviendo y orando: es lo que pidió el profeta Isaías.", "El Rabsaces dice que Jehová no nos librará. ¡Ya verá!", "Al pie de la escalinata la gente ora por el rey. ¿Vienes?"],
+    nino: ["Hay un hombre gritando afuera de la puerta… Mi mamá dice que no le contestemos.", "¡Shhh! El rey mandó callar. Nosotros oramos."],
+    guardia: ["El Rabsaces grita desde afuera. Orden del rey: no le respondáis.", "Desde la torre se ven las tiendas de los asirios en el monte."],
+    anciano: ["Que griten. Nosotros oramos, como el rey Ezequías.", "Jehová oye. Siempre ha oído a su pueblo."],
+    levita: ["El rey subió a la casa de Jehová. Toda la ciudad ora con él."],
+    mercader: ["Hoy casi no se vende… todos están orando. ¡Y yo también!"],
+    alumno: ["Isaías mandó decir al rey: no temas."],
+    peregrino: ["Subí a orar al templo antes de que llegara el ejército. ¡Cuántas tiendas hay en el monte!"],
+    siervo: ["Eliaquim volvió de la muralla con los vestidos rasgados. Todos oramos por el rey."],
+  },
+  liberacion: {
+    todos: ["Senaquerib se volvió a Nínive. ¡Bendito sea Jehová!", "Traigo mi ofrenda de gratitud al templo.", "¿Ya oíste? Al final de la semana hay fiesta en la plaza."],
+    nino: ["¡Ya no hay soldados afuera! ¡Se fueron todos!", "¡Viene la fiesta en la plaza! ¿Vas a ir?"],
+    guardia: ["Al amanecer, el campamento de los asirios estaba en silencio. Jehová peleó por nosotros."],
+    anciano: ["Jamás vi algo así. Jehová salvó a Jerusalén sin que tiráramos una sola flecha."],
+    levita: ["Los cantores ensayan para la fiesta de la liberación."],
+    mercader: ["¡Todos compran para las ofrendas de gratitud! Qué semana tan alegre."],
+    alumno: ["Isaías lo dijo: no entraría en la ciudad, ni echaría saeta en ella."],
+    peregrino: ["Vine desde lejos a dar gracias: ¡todo Judá habla de lo que hizo Jehová!"],
+    siervo: ["El rey prepara una gran fiesta en la plaza."],
+  },
+};
+
+const FRASES_FIESTA = ["¡Es la fiesta de la liberación! Ve a la plaza a dar gracias.", "Toda la ciudad está en la plaza. ¡No faltes!", "¡Grandes cosas ha hecho Jehová con nosotros! Vamos a la plaza."];
+const FRASES_ALABANZA = ["¡Ya empezó la gran alabanza en la plaza! ¿Oyes las trompetas?", "¡Corre a la plaza: los levitas cantan y toda la ciudad da gracias!"];
 
 const FRASES: Record<GenteQueHabla, string[]> = {
   nino: [
@@ -88,12 +144,22 @@ const NOCHE = ["Las antorchas ya están encendidas. Que descanses, vecino.", "De
 /** Una frase para esta persona de la calle. */
 export function fraseDeGente(kind: GenteQueHabla, ctx: ContextoFrases, azar: () => number = Math.random): string {
   const r = azar();
+  const elegir = (l: string[]) => l[Math.floor(azar() * l.length)];
+  // la fiesta final de la historia de la temporada: casi todos hablan de ella
+  if (ctx.fiestaFinal === "vivo" && r < 0.5) return elegir(FRASES_ALABANZA);
+  if (ctx.fiestaFinal === "fiesta" && r < 0.4) return elegir(FRASES_FIESTA);
   if (ctx.fiesta && r < 0.18) return `¡Hoy es ${ctx.fiesta}! Toda la ciudad sube al templo.`;
-  if (ctx.noche && r < 0.3) return NOCHE[Math.floor(azar() * NOCHE.length)];
+  if (ctx.noche && r < 0.26) return elegir(NOCHE);
+  // el capítulo de la semana: de eso habla la ciudad
+  if (ctx.capitulo && r < 0.5) {
+    const f = FRASES_CAPITULO[ctx.capitulo];
+    const propias = f[kind] ?? [];
+    return elegir(propias.length && azar() < 0.65 ? propias : f.todos);
+  }
   // la red de los siervos: el recado de hoy corre de boca en boca
-  if (ctx.recadoQuien && r < 0.42 && kind !== "nino") return `Dicen que ${ctx.recadoQuien} busca a alguien de confianza para un recado…`;
+  if (ctx.recadoQuien && r < 0.62 && kind !== "nino") return `Dicen que ${ctx.recadoQuien} busca a alguien de confianza para un recado…`;
   // lo que de verdad pasa en el juego
-  if (ctx.noticias.length && r < 0.62 && (kind === "paseo" || kind === "mercader" || kind === "peregrino" || kind === "pueblo" || kind === "anciano")) {
+  if (ctx.noticias.length && r < 0.8 && (kind === "paseo" || kind === "mercader" || kind === "peregrino" || kind === "pueblo" || kind === "anciano")) {
     const n = ctx.noticias[Math.floor(azar() * ctx.noticias.length)];
     return `¿Ya supiste? ${n}`;
   }

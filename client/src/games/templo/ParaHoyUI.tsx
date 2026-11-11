@@ -17,6 +17,7 @@ import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
 import { lineasDeRacha } from "./RachaUI";
 import type { RachaVista } from "@shared/racha";
+import { arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type CapitulosVista } from "@shared/capitulos";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -31,7 +32,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -43,7 +44,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<TesoroEstado>("/tesoro"),
       traer<{ estado: RecadoEstado }>("/recado"),
       traer<RachaVista>("/racha"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha }));
+      traer<{ vista: CapitulosVista | null }>("/capitulos"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null }));
     return () => {
       vivo = false;
     };
@@ -56,6 +58,32 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const lineas: Linea[] = [];
   // la racha de servicio va primero: es lo que se pierde si no se sirve hoy
   if (d.racha) lineas.push(...lineasDeRacha(d.racha).filter((l) => l.id === "racha"));
+  // la historia de la temporada: la fiesta final (se anuncia desde el capítulo 3) y la meta de la ciudad de esta semana
+  const hv = d.capitulos;
+  const arco = hv ? arcoDeTemporada(hv.temporada) : null;
+  if (hv && arco) {
+    const f = hv.fiesta;
+    const irPlaza = city ? { texto: "Ir", hacer: () => (gameStore.close(), city.irA("plaza")) } : { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) };
+    if (f.momento === "vivo" && !f.yo.enVivo) lineas.push({ id: "fiesta", icono: "🎺", texto: `¡Es la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias (+${arco.fiesta.premio.vivo} de gozo más)`, boton: irPlaza });
+    else if (f.momento === "fiesta" && !f.yo.fui) lineas.push({ id: "fiesta", icono: "🎺", texto: `¡Hoy es ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad`, boton: irPlaza });
+    else if ((f.momento === "fiesta" || f.momento === "vivo") && f.yo.fui)
+      lineas.push({ id: "fiesta", icono: "🎺", texto: `Diste gracias en la fiesta ✓ ${f.momento === "fiesta" && !f.yo.enVivo ? `La gran alabanza: el ${fechaEnPalabras(f.vivo.dia)} a las ${horaEnPalabras(f.vivo.desde)} (hora de Texas)` : `Ya ${f.participantes === 1 ? "dio gracias 1 vecino" : `dieron gracias ${f.participantes} vecinos`}`}` });
+    else if (f.momento === "antes" && (hv.hoy?.n ?? 0) >= 3)
+      lineas.push({ id: "fiesta", icono: "🎺", texto: `Del ${fechaEnPalabras(f.desde)} al ${fechaEnPalabras(f.hasta)}: ${arco.fiesta.titulo.toLowerCase()} en la plaza, con toda la ciudad`, boton: { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) } });
+    const cv = hv.hoy ? hv.capitulos.find((c) => c.n === hv.hoy!.n) : null;
+    const cap = cv ? arco.capitulos.find((c) => c.n === cv.n) : null;
+    if (cv && cap) {
+      const cuenta = cv.meta !== null ? `${cv.puntos.toLocaleString("es")} de ${cv.meta.toLocaleString("es")} ${cap.unidad[1]}` : `0 ${cap.unidad[1]}`;
+      lineas.push({
+        id: "capitulo",
+        icono: cap.icono,
+        texto: cv.cumplido
+          ? `Capítulo ${cap.n} de ${arco.capitulos.length}, «${cap.titulo}»: ¡la ciudad cumplió! (${cuenta}; tú: ${cv.mios}${cv.premiado ? ", premio recibido ✓" : ""})`
+          : `Capítulo ${cap.n} de ${arco.capitulos.length}, «${cap.titulo}»: la ciudad lleva ${cuenta} (tú: ${cv.mios}). ${hv.hoy!.diasRestantes === 1 ? "¡Último día!" : `Quedan ${hv.hoy!.diasRestantes} días.`}`,
+        boton: { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) },
+      });
+    }
+  }
   const hechos = misiones.encargos.filter((e) => e.hecho).length;
   if (hechos < misiones.encargos.length) lineas.push({ id: "encargos", icono: "🎯", texto: `Encargos de hoy: ${hechos} de ${misiones.encargos.length} (abajo los ves)` });
   // el concurso de la semana

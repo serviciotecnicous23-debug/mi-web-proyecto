@@ -13,6 +13,19 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-historia-temporada",
+    fecha: "11 de noviembre de 2026",
+    titulo: "La historia de la temporada: la amenaza de Senaquerib",
+    puntos: [
+      "📖 Cada temporada cuenta una historia, un capítulo por semana. La primera: los días del rey Ezequías, cuando Senaquerib rey de Asiria vino contra Jerusalén (2 Reyes 18–20; 2 Crónicas 32; Isaías 36–37). Ábrela desde «Para hoy» o desde la ventana de la temporada.",
+      "🧱 Esta semana, capítulo 1: el muro y las torres. Toda la ciudad tiene una meta juntos: cada deber suma 1, cada encargo del día 5 y cada recado de la calle de los siervos 10. Mira las tres torres nuevas del muro del oriente: suben con lo que sirve toda Jerusalén.",
+      "🎁 Si la ciudad cumple la meta, quienes aportaron al menos 25 reciben gozo y una prenda que no se vende (la faja de los que edifican, el manto de las aguas de Siloé…).",
+      "💧 Lo que viene: el conducto de Siloé (la zanja avanza por la calle del sur y el estanque se llena), el Rabsaces gritando frente a la puerta y la oración del rey, y la liberación. ¿Qué pasará la próxima semana?",
+      "🎺 Al final, del viernes 4 al domingo 6 de diciembre: la fiesta de la liberación en la plaza, con toda la ciudad. La gran alabanza: el domingo a las 6 de la tarde (hora de Texas).",
+      "🗣️ Los siervos de la calle de los siervos y la gente de la ciudad hablan del capítulo de cada semana, y hay recados nuevos de la historia.",
+    ],
+  },
+  {
     id: "2026-11-11-la-gente-habla",
     fecha: "11 de noviembre de 2026",
     titulo: "La gente de la ciudad habla",
