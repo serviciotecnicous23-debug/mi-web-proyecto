@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-avisos-telefono",
+    fecha: "12 de noviembre de 2026",
+    titulo: "Avisos al teléfono 🔔",
+    puntos: [
+      "🔔 Jerusalén en línea puede avisarte aunque el juego esté cerrado: actívalos en el menú de pausa → «Avisos al teléfono» (o desde «Misiones»).",
+      "🔥 Tu racha: por la tarde, si hoy todavía no serviste. 🌾 Tu huerto: cuando una parcela queda lista. ⚔️ Duelos: al momento, cuando alguien te reta. 🎉 Fiestas: 10 minutos antes de una fiesta grande, una por día como mucho.",
+      "🌙 Nunca de noche: de 10 de la noche a 8 de la mañana (hora de Texas) no llega ningún aviso. Eliges cuáles quieres y los apagas cuando quieras.",
+    ],
+  },
+  {
     id: "2026-11-12-gran-restauracion",
     fecha: "12 de noviembre de 2026",
     titulo: "La gran restauración y el camino de hoy",

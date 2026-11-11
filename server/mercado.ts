@@ -37,7 +37,7 @@ const objeto = (v: unknown): Record<string, unknown> => (v && typeof v === "obje
 
 type Plantio = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; riego?: number };
 
-function leerHuerto(v: unknown, n: number): Plantio[] {
+export function leerHuerto(v: unknown, n: number): Plantio[] {
   const a = Array.isArray(v) ? v : [];
   return Array.from({ length: n }, (_, i) => {
     const p = objeto(a[i]);
@@ -48,7 +48,7 @@ function leerHuerto(v: unknown, n: number): Plantio[] {
 }
 
 /** ¿Cuánto le falta (en segundos) a una parcela? Regada crece 25 % más rápido (35 % con la tinaja en casa). */
-function faltan(p: Plantio, ahora = Date.now()): number {
+export function faltan(p: Plantio, ahora = Date.now()): number {
   if (!p.semilla || !p.plantado) return 0;
   const dur = SEMILLAS[p.semilla].minutos * 60 * (p.regado ? (p.riego ?? RIEGO.normal) : 1);
   return Math.max(0, Math.ceil((new Date(p.plantado).getTime() + dur * 1000 - ahora) / 1000));

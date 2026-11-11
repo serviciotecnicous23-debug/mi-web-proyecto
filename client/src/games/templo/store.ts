@@ -117,6 +117,7 @@ export type Modal =
   | { kind: "instruccion" }
   | { kind: "estudios"; id?: string }
   | { kind: "misiones" }
+  | { kind: "avisos" }
   | { kind: "upgrades" }
   | { kind: "book" }
   | { kind: "help" }

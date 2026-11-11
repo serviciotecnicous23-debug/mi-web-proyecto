@@ -10,6 +10,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
+import { avisarDuelo } from "./avisos-juego";
 import { diaClave, enFila, nombreDe, personajeDe, type PersonajeFila } from "./jerusalen";
 import { semanaClave } from "./misiones";
 import { sumarGozo } from "./gozo";
@@ -561,6 +562,8 @@ export function registerSabioDueloRoutes(app: Express) {
           await pool.query(`UPDATE game_sabio_duelos SET estado = 'cancelado', finished_at = now() WHERE id = $1`, [d.id]);
           return { error: 409, message: `${rival.nombre} ya no estaba en la ciudad.` };
         }
+        // y al teléfono, por si tiene el juego en segundo plano (si activó los avisos de duelos)
+        void avisarDuelo(rival.u, nombreDe(pr.ch), Number(d.id), DUELO_RETO_S).catch(() => {});
         return { d };
       });
       if ("error" in out) return res.status(out.error).json({ message: out.message });

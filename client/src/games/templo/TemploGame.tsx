@@ -7,7 +7,7 @@ import { enLaRadio } from "@/lib/incrustado";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
-  ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
+  ArrowLeft, Bell, BookOpen, Check, ChevronRight, CircleHelp, Clock, Crown, Droplets, Flame, Gift, Loader2, Lock, Maximize2, Medal, Minimize2, Music,
   Pause, Play, Route, ScrollText, Sparkles, Sprout, Star, Sun, Trophy, Undo2, Users, Volume2, VolumeX, Wheat, Award, LogOut, Timer, CalendarDays, Scale, Search, Home, Gamepad2, RotateCw, GraduationCap, Target,
 } from "lucide-react";
 import { PARTES } from "./instruccion";
@@ -52,6 +52,7 @@ import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
+import { AvisosView } from "./AvisosUI";
 import { CapitulosView } from "./CapitulosUI";
 import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
@@ -1482,6 +1483,19 @@ function PauseMenu(props: {
           <Button variant="secondary" className="col-span-2" onClick={props.onFull} data-testid="button-pausa-pantalla">
             {props.big ? <Minimize2 className="mr-1 h-4 w-4" /> : <Maximize2 className="mr-1 h-4 w-4" />} {props.big ? "Salir de pantalla completa" : "Pantalla completa"}
           </Button>
+          {props.online && (
+            <Button
+              variant="secondary"
+              className="col-span-2"
+              onClick={() => {
+                props.onResume();
+                gameStore.push({ kind: "avisos" });
+              }}
+              data-testid="button-pausa-avisos"
+            >
+              <Bell className="mr-1 h-4 w-4" /> Avisos al teléfono
+            </Button>
+          )}
         </div>
         {props.canGen && (
           <Button variant="secondary" className="w-full" onClick={() => setAskGen(true)} data-testid="button-templo-generacion">
@@ -1608,6 +1622,8 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "tesoro":
     case "personaje":
       return <CiudadModal modal={modal} />;
+    case "avisos":
+      return <AvisosView />;
   }
 }
 

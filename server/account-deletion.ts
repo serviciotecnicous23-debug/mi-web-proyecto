@@ -25,6 +25,8 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["friendships", (id) => sql`requester_id = ${id} OR addressee_id = ${id}`],
   ["notifications", (id) => sql`user_id = ${id}`],
   ["push_subscriptions", (id) => sql`user_id = ${id}`],
+  ["game_avisos_pref", (id) => sql`user_id = ${id}`],
+  ["game_avisos", (id) => sql`user_id = ${id}`],
   ["password_reset_tokens", (id) => sql`user_id = ${id}`],
   ["bible_highlights", (id) => sql`user_id = ${id}`],
   ["bible_notes", (id) => sql`user_id = ${id}`],

@@ -59,7 +59,8 @@ export interface PushPayload {
  */
 export async function sendPushToSubscription(
   subscription: PushSubscriptionData,
-  payload: PushPayload
+  payload: PushPayload,
+  opciones?: { ttl?: number }
 ): Promise<boolean> {
   if (!isPushConfigured) return false;
 
@@ -70,7 +71,8 @@ export async function sendPushToSubscription(
         keys: subscription.keys,
       },
       JSON.stringify(payload),
-      { timeout: 10_000 } // 10s timeout per push
+      // 10 s por envío; ttl: cuánto espera el servicio de avisos si el teléfono está apagado (los del juego vencen)
+      { timeout: 10_000, ...(opciones?.ttl ? { TTL: Math.round(opciones.ttl) } : {}) }
     );
     return true;
   } catch (error: unknown) {
@@ -91,7 +93,8 @@ export async function sendPushToSubscription(
  */
 export async function sendPushToMany(
   subscriptions: Array<{ id: number; subscription: PushSubscriptionData }>,
-  payload: PushPayload
+  payload: PushPayload,
+  opciones?: { ttl?: number }
 ): Promise<number[]> {
   if (!isPushConfigured || subscriptions.length === 0) return [];
 
@@ -103,7 +106,7 @@ export async function sendPushToMany(
     
     const results = await Promise.allSettled(
       batch.map(async ({ id, subscription }) => {
-        const alive = await sendPushToSubscription(subscription, payload);
+        const alive = await sendPushToSubscription(subscription, payload, opciones);
         if (!alive) expiredIds.push(id);
       })
     );
