@@ -41,6 +41,19 @@ export const ENTRADAS_DIA = 7;
 /** Premio de gozo para los tres primeros de la tabla de la semana (se entrega al volver la semana siguiente). */
 export const PREMIO_SEMANA = [60, 40, 25];
 
+/** Qué tan difícil es cada grada: sube de tres en tres, y en la cima solo hay preguntas para expertos. */
+export const NIVELES_DIFICULTAD = [
+  { hasta: 3, nombre: "Fácil", color: "#7ee0a8" },
+  { hasta: 6, nombre: "Media", color: "#8fd3ff" },
+  { hasta: 9, nombre: "Difícil", color: "#ffd36a" },
+  { hasta: 12, nombre: "Muy difícil", color: "#ff9a5a" },
+  { hasta: 15, nombre: "Experto", color: "#ff6b8a" },
+] as const;
+export type NivelDificultad = (typeof NIVELES_DIFICULTAD)[number];
+export function dificultadGrada(n: number): NivelDificultad {
+  return NIVELES_DIFICULTAD.find((d) => n <= d.hasta) ?? NIVELES_DIFICULTAD[NIVELES_DIFICULTAD.length - 1];
+}
+
 /** Segundos para responder cada grada. */
 export function segundosGrada(n: number): number {
   return n <= 5 ? 30 : n <= 10 ? 45 : 60;

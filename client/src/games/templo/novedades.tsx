@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-gradas-dificiles",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Cuanto más subes, más difícil",
+    puntos: [
+      "📈 Cada grada de «¿Quién es sabio?» dice su nivel: fácil (1 a 3), media (4 a 6), difícil (7 a 9), muy difícil (10 a 12) y, en la cima, solo para expertos (13 a 15). Lo ves junto a la grada, en la escalera y en la pantalla grande del estudio.",
+      "🧠 Las preguntas muy conocidas que estaban en la cima bajaron a las gradas del medio, y entraron 30 preguntas nuevas de experto, casi todas de los días del rey Ezequías: el Rabsaces, Tirhaca, Merodac-baladán, la gran pascua del mes segundo, Sebna y Eliaquim…",
+    ],
+  },
+  {
     id: "2026-11-11-estudio-sabio",
     fecha: "11 de noviembre de 2026",
     titulo: "«¿Quién es sabio?» ahora es un programa de verdad",
