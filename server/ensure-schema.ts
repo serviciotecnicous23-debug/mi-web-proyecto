@@ -17,6 +17,7 @@ import { ECONOMIA_SQL } from "./economia";
 import { CATEDRAS_SQL } from "./catedras";
 import { BARRIO_SQL } from "./barrio";
 import { BARRIO_JUNTOS_SQL } from "./barrio-juntos";
+import { PUEBLO_SQL } from "./pueblo";
 import { SABIO_SQL } from "./sabio";
 import { REUNIONES_SQL } from "./reuniones";
 import { CONCURSO_SQL } from "./concurso";
@@ -1141,6 +1142,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(BARRIO_JUNTOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (barrio juntos): ${err?.message}`);
+    }
+    try {
+      // Las casas del pueblo y sus pedidos
+      await pool.query(PUEBLO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (pueblo): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

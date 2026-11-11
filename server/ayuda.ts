@@ -104,13 +104,14 @@ export function registerAyudaRoutes(app: Express) {
     return false;
   };
 
+  // el tope de gozo de ayudar es uno solo: a los vecinos y a las familias del pueblo (server/pueblo.ts)
   async function estado(ch: PersonajeFila & { barrio: number }): Promise<AyudaEstado> {
     const hoy = diaClave();
     const [mios, abiertos, { rows: casa }, { rows: dado }] = await Promise.all([
       pedidos(ch.casa, `r.character_id = $1 AND r.day_key = $2`, [hoy]),
       pedidos(ch.casa, `r.barrio = $2 AND r.character_id <> $1 AND r.done_at IS NULL AND r.expires_at > now()`, [ch.barrio]),
       pool.query(`SELECT goods FROM game_houses WHERE character_id = $1`, [ch.casa]),
-      pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.casa, hoy]),
+      pool.query(`SELECT ((SELECT COALESCE(sum(gozo), 0) FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2) + (SELECT COALESCE(sum(gozo), 0) FROM game_pueblo_dones WHERE titular = $1 AND dia = $2))::int AS g`, [ch.casa, hoy]),
     ]);
     const b = leerBienes(casa[0]?.goods);
     return {
@@ -230,7 +231,7 @@ export function registerAyudaRoutes(app: Express) {
         `UPDATE game_help_requests SET done_at = now() WHERE id = $1 AND done_at IS NULL AND received >= amount RETURNING character_id`,
         [id],
       );
-      const { rows: dado } = await pool.query(`SELECT COALESCE(sum(gozo), 0)::int AS g FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2`, [ch.casa, hoy]);
+      const { rows: dado } = await pool.query(`SELECT ((SELECT COALESCE(sum(gozo), 0) FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2) + (SELECT COALESCE(sum(gozo), 0) FROM game_pueblo_dones WHERE titular = $1 AND dia = $2))::int AS g`, [ch.casa, hoy]);
       const gozo = Math.max(0, Math.min(entra * AYUDA_GOZO, AYUDA_GOZO_DIA - Number(dado[0]?.g || 0)));
       await pool.query(`INSERT INTO game_help_gifts (request_id, donor_character_id, amount, gozo, day_key) VALUES ($1, $2, $3, $4, $5)`, [id, ch.casa, entra, gozo, hoy]);
       await sumarGozo(ch.casa, gozo);
