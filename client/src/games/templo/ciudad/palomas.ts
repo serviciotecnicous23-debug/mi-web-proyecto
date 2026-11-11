@@ -36,7 +36,7 @@ export class Palomas {
     cabeza.translate(0, 0.05, 0.17);
     const geoCuerpo = mergeSimple([cuerpo, cola, cabeza]);
     // más grandes que de verdad, para que se vean desde la cámara de la ciudad
-    const TAM = 1.55;
+    const TAM = 1.15;
     geoCuerpo.scale(TAM, TAM, TAM);
     // el ala sale del costado del cuerpo (la bisagra queda en x = 0) y termina en punta, hacia atrás
     const forma = new THREE.Shape();

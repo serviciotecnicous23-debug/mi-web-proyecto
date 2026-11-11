@@ -42,7 +42,8 @@ import { haciaElPiso } from "../motor/camara";
 import * as P from "./plano";
 import { Antorchas, lugaresAntorchas } from "./antorchas";
 import { Palomas } from "./palomas";
-import { PERSONAJES_CIUDAD, type PersonajeCiudad } from "@shared/personajes";
+import { PERSONAJES_CIUDAD, personajeCiudad, type PersonajeCiudad } from "@shared/personajes";
+import { fraseDeGente, type ContextoFrases, type GenteQueHabla } from "./frases";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 
@@ -145,6 +146,10 @@ type Npc = {
   sentado?: boolean;
   /** Lo que hace mientras espera (conversar, pensar o nada). */
   gestoEspera?: Pose;
+  /** Lo que dice cuando te acercas: su burbuja, hasta cuándo se ve y desde cuándo puede volver a hablar. */
+  frase?: HTMLDivElement | null;
+  fraseHasta?: number;
+  fraseLista?: number;
 };
 
 export class CiudadWorld {
@@ -209,6 +214,9 @@ export class CiudadWorld {
   private frasesRecientes: { id: number; nombre: string; texto: string; hasta: number }[] = [];
   private fraseSeq = 0;
   private miBurbuja: { el: HTMLDivElement; hasta: number } | null = null;
+  /** Lo que la gente de la calle sabe para hablar (los chismes y el recado de hoy) y cuándo se pidió. */
+  private saberGente: { noticias: string[]; recadoQuien: string | null; pedido: number } = { noticias: [], recadoQuien: null, pedido: -1e9 };
+  private ultimaFraseGente = 0;
   private ultimaFrase = 0;
   // los caminos nuevos: el mensaje que lleva el profeta, el pan del siervo del rey y la oración en el monte
   private mensaje: { x: number; z: number; text: string; ref: string; ring: Ring } | null = null;
@@ -1387,6 +1395,7 @@ export class CiudadWorld {
     this.updateZonas();
     this.updateCaminos(dt);
     this.updateGente(dt);
+    this.hablarGente();
     this.slowT += dt;
     if (this.slowT > 0.5) {
       this.slowT = 0;
@@ -2099,6 +2108,54 @@ export class CiudadWorld {
     r.moving = Math.min(1, r.moving + dt * 6);
     r.y = P.alturaCiudad(r.x, r.z);
     return path.length === 0;
+  }
+
+  /** Pide lo que se cuenta en la ciudad (al entrar y cada 5 minutos mientras se juega). */
+  private pedirSaberGente(now: number) {
+    if (now - this.saberGente.pedido < 300000) return;
+    this.saberGente.pedido = now;
+    const traer = (ruta: string) =>
+      fetch(`/api/jerusalen${ruta}`, { credentials: "include", cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+    void traer("/chismes").then((d) => {
+      if (d && Array.isArray(d.noticias)) this.saberGente.noticias = (d.noticias as string[]).slice(0, 12);
+    });
+    void traer("/recado").then((d) => {
+      const e = d?.estado;
+      this.saberGente.recadoQuien = e && !e.hecho ? (personajeCiudad(e.recado.cadena[e.paso])?.nombre ?? null) : null;
+    });
+  }
+
+  /** La gente de la calle habla cuando te acercas: una frase sobre su cabeza (cada uno, cada tanto). */
+  private hablarGente() {
+    const now = performance.now();
+    this.pedirSaberGente(now);
+    const jx = this.player.rig.x, jz = this.player.rig.z;
+    for (const n of this.npcs) {
+      const r = n.rig;
+      const d = dist(jx, jz, r.x, r.z);
+      if (n.frase) {
+        if (now < (n.fraseHasta ?? 0) && d < 12) this.overlay.place(n.frase, new THREE.Vector3(r.x, r.y + 2.2 * r.scale, r.z));
+        else {
+          this.overlay.remove(n.frase);
+          n.frase = null;
+        }
+        continue;
+      }
+      if (d > 2.4 || now < (n.fraseLista ?? 0) || now - this.ultimaFraseGente < 1600 || gameStore.busy) continue;
+      const ctx: ContextoFrases = { noche: this.noche(), fiesta: this.fiestaHoy()?.fiesta.nombre ?? null, recadoQuien: this.saberGente.recadoQuien, noticias: this.saberGente.noticias };
+      const el = this.overlay.make("tpl-frase npc");
+      const span = document.createElement("span");
+      span.className = "tpl-habla";
+      span.textContent = fraseDeGente(n.kind as GenteQueHabla, ctx);
+      el.appendChild(span);
+      n.frase = el;
+      n.fraseHasta = now + 5200;
+      n.fraseLista = now + 30000;
+      this.ultimaFraseGente = now;
+      this.overlay.place(el, new THREE.Vector3(r.x, r.y + 2.2 * r.scale, r.z));
+    }
   }
 
   private updateGente(dt: number) {
