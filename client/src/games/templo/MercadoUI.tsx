@@ -219,7 +219,7 @@ export function MercadoView({
               <PuestosView alCambiar={alCambiarBienes} />
             ) : tab !== "vender" ? (
               <ul className="space-y-1.5">
-                {ARTICULOS.filter((a) => a.categoria === tab).map((a) => {
+                {ARTICULOS.filter((a) => a.categoria === tab && !a.exclusivo).map((a) => {
                   const precio = precioHoy(a, m.dia);
                   const tiene = (a.categoria === "adorno" || a.categoria === "ropa") && m.armario.includes(a.id);
                   const yaLetrero = a.categoria === "letrero" && m.tieneLetrero;

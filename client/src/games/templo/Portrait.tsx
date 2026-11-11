@@ -2,7 +2,7 @@
  * Retratos dibujados (SVG) para los diálogos y la ceremonia de cada rango.
  */
 import type { ReactElement } from "react";
-type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
+type Who = "azarias" | "ezequias" | "narrador" | "conanias" | "isaias" | "eliaquim" | "eleazar" | "etan" | "husai" | "rank0" | "rank1" | "rank2" | "rank3" | "rank4" | "lino";
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
@@ -120,6 +120,36 @@ export function Portrait({ who, size = 64 }: { who: Who; size?: number }) {
           <ellipse cx="50.5" cy="52.5" rx="5" ry="2.2" fill="#b0643a" />
           <path d="M55 51.6 q2.2 -0.6 2.6 -2" stroke="#b0643a" strokeWidth="1.4" fill="none" strokeLinecap="round" />
           <path d="M57.6 48.8 q-1.4 -2.6 0.2 -4.8 q1.6 2.2 -0.2 4.8Z" fill="#ffb347" />
+        </>
+      );
+      break;
+    case "etan":
+      // Etán ezraíta, el sabio (1 Reyes 4:31) que presenta «¿Quién es sabio?»: manto azul noche con orla de oro,
+      // turbante con banda dorada y un rollo en la mano
+      bg = "#1c1640";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#1f2a5c" />
+          <path d="M22 64 L25 45 M42 64 L39 45" stroke="#e9c46a" strokeWidth="1.6" />
+          <path d="M25 45 C29 47.5 35 47.5 39 45" stroke="#e9c46a" strokeWidth="1.4" fill="none" />
+          <Face skin="#c99068" beard="#2b1d14" />
+          <path d="M19.5 21.5 C19 10 45 10 44.5 21.5 C40 16.5 24 16.5 19.5 21.5Z" fill="#f4efe0" />
+          <path d="M19.8 19.6 C26 17.4 38 17.4 44.2 19.6" stroke="#e9c46a" strokeWidth="1.6" fill="none" />
+          <circle cx="32" cy="17.6" r="1.3" fill="#7d3c98" stroke="#e9c46a" strokeWidth="0.5" />
+          <rect x="45" y="49" width="12" height="5.5" rx="2.7" fill="#efe1bd" stroke="#b88a1e" strokeWidth="0.7" />
+          <path d="M47 51.8 H55" stroke="#b88a1e" strokeWidth="0.6" />
+        </>
+      );
+      break;
+    case "husai":
+      // Husai arquita, el amigo del rey David (2 Samuel 15:32-37): túnica parda y manto de viaje
+      bg = "#e8ddc8";
+      body = (
+        <>
+          <path d="M9 64 C11 47 20 41 32 41 C44 41 53 47 55 64Z" fill="#7a5a3a" />
+          <path d="M14 64 C16 51 22 45 32 44 C42 45 48 51 50 64" fill="none" stroke="#a8844f" strokeWidth="4" />
+          <Face skin="#b97a50" beard="#5a5048" brows="#4a4038" />
+          <path d="M20.5 21.5 C20 12 44 12 43.5 21.5 C40 17.5 24 17.5 20.5 21.5Z" fill="#d9c9a8" />
         </>
       );
       break;

@@ -49,6 +49,7 @@ import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
+import { SabioView } from "./SabioUI";
 import { CasaHudLayer } from "./CasaUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
@@ -1407,6 +1408,13 @@ function ModalLayer() {
     modalKeys.set(modal, key);
   }
   const bottom = modal.kind === "dialog" || modal.kind === "rank";
+  // «¿Quién es sabio?» ocupa toda la pantalla del juego (su escenario maneja los bordes seguros)
+  if (modal.kind === "sabio")
+    return (
+      <div className="pointer-events-auto absolute inset-0 z-50">
+        <ModalBody key={key} modal={modal} />
+      </div>
+    );
   return (
     <div
       className={`pointer-events-auto absolute inset-0 z-50 flex justify-center p-2 sm:p-4 ${bottom ? "items-end bg-gradient-to-t from-black/60 via-black/10 to-transparent" : "items-center bg-black/55 backdrop-blur-[2px]"}`}
@@ -1426,6 +1434,8 @@ function ModalBody({ modal }: { modal: Modal }) {
   switch (modal.kind) {
     case "dialog":
       return <DialogView lines={modal.lines} />;
+    case "sabio":
+      return <SabioView />;
     case "lesson":
       return <LessonView lessonId={modal.lessonId} />;
     case "quiz":
