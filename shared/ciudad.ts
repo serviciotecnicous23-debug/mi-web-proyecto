@@ -261,6 +261,28 @@ export function fraseRapida(id: string): FraseRapida | null {
 export const FRASE_CADA_MS = 2500;
 export const FRASES_POR_MINUTO = 12;
 
+/**
+ * Gestos que los vecinos ven hacer a tu personaje (por la misma red que las frases): saludar, aplaudir, alegrarse,
+ * orar, inclinarse, señalar y pensar. `pose` es la pose del personaje (three/characters.ts).
+ */
+export const GESTOS = [
+  { id: "saludar", icono: "👋", texto: "Saludar", pose: "wave" },
+  { id: "aplaudir", icono: "👏", texto: "Aplaudir", pose: "clap" },
+  { id: "alegria", icono: "🙌", texto: "¡Alegría!", pose: "cheer" },
+  { id: "orar", icono: "🙏", texto: "Orar", pose: "kneel" },
+  { id: "inclinarse", icono: "🙇", texto: "Inclinarse", pose: "bow" },
+  { id: "senalar", icono: "👉", texto: "Señalar", pose: "point" },
+  { id: "pensar", icono: "🤔", texto: "Pensar", pose: "think" },
+] as const;
+export type GestoId = (typeof GESTOS)[number]["id"];
+export function gestoDe(id: string): (typeof GESTOS)[number] | null {
+  return GESTOS.find((g) => g.id === id) ?? null;
+}
+/** Un gesto cada 1,8 s y como mucho 16 por minuto; se ve unos 3 segundos. */
+export const GESTO_CADA_MS = 1800;
+export const GESTOS_POR_MINUTO = 16;
+export const GESTO_DURA_MS = 3200;
+
 // ---------------------------------------------------------------- la presencia (WebSocket)
 /** Dirección del WebSocket de la ciudad (la presencia viaja solo en memoria, nunca en la base). */
 export const RED_RUTA = "/api/jerusalen/ciudad/red";
@@ -287,7 +309,7 @@ export type VecinoInfo = {
  * Lo que manda el teléfono. En el templo en línea la posición lleva `l: "templo"` (otro canal: allí
  * solo se ven los que sirven) y `a`, lo que lleva en las manos (ACTIVIDADES).
  */
-export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number; l?: "templo"; a?: number } | { t: "frase"; id: string };
+export type RedSale = { t: "pos"; x: number; z: number; ry: number; m: number; l?: "templo"; a?: number } | { t: "frase"; id: string } | { t: "gesto"; id: string };
 
 /** Lo que lleva en las manos quien sirve en el templo (para verlo sobre su cabeza). */
 export const ACTIVIDADES = ["", "🪵", "🫒", "🍞", "🌿", "🐑", "🌾"] as const;
@@ -303,6 +325,8 @@ export type RedEntra =
   | { t: "info"; v: VecinoInfo }
   | { t: "v"; l: [number, number, number, number, number, number?][] }
   | { t: "frase"; de: number; id: string }
+  /** Un vecino hizo un gesto (saludar, aplaudir…): se ve en su personaje unos segundos. */
+  | { t: "gesto"; de: number; id: string }
   | { t: "barrio"; n: number; casas: CasaVista[] }
   /** La charla del barrio (shared/barrio.ts): un mensaje nuevo, o uno que se borró u ocultó. */
   | { t: "chat"; m: import("./barrio").MensajeBarrio }

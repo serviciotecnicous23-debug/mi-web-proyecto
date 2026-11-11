@@ -149,12 +149,19 @@ let detalleBajo = (() => {
     return false;
   }
 })();
+/** El reloj de los materiales (el viento en las hojas y el brillo del agua): lo avanza el mundo que se dibuja. */
+const tiempoMateriales = { value: 0 };
+export function avanzarMateriales(dt: number) {
+  tiempoMateriales.value = (tiempoMateriales.value + dt) % 3600;
+}
+
 export function configurarDetalle(bajo: boolean) {
   detalleBajo = bajo;
 }
 
 const DETALLE_PARS = `
 varying vec3 vMundo;
+uniform float uTiempo;
 float dHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float dRuido(vec3 x) {
   vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -194,6 +201,9 @@ float dH = dPiedra * (dRuido(dp * 0.9) * 0.65 + dRuido(dp * 3.2) * 0.35)
 #endif
 float dAmp = (dPiedra * 0.15 + dMadera * 0.17 + dVerde * 0.24 + dTela * 0.06 + dMetal * 0.1) * dLejos;
 diffuseColor.rgb *= 1.0 + (dH - 0.5) * dAmp;
+// el agua (azul claro): un brillo que se mueve
+float dAgua = (1.0 - dMetal) * step(dc.r * 1.25, dc.b) * step(dc.g * 0.95, dc.b) * step(0.45, dLum) * step(0.25, dSat);
+diffuseColor.rgb *= 1.0 + dAgua * (sin(uTiempo * 2.2 + dp.x * 3.1 + sin(dp.z * 2.7 + uTiempo * 1.3) * 1.5) * 0.09 + 0.03);
 // manchas de tiempo y de lluvia en la piedra
 diffuseColor.rgb *= 1.0 - dPiedra * smoothstep(0.62, 0.94, dRuido(dp * 0.3 + 3.7)) * 0.1 * dLejos;
 `;
@@ -219,13 +229,25 @@ const DETALLE_RELIEVE = `
 
 function conDetalle<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, metal: boolean): M {
   mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTiempo = tiempoMateriales;
     if (metal) shader.defines = { ...(shader.defines ?? {}), DETALLE_METAL: "" };
     if (detalleBajo) shader.defines = { ...(shader.defines ?? {}), DETALLE_BAJO: "" };
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vMundo;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vMundo;\nuniform float uTiempo;")
       .replace(
         "#include <project_vertex>",
-        `#include <project_vertex>
+        `#if defined(USE_COLOR) && !defined(DETALLE_METAL)
+{
+  // el viento mueve un poco las hojas (lo verde)
+  vec3 vc = sqrt(max(color.rgb, vec3(0.0)));
+  float vMx = max(vc.r, max(vc.g, vc.b));
+  float vHoja = step(vc.r * 1.04, vc.g) * step(vc.b, vc.g) * step(0.12, (vMx - min(vc.r, min(vc.g, vc.b))) / max(vMx, 0.001));
+  vec4 vW = modelMatrix * vec4(transformed, 1.0);
+  transformed.x += sin(uTiempo * 1.6 + vW.x * 0.7 + vW.z * 0.5) * 0.03 * vHoja;
+  transformed.z += cos(uTiempo * 1.3 + vW.z * 0.6 + vW.x * 0.3) * 0.022 * vHoja;
+}
+#endif
+#include <project_vertex>
 vec4 dMundo = vec4(transformed, 1.0);
 #ifdef USE_INSTANCING
 dMundo = instanceMatrix * dMundo;

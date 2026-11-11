@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-gestos",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Gestos para tus vecinos y una ciudad con más vida",
+    puntos: [
+      "👋 Botón nuevo de la mano, a la derecha: saluda, aplaude, alégrate, ora, inclínate, señala o piensa. Tu personaje lo hace y tus vecinos lo ven en el suyo.",
+      "🗣️ La gente de la ciudad se mueve más: los ancianos de la puerta conversan (y te hablan cuando llegas), los mercaderes te ofrecen con las manos, las familias del pueblo te saludan desde su puerta y los que pasean se paran a conversar.",
+      "🕊️ Palomas que vuelan sobre el monte del templo y alrededor de donde estás, el viento que mueve las hojas y el agua del pozo que brilla.",
+    ],
+  },
+  {
     id: "2026-11-11-texturas",
     fecha: "11 de noviembre de 2026",
     titulo: "Piedra, madera y oro que se sienten de verdad",

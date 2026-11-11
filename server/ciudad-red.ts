@@ -17,7 +17,7 @@ import { esAdmin, escalonPorMerito, nombreDe, personajeDe, temporadaDe } from ".
 import { casasDelBarrio } from "./ciudad";
 import { JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import {
-  ACTIVIDADES, ACTIVIDADES_CIUDAD, FRASE_CADA_MS, FRASES_POR_MINUTO, LIMITES_CIUDAD, LIMITES_TEMPLO, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
+  ACTIVIDADES, ACTIVIDADES_CIUDAD, FRASE_CADA_MS, FRASES_POR_MINUTO, GESTO_CADA_MS, GESTOS_POR_MINUTO, gestoDe, LIMITES_CIUDAD, LIMITES_TEMPLO, RED_RUTA, RED_TICK_MS, VECINOS_VISIBLES, canalDe, fraseRapida,
   type RedEntra, type VecinoInfo,
 } from "@shared/ciudad";
 
@@ -37,6 +37,7 @@ type Con = {
   ultimo: string;
   ultimoPos: number;
   frases: number[];
+  gestos: number[];
   vivo: boolean;
   barrioHash: string;
   /** Ya mandó su primera posición (antes de eso está en el punto de llegada, que no es donde está de verdad). */
@@ -150,6 +151,19 @@ function alRecibir(c: Con, data: RawData) {
       if (o === c || o.canal !== c.canal || o.bloqueos.has(c.info.u) || c.bloqueos.has(o.info.u)) continue;
       if (!o.conocidos.has(c.info.id)) continue;
       mandar(o, { t: "frase", de: c.info.id, id: f.id });
+    }
+  } else if (msg.t === "gesto") {
+    const g = typeof msg.id === "string" ? gestoDe(msg.id) : null;
+    if (!g) return;
+    c.gestos = c.gestos.filter((t) => now - t < 60_000);
+    if (c.gestos.length && now - c.gestos[c.gestos.length - 1] < GESTO_CADA_MS) return;
+    if (c.gestos.length >= GESTOS_POR_MINUTO) return;
+    c.gestos.push(now);
+    // lo ven los que lo ven (en su lista de los 20 más cercanos), como las frases
+    for (const o of conexiones.values()) {
+      if (o === c || o.canal !== c.canal || o.bloqueos.has(c.info.u) || c.bloqueos.has(o.info.u)) continue;
+      if (!o.conocidos.has(c.info.id)) continue;
+      mandar(o, { t: "gesto", de: c.info.id, id: g.id });
     }
   }
 }
@@ -487,6 +501,7 @@ export function registrarRedCiudad(server: Server, sesion: RequestHandler) {
       ultimo: "",
       ultimoPos: 0,
       frases: [],
+      gestos: [],
       vivo: true,
       barrioHash: "",
       posReal: false,

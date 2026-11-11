@@ -7,6 +7,7 @@
  * el templo y se llama a los levitas → Azarías enseña y pregunta → se sube de rango hasta ser
  * sumo sacerdote y entrar, el Día de la Expiación, al Lugar Santísimo.
  */
+import { avanzarMateriales } from "./three/builder";
 import * as THREE from "three";
 import {
   DIALOGUES, HELPERS, ITEMS, LESSONS, LESSON_ORDER, QUIZZES, RANKS, STATIONS, UPGRADES, quizById, upgradeCost,
@@ -596,6 +597,7 @@ export class TempleWorld {
     const dt = Math.min(0.05, raw);
     this.last = now;
     this.time += dt;
+    avanzarMateriales(dt);
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
