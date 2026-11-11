@@ -3,7 +3,7 @@
  * templo, y alguien que juega le pide consejo. Ve la pregunta y las respuestas (nunca cuál es la buena), elige una,
  * dice qué tan seguro está y la manda; o dice que no puede. Tiene 30 segundos.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, PhoneCall, X } from "lucide-react";
 import { CONFIANZAS, LLAMADA_S, VERSO_CONSEJO, type Confianza } from "@shared/sabio";
 import { ICONO_CAMINO } from "./barrio-chat";
@@ -18,6 +18,9 @@ export function LlamadaEntrante() {
   const [enviando, setEnviando] = useState(false);
   const [hecho, setHecho] = useState<string | null>(null);
   const [restan, setRestan] = useState(LLAMADA_S);
+  // mientras se manda (o se muestra el «gracias») la tarjeta no se cierra sola
+  const ocupada = useRef(false);
+  ocupada.current = enviando || !!hecho;
 
   // cada llamada nueva empieza limpia
   useEffect(() => {
@@ -31,7 +34,7 @@ export function LlamadaEntrante() {
     if (!l) return;
     const t = setInterval(() => {
       setRestan(Math.max(0, Math.ceil((l.hasta - Date.now()) / 1000)));
-      if (Date.now() - l.hasta > 2500) {
+      if (Date.now() - l.hasta > 2500 && !ocupada.current) {
         clearInterval(t);
         sabioRed.cerrar(l.id);
       }

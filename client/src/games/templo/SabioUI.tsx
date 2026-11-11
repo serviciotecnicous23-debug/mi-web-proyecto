@@ -991,10 +991,11 @@ function Portada({
             type="button"
             aria-pressed={tab === id}
             onClick={() => setTab(id)}
-            className={`flex items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[10.5px] font-bold leading-none ${tab === id ? "bg-amber-400 text-amber-950" : "text-amber-100/80"}`}
+            className={`flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 py-1.5 text-[11px] font-bold leading-none ${tab === id ? "bg-amber-400 text-amber-950" : "text-amber-100/80"}`}
             data-testid={`sabio-tab-${id}`}
           >
-            <Icono className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{nombre}</span>
+            {/* en el teléfono, solo el nombre (con el ícono no caben las cinco) */}
+            <Icono className="hidden h-3.5 w-3.5 shrink-0 sm:inline" /> {nombre}
           </button>
         ))}
       </div>
@@ -1311,7 +1312,7 @@ function MirarView({ id, onSalir }: { id: number; onSalir: () => void }) {
         </div>
       ) : (
         <p className="rounded-xl bg-amber-400/15 p-3 text-center text-sm font-black" data-testid="sabio-mirar-fin">
-          {dice}
+          🏁 Terminó la partida de {v.nombre}. {v.estado === "gano" ? "¡Subió hasta arriba!" : "¡Gracias por animar!"}
         </p>
       )}
       <button type="button" className="w-full rounded-xl bg-white/10 py-2.5 text-sm font-bold hover:bg-white/20" onClick={onSalir} data-testid="sabio-mirar-salir">
