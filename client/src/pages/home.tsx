@@ -4,14 +4,14 @@ import { MemberToday } from "@/components/home/MemberToday";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEvents } from "@/hooks/use-users";
+import { useEvents } from "@/hooks/use-portada";
 import { motion } from "motion/react";
 import {
   Flame, Radio, BookOpen, Heart, Globe, Users, Video, Signal,
   Church, Shield, Award, LogIn, UserPlus, Headphones, ArrowRight,
   ChevronDown, Sparkles, Smartphone,
 } from "lucide-react";
-import { PublicDonationSection } from "@/pages/finanzas";
+import { PublicDonationSection } from "@/components/PublicDonationSection";
 import { FlameLogoSVG } from "@/components/FlameLogoSVG";
 import { RadioInstallActions } from "@/components/RadioInstallActions";
 import { RADIO_OFFICIAL_URL } from "@shared/radio";

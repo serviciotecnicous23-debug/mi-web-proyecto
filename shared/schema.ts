@@ -555,18 +555,8 @@ export const TEACHER_REQUEST_STATUSES = {
   rechazado: "Rechazado",
 } as const;
 
-export const ROLES = {
-  director: "Director del Ministerio",
-  staff_global: "Staff Global",
-  admin_iglesia: "Administrador de Iglesia Aliada",
-  maestro_ministerio: "Maestro del Ministerio",
-  maestro_iglesia: "Maestro de Iglesia Aliada",
-  miembro: "Miembro",
-  usuario: "Usuario",
-  // Alias de retrocompatibilidad
-  admin: "Administrador",
-  obrero: "Maestro",
-} as const;
+// Los roles viven en shared/roles.ts (liviano): el menú de la web los usa en todas las páginas y no debe cargar el esquema.
+export { ROLES } from "./roles";
 
 export const MEMBER_TYPES = {
   visitante: "Visitante / Buscador",
@@ -1085,22 +1075,8 @@ export const RESOURCE_CATEGORIES = {
   ninos: "Ninos",
 } as const;
 
-export const BIBLE_BOOKS = [
-  "Genesis", "Exodo", "Levitico", "Numeros", "Deuteronomio",
-  "Josue", "Jueces", "Rut", "1 Samuel", "2 Samuel",
-  "1 Reyes", "2 Reyes", "1 Cronicas", "2 Cronicas",
-  "Esdras", "Nehemias", "Ester", "Job", "Salmos",
-  "Proverbios", "Eclesiastes", "Cantares", "Isaias", "Jeremias",
-  "Lamentaciones", "Ezequiel", "Daniel", "Oseas", "Joel",
-  "Amos", "Abdias", "Jonas", "Miqueas", "Nahum",
-  "Habacuc", "Sofonias", "Hageo", "Zacarias", "Malaquias",
-  "Mateo", "Marcos", "Lucas", "Juan", "Hechos",
-  "Romanos", "1 Corintios", "2 Corintios", "Galatas", "Efesios",
-  "Filipenses", "Colosenses", "1 Tesalonicenses", "2 Tesalonicenses",
-  "1 Timoteo", "2 Timoteo", "Tito", "Filemon", "Hebreos",
-  "Santiago", "1 Pedro", "2 Pedro", "1 Juan", "2 Juan",
-  "3 Juan", "Judas", "Apocalipsis",
-] as const;
+// Los libros de la Biblia viven en shared/libros-biblia.ts (liviano): la portada los usa sin cargar el esquema.
+export { BIBLE_BOOKS } from "./libros-biblia";
 
 export const BIBLE_CHAPTERS: Record<string, number> = {
   "Genesis": 50, "Exodo": 40, "Levitico": 27, "Numeros": 36, "Deuteronomio": 34,

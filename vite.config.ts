@@ -33,10 +33,11 @@ export default defineConfig({
               test: /[\\/]node_modules[\\/]@radix-ui[\\/]react-(dialog|dropdown-menu|tabs|select|avatar|toast|tooltip)[\\/]/,
               priority: 2,
             },
-            // Data fetching
+            // Data fetching (todas las páginas). zod y react-hook-form van aparte: solo los piden los formularios,
+            // y juntos con React Query se precargaban en cada página.
             {
               name: "vendor-data",
-              test: /[\\/]node_modules[\\/](@tanstack[\\/]react-query|zod|react-hook-form)[\\/]/,
+              test: /[\\/]node_modules[\\/]@tanstack[\\/]react-query[\\/]/,
               priority: 1,
             },
           ],

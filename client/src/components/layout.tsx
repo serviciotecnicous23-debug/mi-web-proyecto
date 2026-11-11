@@ -64,7 +64,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ROLES } from "@shared/schema";
+import { ROLES } from "@shared/roles";
 import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import { GlobalSearch } from "@/components/GlobalSearch";

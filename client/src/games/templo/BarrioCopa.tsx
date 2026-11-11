@@ -22,6 +22,7 @@ const COMO: { icono: string; texto: string; puntos: string }[] = [
   { icono: "⚔️", texto: "Jugar un duelo de sabios (y ganarlo)", puntos: `${COPA_PUNTOS.duelo} y ${COPA_PUNTOS.dueloGanado}` },
   { icono: "💬", texto: "Un consejo acertado a un vecino", puntos: `${COPA_PUNTOS.consejo}` },
   { icono: "🏺", texto: "Cada cosa dada a una familia del pueblo", puntos: `${COPA_PUNTOS.pueblo}` },
+  { icono: "📜", texto: "Cada recado de la calle de los siervos", puntos: `${COPA_PUNTOS.recado}` },
 ];
 
 export function CopaDelBarrio() {

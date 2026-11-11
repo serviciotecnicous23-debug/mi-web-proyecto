@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { api } from "@shared/routes";
-import { type InsertUser } from "@shared/schema";
+import { RUTAS } from "@shared/rutas-livianas";
+import type { InsertUser } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { enLaRadio } from "@/lib/incrustado";
 
@@ -12,12 +12,12 @@ import { enLaRadio } from "@/lib/incrustado";
 async function comprobarSesionEnLaRadio(queryClient: QueryClient, toast: ReturnType<typeof useToast>["toast"]) {
   if (!enLaRadio()) return;
   try {
-    const res = await fetch(api.auth.me.path, { credentials: "include", cache: "no-store" });
+    const res = await fetch(RUTAS.auth.me, { credentials: "include", cache: "no-store" });
     if (res.status !== 401) return;
   } catch {
     return;
   }
-  queryClient.setQueryData([api.auth.me.path], null);
+  queryClient.setQueryData([RUTAS.auth.me], null);
   toast({
     title: "Tu navegador no guardó la sesión aquí",
     description: "Abre los juegos desde la radio oficial (radio.ministerioavivandoelfuego.com) o desde la web del ministerio: ahí sí se guardan tu cuenta y tu avance.",
@@ -31,9 +31,9 @@ export function useAuth() {
   const { toast } = useToast();
 
   const { data: user, isLoading, error } = useQuery({
-    queryKey: [api.auth.me.path],
+    queryKey: [RUTAS.auth.me],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path, { credentials: "include" });
+      const res = await fetch(RUTAS.auth.me, { credentials: "include" });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Error al obtener usuario");
       return res.json();
@@ -44,7 +44,7 @@ export function useAuth() {
   const loginMutation = useMutation({
     // remember=false: la sesión dura hasta cerrar el navegador.
     mutationFn: async (credentials: { username: string; password: string; remember?: boolean }) => {
-      const res = await fetch(api.auth.login.path, {
+      const res = await fetch(RUTAS.auth.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -57,7 +57,7 @@ export function useAuth() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData([api.auth.me.path], data);
+      queryClient.setQueryData([RUTAS.auth.me], data);
       toast({ title: "¡Bienvenido!", description: `Sesión iniciada como ${data.username}` });
       void comprobarSesionEnLaRadio(queryClient, toast);
     },
@@ -68,7 +68,7 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: Partial<InsertUser> & { username: string; password: string }) => {
-      const res = await fetch(api.auth.register.path, {
+      const res = await fetch(RUTAS.auth.register, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -81,7 +81,7 @@ export function useAuth() {
       return responseData;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData([api.auth.me.path], data);
+      queryClient.setQueryData([RUTAS.auth.me], data);
       if (data.pending) {
         toast({
           title: "Registro exitoso",
@@ -102,11 +102,11 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(api.auth.logout.path, { method: "POST", credentials: "include" });
+      const res = await fetch(RUTAS.auth.logout, { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error("Error al cerrar sesión");
     },
     onSuccess: () => {
-      queryClient.setQueryData([api.auth.me.path], null);
+      queryClient.setQueryData([RUTAS.auth.me], null);
       queryClient.clear();
       toast({ title: "Hasta pronto", description: "Sesión cerrada" });
     },

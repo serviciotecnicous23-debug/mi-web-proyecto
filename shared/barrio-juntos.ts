@@ -149,6 +149,8 @@ export const COPA_PUNTOS = {
   juntos: 10,
   /** Por cada cosa dada a una familia del pueblo (shared/pueblo.ts). */
   pueblo: 2,
+  /** Por cada recado de la calle de los siervos cumplido (shared/personajes.ts). */
+  recado: 5,
 } as const;
 export type FuenteCopa = keyof typeof COPA_PUNTOS;
 

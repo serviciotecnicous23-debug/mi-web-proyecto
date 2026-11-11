@@ -1,7 +1,9 @@
 /**
  * El mapa de Jerusalén en línea: un minimapa redondo arriba a la derecha (centrado en el personaje y
  * girado como la cámara, con su casa, los vecinos y el objetivo de la misión) y, al tocarlo, el mapa de
- * toda la ciudad con botones para ir a cada lugar o caminar solo hasta el objetivo.
+ * toda la ciudad con botones para ir a cada lugar o caminar solo hasta el objetivo. También muestra lo que
+ * cambia cada día: la calle de los siervos con la puerta de quien tiene tu recado de hoy, y el lugar del
+ * capítulo de la historia de esta semana (shared/capitulos.ts).
  */
 import { useEffect, useRef, useState } from "react";
 import { Footprints, Map as MapaIcono, MapPin } from "lucide-react";
@@ -11,6 +13,51 @@ import { gameStore } from "./store";
 import * as P from "./ciudad/plano";
 import type { CiudadWorld, MapaVista } from "./ciudad/mundo";
 import type { Rect } from "./layout";
+import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS, personajeCiudad, type RecadoEstado } from "@shared/personajes";
+import { arcoDeTemporada, type CapituloId, type CapitulosVista } from "@shared/capitulos";
+
+/** Lo que el mapa pide aparte (cambia cada día): el recado de hoy y el lugar del capítulo de la semana. */
+type ExtrasMapa = {
+  recado: { id: string; x: number; z: number; nombre: string } | null;
+  capitulo: { id: CapituloId; x: number; z: number; r: number; icono: string; titulo: string } | null;
+};
+
+/** Dónde se ve cada capítulo en la ciudad (ciudad/capitulos3d.ts): la primera torre nueva del muro del oriente, el
+ * estanque de Siloé al final del conducto, la escalinata donde ora Ezequías y la plaza de la fiesta. */
+const LUGAR_CAPITULO: Record<CapituloId, { x: number; z: number; r: number }> = {
+  muro: { x: P.TORRE_X - 4, z: P.TORRES_NUEVAS[0], r: 6 },
+  canal: { x: (P.ESTANQUE[0] + P.ESTANQUE[2]) / 2, z: (P.ESTANQUE[1] + P.ESTANQUE[3]) / 2, r: 5 },
+  rabsaces: { x: 41, z: 0, r: 7 },
+  liberacion: { x: 56, z: -2, r: 13 },
+};
+let extrasGuardados: { t: number; p: Promise<ExtrasMapa> } | null = null;
+
+async function pedirJson<T>(ruta: string): Promise<T | null> {
+  try {
+    const r = await fetch(`/api/jerusalen${ruta}`, { credentials: "include", cache: "no-store" });
+    return r.ok ? ((await r.json()) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Se piden una vez por minuto como mucho (el minimapa y el mapa grande comparten la respuesta). */
+function traerExtras(): Promise<ExtrasMapa> {
+  if (extrasGuardados && Date.now() - extrasGuardados.t < 60_000) return extrasGuardados.p;
+  const p = Promise.all([pedirJson<{ estado: RecadoEstado }>("/recado"), pedirJson<{ vista: CapitulosVista | null }>("/capitulos")]).then(([rc, cv]) => {
+    const e = rc?.estado;
+    const quien = e && !e.hecho ? personajeCiudad(e.recado.cadena[e.paso]) : undefined;
+    const v = cv?.vista;
+    const hoy = v?.hoy;
+    const cap = v && hoy ? arcoDeTemporada(v.temporada)?.capitulos.find((c) => c.n === hoy.n) : undefined;
+    return {
+      recado: quien ? { id: quien.id, x: quien.puerta[0], z: quien.puerta[1], nombre: quien.nombre } : null,
+      capitulo: cap ? { id: cap.id, ...LUGAR_CAPITULO[cap.id], icono: cap.icono, titulo: cap.titulo } : null,
+    };
+  });
+  extrasGuardados = { t: Date.now(), p };
+  return p;
+}
 
 type Lugar = { r: Rect; color: string; nombre?: string };
 
@@ -31,7 +78,7 @@ function aMapa(dx: number, dz: number, giro: number, escala: number): [number, n
   return [(dz * s - dx * c) * escala, -(dx * s + dz * c) * escala];
 }
 
-function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro: { x: number; z: number }; redondo: boolean; nombres: boolean; t: number }) {
+function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro: { x: number; z: number }; redondo: boolean; nombres: boolean; t: number }, ex: ExtrasMapa | null = null) {
   const ctx = cv.getContext("2d");
   if (!ctx) return;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -77,6 +124,47 @@ function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro
   rect([L.minX, L.minZ, L.maxX, L.maxZ], "rgba(214,196,154,0.55)", "rgba(120,90,50,0.6)");
   for (const a of P.AREA_RECT) rect(a as Rect, "rgba(196,160,110,0.35)");
   for (const l of LUGARES) rect(l.r, l.color);
+  // la calle de los siervos: la calle y las siete puertas
+  rect(ZONA_SIERVOS, "rgba(214,182,128,0.6)");
+  rect([CALLE_SIERVOS.x0, CALLE_SIERVOS.z - CALLE_SIERVOS.ancho / 2, CALLE_SIERVOS.x1, CALLE_SIERVOS.z + CALLE_SIERVOS.ancho / 2], "rgba(176,146,104,0.7)");
+  ctx.fillStyle = "#7a4a2a";
+  for (const sv of PERSONAJES_CIUDAD) {
+    const [x, y] = p(sv.puerta[0], sv.puerta[1]);
+    ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6);
+  }
+  // el capítulo de esta semana: las torres del muro o el conducto de Siloé, y un círculo rojizo con su dibujo
+  if (ex?.capitulo?.id === "muro") {
+    ctx.fillStyle = "rgba(150,110,70,0.95)";
+    for (const z of P.TORRES_NUEVAS) {
+      const [x, y] = p(P.TORRE_X, z);
+      ctx.fillRect(x - 3, y - 3, 6, 6);
+    }
+  }
+  if (ex?.capitulo?.id === "canal") {
+    ctx.beginPath();
+    const [gx, gy] = p(P.GIHON[0], P.GIHON[1]);
+    ctx.moveTo(gx, gy);
+    for (const [x, z] of P.CONDUCTO) ctx.lineTo(...p(x, z));
+    ctx.strokeStyle = "rgba(60,130,200,0.9)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    rect(P.ESTANQUE, "rgba(90,160,220,0.8)");
+  }
+  if (ex?.capitulo) {
+    const [x, y] = p(ex.capitulo.x, ex.capitulo.z);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(6, ex.capitulo.r * escala), 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(214,90,40,0.16)";
+    ctx.fill();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = "rgba(170,60,20,0.75)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `${o.nombres ? 16 : 12}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(ex.capitulo.icono, x, y + (o.nombres ? 6 : 4));
+  }
   if (o.nombres) {
     ctx.font = "bold 11px system-ui, sans-serif";
     ctx.textAlign = "center";
@@ -86,6 +174,8 @@ function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro
       const [x, y] = p((l.r[0] + l.r[2]) / 2, (l.r[1] + l.r[3]) / 2);
       ctx.fillText(l.nombre, x, y + 4);
     }
+    const [sx, sy] = p((ZONA_SIERVOS[0] + ZONA_SIERVOS[2]) / 2, ZONA_SIERVOS[3] + 3);
+    ctx.fillText("Siervos", sx, sy);
   }
   // los vecinos
   ctx.fillStyle = "#2f6fd6";
@@ -106,6 +196,21 @@ function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro
     ctx.lineTo(x + 5.5, y - 2);
     ctx.closePath();
     ctx.fill();
+  }
+  // el recado de hoy: un rollo que late en la puerta de quien te toca
+  if (ex?.recado) {
+    const [x, y] = p(ex.recado.x, ex.recado.z);
+    const lat = 1 + 0.18 * Math.sin(o.t * 5);
+    ctx.beginPath();
+    ctx.arc(x, y, 7 * lat, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,240,200,0.9)";
+    ctx.fill();
+    ctx.strokeStyle = "#8a5a1a";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.font = "10px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("📜", x, y + 3.5);
   }
   ctx.restore();
   // el objetivo: un punto dorado que late; si queda fuera, una flecha en el borde
@@ -179,15 +284,23 @@ export function MiniMapa({ city }: { city: CiudadWorld | null }) {
   useEffect(() => {
     if (!city) return;
     let t = 0;
+    let n = 0;
+    let ex: ExtrasMapa | null = null;
+    let vivo = true;
     const id = window.setInterval(() => {
       t += 0.2;
+      // el recado y el capítulo: al empezar y cada minuto
+      if (n++ % 300 === 0) void traerExtras().then((x) => vivo && (ex = x));
       const cv = ref.current;
       if (!cv) return;
       const m = city.mapa();
-      dibujar(cv, m, { radio: 46, centro: { x: m.x, z: m.z }, redondo: true, nombres: false, t });
+      dibujar(cv, m, { radio: 46, centro: { x: m.x, z: m.z }, redondo: true, nombres: false, t }, ex);
       setTexto(m.objetivo?.texto ?? null);
     }, 200);
-    return () => window.clearInterval(id);
+    return () => {
+      vivo = false;
+      window.clearInterval(id);
+    };
   }, [city]);
   if (!city) return null;
   return (
@@ -205,7 +318,7 @@ export function MiniMapa({ city }: { city: CiudadWorld | null }) {
   );
 }
 
-const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria" | "oracion"; nombre: string }[] = [
+const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria" | "oracion" | "siervos"; nombre: string }[] = [
   { id: "casa", nombre: "🏠 Mi casa" },
   { id: "templo", nombre: "🔥 El templo" },
   { id: "plaza", nombre: "⛲ La plaza" },
@@ -215,12 +328,26 @@ const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" 
   { id: "camara", nombre: "🕯️ La cámara de los sacerdotes" },
   { id: "sabiduria", nombre: "🏛️ La casa de la sabiduría" },
   { id: "oracion", nombre: "⛰️ El monte de la oración" },
+  { id: "siervos", nombre: "📜 La calle de los siervos" },
 ];
 
 /** El mapa de toda la ciudad, con el objetivo y los botones para ir. */
 export function MapaView({ city }: { city: CiudadWorld | null }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const [m, setM] = useState<MapaVista | null>(null);
+  const [ex, setEx] = useState<ExtrasMapa | null>(null);
+  const exRef = useRef<ExtrasMapa | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    void traerExtras().then((x) => {
+      if (!vivo) return;
+      exRef.current = x;
+      setEx(x);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
   useEffect(() => {
     if (!city) return;
     let t = 0;
@@ -232,7 +359,7 @@ export function MapaView({ city }: { city: CiudadWorld | null }) {
       const L = P.LIMITES;
       // toda la ciudad (con el monte del templo), centrada
       const centro = { x: (L.minX + L.maxX) / 2 - 6, z: (L.minZ + L.maxZ) / 2 };
-      dibujar(cv, v, { radio: 92, centro, redondo: false, nombres: true, t });
+      dibujar(cv, v, { radio: 92, centro, redondo: false, nombres: true, t }, exRef.current);
       setM(v);
     };
     pintar();
@@ -256,8 +383,42 @@ export function MapaView({ city }: { city: CiudadWorld | null }) {
       <div className="space-y-3 p-3 text-sm">
         <canvas ref={ref} className="aspect-square w-full rounded-xl border border-stone-300 dark:border-stone-700" data-testid="mapa-lienzo" />
         <p className="text-[11px] text-stone-500">
-          La flecha blanca eres tú; arriba está hacia donde mira la cámara. 🏠 tu casa · 🔵 tus vecinos · 🟡 tu objetivo.
+          La flecha blanca eres tú; arriba está hacia donde mira la cámara. 🏠 tu casa · 🔵 tus vecinos · 🟡 tu objetivo · 📜 tu recado de hoy
+          {ex?.capitulo ? ` · ${ex.capitulo.icono} el capítulo de esta semana` : ""}.
         </p>
+        {(ex?.recado || ex?.capitulo) && (
+          <div className="grid gap-1.5 sm:grid-cols-2" data-testid="mapa-hoy">
+            {ex?.recado && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="justify-start rounded-xl"
+                onClick={() => {
+                  const id = ex.recado!.id;
+                  gameStore.close();
+                  setTimeout(() => city?.irAPersonaje(id), 60);
+                }}
+                data-testid="mapa-ir-recado"
+              >
+                📜 Tu recado: {ex.recado.nombre}
+              </Button>
+            )}
+            {ex?.capitulo && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="justify-start rounded-xl"
+                onClick={() => {
+                  city?.caminarA(ex.capitulo!.x, ex.capitulo!.z);
+                  gameStore.close();
+                }}
+                data-testid="mapa-ir-capitulo"
+              >
+                {ex.capitulo.icono} {ex.capitulo.titulo}
+              </Button>
+            )}
+          </div>
+        )}
         {m?.objetivo && (
           <div className="rounded-xl bg-amber-50 p-2.5 dark:bg-amber-950/30" data-testid="mapa-objetivo">
             <p className="font-bold">

@@ -4,7 +4,7 @@
  * al visitar tu casa o tocarte en la calle. Se calculan de lo que ya guarda el juego.
  */
 
-export type LogroId = "constructor" | "buenVecino" | "maestro" | "campeon" | "estudioso" | "discipulo" | "sabio" | "consejero" | "vencedor" | "fiel";
+export type LogroId = "constructor" | "buenVecino" | "maestro" | "campeon" | "estudioso" | "discipulo" | "sabio" | "consejero" | "vencedor" | "fiel" | "siervoFiel" | "mensajero";
 
 export const LOGROS_EN_LINEA: Record<LogroId, { nombre: string; icono: string; como: string }> = {
   constructor: { nombre: "Constructor del muro", icono: "🧱", como: "Pon 30 piedras en el muro caído" },
@@ -17,9 +17,11 @@ export const LOGROS_EN_LINEA: Record<LogroId, { nombre: string; icono: string; c
   consejero: { nombre: "Buen consejero", icono: "🤝", como: "Da 5 consejos acertados a tus amigos y vecinos en «¿Quién es sabio?»" },
   vencedor: { nombre: "Vencedor de duelos", icono: "⚔️", como: "Gana 5 duelos de sabios en la casa de la sabiduría" },
   fiel: { nombre: "Fiel a su barrio", icono: "🙌", como: "Aporta a 2 ofrendas del barrio cumplidas" },
+  siervoFiel: { nombre: "Siervo fiel", icono: "🔥", como: "Llega a 7 días seguidos en tu racha de servicio" },
+  mensajero: { nombre: "Mensajero de los siervos", icono: "📜", como: "Cumple 10 recados de la calle de los siervos" },
 };
 
-export const ORDEN_LOGROS: LogroId[] = ["constructor", "buenVecino", "maestro", "campeon", "estudioso", "discipulo", "sabio", "consejero", "vencedor", "fiel"];
+export const ORDEN_LOGROS: LogroId[] = ["constructor", "buenVecino", "maestro", "campeon", "estudioso", "discipulo", "sabio", "consejero", "vencedor", "fiel", "siervoFiel", "mensajero"];
 
 export type LogrosDe = {
   personajeId: number;

@@ -13,8 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useClubSummary } from "@/hooks/use-club";
-import { useMyEnrollments } from "@/hooks/use-users";
+import { useClubSummary, useMyEnrollments } from "@/hooks/use-portada";
 import { bibleBookLabel } from "@shared/bible";
 
 /**
