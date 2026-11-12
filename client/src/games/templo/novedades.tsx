@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-temporada-2",
+    fecha: "12 de noviembre de 2026",
+    titulo: "Ya está lista la historia de la temporada 2: la gran Pascua de Ezequías",
+    puntos: [
+      "🚪 Desde el lunes 7 de diciembre, una historia nueva (2 Crónicas 29–31): el rey Ezequías abre las puertas del templo y la ciudad lo limpia, los levitas vuelven a cantar el cántico de Jehová, los correos llevan las cartas del rey por todo Israel y Jerusalén celebra la Pascua con un solo corazón.",
+      "🎉 Al final, del 1 al 3 de enero: el gran regocijo en la plaza, con la gran alabanza el domingo 3 de 6 a 7 de la tarde (hora de Texas).",
+      "👀 En la ciudad verás los levitas con sus cestos hasta el torrente de Cedrón, los cantores con címbalos, arpas y trompetas en la escalinata, el correo que pregona junto a la puerta, las tiendas de los peregrinos en el monte y los altares de Acaz que se quitan uno a uno.",
+      "🧱 Lo que la ciudad levantó en la temporada 1 se queda: las torres nuevas y el conducto de Siloé siguen en pie.",
+      "📚 En tu álbum, cada historia es una colección: junta sus cinco prendas y gana «Atalaya de Sion» o «De un solo corazón».",
+    ],
+  },
+  {
     id: "2026-11-12-la-ciudad",
     fecha: "12 de noviembre de 2026",
     titulo: "El arca de Joás, invita a un amigo y tu álbum",

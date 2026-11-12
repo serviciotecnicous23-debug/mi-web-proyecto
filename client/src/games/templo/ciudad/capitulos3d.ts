@@ -8,6 +8,8 @@
  *   avanza la meta).
  * - Capítulo 4: el campamento vacío y la plaza de fiesta; en la fiesta, los cantores en la escalinata y el pueblo
  *   que alaba.
+ * Cuando la temporada cuenta otra historia, de esta solo quedan en pie las obras que la ciudad terminó la última vez
+ * que se contó (las torres y el conducto con su agua): lo que se levanta, queda.
  * Todo se dibuja con figuras simples unidas en pocas mallas, como el resto de la ciudad. Nada con forma de cruz.
  */
 import * as THREE from "three";
@@ -17,12 +19,32 @@ import { jar } from "../three/structures";
 import type { Overlay } from "../three/overlay";
 import { alturaTerreno, liberar, meshes } from "./escenario";
 import * as P from "./plano";
-import type { CapitulosVista } from "@shared/capitulos";
+import { SENAQUERIB, arcoDeTemporada, type CapitulosVista } from "@shared/capitulos";
 
 const Y = P.SUELO;
 
+/** A dónde va la cámara de cine para mostrar un capítulo: el lugar, hacia dónde mira, cuánto dura y cuánto se inclina. */
+export type TomaDeCine = { x: number; z: number; mx: number; mz: number; segundos?: number; alto?: number };
+
+/** Lo que la ciudad (ciudad/mundo.ts) le pide a la escena de cada historia de la temporada. */
+export interface EscenaDeHistoria {
+  readonly group: THREE.Group;
+  /** Pone lo que dice el servidor (null: nada). Devuelve si cambió algo que da sombra. */
+  ponerVista(v: CapitulosVista | null): boolean;
+  animar(dt: number, now: number, jx: number, jz: number, noche: boolean): void;
+  /** Lo que puede tapar al jugador: la ciudad lo aclara si queda entre la cámara y él. */
+  ocluyentes(): THREE.Object3D[];
+  /** Se rehízo algo que puede tapar al jugador: la ciudad vuelve a armar sus cajas. */
+  tapaNueva: boolean;
+  /** Dónde se ve el capítulo n de esta historia (null si esta no es la historia de la temporada). */
+  tomaDeCapitulo(n: number): TomaDeCine | null;
+  destroy(): void;
+}
+
 /** Lo que hay que dibujar, sacado de lo que dice el servidor. */
 export type EstadoHistoria = {
+  /** Esta temporada cuenta esta historia; si no, solo se dibujan las obras terminadas (sin cimientos ni estacas). */
+  actual: boolean;
   /** Avance de las torres (0 a 1). */
   torres: number;
   /** Avance del conducto (0 a 1) y si ya llegó el agua al estanque. */
@@ -41,11 +63,12 @@ const avance = (c: { meta: number | null; puntos: number; cumplido: boolean } | 
   !c ? 0 : c.cumplido ? 1 : c.meta ? Math.max(0, Math.min(1, c.puntos / c.meta)) : 0;
 
 export function estadoDeHistoria(v: CapitulosVista | null): EstadoHistoria {
-  const nada: EstadoHistoria = { torres: 0, canal: 0, canalLleno: false, canalAbierto: false, amenaza: "no", oracion: -1, fiesta: "no" };
+  const nada: EstadoHistoria = { actual: true, torres: 0, canal: 0, canalLleno: false, canalAbierto: false, amenaza: "no", oracion: -1, fiesta: "no" };
   if (!v) return nada;
   const c = (n: number) => v.capitulos.find((x) => x.n === n);
   const hoy = v.hoy?.n ?? 0;
   return {
+    actual: true,
     torres: avance(c(1)),
     canal: avance(c(2)),
     canalLleno: !!c(2)?.cumplido,
@@ -56,8 +79,14 @@ export function estadoDeHistoria(v: CapitulosVista | null): EstadoHistoria {
   };
 }
 
+/** Cuando la temporada cuenta otra historia: solo lo que la ciudad terminó la última vez (shared/capitulos.ts, «hechos»). */
+export function estadoDeLoHecho(hechos: readonly string[]): EstadoHistoria {
+  const hecho = (n: number) => hechos.includes(`${SENAQUERIB.id}:${n}`);
+  return { actual: false, torres: hecho(1) ? 1 : 0, canal: hecho(2) ? 1 : 0, canalLleno: hecho(2), canalAbierto: hecho(2), amenaza: "no", oracion: -1, fiesta: "no" };
+}
+
 // ---------------------------------------------------------------- utilidades
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   return () => {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
@@ -66,7 +95,7 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function vary(rnd: () => number, hex: string, amt = 0.06): THREE.Color {
+export function vary(rnd: () => number, hex: string, amt = 0.06): THREE.Color {
   const c = new THREE.Color(hex);
   const k = 1 + (rnd() - 0.5) * 2 * amt;
   c.r = Math.min(1, c.r * k);
@@ -95,8 +124,10 @@ function puntoDelConducto(d: number): { x: number; z: number; dir: number } {
 }
 
 // ---------------------------------------------------------------- las piezas
-function construirTorres(f: number): THREE.Group {
+function construirTorres(f: number, actual: boolean): THREE.Group {
   const g = new THREE.Group();
+  // en otra historia solo quedan las torres terminadas
+  if (!actual && f < 1) return g;
   const rnd = mulberry32(4101);
   const lado = P.TORRE_MEDIO * 2;
   P.TORRES_NUEVAS.forEach((zt, i) => {
@@ -140,8 +171,10 @@ function construirTorres(f: number): THREE.Group {
   return g;
 }
 
-function construirConducto(f: number, abierto: boolean, lleno: boolean): THREE.Group {
+function construirConducto(f: number, abierto: boolean, lleno: boolean, actual: boolean): THREE.Group {
   const g = new THREE.Group();
+  // en otra historia solo queda el conducto terminado, con su agua
+  if (!actual && !lleno) return g;
   const b = new GeoBuilder();
   const rnd = mulberry32(5303);
   const cavado = abierto ? f * LARGO_CONDUCTO : 0;
@@ -252,7 +285,7 @@ function construirCampamento(vacio: boolean): { grupo: THREE.Group; fogatas: THR
 }
 
 /** La plaza de fiesta: el arco de ramas sobre la puerta, el toldo sobre el púlpito y cántaros con palmas. */
-function construirFiesta(): THREE.Group {
+export function construirFiesta(): THREE.Group {
   const g = new THREE.Group();
   const b = new GeoBuilder();
   const rnd = mulberry32(9131);
@@ -294,17 +327,34 @@ const GRITOS: { text: string; ref: string }[] = [
 ];
 
 /** Lo que hay en la plaza (el pozo, el púlpito, el tablero, las antorchas y los puestos): la gente de la fiesta no se para encima. */
-const ESTORBOS_PLAZA: [number, number, number][] = [
+export const ESTORBOS_PLAZA: [number, number, number][] = [
   [P.POZO[0], P.POZO[1], 1.9], [P.PULPITO[0], P.PULPITO[1], 2.7], [P.ANUNCIOS[0], P.ANUNCIOS[1], 1.3],
   [52.6, 3.2, 0.9], [59.4, 3.2, 0.9], [56, -0.4, 0.9], [48, 0, 0.9], [64, 0, 0.9], [69, 2.4, 0.9], [69, -2.4, 0.9], [54.6, -8.6, 0.9], [61.4, -8.6, 0.9], [46.5, 5.5, 0.9], [46.5, -5.5, 0.9],
   ...P.PUESTOS.map(([x, z]) => [x, z, 1.8] as [number, number, number]),
 ];
 
+/** La gente de la fiesta final: los cantores en la escalinata y el pueblo que alaba en la plaza (sin pararse en nada). */
+export function genteDeFiesta(): { x: number; z: number; yaw: number; hace: "canta" | "alaba" }[] {
+  const out: { x: number; z: number; yaw: number; hace: "canta" | "alaba" }[] = [];
+  for (const x of [40.4, 41.6]) for (const z of [-2.2, -1.4, 1.4, 2.2]) out.push({ x, z, yaw: Math.PI / 2, hace: "canta" });
+  let puestos = 0;
+  for (let k = 0; k < 24 && puestos < 12; k++) {
+    const a = (k / 12) * Math.PI * 2 + (k >= 12 ? 0.26 : 0);
+    const r = k >= 12 ? 6.4 : 4.7;
+    const x = 56 + Math.cos(a) * r, z = -2 + Math.sin(a) * r;
+    if (ESTORBOS_PLAZA.some(([ex, ez, er]) => Math.hypot(x - ex, z - ez) < er)) continue;
+    out.push({ x, z, yaw: Math.atan2(56 - x, -2 - z), hace: "alaba" });
+    puestos++;
+  }
+  return out;
+}
+
 /** Donde se arrodilla el pueblo a orar, al pie de la escalinata (sin tapar el camino del medio ni las antorchas). */
 const LUGARES_ORACION: [number, number][] = [];
 for (const x of [45.6, 47.2, 48.8, 50.4]) for (const z of [2.2, 3.3, 4.4]) for (const sg of [-1, 1]) LUGARES_ORACION.push([x, z * sg]);
 
-export class EscenaHistoria {
+/** La escena de la primera historia, la amenaza de Senaquerib. */
+export class EscenaHistoria implements EscenaDeHistoria {
   group = new THREE.Group();
   private crowd = new Crowd(28);
   private torres: THREE.Group | null = null;
@@ -321,8 +371,9 @@ export class EscenaHistoria {
   private etiquetaFiesta: Etiqueta | null = null;
   private grito: { el: HTMLDivElement | null; hasta: number; siguiente: number; i: number } = { el: null, hasta: 0, siguiente: 0, i: 0 };
   private estado: EstadoHistoria | null = null;
+  private vista: CapitulosVista | null = null;
   /** Se rehicieron las torres (lo que puede tapar al jugador): la ciudad vuelve a armar sus cajas. */
-  torresNuevas = false;
+  tapaNueva = false;
 
   constructor(
     private overlay: Overlay,
@@ -333,21 +384,43 @@ export class EscenaHistoria {
     this.group.add(this.crowd.group);
   }
 
-  /** Pone lo que dice el servidor. Devuelve si cambió algo que da sombra. */
-  poner(e: EstadoHistoria): boolean {
+  ponerVista(v: CapitulosVista | null): boolean {
+    this.vista = v;
+    const actual = !!v && arcoDeTemporada(v.temporada)?.id === SENAQUERIB.id;
+    return this.poner(actual ? estadoDeHistoria(v) : estadoDeLoHecho(v?.hechos ?? []));
+  }
+
+  tomaDeCapitulo(n: number): TomaDeCine | null {
+    const v = this.vista;
+    if (!v || arcoDeTemporada(v.temporada)?.id !== SENAQUERIB.id) return null;
+    const c = v.capitulos.find((x) => x.n === n);
+    const f = !c ? 0 : c.cumplido ? 1 : c.meta ? c.puntos / c.meta : 0;
+    if (n === 1) {
+      // la torre que se está levantando (o la primera, si ya están todas)
+      const z = P.TORRES_NUEVAS[f >= 1 ? 0 : Math.min(P.TORRES_NUEVAS.length - 1, Math.floor(f * P.TORRES_NUEVAS.length))];
+      return { x: 70, z, mx: 78, mz: z };
+    }
+    // si ya llegó el agua (o casi), el estanque; si no, la zanja desde la calle
+    if (n === 2) return f > 0.7 ? { x: 41, z: 60, mx: 35, mz: 67.5 } : { x: 52, z: 46, mx: 70, mz: 48 };
+    if (n === 3) return { x: 71, z: 0, mx: 100, mz: 0, segundos: 9, alto: 0.6 };
+    return { x: 57, z: -1, mx: 44, mz: -3 };
+  }
+
+  /** Pone lo que hay que dibujar. Devuelve si cambió algo que da sombra. */
+  private poner(e: EstadoHistoria): boolean {
     this.estado = e;
     let cambio = false;
-    const ct = `${Math.floor(e.torres * 30)}`;
+    const ct = `${e.actual}:${Math.floor(e.torres * 30)}`;
     if (ct !== this.claves.torres) {
       this.claves.torres = ct;
-      this.torres = this.cambiar(this.torres, construirTorres(e.torres));
-      this.torresNuevas = true;
+      this.torres = this.cambiar(this.torres, construirTorres(e.torres, e.actual));
+      this.tapaNueva = true;
       cambio = true;
     }
-    const cc = `${e.canalAbierto}:${Math.floor(e.canal * 40)}:${e.canalLleno}`;
+    const cc = `${e.actual}:${e.canalAbierto}:${Math.floor(e.canal * 40)}:${e.canalLleno}`;
     if (cc !== this.claves.conducto) {
       this.claves.conducto = cc;
-      this.conducto = this.cambiar(this.conducto, construirConducto(e.canal, e.canalAbierto, e.canalLleno));
+      this.conducto = this.cambiar(this.conducto, construirConducto(e.canal, e.canalAbierto, e.canalLleno, e.actual));
       cambio = true;
     }
     if (e.amenaza !== this.claves.campamento) {
@@ -442,18 +515,7 @@ export class EscenaHistoria {
       agregar(p.x - Math.cos(p.dir) * 0.75 - Math.sin(p.dir) * 0.6, p.z + Math.sin(p.dir) * 0.75 - Math.cos(p.dir) * 0.6, p.dir + Math.PI, "cava");
     }
     // la fiesta: los cantores en la escalinata y el pueblo que alaba en la plaza
-    if (e.fiesta === "fiesta" || e.fiesta === "vivo") {
-      for (const x of [40.4, 41.6]) for (const z of [-2.2, -1.4, 1.4, 2.2]) agregar(x, z, Math.PI / 2, "canta", true);
-      let puestos = 0;
-      for (let k = 0; k < 24 && puestos < 12; k++) {
-        const a = (k / 12) * Math.PI * 2 + (k >= 12 ? 0.26 : 0);
-        const r = k >= 12 ? 6.4 : 4.7;
-        const x = 56 + Math.cos(a) * r, z = -2 + Math.sin(a) * r;
-        if (ESTORBOS_PLAZA.some(([ex, ez, er]) => Math.hypot(x - ex, z - ez) < er)) continue;
-        agregar(x, z, Math.atan2(56 - x, -2 - z), "alaba");
-        puestos++;
-      }
-    }
+    if (e.fiesta === "fiesta" || e.fiesta === "vivo") for (const g of genteDeFiesta()) agregar(g.x, g.z, g.yaw, g.hace, g.hace === "canta");
   }
 
   private ponerEtiquetas(e: EstadoHistoria) {
@@ -474,15 +536,18 @@ export class EscenaHistoria {
     };
     P.TORRES_NUEVAS.forEach((zt, i) => {
       const fi = Math.max(0, Math.min(1, e.torres * P.TORRES_NUEVAS.length - i));
+      if (!e.actual && fi < 1) return;
       const alto = 1.0 + 7.2 * fi;
       pon(fi >= 1 ? "Torre nueva (2 Crónicas 32:5)" : fi > 0 ? `Torre nueva: se levanta (${Math.round(fi * 100)} %)` : "Aquí se alzará una torre nueva", new THREE.Vector3(P.TORRE_X - 2.2, Y + alto + 1.4, zt), 24);
     });
-    pon(
-      e.canalLleno ? "El conducto de Ezequías: ¡el agua llegó!" : e.canalAbierto ? `El conducto de Ezequías (${Math.round(e.canal * 100)} %)` : "Por aquí pasará el conducto de Ezequías",
-      new THREE.Vector3(58, Y + 1.6, P.CONDUCTO[0][1]),
-      15,
-    );
-    pon(e.canalLleno ? "El estanque de Siloé" : "El estanque de Siloé (todavía seco)", new THREE.Vector3((P.ESTANQUE[0] + P.ESTANQUE[2]) / 2, Y + 2.0, (P.ESTANQUE[1] + P.ESTANQUE[3]) / 2), 16);
+    if (e.actual || e.canalLleno) {
+      pon(
+        e.canalLleno ? "El conducto de Ezequías: ¡el agua llegó!" : e.canalAbierto ? `El conducto de Ezequías (${Math.round(e.canal * 100)} %)` : "Por aquí pasará el conducto de Ezequías",
+        new THREE.Vector3(58, Y + 1.6, P.CONDUCTO[0][1]),
+        15,
+      );
+      pon(e.canalLleno ? "El estanque de Siloé" : "El estanque de Siloé (todavía seco)", new THREE.Vector3((P.ESTANQUE[0] + P.ESTANQUE[2]) / 2, Y + 2.0, (P.ESTANQUE[1] + P.ESTANQUE[3]) / 2), 16);
+    }
     this.etiquetaRabsaces = e.amenaza === "acampa" ? pon("El Rabsaces, enviado de Senaquerib", new THREE.Vector3(P.RABSACES[0], alturaTerreno(P.RABSACES[0], P.RABSACES[1]) + 2.6, P.RABSACES[1]), 30) : null;
     this.etiquetaRey = e.amenaza === "acampa" ? pon("El rey Ezequías ora ante Jehová", new THREE.Vector3(P.REY_ORA[0], 2.1, P.REY_ORA[1]), 34) : null;
     this.etiquetaFiesta = null;

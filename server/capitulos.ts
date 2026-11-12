@@ -2,8 +2,8 @@
  * La historia de la temporada (shared/capitulos.ts): cada semana un capítulo con una meta de toda la ciudad. La suman
  * los deberes, los encargos y los recados de todos, y la lleva este archivo. Al cumplirse, quienes ayudaron (con un
  * mínimo) reciben gozo y una prenda que no se vende; quien llega al mínimo después, en la misma semana, también.
- * Al final, la fiesta de la liberación en la plaza: el servidor mira la fecha y que la persona esté de verdad en la
- * plaza (la presencia de la ciudad). Nada se simula: solo se cuenta y se comprueba.
+ * Al final, la fiesta de la historia en la plaza: el servidor mira la fecha y que la persona esté de verdad en la plaza
+ * (la presencia de la ciudad). Nada se simula: solo se cuenta y se comprueba.
  *
  * Las cuentas son por persona (su titular, el primer personaje), como el gozo y la racha.
  */
@@ -74,6 +74,31 @@ async function asegurarCapitulo(temporada: number, n: number): Promise<void> {
   if (filasHechas.size > 200) filasHechas.clear();
 }
 
+/**
+ * Lo que la ciudad terminó la última vez que se contó cada una de las otras historias («historia:capítulo»): lo que se
+ * levantó en otra temporada (las torres, el conducto) sigue en la ciudad. Las temporadas pasadas casi no cambian: se
+ * recuerda unos minutos, y se olvida al cumplirse un capítulo.
+ */
+let hechosGuardados: { temporada: number; t: number; hechos: string[] } | null = null;
+async function hechosDeAntes(temporada: number): Promise<string[]> {
+  if (hechosGuardados && hechosGuardados.temporada === temporada && Date.now() - hechosGuardados.t < 5 * 60_000) return hechosGuardados.hechos;
+  const actual = arcoDeTemporada(temporada)?.id;
+  // la última temporada (antes de esta) en que se contó cada historia
+  const ultima = new Map<string, number>();
+  for (let s = temporada - 1; s >= 1; s--) {
+    const a = arcoDeTemporada(s);
+    if (a && a.id !== actual && !ultima.has(a.id)) ultima.set(a.id, s);
+  }
+  const temporadas = [...ultima.values()];
+  let hechos: string[] = [];
+  if (temporadas.length) {
+    const { rows } = await pool.query(`SELECT season, capitulo FROM game_capitulos WHERE season = ANY($1::int[]) AND done_at IS NOT NULL ORDER BY season, capitulo`, [temporadas]);
+    hechos = rows.map((r) => `${arcoDeTemporada(Number(r.season))!.id}:${Number(r.capitulo)}`);
+  }
+  hechosGuardados = { temporada, t: Date.now(), hechos };
+  return hechos;
+}
+
 /** La prenda al armario de la casa (una sola vez). */
 async function darPrenda(titular: number, prenda: string) {
   await pool.query(`UPDATE game_characters SET armario = CASE WHEN armario @> to_jsonb($2::text) THEN armario ELSE armario || to_jsonb($2::text) END WHERE id = $1`, [titular, prenda]);
@@ -131,6 +156,7 @@ export async function aportarAlCapitulo(ch: { id: number; user_id: number }, pun
     // solo uno la cumple, aunque lleguen dos a la vez
     const { rows: gano } = await pool.query(`UPDATE game_capitulos SET done_at = now() WHERE season = $1 AND capitulo = $2 AND done_at IS NULL RETURNING capitulo`, [t, cap.n]);
     if (gano.length) {
+      hechosGuardados = null;
       const premiados = await premiar(t, cap, null);
       if (premiados.includes(titular)) out.push(avisoDePremio(cap));
       else out.push({ titulo: `${cap.icono} ${cap.alCumplir}`, premio: 0 });
@@ -151,13 +177,14 @@ async function vistaDe(titular: number): Promise<CapitulosVista | null> {
   const arco = arcoDeTemporada(temporada);
   if (!arco || indice < 0) return null;
   const hoy = capituloDelDia(tx.dia);
-  const [{ rows: caps }, { rows: mios }, { rows: fiesta }] = await Promise.all([
+  const [{ rows: caps }, { rows: mios }, { rows: fiesta }, hechos] = await Promise.all([
     pool.query(`SELECT capitulo, meta, puntos, done_at FROM game_capitulos WHERE season = $1`, [temporada]),
     pool.query(`SELECT capitulo, puntos, premiado_at FROM game_capitulo_aportes WHERE season = $1 AND titular = $2`, [temporada, titular]),
     pool.query(
       `SELECT count(*)::int AS n, bool_or(titular = $2) AS fui, bool_or(titular = $2 AND en_vivo) AS vivo FROM game_fiesta_gracias WHERE season = $1`,
       [temporada, titular],
     ),
+    hechosDeAntes(temporada),
   ]);
   let top: CapitulosVista["top"] = [];
   if (hoy) {
@@ -206,6 +233,7 @@ async function vistaDe(titular: number): Promise<CapitulosVista | null> {
       yo: { fui: !!fiesta[0]?.fui, enVivo: !!fiesta[0]?.vivo },
     },
     aporteMinimo: APORTE_MINIMO_CAPITULO,
+    hechos,
   };
 }
 
@@ -260,7 +288,7 @@ export function registerCapitulosRoutes(app: Express) {
     }
   });
 
-  // Dar gracias en la fiesta de la liberación: en sus días y en la plaza (lo mira el servidor con la presencia).
+  // Dar gracias en la fiesta de la historia: en sus días y en la plaza (lo mira el servidor con la presencia).
   app.post("/api/jerusalen/capitulos/gracias", async (req: Request, res: Response) => {
     try {
       const ch = await persona(req, res);

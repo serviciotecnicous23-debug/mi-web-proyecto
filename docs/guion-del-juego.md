@@ -46,9 +46,16 @@ el mismo día para todos.
 | De noche | Antorchas, ventanas encendidas y la hora de las trompetas de la luna nueva | ×1,5 de mérito de 7 a 9 |
 
 ### La semana
-- **Los capítulos de la temporada**: cada semana avanza la historia de Ezequías frente a Senaquerib
-  (2 Reyes 18–19): reparar el muro, cavar el canal al estanque de Siloé, las palabras del Rabsaces y la
-  liberación. Cada capítulo trae sus recados, sus chismes y su evento en vivo.
+- **Los capítulos de la temporada**: cada semana avanza la historia de la temporada, con una meta de toda la
+  ciudad. Cada capítulo trae sus recados, sus chismes, lo que se ve en la ciudad y su premio; al final, la fiesta
+  en la plaza con la gran alabanza en vivo.
+  - Temporada 1, **la amenaza de Senaquerib** (2 Reyes 18–19): reparar el muro y alzar las torres, cavar el
+    conducto al estanque de Siloé, las palabras del Rabsaces y la oración del rey, y la liberación.
+  - Temporada 2, **la gran Pascua de Ezequías** (2 Crónicas 29–31), del 7 de diciembre al 3 de enero: las puertas
+    abiertas (la ciudad limpia el templo y los levitas llevan lo inmundo al Cedrón), el cántico de Jehová (los
+    cantores y las trompetas en la escalinata), las cartas del rey (el correo pregona en la puerta y llegan
+    peregrinos al monte; también se invita a un amigo) y la gran Pascua (se quitan los altares de Acaz). La fiesta:
+    «el gran regocijo», del 1 al 3 de enero.
 - **La ofrenda del barrio**: una meta de deberes entre todos los vecinos; la copa de los barrios premia a los
   tres primeros.
 - **El día de reposo** (cada sábado): no rompe la racha, el servicio vale ×1,1 y su encargo es ir a una
@@ -60,8 +67,14 @@ el mismo día para todos.
   estudios.
 - La casa crece con la honra: **tienda → casa de adobe → casa de piedra con patio → casa con aposento alto**, y se
   edifica con el gozo: las obras de la casa (capítulo 7) y sus estrellas.
-- Al cerrar, empieza otra temporada; mientras no haya una historia nueva, cada temporada vuelve a contar la
-  última (las historias van en orden en `ARCOS`, `shared/capitulos.ts`).
+- Al cerrar, empieza otra temporada. Las historias van en `PROGRAMA` (`shared/capitulos.ts`): una nueva se
+  agrega con la temporada en que empieza (siempre una que todavía no empezó); después de la última, se turnan
+  todas en orden (la temporada 3 vuelve a contar la de Senaquerib, la 4 la Pascua…).
+- Lo que la ciudad levantó en una historia se queda cuando se cuenta otra: las torres y el conducto de Siloé
+  siguen en pie en la temporada 2 (solo si se terminaron). Cuando la historia vuelve a contarse, se levanta de
+  nuevo.
+- En el álbum, cada historia es una colección con su título: sus cinco prendas (una por capítulo cumplido y la de
+  la fiesta) dan «Atalaya de Sion» (Senaquerib) o «De un solo corazón» (la Pascua).
 
 ### El año (el calendario real)
 El año no se acaba: cada día real es un día en Jerusalén. Las fiestas de Levítico 23 caen en su fecha hebrea
@@ -200,6 +213,22 @@ Las reglas posibles: `{ fiesta: "pascua" }` (fecha hebrea de Levítico 23), `{ s
 Resurrección). Con eso el evento aparece solo en el calendario, en «Para hoy», en los anuncios, en lo que dice la
 gente, en los avisos y en los encargos. Para que la gente de la calle lo nombre con una frase propia, se agrega
 también a `FRASES_EVENTO` en `client/src/games/templo/ciudad/frases.ts`. Y se prueba en `shared/anio.test.ts`.
+
+### Cómo agregar una historia de temporada
+
+1. Se escribe en `shared/capitulos.ts` como las otras (`ArcoTemporada`): cuatro capítulos (cada uno con su unidad,
+   su tarea, la historia en palabras propias, su verso, su guía de la calle de los siervos, el diálogo del comienzo,
+   lo que se dice al cumplir, el premio, los chismes y dos recados), la fiesta final y el título de su colección en
+   el álbum. Las citas, literales de la RVR1960 y comprobadas con la Biblia del sitio.
+2. Sus cinco prendas van en `PRENDAS_CAPITULOS`: con eso ya no se venden, se ven en el mercado y forman su colección
+   del álbum.
+3. Se agrega a `PROGRAMA` con la temporada en que empieza (siempre una que todavía no empezó, para no cambiarle la
+   historia a nadie).
+4. Los nombres de sus capítulos van en `CapituloId`, con su lugar en el mapa (`LUGAR_CAPITULO`, `MapaUI.tsx`) y lo
+   que dice la gente (`FRASES_CAPITULO` y `FRASES_FIESTA_DE`, `ciudad/frases.ts`).
+5. Lo que se ve en la ciudad es una escena que cumple `EscenaDeHistoria` (`ciudad/capitulos3d.ts`; la de la Pascua
+   está en `ciudad/pascua3d.ts`) y se suma a `historias` en `ciudad/mundo.ts`.
+6. Se prueba en `shared/temporada2.test.ts` (las fechas, el orden, los recados, las prendas y el álbum).
 
 ## 6. Lo que aprendimos de cinco juegos parecidos
 
@@ -385,14 +414,16 @@ de Club Penguin:
 **El álbum** (`shared/album.ts`, `server/album.ts`, `AlbumUI.tsx`, en *Tu casa → Álbum*), inspirado en la colección de
 Pokémon GO:
 - Todo lo que se tuvo alguna vez queda anotado (`game_album`), aunque después se venda o se regale.
-- Hay 7 colecciones, cada una con su título:
+- Hay 7 colecciones, cada una con su título, más una por cada historia de la temporada:
   - los muebles: «Buen mayordomo»;
   - los adornos: «Casa alegre»;
   - la ropa de siempre: «Bien vestido»;
   - la ropa del año: «Guarda los tiempos»;
   - los muebles finos: «Artífice»;
   - la ropa fina: «Bordador de oro»;
-  - lo que se gana: «Tesoro de Jerusalén».
+  - lo que se gana (los trajes de los sabios, el mejor vestido y la faja del buen amigo): «Tesoro de Jerusalén»;
+  - las cinco prendas de la amenaza de Senaquerib: «Atalaya de Sion»;
+  - las cinco prendas de la gran Pascua de Ezequías: «De un solo corazón».
 - Más títulos: «Dador alegre», «Buen amigo», «Coleccionista» (40 cosas) y «Gran coleccionista» (100).
 - El título elegido lo ven los vecinos en la ficha (`VecinoInfo.titulo`).
 
@@ -406,8 +437,8 @@ Lo que queda:
 1. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
 2. **Mentores** para los nuevos (las colecciones visibles ya están: el álbum de la fase 4; faltan los dichos).
 3. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
-4. **Una historia nueva para la temporada 2** (`ARCOS` en `shared/capitulos.ts`); mientras tanto se repite la de
-   Ezequías y Senaquerib.
+4. **Una historia para la temporada 3 y las que siguen** (`PROGRAMA` en `shared/capitulos.ts`; la temporada 2,
+   la gran Pascua de Ezequías, ya está). Mientras no haya otra, se turnan las dos.
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base
 (cuentas, gozo, calendario y avisos).

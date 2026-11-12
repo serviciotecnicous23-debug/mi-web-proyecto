@@ -126,8 +126,25 @@ export function alturaTerreno(x: number, z: number): number {
   return h;
 }
 
+/** La malla del terreno (buildTerreno): 520 × 480 m en 110 × 100 cuadros, corrida 40 m al oriente. */
+const TERRENO = { x0: -220, z0: -240, dx: 520 / 110, dz: 480 / 100, nx: 110, nz: 100 };
+
+/**
+ * La altura del suelo de afuera tal como se dibuja: los dos triángulos de cada cuadro de la malla del terreno. En el
+ * valle del Cedrón, que es hondo y angosto, los triángulos quedan más altos que alturaTerreno: lo que se pone ahí con
+ * esta altura no queda enterrado.
+ */
+export function alturaSuelo(x: number, z: number): number {
+  const fx = (x - TERRENO.x0) / TERRENO.dx, fz = (z - TERRENO.z0) / TERRENO.dz;
+  const ix = Math.max(0, Math.min(TERRENO.nx - 1, Math.floor(fx))), iz = Math.max(0, Math.min(TERRENO.nz - 1, Math.floor(fz)));
+  const u = fx - ix, v = fz - iz;
+  const X = (i: number) => TERRENO.x0 + i * TERRENO.dx, Z = (j: number) => TERRENO.z0 + j * TERRENO.dz;
+  const ha = alturaTerreno(X(ix), Z(iz)), hb = alturaTerreno(X(ix), Z(iz + 1)), hc = alturaTerreno(X(ix + 1), Z(iz + 1)), hd = alturaTerreno(X(ix + 1), Z(iz));
+  return u + v <= 1 ? ha + u * (hd - ha) + v * (hb - ha) : hc + (1 - u) * (hb - hc) + (1 - v) * (hd - hc);
+}
+
 function buildTerreno(root: THREE.Group) {
-  const geo = new THREE.PlaneGeometry(520, 480, 110, 100);
+  const geo = new THREE.PlaneGeometry(520, 480, TERRENO.nx, TERRENO.nz);
   geo.rotateX(-Math.PI / 2);
   geo.translate(40, 0, 0);
   const p = geo.attributes.position;

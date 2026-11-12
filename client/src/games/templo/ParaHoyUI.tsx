@@ -101,12 +101,12 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   if (hv && arco) {
     const f = hv.fiesta;
     const irPlaza = city ? { texto: "Ir", hacer: () => (gameStore.close(), city.irA("plaza")) } : { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) };
-    if (f.momento === "vivo" && !f.yo.enVivo) lineas.push({ id: "fiesta", icono: "🎺", texto: `¡Es la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias (+${arco.fiesta.premio.vivo} de gozo más)`, boton: irPlaza });
-    else if (f.momento === "fiesta" && !f.yo.fui) lineas.push({ id: "fiesta", icono: "🎺", texto: `¡Hoy es ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad`, boton: irPlaza });
+    if (f.momento === "vivo" && !f.yo.enVivo) lineas.push({ id: "fiesta", icono: arco.fiesta.icono, texto: `¡Es la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias (+${arco.fiesta.premio.vivo} de gozo más)`, boton: irPlaza });
+    else if (f.momento === "fiesta" && !f.yo.fui) lineas.push({ id: "fiesta", icono: arco.fiesta.icono, texto: `¡Hoy es ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad`, boton: irPlaza });
     else if ((f.momento === "fiesta" || f.momento === "vivo") && f.yo.fui)
-      lineas.push({ id: "fiesta", icono: "🎺", texto: `Diste gracias en la fiesta ✓ ${f.momento === "fiesta" && !f.yo.enVivo ? `La gran alabanza: el ${fechaEnPalabras(f.vivo.dia)} a las ${horaEnPalabras(f.vivo.desde)} (hora de Texas)` : `Ya ${f.participantes === 1 ? "dio gracias 1 vecino" : `dieron gracias ${f.participantes} vecinos`}`}` });
+      lineas.push({ id: "fiesta", icono: arco.fiesta.icono, texto: `Diste gracias en la fiesta ✓ ${f.momento === "fiesta" && !f.yo.enVivo ? `La gran alabanza: el ${fechaEnPalabras(f.vivo.dia)} a las ${horaEnPalabras(f.vivo.desde)} (hora de Texas)` : `Ya ${f.participantes === 1 ? "dio gracias 1 vecino" : `dieron gracias ${f.participantes} vecinos`}`}` });
     else if (f.momento === "antes" && (hv.hoy?.n ?? 0) >= 3)
-      lineas.push({ id: "fiesta", icono: "🎺", texto: `Del ${fechaEnPalabras(f.desde)} al ${fechaEnPalabras(f.hasta)}: ${arco.fiesta.titulo.toLowerCase()} en la plaza, con toda la ciudad`, boton: { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) } });
+      lineas.push({ id: "fiesta", icono: arco.fiesta.icono, texto: `Del ${fechaEnPalabras(f.desde)} al ${fechaEnPalabras(f.hasta)}: ${arco.fiesta.titulo.toLowerCase()} en la plaza, con toda la ciudad`, boton: { texto: "Ver", hacer: () => abrir({ kind: "capitulos" }) } });
     const cv = hv.hoy ? hv.capitulos.find((c) => c.n === hv.hoy!.n) : null;
     const cap = cv ? arco.capitulos.find((c) => c.n === cv.n) : null;
     if (cv && cap) {

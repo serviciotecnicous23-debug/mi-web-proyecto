@@ -89,6 +89,16 @@ export const RABSACES: V2 = [82.5, 0.4];
 /** Donde ora el rey Ezequías: arriba de la escalinata, ante la casa de Jehová. */
 export const REY_ORA: V2 = [33.4, 0];
 
+// la segunda historia, la gran Pascua de Ezequías (ciudad/pascua3d.ts)
+/** Lo inmundo que los sacerdotes sacaron al atrio (2 Crónicas 29:16): montones en el gran atrio, junto a su puerta. */
+export const MONTONES_ATRIO: V2[] = [[31.0, 4.4], [30.2, -4.8], [28.8, 7.0], [31.4, -7.6], [27.6, 8.8]];
+/** Donde los levitas echan lo inmundo: el torrente de Cedrón, afuera de la puerta del oriente (se ve por la puerta). */
+export const CEDRON: V2 = [91.6, 1.4];
+/** Los altares que Acaz se hizo «en todos los rincones» de Jerusalén (2 Crónicas 28:24): en las esquinas de las calles. */
+export const ALTARES_ACAZ: V2[] = [[73.2, 13.8], [73.2, -13.8], [38.8, 16.8], [38.8, -16.8], [61.6, 17.2], [50.2, -17.2]];
+/** Donde pregona el correo del rey (2 Crónicas 30:6), adentro de la puerta. */
+export const CORREO_REY: V2 = [71.2, -4.2];
+
 
 // las parcelas de cada barrio viven en shared/parcelas.ts (el servidor las usa para saber quién está en una puerta)
 import { CALLES_DE_AREA, PARCELAS, parcelaDe, type Parcela } from "@shared/parcelas";
