@@ -158,7 +158,7 @@ export function registerCaminoRoutes(app: Express) {
           [ch.casa, c.dia],
         );
         if (!rows.length) return { error: 409, message: "Ya abriste el cofre de hoy." };
-        await sumarGozo(ch.casa, GOZO_COFRE);
+        await sumarGozo(ch.casa, GOZO_COFRE, "cofre");
         const racha = await marcarServicio(ch.id);
         return { racha };
       });

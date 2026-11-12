@@ -349,7 +349,7 @@ async function revisarCargos(season: number, alCerrar = false) {
     const cargo = nombreEscalonCamino(c.camino, c.ahora, escalonNombre(c.ahora)).toLowerCase();
     // al empezar la temporada, cada cargo recibe su premio de gozo (una vez)
     const premio = alCerrar ? PREMIO_CARGO[c.ahora] : 0;
-    if (premio) await sumarGozo(c.id, premio).catch(() => null);
+    if (premio) await sumarGozo(c.id, premio, "cargos").catch(() => null);
     await evento(
       c.user,
       `cargo:T${season}:${c.camino}:${c.ahora}`,
@@ -928,7 +928,7 @@ export function registerJerusalenRoutes(app: Express) {
       });
       // el gozo: uno por cada deber aceptado
       const cuantos = Object.values(aceptados).reduce((a, b) => a + Number(b || 0), 0);
-      await sumarGozo(ch.id, cuantos * GOZO.deber).catch(() => null);
+      await sumarGozo(ch.id, cuantos * GOZO.deber, "deberes").catch(() => null);
       // los encargos del día y la ofrenda del barrio (fuera de la fila del mérito)
       const misiones = await misionesPorDeberes(ch, aceptados, juntos >= JUNTOS_DESDE).catch((err) => {
         console.error("[jerusalen] misiones:", err);
@@ -1055,7 +1055,7 @@ export function registerJerusalenRoutes(app: Express) {
         return { status: 200, body };
       });
       if (out.status === 200 && (out.body as JerusalenRespuesta).correcta) {
-        await sumarGozo(ch.id, GOZO.acierto).catch(() => null);
+        await sumarGozo(ch.id, GOZO.acierto, "preguntas").catch(() => null);
         const misiones = await avanzarMision(ch, "aciertos", 1).catch(() => []);
         if (misiones.length) return res.json({ ...(out.body as JerusalenRespuesta), misiones });
       }

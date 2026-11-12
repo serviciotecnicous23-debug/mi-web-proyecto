@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-obras-de-la-casa",
+    fecha: "11 de noviembre de 2026",
+    titulo: "Edifica tu casa con el gozo",
+    puntos: [
+      "🧱 Las obras de tu casa: en Tu casa → Obras edificas con tu gozo y con harina de tu huerto (el pan de los obreros): cerco, cisterna, horno de barro, granero, emparrado, puerta de cedro, pórtico, fuente y hasta una torre. Tus vecinos ven cada obra.",
+      "💧 Las obras sirven: la cisterna riega lo que siembras, el huerto ensanchado tiene una parcela más, el horno de barro hornea 5 y el granero guarda 30 más.",
+      "📚 Las obras finas piden estudios aprobados en la escuela: estudiar también edifica tu casa.",
+      "⭐ Las estrellas de tu casa (de 1 a 5): suman tus obras, tus muebles, los juegos de muebles completos, tus adornos y tu letrero. Las ven tus vecinos cuando te visitan.",
+      "📸 La foto de tu casa: tómala en Tu casa y compártela por WhatsApp, TikTok o Facebook para invitar a tus amigos.",
+    ],
+  },
+  {
     id: "2026-11-11-regalo-de-regreso",
     fecha: "11 de noviembre de 2026",
     titulo: "El regalo de regreso y lo que hizo tu barrio",

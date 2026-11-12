@@ -19,6 +19,7 @@ import { lineasDeRacha } from "./RachaUI";
 import { diaEnJerusalen, mananaEnJerusalen } from "@shared/anio";
 import type { RachaVista } from "@shared/racha";
 import { arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type CapitulosVista } from "@shared/capitulos";
+import { OBRAS, costoDeObra, obra, type ObrasEstado } from "@shared/obras";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -33,7 +34,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null; obras: ObrasEstado | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -46,7 +47,13 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<{ estado: RecadoEstado }>("/recado"),
       traer<RachaVista>("/racha"),
       traer<{ vista: CapitulosVista | null }>("/capitulos"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos]) => vivo && setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null }));
+      traer<ObrasEstado>("/casa/obras"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos, obras]) => {
+      if (!vivo) return;
+      setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null, obras });
+      // si terminó una obra, la ciudad la dibuja ya (la ven los vecinos)
+      if (obras?.terminada) city?.alObras(obras.hechas, obras.estrellas.estrellas, obras.gozo);
+    });
     return () => {
       vivo = false;
     };
@@ -118,6 +125,26 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
     else if (vacias && semillas) lineas.push({ id: "huerto", icono: "🌱", texto: "Tienes semillas y parcelas vacías: siembra en tu huerto", boton: irCasa });
     if (m.horno && m.horno.faltan <= 0) lineas.push({ id: "horno", icono: "🫓", texto: "Tu horno está listo: saca lo preparado", boton: irCasa });
     else if (m.preparadas.tortas + m.preparadas.aceitePuro > 0) lineas.push({ id: "horno", icono: "🫓", texto: "Tienes ofrendas preparadas para llevar al templo", boton: irCasa });
+  }
+  // las obras de tu casa (shared/obras.ts): la que se está haciendo o la que ya alcanza con tu gozo
+  const o = d.obras;
+  if (o) {
+    const irObras = { texto: "Ver", hacer: () => abrir({ kind: "casa", pestana: "obras" }) };
+    const enObra = o.curso ? obra(o.curso.id) : null;
+    if (o.terminada) {
+      const t = obra(o.terminada);
+      if (t) lineas.push({ id: "obra", icono: t.icono, texto: `¡Terminaron tu obra: ${t.nombre.toLowerCase()}! Tus vecinos ya la ven`, boton: irObras });
+    } else if (enObra && o.curso) {
+      const min = Math.ceil(o.curso.faltan / 60);
+      lineas.push({ id: "obra", icono: "🔨", texto: `Los obreros trabajan en ${enObra.nombre.toLowerCase()}: ${min >= 60 ? `faltan ${Math.floor(min / 60)} h ${min % 60} min` : `faltan ${min} min`}`, boton: irObras });
+    } else {
+      const alcanza = OBRAS.find((x) => {
+        const v = o.obras.find((y) => y.id === x.id);
+        const c = costoDeObra(x);
+        return v?.estado === "se-puede" && o.gozo >= c.gozo && o.harina >= c.harina && o.aceite >= c.aceite;
+      });
+      if (alcanza) lineas.push({ id: "obra", icono: "🧱", texto: `Con tu gozo ya puedes edificar en tu casa: ${alcanza.icono} ${alcanza.nombre.toLowerCase()} (${alcanza.gozo})`, boton: irObras });
+    }
   }
   // las reuniones de ahora
   for (const r of (d.reuniones?.activas ?? []).filter((x) => !x.yaFui && x.faltan > 0).slice(0, 2)) {

@@ -96,7 +96,7 @@ const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 export type BarrioVisto = {
   n: number;
   area: number;
-  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[];
+  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null; obras?: string[]; estrellas?: number }[];
   detalle: boolean;
   /** El nivel del barrio en la copa de los barrios (lámparas, olivos, fuente, estandartes, arco). */
   nivelBarrio?: number;
@@ -1944,7 +1944,7 @@ export class CiudadWorld {
       }
       if (b?.detalle) {
         const dib: CasaDibujo[] = [
-          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero })),
+          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero, obras: c.obras })),
           ...delPueblo.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: 1_000_000 + n * 100 + c.parcela, pueblo: true })),
         ];
         const { grupo, ventanas } = construirAreaDetalle(area, dib, b.nivelBarrio ?? 0);
@@ -2033,6 +2033,51 @@ export class CiudadWorld {
       this.dibujarAreas();
     }
     this.pushHud();
+  }
+
+  /** Las obras de tu casa cambiaron (empezó o terminó una): se redibuja si cambió lo edificado (shared/obras.ts). */
+  alObras(obras: string[], estrellas: number, gozo: number) {
+    const antes = this.estado.barrio.casas.find((c) => c.personajeId === this.casaPropia);
+    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.casaPropia ? { ...c, obras, estrellas } : c));
+    this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo }, barrio: { ...this.estado.barrio, casas } };
+    if (JSON.stringify(antes?.obras ?? []) !== JSON.stringify(obras)) {
+      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true, nivelBarrio: this.barrios.get(this.estado.barrio.n)?.nivelBarrio });
+      this.dibujarAreas();
+    }
+    this.pushHud();
+  }
+
+  /**
+   * La foto de tu casa (para compartirla): una cámara delante de tu puerta, de tres cuartos, dibuja un cuadro y se
+   * copia enseguida (sin esperar al cuadro siguiente: así no hace falta guardar el dibujo). Recorta 4:5.
+   */
+  fotoDeCasa(): HTMLCanvasElement | null {
+    if (!this.running) return null;
+    const p = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
+    const y0 = P.alturaCiudad(p.x, p.z);
+    const cam = this.camera.clone();
+    const lado = (this.estado.yo.parcela % 2 === 0 ? 1 : -1) * 2.6;
+    cam.position.set(p.x + lado, y0 + 3.4, p.z + p.dir * 7.4);
+    cam.fov = 44;
+    cam.aspect = this.w / this.h;
+    cam.near = 0.1;
+    cam.updateProjectionMatrix();
+    cam.lookAt(p.x, y0 + 1.25, p.z + p.dir * 0.7);
+    this.renderer.render(this.scene, cam);
+    const src = this.renderer.domElement;
+    const W = src.width, H = src.height;
+    let cw = W, ch = Math.round((W * 5) / 4);
+    if (ch > H) {
+      ch = H;
+      cw = Math.round((H * 4) / 5);
+    }
+    const out = document.createElement("canvas");
+    out.width = cw;
+    out.height = ch;
+    out.getContext("2d")?.drawImage(src, Math.round((W - cw) / 2), Math.round((H - ch) / 2), cw, ch, 0, 0, cw, ch);
+    // vuelve la vista de siempre
+    this.renderer.render(this.scene, this.camera);
+    return out;
   }
 
   actualizarPrivada(p: CasaPrivada, nivel?: number) {

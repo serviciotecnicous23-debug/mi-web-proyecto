@@ -25,6 +25,7 @@ import {
   type CiudadEstado,
 } from "@shared/ciudad";
 import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
+import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
 
 const JUEGO = JERUSALEN_JUEGO;
 
@@ -137,7 +138,7 @@ function leerSiervos(v: unknown, max: number): Bien[] {
   return Array.isArray(v) ? (v.filter((x) => typeof x === "string" && x in BIEN) as Bien[]).slice(0, max) : [];
 }
 
-type Recogida = { nivel: number; siervos: Bien[]; bienes: Record<Bien, number>; recogido: Record<Bien, number>; usadoHoy: number; ofrecido: number };
+type Recogida = { nivel: number; siervos: Bien[]; bienes: Record<Bien, number>; recogido: Record<Bien, number>; usadoHoy: number; ofrecido: number; /** lo que cabe en el alfolí (con el granero de las obras) */ capacidad: number };
 
 /**
  * Lo que prepararon los siervos desde la última vez, con el tope de los levitas: como mucho 2 h
@@ -146,7 +147,7 @@ type Recogida = { nivel: number; siervos: Bien[]; bienes: Record<Bien, number>; 
 export async function recoger(characterId: number): Promise<Recogida | null> {
   return enFilaCasa(characterId, async () => {
     const { rows } = await pool.query(
-      `SELECT level, servants, goods, prod_day, prod_seconds, offered,
+      `SELECT level, servants, goods, prod_day, prod_seconds, offered, obras,
               EXTRACT(EPOCH FROM (now() - COALESCE(collected_at, created_at)))::float AS pasados
          FROM game_houses WHERE character_id = $1`,
       [characterId],
@@ -160,7 +161,8 @@ export async function recoger(characterId: number): Promise<Recogida | null> {
     const antes = r.prod_day === hoy ? Number(r.prod_seconds) : 0;
     const t = siervos.length ? Math.max(0, Math.min(Number(r.pasados) || 0, SIERVOS_SALIDA, SIERVOS_DIA - antes)) : 0;
     const horas = horasEfectivas(t);
-    const cap = capacidadAlfoli(nivel);
+    // el granero de las obras de la casa (shared/obras.ts) guarda más
+    const cap = capacidadAlfoli(nivel) + ventajasDeColumna(r.obras).alfoli;
     const recogido = cero();
     for (const sv of siervos) {
       const previo = bienes[sv];
@@ -172,7 +174,7 @@ export async function recoger(characterId: number): Promise<Recogida | null> {
       `UPDATE game_houses SET goods = $2::jsonb, collected_at = now(), prod_day = $3, prod_seconds = $4 WHERE character_id = $1`,
       [characterId, JSON.stringify(bienes), hoy, usadoHoy],
     );
-    return { nivel, siervos, bienes, recogido, usadoHoy, ofrecido: Number(r.offered) };
+    return { nivel, siervos, bienes, recogido, usadoHoy, ofrecido: Number(r.offered), capacidad: cap };
   });
 }
 
@@ -198,7 +200,7 @@ async function privadaDe(characterId: number, r: Recogida, marcar: boolean): Pro
     siervos: r.siervos,
     maxSiervos: siervosPermitidos(r.nivel),
     bienes: piso(r.bienes),
-    capacidad: capacidadAlfoli(r.nivel),
+    capacidad: r.capacidad,
     recogido: rec.harina + rec.aceite + rec.corderos > 0 ? rec : null,
     minutosHoy: Math.round(r.usadoHoy / 60),
     ofrecido: r.ofrecido,
@@ -233,7 +235,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
   const p = (async () => {
     const t = temporadaDe();
     const { rows } = await pool.query(
-      `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, c.name, c.user_id, u.display_name, u.username,
+      `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, h.obras, h.interior, c.name, c.user_id, u.display_name, u.username,
               (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS actual,
               (SELECT COALESCE(sum(m.merit), 0)::int FROM game_season_merit m JOIN game_characters c2 ON c2.id = m.character_id
                 WHERE c2.user_id = c.user_id AND c2.game = c.game) AS honra,
@@ -263,6 +265,9 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         esMia: false,
         adornos: Array.isArray(r.adornos) ? (r.adornos as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 8) : [],
         letrero: (r.letrero as string | null) ?? null,
+        // las obras de la casa y sus estrellas (shared/obras.ts): las ven los vecinos
+        obras: obrasHechas(leerObras(r.obras)),
+        estrellas: estrellasDeFila({ ...r, level: nivel }).estrellas,
         userId,
       });
     }
@@ -545,7 +550,7 @@ export function registerCiudadRoutes(app: Express) {
   async function casaVisita(personajeId: number, yo: PersonajeFila): Promise<{ visita: CasaVisita; userId: number } | null> {
     const t = temporadaDe();
     const { rows } = await pool.query(
-      `SELECT h.character_id, h.barrio, h.plot, h.level, c.name, c.user_id, u.display_name, u.username, u.is_active,
+      `SELECT h.character_id, h.barrio, h.plot, h.level, h.obras, h.adornos, h.letrero, h.interior, c.name, c.user_id, u.display_name, u.username, u.is_active,
               (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS actual,
               ${PERSONA_MERITO_CARGO.replace(/\$3/g, () => "$4")},
               (SELECT count(*)::int FROM game_house_blessings b WHERE b.house_character_id = h.character_id) AS bendiciones,
@@ -570,6 +575,8 @@ export function registerCiudadRoutes(app: Express) {
         bendiciones: Number(r.bendiciones),
         yaBendije: r.ya === true,
         esMia: Number(r.character_id) === yo.casa,
+        obras: obrasHechas(leerObras(r.obras)),
+        estrellas: estrellasDeFila(r).estrellas,
       },
     };
   }

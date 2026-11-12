@@ -88,7 +88,7 @@ async function premiar(temporada: number, cap: Capitulo, solo: number | null): P
     solo ? [temporada, cap.n, APORTE_MINIMO_CAPITULO, solo] : [temporada, cap.n, APORTE_MINIMO_CAPITULO],
   );
   for (const r of rows) {
-    await sumarGozo(Number(r.titular), cap.premio.gozo);
+    await sumarGozo(Number(r.titular), cap.premio.gozo, "capitulo");
     await darPrenda(Number(r.titular), cap.premio.prenda);
   }
   return rows.map((r) => Number(r.titular));
@@ -285,7 +285,7 @@ export function registerCapitulosRoutes(app: Express) {
         );
         if (nuevo.length) {
           const gozo = f.premio.gozo + (vivo ? f.premio.vivo : 0);
-          await sumarGozo(ch.casa, gozo);
+          await sumarGozo(ch.casa, gozo, "fiesta-temporada");
           await darPrenda(ch.casa, f.premio.prenda);
           const avisos = await aportarAlCapitulo(ch, PUNTOS_CAPITULO.gracias);
           await evento(ch.user_id, `fiesta:${m.temporada}`, `dio gracias en ${f.titulo.toLowerCase()} de Jerusalén en línea`).catch(() => null);
@@ -294,7 +294,7 @@ export function registerCapitulosRoutes(app: Express) {
         if (vivo) {
           const { rows: sube } = await pool.query(`UPDATE game_fiesta_gracias SET en_vivo = true WHERE season = $1 AND titular = $2 AND en_vivo = false RETURNING titular`, [m.temporada, ch.casa]);
           if (sube.length) {
-            await sumarGozo(ch.casa, f.premio.vivo);
+            await sumarGozo(ch.casa, f.premio.vivo, "fiesta-temporada");
             return { gozo: f.premio.vivo, nuevo: false, enVivo: true, avisos: [] };
           }
         }

@@ -361,6 +361,9 @@ export type CasaVista = {
   /** Los adornos que puso (los ven los vecinos) y el nombre de la casa. */
   adornos?: string[];
   letrero?: string | null;
+  /** Las obras edificadas y las estrellas de la casa (shared/obras.ts). */
+  obras?: string[];
+  estrellas?: number;
 };
 
 /** Un barrio completo (al entrar en su área). */
@@ -397,6 +400,9 @@ export type CasaVisita = {
   /** Ya dejaste tu bendición hoy. */
   yaBendije: boolean;
   esMia: boolean;
+  /** Las obras edificadas y las estrellas de la casa (shared/obras.ts). */
+  obras?: string[];
+  estrellas?: number;
 };
 
 export type CiudadEstado = {

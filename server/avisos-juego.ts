@@ -17,6 +17,7 @@ import { faltan, leerHuerto } from "./mercado";
 import { esReposo, gozoDeRacha, rachaViva } from "@shared/racha";
 import { diaEnJerusalen } from "@shared/anio";
 import { ROPA_DEL_ANIO } from "@shared/mercado";
+import { leerObras, obra } from "@shared/obras";
 import { HORA_RACHA, SILENCIO, type AvisosVista, type TipoAviso } from "@shared/avisos";
 
 export const AVISOS_SQL = `
@@ -106,6 +107,27 @@ export async function revisarAvisos(ahora = new Date()): Promise<AvisoSalido[]> 
       const ultima = listas.map((p) => p.plantado as string).sort().at(-1) as string;
       const titulo = listas.length === 1 ? "🌾 Una parcela de tu huerto está lista" : `🌾 ${listas.length} parcelas de tu huerto están listas`;
       if (await avisar(Number(r.user_id), "huerto", ultima, titulo, "Ve a tu casa en Jerusalén a cosechar.", 6 * 3600)) salieron.push({ tipo: "huerto", userId: Number(r.user_id), titulo });
+    }
+  }
+
+  // las obras de la casa (shared/obras.ts): cuando terminan la que estaba en obra (va con los avisos del huerto).
+  // Si la persona ya entró a verla, el servidor la asentó y no hay nada que avisar.
+  {
+    const { rows } = await pool.query(
+      `SELECT c.user_id, h.obras FROM game_houses h JOIN game_characters c ON c.id = h.character_id
+        WHERE jsonb_typeof(h.obras->'curso') = 'object' AND c.user_id IN (${quienes("huerto")})`,
+    );
+    const t = ahora.getTime();
+    for (const r of rows) {
+      const g = leerObras(r.obras);
+      const o = g.curso ? obra(g.curso.id) : undefined;
+      if (!g.curso || !o) continue;
+      const lista = new Date(g.curso.lista).getTime();
+      if (lista > t || t - lista > 2 * 86400000) continue;
+      const titulo = `${o.icono} Terminaron tu obra: ${o.nombre.charAt(0).toLowerCase()}${o.nombre.slice(1)}`;
+      if (await avisar(Number(r.user_id), "huerto", `obra:${g.curso.id}:${g.curso.lista}`, titulo, "Tus vecinos ya la ven. Entra a tu casa en Jerusalén: puedes empezar otra obra.", 6 * 3600)) {
+        salieron.push({ tipo: "huerto", userId: Number(r.user_id), titulo });
+      }
     }
   }
 

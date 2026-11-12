@@ -7,6 +7,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { capacidadAlfoli } from "@shared/ciudad";
+import { ventajasDeColumna } from "@shared/obras";
 import { AYUDA_GOZO, AYUDA_GOZO_DIA, AYUDA_HORAS, AYUDA_MAX, AYUDA_MIN, type AyudaDada, type AyudaEstado, type BienAyuda, type PedidoVista } from "@shared/ayuda";
 import { diaClave, evento, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
@@ -203,9 +204,9 @@ export function registerAyudaRoutes(app: Express) {
       // 3) se suma a quien pidió (en su fila), hasta lo que le cabe
       await recoger(quien);
       const entra = await enFilaCasa(quien, async () => {
-        const { rows } = await pool.query(`SELECT goods, level FROM game_houses WHERE character_id = $1`, [quien]);
+        const { rows } = await pool.query(`SELECT goods, level, obras FROM game_houses WHERE character_id = $1`, [quien]);
         const b = leerBienes(rows[0]?.goods);
-        const cabe = Math.max(0, Math.floor(capacidadAlfoli(Number(rows[0]?.level || 0)) - b[bien]));
+        const cabe = Math.max(0, Math.floor(capacidadAlfoli(Number(rows[0]?.level || 0)) + ventajasDeColumna(rows[0]?.obras).alfoli - b[bien]));
         const n = Math.min(cantidad, cabe);
         if (n > 0) {
           b[bien] += n;
@@ -234,7 +235,7 @@ export function registerAyudaRoutes(app: Express) {
       const { rows: dado } = await pool.query(`SELECT ((SELECT COALESCE(sum(gozo), 0) FROM game_help_gifts WHERE donor_character_id = $1 AND day_key = $2) + (SELECT COALESCE(sum(gozo), 0) FROM game_pueblo_dones WHERE titular = $1 AND dia = $2))::int AS g`, [ch.casa, hoy]);
       const gozo = Math.max(0, Math.min(entra * AYUDA_GOZO, AYUDA_GOZO_DIA - Number(dado[0]?.g || 0)));
       await pool.query(`INSERT INTO game_help_gifts (request_id, donor_character_id, amount, gozo, day_key) VALUES ($1, $2, $3, $4, $5)`, [id, ch.casa, entra, gozo, hoy]);
-      await sumarGozo(ch.casa, gozo);
+      await sumarGozo(ch.casa, gozo, "ayuda");
       if (cumplido.length) {
         const { rows: u } = await pool.query(`SELECT user_id FROM game_characters WHERE id = $1`, [quien]);
         if (u[0]) await evento(Number(u[0].user_id), `ayuda:${id}`, "recibió la ayuda de su barrio para su ofrenda en Jerusalén en línea").catch(() => null);

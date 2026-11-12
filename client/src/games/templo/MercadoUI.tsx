@@ -457,7 +457,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
             return (
               <div key={i} className="rounded-lg border border-stone-200 p-2 text-center text-xs dark:border-stone-700" data-testid={`parcela-${i}`}>
                 <p className="text-xl">{p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : "🟫"}</p>
-                <p className="font-semibold">{p.semilla ? (listo ? "¡Lista!" : `${tiempo(f)}${p.regado ? (p.lluvia ? " · 🌧️ la regó la lluvia" : " · regada") : ""}`) : "Vacía"}</p>
+                <p className="font-semibold">{p.semilla ? (listo ? "¡Lista!" : `${tiempo(f)}${p.regado ? (p.lluvia ? " · 🌧️ la regó la lluvia" : p.cisterna ? " · 💧 la regó la cisterna" : " · regada") : ""}`) : "Vacía"}</p>
                 {!p.semilla ? (
                   <Button size="sm" className="mt-1 h-7 w-full" disabled={busy || !semillasTengo.includes(semilla)} onClick={() => void hacer("/casa/huerto/sembrar", { parcela: i, semilla })} data-testid={`sembrar-${i}`}>
                     Sembrar
@@ -474,7 +474,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
                   </Button>
                 ) : (
                   <Button size="sm" variant="secondary" className="mt-1 h-7 w-full" disabled={busy || p.regado} onClick={() => void hacer("/casa/huerto/regar", { parcela: i })} data-testid={`regar-${i}`}>
-                    {p.regado ? (p.lluvia ? "🌧️ Regada" : "Regada") : "Regar"}
+                    {p.regado ? (p.lluvia ? "🌧️ Regada" : p.cisterna ? "💧 Regada" : "Regada") : "Regar"}
                   </Button>
                 )}
               </div>
@@ -534,7 +534,7 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
           <div className="space-y-1.5">
             <div className="flex items-center gap-1 text-xs">
               Cuántas:
-              {Array.from({ length: HORNO_MAX }, (_, i) => i + 1).map((n) => (
+              {Array.from({ length: m.hornoMax ?? HORNO_MAX }, (_, i) => i + 1).map((n) => (
                 <button key={n} type="button" onClick={() => setCuantas(n)} className={`h-7 w-7 rounded-full font-bold ${cuantas === n ? "bg-orange-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`} data-testid={`horno-cuantas-${n}`}>
                   {n}
                 </button>

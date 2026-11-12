@@ -98,7 +98,7 @@ async function premiarSemanaAnterior(semana: string) {
   if (!rows.length) return;
   const top = await tabla(antes, 0, CONCURSO_PREMIOS.length);
   for (let i = 0; i < top.length; i++) {
-    await sumarGozo(top[i].characterId, CONCURSO_PREMIOS[i]);
+    await sumarGozo(top[i].characterId, CONCURSO_PREMIOS[i], "concurso");
     const lugar = ["el primer lugar", "el segundo lugar", "el tercer lugar"][i];
     await evento(top[i].userId, `concurso:${antes}`, `ganó ${lugar} del concurso bíblico de la semana en Jerusalén en línea`).catch(() => null);
   }

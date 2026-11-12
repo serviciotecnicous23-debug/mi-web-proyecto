@@ -144,7 +144,7 @@ export function registerRestauracionRoutes(app: Express) {
           await evento(ch.user_id, `restauracion:${s.id}`, `restauró ${s.nombre.toLowerCase()} en ${NOMBRE_EDIFICIO[s.edificio]} de Jerusalén en línea`).catch(() => null);
           forgetJer();
         }
-        await sumarGozo(ch.casa, gozo);
+        await sumarGozo(ch.casa, gozo, "restauracion");
         return { fin, gozo, avisos };
       });
       if ("error" in out) return res.status(out.error as number).json({ message: out.message });
@@ -177,7 +177,7 @@ export function registerRestauracionRoutes(app: Express) {
         const f = (await filasDe(ch.casa)).get(s.id);
         return res.status(409).json({ message: f?.done_at ? `Ya hiciste hoy «${s.diario.nombre.toLowerCase()}». Vuelve mañana.` : `Primero hay que restaurar ${s.nombre.toLowerCase()}.` });
       }
-      await sumarGozo(ch.casa, GOZO_DIARIO);
+      await sumarGozo(ch.casa, GOZO_DIARIO, "restauracion");
       void anotarCamino(ch.id, "aprender");
       const { rows: gz } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
       res.json({ vista: await vistaRestauracion(ch.casa), gozo: GOZO_DIARIO, gozoTotal: Number(gz[0]?.gozo ?? 0), lectura: lecturaDelDia(s, hoy) } satisfies DiarioRespuesta);

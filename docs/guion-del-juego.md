@@ -209,7 +209,84 @@ también a `FRASES_EVENTO` en `client/src/games/templo/ciudad/frases.ts`. Y se p
 | **Adopt Me! (Roblox)** | Actualizaciones semanales y cosas de tiempo limitado | Las novedades del juego y la ropa de cada tiempo, que solo se vende en su estación o su fiesta |
 | **Club Penguin** | Fiestas mensuales, el periódico que anuncia lo que viene, colectas solidarias | Los anuncios de la ciudad, los avisos al teléfono, la ofrenda del barrio |
 
-## 7. Lo que sigue (la fase final de Jerusalén en línea)
+## 7. La economía del gozo: la casa en el centro
+
+### Lo que había (11 de noviembre de 2026)
+- Unas **30 fuentes de gozo** en el servidor y solo **2 gastos**: comprar en el mercado y comprarle a un vecino.
+- Un jugador activo gana **de 150 a 350 de gozo por día** (encargos 45, «¿Quién es sabio?» hasta 150, cátedras 24
+  por camino, preguntas 30, cofre 20, recado 12, racha 2–14…).
+- Todo lo que se vendía costaba **2.282 de gozo una sola vez** (muebles 787, ropa del año 680, adornos 515, ropa 260,
+  letrero 40): en una o dos semanas ya no quedaba nada que comprar, y el gozo se amontonaba sin motivar.
+- La casa crecía con la honra (500 / 2.500 / 8.000), no con el gozo.
+
+### Lo que hacen con su dinero los juegos parecidos
+| Juego | En qué se gasta | Lo que lo hizo viral | Lo que tomamos |
+|---|---|---|---|
+| Animal Crossing: New Horizons | Ampliar la casa (7 ampliaciones, de 98.000 a 2.498.000 bayas), muebles, almacenaje; la Academia de Casas Felices califica la casa cada semana | Mostrar la casa y la isla: visitas, fotos, la bolsa de nabos con amigos | Las obras de la casa (grandes y que nunca se acaban) y las estrellas de la casa |
+| Welcome to Bloxburg (Roblox) | Trabajar para construir y amueblar la casa; una casa grande cuesta más mantenerla | Las casas que la gente comparte en TikTok y YouTube | La casa como centro del gasto y la foto de la casa para compartir |
+| Adopt Me! (Roblox) | Huevos, comida y casas; 4 mascotas iguales crecidas se juntan en una «neón» | El intercambio seguro y lo raro de cada evento | (Fase 3) la pieza fina con 4 iguales, sin nada al azar; lo de temporada se vuelve escaso |
+| Club Penguin | Ropa, muebles del iglú y mascotas; fiestas con cosas que no vuelven | Las fiestas en el iglú y *Coins for Change*: en 2011 llenaron el faro con más de 10 000 millones de monedas y el juego donó 2 millones de dólares | (Fase 2) la casa abierta; (fase 4) la obra de toda la ciudad |
+| Stardew Valley | La casa, graneros, animales, herramientas; el pueblo se restaura donando cosas | Jugar con amigos; y su lección: al final sobran millones sin nada en qué gastarlos | Edificios útiles (cisterna, granero, horno) con tiempo de obra, y gastos que nunca se acaban |
+
+**La respuesta a «¿la casa es el motor viral?»**: la casa es el mejor **motor de gasto** (en Animal Crossing y en
+Bloxburg es lo que más dinero se lleva), pero lo viral no es construirla: es **mostrarla**. Lo que trae amigos en
+todos esos juegos es mostrar lo que construiste, invitar a tu casa, intercambiar lo raro y hacer algo grande todos
+juntos. Por eso: la casa en el centro y, alrededor, cuatro anillos que la vuelven viral.
+
+### Las reglas de la economía
+- **Pesa cabal** (Proverbios 11:1): precios fijos y nada al azar. Sin cajas sorpresa ni apuestas: juegan jóvenes de
+  la iglesia.
+- **El gozo nunca compra mérito ni cargos**: solo la casa, su belleza, su comodidad y lo de la comunidad.
+- **Servir y estudiar abre; el gozo paga**: lo grande pide una casa mayor (la honra) y lo más fino pide estudios
+  aprobados, así que ganar gozo lleva también a las clases.
+- **Cada fuente tiene su gasto**, y siempre hay algo más grande que edificar. El termómetro lo mide.
+
+### Fase 1 — Mi casa (hecho)
+**Las obras de tu casa** (`shared/obras.ts`, `server/obras.ts`, `ObrasUI.tsx`, en *Tu casa → Obras*). Una obra a la
+vez; se paga con gozo y con flor de harina del alfolí (el pan de los obreros), tarda unas horas y los obreros
+trabajan aunque no estés. Con más obreros (Mateo 20:1) cuesta la mitad más y termina en la mitad del tiempo. El
+10 % de cada obra va al tesoro del templo. Cada obra se ve en la ciudad (los vecinos la ven) y al terminar llega un
+aviso al teléfono.
+
+| Obra | Pide | Gozo | Harina | Horas | Lo que da |
+|---|---|---|---|---|---|
+| 🧱 Cerco de piedra | — | 60 | 3 | 2 | +6 a las estrellas |
+| 🪔 Lámparas en la puerta | — (y 3 de aceite) | 90 | 0 | 3 | De noche alumbran tu puerta |
+| 🌱 Ensanchar el huerto (Isaías 54:2) | — | 180 | 5 | 6 | Una parcela más |
+| 💧 Cisterna (Proverbios 5:15) | — | 240 | 6 | 8 | Lo que siembras queda regado |
+| 🫓 Horno de barro | — | 280 | 8 | 8 | Caben 5 en el horno |
+| 🚪 Puerta de cedro labrada (Apocalipsis 3:20) | Casa de adobe | 150 | 4 | 4 | +8 a las estrellas |
+| 📜 Las palabras en los postes (Deuteronomio 6:9) | Casa de adobe y 1 estudio | 120 | 2 | 3 | +10 a las estrellas |
+| 🍇 Emparrado del patio (Salmos 128:3) | Casa de adobe | 220 | 6 | 6 | +10 a las estrellas |
+| 🌾 Granero en el terrado (Proverbios 3:10) | Casa de adobe | 360 | 10 | 10 | El alfolí guarda 30 más |
+| 🏛️ Pórtico con columnas (1 Reyes 7:6) | Casa de piedra y 2 estudios | 600 | 15 (y 3 de aceite) | 12 | +20 a las estrellas |
+| ⛲ Fuente del patio (Cantares 4:15) | Casa de piedra y 3 estudios | 800 | 20 | 16 | +24 a las estrellas |
+| 🗼 Torre del terrado (Lucas 14:28) | Aposento alto y 4 estudios | 1.200 | 25 (y 5 de aceite) | 24 | +30 a las estrellas |
+
+Todas juntas: 4.300 de gozo y 104 de flor de harina, unas tres semanas de un jugador activo, y casi el doble de lo que
+costaba todo el mercado.
+
+**Las estrellas de tu casa** (de 1 a 5, las ven los vecinos al visitarla): la casa (adobe 10, piedra 20, aposento
+alto 30), cada obra, cada mueble distinto puesto dentro (2), cada **juego de muebles completo** (10: la mesa de la
+familia, el aposento del profeta, la cocina de la casa, el rincón de las Escrituras y el trabajo de las manos), cada
+adorno (3) y el letrero (5). Las estrellas piden 40, 90, 160 y 240 puntos.
+
+**La foto de tu casa**: en *Tu casa*, la ciudad toma una foto delante de tu puerta y le pone el marco del juego, el
+nombre de tu casa, sus estrellas y el enlace del juego, para compartirla por WhatsApp, TikTok o Facebook. No lleva
+el nombre de la persona.
+
+**El termómetro del gozo** (solo la administración, en el tesoro del templo): cuánto gozo entró y salió cada día y de
+dónde (`game_gozo_dia`), cuánto tiene guardado la gente y el tesoro. Si entra mucho más de lo que sale, el gozo pierde
+su valor: hay que sumar en qué gastarlo. Meta: que se gaste entre el 70 y el 90 % de lo que entra.
+
+### Lo que viene, por fases
+| Fase | Qué | Inspirado en |
+|---|---|---|
+| 2. Mi barrio | **La casa abierta**: pan y agua para los que llegan, una bandera en el mapa, gozo para los visitantes y puntos para la copa. **Las obras del barrio** (pozo, fuente, horno común, lámparas de la calle), pagadas entre vecinos, con sus nombres en una placa como en Nehemías 3. **Regalos** a un vecino. | Las fiestas en el iglú de Club Penguin; el pueblo de Stardew |
+| 3. El taller | **La pieza fina**: con 4 iguales, el artesano hace una dorada (sin azar). **Oficios**: el telar y las ovejas hacen cosas que se venden en los puestos de los vecinos. Lo de temporada, fuera de su tiempo, solo se consigue de otro jugador. | Adopt Me! |
+| 4. La ciudad y el mundo | **El arca de Joás** (2 Reyes 12:9): una obra de toda la ciudad cada temporada con ofrendas de gozo; al llenarse cambia la ciudad y quedan los nombres de los que dieron; si el ministerio quiere, se vuelve algo real. **Invita a un amigo**: cuando lo aprueban y juega 3 días, los dos reciben gozo. **El álbum** de colecciones con títulos. | *Coins for Change* de Club Penguin; Pokémon GO |
+
+## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
 pronóstico, «Mientras no estabas» con lo que hizo tu barrio, tu casa y la ciudad, el regalo de regreso (con el

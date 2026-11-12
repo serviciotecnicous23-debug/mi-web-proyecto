@@ -215,7 +215,7 @@ async function terminarDuelo(d: Fila, ausente: Lado | null, ahora: number): Prom
         `UPDATE game_sabio SET duelos = duelos + 1, duelos_ganados = $2, dia = $3, gozo_hoy = $4, entradas_hoy = $5, premios = $6::jsonb, updated_at = now() WHERE character_id = $1`,
         [t, ganados, diaClave(), f.gozo_hoy + gozo, f.entradas_hoy, JSON.stringify([...premios])],
       );
-      if (gozo) await sumarGozo(t, gozo);
+      if (gozo) await sumarGozo(t, gozo, "sabio");
       // la copa de los barrios: jugar el duelo (y ganarlo) suma para el barrio; quien lo deja, nada
       if (ausente !== lado) await sumarALaCopa(t, "duelo");
       if (gano) await sumarALaCopa(t, "dueloGanado");
