@@ -35,6 +35,9 @@ import { REGALOS_SQL } from "./regalos";
 import { BANQUETE_SQL } from "./banquete";
 import { TALLER_SQL } from "./taller";
 import { COSAS_SQL } from "./intercambio";
+import { ARCA_SQL } from "./arca";
+import { INVITAR_SQL } from "./invitar";
+import { ALBUM_SQL } from "./album";
 import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
 
@@ -1201,6 +1204,10 @@ export async function ensureDatabaseSchema(): Promise<void> {
       // la fase 3 (el taller): el artesano, el redil, el telar, el fardo y los puestos de cosas
       await pool.query(TALLER_SQL);
       await pool.query(COSAS_SQL);
+      // la fase 4 (la ciudad y el mundo): el arca de Joás, invitar a un amigo y el álbum
+      await pool.query(ARCA_SQL);
+      await pool.query(INVITAR_SQL);
+      await pool.query(ALBUM_SQL);
     } catch (err: any) {
       console.log(`  Migration note (obras): ${err?.message}`);
     }

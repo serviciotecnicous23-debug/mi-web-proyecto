@@ -28,6 +28,7 @@ import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type
 import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
 import { leerOficios } from "@shared/taller";
 import { obrasDeBarrio, ventajasDeBarrio } from "./barrio-obras";
+import { vistaArca } from "./arca";
 
 const JUEGO = JERUSALEN_JUEGO;
 
@@ -352,6 +353,8 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
     jerusalen: hoyEnJerusalen(),
     temporada: { n: t.n, dePrueba: CARGOS_DE_PRUEBA, diasRestantes: t.diasRestantes },
     privada,
+    // el arca de Joás de esta temporada (shared/arca.ts): cuando se llena, cambia la ciudad
+    arca: await vistaArca().catch(() => undefined),
   };
 }
 

@@ -25,6 +25,8 @@ import { nombreDeBarrio } from "@shared/ciudad";
 import { nivelDeBarrio } from "@shared/barrio-juntos";
 import { MURO_META, MURO_TRAMOS } from "@shared/muro";
 import { arcoDeTemporada, capituloDelDia, enTexas } from "@shared/capitulos";
+import { diaJugado } from "./invitar";
+import { anotarAlbum } from "./album";
 import {
   NOMBRE_SEMILLA, PRENDA_REGRESO, REGRESO_CADA, REGRESO_DESDE, REGRESO_VALIDO, REGRESO_VESTIDO, diasEntre, esVuelta, puedeRecibir, regaloDeRegreso,
   semillaDeRegreso, yaRecibido, type BarrioMientras, type CasaMientras, type CiudadMientras, type FilaRegreso, type RegaloRecibido, type RegaloRegreso,
@@ -87,9 +89,15 @@ export function registrarVisita(titular: number, userId: number): Promise<void> 
   const v = vistos.get(titular);
   if (v && v.dia === hoy && Date.now() - v.at < VISITA_MS) return v.p;
   if (vistos.size > 5000) vistos.clear();
-  const p = anotar(titular, userId, hoy);
+  const p = anotar(titular, userId, hoy).then(() => alVisitar(titular, userId, hoy));
   vistos.set(titular, { dia: hoy, at: Date.now(), p });
   return p;
+}
+
+/** Lo demás de cada visita: el día jugado (para el premio de los amigos invitados) y lo nuevo del álbum. */
+async function alVisitar(titular: number, userId: number, hoy: string): Promise<void> {
+  await diaJugado(titular, userId, hoy).catch((err) => console.error("[invitar] día jugado:", err));
+  await anotarAlbum(titular).catch((err) => console.error("[album] anotar:", err));
 }
 
 async function anotar(titular: number, userId: number, hoy: string): Promise<void> {

@@ -357,10 +357,44 @@ entre vecinos.
 Hacer las 39 piezas finas (las 4 iguales y el jornal) cuesta 10.362 de gozo: 4.722 los muebles y 5.640 la ropa. Es
 más del doble de todas las obras de la casa: el gasto que nunca se acaba, ahora también en la ropa que se ve.
 
-### Lo que viene, por fases
-| Fase | Qué | Inspirado en |
-|---|---|---|
-| 4. La ciudad y el mundo | **El arca de Joás** (2 Reyes 12:9): una obra de toda la ciudad cada temporada con ofrendas de gozo; al llenarse cambia la ciudad y quedan los nombres de los que dieron; si el ministerio quiere, se vuelve algo real. **Invita a un amigo**: cuando lo aprueban y juega 3 días, los dos reciben gozo. **El álbum** de colecciones con títulos. | *Coins for Change* de Club Penguin; Pokémon GO |
+### Fase 4 — La ciudad y el mundo (hecho)
+**El arca de Joás** (`shared/arca.ts`, `server/arca.ts`, `ArcaUI.tsx`, `ciudad/arca3d.ts`), inspirada en *Coins for Change*
+de Club Penguin:
+- Una por temporada, para toda la ciudad, arriba de la escalinata: «la cual pusieron fuera, a la puerta de la casa de
+  Jehová» (2 Crónicas 24:8).
+- Cada uno echa su gozo, de 10 a 500 por día, para que sea de todos. Cada 10 suma un punto a la copa del barrio.
+- La meta se fija al empezar la temporada: 1.500 por persona que sirvió en los últimos 7 días, de 3.000 a 300.000.
+- Se da en una transacción con el arca trabada, así que nadie pasa de lo que falta.
+- Al llenarse:
+  - se avisa en vivo a toda la ciudad;
+  - se encienden lámparas de oro a los dos lados de la escalinata hasta el fin de la temporada;
+  - los nombres quedan en el libro del arca;
+  - los que dieron 50 o más ganan el título «Dador alegre».
+- La gente de la ciudad habla del arca en sus chismes.
+- Si el ministerio quiere, la administración escribe una causa real para esa temporada, y se muestra en el arca.
+
+**Invita a un amigo** (`shared/invitar.ts`, `server/invitar.ts`, `InvitarUI.tsx`, en *Misiones*):
+- Cada persona tiene un código de 6 letras y un enlace (`?invita=`) para compartir por WhatsApp.
+- El amigo entra con el enlace: el código queda guardado en el teléfono y se usa solo al llegar a la ciudad. También
+  lo puede escribir, siempre que su cuenta tenga menos de 14 días.
+- Cuando el amigo juega 3 días distintos (`game_dias_jugados`), él gana 100 de gozo y quien lo invitó 150. Este último
+  gana gozo hasta por 10 amigos; después siguen contando, pero sin gozo.
+- Los dos reciben la «Faja del buen amigo» (Proverbios 17:17), que no se vende.
+- Las cuentas las aprueba el ministerio: esa es la guarda contra las trampas.
+
+**El álbum** (`shared/album.ts`, `server/album.ts`, `AlbumUI.tsx`, en *Tu casa → Álbum*), inspirado en la colección de
+Pokémon GO:
+- Todo lo que se tuvo alguna vez queda anotado (`game_album`), aunque después se venda o se regale.
+- Hay 7 colecciones, cada una con su título:
+  - los muebles: «Buen mayordomo»;
+  - los adornos: «Casa alegre»;
+  - la ropa de siempre: «Bien vestido»;
+  - la ropa del año: «Guarda los tiempos»;
+  - los muebles finos: «Artífice»;
+  - la ropa fina: «Bordador de oro»;
+  - lo que se gana: «Tesoro de Jerusalén».
+- Más títulos: «Dador alegre», «Buen amigo», «Coleccionista» (40 cosas) y «Gran coleccionista» (100).
+- El título elegido lo ven los vecinos en la ficha (`VecinoInfo.titulo`).
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
@@ -370,7 +404,7 @@ mejor vestido), los pétalos de almendro y las lámparas de fiesta.
 
 Lo que queda:
 1. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
-2. **Colecciones visibles** (álbum de muebles, ropa y dichos) y **mentores** para los nuevos.
+2. **Mentores** para los nuevos (las colecciones visibles ya están: el álbum de la fase 4; faltan los dichos).
 3. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
 4. **Una historia nueva para la temporada 2** (`ARCOS` en `shared/capitulos.ts`); mientras tanto se repite la de
    Ezequías y Senaquerib.

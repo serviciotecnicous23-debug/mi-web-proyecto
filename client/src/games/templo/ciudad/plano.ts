@@ -23,6 +23,12 @@ export const ESCALINATA = { x0: 34.3, x1: 43.3, half: 2.7, pendiente: 0.379 };
 export const ENTRADA_TEMPLO: V2 = [36.4, 0];
 /** Donde aparece quien sale del templo (al pie de la escalinata). */
 export const LLEGADA_TEMPLO: V2 = [41.8, 0];
+/**
+ * El arca de Joás (shared/arca.ts): «la cual pusieron fuera, a la puerta de la casa de Jehová» (2 Crónicas 24:8). Arriba
+ * de la escalinata, a la mano derecha de quien sube al templo (al norte), y su círculo delante.
+ */
+export const ARCA: V2 = [35.05, -1.95];
+export const ARCA_ZONA: V2 = [36.3, -2.0];
 
 export const PLAZA: Rect = [38, -12, 74, 12];
 export const MURO_ORIENTE = 76;

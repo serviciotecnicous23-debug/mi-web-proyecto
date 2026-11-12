@@ -48,6 +48,9 @@ import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { SiguientePaso } from "./CaminoHoyUI";
 import { Estrellas, ObrasCasa } from "./ObrasUI";
 import { OficiosView } from "./TallerUI";
+import { ArcaView } from "./ArcaUI";
+import { AlbumView } from "./AlbumUI";
+import { usarInvitacionGuardada } from "./InvitarUI";
 import type { TallerEstado } from "@shared/taller";
 import { FotoDeCasa } from "./FotoCasaUI";
 import { RegalarBoton, RegalosRecibidos } from "./RegalosUI";
@@ -163,6 +166,10 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
   useEffect(() => {
     const t = setTimeout(() => setHint(false), 14000);
     return () => clearTimeout(t);
+  }, []);
+  // si entró por el enlace de un amigo (?invita=), el código se usa al llegar a la ciudad (shared/invitar.ts)
+  useEffect(() => {
+    void usarInvitacionGuardada();
   }, []);
   useEffect(() => {
     if (!verGestos) return;
@@ -413,6 +420,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <EdificioView id={modal.id} />;
     case "mercado":
       return <MercadoModal tab={modal.tab} />;
+    case "arca":
+      return <ArcaConMundo />;
     case "concurso":
       return <ConcursoView />;
     case "tesoro":
@@ -579,6 +588,20 @@ function ObrasConMundo() {
   return <ObrasCasa alCambiar={alCambiar} />;
 }
 
+/** El arca de Joás (shared/arca.ts): el gozo que se echa baja también en el marcador de la ciudad. */
+function ArcaConMundo() {
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  const alCambiarGozo = useCallback((gozo: number) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado || estado.yo.gozo === gozo) return;
+    setEstado?.({ ...estado, yo: { ...estado.yo, gozo } });
+    city?.ponerGozo(gozo);
+  }, []);
+  return <ArcaView alCambiarGozo={alCambiarGozo} />;
+}
+
 /** Los oficios de tu casa (shared/taller.ts): las ovejas de tu redil se ven junto a tu casa. */
 function OficiosConMundo() {
   const ctx = useContext(CiudadCtx);
@@ -609,6 +632,7 @@ const PESTANAS_CASA: [string, string][] = [
   ["oficios", "🐑 Oficios"],
   ["adornos", "🪔 Adornos y ropa"],
   ["vecinos", "📖 Vecinos"],
+  ["album", "📚 Álbum"],
 ];
 
 function CasaView({ inicial }: { inicial?: string }) {
@@ -650,6 +674,7 @@ function CasaView({ inicial }: { inicial?: string }) {
         {pestana === "obras" && <ObrasConMundo />}
         {pestana === "huerto" && <CasaExtrasConMundo partes={["huerto", "horno"]} />}
         {pestana === "oficios" && <OficiosConMundo />}
+        {pestana === "album" && <AlbumView />}
         {pestana === "adornos" && <CasaExtrasConMundo partes={["adornos", "ropa", "letrero"]} />}
         {pestana === "vecinos" && (
           <>
@@ -1393,6 +1418,11 @@ function VecinoView({ id }: { id: number }) {
         <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
           {nombreEscalonCamino(v.camino ?? "sacerdocio", v.escalon, escalonNombre(v.escalon))} · {nombreDeBarrio(v.barrio)}, casa {v.casa + 1}
         </p>
+        {v.titulo && (
+          <p className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-950 ring-1 ring-amber-300 dark:bg-amber-900/40 dark:text-amber-100" data-testid="vecino-titulo">
+            🏅 {v.titulo}
+          </p>
+        )}
         {paso === "ficha" && <LogrosDeOtro personajeId={v.id} />}
         {paso === "ficha" && <EstudiosDeOtro personajeId={v.id} />}
         {mensaje && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mensaje}</p>}

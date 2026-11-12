@@ -14,6 +14,7 @@ import { MUEBLES, VALOR_FINA } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
 import { PRENDA_REGRESO } from "./regreso";
+import { PRENDA_AMIGO } from "./invitar";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
@@ -30,9 +31,9 @@ export type Articulo = {
    * No se vende: se gana. «sabio»: los trajes de los sabios, en la casa de la sabiduría (shared/sabio.ts); «temporada»:
    * las prendas de la historia de la temporada (shared/capitulos.ts); «regreso»: el mejor vestido, al volver a
    * Jerusalén después de una semana o más (shared/regreso.ts); «taller»: las piezas finas, que hace el artesano con 4
-   * iguales (shared/taller.ts).
+   * iguales (shared/taller.ts); «amigo»: la faja del buen amigo, al invitar a un amigo que juega 3 días (shared/invitar.ts).
    */
-  exclusivo?: "sabio" | "temporada" | "regreso" | "taller";
+  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo";
   /** Una pieza fina del artesano (shared/taller.ts): el artículo de donde sale (con 4 iguales). */
   fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
@@ -133,6 +134,17 @@ export const ARTICULOS: Articulo[] = [
     detalle: "Se recibe al volver a Jerusalén después de una semana o más: «Sacad el mejor vestido, y vestidle» (Lucas 15:22).",
     color: PRENDA_REGRESO.color,
     exclusivo: "regreso",
+  },
+  // la faja del buen amigo: tampoco se vende, se gana invitando a un amigo (shared/invitar.ts)
+  {
+    id: PRENDA_AMIGO.id,
+    categoria: "ropa",
+    nombre: PRENDA_AMIGO.nombre,
+    icono: "🤝",
+    precio: 0,
+    detalle: "Se gana al invitar a un amigo que juega 3 días (y la recibe también el amigo): «En todo tiempo ama el amigo» (Proverbios 17:17).",
+    color: PRENDA_AMIGO.color,
+    exclusivo: "amigo",
   },
   // la ropa fina del artesano: tampoco se vende (shared/taller.ts)
   ...ROPA_FINA,

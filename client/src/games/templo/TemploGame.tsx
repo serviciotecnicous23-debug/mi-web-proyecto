@@ -64,6 +64,7 @@ import { CasaHudLayer } from "./CasaUI";
 import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
 import { GOZO } from "@shared/mercado";
+import { guardarInvitacionDeLaUrl } from "./InvitarUI";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -90,6 +91,8 @@ function writePref(key: string, v: boolean) {
 type Phase = "loading" | "title" | "starting" | "playing" | "error";
 
 export default function TemploGame({ game }: { game: GameDef }) {
+  // si se abrió con el enlace de un amigo (?invita=CODIGO), el código queda guardado para usarlo al entrar a Jerusalén
+  useEffect(() => guardarInvitacionDeLaUrl(), []);
   const { user } = useAuth();
   const wrapRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -1620,6 +1623,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "escuela":
     case "palacio":
     case "mercado":
+    case "arca":
     case "concurso":
     case "tesoro":
     case "personaje":

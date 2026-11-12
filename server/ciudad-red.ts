@@ -47,6 +47,7 @@ type Con = {
 const conexiones = new Map<number, Con>();
 import { marcarEnTemplo } from "./presencia-templo";
 import { coloresDeRopa } from "./ropa";
+import { nombreDeTitulo } from "@shared/album";
 const MAX_CONEXIONES = 600;
 let reloj: ReturnType<typeof setInterval> | null = null;
 let latidos: ReturnType<typeof setInterval> | null = null;
@@ -83,7 +84,8 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
   const t = temporadaDe();
   const { rows } = await pool.query(
     `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.path, c.ropa, c.city_banned_at, h.barrio, h.plot,
-            COALESCE(sm.merit, 0)::int AS merito, o.office
+            COALESCE(sm.merit, 0)::int AS merito, o.office,
+            (SELECT t.titulo FROM game_characters t WHERE t.id = h.character_id) AS titulo
        FROM users u
        JOIN game_characters c ON c.user_id = u.id AND c.game = $2
        JOIN game_houses h ON h.character_id = (SELECT MIN(c2.id) FROM game_characters c2 WHERE c2.user_id = u.id AND c2.game = $2)
@@ -107,6 +109,8 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
       u: Number(r.user_id),
       camino: r.path === "profecia" || r.path === "realeza" ? r.path : "sacerdocio",
       ropa: coloresDeRopa(r.ropa),
+      // el título que eligió mostrar (shared/album.ts)
+      ...(nombreDeTitulo(r.titulo) ? { titulo: nombreDeTitulo(r.titulo)! } : {}),
     },
     bloqueos,
     suspendido: !!r.city_banned_at,
@@ -291,6 +295,19 @@ export function difundirAlBarrio(barrio: number, armar: (c: { info: VecinoInfo; 
   let n = 0;
   for (const c of conexiones.values()) {
     if (c.info.barrio !== barrio) continue;
+    const msg = armar(c);
+    if (!msg) continue;
+    mandar(c, msg);
+    n++;
+  }
+  return n;
+}
+
+/** Manda algo a todos los conectados de la ciudad (el arca de Joás llena). `armar` decide qué recibe cada uno. */
+export function difundirATodos(armar: (c: { info: VecinoInfo; bloqueos: Set<number> }) => RedEntra | null): number {
+  let n = 0;
+  for (const c of conexiones.values()) {
+    if (c.ws.readyState !== 1) continue;
     const msg = armar(c);
     if (!msg) continue;
     mandar(c, msg);
