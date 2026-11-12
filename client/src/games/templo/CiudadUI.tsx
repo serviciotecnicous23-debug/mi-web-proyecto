@@ -46,6 +46,9 @@ import {
 import { FIESTA } from "@shared/calendario";
 import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { SiguientePaso } from "./CaminoHoyUI";
+import { Estrellas, ObrasCasa } from "./ObrasUI";
+import { FotoDeCasa } from "./FotoCasaUI";
+import { OBRAS, type ObrasEstado } from "@shared/obras";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
 export const CiudadCtx = createContext<{
@@ -532,10 +535,26 @@ function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
   return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} alIrAlMercado={alIrAlMercado} />;
 }
 
+/** Las obras de tu casa: lo edificado se ve en la ciudad y el gozo baja (shared/obras.ts). */
+function ObrasConMundo() {
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  const alCambiar = useCallback((o: ObrasEstado) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const casas = estado.barrio.casas.map((c) => (c.esMia ? { ...c, obras: o.hechas, estrellas: o.estrellas.estrellas } : c));
+    setEstado?.({ ...estado, yo: { ...estado.yo, gozo: o.gozo }, barrio: { ...estado.barrio, casas }, privada: { ...estado.privada, bienes: { ...estado.privada.bienes, harina: o.harina, aceite: o.aceite } } });
+    city?.alObras(o.hechas, o.estrellas.estrellas, o.gozo);
+  }, []);
+  return <ObrasCasa alCambiar={alCambiar} />;
+}
+
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */
 /** Las pestañas de «Tu casa» (en el teléfono la ventana quedaba muy larga). */
 const PESTANAS_CASA: [string, string][] = [
   ["casa", "🏠 Tu casa"],
+  ["obras", "🧱 Obras"],
   ["huerto", "🌾 Huerto y horno"],
   ["adornos", "🪔 Adornos y ropa"],
   ["vecinos", "📖 Vecinos"],
@@ -577,6 +596,7 @@ function CasaView({ inicial }: { inicial?: string }) {
             </button>
           ))}
         </div>
+        {pestana === "obras" && <ObrasConMundo />}
         {pestana === "huerto" && <CasaExtrasConMundo partes={["huerto", "horno"]} />}
         {pestana === "adornos" && <CasaExtrasConMundo partes={["adornos", "ropa", "letrero"]} />}
         {pestana === "vecinos" && (
@@ -593,6 +613,23 @@ function CasaView({ inicial }: { inicial?: string }) {
           </p>
           <p className="text-[15px] leading-relaxed text-stone-600 dark:text-stone-300">{nivel.texto}</p>
         </div>
+        {(() => {
+          const mia = estado.barrio.casas.find((c) => c.esMia);
+          const hechas = mia?.obras?.length ?? 0;
+          return (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/60 p-2.5 dark:border-amber-900/60 dark:bg-amber-950/20" data-testid="casa-estrellas">
+              <span className="min-w-0 flex-1 text-xs">
+                <Estrellas n={mia?.estrellas ?? 1} className="text-lg" />
+                <br />
+                {hechas ? `${hechas} de ${OBRAS.length} obras edificadas.` : "Edifica tu casa con el gozo que ganas: cada obra la ven tus vecinos."}
+              </span>
+              <Button size="sm" className="rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => setPestana("obras")} data-testid="casa-ir-obras">
+                🧱 Obras de tu casa
+              </Button>
+              <FotoDeCasa />
+            </div>
+          );
+        })()}
         <VerseBox text={nivel.verso.text} refName={nivel.verso.ref} />
         <div className="rounded-xl border border-amber-200 p-3 dark:border-amber-900/60" data-testid="ciudad-casa-honra">
           {sig ? (
@@ -816,6 +853,16 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
             <div>
               <p className="font-serif text-xl font-black">{nivel.nombre}</p>
               <p className="text-[15px] leading-relaxed text-stone-600 dark:text-stone-300">{nivel.texto}</p>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-2.5 text-xs dark:border-amber-900/60 dark:bg-amber-950/20" data-testid="visita-estrellas">
+              <Estrellas n={casa.estrellas ?? 1} className="text-lg" />
+              {casa.obras?.length ? (
+                <p className="mt-1">
+                  Edificó: {OBRAS.filter((o) => casa.obras!.includes(o.id)).map((o) => `${o.icono} ${o.nombre.toLowerCase()}`).join(" · ")}
+                </p>
+              ) : (
+                <p className="mt-1 text-stone-500">Todavía no tiene obras en su casa.</p>
+              )}
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
               ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos

@@ -29,6 +29,8 @@ import { MURO_SQL } from "./muro";
 import { CAPITULOS_SQL } from "./capitulos";
 import { REGRESO_SQL } from "./regreso";
 import { RESTAURACION_SQL } from "./restauracion";
+import { OBRAS_SQL } from "./obras";
+import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
 
 const CREATE_TABLES_SQL = `
@@ -1182,6 +1184,13 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CAMINO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (restauración): ${err?.message}`);
+    }
+    try {
+      // Las obras de la casa (shared/obras.ts) y el termómetro del gozo
+      await pool.query(OBRAS_SQL);
+      await pool.query(GOZO_DIA_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (obras): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

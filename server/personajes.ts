@@ -146,7 +146,7 @@ export function registerPersonajesRoutes(app: Express) {
         let racha: RachaMarcada | null = null;
         let capitulo: MisionCumplida[] = [];
         if (fin) {
-          await sumarGozo(ch.casa, RECADO_GOZO);
+          await sumarGozo(ch.casa, RECADO_GOZO, "recado");
           await sumarMerito(ch.id, RECADO_MERITO);
           racha = await marcarServicio(ch.id);
           void anotarCamino(ch.id, "ayudar");

@@ -12,6 +12,76 @@ import {
 } from "@shared/economia";
 import { gameStore } from "./store";
 import { Card } from "./ui";
+import type { TermometroGozo } from "@shared/obras";
+
+/** Los nombres de las fuentes del termómetro (server/gozo.ts). */
+const FUENTE_NOMBRE: Record<string, string> = {
+  deberes: "Deberes del templo", preguntas: "Preguntas del templo", encargos: "Encargos del día", racha: "Racha", recado: "Recados",
+  cofre: "Cofre del camino", catedras: "Cátedras", sabio: "«¿Quién es sabio?»", estudios: "Estudios", ayuda: "Ayudar a vecinos",
+  pueblo: "Casas del pueblo", reuniones: "Reuniones", "barrio-juntos": "Misión del barrio", copa: "Copa de los barrios",
+  "ofrenda-barrio": "Ofrenda del barrio", concurso: "Concurso semanal", muro: "El muro", capitulo: "Capítulos", "fiesta-temporada": "Fiesta de la temporada",
+  restauracion: "Restauración", cargos: "Cargos", mercader: "Ventas al mercader", vecinos: "Puestos de vecinos", provision: "Provisión",
+  "premio-casa": "Premio a las casas", obras: "Obras de las casas", "mercado-semilla": "Semillas", "mercado-adorno": "Adornos",
+  "mercado-ropa": "Ropa", "mercado-mueble": "Muebles", "mercado-letrero": "Letreros", otros: "Otros",
+};
+
+/** El termómetro del gozo (solo la administración): lo que entró y salió cada día y de dónde. */
+function TermometroAdmin() {
+  const [t, setT] = useState<TermometroGozo | null>(null);
+  useEffect(() => {
+    void pedir<TermometroGozo>("/admin/gozo?dias=7").then((r) => (r.ok && r.data ? setT(r.data) : null));
+  }, []);
+  if (!t) return null;
+  const total = new Map<string, { entra: number; sale: number }>();
+  for (const d of t.dias) for (const f of d.fuentes) {
+    const x = total.get(f.fuente) ?? { entra: 0, sale: 0 };
+    x.entra += f.entra;
+    x.sale += f.sale;
+    total.set(f.fuente, x);
+  }
+  const fuentes = [...total.entries()].sort((a, b) => b[1].entra + b[1].sale - (a[1].entra + a[1].sale));
+  const entra = t.dias.reduce((a, d) => a + d.entra, 0), sale = t.dias.reduce((a, d) => a + d.sale, 0);
+  return (
+    <section className="space-y-2 rounded-xl border border-sky-200 bg-sky-50/50 p-3 text-xs dark:border-sky-900/60 dark:bg-sky-950/20" data-testid="termometro-gozo">
+      <p className="font-black">🌡️ El termómetro del gozo (solo administración)</p>
+      <p className="text-[11px] text-stone-600 dark:text-stone-300">
+        Últimos 7 días: entró ✨ {Math.round(entra)} y salió ✨ {Math.round(sale)}
+        {entra > 0 ? ` (se gastó el ${Math.round((sale / entra) * 100)} %)` : ""}. Guardado: ✨ {t.guardado.total} entre {t.guardado.personas} personas (la mitad tiene menos de {t.guardado.mediana}; {t.guardado.conMil} con 1.000 o más; el que más, {t.guardado.maximo}). Tesoro: ✨ {t.tesoro}.
+      </p>
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-left text-stone-500">
+            <th className="font-semibold">Día</th>
+            <th className="text-right font-semibold">Entró</th>
+            <th className="text-right font-semibold">Salió</th>
+          </tr>
+        </thead>
+        <tbody>
+          {t.dias.map((d) => (
+            <tr key={d.dia}>
+              <td>{d.dia}</td>
+              <td className="text-right tabular-nums text-emerald-700 dark:text-emerald-300">+{Math.round(d.entra)}</td>
+              <td className="text-right tabular-nums text-amber-700 dark:text-amber-300">−{Math.round(d.sale)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {fuentes.length > 0 && (
+        <ul className="grid grid-cols-1 gap-0.5 text-[11px] sm:grid-cols-2">
+          {fuentes.map(([f, x]) => (
+            <li key={f} className="flex justify-between gap-2 rounded bg-white/60 px-1.5 dark:bg-stone-900/40">
+              <span className="truncate">{FUENTE_NOMBRE[f] ?? f}</span>
+              <span className="tabular-nums">
+                {x.entra ? <b className="text-emerald-700 dark:text-emerald-300">+{Math.round(x.entra)}</b> : null}
+                {x.sale ? <b className="ml-1 text-amber-700 dark:text-amber-300">−{Math.round(x.sale)}</b> : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 const ICONO: Record<BienMercado, string> = { harina: "🌾", aceite: "🫒", corderos: "🐑" };
 const BIENES: BienMercado[] = ["harina", "aceite", "corderos"];
@@ -241,7 +311,7 @@ export function TesoroView() {
               </p>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-300">
-              Entra el diezmo: el 10 % de cada venta entre vecinos y de cada compra en la plaza. Sale para la provisión de los que empiezan y para premiar cada semana a las casas más bendecidas.
+              Entra el diezmo: el 10 % de cada venta entre vecinos, de cada compra en la plaza y de cada obra de casa. Sale para la provisión de los que empiezan y para premiar cada semana a las casas más bendecidas.
             </p>
             <section className="space-y-1.5 rounded-xl border border-emerald-200 p-3 dark:border-emerald-900/60" data-testid="tesoro-provision">
               <p className="font-black">La provisión para los que empiezan</p>
@@ -294,6 +364,7 @@ export function TesoroView() {
                 </ul>
               </section>
             )}
+            <TermometroAdmin />
             <p className="text-center text-xs italic text-stone-500">
               «{VERSO_DIEZMO.text}» ({VERSO_DIEZMO.ref})
             </p>

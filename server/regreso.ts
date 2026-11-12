@@ -10,6 +10,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
+import { anotarGozo } from "./gozo";
 import { diaClave, nombreDe, personajeDe, type PersonajeFila } from "./jerusalen";
 import { faltan, leerHuerto } from "./mercado";
 import { puntosDeBarrio } from "./barrio-juntos";
@@ -19,6 +20,7 @@ import { refrescarFicha } from "./ciudad-red";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { diaEnJerusalen } from "@shared/anio";
 import { parcelasHuerto } from "@shared/mercado";
+import { ventajasDeColumna } from "@shared/obras";
 import { nombreDeBarrio } from "@shared/ciudad";
 import { nivelDeBarrio } from "@shared/barrio-juntos";
 import { MURO_META, MURO_TRAMOS } from "@shared/muro";
@@ -236,6 +238,8 @@ export async function recibirRegalo(ch: PersonajeFila): Promise<RegaloRecibido |
     [titular, hoy, JSON.stringify(regalo), f.vuelta, f.ausencia, regalo.gozo, regalo.semillas.id, regalo.semillas.n, regalo.prenda?.id ?? null],
   );
   if (!rows.length) return { status: 409, message: "Ya recibiste el regalo de esta vuelta." };
+  // para el termómetro del gozo (server/gozo.ts): el regalo se paga en la misma consulta
+  anotarGozo("regreso", regalo.gozo, 0);
   if (regalo.prenda) {
     // «Sacad el mejor vestido, y vestidle»: queda puesto en el personaje con que volvió (los vecinos lo ven)
     const { rows: r } = await pool.query(
@@ -336,7 +340,7 @@ async function casaMientras(ch: PersonajeFila): Promise<CasaMientras | null> {
   const titular = ch.casa;
   const [{ rows: casa }, visitas, regalos] = await Promise.all([
     pool.query(
-      `SELECT h.level, h.huerto,
+      `SELECT h.level, h.huerto, h.obras,
               (SELECT COALESCE(SUM(sold - notified), 0)::int FROM game_market_listings WHERE seller_character_id = $1 AND sold > notified) AS ventas
          FROM game_houses h WHERE h.character_id = $1`,
       [titular],
@@ -361,7 +365,8 @@ async function casaMientras(ch: PersonajeFila): Promise<CasaMientras | null> {
     ),
   ]);
   if (!casa[0]) return null;
-  const huerto = leerHuerto(casa[0].huerto, parcelasHuerto(Number(casa[0].level || 0)));
+  // con «ensanchar el huerto» (shared/obras.ts) hay una parcela más
+  const huerto = leerHuerto(casa[0].huerto, parcelasHuerto(Number(casa[0].level || 0)) + ventajasDeColumna(casa[0].obras).parcelas);
   return {
     visitas: { nombres: nombres(visitas.rows), total: Number(visitas.rows[0]?.total || 0) },
     regalos: regalos.rows.map((r) => ({ quien: nombreDe(r), bien: String(r.good), cantidad: Number(r.amount) })),

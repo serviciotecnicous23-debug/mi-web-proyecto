@@ -138,7 +138,7 @@ export async function avanzarMision(ch: { id: number; user_id: number }, tipo: T
     // también gozo: por cada encargo y por los tres (más en los eventos del año que lo dan: shared/anio.ts)
     const bonoGozo = bonoDelMomento().gozo;
     if (bonoGozo > 1) for (const c of cumplidas) if (c.gozo) c.gozo = Math.round(c.gozo * bonoGozo);
-    await sumarGozo(ch.id, cumplidas.reduce((a, c) => a + (c.gozo || 0), 0));
+    await sumarGozo(ch.id, cumplidas.reduce((a, c) => a + (c.gozo || 0), 0), "encargos");
     forgetJer();
   }
   if (g.todos && cumplidas.some((c) => c.premio === MERITO_ENCARGOS_TODOS)) await evento(ch.user_id, `encargos:${g.dia}`, "cumplió los tres encargos del día en Jerusalén en línea");
@@ -210,7 +210,7 @@ export async function aportarAlBarrio(ch: { id: number; user_id: number }, n: nu
       );
       for (const r of ellos) {
         await sumarMerito(Number(r.character_id), MERITO_BARRIO);
-        await sumarGozo(Number(r.character_id), GOZO.barrio);
+        await sumarGozo(Number(r.character_id), GOZO.barrio, "ofrenda-barrio");
         await evento(Number(r.user_id), `barrio:${semana}`, `cumplió con ${nombre} la ofrenda del barrio de la semana`);
         if (Number(r.character_id) === ch.id) out.push({ titulo: `¡${nombre} cumplió la ofrenda de la semana!`, premio: MERITO_BARRIO, gozo: GOZO.barrio });
       }
@@ -221,7 +221,7 @@ export async function aportarAlBarrio(ch: { id: number; user_id: number }, n: nu
     const { rows: yo } = await pool.query(`UPDATE game_barrio_aportes SET premiado = true WHERE week_key = $1 AND character_id = $2 AND premiado = false RETURNING character_id`, [semana, ch.id]);
     if (yo.length) {
       await sumarMerito(ch.id, MERITO_BARRIO);
-      await sumarGozo(ch.id, GOZO.barrio);
+      await sumarGozo(ch.id, GOZO.barrio, "ofrenda-barrio");
       await evento(ch.user_id, `barrio:${semana}`, `cumplió con ${nombre} la ofrenda del barrio de la semana`);
       out.push({ titulo: `Aportaste a la ofrenda cumplida de ${nombre}`, premio: MERITO_BARRIO, gozo: GOZO.barrio });
       forgetJer();

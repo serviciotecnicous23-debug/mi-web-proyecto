@@ -6,6 +6,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { capacidadAlfoli } from "@shared/ciudad";
+import { ventajasDeColumna } from "@shared/obras";
 import { BIEN_MERCADO_NOMBRE, type BienMercado } from "@shared/mercado";
 import {
   PREMIO_CASAS, PROVISION, PUESTOS_MAX, PUESTO_CANTIDAD_MAX, PUESTO_HORAS, diezmoDe, rangoPrecio, precioMercaderHoy, type PuestoVista, type PuestosEstado,
@@ -13,7 +14,7 @@ import {
 } from "@shared/economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
-import { sumarGozo } from "./gozo";
+import { anotarGasto, sumarGozo } from "./gozo";
 import { semanaClave } from "./misiones";
 import { precioVentaHoy } from "@shared/mercado";
 
@@ -174,12 +175,12 @@ async function estadoPuestos(ch: PersonajeFila): Promise<PuestosEstado> {
       [ch.casa],
     ),
     pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]),
-    pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.casa]),
+    pool.query(`SELECT level, goods, obras FROM game_houses WHERE character_id = $1`, [ch.casa]),
     saldoTesoro(),
     preciosMercaderHoy(),
   ]);
   const bienes = leerBienes(h[0]?.goods);
-  const cap = capacidadAlfoli(Number(h[0]?.level || 0));
+  const cap = capacidadAlfoli(Number(h[0]?.level || 0)) + ventajasDeColumna(h[0]?.obras).alfoli;
   const ventasNuevas: VentaNueva[] = nuevas
     .filter((r) => esBien(r.good))
     .map((r) => {
@@ -232,7 +233,7 @@ async function premiarCasasSemanaAnterior() {
   const top = await casasBendecidas(anterior, PREMIO_CASAS.length);
   for (const [i, c] of top.entries()) {
     const premio = PREMIO_CASAS[i];
-    if (await delTesoro("premio-casa", c.personajeId, premio, `Premio a la casa más bendecida (${i + 1}.º lugar)`)) await sumarGozo(c.personajeId, premio);
+    if (await delTesoro("premio-casa", c.personajeId, premio, `Premio a la casa más bendecida (${i + 1}.º lugar)`)) await sumarGozo(c.personajeId, premio, "premio-casa");
   }
 }
 
@@ -334,9 +335,9 @@ export function registerEconomiaRoutes(app: Express) {
       const bien = L[0].good as BienMercado;
       await recoger(ch.casa);
       const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; total?: number; n?: number; vendedor?: number }> => {
-        const { rows } = await pool.query(`SELECT level, goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
+        const { rows } = await pool.query(`SELECT level, goods, obras FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const bienes = leerBienes(rows[0]?.goods);
-        const libre = capacidadAlfoli(Number(rows[0]?.level || 0)) - Math.floor(bienes[bien]);
+        const libre = capacidadAlfoli(Number(rows[0]?.level || 0)) + ventajasDeColumna(rows[0]?.obras).alfoli - Math.floor(bienes[bien]);
         if (libre <= 0) return { status: 409, message: "Tu alfolí está lleno de eso: lleva algo al templo o al horno primero." };
         // se compra lo que se pidió, si cabe en el alfolí y si queda en el puesto
         const n = Math.min(pide, libre, Math.max(1, Number(L[0].quantity)));
@@ -359,7 +360,9 @@ export function registerEconomiaRoutes(app: Express) {
       });
       if (out.status !== 200) return res.status(out.status).json({ message: out.message });
       const diezmo = diezmoDe(out.total!);
-      await sumarGozo(out.vendedor!, out.total! - diezmo);
+      // el termómetro: sale lo que pagó el que compra y entra lo del vendedor (la diferencia es el diezmo)
+      anotarGasto("vecinos", out.total!);
+      await sumarGozo(out.vendedor!, out.total! - diezmo, "vecinos");
       await alTesoro("diezmo", out.vendedor!, diezmo, `Diezmo de una venta de ${BIEN_MERCADO_NOMBRE[bien]} entre vecinos`);
       res.json({ ...(await estadoPuestos(ch)), comprado: { bien, cantidad: out.n, total: out.total } });
     } catch (err) {
@@ -443,7 +446,7 @@ export function registerEconomiaRoutes(app: Express) {
         await pool.query(`DELETE FROM game_provision WHERE character_id = $1 AND day_key = $2`, [ch.casa, diaClave()]);
         return res.status(409).json({ message: "El tesoro está vacío por ahora: el diezmo de las ventas lo vuelve a llenar." });
       }
-      await sumarGozo(ch.casa, PROVISION.gozo);
+      await sumarGozo(ch.casa, PROVISION.gozo, "provision");
       res.json(await estadoTesoro(ch));
     } catch (err) {
       console.error("[economia] provisión:", err);

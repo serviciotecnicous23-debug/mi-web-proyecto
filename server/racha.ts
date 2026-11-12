@@ -51,7 +51,7 @@ export async function marcarServicio(characterId: number): Promise<RachaMarcada 
   if (!hecho.length) return null;
   const hito = HITOS_RACHA.find((h) => h.dias === actual) ?? null;
   const gozo = gozoDeRacha(actual) + (hito?.gozo ?? 0);
-  await sumarGozo(titular, gozo);
+  await sumarGozo(titular, gozo, "racha");
   return { actual, gozo, hito };
 }
 

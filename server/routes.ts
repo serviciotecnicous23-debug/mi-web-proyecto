@@ -27,6 +27,8 @@ import { registerMuroRoutes } from "./muro";
 import { registerCapitulosRoutes } from "./capitulos";
 import { registerRegresoRoutes } from "./regreso";
 import { registerRestauracionRoutes } from "./restauracion";
+import { registerObrasRoutes } from "./obras";
+import { registerTermometroRoutes } from "./termometro";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
@@ -3686,6 +3688,9 @@ ${urls}
   registerRegresoRoutes(app);
   // la gran restauración de los edificios y el camino de hoy (el motor del juego)
   registerRestauracionRoutes(app);
+  // las obras de la casa (con el gozo se edifica) y el termómetro del gozo (administración)
+  registerObrasRoutes(app);
+  registerTermometroRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
 

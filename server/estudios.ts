@@ -264,7 +264,7 @@ export function registerEstudiosRoutes(app: Express) {
       if (nueva) {
         premio = MERITO_SECCION;
         await sumarMerito(ch, premio);
-        await sumarGozo(ch.id, GOZO.seccion);
+        await sumarGozo(ch.id, GOZO.seccion, "estudios");
         misiones = await avanzarMision(ch, "seccion", 1).catch(() => []);
       }
       res.json({ premio, estado: await estadoDe(titular), ...(misiones.length ? { misiones } : {}) });
@@ -351,7 +351,7 @@ export function registerEstudiosRoutes(app: Express) {
       if (out.primeraVez) {
         // el mérito va aparte de la fila (enFila no se anida), al personaje con el que se aprobó
         await sumarMerito(ch, out.premio);
-        await sumarGozo(ch.id, GOZO.estudio);
+        await sumarGozo(ch.id, GOZO.estudio, "estudios");
         await evento(req.user!.id, `estudio:${e.id}`, `aprobó el estudio «${e.titulo}» en Jerusalén en línea`);
         out.estado = await estadoDe(titular);
       }

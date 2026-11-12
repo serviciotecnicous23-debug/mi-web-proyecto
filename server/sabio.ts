@@ -389,7 +389,7 @@ async function premioDeLaSemanaPasada(titular: number): Promise<{ puesto: number
     [pasada, titular, mio.puesto, gozo],
   );
   if (!rows.length) return null;
-  await sumarGozo(titular, gozo);
+  await sumarGozo(titular, gozo, "sabio");
   return { puesto: mio.puesto, gozo };
 }
 
@@ -544,7 +544,7 @@ async function premiarConsejo(c: { t: number; u: number; bien: boolean; de: stri
         `UPDATE game_sabio SET consejos_buenos = $2, dia = $3, gozo_hoy = $4, entradas_hoy = $5, premios = $6::jsonb, updated_at = now() WHERE character_id = $1`,
         [c.t, buenos, diaClave(), fila.gozo_hoy + gozo, fila.entradas_hoy, JSON.stringify([...premios])],
       );
-      if (gozo) await sumarGozo(c.t, gozo);
+      if (gozo) await sumarGozo(c.t, gozo, "sabio");
       await sumarALaCopa(c.t, "consejo");
     }
     const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [c.t]);
@@ -672,7 +672,7 @@ export function registerSabioRoutes(app: Express) {
           [pr.titular, t.id],
         );
     }
-    if (gozo) await sumarGozo(pr.titular, gozo);
+    if (gozo) await sumarGozo(pr.titular, gozo, "sabio");
     // la copa de los barrios: cada grada con que se queda suma para su barrio
     if (grada) await sumarALaCopa(pr.ch.id, "grada", grada);
     if (gano) await evento(pr.ch.user_id, `sabio:${p.id}`, "subió las quince gradas de «¿Quién es sabio?» en la casa de la sabiduría");

@@ -198,7 +198,7 @@ export function registerCatedrasRoutes(app: Express) {
       if ("error" in out) return res.status(out.error).json({ message: out.message });
       if (out.correcta) {
         await sumarMerito(ch, CATEDRA_MERITO);
-        await sumarGozo(ch.id, GOZO.acierto);
+        await sumarGozo(ch.id, GOZO.acierto, "catedras");
       }
       // el camino de hoy: una lección con el maestro es aprender
       void anotarCamino(ch.id, "aprender");

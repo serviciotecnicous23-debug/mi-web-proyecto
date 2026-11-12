@@ -178,7 +178,7 @@ export function registerPuebloRoutes(app: Express) {
       // 3) el gozo (con el tope de la ayuda del día), el encargo de ayudar y la copa del barrio
       const gozo = Math.max(0, Math.min(cantidad * GOZO_PUEBLO * AYUDA_GOZO, AYUDA_GOZO_DIA - (await gozoDeAyudaHoy(v.casa))));
       await pool.query(`INSERT INTO game_pueblo_dones (dia, barrio, parcela, titular, cantidad, gozo) VALUES ($1, $2, $3, $4, $5, $6)`, [dia, v.barrio, parcela, v.casa, cantidad, gozo]);
-      if (gozo) await sumarGozo(v.casa, gozo);
+      if (gozo) await sumarGozo(v.casa, gozo, "pueblo");
       await sumarALaCopa(v.id, "pueblo", cantidad);
       const { rows: cumplido } = await pool.query(
         `UPDATE game_pueblo_pedidos SET done_at = now() WHERE dia = $1 AND barrio = $2 AND parcela = $3 AND done_at IS NULL AND recibido >= $4 RETURNING parcela`,

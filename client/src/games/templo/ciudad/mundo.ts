@@ -96,7 +96,7 @@ const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 export type BarrioVisto = {
   n: number;
   area: number;
-  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null }[];
+  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null; obras?: string[]; estrellas?: number }[];
   detalle: boolean;
   /** El nivel del barrio en la copa de los barrios (lámparas, olivos, fuente, estandartes, arco). */
   nivelBarrio?: number;
@@ -1222,7 +1222,8 @@ export class CiudadWorld {
     const antes = this.barrios.get(estado.barrio.n);
     this.estado = estado;
     this.player.fig.setRopa(estado.yo.ropa);
-    const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null]));
+    // las obras de la casa (shared/obras.ts) también cambian el dibujo
+    const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null, c.obras ?? []]));
     const cambio = !antes || firma(antes.casas) !== firma(estado.barrio.casas);
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio });
     if (cambio) this.dibujarAreas();
@@ -1944,7 +1945,7 @@ export class CiudadWorld {
       }
       if (b?.detalle) {
         const dib: CasaDibujo[] = [
-          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero })),
+          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero, obras: c.obras })),
           ...delPueblo.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: 1_000_000 + n * 100 + c.parcela, pueblo: true })),
         ];
         const { grupo, ventanas } = construirAreaDetalle(area, dib, b.nivelBarrio ?? 0);
@@ -2033,6 +2034,63 @@ export class CiudadWorld {
       this.dibujarAreas();
     }
     this.pushHud();
+  }
+
+  /** Las obras de tu casa cambiaron (empezó o terminó una): se redibuja si cambió lo edificado (shared/obras.ts). */
+  alObras(obras: string[], estrellas: number, gozo: number) {
+    // se compara con lo dibujado (la pantalla pudo poner al día el estado un momento antes)
+    const antes = this.barrios.get(this.estado.barrio.n)?.casas.find((c) => c.personajeId === this.casaPropia);
+    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.casaPropia ? { ...c, obras, estrellas } : c));
+    this.estado = { ...this.estado, yo: { ...this.estado.yo, gozo }, barrio: { ...this.estado.barrio, casas } };
+    if (JSON.stringify(antes?.obras ?? []) !== JSON.stringify(obras)) {
+      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true, nivelBarrio: this.barrios.get(this.estado.barrio.n)?.nivelBarrio });
+      this.dibujarAreas();
+    }
+    this.pushHud();
+  }
+
+  /**
+   * La foto de tu casa (para compartirla): una cámara delante de tu puerta, de tres cuartos, dibuja un cuadro de 4:5 y
+   * se copia enseguida (sin esperar al cuadro siguiente: así no hace falta guardar el dibujo). Sin los aros de las
+   * puertas y con las casas opacas aunque estuvieran aclaradas por tapar al jugador.
+   */
+  fotoDeCasa(): HTMLCanvasElement | null {
+    if (!this.running) return null;
+    const p = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
+    const y0 = P.alturaCiudad(p.x, p.z);
+    // un cuadro fijo de 4:5 (igual en el teléfono y en la computadora): se dibuja a ese tamaño y se vuelve al de siempre
+    const FW = 800, FH = 1000;
+    const cam = this.camera.clone();
+    cam.fov = 48;
+    cam.aspect = FW / FH;
+    cam.near = 0.1;
+    cam.zoom = 1;
+    cam.updateProjectionMatrix();
+    // la cámara según el tamaño de la casa: la tienda de cerca, la casa con aposento alto (y su torre) más de lejos
+    const [dist, alto, mira] = ([[7.6, 3.4, 1.0], [8.6, 4.0, 1.3], [9.2, 4.4, 1.45], [10.2, 4.9, 1.95]] as const)[Math.max(0, Math.min(3, this.estado.yo.nivel))];
+    const lado = (this.estado.yo.parcela % 2 === 0 ? 1 : -1) * 2.4;
+    cam.position.set(p.x + lado, y0 + alto, p.z + p.dir * dist);
+    cam.lookAt(p.x, y0 + mira, p.z + p.dir * 0.9);
+    // lo del juego que no va en la foto: los aros de las puertas, y las casas aclaradas vuelven a ser opacas
+    const aros = this.zonas.map((z) => [z.ring.mesh, z.ring.mesh.visible] as const);
+    for (const [m] of aros) m.visible = false;
+    const aclaradas = (this.cajasOcluyentes ?? []).filter((c) => this.transparentes.has(c.malla)).map((c) => [c.malla, c.malla.material, c.original] as const);
+    for (const [m, , original] of aclaradas) m.material = original;
+    const out = document.createElement("canvas");
+    out.width = FW;
+    out.height = FH;
+    try {
+      this.renderer.setSize(FW / this.ratio, FH / this.ratio, false);
+      this.renderer.render(this.scene, cam);
+      out.getContext("2d")?.drawImage(this.renderer.domElement, 0, 0, FW, FH);
+    } finally {
+      for (const [m, v] of aros) m.visible = v;
+      for (const [m, mat] of aclaradas) m.material = mat;
+      // vuelve la vista de siempre
+      this.renderer.setSize(this.w, this.h, false);
+      this.renderer.render(this.scene, this.camera);
+    }
+    return out;
   }
 
   actualizarPrivada(p: CasaPrivada, nivel?: number) {

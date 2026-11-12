@@ -57,7 +57,7 @@ export async function aportarAlMuro(ch: { id: number; user_id: number }, n: numb
       [hecho, MURO_APORTE_MINIMO],
     );
     for (const a of ayudaron) {
-      await sumarGozo(Number(a.character_id), MURO_PREMIO_GOZO);
+      await sumarGozo(Number(a.character_id), MURO_PREMIO_GOZO, "muro");
       if (Number(a.character_id) === ch.id) out.push({ titulo: `¡Se levantó el tramo ${hecho + 1} del muro!`, premio: 0, gozo: MURO_PREMIO_GOZO });
     }
     await evento(ch.user_id, `muro:${hecho}`, `puso la última piedra del tramo ${hecho + 1} del muro de Jerusalén en línea`).catch(() => null);

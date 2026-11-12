@@ -250,9 +250,9 @@ export function registerReunionesRoutes(app: Express) {
         );
         if (premiado.length) {
           await sumarMerito(ch.id, REUNION_PREMIO.meritoVecino);
-          await sumarGozo(ch.casa, REUNION_PREMIO.gozoVecino);
+          await sumarGozo(ch.casa, REUNION_PREMIO.gozoVecino, "reuniones");
           await pool.query(`UPDATE game_houses SET offered = offered + $2 WHERE character_id = $1`, [r.anfitrionId, REUNION_PREMIO.honraCasa]);
-          await sumarGozo(r.anfitrionId, REUNION_PREMIO.gozoCasa);
+          await sumarGozo(r.anfitrionId, REUNION_PREMIO.gozoCasa, "reuniones");
           forgetJer();
           out.merito = REUNION_PREMIO.meritoVecino;
           out.gozo = REUNION_PREMIO.gozoVecino;

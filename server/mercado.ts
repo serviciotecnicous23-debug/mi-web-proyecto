@@ -6,7 +6,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ARTICULOS, HORNO_MAX, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
+  ARTICULOS, HORNO_GRANDE, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
   parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
@@ -16,7 +16,8 @@ import { AYUDA_MUEBLES, DIEZMO, RIEGO } from "@shared/economia";
 import { alTesoro, contarVentaMercader, preciosMercaderHoy, vendidosHoy } from "./economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, olvidarBarrio, recoger } from "./ciudad";
-import { sumarGozo } from "./gozo";
+import { anotarGasto, sumarGozo } from "./gozo";
+import { ventajasDeColumna } from "@shared/obras";
 import { coloresDeRopa } from "./ropa";
 import { refrescarFicha } from "./ciudad-red";
 
@@ -36,7 +37,7 @@ ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "interior" jsonb NOT NULL DEF
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const objeto = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
-type Plantio = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; riego?: number };
+type Plantio = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; riego?: number; /** la regó la cisterna */ cisterna?: boolean };
 
 export function leerHuerto(v: unknown, n: number): Plantio[] {
   const a = Array.isArray(v) ? v : [];
@@ -44,7 +45,13 @@ export function leerHuerto(v: unknown, n: number): Plantio[] {
     const p = objeto(a[i]);
     const s = p.semilla === "trigo" || p.semilla === "cebada" || p.semilla === "olivo" ? p.semilla : null;
     const riego = typeof p.riego === "number" && p.riego >= 0.5 && p.riego <= 1 ? p.riego : undefined;
-    return { semilla: s, plantado: s && typeof p.plantado === "string" ? p.plantado : null, regado: s ? p.regado === true : false, ...(s && riego ? { riego } : {}) };
+    return {
+      semilla: s,
+      plantado: s && typeof p.plantado === "string" ? p.plantado : null,
+      regado: s ? p.regado === true : false,
+      ...(s && riego ? { riego } : {}),
+      ...(s && p.cisterna === true ? { cisterna: true } : {}),
+    };
   });
 }
 
@@ -66,7 +73,15 @@ function llovio(p: Plantio): boolean {
 function vistaParcela(p: Plantio): Parcela {
   const f = faltan(p);
   const lluvia = !p.regado && llovio(p);
-  return { semilla: p.semilla, plantado: p.plantado, regado: p.regado || lluvia, listo: !!p.semilla && f === 0, faltan: f, ...(lluvia ? { lluvia: true } : {}) };
+  return {
+    semilla: p.semilla,
+    plantado: p.plantado,
+    regado: p.regado || lluvia,
+    listo: !!p.semilla && f === 0,
+    faltan: f,
+    ...(lluvia ? { lluvia: true } : {}),
+    ...(p.cisterna && !lluvia ? { cisterna: true } : {}),
+  };
 }
 
 /** Los muebles útiles puestos dentro de la casa (shared/economia.ts: AYUDA_MUEBLES). */
@@ -79,7 +94,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }, precios, vendidos, utiles] = await Promise.all([
     pool.query(`SELECT t.gozo, t.semillas, t.armario, yo.ropa, t.muebles FROM game_characters t, game_characters yo WHERE t.id = $1 AND yo.id = $2`, [ch.casa, ch.casa]),
-    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]),
+    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas, obras FROM game_houses WHERE character_id = $1`, [ch.casa]),
     preciosMercaderHoy(),
     vendidosHoy(),
     mueblesUtiles(ch.casa),
@@ -89,6 +104,8 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const ropa = objeto(c[0]?.ropa);
   const bienes = leerBienes(h[0]?.goods);
   const prep = leerPreparadas(h[0]?.preparadas);
+  // lo que dan las obras de la casa (shared/obras.ts): más huerto, la cisterna y el horno de barro
+  const v = ventajasDeColumna(h[0]?.obras);
   return {
     dia,
     gozo: Number(c[0]?.gozo || 0),
@@ -98,7 +115,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     ropa: { manto: typeof ropa.manto === "string" ? ropa.manto : null, faja: typeof ropa.faja === "string" ? ropa.faja : null },
     adornos: lista(h[0]?.adornos),
     lugares: lugaresAdornos(nivel),
-    huerto: leerHuerto(h[0]?.huerto, parcelasHuerto(nivel)).map(vistaParcela),
+    huerto: leerHuerto(h[0]?.huerto, parcelasHuerto(nivel) + v.parcelas).map(vistaParcela),
     letrero: (h[0]?.letrero as string | null) ?? null,
     tieneLetrero: h[0]?.tiene_letrero === true,
     bienes: { harina: Math.floor(bienes.harina), aceite: Math.floor(bienes.aceite), corderos: Math.floor(bienes.corderos) },
@@ -112,6 +129,8 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     horno: prep.horno
       ? { receta: prep.horno.receta, cantidad: prep.horno.cantidad, faltan: Math.max(0, Math.ceil((new Date(prep.horno.listo).getTime() - Date.now()) / 1000)) }
       : null,
+    hornoMax: v.horno,
+    cisterna: v.cisterna,
   };
 }
 
@@ -197,6 +216,7 @@ export function registerMercadoRoutes(app: Express) {
       // se paga solo si alcanza (de una sola vez, sin carreras)
       const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.casa, costo]);
       if (!pago.length) return res.status(409).json({ message: `Te falta gozo: cuesta ${costo}. Sirve un poco más o vende lo del alfolí.` });
+      anotarGasto(`mercado-${a.categoria}`, costo);
       if (a.categoria === "semilla") {
         await pool.query(
           `UPDATE game_characters SET semillas = jsonb_set(semillas, ARRAY[$2::text], to_jsonb(COALESCE((semillas->>$2)::int, 0) + $3)) WHERE id = $1`,
@@ -268,7 +288,7 @@ export function registerMercadoRoutes(app: Express) {
       });
       for (const [k, n] of Object.entries(vendidos)) await contarVentaMercader(k as "harina" | "aceite" | "corderos", n ?? 0);
       if (!ganado) return res.status(409).json({ message: "No hay nada para vender." });
-      await sumarGozo(ch.casa, ganado);
+      await sumarGozo(ch.casa, ganado, "mercader");
       await responder(res, ch, { vendido: ganado });
     } catch (err) {
       console.error("[mercado] vender:", err);
@@ -335,7 +355,7 @@ export function registerMercadoRoutes(app: Express) {
   app.post("/api/jerusalen/casa/preparar", async (req: Request, res: Response) => {
     const receta = req.body?.receta;
     if (receta !== "tortas" && receta !== "aceitePuro") return res.status(400).json({ message: "Elige qué preparar." });
-    const cantidad = Math.max(1, Math.min(HORNO_MAX, Math.floor(Number(req.body?.cantidad) || 1)));
+    const cantidad = Math.max(1, Math.min(HORNO_GRANDE, Math.floor(Number(req.body?.cantidad) || 1)));
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
@@ -343,9 +363,11 @@ export function registerMercadoRoutes(app: Express) {
       // primero lo que trajeron los siervos (recoger va en su propia fila de la casa)
       await recoger(ch.casa);
       const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string }> => {
-        const { rows } = await pool.query(`SELECT goods, preparadas FROM game_houses WHERE character_id = $1`, [ch.casa]);
+        const { rows } = await pool.query(`SELECT goods, preparadas, obras FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const p = leerPreparadas(rows[0]?.preparadas);
         if (p.horno) return { status: 409, message: "El horno está ocupado: saca lo que hay cuando esté listo." };
+        const max = ventajasDeColumna(rows[0]?.obras).horno;
+        if (cantidad > max) return { status: 409, message: `En tu horno caben ${max}: edifica el horno de barro (Tu casa → Obras) para que quepan ${HORNO_GRANDE}.` };
         const bienes = leerBienes(rows[0]?.goods);
         const r = RECETAS[receta as "tortas" | "aceitePuro"];
         const pide = Object.entries(r.pide) as [BienMercado, number][];
@@ -399,9 +421,10 @@ export function registerMercadoRoutes(app: Express) {
       if (!ch) return;
       if (frenar(ch.casa, 400)) return res.status(429).json({ message: "Espera un momento" });
       const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; cosecha?: { bien: string; cuanto: number } }> => {
-        const { rows: h } = await pool.query(`SELECT level, huerto, goods FROM game_houses WHERE character_id = $1`, [ch.casa]);
+        const { rows: h } = await pool.query(`SELECT level, huerto, goods, obras FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const nivel = Number(h[0]?.level || 0);
-        const huerto = leerHuerto(h[0]?.huerto, parcelasHuerto(nivel));
+        const v = ventajasDeColumna(h[0]?.obras);
+        const huerto = leerHuerto(h[0]?.huerto, parcelasHuerto(nivel) + v.parcelas);
         if (!Number.isInteger(n) || n < 0 || n >= huerto.length) return { status: 400, message: "Esa parcela no existe." };
         const p = huerto[n];
         if (accion === "sembrar") {
@@ -414,10 +437,14 @@ export function registerMercadoRoutes(app: Express) {
             [ch.casa, s],
           );
           if (!gasto.length) return { status: 409, message: "No te quedan semillas de esas: cómpralas en el mercado." };
-          huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: false };
+          // con la cisterna de la casa (shared/obras.ts), lo que se siembra queda regado
+          if (v.cisterna) {
+            const utiles = await mueblesUtiles(ch.casa);
+            huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: true, riego: utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal, cisterna: true };
+          } else huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: false };
         } else if (accion === "regar") {
           if (!p.semilla) return { status: 409, message: "Primero siembra." };
-          if (p.regado) return { status: 409, message: "Ya la regaste." };
+          if (p.regado) return { status: 409, message: p.cisterna ? "La cisterna ya la regó." : "Ya la regaste." };
           if (llovio(p)) return { status: 409, message: "La lluvia ya la regó." };
           if (faltan(p) === 0) return { status: 409, message: "Ya está lista: cosecha." };
           const utiles = await mueblesUtiles(ch.casa);
@@ -430,7 +457,7 @@ export function registerMercadoRoutes(app: Express) {
           const extra = (s.da === "harina" && utiles.has("molino")) || (s.da === "aceite" && utiles.has("vasijas")) ? 1 : 0;
           const cuanto = s.cuanto + (p.regado || llovio(p) ? 1 : 0) + extra;
           const bienes = leerBienes(h[0]?.goods);
-          const cap = capacidadAlfoli(nivel);
+          const cap = capacidadAlfoli(nivel) + v.alfoli;
           if (bienes[s.da] + cuanto > cap) return { status: 409, message: "El alfolí está lleno: lleva lo que tienes al templo o véndelo al mercader." };
           bienes[s.da] += cuanto;
           huerto[n] = { semilla: null, plantado: null, regado: false };

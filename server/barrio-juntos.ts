@@ -170,7 +170,7 @@ async function premioDeLaCopa(titular: number): Promise<CopaEstado["premio"]> {
     [semana, titular, puesto, gozo],
   );
   if (!rows.length) return null;
-  await sumarGozo(titular, gozo);
+  await sumarGozo(titular, gozo, "copa");
   return { puesto, gozo, barrio: nombreDeBarrio(barrio) };
 }
 
@@ -275,7 +275,7 @@ async function cumplir(dia: string, barrio: number, m: MisionJuntos, cerca: { u:
     hechos.add(t);
     if (!rows.length) continue;
     await sumarMerito(cerca[i].personajeId, MERITO_JUNTOS);
-    await sumarGozo(t, GOZO_JUNTOS);
+    await sumarGozo(t, GOZO_JUNTOS, "barrio-juntos");
     await sumarALaCopa(cerca[i].personajeId, "juntos");
     const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [t]);
     avisarA(cerca[i].u, { t: "juntos-hecho", titulo: m.titulo, gozo: GOZO_JUNTOS, merito: MERITO_JUNTOS, ayudo: false, juntos: nombres, gozoTotal: g[0] ? Number(g[0].gozo) : undefined });

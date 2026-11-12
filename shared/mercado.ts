@@ -268,8 +268,9 @@ export const RECETAS: Record<RecetaId, { nombre: string; icono: string; pide: Pa
     verso: { text: "Y mandarás a los hijos de Israel que te traigan aceite puro de olivas machacadas, para el alumbrado, para hacer arder continuamente las lámparas.", ref: "Éxodo 27:20" },
   },
 };
-/** Cuántas a la vez caben en el horno. */
+/** Cuántas a la vez caben en el horno (con el horno de barro de las obras de la casa, shared/obras.ts, caben más). */
 export const HORNO_MAX = 3;
+export const HORNO_GRANDE = 5;
 
 /** Lo preparado y lo que está en el horno (de la columna `preparadas` de la casa). */
 export function leerPreparadas(v: unknown): { preparadas: Preparadas; horno: { receta: RecetaId; cantidad: number; listo: string } | null } {
@@ -279,7 +280,7 @@ export function leerPreparadas(v: unknown): { preparadas: Preparadas; horno: { r
   const receta = h.receta === "tortas" || h.receta === "aceitePuro" ? h.receta : null;
   return {
     preparadas: { tortas: n(o.tortas), aceitePuro: n(o.aceitePuro) },
-    horno: receta && typeof h.listo === "string" ? { receta, cantidad: Math.max(1, Math.min(HORNO_MAX, n(h.cantidad))), listo: h.listo } : null,
+    horno: receta && typeof h.listo === "string" ? { receta, cantidad: Math.max(1, Math.min(HORNO_GRANDE, n(h.cantidad))), listo: h.listo } : null,
   };
 }
 
@@ -289,7 +290,17 @@ export function guardarPreparadas(p: Preparadas, horno: { receta: RecetaId; cant
 }
 
 // ---------------------------------------------------------------- respuestas de la API
-export type Parcela = { semilla: "trigo" | "cebada" | "olivo" | null; plantado: string | null; regado: boolean; listo: boolean; faltan: number; /** la regó la lluvia del día en que se sembró */ lluvia?: boolean };
+export type Parcela = {
+  semilla: "trigo" | "cebada" | "olivo" | null;
+  plantado: string | null;
+  regado: boolean;
+  listo: boolean;
+  faltan: number;
+  /** la regó la lluvia del día en que se sembró */
+  lluvia?: boolean;
+  /** la regó la cisterna de la casa al sembrarla (shared/obras.ts) */
+  cisterna?: boolean;
+};
 export type MercadoEstado = {
   dia: string;
   gozo: number;
@@ -318,4 +329,8 @@ export type MercadoEstado = {
   /** Las ofrendas preparadas y lo que está en el horno (`faltan` en segundos). */
   preparadas: Preparadas;
   horno: { receta: RecetaId; cantidad: number; faltan: number } | null;
+  /** Cuántas caben en el horno (con el horno de barro de las obras, más). */
+  hornoMax: number;
+  /** La casa tiene cisterna: lo que se siembra queda regado. */
+  cisterna: boolean;
 };

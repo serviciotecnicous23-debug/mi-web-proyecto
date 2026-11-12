@@ -72,7 +72,7 @@ const Y = SUELO;
 
 // ---------------------------------------------------------------- tipos públicos
 /** `pueblo`: la casa es de una familia del pueblo (shared/pueblo.ts), no de un vecino. */
-export type CasaDibujo = { parcela: number; nivel: number; personajeId: number; adornos?: string[]; letrero?: boolean; pueblo?: boolean };
+export type CasaDibujo = { parcela: number; nivel: number; personajeId: number; adornos?: string[]; letrero?: boolean; pueblo?: boolean; /** las obras de la casa (shared/obras.ts) */ obras?: string[] };
 
 export type CiudadVisual = {
   root: THREE.Group;
@@ -633,7 +633,7 @@ function vidaDeCasa(m: GeoBuilder, v: GeoBuilder, w: number, d: number, h: numbe
   }
 }
 
-function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
+function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number, obras: ReadonlySet<string> = new Set()) {
   rnd = mulberry32(seed);
   const [w, d, h] = CASA_MEDIDA[nivel];
   if (nivel === 0) {
@@ -663,7 +663,7 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
     // alfombra, fogón y cántaro delante
     m.box(1.3, 0.03, 0.8, pick([C.carmesi, "#8f5a3a", C.azul]), { y: 0.02, z: fr + 0.55 });
     for (let k = 0; k < 6; k++) m.box(0.15, 0.12, 0.15, C.piedraOsc, { x: 0.95 + Math.cos(k) * 0.26, y: 0.06, z: fr + 1.05 + Math.sin(k) * 0.26 });
-    jar(m, -1.0, 0, fr + 0.75, 0.9);
+    if (!obras.has("cisterna")) jar(m, -1.0, 0, fr + 0.75, 0.9);
     // lo de cada día en la tienda: el odre colgado de la vara, una cesta con frutos, leña y, de noche, la lámpara
     if (rnd() < 0.6) m.sphere(0.13, "#6e4a2c", { x: -(w / 2 - 0.08), y: alto - 0.95, z: fr + 0.32, sy: 1.4, sz: 0.8 }, 7, 6);
     if (rnd() < 0.6) {
@@ -692,7 +692,7 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
   m.box(0.45, 0.42, 0.05, "#2e2418", { x: w * 0.26, y: h * 0.62, z: d / 2 + 0.02 });
   v.box(0.36, 0.33, 0.02, "#ffcf7a", { x: w * 0.26, y: h * 0.62, z: d / 2 + 0.05 });
   if (piedra) for (let k = 0; k < 3; k++) m.box(0.03, 0.42, 0.06, C.cedroOsc, { x: w * 0.26 - 0.12 + k * 0.12, y: h * 0.62, z: d / 2 + 0.06 }); // celosía
-  jar(m, w * 0.42, 0, d / 2 + 0.3, 1.0);
+  if (!obras.has("cisterna")) jar(m, w * 0.42, 0, d / 2 + 0.3, 1.0);
   vidaDeCasa(m, v, w, d, h, muro);
   if (!piedra) {
     // escalera de mano al terrado
@@ -723,7 +723,7 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number) {
  * Dónde van los adornos de cada casa (en sus coordenadas: la puerta mira a +z). Primero el suelo
  * (junto a la puerta y en el patio) y luego el terrado (Josué 2:6: el lino de Rahab en su terrado).
  */
-type LugarAdorno = { x: number; z: number; ry: number; alto: 0 | 1 | 2 };
+type LugarAdorno = { x: number; z: number; ry: number; alto: 0 | 1 | 2 | 3 };
 const LUGARES_ADORNO: LugarAdorno[][] = [
   // la tienda: a los dos lados
   [{ x: -1.6, z: -0.6, ry: -Math.PI / 2, alto: 0 }, { x: 1.6, z: -0.6, ry: Math.PI / 2, alto: 0 }],
@@ -744,8 +744,12 @@ const LUGARES_ADORNO: LugarAdorno[][] = [
 /** Los árboles y lo grande van al suelo si hay lugar; lo demás, donde toque. */
 const GRANDES = new Set(["higuera", "palmera", "parra", "telar", "toldo"]);
 
-function adornosDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, ids: string[]) {
-  const lugares = LUGARES_ADORNO[nivel].slice();
+/** Lo alto de la torre del terrado (shared/obras.ts), sobre el terrado. */
+const TORRE_ALTO = 2.2;
+
+function adornosDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, ids: string[], obras: ReadonlySet<string> = new Set()) {
+  // con la torre (casa con aposento alto), el lugar de la esquina de atrás pasa a lo alto de la torre
+  const lugares = LUGARES_ADORNO[nivel].map((l) => (nivel >= 3 && obras.has("torre") && l.alto === 1 && l.x === 1.0 && l.z === -1.05 ? { ...l, alto: 3 as const } : l));
   const [, , h] = CASA_MEDIDA[nivel];
   const suelo = lugares.filter((l) => l.alto === 0);
   const arriba = lugares.filter((l) => l.alto > 0);
@@ -754,9 +758,209 @@ function adornosDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, ids: string[
   for (const id of orden.slice(0, lugares.length)) {
     const l = (GRANDES.has(id) ? suelo.shift() : arriba.shift()) ?? suelo.shift() ?? arriba.shift();
     if (!l) break;
-    const y = l.alto === 0 ? 0 : l.alto === 1 ? h + 0.14 : h + 0.14 + 1.55 + 0.12;
+    const y = l.alto === 0 ? 0 : l.alto === 1 ? h + 0.14 : l.alto === 2 ? h + 0.14 + 1.55 + 0.12 : h + 0.14 + TORRE_ALTO + 0.1;
     // un árbol que no cupo en el suelo va en una maceta grande en el terrado
     adorno(m, v, id, l.x, y, l.z, l.ry, l.alto > 0 && (id === "higuera" || id === "palmera" || id === "parra") ? 0.55 : 1);
+  }
+}
+
+/**
+ * Las obras de la casa (shared/obras.ts), en sus coordenadas (la puerta mira a +z). Cada una tiene su lugar según la
+ * casa (tienda, adobe, piedra con patio o aposento alto), medido para no chocar con lo que ya tiene: la cisterna toma
+ * el lugar de la tinaja, el horno y el huerto nuevo van al frente del patio, el granero y la torre al terrado.
+ */
+function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: ReadonlySet<string>) {
+  const [w, d, h] = CASA_MEDIDA[nivel];
+  const fr = d / 2;
+  const techo = h + 0.14;
+  const tienda = nivel === 0, patio = nivel >= 2;
+  const puertaX = tienda ? 0 : -w * 0.18;
+  const pz1 = fr + 1.15; // el frente del patio (casa de piedra)
+  /** Una hoja de portón con su bisagra en (hx, hz), abierta hacia la calle `a` radianes; `s` dice de qué lado está. */
+  const hoja = (hx: number, hz: number, s: number, largo: number, alto: number, a: number) => {
+    const dx = -s * Math.cos(a), dz = Math.sin(a);
+    const t = { x: hx + (dx * largo) / 2, y: alto / 2 + 0.06, z: hz + (dz * largo) / 2, ry: Math.atan2(-dz, dx) };
+    m.box(largo, alto, 0.05, vary(C.cedro, 0.05), t);
+    m.box(largo * 0.92, 0.07, 0.07, C.cedroOsc, { ...t, y: alto * 0.78 });
+    m.box(largo * 0.92, 0.07, 0.07, C.cedroOsc, { ...t, y: alto * 0.28 });
+  };
+
+  // ------------------------------------------------ el cerco de piedra con su portón
+  if (obras.has("cerco")) {
+    if (!patio) {
+      const z = 2.96, x0 = 1.7, hueco = 0.46, alto = 0.42;
+      for (const sg of [-1, 1]) {
+        m.box(x0 - hueco, alto, 0.18, vary(C.piedraOsc, 0.05), { x: sg * (hueco + (x0 - hueco) / 2), y: alto / 2, z });
+        m.box(0.18, alto, z - fr - 0.05, vary(C.piedraOsc, 0.05), { x: sg * x0, y: alto / 2, z: (z + fr + 0.05) / 2 });
+        for (let k = 0; k < 4; k++) m.box(0.2, 0.07, 0.22, vary(C.piedraClara, 0.06), { x: sg * (hueco + 0.16 + (k * (x0 - hueco - 0.25)) / 3), y: alto + 0.035, z });
+        m.box(0.12, alto + 0.36, 0.12, C.cedroOsc, { x: sg * hueco, y: (alto + 0.36) / 2, z });
+        hoja(sg * hueco, z + 0.06, sg, hueco - 0.05, 0.62, 1.05);
+      }
+    } else {
+      // la casa con patio ya tiene su muro: el portón de madera en la entrada y piedras de remate
+      for (const sg of [-1, 1]) {
+        m.box(0.16, 1.05, 0.16, C.cedroOsc, { x: sg * 0.6, y: 0.52, z: pz1 });
+        hoja(sg * 0.6, pz1 + 0.06, sg, 0.54, 0.85, 1.15);
+        if (!obras.has("ensanchar")) for (let k = 0; k < 4; k++) m.box(0.22, 0.07, 0.26, vary(C.piedraClara, 0.05), { x: sg * (0.75 + k * 0.28), y: 0.785, z: pz1 });
+      }
+    }
+  }
+
+  // ------------------------------------------------ ensanchar el huerto: surcos con estacas y cuerdas (Isaías 54:2)
+  if (obras.has("ensanchar")) {
+    const surcos = (x0: number, x1: number, z0: number, z1: number, y = 0) => {
+      m.box(x1 - x0, 0.12, z1 - z0, "#6e5638", { x: (x0 + x1) / 2, y: y + 0.06, z: (z0 + z1) / 2 });
+      const n = Math.max(2, Math.round((x1 - x0) / 0.2));
+      for (let k = 0; k < n; k++) {
+        for (const zz of z1 - z0 > 0.3 ? [z0 + (z1 - z0) * 0.3, z0 + (z1 - z0) * 0.72] : [(z0 + z1) / 2]) {
+          m.cone(0.075, 0.24, pick([C.hoja, C.hojaClara, C.verdeOliva]), { x: x0 + (k + 0.5) * ((x1 - x0) / n), y: y + 0.24, z: zz }, 5);
+        }
+      }
+      for (const x of [x0 + 0.03, x1 - 0.03]) m.cyl(0.015, 0.02, 0.4, C.cedroOsc, { x, y: y + 0.2, z: z0 + 0.03 }, 5);
+      m.box(x1 - x0, 0.01, 0.01, "#cdbb95", { x: (x0 + x1) / 2, y: y + 0.36, z: z0 + 0.03 });
+    };
+    if (tienda) surcos(-1.6, -1.05, 2.35, 2.86);
+    else if (!patio) surcos(-1.62, -0.78, 2.42, 2.84);
+    else for (const sg of [-1, 1]) surcos(sg > 0 ? 0.64 : -1.6, sg > 0 ? 1.6 : -0.64, pz1 - 0.1, pz1 + 0.1, 0.75);
+  }
+
+  // ------------------------------------------------ la cisterna (en el lugar de la tinaja de la puerta)
+  if (obras.has("cisterna")) {
+    const [x, z] = tienda ? [-1.0, 2.05] : patio ? [1.2, 2.02] : [1.22, 1.97];
+    const r = 0.24;
+    m.cyl(r, r + 0.03, 0.42, vary(C.piedra, 0.04), { x, y: 0.21, z }, 12);
+    m.cyl(r + 0.035, r + 0.035, 0.05, C.piedraClara, { x, y: 0.43, z }, 12);
+    m.cyl(r - 0.05, r - 0.05, 0.02, C.agua, { x, y: 0.4, z }, 12);
+    for (const sg of [-1, 1]) m.box(0.05, 0.78, 0.05, C.cedroOsc, { x: x + sg * (r + 0.02), y: 0.6, z });
+    m.box(2 * r + 0.14, 0.05, 0.05, C.cedroOsc, { x, y: 0.99, z });
+    m.cyl(0.05, 0.05, 0.04, C.bronce, { x, y: 0.93, z, rx: Math.PI / 2 }, 10);
+    m.box(0.008, 0.36, 0.008, "#cdbb95", { x, y: 0.74, z });
+    m.cyl(0.07, 0.055, 0.12, C.bronceOsc, { x, y: 0.52, z }, 10);
+    m.box(0.36, 0.03, 0.36, C.cedroOsc, { x: x - r - 0.06, y: 0.22, z, rz: 1.25 }); // la tapa, apoyada
+  }
+
+  // ------------------------------------------------ el horno de barro (con sus brasas de noche)
+  if (obras.has("horno")) {
+    const [x, z] = tienda ? [-0.36, 2.66] : patio ? [-1.05, 2.64] : [1.2, 2.6];
+    const r = 0.24;
+    m.sphere(r, vary("#a86a42", 0.05), { x, y: 0.02, z, sy: 1.1 }, 10, 5, Math.PI * 2, Math.PI / 2);
+    m.cyl(r + 0.02, r + 0.03, 0.05, "#8a5a3a", { x, y: 0.025, z }, 12);
+    m.box(0.16, 0.13, 0.06, "#2e2418", { x, y: 0.09, z: z + r - 0.03 });
+    v.box(0.1, 0.06, 0.02, "#ff9a3a", { x, y: 0.08, z: z + r });
+    m.cyl(0.03, 0.035, 0.12, "#8a5a3a", { x: x + 0.05, y: r + 0.06, z: z - 0.05 }, 6);
+    const lx = x + (tienda || patio ? 0.34 : -0.34);
+    for (let k = 0; k < 3; k++) m.cyl(0.035, 0.035, 0.36, k % 2 ? "#7a5634" : "#8f6a42", { x: lx, y: 0.04 + (k > 1 ? 0.07 : 0), z: z - 0.08 + (k % 2) * 0.08, rx: Math.PI / 2 }, 6);
+  }
+
+  // ------------------------------------------------ el emparrado del patio: una vid sobre varas (Salmos 128:3)
+  if (obras.has("emparrado") && !tienda) {
+    const xs = patio ? 1.55 : 1.62, z0 = patio ? 1.9 : fr + 0.12, z1 = patio ? 2.85 : 2.86, y0 = patio ? 0.75 : 0, top = patio ? 2.45 : 2.25;
+    for (const sx of [-1, 1]) for (const zz of [z0, z1]) m.cyl(0.035, 0.045, top - y0, C.cedroOsc, { x: sx * xs, y: (y0 + top) / 2, z: zz }, 6);
+    for (const sx of [-1, 1]) m.box(0.06, 0.06, z1 - z0 + 0.1, C.cedroOsc, { x: sx * xs, y: top, z: (z0 + z1) / 2 });
+    for (let k = 0; k <= 5; k++) m.box(2 * xs + 0.1, 0.04, 0.05, C.cedro, { y: top + 0.04, z: z0 + (k * (z1 - z0)) / 5 });
+    for (let k = 0; k < 10; k++) m.add(new THREE.IcosahedronGeometry(0.28, 0), vary("#5f7f3a", 0.12), { x: rr(-xs + 0.12, xs - 0.12), y: top + 0.13 + rr(-0.03, 0.06), z: rr(z0, z1), sy: 0.42 });
+    // los racimos: un cono de uvas colgando (de lejos se ve igual y pesa poco)
+    for (let k = 0; k < 5; k++) m.cone(0.07, 0.2, "#5b2a5e", { x: rr(-xs + 0.25, xs - 0.25), y: top - 0.12, z: rr(z0 + 0.12, z1 - 0.12), rx: Math.PI }, 5);
+    m.cyl(0.03, 0.045, top - y0, "#5d4532", { x: -xs + 0.08, y: (y0 + top) / 2, z: z1 - 0.06, rz: 0.04 }, 5);
+  }
+
+  // ------------------------------------------------ el pórtico con columnas (casa de piedra; 1 Reyes 7:6)
+  const portico = obras.has("portico") && patio;
+  if (portico) {
+    const z = fr + 0.12;
+    for (const sg of [-1, 1]) {
+      const x = puertaX + sg * 0.5;
+      m.cyl(0.11, 0.13, 1.92, vary(C.piedraClara, 0.03), { x, y: 0.12 + 0.96, z }, 12);
+      m.box(0.32, 0.12, 0.32, C.piedra, { x, y: 0.06, z });
+      m.box(0.3, 0.12, 0.3, C.piedraClara, { x, y: 2.1, z });
+    }
+    m.box(1.36, 0.2, 0.42, vary(C.piedraClara, 0.03), { x: puertaX, y: 2.26, z: fr + 0.1 });
+    m.box(1.42, 0.06, 0.46, C.piedraOsc, { x: puertaX, y: 2.39, z: fr + 0.1 });
+    m.box(0.9, 0.08, 0.3, C.piedraOsc, { x: puertaX, y: 0.04, z: fr + 0.17 });
+    m.box(0.7, 0.08, 0.16, C.piedra, { x: puertaX, y: 0.12, z: fr + 0.1 });
+  }
+
+  // ------------------------------------------------ las lámparas en la puerta (de noche se encienden)
+  if (obras.has("lamparas")) {
+    const lampara = (x: number, y: number, z: number) => {
+      m.lathe([[0, 0], [0.07, 0.005], [0.09, 0.04], [0.06, 0.06], [0, 0.055]], "#b0643a", { x, y, z, sx: 1.4 }, 10);
+      v.sphere(0.05, "#ffcf7a", { x: x + 0.08, y: y + 0.09, z, sy: 1.5 }, 6, 5);
+    };
+    if (tienda) {
+      const alto = h + 0.1;
+      for (const sg of [-1, 1]) {
+        const x = sg * (w / 2 - 0.08), z = fr + 0.38;
+        m.box(0.015, 0.3, 0.015, "#5a3d26", { x, y: alto - 0.66, z });
+        lampara(x, alto - 0.86, z);
+      }
+    } else {
+      const sep = portico ? 0.5 : 0.62, z = portico ? fr + 0.25 : fr + 0.06;
+      for (const sg of [-1, 1]) {
+        const x = puertaX + sg * sep;
+        m.box(0.07, 0.07, 0.2, C.cedroOsc, { x, y: 1.42, z: z + 0.06 });
+        lampara(x, 1.46, z + 0.14);
+      }
+    }
+  }
+
+  // ------------------------------------------------ la puerta de cedro labrada, con su aldaba de bronce
+  if (obras.has("puerta") && !tienda) {
+    const z = fr + 0.05;
+    for (const sg of [-1, 1]) m.box(0.1, 1.68, 0.1, C.cedroOsc, { x: puertaX + sg * 0.43, y: 0.84, z });
+    m.box(1.06, 0.16, 0.13, C.cedroOsc, { x: puertaX, y: 1.72, z });
+    m.box(0.72, 1.5, 0.03, "#7a4a26", { x: puertaX, y: 0.78, z: z + 0.01 });
+    for (let r = 0; r < 3; r++) for (const sg of [-1, 1]) m.box(0.26, 0.36, 0.02, "#8f5a30", { x: puertaX + sg * 0.17, y: 0.32 + r * 0.46, z: z + 0.03 });
+    m.torus(0.05, 0.012, C.bronce, { x: puertaX + 0.2, y: 0.92, z: z + 0.05 }, 4, 10);
+    m.sphere(0.025, C.bronceOsc, { x: puertaX + 0.2, y: 0.97, z: z + 0.045 }, 6, 5);
+  }
+
+  // ------------------------------------------------ las palabras en los postes de la puerta (Deuteronomio 6:9)
+  if (obras.has("palabras") && !tienda) {
+    const x = puertaX + 0.47, z = fr + 0.08;
+    m.box(0.07, 0.26, 0.05, C.oro, { x, y: 1.2, z, rz: 0.25 });
+    m.cyl(0.012, 0.012, 0.2, C.lino, { x, y: 1.2, z: z + 0.03, rz: 0.25 }, 6);
+  }
+
+  // ------------------------------------------------ el granero en el terrado: tinajas grandes y sacos de grano
+  if (obras.has("granero") && !tienda) {
+    // dónde caben en cada terrado (sin tocar los lugares de los adornos, el aposento ni la torre)
+    const LUGAR: Record<number, { tinajas: [number, number, number][]; sacos: [number, number, number][] }> = {
+      1: { tinajas: [[0.58, 0.73, 1], [0.98, 0.75, 0.95], [0.78, 1.05, 1.05]], sacos: [[0.46, 1.15, 0.4], [1.1, 1.13, -0.3]] },
+      2: { tinajas: [[-0.2, -0.02, 1], [0.2, 0, 0.95], [0, 0.3, 1.05]], sacos: [[-0.3, 0.4, 0.4], [0.32, 0.38, -0.3]] },
+      3: { tinajas: [[1.3, -0.35, 1], [1.3, 0.02, 0.95], [0.95, -0.3, 1.05]], sacos: [[0.88, 0.04, 0.4]] },
+    };
+    const l = LUGAR[Math.min(3, nivel)];
+    for (const [x, z, k] of l.tinajas)
+      m.lathe([[0, 0], [0.12 * k, 0], [0.22 * k, 0.22 * k], [0.18 * k, 0.48 * k], [0.1 * k, 0.6 * k], [0, 0.6 * k]], vary("#b8673a", 0.07), { x, y: techo, z }, 8);
+    for (const [x, z, ry] of l.sacos) m.sphere(0.15, "#d8c27a", { x, y: techo + 0.1, z, sx: 1.25, sy: 0.7, ry }, 6, 4);
+  }
+
+  // ------------------------------------------------ la fuente del patio (Cantares 4:15)
+  if (obras.has("fuente") && patio) {
+    const x = 0.6, z = 2.62, r = 0.26;
+    m.cyl(r, r + 0.03, 0.3, vary(C.piedraClara, 0.03), { x, y: 0.15, z }, 12);
+    m.cyl(r - 0.04, r - 0.04, 0.02, C.agua, { x, y: 0.29, z }, 12);
+    m.cyl(0.05, 0.07, 0.42, C.piedra, { x, y: 0.5, z }, 10);
+    m.lathe([[0, 0], [0.04, 0], [0.12, 0.06], [0.13, 0.08], [0, 0.07]], C.piedraClara, { x, y: 0.7, z }, 12);
+    m.cyl(0.1, 0.1, 0.012, C.agua, { x, y: 0.775, z }, 12);
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2 + 0.4;
+      m.box(0.012, 0.44, 0.012, "#8fd0ea", { x: x + Math.cos(a) * 0.12, y: 0.53, z: z + Math.sin(a) * 0.12 });
+    }
+  }
+
+  // ------------------------------------------------ la torre del terrado (casa con aposento alto; Lucas 14:28)
+  if (obras.has("torre") && nivel >= 3) {
+    const x = 1.0, z = -1.05, lado = 0.9, alto = TORRE_ALTO;
+    m.box(lado, alto, lado, vary(C.piedra, 0.03), { x, y: techo + alto / 2, z });
+    for (let k = 1; k < 4; k++) m.box(lado + 0.02, 0.03, lado + 0.02, vary(C.junta, 0.04), { x, y: techo + (alto * k) / 4, z });
+    m.box(lado + 0.1, 0.1, lado + 0.1, C.piedraOsc, { x, y: techo + alto + 0.05, z });
+    for (const dx of [-1, 1]) for (const dz of [-1, 1]) m.box(0.22, 0.26, 0.22, vary(C.piedra, 0.04), { x: x + dx * (lado / 2 - 0.06), y: techo + alto + 0.23, z: z + dz * (lado / 2 - 0.06) });
+    m.box(0.12, 0.42, 0.04, "#2e2418", { x, y: techo + alto * 0.62, z: z + lado / 2 + 0.01 });
+    v.box(0.08, 0.34, 0.02, "#ffd88a", { x, y: techo + alto * 0.62, z: z + lado / 2 + 0.03 });
+    const px = x - lado / 2 + 0.08, pz = z - lado / 2 + 0.08;
+    m.cyl(0.015, 0.015, 0.75, C.cedroOsc, { x: px, y: techo + alto + 0.47, z: pz }, 5);
+    m.cone(0.11, 0.34, C.carmesi, { x: px + 0.18, y: techo + alto + 0.72, z: pz, rz: -Math.PI / 2, sz: 0.12 }, 8);
   }
 }
 
@@ -975,15 +1179,18 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     }
     const lm = new GeoBuilder(), lv = new GeoBuilder();
     const nivel = Math.max(0, Math.min(3, c.nivel));
-    casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel);
+    const obras = new Set(c.obras ?? []);
+    casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel, obras);
     // lo que compró en el mercado: los adornos y el letrero (los ven los vecinos)
-    if (c.adornos?.length) adornosDeCasa(lm, lv, nivel, c.adornos);
+    if (c.adornos?.length) adornosDeCasa(lm, lv, nivel, c.adornos, obras);
     // la familia del pueblo tiene su cántaro junto a la puerta (en el primer lugar de adorno del suelo)
     if (c.pueblo) {
       const l = LUGARES_ADORNO[nivel].find((x) => x.alto === 0);
       if (l) adorno(lm, lv, "cantaro", l.x, 0, l.z, l.ry, 1);
     }
     if (c.letrero) letreroDeCasa(lm, nivel);
+    // lo que edificó con su gozo (shared/obras.ts): va al final, para no cambiar el azar de lo de antes
+    if (obras.size) obrasDeCasa(lm, lv, nivel, obras);
     const mat = new THREE.Matrix4().makeRotationY(p.dir === 1 ? 0 : Math.PI).setPosition(p.x, Y, p.z);
     const g = lm.build();
     g.applyMatrix4(mat);
