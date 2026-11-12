@@ -17,6 +17,7 @@ import { coloresDeRopa } from "./ropa";
 import { RECETAS, guardarPreparadas, leerPreparadas, type Preparadas } from "@shared/mercado";
 import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { nivelBarrio } from "./barrio-juntos";
+import { registrarVisita } from "./regreso";
 import { diaEnJerusalen } from "@shared/anio";
 import {
   AREAS, BIEN, BIENES, CASAS_POR_BARRIO, NIVELES_CASA, SIERVOS_DIA, SIERVOS_SALIDA, areaDeBarrio, bienDeFiesta, capacidadAlfoli, honraDe,
@@ -373,6 +374,7 @@ export function registerCiudadRoutes(app: Express) {
       if (now - (ultimaEntrada.get(ch.casa) || 0) < 1500) return res.status(429).json({ message: "Espera un momento" });
       ultimaEntrada.set(ch.casa, now);
       if (ultimaEntrada.size > 5000) ultimaEntrada.clear();
+      void registrarVisita(ch.casa, ch.user_id);
       const { casa, nueva } = await asegurarCasa(ch);
       if (nueva) {
         await avisarCasa(ch.user_id, casa.barrio, 0);

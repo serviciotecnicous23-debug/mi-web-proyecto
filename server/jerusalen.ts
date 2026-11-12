@@ -21,6 +21,7 @@ import { FACTOR_JUNTOS, JUNTOS_DESDE } from "@shared/misiones";
 import { sirviendoJuntos } from "./presencia-templo";
 import { avanzarMision, misionesPorDeberes } from "./misiones";
 import { GOZO, sumarGozo } from "./gozo";
+import { registrarVisita } from "./regreso";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
@@ -573,6 +574,8 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
   const t = temporadaDe();
   const hoy = diaClave();
   const [requisito, ch] = await Promise.all([requisitoDe(user.id), personajeDe(user.id)]);
+  // la visita de hoy (si vuelve después de dos días o más, server/regreso.ts guarda la vuelta y su regalo)
+  if (ch) await registrarVisita(ch.casa, ch.user_id);
   // para ser sumo sacerdote hay que haber sido principal (o sumo) en alguna temporada
   const fuePrincipal = ch
     ? (
@@ -861,6 +864,7 @@ export function registerJerusalenRoutes(app: Express) {
     try {
       const ch = await jugador(req, res);
       if (!ch) return;
+      void registrarVisita(ch.casa, ch.user_id);
       const now = Date.now();
       const espera = 10_000 - (now - (ultimoEnvio.get(ch.id) || 0));
       if (espera > 0) return res.status(429).json({ message: "Espera un momento", espera: Math.ceil(espera / 1000) });

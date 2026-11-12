@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-11-regalo-de-regreso",
+    fecha: "11 de noviembre de 2026",
+    titulo: "El regalo de regreso y lo que hizo tu barrio",
+    puntos: [
+      "🎁 Si vuelves a Jerusalén en línea después de dos días o más, la entrada te da un regalo: gozo y semillas de la estación para sembrar al llegar. Si estuviste fuera una semana o más, la primera vez también recibes el mejor vestido (Lucas 15:22), que no se vende.",
+      "🏘️ Mientras no estabas: ahora también ves lo que hizo tu barrio (vecinos nuevos, la charla, las reuniones, la ayuda y la copa de la semana), quién visitó y bendijo tu casa, tu huerto listo y cómo va la ciudad.",
+    ],
+  },
+  {
     id: "2026-11-11-ropa-de-temporada",
     fecha: "11 de noviembre de 2026",
     titulo: "La ropa de cada tiempo y la ciudad según el año",
