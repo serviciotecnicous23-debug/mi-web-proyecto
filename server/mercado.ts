@@ -203,6 +203,8 @@ export function registerMercadoRoutes(app: Express) {
         message:
           a.exclusivo === "taller"
             ? "Las piezas finas no se venden: las hace el artesano con 4 iguales."
+            : a.exclusivo === "amigo"
+            ? "La faja del buen amigo no se vende: se gana invitando a un amigo que juega 3 días."
             : a.exclusivo === "temporada"
             ? "Esa prenda no se vende: se gana con la historia de la temporada."
             : a.exclusivo === "regreso"

@@ -24,7 +24,7 @@ const FUENTE_NOMBRE: Record<string, string> = {
   "premio-casa": "Premio a las casas", obras: "Obras de las casas", "mercado-semilla": "Semillas", "mercado-adorno": "Adornos",
   "mercado-ropa": "Ropa", "mercado-mueble": "Muebles", "mercado-letrero": "Letreros", otros: "Otros",
   regreso: "Regalo de regreso", "obras-barrio": "Obras del barrio", regalos: "Regalos a vecinos", banquete: "Banquetes (abrir)",
-  "banquete-invitado": "Banquetes (invitados)", taller: "Jornal del artesano", fardo: "Ropa para el fardo", cosas: "Puestos de cosas (intercambio)",
+  "banquete-invitado": "Banquetes (invitados)", taller: "Jornal del artesano", fardo: "Ropa para el fardo", cosas: "Puestos de cosas (intercambio)", arca: "El arca de Joás", invitar: "Amigos invitados",
 };
 
 /** El termómetro del gozo (solo la administración): lo que entró y salió cada día y de dónde. */

@@ -19,6 +19,7 @@ import { PUNTOS_CAPITULO } from "@shared/capitulos";
 import type { MisionCumplida } from "@shared/misiones";
 import { nombreDeBarrio } from "@shared/ciudad";
 import { RECADO_CERCA, RECADO_GOZO, RECADO_MERITO, personajeCiudad, recadoDelDia, type ChismesVista, type RecadoEstado } from "@shared/personajes";
+import { noticiaDelArca } from "./arca";
 
 export const PERSONAJES_SQL = `
 CREATE TABLE IF NOT EXISTS "game_recados" (
@@ -77,6 +78,12 @@ async function armarChismes(): Promise<string[]> {
     if (n) noticias.unshift(n);
   } catch {
     /* sin historia todavía */
+  }
+  try {
+    const n = await noticiaDelArca();
+    if (n) noticias.push(n);
+  } catch {
+    /* sin arca todavía */
   }
   try {
     const { rows } = await pool.query(`SELECT count(*)::int AS n FROM game_houses WHERE created_at > now() - interval '1 day'`);

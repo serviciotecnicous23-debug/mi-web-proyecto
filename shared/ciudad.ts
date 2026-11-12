@@ -303,6 +303,8 @@ export type VecinoInfo = {
   camino?: "sacerdocio" | "profecia" | "realeza";
   /** Los colores de su manto y su faja (si compró), y si son finos (con su orla de oro). */
   ropa?: RopaVista;
+  /** El título que eligió mostrar (shared/album.ts). */
+  titulo?: string;
 };
 
 /** Del teléfono al servidor. */
@@ -354,6 +356,10 @@ export type RedEntra =
   | { t: "regalo"; r: import("./regalos").AvisoRegalo }
   /** Un vecino abrió o cerró un banquete en su casa (shared/banquete.ts): que se vuelvan a pedir los banquetes. */
   | { t: "banquete"; anfitrion: string; abierto: boolean }
+  /** La ciudad llenó el arca de Joás (shared/arca.ts): a todos, para celebrarlo y dibujar las lámparas de oro. */
+  | { t: "arca"; arca: import("./arca").ArcaVista }
+  /** Un amigo que invitaste ya jugó sus 3 días (shared/invitar.ts): los dos ganan gozo. */
+  | { t: "amigo"; nombre: string; gozo: number }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
@@ -453,4 +459,6 @@ export type CiudadEstado = {
   temporada: { n: number; dePrueba: boolean; diasRestantes: number };
   /** Tus siervos, tu alfolí y tus bendiciones (solo los ves tú). */
   privada: CasaPrivada;
+  /** El arca de Joás de esta temporada (shared/arca.ts): cuando se llena, cambia la ciudad. */
+  arca?: import("./arca").ArcaVista;
 };

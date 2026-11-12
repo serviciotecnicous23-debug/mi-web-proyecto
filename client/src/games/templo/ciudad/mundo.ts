@@ -51,6 +51,7 @@ import { fraseDeGente, type ContextoFrases, type GenteQueHabla } from "./frases"
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 import { EscenaHistoria, estadoDeHistoria } from "./capitulos3d";
+import { ArcaJoas } from "./arca3d";
 import { arcoDeTemporada, type CapituloId, type CapitulosVista, type MomentoFiesta } from "@shared/capitulos";
 
 const DAWN = 0.2;
@@ -106,7 +107,7 @@ export type BarrioVisto = {
   obrasBarrio?: string[];
 };
 
-type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "puesto0" | "puesto1" | "puesto2" | "puesto3" | `personaje:${string}`;
+type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "arca" | "puesto0" | "puesto1" | "puesto2" | "puesto3" | `personaje:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
 
 /** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
@@ -224,6 +225,8 @@ export class CiudadWorld {
   private muroT = 59;
   /** La historia de la temporada (shared/capitulos.ts): lo que se dibuja, lo último que dijo el servidor y las trompetas de la fiesta. */
   private historia!: EscenaHistoria;
+  /** El arca de Joás arriba de la escalinata (shared/arca.ts): con lámparas de oro cuando la ciudad la llena. */
+  private arca = new ArcaJoas();
   private historiaT = 0;
   private historiaVista: CapitulosVista | null = null;
   private trompetaFiesta = 0;
@@ -372,6 +375,8 @@ export class CiudadWorld {
     // la historia de la temporada: las torres, el conducto de Siloé, el campamento de Asiria y la fiesta
     this.historia = new EscenaHistoria(this.overlay, (x, y, z, s) => this.shadows.add(x, y, z, s), () => this.abrir({ kind: "capitulos" }));
     this.scene.add(this.historia.group);
+    this.arca.poner(!!estado.arca?.llena);
+    this.scene.add(this.arca.group);
 
     // mi barrio completo; los otros, siluetas hasta que se entra en su área
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio, obrasBarrio: estado.barrio.obrasBarrio });
@@ -472,6 +477,13 @@ export class CiudadWorld {
       },
       // un vecino abrió un banquete (shared/banquete.ts): se miran los banquetes ya
       onBanquete: () => void this.mirarBanquetes(),
+      // ¡la ciudad llenó el arca de Joás! (shared/arca.ts): las lámparas de oro y la fiesta
+      onArca: (a) => this.alArca(a),
+      // un amigo que invitaste (o quien te invitó) ya jugó sus 3 días (shared/invitar.ts)
+      onAmigo: (nombre, gozo) => {
+        this.audio.trumpet(true);
+        gameStore.toast(gozo > 0 ? `🤝 ¡${nombre} ya juega contigo en Jerusalén! +${gozo} de gozo y la faja del buen amigo.` : `🤝 ¡${nombre} ya juega contigo en Jerusalén! Te llegó la faja del buen amigo.`, "gold");
+      },
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
         this.redEstado = e;
@@ -1244,7 +1256,19 @@ export class CiudadWorld {
     const cambio = !antes || firma(antes.casas) !== firma(estado.barrio.casas) || JSON.stringify(antes.obrasBarrio ?? []) !== JSON.stringify(estado.barrio.obrasBarrio ?? []);
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio, obrasBarrio: estado.barrio.obrasBarrio });
     if (cambio) this.dibujarAreas();
+    // el arca de Joás (shared/arca.ts): las lámparas de oro si la ciudad la llenó
+    if (this.arca.poner(!!estado.arca?.llena)) this.shadowDirty = true;
     this.pushHud();
+  }
+
+  /** La ciudad llenó el arca de Joás (aviso en vivo a todos): se encienden las lámparas y se celebra. */
+  alArca(a: import("@shared/arca").ArcaVista) {
+    this.estado = { ...this.estado, arca: a };
+    if (this.arca.poner(a.llena)) this.shadowDirty = true;
+    if (a.llena) {
+      this.audio.trumpet(true);
+      gameStore.toast("🎉 ¡La ciudad llenó el arca de Joás! Se encendieron las lámparas de oro en la escalinata del templo.", "gold");
+    }
   }
 
   /** Lleva al aprendiz junto a un punto de la ciudad (al lado de un vecino, sin caer dentro de una pared). */
@@ -1805,6 +1829,8 @@ export class CiudadWorld {
       ["camara", P.CAMARA_PUERTA, 1.15, "#ffd25a"],
       ["sabiduria", P.SABIDURIA_PUERTA, 1.2, "#c9a8ff"],
       ["mercado", P.MERCADO, 1.0, "#f0b45a"],
+      // el arca de Joás, a la puerta del templo (shared/arca.ts)
+      ["arca", P.ARCA_ZONA, 0.6, "#ffd25a"],
       // delante de cada puesto: su mercader
       ...P.PUESTOS.map(([x, z], i) => [`puesto${i}` as ZonaId, [x, z - 1.75] as V2, 0.75, "#f0b45a"] as [ZonaId, V2, number, string]),
       // la puerta de cada personaje de la calle de los siervos
@@ -1898,6 +1924,9 @@ export class CiudadWorld {
           break;
         case "mercado":
           this.abrir({ kind: "mercado" });
+          break;
+        case "arca":
+          this.abrir({ kind: "arca" });
           break;
         default:
           // la puerta de un personaje de la calle de los siervos
@@ -2548,6 +2577,7 @@ export class CiudadWorld {
     this.animarVecinos(dt);
     this.animarSiervos(dt);
     this.historia.animar(dt, now, p.rig.x, p.rig.z, this.noche());
+    this.arca.animar(now / 1000);
     this.crowd.flush();
     this.shadows.end();
     this.items.end();
@@ -2952,6 +2982,7 @@ export class CiudadWorld {
     this.resizeObs.disconnect();
     this.red.cerrar();
     this.historia.destroy();
+    this.arca.destroy();
     acompanar.ponerSiguiendo(null);
     acompanar.cerrarInvitacion();
     for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);

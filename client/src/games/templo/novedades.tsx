@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-la-ciudad",
+    fecha: "12 de noviembre de 2026",
+    titulo: "El arca de Joás, invita a un amigo y tu álbum",
+    puntos: [
+      "🪙 El arca de Joás: arriba de la escalinata del templo hay un arca para toda la ciudad. Echa tu gozo (hasta 500 por día) y, cuando entre todos la llenen, la escalinata se llena de lámparas de oro y quedan sus nombres en el libro del arca (2 Crónicas 24:10).",
+      "🤝 Invita a un amigo (en Misiones): comparte tu enlace; cuando tu amigo juegue 3 días, tú ganas 150 de gozo, él 100, y los dos reciben la faja del buen amigo.",
+      "📚 Tu álbum (Tu casa → Álbum): todo lo que tuviste queda anotado. Completa colecciones y gana títulos como «Bordador de oro», «Guarda los tiempos» o «Dador alegre»: el que elijas lo ven tus vecinos.",
+    ],
+  },
+  {
     id: "2026-11-12-el-taller",
     fecha: "12 de noviembre de 2026",
     titulo: "El taller: piezas finas, ovejas, telar e intercambio",

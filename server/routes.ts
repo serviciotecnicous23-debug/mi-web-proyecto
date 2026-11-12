@@ -34,6 +34,9 @@ import { registerRegalosRoutes } from "./regalos";
 import { registerBanqueteRoutes } from "./banquete";
 import { registerTallerRoutes } from "./taller";
 import { registerIntercambioRoutes } from "./intercambio";
+import { registerArcaRoutes } from "./arca";
+import { registerInvitarRoutes } from "./invitar";
+import { registerAlbumRoutes } from "./album";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
@@ -3703,6 +3706,10 @@ ${urls}
   // la fase 3 (el taller): el artesano, el redil y el telar, y los puestos de cosas entre vecinos
   registerTallerRoutes(app);
   registerIntercambioRoutes(app);
+  // la fase 4 (la ciudad y el mundo): el arca de Joás, invitar a un amigo y el álbum
+  registerArcaRoutes(app);
+  registerInvitarRoutes(app);
+  registerAlbumRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
 

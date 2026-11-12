@@ -10,6 +10,7 @@ import { Card } from "./ui";
 import { ParaHoy } from "./ParaHoyUI";
 import { AvisosInvitacion } from "./AvisosUI";
 import { CaminoHoyBloque } from "./CaminoHoyUI";
+import { InvitarAmigo } from "./InvitarUI";
 
 export async function traerMisiones(): Promise<{ ok: boolean; data: (MisionesEstado & { message?: string }) | null }> {
   try {
@@ -60,6 +61,7 @@ export function MisionesModal() {
             <CaminoHoyBloque />
             <ParaHoy misiones={m} />
             <AvisosInvitacion />
+            <InvitarAmigo />
             <section className="space-y-2" data-testid="misiones-encargos">
               <p className="font-black">Encargos de hoy</p>
               <p className="text-xs text-stone-500">

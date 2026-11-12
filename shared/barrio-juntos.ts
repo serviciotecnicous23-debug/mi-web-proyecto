@@ -155,6 +155,8 @@ export const COPA_PUNTOS = {
   obra: 1,
   /** Por cada vez que alguien se sienta a la mesa de un banquete (shared/banquete.ts). */
   banquete: 2,
+  /** Por cada 10 de gozo echados en el arca de Joás (shared/arca.ts). */
+  arca: 1,
 } as const;
 export type FuenteCopa = keyof typeof COPA_PUNTOS;
 
