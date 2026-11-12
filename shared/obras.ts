@@ -233,7 +233,7 @@ export function estrellasDePuntos(puntos: number): number {
 }
 
 /** Las estrellas de una casa: su nivel, sus obras, sus muebles puestos (y los juegos completos), sus adornos y su letrero. */
-export function estrellasDeCasa(c: { nivel: number; obras: readonly string[]; adornos: readonly string[]; letrero: boolean; muebles: readonly string[] }): EstrellasCasa {
+export function estrellasDeCasa(c: { nivel: number; obras: readonly string[]; adornos: readonly string[]; letrero: boolean; muebles: readonly string[]; barrio?: number }): EstrellasCasa {
   const partes: EstrellasCasa["partes"] = [];
   const nivel = PUNTOS_CASA.nivel[Math.max(0, Math.min(3, Math.floor(c.nivel)))] ?? 0;
   if (nivel) partes.push({ texto: "La casa", puntos: nivel });
@@ -251,14 +251,17 @@ export function estrellasDeCasa(c: { nivel: number; obras: readonly string[]; ad
   const adornos = new Set(c.adornos).size * PUNTOS_CASA.adorno;
   if (adornos) partes.push({ texto: "Los adornos", puntos: adornos });
   if (c.letrero) partes.push({ texto: "El letrero", puntos: PUNTOS_CASA.letrero });
+  // lo que suman las obras del barrio a todas sus casas (shared/barrio-obras.ts)
+  if (c.barrio) partes.push({ texto: "Las obras del barrio", puntos: c.barrio });
   const puntos = partes.reduce((a, p) => a + p.puntos, 0);
   const estrellas = estrellasDePuntos(puntos);
   return { puntos, estrellas, faltan: estrellas >= 5 ? null : ESTRELLAS_PUNTOS[estrellas] - puntos, partes, juegos };
 }
 
 /** Las estrellas de una fila de `game_houses` (con level, obras, adornos, letrero e interior). */
-export function estrellasDeFila(r: Record<string, unknown>, ahora = Date.now()): EstrellasCasa {
+export function estrellasDeFila(r: Record<string, unknown>, ahora = Date.now(), barrio = 0): EstrellasCasa {
   return estrellasDeCasa({
+    barrio,
     nivel: Number(r.level || 0),
     obras: obrasHechas(leerObras(r.obras), ahora),
     adornos: Array.isArray(r.adornos) ? (r.adornos as unknown[]).filter((x): x is string => typeof x === "string") : [],

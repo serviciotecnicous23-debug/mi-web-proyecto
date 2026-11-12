@@ -26,6 +26,7 @@ import {
 } from "@shared/ciudad";
 import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
 import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
+import { obrasDeBarrio, ventajasDeBarrio } from "./barrio-obras";
 
 const JUEGO = JERUSALEN_JUEGO;
 
@@ -147,7 +148,7 @@ type Recogida = { nivel: number; siervos: Bien[]; bienes: Record<Bien, number>; 
 export async function recoger(characterId: number): Promise<Recogida | null> {
   return enFilaCasa(characterId, async () => {
     const { rows } = await pool.query(
-      `SELECT level, servants, goods, prod_day, prod_seconds, offered, obras,
+      `SELECT level, servants, goods, prod_day, prod_seconds, offered, obras, barrio,
               EXTRACT(EPOCH FROM (now() - COALESCE(collected_at, created_at)))::float AS pasados
          FROM game_houses WHERE character_id = $1`,
       [characterId],
@@ -162,7 +163,7 @@ export async function recoger(characterId: number): Promise<Recogida | null> {
     const t = siervos.length ? Math.max(0, Math.min(Number(r.pasados) || 0, SIERVOS_SALIDA, SIERVOS_DIA - antes)) : 0;
     const horas = horasEfectivas(t);
     // el granero de las obras de la casa (shared/obras.ts) guarda más
-    const cap = capacidadAlfoli(nivel) + ventajasDeColumna(r.obras).alfoli;
+    const cap = capacidadAlfoli(nivel) + ventajasDeColumna(r.obras).alfoli + (await ventajasDeBarrio(Number(r.barrio))).alfoli;
     const recogido = cero();
     for (const sv of siervos) {
       const previo = bienes[sv];
@@ -248,6 +249,8 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
       [JUEGO, barrio, t.n],
     );
     const casas: (CasaVista & { userId: number })[] = [];
+    // los árboles y la placa del barrio suman a las estrellas de todas sus casas (shared/barrio-obras.ts)
+    const extra = (await ventajasDeBarrio(barrio)).estrellas;
     for (const r of rows) {
       const id = Number(r.character_id);
       const userId = Number(r.user_id);
@@ -267,7 +270,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         letrero: (r.letrero as string | null) ?? null,
         // las obras de la casa y sus estrellas (shared/obras.ts): las ven los vecinos
         obras: obrasHechas(leerObras(r.obras)),
-        estrellas: estrellasDeFila({ ...r, level: nivel }).estrellas,
+        estrellas: estrellasDeFila({ ...r, level: nivel }, Date.now(), extra).estrellas,
         userId,
       });
     }
@@ -340,6 +343,7 @@ async function estadoCiudad(ch: PersonajeFila, casa: CasaFila, subio: number | n
       casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa, nivel: c.personajeId === ch.casa ? nivel : c.nivel })),
       libres: Math.max(0, CASAS_POR_BARRIO - casas.length),
       nivelBarrio: await nivelBarrio(casa.barrio).catch(() => 0),
+      obrasBarrio: await obrasDeBarrio(casa.barrio).catch(() => []),
     },
     otros,
     jerusalen: hoyEnJerusalen(),
@@ -414,6 +418,7 @@ export function registerCiudadRoutes(app: Express) {
         nombre: nombreDeBarrio(n),
         casas: casas.map(({ userId, ...c }) => ({ ...c, esMia: c.personajeId === ch.casa })),
         nivelBarrio: await nivelBarrio(n).catch(() => 0),
+        obrasBarrio: await obrasDeBarrio(n).catch(() => []),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(body);
@@ -576,7 +581,7 @@ export function registerCiudadRoutes(app: Express) {
         yaBendije: r.ya === true,
         esMia: Number(r.character_id) === yo.casa,
         obras: obrasHechas(leerObras(r.obras)),
-        estrellas: estrellasDeFila(r).estrellas,
+        estrellas: estrellasDeFila(r, Date.now(), (await ventajasDeBarrio(Number(r.barrio))).estrellas).estrellas,
       },
     };
   }

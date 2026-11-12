@@ -151,6 +151,10 @@ export const COPA_PUNTOS = {
   pueblo: 2,
   /** Por cada recado de la calle de los siervos cumplido (shared/personajes.ts). */
   recado: 5,
+  /** Por cada 10 de gozo dados a la obra del barrio (shared/barrio-obras.ts). */
+  obra: 1,
+  /** Por cada vez que alguien se sienta a la mesa de un banquete (shared/banquete.ts). */
+  banquete: 2,
 } as const;
 export type FuenteCopa = keyof typeof COPA_PUNTOS;
 

@@ -11,6 +11,7 @@ import { enFilaCasa, leerBienes, olvidarBarrio, recoger } from "./ciudad";
 import { alTesoro } from "./economia";
 import { anotarGasto } from "./gozo";
 import { titularEstudios } from "./estudios";
+import { ventajasDeBarrio } from "./barrio-obras";
 import { DIEZMO } from "@shared/economia";
 import { nombreDeBarrio } from "@shared/ciudad";
 import {
@@ -82,7 +83,7 @@ async function estadoObras(ch: PersonajeFila): Promise<ObrasEstado> {
     aceite: Math.floor(bienes.aceite),
     nivel,
     estudios,
-    estrellas: estrellasDeFila({ ...r, obras: g }),
+    estrellas: estrellasDeFila({ ...r, obras: g }, Date.now(), (await ventajasDeBarrio(Number(r.barrio || 0))).estrellas),
     ventajas: ventajasDeObras(hechas),
   };
 }

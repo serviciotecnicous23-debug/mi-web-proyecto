@@ -1164,8 +1164,81 @@ function adornosDeBarrio(m: GeoBuilder, v: GeoBuilder, area: number, nivel: numb
   });
 }
 
+/**
+ * Las obras del barrio (shared/barrio-obras.ts) en sus calles, en lugares que no chocan con los adornos del nivel del
+ * barrio (lámparas, olivos, fuente, estandartes y arco): el pozo en medio de la primera calle, los bancos y la placa a
+ * la entrada, el horno y el granero al fondo, y los árboles a lo largo de la segunda calle, entre las lámparas.
+ */
+function obrasDelBarrio3D(m: GeoBuilder, v: GeoBuilder, area: number, obras: ReadonlySet<string>) {
+  if (!obras.size) return;
+  const [x0, z0, x1] = AREA_RECT[area - 1];
+  const entrada = area <= 2 ? x0 : x1;
+  const fondo = area <= 2 ? x1 : x0;
+  const dentro = area <= 2 ? 1 : -1;
+  const [c1, c2] = CALLES_DE_AREA.map(([a, b]) => ({ za: z0 + a, zb: z0 + b, zc: z0 + (a + b) / 2 }));
+  const xm = (x0 + x1) / 2;
+  // el pozo del barrio: brocal de piedra, dos postes, el travesaño con la polea y un techito
+  if (obras.has("pozo")) {
+    const x = xm, z = c1.zc;
+    m.cyl(0.62, 0.66, 0.6, vary(C.piedra, 0.03), { x, y: Y + 0.3, z }, 14);
+    m.cyl(0.68, 0.68, 0.08, C.piedraClara, { x, y: Y + 0.62, z }, 14);
+    m.cyl(0.5, 0.5, 0.02, C.agua, { x, y: Y + 0.56, z }, 14);
+    for (const s of [-1, 1]) m.box(0.1, 1.6, 0.1, C.cedroOsc, { x: x + s * 0.66, y: Y + 1.1, z });
+    m.box(1.5, 0.08, 0.08, C.cedroOsc, { x, y: Y + 1.86, z });
+    m.cyl(0.07, 0.07, 0.08, C.bronce, { x, y: Y + 1.78, z, rx: Math.PI / 2 }, 10);
+    m.box(0.012, 0.9, 0.012, "#cdbb95", { x, y: Y + 1.3, z });
+    m.cyl(0.11, 0.09, 0.18, C.bronceOsc, { x, y: Y + 0.86, z }, 10);
+    for (const s of [-1, 1]) m.box(1.7, 0.05, 0.62, C.cedro, { x, y: Y + 2.06, z: z + s * 0.27, rx: s * 0.42 });
+  }
+  // los bancos de los ancianos: a la entrada, a los dos lados de la primera calle (Rut 4:2)
+  if (obras.has("bancos")) {
+    for (const z of [c1.za + 0.55, c1.zb - 0.55]) {
+      const x = entrada + dentro * 5.5;
+      m.box(1.5, 0.12, 0.42, vary(C.piedraClara, 0.04), { x, y: Y + 0.46, z });
+      for (const dx of [-0.55, 0.55]) m.box(0.22, 0.4, 0.34, vary(C.piedra, 0.05), { x: x + dx, y: Y + 0.2, z });
+    }
+  }
+  // el horno del barrio: un horno grande de barro al fondo de la segunda calle, con sus brasas de noche
+  if (obras.has("horno")) {
+    const x = fondo - dentro * 2.2, z = c2.zc, r = 0.72;
+    m.sphere(r, vary("#a86a42", 0.04), { x, y: Y + 0.05, z, sy: 1.05 }, 12, 6, Math.PI * 2, Math.PI / 2);
+    m.cyl(r + 0.05, r + 0.08, 0.12, "#8a5a3a", { x, y: Y + 0.06, z }, 12);
+    m.box(0.42, 0.34, 0.1, "#2e2418", { x: x - dentro * (r - 0.05), y: Y + 0.22, z, ry: Math.PI / 2 });
+    v.box(0.3, 0.16, 0.04, "#ff9a3a", { x: x - dentro * (r + 0.01), y: Y + 0.18, z, ry: Math.PI / 2 });
+    m.cyl(0.08, 0.1, 0.3, "#8a5a3a", { x: x + dentro * 0.1, y: Y + r + 0.15, z }, 8);
+    for (let k = 0; k < 5; k++) m.cyl(0.05, 0.05, 0.6, k % 2 ? "#7a5634" : "#8f6a42", { x: x + dentro * (r + 0.35), y: Y + 0.06 + (k > 2 ? 0.1 : 0), z: z - 0.2 + (k % 3) * 0.16, rx: Math.PI / 2 }, 6);
+  }
+  // los árboles de la calle: a lo largo de la segunda calle, entre las lámparas (Salmos 1:3)
+  if (obras.has("arboles")) {
+    const arbol = (x: number, z: number) => {
+      m.cyl(0.09, 0.13, 1.2, "#6e5a43", { x, y: Y + 0.6, z }, 6);
+      for (let k = 0; k < 3; k++) m.add(new THREE.IcosahedronGeometry(0.5, 0), vary("#4f7a37", 0.1), { x: x + rr(-0.25, 0.25), y: Y + 1.45 + rr(0, 0.3), z: z + rr(-0.2, 0.2), sy: 0.8 });
+      for (let k = 0; k < 4; k++) m.sphere(0.06, "#b3242f", { x: x + rr(-0.4, 0.4), y: Y + 1.3 + rr(0, 0.4), z: z + rr(-0.3, 0.3) }, 5, 4);
+    };
+    for (const dx of [7.5, 16.5, 25.5]) arbol(x0 + dx, c2.za + 0.55);
+    for (const dx of [12, 21, 30]) arbol(x0 + dx, c2.zb - 0.55);
+  }
+  // el granero del barrio: redondo, de piedra, con techo de cono, al fondo de la primera calle (Hechos 2:44)
+  if (obras.has("granero")) {
+    const x = fondo - dentro * 2.2, z = c1.zc;
+    m.cyl(0.85, 0.9, 1.7, vary(C.piedra, 0.03), { x, y: Y + 0.85, z }, 14);
+    for (let k = 1; k < 4; k++) m.cyl(0.91, 0.91, 0.03, vary(C.junta, 0.04), { x, y: Y + k * 0.42, z }, 14);
+    m.cone(1.05, 0.9, "#9a7a4a", { x, y: Y + 2.15, z }, 14);
+    m.box(0.5, 0.8, 0.08, C.cedro, { x: x - dentro * 0.86, y: Y + 0.4, z, ry: Math.PI / 2 });
+    for (const dz of [-0.55, 0.55]) m.sphere(0.2, "#d8c27a", { x: x - dentro * 1.15, y: Y + 0.16, z: z + dz, sx: 1.2, sy: 0.75 }, 7, 5);
+  }
+  // la placa de los constructores: una piedra grande a la entrada, con los nombres en oro (Nehemías 3)
+  if (obras.has("placa")) {
+    const x = entrada + dentro * 4.2, z = c1.zb - 0.45;
+    m.box(1.15, 0.2, 0.42, C.piedraOsc, { x, y: Y + 0.1, z });
+    m.box(1.0, 1.35, 0.26, vary(C.piedraClara, 0.03), { x, y: Y + 0.87, z });
+    m.box(1.06, 0.1, 0.3, C.piedra, { x, y: Y + 1.58, z });
+    for (let k = 0; k < 5; k++) m.box(0.72 - (k % 2) * 0.14, 0.035, 0.01, C.oro, { x, y: Y + 1.32 - k * 0.17, z: z - 0.135 });
+  }
+}
+
 /** Las casas de un área, completas: cada parcela con su casa (o libre), las ventanas de noche y los adornos del barrio. */
-export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBarrio = 0): { grupo: THREE.Group; ventanas: THREE.Mesh | null } {
+export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBarrio = 0, obrasBarrio: readonly string[] = []): { grupo: THREE.Group; ventanas: THREE.Mesh | null } {
   const grupo = new THREE.Group();
   const m = new GeoBuilder();
   const v = new GeoBuilder();
@@ -1207,6 +1280,7 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     }
   }
   adornosDeBarrio(m, v, area, nivelBarrio);
+  obrasDelBarrio3D(m, v, area, new Set(obrasBarrio));
   meshes(grupo, m, null, true);
   let ventanas: THREE.Mesh | null = null;
   if (!v.empty) {

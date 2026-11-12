@@ -23,6 +23,8 @@ const FUENTE_NOMBRE: Record<string, string> = {
   restauracion: "Restauración", cargos: "Cargos", mercader: "Ventas al mercader", vecinos: "Puestos de vecinos", provision: "Provisión",
   "premio-casa": "Premio a las casas", obras: "Obras de las casas", "mercado-semilla": "Semillas", "mercado-adorno": "Adornos",
   "mercado-ropa": "Ropa", "mercado-mueble": "Muebles", "mercado-letrero": "Letreros", otros: "Otros",
+  regreso: "Regalo de regreso", "obras-barrio": "Obras del barrio", regalos: "Regalos a vecinos", banquete: "Banquetes (abrir)",
+  "banquete-invitado": "Banquetes (invitados)",
 };
 
 /** El termómetro del gozo (solo la administración): lo que entró y salió cada día y de dónde. */

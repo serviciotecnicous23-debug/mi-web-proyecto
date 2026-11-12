@@ -6,6 +6,7 @@
 import type { Express, Request, Response } from "express";
 import { titularEstudios } from "./estudios";
 import { pool } from "./db";
+import { ventajasDeBarrio } from "./barrio-obras";
 import { ESTUDIOS } from "@shared/estudios";
 import { REUNION_MINUTOS, REUNION_PREMIO, type ReunionesEstado, type ReunionLeccion, type ReunionRespuesta, type ReunionVista } from "@shared/reuniones";
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
@@ -246,7 +247,7 @@ export function registerReunionesRoutes(app: Express) {
             WHERE meeting_id = $1 AND character_id = $2
               AND (SELECT count(*) FROM game_meeting_attendance WHERE meeting_id = $1 AND rewarded) < $3
             RETURNING 1`,
-          [id, ch.casa, REUNION_PREMIO.maxPremiados],
+          [id, ch.casa, (await ventajasDeBarrio(r.barrio)).cupoReunion],
         );
         if (premiado.length) {
           await sumarMerito(ch.id, REUNION_PREMIO.meritoVecino);

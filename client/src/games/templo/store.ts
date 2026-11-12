@@ -148,7 +148,7 @@ export type Modal =
   | { kind: "vecinos" }
   | { kind: "vecino"; id: number }
   /** «Tu barrio»: la charla, los vecinos y el emblema y el lema (el barrio como clan). */
-  | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" | "copa" | "pueblo" }
+  | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" | "copa" | "obras" | "pueblo" }
   /** «¿Quién es sabio?», el concurso de la casa de la sabiduría (pantalla completa). */
   | { kind: "sabio" }
   /** Un personaje de la calle de los siervos (shared/personajes.ts): su charla, sus chismes y el recado del día. */
