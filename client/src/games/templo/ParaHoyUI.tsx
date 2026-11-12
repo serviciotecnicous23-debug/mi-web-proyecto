@@ -20,6 +20,9 @@ import { diaEnJerusalen, mananaEnJerusalen } from "@shared/anio";
 import type { RachaVista } from "@shared/racha";
 import { arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type CapitulosVista } from "@shared/capitulos";
 import { OBRAS, costoDeObra, obra, type ObrasEstado } from "@shared/obras";
+import type { BanquetesEstado } from "@shared/banquete";
+import type { RegalosEstado } from "@shared/regalos";
+import { obraBarrio, type ObrasBarrioEstado } from "@shared/barrio-obras";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -34,7 +37,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null; obras: ObrasEstado | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null; obras: ObrasEstado | null; banquetes: BanquetesEstado | null; regalos: RegalosEstado | null; barrioObras: ObrasBarrioEstado | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -48,9 +51,12 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<RachaVista>("/racha"),
       traer<{ vista: CapitulosVista | null }>("/capitulos"),
       traer<ObrasEstado>("/casa/obras"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos, obras]) => {
+      traer<BanquetesEstado>("/banquetes"),
+      traer<RegalosEstado>("/regalos"),
+      traer<ObrasBarrioEstado>("/barrio/obras"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos, obras, banquetes, regalos, barrioObras]) => {
       if (!vivo) return;
-      setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null, obras });
+      setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null, obras, banquetes, regalos, barrioObras });
       // si terminó una obra, la ciudad la dibuja ya (la ven los vecinos)
       if (obras?.terminada) city?.alObras(obras.hechas, obras.estrellas.estrellas, obras.gozo);
     });
@@ -145,6 +151,30 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       });
       if (alcanza) lineas.push({ id: "obra", icono: "🧱", texto: `Con tu gozo ya puedes edificar en tu casa: ${alcanza.icono} ${alcanza.nombre.toLowerCase()} (${alcanza.gozo})`, boton: irObras });
     }
+  }
+  // los banquetes de ahora en mi barrio (shared/banquete.ts) y el mío
+  const bq = d.banquetes;
+  if (bq?.mio && bq.mio.faltan > 0) {
+    lineas.push({ id: "banquete-mio", icono: "🍞", texto: `Tu banquete está abierto: ${bq.mio.invitados} ${bq.mio.invitados === 1 ? "vecino se sentó" : "vecinos se sentaron"} a tu mesa`, boton: city ? { texto: "Ver", hacer: () => abrir({ kind: "casa", pestana: "vecinos" }) } : undefined });
+  }
+  for (const b of (bq?.activos ?? []).filter((x) => !x.mio && !x.sentado && x.faltan > 0 && x.barrio === d.barrioObras?.barrio).slice(0, 2)) {
+    lineas.push({
+      id: `banquete-${b.id}`,
+      icono: "🍞",
+      texto: `${b.anfitrion} tiene un banquete en su casa: siéntate a su mesa (+2 de gozo)`,
+      boton: city ? { texto: "Ir", hacer: () => (gameStore.close(), city.irACasaDe(b.barrio, b.parcela)) } : undefined,
+    });
+  }
+  // los regalos nuevos (shared/regalos.ts)
+  if (d.regalos?.nuevos) {
+    const n = d.regalos.nuevos;
+    lineas.push({ id: "regalos", icono: "🎁", texto: n === 1 ? `${d.regalos.recibidos.find((g) => g.nuevo)?.de ?? "Un vecino"} te mandó un regalo` : `Te mandaron ${n} regalos`, boton: { texto: "Ver", hacer: () => abrir({ kind: "casa", pestana: "vecinos" }) } });
+  }
+  // la obra del barrio de ahora (shared/barrio-obras.ts)
+  const ob = d.barrioObras?.actual ? obraBarrio(d.barrioObras.actual.id) : null;
+  if (ob && d.barrioObras?.actual) {
+    const a = d.barrioObras.actual;
+    lineas.push({ id: "obra-barrio", icono: ob.icono, texto: `La obra del barrio: ${ob.nombre.toLowerCase()}, ${a.aportado} de ${a.meta} de gozo entre todos`, boton: { texto: "Dar", hacer: () => abrir({ kind: "barrio", pestana: "obras" }) } });
   }
   // las reuniones de ahora
   for (const r of (d.reuniones?.activas ?? []).filter((x) => !x.yaFui && x.faltan > 0).slice(0, 2)) {

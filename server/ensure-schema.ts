@@ -30,6 +30,9 @@ import { CAPITULOS_SQL } from "./capitulos";
 import { REGRESO_SQL } from "./regreso";
 import { RESTAURACION_SQL } from "./restauracion";
 import { OBRAS_SQL } from "./obras";
+import { BARRIO_OBRAS_SQL } from "./barrio-obras";
+import { REGALOS_SQL } from "./regalos";
+import { BANQUETE_SQL } from "./banquete";
 import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
 
@@ -1189,6 +1192,10 @@ export async function ensureDatabaseSchema(): Promise<void> {
       // Las obras de la casa (shared/obras.ts) y el termómetro del gozo
       await pool.query(OBRAS_SQL);
       await pool.query(GOZO_DIA_SQL);
+      // la fase 2 (mi barrio): las obras del barrio, los regalos y el banquete en las casas
+      await pool.query(BARRIO_OBRAS_SQL);
+      await pool.query(REGALOS_SQL);
+      await pool.query(BANQUETE_SQL);
     } catch (err: any) {
       console.log(`  Migration note (obras): ${err?.message}`);
     }

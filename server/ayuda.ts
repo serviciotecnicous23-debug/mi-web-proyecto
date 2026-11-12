@@ -8,6 +8,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { capacidadAlfoli } from "@shared/ciudad";
 import { ventajasDeColumna } from "@shared/obras";
+import { ventajasDeBarrio } from "./barrio-obras";
 import { AYUDA_GOZO, AYUDA_GOZO_DIA, AYUDA_HORAS, AYUDA_MAX, AYUDA_MIN, type AyudaDada, type AyudaEstado, type BienAyuda, type PedidoVista } from "@shared/ayuda";
 import { diaClave, evento, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
@@ -204,9 +205,10 @@ export function registerAyudaRoutes(app: Express) {
       // 3) se suma a quien pidió (en su fila), hasta lo que le cabe
       await recoger(quien);
       const entra = await enFilaCasa(quien, async () => {
-        const { rows } = await pool.query(`SELECT goods, level, obras FROM game_houses WHERE character_id = $1`, [quien]);
+        const { rows } = await pool.query(`SELECT goods, level, obras, barrio FROM game_houses WHERE character_id = $1`, [quien]);
         const b = leerBienes(rows[0]?.goods);
-        const cabe = Math.max(0, Math.floor(capacidadAlfoli(Number(rows[0]?.level || 0)) + ventajasDeColumna(rows[0]?.obras).alfoli - b[bien]));
+        const extra = ventajasDeColumna(rows[0]?.obras).alfoli + (await ventajasDeBarrio(Number(rows[0]?.barrio || 0))).alfoli;
+        const cabe = Math.max(0, Math.floor(capacidadAlfoli(Number(rows[0]?.level || 0)) + extra - b[bien]));
         const n = Math.min(cantidad, cabe);
         if (n > 0) {
           b[bien] += n;

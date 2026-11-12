@@ -281,10 +281,43 @@ el nombre de la persona.
 dónde (`game_gozo_dia`), cuánto tiene guardado la gente y el tesoro. Si entra mucho más de lo que sale, el gozo pierde
 su valor: hay que sumar en qué gastarlo. Meta: que se gaste entre el 70 y el 90 % de lo que entra.
 
+### Fase 2 — Mi barrio (hecho)
+**Las obras del barrio** (`shared/barrio-obras.ts`, `server/barrio-obras.ts`, `BarrioObrasUI.tsx`, en *Tu barrio → Obras*).
+Los vecinos dan su gozo para una obra común a la vez, en orden. Cada uno puede dar hasta 1.000 por día, para que la obra
+sea de todos, y cada 10 de gozo suma un punto a la copa del barrio. Al terminar una obra se avisa a todo el barrio en
+vivo y se ve en sus calles. Los que más dan van en la placa de los constructores (Nehemías 3).
+
+| Obra | Entre todos | Lo que da a cada casa del barrio |
+|---|---|---|
+| 🪣 El pozo del barrio (Génesis 26:22) | 1.500 | El huerto crece 10 % más rápido (lo que se siembra desde entonces) |
+| 🪑 Los bancos de los ancianos (Rut 4:2) | 2.500 | Las reuniones premian hasta 15 vecinos (en vez de 10) |
+| 🔥 El horno del barrio (Mateo 6:11) | 4.000 | El horno de la casa tarda la mitad |
+| 🌳 Los árboles de la calle (Salmos 1:3) | 6.000 | +5 puntos a las estrellas |
+| 🌾 El granero del barrio (Hechos 2:44) | 9.000 | El alfolí guarda 20 más |
+| 🪨 La placa de los constructores (Nehemías 3:28) | 12.000 | +10 puntos a las estrellas y los nombres de los que más dieron |
+
+En total, 35.000 de gozo por barrio: una o dos temporadas de un barrio con vida.
+
+**Los regalos** (`shared/regalos.ts`, `server/regalos.ts`, `RegalosUI.tsx`):
+- Al visitar la casa de un vecino o de un amigo, «Regalarle algo»: un adorno, ropa, un mueble o 5 semillas del
+  mercado, con una frase de una lista fija (sin texto libre).
+- Se paga el precio del día y el 10 % va al tesoro.
+- Como mucho 5 regalos por día, y 2 a la misma persona.
+- Sin bloqueos, y nada de lo que no se vende ni de otra temporada.
+- Le llega un aviso en vivo, y lo ve en *Tu casa → Vecinos*.
+
+**El banquete en tu casa** (`shared/banquete.ts`, `server/banquete.ts`, `BanqueteUI.tsx`, en *Tu casa → Vecinos*):
+- Una vez por día abres tu casa 20 minutos; cuesta 40 de gozo, 5 de flor de harina y 2 de aceite.
+- En tu puerta aparece un círculo dorado, y el barrio recibe el aviso.
+- Quien se para en tu puerta y se sienta a tu mesa gana 2 de gozo y 2 puntos para la copa de su barrio, y tu casa
+  gana 2 de honra (hasta 12 invitados; cada uno se sienta a 3 mesas por día como mucho).
+- El servidor mira la presencia real en la puerta (`shared/parcelas.ts`, que ahora comparten la pantalla y el
+  servidor).
+- El banquete cuesta más gozo del que reparte: es hospitalidad (Romanos 12:13).
+
 ### Lo que viene, por fases
 | Fase | Qué | Inspirado en |
 |---|---|---|
-| 2. Mi barrio | **La casa abierta**: pan y agua para los que llegan, una bandera en el mapa, gozo para los visitantes y puntos para la copa. **Las obras del barrio** (pozo, fuente, horno común, lámparas de la calle), pagadas entre vecinos, con sus nombres en una placa como en Nehemías 3. **Regalos** a un vecino. | Las fiestas en el iglú de Club Penguin; el pueblo de Stardew |
 | 3. El taller | **La pieza fina**: con 4 iguales, el artesano hace una dorada (sin azar). **Oficios**: el telar y las ovejas hacen cosas que se venden en los puestos de los vecinos. Lo de temporada, fuera de su tiempo, solo se consigue de otro jugador. | Adopt Me! |
 | 4. La ciudad y el mundo | **El arca de Joás** (2 Reyes 12:9): una obra de toda la ciudad cada temporada con ofrendas de gozo; al llenarse cambia la ciudad y quedan los nombres de los que dieron; si el ministerio quiere, se vuelve algo real. **Invita a un amigo**: cuando lo aprueban y juega 3 días, los dos reciben gozo. **El álbum** de colecciones con títulos. | *Coins for Change* de Club Penguin; Pokémon GO |
 

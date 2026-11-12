@@ -4,11 +4,25 @@
  * en línea y dónde, y el emblema y el lema que eligen los vecinos con su voto.
  */
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Ban, Flag, Footprints, Home, Loader2, Megaphone, MessageCircle, MoreHorizontal, Send, Shield, Store, Trash2, Trophy, Users } from "lucide-react";
+import { Ban, Flag, Footprints, Home, Loader2, Megaphone, MessageCircle, MoreHorizontal, Send, Shield, Store, Trash2, Trophy, Users, Hammer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, hace } from "./ui";
 import { gameStore } from "./store";
 import { CiudadCtx } from "./CiudadUI";
+import { ObrasDelBarrio } from "./BarrioObrasUI";
+
+/** Las obras del barrio, con el gozo nuevo en el marcador de la ciudad. */
+function ObrasDelBarrioConMundo() {
+  const { city, estado, setEstado } = useContext(CiudadCtx);
+  return (
+    <ObrasDelBarrio
+      alGozo={(g) => {
+        city?.ponerGozo(g);
+        if (estado) setEstado?.({ ...estado, yo: { ...estado.yo, gozo: g } });
+      }}
+    />
+  );
+}
 import { ICONO_CAMINO, chatBarrio, pedirBarrio, textoDeMensaje, useChatBarrio } from "./barrio-chat";
 import { CHAT_MAX, EMBLEMAS, LEMAS, VERSO_PALABRA, revisarMensaje, type BarrioVista, type MensajeBarrio } from "@shared/barrio";
 import { FRASES, VERSICULOS_RAPIDOS } from "@shared/ciudad";
@@ -19,7 +33,7 @@ import { CopaDelBarrio } from "./BarrioCopa";
 import { PuebloDelBarrio } from "./BarrioPueblo";
 import { invitarVecino, irConVecino } from "./Acompanar";
 
-type Pestana = "charla" | "vecinos" | "emblema" | "copa" | "pueblo";
+type Pestana = "charla" | "vecinos" | "emblema" | "copa" | "obras" | "pueblo";
 
 const cerrar = () => gameStore.close();
 
@@ -84,13 +98,14 @@ export function BarrioView({ pestana }: { pestana?: Pestana }) {
               «{vista.lema.text}» <span className="not-italic text-[11px] font-semibold text-amber-800 dark:text-amber-300">{vista.lema.ref}</span>
             </p>
           )}
-          <div className="grid grid-cols-5 gap-0.5 rounded-full bg-amber-100/70 p-1 dark:bg-amber-950/40">
+          <div className="grid grid-cols-6 gap-0.5 rounded-full bg-amber-100/70 p-1 dark:bg-amber-950/40">
             {(
               [
                 ["charla", "Charla", MessageCircle],
                 ["vecinos", "Vecinos", Users],
                 ["emblema", "Emblema", Shield],
                 ["copa", "Copa", Trophy],
+                ["obras", "Obras", Hammer],
                 ["pueblo", "Pueblo", Store],
               ] as const
             ).map(([id, nombre, Icono]) => (
@@ -127,6 +142,7 @@ export function BarrioView({ pestana }: { pestana?: Pestana }) {
           {tab === "vecinos" && <Vecinos vista={vista} propio={propio} />}
           {tab === "emblema" && <EmblemaYLema vista={vista} propio={propio} onVista={setVista} />}
           {tab === "copa" && <CopaDelBarrio />}
+          {tab === "obras" && <ObrasDelBarrioConMundo />}
           {tab === "pueblo" && <PuebloDelBarrio />}
         </div>
       )}

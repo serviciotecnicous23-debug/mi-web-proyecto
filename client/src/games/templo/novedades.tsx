@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-mi-barrio",
+    fecha: "12 de noviembre de 2026",
+    titulo: "Mi barrio: obras de todos, regalos y banquetes",
+    puntos: [
+      "🏗️ Las obras del barrio (Tu barrio → Obras): los vecinos dan su gozo para una obra común a la vez: el pozo, los bancos de los ancianos, el horno, los árboles de la calle, el granero y la placa de los constructores. Cada obra se ve en las calles y ayuda a todas las casas: el huerto crece más rápido, las reuniones premian a más vecinos, el horno tarda la mitad, más estrellas y un alfolí más grande.",
+      "🪨 Los que más dan van en la placa de los constructores, como en Nehemías 3.",
+      "🎁 Regalos: al visitar la casa de un vecino o amigo, toca «Regalarle algo» y mándale algo del mercado con una frase bonita.",
+      "🍞 El banquete en tu casa (Tu casa → Vecinos): abre tu casa 20 minutos; los vecinos que lleguen a tu puerta (círculo dorado) se sientan a tu mesa y ganan gozo, y tu casa gana honra.",
+    ],
+  },
+  {
     id: "2026-11-11-obras-de-la-casa",
     fecha: "11 de noviembre de 2026",
     titulo: "Edifica tu casa con el gozo",

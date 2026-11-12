@@ -48,6 +48,33 @@ import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { SiguientePaso } from "./CaminoHoyUI";
 import { Estrellas, ObrasCasa } from "./ObrasUI";
 import { FotoDeCasa } from "./FotoCasaUI";
+import { RegalarBoton, RegalosRecibidos } from "./RegalosUI";
+import { BanqueteCasa, BanqueteVisita } from "./BanqueteUI";
+
+/** Pone el gozo nuevo en el estado de la pantalla y en el marcador de la ciudad (después de gastar o ganar). */
+function useAlGozo() {
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  return useCallback((g: number) => {
+    const { estado, city, setEstado } = ultimo.current;
+    city?.ponerGozo(g);
+    if (estado) setEstado?.({ ...estado, yo: { ...estado.yo, gozo: g } });
+  }, []);
+}
+
+function BanqueteCasaConMundo() {
+  return <BanqueteCasa alGozo={useAlGozo()} />;
+}
+function VisitaRegaloYBanquete({ personajeId }: { personajeId: number }) {
+  const alGozo = useAlGozo();
+  return (
+    <>
+      <BanqueteVisita personajeId={personajeId} alGozo={alGozo} />
+      <RegalarBoton personajeId={personajeId} alGozo={alGozo} />
+    </>
+  );
+}
 import { OBRAS, type ObrasEstado } from "@shared/obras";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
@@ -601,6 +628,8 @@ function CasaView({ inicial }: { inicial?: string }) {
         {pestana === "adornos" && <CasaExtrasConMundo partes={["adornos", "ropa", "letrero"]} />}
         {pestana === "vecinos" && (
           <>
+            <RegalosRecibidos />
+            <BanqueteCasaConMundo />
             <ReunionCasa />
             <PedirAyuda />
           </>
@@ -872,6 +901,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
                 <Home className="mr-1 h-4 w-4" /> Entrar a ver su casa por dentro
               </Button>
             )}
+            {!casa.esMia && <VisitaRegaloYBanquete personajeId={personajeId} />}
             <LogrosDeOtro personajeId={personajeId} />
             <ReunionVisita personajeId={personajeId} alAcertar={() => city?.audio.correct()} />
             <VerseBox text={VERSO_VISITA.text} refName={VERSO_VISITA.ref} />

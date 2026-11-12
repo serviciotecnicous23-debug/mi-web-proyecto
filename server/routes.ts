@@ -29,6 +29,9 @@ import { registerRegresoRoutes } from "./regreso";
 import { registerRestauracionRoutes } from "./restauracion";
 import { registerObrasRoutes } from "./obras";
 import { registerTermometroRoutes } from "./termometro";
+import { registerBarrioObrasRoutes } from "./barrio-obras";
+import { registerRegalosRoutes } from "./regalos";
+import { registerBanqueteRoutes } from "./banquete";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
@@ -3691,6 +3694,10 @@ ${urls}
   // las obras de la casa (con el gozo se edifica) y el termómetro del gozo (administración)
   registerObrasRoutes(app);
   registerTermometroRoutes(app);
+  // la fase 2 de la economía (mi barrio): obras del barrio, regalos y banquetes
+  registerBarrioObrasRoutes(app);
+  registerRegalosRoutes(app);
+  registerBanqueteRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
 

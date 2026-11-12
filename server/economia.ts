@@ -7,6 +7,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { capacidadAlfoli } from "@shared/ciudad";
 import { ventajasDeColumna } from "@shared/obras";
+import { ventajasDeBarrio } from "./barrio-obras";
 import { BIEN_MERCADO_NOMBRE, type BienMercado } from "@shared/mercado";
 import {
   PREMIO_CASAS, PROVISION, PUESTOS_MAX, PUESTO_CANTIDAD_MAX, PUESTO_HORAS, diezmoDe, rangoPrecio, precioMercaderHoy, type PuestoVista, type PuestosEstado,
@@ -175,12 +176,12 @@ async function estadoPuestos(ch: PersonajeFila): Promise<PuestosEstado> {
       [ch.casa],
     ),
     pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]),
-    pool.query(`SELECT level, goods, obras FROM game_houses WHERE character_id = $1`, [ch.casa]),
+    pool.query(`SELECT level, goods, obras, barrio FROM game_houses WHERE character_id = $1`, [ch.casa]),
     saldoTesoro(),
     preciosMercaderHoy(),
   ]);
   const bienes = leerBienes(h[0]?.goods);
-  const cap = capacidadAlfoli(Number(h[0]?.level || 0)) + ventajasDeColumna(h[0]?.obras).alfoli;
+  const cap = capacidadAlfoli(Number(h[0]?.level || 0)) + ventajasDeColumna(h[0]?.obras).alfoli + (await ventajasDeBarrio(Number(h[0]?.barrio || 0))).alfoli;
   const ventasNuevas: VentaNueva[] = nuevas
     .filter((r) => esBien(r.good))
     .map((r) => {
@@ -335,9 +336,10 @@ export function registerEconomiaRoutes(app: Express) {
       const bien = L[0].good as BienMercado;
       await recoger(ch.casa);
       const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; total?: number; n?: number; vendedor?: number }> => {
-        const { rows } = await pool.query(`SELECT level, goods, obras FROM game_houses WHERE character_id = $1`, [ch.casa]);
+        const { rows } = await pool.query(`SELECT level, goods, obras, barrio FROM game_houses WHERE character_id = $1`, [ch.casa]);
         const bienes = leerBienes(rows[0]?.goods);
-        const libre = capacidadAlfoli(Number(rows[0]?.level || 0)) + ventajasDeColumna(rows[0]?.obras).alfoli - Math.floor(bienes[bien]);
+        const extra = ventajasDeColumna(rows[0]?.obras).alfoli + (await ventajasDeBarrio(Number(rows[0]?.barrio || 0))).alfoli;
+        const libre = capacidadAlfoli(Number(rows[0]?.level || 0)) + extra - Math.floor(bienes[bien]);
         if (libre <= 0) return { status: 409, message: "Tu alfolí está lleno de eso: lleva algo al templo o al horno primero." };
         // se compra lo que se pidió, si cabe en el alfolí y si queda en el puesto
         const n = Math.min(pide, libre, Math.max(1, Number(L[0].quantity)));

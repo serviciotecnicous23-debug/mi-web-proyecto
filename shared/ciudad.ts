@@ -347,6 +347,12 @@ export type RedEntra =
   | { t: "juntos-hecho"; titulo: string; gozo: number; merito: number; ayudo: boolean; juntos: number; gozoTotal?: number }
   /** Un amigo o vecino te invita a venir adonde está (shared/acompanar.ts). */
   | { t: "invitacion"; i: import("./acompanar").Invitacion }
+  /** El barrio terminó una de sus obras (shared/barrio-obras.ts): la calle se dibuja con ella. */
+  | { t: "obras-barrio"; n: number; obras: string[]; terminada: string | null }
+  /** Un vecino o amigo te mandó un regalo (shared/regalos.ts). */
+  | { t: "regalo"; r: import("./regalos").AvisoRegalo }
+  /** Un vecino abrió o cerró un banquete en su casa (shared/banquete.ts): que se vuelvan a pedir los banquetes. */
+  | { t: "banquete"; anfitrion: string; abierto: boolean }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API
@@ -368,7 +374,15 @@ export type CasaVista = {
 
 /** Un barrio completo (al entrar en su área). */
 /** `nivelBarrio`: el nivel del barrio en la copa de los barrios (shared/barrio-juntos.ts), que se ve en sus calles. */
-export type BarrioEstado = { n: number; area: number; nombre: string; casas: CasaVista[]; nivelBarrio?: number };
+export type BarrioEstado = {
+  n: number;
+  area: number;
+  nombre: string;
+  casas: CasaVista[];
+  nivelBarrio?: number;
+  /** Las obras del barrio terminadas (shared/barrio-obras.ts): se dibujan en sus calles. */
+  obrasBarrio?: string[];
+};
 
 /** Lo de tu casa que solo ves tú: siervos, alfolí y bendiciones. */
 export type CasaPrivada = {
@@ -429,7 +443,7 @@ export type CiudadEstado = {
     /** Si la casa acaba de crecer al entrar: el nivel nuevo. */
     subio: number | null;
   };
-  barrio: { n: number; area: number; nombre: string; casas: CasaVista[]; libres: number; nivelBarrio?: number };
+  barrio: { n: number; area: number; nombre: string; casas: CasaVista[]; libres: number; nivelBarrio?: number; /** las obras del barrio terminadas */ obrasBarrio?: string[] };
   /** Los barrios de las otras áreas, de lejos: solo dónde hay casas y de qué nivel. */
   otros: { n: number; area: number; casas: { parcela: number; nivel: number }[] }[];
   jerusalen: JerusalenEstado["jerusalen"];

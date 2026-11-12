@@ -23,6 +23,10 @@ export type RedEventos = {
   onSabio?: (m: RedEntra) => void;
   /** Un amigo o vecino te invita a venir (acompanar.ts). */
   onInvitacion?: (i: import("@shared/acompanar").Invitacion) => void;
+  /** El barrio terminó una obra (shared/barrio-obras.ts), un regalo para ti (shared/regalos.ts), un banquete abierto (shared/banquete.ts). */
+  onObrasBarrio?: (n: number, obras: string[], terminada: string | null) => void;
+  onRegalo?: (r: import("@shared/regalos").AvisoRegalo) => void;
+  onBanquete?: (anfitrion: string, abierto: boolean) => void;
   /** La misión del barrio de hoy (juntos.ts): cómo va y cuando se cumple. */
   onJuntos?: (m: Extract<RedEntra, { t: "juntos" | "juntos-hecho" }>) => void;
   onFuera: (motivo: string) => void;
@@ -105,6 +109,15 @@ export class RedCiudad {
           break;
         case "invitacion":
           this.ev.onInvitacion?.(m.i);
+          break;
+        case "obras-barrio":
+          this.ev.onObrasBarrio?.(m.n, m.obras, m.terminada);
+          break;
+        case "regalo":
+          this.ev.onRegalo?.(m.r);
+          break;
+        case "banquete":
+          this.ev.onBanquete?.(m.anfitrion, m.abierto);
           break;
         case "fuera":
           this.fuera = true;
