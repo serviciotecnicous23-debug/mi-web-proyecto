@@ -25,6 +25,7 @@ import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
 import { registerMuroRoutes } from "./muro";
 import { registerCapitulosRoutes } from "./capitulos";
+import { registerRegresoRoutes } from "./regreso";
 import { registerRestauracionRoutes } from "./restauracion";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
@@ -3681,6 +3682,8 @@ ${urls}
   registerMuroRoutes(app);
   // la historia de la temporada: un capítulo por semana y la fiesta final
   registerCapitulosRoutes(app);
+  // el regreso: el regalo de quien vuelve y lo que pasó mientras no estaba
+  registerRegresoRoutes(app);
   // la gran restauración de los edificios y el camino de hoy (el motor del juego)
   registerRestauracionRoutes(app);
   registerCaminoRoutes(app);

@@ -13,6 +13,7 @@
 import { MUEBLES } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
+import { PRENDA_REGRESO } from "./regreso";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
@@ -27,9 +28,10 @@ export type Articulo = {
   color?: string;
   /**
    * No se vende: se gana. «sabio»: los trajes de los sabios, en la casa de la sabiduría (shared/sabio.ts); «temporada»:
-   * las prendas de la historia de la temporada (shared/capitulos.ts).
+   * las prendas de la historia de la temporada (shared/capitulos.ts); «regreso»: el mejor vestido, al volver a
+   * Jerusalén después de una semana o más (shared/regreso.ts).
    */
-  exclusivo?: "sabio" | "temporada";
+  exclusivo?: "sabio" | "temporada" | "regreso";
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
   deTemporada?: { estacion: EstacionId } | { eventos: string[] };
 };
@@ -97,6 +99,17 @@ export const ARTICULOS: Articulo[] = [
     color: t.color,
     exclusivo: "temporada",
   })),
+  // el mejor vestido: tampoco se vende, se recibe al volver a Jerusalén después de una semana o más (shared/regreso.ts)
+  {
+    id: PRENDA_REGRESO.id,
+    categoria: "ropa",
+    nombre: PRENDA_REGRESO.nombre,
+    icono: "🥻",
+    precio: 0,
+    detalle: "Se recibe al volver a Jerusalén después de una semana o más: «Sacad el mejor vestido, y vestidle» (Lucas 15:22).",
+    color: PRENDA_REGRESO.color,
+    exclusivo: "regreso",
+  },
   // el letrero de la casa
   { id: "letrero", categoria: "letrero", nombre: "Letrero de la casa", icono: "🪧", precio: 40, detalle: "Ponle nombre a tu casa: lo ven los vecinos." },
   // los muebles de la casa por dentro (shared/casa-interior.ts)

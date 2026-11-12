@@ -27,6 +27,7 @@ import { CONCURSO_SQL } from "./concurso";
 import { AYUDA_SQL } from "./ayuda";
 import { MURO_SQL } from "./muro";
 import { CAPITULOS_SQL } from "./capitulos";
+import { REGRESO_SQL } from "./regreso";
 import { RESTAURACION_SQL } from "./restauracion";
 import { CAMINO_SQL } from "./camino-dia";
 
@@ -1168,6 +1169,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CAPITULOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (capítulos): ${err?.message}`);
+    }
+    try {
+      // El regreso: la última visita de cada persona, su vuelta y su regalo
+      await pool.query(REGRESO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (regreso): ${err?.message}`);
     }
     try {
       // La gran restauración (las salas en ruinas de los edificios) y el camino de hoy

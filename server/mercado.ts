@@ -167,7 +167,12 @@ export function registerMercadoRoutes(app: Express) {
     if (!enTemporada(a)) return res.status(409).json({ message: "Esa prenda es de temporada: hoy no se vende. En el calendario ves cuándo vuelve." });
     if (a.exclusivo)
       return res.status(403).json({
-        message: a.exclusivo === "temporada" ? "Esa prenda no se vende: se gana con la historia de la temporada." : "Los trajes de los sabios no se venden: se ganan en la casa de la sabiduría.",
+        message:
+          a.exclusivo === "temporada"
+            ? "Esa prenda no se vende: se gana con la historia de la temporada."
+            : a.exclusivo === "regreso"
+              ? "El mejor vestido no se vende: se recibe al volver a Jerusalén después de una semana o más."
+              : "Los trajes de los sabios no se venden: se ganan en la casa de la sabiduría.",
       });
     try {
       const ch = await jugador(req, res);

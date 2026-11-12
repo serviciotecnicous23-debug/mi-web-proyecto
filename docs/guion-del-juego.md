@@ -33,6 +33,7 @@ el mismo día para todos.
 | Momento | Qué hace | Qué gana |
 |---|---|---|
 | Al entrar | Mira «Para hoy» y la fecha del marcador (abre el calendario) | Sabe qué trae el día |
+| Al volver después de días | Recibe su regalo de regreso y ve qué hizo su barrio mientras no estaba | Gozo, semillas de la estación y, tras una semana, el mejor vestido |
 | En el templo | Cumple sus deberes | Mérito, gozo y su **racha de servicio** |
 | Encargos del día | 3 encargos distintos según su camino (y **uno más los días de fiesta**, con el doble de gozo) | Mérito, gozo y puntos para la copa del barrio |
 | El huerto | Siembra trigo (40 min), cebada (25 min) u olivos (60 min); riega o deja que la lluvia riegue | Harina y aceite para el alfolí |
@@ -107,9 +108,37 @@ cada una.
 | ⭐ Manto de la profecía | 24 y 25 de diciembre | 90 |
 | 🎉 Faja del año nuevo | 1 de enero | 40 |
 
-### Mientras no estabas
-Quien vuelve después de dos días o más encuentra en la entrada de Jerusalén en línea qué fiestas pasaron, si
-cambió la estación, la fecha de hoy y la próxima fiesta grande (`client/src/games/templo/RegresoUI.tsx`).
+### Mientras no estabas y el regalo de regreso
+Quien vuelve después de dos días o más encuentra en la entrada de Jerusalén en línea la tarjeta «¡De vuelta en
+Jerusalén!» («Yo me alegré con los que me decían: A la casa de Jehová iremos», Salmos 122:1). Lo cuenta el servidor
+(`server/regreso.ts`, reglas en `shared/regreso.ts`): la visita se anota al entrar a Jerusalén en línea, al servir
+en el templo y al entrar a la ciudad, sin importar el teléfono o la computadora.
+
+- **En Jerusalén**: qué fiestas pasaron, si cambió la estación, la fecha de hoy y la próxima fiesta grande.
+- **En tu barrio**: los vecinos nuevos, los mensajes de la charla (y quién escribió), las reuniones en las casas,
+  los pedidos de ayuda atendidos, lo que se dio a las familias del pueblo, el puesto en la copa de la semana (con
+  los puntos que ganó el barrio mientras no estabas) y si el barrio subió de nivel.
+- **En tu casa**: quién la visitó y la bendijo, quién te dio algo en tus pedidos, las parcelas del huerto listas
+  para cosechar y lo que se vendió en tu puesto.
+- **En la ciudad**: las piedras que se pusieron en el muro, los capítulos de la historia que se cumplieron y cómo
+  va el de esta semana.
+
+Los nombres de quien bloqueaste no salen. El **regalo de regreso** se recibe con un botón en la misma tarjeta, una
+sola vez por vuelta, hasta 3 días después de volver y como mucho uno cada 7 días. Es pequeño a propósito: servir
+cada día (la racha, los encargos) siempre rinde más que irse y volver.
+
+| Días fuera | Gozo | Semillas de la estación |
+|---|---|---|
+| 2 o 3 | 10 | 2 |
+| 4 a 6 | 20 | 3 |
+| 7 a 13 | 35 | 4 |
+| 14 o más | 50 | 5 |
+
+Las semillas son las del cultivo de la estación (olivo en la cosecha, cebada en su siega, trigo en la suya) y, si la
+estación no tiene uno propio, cebada, la más rápida: quien vuelve ve su primera cosecha en la misma visita. La
+primera vez que alguien vuelve después de una semana o más recibe además **el mejor vestido**, un manto verde que no
+se vende y que queda puesto al recibirlo: «Pero el padre dijo a sus siervos: Sacad el mejor vestido, y vestidle; y
+poned un anillo en su mano, y calzado en sus pies» (Lucas 15:22).
 
 ### Los eventos del año
 | Evento | Cuándo | Efecto | Encargo de la fiesta |
@@ -183,15 +212,14 @@ también a `FRASES_EVENTO` en `client/src/games/templo/ciudad/frases.ts`. Y se p
 ## 7. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
-pronóstico, «Mientras no estabas», los pétalos de almendro y las lámparas de fiesta.
+pronóstico, «Mientras no estabas» con lo que hizo tu barrio, tu casa y la ciudad, el regalo de regreso (con el
+mejor vestido), los pétalos de almendro y las lámparas de fiesta.
 
 Lo que queda:
-1. **Un regalo de regreso** (gozo) para quien vuelve después de varios días, contado en el servidor.
-2. **«Mientras no estabas» con el barrio**: qué hizo tu barrio, en qué puesto va la copa y quién bendijo tu casa.
-3. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
-4. **Colecciones visibles** (álbum de muebles, ropa y dichos) y **mentores** para los nuevos.
-5. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
-6. **Una historia nueva para la temporada 2** (`ARCOS` en `shared/capitulos.ts`); mientras tanto se repite la de
+1. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
+2. **Colecciones visibles** (álbum de muebles, ropa y dichos) y **mentores** para los nuevos.
+3. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
+4. **Una historia nueva para la temporada 2** (`ARCOS` en `shared/capitulos.ts`); mientras tanto se repite la de
    Ezequías y Senaquerib.
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base
