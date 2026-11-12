@@ -22,13 +22,21 @@ type ExtrasMapa = {
   capitulo: { id: CapituloId; x: number; z: number; r: number; icono: string; titulo: string } | null;
 };
 
-/** Dónde se ve cada capítulo en la ciudad (ciudad/capitulos3d.ts): la primera torre nueva del muro del oriente, el
- * estanque de Siloé al final del conducto, la escalinata donde ora Ezequías y la plaza de la fiesta. */
+/**
+ * Dónde se ve cada capítulo en la ciudad. La amenaza de Senaquerib (ciudad/capitulos3d.ts): la primera torre nueva del
+ * muro del oriente, el estanque de Siloé al final del conducto, la escalinata donde ora Ezequías y la plaza de la
+ * fiesta. La gran Pascua (ciudad/pascua3d.ts): el gran atrio que se limpia, los cantores de la escalinata, el correo
+ * del rey junto a la puerta y la plaza (con los altares de Acaz en las esquinas).
+ */
 const LUGAR_CAPITULO: Record<CapituloId, { x: number; z: number; r: number }> = {
   muro: { x: P.TORRE_X - 4, z: P.TORRES_NUEVAS[0], r: 6 },
   canal: { x: (P.ESTANQUE[0] + P.ESTANQUE[2]) / 2, z: (P.ESTANQUE[1] + P.ESTANQUE[3]) / 2, r: 5 },
   rabsaces: { x: 41, z: 0, r: 7 },
   liberacion: { x: 56, z: -2, r: 13 },
+  puertas: { x: 31, z: 0, r: 7 },
+  cantico: { x: 40, z: 0, r: 6 },
+  cartas: { x: P.CORREO_REY[0], z: P.CORREO_REY[1], r: 6 },
+  pascua: { x: 56, z: -2, r: 13 },
 };
 let extrasGuardados: { t: number; p: Promise<ExtrasMapa> } | null = null;
 
@@ -138,6 +146,14 @@ function dibujar(cv: HTMLCanvasElement, m: MapaVista, o: { radio: number; centro
     for (const z of P.TORRES_NUEVAS) {
       const [x, y] = p(P.TORRE_X, z);
       ctx.fillRect(x - 3, y - 3, 6, 6);
+    }
+  }
+  if (ex?.capitulo?.id === "pascua") {
+    // los altares de Acaz que la ciudad quita esta semana
+    ctx.fillStyle = "rgba(90,80,70,0.95)";
+    for (const [ax, az] of P.ALTARES_ACAZ) {
+      const [x, y] = p(ax, az);
+      ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
     }
   }
   if (ex?.capitulo?.id === "canal") {

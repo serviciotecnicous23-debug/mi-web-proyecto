@@ -50,7 +50,8 @@ import { PERSONAJES_CIUDAD, personajeCiudad, type PersonajeCiudad } from "@share
 import { fraseDeGente, type ContextoFrases, type GenteQueHabla } from "./frases";
 import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
-import { EscenaHistoria, estadoDeHistoria } from "./capitulos3d";
+import { EscenaHistoria, type EscenaDeHistoria } from "./capitulos3d";
+import { EscenaPascua } from "./pascua3d";
 import { ArcaJoas } from "./arca3d";
 import { arcoDeTemporada, type CapituloId, type CapitulosVista, type MomentoFiesta } from "@shared/capitulos";
 
@@ -223,8 +224,11 @@ export class CiudadWorld {
   private muroClave = "";
   private muroConstruidos = -1;
   private muroT = 59;
-  /** La historia de la temporada (shared/capitulos.ts): lo que se dibuja, lo último que dijo el servidor y las trompetas de la fiesta. */
-  private historia!: EscenaHistoria;
+  /**
+   * La historia de la temporada (shared/capitulos.ts): una escena por historia (la que se cuenta esta temporada se ve
+   * entera; de las otras quedan las obras que la ciudad terminó), lo último que dijo el servidor y las trompetas.
+   */
+  private historias: EscenaDeHistoria[] = [];
   /** El arca de Joás arriba de la escalinata (shared/arca.ts): con lámparas de oro cuando la ciudad la llena. */
   private arca = new ArcaJoas();
   private historiaT = 0;
@@ -372,9 +376,12 @@ export class CiudadWorld {
     this.scene.add(this.lamparas.group);
     if (coarse) this.fx.density = 0.7;
     this.overlay = new Overlay(container, this.camera);
-    // la historia de la temporada: las torres, el conducto de Siloé, el campamento de Asiria y la fiesta
-    this.historia = new EscenaHistoria(this.overlay, (x, y, z, s) => this.shadows.add(x, y, z, s), () => this.abrir({ kind: "capitulos" }));
-    this.scene.add(this.historia.group);
+    // la historia de la temporada: la amenaza de Senaquerib (las torres, el conducto de Siloé, el campamento de Asiria) y
+    // la gran Pascua de Ezequías (el atrio que se limpia, los cantores, los peregrinos y los altares que se quitan)
+    const sombra = (x: number, y: number, z: number, s: number) => this.shadows.add(x, y, z, s);
+    const alTocarFiesta = () => this.abrir({ kind: "capitulos" });
+    this.historias = [new EscenaHistoria(this.overlay, sombra, alTocarFiesta), new EscenaPascua(this.overlay, sombra, alTocarFiesta, () => this.audio.trumpet())];
+    for (const h of this.historias) this.scene.add(h.group);
     this.arca.poner(!!estado.arca?.llena);
     this.scene.add(this.arca.group);
 
@@ -1549,11 +1556,15 @@ export class CiudadWorld {
     const v = d.vista;
     const antes = this.historiaVista;
     this.historiaVista = v;
-    if (this.historia.poner(estadoDeHistoria(v))) this.shadowDirty = true;
-    if (this.historia.torresNuevas) {
-      this.historia.torresNuevas = false;
-      this.reiniciarOclusion();
+    let tapa = false;
+    for (const h of this.historias) {
+      if (h.ponerVista(v)) this.shadowDirty = true;
+      if (h.tapaNueva) {
+        h.tapaNueva = false;
+        tapa = true;
+      }
     }
+    if (tapa) this.reiniciarOclusion();
     const arco = v ? arcoDeTemporada(v.temporada) : null;
     if (!v || !arco) return;
     if (antes && antes.temporada === v.temporada) {
@@ -1567,11 +1578,11 @@ export class CiudadWorld {
         }
       }
       if (antes.fiesta.momento !== "vivo" && v.fiesta.momento === "vivo") {
-        gameStore.toast(`🎺 ¡Empieza la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad.`, "gold");
+        gameStore.toast(`${arco.fiesta.icono} ¡Empieza la gran alabanza de ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias con toda la ciudad.`, "gold");
         this.trompetaFiesta = 0;
-      } else if (antes.fiesta.momento === "antes" && v.fiesta.momento === "fiesta") gameStore.toast(`🎺 ¡Empieza ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias.`, "gold");
+      } else if (antes.fiesta.momento === "antes" && v.fiesta.momento === "fiesta") gameStore.toast(`${arco.fiesta.icono} ¡Empieza ${arco.fiesta.titulo.toLowerCase()}! Ve a la plaza y da gracias.`, "gold");
     } else if (v.fiesta.momento === "fiesta" || v.fiesta.momento === "vivo") {
-      gameStore.toast(v.fiesta.momento === "vivo" ? `🎺 ¡Es la gran alabanza en la plaza! Ve y da gracias con toda la ciudad.` : `🎺 Hoy es ${arco.fiesta.titulo.toLowerCase()}: toda la ciudad da gracias en la plaza.`, "gold");
+      gameStore.toast(v.fiesta.momento === "vivo" ? `${arco.fiesta.icono} ¡Es la gran alabanza en la plaza! Ve y da gracias con toda la ciudad.` : `${arco.fiesta.icono} Hoy es ${arco.fiesta.titulo.toLowerCase()}: toda la ciudad da gracias en la plaza.`, "gold");
     }
     // al empezar un capítulo, se cuenta su comienzo (una vez por personaje)
     const cap = v.hoy ? arco.capitulos.find((x) => x.n === v.hoy!.n) : undefined;
@@ -2576,7 +2587,7 @@ export class CiudadWorld {
     }
     this.animarVecinos(dt);
     this.animarSiervos(dt);
-    this.historia.animar(dt, now, p.rig.x, p.rig.z, this.noche());
+    for (const h of this.historias) h.animar(dt, now, p.rig.x, p.rig.z, this.noche());
     this.arca.animar(now / 1000);
     this.crowd.flush();
     this.shadows.end();
@@ -2658,23 +2669,13 @@ export class CiudadWorld {
     this.cine = { objetivo: new THREE.Vector3(x, P.alturaCiudad(x, z), z), mira: new THREE.Vector3(mx, P.SUELO + 1.5, mz), hasta: performance.now() + segundos * 1000, alto };
   }
 
-  /** Muestra en la ciudad el lugar de un capítulo de la historia de la temporada. */
+  /** Muestra en la ciudad el lugar de un capítulo de la historia de la temporada (lo dice la escena de esa historia). */
   verCapitulo(n: number) {
-    const v = this.historiaVista;
-    if (n === 1) {
-      // la torre que se está levantando (o la primera, si ya están todas)
-      const c = v?.capitulos.find((x) => x.n === 1);
-      const f = !c ? 0 : c.cumplido ? 1 : c.meta ? c.puntos / c.meta : 0;
-      const z = P.TORRES_NUEVAS[f >= 1 ? 0 : Math.min(P.TORRES_NUEVAS.length - 1, Math.floor(f * P.TORRES_NUEVAS.length))];
-      this.verEscena(70, z, 78, z);
+    for (const h of this.historias) {
+      const t = h.tomaDeCapitulo(n);
+      if (t) return this.verEscena(t.x, t.z, t.mx, t.mz, t.segundos, t.alto);
     }
-    else if (n === 2) {
-      const c = v?.capitulos.find((x) => x.n === 2);
-      // si ya llegó el agua (o casi), el estanque; si no, la zanja desde la calle
-      if (c && (c.cumplido || (c.meta && c.puntos / c.meta > 0.7))) this.verEscena(41, 60, 35, 67.5);
-      else this.verEscena(52, 46, 70, 48);
-    } else if (n === 3) this.verEscena(71, 0, 100, 0, 9, 0.6);
-    else this.verEscena(57, -1, 44, -3);
+    this.verEscena(57, -1, 44, -3);
   }
 
   private updateCamera(dt: number) {
@@ -2907,7 +2908,7 @@ export class CiudadWorld {
         });
       }
       // las torres nuevas del muro (la historia de la temporada)
-      for (const g of this.historia.ocluyentes()) {
+      for (const g of this.historias.flatMap((h) => h.ocluyentes())) {
         g.updateMatrixWorld(true);
         g.traverse((o) => {
           if ((o as THREE.Mesh).isMesh && o.userData.ocluye) agregar(o as THREE.Mesh);
@@ -2981,7 +2982,7 @@ export class CiudadWorld {
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();
     this.red.cerrar();
-    this.historia.destroy();
+    for (const h of this.historias) h.destroy();
     this.arca.destroy();
     acompanar.ponerSiguiendo(null);
     acompanar.cerrarInvitacion();

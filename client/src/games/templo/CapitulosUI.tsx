@@ -97,7 +97,8 @@ export function CapitulosView() {
       }
       setV(d.vista);
       city?.audio.trumpet(true);
-      gameStore.toast(`🎺 ¡Diste gracias en la fiesta! +${d.gozo} de gozo${d.nuevo ? " y la «Faja de la alabanza» en tu armario" : ""}`, "gold");
+      const prenda = arco ? prendaDe(arco.fiesta.premio.prenda) : undefined;
+      gameStore.toast(`${arco?.fiesta.icono ?? "🎺"} ¡Diste gracias en la fiesta! +${d.gozo} de gozo${d.nuevo && prenda ? ` y la «${prenda.nombre}» en tu armario` : ""}`, "gold");
       for (const a of d.avisos) gameStore.toast(a.gozo ? `${a.titulo} · +${a.gozo} de gozo` : a.titulo, "gold");
       city?.ponerGozo(d.gozoTotal);
       if (arco) setAviso(`«${arco.fiesta.gracias.text}» (${arco.fiesta.gracias.ref})`);
@@ -281,7 +282,7 @@ export function CapitulosView() {
                     </span>
                   ) : (
                     <Button className="tpl-btn-oro" disabled={dando} onClick={() => void darGracias()} data-testid="fiesta-gracias">
-                      {dando ? <Loader2 className="h-4 w-4 animate-spin" /> : "🎺 Dar gracias"}
+                      {dando ? <Loader2 className="h-4 w-4 animate-spin" /> : `${arco.fiesta.icono} Dar gracias`}
                     </Button>
                   )}
                   {city && (

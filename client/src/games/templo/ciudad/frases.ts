@@ -4,7 +4,7 @@
  * Eliaquim, Etán), del recado de hoy y de lo que de verdad está pasando en el juego (los chismes del servidor).
  * Son frases propias, sin citas: las citas literales están en las ventanas, con su referencia.
  */
-import type { CapituloId, MomentoFiesta } from "@shared/capitulos";
+import { arcoDeCapitulo, type CapituloId, type MomentoFiesta } from "@shared/capitulos";
 import { diaEnJerusalen, mananaEnJerusalen, type EstacionId } from "@shared/anio";
 
 export type GenteQueHabla = "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
@@ -22,7 +22,7 @@ export type ContextoFrases = {
   fiestaFinal?: MomentoFiesta | null;
 };
 
-/** Lo que dice la gente de cada capítulo de la historia de la temporada (la amenaza de Senaquerib). */
+/** Lo que dice la gente de cada capítulo de la historia de la temporada (la amenaza de Senaquerib y la gran Pascua). */
 const FRASES_CAPITULO: Record<CapituloId, Partial<Record<GenteQueHabla, string[]>> & { todos: string[] }> = {
   muro: {
     todos: ["Dicen que el rey habló al corazón del pueblo en la plaza de la puerta.", "Cada encargo que cumples pone cinco piedras en el muro, dicen.", "¿Ya viste las torres nuevas del muro del oriente? ¡Suben cada día!"],
@@ -68,10 +68,63 @@ const FRASES_CAPITULO: Record<CapituloId, Partial<Record<GenteQueHabla, string[]
     peregrino: ["Vine desde lejos a dar gracias: ¡todo Judá habla de lo que hizo Jehová!"],
     siervo: ["El rey prepara una gran fiesta en la plaza."],
   },
+  puertas: {
+    todos: ["¡Abrieron las puertas de la casa de Jehová! Hacía años que estaban cerradas.", "Cada encargo que cumples saca cinco cestos de lo inmundo, dicen.", "¿Viste a los levitas con los cestos? Bajan la escalinata y salen por la puerta hasta el Cedrón."],
+    nino: ["¡Conté los cestos que llevaban los levitas! Perdí la cuenta en el veinte.", "Mi abuela dice que de niña vio encendidas las lámparas del templo."],
+    guardia: ["Los levitas salen por esta puerta con sus cestos. Yo les abro paso.", "El rey Ezequías es joven, pero manda con firmeza: ¡a limpiar la casa de Jehová!"],
+    anciano: ["En los días de Acaz cerraron las puertas del templo. ¡Qué tristeza fue aquello!", "Por fin un rey que hace lo recto, como David."],
+    levita: ["Nos santificamos para entrar a limpiar la casa de Jehová. ¡Hay mucho trabajo!"],
+    mercader: ["Los levitas me compraron todos los cestos que tenía. ¡Buena semana!"],
+    alumno: ["El maestro dice que Jehová quiere limpiar también el corazón, no solo el templo."],
+    peregrino: ["En el camino oí que el rey nuevo abrió el templo. ¡Por eso vine!"],
+    siervo: ["Eleazar dice que en dieciséis días quedará limpia toda la casa de Jehová."],
+  },
+  cantico: {
+    todos: ["¿Oyes las trompetas? ¡Volvió el cántico a la casa de Jehová!", "Los levitas tocan címbalos, salterios y arpas en la escalinata. ¡Ve a escucharlos!", "Cada deber que cumples suma un cántico, dicen."],
+    nino: ["¡Quiero aprender a tocar el arpa como los levitas!", "Me acerqué a los cantores… ¡las trompetas suenan fuertísimo!"],
+    guardia: ["Desde la puerta se oye el cántico del templo. ¡Hasta los guardias cantamos!"],
+    anciano: ["Hacía tanto que no oía el cántico de Jehová… Se me salen las lágrimas.", "Así cantaban en los días de David, me contaba mi padre."],
+    levita: ["Los sacerdotes son pocos: los levitas les ayudamos con los holocaustos."],
+    mercader: ["Todos traen ofrendas de alabanza. ¡El mercado está lleno!"],
+    alumno: ["Etán nos enseña los salmos de Asaf. ¡Cuántas palabras hermosas!"],
+    peregrino: ["Llegué justo cuando sonaron las trompetas. ¡Qué bienvenida!"],
+    siervo: ["El rey mandó que los levitas alaben con las palabras de David y de Asaf."],
+  },
+  cartas: {
+    todos: ["El rey mandó cartas a todo Israel, desde Beerseba hasta Dan. ¡Que vengan a la Pascua!", "¿Viste las tiendas en el monte de los Olivos? ¡Llegan peregrinos de lejos!", "Dicen que en Efraín se rieron de los correos… pero algunos vienen igual."],
+    nino: ["¡Vi a un correo del rey! Corría con una carta en la mano.", "Hay niños de Zabulón acampando en el monte. ¡Ya somos amigos!"],
+    guardia: ["Por esta puerta salen los correos y entran los peregrinos. ¡No paro en todo el día!"],
+    anciano: ["Que todos vuelvan a Jehová: eso dice la carta del rey.", "Mi hermano vive en Manasés. ¡Ojalá venga a la Pascua!"],
+    levita: ["Hay que santificarse para la Pascua. Los peregrinos nos preguntan cómo."],
+    mercader: ["Con tantos peregrinos, ¡se vende pan, aceite y lana como nunca!"],
+    alumno: ["La Pascua será en el mes segundo: la ley lo permite a los que vienen de lejos."],
+    peregrino: ["Vengo de Aser. En mi pueblo algunos se burlaron, pero yo quise venir.", "¡Por fin en Jerusalén! El camino fue largo, pero valió la pena."],
+    siervo: ["Eliaquim cuenta las cartas que salen del palacio. ¡Ya son muchísimas!"],
+  },
+  pascua: {
+    todos: ["Están quitando los altares de los rincones y los llevan al Cedrón.", "¡Llegó la Pascua! Jerusalén está llena de gente.", "El viernes empieza el gran regocijo en la plaza. ¿Vas a ir?"],
+    nino: ["¡Mañana comemos los panes sin levadura con toda mi familia!", "Ayudé a llevar una piedra de un altar viejo al Cedrón. ¡Pesaba mucho!"],
+    guardia: ["Nunca vi tanta gente en Jerusalén. Dicen que desde los días de Salomón no pasaba algo así."],
+    anciano: ["El rey oró por los que no se purificaron, y Jehová los sanó.", "Jamás pensé ver una Pascua como esta antes de morir."],
+    levita: ["Sacrificamos la Pascua por los que no alcanzaron a purificarse."],
+    mercader: ["Esta semana no se vende levadura: ¡todo es pan sin levadura!"],
+    alumno: ["Isaías habla de un cordero llevado al matadero. ¿Quién será?"],
+    peregrino: ["Vine de Zabulón y me recibieron como a un hermano. ¡Un solo corazón!"],
+    siervo: ["La asamblea pidió siete días más de fiesta, y el rey dijo que sí."],
+  },
 };
 
-const FRASES_FIESTA = ["¡Es la fiesta de la liberación! Ve a la plaza a dar gracias.", "Toda la ciudad está en la plaza. ¡No faltes!", "¡Grandes cosas ha hecho Jehová con nosotros! Vamos a la plaza."];
-const FRASES_ALABANZA = ["¡Ya empezó la gran alabanza en la plaza! ¿Oyes las trompetas?", "¡Corre a la plaza: los levitas cantan y toda la ciudad da gracias!"];
+/** Lo que dice la gente en la fiesta final de cada historia (y en su gran alabanza). */
+const FRASES_FIESTA_DE: Record<string, { fiesta: string[]; alabanza: string[] }> = {
+  senaquerib: {
+    fiesta: ["¡Es la fiesta de la liberación! Ve a la plaza a dar gracias.", "Toda la ciudad está en la plaza. ¡No faltes!", "¡Grandes cosas ha hecho Jehová con nosotros! Vamos a la plaza."],
+    alabanza: ["¡Ya empezó la gran alabanza en la plaza! ¿Oyes las trompetas?", "¡Corre a la plaza: los levitas cantan y toda la ciudad da gracias!"],
+  },
+  "pascua-ezequias": {
+    fiesta: ["¡Es el gran regocijo! Ve a la plaza a dar gracias.", "Toda la ciudad está en la plaza. ¡Desde los días de Salomón no hubo fiesta igual!", "¡Siete días más de fiesta! Vamos a la plaza."],
+    alabanza: ["¡Ya empezó la gran alabanza en la plaza! ¿Oyes los címbalos?", "¡Corre a la plaza: los sacerdotes bendicen al pueblo!"],
+  },
+};
 
 const FRASES: Record<GenteQueHabla, string[]> = {
   nino: [
@@ -174,8 +227,9 @@ export function fraseDeGente(kind: GenteQueHabla, ctx: ContextoFrases, azar: () 
   const r = azar();
   const elegir = (l: string[]) => l[Math.floor(azar() * l.length)];
   // la fiesta final de la historia de la temporada: casi todos hablan de ella
-  if (ctx.fiestaFinal === "vivo" && r < 0.5) return elegir(FRASES_ALABANZA);
-  if (ctx.fiestaFinal === "fiesta" && r < 0.4) return elegir(FRASES_FIESTA);
+  const ff = FRASES_FIESTA_DE[arcoDeCapitulo(ctx.capitulo)?.id ?? "senaquerib"] ?? FRASES_FIESTA_DE.senaquerib;
+  if (ctx.fiestaFinal === "vivo" && r < 0.5) return elegir(ff.alabanza);
+  if (ctx.fiestaFinal === "fiesta" && r < 0.4) return elegir(ff.fiesta);
   if (ctx.fiesta && r < 0.18) return `¡Hoy es ${ctx.fiesta}! Toda la ciudad sube al templo.`;
   if (ctx.noche && r < 0.26) return elegir(NOCHE);
   // el año de Jerusalén: lo que se celebra hoy, la lluvia y la estación (con su propio sorteo)

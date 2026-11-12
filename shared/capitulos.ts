@@ -5,14 +5,17 @@
  * recados de todos (la lleva el servidor: server/capitulos.ts) y un premio para quienes ayudaron. Al final, la fiesta
  * en la plaza, en la que participa toda la ciudad.
  *
- * La primera historia: la amenaza de Senaquerib en los días del rey Ezequías (2 Reyes 18–20; 2 Crónicas 32; Isaías
- * 36–37). Las citas son literales de la RVR1960 (comprobadas con la Biblia del sitio).
+ * Las historias (en PROGRAMA, al final):
+ * - Temporada 1: la amenaza de Senaquerib en los días del rey Ezequías (2 Reyes 18–20; 2 Crónicas 32; Isaías 36–37).
+ * - Temporada 2: la gran Pascua de Ezequías, en el primer año de su reinado (2 Crónicas 29–31).
+ * Después se vuelven a contar en orden, una por temporada, hasta que llegue otra nueva. Las citas son literales de la
+ * RVR1960 (comprobadas con la Biblia del sitio).
  */
 import type { Verso } from "./ciudad";
 import { TEMPORADA_DIAS } from "./jerusalen";
 import type { Chisme, PersonajeId, Recado } from "./personajes";
 
-export type CapituloId = "muro" | "canal" | "rabsaces" | "liberacion";
+export type CapituloId = "muro" | "canal" | "rabsaces" | "liberacion" | "puertas" | "cantico" | "cartas" | "pascua";
 /** Quien habla en la ventana de cada capítulo (los retratos del juego). */
 export type HablaCapitulo = "narrador" | "ezequias" | "eliaquim" | "isaias" | "azarias" | "conanias" | "eleazar" | "etan";
 export type LineaCapitulo = { quien: HablaCapitulo; texto: string; ref?: string };
@@ -67,6 +70,8 @@ export type ArcoTemporada = {
   lema: Verso;
   capitulos: Capitulo[];
   fiesta: FiestaFinal;
+  /** Su colección en el álbum (shared/album.ts): las cinco prendas de la historia dan este título. */
+  album: { icono: string; titulo: string };
 };
 
 // ---------------------------------------------------------------- las reglas
@@ -442,14 +447,373 @@ export const SENAQUERIB: ArcoTemporada = {
     lugar: { x: 56, z: -2, r: 13 },
     premio: { gozo: 30, vivo: 20, prenda: "faja-alabanza" },
   },
+  album: { icono: "🧱", titulo: "Atalaya de Sion" },
 };
 
-/** Las historias, en orden: mientras no haya una nueva, cada temporada vuelve a contar la última. */
-export const ARCOS: ArcoTemporada[] = [SENAQUERIB];
+// ---------------------------------------------------------------- la gran Pascua de Ezequías
+// Algunos versículos se citan en parte: la Biblia del sitio trae ahí un espacio antes del punto («Jerusalén .») o una
+// letra cambiada, y la cita tiene que ser igual a la del sitio.
+const P = {
+  c28_24: { text: "Además de eso recogió Acaz los utensilios de la casa de Dios, y los quebró, y cerró las puertas de la casa de Jehová, y se hizo altares en Jerusalén en todos los rincones.", ref: "2 Crónicas 28:24" },
+  c29_2: { text: "E hizo lo recto ante los ojos de Jehová, conforme a todas las cosas que había hecho David su padre.", ref: "2 Crónicas 29:2" },
+  c29_3: { text: "En el primer año de su reinado, en el mes primero, abrió las puertas de la casa de Jehová, y las reparó.", ref: "2 Crónicas 29:3" },
+  c29_5: { text: "Santificaos ahora, y santificad la casa de Jehová el Dios de vuestros padres, y sacad del santuario la inmundicia.", ref: "2 Crónicas 29:5" },
+  c29_7: { text: "Y aun cerraron las puertas del pórtico, y apagaron las lámparas; no quemaron incienso, ni sacrificaron holocausto en el santuario al Dios de Israel.", ref: "2 Crónicas 29:7" },
+  c29_11: { text: "Hijos míos, no os engañéis ahora, porque Jehová os ha escogido a vosotros para que estéis delante de él, y le sirváis, y seáis sus ministros, y le queméis incienso.", ref: "2 Crónicas 29:11" },
+  c29_16: { text: "Y entrando los sacerdotes dentro de la casa de Jehová para limpiarla, sacaron toda la inmundicia que hallaron en el templo de Jehová, al atrio de la casa de Jehová; y de allí los levitas la llevaron fuera al torrente de Cedrón.", ref: "2 Crónicas 29:16" },
+  c29_18: { text: "Entonces vinieron al rey Ezequías y le dijeron: Ya hemos limpiado toda la casa de Jehová, el altar del holocausto, y todos sus instrumentos, y la mesa de la proposición con todos sus utensilios.", ref: "2 Crónicas 29:18" },
+  c29_19: { text: "Asimismo hemos preparado y santificado todos los utensilios que en su infidelidad había desechado el rey Acaz, cuando reinaba: y he aquí están delante del altar de Jehová.", ref: "2 Crónicas 29:19" },
+  c29_20: { text: "Y levantándose de mañana el rey Ezequías reunió los principales de la ciudad, y subió a la casa de Jehová.", ref: "2 Crónicas 29:20" },
+  c29_25: { text: "Puso también levitas en la casa de Jehová con címbalos, salterios, y arpas, conforme al mandamiento de David, de Gad vidente del rey, y del profeta Natán: porque aquel mandamiento procedía de Jehová por medio de sus profetas.", ref: "2 Crónicas 29:25" },
+  c29_26: { text: "Y los levitas estaban con los instrumentos de David, y los sacerdotes con trompetas.", ref: "2 Crónicas 29:26" },
+  c29_27: { text: "Entonces mandó Ezequías sacrificar el holocausto en el altar; y cuando comenzó el holocausto, comenzó también el cántico de Jehová, con las trompetas y los instrumentos de David rey de Israel.", ref: "2 Crónicas 29:27" },
+  c29_28: { text: "Y toda la multitud adoraba, y los cantores cantaban, y los trompeteros sonaban las trompetas;", ref: "2 Crónicas 29:28" },
+  c29_30: { text: "Entonces el rey Ezequías y los príncipes dijeron a los levitas que alabasen a Jehová con las palabras de David y de Asaf vidente: y ellos alabaron con gran alegría, y se inclinaron y adoraron.", ref: "2 Crónicas 29:30" },
+  c29_31: { text: "Y respondiendo Ezequías dijo: Vosotros os habéis consagrado ahora a Jehová; acercaos, pues, y presentad sacrificios y alabanzas en la casa de Jehová. Y la multitud presentó sacrificios y alabanzas; y todos los generosos de corazón trajeron holocaustos.", ref: "2 Crónicas 29:31" },
+  c29_34: { text: "Mas los sacerdotes eran pocos, y no bastaban para desollar los holocaustos; y así sus hermanos los levitas les ayudaron hasta que acabaron la obra, y hasta que los demás sacerdotes se santificaron: porque los levitas fueron más rectos de corazón para santificarse, que los sacerdotes.", ref: "2 Crónicas 29:34" },
+  c29_35: { text: "Y quedó restablecido el servicio de la casa de Jehová.", ref: "2 Crónicas 29:35" },
+  c29_36: { text: "Y se alegró Ezequías con todo el pueblo, de que Dios hubiese preparado el pueblo; porque la cosa fue hecha rápidamente.", ref: "2 Crónicas 29:36" },
+  c30_1: { text: "Envió después Ezequías por todo Israel y Judá, y escribió cartas a Efraín y a Manasés, para que viniesen a Jerusalén a la casa de Jehová para celebrar la pascua a Jehová Dios de Israel.", ref: "2 Crónicas 30:1" },
+  c30_3: { text: "Porque entonces no la podían celebrar, por cuanto no había suficientes sacerdotes santificados, ni el pueblo se había reunido en Jerusalén.", ref: "2 Crónicas 30:3" },
+  c30_6: { text: "Hijos de Israel, volveos a Jehová el Dios de Abraham, de Isaac, y de Israel, y él se volverá al remanente que ha quedado de la mano de los reyes de Asiria.", ref: "2 Crónicas 30:6" },
+  c30_8: { text: "No endurezcáis, pues, ahora vuestra cerviz como vuestros padres; someteos a Jehová, y venid a su santuario, el cual él ha santificado para siempre; y servid a Jehová vuestro Dios, y el ardor de su ira se apartará de vosotros.", ref: "2 Crónicas 30:8" },
+  c30_9: { text: "porque Jehová vuestro Dios es clemente y misericordioso, y no apartará de vosotros su rostro, si vosotros os volviereis a él.", ref: "2 Crónicas 30:9" },
+  c30_10: { text: "Pasaron, pues, los correos de ciudad en ciudad por la tierra de Efraín y Manasés, hasta Zabulón: mas se reían y burlaban de ellos.", ref: "2 Crónicas 30:10" },
+  c30_11: { text: "Con todo eso, algunos hombres de Aser, de Manasés, y de Zabulón, se humillaron, y vinieron a Jerusalén", ref: "2 Crónicas 30:11" },
+  c30_12: { text: "En Judá también estuvo la mano de Dios para darles un solo corazón para cumplir el mensaje del rey y de los príncipes, conforme a la palabra de Jehová.", ref: "2 Crónicas 30:12" },
+  c30_13: { text: "Y se reunió en Jerusalén mucha gente para celebrar la fiesta solemne de los panes sin levadura en el mes segundo, una vasta reunión.", ref: "2 Crónicas 30:13" },
+  c30_14: { text: "quitaron también todos los altares de incienso, y los echaron al torrente de Cedrón.", ref: "2 Crónicas 30:14" },
+  c30_17: { text: "Porque había muchos en la congregación que no estaban santificados, y por eso los levitas sacrificaban la pascua por todos los que no se habían purificado, para santificarlos a Jehová.", ref: "2 Crónicas 30:17" },
+  c30_20: { text: "Y oyó Jehová a Ezequías, y sanó al pueblo.", ref: "2 Crónicas 30:20" },
+  c30_21: { text: "Así los hijos de Israel que estaban en Jerusalén celebraron la fiesta solemne de los panes sin levadura por siete días con grande gozo: y glorificaban a Jehová todos los días los levitas y los sacerdotes, cantando con instrumentos resonantes a Jehová.", ref: "2 Crónicas 30:21" },
+  c30_23: { text: "Y toda aquella asamblea determinó que celebrasen la fiesta por otros siete días; y la celebraron otros siete días con alegría.", ref: "2 Crónicas 30:23" },
+  c30_24: { text: "Porque Ezequías rey de Judá había dado a la asamblea mil novillos y siete mil ovejas; y también los príncipes dieron al pueblo mil novillos y diez mil ovejas: y muchos sacerdotes ya se habían santificado.", ref: "2 Crónicas 30:24" },
+  c30_25: { text: "Se alegró, pues, toda la congregación de Judá, como también los sacerdotes y levitas, y toda la multitud que había venido de Israel; asimismo los forasteros que habían venido de la tierra de Israel, y los que habitaban en Judá.", ref: "2 Crónicas 30:25" },
+  c30_26: { text: "Hubo entonces gran regocijo en Jerusalén; porque desde los días de Salomón hijo de David rey de Israel, no había habido cosa semejante en Jerusalén", ref: "2 Crónicas 30:26" },
+  c30_27: { text: "Después los sacerdotes y levitas, puestos en pie, bendijeron al pueblo: y la voz de ellos fue oída, y su oración llegó a la habitación de su santuario, al cielo.", ref: "2 Crónicas 30:27" },
+  c31_21: { text: "En todo cuanto emprendió en el servicio de la casa de Dios, de acuerdo con la ley, buscó a su Dios, lo hizo de todo corazón, y fue prosperado.", ref: "2 Crónicas 31:21" },
+  e12_13: { text: "Y la sangre os será por señal en las casas donde vosotros estéis; y veré la sangre y pasaré de vosotros, y no habrá en vosotros plaga de mortandad cuando hiera la tierra de Egipto.", ref: "Éxodo 12:13" },
+  e12_14: { text: "Y este día os será en memoria, y lo celebraréis como fiesta solemne para Jehová durante vuestras generaciones; por estatuto perpetuo lo celebraréis.", ref: "Éxodo 12:14" },
+  n9_11: { text: "En el mes segundo, a los catorce días del mes, entre las dos tardes, la celebrarán; con panes sin levadura y hierbas amargas la comerán.", ref: "Números 9:11" },
+  i1_18: { text: "Venid luego, dice Jehová, y estemos a cuenta: si vuestros pecados fueren como la grana, como la nieve serán emblanquecidos; si fueren rojos como el carmesí, vendrán a ser como blanca lana.", ref: "Isaías 1:18" },
+  i9_2: { text: "El pueblo que andaba en tinieblas vio gran luz; los que moraban en tierra de sombra de muerte, luz resplandeció sobre ellos.", ref: "Isaías 9:2" },
+  i29_13: { text: "Porque este pueblo se acerca a mí con su boca, y con sus labios me honra, pero su corazón está lejos de mí,", ref: "Isaías 29:13" },
+  i53_7: { text: "como cordero fue llevado al matadero; y como oveja delante de sus trasquiladores, enmudeció, y no abrió su boca.", ref: "Isaías 53:7" },
+  m4_2: { text: "Venid, y subamos al monte de Jehová, y a la casa del Dios de Jacob; y nos enseñará en sus caminos, y andaremos por sus veredas;", ref: "Miqueas 4:2" },
+  m6_8: { text: "Oh hombre, él te ha declarado lo que es bueno, y qué pide Jehová de ti: solamente hacer justicia, y amar misericordia, y humillarte ante tu Dios.", ref: "Miqueas 6:8" },
+  s24_7: { text: "Alzad, oh puertas, vuestras cabezas, Y alzaos vosotras, puertas eternas, Y entrará el Rey de gloria.", ref: "Salmo 24:7" },
+  s96_1: { text: "Cantad a Jehová cántico nuevo; Cantad a Jehová, toda la tierra.", ref: "Salmo 96:1" },
+  s100_4: { text: "Entrad por sus puertas con acción de gracias, Por sus atrios con alabanza; Alabadle, bendecid su nombre.", ref: "Salmo 100:4" },
+  s118_24: { text: "Este es el día que hizo Jehová; Nos gozaremos y alegraremos en él.", ref: "Salmo 118:24" },
+  s118_26: { text: "Bendito el que viene en el nombre de Jehová; Desde la casa de Jehová os bendecimos.", ref: "Salmo 118:26" },
+  s133_1: { text: "¡Mirad cuán bueno y cuán delicioso es Habitar los hermanos juntos en armonía!", ref: "Salmo 133:1" },
+  s150_5: { text: "Alabadle con címbalos resonantes; Alabadle con címbalos de júbilo.", ref: "Salmo 150:5" },
+  co5_7: { text: "porque nuestra pascua, que es Cristo, ya fue sacrificada por nosotros.", ref: "1 Corintios 5:7" },
+} satisfies Record<string, Verso>;
+
+export const PASCUA_EZEQUIAS: ArcoTemporada = {
+  id: "pascua-ezequias",
+  titulo: "La gran Pascua de Ezequías",
+  subtitulo: "El primer año del rey Ezequías",
+  refs: "2 Crónicas 29–31",
+  lema: P.c31_21,
+  capitulos: [
+    {
+      n: 1,
+      id: "puertas",
+      titulo: "Las puertas abiertas",
+      icono: "🚪",
+      unidad: ["cesto", "cestos"],
+      tarea: "limpiar la casa de Jehová y sacar lo inmundo al torrente de Cedrón",
+      historia: [
+        "El rey Acaz cerró las puertas de la casa de Jehová y se hizo altares en todos los rincones de Jerusalén. Las lámparas del santuario se apagaron.",
+        "Su hijo Ezequías empieza a reinar y no espera: en el primer año de su reinado, en el mes primero, abre las puertas de la casa de Jehová y las repara. Después reúne a los sacerdotes y a los levitas en la plaza oriental.",
+        "Los sacerdotes sacan al atrio todo lo inmundo que hallan en el templo, y los levitas lo llevan en cestos hasta el torrente de Cedrón. Mira los montones arriba de la escalinata: se acaban con lo que sirve toda la ciudad.",
+      ],
+      verso: P.c29_3,
+      guia: "eleazar",
+      dialogo: [
+        { quien: "narrador", texto: P.c28_24.text, ref: P.c28_24.ref },
+        { quien: "ezequias", texto: "¡Sacerdotes y levitas! «Santificaos ahora, y santificad la casa de Jehová el Dios de vuestros padres, y sacad del santuario la inmundicia».", ref: P.c29_5.ref },
+        { quien: "ezequias", texto: "«Hijos míos, no os engañéis ahora, porque Jehová os ha escogido a vosotros para que estéis delante de él, y le sirváis».", ref: P.c29_11.ref },
+        { quien: "eleazar", texto: "Cada deber que cumplas saca un cesto de lo inmundo; cada encargo del día, cinco; cada recado de la calle de los siervos, diez. Esta semana toda la ciudad tiene una meta: la verás en «Para hoy»." },
+      ],
+      alCumplir: "¡La casa de Jehová quedó limpia y con sus puertas abiertas!",
+      premio: { gozo: 40, prenda: "faja-consagrados" },
+      chismes: {
+        eleazar: [{ texto: "Entramos en la casa de Jehová para limpiarla. Lo que sacamos al atrio, los levitas lo llevan en cestos hasta el torrente de Cedrón.", verso: P.c29_16 }],
+        azarias: [
+          { texto: "El rey nos reunió en la plaza oriental y nos dijo: «Hijos míos, no os engañéis ahora». ¡Jehová nos escogió para servirle!", verso: P.c29_11 },
+          { texto: "Cuando terminemos, iremos al rey a decirle: «Ya hemos limpiado toda la casa de Jehová». ¡Ayúdanos a llegar!", verso: P.c29_18 },
+        ],
+        conanias: [{ texto: "Los utensilios que Acaz quebró y desechó, los estamos preparando otra vez. Pronto estarán delante del altar.", verso: P.c29_19 }],
+        isaias: [{ texto: "Limpiar la casa de Jehová está bien. Pero Jehová quiere limpiar también el corazón de su pueblo.", verso: P.i1_18 }],
+        miqueas: [{ texto: "En el campo dicen que el rey nuevo es muy joven. Yo digo que hace lo recto, como David su padre.", verso: P.c29_2 }],
+        etan: [{ texto: "Esta semana ensayamos el salmo de las puertas: «Alzad, oh puertas, vuestras cabezas».", verso: P.s24_7 }],
+        eliaquim: [{ texto: "El rey no esperó ni un mes: en el mes primero abrió las puertas de la casa de Jehová y las reparó.", verso: P.c29_3 }],
+      },
+      recados: [
+        {
+          id: "p1-cestos-cedron",
+          titulo: "Al torrente de Cedrón",
+          cadena: ["eleazar", "conanias", "azarias"],
+          lleva: ["la cuenta de los cestos que salieron del templo", "los utensilios que ya se limpiaron"],
+          dice: [
+            "Los levitas no paran de sacar cestos al torrente de Cedrón. Lleva esta cuenta a Conanías: él anota todo lo que sale de la casa de Jehová.",
+            "¡Cuántos cestos! Y mira: estos utensilios que Acaz había desechado ya están limpios. Llévaselos a Azarías, que los ponga delante del altar.",
+            "Limpios y santificados. Pronto el altar volverá a servir como antes. Gracias, hijo.",
+          ],
+          verso: P.c29_16,
+        },
+        {
+          id: "p1-lamparas",
+          titulo: "Las lámparas del santuario",
+          cadena: ["azarias", "etan", "eleazar"],
+          lleva: ["el aceite para volver a encender las lámparas", "el salmo para cuando se enciendan"],
+          dice: [
+            "En los días de Acaz se apagaron las lámparas del santuario. Hoy las volvemos a encender. Lleva este aceite a Etán: los cantores lo esperan.",
+            "¡Aceite para las lámparas! Ya tengo el salmo para ese momento: «Entrad por sus puertas con acción de gracias». Llévaselo a Eleazar.",
+            "Las lámparas arderán otra vez delante de Jehová. Que nunca más se apaguen. Gracias.",
+          ],
+          verso: P.c29_7,
+        },
+      ],
+    },
+    {
+      n: 2,
+      id: "cantico",
+      titulo: "El cántico de Jehová",
+      icono: "🎶",
+      unidad: ["cántico", "cánticos"],
+      tarea: "restaurar el servicio del templo con el cántico de Jehová",
+      historia: [
+        "La casa de Jehová ya está limpia. El rey Ezequías se levanta de mañana, reúne a los principales de la ciudad y sube a la casa de Jehová.",
+        "Pone a los levitas con címbalos, salterios y arpas, como lo mandó David, y a los sacerdotes con trompetas. Cuando comienza el holocausto, comienza también el cántico de Jehová.",
+        "Los sacerdotes son pocos, y sus hermanos los levitas les ayudan. Mira la escalinata: cada día suben más cantores y trompeteros. Cuanto más sirve la ciudad, más se oye el cántico.",
+      ],
+      verso: P.c29_27,
+      guia: "etan",
+      dialogo: [
+        { quien: "narrador", texto: P.c29_20.text, ref: P.c29_20.ref },
+        { quien: "ezequias", texto: "Levitas, tomad los instrumentos de David; sacerdotes, las trompetas. Que cuando suba el holocausto se oiga también «el cántico de Jehová».", ref: P.c29_27.ref },
+        { quien: "etan", texto: "Cada deber que cumplas suma un cántico; cada encargo, cinco; cada recado, diez. ¡Mira la escalinata: los cantores suben con lo que sirve la ciudad!" },
+      ],
+      alCumplir: "¡Quedó restablecido el servicio de la casa de Jehová!",
+      premio: { gozo: 40, prenda: "manto-cantico" },
+      chismes: {
+        etan: [{ texto: "Los hijos de Asaf, de Hemán y de Jedutún están otra vez en sus puestos. Esta semana cantamos un cántico nuevo.", verso: P.s96_1 }],
+        eleazar: [
+          { texto: "Los sacerdotes éramos pocos para tantos holocaustos, y nuestros hermanos los levitas nos ayudaron. ¡Ayúdanos tú también!", verso: P.c29_34 },
+          { texto: "Cuando la ciudad llegue a la meta, lo podremos decir como en el libro: «Y quedó restablecido el servicio de la casa de Jehová».", verso: P.c29_35 },
+        ],
+        azarias: [{ texto: "Cuando comenzó el holocausto, comenzó también el cántico. Toda la multitud adoraba.", verso: P.c29_28 }],
+        conanias: [{ texto: "El rey dijo: «acercaos, pues, y presentad sacrificios y alabanzas». ¡Y los generosos de corazón no paran de traer!", verso: P.c29_31 }],
+        isaias: [{ texto: "El pueblo vuelve a cantar en la casa de Jehová. Que el canto salga del corazón, y no solo de los labios.", verso: P.i29_13 }],
+        miqueas: [
+          { texto: "Desde el camino se oyen las trompetas del templo. ¡Hacía tanto tiempo que no se oían!" },
+          { texto: "El rey se alegró con todo el pueblo: todo se hizo muy pronto. ¡Eso es obra de Dios!", verso: P.c29_36 },
+        ],
+        eliaquim: [{ texto: "El rey y los príncipes mandaron que los levitas alaben con las palabras de David y de Asaf vidente.", verso: P.c29_30 }],
+      },
+      recados: [
+        {
+          id: "p2-instrumentos",
+          titulo: "Los instrumentos de David",
+          cadena: ["etan", "conanias", "azarias"],
+          lleva: ["la lista de los címbalos, salterios y arpas que faltan", "los instrumentos que se hallaron en las cámaras"],
+          dice: [
+            "Para el cántico de Jehová faltan címbalos y arpas. Lleva esta lista a Conanías: quizá estén guardados en las cámaras del templo.",
+            "¡Aquí estaban! Salterios y címbalos, limpios y listos. Llévaselos a Azarías, para que los vea antes del holocausto.",
+            "«Alabadle con címbalos resonantes». Que suenen otra vez en la casa de Jehová. Gracias, hijo.",
+          ],
+          verso: P.s150_5,
+        },
+        {
+          id: "p2-trompetas",
+          titulo: "Las trompetas de los sacerdotes",
+          cadena: ["eleazar", "eliaquim", "etan"],
+          lleva: ["el aviso de que las trompetas sonarán al comenzar el holocausto", "la palabra del rey para los cantores"],
+          dice: [
+            "Los sacerdotes tocaremos las trompetas cuando comience el holocausto. Lleva este aviso a Eliaquim: el rey quiere saberlo.",
+            "El rey se alegró mucho. Dice que los levitas alaben con las palabras de David y de Asaf. Lleva su palabra a Etán.",
+            "¡Con las palabras de David y de Asaf! Así lo haremos, con gran alegría. Gracias, amigo.",
+          ],
+          verso: P.c29_26,
+        },
+      ],
+    },
+    {
+      n: 3,
+      id: "cartas",
+      titulo: "Las cartas del rey",
+      icono: "📜",
+      unidad: ["carta", "cartas"],
+      tarea: "llevar las cartas del rey por todo Israel, desde Beerseba hasta Dan",
+      historia: [
+        "El rey quiere celebrar la Pascua en Jerusalén, y no solo con Judá: escribe cartas a Efraín y a Manasés y a todo Israel, desde Beerseba hasta Dan.",
+        "La Pascua será en el mes segundo, porque no había suficientes sacerdotes santificados ni el pueblo se había reunido. Así hay tiempo para que todos lleguen.",
+        "Los correos salen por la puerta de la ciudad. En algunas ciudades se ríen de ellos; en otras, la gente se humilla y se pone en camino. Mira el monte de los Olivos: cada día hay más tiendas de peregrinos.",
+      ],
+      verso: P.c30_6,
+      guia: "eliaquim",
+      dialogo: [
+        { quien: "narrador", texto: P.c30_1.text, ref: P.c30_1.ref },
+        { quien: "ezequias", texto: "Llevad mis cartas por todo Israel y Judá, y decidles: «Hijos de Israel, volveos a Jehová».", ref: P.c30_6.ref },
+        { quien: "eliaquim", texto: "Cada deber que cumplas lleva una carta; cada encargo, cinco; cada recado, diez. Y tú también puedes invitar: en «Misiones» está tu enlace para traer a un amigo a Jerusalén." },
+      ],
+      alCumplir: "¡Las cartas del rey llegaron a todo Israel, y vienen peregrinos de todas partes!",
+      premio: { gozo: 40, prenda: "faja-correos" },
+      chismes: {
+        eliaquim: [
+          { texto: "Los correos pasaron de ciudad en ciudad hasta Zabulón. En algunas se rieron de ellos… pero otros se humillaron y vienen.", verso: P.c30_10 },
+          { texto: "Ya llegan hombres de Aser, de Manasés y de Zabulón. ¡Hay que prepararles lugar!", verso: P.c30_11 },
+        ],
+        isaias: [{ texto: "A Zabulón y a Neftalí, que hoy andan en oscuridad, Jehová les tiene una promesa: verán gran luz.", verso: P.i9_2 }],
+        miqueas: [{ texto: "Yo conozco esos caminos. Los que vienen se animan unos a otros: «Venid, y subamos al monte de Jehová».", verso: P.m4_2 }],
+        eleazar: [{ texto: "¿Por qué la Pascua en el mes segundo? La ley lo permite a quien estaba lejos o no estaba limpio. Así está escrito.", verso: P.n9_11 }],
+        etan: [{ texto: "A los peregrinos los recibimos cantando: «Bendito el que viene en el nombre de Jehová».", verso: P.s118_26 }],
+        azarias: [{ texto: "Los sacerdotes que faltaban se están santificando. Cuando lleguen los peregrinos, todo estará listo.", verso: P.c30_3 }],
+        conanias: [{ texto: "Con tanta gente que viene, el alfolí tiene que estar lleno. ¡Gracias por tus ofrendas!" }],
+      },
+      recados: [
+        {
+          id: "p3-carta-efrain",
+          titulo: "Una carta para Efraín",
+          cadena: ["eliaquim", "miqueas", "isaias"],
+          lleva: ["una carta del rey para las ciudades de Efraín", "la noticia de cómo la recibieron"],
+          dice: [
+            "Esta carta del rey va para las ciudades de Efraín. Llévala a Miqueas: él conoce los caminos y a los correos.",
+            "Ya salió con los correos. En unas ciudades se rieron… pero en otras lloraron y se pusieron en camino. Cuéntaselo a Isaías.",
+            "Jehová es clemente y misericordioso: no aparta su rostro de quien se vuelve a él. Ya verás cuántos vienen.",
+          ],
+          verso: P.c30_9,
+        },
+        {
+          id: "p3-peregrinos",
+          titulo: "Lugar para los peregrinos",
+          cadena: ["conanias", "eleazar", "etan"],
+          lleva: ["la lista de las familias que llegaron de Aser y de Zabulón", "la noticia de que ya se están santificando"],
+          dice: [
+            "Llegaron familias de Aser y de Zabulón y acampan en el monte de los Olivos. Lleva esta lista a Eleazar: hay que enseñarles a santificarse para la Pascua.",
+            "Ya hablé con ellos: se santificarán para la fiesta. Avísale a Etán, que los reciba con un salmo.",
+            "¡Los recibiremos cantando! «Bendito el que viene en el nombre de Jehová». Gracias, hermano.",
+          ],
+          verso: P.c30_11,
+        },
+      ],
+    },
+    {
+      n: 4,
+      id: "pascua",
+      titulo: "La gran Pascua",
+      icono: "🍞",
+      unidad: ["pan sin levadura", "panes sin levadura"],
+      tarea: "celebrar la Pascua con un solo corazón y quitar los altares de la ciudad",
+      historia: [
+        "Se reúne en Jerusalén mucha gente para la fiesta de los panes sin levadura: una vasta reunión. Antes de la fiesta quitan los altares que Acaz había puesto en la ciudad y los echan al torrente de Cedrón.",
+        "Muchos de los que vinieron de lejos no alcanzaron a purificarse. Ezequías ora por ellos, y Jehová oye a Ezequías y sana al pueblo.",
+        "Mira los rincones de la ciudad: con lo que sirve toda Jerusalén, cada día se quita un altar más. Y al final de la semana, en la plaza, el gran regocijo.",
+      ],
+      verso: P.c30_12,
+      guia: "azarias",
+      dialogo: [
+        { quien: "narrador", texto: P.c30_13.text, ref: P.c30_13.ref },
+        { quien: "azarias", texto: "La ley lo dice de la Pascua: «Y este día os será en memoria, y lo celebraréis como fiesta solemne para Jehová».", ref: P.e12_14.ref },
+        { quien: "narrador", texto: "Muchos siglos después, el apóstol Pablo escribió: «porque nuestra pascua, que es Cristo, ya fue sacrificada por nosotros».", ref: P.co5_7.ref },
+        { quien: "azarias", texto: "Cada deber que cumplas es un pan sin levadura para la fiesta; cada encargo, cinco; cada recado, diez. Y el viernes empieza el gran regocijo: toda la ciudad se reúne en la plaza para dar gracias. ¡No faltes!" },
+      ],
+      alCumplir: "¡Jerusalén celebró la Pascua con un solo corazón!",
+      premio: { gozo: 50, prenda: "manto-pascua" },
+      chismes: {
+        azarias: [{ texto: "Muchos de Efraín y de Zabulón no se habían purificado. El rey oró por ellos, y Jehová lo oyó y sanó al pueblo.", verso: P.c30_20 }],
+        eleazar: [{ texto: "Los levitas sacrifican la Pascua por los que no se purificaron. Esta semana el altar no descansa.", verso: P.c30_17 }],
+        isaias: [{ texto: "La sangre del cordero fue la señal en Egipto. Y Jehová me mostró a su Siervo: «como cordero fue llevado al matadero».", verso: P.i53_7 }],
+        miqueas: [{ texto: "Quitaron los altares de los rincones y los echaron al Cedrón. Lo que Jehová pide es más sencillo: hacer justicia, amar misericordia y humillarte ante tu Dios.", verso: P.m6_8 }],
+        etan: [
+          { texto: "Para la fiesta cantamos: «¡Mirad cuán bueno y cuán delicioso es Habitar los hermanos juntos en armonía!»", verso: P.s133_1 },
+          { texto: "Al final de la fiesta, los sacerdotes y los levitas bendecirán al pueblo de pie. ¡Y su oración llegará hasta el cielo!", verso: P.c30_27 },
+        ],
+        conanias: [
+          { texto: "El rey dio a la asamblea mil novillos y siete mil ovejas… ¡y los príncipes, otros mil novillos y diez mil ovejas!", verso: P.c30_24 },
+          { texto: "Se alegran todos: los de Judá, los sacerdotes, los levitas, los que vinieron de Israel ¡y hasta los forasteros!", verso: P.c30_25 },
+        ],
+        eliaquim: [{ texto: "Toda la asamblea quiere seguir la fiesta otros siete días. ¡Y el rey dijo que sí!", verso: P.c30_23 }],
+      },
+      recados: [
+        {
+          id: "p4-altares",
+          titulo: "Los altares de los rincones",
+          cadena: ["eliaquim", "eleazar", "azarias"],
+          lleva: ["la orden del rey de quitar los altares de la ciudad", "la noticia de que ya están en el Cedrón"],
+          dice: [
+            "El rey manda quitar los altares que Acaz puso en los rincones de Jerusalén. Lleva esta orden a Eleazar: los levitas lo harán.",
+            "Ya los quitamos, y también los altares de incienso: todo fue a dar al torrente de Cedrón. Avísale a Azarías.",
+            "Ahora sí, la ciudad está lista para la Pascua. Bendito sea Jehová.",
+          ],
+          verso: P.c30_14,
+        },
+        {
+          id: "p4-panes",
+          titulo: "Los panes sin levadura",
+          cadena: ["conanias", "etan", "isaias"],
+          lleva: ["harina para los panes sin levadura", "la noticia de que ya están cocidos"],
+          dice: [
+            "Para la fiesta de los panes sin levadura hace falta mucha harina. Llévasela a Etán: los levitas cantores ayudan a cocer los panes.",
+            "¡Ya están cocidos! Mientras se cocían, cantábamos. Lleva la noticia a Isaías: la fiesta está lista.",
+            "Siete días con grande gozo… y la asamblea quiere otros siete. ¡Qué fiesta nos da Jehová!",
+          ],
+          verso: P.c30_21,
+        },
+      ],
+    },
+  ],
+  fiesta: {
+    titulo: "El gran regocijo",
+    icono: "🎉",
+    texto: "Toda la asamblea quiso seguir la fiesta otros siete días, y Jerusalén se llenó de alegría. Ve a la plaza y da gracias: gozo y una faja de fiesta para ti, y diez panes más para la ciudad.",
+    verso: P.c30_26,
+    gracias: P.s118_24,
+    dias: [25, 26, 27],
+    vivo: { indice: 27, desde: 18, hasta: 19 },
+    lugar: { x: 56, z: -2, r: 13 },
+    premio: { gozo: 30, vivo: 20, prenda: "faja-regocijo" },
+  },
+  album: { icono: "🍞", titulo: "De un solo corazón" },
+};
+
+/**
+ * Qué historia cuenta cada temporada. Una historia nueva se agrega con la temporada en que empieza (siempre una que
+ * todavía no empezó, para no cambiar la de nadie). Después de la última, se vuelven a contar todas en orden, una por
+ * temporada (con dos historias: la 3 vuelve a contar la primera, la 4 la segunda…), hasta que llegue otra nueva.
+ */
+export const PROGRAMA: { desde: number; arco: ArcoTemporada }[] = [
+  { desde: 1, arco: SENAQUERIB },
+  { desde: 2, arco: PASCUA_EZEQUIAS },
+];
+/** Las historias, en orden. */
+export const ARCOS: ArcoTemporada[] = PROGRAMA.map((p) => p.arco);
 
 export function arcoDeTemporada(n: number): ArcoTemporada | null {
   if (!Number.isFinite(n) || n < 1) return null;
-  return ARCOS[Math.min(ARCOS.length, Math.floor(n)) - 1] ?? null;
+  const t = Math.floor(n);
+  let i = -1;
+  for (let k = 0; k < PROGRAMA.length; k++) if (PROGRAMA[k].desde <= t) i = k;
+  if (i < 0) return null;
+  const p = PROGRAMA[i];
+  if (p.desde === t) return p.arco;
+  // después de la última que empezó, se turnan todas las que ya se contaron, desde la primera
+  const ya = PROGRAMA.slice(0, i + 1);
+  return ya[(t - p.desde - 1) % ya.length].arco;
+}
+
+/** La historia de un capítulo (los nombres de los capítulos no se repiten entre historias). */
+export function arcoDeCapitulo(id: CapituloId | null | undefined): ArcoTemporada | null {
+  return (id && ARCOS.find((a) => a.capitulos.some((c) => c.id === id))) || null;
+}
+
+/** Las prendas de una historia: las de sus capítulos y la de su fiesta. */
+export function prendasDeArco(a: ArcoTemporada): string[] {
+  return [...a.capitulos.map((c) => c.premio.prenda), a.fiesta.premio.prenda];
 }
 
 /** Las prendas que se ganan con la historia (shared/mercado.ts las lista como exclusivas: no se venden). */
@@ -459,6 +823,11 @@ export const PRENDAS_CAPITULOS: { id: string; nombre: string; color: string; req
   { id: "faja-oracion", nombre: "Faja de los que oran", color: "#7d6aa8", requisito: "Ora con el rey Ezequías" },
   { id: "manto-liberacion", nombre: "Manto de la liberación", color: "#e8c56a", requisito: "Trae ofrendas de gratitud" },
   { id: "faja-alabanza", nombre: "Faja de la alabanza", color: "#e0782f", requisito: "Da gracias en la fiesta de la liberación" },
+  { id: "faja-consagrados", nombre: "Faja de los consagrados", color: "#c8b87a", requisito: "Ayuda a limpiar la casa de Jehová" },
+  { id: "manto-cantico", nombre: "Manto del cántico de Jehová", color: "#5470c6", requisito: "Canta el cántico de Jehová con los levitas" },
+  { id: "faja-correos", nombre: "Faja de los correos del rey", color: "#b5562f", requisito: "Lleva las cartas del rey por todo Israel" },
+  { id: "manto-pascua", nombre: "Manto de la Pascua", color: "#7a1426", requisito: "Celebra la Pascua con un solo corazón" },
+  { id: "faja-regocijo", nombre: "Faja del gran regocijo", color: "#f5b82e", requisito: "Da gracias en el gran regocijo de la plaza" },
 ];
 
 // ---------------------------------------------------------------- respuestas de la API
@@ -497,6 +866,11 @@ export type CapitulosVista = {
     yo: { fui: boolean; enVivo: boolean };
   };
   aporteMinimo: number;
+  /**
+   * Lo que la ciudad terminó la última vez que se contó cada una de las otras historias («historia:capítulo», como
+   * «senaquerib:1»): las torres y el conducto que se levantaron en otra temporada siguen en la ciudad.
+   */
+  hechos: string[];
 };
 
 /** Lo que devuelve dar gracias en la fiesta. */

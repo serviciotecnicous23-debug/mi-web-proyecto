@@ -5,6 +5,7 @@
  * el título que quiere mostrar: lo ven los vecinos junto a su nombre.
  * «…semejante a un padre de familia, que saca de su tesoro cosas nuevas y cosas viejas.» (Mateo 13:52)
  */
+import { ARCOS, prendasDeArco } from "./capitulos";
 import { ARTICULOS, type Articulo } from "./mercado";
 
 type Verso = { text: string; ref: string };
@@ -14,7 +15,8 @@ export const VERSO_ALBUM: Verso = {
   ref: "Mateo 13:52",
 };
 
-export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado";
+/** Las de siempre y una por cada historia de la temporada («historia-senaquerib», «historia-pascua-ezequias»…). */
+export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | `historia-${string}`;
 export type TituloEspecialId = "dador-alegre" | "buen-amigo" | "coleccionista" | "gran-coleccionista";
 export type TituloId = ColeccionId | TituloEspecialId;
 
@@ -40,10 +42,21 @@ export const COLECCIONES: Coleccion[] = [
     id: "ganado",
     nombre: "Lo que se gana",
     icono: "🏆",
-    texto: "No se vende: los trajes de los sabios, las prendas de la historia, el mejor vestido y la faja del buen amigo.",
-    items: ids((a) => a.exclusivo === "sabio" || a.exclusivo === "temporada" || a.exclusivo === "regreso" || a.exclusivo === "amigo"),
+    texto: "No se vende: los trajes de los sabios, el mejor vestido y la faja del buen amigo.",
+    items: ids((a) => a.exclusivo === "sabio" || a.exclusivo === "regreso" || a.exclusivo === "amigo"),
     titulo: "Tesoro de Jerusalén",
   },
+  // las prendas de cada historia de la temporada (shared/capitulos.ts): una colección por historia, con su título
+  ...ARCOS.map(
+    (a): Coleccion => ({
+      id: `historia-${a.id}`,
+      nombre: a.titulo,
+      icono: a.album.icono,
+      texto: "La historia de la temporada: una prenda por cada capítulo que la ciudad cumple contigo, y la de la fiesta final. No se venden, y vuelven cuando se vuelve a contar la historia.",
+      items: prendasDeArco(a),
+      titulo: a.album.titulo,
+    }),
+  ),
 ];
 
 /** Cuántas cosas distintas piden los títulos de coleccionista. */
