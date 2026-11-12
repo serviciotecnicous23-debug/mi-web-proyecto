@@ -7,7 +7,7 @@ export type TipoAviso = "racha" | "huerto" | "duelos" | "fiestas";
 
 export const TIPOS_AVISO: { id: TipoAviso; icono: string; titulo: string; texto: string }[] = [
   { id: "racha", icono: "🔥", titulo: "Tu racha de servicio", texto: "Por la tarde, si hoy todavía no serviste y tu racha se puede perder." },
-  { id: "huerto", icono: "🌾", titulo: "Tu huerto y tus obras", texto: "Cuando una parcela queda lista para cosechar y cuando terminan una obra de tu casa." },
+  { id: "huerto", icono: "🌾", titulo: "Tu huerto, tus obras y tu taller", texto: "Cuando una parcela queda lista para cosechar, cuando terminan una obra de tu casa y cuando el artesano o tu telar terminan lo que hacían." },
   { id: "duelos", icono: "⚔️", titulo: "Duelos de sabios", texto: "Al momento, cuando alguien te reta (el reto dura 45 segundos)." },
   { id: "fiestas", icono: "🎉", titulo: "Fiestas de Jerusalén", texto: "10 minutos antes de una fiesta grande (mérito ×1,5 en el templo), una por día como mucho." },
 ];

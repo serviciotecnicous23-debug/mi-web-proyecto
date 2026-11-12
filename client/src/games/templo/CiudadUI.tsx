@@ -47,6 +47,8 @@ import { FIESTA } from "@shared/calendario";
 import { MOTIVOS_DE_DENUNCIA, type MotivoDeDenuncia } from "@shared/reports";
 import { SiguientePaso } from "./CaminoHoyUI";
 import { Estrellas, ObrasCasa } from "./ObrasUI";
+import { OficiosView } from "./TallerUI";
+import type { TallerEstado } from "@shared/taller";
 import { FotoDeCasa } from "./FotoCasaUI";
 import { RegalarBoton, RegalosRecibidos } from "./RegalosUI";
 import { BanqueteCasa, BanqueteVisita } from "./BanqueteUI";
@@ -577,12 +579,34 @@ function ObrasConMundo() {
   return <ObrasCasa alCambiar={alCambiar} />;
 }
 
+/** Los oficios de tu casa (shared/taller.ts): las ovejas de tu redil se ven junto a tu casa. */
+function OficiosConMundo() {
+  const ctx = useContext(CiudadCtx);
+  const ultimo = useRef(ctx);
+  ultimo.current = ctx;
+  const alCambiar = useCallback((t: TallerEstado) => {
+    const { estado, city, setEstado } = ultimo.current;
+    if (!estado) return;
+    const mia = estado.barrio.casas.find((c) => c.esMia);
+    if ((mia?.ovejas ?? 0) === t.redil.ovejas && estado.yo.gozo === t.gozo) return;
+    const casas = estado.barrio.casas.map((c) => (c.esMia ? { ...c, ovejas: t.redil.ovejas } : c));
+    setEstado?.({ ...estado, yo: { ...estado.yo, gozo: t.gozo }, barrio: { ...estado.barrio, casas }, privada: { ...estado.privada, bienes: { ...estado.privada.bienes, corderos: t.corderos } } });
+    city?.alOficios(t.redil.ovejas, t.gozo);
+  }, []);
+  const alIrAlMercado = useCallback(() => {
+    gameStore.close();
+    ultimo.current.city?.irA("mercado");
+  }, []);
+  return <OficiosView alCambiar={alCambiar} alIrAlMercado={alIrAlMercado} />;
+}
+
 /** Tu casa: su nivel, la honra que lleva y lo que falta para el siguiente. */
 /** Las pestañas de «Tu casa» (en el teléfono la ventana quedaba muy larga). */
 const PESTANAS_CASA: [string, string][] = [
   ["casa", "🏠 Tu casa"],
   ["obras", "🧱 Obras"],
   ["huerto", "🌾 Huerto y horno"],
+  ["oficios", "🐑 Oficios"],
   ["adornos", "🪔 Adornos y ropa"],
   ["vecinos", "📖 Vecinos"],
 ];
@@ -625,6 +649,7 @@ function CasaView({ inicial }: { inicial?: string }) {
         </div>
         {pestana === "obras" && <ObrasConMundo />}
         {pestana === "huerto" && <CasaExtrasConMundo partes={["huerto", "horno"]} />}
+        {pestana === "oficios" && <OficiosConMundo />}
         {pestana === "adornos" && <CasaExtrasConMundo partes={["adornos", "ropa", "letrero"]} />}
         {pestana === "vecinos" && (
           <>

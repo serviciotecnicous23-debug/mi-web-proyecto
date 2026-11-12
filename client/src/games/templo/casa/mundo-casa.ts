@@ -445,8 +445,10 @@ export class CasaWorld {
       this.mueblesGrupo.add(g);
       this.mallas.push(g);
       if (mu.luz) {
-        const h = LLAMA[c.m] ?? 0.4;
-        this.agregarLlama(cx, h, cz, c.p, c.m === "brasero" ? 1.1 : 0.75);
+        // la pieza fina alumbra como el mueble de donde sale (shared/taller.ts)
+        const base = mu.fina ?? c.m;
+        const h = LLAMA[base] ?? 0.4;
+        this.agregarLlama(cx, h, cz, c.p, base === "brasero" ? 1.1 : 0.75);
       }
     }
     this.reconstruirChoques();

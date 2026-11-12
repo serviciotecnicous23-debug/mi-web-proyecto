@@ -13,12 +13,14 @@ import type { CasaPrivada } from "@shared/ciudad";
 import { MAX_POR_MUEBLE, mueble } from "@shared/casa-interior";
 import { AYUDA_MUEBLES } from "@shared/economia";
 import { PuestosView } from "./EconomiaUI";
+import { ArtesanoView, IntercambioView } from "./TallerUI";
+import { FARDO_MAX, IGUALES } from "@shared/taller";
 import { gameStore } from "./store";
 import { Card } from "./ui";
 import { vistaDe } from "./casa/vistas3d";
 import { EstacionDelHuerto } from "./CalendarioUI";
 
-type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean };
+type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean; alFardo?: boolean };
 
 async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: RespuestaMercado | null }> {
   try {
@@ -229,7 +231,12 @@ export function MercadoView({
   /** Lo que cambió al comprar o vender entre vecinos (gozo y alfolí). */
   alCambiarBienes?: (d: { gozo: number; bienes: { harina: number; aceite: number; corderos: number } }) => void;
 }) {
-  const { m, error, busy, hacer } = useMercado(alCambiar);
+  const { m, error, busy, hacer, recargar } = useMercado(alCambiar);
+  // el artesano y el intercambio cobran con su propia ruta: si cambió el gozo, se vuelve a mirar el mercado
+  const gozoAntes = m?.gozo;
+  const alCambiarGozo = (g: number) => {
+    if (gozoAntes !== undefined && g !== gozoAntes) void recargar();
+  };
   const [tab, setTab] = useState<TabMercado>(inicial ?? "semilla");
   // la ropa de temporada: cuándo se vende cada prenda (una vez por día)
   const temporadas = useMemo(() => calendarioDeTemporada(), [m?.dia]);
@@ -246,6 +253,8 @@ export function MercadoView({
     ["letrero", "Letrero"],
     ["vender", "Vender"],
     ["vecinos", "Vecinos"],
+    ["intercambio", "🤝 Intercambio"],
+    ["taller", "🛠️ Artesano"],
   ];
   return (
     <Card
@@ -307,9 +316,13 @@ export function MercadoView({
                 </button>
               ))}
             </div>
-            {tab !== "vender" && tab !== "vecinos" && <p className="rounded-lg bg-stone-50 px-2.5 py-1.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300" data-testid="mercado-donde">{DONDE_SE_USA[tab]}</p>}
+            {tab !== "vender" && tab !== "vecinos" && tab !== "taller" && tab !== "intercambio" && <p className="rounded-lg bg-stone-50 px-2.5 py-1.5 text-[11px] text-stone-600 dark:bg-stone-800/60 dark:text-stone-300" data-testid="mercado-donde">{DONDE_SE_USA[tab]}</p>}
             {tab === "vecinos" ? (
               <PuestosView alCambiar={alCambiarBienes} />
+            ) : tab === "taller" ? (
+              <ArtesanoView alCambiarGozo={alCambiarGozo} />
+            ) : tab === "intercambio" ? (
+              <IntercambioView alCambiarGozo={alCambiarGozo} />
             ) : tab !== "vender" ? (
               <ul className="space-y-1.5">
                 {ARTICULOS.filter((a) => a.categoria === tab && !a.exclusivo && (!a.deTemporada || temporadas[a.id]?.hoy || m.armario.includes(a.id))).map((a) => {
@@ -344,6 +357,19 @@ export function MercadoView({
                         {precio < a.precio && <span className="block text-[10px] text-stone-400 line-through">{a.precio}</span>}
                         <span className="block font-black text-amber-700 dark:text-amber-300">✨ {precio}</span>
                       </span>
+                      {a.categoria === "ropa" && (!a.deTemporada || temporadas[a.id]?.hoy) && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="px-2"
+                          title="Comprar una copia para tu fardo: para venderla a un vecino o llevarla al artesano"
+                          disabled={busy || (m.fardo[a.id] || 0) >= FARDO_MAX || m.gozo < precio}
+                          onClick={() => void hacer("/mercado/comprar", { articulo: a.id, fardo: true }, () => gameStore.toast(`🎒 Al fardo: ${a.nombre} (${(m.fardo[a.id] || 0) + 1} de ${FARDO_MAX})`, "gold"))}
+                          data-testid={`fardo-${a.id}`}
+                        >
+                          🎒 {m.fardo[a.id] || 0}/{FARDO_MAX}
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         disabled={busy || tiene || yaLetrero || pideCasa || tantos || m.gozo < precio}
@@ -360,6 +386,16 @@ export function MercadoView({
                     </li>
                   );
                 })}
+                {tab === "ropa" && (
+                  <li className="rounded-xl bg-amber-50/70 p-2.5 text-[11px] text-stone-600 dark:bg-amber-950/20 dark:text-stone-300" data-testid="mercado-fardo">
+                    🎒 <b>Tu fardo</b>: copias de ropa para vender a tus vecinos en «Intercambio» o para llevar {IGUALES} iguales al artesano (hasta {FARDO_MAX} de cada una). La ropa de temporada, fuera de su tiempo, solo se consigue de otro jugador.
+                    {Object.keys(m.fardo).length > 0 && (
+                      <span className="mt-1 block font-semibold">
+                        Guardas: {Object.entries(m.fardo).map(([id, n]) => `${articulo(id)?.nombre ?? id} ×${n}`).join(" · ")}
+                      </span>
+                    )}
+                  </li>
+                )}
                 {tab === "ropa" && <RopaQueVuelve temporadas={temporadas} armario={m.armario} />}
               </ul>
             ) : (

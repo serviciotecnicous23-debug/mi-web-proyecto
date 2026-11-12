@@ -72,7 +72,18 @@ const Y = SUELO;
 
 // ---------------------------------------------------------------- tipos públicos
 /** `pueblo`: la casa es de una familia del pueblo (shared/pueblo.ts), no de un vecino. */
-export type CasaDibujo = { parcela: number; nivel: number; personajeId: number; adornos?: string[]; letrero?: boolean; pueblo?: boolean; /** las obras de la casa (shared/obras.ts) */ obras?: string[] };
+export type CasaDibujo = {
+  parcela: number;
+  nivel: number;
+  personajeId: number;
+  adornos?: string[];
+  letrero?: boolean;
+  pueblo?: boolean;
+  /** las obras de la casa (shared/obras.ts) */
+  obras?: string[];
+  /** las ovejas de su redil (shared/taller.ts) */
+  ovejas?: number;
+};
 
 export type CiudadVisual = {
   root: THREE.Group;
@@ -765,6 +776,27 @@ function adornosDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, ids: string[
 }
 
 /**
+ * Las ovejas del redil de la casa (shared/taller.ts), en sus coordenadas (la puerta mira a +z): pastan a la orilla de la
+ * calle, del lado contrario a la puerta, para no tapar las obras del patio. Se ven hasta 3, sencillas (son muchas casas).
+ */
+const LUGARES_OVEJA: [number, number, number][] = [
+  [1.22, 3.28, 0.35],
+  [0.72, 3.46, -0.5],
+  [1.58, 3.56, 2.7],
+];
+function ovejasDeCasa(m: GeoBuilder, n: number) {
+  for (const [x, z, ry] of LUGARES_OVEJA.slice(0, Math.max(0, Math.min(3, n)))) {
+    const c = Math.cos(ry), sn = Math.sin(ry);
+    // lo que va hacia la cabeza (+x local de la oveja), girado
+    const at = (dx: number, dz: number) => ({ x: x + dx * c + dz * sn, z: z - dx * sn + dz * c });
+    // el vellón (una esfera baja), la cabeza oscura y las patas de dos en dos
+    m.sphere(0.15, vary("#efe9dc", 0.04), { ...at(0, 0), y: 0.23, sx: 1.4, sy: 0.92, ry }, 6, 4);
+    m.box(0.12, 0.1, 0.11, "#3d3229", { ...at(0.22, 0), y: 0.28, ry });
+    for (const dx of [0.11, -0.11]) m.box(0.035, 0.15, 0.17, "#4a3d31", { ...at(dx, 0), y: 0.075, ry });
+  }
+}
+
+/**
  * Las obras de la casa (shared/obras.ts), en sus coordenadas (la puerta mira a +z). Cada una tiene su lugar según la
  * casa (tienda, adobe, piedra con patio o aposento alto), medido para no chocar con lo que ya tiene: la cisterna toma
  * el lugar de la tinaja, el horno y el huerto nuevo van al frente del patio, el granero y la torre al terrado.
@@ -1265,6 +1297,15 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     // lo que edificó con su gozo (shared/obras.ts): va al final, para no cambiar el azar de lo de antes
     if (obras.size) obrasDeCasa(lm, lv, nivel, obras);
     const mat = new THREE.Matrix4().makeRotationY(p.dir === 1 ? 0 : Math.PI).setPosition(p.x, Y, p.z);
+    // las ovejas de su redil (shared/taller.ts) pastan en la calle: van con el suelo del barrio, no con la casa
+    // (la casa se aclara cuando tapa al jugador; las ovejas no)
+    if (c.ovejas) {
+      const lo = new GeoBuilder();
+      ovejasDeCasa(lo, c.ovejas);
+      const go = lo.build();
+      go.applyMatrix4(mat);
+      m.raw(go);
+    }
     const g = lm.build();
     g.applyMatrix4(mat);
     // cada casa en su malla: si tapa al jugador, se aclara solo esa (mundo.ts)

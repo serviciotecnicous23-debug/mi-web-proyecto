@@ -26,6 +26,7 @@ import {
 } from "@shared/ciudad";
 import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
 import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
+import { leerOficios } from "@shared/taller";
 import { obrasDeBarrio, ventajasDeBarrio } from "./barrio-obras";
 
 const JUEGO = JERUSALEN_JUEGO;
@@ -236,7 +237,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
   const p = (async () => {
     const t = temporadaDe();
     const { rows } = await pool.query(
-      `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, h.obras, h.interior, c.name, c.user_id, u.display_name, u.username,
+      `SELECT h.character_id, h.plot, h.level, h.offered, h.adornos, h.letrero, h.obras, h.interior, h.oficios, c.name, c.user_id, u.display_name, u.username,
               (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS actual,
               (SELECT COALESCE(sum(m.merit), 0)::int FROM game_season_merit m JOIN game_characters c2 ON c2.id = m.character_id
                 WHERE c2.user_id = c.user_id AND c2.game = c.game) AS honra,
@@ -271,6 +272,8 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         // las obras de la casa y sus estrellas (shared/obras.ts): las ven los vecinos
         obras: obrasHechas(leerObras(r.obras)),
         estrellas: estrellasDeFila({ ...r, level: nivel }, Date.now(), extra).estrellas,
+        // las ovejas de su redil (shared/taller.ts): se ven junto a la casa
+        ...(leerOficios(r.oficios).redil.ovejas ? { ovejas: leerOficios(r.oficios).redil.ovejas } : {}),
         userId,
       });
     }

@@ -32,6 +32,8 @@ import { registerTermometroRoutes } from "./termometro";
 import { registerBarrioObrasRoutes } from "./barrio-obras";
 import { registerRegalosRoutes } from "./regalos";
 import { registerBanqueteRoutes } from "./banquete";
+import { registerTallerRoutes } from "./taller";
+import { registerIntercambioRoutes } from "./intercambio";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
@@ -3698,6 +3700,9 @@ ${urls}
   registerBarrioObrasRoutes(app);
   registerRegalosRoutes(app);
   registerBanqueteRoutes(app);
+  // la fase 3 (el taller): el artesano, el redil y el telar, y los puestos de cosas entre vecinos
+  registerTallerRoutes(app);
+  registerIntercambioRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
 

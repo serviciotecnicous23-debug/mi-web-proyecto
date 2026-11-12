@@ -13,6 +13,7 @@
  * Las citas entre comillas son textuales de la Reina-Valera 1960.
  */
 import type { EscalonId, JerusalenEstado } from "./jerusalen";
+import type { RopaVista } from "./mercado";
 
 export type Verso = { text: string; ref: string };
 
@@ -300,8 +301,8 @@ export type VecinoInfo = {
   u: number;
   /** Su camino (la vestidura y el nombre del escalón). */
   camino?: "sacerdocio" | "profecia" | "realeza";
-  /** Los colores de su manto y su faja (si compró). */
-  ropa?: { manto?: string; faja?: string };
+  /** Los colores de su manto y su faja (si compró), y si son finos (con su orla de oro). */
+  ropa?: RopaVista;
 };
 
 /** Del teléfono al servidor. */
@@ -370,6 +371,8 @@ export type CasaVista = {
   /** Las obras edificadas y las estrellas de la casa (shared/obras.ts). */
   obras?: string[];
   estrellas?: number;
+  /** Las ovejas de su redil (shared/taller.ts): se ven junto a la casa. */
+  ovejas?: number;
 };
 
 /** Un barrio completo (al entrar en su área). */
@@ -431,7 +434,7 @@ export type CiudadEstado = {
     /** Primeros pasos de su camino (0 a 3; en el sacerdocio, la instrucción). */
     pasos: number;
     /** Los colores de su manto y su faja. */
-    ropa?: { manto?: string; faja?: string };
+    ropa?: RopaVista;
     /** El gozo de Jerusalén en línea (se gana sirviendo aquí y se gasta en el mercado). */
     gozo: number;
     barrio: number;

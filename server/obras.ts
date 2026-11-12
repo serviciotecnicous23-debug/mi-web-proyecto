@@ -22,7 +22,7 @@ import {
 export const OBRAS_SQL = `ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "obras" jsonb NOT NULL DEFAULT '{}'::jsonb;`;
 
 /** Cuántos estudios aprobó la persona (los guarda su primer personaje: server/estudios.ts). */
-async function estudiosAprobados(userId: number): Promise<number> {
+export async function estudiosAprobados(userId: number): Promise<number> {
   const t = await titularEstudios(userId);
   if (!t) return 0;
   const { rows } = await pool.query(`SELECT count(*)::int AS n FROM game_studies WHERE character_id = $1 AND approved_at IS NOT NULL`, [t]);

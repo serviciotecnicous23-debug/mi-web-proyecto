@@ -10,14 +10,14 @@
  * «El peso falso es abominación a Jehová; Mas la pesa cabal le agrada» (Proverbios 11:1): precios fijos.
  */
 
-import { MUEBLES } from "./casa-interior";
+import { MUEBLES, VALOR_FINA } from "./casa-interior";
 import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
 import { PRENDA_REGRESO } from "./regreso";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
-export type TabMercado = Categoria | "vender" | "vecinos";
+export type TabMercado = Categoria | "vender" | "vecinos" | "intercambio" | "taller";
 export type Articulo = {
   id: string;
   categoria: Categoria;
@@ -29,9 +29,12 @@ export type Articulo = {
   /**
    * No se vende: se gana. «sabio»: los trajes de los sabios, en la casa de la sabiduría (shared/sabio.ts); «temporada»:
    * las prendas de la historia de la temporada (shared/capitulos.ts); «regreso»: el mejor vestido, al volver a
-   * Jerusalén después de una semana o más (shared/regreso.ts).
+   * Jerusalén después de una semana o más (shared/regreso.ts); «taller»: las piezas finas, que hace el artesano con 4
+   * iguales (shared/taller.ts).
    */
-  exclusivo?: "sabio" | "temporada" | "regreso";
+  exclusivo?: "sabio" | "temporada" | "regreso" | "taller";
+  /** Una pieza fina del artesano (shared/taller.ts): el artículo de donde sale (con 4 iguales). */
+  fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
   deTemporada?: { estacion: EstacionId } | { eventos: string[] };
 };
@@ -52,6 +55,33 @@ export const ROPA_DEL_ANIO: Articulo[] = [
   { id: "faja-anio-nuevo", categoria: "ropa", nombre: "Faja del año nuevo", icono: "🎉", precio: 40, detalle: "Turquesa, para empezar el año. Solo el 1 de enero.", color: "#3aa3a0", deTemporada: { eventos: ["anioNuevo"] } },
 ];
 
+/** La ropa que siempre se vende (los vecinos la ven). */
+const ROPA_DE_SIEMPRE: Articulo[] = [
+  { id: "manto-lana", categoria: "ropa", nombre: "Manto de lana", icono: "🧥", precio: 30, detalle: "Manto sobre los hombros, color lana.", color: "#d9c9a8" },
+  { id: "manto-cielo", categoria: "ropa", nombre: "Manto azul cielo", icono: "🧥", precio: 50, detalle: "Manto sobre los hombros, azul cielo.", color: "#7fb2d9" },
+  { id: "manto-olivo", categoria: "ropa", nombre: "Manto verde olivo", icono: "🧥", precio: 50, detalle: "Manto sobre los hombros, verde olivo.", color: "#7a8a4a" },
+  { id: "manto-granate", categoria: "ropa", nombre: "Manto granate", icono: "🧥", precio: 70, detalle: "Manto sobre los hombros, granate.", color: "#8a2f3a" },
+  { id: "faja-ocre", categoria: "ropa", nombre: "Faja ocre", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, ocre.", color: "#c98a2b" },
+  { id: "faja-azul", categoria: "ropa", nombre: "Faja azul", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, azul.", color: "#2f5aa8" },
+  { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
+];
+
+/**
+ * La ropa fina del artesano (shared/taller.ts): con 4 iguales del fardo hace la misma prenda con su orla de oro, que se
+ * ve en la ciudad. No se vende: se hace. Vale como las 4 prendas y el jornal del artesano.
+ */
+export const ROPA_FINA: Articulo[] = [...ROPA_DE_SIEMPRE, ...ROPA_DEL_ANIO].map((a) => ({
+  id: `${a.id}-oro`,
+  categoria: "ropa",
+  nombre: `${a.nombre} ${a.id.startsWith("manto-") ? "bordado" : "bordada"} de oro`,
+  icono: a.icono,
+  precio: a.precio * VALOR_FINA,
+  detalle: `Pieza fina del artesano, hecha con 4 de «${a.nombre}»: lleva su orla de oro. No se vende: se hace.`,
+  color: a.color,
+  exclusivo: "taller",
+  fina: a.id,
+}));
+
 export const ARTICULOS: Articulo[] = [
   // semillas
   { id: "trigo", categoria: "semilla", nombre: "Semilla de trigo", icono: "🌾", precio: 5, detalle: "Crece en 40 min y da 4 de flor de harina." },
@@ -68,13 +98,7 @@ export const ARTICULOS: Articulo[] = [
   { id: "higuera", categoria: "adorno", nombre: "Higuera", icono: "🌳", precio: 100, detalle: "Da sombra y fruto junto a la casa." },
   { id: "palmera", categoria: "adorno", nombre: "Palmera", icono: "🌴", precio: 120, detalle: "Alta y verde, se ve desde lejos." },
   // ropa (los vecinos la ven)
-  { id: "manto-lana", categoria: "ropa", nombre: "Manto de lana", icono: "🧥", precio: 30, detalle: "Manto sobre los hombros, color lana.", color: "#d9c9a8" },
-  { id: "manto-cielo", categoria: "ropa", nombre: "Manto azul cielo", icono: "🧥", precio: 50, detalle: "Manto sobre los hombros, azul cielo.", color: "#7fb2d9" },
-  { id: "manto-olivo", categoria: "ropa", nombre: "Manto verde olivo", icono: "🧥", precio: 50, detalle: "Manto sobre los hombros, verde olivo.", color: "#7a8a4a" },
-  { id: "manto-granate", categoria: "ropa", nombre: "Manto granate", icono: "🧥", precio: 70, detalle: "Manto sobre los hombros, granate.", color: "#8a2f3a" },
-  { id: "faja-ocre", categoria: "ropa", nombre: "Faja ocre", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, ocre.", color: "#c98a2b" },
-  { id: "faja-azul", categoria: "ropa", nombre: "Faja azul", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, azul.", color: "#2f5aa8" },
-  { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
+  ...ROPA_DE_SIEMPRE,
   // la ropa del año: solo en su estación o en su fiesta
   ...ROPA_DEL_ANIO,
   // los trajes de los sabios: no se venden, se ganan en «¿Quién es sabio?» (shared/sabio.ts, TRAJES_SABIOS)
@@ -110,6 +134,8 @@ export const ARTICULOS: Articulo[] = [
     color: PRENDA_REGRESO.color,
     exclusivo: "regreso",
   },
+  // la ropa fina del artesano: tampoco se vende (shared/taller.ts)
+  ...ROPA_FINA,
   // el letrero de la casa
   { id: "letrero", categoria: "letrero", nombre: "Letrero de la casa", icono: "🪧", precio: 40, detalle: "Ponle nombre a tu casa: lo ven los vecinos." },
   // los muebles de la casa por dentro (shared/casa-interior.ts)
@@ -233,13 +259,22 @@ export const PUESTOS_MERCADO: { tab: Categoria | "vender"; nombre: string; icono
   { tab: "vender", nombre: "El mercader", icono: "⚖️", dice: "Te compro lo de tu alfolí con pesa cabal. Si quieres más, véndeselo a tus vecinos en «Vecinos»." },
 ];
 
+/** Cómo se ve la ropa de alguien: los colores del manto y la faja, y si son finos (con su orla de oro). */
+export type RopaVista = { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true };
+
 /** Los colores de la ropa elegida (para dibujarla). */
-export function coloresDeIds(r: { manto?: string | null; faja?: string | null } | null | undefined): { manto?: string; faja?: string } {
-  const out: { manto?: string; faja?: string } = {};
+export function coloresDeIds(r: { manto?: string | null; faja?: string | null } | null | undefined): RopaVista {
+  const out: RopaVista = {};
   const m = r?.manto ? articulo(r.manto) : undefined;
   const f = r?.faja ? articulo(r.faja) : undefined;
-  if (m?.categoria === "ropa" && m.color) out.manto = m.color;
-  if (f?.categoria === "ropa" && f.color) out.faja = f.color;
+  if (m?.categoria === "ropa" && m.color) {
+    out.manto = m.color;
+    if (m.fina) out.mantoOro = true;
+  }
+  if (f?.categoria === "ropa" && f.color) {
+    out.faja = f.color;
+    if (f.fina) out.fajaOro = true;
+  }
   return out;
 }
 
@@ -333,4 +368,6 @@ export type MercadoEstado = {
   hornoMax: number;
   /** La casa tiene cisterna: lo que se siembra queda regado. */
   cisterna: boolean;
+  /** El fardo: las copias de ropa guardadas para vender o para el artesano (shared/taller.ts). */
+  fardo: Record<string, number>;
 };

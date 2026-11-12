@@ -132,7 +132,7 @@ export type Modal =
   | { kind: "dificil"; q: JerusalenPregunta }
   | { kind: "fiesta"; id: FiestaId }
   | { kind: "juicio"; casoId: string }
-  | { kind: "casa"; pestana?: "casa" | "obras" | "huerto" | "adornos" | "vecinos" }
+  | { kind: "casa"; pestana?: "casa" | "obras" | "huerto" | "oficios" | "adornos" | "vecinos" }
   | { kind: "anuncios" }
   | { kind: "ancianos"; n: number }
   | { kind: "edificio"; id: EdificioId }

@@ -315,10 +315,51 @@ En total, 35.000 de gozo por barrio: una o dos temporadas de un barrio con vida.
   servidor).
 - El banquete cuesta más gozo del que reparte: es hospitalidad (Romanos 12:13).
 
+### Fase 3 — El taller (hecho)
+**El artesano** (`shared/taller.ts`, `server/taller.ts`, `TallerUI.tsx`, en *Mercado → Artesano*). Con 4 iguales hace la
+pieza fina, dorada, sin nada al azar (como la mascota «neón» de Adopt Me!, pero con lo que se ve antes de pedirlo):
+- Hay una pieza fina por cada mueble del mercado (la silla dorada, la lámpara de oro, la alfombra bordada de oro…) y
+  por cada prenda que se vende, también la de temporada (el manto azul cielo bordado de oro, el manto del lagar
+  bordado de oro…). No se venden: se hacen.
+- Los muebles se juntan de los que tienes: primero los guardados; si faltan, el artesano saca de la casa los últimos
+  que se pusieron y, al terminar, pone la pieza fina en ese lugar. La ropa se junta en el fardo.
+- El jornal es el doble del precio de una pieza (el 10 % va al tesoro); tarda de 1 a 6 horas, una pieza a la vez.
+- Pide estudios aprobados: 1 (lo que cuesta menos de 30), 2 (de 30 a 59) o 3 (60 o más).
+- El mueble fino cuenta como su mueble en los juegos y en lo que ayuda (el molino dorado sigue moliendo), y suma
+  +6 a las estrellas. La ropa fina lleva su orla de oro en el ruedo y en la abertura del manto, o en la faja: la ven
+  todos en la ciudad.
+- Al terminar: aviso al teléfono (con los del huerto), un aviso en «Para hoy» y en lo que pasa en la comunidad.
+
+**Los oficios de la casa** (en *Tu casa → Oficios*):
+- **El redil** (Proverbios 27:23): los corderos que traen los siervos se pueden quedar en el redil como ovejas (2 en
+  la tienda, 3 en la casa de adobe, 4 en la de piedra y 6 con aposento alto). Cada oveja da 1 de lana cada 8 horas y
+  junta hasta 3; al trasquilar, la lana va al alfolí (cabe lo mismo que de lo demás) y lo que no cabe se queda en las
+  ovejas. Los vecinos ven hasta 3 ovejas delante de cada casa.
+- **El telar** (Proverbios 31:13): con el telar de la casa puesto dentro, se teje una cosa a la vez: cojines (2 de
+  lana, 30 min), el manto de lana (3, 1 h) y la alfombra (5, 2 h). Lo tejido va al arcón o al armario (o al fardo).
+
+**El fardo**: en *Mercado → Ropa*, el botón 🎒 compra una copia de una prenda para el fardo (hasta 4 de cada una), en
+su tiempo y al precio del día. Sirve para venderla a un vecino o para llevar 4 al artesano.
+
+**El intercambio** (`server/intercambio.ts`, en *Mercado → Intercambio*, Proverbios 31:24): los puestos de cosas
+entre vecinos.
+- Se vende la lana, la ropa del fardo (o la del armario que no lleva puesta ningún personaje), los muebles guardados
+  (no los que están puestos) y las piezas finas. Lo que se gana (los trajes de los sabios, las prendas de la historia,
+  el mejor vestido) y los adornos no se cambian.
+- Pesa cabal: lo que el mercado vende siempre va de la mitad a su precio; la ropa de temporada, **fuera de su tiempo**,
+  de 1 a 3 veces su precio (y solo se consigue aquí, de otro jugador: «Todo tiene su tiempo», Eclesiastés 3:1); la
+  pieza fina, de 4 a 8 veces la pieza de donde sale; la lana, de 1 a 6.
+- Hasta 3 puestos por persona, 48 horas, 4 cosas (o 30 de lana) por puesto; lo que no se vende vuelve.
+- Se compra lo que cabe (los muebles hasta 12; la ropa, una en el armario y hasta 4 en el fardo). El 10 % va al
+  tesoro; el que vende ve lo vendido al volver. Con bloqueos no se ven los puestos ni se compra.
+- El termómetro cuenta el jornal (`taller`), la ropa del fardo (`fardo`) y los puestos de cosas (`cosas`).
+
+Hacer las 39 piezas finas (las 4 iguales y el jornal) cuesta 10.362 de gozo: 4.722 los muebles y 5.640 la ropa. Es
+más del doble de todas las obras de la casa: el gasto que nunca se acaba, ahora también en la ropa que se ve.
+
 ### Lo que viene, por fases
 | Fase | Qué | Inspirado en |
 |---|---|---|
-| 3. El taller | **La pieza fina**: con 4 iguales, el artesano hace una dorada (sin azar). **Oficios**: el telar y las ovejas hacen cosas que se venden en los puestos de los vecinos. Lo de temporada, fuera de su tiempo, solo se consigue de otro jugador. | Adopt Me! |
 | 4. La ciudad y el mundo | **El arca de Joás** (2 Reyes 12:9): una obra de toda la ciudad cada temporada con ofrendas de gozo; al llenarse cambia la ciudad y quedan los nombres de los que dieron; si el ministerio quiere, se vuelve algo real. **Invita a un amigo**: cuando lo aprueban y juega 3 días, los dos reciben gozo. **El álbum** de colecciones con títulos. | *Coins for Change* de Club Penguin; Pokémon GO |
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)

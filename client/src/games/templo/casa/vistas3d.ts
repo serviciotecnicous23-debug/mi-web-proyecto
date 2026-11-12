@@ -52,7 +52,8 @@ function modelo(id: string): { obj: THREE.Object3D; liberar: () => void } | null
   if (a.categoria === "ropa" && a.color) {
     // la prenda puesta en un aprendiz, un poco de lado para que se vea el manto o la faja
     const f = new Figure("aprendiz");
-    f.setRopa(id.startsWith("manto") ? { manto: a.color } : { faja: a.color });
+    // la ropa fina del artesano, con su orla de oro (shared/taller.ts)
+    f.setRopa(id.startsWith("manto") ? { manto: a.color, ...(a.fina ? { mantoOro: true as const } : {}) } : { faja: a.color, ...(a.fina ? { fajaOro: true as const } : {}) });
     const r = newRig(0, 0);
     r.yaw = 0.55;
     r.t = 0;

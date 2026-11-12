@@ -31,7 +31,8 @@ export type Mueble = Articulo & {
   nivelMin?: number;
 };
 
-export const MUEBLES: Mueble[] = [
+/** Los muebles que se venden en el mercado. */
+const MUEBLES_DEL_MERCADO: Mueble[] = [
   { id: "estera", categoria: "mueble", nombre: "Estera de juncos", icono: "🎋", precio: 10, w: 2, d: 1, capa: 0, detalle: "Para sentarse en el piso a comer y a conversar." },
   { id: "alfombra", categoria: "mueble", nombre: "Alfombra de lana", icono: "🟧", precio: 45, w: 2, d: 2, capa: 0, detalle: "Lana teñida de rojo y ocre; los muebles van encima." },
   { id: "cojines", categoria: "mueble", nombre: "Cojines de lana", icono: "🛋️", precio: 15, w: 1, d: 1, capa: 1, detalle: "Para recibir a las visitas con comodidad." },
@@ -54,8 +55,54 @@ export const MUEBLES: Mueble[] = [
   { id: "brasero", categoria: "mueble", nombre: "Brasero", icono: "🔥", precio: 65, w: 1, d: 1, capa: 1, luz: true, nivelMin: 1, detalle: "Brasas para las noches frías (Jeremías 36:22). Pide casa de adobe o mayor." },
 ];
 
+/**
+ * Las piezas finas del artesano (shared/taller.ts): con 4 iguales, el artesano hace la dorada. No se venden: se hacen.
+ * Tienen el mismo tamaño que el mueble de donde salen y cuentan como él en los juegos de muebles y en lo que ayudan.
+ */
+const NOMBRE_FINO: Record<string, string> = {
+  estera: "Estera tejida con oro",
+  alfombra: "Alfombra bordada de oro",
+  cojines: "Cojines bordados de oro",
+  mesa: "Mesa baja dorada",
+  silla: "Silla dorada",
+  lecho: "Lecho dorado",
+  arcon: "Arcón de cedro dorado",
+  tinaja: "Tinaja con asas de oro",
+  vasijas: "Vasijas con bordes de oro",
+  cesta: "Cesta tejida con oro",
+  planta: "Maceta de hierbas dorada",
+  "lampara-casa": "Lámpara de oro",
+  candelero: "Candelero de casa dorado",
+  molino: "Molino de mano con aro de oro",
+  "banco-cedro": "Banco de cedro dorado",
+  "mesa-pan": "Mesa con el pan, dorada",
+  "telar-casa": "Telar de la casa, dorado",
+  palomar: "Palomar dorado",
+  estante: "Estante de rollos dorado",
+  brasero: "Brasero dorado",
+};
+/** Cuánto vale una pieza fina comparada con la pieza de donde sale (4 piezas y el jornal del artesano). */
+export const VALOR_FINA = 6;
+export const MUEBLES_FINOS: Mueble[] = MUEBLES_DEL_MERCADO.map((m) => ({
+  ...m,
+  id: `${m.id}-oro`,
+  nombre: NOMBRE_FINO[m.id] ?? `${m.nombre} dorado`,
+  precio: m.precio * VALOR_FINA,
+  detalle: `Pieza fina del artesano, hecha con 4 de «${m.nombre}». No se vende: se hace.`,
+  exclusivo: "taller",
+  fina: m.id,
+}));
+
+/** Todos los muebles de las casas: los del mercado y las piezas finas. */
+export const MUEBLES: Mueble[] = [...MUEBLES_DEL_MERCADO, ...MUEBLES_FINOS];
+
 export function mueble(id: string): Mueble | undefined {
   return MUEBLES.find((m) => m.id === id);
+}
+
+/** El mueble de donde sale (el mismo si no es una pieza fina): para los juegos de muebles y lo que ayudan. */
+export function muebleBase(id: string): string {
+  return mueble(id)?.fina ?? id;
 }
 
 /**

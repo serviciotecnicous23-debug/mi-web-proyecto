@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-el-taller",
+    fecha: "12 de noviembre de 2026",
+    titulo: "El taller: piezas finas, ovejas, telar e intercambio",
+    puntos: [
+      "🛠️ El artesano (Mercado → Artesano): llévale 4 iguales y te hace la pieza fina, dorada, sin nada al azar. Hay muebles dorados para tu casa (suman +6 a las estrellas) y ropa bordada de oro que se ve en la ciudad. Las piezas finas piden estudios aprobados en la escuela.",
+      "🐑 Tu redil (Tu casa → Oficios): los corderos que traen tus siervos se quedan como ovejas, se ven junto a tu casa y dan lana. Trasquílalas y teje en el telar de tu casa cojines, mantos y alfombras.",
+      "🎒 Tu fardo: en «Ropa» compra copias de una prenda para venderlas o para llevar 4 al artesano.",
+      "🤝 El intercambio (Mercado → Intercambio): véndeles a tus vecinos lana, ropa, muebles y piezas finas. La ropa de temporada, fuera de su tiempo, solo se consigue aquí: «Todo tiene su tiempo» (Eclesiastés 3:1).",
+    ],
+  },
+  {
     id: "2026-11-12-mi-barrio",
     fecha: "12 de noviembre de 2026",
     titulo: "Mi barrio: obras de todos, regalos y banquetes",
