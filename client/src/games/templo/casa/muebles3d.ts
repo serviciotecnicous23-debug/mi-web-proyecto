@@ -5,7 +5,7 @@
  * en lo alto de su pie.
  */
 import * as THREE from "three";
-import { C, GeoBuilder, meshPair } from "../three/builder";
+import { C, GeoBuilder, meshPair, shinyMat } from "../three/builder";
 import { CELDA, pieza } from "@shared/casa-interior";
 
 const MADERA = "#8a5a32";
@@ -33,10 +33,37 @@ function vasija(g: GeoBuilder, alto: number, ancho: number, color: string, t: { 
   );
 }
 
+const ORO = new THREE.Color("#d9a93a");
+
+/**
+ * La pieza fina del artesano (shared/taller.ts): el mismo mueble, dorado. Cada color se acerca al oro y todo brilla
+ * (como el metal), para que se note a primera vista cuál es la fina.
+ */
+function dorar(g: THREE.Group): THREE.Group {
+  const tmp = new THREE.Color();
+  g.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    const col = mesh.geometry?.getAttribute("color") as THREE.BufferAttribute | undefined;
+    if (!col) return;
+    for (let i = 0; i < col.count; i++) {
+      tmp.setRGB(col.getX(i), col.getY(i), col.getZ(i)).lerp(ORO, 0.55);
+      col.setXYZ(i, tmp.r, tmp.g, tmp.b);
+    }
+    col.needsUpdate = true;
+    mesh.material = shinyMat();
+  });
+  g.userData.fina = true;
+  return g;
+}
+
 /** Arma un mueble. Devuelve null si no existe. */
 export function construirMueble(id: string): THREE.Group | null {
   const mu = pieza(id);
   if (!mu) return null;
+  if (mu.fina) {
+    const base = construirMueble(mu.fina);
+    return base ? dorar(base) : null;
+  }
   const W = mu.w * CELDA, D = mu.d * CELDA;
   const g = new GeoBuilder();
   const brillo = new GeoBuilder();

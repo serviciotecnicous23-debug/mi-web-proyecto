@@ -11,7 +11,8 @@ import {
 } from "@shared/mercado";
 import { capacidadAlfoli } from "@shared/ciudad";
 import { diaEnJerusalen, factorCrecimiento } from "@shared/anio";
-import { MAX_POR_MUEBLE, leerInterior, leerMuebles, mueble } from "@shared/casa-interior";
+import { MAX_POR_MUEBLE, leerInterior, leerMuebles, mueble, muebleBase } from "@shared/casa-interior";
+import { FARDO_MAX, leerFardo } from "@shared/taller";
 import { AYUDA_MUEBLES, DIEZMO, RIEGO } from "@shared/economia";
 import { alTesoro, contarVentaMercader, preciosMercaderHoy, vendidosHoy } from "./economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
@@ -99,13 +100,13 @@ function vistaParcela(p: Plantio): Parcela {
 /** Los muebles útiles puestos dentro de la casa (shared/economia.ts: AYUDA_MUEBLES). */
 async function mueblesUtiles(characterId: number): Promise<Set<string>> {
   const { rows } = await pool.query(`SELECT interior FROM game_houses WHERE character_id = $1`, [characterId]);
-  return new Set(leerInterior(rows[0]?.interior).map((c) => c.m).filter((m) => m in AYUDA_MUEBLES));
+  return new Set(leerInterior(rows[0]?.interior).map((c) => muebleBase(c.m)).filter((m) => m in AYUDA_MUEBLES));
 }
 
 async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }, precios, vendidos, utiles] = await Promise.all([
-    pool.query(`SELECT t.gozo, t.semillas, t.armario, yo.ropa, t.muebles FROM game_characters t, game_characters yo WHERE t.id = $1 AND yo.id = $2`, [ch.casa, ch.casa]),
+    pool.query(`SELECT t.gozo, t.semillas, t.armario, yo.ropa, t.muebles, t.fardo FROM game_characters t, game_characters yo WHERE t.id = $1 AND yo.id = $2`, [ch.casa, ch.casa]),
     pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas, obras FROM game_houses WHERE character_id = $1`, [ch.casa]),
     preciosMercaderHoy(),
     vendidosHoy(),
@@ -143,6 +144,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
       : null,
     hornoMax: v.horno,
     cisterna: v.cisterna,
+    fardo: leerFardo(c[0]?.fardo),
   };
 }
 
@@ -199,7 +201,9 @@ export function registerMercadoRoutes(app: Express) {
     if (a.exclusivo)
       return res.status(403).json({
         message:
-          a.exclusivo === "temporada"
+          a.exclusivo === "taller"
+            ? "Las piezas finas no se venden: las hace el artesano con 4 iguales."
+            : a.exclusivo === "temporada"
             ? "Esa prenda no se vende: se gana con la historia de la temporada."
             : a.exclusivo === "regreso"
               ? "El mejor vestido no se vende: se recibe al volver a Jerusalén después de una semana o más."
@@ -210,6 +214,24 @@ export function registerMercadoRoutes(app: Express) {
       if (!ch) return;
       if (frenar(ch.casa)) return res.status(429).json({ message: "Espera un momento" });
       const costo = precioHoy(a, diaClave()) * cantidad;
+      // una copia de la ropa para el fardo (shared/taller.ts): para venderla a un vecino o llevarla al artesano
+      if (req.body?.fardo === true) {
+        if (a.categoria !== "ropa") return res.status(400).json({ message: "En el fardo solo se guarda ropa." });
+        const { rows: pago } = await pool.query(
+          `UPDATE game_characters SET gozo = gozo - $2,
+                  fardo = jsonb_set(COALESCE(fardo, '{}'::jsonb), ARRAY[$3::text], to_jsonb(COALESCE((fardo->>$3)::int, 0) + 1))
+            WHERE id = $1 AND gozo >= $2 AND COALESCE((fardo->>$3)::int, 0) < $4 RETURNING gozo`,
+          [ch.casa, costo, a.id, FARDO_MAX],
+        );
+        if (!pago.length) {
+          const { rows: f } = await pool.query(`SELECT fardo FROM game_characters WHERE id = $1`, [ch.casa]);
+          if ((leerFardo(f[0]?.fardo)[a.id] || 0) >= FARDO_MAX) return res.status(409).json({ message: `Ya tienes ${FARDO_MAX} en tu fardo: véndelas o llévalas al artesano.` });
+          return res.status(409).json({ message: `Te falta gozo: cuesta ${costo}.` });
+        }
+        anotarGasto("fardo", costo);
+        await alTesoro("mercado", ch.casa, Math.floor(costo * DIEZMO), "El 10 % de una compra en el mercado de la plaza");
+        return await responder(res, ch, { comprado: a.id, costo, alFardo: true });
+      }
       const { rows: c } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]);
       if ((a.categoria === "adorno" || a.categoria === "ropa") && lista(c[0]?.armario).includes(a.id)) return res.status(409).json({ message: "Ya lo tienes." });
       if (a.categoria === "letrero") {

@@ -659,7 +659,7 @@ export class Figure {
   private footL = new THREE.Group();
   private footR = new THREE.Group();
   look: FigureLook | null = null;
-  private ropa: { manto?: string; faja?: string } | null = null;
+  private ropa: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null = null;
   private ropaG: THREE.Group | null = null;
   /** El regazo con la túnica (se ve cuando está sentado). */
   private regazo: THREE.Mesh | null = null;
@@ -686,14 +686,17 @@ export class Figure {
    * La ropa que compró en el mercado de la ciudad: un manto abierto por delante y una faja. En el
    * templo no se usa (se sirve con las vestiduras sagradas, Éxodo 28:2).
    */
-  setRopa(ropa: { manto?: string; faja?: string } | null | undefined) {
-    const r = ropa && (ropa.manto || ropa.faja) ? { manto: ropa.manto, faja: ropa.faja } : null;
+  setRopa(ropa: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null | undefined) {
+    const r =
+      ropa && (ropa.manto || ropa.faja)
+        ? { manto: ropa.manto, faja: ropa.faja, ...(ropa.manto && ropa.mantoOro ? { mantoOro: true as const } : {}), ...(ropa.faja && ropa.fajaOro ? { fajaOro: true as const } : {}) }
+        : null;
     if (JSON.stringify(r) === JSON.stringify(this.ropa)) return;
     this.ropa = r;
     this.ponerRopa(r);
   }
 
-  private ponerRopa(r: { manto?: string; faja?: string } | null) {
+  private ponerRopa(r: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null) {
     if (this.ropaG) {
       this.body.remove(this.ropaG);
       this.ropaG.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
@@ -701,20 +704,35 @@ export class Figure {
     }
     if (!r) return;
     const b = new GeoBuilder();
+    // la orla de oro de la ropa fina del artesano (shared/taller.ts): brilla como el metal
+    const oro = new GeoBuilder();
     if (r.manto) {
       // el manto cae de los hombros y queda abierto por delante
       const perfil = [[0.245, 0.24], [0.238, 0.42], [0.218, 0.58], [0.2, 0.7], [0.14, 0.768], [0.07, 0.785]].map(([x, y]) => new THREE.Vector2(x, y));
       b.add(new THREE.LatheGeometry(perfil, 18, 0.75, Math.PI * 2 - 1.5), r.manto);
+      if (r.mantoOro) {
+        // el ruedo y los dos bordes de la abertura
+        const ruedo = [[0.249, 0.235], [0.252, 0.25], [0.248, 0.29], [0.243, 0.29]].map(([x, y]) => new THREE.Vector2(x, y));
+        oro.add(new THREE.LatheGeometry(ruedo, 18, 0.75, Math.PI * 2 - 1.5), C.oro);
+        const borde = perfil.map((v) => new THREE.Vector2(v.x + 0.005, v.y));
+        oro.add(new THREE.LatheGeometry(borde, 2, 0.75, 0.09), C.oro);
+        oro.add(new THREE.LatheGeometry(borde, 2, Math.PI * 2 - 0.84, 0.09), C.oro);
+      }
     }
     if (r.faja) {
       b.torus(0.213, 0.026, r.faja, { y: 0.43, rx: Math.PI / 2 }, 5, 18);
       b.box(0.05, 0.24, 0.016, r.faja, { x: -0.08, y: 0.31, z: 0.205, rz: -0.05 });
+      if (r.fajaOro) {
+        for (const y of [0.405, 0.455]) oro.torus(0.236, 0.007, C.oro, { y, rx: Math.PI / 2 }, 3, 18);
+        oro.box(0.06, 0.05, 0.02, C.oro, { x: -0.08, y: 0.43, z: 0.236 });
+      }
     }
     if (b.empty) return;
     const g = new THREE.Group();
     const mesh = new THREE.Mesh(b.build(), matteFor());
     mesh.castShadow = true;
     g.add(mesh);
+    if (!oro.empty) g.add(new THREE.Mesh(oro.build(), shinyMat()));
     this.ropaG = g;
     this.body.add(g);
   }

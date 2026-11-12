@@ -9,7 +9,7 @@
  * El gozo nunca compra mérito ni cargos: solo la casa, su belleza y su comodidad. Precios fijos y nada al azar.
  */
 import { HORNO_GRANDE, HORNO_MAX } from "./mercado";
-import { leerInterior } from "./casa-interior";
+import { leerInterior, muebleBase } from "./casa-interior";
 
 export type Verso = { text: string; ref: string };
 export type ObraId =
@@ -213,7 +213,7 @@ export const JUEGOS_DE_MUEBLES: { id: string; nombre: string; icono: string; mue
   { id: "manos", nombre: "El trabajo de las manos", icono: "🧶", muebles: ["telar-casa", "arcon", "brasero", "planta"] },
 ];
 
-export const PUNTOS_CASA = { nivel: [0, 10, 20, 30], adorno: 3, letrero: 5, mueble: 2, juego: 10 };
+export const PUNTOS_CASA = { nivel: [0, 10, 20, 30], adorno: 3, letrero: 5, mueble: 2, juego: 10, /** cada pieza fina distinta puesta (shared/taller.ts) */ fina: 6 };
 /** Puntos para cada estrella (la primera la tiene toda casa). */
 export const ESTRELLAS_PUNTOS = [0, 40, 90, 160, 240];
 
@@ -239,9 +239,12 @@ export function estrellasDeCasa(c: { nivel: number; obras: readonly string[]; ad
   if (nivel) partes.push({ texto: "La casa", puntos: nivel });
   const obras = OBRAS.filter((o) => c.obras.includes(o.id)).reduce((a, o) => a + o.puntos, 0);
   if (obras) partes.push({ texto: "Las obras", puntos: obras });
-  const distintos = new Set(c.muebles);
+  // la pieza fina cuenta como el mueble de donde sale (en los distintos y en los juegos) y suma aparte
+  const distintos = new Set(c.muebles.map(muebleBase));
   const muebles = distintos.size * PUNTOS_CASA.mueble;
   if (muebles) partes.push({ texto: "Los muebles (distintos)", puntos: muebles });
+  const finas = new Set(c.muebles.filter((m) => muebleBase(m) !== m)).size * PUNTOS_CASA.fina;
+  if (finas) partes.push({ texto: "Las piezas finas del artesano", puntos: finas });
   const juegos = JUEGOS_DE_MUEBLES.map((j) => {
     const faltan = j.muebles.filter((m) => !distintos.has(m));
     return { id: j.id, nombre: j.nombre, icono: j.icono, completo: faltan.length === 0, faltan };

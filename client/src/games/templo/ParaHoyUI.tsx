@@ -23,6 +23,8 @@ import { OBRAS, costoDeObra, obra, type ObrasEstado } from "@shared/obras";
 import type { BanquetesEstado } from "@shared/banquete";
 import type { RegalosEstado } from "@shared/regalos";
 import { obraBarrio, type ObrasBarrioEstado } from "@shared/barrio-obras";
+import { TELAR, type TallerEstado } from "@shared/taller";
+import { articulo } from "@shared/mercado";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -37,7 +39,7 @@ type Linea = { id: string; icono: string; texto: string; boton?: { texto: string
 
 export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const { city } = useContext(CiudadCtx);
-  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null; obras: ObrasEstado | null; banquetes: BanquetesEstado | null; regalos: RegalosEstado | null; barrioObras: ObrasBarrioEstado | null } | null>(null);
+  const [d, setD] = useState<{ concurso: ConcursoEstado | null; mercado: MercadoEstado | null; reuniones: ReunionesEstado | null; ayuda: AyudaEstado | null; muro: MuroEstado | null; tesoro: TesoroEstado | null; recado: { estado: RecadoEstado } | null; racha: RachaVista | null; capitulos: CapitulosVista | null; obras: ObrasEstado | null; banquetes: BanquetesEstado | null; regalos: RegalosEstado | null; barrioObras: ObrasBarrioEstado | null; taller: TallerEstado | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     void Promise.all([
@@ -54,9 +56,10 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       traer<BanquetesEstado>("/banquetes"),
       traer<RegalosEstado>("/regalos"),
       traer<ObrasBarrioEstado>("/barrio/obras"),
-    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos, obras, banquetes, regalos, barrioObras]) => {
+      traer<TallerEstado>("/taller"),
+    ]).then(([concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos, obras, banquetes, regalos, barrioObras, taller]) => {
       if (!vivo) return;
-      setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null, obras, banquetes, regalos, barrioObras });
+      setD({ concurso, mercado, reuniones, ayuda, muro, tesoro, recado, racha, capitulos: capitulos?.vista ?? null, obras, banquetes, regalos, barrioObras, taller });
       // si terminó una obra, la ciudad la dibuja ya (la ven los vecinos)
       if (obras?.terminada) city?.alObras(obras.hechas, obras.estrellas.estrellas, obras.gozo);
     });
@@ -151,6 +154,21 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       });
       if (alcanza) lineas.push({ id: "obra", icono: "🧱", texto: `Con tu gozo ya puedes edificar en tu casa: ${alcanza.icono} ${alcanza.nombre.toLowerCase()} (${alcanza.gozo})`, boton: irObras });
     }
+  }
+  // el taller (shared/taller.ts): el artesano, las ovejas y el telar
+  const tl = d.taller;
+  if (tl) {
+    const irArtesano = { texto: "Ver", hacer: () => abrir({ kind: "mercado", tab: "taller" }) };
+    const irOficios = city ? { texto: "Ver", hacer: () => abrir({ kind: "casa", pestana: "oficios" }) } : undefined;
+    const pieza = tl.terminada ? articulo(tl.terminada) : tl.artesano ? articulo(tl.artesano.pieza) : null;
+    if (tl.terminada && pieza) lineas.push({ id: "artesano", icono: "✨", texto: `¡El artesano terminó tu pieza fina: ${pieza.nombre.charAt(0).toLowerCase()}${pieza.nombre.slice(1)}!`, boton: irArtesano });
+    else if (tl.artesano && pieza) {
+      const min = Math.max(1, Math.ceil(tl.artesano.faltan / 60));
+      lineas.push({ id: "artesano", icono: "🛠️", texto: `El artesano hace tu ${pieza.nombre.charAt(0).toLowerCase()}${pieza.nombre.slice(1)}: ${min >= 60 ? `faltan ${Math.floor(min / 60)} h ${min % 60} min` : `faltan ${min} min`}`, boton: irArtesano });
+    }
+    if (tl.redil.lista >= Math.max(1, tl.redil.ovejas)) lineas.push({ id: "lana", icono: "✂️", texto: `Tus ovejas tienen ${tl.redil.lista} de lana: trasquílalas`, boton: irOficios });
+    if (tl.tejido) lineas.push({ id: "telar", icono: "🧶", texto: `Tu telar terminó: ${TELAR[tl.tejido].nombre.toLowerCase()}`, boton: irOficios });
+    else if (tl.tieneTelar && !tl.telar && tl.lana >= 2) lineas.push({ id: "telar", icono: "🧶", texto: `Tienes ${tl.lana} de lana: teje en el telar de tu casa`, boton: irOficios });
   }
   // los banquetes de ahora en mi barrio (shared/banquete.ts) y el mío
   const bq = d.banquetes;

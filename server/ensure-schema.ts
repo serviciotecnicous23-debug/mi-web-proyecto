@@ -33,6 +33,8 @@ import { OBRAS_SQL } from "./obras";
 import { BARRIO_OBRAS_SQL } from "./barrio-obras";
 import { REGALOS_SQL } from "./regalos";
 import { BANQUETE_SQL } from "./banquete";
+import { TALLER_SQL } from "./taller";
+import { COSAS_SQL } from "./intercambio";
 import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
 
@@ -1196,6 +1198,9 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(BARRIO_OBRAS_SQL);
       await pool.query(REGALOS_SQL);
       await pool.query(BANQUETE_SQL);
+      // la fase 3 (el taller): el artesano, el redil, el telar, el fardo y los puestos de cosas
+      await pool.query(TALLER_SQL);
+      await pool.query(COSAS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (obras): ${err?.message}`);
     }
