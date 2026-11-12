@@ -55,8 +55,8 @@ function Bloque({ titulo, items, testid }: { titulo: string; items: (string | nu
     <div className="mt-2" data-testid={testid}>
       <p className="text-[11px] font-bold text-sky-200">{titulo}</p>
       <ul className="mt-0.5 space-y-0.5">
-        {lista.map((t) => (
-          <li key={t} className="leading-snug">
+        {lista.map((t, i) => (
+          <li key={`${i}-${t}`} className="leading-snug">
             {t}
           </li>
         ))}
