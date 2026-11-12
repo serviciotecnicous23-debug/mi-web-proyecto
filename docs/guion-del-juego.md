@@ -39,6 +39,7 @@ el mismo día para todos.
 | El huerto | Siembra trigo (40 min), cebada (25 min) u olivos (60 min); riega o deja que la lluvia riegue | Harina y aceite para el alfolí |
 | El horno | Prepara tortas y aceite puro con lo del alfolí | Ofrendas mejores para el templo |
 | El mercado | Vende lo que le sobra al mercader (que busca más lo que escasea en la estación) | Gozo para muebles, ropa y adornos |
+| Las obras de su casa | Empieza una obra con su gozo y la harina del huerto (cisterna, horno, granero, pórtico…); los obreros trabajan aunque no esté | Una casa que se ve en la ciudad, sus estrellas y la foto para compartir |
 | La calle de los siervos | Cumple el recado del día | Gozo y la historia de la semana |
 | El barrio | Bendice casas, ayuda a vecinos, va a reuniones, acompaña a los nuevos | Gozo, encargos y la ofrenda del barrio |
 | «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines y duelos | Gozo, trajes de sabio y la tabla |
@@ -57,7 +58,8 @@ el mismo día para todos.
 - El mérito de la temporada ordena a los sacerdotes: **sacerdote → sacerdote de turno (150 de mérito) → jefe
   de un turno (12) → principal sacerdote (3) → sumo sacerdote (1)**; los más altos piden además aprobar sus
   estudios.
-- La casa crece con la honra: **tienda → casa de adobe → casa de piedra con patio → casa con aposento alto**.
+- La casa crece con la honra: **tienda → casa de adobe → casa de piedra con patio → casa con aposento alto**, y se
+  edifica con el gozo: las obras de la casa (capítulo 7) y sus estrellas.
 - Al cerrar, empieza otra temporada; mientras no haya una historia nueva, cada temporada vuelve a contar la
   última (las historias van en orden en `ARCOS`, `shared/capitulos.ts`).
 

@@ -813,7 +813,7 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
       const n = Math.max(2, Math.round((x1 - x0) / 0.2));
       for (let k = 0; k < n; k++) {
         for (const zz of z1 - z0 > 0.3 ? [z0 + (z1 - z0) * 0.3, z0 + (z1 - z0) * 0.72] : [(z0 + z1) / 2]) {
-          m.sphere(0.065, pick([C.hoja, C.hojaClara, C.verdeOliva]), { x: x0 + (k + 0.5) * ((x1 - x0) / n), y: y + 0.17, z: zz, sy: 1.35 }, 6, 5);
+          m.cone(0.075, 0.24, pick([C.hoja, C.hojaClara, C.verdeOliva]), { x: x0 + (k + 0.5) * ((x1 - x0) / n), y: y + 0.24, z: zz }, 5);
         }
       }
       for (const x of [x0 + 0.03, x1 - 0.03]) m.cyl(0.015, 0.02, 0.4, C.cedroOsc, { x, y: y + 0.2, z: z0 + 0.03 }, 5);
@@ -828,9 +828,9 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
   if (obras.has("cisterna")) {
     const [x, z] = tienda ? [-1.0, 2.05] : patio ? [1.2, 2.02] : [1.22, 1.97];
     const r = 0.24;
-    m.cyl(r, r + 0.03, 0.42, vary(C.piedra, 0.04), { x, y: 0.21, z }, 14);
-    m.cyl(r + 0.035, r + 0.035, 0.05, C.piedraClara, { x, y: 0.43, z }, 14);
-    m.cyl(r - 0.05, r - 0.05, 0.02, C.agua, { x, y: 0.4, z }, 14);
+    m.cyl(r, r + 0.03, 0.42, vary(C.piedra, 0.04), { x, y: 0.21, z }, 12);
+    m.cyl(r + 0.035, r + 0.035, 0.05, C.piedraClara, { x, y: 0.43, z }, 12);
+    m.cyl(r - 0.05, r - 0.05, 0.02, C.agua, { x, y: 0.4, z }, 12);
     for (const sg of [-1, 1]) m.box(0.05, 0.78, 0.05, C.cedroOsc, { x: x + sg * (r + 0.02), y: 0.6, z });
     m.box(2 * r + 0.14, 0.05, 0.05, C.cedroOsc, { x, y: 0.99, z });
     m.cyl(0.05, 0.05, 0.04, C.bronce, { x, y: 0.93, z, rx: Math.PI / 2 }, 10);
@@ -843,7 +843,7 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
   if (obras.has("horno")) {
     const [x, z] = tienda ? [-0.36, 2.66] : patio ? [-1.05, 2.64] : [1.2, 2.6];
     const r = 0.24;
-    m.sphere(r, vary("#a86a42", 0.05), { x, y: 0.02, z, sy: 1.1 }, 12, 8, Math.PI * 2, Math.PI / 2);
+    m.sphere(r, vary("#a86a42", 0.05), { x, y: 0.02, z, sy: 1.1 }, 10, 5, Math.PI * 2, Math.PI / 2);
     m.cyl(r + 0.02, r + 0.03, 0.05, "#8a5a3a", { x, y: 0.025, z }, 12);
     m.box(0.16, 0.13, 0.06, "#2e2418", { x, y: 0.09, z: z + r - 0.03 });
     v.box(0.1, 0.06, 0.02, "#ff9a3a", { x, y: 0.08, z: z + r });
@@ -858,11 +858,9 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
     for (const sx of [-1, 1]) for (const zz of [z0, z1]) m.cyl(0.035, 0.045, top - y0, C.cedroOsc, { x: sx * xs, y: (y0 + top) / 2, z: zz }, 6);
     for (const sx of [-1, 1]) m.box(0.06, 0.06, z1 - z0 + 0.1, C.cedroOsc, { x: sx * xs, y: top, z: (z0 + z1) / 2 });
     for (let k = 0; k <= 5; k++) m.box(2 * xs + 0.1, 0.04, 0.05, C.cedro, { y: top + 0.04, z: z0 + (k * (z1 - z0)) / 5 });
-    for (let k = 0; k < 14; k++) m.add(new THREE.IcosahedronGeometry(0.24, 0), vary("#5f7f3a", 0.12), { x: rr(-xs + 0.12, xs - 0.12), y: top + 0.13 + rr(-0.03, 0.06), z: rr(z0, z1), sy: 0.42 });
-    for (let k = 0; k < 6; k++) {
-      const gx = rr(-xs + 0.25, xs - 0.25), gz = rr(z0 + 0.12, z1 - 0.12);
-      for (let q = 0; q < 4; q++) m.sphere(0.035, "#5b2a5e", { x: gx + rr(-0.03, 0.03), y: top - 0.06 - q * 0.05, z: gz + rr(-0.03, 0.03) }, 5, 4);
-    }
+    for (let k = 0; k < 10; k++) m.add(new THREE.IcosahedronGeometry(0.28, 0), vary("#5f7f3a", 0.12), { x: rr(-xs + 0.12, xs - 0.12), y: top + 0.13 + rr(-0.03, 0.06), z: rr(z0, z1), sy: 0.42 });
+    // los racimos: un cono de uvas colgando (de lejos se ve igual y pesa poco)
+    for (let k = 0; k < 5; k++) m.cone(0.07, 0.2, "#5b2a5e", { x: rr(-xs + 0.25, xs - 0.25), y: top - 0.12, z: rr(z0 + 0.12, z1 - 0.12), rx: Math.PI }, 5);
     m.cyl(0.03, 0.045, top - y0, "#5d4532", { x: -xs + 0.08, y: (y0 + top) / 2, z: z1 - 0.06, rz: 0.04 }, 5);
   }
 
@@ -912,7 +910,7 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
     m.box(1.06, 0.16, 0.13, C.cedroOsc, { x: puertaX, y: 1.72, z });
     m.box(0.72, 1.5, 0.03, "#7a4a26", { x: puertaX, y: 0.78, z: z + 0.01 });
     for (let r = 0; r < 3; r++) for (const sg of [-1, 1]) m.box(0.26, 0.36, 0.02, "#8f5a30", { x: puertaX + sg * 0.17, y: 0.32 + r * 0.46, z: z + 0.03 });
-    m.torus(0.05, 0.012, C.bronce, { x: puertaX + 0.2, y: 0.92, z: z + 0.05 }, 6, 14);
+    m.torus(0.05, 0.012, C.bronce, { x: puertaX + 0.2, y: 0.92, z: z + 0.05 }, 4, 10);
     m.sphere(0.025, C.bronceOsc, { x: puertaX + 0.2, y: 0.97, z: z + 0.045 }, 6, 5);
   }
 
@@ -933,15 +931,15 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
     };
     const l = LUGAR[Math.min(3, nivel)];
     for (const [x, z, k] of l.tinajas)
-      m.lathe([[0, 0], [0.1 * k, 0], [0.2 * k, 0.14 * k], [0.22 * k, 0.32 * k], [0.16 * k, 0.5 * k], [0.09 * k, 0.56 * k], [0.1 * k, 0.6 * k], [0, 0.6 * k]], vary("#b8673a", 0.07), { x, y: techo, z }, 12);
-    for (const [x, z, ry] of l.sacos) m.sphere(0.15, "#d8c27a", { x, y: techo + 0.1, z, sx: 1.25, sy: 0.7, ry }, 8, 6);
+      m.lathe([[0, 0], [0.12 * k, 0], [0.22 * k, 0.22 * k], [0.18 * k, 0.48 * k], [0.1 * k, 0.6 * k], [0, 0.6 * k]], vary("#b8673a", 0.07), { x, y: techo, z }, 8);
+    for (const [x, z, ry] of l.sacos) m.sphere(0.15, "#d8c27a", { x, y: techo + 0.1, z, sx: 1.25, sy: 0.7, ry }, 6, 4);
   }
 
   // ------------------------------------------------ la fuente del patio (Cantares 4:15)
   if (obras.has("fuente") && patio) {
     const x = 0.6, z = 2.62, r = 0.26;
-    m.cyl(r, r + 0.03, 0.3, vary(C.piedraClara, 0.03), { x, y: 0.15, z }, 16);
-    m.cyl(r - 0.04, r - 0.04, 0.02, C.agua, { x, y: 0.29, z }, 16);
+    m.cyl(r, r + 0.03, 0.3, vary(C.piedraClara, 0.03), { x, y: 0.15, z }, 12);
+    m.cyl(r - 0.04, r - 0.04, 0.02, C.agua, { x, y: 0.29, z }, 12);
     m.cyl(0.05, 0.07, 0.42, C.piedra, { x, y: 0.5, z }, 10);
     m.lathe([[0, 0], [0.04, 0], [0.12, 0.06], [0.13, 0.08], [0, 0.07]], C.piedraClara, { x, y: 0.7, z }, 12);
     m.cyl(0.1, 0.1, 0.012, C.agua, { x, y: 0.775, z }, 12);
