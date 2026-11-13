@@ -260,7 +260,8 @@ async function resolverRonda(n: Fila, ahora: number): Promise<Fila> {
   const antes = new Map(puestosDeNoche(js).map((x) => [x.u, x.puesto]));
   const resp: Record<string, Resp> = {};
   for (const j of js) {
-    j.antes = antes.get(j.u) ?? null;
+    // en la primera pregunta todos venían empatados: no hay flechas de subir o bajar
+    j.antes = Number(n.ronda) > 1 ? antes.get(j.u) ?? null : null;
     j.gano = 0;
     j.bien = null;
     if (!j.fuera && j.r) {

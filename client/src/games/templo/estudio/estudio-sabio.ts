@@ -93,15 +93,15 @@ function toma(n: NombreToma, t: number): Toma {
       return { pos: V(0.01, 7.8, 1.9), mira: V(0, 0.2, -0.2), fov: 50 };
     // la duda: los dos frente a frente, de perfil (la cámara baja, entre las cámaras del frente)
     case "frente":
-      return { pos: V(Math.sin(t * 0.21) * 0.06, 1.02, 2.45), mira: V(0, 0.94, 0.28), fov: 36, empuje: 0.1 };
+      return { pos: V(Math.sin(t * 0.21) * 0.06, 1.1, 3.0), mira: V(0, 1.02, 0.28), fov: 40, empuje: 0.1 };
     // la duda: Etán de cerca, desde el hombro de quien juega
     case "etan":
-      return { pos: V(0.12, 1.08, 0.92), mira: V(ASIENTO.presentador.x, 1.0, ASIENTO.presentador.z), fov: 23, empuje: 0.16 };
+      return { pos: V(0.14, 1.16, 1.02), mira: V(ASIENTO.presentador.x, 1.14, ASIENTO.presentador.z), fov: 28, empuje: 0.14 };
     // el suspenso: el atril desde arriba y adelante, con el foco que cae
     case "atril":
       return { pos: V(1.55, 1.95, 1.75), mira: V(ASIENTO.concursante.x, 0.85, ASIENTO.concursante.z), fov: 34, empuje: 0.14 };
     case "podio":
-      return { pos: V(Math.sin(t * 0.15) * 0.45, 1.5, PODIO.z + 2.7), mira: V(0, 1.02, PODIO.z), fov: 42, empuje: 0.06 };
+      return { pos: V(Math.sin(t * 0.15) * 0.45, 1.75, PODIO.z + 3.3), mira: V(0, 1.38, PODIO.z), fov: 44, empuje: 0.05 };
   }
 }
 
@@ -131,6 +131,22 @@ function texturaCono(): THREE.CanvasTexture {
   gr.addColorStop(0, "rgba(255,255,255,0.9)");
   gr.addColorStop(0.6, "rgba(255,255,255,0.25)");
   gr.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 8, 128);
+  return new THREE.CanvasTexture(cv);
+}
+
+/** El haz del foco que cae sobre el atril: se ve en todo su largo, un poco más fuerte abajo, donde da la luz. */
+function texturaHaz(): THREE.CanvasTexture {
+  const cv = document.createElement("canvas");
+  cv.width = 8;
+  cv.height = 128;
+  const g = cv.getContext("2d")!;
+  const gr = g.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, "rgba(255,255,255,0.55)");
+  gr.addColorStop(0.55, "rgba(255,255,255,0.4)");
+  gr.addColorStop(0.95, "rgba(255,255,255,0.75)");
+  gr.addColorStop(1, "rgba(255,255,255,0.3)");
   g.fillStyle = gr;
   g.fillRect(0, 0, 8, 128);
   return new THREE.CanvasTexture(cv);
@@ -466,9 +482,12 @@ export class EstudioSabio {
 
   // la última palabra: el foco que cae, el apagón, los destellos y el podio
   /** El foco que cae sobre el atril al confirmar (de arriba, cada vez más cerrado). */
-  private focoCenital = new THREE.SpotLight("#fff4dc", 0, 12, 0.62, 0.35, 0);
+  private focoCenital = new THREE.SpotLight("#fff4dc", 0, 12, 0.2, 0.3, 0);
   private conoCenital!: THREE.Mesh;
   private conoCenitalMat!: THREE.MeshBasicMaterial;
+  /** El círculo de luz en el piso del atril. */
+  private charcoLuz!: THREE.Mesh;
+  private charcoLuzMat!: THREE.MeshBasicMaterial;
   private suspensoDesde = -99;
   private suspensoDur = 2;
   /** Desde cuándo dura el apagón de la respuesta mala. */
@@ -773,7 +792,7 @@ export class EstudioSabio {
     this.focoCenital.target.position.set(c.x, 0.4, c.z);
     s.add(this.focoCenital, this.focoCenital.target);
     this.conoCenitalMat = new THREE.MeshBasicMaterial({
-      map: texturaCono(),
+      map: texturaHaz(),
       color: "#fff0c8",
       transparent: true,
       opacity: 0,
@@ -782,14 +801,28 @@ export class EstudioSabio {
       side: THREE.DoubleSide,
       toneMapped: false,
     });
-    const haz = new THREE.ConeGeometry(0.62, 6.8, 32, 1, true);
+    const haz = new THREE.ConeGeometry(0.85, 6.8, 32, 1, true);
     haz.translate(0, -3.4, 0);
     this.conoCenital = new THREE.Mesh(haz, this.conoCenitalMat);
     this.conoCenital.position.set(c.x, 7.1, c.z);
     this.conoCenital.scale.set(1, 0.001, 1);
     this.conoCenital.visible = false;
     s.add(this.conoCenital);
-    this.recursos.push(haz, this.conoCenitalMat, this.conoCenitalMat.map!);
+    // el círculo de luz que deja el foco en el piso, alrededor del asiento
+    this.charcoLuzMat = new THREE.MeshBasicMaterial({
+      map: texturaRadial("rgba(255,246,220,0.95)", "rgba(255,246,220,0)"),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    this.charcoLuz = new THREE.Mesh(new THREE.CircleGeometry(1.15, 48), this.charcoLuzMat);
+    this.charcoLuz.rotation.x = -Math.PI / 2;
+    this.charcoLuz.position.set(c.x, DAIS_H + 0.015, c.z);
+    this.charcoLuz.visible = false;
+    s.add(this.charcoLuz);
+    this.recursos.push(haz, this.conoCenitalMat, this.conoCenitalMat.map!, this.charcoLuz.geometry, this.charcoLuzMat, this.charcoLuzMat.map!);
   }
 
   // ================================================================ lo que manda la pantalla del concurso
@@ -1013,7 +1046,7 @@ export class EstudioSabio {
       figuras.push(f);
       rigs.push(r);
       const nombre = letrero(p.nombre.slice(0, 16), 1.1, 0.26, ["#ffd36a", "#e6ebf2", "#e0a070"][i], "800 120px system-ui, sans-serif");
-      nombre.position.set(PODIO.x[i], r.y + 1.45, PODIO.z);
+      nombre.position.set(PODIO.x[i], r.y + 1.36, PODIO.z);
       grupo.add(nombre);
       sprites.push(nombre);
     });
@@ -1290,7 +1323,7 @@ export class EstudioSabio {
     g.setAttribute("color", new THREE.BufferAttribute(col, 3));
     this.destellos = new THREE.Points(
       g,
-      new THREE.PointsMaterial({ size: 0.11, map: this.chispaTex, vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+      new THREE.PointsMaterial({ size: 0.16, map: this.chispaTex, vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
     );
     this.destellosVel = vel;
     this.destellosDesde = this.t;
@@ -1322,7 +1355,7 @@ export class EstudioSabio {
     const m = this.destellos.material as THREE.PointsMaterial;
     // titilan mientras se apagan
     m.opacity = Math.max(0, 1 - vida / 2.6) * (0.75 + 0.25 * Math.sin(this.t * 38));
-    m.size = 0.11 * (1 + 0.35 * Math.sin(this.t * 23));
+    m.size = 0.16 * (1 + 0.35 * Math.sin(this.t * 23));
     if (vida > 2.7) this.quitarDestellos();
   }
 
@@ -1382,7 +1415,8 @@ export class EstudioSabio {
     const enSuspenso = this.fase === "suspenso";
     const pulso = enSuspenso || this.fase === "confirmar" ? 0.65 + Math.sin(this.t * 3.2) * 0.35 : duda ? 0.3 + 0.9 * this.latido() : 1;
     // la sala baja en la duda y en el suspenso; en el apagón, casi a oscuras
-    const luz = (1 - 0.93 * this.apagon()) * (enSuspenso ? 0.4 : duda ? 0.55 : 1);
+    const apagon = this.apagon();
+    const luz = (1 - 0.93 * apagon) * (enSuspenso ? 0.26 : duda ? 0.55 : 1);
     const flash = this.destello * this.destello;
     this.anillo.color.copy(this.color).multiplyScalar((0.9 + flash * 2.5) * (luz < 1 ? Math.max(0.25, luz) : 1));
     for (const [i, r] of this.anillos.entries()) {
@@ -1395,22 +1429,27 @@ export class EstudioSabio {
     this.hemi.intensity = (enSuspenso ? 0.4 : duda ? 0.6 : 0.7 + flash * 0.6) * luz;
     this.relleno.intensity = 0.9 * luz;
     // focos de los asientos: en el suspenso manda el foco de arriba; en la duda, la luz va sobre Etán
-    const objetivoJ = (enSuspenso ? 1.4 : this.fase === "confirmar" ? 5.5 : duda ? 2.2 : 3.2) * luz;
-    const objetivoE = (enSuspenso ? 0.4 : duda ? 6.5 : 2.6) * luz;
-    this.focoJugador.intensity += (objetivoJ - this.focoJugador.intensity) * (1 - Math.exp(-dt * 3));
-    this.focoEtan.intensity += (objetivoE - this.focoEtan.intensity) * (1 - Math.exp(-dt * 3));
+    const objetivoJ = (enSuspenso ? 0.6 : this.fase === "confirmar" ? 5.5 : duda ? 2.2 : 3.2) * luz;
+    const objetivoE = (enSuspenso ? 0.3 : duda ? 6.5 : 2.6) * luz;
+    // en el apagón la luz se va de golpe; si no, cambia suave
+    const suave = apagon > 0.01 ? 1 : 1 - Math.exp(-dt * 3);
+    this.focoJugador.intensity += (objetivoJ - this.focoJugador.intensity) * suave;
+    this.focoEtan.intensity += (objetivoE - this.focoEtan.intensity) * suave;
     this.focoEtan.color.set(duda ? "#ffd8a8" : "#fff2d8");
     // el foco que cae sobre el atril: en un tercio de segundo baja del techo y se va cerrando mientras dura el suspenso
     const ts = this.t - this.suspensoDesde;
     const caida = enSuspenso ? Math.min(1, ts / 0.32) : 0;
     const cierre = enSuspenso ? Math.min(1, ts / Math.max(0.5, this.suspensoDur)) : 0;
-    const anchoHaz = 1.2 - 0.5 * cierre;
+    const anchoHaz = 1 - 0.32 * cierre;
     this.conoCenital.visible = enSuspenso || this.conoCenitalMat.opacity > 0.01;
     this.conoCenital.scale.set(anchoHaz, Math.max(0.001, enSuspenso ? caida : this.conoCenital.scale.y), anchoHaz);
-    this.conoCenitalMat.opacity += ((enSuspenso ? (0.3 + 0.25 * cierre) * caida : 0) - this.conoCenitalMat.opacity) * (1 - Math.exp(-dt * 10));
-    const objetivoC = enSuspenso ? (10 + 12 * cierre) * caida : 0;
+    this.conoCenitalMat.opacity += ((enSuspenso ? (0.22 + 0.16 * cierre) * caida : 0) - this.conoCenitalMat.opacity) * (1 - Math.exp(-dt * 10));
+    this.charcoLuz.visible = this.conoCenital.visible;
+    this.charcoLuz.scale.setScalar(anchoHaz);
+    this.charcoLuzMat.opacity += ((enSuspenso ? 0.85 * caida : 0) - this.charcoLuzMat.opacity) * (1 - Math.exp(-dt * 10));
+    const objetivoC = enSuspenso ? (28 + 18 * cierre) * caida : 0;
     this.focoCenital.intensity += (objetivoC - this.focoCenital.intensity) * (1 - Math.exp(-dt * (enSuspenso ? 16 : 4)));
-    this.focoCenital.angle = 0.62 - 0.32 * cierre;
+    this.focoCenital.angle = 0.17 - 0.05 * cierre;
     // las gradas: las subidas en oro, la de ahora late, las seguras en turquesa
     for (let i = 0; i < GRADAS; i++) {
       const n = i + 1;
@@ -1426,7 +1465,7 @@ export class EstudioSabio {
       this.columnasLuz[k].color.set(en ? "#ffd36a" : "#34348a").multiplyScalar((en ? 1.3 + flash : 0.8 + 0.2 * Math.sin(this.t * 0.9 + k)) * luz);
     }
     // la pantalla grande también se apaga un momento en el apagón
-    (this.pantalla.mesh.material as THREE.MeshBasicMaterial).color.setScalar(0.3 + 0.7 * (1 - 0.93 * this.apagon()));
+    (this.pantalla.mesh.material as THREE.MeshBasicMaterial).color.setScalar(0.3 + 0.7 * (1 - 0.93 * apagon));
     // los conos de luz: barren lento; en el suspenso apuntan al que concursa; al acertar giran rápido
     this.conoMat.color.copy(this.color);
     this.conoMat.opacity = ((enSuspenso ? 0.05 : duda ? 0.08 : 0.15) + flash * 0.25) * luz;

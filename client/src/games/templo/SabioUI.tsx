@@ -15,6 +15,7 @@ import { ICONO_CAMINO } from "./barrio-chat";
 import { LETRAS, LogoSabio, Presentador, RELACION, Reloj, miles, pedir, primerNombre, useVertical } from "./sabio-comun";
 import { DuelosLobby, DueloView } from "./SabioDuelo";
 import { NocheEntrada, NocheView } from "./SabioNoche";
+import { NombreConRegistro } from "./RegistroUI";
 import { EstudioSabio3D } from "./estudio/EstudioSabio3D";
 import type { EstudioSabio } from "./estudio/estudio-sabio";
 import {
@@ -1450,7 +1451,7 @@ function TablasPorPartida({ miPuestoSemana }: { miPuestoSemana: number | null })
         {t && de !== "mias" && t.total > 0 ? `${t.total} ${t.total === 1 ? "partida" : "partidas"}.` : ""}
         {t && de === "mias" && t.total > 0 ? `Jugaste ${t.total} ${t.total === 1 ? "partida" : "partidas"}.` : ""}
         {t?.miPuesto ? ` Tu mejor partida va en el puesto ${t.miPuesto}.` : ""}
-        {de === "semana" ? ` Las tres personas con la mejor partida de la semana reciben ${PREMIO_SEMANA.join(", ")} de gozo el lunes (cuenta la mejor de cada una).${miPuestoSemana ? ` Vas ${miPuestoSemana}.º.` : ""}` : ""}
+        {de === "semana" ? ` Las tres personas con la mejor partida de la semana reciben ${PREMIO_SEMANA.join(", ")} de gozo el lunes (cuenta la mejor de cada una).${miPuestoSemana ? ` Vas en el puesto ${miPuestoSemana}.` : ""}` : ""}
       </p>
     </div>
   );
@@ -1470,7 +1471,8 @@ function FilaDePartida({ f, mias }: { f: PartidaEnTabla; mias: boolean }) {
         <span className="flex items-center gap-1 truncate font-bold">
           <span aria-hidden="true">{ICONO_CAMINO[f.camino]}</span>
           <span className="truncate">
-            {mias ? cuando : f.nombre}
+            {/* cada nombre abre «📜 Su registro» (RegistroUI.tsx) */}
+            {mias ? cuando : <NombreConRegistro personajeId={f.pid} nombre={f.nombre} className="truncate" />}
             {f.esYo && !mias ? " (tú)" : ""}
           </span>
         </span>

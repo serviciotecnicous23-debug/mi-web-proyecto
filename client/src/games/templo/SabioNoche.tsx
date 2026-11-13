@@ -204,7 +204,14 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
     (x: NocheVista) => {
       const e = estudio();
       if (!e) return;
-      const k = x.estado === "terminada" ? "fin" : x.revelado ? `r${x.revelado.n}` : x.pregunta ? `p${x.pregunta.n}-${x.miRespuesta ?? ""}` : `${x.estado}-${x.ronda}`;
+      const k =
+        x.estado === "terminada"
+          ? "fin"
+          : x.revelado
+            ? `r${x.revelado.n}`
+            : x.pregunta
+              ? `p${x.pregunta.n}-${x.miRespuesta ?? ""}`
+              : `${x.estado}-${x.ronda}-${x.jugadores.length}-${x.anfitrion}`;
       if (k === claveEstudio.current) return;
       claveEstudio.current = k;
       if (x.estado === "terminada") {
@@ -281,12 +288,22 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
     setN(null);
     setError(null);
     void traer();
+    // cada 2 s de respaldo; los avisos de la red se juntan (así un grupo con la misma wifi no gasta el límite de peticiones)
     const t = setInterval(() => {
       if (!termino.current) void traer();
-    }, mirar ? 1500 : 1000);
-    const quitar = sabioRed.onNoche((x) => {
-      if (x === id) void traer();
+    }, mirar ? 2500 : 2000);
+    let juntar: number | null = null;
+    const quitarAviso = sabioRed.onNoche((x) => {
+      if (x !== id || juntar !== null) return;
+      juntar = window.setTimeout(() => {
+        juntar = null;
+        void traer();
+      }, 400);
     });
+    const quitar = () => {
+      quitarAviso();
+      if (juntar !== null) clearTimeout(juntar);
+    };
     const reloj = setInterval(() => {
       const s = Math.max(0, Math.ceil((finPregunta.current - Date.now()) / 1000));
       if (s !== ultimoTic.current && s > 0 && s <= 5 && !termino.current) sonido.tic(true);
@@ -443,7 +460,7 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 truncate text-[11px] font-bold uppercase tracking-widest text-amber-200/85" data-testid="noche-ronda">
           {mirar && <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500 align-middle" aria-hidden="true" />}🌙 Pregunta {Math.max(1, n.ronda)} de {NOCHE_PREGUNTAS}
-          {yo ? ` · vas ${yo.puesto}.º con ${miles(yo.puntos)}` : ""}
+          {yo ? ` · puesto ${yo.puesto} · ${miles(yo.puntos)} puntos` : ""}
         </p>
         <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold" title="Miran en vivo">
           <Eye className="h-3.5 w-3.5" /> {n.mirando}
