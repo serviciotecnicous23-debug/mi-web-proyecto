@@ -285,6 +285,14 @@ function legales(p: Pos): Mov[] {
 /** Las jugadas que valen, escritas («e2e4», «e7e8q»). */
 export const jugadasDe = (p: Pos) => legales(p).map(texto);
 
+/** Cuenta las posiciones a tantas jugadas (para probar que se generan bien todas las jugadas). */
+export function perft(p: Pos, hondo: number): number {
+  if (hondo === 0) return 1;
+  let n = 0;
+  for (const m of legales(p)) n += hondo === 1 ? 1 : perft(hacer(p, m), hondo - 1);
+  return n;
+}
+
 /** ¿Quedan piezas para dar mate? (rey contra rey, o con un solo caballo o alfil, o alfiles del mismo color, no alcanzan) */
 function sinMaterial(t: number[]): boolean {
   const otras = t.map((v, i) => ({ v: Math.abs(v), i })).filter((x) => x.v && x.v !== REY);
