@@ -546,7 +546,7 @@ test("en la sala: los seis juegos con su nombre, su versículo y sus opciones; n
   }
   assert.deepEqual(opcionesValidas("loteria", { modo: "llena", ritmo: "nada", otra: 1 }), { modo: "llena", ritmo: "normal" });
   assert.equal(MESAS_PATIO.length, 6);
-  assert.deepEqual(MESAS_PATIO.map((m) => m.id).sort(), [...ORDEN_MESAS].sort());
+  assert.deepEqual(MESAS_PATIO.map((m) => m.id).sort(), ORDEN_MESAS.filter((id) => id !== "dibuja").sort(), "una mesa por juego (dibujar se juega en la mesa de los juegos)");
   assert.equal(tituloConNombres("¡Lotería de @1!", ["Ana", "Rubén 🤖"]), "¡Lotería de Rubén 🤖!");
   assert.ok(JUEGOS_MESA.memoria.min === 1, "la memoria se juega solo");
 });
@@ -602,4 +602,60 @@ test("en la sala: lo que no vale se explica (y lo que no se entiende, también)"
   assert.match(j.porQueNo(e2, turno, { t: "anotar", cat: "full" }, GENERALA.prepararMs + 5) ?? "", /Primero tira/);
   assert.equal(j.porQueNo(e2, turno, { t: "volar" }, GENERALA.prepararMs + 5), "Esa jugada no se entiende.");
   assert.equal(j.porQueNo(e2, turno, { t: "tirar", guardar: [] }, GENERALA.prepararMs + 5), null);
+});
+
+// ================================================================ dibuja y adivina
+import { DIBUJA, PALABRAS_DIBUJA, dibuja, type EstadoDibuja } from "./mesa/dibuja";
+
+test("dibuja: quien dibuja ve su palabra, los demás ocho opciones; aciertan en orden y la ronda se cierra cuando todos eligen", () => {
+  const azar = azarCon(31);
+  let e = dibuja.estadoInicial({ bots: [null, null, null] }, azar, 0);
+  e = dibuja.alTiempo(e, DIBUJA.prepararMs, azar)!;
+  const d = e.orden[0];
+  const otros = [0, 1, 2].filter((a) => a !== d);
+  const palabra = PALABRAS_DIBUJA[e.palabra];
+  assert.equal(dibuja.vistaPara(e, d, 4000).palabra, palabra);
+  const vo = dibuja.vistaPara(e, otros[0], 4000);
+  assert.equal(vo.palabra, null, "quien adivina no ve la palabra");
+  assert.equal(vo.opciones!.length, DIBUJA.opciones);
+  assert.ok(vo.opciones!.some((x) => x.texto === palabra));
+  assert.ok(!JSON.stringify(vo).includes(`"palabra":${e.palabra}`));
+  // el dibujo: solo quien dibuja, con colores y grosores de la lista
+  assert.equal(dibuja.aplicar(e, otros[0], { t: "trazo", c: 0, g: 6, p: [0, 0, 10, 10] }, 4100, azar).ok, false);
+  assert.equal(dibuja.leerJugada({ t: "trazo", c: 99, g: 6, p: [0, 0, 1, 1] }), null);
+  assert.equal(dibuja.leerJugada({ t: "trazo", c: 1, g: 5, p: [0, 0, 1, 1] }), null);
+  e = (dibuja.aplicar(e, d, { t: "trazo", c: 1, g: 6, p: [100, 100, 500, 500, 900, 120] }, 4200, azar) as { e: EstadoDibuja }).e;
+  assert.equal(dibuja.vistaPara(e, otros[1], 4300).trazos.length, 1);
+  assert.equal(dibuja.aplicar(e, d, { t: "adivinar", o: e.palabra }, 4300, azar).ok, false, "quien dibuja no adivina");
+  // uno acierta y otro falla: se cierra la ronda
+  const mala = e.opciones.find((o) => o !== e.palabra)!;
+  e = (dibuja.aplicar(e, otros[0], { t: "adivinar", o: e.palabra }, 5000, azar) as { e: EstadoDibuja }).e;
+  assert.equal(e.puntos[otros[0]], DIBUJA.acierto[0]);
+  assert.equal(dibuja.aplicar(e, otros[0], { t: "adivinar", o: mala }, 5100, azar).ok, false, "una vez por ronda");
+  assert.equal(dibuja.vistaPara(e, otros[1], 5100).aciertos[0], otros[0], "se ve quién acertó");
+  e = (dibuja.aplicar(e, otros[1], { t: "adivinar", o: mala }, 5200, azar) as { e: EstadoDibuja }).e;
+  assert.equal(e.fase, "revelar");
+  assert.equal(e.puntos[d], DIBUJA.porAcierto, "quien dibuja gana por cada acierto");
+  assert.equal(dibuja.vistaPara(e, otros[1], 5300).palabra, palabra, "al revelar todos la ven");
+});
+
+test("dibuja: solo (o con compañeros de la computadora, que solo miran) es práctica de tres palabras; y en grupo cada uno dibuja una vez", () => {
+  const azar = azarCon(8);
+  let e = dibuja.estadoInicial({ bots: [null, "normal", "facil"] }, azar, 0);
+  assert.deepEqual(e.orden, [0]);
+  e = dibuja.alTiempo(e, DIBUJA.prepararMs, azar)!;
+  assert.equal(dibuja.vistaPara(e, 0, 4000).practica, true);
+  assert.equal(dibuja.aplicar(e, 1, { t: "adivinar", o: e.palabra }, 4000, azar).ok, false, "el compañero solo mira");
+  e = (dibuja.aplicar(e, 0, { t: "listo" }, 9000, azar) as { e: EstadoDibuja }).e;
+  assert.equal(e.fase, "revelar");
+  let t = 9000;
+  for (let k = 0; k < 20 && e.fase !== "fin"; k++) {
+    t = Math.max(t, e.faseHasta);
+    e = dibuja.alTiempo(e, t, azar) ?? e;
+  }
+  assert.equal(e.fase, "fin");
+  assert.equal(e.usadas.length, DIBUJA.rondasPractica);
+  assert.equal(new Set(e.usadas).size, e.usadas.length, "sin repetir palabras");
+  const g = dibuja.estadoInicial({ bots: [null, null, null, null] }, azar, 0);
+  assert.equal(new Set(g.orden).size, 4);
 });

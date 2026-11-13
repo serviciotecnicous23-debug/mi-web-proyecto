@@ -24,6 +24,7 @@ import { escaleras } from "@shared/mesa/escaleras";
 import { damasChinas } from "@shared/mesa/damas-chinas";
 import { memoria, PAREJAS } from "@shared/mesa/memoria";
 import { basta } from "@shared/mesa/basta";
+import { dibuja } from "@shared/mesa/dibuja";
 import { CARTAS_LOTERIA } from "@shared/mesa/loteria-cartas";
 import { DefsFiguras, Figura, IDS_FIGURAS } from "./figuras";
 import { CartaLoteria } from "./Carta";
@@ -45,6 +46,7 @@ const MODULOS: Record<JuegoMesaId, ModuloConVista> = {
   "damas-chinas": damasChinas as unknown as ModuloConVista,
   memoria: memoria as unknown as ModuloConVista,
   basta: basta as unknown as ModuloConVista,
+  dibuja: dibuja as unknown as ModuloConVista,
 };
 
 function Corredor({

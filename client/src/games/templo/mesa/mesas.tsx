@@ -10,6 +10,7 @@ import { EscalerasUI } from "./EscalerasUI";
 import { DamasChinasUI } from "./DamasChinasUI";
 import { MemoriaUI } from "./MemoriaUI";
 import { BastaUI } from "./BastaUI";
+import { DibujaUI } from "./DibujaUI";
 
 export type { JuegoMesaId };
 
@@ -21,4 +22,5 @@ export const UI_MESAS: Record<JuegoMesaId, ComponentType<PropsMesa<any, any>>> =
   "damas-chinas": DamasChinasUI,
   memoria: MemoriaUI,
   basta: BastaUI,
+  dibuja: DibujaUI,
 };

@@ -5,8 +5,8 @@
  */
 import type { Verso } from "../ciudad";
 
-export type JuegoMesaId = "loteria" | "generala" | "escaleras" | "damas-chinas" | "memoria" | "basta";
-export const ORDEN_MESAS: JuegoMesaId[] = ["loteria", "generala", "escaleras", "damas-chinas", "memoria", "basta"];
+export type JuegoMesaId = "loteria" | "generala" | "escaleras" | "damas-chinas" | "memoria" | "basta" | "dibuja";
+export const ORDEN_MESAS: JuegoMesaId[] = ["loteria", "generala", "escaleras", "damas-chinas", "memoria", "basta", "dibuja"];
 export const esJuegoMesa = (x: unknown): x is JuegoMesaId => typeof x === "string" && (ORDEN_MESAS as string[]).includes(x);
 
 export type OpcionMesa = { id: string; nombre: string; valores: { id: string; nombre: string }[]; inicial: string };
@@ -154,6 +154,22 @@ export const JUEGOS_MESA: Record<JuegoMesaId, JuegoMesaDef> = {
     max: 12,
     opciones: [],
     color: "#1fa3a3",
+  },
+  dibuja: {
+    id: "dibuja",
+    nombre: "Dibuja y adivina",
+    icono: "🖍️",
+    corto: "Uno dibuja una palabra de la Biblia y los demás la adivinan entre ocho.",
+    como: [
+      "Por turnos, cada uno dibuja una palabra de la Biblia que solo él ve. Los demás miran el dibujo y eligen entre ocho palabras.",
+      "Adivinar primero vale más; quien dibuja gana por cada uno que adivina. No se escriben letras en el dibujo.",
+      "Solo, es práctica: dibuja tres palabras con el reloj. Los compañeros de la computadora aquí solo miran.",
+    ],
+    verso: { text: "Escribe la visión, y declárala en tablas, para que corra el que leyere en ella.", ref: "Habacuc 2:2" },
+    min: 1,
+    max: 12,
+    opciones: [],
+    color: "#e06aa0",
   },
 };
 

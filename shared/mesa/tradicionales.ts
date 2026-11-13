@@ -18,6 +18,7 @@ import { escaleras } from "./escaleras";
 import { damasChinas } from "./damas-chinas";
 import { memoria } from "./memoria";
 import { basta } from "./basta";
+import { dibuja } from "./dibuja";
 
 type AsientoT = { n: number; nombre: string; bot: Nivel | null };
 type ResultadoT = { ganadores: number[]; puntos: number[]; detalle: string[]; titulo: string };
@@ -65,6 +66,7 @@ const MODULOS: Record<JuegoMesaId, ModuloConVista> = {
   "damas-chinas": damasChinas as unknown as ModuloConVista,
   memoria: memoria as unknown as ModuloConVista,
   basta: basta as unknown as ModuloConVista,
+  dibuja: dibuja as unknown as ModuloConVista,
 };
 
 /** El título del final con los nombres («¡Lotería de @2!» → «¡Lotería de Ana!»). */
