@@ -4,11 +4,14 @@
  */
 import type { JuegoDeMesa } from "../mesa";
 import { TRES_EN_RAYA } from "./tres-en-raya";
+import { CUATRO_EN_RAYA } from "./cuatro-en-raya";
+import { DAMAS } from "./damas";
+import { AJEDREZ } from "./ajedrez";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CualquierJuego = JuegoDeMesa<any, any, any>;
 
-const LISTA: CualquierJuego[] = [TRES_EN_RAYA];
+const LISTA: CualquierJuego[] = [AJEDREZ, DAMAS, CUATRO_EN_RAYA, TRES_EN_RAYA];
 
 export const MESAS: Record<string, CualquierJuego> = Object.fromEntries(LISTA.map((j) => [j.id, j]));
 

@@ -13,6 +13,9 @@ import type { MesaPartidaVista, ResultadoVista } from "@shared/juegos-grupo";
 import { CiudadCtx } from "../CiudadUI";
 import { juegosRed } from "../juegos-red";
 import { TresEnRayaPantalla } from "./TresEnRaya";
+import { AjedrezPantalla } from "./Ajedrez";
+import { DamasPantalla } from "./Damas";
+import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
 
 export type PantallaMesaProps<V = unknown, J = unknown> = {
   vista: V;
@@ -29,6 +32,9 @@ export type PantallaMesaProps<V = unknown, J = unknown> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const PANTALLAS_MESA: Record<string, ComponentType<PantallaMesaProps<any, any>>> = {
   "tres-en-raya": TresEnRayaPantalla,
+  "cuatro-en-raya": CuatroEnRayaPantalla,
+  damas: DamasPantalla,
+  ajedrez: AjedrezPantalla,
 };
 
 /** Avisa a la banda sonora qué juego está abierto (y que se cerró al salir). */

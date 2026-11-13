@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-ajedrez-damas-cuatro",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Ajedrez, damas y cuatro en raya en el patio",
+    puntos: [
+      "♟️ Ajedrez con todas sus reglas: enroque, comer al paso, coronar el peón (eliges en qué se convierte), jaque mate, ahogado y tablas. Las piezas son de marfil y de ébano, se deslizan por el tablero y el rey en jaque late en rojo.",
+      "⚫ Damas a la española: el peón come hacia adelante, la dama vuela por la diagonal, comer es obligatorio y hay que comer la mayor cantidad. Las comidas largas se ven salto por salto.",
+      "🔴 Cuatro en raya: las fichas de granate y de oro caen con rebote y la línea de cuatro brilla.",
+      "🤖 En los tres puedes jugar solo contra la computadora, en fácil, normal o difícil. En difícil, hay que pensar de verdad para ganarle.",
+    ],
+  },
+  {
     id: "2026-11-13-juegos-de-mesa",
     fecha: "13 de noviembre de 2026",
     titulo: "Juegos de mesa en el patio, y compañeros de la computadora para jugar solo",
