@@ -13,6 +13,19 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-la-casa-viva",
+    fecha: "13 de noviembre de 2026",
+    titulo: "La casa viva: más bonita por dentro, muebles que se usan y ropa de pies a cabeza",
+    puntos: [
+      "🏠 Tu casa por dentro tiene ventanas con celosía por donde entra la luz del día, tapices en las paredes, repisas con cántaros, vigas en el techo y lámparas. Y todos los muebles del mercado se ven más finos.",
+      "📐 Más espacio sin mover lo que ya pusiste: la tienda gana el rincón del toldo, la casa de adobe una alcoba y la casa de piedra un cuarto para los huéspedes. Ahora caben 14, 24, 36 y 50 muebles.",
+      "🪑 Los muebles se usan: siéntate en las sillas, los bancos y los cojines; descansa en tu lecho (+3 de gozo), cocina un guiso en el fogón con 2 de harina y 1 de aceite (+3 de gozo, y si ese día abres tu banquete cada invitado gana 1 de gozo más) y lee el rollo del estante (+2 de gozo y un versículo distinto cada día). Descansar, cocinar y leer dan gozo una vez por día.",
+      "🍲 Muebles nuevos en el mercado: el fogón de piedras, los cántaros de barro, el baúl de acacia, el lecho con cobertor y el tapiz bordado. Júntalos en tu álbum para ganar el título «Casa viva».",
+      "👘 Ropa de pies a cabeza en el tejedor: túnicas con franjas y la bordada, turbantes, velos, sandalias, el cayado de pastor, el rollo en la mano y el zurrón. Toca 👁️ para probártela: ves a tu personaje girando con ella antes de comprarla. Júntalas para ganar «De pies a cabeza».",
+      "🪞 En Tu casa → 🪔 Adornos y ropa eliges qué llevar en cada parte (túnica, manto, faja, cabeza, pies, mano y bolsa) y lo ves en tu muñeco antes de ponértela. Tus vecinos te ven así en la ciudad.",
+    ],
+  },
+  {
     id: "2026-11-13-patio-de-los-juegos",
     fecha: "13 de noviembre de 2026",
     titulo: "El patio de los juegos: juega en grupo con tu gente de la iglesia",

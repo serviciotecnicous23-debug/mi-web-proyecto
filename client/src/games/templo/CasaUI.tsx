@@ -8,7 +8,7 @@
  */
 import { useState } from "react";
 import { Check, ChevronRight, DoorOpen, Hammer, Home, Loader2, MapPin, MessageCircle, Package, RotateCw, Sparkles, X } from "lucide-react";
-import { MUEBLES, VERSO_CAMARAS, type InteriorEstado } from "@shared/casa-interior";
+import { MUEBLES, USOS_CASA, VERSO_CAMARAS, type InteriorEstado, type UsoMueble, type UsoRespuesta } from "@shared/casa-interior";
 import { gameStore, useGame } from "./store";
 import { avisarMisiones } from "./online";
 import type { CasaWorld } from "./casa/mundo-casa";
@@ -31,9 +31,31 @@ async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; da
   }
 }
 
-export function CasaHudLayer({ mundo, onSalir, onMaestro, onHuerto }: { mundo: CasaWorld; onSalir: () => void; onMaestro?: () => void; onHuerto?: () => void }) {
+/** Lo que dice cada botón de los muebles que se usan (la casa viva). */
+const BOTON_USO: Record<UsoMueble, { icono: string; texto: string; hecho: string }> = {
+  sentarse: { icono: "🪑", texto: "Sentarse", hecho: "Sentarse" },
+  descansar: { icono: "🛏️", texto: "Descansar", hecho: "Ya descansaste hoy" },
+  cocinar: { icono: "🍲", texto: "Cocinar un guiso", hecho: "Ya cocinaste hoy" },
+  leer: { icono: "📜", texto: "Leer el rollo", hecho: "Ya leíste el rollo hoy" },
+};
+
+export function CasaHudLayer({
+  mundo,
+  onSalir,
+  onMaestro,
+  onHuerto,
+  onGozo,
+}: {
+  mundo: CasaWorld;
+  onSalir: () => void;
+  onMaestro?: () => void;
+  onHuerto?: () => void;
+  /** El gozo nuevo (después de usar un mueble): se ve en la ciudad. */
+  onGozo?: (g: number) => void;
+}) {
   const { casa: c, toasts, modal } = useGame();
   const [guardando, setGuardando] = useState(false);
+  const [usando, setUsando] = useState(false);
   const [bendiciendo, setBendiciendo] = useState(false);
   const [dejarCambios, setDejarCambios] = useState(false);
   if (!c) return null;
@@ -69,6 +91,37 @@ export function CasaHudLayer({ mundo, onSalir, onMaestro, onHuerto }: { mundo: C
       gameStore.toast(`Dejaste tu bendición en la casa de ${c.dueno}`, "gold");
       avisarMisiones(r.data.misiones);
     } else gameStore.toast(r.data?.message || "No se pudo dejar la bendición.", "warn");
+  };
+
+  /** Usar el mueble de ahí cerca: sentarse lo hace la casa; descansar, cocinar y leer, también el servidor (una vez por día). */
+  const usar = async (uso: UsoMueble) => {
+    if (!mundo.usar(uso) || uso === "sentarse") return;
+    setUsando(true);
+    const r = await pedir<UsoRespuesta>("/casa/usar", { uso });
+    setUsando(false);
+    if (!r.ok || !r.data) {
+      gameStore.toast(r.data?.message || "No se pudo. Intenta de nuevo.", "warn");
+      mundo.levantarse();
+      return;
+    }
+    const d = r.data;
+    mundo.ponerUsos({ descansar: false, cocinar: false, leer: false, ...(mundo.estado.usos ?? {}), [uso]: true });
+    onGozo?.(d.gozoTotal);
+    gameStore.toast(`${USOS_CASA[uso].icono} +${d.gozo} de gozo`, "gold");
+    const primero =
+      uso === "descansar"
+        ? "Descansaste en tu casa. Mañana puedes volver a descansar."
+        : uso === "cocinar"
+          ? "Cocinaste un guiso en tu fogón. Si hoy abres tu banquete, cada invitado gana 1 de gozo más."
+          : "El rollo de hoy (mañana trae otro versículo):";
+    gameStore.push({
+      kind: "dialog",
+      id: `uso-${uso}`,
+      lines: [
+        { quien: "narrador", texto: primero },
+        { quien: "narrador", texto: d.verso.text, ref: d.verso.ref },
+      ],
+    });
   };
 
   const enArcon = MUEBLES.filter((m) => (c.disponibles[m.id] || 0) > 0);
@@ -149,6 +202,30 @@ export function CasaHudLayer({ mundo, onSalir, onMaestro, onHuerto }: { mundo: C
               {c.aviso}
             </div>
           </>
+        )}
+
+        {/* los muebles que se usan (la casa viva): sentarse, descansar, cocinar y leer el rollo */}
+        {!modal && !ed && !c.remodelando && c.postura && (
+          <button
+            type="button"
+            onClick={() => mundo.levantarse()}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-amber-950 shadow-lg active:scale-95"
+            data-testid="casa-levantarse"
+          >
+            🚶 Levantarse
+          </button>
+        )}
+        {!modal && !ed && !c.remodelando && !c.postura && c.uso && (
+          <button
+            type="button"
+            onClick={() => void usar(c.uso!.uso)}
+            disabled={usando || c.uso.hecho}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-gradient-to-b from-sky-300 to-sky-500 px-4 py-2 text-sm font-black text-sky-950 shadow-lg ring-2 ring-white/70 active:scale-95 disabled:from-stone-400 disabled:to-stone-500 disabled:text-white/80"
+            data-testid={`casa-usar-${c.uso.uso}`}
+          >
+            {usando ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-base leading-none">{BOTON_USO[c.uso.uso].icono}</span>}
+            {c.uso.hecho ? BOTON_USO[c.uso.uso].hecho : `${BOTON_USO[c.uso.uso].texto} · ${c.uso.icono} ${c.uso.nombre}`}
+          </button>
         )}
 
         {!modal && c.esMia && !c.remodelando && (

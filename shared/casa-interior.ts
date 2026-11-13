@@ -436,6 +436,8 @@ export type InteriorEstado = {
   /** Si quien mira ya bendijo hoy esta casa. */
   yaBendije: boolean;
   gozo: number;
+  /** Solo para el dueño: lo que ya usó hoy (descansar, cocinar y leer el rollo). */
+  usos?: UsosDeHoy;
 };
 
 // ---------------------------------------------------------------- los muebles que se usan
@@ -457,7 +459,7 @@ const USO_BASE: Record<string, UsoMueble> = {
  */
 export function usoDe(m: string, hayEstante = false): UsoMueble | null {
   const base = muebleBase(m);
-  if (base === "mesa" || base === "mesa-pan") return hayEstante ? "leer" : "sentarse";
+  if (base === "mesa") return hayEstante ? "leer" : null;
   return USO_BASE[base] ?? null;
 }
 

@@ -14,7 +14,8 @@ const HORA = 3_600_000;
 
 test("cada mueble del mercado y cada prenda que se vende tiene su pieza fina, que no se vende", () => {
   const muebles = MUEBLES.filter((m) => !m.fina);
-  const ropa = ARTICULOS.filter((a) => a.categoria === "ropa" && !a.exclusivo);
+  // la ropa de pies a cabeza (la casa viva: túnicas, turbantes, velos, sandalias, cayado, rollo y zurrón) no tiene pieza fina
+  const ropa = ARTICULOS.filter((a) => a.categoria === "ropa" && !a.exclusivo && !a.ranura);
   assert.equal(MUEBLES_FINOS.length, muebles.length);
   for (const a of [...muebles, ...ropa]) {
     const f = finaDe(a.id);
@@ -64,7 +65,8 @@ test("lo que cobra y lo que pide el artesano", () => {
   assert.equal(estudiosDeFina(articulo("estante")!), 3);
   // hacer todas las piezas finas (las 4 iguales y el jornal) es un gasto grande: varias semanas de un jugador activo
   const total = PARA_EL_ARTESANO.reduce((s, a) => s + a.precio * IGUALES + jornalDeFina(a), 0);
-  assert.equal(total, 10362);
+  // 10.362 antes de la casa viva, más los 5 muebles nuevos (fogón, cántaros, baúl, lecho con cobertor y tapiz): 6 × 288
+  assert.equal(total, 12090);
 });
 
 test("por qué no se puede llevar al artesano (en orden)", () => {

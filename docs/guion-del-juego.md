@@ -534,13 +534,16 @@ de Club Penguin:
 **El álbum** (`shared/album.ts`, `server/album.ts`, `AlbumUI.tsx`, en *Tu casa → Álbum*), inspirado en la colección de
 Pokémon GO:
 - Todo lo que se tuvo alguna vez queda anotado (`game_album`), aunque después se venda o se regale.
-- Hay 7 colecciones, cada una con su título, más una por cada historia de la temporada:
+- Hay 9 colecciones, cada una con su título, más una por cada historia de la temporada:
   - los muebles: «Buen mayordomo»;
   - los adornos: «Casa alegre»;
   - la ropa de siempre: «Bien vestido»;
   - la ropa del año: «Guarda los tiempos»;
   - los muebles finos: «Artífice»;
   - la ropa fina: «Bordador de oro»;
+  - los muebles de la casa viva (el fogón, los cántaros, el baúl, el lecho con cobertor y el tapiz): «Casa viva»;
+  - la ropa de pies a cabeza (las túnicas, los turbantes y los velos, las sandalias, el cayado, el rollo y el
+    zurrón): «De pies a cabeza»;
   - lo que se gana (los trajes de los sabios, el mejor vestido, la faja del buen amigo y el manto de Elías):
     «Tesoro de Jerusalén»;
   - las cinco prendas de la amenaza de Senaquerib: «Atalaya de Sion»;
@@ -598,6 +601,75 @@ sembrado en su etapa, en la malla del suelo (no se aclara con la casa).
 
 **Para probar** (scratchpad de la parte 4): `reg5079/huerto_api.py` (78) y `shared/huerto.test.ts`. Las pruebas viejas
 que sembraban sin arar ahora deben arar antes, llevar las gavillas al granero y espantar las aves.
+
+## 7c. La casa viva (13 de noviembre de 2026)
+
+Luis veía las casas por dentro «todo muy básico» y pidió muebles, ropa y accesorios más detallados, más bonitos y con
+más espacio.
+
+**Más espacio sin mover nada** (`PLANOS` en `shared/casa-interior.ts`): cada casa crece solo con celdas nuevas (al este
+o en un cuarto nuevo), así que lo que cada uno ya puso sigue en su lugar. `shared/casa-viva.test.ts` lo comprueba con
+los cuartos de antes.
+
+| Casa | Cuarto nuevo | Caben (antes → ahora) |
+|---|---|---|
+| Tienda | El rincón del toldo | 10 → 14 |
+| Casa de adobe | La alcoba | 18 → 24 |
+| Casa de piedra | El cuarto de los huéspedes | 28 → 36 |
+| Aposento alto | El cuarto de los huéspedes | 40 → 50 |
+
+**Por dentro** (`decorar` en `casa/mundo-casa.ts`): en la pared del fondo, cada 4 celdas, una ventana con celosía (con
+su rayo de luz, que se ve de día), un tapiz de granadas o una repisa con cántaros (la tienda no tiene ventanas); hay
+lámparas en las paredes de los lados y vigas en el techo. Todos los muebles del mercado se dibujaron de nuevo, más
+finos (`casa/muebles3d.ts`).
+
+**Los muebles nuevos** (serie `casa-viva`): cada uno tiene su pieza fina en el artesano, y juntos forman la colección
+«Casa viva» del álbum.
+
+| Mueble | Precio | Lo que hace |
+|---|---|---|
+| 🍲 Fogón de piedras | 45 | Alumbra; en él se cocina el guiso |
+| 🏺 Cántaros de barro | 28 | Adorna la cocina |
+| 🧰 Baúl de acacia | 55 | Ocupa 2 × 1 |
+| 🛌 Lecho con cobertor | 95 | Ocupa 2 × 2 y pide casa de adobe; en él se descansa |
+| 🧶 Tapiz bordado | 65 | Ocupa 2 × 1 |
+
+**Los muebles que se usan** (`usoDe`; `POST /api/jerusalen/casa/usar` en `server/casa-usar.ts`): al acercarse a uno,
+un botón dice lo que se puede hacer, y «Levantarse» lo termina.
+- 🪑 **Sentarse** en la silla, el banco de cedro, los cojines o la estera: lo hace la casa sola, sin el servidor.
+- 🛏️ **Descansar** en el lecho o en el lecho con cobertor: +3 de gozo y Salmos 4:8.
+- 🍲 **Cocinar un guiso** en el fogón: 2 de flor de harina y 1 de aceite del alfolí, +3 de gozo y Proverbios 15:17. Si
+  ese día abres tu banquete, cada invitado gana 1 de gozo más (`guisoDeHoy`, en `server/banquete.ts`).
+- 📜 **Leer el rollo** del estante (o en la mesa, si en la casa hay un estante): +2 de gozo y el rollo del día, uno de
+  14 versículos (`ROLLO_DEL_DIA`), el mismo para todos ese día.
+- Descansar, cocinar y leer dan gozo una vez por día. Se guarda en `game_houses.labranza.usos` (`{ dia, hechos }`), y
+  el termómetro lo cuenta como `casa-descansar`, `casa-cocinar` y `casa-leer`. La pieza fina sirve igual que su mueble.
+
+**La ropa de pies a cabeza** (`ROPA_DE_PIES_A_CABEZA` en `shared/mercado.ts`): ahora el personaje se viste en 7 partes
+(`RANURAS`): túnica, manto, faja, cabeza, pies, mano y bolsa (`MercadoEstado.ropa`). En el tejedor:
+
+| Parte | Prendas (precio) |
+|---|---|
+| Túnica | con franjas azules, con franjas granate, verde olivo (55 cada una) y la bordada (110) |
+| Cabeza | turbante de lino (35), turbante azul (45), velo de lino (35) y velo rosa pálido (45) |
+| Pies | sandalias de cuero (25) y sandalias con correas rojas (45) |
+| Mano | el cayado de pastor (50, Salmos 23:4) y el rollo de las Escrituras (60, Ezequiel 2:9) |
+| Bolsa | el zurrón de cuero (30, 1 Samuel 17:40) |
+
+- Las dibuja `Figure.setRopa` (`three/characters.ts`): la túnica con sus franjas y su ruedo (la bordada, con bandas de
+  oro); el turbante o el velo en lugar del tocado del camino (también en los sacerdotes: su vestidura se arma sin la
+  tiara); las sandalias que asoman bajo la túnica; el cayado o el rollo en la mano (se esconde mientras se lleva una
+  herramienta), y el zurrón colgado a un lado.
+- Los vecinos la ven en la ciudad (`coloresDeRopa`, en la presencia).
+- **El probador** (`ProbadorUI.tsx`): en el tejedor, 👁️ muestra al personaje girando con la prenda puesta; se gira con
+  el dedo y se compra desde ahí.
+- **El armario**: en *Tu casa → 🪔 Adornos y ropa*, «Tu ropa, de pies a cabeza». Se elige cada parte, se ve en el
+  muñeco y se guarda con «Ponérmela».
+- Estas prendas no tienen pieza fina (el artesano sigue con los mantos y las fajas). Van en una colección nueva del
+  álbum, «De pies a cabeza»; las colecciones de antes no cambian, así que nadie pierde un título.
+
+**Para probar** (scratchpad de la parte 4): `reg5079/casa_viva_api.py` (37) y `shared/casa-viva.test.ts` (4). Con los
+5 muebles nuevos, hacer las 44 piezas finas cuesta 12.090 de gozo (`shared/taller.test.ts`).
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 

@@ -887,7 +887,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
           <div ref={boxRef} className="absolute inset-0" />
           {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
           {phase === "playing" && city && !casaW && !huertoW && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
-          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} onMaestro={() => maestroRef.current()} onHuerto={() => void entrarAlHuertoRef.current()} />}
+          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} onMaestro={() => maestroRef.current()} onHuerto={() => void entrarAlHuertoRef.current()} onGozo={(g) => cityRef.current?.ponerGozo(g)} />}
           {phase === "playing" && huertoW && <HuertoHudLayer mundo={huertoW} onSalir={salirDelHuerto} alGozo={(g) => cityRef.current?.ponerGozo(g)} />}
           {phase === "playing" && paused && (
             <PauseMenu

@@ -512,7 +512,7 @@ export type FigureLook = "aprendiz" | "sacerdote" | "turno" | "principal" | "sum
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
-function figureParts(look: FigureLook) {
+function figureParts(look: FigureLook, tocado = true) {
   const m = new GeoBuilder(), s = new GeoBuilder();
   const armM = new GeoBuilder(), armS = new GeoBuilder();
   const armLM = new GeoBuilder(), armLS = new GeoBuilder();
@@ -600,8 +600,10 @@ function figureParts(look: FigureLook) {
   }
   m.sphere(r + 0.012, hair, { y: headY + 0.012 }, 16, 6, Math.PI * 2, 1.15);
   m.add(new THREE.SphereGeometry(r + 0.01, 16, 8, OPEN_START, OPEN_LEN, 0, 1.7), hair, { y: headY + 0.01 });
-  // tocados
-  if (high) {
+  // tocados (sin tocado si lleva un turbante o un velo del mercado: shared/mercado.ts, la ropa de pies a cabeza)
+  if (!tocado) {
+    /* la cabeza la cubre la ropa */
+  } else if (high) {
     // mitra de lino con la lámina de oro: SANTIDAD A JEHOVÁ (Éxodo 28:36-38)
     for (let k = 0; k < 4; k++) m.torus(r + 0.02 - k * 0.012, 0.045, linen, { y: headY + 0.135 + k * 0.06, rx: Math.PI / 2 }, 6, 18);
     m.sphere(r * 0.86, linen, { y: headY + 0.29 }, 14, 8, Math.PI * 2, 1.45);
@@ -664,6 +666,8 @@ export class Figure {
   private ropaG: THREE.Group | null = null;
   /** Las sandalias (en cada pie) y lo que lleva en la mano por su ropa (el cayado o el rollo). */
   private sandalias: THREE.Mesh[] = [];
+  /** Lleva un turbante o un velo: la vestidura se dibuja sin su tocado (la tiara, la mitra, la corona o la cinta). */
+  private sinTocado = false;
   private accesorio: { obj: THREE.Object3D; lado: "R" | "L" } | null = null;
   /** El regazo con la túnica (se ve cuando está sentado). */
   private regazo: THREE.Mesh | null = null;
@@ -700,12 +704,16 @@ export class Figure {
     }
     if (JSON.stringify(r) === JSON.stringify(this.ropa)) return;
     this.ropa = r;
+    // con turbante o velo, la vestidura va sin su tocado: se vuelve a armar (y la ropa se pone encima)
+    const sin = !!r?.cabeza;
+    if (sin !== this.sinTocado && this.look) {
+      this.sinTocado = sin;
+      const l = this.look;
+      this.look = null;
+      this.setLook(l);
+      return;
+    }
     this.ponerRopa(r);
-  }
-
-  /** Las vestiduras que ya tienen su tocado (los sacerdotes y el rey): ahí no se pone turbante ni velo. */
-  private conTocado(): boolean {
-    return this.look === "sacerdote" || this.look === "turno" || this.look === "principal" || this.look === "sumo" || this.look === "lino" || this.look === "azarias" || this.look === "rey";
   }
 
   private quitarRopa() {
@@ -772,7 +780,7 @@ export class Figure {
         oro.box(0.06, 0.05, 0.02, C.oro, { x: -0.08, y: 0.43, z: 0.236 });
       }
     }
-    if (r.cabeza && !this.conTocado()) {
+    if (r.cabeza) {
       const hy = 0.97;
       if (r.cabeza.forma === "turbante") {
         // el lino enrollado: tres vueltas, la copa de arriba y el nudo al frente
@@ -804,12 +812,13 @@ export class Figure {
       this.body.add(g);
     }
     if (r.pies) {
-      // las sandalias: la suela, las correas sobre el pie y la del tobillo
+      // las sandalias asoman bajo la túnica: la suela, los dedos y las correas cruzadas sobre el pie (se ven de arriba)
       const sb = new GeoBuilder();
-      sb.box(0.11, 0.016, 0.19, "#5a3d26", { y: 0.006, z: 0.02 });
-      for (const z of [0.0, 0.07]) sb.box(0.104, 0.014, 0.02, r.pies, { y: 0.05, z });
-      sb.box(0.02, 0.05, 0.02, r.pies, { y: 0.03, z: 0.1 });
-      sb.torus(0.05, 0.008, r.pies, { y: 0.075, z: -0.02, rx: Math.PI / 2 }, 3, 10);
+      sb.box(0.12, 0.018, 0.3, "#5a3d26", { y: 0.009, z: 0.12 });
+      sb.sphere(0.05, "#d39a6c", { y: 0.035, z: 0.22, sx: 1.05, sy: 0.55, sz: 1.2 }, 8, 5);
+      for (const z of [0.16, 0.24]) sb.box(0.125, 0.022, 0.03, r.pies, { y: 0.05, z });
+      sb.box(0.03, 0.022, 0.12, r.pies, { y: 0.056, z: 0.2 });
+      sb.torus(0.05, 0.009, r.pies, { y: 0.075, z: 0.0, rx: Math.PI / 2 }, 3, 10);
       const geo = sb.build();
       for (const f of [this.footL, this.footR]) {
         const m = new THREE.Mesh(f === this.footL ? geo : geo.clone(), matteFor());
@@ -854,7 +863,7 @@ export class Figure {
         (c as THREE.Mesh).geometry?.dispose();
       }
     }
-    const p = figureParts(look);
+    const p = figureParts(look, !this.sinTocado);
     this.ponerRegazo(p.robe);
     const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder) => {
       if (!mb.empty) g.add(new THREE.Mesh(mb.build(), matteFor()));
