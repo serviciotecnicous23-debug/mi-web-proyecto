@@ -134,12 +134,23 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   // el huerto y el horno (en tu casa)
   const m = d.mercado;
   const irCasa = city ? { texto: "Ir a tu casa", hacer: () => abrir({ kind: "casa" }) } : undefined;
+  // el huerto de la casa (shared/huerto.ts): se sale a él por la puerta del huerto
+  const irHuerto = city ? { texto: "Ir al huerto", hacer: () => (gameStore.close(), window.dispatchEvent(new Event("jer-huerto"))) } : undefined;
   if (m) {
     const listas = m.huerto.filter((p) => p.listo).length;
     const vacias = m.huerto.filter((p) => !p.semilla).length;
+    const aves = m.huerto.filter((p) => p.aves).length;
     const semillas = Object.values(m.semillas).reduce((a, b) => a + b, 0);
-    if (listas) lineas.push({ id: "huerto", icono: "🌾", texto: `${listas === 1 ? "Una parcela de tu huerto está lista" : `${listas} parcelas de tu huerto están listas`} para cosechar`, boton: irCasa });
-    else if (vacias && semillas) lineas.push({ id: "huerto", icono: "🌱", texto: "Tienes semillas y parcelas vacías: siembra en tu huerto", boton: irCasa });
+    const lab = m.labranza;
+    const gavillas = lab ? lab.gavillas.harina + lab.gavillas.aceite : 0;
+    if (gavillas) lineas.push({ id: "gavillas", icono: "🧺", texto: `Tienes ${gavillas} ${gavillas === 1 ? "gavilla segada" : "gavillas segadas"} en el huerto: llévalas al granero`, boton: irHuerto });
+    if (aves) lineas.push({ id: "aves", icono: "🐦", texto: `Llegaron aves a ${aves === 1 ? "un surco" : `${aves} surcos`} de tu huerto: ¡espántalas!`, boton: irHuerto });
+    if (listas) lineas.push({ id: "huerto", icono: "🌾", texto: `${listas === 1 ? "Un surco de tu huerto está listo" : `${listas} surcos de tu huerto están listos`} para segar`, boton: irHuerto });
+    else if (vacias && semillas) lineas.push({ id: "huerto", icono: "🌱", texto: "Tienes semillas y surcos vacíos: ara y siembra en tu huerto", boton: irHuerto });
+    if (lab && lab.misiones.length && !lab.todas) {
+      const hechas = lab.misiones.filter((x) => x.cumplida).length;
+      lineas.push({ id: "tareas-huerto", icono: "🌿", texto: `Tareas del huerto de hoy: ${hechas} de ${lab.misiones.length} (${lab.misiones.filter((x) => !x.cumplida).map((x) => x.titulo.toLowerCase()).join("; ")})`, boton: irHuerto });
+    }
     if (m.horno && m.horno.faltan <= 0) lineas.push({ id: "horno", icono: "🫓", texto: "Tu horno está listo: saca lo preparado", boton: irCasa });
     else if (m.preparadas.tortas + m.preparadas.aceitePuro > 0) lineas.push({ id: "horno", icono: "🫓", texto: "Tienes ofrendas preparadas para llevar al templo", boton: irCasa });
   }

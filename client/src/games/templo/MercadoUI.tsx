@@ -122,7 +122,7 @@ function tiempo(s: number) {
 /** Dónde se usa lo de cada puesto (para que no quede la duda después de comprar). */
 const DONDE_SE_USA: Record<Categoria, string> = {
   mueble: "Los muebles van dentro de tu casa: entra por tu puerta, toca «Remodelar» y ponlos donde quieras. Tus vecinos pueden entrar a verlos.",
-  semilla: "Las semillas se siembran en el huerto de tu casa: Tu casa → 🌾 Huerto y horno.",
+  semilla: "Las semillas se siembran en el huerto de tu casa: entra a tu casa y sal por la puerta del huerto (o Tu casa → 🌾 Huerto → «Ir a mi huerto»).",
   adorno: "Al comprarlo, el adorno se pone solo en la puerta de tu casa si queda lugar: tus vecinos lo ven. Lo cambias en Tu casa → 🪔 Adornos y ropa.",
   ropa: "Al comprarla te la pones enseguida y tus vecinos te ven con ella. La cambias en Tu casa → 🪔 Adornos y ropa.",
   letrero: "Después de comprarlo eliges el nombre de tu casa en Tu casa → 🪔 Adornos y ropa.",
@@ -133,6 +133,8 @@ function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; coloc
   const irA = (pestana: "huerto" | "adornos" | "adentro") => {
     gameStore.close();
     if (pestana === "adentro" && alEntrarACasa) alEntrarACasa();
+    // el huerto de la casa es un lugar: se va caminando a él (casa/huerto3d.ts)
+    else if (pestana === "huerto") window.dispatchEvent(new Event("jer-huerto"));
     else gameStore.push({ kind: "casa", pestana: pestana === "adentro" ? "casa" : pestana });
   };
   const paso: Record<Categoria, { texto: string; boton: string; pestana: "huerto" | "adornos" | "adentro" }> = {
@@ -142,7 +144,7 @@ function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; coloc
       pestana: "adentro",
     },
     semilla: {
-      texto: "Ahora siémbrala: en tu huerto elige la semilla y toca «Sembrar». Riégala una vez y, cuando esté lista, cosecha: va al alfolí para ofrecerla en el templo, prepararla en el horno o venderla.",
+      texto: "Ahora siémbrala en el huerto de tu casa: ara el surco con la azada, siembra, riega, arranca las malas hierbas y espanta las aves. Al segar, lleva las gavillas al granero: van al alfolí para ofrecerlas en el templo, prepararlas en el horno o venderlas.",
       boton: "Ir a sembrar",
       pestana: "huerto",
     },
@@ -447,7 +449,6 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
   const [cuantas, setCuantas] = useState(1);
   const [ofreciendo, setOfreciendo] = useState(false);
   const [avisoHorno, setAvisoHorno] = useState<string | null>(null);
-  const [semilla, setSemilla] = useState<"trigo" | "cebada" | "olivo">("trigo");
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setAhora(Date.now()), 1000);
@@ -464,70 +465,53 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
       {ver("huerto") && (
       <section className="space-y-2 rounded-xl border border-emerald-200 p-3 dark:border-emerald-900/60" data-testid="casa-huerto">
         <p className="flex items-baseline justify-between font-black">
-          <span>Tu huerto</span>
+          <span>🌾 Tu huerto</span>
           <span className="text-xs font-semibold text-stone-500">✨ {m.gozo} de gozo</span>
         </p>
-        <ol className="grid grid-cols-4 gap-1 text-center text-[10px] leading-tight text-stone-600 dark:text-stone-300" data-testid="huerto-como">
-          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🛒<br />Compra semillas en la plaza</li>
-          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🌱<br />Siembra en una parcela vacía</li>
-          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">💧<br />Riégala una vez: crece más rápido y da uno más</li>
-          <li className="rounded-lg bg-emerald-50 p-1 dark:bg-emerald-950/30">🌾<br />Cosecha: va al alfolí</li>
-        </ol>
-        <p className="text-[11px] text-stone-500">Lo del alfolí se ofrece en el templo (honra para tu casa), se prepara en el horno (vale más) o se vende al mercader (gozo).</p>
+        <p className="text-[12px] text-stone-600 dark:text-stone-300">
+          Detrás de tu casa, por la puerta del fondo. Allí se trabaja de verdad: aras con la azada, siembras, sacas agua del pozo y riegas, arrancas las malas hierbas, espantas las aves, abonas con lo de tu redil y siegas con la hoz. Las gavillas se llevan al granero: de ahí van al alfolí.
+        </p>
         <EstacionDelHuerto />
-        {semillasTengo.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 text-xs">
-            Semilla:
-            {semillasTengo.map((s) => (
-              <button key={s} type="button" onClick={() => setSemilla(s)} className={`rounded-full px-2 py-0.5 font-bold ${semilla === s ? "bg-emerald-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`}>
-                {articulo(s)?.icono} {s} ({m.semillas[s]})
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" data-testid="huerto-resumen">
           {m.huerto.map((p, i) => {
             // el tiempo sigue corriendo en la pantalla desde que llegó el estado
             const f = p.semilla ? Math.max(0, p.faltan - Math.floor((ahora - recibido) / 1000)) : 0;
             const listo = !!p.semilla && (p.listo || f === 0);
             return (
               <div key={i} className="rounded-lg border border-stone-200 p-2 text-center text-xs dark:border-stone-700" data-testid={`parcela-${i}`}>
-                <p className="text-xl">{p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : "🟫"}</p>
-                <p className="font-semibold">{p.semilla ? (listo ? "¡Lista!" : `${tiempo(f)}${p.regado ? (p.lluvia ? " · 🌧️ la regó la lluvia" : p.cisterna ? " · 💧 la regó la cisterna" : " · regada") : ""}`) : "Vacía"}</p>
-                {!p.semilla ? (
-                  <Button size="sm" className="mt-1 h-7 w-full" disabled={busy || !semillasTengo.includes(semilla)} onClick={() => void hacer("/casa/huerto/sembrar", { parcela: i, semilla })} data-testid={`sembrar-${i}`}>
-                    Sembrar
-                  </Button>
-                ) : listo ? (
-                  <Button
-                    size="sm"
-                    className="mt-1 h-7 w-full bg-emerald-600 hover:bg-emerald-500"
-                    disabled={busy}
-                    onClick={() => void hacer("/casa/huerto/cosechar", { parcela: i }, (d) => d.cosecha && gameStore.toast(`Cosechaste ${d.cosecha.cuanto} de ${NOMBRE_BIEN[d.cosecha.bien]}: está en el alfolí`, "gold"))}
-                    data-testid={`cosechar-${i}`}
-                  >
-                    Cosechar
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="secondary" className="mt-1 h-7 w-full" disabled={busy || p.regado} onClick={() => void hacer("/casa/huerto/regar", { parcela: i })} data-testid={`regar-${i}`}>
-                    {p.regado ? (p.lluvia ? "🌧️ Regada" : p.cisterna ? "💧 Regada" : "Regada") : "Regar"}
-                  </Button>
+                <p className="text-xl">{p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : p.arado ? "🟫" : "🪨"}</p>
+                <p className="font-semibold">
+                  Surco {i + 1}: {p.semilla ? (listo ? "¡listo para segar!" : tiempo(f)) : p.arado ? "arado" : "sin arar"}
+                </p>
+                {p.semilla && (
+                  <p className="text-[10px] text-stone-500">
+                    {"⭐".repeat(p.estrellas ?? 0)}
+                    {p.aves ? " · 🐦 aves" : ""}
+                    {p.hierbas ? ` · 🌿 ${p.hierbas}` : ""}
+                  </p>
                 )}
               </div>
             );
           })}
         </div>
-        {!semillasTengo.length && (
-          <div className="flex items-center gap-2 rounded-lg bg-stone-50 p-2 dark:bg-stone-800/60">
-            <p className="min-w-0 flex-1 text-[11px] text-stone-500">No tienes semillas: cómpralas al sembrador del mercado (trigo y cebada dan flor de harina; el olivo, aceite).</p>
-            {alIrAlMercado && (
-              <Button size="sm" variant="secondary" className="shrink-0" onClick={alIrAlMercado} data-testid="huerto-ir-mercado">
-                Ir al mercado
-              </Button>
-            )}
-          </div>
+        {m.labranza && (
+          <p className="text-[11px] text-stone-500" data-testid="huerto-labranza">
+            🏺 {m.labranza.agua} de {m.labranza.carga} riegos · 🐑 {m.labranza.abono.hay} de abono
+            {m.labranza.gavillas.harina + m.labranza.gavillas.aceite > 0 ? ` · 🧺 ${m.labranza.gavillas.harina + m.labranza.gavillas.aceite} gavillas esperan el granero` : ""}
+            {m.labranza.misiones.length ? ` · tareas de hoy ${m.labranza.misiones.filter((x) => x.cumplida).length}/${m.labranza.misiones.length}` : ""}
+          </p>
         )}
-        <p className="text-[10px] text-stone-400">Trigo {SEMILLAS.trigo.minutos} min · cebada {SEMILLAS.cebada.minutos} min · olivo {SEMILLAS.olivo.minutos} min.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" className="bg-emerald-600 font-bold hover:bg-emerald-500" onClick={() => (gameStore.close(), window.dispatchEvent(new Event("jer-huerto")))} data-testid="huerto-ir">
+            🌾 Ir a mi huerto
+          </Button>
+          {!semillasTengo.length && alIrAlMercado && (
+            <Button size="sm" variant="secondary" onClick={alIrAlMercado} data-testid="huerto-ir-mercado">
+              Comprar semillas
+            </Button>
+          )}
+        </div>
+        <p className="text-[10px] text-stone-400">Trigo {SEMILLAS.trigo.minutos} min · cebada {SEMILLAS.cebada.minutos} min · olivo {SEMILLAS.olivo.minutos} min. Cada estrella (riego, sin hierbas y abono) da una gavilla más.</p>
       </section>
       )}
 

@@ -83,6 +83,8 @@ export type CasaDibujo = {
   obras?: string[];
   /** las ovejas de su redil (shared/taller.ts) */
   ovejas?: number;
+  /** su huertito (shared/huerto.ts): lo sembrado en cada surco y su etapa (-1 arado, -2 sin arar) */
+  huerto?: { s: "trigo" | "cebada" | "olivo" | null; e: number }[];
 };
 
 export type CiudadVisual = {
@@ -814,6 +816,47 @@ function ovejasDeCasa(m: GeoBuilder, n: number) {
 }
 
 /**
+ * El huertito de la casa (shared/huerto.ts), en sus coordenadas (la puerta mira a +z): un cantero con borde de piedras a
+ * la orilla de la calle, del lado contrario a las ovejas, con un surco por cada surco del huerto (hasta 4) y lo sembrado
+ * en su etapa, para que los vecinos vean cómo va. Sencillo: son muchas casas.
+ */
+function huertitoDeCasa(m: GeoBuilder, surcos: { s: "trigo" | "cebada" | "olivo" | null; e: number }[]) {
+  const x0 = -1.76, x1 = -0.88, z0 = 3.1, z1 = 3.72;
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+  // el borde de piedras y la tierra
+  m.box(x1 - x0 + 0.08, 0.06, z1 - z0 + 0.08, vary(C.piedraOsc, 0.05), { x: cx, y: 0.03, z: cz });
+  m.box(x1 - x0 - 0.04, 0.07, z1 - z0 - 0.04, "#6b5033", { x: cx, y: 0.04, z: cz });
+  const n = Math.max(1, Math.min(4, surcos.length));
+  const paso = (z1 - z0 - 0.08) / n;
+  surcos.slice(0, 4).forEach((p, i) => {
+    const z = z0 + 0.04 + paso * (i + 0.5);
+    const arado = p.s !== null || p.e === -1;
+    m.box(x1 - x0 - 0.1, 0.03, paso * 0.6, arado ? "#4e3a22" : "#a98d62", { x: cx, y: 0.09, z });
+    if (!p.s) return;
+    const e = Math.max(0, Math.min(4, p.e));
+    if (p.s === "olivo") {
+      // un olivito por surco
+      const alto = [0.08, 0.16, 0.26, 0.34, 0.36][e];
+      m.cyl(0.012, 0.018, alto, "#6e5a43", { x: cx, y: 0.1 + alto / 2, z }, 4);
+      if (e > 0) m.sphere(0.05 + e * 0.016, e === 4 ? "#5f6b4a" : "#7b8a5c", { x: cx, y: 0.1 + alto, z, sy: 0.8 }, 5, 4);
+      if (e === 4) for (const dx of [-0.05, 0.04, 0.0]) m.sphere(0.018, "#3b2a3f", { x: cx + dx, y: 0.06 + alto, z: z + 0.05 }, 4, 3);
+      return;
+    }
+    // seis matas de trigo o cebada: verdes al brotar, doradas al madurar (con su espiga)
+    const alto = [0.02, 0.08, 0.15, 0.22, 0.26][e];
+    const color = e === 4 ? (p.s === "cebada" ? "#ecd98e" : "#e0bd4e") : e === 3 ? "#a9c25a" : "#79a84c";
+    for (let k = 0; k < 6; k++) {
+      const x = x0 + 0.08 + k * ((x1 - x0 - 0.16) / 5);
+      if (e === 0) m.sphere(0.016, "#d9c27a", { x, y: 0.11, z }, 4, 3);
+      else {
+        m.cone(0.028, alto, color, { x, y: 0.1 + alto / 2, z }, 4);
+        if (e >= 3) m.sphere(0.022, e === 4 ? "#f0cf62" : "#c2d46a", { x, y: 0.1 + alto, z, sy: 1.8 }, 4, 3);
+      }
+    }
+  });
+}
+
+/**
  * Las obras de la casa (shared/obras.ts), en sus coordenadas (la puerta mira a +z). Cada una tiene su lugar según la
  * casa (tienda, adobe, piedra con patio o aposento alto), medido para no chocar con lo que ya tiene: la cisterna toma
  * el lugar de la tinaja, el horno y el huerto nuevo van al frente del patio, el granero y la torre al terrado.
@@ -1322,6 +1365,14 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
       const go = lo.build();
       go.applyMatrix4(mat);
       m.raw(go);
+    }
+    // su huertito (shared/huerto.ts), también con el suelo del barrio: así no se aclara con la casa
+    if (c.huerto?.length) {
+      const lh = new GeoBuilder();
+      huertitoDeCasa(lh, c.huerto);
+      const gh = lh.build();
+      gh.applyMatrix4(mat);
+      m.raw(gh);
     }
     const g = lm.build();
     g.applyMatrix4(mat);

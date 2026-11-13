@@ -31,7 +31,7 @@ async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; da
   }
 }
 
-export function CasaHudLayer({ mundo, onSalir, onMaestro }: { mundo: CasaWorld; onSalir: () => void; onMaestro?: () => void }) {
+export function CasaHudLayer({ mundo, onSalir, onMaestro, onHuerto }: { mundo: CasaWorld; onSalir: () => void; onMaestro?: () => void; onHuerto?: () => void }) {
   const { casa: c, toasts, modal } = useGame();
   const [guardando, setGuardando] = useState(false);
   const [bendiciendo, setBendiciendo] = useState(false);
@@ -156,8 +156,13 @@ export function CasaHudLayer({ mundo, onSalir, onMaestro }: { mundo: CasaWorld; 
             <button type="button" onClick={() => mundo.remodelar(true)} className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2 text-sm font-black text-amber-950 shadow-lg active:scale-95" data-testid="casa-remodelar">
               <Hammer className="h-4 w-4" /> Remodelar
             </button>
+            {onHuerto && (
+              <button type="button" onClick={onHuerto} className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-lime-300 to-emerald-500 px-4 py-2 text-sm font-black text-emerald-950 shadow-lg active:scale-95" data-testid="casa-huerto">
+                🌾 Mi huerto
+              </button>
+            )}
             <button type="button" onClick={() => gameStore.push({ kind: "casa" })} className="flex items-center gap-1.5 rounded-full bg-black/55 px-4 py-2 text-sm font-bold shadow-lg active:scale-95" data-testid="casa-ventana">
-              <Home className="h-4 w-4 text-amber-300" /> Huerto, horno y más
+              <Home className="h-4 w-4 text-amber-300" /> Horno, obras y más
             </button>
           </div>
         )}

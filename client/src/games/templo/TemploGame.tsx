@@ -51,6 +51,8 @@ import "./templo.css";
 import { TempleAudio } from "./audio";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
+import type { HuertoWorld, RespuestaHuerto } from "./casa/huerto3d";
+import { HuertoHudLayer } from "./HuertoUI";
 import { CiudadCtx, CiudadHudLayer, CiudadModal } from "./CiudadUI";
 import { AvisosView } from "./AvisosUI";
 import { CalendarioView } from "./CalendarioUI";
@@ -137,7 +139,14 @@ export default function TemploGame({ game }: { game: GameDef }) {
   casaRef.current = casaW;
   const ciudadEstadoRef = useRef<CiudadEstado | null>(null);
   ciudadEstadoRef.current = ciudadEstado;
-  const entrarACasaRef = useRef<(o?: { personajeId?: number; remodelar?: boolean }) => Promise<void>>(async () => undefined);
+  const entrarACasaRef = useRef<(o?: { personajeId?: number; remodelar?: boolean; desdeHuerto?: boolean }) => Promise<void>>(async () => undefined);
+  // El huerto de la casa (casa/huerto3d.ts): se sale a él por la puerta del huerto de la casa y se vuelve por ella.
+  const huertoMod = useRef<Promise<typeof import("./casa/huerto3d")> | null>(null);
+  const [huertoW, setHuertoW] = useState<HuertoWorld | null>(null);
+  const huertoRef = useRef<HuertoWorld | null>(null);
+  huertoRef.current = huertoW;
+  const entrarAlHuertoRef = useRef<() => Promise<void>>(async () => undefined);
+  const salirDelHuertoRef = useRef<() => void>(() => undefined);
   const entrarAEdificioRef = useRef<(id: "escuela" | "palacio" | "camara") => Promise<void>>(async () => undefined);
   /** «Hablar con el maestro» del edificio donde se está (la pantalla de adentro lo llama). */
   const maestroRef = useRef<() => void>(() => undefined);
@@ -306,6 +315,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
       casaRef.current?.destroy();
       casaRef.current = null;
       setCasaW(null);
+      huertoRef.current?.destroy();
+      huertoRef.current = null;
+      setHuertoW(null);
       cityRef.current?.destroy();
       gameStore.reset();
       if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
@@ -361,6 +373,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
     casaRef.current?.destroy();
     casaRef.current = null;
     setCasaW(null);
+    huertoRef.current?.destroy();
+    huertoRef.current = null;
+    setHuertoW(null);
     c?.destroy();
     cityRef.current = null;
     setCity(null);
@@ -374,9 +389,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
   irAlTemploRef.current = irAlTemplo;
 
   /** Entrar a la casa (la tuya o la de un vecino): la ciudad se duerme y la casa se dibuja encima. */
-  const entrarACasaReal = useCallback(async (o?: { personajeId?: number; remodelar?: boolean }) => {
+  const entrarACasaReal = useCallback(async (o?: { personajeId?: number; remodelar?: boolean; desdeHuerto?: boolean }) => {
     const c = cityRef.current;
-    if (!c || !boxRef.current || casaRef.current) return;
+    if (!c || !boxRef.current || casaRef.current || huertoRef.current) return;
     setCambio(o?.personajeId ? "Entrando a la casa del vecino…" : "Entrando a tu casa…");
     if (!casaMod.current) casaMod.current = import("./casa/mundo-casa");
     const [r, mod] = await Promise.all([
@@ -400,6 +415,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
       siervos: e?.privada.siervos,
       alSalir: () => salirDeCasaRef.current(),
       alHorno: () => gameStore.push({ kind: "casa", pestana: "huerto" }),
+      // la puerta del huerto (solo en la casa propia)
+      alHuerto: () => void entrarAlHuertoRef.current(),
+      desdeHuerto: o?.desdeHuerto,
       remodelar: o?.remodelar,
     });
     if (import.meta.env.DEV) (window as unknown as { __casa?: CasaWorld }).__casa = w;
@@ -604,6 +622,85 @@ export default function TemploGame({ game }: { game: GameDef }) {
   }, []);
   entrarAEdificioRef.current = entrarAEdificioReal;
 
+  /**
+   * Salir al huerto de la casa: la casa por dentro se cierra y se abre el huerto (la ciudad sigue dormida). Se puede
+   * llegar desde la casa (su puerta) o desde la ciudad («Ir a mi huerto»).
+   */
+  const entrarAlHuertoReal = useCallback(async () => {
+    const c = cityRef.current;
+    if (!c || !boxRef.current || huertoRef.current) return;
+    setCambio("Saliendo al huerto…");
+    if (!huertoMod.current) huertoMod.current = import("./casa/huerto3d");
+    const [r, mod] = await Promise.all([
+      fetch("/api/jerusalen/mercado", { credentials: "include", cache: "no-store" })
+        .then(async (res) => ({ ok: res.ok, data: (await res.json().catch(() => null)) as (import("@shared/mercado").MercadoEstado & { message?: string }) | null }))
+        .catch(() => ({ ok: false, data: null })),
+      huertoMod.current.catch(() => null),
+    ]);
+    if (!r.ok || !r.data || !mod || !boxRef.current || cityRef.current !== c || huertoRef.current) {
+      setCambio(null);
+      gameStore.toast(r.data?.message || "No se pudo salir al huerto. Revisa tu conexión.", "warn");
+      return;
+    }
+    gameStore.close();
+    casaRef.current?.destroy();
+    casaRef.current = null;
+    setCasaW(null);
+    c.dormir(true);
+    const e = ciudadEstadoRef.current;
+    const w = new mod.HuertoWorld(boxRef.current, r.data, {
+      audio: c.audio,
+      look: c.lookJugador(),
+      ropa: e?.yo.ropa,
+      nivel: e?.yo.nivel ?? 0,
+      alSalir: () => salirDelHuertoRef.current(),
+      pedir: async (accion, body) => {
+        try {
+          const res = await fetch(`/api/jerusalen/casa/huerto/${accion}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+          const d = (await res.json().catch(() => null)) as RespuestaHuerto | null;
+          if (!res.ok || !d) {
+            gameStore.toast(d?.message || "No se pudo. Intenta de nuevo.", "warn");
+            return null;
+          }
+          cityRef.current?.ponerGozo(d.gozo);
+          return d;
+        } catch {
+          gameStore.toast("No se pudo. Revisa tu conexión.", "warn");
+          return null;
+        }
+      },
+    });
+    if (import.meta.env.DEV) (window as unknown as { __huerto?: HuertoWorld }).__huerto = w;
+    huertoRef.current = w;
+    setHuertoW(w);
+    setCambio(null);
+  }, []);
+  entrarAlHuertoRef.current = entrarAlHuertoReal;
+
+  /** Volver del huerto: a la casa por dentro, en la puerta del huerto (y el huertito de la ciudad se pone al día). */
+  const salirDelHuerto = useCallback(() => {
+    const w = huertoRef.current;
+    if (!w) return;
+    const huerto = w.estado.huerto.slice(0, 4).map((p) => ({ s: p.semilla, e: p.semilla ? p.etapa ?? 0 : p.arado ? -1 : -2 }));
+    w.destroy();
+    huertoRef.current = null;
+    setHuertoW(null);
+    cityRef.current?.alHuerto(huerto);
+    void entrarACasaRef.current({ desdeHuerto: true });
+  }, []);
+  salirDelHuertoRef.current = salirDelHuerto;
+
+  // «Ir a mi huerto» desde cualquier ventana de la ciudad (Tu casa, Para hoy, el mercado): el evento «jer-huerto»
+  useEffect(() => {
+    const ir = () => {
+      if (huertoRef.current) return;
+      gameStore.close();
+      void entrarAlHuertoRef.current();
+    };
+    window.addEventListener("jer-huerto", ir);
+    return () => window.removeEventListener("jer-huerto", ir);
+  }, []);
+
   const salirDeCasa = useCallback(() => {
     const w = casaRef.current;
     if (!w) return;
@@ -643,6 +740,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
     casaRef.current?.destroy();
     casaRef.current = null;
     setCasaW(null);
+    huertoRef.current?.destroy();
+    huertoRef.current = null;
+    setHuertoW(null);
     cityRef.current?.destroy();
     cityRef.current = null;
     setCity(null);
@@ -675,6 +775,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
       world?.setPaused(next);
       city?.setPaused(next);
       casaRef.current?.setPaused(next);
+      huertoRef.current?.setPaused(next);
       (world ?? city)?.audio.click();
     },
     [paused, world, city],
@@ -782,8 +883,9 @@ export default function TemploGame({ game }: { game: GameDef }) {
         >
           <div ref={boxRef} className="absolute inset-0" />
           {phase === "playing" && world && <HudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} online={online} />}
-          {phase === "playing" && city && !casaW && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
-          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} onMaestro={() => maestroRef.current()} />}
+          {phase === "playing" && city && !casaW && !huertoW && <CiudadHudLayer paused={paused} onPause={() => togglePause(true)} big={big} onFull={() => void toggleFull()} />}
+          {phase === "playing" && casaW && <CasaHudLayer mundo={casaW} onSalir={salirDeCasa} onMaestro={() => maestroRef.current()} onHuerto={() => void entrarAlHuertoRef.current()} />}
+          {phase === "playing" && huertoW && <HuertoHudLayer mundo={huertoW} onSalir={salirDelHuerto} alGozo={(g) => cityRef.current?.ponerGozo(g)} />}
           {phase === "playing" && paused && (
             <PauseMenu
               onResume={() => togglePause(false)}

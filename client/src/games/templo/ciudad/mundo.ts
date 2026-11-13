@@ -100,7 +100,7 @@ const POBRES: V2[] = [[71.2, -9.6], [71.2, 9.6], [47.0, -10.4]];
 export type BarrioVisto = {
   n: number;
   area: number;
-  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null; obras?: string[]; estrellas?: number; ovejas?: number }[];
+  casas: { parcela: number; nivel: number; personajeId?: number; nombre?: string; adornos?: string[]; letrero?: string | null; obras?: string[]; estrellas?: number; ovejas?: number; huerto?: CasaVista["huerto"] }[];
   detalle: boolean;
   /** El nivel del barrio en la copa de los barrios (lámparas, olivos, fuente, estandartes, arco). */
   nivelBarrio?: number;
@@ -1274,7 +1274,7 @@ export class CiudadWorld {
     this.estado = estado;
     this.player.fig.setRopa(estado.yo.ropa);
     // las obras de la casa (shared/obras.ts) también cambian el dibujo
-    const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null, c.obras ?? [], c.ovejas ?? 0]));
+    const firma = (l: BarrioVisto["casas"]) => JSON.stringify(l.map((c) => [c.parcela, c.nivel, c.adornos ?? [], c.letrero ?? null, c.obras ?? [], c.ovejas ?? 0, c.huerto ?? []]));
     const cambio = !antes || firma(antes.casas) !== firma(estado.barrio.casas) || JSON.stringify(antes.obrasBarrio ?? []) !== JSON.stringify(estado.barrio.obrasBarrio ?? []);
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio, obrasBarrio: estado.barrio.obrasBarrio });
     if (cambio) this.dibujarAreas();
@@ -2068,7 +2068,7 @@ export class CiudadWorld {
       }
       if (b?.detalle) {
         const dib: CasaDibujo[] = [
-          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero, obras: c.obras, ovejas: c.ovejas })),
+          ...casas.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: c.personajeId ?? c.parcela, adornos: c.adornos, letrero: !!c.letrero, obras: c.obras, ovejas: c.ovejas, huerto: c.huerto })),
           ...delPueblo.map((c) => ({ parcela: c.parcela, nivel: c.nivel, personajeId: 1_000_000 + n * 100 + c.parcela, pueblo: true })),
         ];
         const { grupo, ventanas } = construirAreaDetalle(area, dib, b.nivelBarrio ?? 0, b.obrasBarrio ?? []);
@@ -2170,6 +2170,17 @@ export class CiudadWorld {
       this.dibujarAreas();
     }
     this.pushHud();
+  }
+
+  /** Tu huertito cambió (shared/huerto.ts: sembraste o segaste): se ve delante de tu casa. */
+  alHuerto(huerto: NonNullable<CasaVista["huerto"]>) {
+    const antes = this.barrios.get(this.estado.barrio.n)?.casas.find((c) => c.personajeId === this.casaPropia);
+    const casas = this.estado.barrio.casas.map((c) => (c.personajeId === this.casaPropia ? { ...c, huerto } : c));
+    this.estado = { ...this.estado, barrio: { ...this.estado.barrio, casas } };
+    if (JSON.stringify(antes?.huerto ?? []) !== JSON.stringify(huerto)) {
+      this.barrios.set(this.estado.barrio.n, { n: this.estado.barrio.n, area: this.estado.barrio.area, casas, detalle: true, nivelBarrio: this.barrios.get(this.estado.barrio.n)?.nivelBarrio, obrasBarrio: this.barrios.get(this.estado.barrio.n)?.obrasBarrio });
+      this.dibujarAreas();
+    }
   }
 
   /** Las ovejas de tu redil cambiaron (shared/taller.ts): se ven junto a tu casa. */

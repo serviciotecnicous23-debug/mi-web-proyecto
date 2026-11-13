@@ -381,6 +381,11 @@ export type CasaVista = {
   estrellas?: number;
   /** Las ovejas de su redil (shared/taller.ts): se ven junto a la casa. */
   ovejas?: number;
+  /**
+   * Su huertito (shared/huerto.ts), que se ve delante de la casa: lo sembrado en cada surco (hasta 4) y su etapa (0 a 4;
+   * -1 arado y vacío, -2 sin arar).
+   */
+  huerto?: { s: "trigo" | "cebada" | "olivo" | null; e: number }[];
 };
 
 /** Un barrio completo (al entrar en su área). */

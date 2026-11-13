@@ -13,6 +13,19 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-el-huerto",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El huerto de verdad, detrás de tu casa",
+    puntos: [
+      "🚪 Tu casa tiene una puerta al fondo: sal por ella a tu huerto, con sus surcos, el pozo (o tu cisterna), los olivos, la higuera y el granero. También llegas con «🌾 Mi huerto».",
+      "⛏️ Cada tarea se hace con tu dedo, nada se hace solo: desliza a lo largo del surco para arar con la azada, sembrar, abonar y segar con la hoz; mantén apretado para sacar agua del pozo, regar y guardar las gavillas en el granero; toca las malas hierbas para arrancarlas y las aves para espantarlas (Mateo 13:4).",
+      "⭐ La cosecha rinde más si cuidas el surco: una estrella por el riego, otra si está limpio de hierbas al segar y otra por el abono de las ovejas de tu redil. Las aves que nadie espanta se comen parte.",
+      "🏺 El agua se cuenta: tu cántaro lleva para 3 surcos y el pozo da sus cántaros por día. Con gozo, el herrero te da la azada de hierro, el cántaro grande y la hoz de hierro.",
+      "🌿 Cada día, 3 tareas del huerto con gozo. Y al segar puedes dejar el rincón del surco para el pobre y el extranjero (Levítico 23:22).",
+      "🏘️ Tus vecinos ven tu huertito delante de tu casa: lo que sembraste y cómo va creciendo.",
+    ],
+  },
+  {
     id: "2026-11-13-el-aula",
     fecha: "13 de noviembre de 2026",
     titulo: "Las clases ahora se dan en el aula, con el maestro y tus compañeros",

@@ -169,6 +169,8 @@ export type Plano = {
   arbol?: [number, number];
   /** La escalera al piso de arriba: celdas que ocupa (planta baja), dónde se sube y dónde se llega. */
   escalera?: { celdas: [number, number][]; abajo: [number, number]; arriba: [number, number] };
+  /** La puerta del huerto (shared/huerto.ts): en el muro del fondo (norte), las dos celdas de adentro que la dejan libre. */
+  huerto?: [number, number][];
   /** Cuántos muebles caben. */
   maxMuebles: number;
 };
@@ -207,6 +209,7 @@ export const PLANOS: Plano[] = [
     aberturas: puertaS(3, 5),
     puerta: [3, 5],
     horno: [6, 1],
+    huerto: [[4, 0], [5, 0]],
     maxMuebles: 10,
   },
   // 1 · la casa de adobe: el cuarto grande y la despensa
@@ -220,6 +223,7 @@ export const PLANOS: Plano[] = [
     aberturas: [{ x: 9, z: 1, lado: "E", piso: 0 }, { x: 9, z: 2, lado: "E", piso: 0 }, ...puertaS(4, 6)],
     puerta: [4, 6],
     horno: [8, 1],
+    huerto: [[2, 0], [3, 0]],
     maxMuebles: 18,
   },
   // 2 · la casa de piedra con patio: cuatro espacios y el terrado con su pretil (Deuteronomio 22:8)
@@ -232,6 +236,7 @@ export const PLANOS: Plano[] = [
     horno: [5, 5],
     arbol: [4, 11],
     escalera: ESCALERA_PIEDRA,
+    huerto: [[11, 0], [12, 0]],
     maxMuebles: 28,
   },
   // 3 · con aposento alto: sobre el terrado, el aposento de paredes (2 Reyes 4:10)
@@ -248,6 +253,7 @@ export const PLANOS: Plano[] = [
     horno: [5, 5],
     arbol: [4, 11],
     escalera: ESCALERA_PIEDRA,
+    huerto: [[11, 0], [12, 0]],
     maxMuebles: 40,
   },
 ];
@@ -268,7 +274,7 @@ export function abierto(plano: Plano, x: number, z: number, lado: Abertura["lado
 
 const clave = (x: number, z: number, piso: number) => `${piso}:${x},${z}`;
 
-/** Celdas que no se pueden amueblar: la entrada, el horno, la escalera y donde se sube o se llega. */
+/** Celdas que no se pueden amueblar: la entrada, el horno, la escalera, donde se sube o se llega y la puerta del huerto. */
 export function celdasFijas(plano: Plano): Set<string> {
   const s = new Set<string>();
   const [px, pz] = plano.puerta;
@@ -281,6 +287,7 @@ export function celdasFijas(plano: Plano): Set<string> {
     s.add(clave(plano.escalera.abajo[0], plano.escalera.abajo[1], 0));
     s.add(clave(plano.escalera.arriba[0], plano.escalera.arriba[1], 1));
   }
+  for (const [x, z] of plano.huerto ?? []) s.add(clave(x, z, 0));
   return s;
 }
 
@@ -310,7 +317,7 @@ export function porQueNoCabe(plano: Plano, nivel: number, c: Colocado, otros: Co
   const celdas = celdasDe(c, mu);
   for (const [x, z] of celdas) {
     if (!cuartoEn(plano, x, z, c.p)) return "No cabe ahí: se sale de la casa.";
-    if (fijas.has(clave(x, z, c.p))) return "Ahí no: es el paso de la entrada, el horno, la higuera o la escalera.";
+    if (fijas.has(clave(x, z, c.p))) return "Ahí no: es el paso de la entrada, el horno, la higuera, la escalera o la puerta del huerto.";
   }
   // un mueble no se cruza con una pared: todas sus celdas deben quedar en el mismo cuarto
   const cuarto = cuartoEn(plano, celdas[0][0], celdas[0][1], c.p);
