@@ -6,14 +6,13 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ARTICULOS, HORNO_GRANDE, LETREROS, RECETAS, SEMILLAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
-  parcelasHuerto, precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado, type Parcela,
+  ARTICULOS, HORNO_GRANDE, LETREROS, RECETAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
+  precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado,
 } from "@shared/mercado";
-import { capacidadAlfoli } from "@shared/ciudad";
-import { diaEnJerusalen, factorCrecimiento } from "@shared/anio";
 import { MAX_POR_MUEBLE, leerInterior, leerMuebles, mueble, muebleBase } from "@shared/casa-interior";
 import { FARDO_MAX, leerFardo } from "@shared/taller";
-import { AYUDA_MUEBLES, DIEZMO, RIEGO } from "@shared/economia";
+import { AYUDA_MUEBLES, DIEZMO } from "@shared/economia";
+import { COLUMNAS_HUERTO, HUERTO_SQL, registerHuertoRoutes, vistaDelHuerto, type FilaHuerto } from "./huerto";
 import { alTesoro, contarVentaMercader, preciosMercaderHoy, vendidosHoy } from "./economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, olvidarBarrio, recoger } from "./ciudad";
@@ -34,68 +33,15 @@ ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "letrero" text;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "tiene_letrero" boolean NOT NULL DEFAULT false;
 ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "preparadas" jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE "game_characters" ADD COLUMN IF NOT EXISTS "muebles" jsonb NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "interior" jsonb NOT NULL DEFAULT '[]'::jsonb;`;
+ALTER TABLE "game_houses" ADD COLUMN IF NOT EXISTS "interior" jsonb NOT NULL DEFAULT '[]'::jsonb;
+${HUERTO_SQL}`;
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const objeto = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
-type Plantio = {
-  semilla: "trigo" | "cebada" | "olivo" | null;
-  plantado: string | null;
-  regado: boolean;
-  riego?: number;
-  /** la regó la cisterna */
-  cisterna?: boolean;
-  /** cuánto dura su crecimiento (el pozo del barrio: 0,9); se guarda al sembrar */
-  ritmo?: number;
-};
-
-export function leerHuerto(v: unknown, n: number): Plantio[] {
-  const a = Array.isArray(v) ? v : [];
-  return Array.from({ length: n }, (_, i) => {
-    const p = objeto(a[i]);
-    const s = p.semilla === "trigo" || p.semilla === "cebada" || p.semilla === "olivo" ? p.semilla : null;
-    const riego = typeof p.riego === "number" && p.riego >= 0.5 && p.riego <= 1 ? p.riego : undefined;
-    const ritmo = typeof p.ritmo === "number" && p.ritmo >= 0.5 && p.ritmo < 1 ? p.ritmo : undefined;
-    return {
-      semilla: s,
-      plantado: s && typeof p.plantado === "string" ? p.plantado : null,
-      regado: s ? p.regado === true : false,
-      ...(s && riego ? { riego } : {}),
-      ...(s && p.cisterna === true ? { cisterna: true } : {}),
-      ...(s && ritmo ? { ritmo } : {}),
-    };
-  });
-}
-
-/** ¿Cuánto le falta (en segundos) a una parcela? Regada crece 25 % más rápido (35 % con la tinaja en casa). */
-export function faltan(p: Plantio, ahora = Date.now()): number {
-  if (!p.semilla || !p.plantado) return 0;
-  // la estación del día en que se sembró (shared/anio.ts): su cultivo crece más rápido; si ese día llovió, quedó regado
-  const d = diaEnJerusalen(new Date(p.plantado).getTime());
-  const regado = p.regado || d.llueve;
-  const dur = SEMILLAS[p.semilla].minutos * 60 * (regado ? (p.riego ?? RIEGO.normal) : 1) * factorCrecimiento(p.semilla, d) * (p.ritmo ?? 1);
-  return Math.max(0, Math.ceil((new Date(p.plantado).getTime() + dur * 1000 - ahora) / 1000));
-}
-
-/** ¿Llovió el día en que se sembró? Entonces la parcela quedó regada (shared/anio.ts). */
-function llovio(p: Plantio): boolean {
-  return !!p.semilla && !!p.plantado && diaEnJerusalen(new Date(p.plantado).getTime()).llueve;
-}
-
-function vistaParcela(p: Plantio): Parcela {
-  const f = faltan(p);
-  const lluvia = !p.regado && llovio(p);
-  return {
-    semilla: p.semilla,
-    plantado: p.plantado,
-    regado: p.regado || lluvia,
-    listo: !!p.semilla && f === 0,
-    faltan: f,
-    ...(lluvia ? { lluvia: true } : {}),
-    ...(p.cisterna && !lluvia ? { cisterna: true } : {}),
-  };
-}
+// El huerto: sus reglas están en shared/huerto.ts y sus tareas en server/huerto.ts (los avisos y el regreso las
+// siguen pidiendo de aquí).
+export { faltan, leerHuerto } from "@shared/huerto";
 
 /** Los muebles útiles puestos dentro de la casa (shared/economia.ts: AYUDA_MUEBLES). */
 async function mueblesUtiles(characterId: number): Promise<Set<string>> {
@@ -107,7 +53,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const dia = diaClave();
   const [{ rows: c }, { rows: h }, precios, vendidos, utiles] = await Promise.all([
     pool.query(`SELECT t.gozo, t.semillas, t.armario, yo.ropa, t.muebles, t.fardo FROM game_characters t, game_characters yo WHERE t.id = $1 AND yo.id = $2`, [ch.casa, ch.casa]),
-    pool.query(`SELECT level, adornos, huerto, letrero, tiene_letrero, goods, preparadas, obras FROM game_houses WHERE character_id = $1`, [ch.casa]),
+    pool.query(`SELECT adornos, letrero, tiene_letrero, preparadas, ${COLUMNAS_HUERTO} FROM game_houses WHERE character_id = $1`, [ch.casa]),
     preciosMercaderHoy(),
     vendidosHoy(),
     mueblesUtiles(ch.casa),
@@ -119,6 +65,8 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   const prep = leerPreparadas(h[0]?.preparadas);
   // lo que dan las obras de la casa (shared/obras.ts): más huerto, la cisterna y el horno de barro
   const v = ventajasDeColumna(h[0]?.obras);
+  // el huerto de la casa (shared/huerto.ts): cada surco y la labranza (el agua, el abono, las gavillas, las tareas)
+  const hu = h[0] ? await vistaDelHuerto(h[0] as FilaHuerto, ch.casa) : null;
   return {
     dia,
     gozo: Number(c[0]?.gozo || 0),
@@ -128,7 +76,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     ropa: { manto: typeof ropa.manto === "string" ? ropa.manto : null, faja: typeof ropa.faja === "string" ? ropa.faja : null },
     adornos: lista(h[0]?.adornos),
     lugares: lugaresAdornos(nivel),
-    huerto: leerHuerto(h[0]?.huerto, parcelasHuerto(nivel) + v.parcelas).map(vistaParcela),
+    huerto: hu?.huerto ?? [],
     letrero: (h[0]?.letrero as string | null) ?? null,
     tieneLetrero: h[0]?.tiene_letrero === true,
     bienes: { harina: Math.floor(bienes.harina), aceite: Math.floor(bienes.aceite), corderos: Math.floor(bienes.corderos) },
@@ -145,6 +93,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     hornoMax: v.horno,
     cisterna: v.cisterna,
     fardo: leerFardo(c[0]?.fardo),
+    ...(hu ? { labranza: hu.labranza } : {}),
   };
 }
 
@@ -451,73 +400,9 @@ export function registerMercadoRoutes(app: Express) {
     }
   });
 
-  // el huerto: sembrar, regar (una vez) y cosechar al alfolí
-  app.post("/api/jerusalen/casa/huerto/:accion", async (req: Request, res: Response) => {
-    const accion = String(req.params.accion);
-    if (!["sembrar", "regar", "cosechar"].includes(accion)) return res.sendStatus(404);
-    const n = Math.floor(Number(req.body?.parcela));
-    try {
-      const ch = await jugador(req, res);
-      if (!ch) return;
-      if (frenar(ch.casa, 400)) return res.status(429).json({ message: "Espera un momento" });
-      const out = await enFilaCasa(ch.casa, async (): Promise<{ status: number; message?: string; cosecha?: { bien: string; cuanto: number } }> => {
-        const { rows: h } = await pool.query(`SELECT level, huerto, goods, obras, barrio FROM game_houses WHERE character_id = $1`, [ch.casa]);
-        const nivel = Number(h[0]?.level || 0);
-        const v = ventajasDeColumna(h[0]?.obras);
-        const vb = await ventajasDeBarrio(Number(h[0]?.barrio || 0));
-        const huerto = leerHuerto(h[0]?.huerto, parcelasHuerto(nivel) + v.parcelas);
-        if (!Number.isInteger(n) || n < 0 || n >= huerto.length) return { status: 400, message: "Esa parcela no existe." };
-        const p = huerto[n];
-        if (accion === "sembrar") {
-          const s = req.body?.semilla;
-          if (s !== "trigo" && s !== "cebada" && s !== "olivo") return { status: 400, message: "Elige una semilla." };
-          if (p.semilla) return { status: 409, message: "Esa parcela ya está sembrada." };
-          const { rows: gasto } = await pool.query(
-            `UPDATE game_characters SET semillas = jsonb_set(semillas, ARRAY[$2::text], to_jsonb(COALESCE((semillas->>$2)::int, 0) - 1))
-              WHERE id = $1 AND COALESCE((semillas->>$2)::int, 0) > 0 RETURNING 1`,
-            [ch.casa, s],
-          );
-          if (!gasto.length) return { status: 409, message: "No te quedan semillas de esas: cómpralas en el mercado." };
-          // con la cisterna de la casa (shared/obras.ts), lo que se siembra queda regado
-          if (v.cisterna) {
-            const utiles = await mueblesUtiles(ch.casa);
-            huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: true, riego: utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal, cisterna: true };
-          } else huerto[n] = { semilla: s, plantado: new Date().toISOString(), regado: false };
-          // con el pozo del barrio, lo sembrado crece más rápido
-          if (vb.ritmo < 1) huerto[n] = { ...huerto[n], ritmo: vb.ritmo };
-        } else if (accion === "regar") {
-          if (!p.semilla) return { status: 409, message: "Primero siembra." };
-          if (p.regado) return { status: 409, message: p.cisterna ? "La cisterna ya la regó." : "Ya la regaste." };
-          if (llovio(p)) return { status: 409, message: "La lluvia ya la regó." };
-          if (faltan(p) === 0) return { status: 409, message: "Ya está lista: cosecha." };
-          const utiles = await mueblesUtiles(ch.casa);
-          huerto[n] = { ...p, regado: true, riego: utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal };
-        } else {
-          if (!p.semilla) return { status: 409, message: "No hay nada sembrado." };
-          if (faltan(p) > 0) return { status: 409, message: "Todavía no está lista." };
-          const s = SEMILLAS[p.semilla];
-          const utiles = await mueblesUtiles(ch.casa);
-          const extra = (s.da === "harina" && utiles.has("molino")) || (s.da === "aceite" && utiles.has("vasijas")) ? 1 : 0;
-          const cuanto = s.cuanto + (p.regado || llovio(p) ? 1 : 0) + extra;
-          const bienes = leerBienes(h[0]?.goods);
-          const cap = capacidadAlfoli(nivel) + v.alfoli + vb.alfoli;
-          if (bienes[s.da] + cuanto > cap) return { status: 409, message: "El alfolí está lleno: lleva lo que tienes al templo o véndelo al mercader." };
-          bienes[s.da] += cuanto;
-          huerto[n] = { semilla: null, plantado: null, regado: false };
-          await pool.query(`UPDATE game_houses SET goods = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(bienes)]);
-          await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(huerto)]);
-          return { status: 200, cosecha: { bien: s.da, cuanto } };
-        }
-        await pool.query(`UPDATE game_houses SET huerto = $2::jsonb WHERE character_id = $1`, [ch.casa, JSON.stringify(huerto)]);
-        return { status: 200 };
-      });
-      if (out.status !== 200) return res.status(out.status).json({ message: out.message });
-      await responder(res, ch, out.cosecha ? { cosecha: out.cosecha } : {});
-    } catch (err) {
-      console.error("[mercado] huerto:", err);
-      res.sendStatus(500);
-    }
-  });
+  // el huerto de la casa: arar, sembrar, regar, llenar el cántaro, arrancar hierbas, espantar aves, abonar, segar y
+  // llevar las gavillas al granero (server/huerto.ts)
+  registerHuertoRoutes(app, { jugador, responder });
 }
 
 export { ARTICULOS, sumarGozo };

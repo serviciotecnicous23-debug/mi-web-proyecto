@@ -106,8 +106,8 @@ export async function revisarAvisos(ahora = new Date()): Promise<AvisoSalido[]> 
       const listas = leerHuerto(a, a.length).filter((p) => p.semilla && p.plantado && faltan(p, t) === 0 && t - new Date(p.plantado).getTime() < 2 * 86400000);
       if (!listas.length) continue;
       const ultima = listas.map((p) => p.plantado as string).sort().at(-1) as string;
-      const titulo = listas.length === 1 ? "🌾 Una parcela de tu huerto está lista" : `🌾 ${listas.length} parcelas de tu huerto están listas`;
-      if (await avisar(Number(r.user_id), "huerto", ultima, titulo, "Ve a tu casa en Jerusalén a cosechar.", 6 * 3600)) salieron.push({ tipo: "huerto", userId: Number(r.user_id), titulo });
+      const titulo = listas.length === 1 ? "🌾 Un surco de tu huerto está listo para segar" : `🌾 ${listas.length} surcos de tu huerto están listos para segar`;
+      if (await avisar(Number(r.user_id), "huerto", ultima, titulo, "Ve a tu huerto en Jerusalén: espanta las aves, siega y lleva las gavillas al granero.", 6 * 3600)) salieron.push({ tipo: "huerto", userId: Number(r.user_id), titulo });
     }
   }
 

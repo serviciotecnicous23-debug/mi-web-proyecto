@@ -164,7 +164,7 @@ export function MientrasNoEstabas({ personajeId }: { personajeId?: number | null
     ? [
         casa.visitas.total > 0 && `🙏 ${casa.visitas.total === 1 ? "Te visitó y bendijo tu casa" : "Visitaron y bendijeron tu casa"}: ${enLista(casa.visitas.nombres, casa.visitas.total)}.`,
         ...casa.regalos.map((g) => `🎁 ${g.quien} te dio ${bienTexto(g.bien, g.cantidad)} en tu pedido.`),
-        casa.huertoListo > 0 && `🌾 Tu huerto tiene ${veces(casa.huertoListo, "parcela lista", "parcelas listas")} para cosechar.`,
+        casa.huertoListo > 0 && `🌾 Tu huerto tiene ${veces(casa.huertoListo, "surco listo", "surcos listos")} para segar.`,
         casa.ventas > 0 && `🛒 En tu puesto del mercado se ${casa.ventas === 1 ? "vendió 1 cosa" : `vendieron ${casa.ventas} cosas`}.`,
       ]
     : [];

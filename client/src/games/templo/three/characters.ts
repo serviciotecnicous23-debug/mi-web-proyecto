@@ -743,6 +743,8 @@ export class Figure {
     for (const g of [this.body, this.armL, this.armR]) {
       for (const c of [...g.children]) {
         if (c === this.armL || c === this.armR) continue;
+        // lo que lleva en las manos o a la espalda se queda
+        if (c === this.enManos.R || c === this.enManos.L || c === this.enManos.espalda) continue;
         g.remove(c);
         (c as THREE.Mesh).geometry?.dispose();
       }
@@ -778,6 +780,34 @@ export class Figure {
     this.regazo = new THREE.Mesh(b.build(), matteFor());
     this.regazo.visible = false;
     this.body.add(this.regazo);
+  }
+
+  /** Lo que lleva en cada mano y a la espalda (las herramientas del huerto, la cosecha, el cayado, el rollo...). */
+  private enManos: { R: THREE.Object3D | null; L: THREE.Object3D | null; espalda: THREE.Object3D | null } = { R: null, L: null, espalda: null };
+
+  /**
+   * Pone algo en la mano (armado con el puño en su origen y hacia abajo, como cuelga el brazo) o lo suelta con null. Lo
+   * que se suelta no se libera: lo libera quien lo armó.
+   */
+  enMano(obj: THREE.Object3D | null, lado: "R" | "L" = "R") {
+    const brazo = lado === "R" ? this.armR : this.armL;
+    const antes = this.enManos[lado];
+    if (antes === obj) return;
+    if (antes) brazo.remove(antes);
+    this.enManos[lado] = obj;
+    if (obj) {
+      obj.position.set(0, -0.33, 0);
+      brazo.add(obj);
+    }
+  }
+
+  /** Pone algo a la espalda (un fardo de gavillas, una bolsa) o lo quita con null. */
+  aLaEspalda(obj: THREE.Object3D | null) {
+    const antes = this.enManos.espalda;
+    if (antes === obj) return;
+    if (antes) this.body.remove(antes);
+    this.enManos.espalda = obj;
+    if (obj) this.body.add(obj);
   }
 
   update(r: Rig) {

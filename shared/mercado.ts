@@ -5,8 +5,8 @@
  * - Se gasta en el mercado: semillas para el huerto de la casa, adornos para la casa, ropa (un manto
  *   y una faja que ven los vecinos) y el letrero con el nombre de la casa.
  * - Cada día hay dos ofertas (30 % menos), las mismas para todos.
- * - El huerto: parcelas según el nivel de la casa; se siembra, se riega una vez (crece más rápido
- *   y da uno más) y se cosecha al alfolí, para ofrecerlo en el templo (honra) o venderlo (gozo).
+ * - El huerto (shared/huerto.ts): surcos según el nivel de la casa; se ara, se siembra, se riega, se cuida y se siega;
+ *   las gavillas van al alfolí, para ofrecerlas en el templo (honra) o venderlas (gozo).
  * «El peso falso es abominación a Jehová; Mas la pesa cabal le agrada» (Proverbios 11:1): precios fijos.
  */
 
@@ -349,6 +349,7 @@ export function guardarPreparadas(p: Preparadas, horno: { receta: RecetaId; cant
 }
 
 // ---------------------------------------------------------------- respuestas de la API
+/** Un surco del huerto de la casa (shared/huerto.ts) tal como lo ve la pantalla. */
 export type Parcela = {
   semilla: "trigo" | "cebada" | "olivo" | null;
   plantado: string | null;
@@ -359,6 +360,23 @@ export type Parcela = {
   lluvia?: boolean;
   /** la regó la cisterna de la casa al sembrarla (shared/obras.ts) */
   cisterna?: boolean;
+  /** arado con la azada: listo para sembrar */
+  arado?: boolean;
+  /** la etapa de la planta (0 recién sembrado … 4 lista) y cuánto dura su crecimiento (segundos) */
+  etapa?: number;
+  total?: number;
+  /** las malas hierbas que hay y en cuántos segundos sale otra */
+  hierbas?: number;
+  hierbaEn?: number | null;
+  /** hay aves ahora, en cuántos segundos llegan y lo que ya se comieron */
+  aves?: boolean;
+  avesEn?: number | null;
+  /** cuántos segundos se quedan las aves que están (las de la siembra se van al comer; null: hasta espantarlas) */
+  avesHasta?: number | null;
+  comidas?: number;
+  abono?: boolean;
+  /** las estrellas que lleva (riego, sin hierbas y abono) */
+  estrellas?: number;
 };
 export type MercadoEstado = {
   dia: string;
@@ -394,4 +412,6 @@ export type MercadoEstado = {
   cisterna: boolean;
   /** El fardo: las copias de ropa guardadas para vender o para el artesano (shared/taller.ts). */
   fardo: Record<string, number>;
+  /** El huerto de la casa: el agua, el abono, las herramientas, las gavillas y las tareas del día (shared/huerto.ts). */
+  labranza?: import("./huerto").LabranzaVista;
 };

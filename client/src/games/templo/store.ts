@@ -202,7 +202,23 @@ export type CasaHud = {
   };
 };
 
-type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null; casa: CasaHud | null };
+/** Una tarea que se puede hacer donde está el personaje en el huerto (un botón de la pantalla). */
+export type AccionHuertoHud = { id: string; nombre: string; icono: string; /** por qué no se puede ahora (el botón queda apagado y lo dice) */ no?: string; extra?: Record<string, unknown> };
+
+/** El huerto de la casa (casa/huerto3d.ts): lo que muestra la pantalla mientras se está en el huerto. */
+export type HuertoHud = {
+  /** Lo que hay cerca: un surco, el pozo, el granero, las gavillas o la puerta; con lo que se puede hacer ahí. */
+  cerca: { tipo: "surco" | "pozo" | "granero" | "gavillas" | "puerta"; n?: number; titulo: string; estado: string; acciones: AccionHuertoHud[] } | null;
+  /** El gesto que se está haciendo: qué hacer con el dedo y cuánto va (0 a 1). */
+  gesto: { accion: string; texto: string; progreso: number } | null;
+  aviso: string;
+  /** Esperando lo que dice el servidor de la última tarea. */
+  esperando: boolean;
+  /** Lleva las gavillas a cuestas. */
+  llevando: boolean;
+};
+
+type Snapshot = { hud: Hud; modal: Modal | null; toasts: { id: number; text: string; tone: "gold" | "info" | "warn" }[]; online: OnlineHud | null; ciudad: CiudadHud | null; casa: CasaHud | null; huerto: HuertoHud | null };
 
 const emptyHud: Hud = {
   sacerdotes: 0,
@@ -214,7 +230,7 @@ const emptyHud: Hud = {
 };
 
 class GameStore {
-  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null, ciudad: null, casa: null };
+  private snap: Snapshot = { hud: emptyHud, modal: null, toasts: [], online: null, ciudad: null, casa: null, huerto: null };
   private queue: Modal[] = [];
   private listeners = new Set<() => void>();
   private closeHandlers = new Set<(m: Modal) => void>();
@@ -248,6 +264,11 @@ class GameStore {
 
   setCasa(casa: CasaHud | null) {
     this.snap = { ...this.snap, casa };
+    this.emit();
+  }
+
+  setHuerto(huerto: HuertoHud | null) {
+    this.snap = { ...this.snap, huerto };
     this.emit();
   }
 
@@ -306,7 +327,7 @@ class GameStore {
   reset() {
     this.queue = [];
     this.closeHandlers.clear();
-    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online, ciudad: null, casa: null };
+    this.snap = { hud: emptyHud, modal: null, toasts: [], online: this.snap.online, ciudad: null, casa: null, huerto: null };
     this.emit();
   }
 }

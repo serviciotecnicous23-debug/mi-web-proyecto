@@ -64,6 +64,10 @@ export type CasaOpts = {
   alSalir: () => void;
   /** El horno de la casa (solo el dueño): abre «Tu casa» en el huerto y el horno. */
   alHorno?: () => void;
+  /** La puerta del huerto (solo el dueño): sale al huerto de la casa (casa/huerto3d.ts). */
+  alHuerto?: () => void;
+  /** Vuelve del huerto: aparece en la puerta del huerto, mirando hacia adentro. */
+  desdeHuerto?: boolean;
   /** Entrar ya en el modo remodelar (después de comprar un mueble). */
   remodelar?: boolean;
   /** Un edificio de la ciudad (la escuela o el palacio) en vez de una casa. */
@@ -88,7 +92,7 @@ export type CasaOpts = {
   siguiente?: () => string | null;
 };
 
-type ZonaId = "salir" | "horno" | "subir" | "bajar" | `est:${string}` | `trab:${string}` | `diar:${string}`;
+type ZonaId = "salir" | "horno" | "huerto" | "subir" | "bajar" | `est:${string}` | `trab:${string}` | `diar:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; piso: 0 | 1; r: number; ring: Ring; inside: boolean; etiqueta: HTMLDivElement };
 type Siervo = { handle: CrowdHandle; rig: Rig; base: V2; tarea: string };
 type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number };
@@ -248,6 +252,12 @@ export class CasaWorld {
     const [px, pz] = this.plano.puerta;
     const pr = newRig(this.wx(px + 1), this.wz(pz + 0.2));
     pr.yaw = Math.PI;
+    const ph = opts.desdeHuerto && estado.esMia ? this.puntoPuertaHuerto() : null;
+    if (ph) {
+      pr.x = ph[0];
+      pr.z = ph[1] + 0.15;
+      pr.yaw = 0;
+    }
     this.player = { fig: pf, rig: pr, vx: 0, vz: 0, step: 0 };
     this.scene.add(pf.root);
     this.camTarget.set(pr.x, 0, pr.z - 1);
@@ -273,6 +283,19 @@ export class CasaWorld {
     this.pushHud();
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
+  }
+
+  /** Delante de la puerta del huerto (adentro), donde está su círculo. */
+  private puntoPuertaHuerto(): V2 | null {
+    const celdas = this.opts.edificio ? [] : this.plano.huerto ?? [];
+    if (!celdas.length) return null;
+    const xs = celdas.map(([x]) => x);
+    return [this.wx((Math.min(...xs) + Math.max(...xs) + 1) / 2), this.wz(celdas[0][1] + 0.6)];
+  }
+
+  /** Caminar solo hasta la puerta del huerto (desde el botón de la pantalla). */
+  irAlHuerto() {
+    this.irAZona("huerto");
   }
 
   // ================================================================ el plano en el mundo
@@ -327,6 +350,8 @@ export class CasaWorld {
               const k = lado === "N" || lado === "S" ? `H${lado === "N" ? x : x},${lado === "N" ? z : z + 1}` : `V${lado === "O" ? x : x + 1},${z}`;
               if (vistos.has(k)) continue;
               vistos.add(k);
+              // la puerta del huerto (en el muro del fondo): se dibuja aparte
+              if (p === 0 && lado === "N" && !otro && this.esPuertaHuerto(x, z)) continue;
               if (abierto(pl, x, z, lado, p) || abierto(pl, nx, nz, OPUESTO[lado], p)) {
                 // la puerta de la calle: dos postes y el umbral
                 if (p === 0 && lado === "S" && !otro) g.box(CELDA, 0.04, GROSOR * 1.6, "#8f8a82", { x: this.wx(x + 0.5), y: 0.02, z: this.wz(z + 1) });
@@ -363,6 +388,7 @@ export class CasaWorld {
         const [px, pz] = pl.puerta;
         this.rects[0].push([this.wx(px) - 0.2, this.wz(pz + 1) + 0.18, this.wx(px + 2) + 0.2, this.wz(pz + 1) + 0.5]);
         this.construirHorno(g);
+        this.construirPuertaHuerto(g);
         if (pl.arbol) this.construirHiguera(g);
         if (pl.escalera) this.construirEscalera(g);
       } else if (pl.escalera) {
@@ -372,6 +398,52 @@ export class CasaWorld {
       }
       this.pisos[p].add(meshPair(g));
     }
+  }
+
+  /** ¿Esa celda (del muro del fondo) es la puerta del huerto? Solo en las casas (no en los edificios). */
+  private esPuertaHuerto(x: number, z: number): boolean {
+    if (this.opts.edificio || !this.plano.huerto) return false;
+    return this.plano.huerto.some(([hx, hz]) => hx === x && hz === z);
+  }
+
+  /**
+   * La puerta del huerto en el muro del fondo: el marco de cedro y, para el dueño, abierta, con el huerto que se ve detrás
+   * (el cielo, los surcos y un olivo). A las visitas se les ve cerrada.
+   */
+  private construirPuertaHuerto(g: GeoBuilder) {
+    const celdas = this.opts.edificio ? [] : this.plano.huerto ?? [];
+    if (!celdas.length) return;
+    const xs = celdas.map(([x]) => x);
+    const x0 = this.wx(Math.min(...xs)), x1 = this.wx(Math.max(...xs) + 1);
+    const z = this.wz(celdas[0][1]);
+    const cx = (x0 + x1) / 2, ancho = x1 - x0;
+    const alto = this.estilo() === "tienda" ? 1.55 : 1.95;
+    const tope = this.estilo() === "tienda" ? 1.75 : MURO;
+    const colMuro = this.estilo() === "tienda" ? "#4a3a2e" : this.estilo() === "adobe" ? "#c9a77c" : "#d9ccb0";
+    // el muro de arriba de la puerta y el marco
+    g.box(ancho + GROSOR, tope - alto, GROSOR, colMuro, { x: cx, y: alto + (tope - alto) / 2, z }, 0.04);
+    for (const sx of [x0, x1]) g.box(0.1, alto, GROSOR + 0.06, C.cedroOsc, { x: sx, y: alto / 2, z });
+    g.box(ancho + 0.16, 0.12, GROSOR + 0.08, C.cedroOsc, { x: cx, y: alto + 0.04, z });
+    g.box(ancho, 0.04, GROSOR * 1.6, "#8f8a82", { x: cx, y: 0.02, z });
+    // el choque del muro (no se sale caminando: se sale por el círculo)
+    this.rects[0].push([x0 - GROSOR / 2, z - 0.6, x1 + GROSOR / 2, z - GROSOR / 2]);
+    if (!this.estado.esMia) {
+      // cerrada para las visitas
+      g.box(ancho - 0.04, alto - 0.02, 0.05, "#7a4a26", { x: cx, y: alto / 2, z: z - 0.01 });
+      for (const dx of [-ancho / 4, ancho / 4]) g.box(ancho / 2 - 0.1, alto - 0.3, 0.02, "#8f5a30", { x: cx + dx, y: alto / 2, z: z + 0.02 });
+      return;
+    }
+    // abierta: el huerto se ve detrás de la puerta (el cielo, la tierra arada, los surcos verdes y un olivo)
+    const zf = z - 0.9;
+    g.box(ancho + 0.9, alto + 0.4, 0.04, "#a9cbe8", { x: cx, y: (alto + 0.4) / 2, z: zf - 0.02 });
+    g.box(ancho + 0.9, 0.04, 0.9, "#7a5c3a", { x: cx, y: 0.0, z: (z + zf) / 2 });
+    for (let k = 0; k < 3; k++) {
+      const zz = zf + 0.2 + k * 0.24;
+      g.box(ancho + 0.8, 0.06, 0.1, "#5d4529", { x: cx, y: 0.04, z: zz });
+      for (let i = 0; i < 5; i++) g.cone(0.03, 0.16, k % 2 ? C.hojaClara : C.hoja, { x: x0 - 0.3 + i * ((ancho + 0.6) / 4), y: 0.12, z: zz }, 4);
+    }
+    g.cyl(0.04, 0.06, 0.8, "#6e5a43", { x: cx + ancho * 0.35, y: 0.4, z: zf + 0.15 }, 6);
+    g.sphere(0.32, "#7b8a5c", { x: cx + ancho * 0.35, y: 1.0, z: zf + 0.15, sy: 0.75 }, 8, 6);
   }
 
   private construirHorno(g: GeoBuilder) {
@@ -555,6 +627,8 @@ export class CasaWorld {
     if (this.estado.esMia) {
       const [hx, hz] = pl.horno;
       def.push(["horno", this.wx(hx + 0.5), this.wz(hz + 1.5), 0, 0.36, "#ffb36b", "El horno"]);
+      const ph = this.puntoPuertaHuerto();
+      if (ph && this.opts.alHuerto) def.push(["huerto", ph[0], ph[1], 0, 0.4, "#9be07a", "🌾 Salir al huerto"]);
     }
     if (pl.escalera) {
       const [ax, az] = pl.escalera.abajo;
@@ -569,10 +643,9 @@ export class CasaWorld {
       const etiqueta = this.overlay.make("tpl-pad", texto);
       this.zonas.push({ id, x, z, piso, r, ring, inside: false, etiqueta });
     }
-    // aparece en la puerta: ese círculo no se dispara solo
-    const salir = this.zonas[0];
+    // aparece en la puerta (la de la calle o la del huerto): ese círculo no se dispara solo
     const r = this.player.rig;
-    salir.inside = Math.hypot(r.x - salir.x, r.z - salir.z) < salir.r + 0.3;
+    for (const z of this.zonas) if (z.id === "salir" || z.id === "huerto") z.inside = Math.hypot(r.x - z.x, r.z - z.z) < z.r + 0.3;
   }
 
   private updateZonas() {
@@ -596,6 +669,7 @@ export class CasaWorld {
     vibrar(15);
     if (id === "salir") this.opts.alSalir();
     else if (id === "horno") this.opts.alHorno?.();
+    else if (id === "huerto") this.opts.alHuerto?.();
     else if (id === "subir" || id === "bajar") this.cambiarDePiso(id === "subir" ? 1 : 0);
     else if (id.startsWith("est:")) this.opts.alEstacion?.(id.slice(4));
     else if (id.startsWith("trab:")) this.empezarTrabajo(id);
@@ -1322,8 +1396,10 @@ export class CasaWorld {
     const salir = this.zonas[0];
     if (this.piso === 0 && Math.hypot(r.x - salir.x, r.z - salir.z) < 1.4) return "Párate en el círculo de la puerta para salir a la calle";
     if (!this.estado.esMia) return this.estado.yaBendije ? `Ya dejaste tu bendición en la casa de ${this.estado.dueno}.` : `Estás de visita en la casa de ${this.estado.dueno}: déjale una bendición.`;
+    const ph = this.puntoPuertaHuerto();
+    if (ph && Math.hypot(r.x - ph[0], r.z - ph[1]) < 1.3) return "🌾 Párate en el círculo verde para salir a tu huerto.";
     if (!this.items.length) return "Tu casa está vacía: compra muebles en el mercado y toca «Remodelar» para ponerlos.";
-    return "Toca el piso para caminar. «Remodelar» para mover tus muebles.";
+    return "Toca el piso para caminar. «Remodelar» para mover tus muebles. Al fondo está la puerta de tu huerto.";
   }
 
   private pushHud() {

@@ -59,7 +59,7 @@ el mismo día para todos.
 | Al volver después de días | Recibe su regalo de regreso y ve qué hizo su barrio mientras no estaba | Gozo, semillas de la estación y, tras una semana, el mejor vestido |
 | En el templo | Cumple sus deberes | Mérito, gozo y su **racha de servicio** |
 | Encargos del día | 3 encargos distintos según su camino (y **uno más los días de fiesta**, con el doble de gozo) | Mérito, gozo y puntos para la copa del barrio |
-| El huerto | Siembra trigo (40 min), cebada (25 min) u olivos (60 min); riega o deja que la lluvia riegue | Harina y aceite para el alfolí |
+| El huerto | Sale por la puerta del fondo de su casa: ara, siembra trigo (40 min), cebada (25 min) u olivos (60 min), saca agua del pozo y riega, arranca las malas hierbas, espanta las aves, abona y siega; lleva las gavillas al granero y cumple las 3 tareas del huerto del día | Harina y aceite para el alfolí (más con cada estrella de cuidado) y gozo |
 | El horno | Prepara tortas y aceite puro con lo del alfolí | Ofrendas mejores para el templo |
 | El mercado | Vende lo que le sobra al mercader (que busca más lo que escasea en la estación) | Gozo para muebles, ropa y adornos |
 | Las obras de su casa | Empieza una obra con su gozo y la harina del huerto (cisterna, horno, granero, pórtico…); los obreros trabajan aunque no esté | Una casa que se ve en la ciudad, sus estrellas y la foto para compartir |
@@ -501,6 +501,51 @@ Pokémon GO:
   (a 6 m o menos de ellos) gana 3 de gozo una vez por día y lo guarda (`game_dichos`); en la ventana se descubre con lo
   que quiere decir. Los que falten los enseña el mentor. Para agregar dichos, van al final de la lista.
 - El título elegido lo ven los vecinos en la ficha (`VecinoInfo.titulo`).
+
+## 7b. El huerto de verdad (13 de noviembre de 2026)
+
+Luis veía el huerto como «una pantalla seca que no se sabe lo que se está haciendo» y pidió un lugar de verdad, con
+cosas que hacer. Ahora el huerto es un lugar propio (`casa/huerto3d.ts`): se sale a él por la puerta del fondo de la
+casa por dentro (`Plano.huerto` en `shared/casa-interior.ts`) y se vuelve por la misma puerta.
+
+**El lugar**: los surcos (los de siempre: 2 a 5 según la casa, y uno más con «ensanchar el huerto»), el pozo del
+camino (con el pozo del barrio, más cántaros por día; con la cisterna de la casa, sin tope y lo sembrado queda regado),
+el granero (más grande con el granero de las obras), los olivos y la higuera. Llueve cuando llueve en el calendario.
+
+**Las tareas, cada una con su gesto** (nada se hace solo al acercarse; el servidor decide en `server/huerto.ts`):
+
+| Tarea | Gesto | Regla |
+|---|---|---|
+| ⛏️ Arar | Deslizar el dedo a lo largo del surco | Sin arar no se siembra; después de segar hay que volver a arar |
+| 🌱 Sembrar | Deslizar | Trigo, cebada u olivo; el de la estación crece más rápido |
+| 🏺 Llenar el cántaro | Mantener apretado en el pozo | 3 riegos (6 con el cántaro grande); el pozo da 6 cántaros por día (10 con el pozo del barrio) |
+| 💧 Regar | Mantener apretado sobre el surco | Una vez por siembra: crece 25 % más rápido (35 % con la tinaja) y da una estrella |
+| 🌿 Arrancar hierbas | Tocar cada una | Sale una cada 12 min (antes en las lluvias; el doble con la azada de hierro), hasta 3 |
+| 🐦 Espantar las aves | Tocar cada una | Llegan a los 25 s de sembrar (si nadie las espanta, a los 10 min comieron) y 90 s después de que está lista |
+| 🐑 Abonar | Deslizar | Con el abono del redil: cada oveja da 1 cada 3 h (hasta 6; 2 al empezar) |
+| 🌾 Segar | Deslizar con la hoz | La cosecha queda en gavillas a cuestas; con 3 estrellas y la hoz de hierro, una más |
+| 🧺 Al granero | Mantener apretado en el granero | Recién ahí van al alfolí (lo que no cabe queda junto al camino) |
+
+**La cosecha**: lo de la semilla + una por cada estrella (regado, limpio de hierbas al segar, abonado) + el molino o
+las vasijas − lo que se comieron las aves (nunca menos de 1). Al segar se puede dejar **el rincón para el pobre**
+(Levítico 23:22): una gavilla menos y 3 de gozo, hasta 3 por día.
+
+**Las 3 tareas del huerto del día** (`misionesDelDia`): de 12 posibles, solo las que se pueden hacer (sin regar con
+cisterna o lluvia, sin abonar sin ovejas, sin «el cultivo de la estación» si no hay); 8 de gozo cada una y 10 de más
+por las tres (34 por día como mucho).
+
+**Las herramientas** (gozo, el 10 % al tesoro): la azada de hierro (120), el cántaro grande (80) y la hoz de hierro
+(160), 1 Samuel 13:20.
+
+**Lo que se guarda**: cada surco en `game_houses.huerto` (con `arado`, `abono`, `limpio` y `aves`) y lo demás en
+`game_houses.labranza` (el agua, el pozo del día, las herramientas, las gavillas, el abono, las tareas y los rincones).
+El crecimiento, las hierbas, las aves y el abono se calculan con las horas al leer: nada corre de fondo.
+
+**En la ciudad**: cada casa muestra su huertito (`CasaVista.huerto`, `huertitoDe`): un cantero con hasta 4 surcos y lo
+sembrado en su etapa, en la malla del suelo (no se aclara con la casa).
+
+**Para probar** (scratchpad de la parte 4): `reg5079/huerto_api.py` (78) y `shared/huerto.test.ts`. Las pruebas viejas
+que sembraban sin arar ahora deben arar antes, llevar las gavillas al granero y espantar las aves.
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
