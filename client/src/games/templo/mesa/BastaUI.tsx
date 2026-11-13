@@ -8,7 +8,7 @@ import { Hand } from "lucide-react";
 import { BASTA, CATEGORIAS_BASTA, LETRAS_BASTA, NOMBRE_CAT_BASTA, limpiarRespuestaBasta, type CatBasta } from "@shared/mesa/basta-reglas";
 import type { BastaVista, JugadaBasta } from "@shared/mesa/basta";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 type Resp = Record<CatBasta, string>;
 const vacio = (): Resp => ({ personaje: "", lugar: "", libro: "", objeto: "" });
@@ -99,6 +99,7 @@ export function BastaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMes
     if (envio.current) clearTimeout(envio.current);
   }, []);
 
+  useGolpeFinal(v.fase === "fin", yo != null && (v.puntos[yo] ?? 0) >= Math.max(...v.puntos), yo != null);
   const restante = quedaMs(v.restanteMs, recibidaEn, ahora);
   const llenas = CATEGORIAS_BASTA.every((c) => r[c].trim());
   const rev = v.revisada;

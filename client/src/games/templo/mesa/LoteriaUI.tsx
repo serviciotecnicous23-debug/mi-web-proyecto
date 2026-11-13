@@ -31,8 +31,7 @@ import {
   useEventosNuevos,
   useMusicaDeJuego,
   useSonidoMesa,
-  type PropsMesa,
-} from "./vida";
+  type PropsMesa, useGolpeFinal } from "./vida";
 
 const CLAVE_VOZ = "jer-loteria-voz";
 function leerVoz() {
@@ -185,6 +184,7 @@ export function LoteriaUI({
     if (!r.ok && r.message) setAviso(r.message);
   }
 
+  useGolpeFinal(v.fase === "fin", yo != null && v.ganadores.includes(yo), yo != null);
   const fin = v.fase === "fin" || v.fase === "revelar";
   const ganadora = v.jugadores.find((j) => j.gano);
 

@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ESCALERAS, ESCALERAS_JACOB, SERPIENTES, VERSO_LEVANTA, atajoEn, celdaDe, type EscalerasVista, type EvEscaleras, type JugadaEscaleras } from "@shared/mesa/escaleras";
 import { Dado } from "./Dado";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 type P = { x: number; y: number };
 const centro = (c: number): P => {
@@ -260,6 +260,7 @@ export function EscalerasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Prop
   // la ficha que se mueve va arriba
   dibujar.sort((x, y) => Number(fichas[x.a].anim) - Number(fichas[y.a].anim));
 
+  useGolpeFinal(v.fase === "fin", v.ganador != null && v.ganador === yo, yo != null);
   const restante = quedaMs(v.restanteMs, recibidaEn, ahora);
   const at = leccion ? [...ESCALERAS_JACOB, ...SERPIENTES].find((x) => x.id === leccion.id) : null;
 

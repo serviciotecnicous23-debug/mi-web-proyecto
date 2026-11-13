@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CELDAS, DAMAS_CHINAS, PUNTAS, enfrente, hoyosDePunta, movimientosDe, type DamasChinasVista, type EvDamasChinas, type JugadaDamasChinas, type MovDC } from "@shared/mesa/damas-chinas";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 const ESC = 4;
 type P = { x: number; y: number };
@@ -143,6 +143,7 @@ export function DamasChinasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Pr
     }
   }
 
+  useGolpeFinal(v.fase === "fin", v.ganador != null && v.ganador === yo, yo != null);
   const t = Date.now();
   const animP = anim ? enAnim(anim, t) : null;
   const restante = quedaMs(v.restanteMs, recibidaEn, ahora);

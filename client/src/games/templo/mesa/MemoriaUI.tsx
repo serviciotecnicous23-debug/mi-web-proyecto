@@ -8,7 +8,7 @@ import { MEMORIA, PAREJAS, type JugadaMemoria, type MemoriaVista } from "@shared
 import { DorsoCarta } from "./Carta";
 import { DefsFiguras, Figura } from "./figuras";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 type Cara = { par: number; cara: "figura" | "verso" };
 
@@ -76,6 +76,7 @@ export function MemoriaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsM
     if (!r.ok && r.message) setAviso(r.message);
   }
 
+  useGolpeFinal(v.fase === "fin", yo != null && (v.puntos[yo] ?? 0) >= Math.max(...v.puntos), yo != null);
   const restante = quedaMs(v.restanteMs, recibidaEn, ahora);
   const jugado = v.fase === "jugando" ? v.jugadoMs + (ahora - recibidaEn) : v.jugadoMs;
   const total = v.cartas.length / 2;

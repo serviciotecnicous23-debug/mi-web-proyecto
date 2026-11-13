@@ -8,7 +8,7 @@ import { Dices } from "lucide-react";
 import { CATEGORIAS_GENERALA, EXPLICA_CAT_GENERALA, GENERALA, NOMBRE_CAT_GENERALA, type CatGenerala, type GeneralaVista, type JugadaGenerala } from "@shared/mesa/generala";
 import { mesaSonido } from "./mesa-sonido";
 import { Dado } from "./Dado";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 const nombreCorto = (n: string) => n.replace(/\s*🤖\s*$/u, "");
 
@@ -87,6 +87,7 @@ export function GeneralaUI({ vista: v, nombres, bots, jugar, recibidaEn }: Props
     if (!r.ok && r.message) setAviso(r.message);
   }
 
+  useGolpeFinal(v.fase === "fin", yo != null && v.ganadores.includes(yo), yo != null);
   const puedeGuardar = miTurno && v.tiros > 0 && v.tiros < GENERALA.tiros;
   const quien = nombres[v.turno] ?? "";
 

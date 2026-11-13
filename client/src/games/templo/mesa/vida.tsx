@@ -221,3 +221,15 @@ export function AvisoMesa({ texto }: { texto: string | null }) {
 
 /** Pone los nombres en el título del final («¡Lotería de @2!» → «¡Lotería de Ana!»). */
 export const conNombres = (titulo: string, nombres: string[]) => titulo.replace(/@(\d+)/g, (_, i) => nombres[Number(i)] ?? "alguien");
+
+/**
+ * Al terminar la partida, la banda sonora da su golpe final («victoria» o «derrota»): una vez, solo si se estaba
+ * jugando (no al abrir un tablero que ya terminó) y nunca para quien solo mira.
+ */
+export function useGolpeFinal(fin: boolean, gane: boolean, juego: boolean) {
+  const antes = useRef(fin);
+  useEffect(() => {
+    if (fin && !antes.current && juego) window.dispatchEvent(new CustomEvent("jer-golpe", { detail: gane ? "victoria" : "derrota" }));
+    antes.current = fin;
+  }, [fin, gane, juego]);
+}

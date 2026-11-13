@@ -532,6 +532,8 @@ export type SalaVista = {
   juego: JuegoId;
   /** El juego de mesa elegido (si `juego` es «mesa»). */
   mesa: string | null;
+  /** Lo que eligió el anfitrión para ese juego de mesa (la figura de la lotería, el ritmo del cantor…). */
+  opcionesMesa?: Record<string, string>;
   /** Cuántas tribus (en «Las doce tribus»). */
   tribus: number;
   estado: EstadoSala;

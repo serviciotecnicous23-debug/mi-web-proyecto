@@ -18,10 +18,10 @@ export function hace(iso: string) {
   return `hace ${d} ${d === 1 ? "día" : "días"}`;
 }
 
-export function Card({ children, title, onClose, wide, testid }: { children: React.ReactNode; title?: React.ReactNode; onClose?: () => void; wide?: boolean; testid?: string }) {
+export function Card({ children, title, onClose, wide, ancha, testid }: { children: React.ReactNode; title?: React.ReactNode; onClose?: () => void; wide?: boolean; ancha?: boolean; testid?: string }) {
   return (
     <div
-      className={`tpl-ventana relative flex max-h-full w-full ${wide ? "max-w-2xl" : "max-w-md"} flex-col overflow-hidden rounded-[22px] border border-amber-300/50 bg-[#fffaf0] text-stone-800 dark:border-amber-500/25 dark:bg-[#1f1a12] dark:text-stone-100`}
+      className={`tpl-ventana relative flex max-h-full w-full ${ancha ? "max-w-5xl" : wide ? "max-w-2xl" : "max-w-md"} flex-col overflow-hidden rounded-[22px] border border-amber-300/50 bg-[#fffaf0] text-stone-800 dark:border-amber-500/25 dark:bg-[#1f1a12] dark:text-stone-100`}
       data-testid={testid}
     >
       {title && (

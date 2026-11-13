@@ -10,15 +10,16 @@
  * El estado guarda también los nombres de los asientos (para el título del final: «¡Lotería de Ana!»).
  */
 import type { Verso } from "../ciudad";
+import type { JuegoDeMesa } from "../mesa";
 import type { Azar, FinMesa, ModuloMesa, Nivel } from "./comun";
 import { JUEGOS_MESA, ORDEN_MESAS, opcionesValidas, type JuegoMesaId, type OpcionMesa } from "./juegos";
-import { loteria } from "./loteria";
-import { generala } from "./generala";
-import { escaleras } from "./escaleras";
-import { damasChinas } from "./damas-chinas";
-import { memoria } from "./memoria";
-import { basta } from "./basta";
-import { dibuja } from "./dibuja";
+import { RITMOS_LOTERIA, loteria } from "./loteria";
+import { GENERALA, generala } from "./generala";
+import { ESCALERAS, escaleras } from "./escaleras";
+import { DAMAS_CHINAS, damasChinas } from "./damas-chinas";
+import { MEMORIA, memoria } from "./memoria";
+import { BASTA, basta } from "./basta";
+import { DIBUJA, dibuja } from "./dibuja";
 
 type AsientoT = { n: number; nombre: string; bot: Nivel | null };
 type ResultadoT = { ganadores: number[]; puntos: number[]; detalle: string[]; titulo: string };
@@ -71,6 +72,17 @@ const MODULOS: Record<JuegoMesaId, ModuloConVista> = {
   dibuja: dibuja as unknown as ModuloConVista,
 };
 
+/** El reloj de cada juego (lo lleva el propio juego; aquí solo se dice cuánto es): el turno, o la carta del cantor. */
+const RELOJ: Record<JuegoMesaId, number> = {
+  loteria: RITMOS_LOTERIA.normal.ms,
+  generala: GENERALA.turnoMs,
+  escaleras: ESCALERAS.turnoMs,
+  "damas-chinas": DAMAS_CHINAS.turnoMs,
+  memoria: MEMORIA.turnoMs,
+  basta: BASTA.escribirMs,
+  dibuja: DIBUJA.dibujarMs,
+};
+
 /** El título del final con los nombres («¡Lotería de @2!» → «¡Lotería de Ana!»). */
 export const tituloConNombres = (titulo: string, nombres: string[]) => titulo.replace(/@(\d+)/g, (_, i) => nombres[Number(i)] ?? "alguien");
 
@@ -103,7 +115,7 @@ function aMesa(id: JuegoMesaId): JuegoTradicional {
     min: mod.min,
     max: mod.max,
     modo: "todos",
-    relojMs: 0,
+    relojMs: RELOJ[id],
     opciones: def.opciones,
     relojPropio: true,
     estadoInicial(asientos, azar, opciones, ahora = Date.now()) {
@@ -154,4 +166,6 @@ function aMesa(id: JuegoMesaId): JuegoTradicional {
 }
 
 export const MESAS_TRADICIONALES: JuegoTradicional[] = ORDEN_MESAS.map(aMesa);
+// cada uno es un juego de mesa del patio (shared/mesa.ts) con los ganchos opcionales del reloj propio
+MESAS_TRADICIONALES satisfies JuegoDeMesa<EstadoTradicional, unknown, unknown>[];
 export const MESA_TRADICIONAL = Object.fromEntries(MESAS_TRADICIONALES.map((j) => [j.id, j])) as Record<JuegoMesaId, JuegoTradicional>;

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Eraser, Check } from "lucide-react";
 import { COLORES_DIBUJA, DIBUJA, GROSORES_DIBUJA, type DibujaVista, type JugadaDibuja, type Trazo } from "@shared/mesa/dibuja";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 const W = 1000;
 const H = 750;
@@ -187,6 +187,7 @@ export function DibujaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMe
     if (!r.ok && r.message) setAviso(r.message);
   }
 
+  useGolpeFinal(v.fase === "fin", yo != null && (v.practica || (v.puntos[yo] ?? 0) >= Math.max(...v.puntos)), yo != null);
   const restante = quedaMs(v.restanteMs, recibidaEn, ahora);
   const quien = v.dibuja != null ? limpio(nombres[v.dibuja] ?? "") : "";
 
