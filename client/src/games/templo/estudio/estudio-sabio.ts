@@ -6,6 +6,7 @@
  * televisión. Se dibuja en su propio lienzo detrás de la pantalla del concurso; mientras, la ciudad duerme.
  */
 import * as THREE from "three";
+import { Vista } from "../motor/vista";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GeoBuilder } from "../three/builder";
 import { Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
@@ -432,6 +433,8 @@ function partir(g: CanvasRenderingContext2D, texto: string, ancho: number, maxLi
 export class EstudioSabio {
   readonly canvas: HTMLCanvasElement;
   private renderer: THREE.WebGLRenderer;
+  /** La tubería de imagen (motor/vista.ts): tono, gradación, oclusión, resplandor y calidad. */
+  private vista: Vista | null = null;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(47, 1, 0.1, 80);
   private raf = 0;
@@ -1371,7 +1374,7 @@ export class EstudioSabio {
       this.animarConfeti(0.033);
       this.animarDestellos(0.033);
     }
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
   }
 
   private cuadro = (now: number) => {
@@ -1389,7 +1392,7 @@ export class EstudioSabio {
     this.animarGente(dt);
     this.animarConfeti(dt);
     this.animarDestellos(dt);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
   };
 
   /** El latido de la duda: dos golpes (como un corazón) unas 72 veces por minuto. */
@@ -1548,6 +1551,7 @@ export class EstudioSabio {
     this.w = Math.max(1, Math.round(r?.width ?? 1));
     this.h = Math.max(1, Math.round(r?.height ?? 1));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     // el centro de la toma más arriba (la mitad de abajo la tapa la pantalla del concurso en el teléfono)
     const f = Math.min(0.5, Math.max(0.15, this.foco));
@@ -1580,6 +1584,7 @@ export class EstudioSabio {
     this.etan.dispose();
     this.jugador.dispose();
     this.envTex?.dispose();
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.canvas.remove();

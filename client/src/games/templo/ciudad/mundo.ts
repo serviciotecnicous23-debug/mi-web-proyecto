@@ -8,6 +8,7 @@
  */
 import { avanzarMateriales } from "../three/builder";
 import * as THREE from "three";
+import { Vista } from "../motor/vista";
 import { BlobShadows, Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
 import { ItemRenderer } from "../three/items";
 import { Fx } from "../three/fx";
@@ -173,6 +174,8 @@ export class CiudadWorld {
   private opts: CiudadOpts;
   private container: HTMLElement;
   private renderer: THREE.WebGLRenderer;
+  /** La tubería de imagen (motor/vista.ts): tono, gradación, oclusión, resplandor y calidad. */
+  private vista: Vista | null = null;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 1, 0.3, 900);
   private sun = new THREE.DirectionalLight("#fff3d6", 2.6);
@@ -1484,7 +1487,7 @@ export class CiudadWorld {
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
     this.adapt(raw);
     this.hudT += dt;
     if (this.hudT > 0.1) {
@@ -1532,6 +1535,7 @@ export class CiudadWorld {
     this.w = Math.max(1, Math.round(r.width));
     this.h = Math.max(1, Math.round(r.height));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.fov = this.camera.aspect < 0.85 ? 52 : this.camera.aspect < 1.2 ? 46 : 40;
     this.camera.updateProjectionMatrix();
@@ -3156,6 +3160,7 @@ export class CiudadWorld {
     liberar(this.vis.root);
     this.overlay.dispose();
     gameStore.setCiudad(null);
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     canvas.remove();

@@ -44,6 +44,7 @@ import { ALEGRIA, ESCUCHAR, INQUIRIR, casoPorId } from "./casos";
 import { Card, VerseBox, fmt, hace } from "./ui";
 import { Cruceta, PanelControles, elegirOrientacion, orientacionGuardada, textoAyuda, useControles, useReservaControles } from "./motor/Cruceta";
 import { girarPantalla, orientacionActual } from "./motor/controles";
+import { NOMBRE_CALIDAD, calidadElegida, fijarCalidad, type Calidad } from "./motor/vista";
 import { AvisoVersionNueva, NovedadesAviso } from "./novedades";
 import { EmblemaJerusalen, EmblemaTemplo } from "./portada";
 import { Medalla } from "./medalla";
@@ -1604,6 +1605,8 @@ function PauseMenu(props: {
 }) {
   const [askGen, setAskGen] = useState(false);
   const [verControles, setVerControles] = useState(false);
+  // la calidad de imagen (motor/vista.ts): null es automática
+  const [calidad, setCalidad] = useState<Calidad | null>(() => calidadElegida());
   const margen = {
     paddingTop: "calc(0.75rem + var(--tpl-st, 0px))",
     paddingBottom: "calc(0.75rem + var(--tpl-sb, 0px))",
@@ -1678,6 +1681,26 @@ function PauseMenu(props: {
               />
             </label>
           )}
+          <div className="col-span-2 text-left text-xs text-amber-100/85" data-testid="pausa-calidad">
+            <span className="mb-1 block">Calidad de imagen</span>
+            <div className="grid grid-cols-4 gap-1">
+              {([null, "alta", "media", "baja"] as const).map((c) => (
+                <button
+                  key={c ?? "auto"}
+                  type="button"
+                  onClick={() => {
+                    fijarCalidad(c);
+                    setCalidad(c);
+                  }}
+                  className={`rounded-full px-1.5 py-1 font-bold transition-colors ${calidad === c ? "bg-amber-400 text-amber-950" : "bg-white/10 text-amber-50 hover:bg-white/20"}`}
+                  aria-pressed={calidad === c}
+                  data-testid={`pausa-calidad-${c ?? "auto"}`}
+                >
+                  {c ? NOMBRE_CALIDAD[c] : "Auto"}
+                </button>
+              ))}
+            </div>
+          </div>
           <Button variant="secondary" className="col-span-2" onClick={() => setVerControles(true)} data-testid="button-pausa-controles">
             <Gamepad2 className="mr-1 h-4 w-4" /> Controles{props.big ? " y pantalla" : ""}
           </Button>

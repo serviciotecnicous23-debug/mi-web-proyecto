@@ -123,13 +123,46 @@ export class GeoBuilder {
     return this.parts.length === 0;
   }
 
-  build(): THREE.BufferGeometry {
+  /** Une todo en una geometría. Con `oclusion` (por defecto) lo de abajo de los costados queda un poco más oscuro. */
+  build(oclusion = true): THREE.BufferGeometry {
     const merged = mergeGeometries(this.parts, false) || new THREE.BufferGeometry();
     for (const p of this.parts) p.dispose();
     this.parts = [];
+    if (oclusion) hornearOclusion(merged);
     merged.computeBoundingSphere();
     return merged;
   }
+}
+
+/** Para los personajes: sin oclusión horneada (les ensuciaría el ruedo y los pies). */
+export class GeoFigura extends GeoBuilder {
+  build(): THREE.BufferGeometry {
+    return super.build(false);
+  }
+}
+
+/**
+ * La oclusión horneada (docs/guia-visual.md, sección 3): en las caras de los costados (no en los pisos ni en las mesas),
+ * lo que está cerca del suelo de la malla se oscurece un poco, como en los rincones de verdad. Así todo queda asentado en
+ * el piso aunque el aparato no calcule la oclusión en pantalla. Cuesta solo al armar la malla.
+ */
+const OCLUSION_ALTO = 0.5;
+const OCLUSION_MIN = 0.68;
+function hornearOclusion(g: THREE.BufferGeometry) {
+  const pos = g.attributes.position, nor = g.attributes.normal, col = g.attributes.color;
+  if (!pos || !nor || !col) return;
+  let yMin = Infinity;
+  for (let i = 0; i < pos.count; i++) yMin = Math.min(yMin, pos.getY(i));
+  for (let i = 0; i < pos.count; i++) {
+    // las caras de arriba y de abajo no (el piso no se oscurece entero)
+    if (Math.abs(nor.getY(i)) > 0.75) continue;
+    const h = pos.getY(i) - yMin;
+    if (h >= OCLUSION_ALTO) continue;
+    const s = h / OCLUSION_ALTO;
+    const k = OCLUSION_MIN + (1 - OCLUSION_MIN) * s * s * (3 - 2 * s);
+    col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k);
+  }
+  col.needsUpdate = true;
 }
 
 // ---------------------------------------------------------------- textura de las superficies

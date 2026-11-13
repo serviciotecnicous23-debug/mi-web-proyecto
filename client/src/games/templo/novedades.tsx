@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-motor-de-imagen",
+    fecha: "13 de noviembre de 2026",
+    titulo: "La imagen del juego, más profesional",
+    puntos: [
+      "🎨 Todos los lugares (la ciudad, el templo, tu casa, los edificios, el huerto, el aula y el estudio de «¿Quién es sabio?») se dibujan con la misma luz y el mismo color: más contraste, luces doradas y sombras con un toque de azul.",
+      "🕯️ De noche, las lámparas, el fogón y el horno brillan de verdad y dejan su luz cálida alrededor.",
+      "🧱 Las paredes, los muebles y las columnas quedan asentados en el piso, con su sombra en los rincones.",
+      "⚙️ En la pausa, «Calidad de imagen»: Auto, Alta, Media o Ahorro. En Auto, el juego elige la mejor para tu teléfono o computadora, y baja sola si el aparato no alcanza.",
+    ],
+  },
+  {
     id: "2026-11-13-pasos-libres",
     fecha: "13 de noviembre de 2026",
     titulo: "Se puede pasar a todas partes",

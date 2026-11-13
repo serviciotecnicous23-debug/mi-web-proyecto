@@ -734,6 +734,25 @@ muro del oeste y la mesa del pan (con su panadero y su círculo) bajó una fila.
 - Cada lugar nuevo para caminar entra en `shared/pasos-libres.test.ts`. La ciudad y el huerto se revisaron en el
   navegador con sus buscadores (se llega a los 22 círculos de la ciudad y a todo el huerto).
 
+## 7e. El motor de imagen y la guía visual (13 de noviembre de 2026)
+
+Luis pidió un desarrollo visual profesional («está muy básico, parece muy 2002»). La regla para todo lo visual quedó en
+`docs/guia-visual.md` (y en `CLAUDE.md`, para todas las sesiones). Lo primero del motor:
+- **La tubería de imagen** (`client/src/games/templo/motor/vista.ts`): todos los mundos 3D dibujan con `Vista`: tono
+  ACES, la gradación del juego (luces doradas, sombras un poco azul pizarra, saturación y contraste suaves), viñeta,
+  resplandor solo para lo que pasa del blanco (llamas, oro al sol) y, en calidad alta, oclusión ambiental en pantalla
+  (GTAO, sin los destellos transparentes). Se probó AgX: dejaba los blancos grises en estas escenas claras.
+- **La calidad**: alta (con oclusión y bordes por muestreo múltiple), media (FXAA) y ahorro (sin tubería). Se elige
+  sola según el aparato (`calidadDelAparato`) y baja sola si los cuadros por segundo no alcanzan; en la pausa se puede
+  fijar (`templo-calidad` en el almacenamiento del navegador).
+- **La oclusión horneada** (`GeoBuilder.build`): en las caras de los costados, lo de abajo de cada malla se oscurece un
+  poco (hasta 0,5 m), así todo queda asentado también en los teléfonos de ahorro. Los personajes arman con `GeoFigura`,
+  sin oclusión.
+
+Lo que sigue del rediseño (en la guía): los personajes de 5,5 a 6 cabezas con animación de oficio, los íconos (fotos 3D
+de las cosas e íconos de línea, sin emojis como imagen), los paneles y las tablas de texto con el sistema de diseño, y
+más detalle en la arquitectura, la vegetación y el agua.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
