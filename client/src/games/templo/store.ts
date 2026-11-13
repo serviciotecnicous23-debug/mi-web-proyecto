@@ -153,6 +153,8 @@ export type Modal =
   | { kind: "barrio"; pestana?: "charla" | "vecinos" | "emblema" | "copa" | "obras" | "pueblo" }
   /** «¿Quién es sabio?», el concurso de la casa de la sabiduría (pantalla completa). */
   | { kind: "sabio" }
+  /** El aula de un edificio (pantalla completa): la clase de una sección, el examen final o la cátedra (AulaUI.tsx). */
+  | { kind: "aula"; aula: import("@shared/aula").AulaId; pedido?: import("./aula/clases").PedidoAula }
   /** Un personaje de la calle de los siervos (shared/personajes.ts): su charla, sus chismes y el recado del día. */
   | { kind: "personaje"; id: string }
   /** La historia de la temporada (shared/capitulos.ts). */

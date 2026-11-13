@@ -145,7 +145,7 @@ const ESCUELA_BASE: EdificioDef = {
   estaciones: [
     { id: "memoria", nombre: "Memorizar con Isaías", icono: "📖", x: 6.5, z: 2.9, color: "#8fe08a", para: "camino", ayuda: "Isaías te enseña a guardar la Palabra: párate en el círculo frente a su atril." },
     { id: "maestro", nombre: "Hablar con Isaías", icono: "💬", x: 6.5, z: 2.9, color: "#8fe08a", para: "otros", ayuda: "Isaías recibe a quien viene a aprender." },
-    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 15.0, z: 2.2, color: "#ffd166", ayuda: "Los rollos de los estudios: lee cada sección, practica y da el examen." },
+    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 15.0, z: 2.2, color: "#ffd166", ayuda: "El aula de Isaías: la clase de cada sección, su práctica y el examen final." },
     { id: "discernir", nombre: "Discernir con las Escrituras", icono: "🔎", x: 18.0, z: 6.6, color: "#9ad0ff", para: "camino", ayuda: "Escucha lo que dicen y examínalo con las Escrituras (1 Juan 4:1)." },
     { id: "mensaje", nombre: "Tomar un mensaje", icono: "✉️", x: 10.0, z: 10.7, color: "#ffb36b", para: "camino", ayuda: "Toma un mensaje de ánimo y llévalo a la casa marcada: la flecha te guía." },
     { id: "catedra", nombre: "Los oficios del profeta", icono: "📯", x: 13.0, z: 2.6, color: "#c9a8f0", para: "camino", ayuda: "Miqueas de Moreset te enseña qué hace un profeta y la historia de los profetas, empezando por lo que serviste hoy." },
@@ -234,6 +234,7 @@ const PALACIO_BASE: EdificioDef = {
     { id: "maestro", nombre: "Hablar con Eliaquim", icono: "💬", x: 12.9, z: 4.2, color: "#c9a8f0", para: "otros", ayuda: "Eliaquim, el mayordomo, recibe a quien entra al palacio." },
     { id: "pan", nombre: "Tomar pan para los pobres", icono: "🍞", x: 20.0, z: 3.5, color: "#ffd166", para: "camino", ayuda: "Toma pan y repártelo a los pobres de la ciudad (hasta 3 a la vez)." },
     { id: "ley", nombre: "Copiar la ley", icono: "📜", x: 2.0, z: 5.7, color: "#9ad0ff", para: "camino", ayuda: "Junto a Sebna, el escriba, se copia la ley con cuidado (Deuteronomio 17:18)." },
+    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 2.0, z: 1.7, color: "#ffd166", ayuda: "En la sala de los escribas, Eliaquim da la clase de los estudios y toma los exámenes." },
     { id: "catedra", nombre: "La cátedra de los reyes", icono: "👑", x: 12.9, z: 4.2, color: "#e2b33c", para: "camino", ayuda: "Eliaquim te enseña cómo debe gobernar un rey y la historia de los reyes, empezando por lo que serviste hoy." },
   ],
   catedra: "reyes",
@@ -306,7 +307,7 @@ const CAMARA_BASE: EdificioDef = {
   estaciones: [
     { id: "catedra", nombre: "La cátedra de Eleazar", icono: "📜", x: 4.5, z: 2.9, color: "#ffd25a", para: "camino", ayuda: "Eleazar te enseña el porqué de cada servicio del templo, empezando por lo que serviste hoy." },
     { id: "maestro", nombre: "Hablar con Eleazar", icono: "💬", x: 4.5, z: 2.9, color: "#ffd25a", para: "otros", ayuda: "Eleazar, anciano de los sacerdotes, recibe a quien entra a la cámara." },
-    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 8.0, z: 1.7, color: "#ffd166", ayuda: "Los rollos de los estudios: lee cada sección, practica y da el examen." },
+    { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 8.0, z: 1.7, color: "#ffd166", ayuda: "El aula de Eleazar: la clase de cada sección, su práctica y el examen final." },
     { id: "diezmos", nombre: "La cámara de los diezmos", icono: "🧺", x: 12.5, z: 5.0, color: "#f0b45a", ayuda: "Conanías guarda aquí los diezmos y las ofrendas, fielmente (2 Crónicas 31:12): es el tesoro del templo." },
     { id: "turnos", nombre: "Los turnos del sacerdocio", icono: "🎲", x: 6.0, z: 9.0, color: "#9ad0ff", para: "camino", ayuda: "Los cargos de la temporada y quién sirve más: los turnos se repartían por suertes (1 Crónicas 24:5)." },
   ],

@@ -3,7 +3,7 @@
  * secciones (lectura, versículos, la idea clave y la práctica) y el examen final que corrige el
  * servidor. Lo aprobado queda para siempre y lo ve la comunidad.
  */
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ArrowLeft, Check, GraduationCap, Loader2, Lock, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,8 @@ import {
   ordenDeOpciones,
 } from "@shared/estudios";
 import { GOZO } from "@shared/mercado";
+import { aulaDeEstudio } from "@shared/aula";
+import { CiudadCtx } from "./CiudadUI";
 import { avisarMisiones } from "./online";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
@@ -33,6 +35,16 @@ type Vista = { v: "lista" } | { v: "estudio"; id: string } | { v: "seccion"; id:
 /** La ventana de los estudios (con su propia navegación: lista, estudio, sección y examen). */
 export function EstudiosModal({ id }: { id?: string }) {
   const [vista, setVista] = useState<Vista>(id ? { v: "estudio", id } : { v: "lista" });
+  const { estado: ciudad } = useContext(CiudadCtx);
+  /** La clase se da en el aula del camino del estudio (los «para todos», en la del camino de quien estudia). */
+  const aClase = (eid: string, que: { seccion: string } | { examen: true }) => {
+    const e = estudioPorId(eid);
+    if (!e) return;
+    const aula = aulaDeEstudio(e.camino, ciudad?.yo.camino ?? "profecia");
+    gameStore.pushFront({ kind: "estudios", id: eid });
+    gameStore.pushFront({ kind: "aula", aula, pedido: "examen" in que ? { que: "examen", estudio: eid } : { que: "seccion", estudio: eid, seccion: que.seccion } });
+    gameStore.close();
+  };
   const [estado, setEstado] = useState<EstudiosEstado | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -74,7 +86,14 @@ export function EstudiosModal({ id }: { id?: string }) {
         )}
         {estado && vista.v === "lista" && <Lista estado={estado} abrir={(eid) => setVista({ v: "estudio", id: eid })} />}
         {estado && vista.v === "estudio" && (
-          <Detalle id={vista.id} mio={mio(vista.id)} estado={estado} leer={(s) => setVista({ v: "seccion", id: vista.id, seccion: s })} examen={() => setVista({ v: "examen", id: vista.id })} />
+          <Detalle
+            id={vista.id}
+            mio={mio(vista.id)}
+            estado={estado}
+            leer={(s) => setVista({ v: "seccion", id: vista.id, seccion: s })}
+            clase={(s) => aClase(vista.id, { seccion: s })}
+            examen={() => aClase(vista.id, { examen: true })}
+          />
         )}
         {estado && vista.v === "seccion" && (
           <Seccion
@@ -149,7 +168,7 @@ function Lista({ estado, abrir }: { estado: EstudiosEstado; abrir: (id: string) 
   );
 }
 
-function Detalle({ id, mio, estado, leer, examen }: { id: string; mio?: MiEstudio; estado: EstudiosEstado; leer: (s: string) => void; examen: () => void }) {
+function Detalle({ id, mio, estado, leer, clase, examen }: { id: string; mio?: MiEstudio; estado: EstudiosEstado; leer: (s: string) => void; clase: (s: string) => void; examen: () => void }) {
   const e = estudioPorId(id);
   if (!e) return null;
   const bloqueado = !!e.requiere && !estado.mios.find((x) => x.id === e.requiere)?.aprobado;
@@ -171,8 +190,11 @@ function Detalle({ id, mio, estado, leer, examen }: { id: string; mio?: MiEstudi
                 {hecha ? <Check className="h-4 w-4" /> : i + 1}
               </span>
               <span className="min-w-0 flex-1 font-semibold">{s.titulo}</span>
-              <Button size="sm" variant={hecha ? "secondary" : "default"} disabled={bloqueado} onClick={() => leer(s.id)} data-testid={`button-seccion-${s.id}`}>
-                {hecha ? "Repasar" : "Leer"}
+              <button type="button" disabled={bloqueado} onClick={() => leer(s.id)} className="text-[11px] font-semibold text-stone-500 underline-offset-2 hover:underline disabled:opacity-50" data-testid={`button-seccion-texto-${s.id}`}>
+                Texto
+              </button>
+              <Button size="sm" variant={hecha ? "secondary" : "default"} disabled={bloqueado} onClick={() => clase(s.id)} data-testid={`button-seccion-${s.id}`}>
+                {hecha ? "Repasar en clase" : "A clase ▸"}
               </Button>
             </li>
           );
@@ -208,7 +230,7 @@ function Detalle({ id, mio, estado, leer, examen }: { id: string; mio?: MiEstudi
                 ? `Buscar el 6 de 6: otro intento con preguntas nuevas (quedan ${EXAMEN_INTENTOS - mio.intentos})`
                 : mio.intentos
                   ? `Otro intento con preguntas nuevas (${mio.intentos + 1}.º)`
-                  : "Dar el examen final"
+                  : "Dar el examen final en el aula"
               : "Examen final (termina las secciones)"}
         </Button>
       ) : null}

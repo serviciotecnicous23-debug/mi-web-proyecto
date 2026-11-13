@@ -263,7 +263,7 @@ export function EscuelaView({ tab: inicial }: { tab?: "memoria" | "discernir" } 
                 className="justify-start rounded-xl"
                 onClick={() => {
                   gameStore.close();
-                  gameStore.push({ kind: "catedra", area: "oficios" });
+                  gameStore.push({ kind: "aula", aula: "escuela", pedido: { que: "catedra", area: "oficios" } });
                 }}
                 data-testid="button-escuela-oficios"
               >
@@ -286,11 +286,11 @@ export function EscuelaView({ tab: inicial }: { tab?: "memoria" | "discernir" } 
                 className="justify-start rounded-xl"
                 onClick={() => {
                   gameStore.close();
-                  gameStore.push({ kind: "estudios" });
+                  gameStore.push({ kind: "aula", aula: "escuela" });
                 }}
                 data-testid="button-escuela-estudios"
               >
-                <ScrollText className="mr-2 h-4 w-4" /> Estudios
+                <ScrollText className="mr-2 h-4 w-4" /> Estudios y exámenes en el aula
               </Button>
             </div>
             <p className="text-xs text-stone-500">También puedes orar al pie del monte, junto a la escuela: arrodíllate en el círculo violeta y aprende con la cátedra de la oración (+2 de mérito al orar, y +3 más si respondes bien).</p>
@@ -362,7 +362,7 @@ export function PalacioView({ tab: inicial }: { tab?: "audiencia" | "ley" } = {}
                 className="justify-start rounded-xl"
                 onClick={() => {
                   gameStore.close();
-                  gameStore.push({ kind: "catedra", area: "reyes" });
+                  gameStore.push({ kind: "aula", aula: "palacio", pedido: { que: "catedra", area: "reyes" } });
                 }}
                 data-testid="button-palacio-catedra"
               >

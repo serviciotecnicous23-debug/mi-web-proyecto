@@ -1416,6 +1416,26 @@ export class CasaWorld {
     this.paused = p;
   }
 
+  /** Mientras otra escena ocupa toda la pantalla (el aula del edificio), este no se dibuja ni se mueve. */
+  dormir(on: boolean) {
+    const canvas = this.renderer.domElement;
+    if (on) {
+      if (!this.running) return;
+      this.running = false;
+      cancelAnimationFrame(this.raf);
+      canvas.style.visibility = "hidden";
+      this.overlay.layer.style.display = "none";
+    } else {
+      // (si ya se salió del edificio, el lienzo no está: no se vuelve a encender)
+      if (this.running || !canvas.isConnected) return;
+      canvas.style.visibility = "";
+      this.overlay.layer.style.display = "";
+      this.running = true;
+      this.last = performance.now();
+      this.raf = requestAnimationFrame(this.frame);
+    }
+  }
+
   private onVisibility = () => {
     if (!document.hidden) this.last = performance.now();
   };
