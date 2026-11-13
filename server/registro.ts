@@ -149,9 +149,10 @@ async function armarRegistro(userId: number, titular: number): Promise<Recordado
       ORDER BY finished_at DESC LIMIT $2`,
     [titular, REGISTRO_PARTIDAS],
   );
+  // los duelos de práctica contra la computadora no cuentan
   const duel = await uno<{ jugados: number; ganados: number }>(
     `SELECT count(*)::int AS jugados, count(*) FILTER (WHERE ganador = $1)::int AS ganados
-       FROM game_sabio_duelos WHERE (a_id = $1 OR b_id = $1) AND estado = 'terminado'`,
+       FROM game_sabio_duelos WHERE (a_id = $1 OR b_id = $1) AND estado = 'terminado' AND bot IS NULL`,
     [titular],
   );
   const conc = await uno<{ semanas: number; correct: number | null; ms: number | null }>(

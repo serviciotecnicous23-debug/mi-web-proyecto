@@ -1302,7 +1302,7 @@ function Portada({
         onClick={onDuelos}
         data-testid="sabio-duelos-abrir"
       >
-        ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo o con alguien que busque</span>
+        ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo, con quien busque o contra la computadora</span>
       </button>
       <button
         type="button"
@@ -1536,7 +1536,7 @@ function Reglas() {
         • El público: en «En vivo» miras las partidas que se juegan ahora y animas con 👏 🙏 🔥 (quien juega lo ve). <span className="italic text-amber-200/80">«{VERSO_PUBLICO.text}» {VERSO_PUBLICO.ref}</span>
       </p>
       <p>
-        • ⚔️ El duelo de sabios: reta a un amigo o vecino en línea (o busca a alguien). Los dos responden a la vez las mismas {DUELO_RONDAS} preguntas; acertar rápido vale más. Con {DUELOS_MANTO} duelos ganados, el manto azul de los vencedores.
+        • ⚔️ El duelo de sabios: reta a un amigo o vecino en línea, busca a alguien o practica contra la computadora (fácil, normal o difícil). Los dos responden a la vez las mismas {DUELO_RONDAS} preguntas; acertar rápido vale más. Con {DUELOS_MANTO} duelos ganados, el manto azul de los vencedores.
       </p>
       <p>
         • 🌙 {NOMBRE_NOCHE}: abre una sala con su código de seis letras e invita a tus vecinos y amigos (de {NOCHE_MIN} a {NOCHE_MAX}). Todos responden a la vez las mismas 12 preguntas, con la tabla en vivo después de cada una y el podio al final.

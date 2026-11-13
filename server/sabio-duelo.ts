@@ -7,6 +7,14 @@
  * Las horas del duelo son milisegundos del reloj del servidor (no `timestamp`: así no se corren con la zona horaria).
  * Cuándo vio cada uno su duelo por última vez se guarda en memoria (no se escribe en la base cada segundo).
  * Orden de las filas de espera (para no trabarse): la búsqueda, luego el duelo, luego cada persona.
+ *
+ * Practicar contra la computadora (`POST /duelo/computadora` con el nivel): un duelo ya aceptado contra un rival de la
+ * computadora. El rival no tiene personaje (`b_id` vacío y `bot` con su nivel): su número es negativo y dice su nombre
+ * («Nombre 🤖», sin consultar la base). Contesta con el mismo método que los compañeros de la noche de los sabios
+ * (`respuestaDeBot`, un azar fijo por duelo, ronda y lado): nada se guarda de antemano y su respuesta sale cuando
+ * alguien pregunta por el duelo. El rival nunca cuenta en la base (ni gozo, ni duelos, ni la tabla, ni el manto, ni las
+ * respuestas para los ancianos) y, para la persona, es de práctica: poco gozo, sin copa ni manto y sin gastar los
+ * duelos del día.
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
@@ -18,8 +26,10 @@ import { avisarA } from "./ciudad-red";
 import { sumarALaCopa } from "./barrio-juntos";
 import { POR_GRADA, PREGUNTA, amigosPosibles, filaPersona, lista, mezclar } from "./sabio";
 import { caminoDe, type Camino } from "@shared/caminos";
+import { esNivelBot, type NivelBot } from "@shared/mesa";
 import {
-  DUELO_PREPARAR_S, DUELO_RETO_S, DUELO_REVELAR_S, DUELO_RONDAS, DUELO_SEGUNDOS, DUELOS_DIA, DUELOS_MANTO, GOZO_DUELO, GOZO_SABIO_DIA, TRAJES_SABIOS, puntosDuelo,
+  DUELO_PREPARAR_S, DUELO_RETO_S, DUELO_REVELAR_S, DUELO_RONDAS, DUELO_SEGUNDOS, DUELOS_DIA, DUELOS_MANTO, GOZO_DUELO, GOZO_PRACTICA_DUELO, GOZO_SABIO_DIA, TRAJES_SABIOS,
+  nombreDeRival, numeroDeRival, puntosDuelo, respuestaDeBot,
   type DueloVista, type DuelosEstado, type EstadoDuelo, type FilaDuelo, type RetoDuelo,
 } from "@shared/sabio";
 
@@ -39,7 +49,8 @@ type Ronda = { q: string; opciones: string[]; a: Respuesta | null; b: Respuesta 
 type Fila = {
   id: number;
   a_id: number;
-  b_id: number;
+  /** Vacío si el rival es de la computadora (no tiene personaje). */
+  b_id: number | null;
   a_user: number;
   b_user: number;
   a_jugador: number;
@@ -62,6 +73,8 @@ type Fila = {
   premio_a: string | null;
   premio_b: string | null;
   semana: string;
+  /** El nivel del rival de la computadora (el duelo es de práctica); vacío si el rival es una persona. */
+  bot: string | null;
 };
 type Persona = { ch: PersonajeFila; titular: number };
 
@@ -69,6 +82,15 @@ const otroLado = (l: Lado): Lado => (l === "a" ? "b" : "a");
 const respDe = (d: Fila): { a?: Respuesta; b?: Respuesta } => (d.resp && typeof d.resp === "object" && !Array.isArray(d.resp) ? (d.resp as { a?: Respuesta; b?: Respuesta }) : {});
 const ladoDe = (d: Fila, cuenta: number): Lado | null => (Number(d.a_user) === cuenta ? "a" : Number(d.b_user) === cuenta ? "b" : null);
 const normal = (s: string) => s.normalize("NFC").trim();
+
+// ---------------------------------------------------------------- el rival de la computadora
+/** El nivel del rival de la computadora, o null si el rival es una persona. */
+const nivelDe = (d: Fila): NivelBot | null => (d.bot == null ? null : esNivelBot(d.bot) ? d.bot : "normal");
+/**
+ * El titular de cada lado. El rival de la computadora no tiene personaje: su número es negativo (va en `b_user` y en
+ * `b_jugador`) y dice su nombre (`nombreDeRival`).
+ */
+const titularDe = (d: Fila, l: Lado): number => (l === "a" ? Number(d.a_id) : d.bot != null ? Number(d.b_user) : Number(d.b_id));
 
 // ---------------------------------------------------------------- en memoria: cuándo vio cada uno su duelo, y los nombres
 const vistos = new Map<string, number>();
@@ -91,8 +113,9 @@ setInterval(() => {
 }, 5 * 60_000).unref?.();
 
 const nombres = new Map<number, { nombre: string; camino: Camino }>();
+/** Los nombres de los personajes; el del rival de la computadora (número negativo) sale de su número, sin consultar la base. */
 async function nombresDe(ids: number[]): Promise<Map<number, { nombre: string; camino: Camino }>> {
-  const faltan = [...new Set(ids)].filter((i) => !nombres.has(i));
+  const faltan = [...new Set(ids)].filter((i) => i > 0 && !nombres.has(i));
   if (faltan.length) {
     if (nombres.size > 3000) nombres.clear();
     const { rows } = await pool.query(
@@ -101,7 +124,9 @@ async function nombresDe(ids: number[]): Promise<Map<number, { nombre: string; c
     );
     for (const r of rows) nombres.set(Number(r.id), { nombre: nombreDe(r), camino: caminoDe(r.path) });
   }
-  return new Map(ids.map((i) => [i, nombres.get(i) ?? { nombre: "Alguien", camino: "sacerdocio" as Camino }]));
+  return new Map(
+    ids.map((i) => [i, i < 0 ? { nombre: nombreDeRival(i), camino: "sacerdocio" as Camino } : nombres.get(i) ?? { nombre: "Alguien", camino: "sacerdocio" as Camino }]),
+  );
 }
 
 async function leer(id: number): Promise<Fila | null> {
@@ -109,37 +134,44 @@ async function leer(id: number): Promise<Fila | null> {
   return (rows[0] as Fila) ?? null;
 }
 
+/** Que las personas del duelo lo vuelvan a pedir (el rival de la computadora no recibe avisos). */
 function avisarAmbos(d: Fila) {
-  avisarA(Number(d.a_user), { t: "duelo", id: Number(d.id) });
-  avisarA(Number(d.b_user), { t: "duelo", id: Number(d.id) });
+  for (const u of [Number(d.a_user), Number(d.b_user)]) if (u > 0) avisarA(u, { t: "duelo", id: Number(d.id) });
 }
 
 // ---------------------------------------------------------------- las rondas
-/** Las diez preguntas (de la grada 1 a la 10) que ninguno de los dos haya visto; quedan vistas para los dos. */
-async function elegirParaDuelo(ta: number, tb: number): Promise<string[]> {
-  const fa = await filaPersona(ta);
-  const fb = await filaPersona(tb);
+/** Las diez preguntas (de la grada 1 a la 10) que no haya visto ninguno de quienes juegan (contra la computadora, solo la persona). */
+async function preguntasParaDuelo(titulares: number[]): Promise<string[]> {
+  const filas = [];
+  for (const t of titulares) filas.push(await filaPersona(t));
   const ids: string[] = [];
   for (let n = 1; n <= DUELO_RONDAS; n++) {
     const todas = POR_GRADA.get(n) ?? [];
-    const va = new Set(fa.vistas[String(n)] ?? []);
-    const vb = new Set(fb.vistas[String(n)] ?? []);
-    let libres = todas.filter((q) => !va.has(q.id) && !vb.has(q.id));
-    if (!libres.length) libres = todas.filter((q) => !va.has(q.id) || !vb.has(q.id));
+    const vistas = filas.map((f) => new Set(f.vistas[String(n)] ?? []));
+    let libres = todas.filter((q) => vistas.every((v) => !v.has(q.id)));
+    if (!libres.length) libres = todas.filter((q) => vistas.some((v) => !v.has(q.id)));
     if (!libres.length) libres = todas;
     ids.push(libres[Math.floor(Math.random() * libres.length)].id);
   }
-  for (const t of [ta, tb])
-    await enFila(t, async () => {
-      const f = await filaPersona(t);
-      const vistas = { ...f.vistas };
-      ids.forEach((id, i) => {
-        const k = String(i + 1);
-        const l = vistas[k] ?? [];
-        if (!l.includes(id)) vistas[k] = [...l, id];
-      });
-      await pool.query(`UPDATE game_sabio SET vistas = $2::jsonb WHERE character_id = $1`, [t, JSON.stringify(vistas)]);
-    });
+  return ids;
+}
+
+/** Deja vistas las preguntas del duelo para esa persona (se llama dentro de su fila de espera). */
+async function marcarVistas(t: number, ids: string[]) {
+  const f = await filaPersona(t);
+  const vistas = { ...f.vistas };
+  ids.forEach((id, i) => {
+    const k = String(i + 1);
+    const l = vistas[k] ?? [];
+    if (!l.includes(id)) vistas[k] = [...l, id];
+  });
+  await pool.query(`UPDATE game_sabio SET vistas = $2::jsonb WHERE character_id = $1`, [t, JSON.stringify(vistas)]);
+}
+
+/** Las diez preguntas que ninguno de los dos haya visto; quedan vistas para los dos. */
+async function elegirParaDuelo(ta: number, tb: number): Promise<string[]> {
+  const ids = await preguntasParaDuelo([ta, tb]);
+  for (const t of [ta, tb]) await enFila(t, () => marcarVistas(t, ids));
   return ids;
 }
 
@@ -177,8 +209,8 @@ async function resolverRonda(d: Fila, ahora: number): Promise<Fila> {
     `UPDATE game_sabio_duelos SET pa = pa + $2, pb = pb + $3, historial = $4::jsonb, revelada = $5 WHERE id = $1 RETURNING *`,
     [d.id, ronda.pa, ronda.pb, JSON.stringify([...lista<Ronda>(d.historial), ronda]), ahora],
   );
-  // lo que se responde en los duelos también lo cuentan los ancianos de la puerta
-  for (const r of [resp.a, resp.b])
+  // lo que se responde en los duelos también lo cuentan los ancianos de la puerta (lo del rival de la computadora, no)
+  for (const r of d.bot != null ? [resp.a] : [resp.a, resp.b])
     if (r?.o)
       await pool.query(
         `INSERT INTO game_sabio_respuestas (pregunta, opcion, n) VALUES ($1, $2, 1) ON CONFLICT (pregunta, opcion) DO UPDATE SET n = game_sabio_respuestas.n + 1`,
@@ -188,16 +220,37 @@ async function resolverRonda(d: Fila, ahora: number): Promise<Fila> {
   return rows[0] as Fila;
 }
 
-/** Termina el duelo: quién ganó (o empate; o quién lo abandonó), el gozo de cada uno y el manto de los vencedores. */
+/**
+ * Termina el duelo: quién ganó (o empate; o quién lo abandonó), el gozo de cada uno y el manto de los vencedores.
+ * Contra la computadora es de práctica: la persona gana poco gozo y nada más; el rival, nada.
+ */
 async function terminarDuelo(d: Fila, ausente: Lado | null, ahora: number): Promise<Fila> {
   const pa = Number(d.pa);
   const pb = Number(d.pb);
-  const ganador = ausente ? (ausente === "a" ? Number(d.b_id) : Number(d.a_id)) : pa > pb ? Number(d.a_id) : pb > pa ? Number(d.b_id) : 0;
-  const premiar = (lado: Lado) => {
-    const t = lado === "a" ? Number(d.a_id) : Number(d.b_id);
+  const ta = titularDe(d, "a");
+  const tb = titularDe(d, "b");
+  const ganador = ausente ? (ausente === "a" ? tb : ta) : pa > pb ? ta : pb > pa ? tb : 0;
+  const practica = d.bot != null;
+  const premiar = (lado: Lado): Promise<{ gozo: number; premio: string | null }> => {
+    const t = lado === "a" ? ta : tb;
+    // el rival de la computadora no cuenta en la base
+    if (practica && lado === "b") return Promise.resolve({ gozo: 0, premio: null });
     return enFila(t, async () => {
       const f = await filaPersona(t);
       const gano = ganador === t;
+      if (practica) {
+        // de práctica: el gozo (dentro del tope del concurso) y nada más: ni duelo jugado ni ganado, ni manto, ni copa
+        const quiere = ausente === lado ? 0 : gano ? GOZO_PRACTICA_DUELO.gana : ganador === 0 ? GOZO_PRACTICA_DUELO.empate : GOZO_PRACTICA_DUELO.pierde;
+        const gozo = Math.max(0, Math.min(quiere, GOZO_SABIO_DIA - f.gozo_hoy));
+        await pool.query(`UPDATE game_sabio SET dia = $2, gozo_hoy = $3, entradas_hoy = $4, updated_at = now() WHERE character_id = $1`, [
+          t,
+          diaClave(),
+          f.gozo_hoy + gozo,
+          f.entradas_hoy,
+        ]);
+        if (gozo) await sumarGozo(t, gozo, "sabio");
+        return { gozo, premio: null };
+      }
       const quiere = ausente === lado ? 0 : gano ? GOZO_DUELO.gana : ganador === 0 ? GOZO_DUELO.empate : GOZO_DUELO.pierde;
       const gozo = Math.max(0, Math.min(quiere, GOZO_SABIO_DIA - f.gozo_hoy));
       const ganados = f.duelos_ganados + (gano ? 1 : 0);
@@ -228,15 +281,36 @@ async function terminarDuelo(d: Fila, ausente: Lado | null, ahora: number): Prom
     `UPDATE game_sabio_duelos SET estado = 'terminado', ganador = $2, abandono = $3, gozo_a = $4, gozo_b = $5, premio_a = $6, premio_b = $7,
             revelada = COALESCE(revelada, $8), finished_at = now()
       WHERE id = $1 RETURNING *`,
-    [d.id, ganador, ausente ? (ausente === "a" ? Number(d.a_id) : Number(d.b_id)) : null, ra.gozo, rb.gozo, ra.premio, rb.premio, ahora],
+    [d.id, ganador, ausente ? (ausente === "a" ? ta : tb) : null, ra.gozo, rb.gozo, ra.premio, rb.premio, ahora],
   );
   avisarAmbos(rows[0] as Fila);
   return rows[0] as Fila;
 }
 
 /**
+ * El rival de la computadora contesta la ronda abierta cuando le llega su tiempo. El tiempo y la respuesta salen de
+ * `respuestaDeBot` (como los compañeros de la noche), con un azar fijo por duelo, ronda y lado: lo que tardó cuenta
+ * igual aunque alguien pregunte más tarde.
+ */
+async function contestaLaComputadora(d: Fila, ahora: number): Promise<Fila> {
+  const nivel = nivelDe(d);
+  if (!nivel || d.estado !== "jugando" || d.revelada != null) return d;
+  const resp = respDe(d);
+  const ronda = Number(d.ronda);
+  const servida = Number(d.servida || 0);
+  const q = PREGUNTA.get(lista<string>(d.preguntas)[ronda - 1]);
+  if (resp.b || !q || ahora < servida) return d;
+  const { o, ms } = respuestaDeBot(nivel, Number(d.id), ronda, Number(d.b_user), lista<string>(d.opciones), q.correcta);
+  if (ahora < servida + ms) return d;
+  const nuevo = { ...resp, b: { o, ms: Math.min(DUELO_SEGUNDOS * 1000, Math.round(ms)) } as Respuesta };
+  const { rows } = await pool.query(`UPDATE game_sabio_duelos SET resp = $2::jsonb WHERE id = $1 RETURNING *`, [d.id, JSON.stringify(nuevo)]);
+  return rows[0] as Fila;
+}
+
+/**
  * Pone el duelo al día (lo llama quien pregunta): vence el reto que nadie aceptó, termina el duelo que alguien
- * abandonó, cierra la ronda cuando los dos respondieron o se acabó el tiempo, y pasa a la siguiente.
+ * abandonó, hace contestar al rival de la computadora, cierra la ronda cuando los dos respondieron o se acabó el
+ * tiempo, y pasa a la siguiente.
  */
 async function avanzar(d: Fila, ahora: number): Promise<Fila> {
   if (d.estado === "invitado") {
@@ -249,10 +323,19 @@ async function avanzar(d: Fila, ahora: number): Promise<Fila> {
   }
   if (d.estado !== "jugando") return d;
   const va = vistoDe(Number(d.id), "a", ahora);
-  const vb = vistoDe(Number(d.id), "b", ahora);
-  if (ahora - va > AUSENTE_MS || ahora - vb > AUSENTE_MS) return terminarDuelo(d, va <= vb ? "a" : "b", ahora);
+  if (d.bot != null) {
+    // contra la computadora solo puede irse la persona. Nadie más pregunta por el duelo (y lo visto en memoria se
+    // pierde al reiniciar), así que también lo dice la base: si quedó quieto más de lo que dura una ronda y la
+    // ausencia, la persona ya lo había dejado
+    const ultimo = d.revelada != null ? Number(d.revelada) : Number(d.servida || 0);
+    if (ahora - va > AUSENTE_MS || ahora - ultimo > DUELO_SEGUNDOS * 1000 + GRACIA_MS + AUSENTE_MS) return terminarDuelo(d, "a", ahora);
+  } else {
+    const vb = vistoDe(Number(d.id), "b", ahora);
+    if (ahora - va > AUSENTE_MS || ahora - vb > AUSENTE_MS) return terminarDuelo(d, va <= vb ? "a" : "b", ahora);
+  }
   const servida = Number(d.servida || 0);
   if (d.revelada == null) {
+    d = await contestaLaComputadora(d, ahora);
     const resp = respDe(d);
     if ((resp.a && resp.b) || ahora > servida + DUELO_SEGUNDOS * 1000 + GRACIA_MS) return resolverRonda(d, ahora);
     return d;
@@ -274,7 +357,7 @@ function vistaDuelo(d: Fila, l: Lado, ns: Map<number, { nombre: string; camino: 
   const qu = ult ? PREGUNTA.get(ult.q) : undefined;
   const puntos = (x: Lado) => (x === "a" ? Number(d.pa) : Number(d.pb));
   const jugador = (x: Lado) => (x === "a" ? Number(d.a_jugador) : Number(d.b_jugador));
-  const titular = (x: Lado) => (x === "a" ? Number(d.a_id) : Number(d.b_id));
+  const titular = (x: Lado) => titularDe(d, x);
   let espera = 0;
   if (d.estado === "invitado") espera = Math.max(0, Math.ceil((Number(d.creado) + DUELO_RETO_S * 1000 - ahora) / 1000));
   else if (d.estado === "jugando")
@@ -286,6 +369,7 @@ function vistaDuelo(d: Fila, l: Lado, ns: Map<number, { nombre: string; camino: 
     yo: { ...ns.get(jugador(l))!, puntos: puntos(l), respondio: abierta && !!resp[l] },
     rival: { ...ns.get(jugador(o))!, puntos: puntos(o), respondio: abierta && !!resp[o] },
     rivalId: jugador(o),
+    bot: nivelDe(d),
     ronda: Number(d.ronda),
     pregunta:
       abierta && q && ahora >= servida
@@ -328,15 +412,15 @@ function vistaDuelo(d: Fila, l: Lado, ns: Map<number, { nombre: string; camino: 
   };
 }
 
-/** La tabla de la semana: quién ganó más duelos (empates: quien jugó menos). */
+/** La tabla de la semana: quién ganó más duelos (empates: quien jugó menos). Los de práctica contra la computadora no cuentan. */
 async function tablaDuelos(semana: string, yo: number): Promise<FilaDuelo[]> {
   const { rows } = await pool.query(
     `SELECT t.titular, sum(t.gano)::int AS ganados, count(*)::int AS jugados,
             (SELECT c5.name FROM game_characters c5 WHERE c5.user_id = c.user_id AND c5.game = c.game ORDER BY c5.selected_at DESC NULLS LAST, c5.slot LIMIT 1) AS name,
             u.display_name, u.username
-       FROM (SELECT a_id AS titular, (ganador = a_id)::int AS gano FROM game_sabio_duelos WHERE semana = $1 AND estado = 'terminado'
+       FROM (SELECT a_id AS titular, (ganador = a_id)::int AS gano FROM game_sabio_duelos WHERE semana = $1 AND estado = 'terminado' AND bot IS NULL
              UNION ALL
-             SELECT b_id AS titular, (ganador = b_id)::int AS gano FROM game_sabio_duelos WHERE semana = $1 AND estado = 'terminado') t
+             SELECT b_id AS titular, (ganador = b_id)::int AS gano FROM game_sabio_duelos WHERE semana = $1 AND estado = 'terminado' AND bot IS NULL) t
        JOIN game_characters c ON c.id = t.titular
        JOIN users u ON u.id = c.user_id AND u.is_active IS NOT FALSE
       GROUP BY t.titular, c.user_id, c.game, u.display_name, u.username
@@ -687,6 +771,59 @@ export function registerSabioDueloRoutes(app: Express) {
       if (!pr) return;
       buscando.delete(pr.titular);
       res.json({ buscando: false });
+    }),
+  );
+
+  // Practicar contra la computadora (con su nivel): un duelo ya aceptado y de práctica, que no gasta los duelos del día.
+  app.post("/api/jerusalen/sabio/duelo/computadora", (req, res) =>
+    responder(res, async () => {
+      const pr = await persona(req, res);
+      if (!pr) return;
+      const me = pr.ch.user_id;
+      const nivel: NivelBot = esNivelBot(req.body?.nivel) ? req.body.nivel : "normal";
+      // si ya tenía un duelo, primero se pone al día (el que dejó a medias hace rato se cierra solo)
+      const ya = await dueloDe(me);
+      if (ya) {
+        const id = Number(ya.id);
+        const x = await enFila(-id, async () => {
+          const y = await leer(id);
+          return y ? avanzar(y, Date.now()) : null;
+        });
+        if (x && (x.estado === "jugando" || x.estado === "invitado")) return res.status(409).json({ message: "Ya tienes un duelo en curso.", duelo: await vistaPara(x, me) });
+      }
+      type Salida = { error: number; message: string } | { d: Fila };
+      const out = await enFila(pr.titular, async (): Promise<Salida> => {
+        if (await ocupadoEnDuelo(pr.titular)) return { error: 409, message: "Ya tienes un duelo en curso (o un reto por contestar)." };
+        buscando.delete(pr.titular);
+        const ahora = Date.now();
+        // las preguntas se eligen solo con lo que vio la persona (y quedan vistas para ella)
+        const preguntas = await preguntasParaDuelo([pr.titular]);
+        await marcarVistas(pr.titular, preguntas);
+        const q = PREGUNTA.get(preguntas[0]);
+        if (!q) return { error: 500, message: "No se pudo preparar el duelo." };
+        // ya empieza: la primera ronda con sus segundos para prepararse (sin estados a medias que otro pedido pueda ver)
+        const { rows } = await pool.query(
+          `INSERT INTO game_sabio_duelos (a_id, b_id, a_user, b_user, a_jugador, b_jugador, estado, ronda, preguntas, opciones, servida, creado, semana, bot)
+           VALUES ($1, NULL, $2, $3, $4, $3, 'jugando', 1, $5::jsonb, $6::jsonb, $7, $8, $9, $10) RETURNING *`,
+          [
+            pr.titular,
+            me,
+            numeroDeRival(nombreDe(pr.ch)),
+            pr.ch.id,
+            JSON.stringify(preguntas),
+            JSON.stringify(mezclar([q.correcta, ...q.falsas])),
+            ahora + DUELO_PREPARAR_S * 1000,
+            ahora,
+            semanaClave(),
+            nivel,
+          ],
+        );
+        const d = rows[0] as Fila;
+        marcarVisto(Number(d.id), "a", ahora);
+        return { d };
+      });
+      if ("error" in out) return res.status(out.error).json({ message: out.message });
+      res.json({ duelo: await vistaPara(out.d, me) });
     }),
   );
 }

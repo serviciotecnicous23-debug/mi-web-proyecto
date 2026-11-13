@@ -23,7 +23,7 @@ import { POR_GRADA, PREGUNTA, amigosPosibles, filaPersona, lista, mezclar, poner
 import { marcarMirando, publicoDe } from "./sabio-publico";
 import { caminoDe, type Camino } from "@shared/caminos";
 import { esNivelBot, nombreDeBot, type NivelBot } from "@shared/mesa";
-import { GOZO_SABIO_DIA } from "@shared/sabio";
+import { GOZO_SABIO_DIA, respuestaDeBot } from "@shared/sabio";
 import {
   LARGO_CODIGO, NOCHE_INVITA_S, NOCHE_MAX, NOCHE_MIN, NOCHE_PREGUNTAS, NOCHE_PREPARAR_S, NOCHE_REVELAR_S, NOCHE_SALA_MIN, NOCHE_SEGUNDOS, NOCHES_DIA,
   codigoNuevo, codigoValido, gozoDePuesto, limpiarCodigo, puestosDeNoche, puntosNoche,
@@ -98,30 +98,14 @@ const jugadoresDe = (n: Fila) => lista<JugadorNoche>(n.jugadores);
 const personasDe = (js: JugadorNoche[]) => js.filter((j) => !j.bot);
 
 // ---------------------------------------------------------------- los compañeros de la computadora
-/** Cuánto tardan en contestar (ms) y cuántas veces aciertan, por nivel. */
-const BOT_NOCHE: Record<NivelBot, { ms: [number, number]; acierta: number }> = {
-  facil: { ms: [6000, 17000], acierta: 0.45 },
-  normal: { ms: [4500, 13000], acierta: 0.66 },
-  dificil: { ms: [3000, 9500], acierta: 0.84 },
-};
-/** Un número de 0 a 1 que siempre sale igual para la misma noche, ronda y compañero (así no hay que guardar nada). */
-function azarFijo(...xs: number[]): number {
-  let h = 2166136261;
-  for (const x of xs) {
-    h ^= x & 0xffff;
-    h = Math.imul(h, 16777619);
-    h ^= x >>> 16;
-    h = Math.imul(h, 16777619);
-  }
-  h ^= h >>> 13;
-  h = Math.imul(h, 0x5bd1e995);
-  h ^= h >>> 15;
-  return (h >>> 0) / 4294967296;
-}
 /** Con compañeros la noche es de práctica: como mucho este gozo por persona, y sin copa. */
 const GOZO_PRACTICA_NOCHE = 4;
 
-/** Los compañeros a los que ya les tocó contestar la pregunta abierta, contestan (devuelve si contestó alguno). */
+/**
+ * Los compañeros a los que ya les tocó contestar la pregunta abierta, contestan (devuelve si contestó alguno). El
+ * tiempo y la respuesta salen de `respuestaDeBot` (shared/sabio.ts), con un azar fijo por noche, ronda y compañero:
+ * el mismo método que el rival del duelo de práctica (server/sabio-duelo.ts).
+ */
 function contestanLosBots(n: Fila, js: JugadorNoche[], ahora: number): boolean {
   if (n.revelada != null) return false;
   const servida = Number(n.servida || 0);
@@ -132,11 +116,8 @@ function contestanLosBots(n: Fila, js: JugadorNoche[], ahora: number): boolean {
   let alguno = false;
   for (const j of js) {
     if (!j.bot || j.fuera || j.r) continue;
-    const b = BOT_NOCHE[j.bot];
-    const ms = b.ms[0] + (b.ms[1] - b.ms[0]) * azarFijo(Number(n.id), ronda, j.u, 1);
+    const { o, ms } = respuestaDeBot(j.bot, Number(n.id), ronda, j.u, opciones, q.correcta);
     if (ahora < servida + ms) continue;
-    const malas = opciones.filter((o) => o !== q.correcta);
-    const o = azarFijo(Number(n.id), ronda, j.u, 2) < b.acierta || !malas.length ? q.correcta : malas[Math.floor(azarFijo(Number(n.id), ronda, j.u, 3) * malas.length)];
     j.r = { o, ms: Math.min(NOCHE_SEGUNDOS * 1000, Math.round(ms)) };
     j.respondidas += 1;
     alguno = true;

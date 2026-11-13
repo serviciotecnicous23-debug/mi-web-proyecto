@@ -1,17 +1,37 @@
 /**
  * El duelo de sabios (shared/sabio.ts, server/sabio-duelo.ts), dentro de la casa de la sabiduría: la sala (a quién
- * retar, buscar a alguien, los duelos de hoy y la tabla de la semana) y el duelo mismo: los dos con sus puntos, la
- * pregunta con su reloj, la ronda cerrada con lo que respondió cada uno (y su cita) y el resultado. Se pregunta al
- * servidor cada segundo y la red de la ciudad avisa los cambios; aquí nunca está la respuesta antes de tiempo.
+ * retar, buscar a alguien, practicar contra la computadora, los duelos de hoy y la tabla de la semana) y el duelo
+ * mismo: los dos con sus puntos, la pregunta con su reloj, la ronda cerrada con lo que respondió cada uno (y su cita)
+ * y el resultado. Se pregunta al servidor cada segundo y la red de la ciudad avisa los cambios; aquí nunca está la
+ * respuesta antes de tiempo (tampoco la del rival de la computadora: la decide el servidor).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Search, Swords } from "lucide-react";
-import { DUELO_RONDAS, DUELO_SEGUNDOS, DUELOS_DIA, DUELOS_MANTO, GOZO_DUELO, VERSO_DUELO, type DueloVista, type DuelosEstado } from "@shared/sabio";
+import { NIVELES_BOT, type NivelBot } from "@shared/mesa";
+import {
+  DUELO_RONDAS, DUELO_SEGUNDOS, DUELOS_DIA, DUELOS_MANTO, GOZO_DUELO, GOZO_PRACTICA_DUELO, VERSO_DUELO, type DueloVista, type DuelosEstado,
+} from "@shared/sabio";
 import { ICONO_CAMINO } from "./barrio-chat";
 import { LETRAS, Presentador, RELACION, Reloj, miles, pedir, primerNombre } from "./sabio-comun";
 import { sabioRed } from "./sabio-red";
 import { sonido } from "./sabio-sonido";
 import { Ico } from "./iconos";
+
+/** Cómo juega el rival de la computadora en el duelo, por nivel (shared/sabio.ts, BOT_SABIO). */
+const COMO_JUEGA: Record<NivelBot, string> = {
+  facil: "Contesta sin prisa y a veces falla.",
+  normal: "Acierta dos de cada tres.",
+  dificil: "Rápido y sabe mucho.",
+};
+const NIVELES = Object.keys(NIVELES_BOT) as NivelBot[];
+
+/** Empieza un duelo de práctica contra la computadora (si ya hay un duelo en curso, el servidor lo devuelve). */
+async function empezarPractica(nivel: NivelBot): Promise<{ id: number | null; aviso: string | null }> {
+  const r = await pedir<{ duelo: DueloVista | null }>("/duelo/computadora", { nivel });
+  const d = r.data?.duelo;
+  if (d && (r.ok || d.estado === "jugando" || d.estado === "invitado")) return { id: d.id, aviso: null };
+  return { id: null, aviso: r.data?.message || "No se pudo empezar la práctica. Revisa tu conexión." };
+}
 
 // ================================================================ la sala de los duelos
 export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => void; onVolver: () => void }) {
@@ -19,6 +39,7 @@ export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => 
   const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [buscando, setBuscando] = useState(false);
+  const [practica, setPractica] = useState(false);
   const entrar = useRef(onEntrar);
   entrar.current = onEntrar;
 
@@ -93,6 +114,19 @@ export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => 
     await pedir("/duelo/buscar", undefined, "DELETE");
   }
 
+  // practicar contra la computadora (el servidor deja de buscar rival)
+  async function practicar(nivel: NivelBot) {
+    setOcupado(true);
+    setAviso(null);
+    setBuscando(false);
+    const r = await empezarPractica(nivel);
+    setOcupado(false);
+    if (r.id !== null) {
+      sonido.reto();
+      onEntrar(r.id);
+    } else setAviso(r.aviso);
+  }
+
   const quedan = e ? Math.max(0, DUELOS_DIA - e.hoy) : 0;
   return (
     <div className="mx-auto max-w-2xl space-y-3 pt-2" data-testid="sabio-duelos">
@@ -134,10 +168,47 @@ export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => 
               <Search className="h-4 w-4" /> {quedan > 0 ? "Buscar a alguien para un duelo" : "Mañana hay más duelos"}
             </button>
           )}
+          <div className="space-y-2 rounded-2xl bg-sky-950/60 p-2" data-testid="sabio-duelo-practica">
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-sm font-bold hover:bg-white/20"
+              aria-expanded={practica}
+              onClick={() => setPractica((x) => !x)}
+              data-testid="sabio-duelo-practicar"
+            >
+              🤖 Practicar contra la computadora
+            </button>
+            {practica && (
+              <>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {NIVELES.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      disabled={ocupado}
+                      onClick={() => void practicar(n)}
+                      className="rounded-xl bg-white/10 px-1.5 py-2 text-center text-[12.5px] font-black hover:bg-white/20 disabled:opacity-50"
+                      aria-label={`Practicar contra la computadora, nivel ${NIVELES_BOT[n].nombre.toLowerCase()}`}
+                      data-testid={`sabio-duelo-bot-${n}`}
+                    >
+                      <span className="block text-lg leading-none" aria-hidden="true">
+                        <Ico e={NIVELES_BOT[n].icono} />
+                      </span>
+                      <span className="mt-1 block">{NIVELES_BOT[n].nombre}</span>
+                      <span className="mt-0.5 block text-[10.5px] font-semibold leading-tight text-sky-100/75">{COMO_JUEGA[n]}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-[11px] leading-snug text-sky-100/80">
+                  Es de práctica: +{GOZO_PRACTICA_DUELO.gana} de gozo si ganas, +{GOZO_PRACTICA_DUELO.empate} si empatan y +{GOZO_PRACTICA_DUELO.pierde} por jugar. No gasta tus duelos del día ni cuenta para el manto ni para la tabla.
+                </p>
+              </>
+            )}
+          </div>
           <p className="text-[11px] font-bold uppercase tracking-wider text-amber-200/80">Retar a un amigo o vecino en línea</p>
           {e.rivales.length === 0 ? (
             <p className="rounded-xl bg-white/5 p-3 text-center text-[12px] text-amber-100/75" data-testid="sabio-rivales-vacio">
-              Ahora ninguno de tus amigos ni vecinos está en la ciudad (o están jugando). Busca a alguien con el botón de arriba.
+              Ahora ninguno de tus amigos ni vecinos está en la ciudad (o están jugando). Busca a alguien con el botón de arriba, o practica contra la computadora.
             </p>
           ) : (
             <ul className="space-y-1.5" data-testid="sabio-rivales">
@@ -191,6 +262,9 @@ export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => 
               • Al terminar: +{GOZO_DUELO.gana} de gozo si ganas, +{GOZO_DUELO.empate} si empatan y +{GOZO_DUELO.pierde} por jugar (dentro del tope de gozo del concurso). Quien deja el duelo lo pierde.
             </p>
             <p>• {DUELOS_DIA} duelos por día. Las preguntas no se te repiten con las del atril.</p>
+            <p>
+              • 🤖 Contra la computadora practicas cuando quieras, aunque no haya nadie en línea: el rival contesta con su propio tiempo y no siempre acierta. Hasta +{GOZO_PRACTICA_DUELO.gana} de gozo.
+            </p>
           </div>
         </>
       )}
@@ -300,6 +374,15 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
   async function revancha() {
     if (!d) return;
     setAviso(null);
+    // contra la computadora: otra práctica del mismo nivel
+    if (d.bot) {
+      const p = await empezarPractica(d.bot);
+      if (p.id !== null) {
+        sonido.reto();
+        onCambiar(p.id);
+      } else setAviso(p.aviso);
+      return;
+    }
     const r = await pedir<{ duelo: DueloVista }>("/duelo/retar", { a: d.rivalId });
     if (r.ok && r.data?.duelo) {
       sonido.reto();
@@ -323,7 +406,9 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
       </div>
     );
 
-  const rival = primerNombre(d.rival.nombre);
+  // el rival de la computadora siempre se ve como tal: su nombre lleva 🤖
+  const rival = d.bot ? d.rival.nombre : primerNombre(d.rival.nombre);
+  const iconoRival = d.bot ? NIVELES_BOT[d.bot].icono : ICONO_CAMINO[d.rival.camino];
   // el reto que mandé: esperando que acepte
   if (d.estado === "invitado" || d.estado === "rechazado" || d.estado === "vencido" || d.estado === "cancelado") {
     const texto =
@@ -399,8 +484,20 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
             {Math.max(1, d.ronda)}/{DUELO_RONDAS}
           </p>
         </div>
-        <Lado nombre={rival} detalle={d.rival.nombre} icono={ICONO_CAMINO[d.rival.camino]} puntos={d.rival.puntos} listo={!!q && d.rival.respondio} derecha />
+        <Lado
+          nombre={rival}
+          detalle={d.bot ? `${d.rival.nombre} · computadora, nivel ${NIVELES_BOT[d.bot].nombre.toLowerCase()}` : d.rival.nombre}
+          icono={iconoRival}
+          puntos={d.rival.puntos}
+          listo={!!q && d.rival.respondio}
+          derecha
+        />
       </div>
+      {d.bot && (
+        <p className="text-center text-[11px] font-bold text-sky-100/85" data-testid="sabio-duelo-de-practica">
+          🤖 Práctica contra la computadora · <Ico e={NIVELES_BOT[d.bot].icono} /> {NIVELES_BOT[d.bot].nombre}
+        </p>
+      )}
       <Presentador dice={dice} />
       {q && !terminado && (
         <>
@@ -473,7 +570,9 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
           <p className="text-sm font-bold">
             {miles(d.yo.puntos)} – {miles(d.rival.puntos)}
           </p>
-          <p className="text-sm"><Ico e="✨" /> +{fin.gozo} de gozo</p>
+          <p className="text-sm">
+            <Ico e="✨" /> +{fin.gozo} de gozo{d.bot ? " · de práctica" : ""}
+          </p>
           {fin.premio && (
             <p className="rounded-xl bg-amber-400/20 p-2 text-sm font-black" data-testid="sabio-duelo-premio">
               ¡Ganaste el {fin.premio}! Ya está en el armario de tu casa.
@@ -483,10 +582,16 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
             «{VERSO_DUELO.text}» <span className="not-italic font-semibold text-amber-300">{VERSO_DUELO.ref}</span>
           </p>
           <div className="grid gap-2 pt-1">
-            {!fin.meFui && (
-              <button type="button" className="sabio-boton w-full" onClick={() => void revancha()} data-testid="sabio-duelo-revancha">
-                ⚔️ Pedir la revancha a {rival}
+            {d.bot ? (
+              <button type="button" className="sabio-boton w-full" onClick={() => void revancha()} data-testid="sabio-duelo-otra-practica">
+                🤖 Otra práctica · <Ico e={NIVELES_BOT[d.bot].icono} /> {NIVELES_BOT[d.bot].nombre}
               </button>
+            ) : (
+              !fin.meFui && (
+                <button type="button" className="sabio-boton w-full" onClick={() => void revancha()} data-testid="sabio-duelo-revancha">
+                  ⚔️ Pedir la revancha a {rival}
+                </button>
+              )
             )}
             <button type="button" className="w-full rounded-xl bg-white/10 py-2.5 text-sm font-bold hover:bg-white/20" onClick={onSalir} data-testid="sabio-duelo-volver">
               Volver a la sala de los duelos
@@ -498,7 +603,7 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
       {!terminado &&
         (salir ? (
           <div className="grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-2 text-xs">
-            <p className="col-span-2 text-center">Si sales ahora, pierdes el duelo. ¿Seguro?</p>
+            <p className="col-span-2 text-center">{d.bot ? "Si sales ahora, la práctica termina sin gozo. ¿Seguro?" : "Si sales ahora, pierdes el duelo. ¿Seguro?"}</p>
             <button type="button" className="rounded-xl bg-red-800/80 py-2 font-bold" onClick={() => void dejar()} data-testid="sabio-duelo-salir-si">
               Sí, salgo
             </button>

@@ -73,7 +73,8 @@ el mismo día para todos.
 
 ### «¿Quién es sabio?»: el concurso, la duda y la noche de los sabios
 La casa de la sabiduría (frente a la cámara de los sacerdotes) abre el concurso: 15 gradas, de fácil a experto, con su
-reloj, cuatro comodines, llamadas a un amigo de verdad, público que mira y aplaude, y duelos de dos.
+reloj, cuatro comodines, llamadas a un amigo de verdad, público que mira y aplaude, y duelos de dos (o de práctica,
+contra la computadora: sección 9b).
 - **La última palabra**: al confirmar, las luces bajan, cae un foco sobre el atril y suena un redoble; la respuesta
   elegida queda en ámbar. El suspenso crece con la grada (`suspensoMs`: 1,5 s en la primera, 4 s en la última). Al
   revelar: verde con destellos dorados, o rojo con apagón.
@@ -901,6 +902,16 @@ juego y `index.ts` con la lista), `client/src/games/templo/mesa/` (la pantalla d
   la respuesta salen de un azar fijo por noche, ronda y compañero, así no hay que guardar nada y siempre da lo mismo.
   Nunca cuentan en la base (ni sus respuestas para los ancianos de la puerta). Con ellos la noche es de práctica: hasta
   4 de gozo por persona, sin copa y sin «noche ganada».
+- En el duelo de sabios (`server/sabio-duelo.ts`), «🤖 Practicar contra la computadora» (`POST /sabio/duelo/computadora`
+  con el nivel) empieza un duelo ya aceptado contra un rival de la computadora. El rival no tiene personaje (`b_id`
+  vacío y la columna `bot` con su nivel): su número es negativo y dice su nombre (`nombreDeRival`, sin consultar la
+  base), que nunca es el de quien juega. Contesta con el mismo método que los compañeros de la noche
+  (`respuestaDeBot` y `azarFijo` en `shared/sabio.ts`), con un azar fijo por duelo, ronda y lado: nada se guarda de
+  antemano y su respuesta sale cuando alguien pregunta por el duelo. Las preguntas se eligen solo con lo que vio la
+  persona. El rival nunca cuenta en la base: ni gozo, ni duelos del día, ni la tabla de la semana, ni el manto, ni el
+  registro, ni las respuestas para los ancianos. Para la persona es de práctica (`GOZO_PRACTICA_DUELO`): 4 de gozo si
+  gana, 3 si empatan y 2 si pierde (dentro del tope del concurso), sin copa ni manto, sin contar como duelo jugado y
+  sin gastar los duelos del día. Al terminar, «Otra práctica» empieza otra del mismo nivel.
 - «Llenar con la computadora» completa la sala de un toque: la mesa entera; 4 en la esgrima, «¿Quién soy?» y la
   carrera; dos por tribu en las tribus; 3 en el muro.
 - Si solo quedan compañeros, la sala se cierra.
