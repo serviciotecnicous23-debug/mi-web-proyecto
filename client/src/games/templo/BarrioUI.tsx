@@ -32,6 +32,7 @@ import { escalonNombre } from "@shared/jerusalen";
 import { CopaDelBarrio } from "./BarrioCopa";
 import { PuebloDelBarrio } from "./BarrioPueblo";
 import { invitarVecino, irConVecino } from "./Acompanar";
+import { NombreConRegistro } from "./RegistroUI";
 
 type Pestana = "charla" | "vecinos" | "emblema" | "copa" | "obras" | "pueblo";
 
@@ -561,7 +562,7 @@ function Vecinos({ vista, propio }: { vista: BarrioVista; propio: boolean }) {
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${m.enLinea ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,.2)]" : "bg-stone-300 dark:bg-stone-600"}`} aria-label={m.enLinea ? "En línea" : "No está en línea"} />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-bold">
-                {ICONO_CAMINO[m.camino]} {m.nombre}
+                {ICONO_CAMINO[m.camino]} {m.esYo ? m.nombre : <NombreConRegistro personajeId={m.personajeId} nombre={m.nombre} />}
                 {m.esYo ? " (tú)" : ""}
               </span>
               <span className="block truncate text-xs text-stone-500">

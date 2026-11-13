@@ -139,7 +139,7 @@ async function estadoDe(ch: PersonajeFila): Promise<ConcursoEstado> {
       ? { respondidas: Number(e.n), aciertos: Number(e.correct), segundos: Math.round(Number(e.ms) / 100) / 10, terminado: !!e.finished_at, esperando: !e.finished_at && !e.asked_at }
       : null,
     pregunta,
-    tabla: top.map(({ userId, characterId, ...f }) => f),
+    tabla: top.map(({ userId, characterId, ...f }) => ({ ...f, personajeId: characterId })),
     campeones: campeones.length ? { semana: semanaAnterior(semana), nombres: campeones.map((c) => c.nombre) } : null,
   };
 }

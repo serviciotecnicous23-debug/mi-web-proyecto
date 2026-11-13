@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-registro",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El registro de cada jugador",
+    puntos: [
+      "📜 Al visitar una casa, en la ficha de un vecino o tocando su nombre en las tablas, abre «Ver su registro»: todo lo que ha hecho esa persona.",
+      "🔥 Su servicio en cada camino, sus estudios aprobados (con su nota) y el grado en cada cátedra.",
+      "🏆 Sus últimas partidas de «¿Quién es sabio?»: en qué grada quedó, con cuántos puntos y en cuánto tiempo; sus duelos y su mejor concurso.",
+      "🏠 Su casa con sus estrellas, lo que hizo por su barrio, sus logros y su álbum. El tuyo está en «Tu casa» → «Ver mi registro».",
+    ],
+  },
+  {
     id: "2026-11-12-opciones-revueltas",
     fecha: "12 de noviembre de 2026",
     titulo: "Las preguntas ya no tienen la respuesta siempre en el mismo lugar",

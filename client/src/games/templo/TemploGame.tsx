@@ -65,6 +65,7 @@ import { GananciaEnLinea } from "./GananciaUI";
 import type { CiudadEstado } from "@shared/ciudad";
 import { GOZO } from "@shared/mercado";
 import { guardarInvitacionDeLaUrl } from "./InvitarUI";
+import { NombreConRegistro, RegistroView } from "./RegistroUI";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -1628,6 +1629,8 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "tesoro":
     case "personaje":
       return <CiudadModal modal={modal} />;
+    case "registro":
+      return <RegistroView personajeId={modal.personajeId} nombre={modal.nombre} volver={modal.volver} />;
     case "avisos":
       return <AvisosView />;
     case "calendario":
@@ -3151,7 +3154,7 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
               <li key={r.personajeId} className={`flex items-center gap-2 px-3 py-1.5 text-sm ${r.isMe ? "bg-amber-50 font-semibold dark:bg-amber-950/30" : ""}`}>
                 <span className={`w-6 text-center font-black ${r.puesto === 1 ? "text-yellow-500" : r.puesto === 2 ? "text-slate-400" : r.puesto === 3 ? "text-amber-700" : "text-stone-400"}`}>{r.puesto}</span>
                 <span className="min-w-0 flex-1 truncate">
-                  {r.isMe ? `${r.nombre} (tú)` : r.nombre}
+                  {r.isMe ? `${r.nombre} (tú)` : <NombreConRegistro personajeId={r.personajeId} nombre={r.nombre} />}
                   {r.persona && r.persona !== r.nombre && <span className="text-xs font-normal text-stone-500"> · {r.persona}</span>}
                 </span>
                 <span className="tabular-nums">{fmt(r.merito)}</span>
