@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-paneles",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Ventanas más finas",
+    puntos: [
+      "🪟 Las ventanas del juego tienen un marco doble de oro fino, títulos de sección con su filete y tablas con encabezado, filas suaves y tu fila resaltada.",
+      "👆 Los botones responden al tocarlos (se hunden un poco) y la pestaña elegida brilla. Si tu teléfono pide menos movimiento, no se mueven.",
+    ],
+  },
+  {
     id: "2026-11-13-iconos",
     fecha: "13 de noviembre de 2026",
     titulo: "Íconos de verdad en lugar de emojis",

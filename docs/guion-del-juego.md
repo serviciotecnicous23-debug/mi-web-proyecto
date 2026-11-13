@@ -780,6 +780,15 @@ sobre el cuerpo: armarlo con las medidas de siempre y pasarlo por `proporcionarC
   como propiedad. Dentro de un `<option>` va solo el texto. Lo que se arma como texto (los avisos, los toasts) sigue
   con el emoji. Faltan los letreros 3D de los círculos (`tpl-pad`).
 
+## 7h. Las ventanas (13 de noviembre de 2026)
+
+El sistema de diseño de las ventanas vive en `templo.css` (sección «el sistema de diseño de las ventanas»): las
+variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-pergamino`, `--tpl-rapido`,
+`--tpl-medio`), el marco doble de oro fino de `.tpl-ventana`, los títulos de sección (`h3` con su filete), las tablas
+(encabezado en versalitas de oro viejo, filas alternadas, la fila propia con `aria-current="true"` o
+`.tpl-fila-mia`), los botones que se hunden al tocarlos y la pestaña elegida (`aria-pressed`) con brillo. Todo respeta
+«reducir el movimiento». Una ventana nueva usa `Card` (`ui.tsx`) y estas piezas.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
