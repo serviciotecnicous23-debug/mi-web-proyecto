@@ -146,7 +146,9 @@ CREATE INDEX IF NOT EXISTS "idx_game_sabio_noches_estado" ON "game_sabio_noches"
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches" integer NOT NULL DEFAULT 0;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_ganadas" integer NOT NULL DEFAULT 0;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_dia" text;
-ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_hoy" integer NOT NULL DEFAULT 0;`;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_hoy" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio_duelos" ADD COLUMN IF NOT EXISTS "bot" text;
+ALTER TABLE "game_sabio_duelos" ALTER COLUMN "b_id" DROP NOT NULL;`;
 
 export const PREGUNTA = new Map(BANCO_SABIO.map((q) => [q.id, q]));
 /** El nombre con que se ve una cuenta (su personaje), guardado un rato: el público pide la partida cada segundo y medio. */

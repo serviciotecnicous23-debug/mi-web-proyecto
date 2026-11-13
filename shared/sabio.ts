@@ -19,6 +19,7 @@
  */
 import type { Verso } from "./ciudad";
 import type { Camino } from "./caminos";
+import { NOMBRES_BOT, nombreDeBot, type NivelBot } from "./mesa";
 
 export const NOMBRE_CONCURSO = "¿Quién es sabio?";
 export const VERSO_CONCURSO: Verso = { text: "¿Quién es sabio y avisado entre vosotros? muestre por buena conversación sus obras en mansedumbre de sabiduría.", ref: "Santiago 3:13" };
@@ -532,12 +533,72 @@ export const DUELOS_DIA = 10;
 export const GOZO_DUELO = { gana: 12, empate: 6, pierde: 3 } as const;
 /** Duelos ganados para el manto de los vencedores. */
 export const DUELOS_MANTO = 5;
+/**
+ * Contra la computadora el duelo es de práctica: este gozo (dentro del tope del concurso), sin copa, manto ni tabla, y
+ * no cuenta entre los duelos del día ni entre los jugados.
+ */
+export const GOZO_PRACTICA_DUELO = { gana: 4, empate: 3, pierde: 2 } as const;
 export const VERSO_DUELO: Verso = { text: "Hierro con hierro se aguza; Y así el hombre aguza el rostro de su amigo.", ref: "Proverbios 27:17" };
 
 /** Los puntos de una respuesta buena: 100, y hasta 100 más según lo rápido que se respondió. */
 export function puntosDuelo(msUsados: number): number {
   const total = DUELO_SEGUNDOS * 1000;
   return 100 + Math.round((100 * Math.max(0, total - Math.max(0, msUsados))) / total);
+}
+
+// ================================================================ los compañeros de la computadora (la noche y el duelo)
+/**
+ * Los compañeros de «La noche de los sabios» y el rival del duelo de práctica: cuánto tardan en contestar (ms desde
+ * que se muestra la pregunta) y cuántas veces aciertan, por nivel. Siempre se ven como tales («Nombre 🤖», de
+ * shared/mesa.ts) y nunca cuentan en la base.
+ */
+export const BOT_SABIO: Record<NivelBot, { ms: [number, number]; acierta: number }> = {
+  facil: { ms: [6000, 17000], acierta: 0.45 },
+  normal: { ms: [4500, 13000], acierta: 0.66 },
+  dificil: { ms: [3000, 9500], acierta: 0.84 },
+};
+
+/** Un número de 0 a 1 que siempre sale igual con los mismos números (la noche o el duelo, la ronda y quién): así no hay que guardar nada. */
+export function azarFijo(...xs: number[]): number {
+  let h = 2166136261;
+  for (const x of xs) {
+    h ^= x & 0xffff;
+    h = Math.imul(h, 16777619);
+    h ^= x >>> 16;
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 13;
+  h = Math.imul(h, 0x5bd1e995);
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+
+/**
+ * Lo que contesta un compañero de la computadora en una ronda, y a los cuántos ms de mostrarse la pregunta. Sale del
+ * azar fijo de (la partida, la ronda, quién contesta): siempre da lo mismo, así que el servidor lo calcula cuando
+ * alguien pregunta por la partida, sin guardar ningún plan.
+ */
+export function respuestaDeBot(nivel: NivelBot, partida: number, ronda: number, quien: number, opciones: readonly string[], correcta: string): { o: string; ms: number } {
+  const b = BOT_SABIO[nivel];
+  const ms = b.ms[0] + (b.ms[1] - b.ms[0]) * azarFijo(partida, ronda, quien, 1);
+  const malas = opciones.filter((o) => o !== correcta);
+  const o = azarFijo(partida, ronda, quien, 2) < b.acierta || !malas.length ? correcta : malas[Math.floor(azarFijo(partida, ronda, quien, 3) * malas.length)];
+  return { o, ms };
+}
+
+/** El rival del duelo de práctica no tiene personaje: su número (negativo) dice su nombre (−1 es el primero de NOMBRES_BOT, −2 el segundo…). */
+export const nombreDeRival = (numero: number) => nombreDeBot(-numero - 1);
+
+/** El número de un rival de la computadora para el duelo (al azar), que nunca se llame como quien juega. */
+export function numeroDeRival(nombre: string, azar: () => number = Math.random): number {
+  const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const mias = new Set(sinTildes(nombre).split(/[^a-z0-9]+/).filter(Boolean));
+  const inicio = Math.floor(azar() * NOMBRES_BOT.length) % NOMBRES_BOT.length;
+  for (let k = 0; k < NOMBRES_BOT.length; k++) {
+    const i = (inicio + k) % NOMBRES_BOT.length;
+    if (!mias.has(sinTildes(NOMBRES_BOT[i]))) return -(i + 1);
+  }
+  return -(inicio + 1);
 }
 
 export type EstadoDuelo = "invitado" | "jugando" | "terminado" | "rechazado" | "vencido" | "cancelado";
@@ -562,8 +623,10 @@ export type DueloVista = {
   reto: boolean;
   yo: DueloLado;
   rival: DueloLado;
-  /** El personaje del rival (para pedirle la revancha). */
+  /** El personaje del rival (para pedirle la revancha); el rival de la computadora tiene un número negativo. */
   rivalId: number;
+  /** El rival es de la computadora (con su nivel): el duelo es de práctica. */
+  bot: NivelBot | null;
   ronda: number;
   pregunta: { n: number; texto: string; opciones: string[]; segundos: number; restantes: number } | null;
   /** Lo que respondí en la ronda abierta (mientras espero al otro). */

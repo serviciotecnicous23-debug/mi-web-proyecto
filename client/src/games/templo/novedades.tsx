@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-duelo-contra-la-computadora",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El duelo de sabios también se practica solo",
+    puntos: [
+      "🤖 En la sala de los duelos, «Practicar contra la computadora»: eliges 🌱 fácil, 🌿 normal o 🌳 difícil y el duelo empieza enseguida, aunque no haya nadie en línea.",
+      "⏱️ El rival contesta con su propio tiempo y no siempre acierta: el fácil va sin prisa y el difícil es rápido y sabe mucho. Se ve como tal, con 🤖 junto al nombre.",
+      "🏅 Es de práctica: 4 de gozo si ganas, 3 si empatan y 2 por jugar. No gasta tus duelos del día ni cuenta para el manto ni para la tabla de la semana.",
+    ],
+  },
+  {
     id: "2026-11-13-paneles",
     fecha: "13 de noviembre de 2026",
     titulo: "Ventanas más finas",
