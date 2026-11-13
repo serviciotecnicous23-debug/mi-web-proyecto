@@ -180,7 +180,10 @@ type Partida = (PartidaEsgrima | PartidaTribus | PartidaQuien | PartidaCarrera |
   participo: Set<number>;
   /** Más rápido, para las pruebas (solo fuera de producción). */
   rapido: boolean;
+  /** Lo que hará cada compañero de la computadora y cuándo (en los juegos del patio; los de mesa usan `botEn`). */
+  planBots: Map<number, PlanBot>;
 };
+type PlanBot = { clave: string; en: number };
 
 type FilaFinal = { u: number; t: number; pj: number; nombre: string; puesto: number; puntos: number; detalle: string; gano: boolean; tribu: number | null; participo: boolean; quiere: number };
 type Premio = NonNullable<ResultadoVista["mio"]>;
@@ -313,6 +316,167 @@ function aplicarMesa(p: PartidaMesa & { participo: Set<number> }, a: number, j: 
   prepararTurnos(p, ahora);
 }
 
+// ================================================================ los compañeros de la computadora en los juegos del patio
+/** En los juegos de preguntas: cuánto tardan en contestar (ms) y cuántas veces aciertan. */
+const BOT_PREGUNTA: Record<NivelBot, { ms: [number, number]; acierta: number }> = {
+  facil: { ms: [7000, 15000], acierta: 0.45 },
+  normal: { ms: [5000, 11500], acierta: 0.68 },
+  dificil: { ms: [3000, 8000], acierta: 0.86 },
+};
+/** En «¿Quién soy?», cuántas pistas esperan para contestar. */
+const BOT_PISTAS: Record<NivelBot, [number, number]> = { facil: [4, 5], normal: [3, 4], dificil: [2, 3] };
+/** En la carrera, su paso (m/s), ya contando que las calles no van derecho. */
+const BOT_PASO: Record<NivelBot, number> = { facil: 2.6, normal: 3.2, dificil: 3.8 };
+/** En el muro, cada cuánto ponen una piedra (ms). */
+const BOT_PIEDRA_MS: Record<NivelBot, number> = { facil: 24000, normal: 18000, dificil: 14000 };
+const alAzarEntre = ([a, b]: [number, number]) => a + (b - a) * Math.random();
+
+/** Qué tiene que hacer ahora un compañero (una clave por cosa: la ronda, el turno, el tramo, la piedra), o null si nada. */
+function claveBot(p: Partida, u: number, ahora: number): string | null {
+  switch (p.juego) {
+    case "esgrima":
+      return ahora >= p.servida && p.revelada == null && !p.resp.has(u) ? `e${p.ronda}` : null;
+    case "tribus": {
+      if (ahora < p.servida) return null;
+      const t = p.tribuDe.get(u);
+      if (t == null) return null;
+      if (p.fase === "pregunta" && t === p.enTurno && !p.respTurno) return `p${p.turno}`;
+      if (p.fase === "robo" && t !== p.enTurno && !p.respRobo.has(t)) return `r${p.turno}`;
+      return null;
+    }
+    case "quien":
+      return ahora >= p.servida && p.revelada == null && !p.resp.has(u) ? `q${p.ronda}` : null;
+    case "carrera": {
+      const c = p.corredores.get(u);
+      return ahora >= p.salida && c && c.termino == null ? `c${c.siguiente}` : null;
+    }
+    case "muro":
+      return ahora >= p.salida && !p.cumplido ? `m${p.aportes.get(u) ?? 0}` : null;
+    default:
+      return null;
+  }
+}
+
+/** Cuándo lo hará (según su nivel; en las pruebas, todo más rápido). */
+function cuandoBot(s: Sala, p: Partida, u: number, nivel: NivelBot, ahora: number): number {
+  const f = p.rapido ? 0.15 : 1;
+  switch (p.juego) {
+    case "esgrima":
+      return p.servida + alAzarEntre(BOT_PREGUNTA[nivel].ms) * f;
+    case "tribus": {
+      if (p.fase === "robo") return (p.roboDesde ?? ahora) + alAzarEntre([2500, 8500]) * f;
+      // si en su tribu hay personas, les da tiempo para contestar primero
+      const conPersonas = s.miembros.some((m) => !m.bot && p.tribuDe.get(m.u) === p.tribuDe.get(u));
+      return p.servida + alAzarEntre(conPersonas ? [15000, 22000] : [6000, 15000]) * f;
+    }
+    case "quien": {
+      const k = Math.round(alAzarEntre(BOT_PISTAS[nivel]));
+      // (las pistas ya salen más seguido en las pruebas: solo se acorta lo que piensa después)
+      return p.servida + (k - 1) * pistaMs(p) + alAzarEntre([800, 3500]) * f;
+    }
+    case "carrera": {
+      const c = p.corredores.get(u)!;
+      const desde = c.siguiente === 0 ? { x: PATIO_SALIDA[0], z: PATIO_SALIDA[1] } : p.puntos[c.siguiente - 1];
+      const hasta = p.puntos[c.siguiente];
+      const d = Math.hypot(hasta.x - desde.x, hasta.z - desde.z);
+      return Math.max(ahora, p.salida) + (d / BOT_PASO[nivel]) * 1000 * alAzarEntre([0.9, 1.1]) * f;
+    }
+    case "muro":
+      return Math.max(ahora, p.salida) + BOT_PIEDRA_MS[nivel] * alAzarEntre([0.85, 1.15]) * f;
+    default:
+      return ahora;
+  }
+}
+
+/** Pone al día el plan de cada compañero (solo cambia si cambió lo que tiene que hacer). */
+function planearBots(s: Sala, p: Partida, ahora: number) {
+  for (const m of s.miembros) {
+    if (!m.bot) continue;
+    const clave = claveBot(p, m.u, ahora);
+    if (clave === null) {
+      p.planBots.delete(m.u);
+      continue;
+    }
+    if (p.planBots.get(m.u)?.clave === clave) continue;
+    p.planBots.set(m.u, { clave, en: cuandoBot(s, p, m.u, m.bot, ahora) });
+  }
+}
+
+/** Cuándo juega el próximo compañero (null si ninguno tiene nada que hacer). */
+function proximoBot(s: Sala, p: Partida, ahora: number): number | null {
+  if (p.juego === "mesa") return null;
+  planearBots(s, p, ahora);
+  let t = Infinity;
+  for (const x of p.planBots.values()) t = Math.min(t, x.en);
+  return t === Infinity ? null : t;
+}
+
+/** Una opción al azar que no sea la buena (ni la que ya se quitó). */
+function otraOpcion(opciones: string[], buena: string, quitada: string | null = null): string {
+  const malas = opciones.filter((o) => o !== buena && o !== quitada);
+  return malas.length ? malas[Math.floor(Math.random() * malas.length)] : buena;
+}
+
+/** Juega el primer compañero al que ya le tocó (devuelve si cambió algo). */
+function jugarBots(s: Sala, p: Partida, ahora: number): boolean {
+  if (p.juego === "mesa") return false;
+  planearBots(s, p, ahora);
+  for (const m of s.miembros) {
+    const plan = p.planBots.get(m.u);
+    if (!m.bot || !plan || plan.en > ahora || claveBot(p, m.u, ahora) !== plan.clave) continue;
+    p.planBots.delete(m.u);
+    const nivel = m.bot;
+    switch (p.juego) {
+      case "esgrima": {
+        const it = p.items[p.ronda - 1];
+        const o = Math.random() < BOT_PREGUNTA[nivel].acierta ? it.correcta : otraOpcion(it.opciones, it.correcta);
+        p.resp.set(m.u, { u: m.u, o, ms: Math.min(ESGRIMA.segundos * 1000, ahora - p.servida) });
+        if (o === it.correcta && p.primerAcierto == null) p.primerAcierto = ahora;
+        break;
+      }
+      case "tribus": {
+        const q = p.preguntas[p.turno - 1];
+        const t = p.tribuDe.get(m.u)!;
+        const robo = p.fase === "robo";
+        const o = Math.random() < BOT_PREGUNTA[nivel].acierta ? q.correcta : otraOpcion(q.opciones, q.correcta, robo ? p.quitada : null);
+        if (robo) p.respRobo.set(t, { u: m.u, o, ms: ahora - (p.roboDesde ?? ahora) });
+        else p.respTurno = { u: m.u, o, ms: ahora - p.servida };
+        break;
+      }
+      case "quien": {
+        const it = p.items[p.ronda - 1];
+        const buena = QUIEN_BANCO[it.i].nombre;
+        const pistas = pistasAhora(p, ahora);
+        const acierta = Math.min(0.97, BOT_PREGUNTA[nivel].acierta + 0.08 * (pistas - 2));
+        p.resp.set(m.u, { u: m.u, o: Math.random() < acierta ? buena : otraOpcion(it.opciones, buena), ms: ahora - p.servida, pistas });
+        break;
+      }
+      case "carrera": {
+        const c = p.corredores.get(m.u);
+        if (!c) break;
+        const punto = p.puntos[c.siguiente];
+        c.tiempos.push(ahora - p.salida);
+        c.siguiente++;
+        c.ultima = { x: punto.x, z: punto.z, at: ahora };
+        if (c.siguiente >= p.puntos.length) {
+          c.termino = ahora - p.salida;
+          if (p.primero == null) p.primero = ahora;
+        }
+        break;
+      }
+      case "muro": {
+        p.puestas++;
+        p.aportes.set(m.u, (p.aportes.get(m.u) ?? 0) + 1);
+        if (p.puestas >= p.meta) p.cumplido = true;
+        break;
+      }
+    }
+    s.actividad = ahora;
+    return true;
+  }
+  return false;
+}
+
 // ================================================================ las partidas: empezar
 /** El versículo cortado para una opción (lo que se ve en el botón: el principio, literal, y «…»). */
 function corto(t: string, max = 118): string {
@@ -386,7 +550,7 @@ function repartirTribus(miembros: Miembro[], n: number): Map<number, number> {
 }
 
 function empezarPartida(s: Sala, ahora: number, rapido: boolean): Partida {
-  const base = { empezo: ahora, participo: new Set<number>(), rapido };
+  const base = { empezo: ahora, participo: new Set<number>(), rapido, planBots: new Map<number, PlanBot>() };
   switch (s.juego) {
     case "esgrima":
       return { ...empezarEsgrima(ahora), ...base };
@@ -478,6 +642,15 @@ const despuesDelPrimero = (p: Partida) => (p.rapido ? 8000 : CARRERA.despuesDelP
 function proximoCambio(s: Sala, ahora: number): number | null {
   const p = s.partida;
   if (s.estado !== "jugando" || !p) return null;
+  const propio = cambioDelJuego(s, p, ahora);
+  // el compañero de la computadora que juega antes
+  const bot = proximoBot(s, p, ahora);
+  if (bot === null) return propio;
+  const b = Math.max(0, bot - ahora);
+  return propio === null ? b : Math.min(propio, b);
+}
+
+function cambioDelJuego(s: Sala, p: Partida, ahora: number): number | null {
   const quedan = (t: number) => Math.max(0, t - ahora);
   switch (p.juego) {
     case "esgrima": {
@@ -565,6 +738,8 @@ function avanzar(s: Sala, ahora: number): boolean {
 
 /** Un paso de la partida (devuelve si cambió algo; se llama hasta que no cambie). */
 function avanzarUnPaso(s: Sala, p: Partida, ahora: number, dentro: Set<number>): boolean {
+  // primero juegan los compañeros de la computadora a los que ya les tocó
+  if (jugarBots(s, p, ahora)) return true;
   switch (p.juego) {
     case "mesa": {
       const juego = MESAS[p.id];
@@ -1078,9 +1253,7 @@ function puedeEmpezar(s: Sala, pres: Set<number>): { ok: boolean; motivo: string
   if (s.estado !== "espera") return { ok: false, motivo: null };
   const def = JUEGOS[s.juego];
   const lim = limites(s);
-  const hayBots = s.miembros.some((m) => m.bot);
-  if (hayBots && s.juego !== "mesa") return { ok: false, motivo: "En este juego todavía no juegan los compañeros de la computadora: quítalos o elige un juego de mesa." };
-  if (s.miembros.length < lim.min) return { ok: false, motivo: `Hacen falta al menos ${lim.min} jugadores. Invita a alguien${s.juego === "mesa" ? " o agrega compañeros de la computadora" : ""}.` };
+  if (s.miembros.length < lim.min) return { ok: false, motivo: `Hacen falta al menos ${lim.min} jugadores. Invita a alguien o agrega compañeros de la computadora.` };
   if (s.miembros.length > lim.max) return { ok: false, motivo: `En «${lim.nombre}» juegan hasta ${lim.max}: ${s.miembros.length - lim.max === 1 ? "sobra uno" : `sobran ${s.miembros.length - lim.max}`}.` };
   const fuera = humanos(s).filter((m) => !pres.has(m.u));
   if (fuera.length) return { ok: false, motivo: `${fuera.map((m) => m.nombre).join(", ")} no ${fuera.length === 1 ? "está" : "están"} en la ciudad.` };
@@ -1739,7 +1912,6 @@ export function registerJuegosGrupoRoutes(app: Express) {
       quitarMiembro(s, b.u, null);
       return;
     }
-    if (s.juego !== "mesa") return { error: 409, message: "Por ahora los compañeros de la computadora juegan los juegos de mesa." };
     const nivel: NivelBot = esNivelBot(body.nivel) ? body.nivel : "normal";
     const lim = limites(s);
     if (s.miembros.length >= lim.max) return { error: 409, message: `En «${lim.nombre}» juegan hasta ${lim.max}: ya están todos los asientos.` };

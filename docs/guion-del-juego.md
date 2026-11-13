@@ -804,6 +804,16 @@ juego y `index.ts` con la lista), `client/src/games/templo/mesa/` (la pantalla d
 - El anfitrión los agrega (🌱 fácil, 🌿 normal o 🌳 difícil) o los quita. Siempre se ven como tales: «Nombre 🤖» y la
   etiqueta «computadora · nivel»; nunca se hacen pasar por personas. Tienen número negativo y nunca reciben avisos.
 - Piensan un momento antes de jugar (`pensarMs` de cada juego) y, según el nivel, no siempre hacen la mejor jugada.
+- También juegan los cinco juegos del patio (`planearBots` y `jugarBots` en `server/juegos-grupo.ts`; cada uno tiene su
+  plan: qué hará y cuándo, y el temporizador de la sala los despierta):
+  - esgrima: contestan entre 7 y 15 s (fácil, 45 % de aciertos), 5 y 11,5 s (normal, 68 %) o 3 y 8 s (difícil, 86 %);
+  - tribus: contestan por su tribu (si hay personas en ella, esperan 15 a 22 s para que contesten primero) y roban;
+  - «¿Quién soy?»: esperan 4–5, 3–4 o 2–3 pistas; aciertan más con más pistas;
+  - carrera: corren su recorrido a 2,6, 3,2 o 3,8 m/s en línea recta (las calles dan vueltas); no se ven en las calles,
+    solo en la tabla;
+  - muro: ponen una piedra cada 24, 18 o 14 s (la meta crece 15 por cada uno, como con las personas).
+- «Llenar con la computadora» completa la sala de un toque: la mesa entera; 4 en la esgrima, «¿Quién soy?» y la
+  carrera; dos por tribu en las tribus; 3 en el muro.
 - Si solo quedan compañeros, la sala se cierra.
 
 **Los premios.** Si la partida empezó con compañeros de la computadora, es de práctica: 4 de gozo al ganar y 2 si no,
