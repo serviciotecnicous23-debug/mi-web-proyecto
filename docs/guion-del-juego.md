@@ -812,6 +812,11 @@ juego y `index.ts` con la lista), `client/src/games/templo/mesa/` (la pantalla d
   - carrera: corren su recorrido a 2,6, 3,2 o 3,8 m/s en línea recta (las calles dan vueltas); no se ven en las calles,
     solo en la tabla;
   - muro: ponen una piedra cada 24, 18 o 14 s (la meta crece 15 por cada uno, como con las personas).
+- En «La noche de los sabios» (`server/sabio-noche.ts`), quien abre la sala los agrega o los quita (con dos ya se puede
+  empezar). Contestan entre 6 y 17 s (fácil, 45 %), 4,5 y 13 s (normal, 66 %) o 3 y 9,5 s (difícil, 84 %); el tiempo y
+  la respuesta salen de un azar fijo por noche, ronda y compañero, así no hay que guardar nada y siempre da lo mismo.
+  Nunca cuentan en la base (ni sus respuestas para los ancianos de la puerta). Con ellos la noche es de práctica: hasta
+  4 de gozo por persona, sin copa y sin «noche ganada».
 - «Llenar con la computadora» completa la sala de un toque: la mesa entera; 4 en la esgrima, «¿Quién soy?» y la
   carrera; dos por tribu en las tribus; 3 en el muro.
 - Si solo quedan compañeros, la sala se cierra.

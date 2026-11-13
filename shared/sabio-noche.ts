@@ -84,8 +84,10 @@ export function puestosDeNoche<T extends { puntos: number; ms: number; fuera?: b
 export type EstadoNoche = "sala" | "jugando" | "terminada" | "cancelada";
 
 export type NocheJugadorVista = {
-  /** El personaje con que juega. */
+  /** El personaje con que juega (negativo: un compañero de la computadora). */
   pid: number;
+  /** Un compañero de la computadora (con su nivel); null si es una persona. */
+  bot?: "facil" | "normal" | "dificil" | null;
   nombre: string;
   camino: Camino;
   puntos: number;

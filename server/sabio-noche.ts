@@ -22,6 +22,7 @@ import { avisarNoche } from "./avisos-juego";
 import { POR_GRADA, PREGUNTA, amigosPosibles, filaPersona, lista, mezclar, ponerNochesEnVivo } from "./sabio";
 import { marcarMirando, publicoDe } from "./sabio-publico";
 import { caminoDe, type Camino } from "@shared/caminos";
+import { esNivelBot, nombreDeBot, type NivelBot } from "@shared/mesa";
 import { GOZO_SABIO_DIA } from "@shared/sabio";
 import {
   LARGO_CODIGO, NOCHE_INVITA_S, NOCHE_MAX, NOCHE_MIN, NOCHE_PREGUNTAS, NOCHE_PREPARAR_S, NOCHE_REVELAR_S, NOCHE_SALA_MIN, NOCHE_SEGUNDOS, NOCHES_DIA,
@@ -64,6 +65,8 @@ type JugadorNoche = {
   gano: number;
   bien: boolean | null;
   fuera: boolean;
+  /** Un compañero de la computadora (con su nivel): números negativos, nunca cuenta en la base. */
+  bot?: NivelBot | null;
   /** Al terminar: el puesto, el gozo y si llegó al tope del día. */
   puesto?: number;
   gozo?: number;
@@ -92,6 +95,54 @@ type Fila = {
 type Persona = { ch: PersonajeFila; titular: number };
 
 const jugadoresDe = (n: Fila) => lista<JugadorNoche>(n.jugadores);
+const personasDe = (js: JugadorNoche[]) => js.filter((j) => !j.bot);
+
+// ---------------------------------------------------------------- los compañeros de la computadora
+/** Cuánto tardan en contestar (ms) y cuántas veces aciertan, por nivel. */
+const BOT_NOCHE: Record<NivelBot, { ms: [number, number]; acierta: number }> = {
+  facil: { ms: [6000, 17000], acierta: 0.45 },
+  normal: { ms: [4500, 13000], acierta: 0.66 },
+  dificil: { ms: [3000, 9500], acierta: 0.84 },
+};
+/** Un número de 0 a 1 que siempre sale igual para la misma noche, ronda y compañero (así no hay que guardar nada). */
+function azarFijo(...xs: number[]): number {
+  let h = 2166136261;
+  for (const x of xs) {
+    h ^= x & 0xffff;
+    h = Math.imul(h, 16777619);
+    h ^= x >>> 16;
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 13;
+  h = Math.imul(h, 0x5bd1e995);
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+/** Con compañeros la noche es de práctica: como mucho este gozo por persona, y sin copa. */
+const GOZO_PRACTICA_NOCHE = 4;
+
+/** Los compañeros a los que ya les tocó contestar la pregunta abierta, contestan (devuelve si contestó alguno). */
+function contestanLosBots(n: Fila, js: JugadorNoche[], ahora: number): boolean {
+  if (n.revelada != null) return false;
+  const servida = Number(n.servida || 0);
+  const ronda = Number(n.ronda);
+  const q = PREGUNTA.get(lista<string>(n.preguntas)[ronda - 1]);
+  if (!q || ahora < servida) return false;
+  const opciones = lista<string>(n.opciones);
+  let alguno = false;
+  for (const j of js) {
+    if (!j.bot || j.fuera || j.r) continue;
+    const b = BOT_NOCHE[j.bot];
+    const ms = b.ms[0] + (b.ms[1] - b.ms[0]) * azarFijo(Number(n.id), ronda, j.u, 1);
+    if (ahora < servida + ms) continue;
+    const malas = opciones.filter((o) => o !== q.correcta);
+    const o = azarFijo(Number(n.id), ronda, j.u, 2) < b.acierta || !malas.length ? q.correcta : malas[Math.floor(azarFijo(Number(n.id), ronda, j.u, 3) * malas.length)];
+    j.r = { o, ms: Math.min(NOCHE_SEGUNDOS * 1000, Math.round(ms)) };
+    j.respondidas += 1;
+    alguno = true;
+  }
+  return alguno;
+}
 const activosDe = (js: JugadorNoche[]) => js.filter((j) => !j.fuera);
 const normal = (s: string) => s.normalize("NFC").trim();
 
@@ -229,11 +280,11 @@ async function cancelar(n: Fila, avisar: number[]): Promise<Fila> {
 async function avanzarSala(n: Fila, ahora: number): Promise<Fila> {
   const js = jugadoresDe(n);
   if (ahora - Number(n.creado) > NOCHE_SALA_MIN * 60_000) return cancelar(n, js.map((j) => j.u));
-  const quedan = js.filter((j) => ahora - vistoDe(Number(n.id), j.u, ahora) <= AUSENTE_MS);
+  const quedan = js.filter((j) => j.bot || ahora - vistoDe(Number(n.id), j.u, ahora) <= AUSENTE_MS);
   if (quedan.length === js.length) return n;
-  if (!quedan.length) return cancelar(n, []);
+  if (!personasDe(quedan).length) return cancelar(n, []);
   const sigue = quedan.some((j) => j.u === Number(n.anfitrion_user));
-  const nuevo = sigue ? null : quedan[0];
+  const nuevo = sigue ? null : personasDe(quedan)[0];
   const x = await guardarJugadores(n, quedan, nuevo ? `, anfitrion = $3, anfitrion_user = $4` : "", nuevo ? [nuevo.t, nuevo.u] : []);
   avisarTodos(x, js.filter((j) => !quedan.includes(j)).map((j) => j.u));
   return x;
@@ -259,6 +310,7 @@ async function resolverRonda(n: Fila, ahora: number): Promise<Fila> {
   if (!q) return terminarNoche(n, js, ahora);
   const antes = new Map(puestosDeNoche(js).map((x) => [x.u, x.puesto]));
   const resp: Record<string, Resp> = {};
+  const respPersonas: Resp[] = [];
   for (const j of js) {
     // en la primera pregunta todos venían empatados: no hay flechas de subir o bajar
     j.antes = Number(n.ronda) > 1 ? antes.get(j.u) ?? null : null;
@@ -266,6 +318,7 @@ async function resolverRonda(n: Fila, ahora: number): Promise<Fila> {
     j.bien = null;
     if (!j.fuera && j.r) {
       resp[String(j.u)] = j.r;
+      if (!j.bot) respPersonas.push(j.r);
       j.bien = j.r.o === q.correcta;
       if (j.bien) {
         j.gano = puntosNoche(j.r.ms);
@@ -279,7 +332,7 @@ async function resolverRonda(n: Fila, ahora: number): Promise<Fila> {
   const x = await guardarJugadores(n, js, `, historial = $3::jsonb, revelada = $4`, [JSON.stringify([...lista<RondaNoche>(n.historial), ronda]), ahora]);
   // lo que se responde en la noche también lo cuentan los ancianos de la puerta
   const cuenta = new Map<string, number>();
-  for (const r of Object.values(resp)) cuenta.set(r.o, (cuenta.get(r.o) ?? 0) + 1);
+  for (const r of respPersonas) cuenta.set(r.o, (cuenta.get(r.o) ?? 0) + 1);
   if (cuenta.size) {
     const vals: unknown[] = [q.id];
     const filas = [...cuenta.entries()].map(([o, k], i) => {
@@ -302,24 +355,27 @@ async function resolverRonda(n: Fila, ahora: number): Promise<Fila> {
 async function terminarNoche(n: Fila, js: JugadorNoche[], ahora: number): Promise<Fila> {
   const finales = puestosDeNoche(js);
   const hoy = diaClave();
+  const practica = js.some((j) => j.bot);
   for (const f of finales) {
     const j = js.find((x) => x.u === f.u)!;
     j.puesto = f.fuera ? undefined : f.puesto;
     j.gozo = 0;
     j.tope = false;
-    if (f.fuera || f.respondidas < MIN_RESPUESTAS) continue;
+    if (j.bot || f.fuera || f.respondidas < MIN_RESPUESTAS) continue;
     await enFila(f.t, async () => {
       const fila = await filaPersona(f.t);
-      const gozo = Math.max(0, Math.min(gozoDePuesto(f.puesto), GOZO_SABIO_DIA - fila.gozo_hoy));
+      const quiere = practica ? Math.min(GOZO_PRACTICA_NOCHE, gozoDePuesto(f.puesto)) : gozoDePuesto(f.puesto);
+      const gozo = Math.max(0, Math.min(quiere, GOZO_SABIO_DIA - fila.gozo_hoy));
       await pool.query(
         `UPDATE game_sabio SET noches = noches + 1, noches_ganadas = noches_ganadas + $2, dia = $3, gozo_hoy = $4, entradas_hoy = $5, updated_at = now() WHERE character_id = $1`,
-        [f.t, f.puesto === 1 ? 1 : 0, hoy, fila.gozo_hoy + gozo, fila.entradas_hoy],
+        [f.t, f.puesto === 1 && !practica ? 1 : 0, hoy, fila.gozo_hoy + gozo, fila.entradas_hoy],
       );
       if (gozo) await sumarGozo(f.t, gozo, "sabio-noche");
       j.gozo = gozo;
       j.tope = fila.gozo_hoy + gozo >= GOZO_SABIO_DIA;
     });
-    // la copa de los barrios: jugar la noche suma, y el podio un poco más
+    // la copa de los barrios: jugar la noche suma, y el podio un poco más (con compañeros de la computadora, no)
+    if (practica) continue;
     await sumarALaCopa(f.t, "noche");
     if (f.puesto <= 3) await sumarALaCopa(f.t, "nochePodio");
   }
@@ -338,14 +394,18 @@ async function avanzar(n: Fila, ahora: number): Promise<Fila> {
   const js = jugadoresDe(n);
   let cambio = false;
   for (const j of js)
-    if (!j.fuera && ahora - vistoDe(Number(n.id), j.u, ahora) > AUSENTE_MS) {
+    if (!j.fuera && !j.bot && ahora - vistoDe(Number(n.id), j.u, ahora) > AUSENTE_MS) {
       j.fuera = true;
       j.r = null;
       cambio = true;
     }
-  // si ya no queda con quién jugar, la noche termina
-  if (activosDe(js).length < 2) return terminarNoche(n, js, ahora);
-  if (cambio) n = await guardarJugadores(n, js);
+  // si ya no queda con quién jugar (o no queda ninguna persona), la noche termina
+  if (activosDe(js).length < 2 || !personasDe(activosDe(js)).length) return terminarNoche(n, js, ahora);
+  if (contestanLosBots(n, js, ahora)) cambio = true;
+  if (cambio) {
+    n = await guardarJugadores(n, js);
+    if (n.revelada == null && !activosDe(js).every((j) => !!j.r)) avisarTodos(n);
+  }
   const servida = Number(n.servida || 0);
   if (n.revelada == null) {
     const todos = activosDe(js).every((j) => !!j.r);
@@ -380,6 +440,7 @@ function vistaNoche(n: Fila, me: number | null, ahora: number): NocheVista {
   const orden = enSala ? [...js].sort((a, b) => a.orden - b.orden) : [...js].sort((a, b) => (ps.get(a.u) ?? 99) - (ps.get(b.u) ?? 99) || a.orden - b.orden);
   const jugadores: NocheJugadorVista[] = orden.map((j) => ({
     pid: j.j,
+    bot: j.bot ?? null,
     nombre: j.nombre,
     camino: j.camino,
     puntos: j.puntos,
@@ -710,6 +771,49 @@ export function registerSabioNocheRoutes(app: Express) {
     }),
   );
 
+  // Quien abrió la sala agrega un compañero de la computadora (con su nivel) o lo quita, antes de empezar.
+  app.post("/api/jerusalen/sabio/noche/:id/bot", (req, res) =>
+    responder(res, async () => {
+      const me = cuentaActiva(req, res);
+      if (me === null) return;
+      const id = idDe(req, res);
+      if (id === null) return;
+      const ahora = Date.now();
+      type Salida = { error: number; message: string } | { n: Fila };
+      const out = await enFila(filaNoche(id), async (): Promise<Salida> => {
+        const n = await leer(id);
+        if (!n || !soyDe(n, me)) return { error: 404, message: "Ya no estás en esta sala." };
+        if (Number(n.anfitrion_user) !== me) return { error: 403, message: "Solo quien abrió la sala agrega o quita compañeros de la computadora." };
+        if (n.estado !== "sala") return { error: 409, message: "La noche ya empezó." };
+        const js = jugadoresDe(n);
+        if (req.body?.quitar !== undefined) {
+          const sale = js.find((j) => j.bot && j.j === Number(req.body.quitar));
+          if (!sale) return { error: 404, message: "Ese compañero ya no está en la sala." };
+          const x = await guardarJugadores(n, js.filter((j) => j !== sale));
+          avisarTodos(x);
+          return { n: x };
+        }
+        if (js.length >= NOCHE_MAX) return { error: 409, message: `La noche es de hasta ${NOCHE_MAX}: ya no caben más.` };
+        const nivel: NivelBot = esNivelBot(req.body?.nivel) ? req.body.nivel : "normal";
+        const k = Math.min(0, ...js.map((j) => j.u)) - 1;
+        // un nombre que no tenga nadie de la sala (ni persona ni compañero)
+        const base = (x: string) => x.replace(/ 🤖$/, "");
+        const usados = new Set(js.map((j) => base(j.nombre)));
+        let i = Number(n.id) + -k;
+        while (usados.has(base(nombreDeBot(i))) && i < Number(n.id) + -k + 12) i++;
+        const bot: JugadorNoche = {
+          t: k, u: k, j: k, nombre: nombreDeBot(i), camino: "sacerdocio", orden: js.length, puntos: 0, ms: 0, respondidas: 0, r: null,
+          antes: null, gano: 0, bien: null, fuera: false, bot: nivel,
+        };
+        const x = await guardarJugadores(n, [...js, bot]);
+        avisarTodos(x);
+        return { n: x };
+      });
+      if ("error" in out) return res.status(out.error).json({ message: out.message });
+      res.json({ noche: vistaNoche(out.n, me, ahora) });
+    }),
+  );
+
   // Quien abrió la sala puede sacar a alguien (antes de empezar); esa persona ya no puede volver a esta sala.
   app.post("/api/jerusalen/sabio/noche/:id/quitar", (req, res) =>
     responder(res, async () => {
@@ -755,11 +859,11 @@ export function registerSabioNocheRoutes(app: Express) {
         if (Number(n.anfitrion_user) !== me) return { error: 403, message: "Solo quien abrió la sala puede empezar la noche." };
         const js = jugadoresDe(n);
         if (js.length < NOCHE_MIN) return { error: 409, message: `Faltan ${NOCHE_MIN - js.length} para empezar: la noche es de ${NOCHE_MIN} a ${NOCHE_MAX} personas.` };
-        for (const j of js)
+        for (const j of personasDe(js))
           if ((await filaPersona(j.t)).noches_hoy >= NOCHES_DIA) return { error: 409, message: `${j.nombre} ya jugó sus ${NOCHES_DIA} noches de hoy.` };
-        const preguntas = await elegirParaNoche(js.map((j) => j.t));
-        for (const j of js) await contarNoche(j.t);
-        for (const j of js) marcarVisto(id, j.u, ahora);
+        const preguntas = await elegirParaNoche(personasDe(js).map((j) => j.t));
+        for (const j of personasDe(js)) await contarNoche(j.t);
+        for (const j of personasDe(js)) marcarVisto(id, j.u, ahora);
         const { rows } = await pool.query(`UPDATE game_sabio_noches SET estado = 'jugando', preguntas = $2::jsonb WHERE id = $1 RETURNING *`, [id, JSON.stringify(preguntas)]);
         return { n: await servirRonda(rows[0] as Fila, 1, ahora) };
       });
