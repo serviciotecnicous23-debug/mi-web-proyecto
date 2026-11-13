@@ -144,7 +144,7 @@ export const JUEGOS: Record<JuegoId, JuegoDef> = {
     id: "mesa",
     nombre: "Juegos de mesa",
     icono: "🎲",
-    corto: "Ajedrez, damas, cuatro en raya y tres en raya: con tus amistades o solo, con la computadora.",
+    corto: "Ajedrez, damas, dominó, cuatro en raya y tres en raya: con tus amistades o solo, con la computadora.",
     como: [
       "Quien crea la sala elige el juego de mesa. Cada uno tiene su asiento y juega en su turno.",
       "Si faltan jugadores, quien creó la sala agrega compañeros de la computadora (fácil, normal o difícil).",

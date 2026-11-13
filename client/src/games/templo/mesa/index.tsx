@@ -16,6 +16,7 @@ import { TresEnRayaPantalla } from "./TresEnRaya";
 import { AjedrezPantalla } from "./Ajedrez";
 import { DamasPantalla } from "./Damas";
 import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
+import { DominoPantalla } from "./Domino";
 
 export type PantallaMesaProps<V = unknown, J = unknown> = {
   vista: V;
@@ -35,6 +36,7 @@ export const PANTALLAS_MESA: Record<string, ComponentType<PantallaMesaProps<any,
   "cuatro-en-raya": CuatroEnRayaPantalla,
   damas: DamasPantalla,
   ajedrez: AjedrezPantalla,
+  domino: DominoPantalla,
 };
 
 /** Avisa a la banda sonora qué juego está abierto (y que se cerró al salir). */
