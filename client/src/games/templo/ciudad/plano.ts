@@ -9,6 +9,7 @@ import { AREAS, AREA_RECT, CASAS_POR_BARRIO, LIMITES_CIUDAD, areaDeBarrio, areaE
 import type { Circle, Rect, V2 } from "../layout";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS } from "@shared/personajes";
 import { LUGAR_ANCIANOS } from "@shared/dichos";
+import { CANTERA, PATIO, PATIO_MESA, PATIO_PUERTA, PATIO_PUERTA_ANCHO, PATIO_ZONA, TRAMO } from "@shared/juegos-grupo";
 
 /** Altura de las calles (la explanada del templo está en 0). */
 export const SUELO = -3.4;
@@ -101,6 +102,32 @@ export const ALTARES_ACAZ: V2[] = [[73.2, 13.8], [73.2, -13.8], [38.8, 16.8], [3
 /** Donde pregona el correo del rey (2 Crónicas 30:6), adentro de la puerta. */
 export const CORREO_REY: V2 = [71.2, -4.2];
 
+// el patio de los juegos (shared/juegos-grupo.ts): en la franja del norte, entre el barrio de la puerta de las Ovejas y el muro
+export { PATIO, PATIO_MESA, PATIO_PUERTA };
+
+/** Lo que choca del patio: sus muros bajos (con la puerta abierta), la grada, la mesa de los juegos y el montón de la cantera. */
+export function obstaculosPatio(): Rect[] {
+  const [x0, z0, x1, z1] = PATIO;
+  const g = 0.225;
+  const p0 = PATIO_PUERTA[0] - PATIO_PUERTA_ANCHO / 2, p1 = PATIO_PUERTA[0] + PATIO_PUERTA_ANCHO / 2;
+  return [
+    [x0 - g, z0 - g, x1 + g, z0 + g],
+    [x0 - g, z0, x0 + g, z1],
+    [x1 - g, z0, x1 + g, z1],
+    [x0 - g, z1 - g, p0 - 0.9, z1 + g],
+    [p1 + 0.9, z1 - g, x1 + g, z1 + g],
+    // los pilares de la portada
+    [p0 - 0.9, z1 - 0.45, p0, z1 + 0.45],
+    [p1, z1 - 0.45, p1 + 0.9, z1 + 0.45],
+    // la grada del oriente, la mesa de los juegos y el montón de piedras de la cantera
+    [66.4, -64.2, 69.6, -58.4],
+    [PATIO_MESA[0] - 0.95, PATIO_MESA[1] - 2.1, PATIO_MESA[0] + 0.95, PATIO_MESA[1] - 1.2],
+    [CANTERA[0] + 0.7, CANTERA[1] - 1.1, CANTERA[0] + 1.95, CANTERA[1] + 1.1],
+    // el tramo del muro que se levanta en «Levantemos el muro»
+    [TRAMO.x0 - 0.15, TRAMO.z - 0.5, TRAMO.x1 + 0.15, TRAMO.z + 0.5],
+  ];
+}
+
 
 // las parcelas de cada barrio viven en shared/parcelas.ts (el servidor las usa para saber quién está en una puerta)
 import { CALLES_DE_AREA, PARCELAS, parcelaDe, type Parcela } from "@shared/parcelas";
@@ -169,6 +196,8 @@ export function obstaculosFijos(): { rects: Rect[]; circles: Circle[] } {
     // las torres nuevas del muro (se ven desde sus cimientos) y el estanque de Siloé
     ...TORRES_NUEVAS.map((z) => [TORRE_X - TORRE_MEDIO, z - TORRE_MEDIO, TORRE_X + TORRE_MEDIO, z + TORRE_MEDIO] as Rect),
     ESTANQUE,
+    // el patio de los juegos
+    ...obstaculosPatio(),
   ];
   const circles: Circle[] = [
     [POZO[0], POZO[1], 1.15],
@@ -218,8 +247,8 @@ export function rellenoDeCasas(): { x: number; z: number; w: number; d: number; 
     const rr: Rect = [x - w / 2 - 0.6, z - d / 2 - 0.6, x + w / 2 + 0.6, z + d / 2 + 0.6];
     const toca = (q: Rect) => rr[0] < q[2] && rr[2] > q[0] && rr[1] < q[3] && rr[3] > q[1];
     if (out.some((o) => toca([o.x - o.w / 2, o.z - o.d / 2, o.x + o.w / 2, o.z + o.d / 2]))) return false;
-    // la calle de los siervos de Dios y sus casas quedan libres
-    if (toca(ZONA_SIERVOS)) return false;
+    // la calle de los siervos de Dios y sus casas quedan libres, y también el patio de los juegos con su calle de entrada
+    if (toca(ZONA_SIERVOS) || toca(PATIO_ZONA)) return false;
     return true;
   };
   // franjas junto a los muros de la ciudad: entre los barrios del oriente y en los bordes del sur y del norte

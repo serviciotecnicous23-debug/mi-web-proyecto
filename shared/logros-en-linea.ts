@@ -4,7 +4,7 @@
  * al visitar tu casa o tocarte en la calle. Se calculan de lo que ya guarda el juego.
  */
 
-export type LogroId = "constructor" | "buenVecino" | "maestro" | "campeon" | "estudioso" | "discipulo" | "sabio" | "consejero" | "vencedor" | "fiel" | "siervoFiel" | "mensajero";
+export type LogroId = "constructor" | "buenVecino" | "maestro" | "campeon" | "estudioso" | "discipulo" | "sabio" | "consejero" | "vencedor" | "fiel" | "siervoFiel" | "mensajero" | "alegriaPatio" | "coronaPatio";
 
 export const LOGROS_EN_LINEA: Record<LogroId, { nombre: string; icono: string; como: string }> = {
   constructor: { nombre: "Constructor del muro", icono: "🧱", como: "Pon 30 piedras en el muro caído" },
@@ -19,9 +19,11 @@ export const LOGROS_EN_LINEA: Record<LogroId, { nombre: string; icono: string; c
   fiel: { nombre: "Fiel a su barrio", icono: "🙌", como: "Aporta a 2 ofrendas del barrio cumplidas" },
   siervoFiel: { nombre: "Siervo fiel", icono: "🔥", como: "Llega a 7 días seguidos en tu racha de servicio" },
   mensajero: { nombre: "Mensajero de los siervos", icono: "📜", como: "Cumple 10 recados de la calle de los siervos" },
+  alegriaPatio: { nombre: "Alegría del patio", icono: "🎲", como: "Juega 10 partidas en grupo en el patio de los juegos" },
+  coronaPatio: { nombre: "Corona del patio", icono: "👑", como: "Gana 5 partidas en grupo en el patio de los juegos (levantar el muro cuenta)" },
 };
 
-export const ORDEN_LOGROS: LogroId[] = ["constructor", "buenVecino", "maestro", "campeon", "estudioso", "discipulo", "sabio", "consejero", "vencedor", "fiel", "siervoFiel", "mensajero"];
+export const ORDEN_LOGROS: LogroId[] = ["constructor", "buenVecino", "maestro", "campeon", "estudioso", "discipulo", "sabio", "consejero", "vencedor", "fiel", "siervoFiel", "mensajero", "alegriaPatio", "coronaPatio"];
 
 export type LogrosDe = {
   personajeId: number;

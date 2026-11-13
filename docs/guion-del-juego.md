@@ -68,6 +68,7 @@ el mismo día para todos.
 | El barrio | Bendice casas, ayuda a vecinos, va a reuniones, acompaña a los nuevos | Gozo, encargos y la ofrenda del barrio |
 | Las clases en el aula | La sección de un estudio, su examen final o la cátedra del maestro de su camino (8 lecciones por día) | Mérito, gozo, estudios aprobados para siempre y el grado de la cátedra |
 | «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines, duelos y la noche de los sabios en grupo | Gozo, trajes de sabio y las tablas por partida |
+| El patio de los juegos | Juega en grupo (de 2 a 12) con tus amistades y la gente de tu barrio: esgrima bíblica, las doce tribus, «¿Quién soy?», la carrera de Ahimaas y el muro (capítulo 9) | Gozo (hasta 60 por día), la copa del barrio, prendas y logros |
 | De noche | Antorchas, ventanas encendidas y la hora de las trompetas de la luna nueva | ×1,5 de mérito de 7 a 9 |
 
 ### «¿Quién es sabio?»: el concurso, la duda y la noche de los sabios
@@ -543,7 +544,8 @@ Pokémon GO:
   - lo que se gana (los trajes de los sabios, el mejor vestido, la faja del buen amigo y el manto de Elías):
     «Tesoro de Jerusalén»;
   - las cinco prendas de la amenaza de Senaquerib: «Atalaya de Sion»;
-  - las cinco prendas de la gran Pascua de Ezequías: «De un solo corazón».
+  - las cinco prendas de la gran Pascua de Ezequías: «De un solo corazón»;
+  - las cinco prendas del patio de los juegos (una por juego ganado): «Gozo del patio».
 - Más títulos: «Dador alegre», «Buen amigo», «Idóneo para enseñar» (un aprendiz que termina sus pasos), «Oído de
   sabio» (los 30 dichos), «Coleccionista» (40 cosas) y «Gran coleccionista» (100).
 - **Los dichos de los ancianos** (`shared/dichos.ts`, `server/dichos.ts`, `DichosUI.tsx`): cada día los ancianos de
@@ -613,3 +615,64 @@ Lo que queda:
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base
 (cuentas, gozo, calendario y avisos).
+
+## 9. El patio de los juegos (jugar en grupo)
+
+Pedido de Luis (12 de noviembre de 2026): jugó «¿Quién es sabio?» con un amigo y quiere muchas más cosas para hacer en
+línea, de verdad y en grupo, para conectarse con los amigos de la iglesia. Archivos: `shared/juegos-grupo.ts` (reglas),
+`server/juegos-grupo.ts` (salas y juegos), `server/juegos-grupo-banco.ts` (solo servidor), `JuegosGrupoUI.tsx`,
+`juegos-red.ts` y `ciudad/patio3d.ts`.
+
+**El lugar.** En la franja del norte de la ciudad, entre el barrio de la puerta de las Ovejas y el muro norte (`PATIO`):
+un patio empedrado con muros bajos, una portada con banderines, las banderas de cuatro tribus (cada una en un solo
+palo, nada con forma de cruz), bancos, una grada, la mesa de los juegos con su toldo (su círculo abre el patio), la
+cantera y el tramo del muro. Niños que juegan (Zacarías 8:5). Se llega con «Ir a…», el mapa o el botón 🎲 (tecla G).
+
+**La sala.**
+- Se crea con un juego y tiene un código de 6 letras (sin I ni O). Caben de 2 a 12 personas.
+- Se entra con el código, desde «Salas de tus amigos y vecinos» o con una invitación (como «Invitar a venir»: solo
+  amigos y vecinos del barrio, una cada 20 s a la misma persona y 6 por minuto, respeta «Recibir llamadas, retos e
+  invitaciones»).
+- Cada uno dice que está «a punto»; el anfitrión elige el juego, empieza y puede sacar a alguien (no vuelve a esa sala).
+- Se habla con frases fijas y los versículos rápidos de la ciudad: no hay texto libre.
+- Solo cuentas aprobadas, con su personaje y en la ciudad. Nunca se juntan quienes se bloquearon: no se ven sus salas,
+  no se invitan, no se puede entrar (404, como si no existiera), y si alguien bloquea a otro de su sala, el bloqueado
+  sale de ella.
+- Las salas viven en memoria; se cierran solas a los 20 minutos sin movimiento. Quien no está en la ciudad ni pregunta
+  por la sala en 90 s, sale.
+
+**Los juegos** (lo decide el servidor, con los tiempos en milisegundos; nunca manda la respuesta antes de tiempo):
+
+| Juego | Cómo se juega | Quién gana |
+|---|---|---|
+| ⚔️ Esgrima bíblica (Efesios 6:17) | 10 rondas de 20 s: una cita y 4 versículos, o un versículo y 4 citas (una del mismo libro) | Quien acierta primero gana 3 puntos; acertar después, 1. La ronda se cierra 3 s después del primer acierto |
+| 🛡️ Las doce tribus (Salmos 122:4) | 2 a 4 tribus (Judá, Benjamín, Neftalí, Zabulón). 12 preguntas por turno, 25 s; la primera respuesta de la tribu vale | Acertar en el turno: 100. Si falla o se acaba el tiempo, las demás roban (12 s, sin la opción que falló): 50 |
+| 🕵️ ¿Quién soy? (Hebreos 12:1) | 6 personajes; 5 pistas, una cada 7 s, de la más difícil a la más fácil; 6 nombres | 100, 80, 60, 40 o 20 según las pistas que se veían; quien falla espera la siguiente ronda |
+| 🏃 La carrera de Ahimaas (2 Samuel 18:23) | Salen juntos del patio a 5 lugares de la ciudad en orden y vuelven. Como mucho 4 min; al llegar el primero, un minuto más | Quien vuelve primero |
+| 🧱 Levantemos el muro (Nehemías 4:6) | Cooperativo: llevar piedras de la cantera al tramo, de a una, 15 por persona (de 30 a 180) en 5 minutos | Todos los que pusieron al menos 3, si se levanta |
+
+- La carrera y el muro se juegan caminando: el servidor mira cada posición real de la red (`observarPosiciones` en
+  `server/ciudad-red.ts`). Nadie va más rápido que una persona: cada uno tiene un margen de 12 m que se llena a 8,6 m/s
+  (`margenDespues`); quien lo pasa (con «Ir a…» o una trampa) salta: en la carrera tiene que volver al último lugar, en
+  el muro se le cae la piedra. «Ir a…» no funciona mientras se juega, y para empezar todos tienen que estar en el patio.
+- Los avisos van por la red (`avisarA`) en cada cambio, y un temporizador de la sala avisa en cada momento esperado (sale
+  la pregunta, otra pista, se cierra la ronda). El teléfono solo pregunta si un aviso no llegó (al próximo cambio, o cada
+  15–20 s): así una iglesia entera en la misma wifi no gasta el cupo de 120 peticiones por minuto.
+
+**Los premios.**
+- Gozo con tope de **60 por día** entre todos los juegos: 12, 8 y 6 a los tres primeros y 4 a los demás que jugaron;
+  en las tribus, 12 la que gana, 5 las demás y 8 si empatan; en el muro, 12 si se levanta y 4 si no.
+- Sin premio si juegan menos de dos personas, ni para quien no jugó (no respondió, no corrió, no puso piedras).
+- La copa del barrio: 2 por partida jugada y 3 por ganarla (`COPA_PUNTOS.juego` y `juegoGanado`).
+- Una prenda por juego, la primera vez que se gana, que no se vende (`exclusivo: "juegos"`): Faja de la espada del
+  Espíritu, Manto de las doce tribus, Faja de la nube de testigos, Faja del corredor Ahimaas y Manto de los que
+  edificaron el muro. Las cinco son la colección «El patio de los juegos» del álbum (título «Gozo del patio»).
+- Logros: «Alegría del patio» (10 partidas) y «Corona del patio» (5 ganadas).
+- Tablas: `game_juegos_grupo` (tope del día y prendas), `game_juegos_partidas` y `game_juegos_jugadores` (cada partida
+  y cómo quedó cada uno).
+
+**Cómo agregar contenido.** Los versículos de la esgrima y los personajes de «¿Quién soy?» se escriben en
+`generar_banco_juegos.py` (las pistas, con otras palabras; los versículos se traen literales de la Biblia del sitio) y
+se genera `server/juegos-grupo-banco.ts`. Los personajes nuevos van al final y su id no se reusa. Un lugar nuevo de la
+carrera va en `LUGARES_CARRERA`, en una calle o plaza (la prueba `shared/juegos-grupo.test.ts` mira que se pueda pisar).
+Las preguntas de las tribus salen de los bancos que ya hay (`server/jerusalen-banco.ts` y `server/sabio-banco.ts`).

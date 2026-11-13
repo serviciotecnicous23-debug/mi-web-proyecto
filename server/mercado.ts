@@ -158,6 +158,8 @@ export function registerMercadoRoutes(app: Express) {
             ? "El manto de Elías no se vende: lo reciben el mentor y su aprendiz cuando el aprendiz termina sus pasos."
             : a.exclusivo === "rango"
             ? "Las prendas de los rangos no se venden: se ganan aprobando el examen de rango en el aula."
+            : a.exclusivo === "juegos"
+            ? "Esa prenda no se vende: se gana jugando en grupo en el patio de los juegos."
             : a.exclusivo === "temporada"
             ? "Esa prenda no se vende: se gana con la historia de la temporada."
             : a.exclusivo === "regreso"

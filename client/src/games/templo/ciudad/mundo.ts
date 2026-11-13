@@ -53,6 +53,9 @@ import type { MuroEstado } from "@shared/muro";
 import { EscenaHistoria, type EscenaDeHistoria } from "./capitulos3d";
 import { EscenaPascua } from "./pascua3d";
 import { ArcaJoas } from "./arca3d";
+import { EscenaJuegos, construirPatio } from "./patio3d";
+import { juegosRed } from "../juegos-red";
+import { JUEGOS } from "@shared/juegos-grupo";
 import { arcoDeTemporada, type CapituloId, type CapitulosVista, type MomentoFiesta } from "@shared/capitulos";
 
 const DAWN = 0.2;
@@ -108,7 +111,7 @@ export type BarrioVisto = {
   obrasBarrio?: string[];
 };
 
-type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "arca" | "puesto0" | "puesto1" | "puesto2" | "puesto3" | `personaje:${string}`;
+type ZonaId = "templo" | "casa" | "anuncios" | "ancianos" | "palacio" | "escuela" | "camara" | "sabiduria" | "mercado" | "arca" | "juegos" | "puesto0" | "puesto1" | "puesto2" | "puesto3" | `personaje:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; r: number; ring: Ring; inside: boolean };
 
 /** Un vecino que se ve: su figura (con la vestidura de su escalón), adónde va y su letrero. */
@@ -231,6 +234,10 @@ export class CiudadWorld {
   private historias: EscenaDeHistoria[] = [];
   /** El arca de Joás arriba de la escalinata (shared/arca.ts): con lámparas de oro cuando la ciudad la llena. */
   private arca = new ArcaJoas();
+  /** El patio de los juegos (shared/juegos-grupo.ts): la carrera y el muro que se juegan caminando, y la sala de ahora. */
+  private juegos!: EscenaJuegos;
+  private quitarJuegos: (() => void) | null = null;
+  private juegoAntes: { codigo: string; estado: string } | null = null;
   private historiaT = 0;
   private historiaVista: CapitulosVista | null = null;
   private trompetaFiesta = 0;
@@ -384,6 +391,10 @@ export class CiudadWorld {
     for (const h of this.historias) this.scene.add(h.group);
     this.arca.poner(!!estado.arca?.llena);
     this.scene.add(this.arca.group);
+    // el patio de los juegos, al norte: lo de siempre y lo que cambia con la partida (la carrera y el muro)
+    this.scene.add(construirPatio());
+    this.juegos = new EscenaJuegos(this.overlay);
+    this.scene.add(this.juegos.group);
 
     // mi barrio completo; los otros, siluetas hasta que se entra en su área
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio, obrasBarrio: estado.barrio.obrasBarrio });
@@ -499,6 +510,9 @@ export class CiudadWorld {
         if (m.gozo > 0) this.flotar(`+${m.gozo} de gozo`);
         window.dispatchEvent(new CustomEvent("jer-mentor"));
       },
+      // el patio de los juegos (shared/juegos-grupo.ts): cómo está mi sala y las invitaciones a jugar
+      onSala: (v, motivo) => juegosRed.recibir(v, motivo),
+      onSalaInvitacion: (i) => juegosRed.invitacion(i),
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
         this.redEstado = e;
@@ -508,10 +522,14 @@ export class CiudadWorld {
           // la posición sale ya (aunque haya una ventana abierta): así el servidor sabe dónde estás de verdad
           this.enviarPosicionYa();
           void chatBarrio.ponerAlDia();
+          // si estaba en una sala del patio, se pone al día (pudo cambiar mientras no había red)
+          if (juegosRed.get().sala) void juegosRed.cargar();
         }
       },
     });
     this.red.conectar();
+    this.quitarJuegos = juegosRed.subscribe(() => this.alCambiarJuego());
+    this.alCambiarJuego();
     void this.mirarHistoria();
     this.pasos = estado.yo.pasos ?? 0;
     // el guía del camino recibe al nuevo una sola vez por personaje (después lo guían la flecha y su edificio)
@@ -824,6 +842,11 @@ export class CiudadWorld {
     if (m?.kind === "estudios") return 3;
     if (m?.kind === "escuela") return 4;
     if (m?.kind === "palacio") return 5;
+    if (m?.kind === "juegos") return 11;
+    // el patio de los juegos: corre en la carrera o lleva una piedra al muro
+    const jg = juegosRed.enLaCiudad();
+    if (jg?.juego === "carrera" && jg.miTiempo == null) return 10;
+    if (jg?.juego === "muro" && jg.llevo) return 9;
     if (this.oracionT > 0) return 6;
     if (this.panesQueLleva > 0) return 7;
     if (this.mensaje) return 8;
@@ -1066,6 +1089,8 @@ export class CiudadWorld {
 
   /** El objetivo de ahora, con su nombre (para el mapa): la misión en curso o el siguiente primer paso. */
   private objetivoMapa(): { x: number; z: number; texto: string } | null {
+    const jg = this.objetivoJuego();
+    if (jg) return jg;
     const c = this.estado.yo.camino;
     const r = this.player.rig;
     if (this.mensaje) return { x: this.mensaje.x, z: this.mensaje.z, texto: "La casa del mensaje" };
@@ -1087,7 +1112,20 @@ export class CiudadWorld {
     this.ruta = this.nav.path(r.x, r.z, x, z);
   }
 
+  /** En la carrera, el lugar que toca (o al que hay que volver); en el muro, la cantera o el tramo. */
+  private objetivoJuego(): { x: number; z: number; texto: string } | null {
+    const jg = juegosRed.enLaCiudad();
+    if (jg?.juego === "carrera" && jg.miTiempo == null) {
+      const l = jg.puntos[jg.saltoMio ? Math.max(0, jg.miSiguiente - 1) : jg.miSiguiente];
+      return l ? { x: l.x, z: l.z, texto: `La carrera: ${l.nombre}` } : null;
+    }
+    if (jg?.juego === "muro") return jg.llevo ? { x: jg.tramo.x, z: jg.tramo.z, texto: "El muro: pon la piedra" } : { x: jg.cantera.x, z: jg.cantera.z, texto: "La cantera: toma una piedra" };
+    return null;
+  }
+
   private objetivoCamino(): THREE.Vector3 | null {
+    const jg = this.objetivoJuego();
+    if (jg) return new THREE.Vector3(jg.x, P.alturaCiudad(jg.x, jg.z) + 1, jg.z);
     const c = this.estado.yo.camino;
     if (c === "sacerdocio") return null;
     const r = this.player.rig;
@@ -1355,8 +1393,37 @@ export class CiudadWorld {
     }
   }
 
+  /**
+   * La sala del patio cambió (juegos-red.ts): la carrera y el muro se dibujan; al empezar una partida, la ventana se
+   * cierra si se juega caminando (o se abre si se juega en ella); al terminar, se abre con el resultado; y el gozo ganado
+   * se pone en el marcador.
+   */
+  private alCambiarJuego() {
+    const { sala } = juegosRed.get();
+    this.juegos.poner(juegosRed.enLaCiudad());
+    const antes = this.juegoAntes;
+    this.juegoAntes = sala ? { codigo: sala.codigo, estado: sala.estado } : null;
+    const g = sala?.resultado?.mio?.gozoTotal;
+    if (g != null && g !== this.estado.yo.gozo) this.ponerGozo(g);
+    if (!sala || !antes || antes.codigo !== sala.codigo || antes.estado === sala.estado) return;
+    const modal = gameStore.getSnapshot().modal;
+    if (sala.estado === "jugando") {
+      this.audio.trumpet(true);
+      if (JUEGOS[sala.juego].enLaCiudad) {
+        if (modal?.kind === "juegos") gameStore.close();
+        this.ultimoEnvio.t = 0;
+      } else if (!modal) gameStore.push({ kind: "juegos" });
+    } else if (sala.estado === "fin" && antes.estado === "jugando" && !modal) gameStore.push({ kind: "juegos" });
+  }
+
   /** Lleva al aprendiz a un lugar de la ciudad (con «Ir a…»). */
-  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion" | "siervos") {
+  irA(lugar: "casa" | "templo" | "plaza" | "mercado" | "puerta" | "palacio" | "escuela" | "camara" | "sabiduria" | "oracion" | "siervos" | "juegos") {
+    // en la carrera y en el muro se camina: «Ir a…» no vale (el servidor tampoco cuenta los saltos)
+    const jg = juegosRed.enLaCiudad();
+    if (jg) {
+      gameStore.toast(`En «${JUEGOS[jg.juego].nombre}» se camina: «Ir a…» no vale mientras juegas.`, "warn");
+      return;
+    }
     const casa = P.parcelaDe(this.estado.barrio.n, this.estado.yo.parcela);
     const destinos: Record<typeof lugar, [V2, number]> = {
       casa: [casa.umbral, casa.dir === 1 ? 0 : Math.PI],
@@ -1373,6 +1440,8 @@ export class CiudadWorld {
       oracion: [[P.ORACION_PUNTO[0] + 2.2, P.ORACION_PUNTO[1]], -Math.PI / 2],
       // al principio de la calle de los siervos, mirando a lo largo de ella
       siervos: [[P.CALLE_SIERVOS_PUNTO[0] - 13, P.CALLE_SIERVOS_PUNTO[1]], Math.PI / 2],
+      // adentro del patio de los juegos, mirando hacia el muro norte
+      juegos: [[P.PATIO_PUERTA[0], P.PATIO_PUERTA[1] - 2.4], Math.PI],
     };
     const [[x, z], yaw] = destinos[lugar];
     this.dejarDeSeguir();
@@ -1857,6 +1926,8 @@ export class CiudadWorld {
       ["mercado", P.MERCADO, 1.0, "#f0b45a"],
       // el arca de Joás, a la puerta del templo (shared/arca.ts)
       ["arca", P.ARCA_ZONA, 0.6, "#ffd25a"],
+      // la mesa del patio de los juegos (shared/juegos-grupo.ts)
+      ["juegos", P.PATIO_MESA, 1.1, "#c9a8ff"],
       // delante de cada puesto: su mercader
       ...P.PUESTOS.map(([x, z], i) => [`puesto${i}` as ZonaId, [x, z - 1.75] as V2, 0.75, "#f0b45a"] as [ZonaId, V2, number, string]),
       // la puerta de cada personaje de la calle de los siervos
@@ -1953,6 +2024,10 @@ export class CiudadWorld {
           break;
         case "arca":
           this.abrir({ kind: "arca" });
+          break;
+        case "juegos":
+          // la mesa del patio de los juegos: la sala (JuegosGrupoUI.tsx)
+          this.abrir({ kind: "juegos" });
           break;
         default:
           // la puerta de un personaje de la calle de los siervos
@@ -2336,6 +2411,7 @@ export class CiudadWorld {
       ["El púlpito de la plaza", L.plaza, 22],
       ["El mercado", new THREE.Vector3(P.MERCADO[0], P.SUELO + 3.1, P.PUESTOS[0][1]), 20],
       ["El muro caído: cada deber pone una piedra", new THREE.Vector3(P.MURO_ORIENTE - 1.5, P.SUELO + 6.4, 19), 26],
+      ["🎲 El patio de los juegos", new THREE.Vector3(P.PATIO_PUERTA[0], P.SUELO + 4.1, P.PATIO_PUERTA[1]), 30],
     ];
     for (const [t, p, r] of def) {
       const el = this.overlay.make("tpl-tag", t);
@@ -2354,6 +2430,8 @@ export class CiudadWorld {
       }
     // niños que juegan en la plaza (Zacarías 8:5)
     for (const [x, z] of [[53.5, 1.4], [54.6, 5.2], [58.4, 4.6]] as V2[]) this.npc("nino", [x, z], {});
+    // y en el patio de los juegos
+    for (const [x, z] of [[55.2, -58.6], [59.4, -61.2]] as V2[]) this.npc("nino", [x, z], {});
     // guardias a la puerta del palacio y alumnos en los bancos de la escuela
     for (const x of [15.4, 18.6]) this.npc("guardia", [x, 19.4], { yaw: Math.PI });
     for (const x of [10.2, 11.8, 23.4]) this.npc("alumno", [x, -22.05], { yaw: 0, sit: true });
@@ -2615,6 +2693,7 @@ export class CiudadWorld {
     this.animarSiervos(dt);
     for (const h of this.historias) h.animar(dt, now, p.rig.x, p.rig.z, this.noche());
     this.arca.animar(now / 1000);
+    this.juegos.animar(dt, this.time, { x: p.rig.x, y: p.rig.y, z: p.rig.z, yaw: p.rig.yaw });
     this.crowd.flush();
     this.shadows.end();
     this.items.end();
@@ -2831,6 +2910,7 @@ export class CiudadWorld {
     const area = P.areaEn(r.x, r.z);
     if (area) return nombreDeBarrio(this.barrioDeArea(area));
     if (P.cercaDe(r.x, r.z, P.CAMARA, 3.3)) return "La cámara de los sacerdotes";
+    if (P.cercaDe(r.x, r.z, P.PATIO, 0.5)) return "El patio de los juegos";
     if (P.cercaDe(r.x, r.z, P.SABIDURIA_GRADA, 3.3) || P.cercaDe(r.x, r.z, P.SABIDURIA, 2)) return "La casa de la sabiduría";
     if (P.cercaDe(r.x, r.z, P.PLAZA, 0)) return r.x > 70 ? "La puerta de la ciudad" : "La plaza";
     if (P.cercaDe(r.x, r.z, P.PALACIO, 4)) return "El palacio del rey";
@@ -2839,6 +2919,16 @@ export class CiudadWorld {
   }
 
   private aviso(): string {
+    const jg = juegosRed.enLaCiudad();
+    if (jg?.juego === "carrera") {
+      if (jg.fase === "preparar") return "La carrera de Ahimaas: espera la salida en el patio";
+      if (jg.miTiempo != null) return "¡Llegaste al patio! Espera a los demás corredores";
+      const l = jg.puntos[jg.saltoMio ? Math.max(0, jg.miSiguiente - 1) : jg.miSiguiente];
+      if (l) return jg.saltoMio ? `Saltaste de lugar: vuelve a ${l.nombre} para seguir` : `Corre hasta la luz dorada: ${l.nombre} (${jg.miSiguiente + 1} de ${jg.puntos.length})`;
+    }
+    if (jg?.juego === "muro")
+      return jg.fase === "preparar" ? "Levantemos el muro: espera la señal en el patio" : jg.llevo ? "Lleva la piedra al tramo del muro, al fondo del patio" : "Toma una piedra de la cantera (el círculo junto al muro del oriente)";
+    if (P.cercaDe(this.player.rig.x, this.player.rig.z, P.PATIO, 0.5) && !juegosRed.get().sala) return "El patio de los juegos: párate en el círculo de la mesa para jugar con tus amigos";
     const camino = this.avisoCamino();
     if (camino) return camino;
     const r = this.player.rig;
@@ -3010,6 +3100,8 @@ export class CiudadWorld {
     this.red.cerrar();
     for (const h of this.historias) h.destroy();
     this.arca.destroy();
+    this.quitarJuegos?.();
+    this.juegos.destroy();
     acompanar.ponerSiguiendo(null);
     acompanar.cerrarInvitacion();
     for (const id of [...this.vecinos.keys()]) this.quitarVecino(id);

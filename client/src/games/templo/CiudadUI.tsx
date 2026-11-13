@@ -59,6 +59,7 @@ import type { TallerEstado } from "@shared/taller";
 import { FotoDeCasa } from "./FotoCasaUI";
 import { RegalarBoton, RegalosRecibidos } from "./RegalosUI";
 import { BanqueteCasa, BanqueteVisita } from "./BanqueteUI";
+import { BotonPatio, JuegoChip, JuegosGrupoView } from "./JuegosGrupoUI";
 
 /** Pone el gozo nuevo en el estado de la pantalla y en el marcador de la ciudad (después de gastar o ganar). */
 function useAlGozo() {
@@ -333,6 +334,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
       {/* a la derecha, en el medio: tu barrio (la charla), frases rápidas y vecinos */}
       <div className="pointer-events-auto absolute top-1/2 flex -translate-y-1/2 flex-col gap-2" style={{ right: "calc(0.5rem + var(--tpl-sr, 0px))" }}>
         <BotonBarrio onClick={() => open({ kind: "barrio" })} />
+        {/* el patio de los juegos: salas para jugar en grupo (JuegosGrupoUI.tsx) */}
+        <BotonPatio />
         <div className="relative">
           <button
             type="button"
@@ -420,6 +423,8 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
           <>
             {/* la misión del barrio de hoy: cuántos vecinos hay en el lugar y cuánto falta (BarrioCopa.tsx) */}
             <JuntosChip />
+            {/* el patio de los juegos: la carrera, el muro o la sala que espera (JuegosGrupoUI.tsx) */}
+            <JuegoChip />
             {/* a quién se sigue caminando (Acompanar.tsx) */}
             <SiguiendoChip />
             <div className={`rounded-full bg-sky-500/30 px-3 py-0.5 text-center text-[11px] font-bold leading-tight text-sky-50 backdrop-blur-[2px] ${sombra}`} data-testid="ciudad-lugar">
@@ -482,6 +487,8 @@ export function CiudadModal({ modal }: { modal: Modal }) {
       return <VecinoView id={modal.id} />;
     case "barrio":
       return <BarrioView pestana={modal.pestana} />;
+    case "juegos":
+      return <JuegosGrupoView />;
     case "visita":
       return <VisitaView personajeId={modal.personajeId} nombre={modal.nombre} />;
     default:

@@ -43,6 +43,7 @@ import { DICHOS_SQL } from "./dichos";
 import { ALBUM_SQL } from "./album";
 import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
+import { JUEGOS_GRUPO_SQL } from "./juegos-grupo";
 
 const CREATE_TABLES_SQL = `
 -- Users (should already exist, but just in case)
@@ -1222,6 +1223,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(DICHOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (obras): ${err?.message}`);
+    }
+    try {
+      // el patio de los juegos (shared/juegos-grupo.ts): las partidas en grupo, sus premios y el tope del día
+      await pool.query(JUEGOS_GRUPO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (juegos en grupo): ${err?.message}`);
     }
     
     // Step 2: Add missing columns to existing tables

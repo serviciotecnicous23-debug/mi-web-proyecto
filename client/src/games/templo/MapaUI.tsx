@@ -78,6 +78,7 @@ const LUGARES: Lugar[] = [
   { r: P.CAMARA, color: "#f0d27a" },
   { r: P.SABIDURIA, color: "#c9a8ff" },
   { r: P.MONTE_ORACION, color: "#a9c48a", nombre: "Monte" },
+  { r: P.PATIO, color: "#d8c0f0", nombre: "Juegos" },
 ];
 
 /** De la ciudad al mapa: la cámara mira hacia arriba del mapa, como en la pantalla. */
@@ -334,7 +335,7 @@ export function MiniMapa({ city }: { city: CiudadWorld | null }) {
   );
 }
 
-const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria" | "oracion" | "siervos"; nombre: string }[] = [
+const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" | "camara" | "sabiduria" | "oracion" | "siervos" | "juegos"; nombre: string }[] = [
   { id: "casa", nombre: "🏠 Mi casa" },
   { id: "templo", nombre: "🔥 El templo" },
   { id: "plaza", nombre: "⛲ La plaza" },
@@ -345,6 +346,7 @@ const IR: { id: "casa" | "templo" | "plaza" | "mercado" | "escuela" | "palacio" 
   { id: "sabiduria", nombre: "🏛️ La casa de la sabiduría" },
   { id: "oracion", nombre: "⛰️ El monte de la oración" },
   { id: "siervos", nombre: "📜 La calle de los siervos" },
+  { id: "juegos", nombre: "🎲 El patio de los juegos" },
 ];
 
 /** El mapa de toda la ciudad, con el objetivo y los botones para ir. */

@@ -155,6 +155,8 @@ export type Modal =
   | { kind: "sabio" }
   /** El aula de un edificio (pantalla completa): la clase de una sección, el examen final o la cátedra (AulaUI.tsx). */
   | { kind: "aula"; aula: import("@shared/aula").AulaId; pedido?: import("./aula/clases").PedidoAula }
+  /** El patio de los juegos: las salas para jugar en grupo (shared/juegos-grupo.ts, JuegosGrupoUI.tsx). */
+  | { kind: "juegos" }
   /** Un personaje de la calle de los siervos (shared/personajes.ts): su charla, sus chismes y el recado del día. */
   | { kind: "personaje"; id: string }
   /** La historia de la temporada (shared/capitulos.ts). */

@@ -17,6 +17,7 @@ import { PRENDA_REGRESO } from "./regreso";
 import { PRENDA_AMIGO } from "./invitar";
 import { PRENDA_MENTOR } from "./mentores";
 import { PRENDAS_RANGO } from "./examenes-rango";
+import { PRENDAS_JUEGOS } from "./juegos-grupo";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
@@ -33,9 +34,10 @@ export type Articulo = {
    * No se vende: se gana. «sabio»: los trajes de los sabios, en la casa de la sabiduría (shared/sabio.ts); «temporada»:
    * las prendas de la historia de la temporada (shared/capitulos.ts); «regreso»: el mejor vestido, al volver a
    * Jerusalén después de una semana o más (shared/regreso.ts); «taller»: las piezas finas, que hace el artesano con 4
-   * iguales (shared/taller.ts); «amigo»: la faja del buen amigo, al invitar a un amigo que juega 3 días (shared/invitar.ts).
+   * iguales (shared/taller.ts); «amigo»: la faja del buen amigo, al invitar a un amigo que juega 3 días (shared/invitar.ts);
+   * «juegos»: las prendas del patio de los juegos, al ganar cada juego en grupo (shared/juegos-grupo.ts).
    */
-  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo" | "mentor" | "rango";
+  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo" | "mentor" | "rango" | "juegos";
   /** Una pieza fina del artesano (shared/taller.ts): el artículo de donde sale (con 4 iguales). */
   fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
@@ -169,6 +171,17 @@ export const ARTICULOS: Articulo[] = [
     detalle: `Se gana al aprobar su examen de rango. ${p.detalle} «${p.verso.text}» (${p.verso.ref}).`,
     color: p.color,
     exclusivo: "rango",
+  })),
+  // las prendas del patio de los juegos: tampoco se venden, se ganan jugando en grupo (shared/juegos-grupo.ts)
+  ...PRENDAS_JUEGOS.map((p): Articulo => ({
+    id: p.id,
+    categoria: "ropa",
+    nombre: p.nombre,
+    icono: p.id.startsWith("manto") ? "🥻" : "🎖️",
+    precio: 0,
+    detalle: p.detalle,
+    color: p.color,
+    exclusivo: "juegos",
   })),
   // la ropa fina del artesano: tampoco se vende (shared/taller.ts)
   ...ROPA_FINA,
