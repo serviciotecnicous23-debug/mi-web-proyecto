@@ -30,6 +30,8 @@ export type RedEventos = {
   /** La ciudad llenó el arca de Joás (shared/arca.ts) y un amigo invitado ya jugó sus 3 días (shared/invitar.ts). */
   onArca?: (a: import("@shared/arca").ArcaVista) => void;
   onAmigo?: (nombre: string, gozo: number) => void;
+  /** Los mentores (shared/mentores.ts): te eligieron, tu aprendiz cumplió un paso, se encontraron… */
+  onMentor?: (m: import("@shared/mentores").AvisoMentor) => void;
   /** La misión del barrio de hoy (juntos.ts): cómo va y cuando se cumple. */
   onJuntos?: (m: Extract<RedEntra, { t: "juntos" | "juntos-hecho" }>) => void;
   onFuera: (motivo: string) => void;
@@ -127,6 +129,9 @@ export class RedCiudad {
           break;
         case "amigo":
           this.ev.onAmigo?.(m.nombre, m.gozo);
+          break;
+        case "mentor":
+          this.ev.onMentor?.(m.m);
           break;
         case "fuera":
           this.fuera = true;

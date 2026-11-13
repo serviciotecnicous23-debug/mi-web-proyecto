@@ -36,6 +36,8 @@ import { registerTallerRoutes } from "./taller";
 import { registerIntercambioRoutes } from "./intercambio";
 import { registerArcaRoutes } from "./arca";
 import { registerInvitarRoutes } from "./invitar";
+import { registerMentoresRoutes } from "./mentores";
+import { registerDichosRoutes } from "./dichos";
 import { registerAlbumRoutes } from "./album";
 import { registerRegistroRoutes } from "./registro";
 import { registerCaminoRoutes } from "./camino";
@@ -3711,6 +3713,9 @@ ${urls}
   registerArcaRoutes(app);
   registerInvitarRoutes(app);
   registerAlbumRoutes(app);
+  // los mentores para los nuevos y los dichos de los ancianos de la puerta
+  registerMentoresRoutes(app);
+  registerDichosRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
   // el registro de cada jugador: todo lo que hizo, para verlo en su casa, su ficha y las tablas

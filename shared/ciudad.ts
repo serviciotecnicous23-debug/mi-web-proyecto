@@ -360,6 +360,8 @@ export type RedEntra =
   | { t: "arca"; arca: import("./arca").ArcaVista }
   /** Un amigo que invitaste ya jugó sus 3 días (shared/invitar.ts): los dos ganan gozo. */
   | { t: "amigo"; nombre: string; gozo: number }
+  /** Los mentores (shared/mentores.ts): te eligieron como mentor, tu aprendiz cumplió un paso, se encontraron… */
+  | { t: "mentor"; m: import("./mentores").AvisoMentor }
   | { t: "fuera"; motivo: string };
 
 // ---------------------------------------------------------------- respuestas de la API

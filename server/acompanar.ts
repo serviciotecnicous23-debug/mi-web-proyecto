@@ -10,6 +10,7 @@ import { nombreDe, personajeDe, type PersonajeFila } from "./jerusalen";
 import { avisarA, ubicacionDe } from "./ciudad-red";
 import { relacionesDe } from "./sabio";
 import { dondeEsta } from "./barrio";
+import { sonMentorYAprendiz } from "./mentores";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { INVITACION_S, INVITACIONES_POR_MINUTO, INVITAR_CADA_MS, type DondeEsta } from "@shared/acompanar";
 
@@ -53,7 +54,9 @@ export function registerAcompanarRoutes(app: Express) {
     if (pos.u === pr.ch.user_id) return { error: 400, message: "Ese eres tú." };
     const r = await relacionesDe(pr.titular, pr.ch.user_id);
     if (r.bloqueados.has(pos.u)) return noEsta;
-    if (!r.vecinos.has(pos.u) && !r.amigos.has(pos.u)) return { error: 403, message: "Solo puedes acompañar a tus amigos y a los vecinos de tu barrio." };
+    // también al mentor y a su aprendiz, aunque no sean vecinos ni amigos (server/mentores.ts)
+    if (!r.vecinos.has(pos.u) && !r.amigos.has(pos.u) && !(await sonMentorYAprendiz(pr.ch.user_id, pos.u)))
+      return { error: 403, message: "Solo puedes acompañar a tus amigos, a los vecinos de tu barrio y a tu mentor o tus aprendices." };
     if (!(await aceptaInvitaciones(pos.u))) return { error: 403, message: `${pos.nombre} prefiere no recibir invitaciones ahora.` };
     return { ...pos, ok: true };
   }

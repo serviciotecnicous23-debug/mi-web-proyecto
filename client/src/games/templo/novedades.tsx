@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-mentores",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Los mentores y los dichos de los ancianos",
+    puntos: [
+      "🎓 Si acabas de llegar a Jerusalén, elige un mentor en Misiones → Mentores: un vecino o un amigo con experiencia que te acompaña en seis pasos (tu primer servicio, los primeros pasos, encontrarse en la ciudad, el primer estudio, la primera obra y tres días en Jerusalén). Cada paso les da gozo a los dos.",
+      "🧥 Cuando el aprendiz cumple los seis pasos, los dos reciben el manto de Elías (el que Elías echó sobre Eliseo, 1 Reyes 19:19) y el mentor gana el título «Idóneo para enseñar».",
+      "🌱 En la ciudad, tu mentor y tus aprendices llevan su marca sobre el nombre: puedes ir adonde están, invitar a que vengan y encontrarte en la ciudad.",
+      "🧓 Los ancianos de la puerta dicen cada día un dicho de Proverbios. Siéntate a escucharlo (+3 de gozo) y junta los 30 en tu álbum para ganar «Oído de sabio». Si te falta uno, tu mentor te lo puede enseñar.",
+    ],
+  },
+  {
     id: "2026-11-13-registro",
     fecha: "13 de noviembre de 2026",
     titulo: "El registro de cada jugador",

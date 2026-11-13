@@ -7,6 +7,7 @@
  */
 import { ARCOS, prendasDeArco } from "./capitulos";
 import { ARTICULOS, type Articulo } from "./mercado";
+import { DICHOS } from "./dichos";
 
 type Verso = { text: string; ref: string };
 
@@ -17,7 +18,7 @@ export const VERSO_ALBUM: Verso = {
 
 /** Las de siempre y una por cada historia de la temporada («historia-senaquerib», «historia-pascua-ezequias»…). */
 export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | `historia-${string}`;
-export type TituloEspecialId = "dador-alegre" | "buen-amigo" | "coleccionista" | "gran-coleccionista";
+export type TituloEspecialId = "dador-alegre" | "buen-amigo" | "idoneo" | "oido-sabio" | "coleccionista" | "gran-coleccionista";
 export type TituloId = ColeccionId | TituloEspecialId;
 
 const ids = (f: (a: Articulo) => boolean) => ARTICULOS.filter(f).map((a) => a.id);
@@ -42,8 +43,8 @@ export const COLECCIONES: Coleccion[] = [
     id: "ganado",
     nombre: "Lo que se gana",
     icono: "🏆",
-    texto: "No se vende: los trajes de los sabios, el mejor vestido y la faja del buen amigo.",
-    items: ids((a) => a.exclusivo === "sabio" || a.exclusivo === "regreso" || a.exclusivo === "amigo"),
+    texto: "No se vende: los trajes de los sabios, el mejor vestido, la faja del buen amigo y el manto de Elías (el de los mentores).",
+    items: ids((a) => a.exclusivo === "sabio" || a.exclusivo === "regreso" || a.exclusivo === "amigo" || a.exclusivo === "mentor"),
     titulo: "Tesoro de Jerusalén",
   },
   // las prendas de cada historia de la temporada (shared/capitulos.ts): una colección por historia, con su título
@@ -66,6 +67,8 @@ export const GRAN_COLECCIONISTA = 100;
 export const TITULOS_ESPECIALES: { id: TituloEspecialId; titulo: string; como: string }[] = [
   { id: "dador-alegre", titulo: "Dador alegre", como: "Echa 50 de gozo o más en el arca de Joás de una temporada en que la ciudad la llene." },
   { id: "buen-amigo", titulo: "Buen amigo", como: "Invita a un amigo que juegue 3 días en Jerusalén." },
+  { id: "idoneo", titulo: "Idóneo para enseñar", como: "Sé mentor de un nuevo hasta que termine sus seis pasos." },
+  { id: "oido-sabio", titulo: "Oído de sabio", como: `Junta los ${DICHOS.length} dichos de los ancianos de la puerta.` },
   { id: "coleccionista", titulo: "Coleccionista", como: `Junta ${COLECCIONISTA} cosas distintas en tu álbum.` },
   { id: "gran-coleccionista", titulo: "Gran coleccionista", como: `Junta ${GRAN_COLECCIONISTA} cosas distintas en tu álbum.` },
 ];
@@ -79,12 +82,14 @@ export function nombreDeTitulo(id: unknown): string | null {
   return COLECCIONES.find((c) => c.id === id)?.titulo ?? TITULOS_ESPECIALES.find((t) => t.id === id)?.titulo ?? null;
 }
 
-/** Los títulos ganados con lo que tiene en el álbum y lo demás (el arca y los amigos). */
-export function titulosGanados(tengo: ReadonlySet<string>, extra: { dador: boolean; amigo: boolean }): TituloId[] {
+/** Los títulos ganados con lo que tiene en el álbum y lo demás (el arca, los amigos, los aprendices y los dichos). */
+export function titulosGanados(tengo: ReadonlySet<string>, extra: { dador: boolean; amigo: boolean; mentor?: boolean; dichos?: number }): TituloId[] {
   const out: TituloId[] = [];
   for (const c of COLECCIONES) if (c.items.length && c.items.every((i) => tengo.has(i))) out.push(c.id);
   if (extra.dador) out.push("dador-alegre");
   if (extra.amigo) out.push("buen-amigo");
+  if (extra.mentor) out.push("idoneo");
+  if ((extra.dichos ?? 0) >= DICHOS.length) out.push("oido-sabio");
   const n = [...tengo].filter((i) => EN_EL_ALBUM.has(i)).length;
   if (n >= COLECCIONISTA) out.push("coleccionista");
   if (n >= GRAN_COLECCIONISTA) out.push("gran-coleccionista");
@@ -99,6 +104,8 @@ export function leerAlbum(v: unknown): string[] {
 // ---------------------------------------------------------------- respuestas de la API
 export type AlbumEstado = {
   tengo: string[];
+  /** Los dichos de los ancianos que tiene (shared/dichos.ts). */
+  dichos: string[];
   titulos: TituloId[];
   /** El título que muestra (o null). */
   titulo: TituloId | null;

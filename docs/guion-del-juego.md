@@ -28,6 +28,29 @@ el mismo día para todos.
 5. **La ciudad**: entra a Jerusalén y recibe su **tienda** en un barrio. La gente de la calle le habla, los
    siervos le cuentan chismes y le dejan un recado.
 6. **Para hoy**: la lista de lo que conviene hacer hoy: la racha, lo que se celebra, la estación, los encargos.
+7. **Su mentor**: quien acaba de llegar elige un mentor (un vecino o un amigo con experiencia) para sus primeros
+   días (ver «Los primeros días con un mentor»).
+
+### Los primeros días con un mentor
+`shared/mentores.ts`, `server/mentores.ts`, `MentoresUI.tsx` (en *Misiones → Mentores* y en su propia ventana):
+- **Quién elige mentor**: una cuenta aprobada en sus primeros 14 días en Jerusalén que todavía no cumplió más de 3 de
+  los pasos de siempre (si ya conoce la ciudad, mejor que sea mentor). Lo elige entre los vecinos de su barrio y sus
+  amigos; el juego pone primero al sugerido (en línea, vecino y amigo, del mismo camino, el que ya guió a más).
+- **Quién puede ser mentor**: quien terminó sus primeros pasos, aprobó un estudio, jugó 3 días y no está haciendo sus
+  propios pasos. Acompaña a 3 aprendices a la vez y puede apagar «Recibir aprendices nuevos».
+- **Los seis pasos** (los decide el servidor con lo que ya guardan otras tablas): 🔥 el primer servicio, 📜 los primeros
+  pasos de su camino, 🤝 encontrarse con su mentor en la ciudad, 📚 el primer estudio, 🧱 la primera obra de su casa y
+  📅 tres días en Jerusalén.
+- **Encontrarse**: los dos en la ciudad, a 6 m o menos (el servidor mira dónde están de verdad), una vez por día. El
+  mentor le enseña un dicho de los ancianos que le falte (y el aprendiz, si sabe uno que al mentor le falte, se lo
+  enseña a él).
+- **El premio**: cada paso da 15 de gozo al aprendiz y 10 al mentor (los que ya había cumplido antes de elegir mentor
+  quedan marcados, sin gozo). Con los seis, 50 y 80 más, el **manto de Elías** para los dos (el que Elías echó sobre
+  Eliseo cuando lo llamó, 1 Reyes 19:19) y el título «Idóneo para enseñar» para el mentor (2 Timoteo 2:2). Un mentor
+  gana gozo hasta por 10 aprendices.
+- **Juntos en la ciudad**: el nombre del mentor y de los aprendices lleva su marca (🎓 / 🌱) y se ve desde más lejos;
+  se puede ir adonde está el otro, invitar a que venga y encontrarse. Un aprendiz puede cambiar de mentor dos veces; un bloqueo
+  deshace el lazo.
 
 ### Cada día (el bucle diario)
 | Momento | Qué hace | Qué gana |
@@ -41,6 +64,7 @@ el mismo día para todos.
 | El mercado | Vende lo que le sobra al mercader (que busca más lo que escasea en la estación) | Gozo para muebles, ropa y adornos |
 | Las obras de su casa | Empieza una obra con su gozo y la harina del huerto (cisterna, horno, granero, pórtico…); los obreros trabajan aunque no esté | Una casa que se ve en la ciudad, sus estrellas y la foto para compartir |
 | La calle de los siervos | Cumple el recado del día | Gozo y la historia de la semana |
+| La puerta de la ciudad | Se sienta con los ancianos a escuchar el dicho del día (Proverbios) | Gozo y un dicho más en el álbum |
 | El barrio | Bendice casas, ayuda a vecinos, va a reuniones, acompaña a los nuevos | Gozo, encargos y la ofrenda del barrio |
 | «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines y duelos | Gozo, trajes de sabio y la tabla |
 | De noche | Antorchas, ventanas encendidas y la hora de las trompetas de la luna nueva | ×1,5 de mérito de 7 a 9 |
@@ -434,23 +458,30 @@ Pokémon GO:
   - la ropa del año: «Guarda los tiempos»;
   - los muebles finos: «Artífice»;
   - la ropa fina: «Bordador de oro»;
-  - lo que se gana (los trajes de los sabios, el mejor vestido y la faja del buen amigo): «Tesoro de Jerusalén»;
+  - lo que se gana (los trajes de los sabios, el mejor vestido, la faja del buen amigo y el manto de Elías):
+    «Tesoro de Jerusalén»;
   - las cinco prendas de la amenaza de Senaquerib: «Atalaya de Sion»;
   - las cinco prendas de la gran Pascua de Ezequías: «De un solo corazón».
-- Más títulos: «Dador alegre», «Buen amigo», «Coleccionista» (40 cosas) y «Gran coleccionista» (100).
+- Más títulos: «Dador alegre», «Buen amigo», «Idóneo para enseñar» (un aprendiz que termina sus pasos), «Oído de
+  sabio» (los 30 dichos), «Coleccionista» (40 cosas) y «Gran coleccionista» (100).
+- **Los dichos de los ancianos** (`shared/dichos.ts`, `server/dichos.ts`, `DichosUI.tsx`): cada día los ancianos de
+  la puerta dicen un dicho de Proverbios, el mismo para todos, en el orden de la lista. Quien se sienta a escucharlo
+  (a 6 m o menos de ellos) gana 3 de gozo una vez por día y lo guarda (`game_dichos`); en la ventana se descubre con lo
+  que quiere decir. Los que falten los enseña el mentor. Para agregar dichos, van al final de la lista.
 - El título elegido lo ven los vecinos en la ficha (`VecinoInfo.titulo`).
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
 pronóstico, «Mientras no estabas» con lo que hizo tu barrio, tu casa y la ciudad, el regalo de regreso (con el
-mejor vestido), los pétalos de almendro y las lámparas de fiesta.
+mejor vestido), los pétalos de almendro, las lámparas de fiesta, los mentores para los que llegan y los dichos de los
+ancianos (las colecciones visibles quedan completas con el álbum).
 
 Lo que queda:
 1. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
-2. **Mentores** para los nuevos (las colecciones visibles ya están: el álbum de la fase 4; faltan los dichos).
-3. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas.
-4. **Una historia para la temporada 3 y las que siguen** (`PROGRAMA` en `shared/capitulos.ts`; la temporada 2,
+2. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas (también dichos nuevos al final de
+   `DICHOS`).
+3. **Una historia para la temporada 3 y las que siguen** (`PROGRAMA` en `shared/capitulos.ts`; la temporada 2,
    la gran Pascua de Ezequías, ya está). Mientras no haya otra, se turnan las dos.
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base

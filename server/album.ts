@@ -9,6 +9,8 @@ import { personajeDe, type PersonajeFila } from "./jerusalen";
 import { refrescarFicha } from "./ciudad-red";
 import { esDadorAlegre } from "./arca";
 import { esBuenAmigo } from "./invitar";
+import { esMentorFiel } from "./mentores";
+import { dichosDe } from "./dichos";
 import { EN_EL_ALBUM, leerAlbum, nombreDeTitulo, titulosGanados, type AlbumEstado, type TituloId } from "@shared/album";
 
 export const ALBUM_SQL = `
@@ -42,15 +44,17 @@ export async function anotarAlbum(titular: number): Promise<string[]> {
 }
 
 async function estadoAlbum(ch: PersonajeFila): Promise<AlbumEstado> {
-  const [tengo, dador, amigo, { rows }] = await Promise.all([
+  const [tengo, dador, amigo, mentor, dichos, { rows }] = await Promise.all([
     anotarAlbum(ch.casa),
     esDadorAlegre(ch.casa),
     esBuenAmigo(ch.user_id),
+    esMentorFiel(ch.user_id),
+    dichosDe(ch.casa),
     pool.query(`SELECT titulo FROM game_characters WHERE id = $1`, [ch.casa]),
   ]);
-  const titulos = titulosGanados(new Set(tengo), { dador, amigo });
+  const titulos = titulosGanados(new Set(tengo), { dador, amigo, mentor, dichos: dichos.length });
   const elegido = rows[0]?.titulo as string | null;
-  return { tengo, titulos, titulo: elegido && (titulos as string[]).includes(elegido) ? (elegido as TituloId) : null };
+  return { tengo, dichos, titulos, titulo: elegido && (titulos as string[]).includes(elegido) ? (elegido as TituloId) : null };
 }
 
 export function registerAlbumRoutes(app: Express) {

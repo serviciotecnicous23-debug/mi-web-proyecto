@@ -190,6 +190,9 @@ const FRASES: Record<GenteQueHabla, string[]> = {
     "En mis días el templo estaba cerrado; hoy vuelve a arder el fuego.",
     "Los jóvenes deben escuchar a los profetas, como Isaías y Miqueas.",
     "Siéntate un rato con nosotros: en la puerta se aprende mucho.",
+    "Cada día decimos aquí un dicho de los sabios. ¿Ya escuchaste el de hoy?",
+    "Ven, siéntate: el dicho de hoy es para toda la ciudad.",
+    "El que tiene un mentor aprende más rápido. ¡Busca uno en las Misiones!",
   ],
 };
 

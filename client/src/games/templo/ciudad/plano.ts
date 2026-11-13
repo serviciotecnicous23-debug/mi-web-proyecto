@@ -8,6 +8,7 @@
 import { AREAS, AREA_RECT, CASAS_POR_BARRIO, LIMITES_CIUDAD, areaDeBarrio, areaEn as areaDeCiudad } from "@shared/ciudad";
 import type { Circle, Rect, V2 } from "../layout";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS } from "@shared/personajes";
+import { LUGAR_ANCIANOS } from "@shared/dichos";
 
 /** Altura de las calles (la explanada del templo está en 0). */
 export const SUELO = -3.4;
@@ -36,7 +37,8 @@ export const PUERTA = { half: 3 };
 export const POZO: V2 = [56, 3.2];
 export const PULPITO: V2 = [58, -8.6];
 export const ANUNCIOS: V2 = [58, -6.1];
-export const ANCIANOS: V2 = [72.4, 0];
+/** Los ancianos de la puerta (shared/dichos.ts: el servidor mira que estés cerca para escuchar el dicho de hoy). */
+export const ANCIANOS: V2 = [LUGAR_ANCIANOS[0], LUGAR_ANCIANOS[1]];
 /** Los cuatro puestos del mercado, a los dos lados del pozo (dejan libre la entrada de la casa de la sabiduría). */
 export const PUESTOS: V2[] = [[48.0, 9.4], [52.5, 9.4], [59.5, 9.4], [64.0, 9.4]];
 export const MERCADO: V2 = [56, 8.6];

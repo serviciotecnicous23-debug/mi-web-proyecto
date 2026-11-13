@@ -205,6 +205,8 @@ export function registerMercadoRoutes(app: Express) {
             ? "Las piezas finas no se venden: las hace el artesano con 4 iguales."
             : a.exclusivo === "amigo"
             ? "La faja del buen amigo no se vende: se gana invitando a un amigo que juega 3 días."
+            : a.exclusivo === "mentor"
+            ? "El manto de Elías no se vende: lo reciben el mentor y su aprendiz cuando el aprendiz termina sus pasos."
             : a.exclusivo === "temporada"
             ? "Esa prenda no se vende: se gana con la historia de la temporada."
             : a.exclusivo === "regreso"

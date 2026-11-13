@@ -15,6 +15,7 @@ import { TRAJES_SABIOS } from "./sabio";
 import { PRENDAS_CAPITULOS } from "./capitulos";
 import { PRENDA_REGRESO } from "./regreso";
 import { PRENDA_AMIGO } from "./invitar";
+import { PRENDA_MENTOR } from "./mentores";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
@@ -33,7 +34,7 @@ export type Articulo = {
    * Jerusalén después de una semana o más (shared/regreso.ts); «taller»: las piezas finas, que hace el artesano con 4
    * iguales (shared/taller.ts); «amigo»: la faja del buen amigo, al invitar a un amigo que juega 3 días (shared/invitar.ts).
    */
-  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo";
+  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo" | "mentor";
   /** Una pieza fina del artesano (shared/taller.ts): el artículo de donde sale (con 4 iguales). */
   fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
@@ -145,6 +146,17 @@ export const ARTICULOS: Articulo[] = [
     detalle: "Se gana al invitar a un amigo que juega 3 días (y la recibe también el amigo): «En todo tiempo ama el amigo» (Proverbios 17:17).",
     color: PRENDA_AMIGO.color,
     exclusivo: "amigo",
+  },
+  // el manto de Elías: tampoco se vende, lo reciben el mentor y su aprendiz cuando el aprendiz termina sus pasos (shared/mentores.ts)
+  {
+    id: PRENDA_MENTOR.id,
+    categoria: "ropa",
+    nombre: PRENDA_MENTOR.nombre,
+    icono: "🧥",
+    precio: 0,
+    detalle: "Lo reciben el mentor y su aprendiz cuando el aprendiz termina sus seis pasos: «echó sobre él su manto» (1 Reyes 19:19).",
+    color: PRENDA_MENTOR.color,
+    exclusivo: "mentor",
   },
   // la ropa fina del artesano: tampoco se vende (shared/taller.ts)
   ...ROPA_FINA,
