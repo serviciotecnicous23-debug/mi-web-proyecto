@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-pasos-libres",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Se puede pasar a todas partes",
+    puntos: [
+      "🪜 En la casa de piedra, la escalera del patio ya no tapa el paso: del patio se pasa al cuarto del este y al de los huéspedes (y la escalera solo te sube cuando caminas hacia ella).",
+      "📚 En la escuela de los profetas, el aposento de oración ya no queda detrás de las bibliotecas; en el palacio se llega al archivo del reino y a los depósitos del rey.",
+      "🚪 La alcoba de la casa de adobe se abre por dos celdas, y tocando el piso el personaje entra por cualquier puerta.",
+      "👣 Al caminar tocando el piso, los círculos que cruzas en el camino (el horno, una estación) ya no se abren solos: solo el lugar al que vas.",
+      "🪑 Al remodelar, un mueble no puede tapar el paso a un cuarto, al horno, a la escalera ni a la puerta del huerto. Si en tu casa algún mueble ya tapaba un paso, volvió a tu arcón.",
+    ],
+  },
+  {
     id: "2026-11-13-noche-con-companeros",
     fecha: "13 de noviembre de 2026",
     titulo: "«La noche de los sabios» también se juega solo",

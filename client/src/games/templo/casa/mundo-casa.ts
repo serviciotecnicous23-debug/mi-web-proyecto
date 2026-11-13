@@ -21,7 +21,7 @@ import { gameStore, type CasaHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
 import { relojEnLinea } from "@shared/calendario";
 import {
-  ALTURA_PISO, CELDA, abierto, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, muebleBase, pieza, planoDe, porQueNoCabe, usoDe,
+  ALTURA_PISO, CELDA, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, muebleBase, pieza, planoDe, porQueNoCabe, usoDe,
   type Colocado, type Cuarto, type InteriorEstado, type Plano, type UsoMueble, type UsosDeHoy,
 } from "@shared/casa-interior";
 import type { Camino } from "@shared/caminos";
@@ -30,24 +30,14 @@ import type { SalaDef, SalaEstado } from "@shared/restauracion";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import { ASIENTO, LECHO_ALTO, LLAMA, construirMueble } from "./muebles3d";
+import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro } from "./choques";
 
-const PLAYER_R = 0.22;
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
 const MURO = 2.3;
 /** Los muros de los costados (norte-sur): a media altura, para ver los cuartos sin perder la forma. */
 const COSTADO = 1.45;
 const BAJO = 0.34;
-const GROSOR = 0.12;
 const PRETIL = 0.55;
-
-type Lado = "N" | "S" | "E" | "O";
-const LADOS: [Lado, number, number][] = [
-  ["N", 0, -1],
-  ["S", 0, 1],
-  ["O", -1, 0],
-  ["E", 1, 0],
-];
-const OPUESTO: Record<Lado, Lado> = { N: "S", S: "N", E: "O", O: "E" };
 
 function turn(a: number, b: number, k: number) {
   let d = b - a;
@@ -253,6 +243,11 @@ export class CasaWorld {
     this.scene.add(this.suelo);
 
     this.construirCasa();
+    // lo que no deja pasar (muros, puerta, horno, higuera, escalera, huerto): casa/choques.ts, lo mismo que mide la
+    // prueba de los pasos (shared/pasos-libres.test.ts)
+    const fijos = choquesFijos(this.plano, { edificio: !!this.opts.edificio });
+    this.rects = fijos.rects;
+    this.circles = fijos.circles;
     this.scene.add(this.pisos[0], this.pisos[1], this.mueblesGrupo, this.crowd.group, this.sombras.mesh);
     this.marcaSel = new THREE.Group();
     this.scene.add(this.marcaSel);
@@ -350,58 +345,36 @@ export class CasaWorld {
         if (est === "piedra" && !cu.cielo)
           for (let i = 0; i < cu.w; i += 2) for (let j = 0; j < cu.d; j += 2) if ((i + j) % 4 === 0) g.box(CELDA * 1.9, 0.004, CELDA * 1.9, "#c2b392", { x: this.wx(cu.x + i + 1), y: y0 + 0.002, z: this.wz(cu.z + j + 1) });
       }
-      // los muros: cada borde de un cuarto que no da al mismo cuarto ni es una puerta
-      const vistos = new Set<string>();
-      for (const cu of cuartos)
-        for (let x = cu.x; x < cu.x + cu.w; x++)
-          for (let z = cu.z; z < cu.z + cu.d; z++)
-            for (const [lado, dx, dz] of LADOS) {
-              const nx = x + dx, nz = z + dz;
-              const otro = cuartoEn(pl, nx, nz, p);
-              if (otro === cu) continue;
-              const k = lado === "N" || lado === "S" ? `H${lado === "N" ? x : x},${lado === "N" ? z : z + 1}` : `V${lado === "O" ? x : x + 1},${z}`;
-              if (vistos.has(k)) continue;
-              vistos.add(k);
-              // la puerta del huerto (en el muro del fondo): se dibuja aparte
-              if (p === 0 && lado === "N" && !otro && this.esPuertaHuerto(x, z)) continue;
-              if (abierto(pl, x, z, lado, p) || abierto(pl, nx, nz, OPUESTO[lado], p)) {
-                // la puerta de la calle: dos postes y el umbral
-                if (p === 0 && lado === "S" && !otro) g.box(CELDA, 0.04, GROSOR * 1.6, "#8f8a82", { x: this.wx(x + 0.5), y: 0.02, z: this.wz(z + 1) });
-                continue;
-              }
-              let h: number;
-              if (p === 1 && cu.cielo && (!otro || otro.cielo)) h = PRETIL;
-              else if (lado === "N" || lado === "S") h = lado === "N" && !otro ? alto : BAJO;
-              else h = cu.cielo && otro?.cielo ? PRETIL : est === "tienda" ? alto : COSTADO;
-              const color = h >= COSTADO - 0.01 ? colMuro : colMuroBajo;
-              if (lado === "N" || lado === "S") {
-                const zz = this.wz(lado === "N" ? z : z + 1);
-                g.box(CELDA + GROSOR, h, GROSOR, color, { x: this.wx(x + 0.5), y: y0 + h / 2, z: zz }, 0.04);
-                this.rects[p].push([this.wx(x) - GROSOR / 2, zz - GROSOR / 2, this.wx(x + 1) + GROSOR / 2, zz + GROSOR / 2]);
-              } else {
-                const xx = this.wx(lado === "O" ? x : x + 1);
-                g.box(GROSOR, h, CELDA + GROSOR, color, { x: xx, y: y0 + h / 2, z: this.wz(z + 0.5) }, 0.04);
-                this.rects[p].push([xx - GROSOR / 2, this.wz(z) - GROSOR / 2, xx + GROSOR / 2, this.wz(z + 1) + GROSOR / 2]);
-              }
-            }
+      // los muros: cada borde de un cuarto que no da al mismo cuarto ni es una abertura (sus choques, en casa/choques.ts)
+      for (const t of tramosDeMuro(pl, p, (x, z) => this.esPuertaHuerto(x, z))) {
+        const { cu, otro, lado, x, z } = t;
+        // la puerta del huerto (en el muro del fondo): se dibuja aparte
+        if (t.huerto) continue;
+        if (t.abierto) {
+          // la puerta de la calle: dos postes y el umbral
+          if (p === 0 && lado === "S" && !otro) g.box(CELDA, 0.04, GROSOR * 1.6, "#8f8a82", { x: this.wx(x + 0.5), y: 0.02, z: this.wz(z + 1) });
+          continue;
+        }
+        let h: number;
+        if (p === 1 && cu.cielo && (!otro || otro.cielo)) h = PRETIL;
+        else if (lado === "N" || lado === "S") h = lado === "N" && !otro ? alto : BAJO;
+        else h = cu.cielo && otro?.cielo ? PRETIL : est === "tienda" ? alto : COSTADO;
+        const color = h >= COSTADO - 0.01 ? colMuro : colMuroBajo;
+        if (lado === "N" || lado === "S") g.box(CELDA + GROSOR, h, GROSOR, color, { x: this.wx(x + 0.5), y: y0 + h / 2, z: this.wz(lado === "N" ? z : z + 1) }, 0.04);
+        else g.box(GROSOR, h, CELDA + GROSOR, color, { x: this.wx(lado === "O" ? x : x + 1), y: y0 + h / 2, z: this.wz(z + 0.5) }, 0.04);
+      }
       // la tienda: los postes de pelo de cabra
       if (est === "tienda" && p === 0) {
         for (const [x, z] of [[0, 0], [pl.W, 0], [0, pl.D], [pl.W, pl.D], [pl.W / 2, pl.D / 2]] as V2[])
           g.cyl(0.05, 0.06, x === pl.W / 2 ? 2.3 : 1.9, "#6a4a2a", { x: this.wx(x), y: (x === pl.W / 2 ? 2.3 : 1.9) / 2, z: this.wz(z) }, 8);
         for (let x = 0; x < pl.W; x += 2) g.box(CELDA * 2, 0.08, GROSOR + 0.01, "#2f241c", { x: this.wx(x + 1), y: 1.35, z: this.wz(0) });
       }
+      // (la puerta de la calle y la llegada de la escalera arriba no dejan pasar caminando: casa/choques.ts)
       if (p === 0) {
-        // la puerta de la calle no deja salir caminando: se sale por el círculo
-        const [px, pz] = pl.puerta;
-        this.rects[0].push([this.wx(px) - 0.2, this.wz(pz + 1) + 0.18, this.wx(px + 2) + 0.2, this.wz(pz + 1) + 0.5]);
         this.construirHorno(g);
         this.construirPuertaHuerto(g);
         if (pl.arbol) this.construirHiguera(g);
         if (pl.escalera) this.construirEscalera(g);
-      } else if (pl.escalera) {
-        // la llegada de la escalera arriba no tiene pretil, pero tampoco se baja caminando
-        const [ax, az] = pl.escalera.arriba;
-        this.rects[1].push([this.wx(ax), this.wz(az + 1) + 0.12, this.wx(ax + 1), this.wz(az + 1) + 0.45]);
       }
       // la casa viva: ventanas con luz, tapices, repisas, lámparas y el techo (solo en las casas)
       const brillo = new GeoBuilder();
@@ -435,8 +408,7 @@ export class CasaWorld {
     for (const sx of [x0, x1]) g.box(0.1, alto, GROSOR + 0.06, C.cedroOsc, { x: sx, y: alto / 2, z });
     g.box(ancho + 0.16, 0.12, GROSOR + 0.08, C.cedroOsc, { x: cx, y: alto + 0.04, z });
     g.box(ancho, 0.04, GROSOR * 1.6, "#8f8a82", { x: cx, y: 0.02, z });
-    // el choque del muro (no se sale caminando: se sale por el círculo)
-    this.rects[0].push([x0 - GROSOR / 2, z - 0.6, x1 + GROSOR / 2, z - GROSOR / 2]);
+    // (el choque del muro, en casa/choques.ts: no se sale caminando, se sale por el círculo)
     if (!this.estado.esMia) {
       // cerrada para las visitas
       g.box(ancho - 0.04, alto - 0.02, 0.05, "#7a4a26", { x: cx, y: alto / 2, z: z - 0.01 });
@@ -564,7 +536,6 @@ export class CasaWorld {
     g.lathe([[0, 0], [0.27, 0], [0.28, 0.28], [0.22, 0.5], [0.13, 0.58], [0.08, 0.6], [0, 0.6]], "#a8603a", { x, z }, 14);
     g.box(0.18, 0.16, 0.06, "#2a1a10", { x, y: 0.18, z: z + 0.25 });
     g.sphere(0.06, C.brasa, { x, y: 0.16, z: z + 0.2 }, 6, 5);
-    this.circles[0].push([x, z, 0.3]);
     this.agregarLlama(x, 0.25, z + 0.22, 0, 0.8);
   }
 
@@ -575,7 +546,6 @@ export class CasaWorld {
     for (const [dx, dy, dz, r] of [[0, 1.75, 0, 0.55], [0.3, 1.55, 0.15, 0.4], [-0.28, 1.6, -0.12, 0.42], [0.05, 2.05, -0.1, 0.36]])
       g.sphere(r, dy > 1.9 ? C.hojaClara : C.hoja, { x: x + dx, y: dy, z: z + dz }, 10, 8);
     for (let i = 0; i < 6; i++) g.sphere(0.045, "#6a3a5a", { x: x + Math.cos(i * 1.7) * 0.4, y: 1.5 + (i % 3) * 0.15, z: z + Math.sin(i * 1.7) * 0.35 }, 6, 5);
-    this.circles[0].push([x, z, 0.2]);
   }
 
   private construirEscalera(g: GeoBuilder) {
@@ -589,7 +559,6 @@ export class CasaWorld {
       const zz = this.wz(z1) - (largo * (i + 0.5)) / n;
       g.box((x1 - x0) * CELDA - 0.04, h, largo / n + 0.01, i % 2 ? "#b3a586" : "#c2b392", { x: this.wx((x0 + x1) / 2), y: h / 2, z: zz }, 0.03);
     }
-    this.rects[0].push([this.wx(x0), this.wz(z0), this.wx(x1), this.wz(z1)]);
   }
 
   private agregarLlama(x: number, y: number, z: number, piso: 0 | 1, fuerza = 1) {
@@ -644,29 +613,14 @@ export class CasaWorld {
   private reconstruirChoques() {
     const fijosR = this.rectsFijos ?? (this.rectsFijos = [this.rects[0].slice(), this.rects[1].slice()]);
     const fijosC = this.circlesFijos ?? (this.circlesFijos = [this.circles[0].slice(), this.circles[1].slice()]);
-    this.rects = [fijosR[0].slice(), fijosR[1].slice()];
+    const muebles = choquesMuebles(this.plano, this.items);
+    this.rects = [[...fijosR[0], ...muebles[0]], [...fijosR[1], ...muebles[1]]];
     this.circles = [fijosC[0].slice(), fijosC[1].slice()];
-    for (const c of this.items) {
-      const mu = pieza(c.m);
-      if (!mu || mu.capa === 0) continue;
-      const [w, d] = medidas(mu, c.r);
-      this.rects[c.p].push([this.wx(c.x) + 0.06, this.wz(c.z) + 0.06, this.wx(c.x + w) - 0.06, this.wz(c.z + d) - 0.06]);
-    }
     for (const s of this.siervos) this.circles[0].push([s.rig.x, s.rig.z, 0.18]);
     const pl = this.plano;
     for (const p of [0, 1] as const) {
       if (!pl.cuartos.some((c) => c.piso === p)) continue;
-      this.nav[p] = new NavGrid(this.rects[p], this.circles[p], PLAYER_R + 0.04, {
-        minX: this.wx(0) - 0.3,
-        maxX: this.wx(pl.W) + 0.3,
-        minZ: this.wz(0) - 0.3,
-        maxZ: this.wz(pl.D) + 0.3,
-        cell: 0.15,
-        walkable: (x, z) => {
-          const [cx, cz] = this.celda(x, z);
-          return !!cuartoEn(pl, cx, cz, p);
-        },
-      });
+      this.nav[p] = navDe(pl, p, this.rects[p], this.circles[p]);
     }
   }
   private rectsFijos: [Rect[], Rect[]] | null = null;
@@ -760,12 +714,32 @@ export class CasaWorld {
     for (const z of this.zonas) if (z.id === "salir" || z.id === "huerto") z.inside = Math.hypot(r.x - z.x, r.z - z.z) < z.r + 0.3;
   }
 
+  /** ¿Va hacia la escalera? (se fue a su círculo a propósito, o camina en el sentido de la escalera) */
+  private haciaLaEscalera(id: "subir" | "bajar"): boolean {
+    const e = this.plano.escalera;
+    if (!e || this.destinoZona === id) return true;
+    const [ax, az] = id === "subir" ? e.abajo : e.arriba;
+    const cx = e.celdas.reduce((s, c) => s + c[0], 0) / e.celdas.length;
+    const cz = e.celdas.reduce((s, c) => s + c[1], 0) / e.celdas.length;
+    const n = Math.hypot(cx - ax, cz - az) || 1;
+    const { vx, vz } = this.player;
+    const v = Math.hypot(vx, vz);
+    return v > 0.05 && (vx * (cx - ax) + vz * (cz - az)) / (n * v) > 0.5;
+  }
+
   private updateZonas() {
     if (this.remodelando) return;
     const r = this.player.rig;
     for (const z of this.zonas) {
       const dentro = z.piso === this.piso && Math.hypot(r.x - z.x, r.z - z.z) < z.r;
       if (dentro && !z.inside) {
+        // la escalera solo se sube (o se baja) caminando hacia ella o yendo a su círculo: al pasar de largo, no
+        if ((z.id === "subir" || z.id === "bajar") && !this.haciaLaEscalera(z.id)) continue;
+        // yendo solo (tocando el piso) hacia otro punto, los círculos que se cruzan en el camino no se disparan
+        if (this.ruta.length && !this.destinoZona) {
+          const [fx, fz] = this.ruta[this.ruta.length - 1];
+          if (Math.hypot(fx - z.x, fz - z.z) > z.r) continue;
+        }
         z.inside = true;
         // caminando solo hacia otro círculo, este no se dispara (se pasa por encima)
         if (!this.destinoZona || this.destinoZona === z.id) {

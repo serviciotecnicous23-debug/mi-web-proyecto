@@ -705,6 +705,35 @@ Van en `client/public/musica/<pista>.m4a` (AAC de 96 kbps, también para iPhone)
 
 **Agregar una pista:** se escribe su pedido en `pistas.json`, se genera con `generar_musica.sh <id>`, se revisa con `procesar_musica.sh <id>` y se suma a `PISTAS` en `banda-sonora.ts`. La prueba `shared/banda-sonora.test.ts` comprueba que exista.
 
+## 7d. Se puede pasar a todas partes (13 de noviembre de 2026)
+
+Luis no podía pasar de la escalera de su casa a los otros cuartos, y había salas de los edificios tapadas por las
+bibliotecas. Ahora los choques de la casa por dentro y de los edificios salen de un solo lugar,
+`client/src/games/templo/casa/choques.ts` (sin three.js), que usan el motor y la prueba `shared/pasos-libres.test.ts`.
+
+**La prueba de los pasos** recorre con el mismo buscador de caminos del juego:
+- las 4 casas: desde la puerta se llega a cada cuarto, al horno, a la puerta del huerto y al pie de la escalera, y
+  arriba a cada cuarto desde la llegada; ningún círculo que lleva a otro lado (subir, salir, el huerto) tapa un paso;
+- los 3 edificios en cada etapa de la restauración (en ruinas, cada trabajo a medias, cada sala hecha y todo hecho):
+  cada sala, cada estación, cada trabajo y cada lectura, con las personas paradas en su lugar;
+- el templo del modo del aprendiz, al empezar (con las puertas cerradas) y con todo construido;
+- que toda abertura entre cuartos tenga dos celdas o más (por una sola no se alcanza a pasar).
+
+**Lo que se arregló**: el paso del patio al cuarto del este (en las casas de piedra) se corrió a las filas 8 a 10, al
+sur del pie de la escalera; la alcoba de adobe se abre por 9,5 y 9,6; en la sala de los rollos de la escuela quedan dos
+estantes contra el muro del norte y uno contra el del este; en el palacio, los estantes de los escribas van contra el
+muro del oeste y la mesa del pan (con su panadero y su círculo) bajó una fila.
+
+**Las reglas para lo que venga**:
+- Un mueble o una pieza fija nunca delante de una abertura; las aberturas, de dos celdas o más.
+- `pasoTapado` (en `shared/casa-interior.ts`, dentro de `porQueNoCabe`) no deja que un mueble de un jugador tape el paso
+  a un cuarto, al horno (su frente), a la escalera ni al huerto; lo que ya lo tapaba vuelve al arcón al leer la casa.
+- La escalera solo sube (o baja) caminando hacia ella o yendo a su círculo; yendo solo hacia otro punto, los círculos
+  del camino no se disparan.
+- El buscador de caminos de la casa mira cada 0,10 m y se aparta 0,23 m (`NAV_CELDA`, `NAV_PAD`).
+- Cada lugar nuevo para caminar entra en `shared/pasos-libres.test.ts`. La ciudad y el huerto se revisaron en el
+  navegador con sus buscadores (se llega a los 22 círculos de la ciudad y a todo el huerto).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

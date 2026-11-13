@@ -108,11 +108,10 @@ const ESCUELA_BASE: EdificioDef = {
     p("candelero", 11, 0),
     p("brasero", 0, 7),
     p("estera", 9, 1),
-    // la sala de los rollos
+    // la sala de los rollos (el medio del muro del norte queda libre: ahí se pasa al aposento de oración)
     p("estante", 12, 0),
-    p("estante", 14, 0),
-    p("estante", 16, 0),
     p("estante", 18, 0),
+    p("estante", 19, 1, 1),
     p("mesa", 13, 4),
     p("cojines", 13, 5),
     p("mesa", 17, 4),
@@ -202,16 +201,16 @@ const PALACIO_BASE: EdificioDef = {
     p("columna", 14, 12),
     p("planta", 6, 15),
     p("planta", 15, 15),
-    // la despensa del pan
-    p("mesa-pan", 19, 1),
+    // la despensa del pan (la mesa deja libre el paso a los depósitos, al norte)
+    p("mesa-pan", 19, 2),
     p("cesta", 21, 1),
     p("vasijas", 18, 0),
     p("tinaja", 21, 4),
     p("cesta", 18, 6),
-    // la sala de los escribas
+    // la sala de los escribas (los estantes contra el muro del oeste: el del norte es el paso al archivo del reino)
     p("pupitre", 1, 3),
-    p("estante", 0, 0),
-    p("estante", 2, 0),
+    p("estante", 0, 0, 3),
+    p("estante", 0, 4, 3),
     p("lampara-casa", 3, 7),
     p("arcon", 0, 7),
   ],
@@ -226,13 +225,13 @@ const PALACIO_BASE: EdificioDef = {
     { x: 8.4, z: 7.6, yaw: Math.PI / 2, pose: "idle", variante: "hombre", manto: "#9a6a3a" },
     { x: 7.6, z: 9.5, yaw: Math.PI, pose: "sit", variante: "nino", manto: "#5a6a8a" },
     // el panadero y el escriba
-    { x: 19.9, z: 2.4, yaw: Math.PI, pose: "bow", variante: "hombre", manto: "#9a8a6a", trabaja: true },
+    { x: 19.9, z: 3.4, yaw: Math.PI, pose: "bow", variante: "hombre", manto: "#9a8a6a", trabaja: true },
     { nombre: "Sebna, el escriba", x: 2.0, z: 4.45, yaw: Math.PI, pose: "sit", variante: "anciano", manto: "#5a5a6a" },
   ],
   estaciones: [
     { id: "audiencia", nombre: "Atender una audiencia", icono: "⚖️", x: 11, z: 4.0, color: "#c9a8f0", para: "camino", ayuda: "El rey oye al pueblo: atiende cada caso con verdad y misericordia." },
     { id: "maestro", nombre: "Hablar con Eliaquim", icono: "💬", x: 12.9, z: 4.2, color: "#c9a8f0", para: "otros", ayuda: "Eliaquim, el mayordomo, recibe a quien entra al palacio." },
-    { id: "pan", nombre: "Tomar pan para los pobres", icono: "🍞", x: 20.0, z: 3.5, color: "#ffd166", para: "camino", ayuda: "Toma pan y repártelo a los pobres de la ciudad (hasta 3 a la vez)." },
+    { id: "pan", nombre: "Tomar pan para los pobres", icono: "🍞", x: 20.0, z: 4.5, color: "#ffd166", para: "camino", ayuda: "Toma pan y repártelo a los pobres de la ciudad (hasta 3 a la vez)." },
     { id: "ley", nombre: "Copiar la ley", icono: "📜", x: 2.0, z: 5.7, color: "#9ad0ff", para: "camino", ayuda: "Junto a Sebna, el escriba, se copia la ley con cuidado (Deuteronomio 17:18)." },
     { id: "rollos", nombre: "Estudios y exámenes", icono: "🎓", x: 2.0, z: 1.7, color: "#ffd166", ayuda: "En la sala de los escribas, Eliaquim da la clase de los estudios y toma los exámenes." },
     { id: "catedra", nombre: "La cátedra de los reyes", icono: "👑", x: 12.9, z: 4.2, color: "#e2b33c", para: "camino", ayuda: "Eliaquim te enseña cómo debe gobernar un rey y la historia de los reyes, empezando por lo que serviste hoy." },

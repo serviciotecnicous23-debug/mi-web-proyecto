@@ -207,8 +207,11 @@ const PASOS_PIEDRA: Abertura[] = [
   { x: 7, z: 4, lado: "N", piso: 0 },
   { x: 4, z: 7, lado: "O", piso: 0 },
   { x: 4, z: 8, lado: "O", piso: 0 },
-  { x: 9, z: 7, lado: "E", piso: 0 },
+  // del patio al cuarto del este: al sur del pie de la escalera, para que la escalera no tape el paso (antes estaba en
+  // las filas 7 y 8: la escalera tapaba una y el círculo de subir la otra, y quien pasaba terminaba en el terrado)
   { x: 9, z: 8, lado: "E", piso: 0 },
+  { x: 9, z: 9, lado: "E", piso: 0 },
+  { x: 9, z: 10, lado: "E", piso: 0 },
   ...puertaS(6, 11),
   { x: 13, z: 7, lado: "E", piso: 0 },
   { x: 13, z: 8, lado: "E", piso: 0 },
@@ -241,7 +244,8 @@ export const PLANOS: Plano[] = [
       { id: "despensa", nombre: "La despensa", x: 10, z: 0, w: 3, d: 4, piso: 0 },
       { id: "alcoba", nombre: "La alcoba", x: 10, z: 4, w: 3, d: 3, piso: 0 },
     ],
-    aberturas: [{ x: 9, z: 1, lado: "E", piso: 0 }, { x: 9, z: 2, lado: "E", piso: 0 }, ...puertaS(4, 6), { x: 9, z: 5, lado: "E", piso: 0 }],
+    // la alcoba se abre por dos celdas (con una sola no se alcanzaba a pasar caminando)
+    aberturas: [{ x: 9, z: 1, lado: "E", piso: 0 }, { x: 9, z: 2, lado: "E", piso: 0 }, ...puertaS(4, 6), { x: 9, z: 5, lado: "E", piso: 0 }, { x: 9, z: 6, lado: "E", piso: 0 }],
     puerta: [4, 6],
     horno: [8, 1],
     huerto: [[2, 0], [3, 0]],
@@ -348,6 +352,72 @@ export function porQueNoCabe(plano: Plano, nivel: number, c: Colocado, otros: Co
     const om = mueble(o.m);
     if (!om || o.p !== c.p || om.capa !== mu.capa) continue;
     if (celdasDe(o, om).some(([x, z]) => mias.has(clave(x, z, o.p)))) return mu.capa === 0 ? "Ahí ya hay otra estera o alfombra." : "Ahí ya hay otro mueble.";
+  }
+  // que no tape el paso a ningún cuarto (ni al horno, la escalera o el huerto)
+  if (mu.capa !== 0) {
+    const tapa = pasoTapado(plano, [...otros, c]);
+    if (tapa) return `Así taparías el paso a ${tapa}: deja libre por dónde se camina.`;
+  }
+  return null;
+}
+
+/**
+ * ¿Algún mueble tapa el paso? Desde la puerta (y arriba, desde la llegada de la escalera) se tiene que poder llegar
+ * caminando a cada cuarto, al horno, al pie de la escalera y a la puerta del huerto. Se mide por celdas, como el buscador
+ * de caminos del juego: sin cortar esquinas y cruzando los muros solo por sus aberturas (de dos celdas: por una sola no
+ * se pasa). Devuelve lo que quedaría tapado (««El cuarto del este»», «el horno»…), o null si todo queda a mano.
+ */
+export function pasoTapado(plano: Plano, items: Colocado[]): string | null {
+  const ocupada = new Set<string>();
+  for (const c of items) {
+    const mu = pieza(c.m);
+    if (!mu || mu.capa === 0) continue;
+    for (const [x, z] of celdasDe(c, mu)) ocupada.add(clave(x, z, c.p));
+  }
+  if (plano.escalera) for (const [x, z] of plano.escalera.celdas) ocupada.add(clave(x, z, 0));
+  ocupada.add(clave(plano.horno[0], plano.horno[1], 0));
+  if (plano.arbol) ocupada.add(clave(plano.arbol[0], plano.arbol[1], 0));
+  const pasos: [Abertura["lado"], number, number][] = [["N", 0, -1], ["S", 0, 1], ["O", -1, 0], ["E", 1, 0]];
+  const opuesto: Record<Abertura["lado"], Abertura["lado"]> = { N: "S", S: "N", E: "O", O: "E" };
+  const recorrer = (piso: 0 | 1, desde: [number, number][]): Set<string> => {
+    const visto = new Set<string>();
+    const cola = desde.filter(([x, z]) => cuartoEn(plano, x, z, piso) && !ocupada.has(clave(x, z, piso)));
+    for (const [x, z] of cola) visto.add(clave(x, z, piso));
+    while (cola.length) {
+      const [x, z] = cola.pop()!;
+      const aqui = cuartoEn(plano, x, z, piso);
+      for (const [lado, dx, dz] of pasos) {
+        const nx = x + dx, nz = z + dz, k = clave(nx, nz, piso);
+        if (visto.has(k) || ocupada.has(k)) continue;
+        const alla = cuartoEn(plano, nx, nz, piso);
+        if (!alla) continue;
+        if (alla !== aqui && !abierto(plano, x, z, lado, piso) && !abierto(plano, nx, nz, opuesto[lado], piso)) continue;
+        visto.add(k);
+        cola.push([nx, nz]);
+      }
+    }
+    return visto;
+  };
+  const [px, pz] = plano.puerta;
+  const abajo = recorrer(0, [[px, pz], [px + 1, pz]]);
+  const llega = (piso: 0 | 1, vistos: Set<string>, celdas: [number, number][]) => celdas.some(([x, z]) => vistos.has(clave(x, z, piso)));
+  for (const cu of plano.cuartos.filter((c) => c.piso === 0)) {
+    const celdas: [number, number][] = [];
+    for (let x = cu.x; x < cu.x + cu.w; x++) for (let z = cu.z; z < cu.z + cu.d; z++) celdas.push([x, z]);
+    if (!llega(0, abajo, celdas)) return `«${cu.nombre}»`;
+  }
+  // el horno se usa desde su frente (ahí está su círculo)
+  const [hx, hz] = plano.horno;
+  if (!llega(0, abajo, [[hx, hz + 1]])) return "el horno";
+  if (plano.huerto?.length && !llega(0, abajo, plano.huerto)) return "la puerta del huerto";
+  if (plano.escalera) {
+    if (!llega(0, abajo, [plano.escalera.abajo])) return "la escalera";
+    const arriba = recorrer(1, [plano.escalera.arriba]);
+    for (const cu of plano.cuartos.filter((c) => c.piso === 1)) {
+      const celdas: [number, number][] = [];
+      for (let x = cu.x; x < cu.x + cu.w; x++) for (let z = cu.z; z < cu.z + cu.d; z++) celdas.push([x, z]);
+      if (!llega(1, arriba, celdas)) return `«${cu.nombre}»`;
+    }
   }
   return null;
 }
