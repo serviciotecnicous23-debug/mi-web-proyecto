@@ -782,3 +782,41 @@ cantera y el tramo del muro. Niños que juegan (Zacarías 8:5). Se llega con «I
 se genera `server/juegos-grupo-banco.ts`. Los personajes nuevos van al final y su id no se reusa. Un lugar nuevo de la
 carrera va en `LUGARES_CARRERA`, en una calle o plaza (la prueba `shared/juegos-grupo.test.ts` mira que se pueda pisar).
 Las preguntas de las tribus salen de los bancos que ya hay (`server/jerusalen-banco.ts` y `server/sabio-banco.ts`).
+
+### 9b. Los juegos de mesa y los compañeros de la computadora (13 de noviembre de 2026)
+
+Pedido de Luis: poder jugar solo, con compañeros de la computadora, y juegos de mesa tradicionales con vida (sin nada
+parecido a UNO ni a Monopoly, que son marcas). Archivos: `shared/mesa.ts` (el marco), `shared/mesa/` (un módulo por
+juego y `index.ts` con la lista), `client/src/games/templo/mesa/` (la pantalla de cada juego) y la sala de
+`server/juegos-grupo.ts` (el juego «mesa»).
+
+**La mesa.**
+- Es el sexto juego del patio: «🎲 Juegos de mesa». Quien crea la sala elige el juego de mesa; cada uno tiene su
+  asiento (sorteado al empezar) y juega en su turno.
+- El servidor decide el turno, las jugadas válidas, el reloj y quién gana. Cada turno tiene su reloj (lo dice el juego):
+  si se acaba, el servidor juega por esa persona (`jugadaPorTiempo`, o la primera jugada que vale). Lo oculto (las
+  fichas o cartas de los demás) nunca se manda: cada uno recibe `vistaPara(su asiento)`.
+- El cupo de la sala es el del juego (el tres en raya, 2). Si una persona llega a una mesa llena, toma el asiento de un
+  compañero de la computadora. Si alguien se va a mitad de partida, la computadora sigue en su asiento («sigo yo en su
+  asiento») para que los demás terminen.
+
+**Los compañeros de la computadora.**
+- El anfitrión los agrega (🌱 fácil, 🌿 normal o 🌳 difícil) o los quita. Siempre se ven como tales: «Nombre 🤖» y la
+  etiqueta «computadora · nivel»; nunca se hacen pasar por personas. Tienen número negativo y nunca reciben avisos.
+- Piensan un momento antes de jugar (`pensarMs` de cada juego) y, según el nivel, no siempre hacen la mejor jugada.
+- Si solo quedan compañeros, la sala se cierra.
+
+**Los premios.** Si la partida empezó con compañeros de la computadora, es de práctica: 4 de gozo al ganar y 2 si no,
+hasta **10 por día** (`PRACTICA_GOZO_DIA`, columna `practica_hoy`), sin copa del barrio, prendas, logros ni tablas. Entre
+personas, los premios de siempre (los juegos de mesa no tienen prenda). Si uno solo tomó el asiento de quien se fue, la
+partida sigue siendo de personas.
+
+**Cómo agregar un juego de mesa.**
+1. Un módulo en `shared/mesa/` con la interfaz `JuegoDeMesa`: `estadoInicial`, `turnoDe` (o `pendientes` si juegan
+   todos a la vez), `jugadasValidas`, `aplicar`, `terminado`, `vistaPara(asiento)` y `jugadaDeBot(nivel)`, con su
+   versículo RVR1960 comprobado. Si el estado guarda `asientos`, la sala los pone al día cuando la computadora toma uno.
+2. Su línea en `LISTA` de `shared/mesa/index.ts` y sus pruebas (reglas, fin de partida y que la computadora siempre
+   juegue algo que vale).
+3. Su pantalla en `client/src/games/templo/mesa/` (`PantallaMesaProps`), con su línea en `PANTALLAS_MESA`: el tablero
+   dibujado, las piezas que se mueven animadas y la última jugada marcada. La música la pone la banda sonora
+   («juegos-mesa» para los de tablero; los de grupo, «juegos-grupo»).

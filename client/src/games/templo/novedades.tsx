@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-juegos-de-mesa",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Juegos de mesa en el patio, y compañeros de la computadora para jugar solo",
+    puntos: [
+      "🎲 En el patio de los juegos hay «Juegos de mesa»: quien crea la sala elige el juego, cada uno tiene su asiento y juega en su turno, con su reloj. El primero es el tres en raya, con su tablero de madera; pronto vienen el ajedrez, las damas, el dominó, el parchís y más.",
+      "🤖 ¿No hay nadie? Agrega compañeros de la computadora (🌱 fácil, 🌿 normal o 🌳 difícil) y juega solo, o completa la mesa con ellos. Siempre se ven como tales: llevan 🤖 junto a su nombre.",
+      "🪑 Si alguien llega a una mesa llena, toma el asiento de un compañero de la computadora. Y si alguien se va a mitad de partida, la computadora sigue en su asiento para que los demás terminen.",
+      "✨ Con compañeros de la computadora la partida es de práctica: hasta 10 de gozo por día, sin copa ni prendas. Entre personas siguen los premios de siempre.",
+    ],
+  },
+  {
     id: "2026-11-13-banda-sonora",
     fecha: "13 de noviembre de 2026",
     titulo: "La banda sonora: música propia en cada lugar y en cada juego",
