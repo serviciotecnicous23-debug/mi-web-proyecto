@@ -1,8 +1,9 @@
 /**
  * Los mentores en la pantalla (shared/mentores.ts, server/mentores.ts): el nuevo elige a su mentor (el sugerido va
  * primero) y ve sus seis pasos; el mentor ve a sus aprendices con sus pasos y dónde están, y puede ir con ellos,
- * invitarlos a venir y encontrarse con ellos para enseñarles un dicho de los ancianos. Va en las Misiones y en su
- * propia ventana (la que abren «Para hoy» y los avisos).
+ * invitarlos a venir y encontrarse con ellos para enseñarles un dicho de los ancianos. Cada nombre abre el registro de
+ * esa persona (RegistroUI.tsx): así se ve lo que ha hecho antes de elegirla. Va en las Misiones y en su propia ventana
+ * (la que abren «Para hoy» y los avisos).
  */
 import { useContext, useEffect, useState } from "react";
 import { Footprints, GraduationCap, HeartHandshake, Loader2, Megaphone } from "lucide-react";
@@ -12,6 +13,7 @@ import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
 import { invitarVecino, irConVecino } from "./Acompanar";
 import { ICONO_CAMINO } from "./barrio-chat";
+import { NombreConRegistro } from "./RegistroUI";
 import { MENTORES, PASOS, VERSO_APRENDIZ, VERSO_JUNTOS, VERSO_MANTO, VERSO_MENTOR, type Companero, type MentoresEstado, type PasoVista } from "@shared/mentores";
 import type { Dicho } from "@shared/dichos";
 
@@ -179,7 +181,11 @@ export function Mentores() {
       {e.miMentor && (
         <div className="space-y-1.5" data-testid="mentores-mi-mentor">
           <p className="text-[13px]">
-            Tu mentor: <b>{ICONO_CAMINO[e.miMentor.camino]} {e.miMentor.nombre}</b> {enLinea(e.miMentor)}
+            Tu mentor:{" "}
+            <b>
+              {ICONO_CAMINO[e.miMentor.camino]} <NombreConRegistro personajeId={e.miMentor.personajeId} nombre={e.miMentor.nombre} />
+            </b>{" "}
+            {enLinea(e.miMentor)}
           </p>
           <div className="flex items-center gap-2">
             <span className="min-w-0 flex-1">
@@ -205,7 +211,7 @@ export function Mentores() {
       {yo.puedeElegir && (
         <div className="space-y-1.5" data-testid="mentores-elegir">
           <p className="text-xs text-stone-700 dark:text-stone-300">
-            Acabas de llegar a Jerusalén: elige un mentor que te acompañe en tus primeros días. Juntos cumplen seis pasos, y cada uno les da gozo a los dos.
+            Acabas de llegar a Jerusalén: elige un mentor que te acompañe en tus primeros días. Juntos cumplen seis pasos, y cada uno les da gozo a los dos. Toca un nombre para ver su registro.
           </p>
           {e.posibles.length ? (
             <ul className="space-y-1">
@@ -213,7 +219,7 @@ export function Mentores() {
                 <li key={m.userId} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs ${m.sugerido ? "bg-violet-100 ring-1 ring-violet-400 dark:bg-violet-900/40" : "bg-white/70 dark:bg-stone-900/40"}`} data-testid={`mentor-posible-${m.userId}`}>
                   <span className="min-w-0 flex-1">
                     <b>
-                      {ICONO_CAMINO[m.camino]} {m.nombre}
+                      {ICONO_CAMINO[m.camino]} <NombreConRegistro personajeId={m.personajeId} nombre={m.nombre} />
                     </b>
                     {m.sugerido && <span className="ml-1 rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-black text-white">⭐ Sugerido</span>}
                     {m.titulo && <span className="ml-1 text-[11px] text-amber-700 dark:text-amber-300">🏅 {m.titulo}</span>}
@@ -247,7 +253,7 @@ export function Mentores() {
             <div key={a.userId} className="space-y-1 rounded-lg bg-white/70 p-2 dark:bg-stone-900/40" data-testid={`mentor-aprendiz-${a.userId}`}>
               <p className="text-xs">
                 <b>
-                  {ICONO_CAMINO[a.camino]} {a.nombre}
+                  {ICONO_CAMINO[a.camino]} <NombreConRegistro personajeId={a.personajeId} nombre={a.nombre} />
                 </b>{" "}
                 {enLinea(a)}
               </p>
