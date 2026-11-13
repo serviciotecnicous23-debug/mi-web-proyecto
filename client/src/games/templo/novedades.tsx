@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-domino",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El dominó llegó al patio",
+    puntos: [
+      "🁫 Dominó doble seis, como se juega en Latinoamérica: de 2 a 4 jugadores, y con 4 por parejas (el de enfrente es tu compañero). Se juega a 100 puntos.",
+      "🟩 Una mesa de paño verde con la fila de fichas que serpentea; los dobles van de pie y la ficha recién puesta brilla. Tus fichas que casan se levantan, y si una casa en las dos puntas, eliges dónde ponerla.",
+      "🔁 Con menos de 4 jugadores se roba del pozo. Al terminar cada mano (por dominó o por tranque) se destapan todas las fichas y se anotan los puntos.",
+      "🤖 Juega solo con tres compañeros de la computadora: el difícil cuenta las fichas, recuerda quién pasó y trata de tranquear al rival.",
+    ],
+  },
+  {
     id: "2026-11-13-ajedrez-damas-cuatro",
     fecha: "13 de noviembre de 2026",
     titulo: "Ajedrez, damas y cuatro en raya en el patio",

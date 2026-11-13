@@ -828,6 +828,7 @@ partida sigue siendo de personas.
 |---|---|---|
 | ♟️ Ajedrez (Proverbios 24:6) | Completas: enroque, al paso, coronación a elegir, jaque mate, ahogado, tablas por 50 jugadas, por repetición o sin material; reloj de 60 s | Alfa-beta con tablas de casillas y capturas hasta que se calman; el fácil a veces juega cualquier cosa |
 | ⚫ Damas (Apocalipsis 3:11) | A la española: el peón come hacia adelante, la dama vuela, comer es obligatorio y la mayor cantidad; tablas a las 50 jugadas solo de damas; reloj de 45 s | Alfa-beta mirando el material, el avance y el centro |
+| 🁫 Dominó (Eclesiastés 4:9) | Doble seis, de 2 a 4 (con 4, por parejas: 0 y 2 contra 1 y 3); 7 fichas cada uno y, con menos de 4, se roba del pozo. La primera mano la abre el doble más alto; las demás, quien ganó. Dominó o tranque (gana quien tiene menos); se anota lo que les queda a los demás; a 100. Al terminar la mano se destapa todo y quien ganó toca «Siguiente mano». Reloj de 25 s | Fácil al azar; normal suelta las más pesadas y los dobles; difícil además guarda opciones, recuerda quién pasó (le deja números que no tiene al rival) y no le cierra el paso al compañero |
 | 🔴 Cuatro en raya (Proverbios 30:24) | 7 × 6, gana quien junta cuatro; reloj de 30 s | Alfa-beta con las 69 ventanas de cuatro |
 
 Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
