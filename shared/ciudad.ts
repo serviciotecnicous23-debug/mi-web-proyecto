@@ -345,6 +345,9 @@ export type RedEntra =
   | { t: "duelo-reto"; r: import("./sabio").RetoDuelo }
   | { t: "duelo-reto-fin"; id: number; motivo: string }
   | { t: "duelo"; id: number }
+  /** «La noche de los sabios» (shared/sabio-noche.ts): te invitan a una sala, o algo cambió en tu noche (que vuelva a pedirla). */
+  | { t: "noche-invita"; i: import("./sabio-noche").InvitacionNoche }
+  | { t: "noche"; id: number }
   /** La misión del barrio de hoy (shared/barrio-juntos.ts): cómo va mientras estás en el lugar, y cuando se cumple. */
   | { t: "juntos"; p: import("./barrio-juntos").JuntosProgreso }
   | { t: "juntos-hecho"; titulo: string; gozo: number; merito: number; ayudo: boolean; juntos: number; gozoTotal?: number }

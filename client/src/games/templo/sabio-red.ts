@@ -2,23 +2,29 @@
  * Lo que llega por la red de la ciudad (o del templo en línea) para «¿Quién es sabio?» (shared/sabio.ts): la
  * llamada de un amigo o vecino que pide consejo (la muestra LlamadaEntrante en cualquier parte), el aviso a quien
  * llamó de que llegó el consejo, el agradecimiento cuando se supo si el consejo era el bueno, y el duelo de
- * sabios: el reto que llega (RetoEntrante) y los avisos de que algo cambió en el duelo.
+ * sabios: el reto que llega (RetoEntrante) y los avisos de que algo cambió en el duelo; y la noche de los sabios: la
+ * invitación a una sala (NocheEntrante) y los avisos de que algo cambió en la noche.
  */
 import { useSyncExternalStore } from "react";
 import type { RedEntra } from "@shared/ciudad";
 import type { LlamadaSabio, RetoDuelo } from "@shared/sabio";
+import type { InvitacionNoche } from "@shared/sabio-noche";
 import { gameStore } from "./store";
 import { sonido } from "./sabio-sonido";
 
 export type LlamadaEntrante = LlamadaSabio & { hasta: number };
 export type RetoEntrante = RetoDuelo & { hasta: number };
+export type InvitacionEntrante = InvitacionNoche & { hasta: number };
 
 let llamada: LlamadaEntrante | null = null;
 let reto: RetoEntrante | null = null;
+let invitacion: InvitacionEntrante | null = null;
 const oyentes = new Set<() => void>();
 const alConsejo = new Set<(id: number) => void>();
 const alDuelo = new Set<(id: number) => void>();
 const alAbrirDuelo = new Set<(id: number) => void>();
+const alNoche = new Set<(id: number) => void>();
+const alAbrirNoche = new Set<(id: number) => void>();
 /** Cuántas pantallas del concurso están abiertas (para saber si hay que abrir una al aceptar un reto). */
 let vistasAbiertas = 0;
 
@@ -60,6 +66,14 @@ export const sabioRed = {
         break;
       case "duelo":
         for (const f of alDuelo) f(m.id);
+        break;
+      case "noche-invita":
+        invitacion = { ...m.i, hasta: Date.now() + m.i.restantes * 1000 };
+        sonido.reto();
+        avisar();
+        break;
+      case "noche":
+        for (const f of alNoche) f(m.id);
         break;
       case "sabio-gracias":
         gameStore.toast(
@@ -106,6 +120,30 @@ export const sabioRed = {
       vistasAbiertas--;
     };
   },
+  getInvitacion: (): InvitacionEntrante | null => invitacion,
+  cerrarInvitacion(id?: number) {
+    if (id !== undefined && invitacion?.id !== id) return;
+    invitacion = null;
+    avisar();
+  },
+  /** Algo cambió en la noche `id` (que la pantalla la vuelva a pedir). */
+  onNoche(f: (id: number) => void): () => void {
+    alNoche.add(f);
+    return () => {
+      alNoche.delete(f);
+    };
+  },
+  /** Se entró a una noche: la pantalla del concurso la abre (si no está abierta, se abre y la encuentra sola). */
+  abrirNoche(id: number) {
+    if (alAbrirNoche.size > 0) for (const f of alAbrirNoche) f(id);
+    else gameStore.push({ kind: "sabio" });
+  },
+  onAbrirNoche(f: (id: number) => void): () => void {
+    alAbrirNoche.add(f);
+    return () => {
+      alAbrirNoche.delete(f);
+    };
+  },
   /** Quien llamó: llegó el consejo de su partida `id`. */
   onConsejo(f: (id: number) => void): () => void {
     alConsejo.add(f);
@@ -127,4 +165,8 @@ export function useLlamadaEntrante(): LlamadaEntrante | null {
 
 export function useRetoEntrante(): RetoEntrante | null {
   return useSyncExternalStore(sabioRed.subscribe, sabioRed.getReto, sabioRed.getReto);
+}
+
+export function useInvitacionNoche(): InvitacionEntrante | null {
+  return useSyncExternalStore(sabioRed.subscribe, sabioRed.getInvitacion, sabioRed.getInvitacion);
 }

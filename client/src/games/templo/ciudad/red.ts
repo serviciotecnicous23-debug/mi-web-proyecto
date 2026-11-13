@@ -106,6 +106,8 @@ export class RedCiudad {
         case "duelo-reto":
         case "duelo-reto-fin":
         case "duelo":
+        case "noche-invita":
+        case "noche":
           this.ev.onSabio?.(m);
           break;
         case "juntos":

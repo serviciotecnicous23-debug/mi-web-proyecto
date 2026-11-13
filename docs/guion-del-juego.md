@@ -67,8 +67,32 @@ el mismo día para todos.
 | La puerta de la ciudad | Se sienta con los ancianos a escuchar el dicho del día (Proverbios) | Gozo y un dicho más en el álbum |
 | El barrio | Bendice casas, ayuda a vecinos, va a reuniones, acompaña a los nuevos | Gozo, encargos y la ofrenda del barrio |
 | Las clases en el aula | La sección de un estudio, su examen final o la cátedra del maestro de su camino (8 lecciones por día) | Mérito, gozo, estudios aprobados para siempre y el grado de la cátedra |
-| «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines y duelos | Gozo, trajes de sabio y la tabla |
+| «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines, duelos y la noche de los sabios en grupo | Gozo, trajes de sabio y las tablas por partida |
 | De noche | Antorchas, ventanas encendidas y la hora de las trompetas de la luna nueva | ×1,5 de mérito de 7 a 9 |
+
+### «¿Quién es sabio?»: el concurso, la duda y la noche de los sabios
+La casa de la sabiduría (frente a la cámara de los sacerdotes) abre el concurso: 15 gradas, de fácil a experto, con su
+reloj, cuatro comodines, llamadas a un amigo de verdad, público que mira y aplaude, y duelos de dos.
+- **La última palabra**: al confirmar, las luces bajan, cae un foco sobre el atril y suena un redoble; la respuesta
+  elegida queda en ámbar. El suspenso crece con la grada (`suspensoMs`: 1,5 s en la primera, 4 s en la última). Al
+  revelar: verde con destellos dorados, o rojo con apagón.
+- **La duda con Etán** (`tocaDuda`, `fraseDeDuda` en `shared/sabio.ts`): al elegir, a veces la cámara corta a los dos
+  frente a frente y luego a Etán de cerca, con un latido de fondo: «¿Es tu respuesta final?». Sale cada 2 o 3 preguntas
+  (al azar), siempre en las gradas 5 y 10 y desde la 11, y cuando quien juega ya usó más del 60 % del reloj. El
+  servidor lo decide al mostrar la pregunta, así que **nunca depende de la respuesta**. Mientras Etán habla el reloj se
+  detiene: el servidor devuelve esos 5 segundos (`POST /sabio/duda`, una vez por pregunta). Las frases están en
+  `FRASES_DUDA`; para agregar una, basta una fila nueva (con `cuando: "segura"` o `"alta"` si es de esas gradas).
+- **Las tablas por partida** (`GET /sabio/tablas?de=hoy|semana|siempre|mias`): cada partida terminada, no solo la mejor
+  de cada persona: el puesto, el nombre, la grada en que quedó, los puntos, el tiempo, los comodines y cómo terminó. Más
+  puntos primero y, si empatan, menos tiempo. Tu fila resaltada y tu puesto aunque estés más abajo de los diez primeros.
+  El premio de la semana sigue siendo por persona (su mejor partida).
+- **La noche de los sabios** (`shared/sabio-noche.ts`, `server/sabio-noche.ts`, `SabioNoche.tsx`): una sala de 3 a 12
+  personas con un código de seis letras y la invitación por la red de la ciudad (solo cuentas aprobadas y sin
+  bloqueos). Quien abre la sala la empieza. Son 12 preguntas, de la grada 1 a la 12, de 20 s, y todos responden a la
+  vez: 100 puntos más la rapidez. Después de cada pregunta, la tabla en vivo con los puestos que suben y bajan; al final,
+  el podio de los tres primeros en el estudio. Gozo 20/15/12 y 6 para los demás (dentro del tope de 150 del concurso,
+  si respondiste al menos la mitad), puntos para la copa del barrio y 6 noches por día. Quien no juega puede mirarla
+  desde «En vivo».
 
 ### La semana
 - **Los capítulos de la temporada**: cada semana avanza la historia de la temporada, con una meta de toda la

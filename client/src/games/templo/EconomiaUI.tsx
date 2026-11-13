@@ -17,7 +17,7 @@ import type { TermometroGozo } from "@shared/obras";
 /** Los nombres de las fuentes del termómetro (server/gozo.ts). */
 const FUENTE_NOMBRE: Record<string, string> = {
   deberes: "Deberes del templo", preguntas: "Preguntas del templo", encargos: "Encargos del día", racha: "Racha", recado: "Recados",
-  cofre: "Cofre del camino", catedras: "Cátedras", sabio: "«¿Quién es sabio?»", estudios: "Estudios", ayuda: "Ayudar a vecinos",
+  cofre: "Cofre del camino", catedras: "Cátedras", sabio: "«¿Quién es sabio?»", "sabio-noche": "La noche de los sabios", estudios: "Estudios", ayuda: "Ayudar a vecinos",
   pueblo: "Casas del pueblo", reuniones: "Reuniones", "barrio-juntos": "Misión del barrio", copa: "Copa de los barrios",
   "ofrenda-barrio": "Ofrenda del barrio", concurso: "Concurso semanal", muro: "El muro", capitulo: "Capítulos", "fiesta-temporada": "Fiesta de la temporada",
   restauracion: "Restauración", cargos: "Cargos", mercader: "Ventas al mercader", vecinos: "Puestos de vecinos", provision: "Provisión",

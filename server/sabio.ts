@@ -19,12 +19,13 @@ import { aplaudir, duenioDe, marcarMirando, publicoDe, registrarDuenio } from ".
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { caminoDe, type Camino } from "@shared/caminos";
 import {
-  CONSEJOS_FAJA, ENTRADAS_DIA, GOZO_CONSEJO, GOZO_GRADA, GOZO_SABIO_DIA, GRADAS, LLAMADA_S, PREMIO_SEMANA, PUNTOS_GRADA, SEGUNDOS_COMODIN, TRAJES_SABIOS, gradaSegura,
-  segundosGrada, textoDeConsejo, tituloDe,
-  type AmigoPosible, type Comodin, type Confianza, type ConsejoAmigo, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PremioSabio,
-  type Relacion, type RespuestaSabio, type SabioEstado, type UltimaRespuesta,
+  CONSEJOS_FAJA, DUDA_CADA, DUDA_S, ENTRADAS_DIA, GOZO_CONSEJO, GOZO_GRADA, GOZO_SABIO_DIA, GRADAS, LLAMADA_S, MIS_PARTIDAS, PREMIO_SEMANA, PUNTOS_GRADA, SEGUNDOS_COMODIN,
+  TABLA_PRIMEROS, TRAJES_SABIOS, fraseDeDuda, gradaEnQueQuedo, gradaSegura, segundosGrada, tardaMucho, textoDeConsejo, tituloDe, tocaDuda,
+  type AmigoPosible, type Comodin, type Confianza, type ConsejoAmigo, type DudaEstado, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaEnTabla,
+  type PartidaVista, type PremioSabio, type Relacion, type RespuestaSabio, type SabioEstado, type TablaDe, type TablaVista, type UltimaRespuesta,
 } from "@shared/sabio";
 import { anotarCamino } from "./camino-dia";
+import type { NocheEnVivo } from "@shared/sabio-noche";
 
 export const SABIO_SQL = `
 CREATE TABLE IF NOT EXISTS "game_sabio" (
@@ -118,7 +119,34 @@ CREATE INDEX IF NOT EXISTS "idx_game_sabio_duelos_semana" ON "game_sabio_duelos"
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos" integer NOT NULL DEFAULT 0;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_ganados" integer NOT NULL DEFAULT 0;
 ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_dia" text;
-ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_hoy" integer NOT NULL DEFAULT 0;`;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "duelos_hoy" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio_partidas" ADD COLUMN IF NOT EXISTS "duda" jsonb;
+CREATE INDEX IF NOT EXISTS "idx_game_sabio_partidas_fin" ON "game_sabio_partidas" ("finished_at");
+CREATE TABLE IF NOT EXISTS "game_sabio_noches" (
+  "id" serial PRIMARY KEY,
+  "codigo" text NOT NULL,
+  "anfitrion" integer NOT NULL REFERENCES "game_characters"("id") ON DELETE CASCADE,
+  "anfitrion_user" integer NOT NULL,
+  "estado" text NOT NULL DEFAULT 'sala',
+  "jugadores" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "invitados" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "quitados" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "ronda" integer NOT NULL DEFAULT 0,
+  "preguntas" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "opciones" jsonb,
+  "servida" bigint,
+  "revelada" bigint,
+  "historial" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "creado" bigint NOT NULL,
+  "semana" text NOT NULL,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "finished_at" timestamp
+);
+CREATE INDEX IF NOT EXISTS "idx_game_sabio_noches_estado" ON "game_sabio_noches" ("estado", "codigo");
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_ganadas" integer NOT NULL DEFAULT 0;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_dia" text;
+ALTER TABLE "game_sabio" ADD COLUMN IF NOT EXISTS "noches_hoy" integer NOT NULL DEFAULT 0;`;
 
 export const PREGUNTA = new Map(BANCO_SABIO.map((q) => [q.id, q]));
 /** El nombre con que se ve una cuenta (su personaje), guardado un rato: el público pide la partida cada segundo y medio. */
@@ -182,6 +210,8 @@ type FilaPartida = {
   llamada: unknown;
   /** La última pregunta que se respondió (UltimaRespuesta, para el público). */
   ultima: unknown;
+  /** Cómo va la escena de la duda con Etán (DudaEstado). */
+  duda: unknown;
   puntos: number;
   semana: string;
   created_at: Date | string;
@@ -208,6 +238,10 @@ export type FilaSabioPersona = {
   duelos_ganados: number;
   /** Duelos empezados hoy (tienen su propio tope por día). */
   duelos_hoy: number;
+  /** La noche de los sabios: las jugadas, las ganadas y las empezadas hoy (shared/sabio-noche.ts). */
+  noches: number;
+  noches_ganadas: number;
+  noches_hoy: number;
 };
 
 /**
@@ -246,6 +280,9 @@ export async function filaPersona(titular: number): Promise<FilaSabioPersona> {
     duelos: Number(r.duelos || 0),
     duelos_ganados: Number(r.duelos_ganados || 0),
     duelos_hoy: r.duelos_dia === hoy ? Number(r.duelos_hoy || 0) : 0,
+    noches: Number(r.noches || 0),
+    noches_ganadas: Number(r.noches_ganadas || 0),
+    noches_hoy: r.noches_dia === hoy ? Number(r.noches_hoy || 0) : 0,
   };
 }
 
@@ -255,16 +292,37 @@ function restantes(p: FilaPartida, n: number): number {
   return Math.max(0, Math.ceil(segundosDe(p, n) - Number(p.pasados)));
 }
 
+/** Cómo va la escena de la duda con Etán en la partida (null si todavía no hubo pregunta). */
+const dudaDe = (p: FilaPartida): DudaEstado | null => (p.duda && typeof p.duda === "object" && !Array.isArray(p.duda) ? (p.duda as DudaEstado) : null);
+const azarCada = () => DUDA_CADA[Math.floor(Math.random() * DUDA_CADA.length)];
+/**
+ * La escena de la duda para la pregunta `n` que se va a mostrar: si toca (cada 2 o 3 preguntas, en las seguras y
+ * desde la 11). Se decide aquí, antes de que se elija ninguna respuesta: nunca depende de la respuesta.
+ */
+function planDeDuda(antes: DudaEstado | null, n: number): DudaEstado {
+  const d = antes ?? { cada: azarCada(), ultima: 0, plan: false, usada: false, frases: [] };
+  return { ...d, plan: tocaDuda(n, d.ultima, d.cada), usada: false };
+}
+
 function vista(p: FilaPartida, rolloAbierto: boolean): PartidaVista {
   const q = p.pregunta ? PREGUNTA.get(p.pregunta) : undefined;
   const n = p.grada + 1;
+  const d = dudaDe(p);
   return {
     id: Number(p.id),
     grada: Number(p.grada),
     puntos: PUNTOS_GRADA[p.grada],
     seguro: PUNTOS_GRADA[gradaSegura(p.grada)],
     pregunta: q
-      ? { n, texto: q.pregunta, opciones: lista<string>(p.opciones), quitadas: lista<number>(p.quitadas), segundos: segundosDe(p, n), restantes: restantes(p, n) }
+      ? {
+          n,
+          texto: q.pregunta,
+          opciones: lista<string>(p.opciones),
+          quitadas: lista<number>(p.quitadas),
+          segundos: segundosDe(p, n),
+          restantes: restantes(p, n),
+          duda: d?.usada ? "hecha" : d?.plan ? "toca" : "puede",
+        }
       : null,
     usados: lista<Comodin>(p.usados),
     rolloAbierto,
@@ -375,6 +433,121 @@ async function tablaSiempre(yo: number): Promise<FilaTabla[]> {
   return rows.map((r, i) => ({ puesto: i + 1, nombre: nombreDe(r), puntos: Number(r.total), grada: Number(r.mejor), ganadas: Number(r.ganadas), esYo: Number(r.character_id) === yo }));
 }
 
+// ================================================================ las tablas por partida
+const ZONA_TEXAS = "America/Chicago";
+/**
+ * Cuánto duró una partida, en segundos, calculado en la base (las horas se guardan sin zona horaria). Una partida que
+ * se cerró sola por abandono no cuenta las horas en que nadie jugó: como mucho, 125 s después de su último movimiento
+ * (lo que dura la pregunta más larga con sus comodines).
+ */
+const DURACION = (t = "p.") =>
+  `EXTRACT(EPOCH FROM (LEAST(${t}finished_at, COALESCE(${t}servida_at, ${t}created_at) + interval '125 seconds') - ${t}created_at))::float`;
+/** Cuándo terminó, en milisegundos (la hora sin zona es la de la base). */
+const FIN_MS = (t = "p.") => `(EXTRACT(EPOCH FROM (${t}finished_at AT TIME ZONE current_setting('TimeZone'))) * 1000)::float8`;
+/** Desde y hasta del día de Texas `$n` (texto AAAA-MM-DD), en la hora de la base. */
+const DIA_DESDE = (n: number) => `((($${n}::date)::timestamp AT TIME ZONE '${ZONA_TEXAS}') AT TIME ZONE current_setting('TimeZone'))`;
+const DIA_HASTA = (n: number) => `(((($${n}::date) + 1)::timestamp AT TIME ZONE '${ZONA_TEXAS}') AT TIME ZONE current_setting('TimeZone'))`;
+const ORDEN_TABLA = `ORDER BY t.puntos DESC, t.segundos ASC, t.fin ASC, t.id ASC`;
+
+type FilaTablaBD = {
+  id: number;
+  character_id: number;
+  jugador_id: number;
+  estado: string;
+  grada: number;
+  puntos: number;
+  usados: unknown;
+  segundos: number;
+  fin: number;
+  puesto: number | string | null;
+  name: string | null;
+  path: string | null;
+  display_name: string | null;
+  username: string | null;
+};
+
+function filaDeTabla(r: FilaTablaBD, yo: number, puesto: number | null): PartidaEnTabla {
+  const estado = (["perdio", "retiro", "gano", "tiempo"].includes(r.estado) ? r.estado : "retiro") as FinPartida["estado"];
+  const grada = Number(r.grada);
+  return {
+    id: Number(r.id),
+    puesto,
+    pid: Number(r.jugador_id),
+    nombre: nombreDe(r),
+    camino: caminoDe(r.path),
+    grada,
+    quedo: gradaEnQueQuedo(estado, grada),
+    puntos: Number(r.puntos),
+    segundos: Math.max(0, Math.round(Number(r.segundos) || 0)),
+    usados: lista<Comodin>(r.usados),
+    estado,
+    esYo: Number(r.character_id) === yo,
+    at: Math.round(Number(r.fin) || 0),
+  };
+}
+
+/**
+ * Hoy, la semana o siempre: cada partida terminada con puntos, en orden (más puntos; si empatan, menos tiempo). Trae
+ * las diez primeras y, si la mejor de quien pregunta está más abajo, también esa (con su puesto).
+ */
+async function tablaPartidas(de: Exclude<TablaDe, "mias">, titular: number): Promise<TablaVista> {
+  const dia = diaClave();
+  const semana = semanaClave();
+  const filtro = de === "hoy" ? `AND p.finished_at >= ${DIA_DESDE(2)} AND p.finished_at < ${DIA_HASTA(2)}` : de === "semana" ? `AND p.semana = $2` : "";
+  const valores: unknown[] = de === "siempre" ? [titular, TABLA_PRIMEROS] : [titular, de === "hoy" ? dia : semana, TABLA_PRIMEROS];
+  const lim = `$${valores.length}`;
+  const { rows } = await pool.query(
+    `WITH t AS (
+       SELECT p.id, p.character_id, p.jugador_id, p.estado, p.grada, p.puntos, p.usados, ${DURACION()} AS segundos, ${FIN_MS()} AS fin
+         FROM game_sabio_partidas p
+         JOIN users u ON u.id = p.user_id AND u.is_active IS NOT FALSE
+        WHERE p.estado <> 'jugando' AND p.finished_at IS NOT NULL AND p.puntos > 0 ${filtro}
+     ), r AS (
+       SELECT t.*, ROW_NUMBER() OVER (${ORDEN_TABLA}) AS puesto, count(*) OVER () AS total FROM t
+     ), yo AS (SELECT MIN(puesto) AS p FROM r WHERE r.character_id = $1)
+     SELECT r.*, (SELECT p FROM yo) AS mio, c.name, c.path, u.display_name, u.username
+       FROM r
+       JOIN game_characters c ON c.id = r.jugador_id
+       JOIN users u ON u.id = c.user_id
+      WHERE r.puesto <= ${lim} OR r.puesto = (SELECT p FROM yo)
+      ORDER BY r.puesto`,
+    valores,
+  );
+  const todas = rows.map((r) => filaDeTabla(r as FilaTablaBD, titular, Number(r.puesto)));
+  const miPuesto = rows[0]?.mio != null ? Number(rows[0].mio) : null;
+  const filas = todas.filter((f) => (f.puesto ?? 0) <= TABLA_PRIMEROS);
+  const mia = miPuesto !== null && miPuesto > TABLA_PRIMEROS ? todas.find((f) => f.puesto === miPuesto) ?? null : null;
+  return { de, filas, mia, total: rows[0] ? Number(rows[0].total) : 0, miPuesto, dia, semana };
+}
+
+/** Mis partidas: las últimas que jugué (la más nueva primero), cada una con el puesto que tuvo en la tabla de su semana. */
+async function misPartidas(titular: number): Promise<TablaVista> {
+  const { rows } = await pool.query(
+    `WITH mias AS (
+       SELECT p.id, p.character_id, p.jugador_id, p.estado, p.grada, p.puntos, p.usados, p.semana, ${DURACION()} AS segundos, ${FIN_MS()} AS fin
+         FROM game_sabio_partidas p
+        WHERE p.character_id = $1 AND p.estado <> 'jugando' AND p.finished_at IS NOT NULL
+        ORDER BY p.id DESC LIMIT $2
+     ), rk AS (
+       SELECT t.id, ROW_NUMBER() OVER (PARTITION BY t.semana ${ORDEN_TABLA}) AS puesto
+         FROM (SELECT p.id, p.semana, p.puntos, ${DURACION()} AS segundos, ${FIN_MS()} AS fin
+                 FROM game_sabio_partidas p
+                 JOIN users u ON u.id = p.user_id AND u.is_active IS NOT FALSE
+                WHERE p.semana IN (SELECT DISTINCT semana FROM mias) AND p.estado <> 'jugando' AND p.finished_at IS NOT NULL AND p.puntos > 0) t
+     )
+     SELECT m.*, rk.puesto, c.name, c.path, u.display_name, u.username,
+            (SELECT count(*) FROM game_sabio_partidas x WHERE x.character_id = $1 AND x.estado <> 'jugando') AS total
+       FROM mias m
+       LEFT JOIN rk ON rk.id = m.id
+       JOIN game_characters c ON c.id = m.jugador_id
+       JOIN users u ON u.id = c.user_id
+      ORDER BY m.id DESC`,
+    [titular, MIS_PARTIDAS],
+  );
+  const filas = rows.map((r) => filaDeTabla(r as FilaTablaBD, titular, r.puesto != null ? Number(r.puesto) : null));
+  return { de: "mias", filas, mia: null, total: rows[0] ? Number(rows[0].total) : 0, miPuesto: null, dia: diaClave(), semana: semanaClave() };
+}
+
 /** Los tres primeros de la semana pasada reciben su gozo la primera vez que vuelven. */
 async function premioDeLaSemanaPasada(titular: number): Promise<{ puesto: number; gozo: number } | null> {
   const hoy = new Date(`${semanaClave()}T12:00:00Z`);
@@ -435,7 +608,9 @@ export async function amigosPosibles(titular: number, cuenta: number): Promise<(
             (EXISTS (SELECT 1 FROM game_sabio_partidas p WHERE p.character_id = t.titular AND p.estado = 'jugando'
                       AND COALESCE(p.servida_at, p.created_at) > now() - interval '5 minutes')
              OR EXISTS (SELECT 1 FROM game_sabio_duelos d WHERE (d.a_id = t.titular OR d.b_id = t.titular) AND d.estado IN ('invitado', 'jugando')
-                      AND d.created_at > now() - interval '30 minutes')) AS jugando
+                      AND d.created_at > now() - interval '30 minutes')
+             OR EXISTS (SELECT 1 FROM game_sabio_noches n WHERE n.estado IN ('sala', 'jugando') AND n.created_at > now() - interval '2 hours'
+                      AND n.jugadores @> jsonb_build_array(jsonb_build_object('t', t.titular, 'fuera', false)))) AS jugando
        FROM (SELECT user_id, MIN(id) AS titular FROM game_characters WHERE user_id = ANY($1::int[]) AND game = $2 GROUP BY user_id) t
        LEFT JOIN game_sabio s ON s.character_id = t.titular`,
     [ids, JERUSALEN_JUEGO],
@@ -458,6 +633,16 @@ export async function amigosPosibles(titular: number, cuenta: number): Promise<(
   }
   return out.sort((a, b) => ORDEN_RELACION[a.relacion] - ORDEN_RELACION[b.relacion] || a.nombre.localeCompare(b.nombre, "es")).slice(0, 30);
 }
+
+/**
+ * Las noches de los sabios que se juegan ahora, sin las de los bloqueos. Las pone server/sabio-noche.ts al registrar
+ * sus rutas (así los dos archivos no se importan en círculo).
+ */
+let nochesEnVivo: ((cuenta: number, bloqueados: Set<number>) => Promise<NocheEnVivo[]>) | null = null;
+export function ponerNochesEnVivo(f: (cuenta: number, bloqueados: Set<number>) => Promise<NocheEnVivo[]>) {
+  nochesEnVivo = f;
+}
+const nochesPara = (cuenta: number, r: Relaciones) => (nochesEnVivo ? nochesEnVivo(cuenta, r.bloqueados) : Promise.resolve([] as NocheEnVivo[]));
 
 /** Las partidas que se juegan ahora (con movimiento en los últimos 3 minutos), sin las de los bloqueos. */
 async function enVivoPara(cuenta: number, r: Relaciones): Promise<EnVivo[]> {
@@ -708,7 +893,9 @@ export function registerSabioRoutes(app: Express) {
     const fila = await filaPersona(pr.titular);
     const semana = semanaClave();
     const [sem, siempre] = await Promise.all([tablaSemana(semana, pr.titular), tablaSiempre(pr.titular)]);
-    const enVivo = await enVivoPara(pr.ch.user_id, await relacionesDe(pr.titular, pr.ch.user_id));
+    const rel = await relacionesDe(pr.titular, pr.ch.user_id);
+    const enVivo = await enVivoPara(pr.ch.user_id, rel);
+    const noches = await nochesPara(pr.ch.user_id, rel);
     const t = tituloDe(fila);
     const rolloAbierto = fila.mejor >= 10;
     if (p) registrarDuenio(Number(p.id), pr.ch.user_id);
@@ -730,6 +917,7 @@ export function registerSabioRoutes(app: Express) {
         llamadas: fila.llamadas,
       },
       enVivo,
+      noches,
       semana,
       tablaSemana: sem.filas,
       tablaSiempre: siempre,
@@ -792,10 +980,13 @@ export function registerSabioRoutes(app: Express) {
         const { q, vistas } = elegirPregunta(n, fila.vistas);
         const opciones = mezclar([q.correcta, ...q.falsas]);
         await pool.query(`UPDATE game_sabio SET vistas = $2::jsonb WHERE character_id = $1`, [pr.titular, JSON.stringify(vistas)]);
+        // si en esta grada Etán hará dudar: se decide ahora, antes de que se elija ninguna respuesta
+        const duda = planDeDuda(dudaDe(p), n);
         const { rows } = await pool.query(
-          `UPDATE game_sabio_partidas SET pregunta = $2, opciones = $3::jsonb, quitadas = '[]'::jsonb, servida_at = now(), extra = 0, ancianos = NULL, amigo = NULL, llamada = NULL
+          `UPDATE game_sabio_partidas SET pregunta = $2, opciones = $3::jsonb, quitadas = '[]'::jsonb, servida_at = now(), extra = 0, ancianos = NULL, amigo = NULL, llamada = NULL,
+                  duda = $4::jsonb
             WHERE id = $1 RETURNING *, ${TIEMPOS}`,
-          [p.id, q.id, JSON.stringify(opciones)],
+          [p.id, q.id, JSON.stringify(opciones), JSON.stringify(duda)],
         );
         registrarDuenio(Number(p.id), pr.ch.user_id);
         return { partida: vista(rows[0] as FilaPartida, fila.mejor >= 10) };
@@ -857,6 +1048,48 @@ export function registerSabioRoutes(app: Express) {
       const { premiar, ...respuesta } = out;
       if (premiar) void premiarConsejo(premiar).catch((err) => console.error("[sabio] premiar consejo:", err));
       res.json(respuesta);
+    }),
+  );
+
+  // La escena de la duda con Etán: empieza al elegir una respuesta (sin decir cuál). El reloj se detiene mientras habla
+  // Etán: el servidor devuelve esos segundos, una vez por pregunta, y solo si tocaba o si ya pensó más del 60 % del reloj.
+  app.post("/api/jerusalen/sabio/duda", (req, res) =>
+    responder(res, async () => {
+      const pr = await persona(req, res);
+      if (!pr) return;
+      type Salida = { frase: string; partida: PartidaVista } | { error: number; message: string };
+      const out = await enFila(pr.titular, async (): Promise<Salida> => {
+        const p = await partidaActiva(pr.titular);
+        if (!p || !p.pregunta) return { error: 409, message: "No hay una pregunta a la vista." };
+        const n = p.grada + 1;
+        const d = dudaDe(p) ?? planDeDuda(null, n);
+        if (d.usada) return { error: 409, message: "Etán ya te preguntó en esta grada." };
+        if (restantes(p, n) <= 0) return { error: 409, message: "Se acabó el tiempo." };
+        // un segundo de gracia por lo que tarda la red
+        if (!d.plan && !tardaMucho(Number(p.pasados ?? 0) + 1, segundosDe(p, n))) return { error: 409, message: "Etán no tiene nada que preguntarte ahora." };
+        const frase = fraseDeDuda(n, d.frases);
+        const nueva: DudaEstado = { cada: azarCada(), ultima: n, plan: d.plan, usada: true, frases: [...d.frases, frase.id].slice(-12) };
+        const fila = await filaPersona(pr.titular);
+        const { rows } = await pool.query(`UPDATE game_sabio_partidas SET duda = $2::jsonb, extra = extra + ${DUDA_S} WHERE id = $1 RETURNING *, ${TIEMPOS}`, [
+          p.id,
+          JSON.stringify(nueva),
+        ]);
+        return { frase: frase.texto, partida: vista(rows[0] as FilaPartida, fila.mejor >= 10) };
+      });
+      if ("error" in out) return res.status(out.error).json({ message: out.message });
+      res.json(out);
+    }),
+  );
+
+  // Las tablas por partida: hoy, la semana, siempre y mis partidas.
+  app.get("/api/jerusalen/sabio/tablas", (req, res) =>
+    responder(res, async () => {
+      const pr = await persona(req, res);
+      if (!pr) return;
+      const de = String(req.query.de ?? "semana") as TablaDe;
+      if (!["hoy", "semana", "siempre", "mias"].includes(de)) return res.status(400).json({ message: "Esa tabla no existe." });
+      res.setHeader("Cache-Control", "no-store");
+      res.json(de === "mias" ? await misPartidas(pr.titular) : await tablaPartidas(de, pr.titular));
     }),
   );
 
@@ -1078,7 +1311,8 @@ export function registerSabioRoutes(app: Express) {
       const pr = await persona(req, res);
       if (!pr) return;
       res.setHeader("Cache-Control", "no-store");
-      res.json({ enVivo: await enVivoPara(pr.ch.user_id, await relacionesDe(pr.titular, pr.ch.user_id)) });
+      const rel = await relacionesDe(pr.titular, pr.ch.user_id);
+      res.json({ enVivo: await enVivoPara(pr.ch.user_id, rel), noches: await nochesPara(pr.ch.user_id, rel) });
     }),
   );
 

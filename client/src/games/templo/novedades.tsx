@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-sabio-vivo",
+    fecha: "13 de noviembre de 2026",
+    titulo: "«¿Quién es sabio?» más vivo, y la noche de los sabios para jugar en grupo",
+    puntos: [
+      "🌙 La noche de los sabios: abre una sala con su código de seis letras e invita a tus vecinos y amigos (de 3 a 12). Todos responden a la vez las mismas 12 preguntas; después de cada una, la tabla en vivo con los puestos que suben y bajan, y al final el podio en el estudio.",
+      "🏆 Las tablas ahora muestran cada partida: Hoy, La semana, Siempre y Mis partidas, con la grada en que quedó cada quien, sus puntos, su tiempo, sus comodines y cómo terminó.",
+      "🥁 Al confirmar tu respuesta, las luces bajan, cae un foco sobre tu atril y suena el redoble; al revelar, verde con destellos dorados o rojo con apagón.",
+      "👀 Etán ezraíta a veces te mira a los ojos y te hace dudar: «¿Es tu respuesta final?». Pasa igual si tu respuesta es buena o mala, y mientras habla el reloj se detiene.",
+    ],
+  },
+  {
     id: "2026-11-13-el-huerto",
     fecha: "13 de noviembre de 2026",
     titulo: "El huerto de verdad, detrás de tu casa",

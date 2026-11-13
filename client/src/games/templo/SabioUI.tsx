@@ -5,7 +5,7 @@
  * El servidor corrige: aquí nunca está la respuesta antes de contestar.
  */
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Crown, Eye, ListOrdered, Loader2, Lock, PhoneCall, ScrollText, Shirt, Trophy, Volume2, VolumeX, X } from "lucide-react";
+import { Eye, ListOrdered, Loader2, Lock, Moon, Pause, PhoneCall, ScrollText, Shirt, Trophy, Volume2, VolumeX, X } from "lucide-react";
 import { Portrait } from "./Portrait";
 import { gameStore } from "./store";
 import { CiudadCtx } from "./CiudadUI";
@@ -14,15 +14,18 @@ import { sabioRed } from "./sabio-red";
 import { ICONO_CAMINO } from "./barrio-chat";
 import { LETRAS, LogoSabio, Presentador, RELACION, Reloj, miles, pedir, primerNombre, useVertical } from "./sabio-comun";
 import { DuelosLobby, DueloView } from "./SabioDuelo";
+import { NocheEntrada, NocheView } from "./SabioNoche";
 import { EstudioSabio3D } from "./estudio/EstudioSabio3D";
 import type { EstudioSabio } from "./estudio/estudio-sabio";
 import {
-  APLAUSOS, COMODINES, CONSEJOS_FAJA, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, NOMBRE_CONCURSO, ORDEN_COMODINES,
-  PREMIO_SEMANA, PUNTOS_GRADA, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada, dificultadGrada, segundosGrada,
+  APLAUSOS, COMODINES, CONSEJOS_FAJA, DUDA_S, ENTRADAS_DIA, FRASES_PRESENTADOR, GOZO_CONSEJO, GOZO_SABIO_DIA, GRADAS, GRADAS_SEGURAS, LLAMADA_S, MEDALLAS, NOMBRE_CONCURSO,
+  ORDEN_COMODINES, PREMIO_SEMANA, PUNTOS_GRADA, TABLAS, TITULOS, TRAJES_SABIOS, VERSO_CASA, VERSO_CONCURSO, VERSO_CONSEJO, VERSO_PUBLICO, VERSO_TRAJES, canticoGrada,
+  comoTermino, dificultadGrada, segundosGrada, suspensoMs, tardaMucho, tiempoCorto,
   DUELO_RONDAS, DUELOS_MANTO,
-  type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type DueloVista, type EnVivo, type FilaTabla, type FinPartida, type MirarVista, type PartidaVista, type PreguntaVista,
-  type PublicoVista, type RespuestaSabio, type SabioEstado,
+  type AmigoPosible, type AplausoId, type Comodin, type ConsejoAmigo, type DueloVista, type EnVivo, type FinPartida, type MirarVista, type PartidaEnTabla, type PartidaVista,
+  type PreguntaVista, type PublicoVista, type RespuestaSabio, type SabioEstado, type TablaDe, type TablaVista,
 } from "@shared/sabio";
+import { NOMBRE_NOCHE, NOCHE_MAX, NOCHE_MIN, type NocheEnVivo, type NocheVista } from "@shared/sabio-noche";
 
 const azar = <T,>(l: T[]) => l[Math.floor(Math.random() * l.length)];
 
@@ -41,7 +44,9 @@ function nuevosAplausos(antes: PublicoVista | null, ahora: PublicoVista): Flota[
   return out;
 }
 
-type Fase = "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "revelado" | "fin" | "mirando" | "duelos" | "duelo" | "error";
+type Fase =
+  | "cargando" | "portada" | "entre" | "pregunta" | "confirmar" | "duda" | "suspenso" | "revelado" | "fin" | "mirando" | "duelos" | "duelo" | "noches" | "noche" | "noche-mirar"
+  | "error";
 type Revelado = { elegida: number; correcta: number; bien: boolean; explica: string; ref: string; respuesta: string };
 
 export function SabioView() {
@@ -69,14 +74,24 @@ export function SabioView() {
   const [publico, setPublico] = useState<PublicoVista | null>(null);
   const [flotan, setFlotan] = useState<Flota[]>([]);
   const [mirandoId, setMirandoId] = useState<number | null>(null);
-  // el duelo de sabios (SabioDuelo.tsx)
+  // el duelo de sabios (SabioDuelo.tsx) y la noche de los sabios (SabioNoche.tsx)
   const [dueloId, setDueloId] = useState<number | null>(null);
+  const [nocheId, setNocheId] = useState<number | null>(null);
+  // la escena de la duda con Etán: lo que dice y el reloj detenido mientras habla
+  const [fraseDuda, setFraseDuda] = useState<string | null>(null);
+  const [congelado, setCongelado] = useState<number | null>(null);
+  /** La pregunta en que ya salió la escena (una vez por pregunta). */
+  const dudaPedida = useRef<string | null>(null);
+  const dudaTimers = useRef<number[]>([]);
+  const pararLatido = useRef<() => void>(() => undefined);
+  const pararRedoble = useRef<() => void>(() => undefined);
   const pararSuspenso = useRef<() => void>(() => undefined);
   const finTiempo = useRef<number>(0);
   const finLlamada = useRef<number>(0);
   const vivo = useRef(true);
   // el estudio 3D detrás de la pantalla (si el equipo puede)
   const estudio = useRef<EstudioSabio | null>(null);
+  const verEstudio = useCallback(() => estudio.current, []);
   const [hay3d, setHay3d] = useState(false);
   const vertical = useVertical();
 
@@ -94,6 +109,14 @@ export function SabioView() {
     if (dr.ok && dr.data?.duelo && (dr.data.duelo.estado === "jugando" || dr.data.duelo.estado === "invitado")) {
       setDueloId(dr.data.duelo.id);
       setFase("duelo");
+      return;
+    }
+    // si está en una sala o en una noche de los sabios, vuelve a ella
+    const nr = await pedir<{ noche: NocheVista | null }>("/noche");
+    if (!vivo.current) return;
+    if (nr.ok && nr.data?.noche) {
+      setNocheId(nr.data.noche.id);
+      setFase("noche");
       return;
     }
     if (r.data.partida) {
@@ -114,8 +137,21 @@ export function SabioView() {
     return () => {
       vivo.current = false;
       pararSuspenso.current();
+      pararLatido.current();
+      pararRedoble.current();
+      for (const t of dudaTimers.current) clearTimeout(t);
     };
   }, [cargar]);
+
+  // se entró a una noche desde la invitación (en la tarjeta de arriba): a la sala
+  useEffect(
+    () =>
+      sabioRed.onAbrirNoche((id) => {
+        setNocheId(id);
+        setFase("noche");
+      }),
+    [],
+  );
 
   // con el estudio en 3D, la sala tiene su murmullo
   useEffect(() => {
@@ -193,7 +229,7 @@ export function SabioView() {
   }, [llamadaId, traerPartida]);
 
   // quien juega ve cuántos lo miran y los aplausos del público
-  const jugandoId = partida && (fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") ? partida.id : null;
+  const jugandoId = partida && (fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "duda" || fase === "suspenso" || fase === "revelado") ? partida.id : null;
   const ultimoPublico = useRef<PublicoVista | null>(null);
   useEffect(() => {
     if (jugandoId === null) return;
@@ -282,25 +318,107 @@ export function SabioView() {
     if (qVista?.quitadas.includes(i)) return;
     city?.audio.click();
     setElegida(i);
+    // la escena de la duda: la primera vez que se elige en esta pregunta, si tocaba (lo decidió el servidor al
+    // mostrarla) o si ya pensó más del 60 % del reloj. Nunca mira cuál se eligió: aquí no se sabe la respuesta.
+    const q = qVista;
+    if (q && fase === "pregunta" && dudaPedida.current !== q.texto && q.duda !== "hecha" && !partida?.llamada) {
+      const pasados = q.segundos - Math.max(0, (finTiempo.current - Date.now()) / 1000);
+      if (q.duda === "toca" || tardaMucho(pasados, q.segundos)) {
+        void empezarDuda(q);
+        return;
+      }
+    }
     setDice(FRASES_PRESENTADOR.ultima);
     setFase("confirmar");
+  }
+
+  /** La escena de la duda con Etán: frente a frente, luego Etán de cerca con el latido. El reloj se detiene mientras habla. */
+  async function empezarDuda(q: PreguntaVista) {
+    dudaPedida.current = q.texto;
+    const quedan = Math.max(0, Math.ceil((finTiempo.current - Date.now()) / 1000));
+    setCongelado(quedan);
+    setFraseDuda(null);
+    setDice("…");
+    setFase("duda");
+    pararSuspenso.current();
+    pararLatido.current();
+    pararLatido.current = sonido.latido();
+    const desde = Date.now();
+    const r = await pedir<{ frase: string; partida: PartidaVista }>("/duda", {});
+    if (!vivo.current || faseRef.current !== "duda") return;
+    if (!r.ok || !r.data?.partida?.pregunta) {
+      // el servidor no la dio (por ejemplo, se acabó el tiempo): la última palabra de siempre, con el reloj corriendo
+      terminarDuda(FRASES_PRESENTADOR.ultima);
+      return;
+    }
+    // el servidor devolvió los segundos de la escena: el reloj sigue después desde el mismo número
+    const p = r.data.partida;
+    finTiempo.current = Date.now() + p.pregunta!.restantes * 1000;
+    setPartida(p);
+    setQVista(p.pregunta);
+    const frase = r.data.frase;
+    const plano = Math.max(0, 1500 - (Date.now() - desde));
+    dudaTimers.current.push(
+      window.setTimeout(() => {
+        if (faseRef.current !== "duda") return;
+        setFraseDuda(frase);
+        setDice(frase);
+      }, plano),
+      window.setTimeout(() => {
+        if (faseRef.current === "duda") terminarDuda(frase);
+      }, DUDA_S * 1000 - (Date.now() - desde)),
+    );
+  }
+
+  /** Termina la escena: vuelve el reloj y la música de la pregunta; queda la elegida para confirmar o cambiar. */
+  function terminarDuda(dice?: string, a: Fase = "confirmar") {
+    for (const t of dudaTimers.current) clearTimeout(t);
+    dudaTimers.current = [];
+    pararLatido.current();
+    pararLatido.current = () => undefined;
+    setCongelado(null);
+    setFraseDuda(null);
+    if (dice) setDice(dice);
+    if (a !== "suspenso" && qVista) {
+      pararSuspenso.current();
+      pararSuspenso.current = sonido.suspenso(qVista.n);
+    }
+    setFase(a);
+  }
+
+  /** Quiere cambiar su respuesta (en la última palabra o en la escena con Etán). */
+  function cambiar() {
+    setElegida(null);
+    if (faseRef.current === "duda") terminarDuda("Piénsalo bien…", "pregunta");
+    else {
+      setDice("Piénsalo bien…");
+      setFase("pregunta");
+    }
   }
 
   async function confirmar() {
     if (elegida === null || !qVista) return;
     const q = qVista;
+    if (faseRef.current === "duda") terminarDuda(undefined, "suspenso");
+    // las luces bajan, cae el foco sobre el atril y suena el redoble: el suspenso crece con la grada
+    const ms = suspensoMs(q.n);
     setFase("suspenso");
+    pararSuspenso.current();
     sonido.fijar();
+    pararRedoble.current();
+    pararRedoble.current = sonido.redoble(ms);
     setDice("…");
-    const espera = new Promise((r) => setTimeout(r, Math.min(2800, 900 + q.n * 130)));
+    const espera = new Promise((r) => setTimeout(r, ms));
     const [r] = await Promise.all([pedir<RespuestaSabio>("/responder", { opcion: q.opciones[elegida] }), espera]);
     if (!vivo.current) return;
-    pararSuspenso.current();
+    pararRedoble.current();
     if (!r.ok || !r.data) {
       setAviso(r.data?.message || "No se pudo enviar la respuesta. Revisa tu conexión.");
+      pararSuspenso.current = sonido.suspenso(q.n);
       setFase("pregunta");
       return;
     }
+    sonido.golpe();
     revelar(r.data, elegida);
   }
 
@@ -320,8 +438,14 @@ export function SabioView() {
     const correcta = opciones.indexOf(d.respuesta);
     setRevelado({ elegida: elegidaI, correcta, bien: d.correcta, explica: d.explica, ref: d.ref, respuesta: d.respuesta });
     const subio = d.partida?.grada ?? (d.fin?.estado === "gano" ? GRADAS : 0);
-    if (d.correcta) sonido.ovacion(d.fin?.estado === "gano" ? 6 : 2.6, d.fin?.estado === "gano" ? 1.6 : 1);
-    else sonido.oh();
+    // verde con destellos dorados, o rojo con apagón
+    if (d.correcta) {
+      sonido.ovacion(d.fin?.estado === "gano" ? 6 : 2.6, d.fin?.estado === "gano" ? 1.6 : 1);
+      sonido.destellos();
+    } else {
+      sonido.oh();
+      if (elegidaI >= 0) sonido.apagon();
+    }
     if (d.correcta) {
       if (d.fin?.estado === "gano") {
         sonido.ganar();
@@ -420,6 +544,7 @@ export function SabioView() {
     setPartida(null);
     setQVista(null);
     setMirandoId(null);
+    setNocheId(null);
     setPublico(null);
     setFase("cargando");
     setDice(FRASES_PRESENTADOR.bienvenida);
@@ -460,8 +585,8 @@ export function SabioView() {
     if (fase === "entre" && partida) {
       e.setFase("entre", { grada });
       e.mostrarGrada(grada + 1);
-    } else if ((fase === "pregunta" || fase === "confirmar" || fase === "suspenso") && qVista) {
-      e.setFase(fase, { grada: qVista.n - 1 });
+    } else if ((fase === "pregunta" || fase === "confirmar" || fase === "duda" || fase === "suspenso") && qVista) {
+      e.setFase(fase, { grada: qVista.n - 1, dur: suspensoMs(qVista.n) / 1000 });
       pintarPregunta(e);
     } else if (fase === "revelado" && revelado && qVista) {
       const gano = fin?.estado === "gano";
@@ -474,7 +599,7 @@ export function SabioView() {
         fin.estado === "gano" ? "¡Sabio de las quince gradas!" : `${miles(fin.puntos)} puntos`,
         fin.estado === "retiro" ? "Se retiró con lo ganado" : fin.estado === "gano" ? "Santiago 3:13" : `Se queda en la grada ${fin.grada}`,
       );
-    } else if (fase === "portada" || fase === "cargando" || fase === "duelos" || fase === "error") {
+    } else if (fase === "portada" || fase === "cargando" || fase === "duelos" || fase === "noches" || fase === "error") {
       e.setFase("portada", { grada: 0 });
       e.mostrarLogo();
     }
@@ -504,7 +629,7 @@ export function SabioView() {
 
   const q = qVista;
   const n = q?.n ?? (partida ? partida.grada + 1 : 1);
-  const enJuego = fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado";
+  const enJuego = fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "duda" || fase === "suspenso" || fase === "revelado";
   const luces = fase === "suspenso" ? "opacity-40" : fase === "revelado" && revelado ? (revelado.bien ? "opacity-100" : "opacity-60") : "opacity-80";
   return (
     <div
@@ -532,7 +657,14 @@ export function SabioView() {
           <Columnas />
         </>
       )}
-      {fase === "revelado" && revelado?.bien && <div className="sabio-destello pointer-events-none absolute inset-0" />}
+      {fase === "revelado" && revelado?.bien && (
+        <>
+          <div className="sabio-destello pointer-events-none absolute inset-0" />
+          <Chispas />
+        </>
+      )}
+      {fase === "revelado" && revelado && !revelado.bien && revelado.elegida >= 0 && <div className="sabio-apagon pointer-events-none absolute inset-0 z-[5]" data-testid="sabio-apagon" />}
+      {fase === "suspenso" && <div className="sabio-penumbra pointer-events-none absolute inset-0 z-[1]" />}
 
       {/* cabecera */}
       <div className="relative z-10 flex items-center justify-between gap-2 px-3 pt-2">
@@ -576,9 +708,33 @@ export function SabioView() {
               city?.audio.click();
               setFase("duelos");
             }}
+            onNoches={() => {
+              city?.audio.click();
+              setFase("noches");
+            }}
+            onMirarNoche={(id) => {
+              city?.audio.click();
+              setNocheId(id);
+              setFase("noche-mirar");
+            }}
             hay3d={hay3d}
           />
         )}
+        {fase === "noches" && (
+          <NocheEntrada
+            onEntrar={(id) => {
+              setNocheId(id);
+              setFase("noche");
+            }}
+            onMirar={(id) => {
+              setNocheId(id);
+              setFase("noche-mirar");
+            }}
+            onVolver={() => void volverAPortada()}
+          />
+        )}
+        {fase === "noche" && nocheId !== null && <NocheView id={nocheId} onSalir={() => void volverAPortada()} estudio={verEstudio} />}
+        {fase === "noche-mirar" && nocheId !== null && <NocheView id={nocheId} mirar onSalir={() => void volverAPortada()} estudio={verEstudio} />}
         {fase === "duelos" && (
           <DuelosLobby
             onEntrar={(id) => {
@@ -590,7 +746,7 @@ export function SabioView() {
         )}
         {fase === "duelo" && dueloId !== null && <DueloView id={dueloId} onSalir={() => setFase("duelos")} onCambiar={(id) => setDueloId(id)} />}
         {fase === "mirando" && mirandoId !== null && <MirarView id={mirandoId} onSalir={() => void volverAPortada()} estudio={() => estudio.current} />}
-        {(fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "suspenso" || fase === "revelado") && partida && (
+        {(fase === "entre" || fase === "pregunta" || fase === "confirmar" || fase === "duda" || fase === "suspenso" || fase === "revelado") && partida && (
           <div className={`mx-auto flex w-full max-w-4xl gap-4 pt-2 ${hay3d ? "sabio-panel mt-auto rounded-t-3xl px-2 pb-1" : ""}`}>
             <div className="min-w-0 flex-1 space-y-2.5">
               <Presentador dice={dice} compacto={hay3d} />
@@ -613,7 +769,16 @@ export function SabioView() {
                     <Eye className="h-3.5 w-3.5" /> {publico.mirando}
                   </span>
                 )}
-                {q && (fase === "pregunta" || fase === "confirmar") && <Reloj restan={restan} total={q.segundos} />}
+                {q && (fase === "pregunta" || fase === "confirmar" || fase === "duda") && (
+                  <div className="relative shrink-0" data-testid={congelado !== null ? "sabio-reloj-detenido" : undefined}>
+                    <Reloj restan={congelado ?? restan} total={q.segundos} />
+                    {congelado !== null && (
+                      <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-amber-950" title="Etán detuvo el reloj">
+                        <Pause className="h-3 w-3" />
+                      </span>
+                    )}
+                  </div>
+                )}
                 <button
                   type="button"
                   className="shrink-0 rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-bold hover:bg-white/20 lg:hidden"
@@ -656,7 +821,7 @@ export function SabioView() {
                         <button
                           key={i}
                           type="button"
-                          disabled={quitada || !!revelado || fase === "suspenso"}
+                          disabled={quitada || !!revelado || fase === "suspenso" || fase === "duda"}
                           onClick={() => elegir(i)}
                           className={`flex min-h-[44px] items-center gap-2 rounded-xl text-left font-semibold transition ${hay3d ? "px-2.5 py-1.5 text-[13px] leading-tight" : "px-3 py-2 text-[14px]"} ${clase} ${quitada ? "invisible" : ""}`}
                           data-testid={`sabio-opcion-${i}`}
@@ -687,12 +852,16 @@ export function SabioView() {
                       <button type="button" className="sabio-boton" onClick={() => void confirmar()} data-testid="sabio-si">
                         Sí, es mi última palabra
                       </button>
-                      <button type="button" className="rounded-xl bg-white/10 px-3 py-2.5 text-sm font-bold hover:bg-white/20" onClick={() => { setElegida(null); setDice("Piénsalo bien…"); setFase("pregunta"); }}>
+                      <button type="button" className="rounded-xl bg-white/10 px-3 py-2.5 text-sm font-bold hover:bg-white/20" onClick={cambiar} data-testid="sabio-pensar">
                         Déjame pensar
                       </button>
                     </div>
                   )}
-                  {fase === "suspenso" && <p className="text-center text-sm font-bold italic text-amber-200/90">El pueblo contiene el aliento…</p>}
+                  {fase === "suspenso" && (
+                    <p className="sabio-latido text-center text-sm font-bold italic text-amber-200/90" data-testid="sabio-suspenso">
+                      🥁 El pueblo contiene el aliento…
+                    </p>
+                  )}
                   {revelado && (
                     <div className={`rounded-2xl p-3 text-[13px] leading-snug ${revelado.bien ? "bg-emerald-950/60" : "bg-red-950/60"}`} data-testid="sabio-explica">
                       <p className="font-black">{revelado.bien ? "¡Correcto!" : `La respuesta era: ${revelado.respuesta}`}</p>
@@ -775,6 +944,10 @@ export function SabioView() {
         </div>
       )}
 
+      {fase === "duda" && q && elegida !== null && (
+        <EscenaDuda frase={fraseDuda} letra={LETRAS[elegida]} opcion={q.opciones[elegida]} hay3d={hay3d} onConfirmar={() => void confirmar()} onCambiar={cambiar} />
+      )}
+
       {elegirAmigo && partida && (
         <ElegirAmigo
           amigos={amigos}
@@ -799,6 +972,64 @@ export function SabioView() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ================================================================ la escena de la duda y los efectos de la respuesta
+/**
+ * La escena de la duda: franjas de cine, el latido en la orilla de la pantalla y lo que dice Etán, grande. En 3D, la
+ * cámara corta a los dos frente a frente y luego a Etán de cerca; sin 3D, su retrato. El reloj está detenido.
+ */
+function EscenaDuda({ frase, letra, opcion, hay3d, onConfirmar, onCambiar }: { frase: string | null; letra: string; opcion: string; hay3d: boolean; onConfirmar: () => void; onCambiar: () => void }) {
+  return (
+    <div className="sabio-duda pointer-events-auto absolute inset-0 z-30 flex flex-col justify-between" data-testid="sabio-duda" role="dialog" aria-label="Etán te pregunta si es tu respuesta final">
+      <div className="sabio-franja h-[11vh] min-h-[44px] bg-black" />
+      <div className="flex flex-1 flex-col items-center justify-end gap-3 px-4 pb-4 text-center">
+        {!hay3d && (
+          <div className="sabio-latido-lento">
+            <Portrait who="etan" size={120} />
+          </div>
+        )}
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300/90">Etán ezraíta</p>
+        <p className={`max-w-xl font-serif text-[22px] font-black leading-tight text-amber-50 drop-shadow-[0_3px_12px_rgba(0,0,0,.9)] sm:text-[28px] ${frase ? "sabio-frase" : "opacity-0"}`} data-testid="sabio-duda-frase">
+          {frase ?? "…"}
+        </p>
+        <p className="rounded-full bg-black/55 px-3 py-1 text-[12px] font-bold text-amber-100/90">
+          Elegiste la {letra}: «{opcion}» · <Pause className="inline h-3 w-3" /> el reloj se detuvo
+        </p>
+      </div>
+      <div className="sabio-franja grid min-h-[64px] grid-cols-2 items-center gap-2 bg-black px-3 py-2">
+        <button type="button" className="sabio-boton" onClick={onConfirmar} data-testid="sabio-duda-si">
+          Sí, es mi respuesta final
+        </button>
+        <button type="button" className="rounded-xl bg-white/10 px-3 py-2.5 text-sm font-bold hover:bg-white/20" onClick={onCambiar} data-testid="sabio-duda-cambiar">
+          Cambiar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Los destellos dorados de la respuesta buena (también sin 3D). */
+function Chispas() {
+  const chispas = useRef(
+    Array.from({ length: 22 }, (_, i) => ({
+      x: 50 + Math.cos((i / 22) * Math.PI * 2) * (22 + Math.random() * 26),
+      y: 42 + Math.sin((i / 22) * Math.PI * 2) * (16 + Math.random() * 22),
+      d: Math.random() * 0.35,
+      s: 6 + Math.random() * 9,
+    })),
+  );
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[6] overflow-hidden" aria-hidden="true" data-testid="sabio-chispas">
+      {chispas.current.map((c, i) => (
+        <span
+          key={i}
+          className="sabio-chispa absolute rounded-full"
+          style={{ left: `${c.x}%`, top: `${c.y}%`, width: c.s, height: c.s, animationDelay: `${c.d}s` }}
+        />
+      ))}
     </div>
   );
 }
@@ -997,6 +1228,8 @@ function Portada({
   onMirar,
   onLlamadas,
   onDuelos,
+  onNoches,
+  onMirarNoche,
   hay3d = false,
 }: {
   estado: SabioEstado;
@@ -1007,19 +1240,25 @@ function Portada({
   onMirar: (id: number) => void;
   onLlamadas: (si: boolean) => void;
   onDuelos: () => void;
+  onNoches: () => void;
+  onMirarNoche: (id: number) => void;
   /** Con el estudio en 3D detrás: la portada empieza más abajo para que se vea el escenario. */
   hay3d?: boolean;
 }) {
-  const [tab, setTab] = useState<"vivo" | "semana" | "siempre" | "trajes" | "reglas">(estado.enVivo.length ? "vivo" : "semana");
+  const [tab, setTab] = useState<"vivo" | "tablas" | "trajes" | "reglas">(estado.enVivo.length || estado.noches?.length ? "vivo" : "tablas");
   const [enVivo, setEnVivo] = useState<EnVivo[]>(estado.enVivo);
+  const [noches, setNoches] = useState<NocheEnVivo[]>(estado.noches ?? []);
   const y = estado.yo;
   const quedan = Math.max(0, ENTRADAS_DIA - y.entradasHoy);
   // quién juega ahora: se refresca solo
   useEffect(() => {
     let parar = false;
     const t = setInterval(async () => {
-      const r = await pedir<{ enVivo: EnVivo[] }>("/en-vivo");
-      if (!parar && r.ok && r.data?.enVivo) setEnVivo(r.data.enVivo);
+      const r = await pedir<{ enVivo: EnVivo[]; noches?: NocheEnVivo[] }>("/en-vivo");
+      if (!parar && r.ok && r.data?.enVivo) {
+        setEnVivo(r.data.enVivo);
+        setNoches(r.data.noches ?? []);
+      }
     }, 10_000);
     return () => {
       parar = true;
@@ -1063,6 +1302,17 @@ function Portada({
       >
         ⚔️ Duelo de sabios <span className="font-semibold text-sky-100/80">· con un amigo o con alguien que busque</span>
       </button>
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-900/85 to-violet-800/85 py-3 text-sm font-black ring-1 ring-violet-300/50 hover:ring-violet-200"
+        onClick={onNoches}
+        data-testid="sabio-noches-abrir"
+      >
+        <Moon className="h-4 w-4 text-amber-200" /> {NOMBRE_NOCHE}
+        <span className="font-semibold text-violet-100/80">
+          · de {NOCHE_MIN} a {NOCHE_MAX}, con tus amigos de la iglesia
+        </span>
+      </button>
       <p className="text-center text-[11px] text-amber-100/70" data-testid="sabio-entradas">
         Entradas de hoy: {quedan} de {ENTRADAS_DIA} · gozo de hoy {y.gozoHoy} de {GOZO_SABIO_DIA}
       </p>
@@ -1088,12 +1338,11 @@ function Portada({
           Recibir llamadas e invitaciones
         </label>
       </div>
-      <div className="grid grid-cols-5 gap-0.5 rounded-full bg-black/30 p-1">
+      <div className="grid grid-cols-4 gap-0.5 rounded-full bg-black/30 p-1">
         {(
           [
             ["vivo", "En vivo", Eye],
-            ["semana", "Semana", Trophy],
-            ["siempre", "Siempre", Crown],
+            ["tablas", "Tablas", Trophy],
             ["trajes", "Trajes", Shirt],
             ["reglas", "Reglas", ScrollText],
           ] as const
@@ -1106,20 +1355,12 @@ function Portada({
             className={`flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 py-1.5 text-[11px] font-bold leading-none ${tab === id ? "bg-amber-400 text-amber-950" : "text-amber-100/80"}`}
             data-testid={`sabio-tab-${id}`}
           >
-            {/* en el teléfono, solo el nombre (con el ícono no caben las cinco) */}
-            <Icono className="hidden h-3.5 w-3.5 shrink-0 sm:inline" /> {nombre}
+            <Icono className="h-3.5 w-3.5 shrink-0" /> {nombre}
           </button>
         ))}
       </div>
-      {tab === "vivo" && <EnVivoLista enVivo={enVivo} onMirar={onMirar} />}
-      {tab === "semana" && (
-        <Tabla
-          filas={estado.tablaSemana}
-          vacia="Esta semana nadie ha subido todavía. ¡Sé el primero!"
-          nota={`Cuenta tu mejor partida de la semana. Los tres primeros reciben ${PREMIO_SEMANA.join(", ")} de gozo el lunes.${estado.miPuestoSemana ? ` Vas en el puesto ${estado.miPuestoSemana}.` : ""}`}
-        />
-      )}
-      {tab === "siempre" && <Tabla filas={estado.tablaSiempre} vacia="Todavía no hay sabios en la tabla." nota="La sabiduría que juntó cada persona en todas sus partidas." conGanadas />}
+      {tab === "vivo" && <EnVivoLista enVivo={enVivo} noches={noches} onMirar={onMirar} onMirarNoche={onMirarNoche} />}
+      {tab === "tablas" && <TablasPorPartida miPuestoSemana={estado.miPuestoSemana} />}
       {tab === "trajes" && <Trajes premios={y.premios} />}
       {tab === "reglas" && <Reglas />}
       <p className="pb-2 text-center font-serif text-[12px] italic text-amber-100/70">
@@ -1138,28 +1379,109 @@ function Dato({ titulo, valor }: { titulo: string; valor: string }) {
   );
 }
 
-function Tabla({ filas, vacia, nota, conGanadas }: { filas: FilaTabla[]; vacia: string; nota: string; conGanadas?: boolean }) {
+/**
+ * Las tablas por partida (pedido de Luis): Hoy, La semana, Siempre y Mis partidas. Cada partida terminada con su puesto,
+ * quién jugó, la grada en que quedó, los puntos, el tiempo, los comodines y cómo terminó. Mi fila resaltada, y mi puesto
+ * aunque esté más abajo de los diez primeros.
+ */
+function TablasPorPartida({ miPuestoSemana }: { miPuestoSemana: number | null }) {
+  const [de, setDe] = useState<TablaDe>("hoy");
+  const [tablas, setTablas] = useState<Partial<Record<TablaDe, TablaVista>>>({});
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    setError(null);
+    void pedir<TablaVista>(`/tablas?de=${de}`).then((r) => {
+      if (!vivo) return;
+      if (r.ok && r.data) setTablas((t) => ({ ...t, [de]: r.data! }));
+      else setError(r.data?.message || "No se pudo traer la tabla. Revisa tu conexión.");
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [de]);
+  const t = tablas[de];
+  const info = TABLAS.find((x) => x.id === de)!;
+  const vacia =
+    de === "hoy" ? "Hoy nadie ha terminado una partida todavía. ¡Sube tú primero!" : de === "semana" ? "Esta semana nadie ha subido todavía." : de === "siempre" ? "Todavía no hay partidas en la tabla." : "Todavía no has jugado. ¡Sube al atril!";
   return (
-    <div className="space-y-1.5" data-testid="sabio-tabla">
-      {filas.length === 0 ? (
-        <p className="py-4 text-center text-xs text-amber-100/70">{vacia}</p>
+    <div className="space-y-1.5" data-testid="sabio-tablas">
+      <div className="grid grid-cols-4 gap-1">
+        {TABLAS.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            aria-pressed={de === x.id}
+            onClick={() => setDe(x.id)}
+            className={`rounded-xl px-1 py-1.5 text-[11px] font-black leading-tight ${de === x.id ? "bg-white/90 text-[#1b1446]" : "bg-white/10 text-amber-100/85 hover:bg-white/20"}`}
+            data-testid={`sabio-tabla-${x.id}`}
+          >
+            {x.nombre}
+          </button>
+        ))}
+      </div>
+      {error ? (
+        <p className="rounded-xl bg-red-950/60 p-3 text-center text-xs">{error}</p>
+      ) : !t ? (
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-amber-300" />
+        </div>
+      ) : t.filas.length === 0 ? (
+        <p className="rounded-2xl bg-black/30 py-4 text-center text-xs text-amber-100/70" data-testid="sabio-tabla-vacia">
+          {vacia}
+        </p>
       ) : (
-        <ol className="divide-y divide-white/10 rounded-2xl bg-black/30">
-          {filas.map((f) => (
-            <li key={`${f.puesto}-${f.nombre}`} className={`flex items-center gap-2 px-3 py-2 text-[13px] ${f.esYo ? "bg-amber-400/20" : ""}`}>
-              <span className="w-6 text-center font-black">{f.puesto <= 3 ? ["🥇", "🥈", "🥉"][f.puesto - 1] : f.puesto}</span>
-              <span className="min-w-0 flex-1 truncate font-bold">
-                {f.nombre}
-                {f.esYo ? " (tú)" : ""}
-              </span>
-              <span className="text-[11px] text-amber-200/70">grada {f.grada}{conGanadas && f.ganadas ? ` · ${f.ganadas} 🌟` : ""}</span>
-              <span className="w-20 text-right font-black tabular-nums">{miles(f.puntos)}</span>
-            </li>
+        <ol className="divide-y divide-white/10 overflow-hidden rounded-2xl bg-black/30" data-testid="sabio-tabla">
+          {t.filas.map((f) => (
+            <FilaDePartida key={f.id} f={f} mias={de === "mias"} />
           ))}
+          {t.mia && (
+            <>
+              <li className="py-0.5 text-center text-[11px] font-black text-amber-200/60" aria-hidden="true">
+                ⋯
+              </li>
+              <FilaDePartida f={t.mia} mias={false} />
+            </>
+          )}
         </ol>
       )}
-      <p className="text-center text-[11px] text-amber-100/60">{nota}</p>
+      <p className="text-center text-[11px] text-amber-100/60" data-testid="sabio-tabla-nota">
+        {info.nota}{" "}
+        {t && de !== "mias" && t.total > 0 ? `${t.total} ${t.total === 1 ? "partida" : "partidas"}.` : ""}
+        {t && de === "mias" && t.total > 0 ? `Jugaste ${t.total} ${t.total === 1 ? "partida" : "partidas"}.` : ""}
+        {t?.miPuesto ? ` Tu mejor partida va en el puesto ${t.miPuesto}.` : ""}
+        {de === "semana" ? ` Las tres personas con la mejor partida de la semana reciben ${PREMIO_SEMANA.join(", ")} de gozo el lunes (cuenta la mejor de cada una).${miPuestoSemana ? ` Vas ${miPuestoSemana}.º.` : ""}` : ""}
+      </p>
     </div>
+  );
+}
+
+/** Una partida de la tabla: puesto (con medalla), quién, la grada en que quedó, el tiempo, los comodines y los puntos. */
+function FilaDePartida({ f, mias }: { f: PartidaEnTabla; mias: boolean }) {
+  const fecha = new Date(f.at);
+  const cuando = mias ? fecha.toLocaleString("es", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }) : null;
+  const medalla = !mias && f.puesto !== null && f.puesto <= 3 ? MEDALLAS[f.puesto - 1] : null;
+  return (
+    <li className={`flex items-center gap-2 px-2.5 py-1.5 text-[12.5px] ${f.esYo && !mias ? "bg-amber-400/20 ring-1 ring-inset ring-amber-300/50" : ""}`} data-testid={`sabio-fila-${f.id}`}>
+      <span className="w-7 shrink-0 text-center font-black" title={mias && f.puesto ? `Puesto ${f.puesto} de su semana` : undefined}>
+        {medalla ?? (mias ? (f.puesto ? `#${f.puesto}` : "–") : f.puesto)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1 truncate font-bold">
+          <span aria-hidden="true">{ICONO_CAMINO[f.camino]}</span>
+          <span className="truncate">
+            {mias ? cuando : f.nombre}
+            {f.esYo && !mias ? " (tú)" : ""}
+          </span>
+        </span>
+        <span className="block truncate text-[10.5px] text-amber-200/75">
+          {comoTermino(f.estado, f.grada)} · ⏱ {tiempoCorto(f.segundos)}
+          {f.usados.length ? ` · ${f.usados.map((c) => COMODINES[c].icono).join("")}` : " · sin comodines"}
+          {mias && f.puesto ? ` · puesto ${f.puesto} de su semana` : ""}
+        </span>
+      </span>
+      <span className="w-[4.6rem] shrink-0 text-right font-black tabular-nums">{miles(f.puntos)}</span>
+    </li>
   );
 }
 
@@ -1193,7 +1515,10 @@ function Reglas() {
     <div className="space-y-2 rounded-2xl bg-black/30 p-3 text-[12.5px] leading-snug" data-testid="sabio-reglas">
       <p>• Quince gradas, una pregunta por grada, cada vez más difícil: fácil (1 a 3), media (4 a 6), difícil (7 a 9), muy difícil (10 a 12) y, en la cima, solo para expertos (13 a 15). Las gradas <b>5</b> y <b>10</b> son seguras: si fallas después, te quedas con ellas.</p>
       <p>• Tienes {segundosGrada(1)} segundos en las gradas 1 a 5, {segundosGrada(6)} en la 6 a la 10 y {segundosGrada(11)} en las últimas. Puedes retirarte con lo ganado antes de responder.</p>
-      <p>• Antes de corregir, el presentador te pregunta si es tu última palabra.</p>
+      <p>• Antes de corregir, el presentador te pregunta si es tu última palabra. Al confirmar, las luces bajan, cae el foco sobre tu atril y suena el redoble: el suspenso crece con la grada.</p>
+      <p>
+        • A veces Etán te mira a los ojos y te hace dudar: cada 2 o 3 preguntas, siempre en las gradas seguras y desde la 11, y cuando ya usaste más de la mitad del reloj. Pasa igual si tu respuesta es buena o mala (ni él la sabe), y mientras habla el reloj se detiene: no pierdes ni un segundo.
+      </p>
       <div className="space-y-1.5">
         {ORDEN_COMODINES.map((c) => (
           <p key={c}>
@@ -1210,6 +1535,9 @@ function Reglas() {
       <p>
         • ⚔️ El duelo de sabios: reta a un amigo o vecino en línea (o busca a alguien). Los dos responden a la vez las mismas {DUELO_RONDAS} preguntas; acertar rápido vale más. Con {DUELOS_MANTO} duelos ganados, el manto azul de los vencedores.
       </p>
+      <p>
+        • 🌙 {NOMBRE_NOCHE}: abre una sala con su código de seis letras e invita a tus vecinos y amigos (de {NOCHE_MIN} a {NOCHE_MAX}). Todos responden a la vez las mismas 12 preguntas, con la tabla en vivo después de cada una y el podio al final.
+      </p>
       <p>• {ENTRADAS_DIA} entradas por día (las siete columnas). Las preguntas no se te repiten hasta que veas todas las de esa grada.</p>
       <p>• Ganas puntos de sabiduría, gozo (hasta {GOZO_SABIO_DIA} por día), títulos ({TITULOS.map((t) => t.nombre).join(", ")}) y los trajes de los sabios.</p>
     </div>
@@ -1217,11 +1545,37 @@ function Reglas() {
 }
 
 // ================================================================ el público
-function EnVivoLista({ enVivo, onMirar }: { enVivo: EnVivo[]; onMirar: (id: number) => void }) {
+function EnVivoLista({ enVivo, noches, onMirar, onMirarNoche }: { enVivo: EnVivo[]; noches: NocheEnVivo[]; onMirar: (id: number) => void; onMirarNoche: (id: number) => void }) {
   return (
     <div className="space-y-1.5" data-testid="sabio-envivo">
+      {noches.length > 0 && (
+        <ul className="divide-y divide-white/10 rounded-2xl bg-indigo-950/50 ring-1 ring-indigo-300/30" data-testid="sabio-envivo-noches">
+          {noches.map((n) => (
+            <li key={n.id} className="flex items-center gap-2 px-3 py-2 text-[13px]">
+              <Moon className="h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold">La noche de {n.anfitrion}</span>
+                <span className="block truncate text-[11px] text-amber-200/70">
+                  {n.jugadores} personas · pregunta {Math.max(1, n.ronda)} de {n.total}
+                  {n.primero ? ` · primer puesto: ${n.primero}` : ""}
+                </span>
+              </span>
+              {n.mirando > 0 && (
+                <span className="flex items-center gap-0.5 text-[11px] text-amber-100/70">
+                  <Eye className="h-3 w-3" /> {n.mirando}
+                </span>
+              )}
+              <button type="button" className="rounded-full bg-amber-400 px-3 py-1 text-[11px] font-black text-amber-950" onClick={() => onMirarNoche(n.id)} data-testid={`sabio-mirar-noche-${n.id}`}>
+                Mirar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {enVivo.length === 0 ? (
-        <p className="rounded-2xl bg-black/30 py-4 text-center text-xs text-amber-100/70">Ahora no hay nadie en el atril. Cuando alguien juegue, aquí lo puedes mirar en vivo y animarlo.</p>
+        noches.length ? null : (
+          <p className="rounded-2xl bg-black/30 py-4 text-center text-xs text-amber-100/70">Ahora no hay nadie en el atril. Cuando alguien juegue, aquí lo puedes mirar en vivo y animarlo.</p>
+        )
       ) : (
         <ul className="divide-y divide-white/10 rounded-2xl bg-black/30">
           {enVivo.map((v) => (
@@ -1566,6 +1920,25 @@ const ESTILOS = `
 @keyframes sabioBarra{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
 .sabio-flota{animation:sabioFlota 2.3s ease-out forwards;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
 @keyframes sabioFlota{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1;transform:translateY(-20px) scale(1.1)}100%{transform:translateY(-260px) scale(1);opacity:0}}
-@media (prefers-reduced-motion: reduce){.sabio-foco,.sabio-op-elegida,.sabio-op-bien,.sabio-latido,.sabio-destello,.sabio-barra,.sabio-flota{animation:none!important}}
+.sabio-duda{background:radial-gradient(ellipse at 50% 42%,transparent 34%,rgba(0,0,0,.5) 72%,rgba(0,0,0,.85) 100%);animation:sabioDudaLatido .83s ease-in-out infinite}
+@keyframes sabioDudaLatido{0%,100%{box-shadow:inset 0 0 0 rgba(170,24,24,0)}8%{box-shadow:inset 0 0 95px rgba(170,24,24,.55)}20%{box-shadow:inset 0 0 30px rgba(170,24,24,.15)}29%{box-shadow:inset 0 0 70px rgba(170,24,24,.42)}}
+.sabio-franja{animation:sabioFranja .45s cubic-bezier(.2,.8,.2,1) both}
+.sabio-duda>.sabio-franja:first-child{transform-origin:top}
+.sabio-duda>.sabio-franja:last-child{transform-origin:bottom}
+@keyframes sabioFranja{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.sabio-frase{animation:sabioFrase .6s ease-out both}
+@keyframes sabioFrase{from{opacity:0;transform:translateY(10px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.sabio-latido-lento{animation:sabioLatido .83s ease-in-out infinite}
+.sabio-penumbra{background:radial-gradient(ellipse at 62% 38%,rgba(255,240,200,.07) 0%,rgba(0,0,0,.32) 42%,rgba(0,0,0,.66) 100%);animation:sabioPenumbra .5s ease-out both}
+@keyframes sabioPenumbra{from{opacity:0}to{opacity:1}}
+.sabio-apagon{animation:sabioApagon 2.7s ease-in-out both}
+@keyframes sabioApagon{0%{background:rgba(255,40,40,.38)}6%{background:rgba(255,40,40,.22)}12%{background:rgba(0,0,0,.93)}44%{background:rgba(0,0,0,.9)}100%{background:rgba(90,0,0,.18)}}
+.sabio-chispa{background:radial-gradient(circle,#fffbe6 0%,#ffd36a 42%,rgba(243,201,90,0) 72%);animation:sabioChispa 1.7s ease-out both}
+@keyframes sabioChispa{0%{transform:scale(0);opacity:0}18%{transform:scale(1.5);opacity:1}60%{opacity:.9}100%{transform:scale(.3) translateY(-34px);opacity:0}}
+.sabio-sube{animation:sabioSube .6s ease-out}
+.sabio-baja{animation:sabioBaja .6s ease-out}
+@keyframes sabioSube{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@keyframes sabioBaja{from{transform:translateY(-6px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sabio-foco,.sabio-op-elegida,.sabio-op-bien,.sabio-latido,.sabio-destello,.sabio-barra,.sabio-flota,.sabio-duda,.sabio-franja,.sabio-frase,.sabio-latido-lento,.sabio-chispa,.sabio-apagon{animation:none!important}}
 `;
 
