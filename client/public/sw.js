@@ -35,6 +35,10 @@ self.addEventListener("fetch", (event) => {
   // Si pasara, el navegador podría cortarla al dormir este archivo y habría reconexiones.
   if (url.pathname === "/api/dm/stream") return;
 
+  // La banda sonora del juego (/musica/*.m4a): el reproductor la pide por partes (Range) y la caché no guarda
+  // respuestas parciales; el navegador la maneja solo, con su caché de siempre.
+  if (url.pathname.startsWith("/musica/")) return;
+
   // API, archivos subidos e íconos: siempre de la red (la caché solo si no hay conexión).
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/icons/")) {
     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));

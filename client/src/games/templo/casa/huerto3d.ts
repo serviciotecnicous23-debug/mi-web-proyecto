@@ -347,6 +347,7 @@ export class HuertoWorld {
     this._estado = estado;
     this.opts = opts;
     this.audio = opts.audio;
+    this.audio.lugar("huerto");
     const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     this.renderer = new THREE.WebGLRenderer({ antialias: !coarse || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.75 : 2));

@@ -15,6 +15,7 @@ import { NavGrid, collide } from "../three/nav";
 import { Overlay, Ring } from "../three/overlay";
 import { fadeMaterials } from "../three/structures";
 import type { TempleAudio } from "../audio";
+import { lugarDeCiudad } from "../banda-sonora";
 import { gameStore, type CiudadHud, type EdificioId, type Modal } from "../store";
 import { escalonRank } from "../online";
 import type { Circle, Rect, V2 } from "../layout";
@@ -203,6 +204,8 @@ export class CiudadWorld {
   private calle: { p: PersonajeCiudad; fig: Figure; rig: Rig; etiqueta: HTMLDivElement }[] = [];
 
   private player: { fig: Figure; rig: Rig; vx: number; vz: number; step: number };
+  /** Cada cuánto se mira qué música toca según dónde camina. */
+  private musicaCada = 0;
   private npcs: Npc[] = [];
   private zonas: Zona[] = [];
   private barrios = new Map<number, BarrioVisto>();
@@ -2705,6 +2708,11 @@ export class CiudadWorld {
     this.actualizarOclusion(dt);
     this.overlay.update(now);
     this.ambiente();
+    // la banda sonora según dónde camina: el patio, la calle de los siervos, el mercado, la plaza o el barrio
+    if ((this.musicaCada -= dt) <= 0) {
+      this.musicaCada = 0.6;
+      this.audio.lugar(lugarDeCiudad(this.player.rig.x, this.player.rig.z, this.noche(), this.audio.layers.event));
+    }
     this.audio.update();
     if (this.shadowDirty) {
       this.renderer.shadowMap.needsUpdate = true;

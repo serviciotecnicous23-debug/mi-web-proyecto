@@ -16,6 +16,7 @@ import { NavGrid, collide } from "../three/nav";
 import { Overlay, Ring } from "../three/overlay";
 import { C, GeoBuilder, disposeGroup, meshPair, avanzarMateriales } from "../three/builder";
 import type { TempleAudio } from "../audio";
+import { lugarDeEdificio } from "../banda-sonora";
 import { gameStore, type CasaHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
 import { relojEnLinea } from "@shared/calendario";
@@ -196,6 +197,8 @@ export class CasaWorld {
     this.estado = estado;
     this.opts = opts;
     this.audio = opts.audio;
+    // la música de la casa, o la del edificio (la escuela de los profetas, el palacio, la cámara de los sacerdotes)
+    this.audio.lugar(lugarDeEdificio(opts.edificio?.id));
     this.plano = opts.edificio?.plano ?? planoDe(estado.nivel);
     if (opts.edificio && opts.quien) this.estaciones = estacionesPara(opts.edificio, opts.quien.camino);
     this.fijas = celdasFijas(this.plano);

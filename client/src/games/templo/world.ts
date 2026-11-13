@@ -33,6 +33,7 @@ import { Fx } from "./three/fx";
 import { NavGrid, collide, walkableArea } from "./three/nav";
 import { Overlay, Ring } from "./three/overlay";
 import { TempleAudio } from "./audio";
+import { lugarDelTemplo } from "./banda-sonora";
 import type { DeberId } from "@shared/jerusalen";
 import type { OnlineHooks } from "./online";
 import { fechaDe, relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
@@ -179,6 +180,8 @@ export class TempleWorld {
   private nav: NavGrid;
   private overlay: Overlay;
   audio: TempleAudio;
+  /** Cada cuánto se mira qué música toca (de día, de noche o de fiesta). */
+  private musicaCada = 0;
 
   private player: { fig: Figure; rig: Rig; carry: Carrier; vx: number; vz: number; step: number };
   private azarias: { fig: Figure; rig: Rig; bubble: HTMLDivElement };
@@ -3142,6 +3145,13 @@ export class TempleWorld {
     this.updateLabels(dt);
     this.updateArrow();
     this.overlay.update(now);
+    // la banda sonora del templo: de día, de noche o de fiesta
+    if ((this.musicaCada -= dt) <= 0) {
+      this.musicaCada = 0.6;
+      // (las horas de la oración también marcan «evento» para el arpa, pero no son fiesta: la fiesta suena en las
+      // fiestas de verdad, y en la Pascua de la historia, la suya)
+      this.audio.lugar(this.pascua > 0 ? "pascua" : lugarDelTemplo(this.isNight(), this.fiestaFestiva()));
+    }
     this.audio.update();
     if (this.shadowDirty) {
       this.renderer.shadowMap.needsUpdate = true;
