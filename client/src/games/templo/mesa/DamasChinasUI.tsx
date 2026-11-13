@@ -176,7 +176,7 @@ export function DamasChinasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Pr
                 : "Ahora toca un hoyo encendido (los saltos se encadenan solos)."
               : `Juega ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}…`}
       </p>
-      <section className="mx-auto w-full max-w-[36rem]" aria-label="La estrella">
+      <section className="mx-auto w-full max-w-[29rem]" aria-label="La estrella">
         <svg viewBox="-54 -58 108 116" className="h-auto w-full touch-manipulation" role="img" aria-label="El tablero de las damas chinas">
           <defs>
             <radialGradient id="dc-madera" cx=".5" cy=".45" r=".6">

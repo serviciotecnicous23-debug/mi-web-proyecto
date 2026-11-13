@@ -27,7 +27,7 @@ function CaraMemoria({ c, grande }: { c: Cara; grande?: boolean }) {
   }
   return (
     <div className="mesa-papel flex h-full w-full flex-col justify-center overflow-hidden rounded-[10px] border-2 border-[#b8862a] p-[7%] text-center">
-      <p className={`font-serif italic leading-snug text-stone-800 ${grande ? "text-[14px]" : "line-clamp-5 text-[7px] sm:text-[8.5px]"}`}>«{p.verso.text}»</p>
+      <p className={`font-serif italic leading-snug text-stone-800 ${grande ? (p.verso.text.length > 110 ? "text-[11px]" : p.verso.text.length > 70 ? "text-[12.5px]" : "text-[14px]") : "line-clamp-5 text-[7px] sm:text-[8.5px]"}`}>«{p.verso.text}»</p>
       <p className={`mt-1 font-bold text-amber-900 ${grande ? "text-xs" : "text-[7px] sm:text-[8px]"}`}>{p.verso.ref}</p>
     </div>
   );
@@ -104,11 +104,11 @@ export function MemoriaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsM
       </div>
 
       {/* el visor: las dos abiertas en grande */}
-      <section className="mesa-pano flex min-h-[9.5rem] items-center justify-center gap-3 rounded-3xl p-3" aria-live="polite" aria-label="Las cartas abiertas">
+      <section className="mesa-pano flex min-h-[11.5rem] items-center justify-center gap-3 rounded-3xl p-3 sm:min-h-[13rem]" aria-live="polite" aria-label="Las cartas abiertas">
         {abiertas.length ? (
           abiertas.map(({ c, i }) =>
             c.estado === "abierta" ? (
-              <div key={i} className="mesa-pop h-[8.4rem] w-[6.3rem] shadow-xl sm:h-[10rem] sm:w-[7.5rem]">
+              <div key={i} className="mesa-pop h-[10.5rem] w-[7.8rem] shadow-xl sm:h-[12rem] sm:w-[9.4rem]">
                 <CaraMemoria c={c} grande />
               </div>
             ) : null,
