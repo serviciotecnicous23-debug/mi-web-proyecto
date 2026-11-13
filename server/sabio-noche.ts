@@ -796,9 +796,11 @@ export function registerSabioNocheRoutes(app: Express) {
         if (js.length >= NOCHE_MAX) return { error: 409, message: `La noche es de hasta ${NOCHE_MAX}: ya no caben más.` };
         const nivel: NivelBot = esNivelBot(req.body?.nivel) ? req.body.nivel : "normal";
         const k = Math.min(0, ...js.map((j) => j.u)) - 1;
-        const usados = new Set(js.map((j) => j.nombre));
+        // un nombre que no tenga nadie de la sala (ni persona ni compañero)
+        const base = (x: string) => x.replace(/ 🤖$/, "");
+        const usados = new Set(js.map((j) => base(j.nombre)));
         let i = Number(n.id) + -k;
-        while (usados.has(nombreDeBot(i)) && i < Number(n.id) + -k + 12) i++;
+        while (usados.has(base(nombreDeBot(i))) && i < Number(n.id) + -k + 12) i++;
         const bot: JugadorNoche = {
           t: k, u: k, j: k, nombre: nombreDeBot(i), camino: "sacerdocio", orden: js.length, puntos: 0, ms: 0, respondidas: 0, r: null,
           antes: null, gano: 0, bien: null, fuera: false, bot: nivel,

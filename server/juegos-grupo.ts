@@ -1538,9 +1538,11 @@ function quitarMiembro(s: Sala, u: number, motivo: string | null) {
 function nuevoBot(s: Sala, nivel: NivelBot, ahora: number): Miembro {
   s.botN++;
   const id = -s.botN;
-  const usados = new Set(s.miembros.map((x) => x.nombre));
+  // un nombre que no tenga nadie de la sala (ni persona ni compañero)
+  const base = (x: string) => x.replace(/ 🤖$/, "");
+  const usados = new Set(s.miembros.map((x) => base(x.nombre)));
   let k = s.codigo.charCodeAt(0) + s.botN;
-  while (usados.has(nombreDeBot(k)) && k < s.codigo.charCodeAt(0) + s.botN + 12) k++;
+  while (usados.has(base(nombreDeBot(k))) && k < s.codigo.charCodeAt(0) + s.botN + 12) k++;
   return { u: id, pj: id, t: 0, nombre: nombreDeBot(k), camino: "sacerdocio", listo: true, equipo: null, entro: ahora, visto: ahora, bot: nivel };
 }
 
