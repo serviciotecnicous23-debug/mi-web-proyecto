@@ -10,6 +10,7 @@ import type { Circle, Rect, V2 } from "../layout";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS } from "@shared/personajes";
 import { LUGAR_ANCIANOS } from "@shared/dichos";
 import { CANTERA, PATIO, PATIO_MESA, PATIO_PUERTA, PATIO_PUERTA_ANCHO, PATIO_ZONA, TRAMO } from "@shared/juegos-grupo";
+import { MESAS_PATIO, MESA_PATIO_MEDIO } from "@shared/mesa/juegos";
 
 /** Altura de las calles (la explanada del templo está en 0). */
 export const SUELO = -3.4;
@@ -125,6 +126,8 @@ export function obstaculosPatio(): Rect[] {
     [CANTERA[0] + 0.7, CANTERA[1] - 1.1, CANTERA[0] + 1.95, CANTERA[1] + 1.1],
     // el tramo del muro que se levanta en «Levantemos el muro»
     [TRAMO.x0 - 0.15, TRAMO.z - 0.5, TRAMO.x1 + 0.15, TRAMO.z + 0.5],
+    // las mesas de los juegos de grupo tradicionales, con sus banquitos (shared/mesa/juegos.ts)
+    ...MESAS_PATIO.map((m) => [m.x - MESA_PATIO_MEDIO, m.z - MESA_PATIO_MEDIO, m.x + MESA_PATIO_MEDIO, m.z + MESA_PATIO_MEDIO] as Rect),
   ];
 }
 

@@ -60,6 +60,8 @@ const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
 const ReportesPage = lazy(() => import("@/pages/reportes"));
 const PlanillasPage = lazy(() => import("@/pages/planillas"));
 const JuegosPage = lazy(() => import("@/pages/juegos"));
+// solo en desarrollo: las mesas del patio corriendo en el navegador (no existe en la web publicada)
+const PruebaMesa = import.meta.env.DEV ? lazy(() => import("@/games/templo/mesa/PruebaMesa")) : null;
 const FinanzasPage = lazy(() => import("@/pages/finanzas"));
 const SermonesPage = lazy(() => import("@/pages/sermones"));
 const GruposPage = lazy(() => import("@/pages/grupos"));
@@ -115,6 +117,7 @@ function Router() {
       <Route path="/planillas/:id" component={PlanillasPage} />
       <Route path="/juegos" component={JuegosPage} />
       <Route path="/juegos/:slug" component={JuegosPage} />
+      {PruebaMesa && <Route path="/mesa-prueba/:juego" component={PruebaMesa} />}
       <Route path="/finanzas" component={FinanzasPage} />
       <Route path="/sermones" component={SermonesPage} />
       <Route path="/grupos" component={GruposPage} />
