@@ -7,7 +7,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { USOS_CASA, leerInterior, muebleBase, rolloDelDia, type UsoRespuesta, type UsosDeHoy } from "@shared/casa-interior";
-import { leerLabranza } from "@shared/huerto";
+import { leerLabranza, usosDelDia } from "@shared/huerto";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
 import { sumarGozo } from "./gozo";
 import { diaClave, type PersonajeFila } from "./jerusalen";
@@ -23,9 +23,7 @@ const YA_HOY: Record<keyof typeof USOS_CASA, string> = {
 
 /** Lo que ya se usó hoy (para la pantalla), desde la columna `labranza`. */
 export function usosDeHoy(labranza: unknown, dia = diaClave()): UsosDeHoy {
-  const u = leerLabranza(labranza).usos;
-  const hechos = u.dia === dia ? u.hechos : [];
-  return { descansar: hechos.includes("descansar"), cocinar: hechos.includes("cocinar"), leer: hechos.includes("leer") };
+  return usosDelDia(labranza, dia);
 }
 
 /** ¿El anfitrión cocinó hoy el guiso en su fogón? (los invitados de su banquete ganan un poco más). */

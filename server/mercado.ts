@@ -296,10 +296,16 @@ export function registerMercadoRoutes(app: Express) {
       const ch = await jugador(req, res);
       if (!ch) return;
       const { rows } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]);
+      const { rows: yo } = await pool.query(`SELECT ropa FROM game_characters WHERE id = $1`, [ch.id]);
       const tiene = new Set(lista(rows[0]?.armario));
-      // de pies a cabeza: cada ranura con algo del armario que sea de esa ranura (lo que no venga queda sin nada)
+      const antes = leerRopaIds(yo[0]?.ropa);
+      // de pies a cabeza: cada ranura con algo del armario que sea de esa ranura (null la deja sin nada). La ranura que
+      // no viene se queda como estaba: una pantalla vieja que manda solo el manto y la faja no quita la túnica ni el velo.
       const elegir = (v: unknown, r: Ranura) => (typeof v === "string" && tiene.has(v) && ranuraDe(articulo(v)) === r ? v : null);
-      const ropa = Object.fromEntries(RANURAS.map((r) => [r, elegir(req.body?.[r], r)])) as Record<Ranura, string | null>;
+      const pide: Record<string, unknown> = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+      const ropa = Object.fromEntries(
+        RANURAS.map((r) => [r, elegir(Object.prototype.hasOwnProperty.call(pide, r) ? pide[r] : antes[r], r)]),
+      ) as Record<Ranura, string | null>;
       await pool.query(`UPDATE game_characters SET ropa = $2::jsonb WHERE id = $1`, [ch.id, JSON.stringify(ropa)]);
       // los vecinos que lo ven reciben otra vez su ficha (con la ropa nueva)
       refrescarFicha(ch.id, { ropa: coloresDeRopa(ropa) });

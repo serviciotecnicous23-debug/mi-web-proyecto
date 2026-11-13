@@ -27,14 +27,7 @@ import {
 import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
 import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
 import { leerOficios } from "@shared/taller";
-import { huertitoDe, leerLabranza } from "@shared/huerto";
-
-/** Lo que el dueño ya usó hoy en su casa (la labranza guarda los usos del día). */
-function usosHoy(labranza: unknown): { descansar: boolean; cocinar: boolean; leer: boolean } {
-  const u = leerLabranza(labranza).usos;
-  const hechos = u.dia === diaClave() ? u.hechos : [];
-  return { descansar: hechos.includes("descansar"), cocinar: hechos.includes("cocinar"), leer: hechos.includes("leer") };
-}
+import { huertitoDe, usosDelDia } from "@shared/huerto";
 import { obrasDeBarrio, ventajasDeBarrio } from "./barrio-obras";
 import { vistaArca } from "./arca";
 
@@ -659,7 +652,7 @@ export function registerCiudadRoutes(app: Express) {
         yaBendije: c.visita.yaBendije,
         gozo: esMia ? Number(r.gozo || 0) : 0,
         // lo que el dueño ya usó hoy en su casa: descansar, cocinar y leer el rollo (server/casa-usar.ts)
-        ...(esMia ? { usos: usosHoy(r.labranza) } : {}),
+        ...(esMia ? { usos: usosDelDia(r.labranza, diaClave()) } : {}),
       },
     };
   }

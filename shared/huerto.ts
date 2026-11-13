@@ -377,6 +377,13 @@ export function leerLabranza(v: unknown): LabranzaGuardada {
   };
 }
 
+/** Lo que ya se usó ese día en la casa por dentro (descansar, cocinar y leer el rollo), desde la columna `labranza`. */
+export function usosDelDia(labranza: unknown, dia: string): { descansar: boolean; cocinar: boolean; leer: boolean } {
+  const u = leerLabranza(labranza).usos;
+  const hechos = u.dia === dia ? u.hechos : [];
+  return { descansar: hechos.includes("descansar"), cocinar: hechos.includes("cocinar"), leer: hechos.includes("leer") };
+}
+
 /** Las tareas de hoy (si cambió el día, empiezan de nuevo con las del día). */
 export function misionesDeHoy(lab: LabranzaGuardada, dia: string, casa: number, c: Parameters<typeof misionesDelDia>[2]): MisionesGuardadas {
   if (lab.misiones && lab.misiones.dia === dia && lab.misiones.ids.length) return lab.misiones;

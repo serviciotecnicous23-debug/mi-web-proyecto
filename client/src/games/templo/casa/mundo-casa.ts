@@ -997,6 +997,8 @@ export class CasaWorld {
 
   remodelar(on: boolean) {
     if (!this.estado.esMia) return;
+    // sentado o acostado: primero se levanta (si no, quedaría en el aire al mover ese mueble)
+    if (on && this.postura) this.levantarse();
     this.remodelando = on;
     this.sel = -1;
     this.ruta = [];
