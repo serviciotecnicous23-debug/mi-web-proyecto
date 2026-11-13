@@ -121,6 +121,28 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
 const num = (v: unknown, lo: number, hi: number, def: number) => (typeof v === "number" && Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : def);
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
+/**
+ * Quien quiera saber cada posición real que llega (el patio de los juegos: la carrera y el muro, server/juegos-grupo.ts).
+ * Se llama con la cuenta, el personaje, dónde está, su canal y la hora del servidor. Debe ser rápido: llega muy seguido.
+ */
+type AlMoverse = (cuenta: number, personajeId: number, x: number, z: number, canal: string, ahora: number) => void;
+const alMoverse = new Set<AlMoverse>();
+export function observarPosiciones(f: AlMoverse): () => void {
+  alMoverse.add(f);
+  return () => {
+    alMoverse.delete(f);
+  };
+}
+/** Quien quiera saber cuándo alguien bloquea o desbloquea (el patio de los juegos saca de la sala al bloqueado). */
+type AlBloquear = (a: number, b: number, bloqueado: boolean) => void;
+const alBloquearse = new Set<AlBloquear>();
+export function observarBloqueos(f: AlBloquear): () => void {
+  alBloquearse.add(f);
+  return () => {
+    alBloquearse.delete(f);
+  };
+}
+
 function alRecibir(c: Con, data: RawData) {
   let msg: { t?: unknown; x?: unknown; z?: unknown; ry?: unknown; m?: unknown; id?: unknown; l?: unknown; a?: unknown };
   try {
@@ -144,6 +166,13 @@ function alRecibir(c: Con, data: RawData) {
     c.a = Math.round(num(msg.a, 0, (templo ? ACTIVIDADES : ACTIVIDADES_CIUDAD).length - 1, 0));
     c.canal = templo ? "templo" : canalDe(c.x, c.z, c.info.barrio);
     marcarEnTemplo(c.info.id, templo);
+    for (const f of alMoverse) {
+      try {
+        f(c.info.u, c.info.id, c.x, c.z, c.canal, now);
+      } catch (err) {
+        console.error("[ciudad-red] al moverse:", err);
+      }
+    }
   } else if (msg.t === "frase") {
     const f = typeof msg.id === "string" ? fraseRapida(msg.id) : null;
     if (!f) return;
@@ -259,6 +288,13 @@ export function aplicarBloqueo(a: number, b: number, bloqueado: boolean) {
     if (bloqueado) c.bloqueos.add(otro);
     else c.bloqueos.delete(otro);
     c.ultimo = "";
+  }
+  for (const f of alBloquearse) {
+    try {
+      f(a, b, bloqueado);
+    } catch (err) {
+      console.error("[ciudad-red] al bloquear:", err);
+    }
   }
 }
 

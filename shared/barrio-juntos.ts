@@ -160,6 +160,9 @@ export const COPA_PUNTOS = {
   banquete: 2,
   /** Por cada 10 de gozo echados en el arca de Joás (shared/arca.ts). */
   arca: 1,
+  /** Por cada partida jugada en el patio de los juegos (shared/juegos-grupo.ts), y por ganarla (o levantar el muro). */
+  juego: 2,
+  juegoGanado: 3,
 } as const;
 export type FuenteCopa = keyof typeof COPA_PUNTOS;
 

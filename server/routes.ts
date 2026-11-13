@@ -44,6 +44,7 @@ import { registerAlbumRoutes } from "./album";
 import { registerRegistroRoutes } from "./registro";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
+import { registerJuegosGrupoRoutes } from "./juegos-grupo";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
 import { api } from "@shared/routes";
@@ -3746,6 +3747,8 @@ ${urls}
   registerLogrosEnLineaRoutes(app);
   // el registro de cada jugador: todo lo que hizo, para verlo en su casa, su ficha y las tablas
   registerRegistroRoutes(app);
+  // el patio de los juegos: salas para grupos y cinco juegos en línea (shared/juegos-grupo.ts)
+  registerJuegosGrupoRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {

@@ -32,6 +32,9 @@ export type RedEventos = {
   onAmigo?: (nombre: string, gozo: number) => void;
   /** Los mentores (shared/mentores.ts): te eligieron, tu aprendiz cumplió un paso, se encontraron… */
   onMentor?: (m: import("@shared/mentores").AvisoMentor) => void;
+  /** El patio de los juegos (shared/juegos-grupo.ts): mi sala (null: ya no estoy en una) y las invitaciones a jugar. */
+  onSala?: (v: import("@shared/juegos-grupo").SalaVista | null, motivo?: string) => void;
+  onSalaInvitacion?: (i: import("@shared/juegos-grupo").InvitacionSala) => void;
   /** La misión del barrio de hoy (juntos.ts): cómo va y cuando se cumple. */
   onJuntos?: (m: Extract<RedEntra, { t: "juntos" | "juntos-hecho" }>) => void;
   onFuera: (motivo: string) => void;
@@ -134,6 +137,12 @@ export class RedCiudad {
           break;
         case "mentor":
           this.ev.onMentor?.(m.m);
+          break;
+        case "sala":
+          this.ev.onSala?.(m.v, m.motivo);
+          break;
+        case "sala-invitacion":
+          this.ev.onSalaInvitacion?.(m.i);
           break;
         case "fuera":
           this.fuera = true;

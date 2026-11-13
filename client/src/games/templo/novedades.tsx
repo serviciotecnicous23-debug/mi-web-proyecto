@@ -13,6 +13,20 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-patio-de-los-juegos",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El patio de los juegos: juega en grupo con tu gente de la iglesia",
+    puntos: [
+      "🎲 Un lugar nuevo al norte de la ciudad, junto al barrio de la puerta de las Ovejas (en el mapa: «Ir a… → El patio de los juegos»), y el botón 🎲 a la derecha. Crea una sala, comparte su código de 6 letras o invita a tus amistades y a la gente de tu barrio: caben de 2 a 12 personas, y se habla con frases fijas y versículos.",
+      "⚔️ Esgrima bíblica: sale una cita y hay que hallar su versículo (o al revés). Gana la ronda quien acierta primero (Efesios 6:17).",
+      "🛡️ Las doce tribus: de 2 a 4 tribus. Si tu tribu falla, las demás le roban la pregunta.",
+      "🕵️ ¿Quién soy?: un personaje de la Biblia y sus pistas, una por una. Con menos pistas, más puntos.",
+      "🏃 La carrera de Ahimaas: corran por las calles de Jerusalén hasta la luz dorada de cada lugar y vuelvan al patio (2 Samuel 18:23).",
+      "🧱 Levantemos el muro: en grupo, lleven piedras de la cantera al muro del patio en 5 minutos (Nehemías 4:6).",
+      "🏆 Jugar da gozo (hasta 60 por día) y puntos para la copa de tu barrio. Ganar cada juego da su prenda, que no se vende, y hay dos logros nuevos: «Alegría del patio» y «Corona del patio».",
+    ],
+  },
+  {
     id: "2026-11-13-examenes-de-rango",
     fecha: "13 de noviembre de 2026",
     titulo: "Los exámenes de rango: cada escalón de tu camino tiene su examen",

@@ -63,6 +63,7 @@ import { SabioView } from "./SabioUI";
 import { AulaView } from "./AulaUI";
 import { RangoAviso } from "./RangoUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
+import { InvitacionSalaAviso } from "./JuegosGrupoUI";
 import { InvitacionEntrante } from "./Acompanar";
 import { CasaHudLayer } from "./CasaUI";
 import { GananciaEnLinea } from "./GananciaUI";
@@ -797,6 +798,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
         else if (city && k === "f") gameStore.push({ kind: "frases" });
         else if (city && k === "v") gameStore.push({ kind: "vecinos" });
         else if (city && k === "b") gameStore.push({ kind: "barrio" });
+        else if (city && k === "g") gameStore.push({ kind: "juegos" });
       } else if (k === "l") gameStore.push({ kind: "book" });
       else if (k === "m") gameStore.push({ kind: "upgrades" });
       else if (k === "c") gameStore.push({ kind: "comunidad" });
@@ -911,6 +913,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
               <LlamadaEntrante />
               <RetoEntrante />
               {city && <InvitacionEntrante />}
+              {city && <InvitacionSalaAviso />}
             </>
           )}
           <AvisoVersionNueva alActualizar={actualizarVersion} />
@@ -1746,6 +1749,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "vecinos":
     case "vecino":
     case "barrio":
+    case "juegos":
     case "visita":
     case "escuela":
     case "palacio":
