@@ -677,6 +677,34 @@ mercado después también debe llevar su `serie`.
 solo las partes que llegan (null deja la parte sin nada): las pruebas que comparan la ropa completa con solo el manto y
 la faja deben mirar solo esas dos.
 
+## 7d. La banda sonora (13 de noviembre de 2026)
+
+Pedido de Luis: música profesional y propia para cada lugar y cada juego, «que sea un deleite escuchar».
+
+**Las pistas.** Son pistas instrumentales propias, compuestas en la PC del ministerio con ACE-Step 1.5 turbo (licencia MIT; `scratchpad/musica/pistas.json` tiene el pedido de cada una), revisadas una por una:
+- volumen parejo (−16 LUFS), sin silencios en medio y con entradas y salidas suaves;
+- **sin voces** (whisper lo comprueba).
+
+Van en `client/public/musica/<pista>.m4a` (AAC de 96 kbps, también para iPhone) y cada una se descarga solo cuando toca. La paleta es antigua del Medio Oriente con producción de cine: laúd, qanún, flauta ney, lira, panderos, darbuka, cuerdas, metales suaves y coro sin palabras.
+
+| Lugar | Pista |
+|---|---|
+| El templo | de día (dos variantes), de noche y en fiesta |
+| La ciudad | de día (dos variantes), de noche, el mercado, el barrio, la calle de los siervos, el patio (dos variantes) y la fiesta en la plaza |
+| Por dentro | la casa, el huerto, la escuela de los profetas, el palacio, la cámara de los sacerdotes y el aula (con su música de examen) |
+| Ventanas | «¿Quién es sabio?» (el tema y el suspenso), el concurso, la historia de la temporada (la amenaza de Senaquerib o la Pascua) |
+| Juegos | los de mesa (tranquila), los de grupo (alegre), los rápidos (con energía) y los de fiesta, más dos golpes cortos al ganar y al perder |
+
+**Cómo suena (`banda-sonora.ts`).**
+- Cada mundo dice dónde está el jugador (`audio.lugar`). La ciudad lo mira cada 0,6 s según la zona, la hora y la fiesta.
+- Las ventanas y los juegos piden la suya encima: la ventana abierta (`encimaDeVentana`) y el evento `jer-musica` de cada juego (`detail`: el juego, o `null` al cerrarse). Para el golpe final se usa `jer-golpe` (`"victoria"` o `"derrota"`).
+- Dos voces `<audio>` se cruzan en 2,6 s. Al acercarse el final, pasa a la otra variante del lugar.
+- Las pistas respetan «Música», «Sin sonido» y la radio, bajan un momento en los logros y tienen su «Volumen de la música» en la pausa.
+- Mientras suena una pista, el arpa hecha en el momento se calla. Si una pista no carga, vuelve el arpa.
+- El service worker deja pasar `/musica/`.
+
+**Agregar una pista:** se escribe su pedido en `pistas.json`, se genera con `generar_musica.sh <id>`, se revisa con `procesar_musica.sh <id>` y se suma a `PISTAS` en `banda-sonora.ts`. La prueba `shared/banda-sonora.test.ts` comprueba que exista.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

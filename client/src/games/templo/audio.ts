@@ -11,8 +11,11 @@
  *    el shofar, las campanillas del manto (Éxodo 28:35), el corderito, las palomas, el fuego
  *    del altar, el agua del mar de bronce y el velo que se rasga de arriba abajo (Mateo 27:51).
  *  - Cuando suena un logro, la música baja un momento para que se escuche bien.
+ *  - La música de fondo es la banda sonora grabada (banda-sonora.ts): cada mundo dice dónde está el jugador y las
+ *    ventanas y los juegos piden la suya encima. La música hecha en el momento queda solo si una pista no carga.
  */
 import type { Speaker } from "./data";
+import { BandaSonora, type Golpe, type LugarMusica } from "./banda-sonora";
 
 // re dórico / pentatónico: re fa sol la do
 const SCALE = [146.83, 174.61, 196.0, 220.0, 261.63, 293.66, 349.23, 392.0, 440.0, 523.25, 587.33, 698.46, 783.99, 880.0, 1046.5];
@@ -36,6 +39,16 @@ export class TempleAudio {
   private brown!: AudioBuffer;
   private loops: { crowd: GainNode; fire: GainNode; water: GainNode; wind: GainNode } | null = null;
   private drone: OscillatorNode[] = [];
+  private droneGain: GainNode | null = null;
+  /** La banda sonora grabada: su propio canal (sin el eco de piedra: las pistas ya traen su sala). */
+  private pistas!: GainNode;
+  private pistasDuck!: GainNode;
+  private banda: BandaSonora | null = null;
+  private lugarPedido: LugarMusica | null = null;
+  private encimaVentana: LugarMusica | null = null;
+  private encimaJuego: LugarMusica | null = null;
+  /** El volumen de la música (0 a 1), elegido en el menú. */
+  volumenMusica = 0.8;
   private nextNote = 0;
   private step = 0;
   private lastPitch = 5;
@@ -49,9 +62,10 @@ export class TempleAudio {
   layers = { cantores: 0, night: false, event: false };
   private ambState: Ambience = { crowd: 0, fire: 0, water: 0, night: false, day: 1 };
 
-  constructor(muted: boolean, musicOn: boolean) {
+  constructor(muted: boolean, musicOn: boolean, volumenMusica = 0.8) {
     this.muted = muted;
     this.musicOn = musicOn;
+    this.volumenMusica = Math.max(0, Math.min(1, volumenMusica));
   }
 
   /** Se crea al primer toque (los navegadores no dejan sonar antes). */
@@ -93,6 +107,11 @@ export class TempleAudio {
     const verbGain = ctx.createGain();
     verbGain.gain.value = 0.28;
     this.music.connect(this.musicDuck).connect(this.master);
+    this.pistas = ctx.createGain();
+    this.pistas.gain.value = this.nivelPistas();
+    this.pistasDuck = ctx.createGain();
+    this.pistasDuck.gain.value = 1;
+    this.pistas.connect(this.pistasDuck).connect(this.master);
     this.sfx.connect(this.master);
     this.amb.connect(this.master);
     this.musicDuck.connect(this.verb);
@@ -105,6 +124,68 @@ export class TempleAudio {
     this.startLoops();
     this.nextNote = ctx.currentTime + 0.4;
     this.motif(0.3, 0.12);
+    try {
+      this.banda = new BandaSonora(ctx, this.pistas);
+      this.banda.alCambiar = (sonando) => this.alSonarPista(sonando);
+    } catch {
+      this.banda = null; // sin banda sonora: queda la música hecha en el momento
+    }
+    this.elegirMusica();
+  }
+
+  /** El volumen de las pistas según «Música», la radio y el volumen elegido. */
+  private nivelPistas() {
+    return this.musicOn && !this.radioOn && !this.muted ? 0.9 * this.volumenMusica : 0;
+  }
+
+  /** Mientras suena una pista grabada, la música hecha en el momento (el arpa y el bordón) se calla. */
+  private alSonarPista(sonando: boolean) {
+    if (!this.ctx || !this.droneGain) return;
+    this.droneGain.gain.setTargetAtTime(sonando ? 0 : 0.055, this.ctx.currentTime, sonando ? 0.6 : 2);
+  }
+
+  /** Lo que debe sonar: lo que piden encima (un juego, una ventana) o lo del lugar; nada con la música apagada. */
+  private elegirMusica() {
+    if (!this.banda) return;
+    const quiere = this.musicOn && !this.radioOn && !this.muted;
+    this.banda.poner(quiere ? this.encimaJuego ?? this.encimaVentana ?? this.lugarPedido : null);
+  }
+
+  /** Dónde está el jugador (lo dice cada mundo: el templo, la ciudad, la casa, el huerto, un edificio). */
+  lugar(l: LugarMusica | null) {
+    if (this.lugarPedido === l) return;
+    this.lugarPedido = l;
+    this.elegirMusica();
+  }
+
+  /** La música de una ventana abierta («¿Quién es sabio?», el aula…), encima de la del lugar. */
+  encimaDeVentana(l: LugarMusica | null) {
+    if (this.encimaVentana === l) return;
+    this.encimaVentana = l;
+    this.elegirMusica();
+  }
+
+  /** La música de un juego abierto (el evento `jer-musica`), encima de todo. */
+  encimaDeJuego(l: LugarMusica | null) {
+    if (this.encimaJuego === l) return;
+    this.encimaJuego = l;
+    this.elegirMusica();
+  }
+
+  /** El volumen de la música (0 a 1), del menú. */
+  setVolumenMusica(v: number) {
+    this.volumenMusica = Math.max(0, Math.min(1, v));
+    if (this.ctx) this.pistas.gain.setTargetAtTime(this.nivelPistas(), this.ctx.currentTime, 0.2);
+  }
+
+  /** Un golpe corto de la banda sonora: al ganar o perder una partida. */
+  golpe(cual: Golpe) {
+    if (this.nivelPistas() > 0) this.banda?.golpe(cual);
+  }
+
+  /** Lo que suena ahora (para las pruebas y la ventana de sonido). */
+  get musicaAhora(): { lugar: LugarMusica | null; grabada: boolean } {
+    return { lugar: this.banda?.lugar ?? null, grabada: !!this.banda?.sonando };
   }
 
   private impulse(sec: number) {
@@ -181,6 +262,7 @@ export class TempleAudio {
     this.drone.push(lfo);
     filter.connect(gain).connect(this.music);
     gain.gain.setTargetAtTime(0.055, ctx.currentTime, 3);
+    this.droneGain = gain;
   }
 
   /** Sonidos de fondo continuos: viento, murmullo del pueblo, fuego del altar y agua. */
@@ -224,7 +306,11 @@ export class TempleAudio {
 
   setMuted(m: boolean) {
     this.muted = m;
-    if (this.ctx) this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ctx.currentTime, 0.05);
+    if (this.ctx) {
+      this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ctx.currentTime, 0.05);
+      this.pistas.gain.setTargetAtTime(this.nivelPistas(), this.ctx.currentTime, 0.2);
+    }
+    this.elegirMusica();
   }
 
   setMusic(on: boolean) {
@@ -243,7 +329,10 @@ export class TempleAudio {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     this.music.gain.setTargetAtTime(this.musicOn && !this.radioOn ? 0.5 : 0, t, 0.4);
+    this.pistas.gain.setTargetAtTime(this.nivelPistas(), t, 0.4);
     this.amb.gain.setTargetAtTime(this.radioOn ? 0.45 : 0.8, t, 0.4);
+    // con la música apagada o la radio sonando, la pista se calla (y no se sigue bajando)
+    this.elegirMusica();
   }
 
   suspend() {
@@ -258,10 +347,11 @@ export class TempleAudio {
   private duck(amount = 0.35, sec = 1.6) {
     const ctx = this.ctx;
     if (!ctx) return;
-    const g = this.musicDuck.gain;
-    g.cancelScheduledValues(ctx.currentTime);
-    g.setTargetAtTime(amount, ctx.currentTime, 0.04);
-    g.setTargetAtTime(1, ctx.currentTime + sec, 0.5);
+    for (const g of [this.musicDuck.gain, this.pistasDuck.gain]) {
+      g.cancelScheduledValues(ctx.currentTime);
+      g.setTargetAtTime(amount, ctx.currentTime, 0.04);
+      g.setTargetAtTime(1, ctx.currentTime + sec, 0.5);
+    }
   }
 
   /** Evita que un mismo sonido se amontone. */
@@ -340,6 +430,11 @@ export class TempleAudio {
   update() {
     const ctx = this.ctx;
     if (!ctx || !this.musicOn || this.muted || this.radioOn) return;
+    // con una pista grabada sonando, la música hecha en el momento descansa
+    if (this.banda?.sonando) {
+      this.nextNote = Math.max(this.nextNote, ctx.currentTime + 0.25);
+      return;
+    }
     const bpm = this.layers.event ? 76 : 66;
     const beat = 60 / bpm / 2;
     while (this.nextNote < ctx.currentTime + 0.25) {
@@ -959,6 +1054,8 @@ export class TempleAudio {
   dispose() {
     const ctx = this.ctx;
     this.ctx = null;
+    this.banda?.dispose();
+    this.banda = null;
     if (!ctx) return;
     try {
       this.drone.forEach((o) => o.stop());

@@ -49,6 +49,8 @@ import { EmblemaJerusalen, EmblemaTemplo } from "./portada";
 import { Medalla } from "./medalla";
 import "./templo.css";
 import { TempleAudio } from "./audio";
+import { lugarDeJuego, lugarDeVentana, type Golpe } from "./banda-sonora";
+import { arcoDeTemporada, enLaTemporada, enTexas } from "@shared/capitulos";
 import type { CiudadWorld } from "./ciudad/mundo";
 import type { CasaWorld } from "./casa/mundo-casa";
 import type { HuertoWorld, RespuestaHuerto } from "./casa/huerto3d";
@@ -93,6 +95,30 @@ function writePref(key: string, v: boolean) {
     /* modo privado */
   }
 }
+function readNum(key: string, def: number) {
+  try {
+    const v = Number(localStorage.getItem(key));
+    return localStorage.getItem(key) === null || !Number.isFinite(v) ? def : Math.max(0, Math.min(1, v));
+  } catch {
+    return def;
+  }
+}
+function writeNum(key: string, v: number) {
+  try {
+    localStorage.setItem(key, String(v));
+  } catch {
+    /* modo privado */
+  }
+}
+
+/** La música de la ventana abierta (el aula, «¿Quién es sabio?»…): un examen en el aula suena a examen. */
+function musicaDeVentana(m: Modal | null) {
+  if (m?.kind === "aula" && (m.pedido?.que === "examen" || m.pedido?.que === "rango")) return "examen" as const;
+  if (m?.kind === "juegos") return "patio" as const;
+  // la historia de la temporada: la amenaza de Senaquerib o la gran Pascua de Ezequías
+  if (m?.kind === "capitulos") return arcoDeTemporada(enLaTemporada(enTexas().dia).temporada)?.id === "pascua-ezequias" ? ("pascua" as const) : ("amenaza" as const);
+  return lugarDeVentana(m?.kind);
+}
 
 type Phase = "loading" | "title" | "starting" | "playing" | "error";
 
@@ -110,6 +136,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const [muted, setMuted] = useState(() => readPref("juegos-silencio", false));
   // dentro de la radio, sin la música del juego (se oye la radio) hasta que la persona la encienda
   const [music, setMusic] = useState(() => readPref("templo-musica", !enLaRadio()));
+  const [volMusica, setVolMusica] = useState(() => readNum("templo-musica-volumen", 0.8));
   const [full, setFull] = useState(false);
   const [immersive, setImmersive] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
@@ -132,6 +159,23 @@ export default function TemploGame({ game }: { game: GameDef }) {
   const [ciudadEstado, setCiudadEstado] = useState<CiudadEstado | null>(null);
   const [cambio, setCambio] = useState<string | null>(null);
   const audioRef = useRef<TempleAudio | null>(null);
+  // la banda sonora: cada juego pide su música (jer-musica), las ventanas la suya, y los golpes al ganar o perder
+  useEffect(() => {
+    const alJuego = (e: Event) => audioRef.current?.encimaDeJuego(lugarDeJuego((e as CustomEvent).detail));
+    const alGolpe = (e: Event) => {
+      const g = (e as CustomEvent).detail;
+      if (g === "victoria" || g === "derrota") audioRef.current?.golpe(g as Golpe);
+    };
+    const alCambiar = () => audioRef.current?.encimaDeVentana(musicaDeVentana(gameStore.getSnapshot().modal));
+    window.addEventListener("jer-musica", alJuego);
+    window.addEventListener("jer-golpe", alGolpe);
+    const quitar = gameStore.subscribe(alCambiar);
+    return () => {
+      window.removeEventListener("jer-musica", alJuego);
+      window.removeEventListener("jer-golpe", alGolpe);
+      quitar();
+    };
+  }, []);
   const irACiudadRef = useRef<(llegada: "templo" | "casa", e?: JerusalenEstado) => Promise<boolean>>(async () => false);
   const irAlTemploRef = useRef<() => Promise<void>>(async () => undefined);
   // La casa por dentro: se entra desde la ciudad (que queda dormida) y se vuelve a la misma puerta.
@@ -212,7 +256,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
       const ses = sessionRef.current ?? new OnlineSession(enLinea);
       sessionRef.current = ses;
       ses.hooks.toCity = () => void irACiudadRef.current("templo");
-      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
+      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music, volMusica);
       const e = ses.estado ?? enLinea;
       const partes = e.personaje?.instruccion ?? 0;
       const w = new mod.TempleWorld(boxRef.current, onlineSave(ses.hooks.rank), {
@@ -322,7 +366,7 @@ export default function TemploGame({ game }: { game: GameDef }) {
       setHuertoW(null);
       cityRef.current?.destroy();
       gameStore.reset();
-      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music);
+      if (!audioRef.current) audioRef.current = new TempleAudio(muted, music, volMusica);
       const sesion = ses;
       const c = new mod.CiudadWorld(boxRef.current, r.data, {
         muted,
@@ -841,6 +885,11 @@ export default function TemploGame({ game }: { game: GameDef }) {
     world?.setMuted(n);
     city?.setMuted(n);
   };
+  const cambiarVolMusica = (v: number) => {
+    setVolMusica(v);
+    writeNum("templo-musica-volumen", v);
+    audioRef.current?.setVolumenMusica(v);
+  };
   const toggleMusic = () => {
     const n = !music;
     setMusic(n);
@@ -901,6 +950,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
               big={big}
               onMute={toggleMute}
               onMusic={toggleMusic}
+              volMusica={volMusica}
+              onVolMusica={cambiarVolMusica}
               onFull={() => void toggleFull()}
               online={online}
               onExitOnline={exitOnline}
@@ -1545,6 +1596,8 @@ function PauseMenu(props: {
   big: boolean;
   onMute: () => void;
   onMusic: () => void;
+  volMusica: number;
+  onVolMusica: (v: number) => void;
   onFull: () => void;
   online: boolean;
   onExitOnline: () => void;
@@ -1607,6 +1660,24 @@ function PauseMenu(props: {
           <Button variant="secondary" onClick={props.onMusic} className={props.music ? "" : "opacity-60"}>
             <Music className="mr-1 h-4 w-4" /> {props.music ? "Música" : "Sin música"}
           </Button>
+          {props.music && (
+            <label className="col-span-2 block text-left text-xs text-amber-100/85" data-testid="pausa-volumen-musica">
+              <span className="mb-1 flex items-center justify-between">
+                <span>Volumen de la música</span>
+                <span className="tabular-nums">{Math.round(props.volMusica * 100)} %</span>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(props.volMusica * 100)}
+                onChange={(e) => props.onVolMusica(Number(e.target.value) / 100)}
+                className="w-full accent-amber-400"
+                aria-label="Volumen de la música"
+              />
+            </label>
+          )}
           <Button variant="secondary" className="col-span-2" onClick={() => setVerControles(true)} data-testid="button-pausa-controles">
             <Gamepad2 className="mr-1 h-4 w-4" /> Controles{props.big ? " y pantalla" : ""}
           </Button>

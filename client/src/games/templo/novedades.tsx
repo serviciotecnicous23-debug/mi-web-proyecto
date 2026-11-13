@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-banda-sonora",
+    fecha: "13 de noviembre de 2026",
+    titulo: "La banda sonora: música propia en cada lugar y en cada juego",
+    puntos: [
+      "🎶 Jerusalén tiene su banda sonora: pistas propias con laúd, qanún, flauta ney, lira, panderos, cuerdas y coro sin palabras, una para cada lugar.",
+      "🏛️ El templo de día y de noche, la plaza, el mercado, tu barrio, tu casa, el huerto, la calle de los siervos, la escuela de los profetas, el palacio y la cámara de los sacerdotes: cada uno suena distinto, y la música cambia con la hora y en las fiestas.",
+      "🎲 «¿Quién es sabio?», el aula, los exámenes, el patio y cada juego tienen su música: tranquila para pensar, alegre para jugar en grupo y con energía para correr.",
+      "🔊 En el menú de pausa está el «Volumen de la música». Con la radio del ministerio sonando, la música del juego se aparta.",
+    ],
+  },
+  {
     id: "2026-11-13-la-casa-viva",
     fecha: "13 de noviembre de 2026",
     titulo: "La casa viva: más bonita por dentro, muebles que se usan y ropa de pies a cabeza",
