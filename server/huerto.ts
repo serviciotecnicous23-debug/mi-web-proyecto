@@ -146,7 +146,10 @@ export async function vistaDelHuerto(h: FilaHuerto, casa: number, ahora = Date.n
 }
 
 // ---------------------------------------------------------------- las rutas
-/** El mínimo entre dos tareas del mismo tipo de una casa (el gesto de cada una tarda más que esto). */
+/**
+ * El mínimo entre dos tareas del mismo tipo de una casa (el gesto de cada una tarda más que esto). Se mira después de
+ * revisar la regla: así quien se equivoca recibe el motivo de verdad, y el tope frena solo lo que sí se iba a hacer.
+ */
 const RITMO_MS: Record<string, number> = { arar: 1200, sembrar: 1000, regar: 1000, llenar: 1200, hierbas: 700, aves: 700, abonar: 1000, cosechar: 1200, granero: 800, mejorar: 1000 };
 const ACCIONES = Object.keys(RITMO_MS);
 
@@ -167,13 +170,14 @@ export function registerHuertoRoutes(
   deps: { jugador: (req: Request, res: Response) => Promise<PersonajeFila | null>; responder: (res: Response, ch: PersonajeFila, extra?: Record<string, unknown>) => Promise<unknown> },
 ) {
   const ultimo = new Map<string, number>();
-  const frenar = (casa: number, accion: string) => {
+  /** ¿Se puede hacer ya esta tarea? (si sí, queda anotada la hora) */
+  const aTiempo = (casa: number, accion: string) => {
     const k = `${casa}:${accion}`;
     const ahora = Date.now();
-    if (ahora - (ultimo.get(k) || 0) < (RITMO_MS[accion] ?? 800)) return true;
+    if (ahora - (ultimo.get(k) || 0) < (RITMO_MS[accion] ?? 800)) return false;
     ultimo.set(k, ahora);
     if (ultimo.size > 20_000) ultimo.clear();
-    return false;
+    return true;
   };
 
   app.post("/api/jerusalen/casa/huerto/:accion", async (req: Request, res: Response) => {
@@ -182,10 +186,9 @@ export function registerHuertoRoutes(
     try {
       const ch = await deps.jugador(req, res);
       if (!ch) return;
-      if (frenar(ch.casa, accion)) return res.status(429).json({ message: "Espera un momento: cada tarea lleva su tiempo." });
       // lo que trajeron los siervos llega antes al alfolí (va en su propia fila de la casa)
       if (accion === "granero") await recoger(ch.casa);
-      const out = await enFilaCasa(ch.casa, () => hacer(ch, accion, req.body ?? {}));
+      const out = await enFilaCasa(ch.casa, () => hacer(ch, accion, req.body ?? {}, () => aTiempo(ch.casa, accion)));
       if (out.status !== 200) return res.status(out.status).json({ message: out.message });
       let gozo = 0;
       if (out.gozo && out.gozo > 0) {
@@ -205,8 +208,13 @@ export function registerHuertoRoutes(
   });
 }
 
-/** Hace una tarea del huerto (dentro de la fila de la casa: una a la vez). */
-async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unknown>): Promise<Resultado> {
+const DESPACIO: Resultado = { status: 429, message: "Espera un momento: cada tarea lleva su tiempo." };
+
+/**
+ * Hace una tarea del huerto (dentro de la fila de la casa: una a la vez). `aTiempo` se pregunta cuando la tarea ya pasó
+ * sus reglas, justo antes de cambiar algo.
+ */
+async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unknown>, aTiempo: () => boolean): Promise<Resultado> {
   const { rows } = await pool.query(`SELECT ${COLUMNAS_HUERTO} FROM game_houses WHERE character_id = $1`, [ch.casa]);
   if (!rows[0]) return { status: 409, message: "Primero entra a la ciudad: allí está tu casa." };
   const c = await contextoDe(rows[0] as FilaHuerto);
@@ -236,6 +244,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
     case "arar": {
       if (p.semilla) return { status: 409, message: "Ese surco ya está sembrado." };
       if (p.arado) return { status: 409, message: "Ese surco ya está arado: siémbralo." };
+      if (!aTiempo()) return DESPACIO;
       c.surcos[n] = { ...SURCO_VACIO, arado: ahoraIso };
       tareas.push(["arar", 1]);
       break;
@@ -245,6 +254,9 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       if (s !== "trigo" && s !== "cebada" && s !== "olivo") return { status: 400, message: "Elige una semilla." };
       if (p.semilla) return { status: 409, message: "Ese surco ya está sembrado." };
       if (!p.arado) return { status: 409, message: "Primero ara el surco con la azada." };
+      const { rows: hay } = await pool.query(`SELECT COALESCE((semillas->>$2)::int, 0) AS n FROM game_characters WHERE id = $1`, [ch.casa, s]);
+      if (Number(hay[0]?.n || 0) < 1) return { status: 409, message: "No te quedan semillas de esas: cómpralas al sembrador del mercado." };
+      if (!aTiempo()) return DESPACIO;
       const { rows: gasto } = await pool.query(
         `UPDATE game_characters SET semillas = jsonb_set(semillas, ARRAY[$2::text], to_jsonb(COALESCE((semillas->>$2)::int, 0) - 1))
           WHERE id = $1 AND COALESCE((semillas->>$2)::int, 0) > 0 RETURNING 1`,
@@ -268,6 +280,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       if (llovio(p)) return { status: 409, message: "La lluvia ya la regó." };
       if (faltan(p, ahora) === 0) return { status: 409, message: "Ya está lista: siégala." };
       if (lab.agua < 1) return { status: 409, message: "Tu cántaro está vacío: llénalo en el pozo." };
+      if (!aTiempo()) return DESPACIO;
       lab.agua -= 1;
       c.surcos[n] = { ...p, regado: true, riego: c.utiles.has("tinaja") ? RIEGO.conTinaja : RIEGO.normal };
       tareas.push(["regar", 1]);
@@ -279,6 +292,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       const tope = topePozo(c, hoy.llueve);
       const sacados = lab.pozo.dia === dia ? lab.pozo.n : 0;
       if (tope !== null && sacados >= tope) return { status: 409, message: `Por hoy ya sacaste ${tope} cántaros del pozo: mañana hay más. Con una cisterna en tu casa no hay tope.` };
+      if (!aTiempo()) return DESPACIO;
       lab.agua = carga;
       lab.pozo = { dia, n: sacados + 1 };
       tareas.push(["llenar", 1]);
@@ -288,6 +302,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       if (!p.semilla) return { status: 409, message: "En ese surco no hay nada sembrado." };
       const h = hierbasDe(p, azada, ahora);
       if (h.n < 1) return { status: 409, message: "Ese surco está limpio: no hay malas hierbas." };
+      if (!aTiempo()) return DESPACIO;
       c.surcos[n] = { ...p, limpio: ahoraIso };
       tareas.push(["hierbas", h.n]);
       extra = { quitadas: h.n };
@@ -297,6 +312,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       if (!p.semilla) return { status: 409, message: "En ese surco no hay nada sembrado." };
       const a = avesDe(p, ahora);
       if (!a.ahora || !a.cual) return { status: 409, message: "No hay aves en ese surco." };
+      if (!aTiempo()) return DESPACIO;
       c.surcos[n] = { ...p, aves: [...new Set([...(p.aves ?? []), a.cual])] };
       tareas.push(["aves", 1]);
       extra = { espantadas: a.cual };
@@ -311,6 +327,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
           status: 409,
           message: c.ovejas > 0 ? "Tu redil todavía no tiene abono: las ovejas dan más en un rato." : "Para abonar hacen falta ovejas en tu redil: lleva corderos en Tu casa → Oficios.",
         };
+      if (!aTiempo()) return DESPACIO;
       lab.abono = { n: ab.hay - 1, desde: ab.asentado.desde };
       c.surcos[n] = { ...p, abono: true };
       tareas.push(["abonar", 1]);
@@ -319,6 +336,9 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
     case "cosechar": {
       if (!p.semilla) return { status: 409, message: "No hay nada sembrado." };
       if (faltan(p, ahora) > 0) return { status: 409, message: "Todavía no está lista." };
+      const rinconesYa = lab.rincones.dia === dia ? lab.rincones.n : 0;
+      if (body.rincon === true && rinconesYa >= RINCON.dia) return { status: 409, message: `Hoy ya dejaste ${RINCON.dia} rincones para el pobre: siega sin dejarlo.` };
+      if (!aTiempo()) return DESPACIO;
       const r = rindeDe(p, { azada, hoz: lab.herramientas.hoz, molino: c.utiles.has("molino"), vasijas: c.utiles.has("vasijas") }, ahora);
       let cuanto = r.cuanto;
       // el rincón para el pobre y el extranjero (Levítico 23:22)
@@ -353,6 +373,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       }
       const total = meter.harina + meter.aceite;
       if (total < 1) return { status: 409, message: "Tu alfolí está lleno: lleva lo que tienes al templo, prepáralo en el horno o véndelo al mercader." };
+      if (!aTiempo()) return DESPACIO;
       lab.gavillas = { harina: g.harina - meter.harina, aceite: g.aceite - meter.aceite };
       guardarBienes = true;
       tareas.push(["gavillas", total]);
@@ -364,6 +385,7 @@ async function hacer(ch: PersonajeFila, accion: string, body: Record<string, unk
       if (!HERRAMIENTAS_IDS.includes(id)) return { status: 400, message: "Elige una herramienta." };
       if (lab.herramientas[id] >= 2) return { status: 409, message: "Ya tienes la mejor." };
       const costo = HERRAMIENTAS[id].mejor.precio;
+      if (!aTiempo()) return DESPACIO;
       const { rows: pago } = await pool.query(`UPDATE game_characters SET gozo = gozo - $2 WHERE id = $1 AND gozo >= $2 RETURNING gozo`, [ch.casa, costo]);
       if (!pago.length) return { status: 409, message: `Te falta gozo: cuesta ${costo}.` };
       anotarGasto("huerto-herramientas", costo);
