@@ -357,9 +357,10 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/70 bg-gradient-to-r from-amber-100 to-amber-50 p-3 dark:from-amber-950/50 dark:to-stone-900 dark:border-amber-700/50">
-        <div className="min-w-0 flex-1">
+        {/* en el teléfono, los botones bajan a otra línea para que el código entre completo */}
+        <div className="min-w-[13.5rem] flex-1">
           <p className="text-[11px] font-bold uppercase tracking-widest text-amber-800 dark:text-amber-300">El código de la sala</p>
-          <p className="font-mono text-3xl font-black tracking-[0.35em] text-amber-950 dark:text-amber-100" data-testid="juegos-codigo-sala">
+          <p className="font-mono text-[1.7rem] font-black tracking-[0.3em] text-amber-950 min-[460px]:text-3xl min-[460px]:tracking-[0.35em] dark:text-amber-100" data-testid="juegos-codigo-sala">
             {sala.codigo}
           </p>
           <p className="text-[12px] text-stone-600 dark:text-stone-300">Compártelo con tu gente de la iglesia, o invita desde aquí.</p>

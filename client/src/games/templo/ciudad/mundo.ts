@@ -2928,7 +2928,7 @@ export class CiudadWorld {
     }
     if (jg?.juego === "muro")
       return jg.fase === "preparar" ? "Levantemos el muro: espera la señal en el patio" : jg.llevo ? "Lleva la piedra al tramo del muro, al fondo del patio" : "Toma una piedra de la cantera (el círculo junto al muro del oriente)";
-    if (P.cercaDe(this.player.rig.x, this.player.rig.z, P.PATIO, 0.5) && !juegosRed.get().sala) return "El patio de los juegos: párate en el círculo de la mesa para jugar con tus amigos";
+    if (P.cercaDe(this.player.rig.x, this.player.rig.z, P.PATIO, 0.5) && !juegosRed.get().sala) return "El patio de los juegos: párate en el círculo de la mesa para jugar en grupo";
     const camino = this.avisoCamino();
     if (camino) return camino;
     const r = this.player.rig;
