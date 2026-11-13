@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-personajes-proporciones",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Personajes con proporciones de verdad",
+    puntos: [
+      "🧍 Todas las personas del juego (tu personaje, los maestros, el pueblo y los vecinos) tienen ahora la cabeza en su medida: unas 5 cabezas de alto en lugar de 3, con el torso y los brazos más largos. Los niños, un poco más cabezones, como debe ser.",
+      "👤 Caras más sobrias, sin las mejillas pintadas, y mangas más finas.",
+      "👘 La ropa del mercado (la túnica, el turbante o el velo, el zurrón) y lo que llevas en la mano (el cayado, el rollo, las herramientas del huerto) quedan en su lugar, y te sigues sentando bien en sillas, bancos y cojines.",
+    ],
+  },
+  {
     id: "2026-11-13-motor-de-imagen",
     fecha: "13 de noviembre de 2026",
     titulo: "La imagen del juego, más profesional",

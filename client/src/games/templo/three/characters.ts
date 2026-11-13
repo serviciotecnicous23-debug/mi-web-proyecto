@@ -6,6 +6,90 @@
  */
 import * as THREE from "three";
 import { C, GeoBuilder, GeoFigura, matrixOf, shinyMat, type Tf } from "./builder";
+
+// ---------------------------------------------------------------- las proporciones (docs/guia-visual.md, sección 6)
+/**
+ * Las figuras se arman con las medidas de siempre (cabeza grande con el centro en 0,97) y al final se proporcionan: la
+ * cabeza, con la cara, el pelo y el tocado, se achica alrededor de su centro y queda con la coronilla a la misma altura;
+ * el cuerpo se estira de los pies al cuello, y el cuello se afina de a poco. Así el personaje pasa de unas 3 cabezas a
+ * unas 5,5 (los niños, a unas 4,5) sin cambiar la altura total, los pies, los asientos ni las etiquetas de los nombres.
+ */
+const Y_PIES = 0.05, Y_CORTE = 0.77, Y_CABEZA = 0.97, R_CABEZA = 0.2, Y_CORONILLA = 1.17;
+export const K_ADULTO = 0.56;
+export const K_NINO = 0.7;
+function medidasDe(k: number) {
+  const r = R_CABEZA * k, centro = Y_CORONILLA - r;
+  return { centro, f: (centro - r - Y_PIES) / (Y_CORTE - Y_PIES) };
+}
+/** La altura nueva de un punto del cuerpo (por ejemplo el hombro o la cadera), con las proporciones de adulto. */
+export function alturaNueva(y: number, k = K_ADULTO): number {
+  const { f } = medidasDe(k);
+  return y <= Y_PIES ? y : Y_PIES + (y - Y_PIES) * f;
+}
+/** El hombro (de donde cuelga el brazo) y la mano (al final del brazo, más largo). */
+const HOMBRO_Y = alturaNueva(0.68);
+const ESTIRA_BRAZO = medidasDe(K_ADULTO).f;
+export const MANO_Y = -0.33 * ESTIRA_BRAZO;
+/** Las mangas, un poco más finas (con la cabeza más chica, los brazos gruesos se veían como tubos). */
+const BRAZO_FINO = 0.8;
+/** Lo que baja el cuerpo al sentarse o arrodillarse: lo de siempre más lo que subió la cadera. */
+const SUBE_CADERA = alturaNueva(0.3) - 0.3;
+
+/** Proporciona la geometría de un cuerpo (o de la ropa que va sobre el cuerpo). */
+export function proporcionarCuerpo<G extends THREE.BufferGeometry>(geo: G, k = K_ADULTO): G {
+  const { centro, f } = medidasDe(k);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const nor = geo.attributes.normal as THREE.BufferAttribute | undefined;
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (y >= Y_CORTE) {
+      // la cabeza (y lo que lleva): más chica alrededor de su centro (las normales no cambian)
+      x *= k;
+      z *= k;
+      y = centro + (y - Y_CABEZA) * k;
+    } else if (y > Y_PIES) {
+      // el cuerpo: más alto; el cuello y el escote se afinan de a poco antes del corte
+      const u = Math.min(1, Math.max(0, (y - (Y_CORTE - 0.06)) / 0.06));
+      const s = 1 + (k - 1) * u * u * (3 - 2 * u);
+      x *= s;
+      z *= s;
+      y = Y_PIES + (y - Y_PIES) * f;
+      if (nor) {
+        const nx = nor.getX(i) / s, ny = nor.getY(i) / f, nz = nor.getZ(i) / s;
+        const n = Math.hypot(nx, ny, nz) || 1;
+        nor.setXYZ(i, nx / n, ny / n, nz / n);
+      }
+    }
+    pos.setXYZ(i, x, y, z);
+  }
+  pos.needsUpdate = true;
+  if (nor) nor.needsUpdate = true;
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+/** Proporciona un brazo (colgado del hombro en su origen): más largo hasta la mano; la mano y lo que tiene, iguales. */
+export function proporcionarBrazo<G extends THREE.BufferGeometry>(geo: G): G {
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const nor = geo.attributes.normal as THREE.BufferAttribute | undefined;
+  const corte = -0.3;
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    if (y >= corte) {
+      // la manga, más larga y más fina (la mano y lo que tiene quedan iguales)
+      pos.setXYZ(i, pos.getX(i) * BRAZO_FINO, y * ESTIRA_BRAZO, pos.getZ(i) * BRAZO_FINO);
+      if (nor) {
+        const nx = nor.getX(i) / BRAZO_FINO, ny = nor.getY(i) / ESTIRA_BRAZO, nz = nor.getZ(i) / BRAZO_FINO;
+        const n = Math.hypot(nx, ny, nz) || 1;
+        nor.setXYZ(i, nx / n, ny / n, nz / n);
+      }
+    } else pos.setY(i, y + corte * (ESTIRA_BRAZO - 1));
+  }
+  pos.needsUpdate = true;
+  if (nor) nor.needsUpdate = true;
+  geo.computeBoundingSphere();
+  return geo;
+}
 import type { RopaVista } from "@shared/mercado";
 
 // ---------------------------------------------------------------- pose y animación
@@ -65,13 +149,13 @@ export function computePose(r: Rig): PoseOut {
       break;
     }
     case "kneel":
-      po.drop = 0.26;
+      po.drop = 0.26 + SUBE_CADERA;
       po.tilt = 0.32 + Math.max(0, Math.sin(r.t * 0.9)) * 0.35;
       po.armL = po.armR = -1.3;
       po.outL = po.outR = -0.32;
       break;
     case "sit":
-      po.drop = 0.24;
+      po.drop = 0.24 + SUBE_CADERA;
       po.tilt = 0.05;
       po.armL = po.armR = -0.7;
       po.outL = po.outR = -0.15;
@@ -135,7 +219,7 @@ export function computePose(r: Rig): PoseOut {
   }
   if (r.seated && r.pose !== "sit" && r.pose !== "kneel") {
     // sentado: el cuerpo baja, no se salta y las piernas no caminan
-    po.drop = Math.max(po.drop, 0.24);
+    po.drop = Math.max(po.drop, 0.24 + SUBE_CADERA);
     po.bob = Math.min(po.bob, 0.03);
     po.footL = po.footR = 0.06;
     po.liftL = po.liftR = 0;
@@ -228,8 +312,6 @@ function face(b: SlotBuilder, headY: number, r: number, big = 1) {
     b.add(new THREE.SphereGeometry(0.035, 6, 5), SKIN, "#fff", { x: sg * r * 0.98, y: headY - 0.01, z: 0, sz: 0.6 }); // orejas
   }
   b.add(new THREE.SphereGeometry(0.03, 6, 5), SKIN, "#fff", { x: 0, y: headY - 0.025, z: r * 0.98 });
-  b.add(new THREE.SphereGeometry(0.04, 8, 6), FIXED, "#e3907a", { x: -0.11, y: headY - 0.05, z: r * 0.8, sz: 0.4, sy: 0.6 }); // mejillas
-  b.add(new THREE.SphereGeometry(0.04, 8, 6), FIXED, "#e3907a", { x: 0.11, y: headY - 0.05, z: r * 0.8, sz: 0.4, sy: 0.6 });
 }
 
 function robe(b: SlotBuilder, hem: number, top: number, slot = ROBE) {
@@ -306,7 +388,7 @@ function bodyGeometry(v: CrowdVariant): THREE.BufferGeometry {
       break;
     }
   }
-  return b.build();
+  return proporcionarCuerpo(b.build(), v === "nino" ? K_NINO : K_ADULTO);
 }
 
 function armGeometry(): THREE.BufferGeometry {
@@ -314,7 +396,7 @@ function armGeometry(): THREE.BufferGeometry {
   b.add(new THREE.CylinderGeometry(0.06, 0.078, 0.3, 8), ROBE, "#fff", { y: -0.14 });
   b.add(new THREE.SphereGeometry(0.062, 8, 6), ROBE, "#fff", { y: 0 });
   b.add(new THREE.SphereGeometry(0.055, 8, 6), SKIN, "#fff", { y: -0.33 });
-  return b.build();
+  return proporcionarBrazo(b.build());
 }
 
 function footGeometry(): THREE.BufferGeometry {
@@ -432,7 +514,7 @@ export class Crowd {
       const sg = k === 0 ? -1 : 1;
       tmpE.set(k === 0 ? p.armL : p.armR, 0, sg * (k === 0 ? p.outL : p.outR), "XYZ");
       tmpQ.setFromEuler(tmpE);
-      tmpV.set(sg * 0.215, 0.68, 0);
+      tmpV.set(sg * 0.215, HOMBRO_Y, 0);
       tmpS.set(1, 1, 1);
       tmpL.compose(tmpV, tmpQ, tmpS);
       tmpM.multiplyMatrices(tmpB, tmpL);
@@ -587,7 +669,6 @@ function figureParts(look: FigureLook, tocado = true) {
     m.sphere(0.01, "#ffffff", { x: sg * 0.075 - 0.01, y: headY + 0.035, z: r * 0.9 + 0.012 }, 5, 4);
     m.sphere(0.035, skin, { x: sg * r * 0.98, y: headY - 0.01, z: 0, sz: 0.6 }, 6, 5);
     m.box(0.065, 0.016, 0.01, old ? "#f2efe8" : hair, { x: sg * 0.075, y: headY + 0.07, z: r * 0.875, rz: sg * -0.12 });
-    m.sphere(0.04, "#e3907a", { x: sg * 0.11, y: headY - 0.05, z: r * 0.8, sz: 0.4, sy: 0.6 }, 8, 6);
   }
   m.sphere(0.03, skin, { y: headY - 0.025, z: r * 0.98 }, 6, 5);
   // barba y cabello
@@ -675,8 +756,8 @@ export class Figure {
   constructor(look: FigureLook) {
     this.root.add(this.body, this.footL, this.footR);
     this.body.add(this.armL, this.armR);
-    this.armL.position.set(-0.215, 0.68, 0);
-    this.armR.position.set(0.215, 0.68, 0);
+    this.armL.position.set(-0.215, HOMBRO_Y, 0);
+    this.armR.position.set(0.215, HOMBRO_Y, 0);
     const fb = new GeoFigura();
     fb.box(0.095, 0.05, 0.16, "#6a4a2c", { y: 0.025, z: 0.02 });
     fb.sphere(0.045, "#d39a6c", { y: 0.04, z: 0.04, sz: 1.3 }, 6, 4, Math.PI * 2, Math.PI / 2);
@@ -803,11 +884,11 @@ export class Figure {
     if (!b.empty || !oro.empty) {
       const g = new THREE.Group();
       if (!b.empty) {
-        const mesh = new THREE.Mesh(b.build(), matteFor());
+        const mesh = new THREE.Mesh(proporcionarCuerpo(b.build()), matteFor());
         mesh.castShadow = true;
         g.add(mesh);
       }
-      if (!oro.empty) g.add(new THREE.Mesh(oro.build(), shinyMat()));
+      if (!oro.empty) g.add(new THREE.Mesh(proporcionarCuerpo(oro.build()), shinyMat()));
       this.ropaG = g;
       this.body.add(g);
     }
@@ -842,7 +923,7 @@ export class Figure {
       }
       const obj = new THREE.Group();
       obj.add(new THREE.Mesh(ab.build(), matteFor()));
-      obj.position.set(0, -0.33, 0);
+      obj.position.set(0, MANO_Y, 0);
       // si la mano ya lleva algo (una herramienta), el accesorio espera a que se suelte
       obj.visible = !this.enManos[lado];
       (lado === "R" ? this.armR : this.armL).add(obj);
@@ -865,15 +946,16 @@ export class Figure {
     }
     const p = figureParts(look, !this.sinTocado);
     this.ponerRegazo(p.robe);
-    const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder) => {
-      if (!mb.empty) g.add(new THREE.Mesh(mb.build(), matteFor()));
-      if (!sb.empty) g.add(new THREE.Mesh(sb.build(), shinyMat()));
+    const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder, brazo = false) => {
+      const prop = (geo: THREE.BufferGeometry) => (brazo ? proporcionarBrazo(geo) : proporcionarCuerpo(geo));
+      if (!mb.empty) g.add(new THREE.Mesh(prop(mb.build()), matteFor()));
+      if (!sb.empty) g.add(new THREE.Mesh(prop(sb.build()), shinyMat()));
     };
     put(this.body, p.m, p.s);
     // la ropa del mercado se vuelve a poner sobre la vestidura nueva (sin tocado si la vestidura ya tiene el suyo)
     if (this.ropa) this.ponerRopa(this.ropa);
-    put(this.armR, p.armM, p.armS);
-    put(this.armL, p.armLM, p.armLS);
+    put(this.armR, p.armM, p.armS, true);
+    put(this.armL, p.armLM, p.armLS, true);
     this.root.traverse((o) => {
       o.castShadow = false;
       o.receiveShadow = true;
@@ -890,7 +972,7 @@ export class Figure {
     b.box(0.36, 0.13, 0.34, color, { y: 0.27, z: 0.17 });
     b.cyl(0.07, 0.065, 0.24, color, { x: -0.09, y: 0.12, z: 0.32 }, 8);
     b.cyl(0.07, 0.065, 0.24, color, { x: 0.09, y: 0.12, z: 0.32 }, 8);
-    this.regazo = new THREE.Mesh(b.build(), matteFor());
+    this.regazo = new THREE.Mesh(proporcionarCuerpo(b.build()), matteFor());
     this.regazo.visible = false;
     this.body.add(this.regazo);
   }
@@ -909,7 +991,7 @@ export class Figure {
     if (antes) brazo.remove(antes);
     this.enManos[lado] = obj;
     if (obj) {
-      obj.position.set(0, -0.33, 0);
+      obj.position.set(0, MANO_Y, 0);
       brazo.add(obj);
     }
     // el cayado o el rollo de su ropa se guarda mientras la mano lleva otra cosa

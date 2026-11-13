@@ -753,6 +753,20 @@ Lo que sigue del rediseño (en la guía): los personajes de 5,5 a 6 cabezas con 
 de las cosas e íconos de línea, sin emojis como imagen), los paneles y las tablas de texto con el sistema de diseño, y
 más detalle en la arquitectura, la vegetación y el agua.
 
+## 7f. Los personajes con proporciones de verdad (13 de noviembre de 2026)
+
+Las figuras se siguen armando con las medidas de siempre (`characters.ts`: cabeza con centro en 0,97 y radio 0,2) y al
+final se **proporcionan** (`proporcionarCuerpo`):
+- lo que está sobre el corte del cuello (0,77) —la cabeza, la cara, el pelo y el tocado— se achica alrededor de su
+  centro (`K_ADULTO` 0,56, `K_NINO` 0,7), con la coronilla a la misma altura (1,17);
+- el cuerpo se estira de los pies al cuello, y el cuello se afina de a poco;
+- los brazos se alargan y se afinan (`proporcionarBrazo`) sin tocar la mano ni lo que lleva; el hombro
+  (`HOMBRO_Y`) y la mano (`MANO_Y`) salen de la misma regla;
+- al sentarse o arrodillarse, el cuerpo baja lo que subió la cadera (`SUBE_CADERA`).
+Así quedan de unas 5 cabezas (antes, unas 3) sin cambiar la altura, los pies, los asientos ni las etiquetas de los
+nombres. La ropa del mercado se proporciona igual. Las caras ya no llevan las mejillas pintadas. Para algo nuevo que va
+sobre el cuerpo: armarlo con las medidas de siempre y pasarlo por `proporcionarCuerpo` (lo de la mano, en `MANO_Y`).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
