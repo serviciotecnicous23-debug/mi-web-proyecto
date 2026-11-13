@@ -4,6 +4,7 @@
  * (texto nítido) que se mueven con el mundo; los círculos del piso son mallas con su propio sombreado.
  */
 import * as THREE from "three";
+import { htmlConIcono } from "../iconos";
 
 const CSS = `
 .tpl-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -13,6 +14,7 @@ const CSS = `
 .tpl-pad.off{border-color:rgba(255,255,255,.35)}
 .tpl-pad.off small{color:#f3c9b8}
 .tpl-tag{background:rgba(0,0,0,.5);color:#fff;border-radius:7px;padding:1px 7px;font-size:11px;font-weight:600}
+.tpl-ico{display:inline-flex;vertical-align:-.18em;margin-right:.32em;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45)) brightness(1.35)}
 .tpl-heap{background:rgba(255,214,107,.95);color:#3b2a10;border-radius:999px;padding:1px 8px;font-weight:800;font-size:12px;box-shadow:0 1px 6px rgba(255,190,60,.6)}
 .tpl-bub{width:30px;height:30px;border-radius:50%;background:#fff;color:#7a4b0f;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:tplBob 1.1s ease-in-out infinite}
 .tpl-bub.gold{background:linear-gradient(#ffe48a,#f2b632);color:#5a3500}
@@ -76,7 +78,8 @@ export class Overlay {
   make(cls: string, html = ""): HTMLDivElement {
     const el = document.createElement("div");
     el.className = `tpl-l ${cls}`;
-    el.innerHTML = html;
+    // el emoji del principio (los letreros de los círculos) se dibuja con su ícono (iconos.tsx)
+    el.innerHTML = htmlConIcono(html);
     this.layer.appendChild(el);
     return el;
   }

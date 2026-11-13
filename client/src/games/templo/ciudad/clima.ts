@@ -169,6 +169,81 @@ export class Petalos {
 }
 
 /**
+ * El polvo que flota en la luz del sol (docs/guia-visual.md, sección 7: partículas con sentido): motas finas alrededor de
+ * donde estás, que el viento lleva despacio hacia el poniente y que brillan cuando les da el sol. Solo de día y sin
+ * lluvia: de noche y cuando llueve se apagan despacio.
+ */
+export class Polvo {
+  readonly group = new THREE.Group();
+  private nivel = 0;
+  private reloj = 0;
+  private pts: THREE.Points;
+  private pos: Float32Array;
+  private col: Float32Array;
+  private fase: Float32Array;
+  private n: number;
+  private suelo: number;
+  private mat: THREE.PointsMaterial;
+
+  constructor(coarse: boolean, suelo: number) {
+    this.n = coarse ? 70 : 160;
+    this.suelo = suelo;
+    this.pos = new Float32Array(this.n * 3);
+    this.col = new Float32Array(this.n * 3);
+    this.fase = new Float32Array(this.n);
+    for (let i = 0; i < this.n; i++) this.colocar(i, 0, 0);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(this.col, 3));
+    this.mat = new THREE.PointsMaterial({ size: 0.15, map: texturaPunto(), vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.pts = new THREE.Points(geo, this.mat);
+    this.pts.frustumCulled = false;
+    this.group.add(this.pts);
+    this.group.visible = false;
+  }
+
+  private colocar(i: number, cx: number, cz: number) {
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 12;
+    this.pos[i * 3] = cx + Math.cos(a) * r;
+    this.pos[i * 3 + 1] = this.suelo + 0.3 + Math.random() * 4.2;
+    this.pos[i * 3 + 2] = cz + Math.sin(a) * r;
+    this.fase[i] = Math.random() * Math.PI * 2;
+  }
+
+  /** `dia`: 1 de día con sol, 0 de noche o con lluvia (cambia despacio). */
+  update(dt: number, dia: number, cx: number, cz: number) {
+    const meta = Math.max(0, Math.min(1, dia));
+    this.nivel += Math.sign(meta - this.nivel) * Math.min(Math.abs(meta - this.nivel), dt * 0.4);
+    this.group.visible = this.nivel > 0.01;
+    if (!this.group.visible) return;
+    this.reloj += dt;
+    this.mat.opacity = 0.75 * this.nivel;
+    const t = this.reloj;
+    for (let i = 0; i < this.n; i++) {
+      const o = i * 3, f = this.fase[i];
+      // el viento las lleva despacio hacia el poniente; suben y bajan sin apuro
+      this.pos[o] -= (0.1 + Math.sin(t * 0.31 + f) * 0.16) * dt;
+      this.pos[o + 1] += Math.sin(t * 0.5 + f * 1.7) * 0.07 * dt;
+      this.pos[o + 2] += Math.cos(t * 0.27 + f) * 0.12 * dt;
+      // brillan a ratos, cuando el sol les da de lado
+      const b = Math.max(0, Math.sin(t * (0.6 + (i % 7) * 0.09) + f * 3.1));
+      const k = 0.25 + 0.75 * b * b;
+      this.col[o] = k;
+      this.col[o + 1] = k * 0.93;
+      this.col[o + 2] = k * 0.74;
+      if (Math.abs(this.pos[o] - cx) > 13 || Math.abs(this.pos[o + 2] - cz) > 13 || this.pos[o + 1] < this.suelo + 0.1 || this.pos[o + 1] > this.suelo + 5) this.colocar(i, cx, cz);
+    }
+    (this.pts.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+    (this.pts.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+  }
+
+  dispose() {
+    this.pts.geometry.dispose();
+    this.mat.dispose();
+  }
+}
+
+/**
  * Las lámparas de fiesta en las calles (Navidad y año nuevo): tres por lugar, colgadas a distintas alturas; de noche
  * brillan del todo y titilan un poco.
  */

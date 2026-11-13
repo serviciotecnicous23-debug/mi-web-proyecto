@@ -23,7 +23,8 @@ import type { Circle, Rect, V2 } from "../layout";
 import type { ItemType } from "../data";
 import { relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import { diaEnJerusalen } from "@shared/anio";
-import { Lamparas, Lluvia, Petalos } from "./clima";
+import { Lamparas, Lluvia, Petalos, Polvo } from "./clima";
+import { construirSueloVivo, type SueloVivo } from "./suelo-vivo";
 import {
   BIEN, CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVista,
   type CiudadEstado, type VecinoInfo,
@@ -190,6 +191,9 @@ export class CiudadWorld {
   /** Lo que cambia con el año: pétalos de almendro (siega de la cebada) y lámparas de fiesta (Navidad y año nuevo). */
   private petalos!: Petalos;
   private lamparas!: Lamparas;
+  /** El polvo en la luz del sol y el suelo vivo (la hierba con viento, las piedritas y el campo). */
+  private polvo!: Polvo;
+  private sueloVivo: SueloVivo | null = null;
   private fechaRevisada = 0;
   /** En el invierno los braseros arden también de día (Jeremías 36:22). */
   private invierno = false;
@@ -387,6 +391,10 @@ export class CiudadWorld {
     this.scene.add(this.lluvia.group);
     this.petalos = new Petalos(coarse, P.SUELO);
     this.scene.add(this.petalos.group);
+    this.polvo = new Polvo(coarse, P.SUELO);
+    this.scene.add(this.polvo.group);
+    this.sueloVivo = construirSueloVivo(coarse);
+    this.scene.add(this.sueloVivo.grupo);
     this.lamparas = new Lamparas([...P.ARBOLES, ...P.PASEO], P.SUELO);
     this.scene.add(this.lamparas.group);
     if (coarse) this.fx.density = 0.7;
@@ -2769,6 +2777,7 @@ export class CiudadWorld {
     this.palomas.update(dt, this.noche() ? 0 : 1, this.camTarget.x, this.camTarget.z);
     this.lluvia.update(dt, this.camTarget.x, this.camTarget.z);
     this.petalos.update(dt, this.camTarget.x, this.camTarget.z);
+    this.polvo.update(dt, this.noche() ? 0 : 1 - this.lluvia.intensidad, this.camTarget.x, this.camTarget.z);
     this.lamparas.update(dt, this.noche());
     if (this.invierno || t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos
@@ -3156,6 +3165,8 @@ export class CiudadWorld {
     this.palomas.dispose();
     this.lluvia.dispose();
     this.petalos.dispose();
+    this.polvo.dispose();
+    this.sueloVivo?.dispose();
     this.lamparas.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();

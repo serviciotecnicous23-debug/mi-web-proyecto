@@ -109,29 +109,64 @@ export type Rig = {
   hunch?: number;
   /** Sentado (en un banco o una silla): las poses de brazos se hacen sentado, sin saltar. */
   seated?: boolean;
+  /** La inercia de la animación (resortes): lo calcula computePose. */
+  _ani?: { t: number; w: number; yaw: number; lean: number; leanV: number; bank: number; bankV: number };
 };
 
 export function newRig(x = 0, z = 0, scale = 1): Rig {
   return { x, y: 0, z, yaw: 0, phase: Math.random() * 6, moving: 0, carrying: false, pose: "idle", t: Math.random() * 10, scale };
 }
 
-type PoseOut = { bob: number; tilt: number; sway: number; armL: number; armR: number; outL: number; outR: number; footL: number; footR: number; liftL: number; liftR: number; drop: number };
-const po: PoseOut = { bob: 0, tilt: 0, sway: 0, armL: 0, armR: 0, outL: 0, outR: 0, footL: 0, footR: 0, liftL: 0, liftR: 0, drop: 0 };
+type PoseOut = { bob: number; tilt: number; sway: number; twist: number; armL: number; armR: number; outL: number; outR: number; footL: number; footR: number; liftL: number; liftR: number; drop: number };
+const po: PoseOut = { bob: 0, tilt: 0, sway: 0, twist: 0, armL: 0, armR: 0, outL: 0, outR: 0, footL: 0, footR: 0, liftL: 0, liftR: 0, drop: 0 };
+
+/**
+ * La inercia (docs/guia-visual.md, sección 6): resortes un poco blandos (amortiguación de 0,5 a 0,8, no rígidos). El
+ * cuerpo se inclina al arrancar y se asienta al frenar, y se ladea en las curvas.
+ */
+function inercia(r: Rig) {
+  const a = (r._ani ??= { t: r.t, w: r.moving, yaw: r.yaw, lean: 0, leanV: 0, bank: 0, bankV: 0 });
+  const dt = r.t - a.t;
+  if (dt > 0 && dt < 0.2) {
+    const acel = (r.moving - a.w) / dt;
+    let dy = r.yaw - a.yaw;
+    while (dy > Math.PI) dy -= Math.PI * 2;
+    while (dy < -Math.PI) dy += Math.PI * 2;
+    const objLean = Math.max(-0.1, Math.min(0.12, acel * 0.05));
+    const objBank = Math.max(-0.14, Math.min(0.14, (-dy / dt) * 0.035 * r.moving));
+    a.leanV += (objLean - a.lean) * 70 * dt;
+    a.leanV *= Math.exp(-10 * dt);
+    a.lean += a.leanV * dt;
+    a.bankV += (objBank - a.bank) * 60 * dt;
+    a.bankV *= Math.exp(-9 * dt);
+    a.bank += a.bankV * dt;
+  }
+  a.t = r.t;
+  a.w = r.moving;
+  a.yaw = r.yaw;
+  return a;
+}
 
 /** Calcula la pose del momento (balanceo al caminar, brazos al cargar, alegría, oración...). */
 export function computePose(r: Rig): PoseOut {
   const w = r.moving;
   const s = Math.sin(r.phase);
-  const breathe = Math.sin(r.t * 2.1) * 0.012;
-  po.bob = Math.abs(s) * 0.05 * w + breathe;
-  po.tilt = (r.hunch || 0) + w * 0.06;
-  po.sway = s * 0.05 * w;
+  const a = inercia(r);
+  const quieto = 1 - w;
+  // en quietud: la respiración más pausada y un cambio de peso lento de un lado a otro (nadie queda congelado)
+  const breathe = Math.sin(r.t * 1.6) * 0.009 * (0.4 + 0.6 * quieto);
+  po.bob = Math.abs(s) * 0.045 * w + breathe;
+  po.tilt = (r.hunch || 0) + w * 0.05 + a.lean;
+  po.sway = s * 0.045 * w + Math.sin(r.t * 0.45) * 0.022 * quieto + a.bank;
+  // el contrapunto: el cuerpo gira un poco al compás del paso (los pies no)
+  po.twist = s * 0.09 * w;
   po.footL = s * 0.1 * w;
   po.footR = -s * 0.1 * w;
   po.liftL = Math.max(0, Math.cos(r.phase)) * 0.05 * w;
   po.liftR = Math.max(0, -Math.cos(r.phase)) * 0.05 * w;
   po.drop = 0;
-  const swing = s * 0.6 * w;
+  // los brazos siguen al paso un poco detrás (seguimiento)
+  const swing = Math.sin(r.phase - 0.35) * 0.58 * w;
   po.armL = -swing + Math.sin(r.t * 1.3) * 0.04;
   po.armR = swing - Math.sin(r.t * 1.3) * 0.04;
   po.outL = 0.08;
@@ -223,6 +258,7 @@ export function computePose(r: Rig): PoseOut {
     po.bob = Math.min(po.bob, 0.03);
     po.footL = po.footR = 0.06;
     po.liftL = po.liftR = 0;
+    po.twist = 0;
   }
   return po;
 }
@@ -503,7 +539,7 @@ export class Crowd {
     const p = computePose(r);
     const s = r.scale;
     // cuerpo
-    tmpE.set(p.tilt, r.yaw, p.sway, "YXZ");
+    tmpE.set(p.tilt, r.yaw + p.twist, p.sway, "YXZ");
     tmpQ.setFromEuler(tmpE);
     tmpV.set(r.x, r.y + (p.bob - p.drop) * s, r.z);
     tmpS.set(s, s, s);
@@ -1015,7 +1051,7 @@ export class Figure {
     this.root.rotation.y = r.yaw;
     this.root.scale.setScalar(s);
     this.body.position.y = p.bob - p.drop;
-    this.body.rotation.set(p.tilt, 0, p.sway);
+    this.body.rotation.set(p.tilt, p.twist, p.sway);
     this.armL.rotation.set(p.armL, 0, -p.outL);
     this.armR.rotation.set(p.armR, 0, p.outR);
     this.footL.position.set(-0.085, p.liftL, p.footL);
