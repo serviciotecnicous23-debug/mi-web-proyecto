@@ -15,6 +15,7 @@ import {
 } from "@shared/estudios";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { EXAMENES, type FilaExamen } from "./estudios-examen";
+import { opcionesDeExamen } from "./orden-examen";
 import { diaClave, enFila, esAdmin, evento, filaMerito, forgetJer, nombreDe, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
 import { GOZO, sumarGozo } from "./gozo";
@@ -187,13 +188,17 @@ function bancoDe(studyId: string): FilaExamen[] {
   return EXAMENES[studyId] ?? [];
 }
 
-/** Las preguntas de un intento: primero las que todavía no le salieron, después las demás. */
+/**
+ * Las preguntas de un intento: primero las que todavía no le salieron, después las demás. Cada una con el orden de
+ * sus opciones (server/orden-examen.ts): con la mezcla de antes, todas las preguntas de un mismo examen tenían la
+ * buena en la misma letra (y quien la adivinaba en la primera sacaba 6 de 6).
+ */
 function preguntasDe(banco: FilaExamen[], vistas: Set<string>, semilla: number): PreguntaExamen[] {
   const nuevas = mezcla(banco.filter((f) => !vistas.has(f[0])), semilla);
   const repetidas = mezcla(banco.filter((f) => vistas.has(f[0])), semilla + 17);
   return [...nuevas, ...repetidas]
     .slice(0, EXAMEN_PREGUNTAS)
-    .map((f, i) => ({ id: f[0], pregunta: f[1], opciones: mezcla([...new Set([f[2], ...f[3]])], semilla + i * 7919 + 1) }));
+    .map((f, i) => ({ id: f[0], pregunta: f[1], opciones: opcionesDeExamen(f[0], f[2], f[3], semilla, i) }));
 }
 
 export function registerEstudiosRoutes(app: Express) {

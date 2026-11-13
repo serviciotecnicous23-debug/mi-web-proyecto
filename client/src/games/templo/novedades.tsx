@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-el-aula",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Las clases ahora se dan en el aula, con el maestro y tus compañeros",
+    puntos: [
+      "🏫 En la escuela de los profetas (con Isaías y Miqueas), en la cámara de los sacerdotes (con Eleazar) y en la sala de los escribas del palacio (con Eliaquim) hay un aula de verdad: bancos con compañeros que tienen su nombre, el atril del maestro, la luz de las ventanas y las lámparas.",
+      "📜 El maestro enseña cada sección en su burbuja, escribe la pregunta en el gran rollo y tú tocas la respuesta en el rollo de abajo, con el reloj corriendo. Si aciertas, te felicita y la clase aplaude; si no, te explica con el versículo.",
+      "🎓 El examen final y las cátedras también se dan en el aula: al terminar, se revisan las respuestas juntos y la última tiene el suspenso de «¿Quién es sabio?». Al final, tu nota con su medalla.",
+      "🔀 En el examen final de los estudios, la respuesta buena ya no cae en la misma letra en todas las preguntas.",
+    ],
+  },
+  {
     id: "2026-11-13-mentores",
     fecha: "13 de noviembre de 2026",
     titulo: "Los mentores y los dichos de los ancianos",

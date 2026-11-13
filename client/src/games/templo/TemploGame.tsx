@@ -58,6 +58,7 @@ import { MientrasNoEstabas } from "./RegresoUI";
 import { CapitulosView } from "./CapitulosUI";
 import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
+import { AulaView } from "./AulaUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
 import { InvitacionEntrante } from "./Acompanar";
 import { CasaHudLayer } from "./CasaUI";
@@ -445,7 +446,8 @@ export default function TemploGame({ game }: { game: GameDef }) {
     const guia = restoMod && primera && restoMod.EDIFICIO_DE_CAMINO[camino] === id && !restoVista?.vista.salas.find((x) => x.id === primera.id)?.hecha ? primera.id : null;
     // el maestro: a los de su camino les abre su servicio; a los demás les habla y los orienta
     const hablarConMaestro = () => {
-      if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : id === "camara" ? { kind: "catedra", area: "sacerdotal" } : { kind: "palacio" });
+      // en la cámara, Eleazar da su cátedra en el aula
+      if (camino === def.camino) gameStore.push(id === "escuela" ? { kind: "escuela" } : id === "camara" ? { kind: "aula", aula: "camara", pedido: { que: "catedra", area: "sacerdotal" } } : { kind: "palacio" });
       else gameStore.push({ kind: "dialog", id: `visita-${id}`, lines: ed.dialogoVisita(def, e.yo.nombre) });
     };
     maestroRef.current = hablarConMaestro;
@@ -489,12 +491,13 @@ export default function TemploGame({ game }: { game: GameDef }) {
           case "maestro":
             hablarConMaestro();
             break;
+          // los rollos de los estudios: la clase se da en el aula del edificio (AulaUI.tsx)
           case "rollos":
-            gameStore.push({ kind: "estudios" });
+            gameStore.push({ kind: "aula", aula: id });
             break;
-          // la cátedra del maestro (Eleazar en la cámara, Eliaquim en el palacio, Miqueas en la escuela), los diezmos y los turnos
+          // la cátedra del maestro (Eleazar en la cámara, Eliaquim en el palacio, Miqueas en la escuela), en el aula; los diezmos y los turnos
           case "catedra":
-            if (def.catedra) gameStore.push({ kind: "catedra", area: def.catedra });
+            if (def.catedra) gameStore.push({ kind: "aula", aula: id, pedido: { que: "catedra", area: def.catedra } });
             break;
           case "diezmos":
             gameStore.push({ kind: "tesoro" });
@@ -610,6 +613,24 @@ export default function TemploGame({ game }: { game: GameDef }) {
     cityRef.current?.dormir(false);
   }, []);
   salirDeCasaRef.current = salirDeCasa;
+
+  // mientras el aula (a pantalla completa, con su propio 3D) está abierta, el edificio por dentro no se dibuja
+  useEffect(() => {
+    if (!casaW) return;
+    let enAula = false;
+    const revisar = () => {
+      const ahora = gameStore.getSnapshot().modal?.kind === "aula";
+      if (ahora === enAula) return;
+      enAula = ahora;
+      casaW.dormir(ahora);
+    };
+    revisar();
+    const quitar = gameStore.subscribe(revisar);
+    return () => {
+      quitar();
+      if (enAula) casaW.dormir(false);
+    };
+  }, [casaW]);
 
   // Salir de Jerusalén en línea: se mandan los deberes que faltan y se vuelve a la sala.
   const exitOnline = useCallback(() => {
@@ -1541,8 +1562,8 @@ function ModalLayer() {
     modalKeys.set(modal, key);
   }
   const bottom = modal.kind === "dialog" || modal.kind === "rank";
-  // «¿Quién es sabio?» ocupa toda la pantalla del juego (su escenario maneja los bordes seguros)
-  if (modal.kind === "sabio")
+  // «¿Quién es sabio?» y el aula ocupan toda la pantalla del juego (su escenario maneja los bordes seguros)
+  if (modal.kind === "sabio" || modal.kind === "aula")
     return (
       <div className="pointer-events-auto absolute inset-0 z-50">
         <ModalBody key={key} modal={modal} />
@@ -1569,6 +1590,8 @@ function ModalBody({ modal }: { modal: Modal }) {
       return <DialogView lines={modal.lines} />;
     case "sabio":
       return <SabioView />;
+    case "aula":
+      return <AulaView aula={modal.aula} pedido={modal.pedido} />;
     case "lesson":
       return <LessonView lessonId={modal.lessonId} />;
     case "quiz":

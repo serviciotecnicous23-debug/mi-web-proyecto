@@ -66,6 +66,7 @@ el mismo día para todos.
 | La calle de los siervos | Cumple el recado del día | Gozo y la historia de la semana |
 | La puerta de la ciudad | Se sienta con los ancianos a escuchar el dicho del día (Proverbios) | Gozo y un dicho más en el álbum |
 | El barrio | Bendice casas, ayuda a vecinos, va a reuniones, acompaña a los nuevos | Gozo, encargos y la ofrenda del barrio |
+| Las clases en el aula | La sección de un estudio, su examen final o la cátedra del maestro de su camino (8 lecciones por día) | Mérito, gozo, estudios aprobados para siempre y el grado de la cátedra |
 | «¿Quién es sabio?» | 15 gradas de preguntas en el estudio de TV, con comodines y duelos | Gozo, trajes de sabio y la tabla |
 | De noche | Antorchas, ventanas encendidas y la hora de las trompetas de la luna nueva | ×1,5 de mérito de 7 a 9 |
 
@@ -99,6 +100,37 @@ el mismo día para todos.
   nuevo.
 - En el álbum, cada historia es una colección con su título: sus cinco prendas (una por capítulo cumplido y la de
   la fiesta) dan «Atalaya de Sion» (Senaquerib) o «De un solo corazón» (la Pascua).
+
+### Las clases en el aula
+Cada edificio tiene su aula, una sala en 3D con su maestro al frente, su atril, un gran rollo colgado en el muro y
+bancos con compañeros que tienen nombre (las familias del pueblo y los aprendices). Por las ventanas entra la luz y
+alumbran las lámparas de aceite. Está en `client/src/games/templo/aula/` (la escena en `escena.ts`, el guion de cada
+clase en `clases.ts` y su director en `director.ts`), la pantalla en `AulaUI.tsx` y los datos en `shared/aula.ts`.
+
+| Aula | Edificio | Maestro | Compañeros |
+|---|---|---|---|
+| El aula de Isaías | La escuela de los profetas (adobe) | Isaías; Miqueas de Moreset da los oficios del profeta | Miriam, Jabes, Ana, Simeón, Josías, Débora, Asaf y Obed |
+| La cátedra de Eleazar | La cámara de los sacerdotes (piedra) | Eleazar | Itamar, Elcana, Hanán, Finees, Ezer, Ahimaas, Abner y Matán |
+| La sala de los escribas | El palacio del rey (cedro, con pupitres) | Eliaquim | Joa, Rebeca, Gedeón, Raquel, Booz, Tamar, Jonatán e Isaí |
+
+- **Se entra** por la estación de los estudios («Estudios y exámenes») o la de la cátedra de cada edificio, o desde la
+  ventana de los estudios con «A clase». Un estudio se da en el aula de su camino (los «para todos», en la del camino
+  de quien estudia).
+- **La clase de una sección**: el maestro la enseña en 3 a 5 burbujas (la lectura, sus versículos y la idea clave) y
+  la escribe en el gran rollo; después pregunta la práctica una por una, revuelta, con el reloj (45 s). Si se acierta,
+  felicita y la clase aplaude; si no, tacha la opción y explica con el versículo, y se vuelve a elegir. Al final, la
+  nota con su medalla (oro: todas a la primera).
+- **El examen final**: el servidor da las 6 preguntas sin la respuesta; se contestan una por una (60 s cada una), se
+  entregan juntas y después el maestro las revisa una por una. La última, con el suspenso de «¿Quién es sabio?»: la
+  luz baja, la cámara se acerca, el redoble y el latido. La nota con su medalla (oro 6 de 6, plata aprobado, bronce si
+  faltó una).
+- **La cátedra**: la enseñanza corta, la pregunta (45 s) y la corrección del servidor con su cita, lección tras
+  lección hasta las 8 del día; la última del día, con suspenso. Al final, lo aprendido y el grado.
+- Los compañeros levantan la mano, asienten, cuchichean, aplauden, contienen el aliento y se ponen de pie al aprobar;
+  dicen frases cortas y fijas. Los sonidos (la campanilla, la pluma, el murmullo, las palmas, el redoble) están en
+  `aula/aula-sonido.ts` y se pueden apagar.
+- Las reglas del servidor no cambian: nada llega antes de tiempo. En el examen de los estudios, cada pregunta tiene su
+  propio orden de opciones (`server/orden-examen.ts`): antes la buena caía en la misma letra en todo el examen.
 
 ### El año (el calendario real)
 El año no se acaba: cada día real es un día en Jerusalén. Las fiestas de Levítico 23 caen en su fecha hebrea
