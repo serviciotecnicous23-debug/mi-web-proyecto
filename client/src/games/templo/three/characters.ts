@@ -5,7 +5,7 @@
  * - El aprendiz, Azarías y el rey Ezequías tienen mallas propias con sus vestiduras (Éxodo 28).
  */
 import * as THREE from "three";
-import { C, GeoBuilder, matrixOf, shinyMat, type Tf } from "./builder";
+import { C, GeoBuilder, GeoFigura, matrixOf, shinyMat, type Tf } from "./builder";
 import type { RopaVista } from "@shared/mercado";
 
 // ---------------------------------------------------------------- pose y animación
@@ -513,9 +513,9 @@ export type FigureLook = "aprendiz" | "sacerdote" | "turno" | "principal" | "sum
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
 function figureParts(look: FigureLook, tocado = true) {
-  const m = new GeoBuilder(), s = new GeoBuilder();
-  const armM = new GeoBuilder(), armS = new GeoBuilder();
-  const armLM = new GeoBuilder(), armLS = new GeoBuilder();
+  const m = new GeoFigura(), s = new GeoFigura();
+  const armM = new GeoFigura(), armS = new GeoFigura();
+  const armLM = new GeoFigura(), armLS = new GeoFigura();
   const skin = look === "azarias" ? "#c48a5e" : look === "rey" ? "#bf8457" : "#d39a6c";
   const hair = look === "azarias" ? "#ece8e0" : look === "rey" ? "#2b1d14" : "#3b2a1e";
   const old = look === "azarias";
@@ -677,7 +677,7 @@ export class Figure {
     this.body.add(this.armL, this.armR);
     this.armL.position.set(-0.215, 0.68, 0);
     this.armR.position.set(0.215, 0.68, 0);
-    const fb = new GeoBuilder();
+    const fb = new GeoFigura();
     fb.box(0.095, 0.05, 0.16, "#6a4a2c", { y: 0.025, z: 0.02 });
     fb.sphere(0.045, "#d39a6c", { y: 0.04, z: 0.04, sz: 1.3 }, 6, 4, Math.PI * 2, Math.PI / 2);
     const fg = fb.build();
@@ -738,9 +738,9 @@ export class Figure {
   private ponerRopa(r: RopaVista | null) {
     this.quitarRopa();
     if (!r) return;
-    const b = new GeoBuilder();
+    const b = new GeoFigura();
     // la orla de oro de la ropa fina del artesano (shared/taller.ts) y los bordados: brillan como el metal
-    const oro = new GeoBuilder();
+    const oro = new GeoFigura();
     if (r.tunica) {
       // la túnica sobre la vestidura, con dos franjas de los hombros al ruedo y el ruedo del color de las franjas
       const perfil = [[0.272, 0.055], [0.264, 0.2], [0.235, 0.42], [0.203, 0.58], [0.192, 0.68], [0.132, 0.752], [0.06, 0.765]].map(([x, y]) => new THREE.Vector2(x, y));
@@ -814,7 +814,7 @@ export class Figure {
     if (r.pies) {
       // las sandalias asoman bajo la túnica: la suela, los dedos y dos correas de lado a lado (se ven de arriba; nada
       // en forma de cruz) y la del tobillo
-      const sb = new GeoBuilder();
+      const sb = new GeoFigura();
       sb.box(0.12, 0.018, 0.3, "#5a3d26", { y: 0.009, z: 0.12 });
       sb.sphere(0.05, "#d39a6c", { y: 0.035, z: 0.22, sx: 1.05, sy: 0.55, sz: 1.2 }, 8, 5);
       for (const z of [0.15, 0.23]) sb.box(0.125, 0.024, 0.035, r.pies, { y: 0.05, z });
@@ -827,7 +827,7 @@ export class Figure {
       }
     }
     if (r.mano) {
-      const ab = new GeoBuilder();
+      const ab = new GeoFigura();
       let lado: "R" | "L" = "R";
       if (r.mano === "cayado") {
         // el cayado del pastor: la vara y la curva de arriba (Salmos 23:4)
@@ -886,7 +886,7 @@ export class Figure {
       this.body.remove(this.regazo);
       this.regazo.geometry.dispose();
     }
-    const b = new GeoBuilder();
+    const b = new GeoFigura();
     b.box(0.36, 0.13, 0.34, color, { y: 0.27, z: 0.17 });
     b.cyl(0.07, 0.065, 0.24, color, { x: -0.09, y: 0.12, z: 0.32 }, 8);
     b.cyl(0.07, 0.065, 0.24, color, { x: 0.09, y: 0.12, z: 0.32 }, 8);
@@ -954,7 +954,7 @@ function matteFor() {
 // ---------------------------------------------------------------- instrumentos de los cantores
 export function instrument(kind: number): THREE.Group {
   const g = new THREE.Group();
-  const m = new GeoBuilder(), s = new GeoBuilder();
+  const m = new GeoFigura(), s = new GeoFigura();
   if (kind === 0) {
     // arpa (kinnor)
     m.box(0.04, 0.4, 0.04, C.cedro, { x: -0.1, y: 0.2, rz: 0.15 });

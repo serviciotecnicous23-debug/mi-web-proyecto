@@ -9,6 +9,7 @@
  */
 import { avanzarMateriales } from "./three/builder";
 import * as THREE from "three";
+import { Vista } from "./motor/vista";
 import {
   DIALOGUES, HELPERS, ITEMS, LESSONS, LESSON_ORDER, QUIZZES, RANKS, STATIONS, UPGRADES, quizById, upgradeCost,
   type HelperId, type ItemType, type StationId, type UpgradeId,
@@ -165,6 +166,8 @@ export class TempleWorld {
   private online: OnlineHooks | null = null;
   private container: HTMLElement;
   private renderer: THREE.WebGLRenderer;
+  /** La tubería de imagen (motor/vista.ts): tono, gradación, oclusión, resplandor y calidad. */
+  private vista: Vista | null = null;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 1, 0.3, 900);
   private sun = new THREE.DirectionalLight("#fff3d6", 2.6);
@@ -608,7 +611,7 @@ export class TempleWorld {
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
     this.adapt(raw);
     this.timers.hud += dt;
     if (this.timers.hud > 0.1) {
@@ -663,6 +666,7 @@ export class TempleWorld {
     this.w = Math.max(1, Math.round(r.width));
     this.h = Math.max(1, Math.round(r.height));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.fov = this.camera.aspect < 0.85 ? 52 : this.camera.aspect < 1.2 ? 46 : 40;
     this.camera.updateProjectionMatrix();
@@ -3737,6 +3741,7 @@ export class TempleWorld {
     this.overlay.dispose();
     // el sonido compartido con la ciudad lo cierra la pantalla
     if (!this.opts.audio) this.audio.dispose();
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     canvas.remove();

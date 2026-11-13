@@ -12,6 +12,7 @@
  * servidor), y la lluvia del calendario cae también aquí.
  */
 import * as THREE from "three";
+import { Vista } from "../motor/vista";
 import { BlobShadows, Figure, newRig, type FigureLook, type Rig } from "../three/characters";
 import { NavGrid, collide } from "../three/nav";
 import { Overlay, Ring } from "../three/overlay";
@@ -291,6 +292,8 @@ export class HuertoWorld {
   private opts: HuertoOpts;
   private container: HTMLElement;
   private renderer: THREE.WebGLRenderer;
+  /** La tubería de imagen (motor/vista.ts): tono, gradación, oclusión, resplandor y calidad. */
+  private vista: Vista | null = null;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
   private hemi = new THREE.HemisphereLight("#fff1d8", "#6a5a3a", 1.1);
@@ -1541,7 +1544,7 @@ export class HuertoWorld {
     }
     if (this.refrescoEn && now > this.refrescoEn) void this.refrescar();
     this.animate(dt, now);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
     this.hudT += dt;
     if (this.hudT > 0.15) {
       this.hudT = 0;
@@ -1712,6 +1715,7 @@ export class HuertoWorld {
     this.w = Math.max(1, Math.round(r.width));
     this.h = Math.max(1, Math.round(r.height));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.fov = this.camera.aspect < 0.85 ? 52 : this.camera.aspect < 1.2 ? 46 : 42;
     this.camera.updateProjectionMatrix();
@@ -1748,6 +1752,7 @@ export class HuertoWorld {
     (this.suelo.material as THREE.Material).dispose();
     this.overlay.dispose();
     gameStore.setHuerto(null);
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     canvas.remove();

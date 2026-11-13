@@ -11,6 +11,7 @@
  * las ventanas llevan barrotes rectos y los adornos son franjas, granadas y rollos.
  */
 import * as THREE from "three";
+import { Vista } from "../motor/vista";
 import { GeoBuilder, disposeGroup, meshPair } from "../three/builder";
 import { BlobShadows, Crowd, Figure, newRig, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
 import { DICEN, type AulaDef, type MaestroAula } from "@shared/aula";
@@ -432,6 +433,8 @@ function soltarSprite(s: THREE.Sprite) {
 export class AulaEscena {
   readonly canvas: HTMLCanvasElement;
   private renderer: THREE.WebGLRenderer;
+  /** La tubería de imagen (motor/vista.ts): tono, gradación, oclusión, resplandor y calidad. */
+  private vista: Vista | null = null;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(50, 1, 0.05, 60);
   private raf = 0;
@@ -1207,7 +1210,7 @@ export class AulaEscena {
   simular(segundos: number) {
     const pasos = Math.max(1, Math.round(segundos / 0.033));
     for (let i = 0; i < pasos; i++) this.avanzar(0.033);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
   }
 
   private cuadro = (now: number) => {
@@ -1220,7 +1223,7 @@ export class AulaEscena {
     const dt = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
     this.last = now;
     this.avanzar(dt);
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
   };
 
   private avanzar(dt: number) {
@@ -1392,6 +1395,7 @@ export class AulaEscena {
     this.w = Math.max(1, Math.round(r?.width ?? 1));
     this.h = Math.max(1, Math.round(r?.height ?? 1));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     const f = Math.min(0.5, Math.max(0.15, this.foco));
     if (f < 0.5) {
@@ -1408,7 +1412,7 @@ export class AulaEscena {
 
   /** Para las capturas de las pruebas: dibuja ahora mismo. */
   dibujar() {
-    this.renderer.render(this.scene, this.camera);
+    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
   }
 
   dispose() {
@@ -1425,6 +1429,7 @@ export class AulaEscena {
     this.crowd.dispose();
     this.sombras.dispose();
     this.alumno.dispose();
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.canvas.remove();

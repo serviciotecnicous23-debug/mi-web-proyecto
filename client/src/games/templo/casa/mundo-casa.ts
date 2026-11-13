@@ -31,6 +31,7 @@ import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import { ASIENTO, LECHO_ALTO, LLAMA, construirMueble } from "./muebles3d";
 import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro } from "./choques";
+import { Vista } from "../motor/vista";
 
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
 const MURO = 2.3;
@@ -134,6 +135,8 @@ export class CasaWorld {
   private rects: [Rect[], Rect[]] = [[], []];
   private circles: [Circle[], Circle[]] = [[], []];
   private nav: [NavGrid | null, NavGrid | null] = [null, null];
+  /** La tubería de imagen (motor/vista.ts): tono, resplandor, gradación y calidad. */
+  private vista: Vista | null = null;
   private zonas: Zona[] = [];
   private siervos: Siervo[] = [];
   private llamas: Llama[] = [];
@@ -283,6 +286,7 @@ export class CasaWorld {
     document.addEventListener("visibilitychange", this.onVisibility);
     this.resizeObs = new ResizeObserver(() => this.resize());
     this.resizeObs.observe(container);
+    this.vista = new Vista(this.renderer, this.scene, this.camera);
     this.resize();
     if (opts.remodelar && estado.esMia) this.remodelar(true);
     // el maestro del edificio recibe a quien entra
@@ -1447,7 +1451,8 @@ export class CasaWorld {
       this.updateTrabajo(now);
     } else this.entrada.tomarToque();
     this.animate(dt, now);
-    this.renderer.render(this.scene, this.camera);
+    if (this.vista) this.vista.render(dt);
+    else this.renderer.render(this.scene, this.camera);
     this.hudT += dt;
     if (this.hudT > 0.15) {
       this.hudT = 0;
@@ -1724,6 +1729,7 @@ export class CasaWorld {
     this.w = Math.max(1, Math.round(r.width));
     this.h = Math.max(1, Math.round(r.height));
     this.renderer.setSize(this.w, this.h, false);
+    this.vista?.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.fov = this.camera.aspect < 0.85 ? 52 : this.camera.aspect < 1.2 ? 46 : 42;
     this.camera.updateProjectionMatrix();
@@ -1787,6 +1793,7 @@ export class CasaWorld {
     (this.suelo.material as THREE.Material).dispose();
     this.overlay.dispose();
     gameStore.setCasa(null);
+    this.vista?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     canvas.remove();
