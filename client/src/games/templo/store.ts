@@ -159,7 +159,8 @@ export type Modal =
   | { kind: "capitulos" }
   /** El libro de la restauración (shared/restauracion.ts). */
   | { kind: "libro" }
-  | { kind: "visita"; personajeId: number; nombre: string };
+  | { kind: "visita"; personajeId: number; nombre: string }
+  | { kind: "registro"; personajeId: number; nombre?: string; volver?: Modal };
 
 /** La casa por dentro (casa/mundo-casa.ts): lo que muestra la pantalla mientras se está adentro. */
 export type CasaHud = {
@@ -257,6 +258,15 @@ class GameStore {
   pushFront(modal: Modal) {
     if (!this.snap.modal) this.snap = { ...this.snap, modal };
     else this.queue.unshift(modal);
+    this.emit();
+  }
+
+  /**
+   * Cambia la ventana de ahora por otra sin darla por cerrada (para volver a ella después, como el registro
+   * de un vecino que se abre desde su casa). Solo para ventanas que no esperan su cierre (no la historia).
+   */
+  reemplazar(modal: Modal) {
+    this.snap = { ...this.snap, modal };
     this.emit();
   }
 

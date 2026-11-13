@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { CasaExtras, MercadoView, type Ofrecido, type ParteCasa } from "./MercadoUI";
 import { ReunionCasa, ReunionVisita, ReunionesAnuncios } from "./ReunionesUI";
+import { BotonRegistro } from "./RegistroUI";
 import { ConcursoView } from "./ConcursoUI";
 import { PedidosBarrio, PedirAyuda } from "./AyudaUI";
 import { LogrosDeOtro, MisLogros } from "./LogrosUI";
@@ -686,6 +687,7 @@ function CasaView({ inicial }: { inicial?: string }) {
         )}
         {pestana === "casa" && (
         <>
+        <BotonRegistro personajeId={yo.personajeId} nombre={yo.nombre} mio />
         <div>
           <p className="font-serif text-2xl font-black" data-testid="ciudad-casa-nivel">
             {nivel.nombre}
@@ -946,6 +948,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
               ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
+            <BotonRegistro personajeId={personajeId} nombre={casa.nombre} mio={casa.esMia} />
             {entrarACasa && (
               <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => entrarACasa({ personajeId })} data-testid="button-visita-entrar">
                 <Home className="mr-1 h-4 w-4" /> Entrar a ver su casa por dentro
@@ -1425,6 +1428,7 @@ function VecinoView({ id }: { id: number }) {
         )}
         {paso === "ficha" && <LogrosDeOtro personajeId={v.id} />}
         {paso === "ficha" && <EstudiosDeOtro personajeId={v.id} />}
+        {paso === "ficha" && <BotonRegistro personajeId={v.id} nombre={v.nombre} />}
         {mensaje && <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">{mensaje}</p>}
         {paso === "ficha" && (
           <div className="grid grid-cols-2 gap-2">

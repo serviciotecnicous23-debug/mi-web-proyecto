@@ -81,6 +81,19 @@ El año no se acaba: cada día real es un día en Jerusalén. Las fiestas de Lev
 real; la Navidad, el año nuevo y la Semana Santa en su fecha civil; las seis estaciones de la tierra de Israel
 cambian el huerto, el mercado, el cielo y lo que dice la gente.
 
+### El registro de cada jugador
+Cada persona tiene su **registro** («📜 Su registro», `shared/registro.ts`, `server/registro.ts`, `RegistroUI.tsx`):
+todo lo que ha hecho, sin datos personales. Se abre al visitar su casa, en su ficha de vecino, en «Tu casa» (el
+mío) y tocando su nombre en las tablas (la temporada, el concurso y los vecinos del barrio). Tiene cinco partes:
+- **Servicio**: cada personaje con su escalón, el mérito y el puesto en su camino, y sus cargos.
+- **Estudios**: los aprobados (con su nota), los empezados, la instrucción y el grado de cada cátedra.
+- **Juegos**: «¿Quién es sabio?» con sus últimas partidas (la grada en que quedó, los puntos, el tiempo y cómo
+  terminó), los duelos, el concurso y los consejos.
+- **Casa y barrio**: la casa con sus estrellas y obras, y lo que hizo por su barrio y la ciudad.
+- **Logros**: las medallas y el álbum con sus colecciones.
+
+Lo recuerda el servidor un minuto, y con un bloqueo de por medio no se ve.
+
 ## 4. El calendario de Jerusalén (lógica fija)
 
 Todo sale de `shared/anio.ts`, que usa el calendario hebreo del navegador y del servidor (`Intl`, sin tablas

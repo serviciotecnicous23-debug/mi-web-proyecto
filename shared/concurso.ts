@@ -17,7 +17,7 @@ export const VERSO_CONCURSO = {
   ref: "2 Timoteo 2:15",
 };
 
-export type ConcursoFila = { puesto: number; nombre: string; aciertos: number; segundos: number; isMe: boolean };
+export type ConcursoFila = { puesto: number; nombre: string; aciertos: number; segundos: number; isMe: boolean; /** Para abrir su registro. */ personajeId?: number };
 
 export type ConcursoEstado = {
   /** El lunes de la semana (clave). */

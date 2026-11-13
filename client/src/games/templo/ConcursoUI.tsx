@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CONCURSO_PREGUNTAS, CONCURSO_PREMIOS, CONCURSO_SEGUNDOS, VERSO_CONCURSO, type ConcursoEstado, type ConcursoRespuesta } from "@shared/concurso";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
+import { NombreConRegistro } from "./RegistroUI";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -185,7 +186,7 @@ export function ConcursoView() {
                   {e.tabla.map((f) => (
                     <li key={f.puesto} className={`flex items-center gap-2 rounded-lg px-2 py-1 ${f.isMe ? "bg-amber-100 font-bold dark:bg-amber-900/40" : "bg-stone-50 dark:bg-stone-800/50"}`}>
                       <span className="w-5 text-center">{f.puesto <= 3 ? ["🥇", "🥈", "🥉"][f.puesto - 1] : f.puesto}</span>
-                      <span className="min-w-0 flex-1 truncate">{f.nombre}</span>
+                      <span className="min-w-0 flex-1 truncate">{f.personajeId && !f.isMe ? <NombreConRegistro personajeId={f.personajeId} nombre={f.nombre} /> : f.nombre}</span>
                       <span className="text-xs tabular-nums">
                         {f.aciertos}/{CONCURSO_PREGUNTAS} · {f.segundos} s
                       </span>

@@ -37,6 +37,7 @@ import { registerIntercambioRoutes } from "./intercambio";
 import { registerArcaRoutes } from "./arca";
 import { registerInvitarRoutes } from "./invitar";
 import { registerAlbumRoutes } from "./album";
+import { registerRegistroRoutes } from "./registro";
 import { registerCaminoRoutes } from "./camino";
 import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { memoryStorage } from "./memory-storage";
@@ -3712,6 +3713,8 @@ ${urls}
   registerAlbumRoutes(app);
   registerCaminoRoutes(app);
   registerLogrosEnLineaRoutes(app);
+  // el registro de cada jugador: todo lo que hizo, para verlo en su casa, su ficha y las tablas
+  registerRegistroRoutes(app);
 
   // ========== IGLESIAS DEL MINISTERIO (COBERTURA Y RESPALDO) ==========
   app.get(api.ministryChurches.list.path, async (req, res) => {
