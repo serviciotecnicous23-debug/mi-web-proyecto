@@ -698,11 +698,29 @@ ${urls}
     legacyHeaders: false,
   });
 
-  // General API rate limiter
-  const apiLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 120, // 120 requests per minute
+  // Límite general de la API, en dos pasos. Antes contaba 120 por minuto por IP, y un grupo
+  // de la iglesia con la misma wifi (todos con la misma IP) se quedaba sin cupo jugando junto.
+  // 1) Antes de leer la sesión: un tope ancho por IP, que frena una avalancha sin tocar la base
+  //    (la sesión se busca en la base en cada petición) y deja jugar a toda una iglesia.
+  // 2) Después de la sesión: 120 por minuto por persona (su cuenta); sin sesión, por IP como antes.
+  const LIMITE_POR_IP = Number(process.env.LIMITE_API_IP) || 1500;
+  const LIMITE_POR_PERSONA = Number(process.env.LIMITE_API_PERSONA) || 120;
+  const ipLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: LIMITE_POR_IP,
     keyGenerator: clientKey,
+    message: { message: "Demasiadas solicitudes desde esta red. Intenta de nuevo en un momento." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const claveDePersona = (req: Request) => {
+    const id = (req.user as { id?: number } | undefined)?.id;
+    return typeof id === "number" && id > 0 ? `u:${id}` : clientKey(req);
+  };
+  const apiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: LIMITE_POR_PERSONA,
+    keyGenerator: claveDePersona,
     message: { message: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -718,8 +736,8 @@ ${urls}
     legacyHeaders: false,
   });
 
-  // Apply general rate limiter to all API routes
-  app.use("/api/", apiLimiter as RequestHandler);
+  // El tope ancho por IP, antes de la sesión (el de cada persona va después de passport.session()).
+  app.use("/api/", ipLimiter as RequestHandler);
 
   // Archivos subidos (/files/<id>/<nombre>): antes de la sesión, sin cookies.
   registerFileServing(app);
@@ -800,6 +818,8 @@ ${urls}
 
   app.use(passport.initialize() as RequestHandler);
   app.use(passport.session() as RequestHandler);
+  // El límite de cada persona: con la sesión ya leída, cuenta por cuenta (y por IP si no entró).
+  app.use("/api/", apiLimiter as RequestHandler);
 
   // Archivos (/files/...), subida general y vistas previas de enlaces (después de la
   // sesión: la subida necesita saber quién la hace).
