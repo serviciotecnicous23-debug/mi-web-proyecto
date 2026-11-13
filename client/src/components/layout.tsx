@@ -65,6 +65,7 @@ import gsap from "gsap";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ROLES } from "@shared/roles";
+import { veVistaPrevia } from "@shared/academia-acceso";
 import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -108,6 +109,15 @@ type DesktopNavGroupData = {
   title: string;
   links: { href: string; label: string; icon: typeof Home }[];
 };
+
+/**
+ * La Academia en «Formación»: mientras está en vista previa, solo para la administración y los profesores
+ * (docs/academia.md). Cuando Luis la abra, va para todos.
+ */
+function conAcademia<G extends { title: string; links: { href: string; label: string; icon: typeof Home }[] }>(grupos: G[], role: string | null | undefined): G[] {
+  if (!veVistaPrevia(role)) return grupos;
+  return grupos.map((g) => (g.title.startsWith("Forma") ? { ...g, links: [{ href: "/academia", label: "Academia", icon: GraduationCap }, ...g.links] } : g));
+}
 
 const memberDesktopNavGroups: DesktopNavGroupData[] = [
   {
@@ -579,7 +589,7 @@ export function Navbar() {
         {/* Desktop navigation — public or member */}
         <div className={`hidden items-center gap-0.5 ${user ? "lg:flex" : "xl:flex"}`}>
           {user
-            ? memberDesktopNavGroups.map((group) => (
+            ? conAcademia(memberDesktopNavGroups, user.role).map((group) => (
                 <DesktopNavGroup key={group.title} group={group} location={location} />
               ))
             : publicDesktopNavItems.map((item) => {
@@ -805,7 +815,7 @@ export function Navbar() {
 
             {/* Grouped navigation — dynamic by auth state */}
             <div className="space-y-1">
-              {(user ? memberMobileNavGroups : publicMobileNavGroups).map((group) => (
+              {(user ? conAcademia(memberMobileNavGroups, user.role) : publicMobileNavGroups).map((group) => (
                 <MobileNavGroup
                   key={group.title}
                   group={group}

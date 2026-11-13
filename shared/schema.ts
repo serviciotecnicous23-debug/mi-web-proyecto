@@ -1237,6 +1237,104 @@ export const certificates = pgTable("certificates", {
 
 export type Certificate = typeof certificates.$inferSelect;
 
+// ========== ACADEMIA AVIVANDO EL FUEGO (docs/academia.md) ==========
+// Las crea server/ensure-schema.ts con ACADEMIA_SQL (server/academia-comun.ts); aquí van para que coincidan.
+
+export const academiaAlumnos = pgTable("academia_alumnos", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  matricula: text("matricula").unique(),
+  promocion: integer("promocion"),
+  estatus: text("estatus").notNull().default("activo"),
+  nivel: integer("nivel").notNull().default(1),
+  mentorUserId: integer("mentor_user_id"),
+  reglamentoAt: timestamp("reglamento_at"),
+  racha: integer("racha").notNull().default(0),
+  rachaFecha: text("racha_fecha"),
+  inscritoAt: timestamp("inscrito_at").notNull().defaultNow(),
+  ultimaAt: timestamp("ultima_at").notNull().defaultNow(),
+});
+
+export const academiaLecciones = pgTable(
+  "academia_lecciones",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    leccionId: text("leccion_id").notNull(),
+    vistaAt: timestamp("vista_at").notNull().defaultNow(),
+    completadaAt: timestamp("completada_at"),
+    repaso: jsonb("repaso").notNull().default({}),
+    reflexion: text("reflexion"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.leccionId] })],
+);
+
+export const academiaPruebas = pgTable(
+  "academia_pruebas",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    clave: text("clave").notNull(),
+    intentos: integer("intentos").notNull().default(0),
+    fallos: integer("fallos").notNull().default(0),
+    mejor: integer("mejor"),
+    ultima: integer("ultima"),
+    vistas: jsonb("vistas").notNull().default([]),
+    curso: jsonb("curso"),
+    cursoAt: timestamp("curso_at"),
+    falloAt: timestamp("fallo_at"),
+    aprobadaAt: timestamp("aprobada_at"),
+    resultado: jsonb("resultado"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.clave] })],
+);
+
+export const academiaRespuestas = pgTable("academia_respuestas", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clave: text("clave").notNull(),
+  intento: integer("intento").notNull(),
+  preguntaId: text("pregunta_id").notNull(),
+  texto: text("texto").notNull(),
+  notaAuto: integer("nota_auto").notNull(),
+  detalle: jsonb("detalle").notNull().default({}),
+  revisar: boolean("revisar").notNull().default(false),
+  notaFinal: integer("nota_final"),
+  revisadaPor: integer("revisada_por"),
+  revisadaAt: timestamp("revisada_at"),
+  motivo: text("motivo"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const academiaMaterias = pgTable(
+  "academia_materias",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    materiaId: text("materia_id").notNull(),
+    estado: text("estado").notNull().default("en-curso"),
+    nota: integer("nota"),
+    componentes: jsonb("componentes").notNull().default({}),
+    via: text("via").notNull().default("cursada"),
+    inicioAt: timestamp("inicio_at").notNull().defaultNow(),
+    aprobadaAt: timestamp("aprobada_at"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.materiaId] })],
+);
+
+export const academiaVersiculos = pgTable(
+  "academia_versiculos",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    materiaId: text("materia_id").notNull(),
+    ref: text("ref").notNull(),
+    intentos: integer("intentos").notNull().default(0),
+    fallos: integer("fallos").notNull().default(0),
+    puntaje: integer("puntaje"),
+    aprendidoAt: timestamp("aprendido_at"),
+    caja: integer("caja").notNull().default(0),
+    proximoAt: timestamp("proximo_at"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.materiaId] })],
+);
+
 // ========== DIEZMOS Y OFRENDAS ==========
 
 export const tithes = pgTable("tithes", {

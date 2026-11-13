@@ -67,6 +67,11 @@ const SermonesPage = lazy(() => import("@/pages/sermones"));
 const GruposPage = lazy(() => import("@/pages/grupos"));
 const CalendarioPage = lazy(() => import("@/pages/calendario"));
 const CertificadosPage = lazy(() => import("@/pages/certificados"));
+// La Academia Avivando el Fuego (docs/academia.md)
+const AcademiaPage = lazy(() => import("@/pages/academia"));
+const AcademiaMateria = lazy(() => import("@/pages/academia-materia"));
+const AcademiaLeccion = lazy(() => import("@/pages/academia-leccion"));
+const AcademiaExamen = lazy(() => import("@/pages/academia-examen"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
 const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
 const MiIglesiaPage = lazy(() => import("@/pages/mi-iglesia"));
@@ -123,6 +128,10 @@ function Router() {
       <Route path="/grupos" component={GruposPage} />
       <Route path="/calendario" component={CalendarioPage} />
       <Route path="/certificados" component={CertificadosPage} />
+      <Route path="/academia" component={AcademiaPage} />
+      <Route path="/academia/materia/:materiaId" component={AcademiaMateria} />
+      <Route path="/academia/leccion/:leccionId" component={AcademiaLeccion} />
+      <Route path="/academia/examen/:materiaId" component={AcademiaExamen} />
       <Route path="/alianza" component={AlianzaPage} />
       <Route path="/ficha-ministerial" component={FichaMinisterialPage} />
       <Route path="/ficha-ministerial/:userId" component={FichaMinisterialPage} />

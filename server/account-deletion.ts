@@ -28,6 +28,13 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["game_avisos_pref", (id) => sql`user_id = ${id}`],
   ["game_avisos", (id) => sql`user_id = ${id}`],
   ["password_reset_tokens", (id) => sql`user_id = ${id}`],
+  // la academia: su avance, sus exámenes y sus respuestas escritas (docs/academia.md)
+  ["academia_respuestas", (id) => sql`user_id = ${id}`],
+  ["academia_pruebas", (id) => sql`user_id = ${id}`],
+  ["academia_versiculos", (id) => sql`user_id = ${id}`],
+  ["academia_lecciones", (id) => sql`user_id = ${id}`],
+  ["academia_materias", (id) => sql`user_id = ${id}`],
+  ["academia_alumnos", (id) => sql`user_id = ${id}`],
   ["bible_highlights", (id) => sql`user_id = ${id}`],
   ["bible_notes", (id) => sql`user_id = ${id}`],
   ["sermon_notes", (id) => sql`user_id = ${id}`],

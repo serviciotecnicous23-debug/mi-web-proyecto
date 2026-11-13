@@ -75,6 +75,7 @@ import { registerClubRoutes, notifyClubComment, readingClubPostAuthor } from "./
 import { registerPrayerWallRoutes } from "./prayer-wall";
 import { eliminarCuentaPropia } from "./account-deletion";
 import { registerReportRoutes } from "./reports";
+import { registerAcademiaRoutes } from "./academia";
 import { DEFAULT_AZURACAST_BASE_URL, AZURACAST_STATION_SHORTCODE } from "@shared/radio";
 import {
   DEFAULT_AZURACAST_HLS_URL,
@@ -2983,6 +2984,10 @@ ${urls}
   // ========== ORACIÓN: MURO DE PETICIONES ==========
   registerPrayerWallRoutes(app, { isTeacherOrAdmin, isAdmin });
   registerReportRoutes(app, { isAdmin });
+
+  // ========== ACADEMIA AVIVANDO EL FUEGO ==========
+  // Niveles, materias, lecciones, repasos, versículos y exámenes con corrección automática (docs/academia.md).
+  registerAcademiaRoutes(app);
 
   // ========== BIBLIOTECA: BIBLE HIGHLIGHTS ==========
   app.get(api.bibleHighlights.list.path, async (req, res) => {
