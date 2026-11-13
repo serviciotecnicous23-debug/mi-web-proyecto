@@ -304,7 +304,9 @@ function aplicarMesa(p: PartidaMesa & { participo: Set<number> }, a: number, j: 
   const juego = MESAS[p.id];
   p.estado = juego.aplicar(p.estado, a, j, p.azar, ahora);
   p.n++;
-  p.ultima = { asiento: a, jugada: j, n: p.n };
+  // en los juegos con reloj propio la jugada puede ser secreta (lo que escribe cada uno en el «Basta», lo que eligió en
+  // «Dibuja y adivina»): no se reparte; esos juegos animan con sus propios eventos
+  p.ultima = { asiento: a, jugada: juego.relojPropio ? null : j, n: p.n };
   if (!porTiempo) p.participo.add(p.cuentas[a]);
   p.desde.delete(a);
   p.botEn.delete(a);
