@@ -30,9 +30,12 @@ test("el código de la sala: 6 letras, sin I ni O, se limpia lo que escribe la p
   assert.ok(!CODIGO_LETRAS.includes("I") && !CODIGO_LETRAS.includes("O") && CODIGO_LETRAS.length === 24);
 });
 
-test("los cinco juegos: de 2 a 12, con su versículo y su prenda", () => {
-  assert.deepEqual(ORDEN_JUEGOS, ["esgrima", "tribus", "quien", "carrera", "muro"]);
-  for (const id of ORDEN_JUEGOS) {
+test("los cinco juegos: de 2 a 12, con su versículo y su prenda (y los juegos de mesa, que eligen su juego)", () => {
+  assert.deepEqual(ORDEN_JUEGOS, ["esgrima", "tribus", "quien", "carrera", "muro", "mesa"]);
+  // los juegos de mesa: se puede empezar solo (con compañeros de la computadora) y no dan prenda
+  assert.ok(JUEGOS.mesa.min === 1 && JUEGOS.mesa.max === 12 && JUEGOS.mesa.prenda === "" && JUEGOS.mesa.verso.ref === "Salmos 133:1");
+  assert.ok(esJuego("mesa"));
+  for (const id of ORDEN_JUEGOS.filter((j) => j !== "mesa")) {
     const j = JUEGOS[id];
     assert.equal(j.id, id);
     assert.ok(j.min >= 2 && j.max === 12, id);

@@ -25,13 +25,15 @@ import { dondeEsta } from "./barrio";
 import { BANCO } from "./jerusalen-banco";
 import { BANCO_SABIO } from "./sabio-banco";
 import { ESGRIMA_BANCO, QUIEN_BANCO } from "./juegos-grupo-banco";
+import { MESAS, ORDEN_MESAS, esMesa } from "@shared/mesa/index";
+import { azarConSemilla, esNivelBot, jugadaValida, nombreDeBot, quienesJuegan, type AsientoMesa, type MesaVista, type NivelBot, type ResultadoMesa } from "@shared/mesa";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { VERSICULOS_RAPIDOS } from "@shared/ciudad";
 import type { Camino } from "@shared/caminos";
 import {
   CANTERA, CARRERA, CODIGO_LARGO, CODIGO_LETRAS, ESGRIMA, FRASES_SALA, FRASES_SALA_POR_MINUTO, FRASES_SALA_VISTAS, FRASE_SALA_CADA_MS, GOZO_JUEGOS_DIA,
   GOZO_JUGAR, GOZO_MURO, GOZO_PUESTOS, GOZO_TRIBU, GRACIA_MS, INVITACIONES_SALA_POR_MINUTO, INVITACION_SALA_S, INVITAR_SALA_CADA_MS, JUEGOS, MURO,
-  MURO_APORTE_MIN, ORDEN_JUEGOS, PATIO_SALIDA, PREPARAR_MS, QUIEN, QUIEN_RONDA_MS, REVELAR_MS, SALA_MAX, SALA_MIN, SALA_QUIETA_MS, AUSENTE_SALA_MS,
+  MURO_APORTE_MIN, ORDEN_JUEGOS, PATIO_SALIDA, PRACTICA_GOZO_DIA, PREPARAR_MS, QUIEN, QUIEN_RONDA_MS, REVELAR_MS, SALA_MAX, SALA_MIN, SALA_QUIETA_MS, AUSENTE_SALA_MS,
   TRAMO, TRAMO_CENTRO, TRIBUS, TRIBUS_EQUIPOS, enElPatio, esJuego, limpiarCodigo, margenDespues, metaDelMuro, pistasVistas, puntosQuien, recorridoDeCarrera,
   type EstadoSala, type FraseVista, type InvitableSala, type JuegoId, type LugarCarrera, type MiembroVista, type PartidaVista, type PatioEstado,
   type ResultadoVista, type SalaAbierta, type SalaVista, type TribuVista,
@@ -65,7 +67,9 @@ CREATE TABLE IF NOT EXISTS "game_juegos_jugadores" (
   "created_at" timestamp NOT NULL DEFAULT now(),
   PRIMARY KEY ("partida_id", "titular")
 );
-CREATE INDEX IF NOT EXISTS "idx_game_juegos_jugadores_titular" ON "game_juegos_jugadores" ("titular", "juego");`;
+CREATE INDEX IF NOT EXISTS "idx_game_juegos_jugadores_titular" ON "game_juegos_jugadores" ("titular", "juego");
+ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_dia" text;
+ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_hoy" integer NOT NULL DEFAULT 0;`;
 
 // ================================================================ en memoria
 type Miembro = {
@@ -83,6 +87,11 @@ type Miembro = {
   entro: number;
   /** La última vez que preguntó por la sala o hizo algo en ella. */
   visto: number;
+  /**
+   * Un compañero de la computadora (con su nivel): sus números (`u`, `pj`) son negativos, no tiene titular (`t` = 0),
+   * siempre está a punto y conectado, y nunca se le manda nada por la red.
+   */
+  bot: NivelBot | null;
 };
 type Frase = { n: number; nombre: string; texto: string; ref?: string; u: number };
 type Resp = { u: number; o: string; ms: number };
@@ -143,7 +152,24 @@ type PartidaMuro = {
   ultima: Map<number, Pos & { margen: number }>;
   cumplido: boolean;
 };
-type Partida = (PartidaEsgrima | PartidaTribus | PartidaQuien | PartidaCarrera | PartidaMuro) & {
+/** Una partida de un juego de mesa (shared/mesa.ts): el estado es del módulo; la sala pone los asientos y el reloj. */
+type PartidaMesa = {
+  juego: "mesa";
+  id: string;
+  estado: unknown;
+  asientos: AsientoMesa[];
+  /** La cuenta (`u`) de cada asiento (negativa en los compañeros de la computadora). */
+  cuentas: number[];
+  azar: () => number;
+  /** Desde cuándo espera su jugada cada asiento que juega ahora. */
+  desde: Map<number, number>;
+  /** Cuándo juega cada compañero de la computadora que juega ahora (ya pensó). */
+  botEn: Map<number, number>;
+  ultima: { asiento: number; jugada: unknown; n: number } | null;
+  n: number;
+  fin: ResultadoMesa | null;
+};
+type Partida = (PartidaEsgrima | PartidaTribus | PartidaQuien | PartidaCarrera | PartidaMuro | PartidaMesa) & {
   empezo: number;
   /** Quiénes jugaron de verdad (respondieron, corrieron o pusieron piedras): solo ellos cuentan para los premios. */
   participo: Set<number>;
@@ -157,6 +183,12 @@ type Premio = NonNullable<ResultadoVista["mio"]>;
 type Sala = {
   codigo: string;
   juego: JuegoId;
+  /** El juego de mesa elegido (si `juego` es «mesa»). */
+  mesa: string | null;
+  /** Cuántos compañeros de la computadora se agregaron (para sus números y nombres). */
+  botN: number;
+  /** La partida empezó con compañeros de la computadora: es de práctica (poco gozo; sin copa, prendas, logros ni tablas). */
+  practica: boolean;
   tribus: number;
   estado: EstadoSala;
   anfitrion: number;
@@ -167,7 +199,14 @@ type Sala = {
   frases: Frase[];
   fraseN: number;
   partida: Partida | null;
-  resultado: { vista: Omit<ResultadoVista, "mio" | "anotando">; filas: FilaFinal[]; premios: Map<number, Premio>; anotando: boolean } | null;
+  resultado: {
+    vista: Omit<ResultadoVista, "mio" | "anotando">;
+    filas: FilaFinal[];
+    premios: Map<number, Premio>;
+    anotando: boolean;
+    /** De quién era cada asiento del juego de mesa (para marcar «yo» en el tablero final). */
+    cuentasMesa?: number[];
+  } | null;
   /** Cuentas que el anfitrión sacó: no vuelven a entrar a esta sala. */
   sacados: Set<number>;
   temporizador: ReturnType<typeof setTimeout> | null;
@@ -213,7 +252,56 @@ function fraseDeSala(id: string): { texto: string; ref?: string } | null {
 
 /** Quiénes de la sala están en la ciudad (o en el templo) ahora. */
 function conectados(s: Sala): Set<number> {
-  return new Set(presenciaDe(s.miembros.map((m) => m.u)).keys());
+  const pres = new Set(presenciaDe(s.miembros.filter((m) => !m.bot).map((m) => m.u)).keys());
+  for (const m of s.miembros) if (m.bot) pres.add(m.u);
+  return pres;
+}
+
+/** Cuántos pueden jugar el juego de la sala (en los de mesa, lo dice su módulo). */
+function limites(s: Sala): { min: number; max: number; nombre: string } {
+  if (s.juego === "mesa") {
+    const j = MESAS[s.mesa ?? ""];
+    if (j) return { min: Math.max(1, j.min), max: Math.min(SALA_MAX, j.max), nombre: j.nombre };
+  }
+  const def = JUEGOS[s.juego];
+  return { min: Math.max(SALA_MIN, def.min), max: Math.min(SALA_MAX, def.max), nombre: def.nombre };
+}
+
+const humanos = (s: Sala) => s.miembros.filter((m) => !m.bot);
+
+// ================================================================ los juegos de mesa (shared/mesa.ts)
+/** Quienes juegan ahora tienen su reloj, y los compañeros de la computadora su momento para jugar (después de pensar). */
+function prepararTurnos(p: PartidaMesa, ahora: number) {
+  const juego = MESAS[p.id];
+  if (!juego) return;
+  const juegan = new Set(quienesJuegan(juego, p.estado));
+  for (const k of [...p.desde.keys()]) {
+    if (!juegan.has(k)) {
+      p.desde.delete(k);
+      p.botEn.delete(k);
+    }
+  }
+  for (const a of juegan) {
+    if (p.desde.has(a)) continue;
+    p.desde.set(a, ahora);
+    const nivel = p.asientos[a]?.bot;
+    if (nivel) {
+      const [x, y] = juego.pensarMs?.[nivel] ?? [900, 2200];
+      p.botEn.set(a, ahora + x + (y - x) * Math.random());
+    }
+  }
+}
+
+/** Aplica una jugada (ya validada) de un asiento y prepara los turnos que siguen. */
+function aplicarMesa(p: PartidaMesa & { participo: Set<number> }, a: number, j: unknown, ahora: number, porTiempo = false) {
+  const juego = MESAS[p.id];
+  p.estado = juego.aplicar(p.estado, a, j, p.azar);
+  p.n++;
+  p.ultima = { asiento: a, jugada: j, n: p.n };
+  if (!porTiempo) p.participo.add(p.cuentas[a]);
+  p.desde.delete(a);
+  p.botEn.delete(a);
+  prepararTurnos(p, ahora);
 }
 
 // ================================================================ las partidas: empezar
@@ -332,6 +420,29 @@ function empezarPartida(s: Sala, ahora: number, rapido: boolean): Partida {
       }
       return { juego: "carrera", puntos: recorridoDeCarrera(Math.floor(Math.random() * 2 ** 31)), salida: ahora + CARRERA.salidaMs, primero: null, corredores, ...base };
     }
+    case "mesa": {
+      const juego = MESAS[s.mesa ?? ""] ?? MESAS[ORDEN_MESAS[0]];
+      const azar = azarConSemilla(Math.floor(Math.random() * 2 ** 31));
+      // los asientos, en un orden al azar (así quien empieza cambia)
+      const orden = mezclar(s.miembros);
+      const asientos: AsientoMesa[] = orden.map((m, n) => ({ n, nombre: m.nombre, bot: m.bot }));
+      const p: PartidaMesa & typeof base = {
+        juego: "mesa",
+        id: juego.id,
+        estado: juego.estadoInicial(asientos, azar),
+        asientos,
+        cuentas: orden.map((m) => m.u),
+        azar,
+        desde: new Map(),
+        botEn: new Map(),
+        ultima: null,
+        n: 0,
+        fin: null,
+        ...base,
+      };
+      prepararTurnos(p, ahora);
+      return p;
+    }
     case "muro":
       return {
         juego: "muro",
@@ -392,6 +503,14 @@ function proximoCambio(s: Sala, ahora: number): number | null {
     case "muro":
       if (ahora < p.salida) return quedan(p.salida);
       return quedan(p.salida + MURO.ms);
+    case "mesa": {
+      const juego = MESAS[p.id];
+      if (!juego) return 0;
+      let t = Infinity;
+      for (const en of p.botEn.values()) t = Math.min(t, en);
+      for (const [a, d] of p.desde) if (!p.asientos[a]?.bot) t = Math.min(t, d + juego.relojMs + GRACIA_MS);
+      return t === Infinity ? null : quedan(t);
+    }
   }
 }
 
@@ -435,6 +554,39 @@ function avanzar(s: Sala, ahora: number): boolean {
 /** Un paso de la partida (devuelve si cambió algo; se llama hasta que no cambie). */
 function avanzarUnPaso(s: Sala, p: Partida, ahora: number, dentro: Set<number>): boolean {
   switch (p.juego) {
+    case "mesa": {
+      const juego = MESAS[p.id];
+      if (!juego) {
+        terminar(s, ahora, "Ese juego de mesa ya no está.");
+        return true;
+      }
+      const fin = juego.terminado(p.estado);
+      if (fin) {
+        p.fin = fin;
+        terminar(s, ahora);
+        return true;
+      }
+      prepararTurnos(p, ahora);
+      // el compañero de la computadora que ya pensó, juega
+      for (const [a, en] of p.botEn) {
+        if (ahora < en) continue;
+        const nivel = p.asientos[a].bot ?? "normal";
+        let j = juego.jugadaDeBot(p.estado, a, nivel, p.azar);
+        if (!jugadaValida(juego, p.estado, a, j)) j = juego.jugadasValidas(p.estado, a)[0];
+        if (j === undefined) continue;
+        aplicarMesa(p, a, j, ahora);
+        return true;
+      }
+      // a quien se le acabó el reloj, se le juega solo
+      for (const [a, d] of p.desde) {
+        if (p.asientos[a]?.bot || ahora < d + juego.relojMs + GRACIA_MS) continue;
+        const j = juego.jugadaPorTiempo ? juego.jugadaPorTiempo(p.estado, a, p.azar) : juego.jugadasValidas(p.estado, a)[0];
+        if (j === undefined) continue;
+        aplicarMesa(p, a, j, ahora, true);
+        return true;
+      }
+      return false;
+    }
     case "esgrima": {
       if (ahora < p.servida) return false;
       if (p.revelada == null) {
@@ -690,6 +842,8 @@ function terminar(s: Sala, ahora: number, aviso?: string) {
   let titulo = "";
   let tribus: TribuVista[] | null = null;
   let cumplido: boolean | undefined;
+  let mesaFinal: ResultadoVista["mesaFinal"] = null;
+  let cuentasMesa: number[] | undefined;
   const fila = (m: Miembro, puesto: number, puntos: number, detalle: string, gano: boolean, tribu: number | null, quiere: number): FilaFinal => ({
     u: m.u, t: m.t, pj: m.pj, nombre: m.nombre, puesto, puntos, detalle, gano, tribu, participo: p.participo.has(m.u), quiere,
   });
@@ -734,6 +888,33 @@ function terminar(s: Sala, ahora: number, aviso?: string) {
       titulo = l[0]?.llego ? `¡Ganó ${l[0].m.nombre}, como Ahimaas!` : "Nadie llegó al patio a tiempo.";
       break;
     }
+    case "mesa": {
+      const juego = MESAS[p.id];
+      if (juego) {
+        mesaFinal = { vista: juego.vistaPara(p.estado, null), asientos: p.asientos.map((a) => ({ ...a, yo: false })), ultima: p.ultima };
+        cuentasMesa = [...p.cuentas];
+      }
+      const r: ResultadoMesa = p.fin ??
+        juego?.terminado(p.estado) ?? { ganadores: [], puntos: p.asientos.map(() => 0), detalle: p.asientos.map(() => "No terminó"), titulo: "La partida terminó." };
+      const orden = p.asientos
+        .map((x) => x.n)
+        .sort((a, b) => Number(r.ganadores.includes(b)) - Number(r.ganadores.includes(a)) || (r.puntos[b] ?? 0) - (r.puntos[a] ?? 0));
+      let puesto = 0;
+      let antes = "";
+      orden.forEach((a, k) => {
+        const clave = `${r.ganadores.includes(a)}:${r.puntos[a] ?? 0}`;
+        if (clave !== antes) {
+          puesto = k + 1;
+          antes = clave;
+        }
+        const m = s.miembros.find((x) => x.u === p.cuentas[a]);
+        if (!m) return;
+        const gano = r.ganadores.includes(a);
+        filas.push(fila(m, puesto, r.puntos[a] ?? 0, r.detalle[a] ?? "", gano, null, gano ? GOZO_PUESTOS[0] : GOZO_JUGAR));
+      });
+      titulo = r.titulo;
+      break;
+    }
     case "muro": {
       cumplido = p.cumplido;
       const l = [...s.miembros].sort((a, b) => (p.aportes.get(b.u) ?? 0) - (p.aportes.get(a.u) ?? 0) || a.entro - b.entro);
@@ -751,14 +932,16 @@ function terminar(s: Sala, ahora: number, aviso?: string) {
   s.temporizador = null;
   s.estado = "fin";
   s.resultado = {
-    vista: { juego: p.juego, titulo, puestos: filas.map((f) => ({ puesto: f.puesto, pj: f.pj, nombre: f.nombre, puntos: f.puntos, detalle: f.detalle, gano: f.gano, yo: false, tribu: f.tribu })), tribus, cumplido },
+    vista: { juego: p.juego, mesa: p.juego === "mesa" ? p.id : null, mesaFinal, titulo, puestos: filas.map((f) => ({ puesto: f.puesto, pj: f.pj, nombre: f.nombre, puntos: f.puntos, detalle: f.detalle, gano: f.gano, yo: false, tribu: f.tribu })), tribus, cumplido },
     filas,
+    cuentasMesa,
     premios: new Map(),
     anotando: true,
   };
   const ms = ahora - p.empezo;
   s.partida = null;
-  for (const m of s.miembros) m.listo = false;
+  // los compañeros de la computadora siempre están a punto
+  for (const m of s.miembros) m.listo = !!m.bot;
   s.actividad = ahora;
   void anotarPremios(s, p.juego, ms, cumplido)
     .catch((err) => console.error("[juegos] premios:", err))
@@ -771,7 +954,13 @@ function terminar(s: Sala, ahora: number, aviso?: string) {
 /** Anota la partida y reparte los premios (de a una persona: la base de prueba no aguanta muchas consultas a la vez). */
 async function anotarPremios(s: Sala, juego: JuegoId, ms: number, cumplido: boolean | undefined) {
   const r = s.resultado!;
-  const jugaron = r.filas.filter((f) => f.participo);
+  // con compañeros de la computadora la partida es de práctica: poco gozo, y nada de copa, prendas, logros ni tablas
+  // (si uno solo tomó el asiento de quien se fue, la partida sigue siendo de personas)
+  if (s.practica) {
+    await premiosDePractica(r.filas.filter((f) => f.participo && f.u > 0), r.premios);
+    return;
+  }
+  const jugaron = r.filas.filter((f) => f.participo && f.u > 0);
   const sinPremio = jugaron.length < 2 ? "Para los premios tienen que jugar al menos dos personas." : null;
   if (!jugaron.length) return;
   const { rows } = await pool.query(`INSERT INTO game_juegos_partidas (juego, jugadores, ms, cumplido) VALUES ($1, $2, $3, $4) RETURNING id`, [
@@ -798,7 +987,7 @@ async function anotarPremios(s: Sala, juego: JuegoId, ms: number, cumplido: bool
           const premios = new Set<string>(Array.isArray(g[0]?.premios) ? (g[0].premios as string[]) : []);
           premio.gozo = Math.max(0, Math.min(f.quiere, GOZO_JUEGOS_DIA - hoy));
           premio.topeHoy = f.quiere > 0 && premio.gozo < f.quiere;
-          if (f.gano && !premios.has(prenda)) {
+          if (f.gano && prenda && !premios.has(prenda)) {
             premios.add(prenda);
             premio.prenda = prenda;
             await pool.query(
@@ -833,18 +1022,52 @@ async function anotarPremios(s: Sala, juego: JuegoId, ms: number, cumplido: bool
   }
 }
 
+/** El gozo de una partida de práctica (con compañeros de la computadora): como mucho PRACTICA_GOZO_DIA por día. */
+async function premiosDePractica(jugaron: FilaFinal[], premios: Map<number, Premio>) {
+  const dia = diaClave();
+  for (const f of jugaron) {
+    try {
+      const premio: Premio = { gozo: 0, topeHoy: false, prenda: null, copa: 0, gozoTotal: null, sinPremio: null, practica: true };
+      const quiere = Math.min(f.quiere, f.gano ? 4 : 2);
+      await enFila(f.t, async () => {
+        const { rows: g } = await pool.query(
+          `INSERT INTO game_juegos_grupo (titular, dia, gozo_hoy, practica_dia, practica_hoy) VALUES ($1, $2, 0, $2, 0)
+           ON CONFLICT (titular) DO UPDATE SET practica_hoy = CASE WHEN game_juegos_grupo.practica_dia = $2 THEN game_juegos_grupo.practica_hoy ELSE 0 END,
+             practica_dia = $2, updated_at = now()
+           RETURNING practica_hoy`,
+          [f.t, dia],
+        );
+        const hoy = Number(g[0]?.practica_hoy || 0);
+        premio.gozo = Math.max(0, Math.min(quiere, PRACTICA_GOZO_DIA - hoy));
+        premio.topeHoy = quiere > 0 && premio.gozo < quiere;
+        if (premio.gozo) await pool.query(`UPDATE game_juegos_grupo SET practica_hoy = practica_hoy + $2, updated_at = now() WHERE titular = $1`, [f.t, premio.gozo]);
+      });
+      if (premio.gozo) await sumarGozo(f.t, premio.gozo, "juegos");
+      const { rows: gz } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [f.t]);
+      premio.gozoTotal = gz[0] ? Number(gz[0].gozo) : null;
+      premios.set(f.u, premio);
+    } catch (err) {
+      console.error("[juegos] práctica de", f.t, err);
+    }
+  }
+}
+
 // ================================================================ lo que ve cada uno
 function puedeEmpezar(s: Sala, pres: Set<number>): { ok: boolean; motivo: string | null } {
   if (s.estado !== "espera") return { ok: false, motivo: null };
   const def = JUEGOS[s.juego];
-  if (s.miembros.length < Math.max(SALA_MIN, def.min)) return { ok: false, motivo: `Hacen falta al menos ${Math.max(SALA_MIN, def.min)} personas para jugar.` };
-  const fuera = s.miembros.filter((m) => !pres.has(m.u));
+  const lim = limites(s);
+  const hayBots = s.miembros.some((m) => m.bot);
+  if (hayBots && s.juego !== "mesa") return { ok: false, motivo: "En este juego todavía no juegan los compañeros de la computadora: quítalos o elige un juego de mesa." };
+  if (s.miembros.length < lim.min) return { ok: false, motivo: `Hacen falta al menos ${lim.min} jugadores. Invita a alguien${s.juego === "mesa" ? " o agrega compañeros de la computadora" : ""}.` };
+  if (s.miembros.length > lim.max) return { ok: false, motivo: `En «${lim.nombre}» juegan hasta ${lim.max}: ${s.miembros.length - lim.max === 1 ? "sobra uno" : `sobran ${s.miembros.length - lim.max}`}.` };
+  const fuera = humanos(s).filter((m) => !pres.has(m.u));
   if (fuera.length) return { ok: false, motivo: `${fuera.map((m) => m.nombre).join(", ")} no ${fuera.length === 1 ? "está" : "están"} en la ciudad.` };
-  const faltan = s.miembros.filter((m) => m.u !== s.anfitrion && !m.listo);
+  const faltan = humanos(s).filter((m) => m.u !== s.anfitrion && !m.listo);
   if (faltan.length) return { ok: false, motivo: `Esperando a que estén a punto: ${faltan.map((m) => m.nombre).join(", ")}.` };
   if (s.juego === "tribus" && s.miembros.length < s.tribus) return { ok: false, motivo: `Para ${s.tribus} tribus hacen falta ${s.tribus} personas: elige menos tribus.` };
   if (def.enElPatio) {
-    const lejos = s.miembros.filter((m) => {
+    const lejos = humanos(s).filter((m) => {
       const pos = ubicacionDe(m.pj);
       return !pos || pos.canal === "templo" || !enElPatio(pos.x, pos.z);
     });
@@ -856,6 +1079,28 @@ function puedeEmpezar(s: Sala, pres: Set<number>): { ok: boolean; motivo: string
 function partidaVista(s: Sala, u: number, ahora: number): PartidaVista | null {
   const p = s.partida;
   if (!p || s.estado !== "jugando") return null;
+  if (p.juego === "mesa") {
+    const juego = MESAS[p.id];
+    if (!juego) return null;
+    const i = p.cuentas.indexOf(u);
+    const miAsiento = i >= 0 ? i : null;
+    const juegan = quienesJuegan(juego, p.estado);
+    const meToca = miAsiento !== null && juegan.includes(miAsiento);
+    const finDe = (a: number) => (p.desde.get(a) ?? ahora) + juego.relojMs;
+    const reloj = meToca ? finDe(miAsiento!) : juegan.length ? Math.min(...juegan.map(finDe)) : null;
+    const mesa: MesaVista = {
+      id: p.id,
+      vista: juego.vistaPara(p.estado, miAsiento),
+      asientos: p.asientos.map((x) => ({ ...x, yo: x.n === miAsiento })),
+      miAsiento,
+      juegan,
+      jugadas: meToca ? juego.jugadasValidas(p.estado, miAsiento!) : [],
+      relojMs: reloj === null ? null : Math.max(0, reloj - ahora),
+      ultima: p.ultima,
+      resultado: p.fin,
+    };
+    return { juego: "mesa", restanteMs: proximoCambio(s, ahora) ?? 0, mesa };
+  }
   const nombre = (x: number) => s.miembros.find((m) => m.u === x)?.nombre ?? "Alguien";
   const restante = proximoCambio(s, ahora) ?? 0;
   const tabla = (puntos: Map<number, number>, tiempo: Map<number, number>) =>
@@ -1004,7 +1249,8 @@ function vistaPara(s: Sala, u: number, ahora: number, pres = conectados(s)): Sal
       equipo: s.partida?.juego === "tribus" ? s.partida.tribuDe.get(m.u) ?? null : m.equipo,
       yo: m.u === u,
       conectado: pres.has(m.u),
-      enPatio: !!pos && pos.canal !== "templo" && enElPatio(pos.x, pos.z),
+      enPatio: m.bot ? true : !!pos && pos.canal !== "templo" && enElPatio(pos.x, pos.z),
+      bot: m.bot,
     };
   });
   const frases: FraseVista[] = s.frases.slice(-FRASES_SALA_VISTAS).map((f) => ({ n: f.n, de: f.nombre, texto: f.texto, ...(f.ref ? { ref: f.ref } : {}) }));
@@ -1012,12 +1258,13 @@ function vistaPara(s: Sala, u: number, ahora: number, pres = conectados(s)): Sal
   return {
     codigo: s.codigo,
     juego: s.juego,
+    mesa: s.mesa,
     tribus: s.tribus,
     estado: s.estado,
     ver: s.ver,
     miembros,
     soyAnfitrion: s.anfitrion === u,
-    max: SALA_MAX,
+    max: limites(s).max,
     frases,
     puedeEmpezar: puedeEmpezar(s, pres),
     partida: partidaVista(s, u, ahora),
@@ -1026,6 +1273,7 @@ function vistaPara(s: Sala, u: number, ahora: number, pres = conectados(s)): Sal
         ? {
             ...r.vista,
             puestos: r.vista.puestos.map((x) => ({ ...x, yo: r.filas.find((f) => f.pj === x.pj)?.u === u })),
+            mesaFinal: r.vista.mesaFinal ? { ...r.vista.mesaFinal, asientos: r.vista.mesaFinal.asientos.map((a, i) => ({ ...a, yo: r.cuentasMesa?.[i] === u })) } : null,
             mio: r.premios.get(u) ?? (r.anotando ? null : r.filas.some((f) => f.u === u && f.participo) ? null : { gozo: 0, topeHoy: false, prenda: null, copa: 0, gozoTotal: null, sinPremio: "No jugaste en esta partida." }),
             anotando: r.anotando,
           }
@@ -1039,7 +1287,7 @@ function enviarATodos(s: Sala) {
   if (salas.get(s.codigo) !== s) return;
   const ahora = Date.now();
   const pres = conectados(s);
-  for (const m of s.miembros) avisarA(m.u, { t: "sala", v: vistaPara(s, m.u, ahora, pres) });
+  for (const m of s.miembros) if (!m.bot) avisarA(m.u, { t: "sala", v: vistaPara(s, m.u, ahora, pres) });
   programar(s, ahora);
 }
 
@@ -1074,18 +1322,52 @@ function programar(s: Sala, ahora: number) {
 function quitarMiembro(s: Sala, u: number, motivo: string | null) {
   const i = s.miembros.findIndex((m) => m.u === u);
   if (i < 0) return;
-  s.miembros.splice(i, 1);
+  const [fuera] = s.miembros.splice(i, 1);
   if (salaDe.get(u) === s.codigo) salaDe.delete(u);
   const p = s.partida;
   if (p?.juego === "muro") p.llevando.delete(u);
-  if (s.anfitrion === u && s.miembros.length) s.anfitrion = s.miembros[0].u;
-  if (motivo) avisarA(u, { t: "sala", v: null, motivo });
-  if (!s.miembros.length) {
+  // en un juego de mesa, si una persona se va a mitad de partida, la computadora sigue en su asiento
+  if (p?.juego === "mesa" && s.estado === "jugando" && !fuera.bot && humanos(s).length) cederAsiento(s, p, u);
+  if (s.anfitrion === u && s.miembros.length) s.anfitrion = (humanos(s)[0] ?? s.miembros[0]).u;
+  if (motivo && u > 0) avisarA(u, { t: "sala", v: null, motivo });
+  // con solo compañeros de la computadora no hay sala
+  if (!humanos(s).length) {
     borrarSala(s);
     return;
   }
   s.actividad = Date.now();
   emitir(s);
+}
+
+/** Un compañero de la computadora nuevo para la sala (con su número negativo y un nombre que no esté en la sala). */
+function nuevoBot(s: Sala, nivel: NivelBot, ahora: number): Miembro {
+  s.botN++;
+  const id = -s.botN;
+  const usados = new Set(s.miembros.map((x) => x.nombre));
+  let k = s.codigo.charCodeAt(0) + s.botN;
+  while (usados.has(nombreDeBot(k)) && k < s.codigo.charCodeAt(0) + s.botN + 12) k++;
+  return { u: id, pj: id, t: 0, nombre: nombreDeBot(k), camino: "sacerdocio", listo: true, equipo: null, entro: ahora, visto: ahora, bot: nivel };
+}
+
+/** Quien se fue a mitad de una partida de mesa deja su asiento a la computadora, que sigue jugando por él. */
+function cederAsiento(s: Sala, p: Extract<Partida, { juego: "mesa" }>, u: number) {
+  const a = p.cuentas.indexOf(u);
+  if (a < 0) return;
+  const ahora = Date.now();
+  const antes = p.asientos[a]?.nombre ?? "Alguien";
+  const b = nuevoBot(s, "normal", ahora);
+  s.miembros.push(b);
+  p.cuentas[a] = b.u;
+  p.asientos[a] = { ...p.asientos[a], nombre: b.nombre, bot: b.bot };
+  // si el estado del juego guarda los asientos (para los nombres del resultado), también se pone al día
+  const e = p.estado as { asientos?: AsientoMesa[] } | null;
+  if (e && Array.isArray(e.asientos) && e.asientos[a]) e.asientos[a] = { ...e.asientos[a], nombre: b.nombre, bot: b.bot };
+  p.desde.delete(a);
+  p.botEn.delete(a);
+  prepararTurnos(p, ahora);
+  s.frases.push({ n: ++s.fraseN, nombre: b.nombre, texto: `${antes} salió de la partida: sigo yo en su asiento.`, u: b.u });
+  if (s.frases.length > 30) s.frases.splice(0, s.frases.length - 30);
+  programar(s, ahora);
 }
 
 function borrarSala(s: Sala) {
@@ -1099,8 +1381,8 @@ function borrarSala(s: Sala) {
 /** Cierra las salas quietas o vacías (se llama con cada petición: no hay nada corriendo de fondo). */
 function barrer(ahora: number) {
   for (const s of [...salas.values()]) {
-    if (!s.miembros.length || ahora - s.actividad > SALA_QUIETA_MS) {
-      for (const m of s.miembros) avisarA(m.u, { t: "sala", v: null, motivo: "La sala se cerró porque nadie jugaba." });
+    if (!humanos(s).length || ahora - s.actividad > SALA_QUIETA_MS) {
+      for (const m of humanos(s)) avisarA(m.u, { t: "sala", v: null, motivo: "La sala se cerró porque nadie jugaba." });
       borrarSala(s);
     }
   }
@@ -1194,7 +1476,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
   const vista = (s: Sala | null, u: number) => (s ? vistaPara(s, u, Date.now()) : null);
   const enLaCiudad = (u: number) => presenciaDe([u]).has(u);
   const miembroNuevo = (pr: Persona, ahora: number): Miembro => ({
-    u: pr.ch.user_id, pj: pr.ch.id, t: pr.titular, nombre: nombreDe(pr.ch), camino: pr.ch.camino, listo: false, equipo: null, entro: ahora, visto: ahora,
+    u: pr.ch.user_id, pj: pr.ch.id, t: pr.titular, nombre: nombreDe(pr.ch), camino: pr.ch.camino, listo: false, equipo: null, entro: ahora, visto: ahora, bot: null,
   });
 
   // ------------------------------------------------------------ el patio: mi sala, las salas de mis amigos y lo mío
@@ -1207,11 +1489,11 @@ export function registerJuegosGrupoRoutes(app: Express) {
       const r = await relacionesDe(pr.titular, pr.ch.user_id);
       const salasAbiertas: SalaAbierta[] = [];
       for (const x of salas.values()) {
-        if (x === s || x.estado === "jugando" || x.miembros.length >= SALA_MAX) continue;
+        if (x === s || x.estado === "jugando" || (x.miembros.length >= limites(x).max && !x.miembros.some((m) => m.bot))) continue;
         if (x.miembros.some((m) => r.bloqueados.has(m.u)) || x.sacados.has(pr.ch.user_id)) continue;
         const conocidos = x.miembros.filter((m) => r.amigos.has(m.u) || r.vecinos.has(m.u)).map((m) => m.nombre);
         if (!conocidos.length) continue;
-        salasAbiertas.push({ codigo: x.codigo, juego: x.juego, anfitrion: x.miembros.find((m) => m.u === x.anfitrion)?.nombre ?? "", jugadores: x.miembros.length, max: SALA_MAX, conocidos });
+        salasAbiertas.push({ codigo: x.codigo, juego: x.juego, mesa: x.mesa, anfitrion: x.miembros.find((m) => m.u === x.anfitrion)?.nombre ?? "", jugadores: x.miembros.length, max: limites(x).max, conocidos });
         if (salasAbiertas.length >= 8) break;
       }
       const [{ rows: g }, { rows: j }] = await Promise.all([
@@ -1256,6 +1538,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
       const u = pr.ch.user_id;
       const ahora = Date.now();
       const juego = esJuego(req.body?.juego) ? req.body.juego : "esgrima";
+      const mesa = juego === "mesa" ? (esMesa(req.body?.mesa) ? req.body.mesa : ORDEN_MESAS[0]) : null;
       const ya = miSala(u, ahora);
       if (ya) return res.status(409).json({ message: "Ya estás en una sala: sal de ella para crear otra.", sala: vista(ya, u) });
       if (!enLaCiudad(u)) return res.status(409).json({ message: "Para jugar en el patio, entra a la ciudad de Jerusalén." });
@@ -1267,6 +1550,9 @@ export function registerJuegosGrupoRoutes(app: Express) {
       const s: Sala = {
         codigo: nuevoCodigo(),
         juego,
+        mesa,
+        botN: 0,
+        practica: false,
         tribus: 2,
         estado: "espera",
         anfitrion: u,
@@ -1304,12 +1590,22 @@ export function registerJuegosGrupoRoutes(app: Express) {
       const noEsta = { message: "No encontramos esa sala. Revisa el código." };
       const s = salas.get(codigo);
       if (!s || s.sacados.has(u)) return res.status(404).json(noEsta);
-      if (await hayBloqueo(u, s.miembros.map((m) => m.u))) return res.status(404).json(noEsta);
+      if (await hayBloqueo(u, humanos(s).map((m) => m.u))) return res.status(404).json(noEsta);
       if (s.estado === "jugando") return res.status(409).json({ message: "En esa sala ya empezó una partida. Espera a que termine e inténtalo otra vez." });
-      if (s.miembros.length >= SALA_MAX) return res.status(409).json({ message: `Esa sala ya está llena (${SALA_MAX} personas).` });
+      // en una mesa llena, la persona que llega toma el asiento de un compañero de la computadora
+      const cupo = limites(s).max;
+      if (s.miembros.length >= cupo && !s.miembros.some((m) => m.bot))
+        return res.status(409).json({ message: `Esa sala ya está llena (${cupo} ${s.juego === "mesa" ? "asientos" : "personas"}).` });
       if (!enLaCiudad(u)) return res.status(409).json({ message: "Para jugar en el patio, entra a la ciudad de Jerusalén." });
       // se volvió a mirar después de esperar a la base: puede haber cambiado
       if (salas.get(codigo) !== s || s.miembros.some((m) => m.u === u) || salaDe.has(u)) return res.status(409).json({ message: "Intenta otra vez." });
+      // (pudo empezar mientras se esperaba a la base)
+      if ((s.estado as EstadoSala) === "jugando") return res.status(409).json({ message: "En esa sala ya empezó una partida. Espera a que termine e inténtalo otra vez." });
+      if (s.miembros.length >= limites(s).max) {
+        const cede = s.miembros.filter((m) => m.bot).sort((a, b) => a.u - b.u)[0];
+        if (!cede) return res.status(409).json({ message: "Esa sala ya está llena." });
+        quitarMiembro(s, cede.u, null);
+      }
       s.miembros.push(miembroNuevo(pr, ahora));
       salaDe.set(u, s.codigo);
       s.actividad = ahora;
@@ -1358,8 +1654,15 @@ export function registerJuegosGrupoRoutes(app: Express) {
     if (s.estado === "jugando") return { error: 409, message: "Espera a que termine la partida." };
     if (body.juego !== undefined) {
       if (!esJuego(body.juego)) return { error: 400, message: "Ese juego no existe." };
-      if (body.juego !== s.juego) for (const x of s.miembros) x.listo = false;
+      if (body.juego !== s.juego) for (const x of s.miembros) x.listo = !!x.bot;
       s.juego = body.juego;
+      if (s.juego !== "mesa") s.mesa = null;
+      else if (!s.mesa) s.mesa = ORDEN_MESAS[0];
+    }
+    if (body.mesa !== undefined && s.juego === "mesa") {
+      if (!esMesa(body.mesa)) return { error: 400, message: "Ese juego de mesa no existe." };
+      if (body.mesa !== s.mesa) for (const x of s.miembros) x.listo = !!x.bot;
+      s.mesa = body.mesa;
     }
     if (body.tribus !== undefined) {
       const n = Math.floor(Number(body.tribus));
@@ -1394,6 +1697,51 @@ export function registerJuegosGrupoRoutes(app: Express) {
     quitarMiembro(s, otro.u, "Quien creó la sala te sacó de ella.");
   });
 
+  // El anfitrión agrega un compañero de la computadora (con su nivel) o lo quita.
+  accion("bot", (s, m, body, ahora) => {
+    if (s.anfitrion !== m.u) return { error: 403, message: "Solo quien creó la sala agrega o quita compañeros de la computadora." };
+    if (s.estado === "jugando") return { error: 409, message: "Espera a que termine la partida." };
+    if (body.quitar !== undefined) {
+      const pj = Number(body.quitar);
+      const b = s.miembros.find((x) => x.bot && x.pj === pj);
+      if (!b) return { error: 404, message: "Ese compañero ya no está en la sala." };
+      quitarMiembro(s, b.u, null);
+      return;
+    }
+    if (s.juego !== "mesa") return { error: 409, message: "Por ahora los compañeros de la computadora juegan los juegos de mesa." };
+    const nivel: NivelBot = esNivelBot(body.nivel) ? body.nivel : "normal";
+    const lim = limites(s);
+    if (s.miembros.length >= lim.max) return { error: 409, message: `En «${lim.nombre}» juegan hasta ${lim.max}: ya están todos los asientos.` };
+    s.miembros.push(nuevoBot(s, nivel, ahora));
+    if (s.estado === "fin") {
+      s.estado = "espera";
+      s.resultado = null;
+    }
+    emitir(s);
+  });
+
+  // Una jugada en un juego de mesa (la valida el módulo del juego).
+  accion("jugar", (s, m, body, ahora) => {
+    const p0 = s.partida;
+    if (s.estado !== "jugando" || !p0 || p0.juego !== "mesa") return { error: 409, message: "No hay una partida de mesa en juego." };
+    if (avanzar(s, ahora)) emitir(s, true);
+    const p = s.partida;
+    if (p !== p0 || s.estado !== "jugando" || p.juego !== "mesa") return { error: 409, message: "La partida ya terminó." };
+    const juego = MESAS[p.id];
+    const a = p.cuentas.indexOf(m.u);
+    if (a < 0) return { error: 403, message: "En esta partida estás mirando: no tienes asiento." };
+    if (!quienesJuegan(juego, p.estado).includes(a)) return { error: 409, message: "Todavía no es tu turno." };
+    const j = body.jugada;
+    if (j === undefined || JSON.stringify(j).length > 4000 || !jugadaValida(juego, p.estado, a, j)) return { error: 400, message: "Esa jugada no vale." };
+    aplicarMesa(p, a, j, ahora);
+    const fin = juego.terminado(p.estado);
+    if (fin) {
+      p.fin = fin;
+      terminar(s, ahora);
+    }
+    emitir(s, true);
+  });
+
   // Una frase fija o un versículo (no hay texto libre en la sala).
   accion("frase", (s, m, body, ahora) => {
     const id = typeof body.id === "string" ? body.id : "";
@@ -1421,6 +1769,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
     if (!ok.ok) return { error: 409, message: ok.motivo ?? "Todavía no se puede empezar." };
     const rapido = !enProduccion() && body.rapido === true;
     s.partida = empezarPartida(s, ahora, rapido);
+    s.practica = s.miembros.some((m) => m.bot);
     s.estado = "jugando";
     s.resultado = null;
     emitir(s, true);
@@ -1488,7 +1837,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
     if (s.estado === "jugando") return { error: 409, message: "Todavía se está jugando." };
     s.estado = "espera";
     s.resultado = null;
-    for (const x of s.miembros) x.listo = false;
+    for (const x of s.miembros) x.listo = !!x.bot;
     emitir(s);
   });
 
@@ -1523,7 +1872,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
       const ahora = Date.now();
       const s = miSala(u, ahora);
       if (!s) return res.status(404).json({ message: "Primero crea una sala o únete a una." });
-      if (s.miembros.length >= SALA_MAX) return res.status(409).json({ message: "La sala ya está llena." });
+      if (s.miembros.length >= limites(s).max && !s.miembros.some((m) => m.bot)) return res.status(409).json({ message: "La sala ya está llena." });
       const a = Number(req.body?.a);
       if (!Number.isInteger(a) || a <= 0) return res.status(400).json({ message: "Elige a quién invitar." });
       const pos = ubicacionDe(a);

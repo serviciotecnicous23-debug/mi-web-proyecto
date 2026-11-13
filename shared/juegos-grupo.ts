@@ -16,9 +16,11 @@
  */
 import type { Verso } from "./ciudad";
 import type { Camino } from "./caminos";
+import type { AsientoMesa, MesaVista, NivelBot } from "./mesa";
 
 // ---------------------------------------------------------------- los juegos
-export type JuegoId = "esgrima" | "tribus" | "quien" | "carrera" | "muro";
+/** «mesa»: un juego de mesa por turnos (ajedrez, damas, dominó, tres en raya…); cuál, lo dice `mesa` (shared/mesa/index.ts). */
+export type JuegoId = "esgrima" | "tribus" | "quien" | "carrera" | "muro" | "mesa";
 
 export type JuegoDef = {
   id: JuegoId;
@@ -138,9 +140,27 @@ export const JUEGOS: Record<JuegoId, JuegoDef> = {
     cooperativo: true,
     prenda: "manto-nehemias",
   },
+  mesa: {
+    id: "mesa",
+    nombre: "Juegos de mesa",
+    icono: "🎲",
+    corto: "Por turnos, con tus amistades o con compañeros de la computadora: puedes jugar solo.",
+    como: [
+      "Quien crea la sala elige el juego de mesa. Cada uno tiene su asiento y juega en su turno.",
+      "Si faltan jugadores, quien creó la sala agrega compañeros de la computadora (fácil, normal o difícil).",
+      "Cada turno tiene su reloj: si se acaba, se juega solo.",
+    ],
+    verso: { text: "¡Mirad cuán bueno y cuán delicioso es Habitar los hermanos juntos en armonía!", ref: "Salmos 133:1" },
+    min: 1,
+    max: 12,
+    enLaCiudad: false,
+    enElPatio: false,
+    cooperativo: false,
+    prenda: "",
+  },
 };
 
-export const ORDEN_JUEGOS: JuegoId[] = ["esgrima", "tribus", "quien", "carrera", "muro"];
+export const ORDEN_JUEGOS: JuegoId[] = ["esgrima", "tribus", "quien", "carrera", "muro", "mesa"];
 export const esJuego = (x: unknown): x is JuegoId => typeof x === "string" && (ORDEN_JUEGOS as string[]).includes(x);
 
 /** «Y las calles de la ciudad estarán llenas de muchachos y muchachas que jugarán en ellas.» */
@@ -148,6 +168,11 @@ export const VERSO_PATIO: Verso = { text: "Y las calles de la ciudad estarán ll
 
 // ---------------------------------------------------------------- la sala
 export const SALA_MIN = 2;
+/**
+ * Con compañeros de la computadora la partida es de práctica: como mucho este gozo por día, y nada de copa del barrio,
+ * prendas, logros ni tablas (así nadie junta gozo jugando solo contra la computadora).
+ */
+export const PRACTICA_GOZO_DIA = 10;
 export const SALA_MAX = 12;
 export const CODIGO_LARGO = 6;
 /** Letras del código (sin I ni O, que se confunden con 1 y 0). */
@@ -368,6 +393,8 @@ export type MiembroVista = {
   conectado: boolean;
   /** Está dentro del patio (para la carrera y el muro). */
   enPatio: boolean;
+  /** Un compañero de la computadora (con su nivel); null si es una persona. */
+  bot?: NivelBot | null;
 };
 
 export type FraseVista = { n: number; de: string; texto: string; ref?: string };
@@ -478,16 +505,23 @@ export type MuroVista = {
   aportes: { pj: number; nombre: string; n: number; yo: boolean }[];
 };
 
-export type PartidaVista = EsgrimaVista | TribusVista | QuienVista | CarreraVista | MuroVista;
+/** Una partida de un juego de mesa (la vista del juego va en `mesa.vista`). */
+export type MesaPartidaVista = { juego: "mesa"; restanteMs: number; mesa: MesaVista };
+
+export type PartidaVista = EsgrimaVista | TribusVista | QuienVista | CarreraVista | MuroVista | MesaPartidaVista;
 
 export type ResultadoVista = {
   juego: JuegoId;
+  /** El juego de mesa (si `juego` es «mesa»). */
+  mesa?: string | null;
+  /** El tablero al terminar un juego de mesa (la última jugada, la línea ganadora; lo que se tapaba, a la vista). */
+  mesaFinal?: { vista: unknown; asientos: (AsientoMesa & { yo: boolean })[]; ultima: MesaVista["ultima"] } | null;
   /** Un resumen: quién ganó, o si el muro se levantó. */
   titulo: string;
   puestos: { puesto: number; pj: number; nombre: string; puntos: number; detalle: string; gano: boolean; yo: boolean; tribu: number | null }[];
   tribus: TribuVista[] | null;
   /** Lo que gané yo (null mientras el servidor lo anota, o si no jugué). */
-  mio: { gozo: number; topeHoy: boolean; prenda: string | null; copa: number; gozoTotal: number | null; sinPremio: string | null } | null;
+  mio: { gozo: number; topeHoy: boolean; prenda: string | null; copa: number; gozoTotal: number | null; sinPremio: string | null; practica?: boolean } | null;
   /** El servidor todavía está anotando los premios. */
   anotando: boolean;
   cumplido?: boolean;
@@ -496,6 +530,8 @@ export type ResultadoVista = {
 export type SalaVista = {
   codigo: string;
   juego: JuegoId;
+  /** El juego de mesa elegido (si `juego` es «mesa»). */
+  mesa: string | null;
   /** Cuántas tribus (en «Las doce tribus»). */
   tribus: number;
   estado: EstadoSala;
@@ -514,10 +550,10 @@ export type SalaVista = {
 };
 
 /** Una sala abierta de un amigo o vecino (para unirse sin el código). */
-export type SalaAbierta = { codigo: string; juego: JuegoId; anfitrion: string; jugadores: number; max: number; conocidos: string[] };
+export type SalaAbierta = { codigo: string; juego: JuegoId; mesa?: string | null; anfitrion: string; jugadores: number; max: number; conocidos: string[] };
 
 /** La invitación que le llega a un amigo o vecino. */
-export type InvitacionSala = { codigo: string; juego: JuegoId; de: string; camino: Camino; restantes: number };
+export type InvitacionSala = { codigo: string; juego: JuegoId; mesa?: string | null; de: string; camino: Camino; restantes: number };
 
 /** A quién se puede invitar ahora. */
 export type InvitableSala = { personajeId: number; nombre: string; camino: Camino; donde: string; relacion: "amigo" | "vecino" | "ambos" };

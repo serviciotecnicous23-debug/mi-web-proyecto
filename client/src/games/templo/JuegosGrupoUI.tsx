@@ -18,6 +18,9 @@ import { CiudadCtx } from "./CiudadUI";
 import { ICONO_CAMINO } from "./barrio-chat";
 import { juegosRed, pedirJuegos, useAhora, useJuegos } from "./juegos-red";
 import { VERSICULOS_RAPIDOS } from "@shared/ciudad";
+import { MESAS, ORDEN_MESAS } from "@shared/mesa/index";
+import { NIVELES_BOT, type NivelBot } from "@shared/mesa";
+import { MesaFinal, MesaJuego, useMusicaDeJuego } from "./mesa";
 import {
   FRASES_SALA, GOZO_JUEGOS_DIA, JUEGOS, ORDEN_JUEGOS, PRENDAS_JUEGOS, QUIEN, SALA_MAX, TRIBUS, TRIBUS_EQUIPOS, VERSO_PATIO,
   type EsgrimaVista, type InvitableSala, type JuegoId, type MuroVista, type CarreraVista, type PatioEstado, type QuienVista, type SalaVista, type TribusVista,
@@ -131,6 +134,15 @@ export function JuegosGrupoView() {
     tenia.current = !!sala;
   }, [sala]);
 
+  // al empezar o terminar una partida, la ventana vuelve arriba (para ver el tablero o el resultado desde el principio)
+  const cuerpo = useRef<HTMLDivElement>(null);
+  const estado = sala?.estado ?? null;
+  useEffect(() => {
+    let el: HTMLElement | null = cuerpo.current?.parentElement ?? null;
+    while (el && !(el.scrollHeight > el.clientHeight && /(auto|scroll)/.test(getComputedStyle(el).overflowY))) el = el.parentElement;
+    if (el && el !== document.scrollingElement) el.scrollTop = 0;
+  }, [estado]);
+
   const titulo = sala ? (
     <span className="flex items-center gap-2">
       <span aria-hidden="true">{JUEGOS[sala.juego].icono}</span>
@@ -144,7 +156,7 @@ export function JuegosGrupoView() {
   );
   return (
     <Card title={titulo} onClose={cerrar} wide testid="juegos-ventana">
-      <div className="space-y-3 p-4">
+      <div ref={cuerpo} className="space-y-3 p-4">
         {aviso && !sala && <Aviso texto={aviso} tono="info" />}
         {!sala ? (
           cargando && !patio ? (
@@ -197,7 +209,8 @@ function PatioInicio({ patio, onRecargar }: { patio: PatioEstado | null; onRecar
     <>
       <VerseBox text={VERSO_PATIO.text} refName={VERSO_PATIO.ref} />
       <p className="text-[13px] leading-snug text-stone-600 dark:text-stone-300">
-        Juega con tus amistades y la gente de tu barrio: crea una sala, comparte su código de 6 letras e invita. Caben de 2 a {SALA_MAX} personas.
+        Juega con tus amistades y la gente de tu barrio: crea una sala, comparte su código de 6 letras e invita. Caben de 2 a {SALA_MAX} personas, y en
+        los juegos de mesa también puedes jugar solo, con compañeros de la computadora.
       </p>
       <Aviso texto={aviso} />
       <section aria-labelledby="juegos-crear">
@@ -330,6 +343,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
   const [copiado, setCopiado] = useState(false);
   const yo = sala.miembros.find((m) => m.yo);
   const def = JUEGOS[sala.juego];
+  const mesaDef = sala.juego === "mesa" && sala.mesa ? MESAS[sala.mesa] ?? null : null;
 
   async function hacer(ruta: string, body: unknown = {}) {
     audio?.click();
@@ -380,7 +394,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
       {/* el juego (lo elige el anfitrión) */}
       <section aria-labelledby="juegos-elegido" className="space-y-2">
         <h3 id="juegos-elegido" className="font-serif text-base font-bold">
-          {def.icono} {def.nombre}
+          {mesaDef ? `${mesaDef.icono} ${mesaDef.nombre}` : `${def.icono} ${def.nombre}`}
         </h3>
         {sala.soyAnfitrion && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Elegir el juego">
@@ -399,15 +413,38 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
             ))}
           </div>
         )}
+        {sala.juego === "mesa" && sala.soyAnfitrion && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Elegir el juego de mesa">
+            {ORDEN_MESAS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={id === sala.mesa}
+                disabled={ocupado}
+                onClick={() => id !== sala.mesa && void hacer("juego", { mesa: id })}
+                className={`rounded-xl border px-2.5 py-1.5 text-left text-[12px] font-bold shadow-sm ${
+                  id === sala.mesa ? "border-amber-500 bg-amber-100 dark:bg-amber-900/40" : "border-stone-200 bg-white hover:bg-amber-50 dark:border-stone-700 dark:bg-stone-800"
+                }`}
+                data-testid={`juegos-mesa-${id}`}
+              >
+                <span className="text-base">{MESAS[id].icono}</span> {MESAS[id].nombre}
+                <span className="block text-[10px] font-semibold text-stone-500">
+                  {MESAS[id].min === MESAS[id].max ? `${MESAS[id].min} jugadores` : `de ${MESAS[id].min} a ${MESAS[id].max} jugadores`}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
         <ul className="list-disc space-y-0.5 pl-5 text-[13px] leading-snug text-stone-700 dark:text-stone-200">
-          {def.como.map((c) => (
+          {(mesaDef?.como ?? def.como).map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
-        <VerseBox text={def.verso.text} refName={def.verso.ref} />
+        <VerseBox text={(mesaDef?.verso ?? def.verso).text} refName={(mesaDef?.verso ?? def.verso).ref} />
       </section>
 
       {sala.juego === "tribus" && <TribusEspera sala={sala} ocupado={ocupado} hacer={hacer} />}
+      {sala.juego === "mesa" && sala.soyAnfitrion && sala.estado !== "jugando" && <CompanerosPanel sala={sala} ocupado={ocupado} hacer={hacer} />}
 
       <section aria-labelledby="juegos-gente">
         <h3 id="juegos-gente" className="mb-2 flex items-center gap-2 font-serif text-base font-bold">
@@ -416,17 +453,18 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
         <ul className="space-y-1.5" data-testid="juegos-miembros">
           {sala.miembros.map((m) => (
             <li key={m.pj} className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] ${m.yo ? "bg-amber-100 dark:bg-amber-900/40" : "bg-white dark:bg-stone-900"}`}>
-              <span aria-hidden="true">{ICONO_CAMINO[m.camino]}</span>
+              <span aria-hidden="true">{m.bot ? NIVELES_BOT[m.bot].icono : ICONO_CAMINO[m.camino]}</span>
               <span className="min-w-0 flex-1 truncate font-semibold">
                 {m.nombre}
                 {m.anfitrion && <span title="Creó la sala"> 👑</span>}
                 {m.yo && <span className="font-normal text-stone-500"> (tú)</span>}
+                {m.bot && <span className="ml-1 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">computadora · {NIVELES_BOT[m.bot].nombre}</span>}
               </span>
               {def.enElPatio && <span className={`text-[11px] font-bold ${m.enPatio ? "text-emerald-700 dark:text-emerald-300" : "text-stone-400"}`}>{m.enPatio ? "📍 en el patio" : "lejos del patio"}</span>}
               {!m.conectado && <span className="text-[11px] font-bold text-red-600">fuera de la ciudad</span>}
               <span className={`text-[11px] font-black ${m.listo ? "text-emerald-700 dark:text-emerald-300" : "text-stone-400"}`}>{m.listo ? "✅ a punto" : "⏳ esperando"}</span>
               {sala.soyAnfitrion && !m.yo && (
-                <button type="button" className="rounded-full p-1 text-stone-500 hover:bg-red-50 hover:text-red-700" title={`Sacar a ${m.nombre} de la sala`} aria-label={`Sacar a ${m.nombre} de la sala`} onClick={() => void hacer("sacar", { pj: m.pj })}>
+                <button type="button" className="rounded-full p-1 text-stone-500 hover:bg-red-50 hover:text-red-700" title={m.bot ? `Quitar a ${m.nombre}` : `Sacar a ${m.nombre} de la sala`} aria-label={m.bot ? `Quitar a ${m.nombre}` : `Sacar a ${m.nombre} de la sala`} onClick={() => void (m.bot ? hacer("bot", { quitar: m.pj }) : hacer("sacar", { pj: m.pj }))} data-testid={m.bot ? `juegos-quitar-bot-${m.pj}` : undefined}>
                   <UserMinus className="h-4 w-4" />
                 </button>
               )}
@@ -463,6 +501,31 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
 
       <Frases sala={sala} />
     </>
+  );
+}
+
+/** Los compañeros de la computadora: el anfitrión los agrega (con su nivel) para jugar solo o completar la mesa. */
+function CompanerosPanel({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: boolean; hacer: (ruta: string, body?: unknown) => Promise<boolean> }) {
+  const bots = sala.miembros.filter((m) => m.bot).length;
+  const lleno = sala.miembros.length >= sala.max;
+  return (
+    <section aria-labelledby="juegos-companeros" className="space-y-2 rounded-2xl border border-sky-200 bg-sky-50/70 p-3 dark:border-sky-900/60 dark:bg-sky-950/20" data-testid="juegos-companeros">
+      <h3 id="juegos-companeros" className="font-serif text-base font-bold">
+        🤖 Compañeros de la computadora
+      </h3>
+      <p className="text-[12px] text-stone-600 dark:text-stone-300">
+        {sala.miembros.length === 1 ? "¿No hay nadie? Agrega compañeros y juega solo." : "Completa la mesa con compañeros de la computadora."} Con ellos la partida es de
+        práctica: hasta 10 de gozo por día, sin copa ni prendas.
+      </p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Agregar un compañero de la computadora">
+        {(Object.keys(NIVELES_BOT) as NivelBot[]).map((n) => (
+          <Button key={n} size="sm" variant="secondary" disabled={ocupado || lleno} onClick={() => void hacer("bot", { nivel: n })} title={NIVELES_BOT[n].detalle} data-testid={`juegos-bot-${n}`}>
+            {NIVELES_BOT[n].icono} {NIVELES_BOT[n].nombre}
+          </Button>
+        ))}
+      </div>
+      {lleno && <p className="text-[11px] text-stone-500">Ya están todos los asientos{bots ? ": quita uno para cambiarlo." : "."}</p>}
+    </section>
   );
 }
 
@@ -617,6 +680,8 @@ function Frases({ sala, compacto }: { sala: SalaVista; compacto?: boolean }) {
 // ================================================================ los juegos
 function PartidaView({ sala }: { sala: SalaVista }) {
   const p = sala.partida;
+  // la banda sonora pone la música de cada juego (los de mesa la piden ellos, con su nombre)
+  useMusicaDeJuego(p && p.juego !== "mesa" ? p.juego : null);
   if (!p)
     return (
       <p className="flex items-center gap-2 text-sm">
@@ -630,6 +695,7 @@ function PartidaView({ sala }: { sala: SalaVista }) {
       {p.juego === "quien" && <QuienJuego p={p} />}
       {p.juego === "carrera" && <CarreraPanel p={p} />}
       {p.juego === "muro" && <MuroPanel p={p} />}
+      {p.juego === "mesa" && <MesaJuego p={p} />}
       <Frases sala={sala} compacto />
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={() => void juegosRed.accion("/sala/salir")} data-testid="juegos-dejar">
@@ -944,6 +1010,8 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
     yaSono.current = true;
     if (gane) audio?.trumpet(true);
     else audio?.page();
+    // el golpe corto de la banda sonora al ganar o perder
+    window.dispatchEvent(new CustomEvent("jer-golpe", { detail: gane ? "victoria" : "derrota" }));
   }, [r, gane, audio]);
   const prenda = useMemo(() => (r?.mio?.prenda ? PRENDAS_JUEGOS.find((p) => p.id === r.mio!.prenda) : null), [r]);
   if (!r) return null;
@@ -956,11 +1024,12 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
   return (
     <div className="space-y-3" data-testid="juegos-resultado">
       <div className={`rounded-2xl p-4 text-center ${r.cumplido === false ? "bg-stone-200 dark:bg-stone-800" : "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950"}`}>
-        <p className="text-4xl">{r.juego === "muro" ? (r.cumplido ? "🧱" : "⏳") : "🏆"}</p>
+        <p className="text-4xl">{r.juego === "muro" ? (r.cumplido ? "🧱" : "⏳") : r.juego === "mesa" && r.mesa ? (MESAS[r.mesa]?.icono ?? "🎲") : "🏆"}</p>
         <p className="font-serif text-xl font-black" data-testid="juegos-resultado-titulo">
           {r.titulo}
         </p>
       </div>
+      {r.juego === "mesa" && <MesaFinal r={r} />}
       {r.tribus && (
         <div className="grid grid-cols-2 gap-2 min-[520px]:grid-cols-4">
           {[...r.tribus].sort((a, b) => b.puntos - a.puntos).map((t) => (
@@ -997,10 +1066,17 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
               <p>{r.mio.sinPremio}</p>
             ) : (
               <>
-                <p>
-                  ✨ <b>+{r.mio.gozo} de gozo</b>
-                  {r.mio.topeHoy ? ` (llegaste al tope de hoy en los juegos: ${GOZO_JUEGOS_DIA})` : ""} · 🏆 +{r.mio.copa} para la copa de tu barrio
-                </p>
+                {r.mio.practica ? (
+                  <p data-testid="juegos-practica">
+                    ✨ <b>+{r.mio.gozo} de gozo</b> · partida de práctica con compañeros de la computadora (hasta 10 de gozo por día, sin copa ni prendas)
+                    {r.mio.topeHoy ? ". Ya llegaste al tope de práctica de hoy." : "."}
+                  </p>
+                ) : (
+                  <p>
+                    ✨ <b>+{r.mio.gozo} de gozo</b>
+                    {r.mio.topeHoy ? ` (llegaste al tope de hoy en los juegos: ${GOZO_JUEGOS_DIA})` : ""} · 🏆 +{r.mio.copa} para la copa de tu barrio
+                  </p>
+                )}
                 {prenda && (
                   <p className="mt-1 flex items-center gap-2 font-bold">
                     <span className="inline-block h-4 w-4 rounded-full border border-black/20" style={{ background: prenda.color }} aria-hidden="true" />
