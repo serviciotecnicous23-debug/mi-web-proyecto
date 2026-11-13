@@ -218,3 +218,111 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------- el sistema de diseño de las ventanas (docs/guia-visual.md, sección 9) */
+:root {
+  --tpl-oro: #e3b448;
+  --tpl-oro-viejo: #b88a1e;
+  --tpl-tinta: #2b1d12;
+  --tpl-cedro: #5e3a1f;
+  --tpl-pergamino: #fbf1dc;
+  --tpl-rapido: 120ms;
+  --tpl-medio: 220ms;
+}
+
+/* el marco doble: un filete de oro fino por dentro del borde */
+.tpl-ventana::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 17px;
+  border: 1px solid rgba(184, 138, 30, 0.22);
+  pointer-events: none;
+  z-index: 5;
+}
+.dark .tpl-ventana::before {
+  border-color: rgba(243, 201, 90, 0.14);
+}
+
+/* los títulos de sección, con su filete de oro */
+.tpl-ventana h3,
+.tpl-ventana h4 {
+  font-family: var(--font-serif);
+  letter-spacing: 0.005em;
+}
+.tpl-ventana h3::after {
+  content: "";
+  display: block;
+  width: 2.4rem;
+  height: 2px;
+  margin-top: 0.3rem;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--tpl-oro), rgba(227, 180, 72, 0));
+}
+
+/* las tablas: encabezado en versalitas de oro viejo, filas suaves y números tabulares */
+.tpl-ventana table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.tpl-ventana th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tpl-oro-viejo);
+  border-bottom: 1.5px solid rgba(184, 138, 30, 0.45);
+}
+.tpl-ventana td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(120, 90, 40, 0.12);
+}
+.tpl-ventana tbody tr:nth-child(even) td {
+  background: rgba(184, 138, 30, 0.05);
+}
+.tpl-ventana tbody tr[aria-current="true"] td,
+.tpl-ventana tbody tr.tpl-fila-mia td {
+  background: rgba(227, 180, 72, 0.2);
+  font-weight: 700;
+}
+.dark .tpl-ventana td {
+  border-bottom-color: rgba(243, 201, 90, 0.08);
+}
+.dark .tpl-ventana tbody tr:nth-child(even) td {
+  background: rgba(243, 201, 90, 0.04);
+}
+
+/* los botones: responden al tocar (se hunden un poco) y al pasar el dedo, sin cambiar sus colores */
+.tpl-ventana button {
+  transition:
+    transform var(--tpl-rapido) ease,
+    filter var(--tpl-rapido) ease,
+    background-color var(--tpl-medio) ease,
+    box-shadow var(--tpl-medio) ease;
+}
+.tpl-ventana button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.tpl-ventana button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+/* la pestaña o la opción elegida, con un brillo de oro */
+.tpl-ventana button[aria-pressed="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 0 1px rgba(184, 138, 30, 0.35),
+    0 2px 8px -2px rgba(184, 138, 30, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpl-ventana button {
+    transition: none;
+  }
+  .tpl-ventana button:active:not(:disabled) {
+    transform: none;
+  }
+}
