@@ -192,6 +192,14 @@ export async function avisarDuelo(userId: number, de: string, retoId: number, se
   return avisar(userId, "duelos", String(retoId), `⚔️ ${de} te reta a un duelo de sabios`, `Tienes ${segundos} segundos para aceptar en «¿Quién es sabio?».`, segundos);
 }
 
+/** La invitación a «La noche de los sabios» (va con los avisos de duelos: los dos son de «¿Quién es sabio?»). */
+export async function avisarNoche(userId: number, de: string, nocheId: number, codigo: string, segundos: number): Promise<boolean> {
+  if (enSilencio(horaTexas(new Date()))) return false;
+  const { rows } = await pool.query(`${quienes("duelos")} AND p.user_id = $1`, [userId]);
+  if (!rows.length) return false;
+  return avisar(userId, "duelos", `noche-${nocheId}`, `🌙 ${de} te invita a «La noche de los sabios»`, `Entra a «¿Quién es sabio?» con el código ${codigo}.`, segundos);
+}
+
 async function vista(userId: number): Promise<AvisosVista> {
   const [{ rows: p }, { rows: s }] = await Promise.all([
     pool.query(`SELECT activo, racha, huerto, duelos, fiestas FROM game_avisos_pref WHERE user_id = $1`, [userId]),

@@ -167,6 +167,12 @@ export type PreguntaVista = {
   segundos: number;
   /** Segundos que quedan según el servidor. */
   restantes: number;
+  /**
+   * La escena de la duda con Etán en esta pregunta: «toca» (sale al elegir una respuesta), «puede» (solo si tardas
+   * más del 60 % del reloj) o «hecha» (ya salió). Lo decide el servidor al mostrar la pregunta, antes de que elijas:
+   * nunca depende de si la respuesta es la buena.
+   */
+  duda?: "toca" | "puede" | "hecha";
 };
 
 export type PartidaVista = {
@@ -237,6 +243,8 @@ export type SabioEstado = {
   };
   /** Quién está jugando ahora en la casa de la sabiduría (para mirar). */
   enVivo: EnVivo[];
+  /** Las noches de los sabios que se juegan ahora (shared/sabio-noche.ts). */
+  noches?: import("./sabio-noche").NocheEnVivo[];
   semana: string;
   tablaSemana: FilaTabla[];
   tablaSiempre: FilaTabla[];
@@ -325,6 +333,184 @@ export type MirarVista = {
   ultima: UltimaRespuesta | null;
   publico: PublicoVista;
 };
+
+// ================================================================ las tablas por partida (pedido de Luis, 12 de noviembre)
+/**
+ * Las tablas muestran cada partida terminada, no solo la mejor de cada persona: quién jugó, en qué grada quedó, con
+ * cuántos puntos, en cuánto tiempo, con qué comodines y cómo terminó. El orden: más puntos primero y, si empatan,
+ * quien tardó menos. El premio de la semana sigue siendo por persona (su mejor partida).
+ */
+export type TablaDe = "hoy" | "semana" | "siempre" | "mias";
+export const TABLAS: { id: TablaDe; nombre: string; nota: string }[] = [
+  { id: "hoy", nombre: "Hoy", nota: "Las partidas terminadas hoy (día de Texas)." },
+  { id: "semana", nombre: "La semana", nota: "Las partidas de esta semana, de lunes a domingo." },
+  { id: "siempre", nombre: "Siempre", nota: "Todas las partidas que se han jugado." },
+  { id: "mias", nombre: "Mis partidas", nota: "Todo lo que jugaste, la más nueva primero." },
+];
+/** Cuántas filas muestra cada tabla (y la tuya, aunque esté más abajo). */
+export const TABLA_PRIMEROS = 10;
+/** Cuántas de tus partidas se ven en «Mis partidas». */
+export const MIS_PARTIDAS = 30;
+export const MEDALLAS = ["🥇", "🥈", "🥉"] as const;
+
+export type PartidaEnTabla = {
+  /** La partida. */
+  id: number;
+  /** El puesto en esa tabla (en «Mis partidas», el que tuvo en la tabla de su semana; sin puntos, null). */
+  puesto: number | null;
+  /** El personaje con que jugó (para abrir su registro). */
+  pid: number;
+  nombre: string;
+  camino: Camino;
+  /** Gradas que subió (respuestas buenas). */
+  grada: number;
+  /** La grada en que quedó: la que falló (o se le acabó el tiempo), o la última que subió. */
+  quedo: number;
+  /** Los puntos con que se quedó (si falló, los de su grada segura). */
+  puntos: number;
+  /** Cuánto duró la partida, en segundos. */
+  segundos: number;
+  usados: Comodin[];
+  estado: FinPartida["estado"];
+  esYo: boolean;
+  /** Cuándo terminó (milisegundos). */
+  at: number;
+};
+
+export type TablaVista = {
+  de: TablaDe;
+  filas: PartidaEnTabla[];
+  /** Tu mejor partida en esa tabla cuando no está entre las primeras (para verla abajo, con su puesto). */
+  mia: PartidaEnTabla | null;
+  /** Cuántas partidas hay en la tabla (en «Mis partidas», cuántas jugaste en total). */
+  total: number;
+  miPuesto: number | null;
+  dia: string;
+  semana: string;
+};
+
+/** La grada en que quedó una partida, según cómo terminó. */
+export function gradaEnQueQuedo(estado: FinPartida["estado"], grada: number): number {
+  if (estado === "gano") return GRADAS;
+  if (estado === "perdio" || estado === "tiempo") return Math.min(GRADAS, grada + 1);
+  return Math.max(0, grada);
+}
+
+/** Cómo terminó, dicho corto (para las tablas). */
+export function comoTermino(estado: FinPartida["estado"], grada: number): string {
+  const q = gradaEnQueQuedo(estado, grada);
+  if (estado === "gano") return "Subió las 15";
+  if (estado === "retiro") return grada > 0 ? `Se retiró en la ${q}` : "Se retiró al empezar";
+  if (estado === "tiempo") return `Se le acabó el tiempo en la ${q}`;
+  return `Falló la ${q}`;
+}
+
+/** Un tiempo corto y claro: «45 s», «3:07», «1 h 05 min». */
+export function tiempoCorto(segundos: number): string {
+  const s = Math.max(0, Math.round(segundos));
+  if (s < 60) return `${s} s`;
+  if (s < 3600) return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  return `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")} min`;
+}
+
+/** El orden de las tablas: más puntos primero; si empatan, menos tiempo; después, quien terminó antes. */
+export function ordenTabla<T extends { puntos: number; segundos: number; at: number; id: number }>(a: T, b: T): number {
+  return b.puntos - a.puntos || a.segundos - b.segundos || a.at - b.at || a.id - b.id;
+}
+
+// ================================================================ la última palabra: el suspenso y la escena con Etán
+/**
+ * Al confirmar la respuesta: las luces bajan, cae un foco sobre el atril, suena un redoble y la respuesta elegida
+ * queda en ámbar. El suspenso crece con la grada: un segundo y medio en la primera, cuatro en la última.
+ */
+export function suspensoMs(n: number): number {
+  const g = Math.max(1, Math.min(GRADAS, Math.round(n)));
+  return Math.round(1500 + ((g - 1) / (GRADAS - 1)) * 2500);
+}
+
+/**
+ * La escena de la duda: al elegir una respuesta, la cámara corta a Etán y a quien juega frente a frente, luego a
+ * Etán de cerca, con un latido de fondo, y Etán dice algo para hacer dudar. Quien juega confirma o cambia.
+ *
+ * Sale cada 2 o 3 preguntas (al azar), siempre en las gradas seguras (5 y 10) y desde la 11, y también cuando
+ * quien juega ya usó más del 60 % del reloj. NUNCA depende de si la respuesta elegida es la buena: el servidor la
+ * decide al mostrar la pregunta (antes de que se elija nada) y el teléfono no sabe la respuesta.
+ *
+ * El reloj se detiene mientras habla Etán: el servidor devuelve esos segundos (DUDA_S), una vez por pregunta. Así
+ * la escena no le quita tiempo a nadie.
+ */
+export const DUDA_S = 5;
+/** Si ya usó más de esta parte del reloj al elegir, Etán pregunta aunque no tocara. */
+export const DUDA_TARDA = 0.6;
+/** Cada cuántas preguntas (contando desde la última escena) vuelve a salir: 2 o 3, al azar. */
+export const DUDA_CADA = [2, 3] as const;
+
+/** Si a la pregunta `n` le toca la escena (desde la última que hubo, en la pregunta `ultima`, y cada `cada`). */
+export function tocaDuda(n: number, ultima: number, cada: number): boolean {
+  return (GRADAS_SEGURAS as readonly number[]).includes(n) || n >= 11 || n - ultima >= cada;
+}
+
+/** Si quien juega ya pensó más del 60 % del reloj. */
+export function tardaMucho(pasados: number, segundos: number): boolean {
+  return segundos > 0 && pasados >= segundos * DUDA_TARDA;
+}
+
+export type FraseDuda = { id: string; texto: string; cuando?: "segura" | "alta" };
+/** Lo que dice Etán para hacer dudar (original). Ninguna da pistas: se dicen igual si la respuesta es buena o mala. */
+export const FRASES_DUDA: FraseDuda[] = [
+  { id: "final", texto: "¿Es tu respuesta final?" },
+  { id: "mirame", texto: "Mírame… ¿lo tienes seguro?" },
+  { id: "ojos", texto: "Mírame a los ojos y dímelo otra vez: ¿es esa?" },
+  { id: "reloj", texto: "Detengo el reloj un momento… ¿la sostienes?" },
+  { id: "aliento", texto: "El público contiene el aliento… ¿la confirmas?" },
+  { id: "piensalo", texto: "Piénsalo bien. Después de decirla, ya no hay vuelta atrás." },
+  { id: "letra", texto: "Hay quien bajó de estas gradas por una sola letra…" },
+  { id: "corazon", texto: "Tu corazón dice una cosa… ¿y tu memoria qué dice?" },
+  { id: "otra-vez", texto: "Te lo pregunto una vez más: ¿es tu última palabra?" },
+  { id: "cambiar", texto: "Todavía puedes cambiarla… o sostenerla. Tú decides." },
+  { id: "murmullo", texto: "Escucha cómo murmura la sala… ¿sigues con esa?" },
+  { id: "respira", texto: "Respira hondo. ¿La confirmas?" },
+  { id: "dudaron", texto: "Mucha gente dudó justo aquí…" },
+  { id: "prisa", texto: "La sabiduría no se apresura… ¿ya lo pensaste bien?" },
+  { id: "cabeza", texto: "¿Me lo dices con el corazón o con la cabeza?" },
+  { id: "silencio", texto: "Silencio en la casa de la sabiduría… ¿es esa?" },
+  { id: "decides", texto: "Una grada más… o un paso atrás. Tú decides." },
+  { id: "nada", texto: "Yo no te diré nada. Solo te pregunto: ¿es tu respuesta final?" },
+  { id: "cierra", texto: "Cierra los ojos un segundo… ¿sigue siendo esa?" },
+  { id: "vi", texto: "Aquí he visto dudar a mucha gente sabia… y a otra acertar." },
+  { id: "certeza", texto: "¿Tienes certeza? Dímelo mirándome." },
+  { id: "avisado", texto: "«El simple todo lo cree; Mas el avisado mira bien sus pasos.» ¿Miraste bien la tuya?" },
+  { id: "segura1", texto: "Mucha gente se quedó en esta grada…", cuando: "segura" },
+  { id: "segura2", texto: "Esta es una grada segura: si la subes, nadie te la quita. ¿La sostienes?", cuando: "segura" },
+  { id: "alta1", texto: "Aquí arriba llega poca gente… ¿la confirmas?", cuando: "alta" },
+  { id: "alta2", texto: "Desde aquí cada grada pesa más. ¿Es tu respuesta final?", cuando: "alta" },
+  { id: "alta3", texto: "Estás muy cerca de la cima… piénsalo una vez más.", cuando: "alta" },
+];
+/** La cita de una de las frases (comprobada con la RVR1960). */
+export const CITA_DUDA: Verso = { text: "El simple todo lo cree; Mas el avisado mira bien sus pasos.", ref: "Proverbios 14:15" };
+/** Cuántas de las últimas frases no se repiten. */
+export const DUDA_SIN_REPETIR = 6;
+
+/**
+ * La frase de Etán para la grada `n`, sin repetir las últimas que dijo en la partida (`recientes`). Solo mira la grada
+ * y las frases de antes: nunca la respuesta.
+ */
+export function fraseDeDuda(n: number, recientes: string[], azar: () => number = Math.random): FraseDuda {
+  const segura = (GRADAS_SEGURAS as readonly number[]).includes(n);
+  const alta = n >= 11;
+  const propias = FRASES_DUDA.filter((f) => (f.cuando === "segura" && segura) || (f.cuando === "alta" && alta));
+  const generales = FRASES_DUDA.filter((f) => !f.cuando);
+  const sin = new Set(recientes.slice(-DUDA_SIN_REPETIR));
+  // en las gradas seguras y en las altas, la mitad de las veces una frase de esa grada
+  const quiero = propias.length && azar() < 0.5 ? propias : generales;
+  let libres = quiero.filter((f) => !sin.has(f.id));
+  if (!libres.length) libres = [...propias, ...generales].filter((f) => !sin.has(f.id));
+  if (!libres.length) libres = generales;
+  return libres[Math.floor(azar() * libres.length) % libres.length];
+}
+
+/** Cómo va la duda en la partida (lo guarda el servidor): cada cuánto, la última escena, si toca en esta pregunta. */
+export type DudaEstado = { cada: number; ultima: number; plan: boolean; usada: boolean; frases: string[] };
 
 // ================================================================ el duelo de sabios
 /**

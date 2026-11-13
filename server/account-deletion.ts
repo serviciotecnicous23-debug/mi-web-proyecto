@@ -52,6 +52,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["game_barrio_copa_premios", (id) => sql`titular IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_barrio_copa_aportes", (id) => sql`titular IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_sabio_duelos", (id) => sql`a_user = ${id} OR b_user = ${id}`],
+  ["game_sabio_noches", (id) => sql`anfitrion_user = ${id} OR jugadores @> jsonb_build_array(jsonb_build_object('u', ${id}::int))`],
   ["game_sabio_partidas", (id) => sql`user_id = ${id} OR character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_sabio_premios_semana", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],
   ["game_sabio", (id) => sql`character_id IN (SELECT id FROM game_characters WHERE user_id = ${id})`],

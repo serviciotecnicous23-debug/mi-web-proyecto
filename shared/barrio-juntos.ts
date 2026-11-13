@@ -146,6 +146,9 @@ export const COPA_PUNTOS = {
   duelo: 3,
   dueloGanado: 5,
   consejo: 3,
+  /** La noche de los sabios (shared/sabio-noche.ts): por jugarla, y un poco más por quedar en el podio. */
+  noche: 3,
+  nochePodio: 5,
   juntos: 10,
   /** Por cada cosa dada a una familia del pueblo (shared/pueblo.ts). */
   pueblo: 2,

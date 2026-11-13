@@ -284,4 +284,145 @@ export const sonido = {
   aplauso() {
     [0, 0.08, 0.15, 0.24].forEach((t) => nota(1800 + Math.random() * 900, t, 0.035, "square", 0.025));
   },
+  /**
+   * El redoble de la última palabra: golpes de tambor cada vez más seguidos y más fuertes durante `ms`, y un golpe
+   * grave al final (justo cuando se revela). Devuelve cómo pararlo.
+   */
+  redoble(ms: number): () => void {
+    const c = audio();
+    if (!c || !master) return () => undefined;
+    const buf = ruidoBlanco(c);
+    const t0 = c.currentTime;
+    const dur = Math.max(0.6, ms / 1000);
+    const fuentes: AudioScheduledSourceNode[] = [];
+    let t = 0;
+    let k = 0;
+    while (t < dur - 0.02 && k < 400) {
+      const avance = t / dur;
+      const s = c.createBufferSource();
+      s.buffer = buf;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 1700 + Math.random() * 500;
+      f.Q.value = 0.8;
+      const g = c.createGain();
+      const tt = t0 + t;
+      const vol = (0.05 + 0.13 * avance) * (k % 2 ? 0.78 : 1);
+      g.gain.setValueAtTime(vol, tt);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.06);
+      s.connect(f);
+      f.connect(g);
+      g.connect(master);
+      s.start(tt, Math.random() * 1.5, 0.07);
+      fuentes.push(s);
+      // el cuero del tambor (un tono grave muy corto)
+      const o = c.createOscillator();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(190 + 40 * avance, tt);
+      o.frequency.exponentialRampToValueAtTime(120, tt + 0.05);
+      const go = c.createGain();
+      go.gain.setValueAtTime(0.035 + 0.05 * avance, tt);
+      go.gain.exponentialRampToValueAtTime(0.0001, tt + 0.06);
+      o.connect(go);
+      go.connect(master);
+      o.start(tt);
+      o.stop(tt + 0.07);
+      fuentes.push(o);
+      // cada vez más seguido: de 9 golpes por segundo a 24
+      t += 1 / (9 + 15 * avance);
+      k++;
+    }
+    let parado = false;
+    return () => {
+      if (parado) return;
+      parado = true;
+      const ahora = c.currentTime;
+      for (const s of fuentes)
+        try {
+          s.stop(ahora + 0.01);
+        } catch {
+          /* ya sonó */
+        }
+    };
+  },
+  /** El golpe de platillo y bombo con que termina el redoble. */
+  golpe() {
+    nota(70, 0, 0.7, "sine", 0.4);
+    nota(140, 0, 0.35, "triangle", 0.2);
+    palmas(0.35, 60, 0.05);
+  },
+  /** El latido de la duda con Etán: dos golpes graves, como un corazón (sigue hasta que se llama a lo que devuelve). */
+  latido(): () => void {
+    const c = audio();
+    if (!c || !master) return () => undefined;
+    let vivo = true;
+    const golpe = (dt: number, fuerte: boolean) => {
+      const t = c.currentTime + dt;
+      const o = c.createOscillator();
+      o.type = "sine";
+      o.frequency.setValueAtTime(fuerte ? 62 : 54, t);
+      o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(fuerte ? 0.55 : 0.38, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      o.connect(g);
+      g.connect(master!);
+      o.start(t);
+      o.stop(t + 0.25);
+    };
+    const latir = () => {
+      if (!vivo) return;
+      golpe(0, true);
+      golpe(0.22, false);
+    };
+    latir();
+    const id = setInterval(latir, 830);
+    return () => {
+      vivo = false;
+      clearInterval(id);
+    };
+  },
+  /** Las chispas doradas de la respuesta buena: campanitas que suben. */
+  destellos() {
+    [1567.98, 1975.53, 2349.32, 2637.02, 3135.96].forEach((f, i) => nota(f, 0.12 + i * 0.07, 0.5, "sine", 0.05));
+  },
+  /** El apagón de la respuesta mala: un golpe grave y la luz que se va (un zumbido que baja). */
+  apagon() {
+    const c = audio();
+    if (!c || !master) return;
+    const t = c.currentTime;
+    nota(55, 0, 1.2, "sine", 0.45);
+    const o = c.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(240, t + 0.05);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.9);
+    const f = c.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 500;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.06, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+    o.connect(f);
+    f.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + 1);
+  },
 };
+
+/** Para probar en el navegador (solo en desarrollo): cuántas veces sonó cada cosa. */
+export const sonidosOidos: Record<string, number> = {};
+if (import.meta.env?.DEV) {
+  const todos = sonido as unknown as Record<string, (...a: unknown[]) => unknown>;
+  for (const k of Object.keys(todos)) {
+    const f = todos[k];
+    if (typeof f !== "function" || k === "activo" || k === "alternar") continue;
+    todos[k] = (...a: unknown[]) => {
+      sonidosOidos[k] = (sonidosOidos[k] ?? 0) + 1;
+      return f(...a);
+    };
+  }
+  (window as unknown as { __sonidosSabio?: Record<string, number> }).__sonidosSabio = sonidosOidos;
+}

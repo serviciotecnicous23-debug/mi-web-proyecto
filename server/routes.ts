@@ -20,6 +20,7 @@ import { registerRachaRoutes } from "./racha";
 import { registerAvisosRoutes } from "./avisos-juego";
 import { registerSabioRoutes } from "./sabio";
 import { registerSabioDueloRoutes } from "./sabio-duelo";
+import { registerSabioNocheRoutes } from "./sabio-noche";
 import { registerReunionesRoutes } from "./reuniones";
 import { registerConcursoRoutes } from "./concurso";
 import { registerAyudaRoutes } from "./ayuda";
@@ -3709,6 +3710,8 @@ ${urls}
   registerSabioRoutes(app);
   // el duelo de sabios (dos personas, las mismas preguntas a la vez)
   registerSabioDueloRoutes(app);
+  // la noche de los sabios (de 3 a 12 personas, con un código)
+  registerSabioNocheRoutes(app);
   registerReunionesRoutes(app);
   registerConcursoRoutes(app);
   registerAyudaRoutes(app);

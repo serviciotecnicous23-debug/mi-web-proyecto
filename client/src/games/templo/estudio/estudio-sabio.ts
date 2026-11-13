@@ -12,9 +12,21 @@ import { Crowd, Figure, newRig, randomVisitor, type CrowdHandle, type FigureLook
 import { GRADAS, GRADAS_SEGURAS, PUNTOS_GRADA, canticoGrada, dificultadGrada } from "@shared/sabio";
 
 // ---------------------------------------------------------------- tipos públicos
-export type FaseEstudio = "portada" | "entre" | "pregunta" | "confirmar" | "suspenso" | "bien" | "mal" | "segura" | "gano" | "fin" | "mirando";
+export type FaseEstudio = "portada" | "entre" | "pregunta" | "confirmar" | "duda" | "suspenso" | "bien" | "mal" | "segura" | "gano" | "fin" | "mirando" | "podio";
+/** Quien sube al podio de la noche de los sabios. */
+export type EnElPodio = { nombre: string; look: FigureLook; puesto: number };
 export type Ropa = { manto?: string; faja?: string } | null;
-export type PreguntaPantalla = { n: number; texto: string; opciones: string[]; quitadas: number[]; elegida?: number | null; correcta?: number | null; mala?: number | null };
+export type PreguntaPantalla = {
+  n: number;
+  texto: string;
+  opciones: string[];
+  quitadas: number[];
+  elegida?: number | null;
+  correcta?: number | null;
+  mala?: number | null;
+  /** Lo que va arriba de la pregunta (si no, la grada, sus puntos y su dificultad). */
+  titulo?: string;
+};
 export type OpcionesEstudio = {
   /** Quien se sienta en el asiento del que concursa. */
   concursante: { look: FigureLook; ropa?: Ropa; nombre: string };
@@ -36,13 +48,20 @@ const COLUMNAS_R = 6.3;
 const COLOR = {
   calma: new THREE.Color("#5b6cff"),
   suspenso: new THREE.Color("#2a3aa8"),
-  bien: new THREE.Color("#ffc94a"),
+  /** La duda con Etán: luz de vela, cálida y baja. */
+  duda: new THREE.Color("#c2702a"),
+  /** La respuesta buena: verde, con destellos dorados. */
+  bien: new THREE.Color("#3be07a"),
   mal: new THREE.Color("#ff3b3b"),
   segura: new THREE.Color("#3be0c8"),
   gano: new THREE.Color("#ffe08a"),
 };
+/** Dónde está el podio de la noche de los sabios (al frente del escenario, delante de los asientos). */
+const PODIO = { z: 1.3, x: [0, -0.86, 0.86], alto: [0.5, 0.36, 0.26] };
 
-type NombreToma = "general" | "grua" | "hombro" | "concursante" | "presentador" | "publico" | "alas" | "gradas" | "pantalla" | "cenital";
+type NombreToma =
+  | "general" | "grua" | "hombro" | "concursante" | "presentador" | "publico" | "alas" | "gradas" | "pantalla" | "cenital"
+  | "frente" | "etan" | "atril" | "podio";
 type Toma = { pos: THREE.Vector3; mira: THREE.Vector3; fov: number; empuje?: number };
 type Paso = { toma: NombreToma; dur: number; corte?: boolean };
 
@@ -72,6 +91,17 @@ function toma(n: NombreToma, t: number): Toma {
       return { pos: V(0, 2.35, 1.6), mira: V(0, 3.1, -6.1), fov: 44, empuje: 0.08 };
     case "cenital":
       return { pos: V(0.01, 7.8, 1.9), mira: V(0, 0.2, -0.2), fov: 50 };
+    // la duda: los dos frente a frente, de perfil (la cámara baja, entre las cámaras del frente)
+    case "frente":
+      return { pos: V(Math.sin(t * 0.21) * 0.06, 1.1, 3.0), mira: V(0, 1.02, 0.28), fov: 40, empuje: 0.1 };
+    // la duda: Etán de cerca, desde el hombro de quien juega
+    case "etan":
+      return { pos: V(0.14, 1.16, 1.02), mira: V(ASIENTO.presentador.x, 1.14, ASIENTO.presentador.z), fov: 28, empuje: 0.14 };
+    // el suspenso: el atril desde arriba y adelante, con el foco que cae
+    case "atril":
+      return { pos: V(1.55, 1.95, 1.75), mira: V(ASIENTO.concursante.x, 0.85, ASIENTO.concursante.z), fov: 34, empuje: 0.14 };
+    case "podio":
+      return { pos: V(Math.sin(t * 0.15) * 0.45, 1.75, PODIO.z + 3.3), mira: V(0, 1.38, PODIO.z), fov: 44, empuje: 0.05 };
   }
 }
 
@@ -101,6 +131,22 @@ function texturaCono(): THREE.CanvasTexture {
   gr.addColorStop(0, "rgba(255,255,255,0.9)");
   gr.addColorStop(0.6, "rgba(255,255,255,0.25)");
   gr.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 8, 128);
+  return new THREE.CanvasTexture(cv);
+}
+
+/** El haz del foco que cae sobre el atril: se ve en todo su largo, un poco más fuerte abajo, donde da la luz. */
+function texturaHaz(): THREE.CanvasTexture {
+  const cv = document.createElement("canvas");
+  cv.width = 8;
+  cv.height = 128;
+  const g = cv.getContext("2d")!;
+  const gr = g.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, "rgba(255,255,255,0.55)");
+  gr.addColorStop(0.55, "rgba(255,255,255,0.4)");
+  gr.addColorStop(0.95, "rgba(255,255,255,0.75)");
+  gr.addColorStop(1, "rgba(255,255,255,0.3)");
   g.fillStyle = gr;
   g.fillRect(0, 0, 8, 128);
   return new THREE.CanvasTexture(cv);
@@ -227,7 +273,7 @@ class Pantalla {
       const p = c.p;
       g.font = sans(H * 0.055, "800");
       g.fillStyle = "rgba(255,236,190,0.85)";
-      g.fillText(`GRADA ${p.n}  ·  ${miles(PUNTOS_GRADA[p.n])} PUNTOS  ·  ${dificultadGrada(p.n).nombre.toUpperCase()}`, W / 2, H * 0.09);
+      g.fillText(p.titulo ?? `GRADA ${p.n}  ·  ${miles(PUNTOS_GRADA[p.n])} PUNTOS  ·  ${dificultadGrada(p.n).nombre.toUpperCase()}`, W / 2, H * 0.09);
       // la pregunta, partida en renglones
       g.font = serif(H * 0.075, "700");
       const lineas = partir(g, p.texto, W * 0.86, 3);
@@ -433,6 +479,27 @@ export class EstudioSabio {
   private confetiHasta = 0;
   private envTex: THREE.Texture | null = null;
   private recursos: { dispose: () => void }[] = [];
+
+  // la última palabra: el foco que cae, el apagón, los destellos y el podio
+  /** El foco que cae sobre el atril al confirmar (de arriba, cada vez más cerrado). */
+  private focoCenital = new THREE.SpotLight("#fff4dc", 0, 12, 0.2, 0.3, 0);
+  private conoCenital!: THREE.Mesh;
+  private conoCenitalMat!: THREE.MeshBasicMaterial;
+  /** El círculo de luz en el piso del atril. */
+  private charcoLuz!: THREE.Mesh;
+  private charcoLuzMat!: THREE.MeshBasicMaterial;
+  private suspensoDesde = -99;
+  private suspensoDur = 2;
+  /** Desde cuándo dura el apagón de la respuesta mala. */
+  private apagonDesde = -99;
+  /** Los destellos dorados de la respuesta buena. */
+  private destellos: THREE.Points | null = null;
+  private destellosVel: Float32Array | null = null;
+  private destellosDesde = 0;
+  private chispaTex: THREE.CanvasTexture | null = null;
+  /** El podio de la noche de los sabios (y dónde estaba sentado Etán antes de pararse a aplaudir). */
+  private podio: { grupo: THREE.Group; figuras: Figure[]; rigs: Rig[]; sprites: THREE.Sprite[]; recursos: { dispose: () => void }[] } | null = null;
+  private etanAntes: { x: number; z: number; yaw: number } | null = null;
 
   // estado de la dirección
   private fase: FaseEstudio = "portada";
@@ -719,14 +786,52 @@ export class EstudioSabio {
       foco.target.position.set(p.x, 0.8, p.z);
       s.add(foco, foco.target);
     }
+    // el foco cenital sobre el atril: se enciende al confirmar la respuesta, con su haz que baja del techo
+    const c = ASIENTO.concursante;
+    this.focoCenital.position.set(c.x, 7.2, c.z + 0.15);
+    this.focoCenital.target.position.set(c.x, 0.4, c.z);
+    s.add(this.focoCenital, this.focoCenital.target);
+    this.conoCenitalMat = new THREE.MeshBasicMaterial({
+      map: texturaHaz(),
+      color: "#fff0c8",
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+    const haz = new THREE.ConeGeometry(0.85, 6.8, 32, 1, true);
+    haz.translate(0, -3.4, 0);
+    this.conoCenital = new THREE.Mesh(haz, this.conoCenitalMat);
+    this.conoCenital.position.set(c.x, 7.1, c.z);
+    this.conoCenital.scale.set(1, 0.001, 1);
+    this.conoCenital.visible = false;
+    s.add(this.conoCenital);
+    // el círculo de luz que deja el foco en el piso, alrededor del asiento
+    this.charcoLuzMat = new THREE.MeshBasicMaterial({
+      map: texturaRadial("rgba(255,246,220,0.95)", "rgba(255,246,220,0)"),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    this.charcoLuz = new THREE.Mesh(new THREE.CircleGeometry(1.15, 48), this.charcoLuzMat);
+    this.charcoLuz.rotation.x = -Math.PI / 2;
+    this.charcoLuz.position.set(c.x, DAIS_H + 0.015, c.z);
+    this.charcoLuz.visible = false;
+    s.add(this.charcoLuz);
+    this.recursos.push(haz, this.conoCenitalMat, this.conoCenitalMat.map!, this.charcoLuz.geometry, this.charcoLuzMat, this.charcoLuzMat.map!);
   }
 
   // ================================================================ lo que manda la pantalla del concurso
   /** El momento del programa: cambia luces, tomas y lo que hace el público. */
-  setFase(f: FaseEstudio, info: { grada?: number } = {}) {
+  setFase(f: FaseEstudio, info: { grada?: number; dur?: number } = {}) {
     if (info.grada !== undefined) this.setGrada(info.grada);
     const antes = this.fase;
     this.fase = f;
+    if (f !== "podio" && antes === "podio") this.quitarPodio();
     switch (f) {
       case "portada":
       case "mirando":
@@ -770,9 +875,20 @@ export class EstudioSabio {
         this.jugRig.pose = "idle";
         this.etanRig.pose = "talk";
         break;
+      case "duda":
+        // corte a los dos frente a frente, y luego Etán de cerca (con el latido de fondo que pone la pantalla)
+        this.colorMeta.copy(COLOR.duda);
+        this.dirigir([{ toma: "frente", dur: 1.7, corte: true }, { toma: "etan", dur: 30, corte: true }]);
+        this.jugRig.pose = "think";
+        this.etanRig.pose = "talk";
+        this.reaccion("think", 0.6, 6);
+        break;
       case "suspenso":
+        // las luces bajan y cae un foco sobre el atril; el suspenso dura lo que diga la pantalla (crece con la grada)
         this.colorMeta.copy(COLOR.suspenso);
-        this.dirigir([{ toma: "concursante", dur: 12, corte: true }]);
+        this.suspensoDesde = this.t;
+        this.suspensoDur = info.dur ?? 2;
+        this.dirigir([{ toma: "atril", dur: 0.95, corte: true }, { toma: "concursante", dur: 30, corte: true }]);
         this.jugRig.pose = "think";
         this.etanRig.pose = "idle";
         this.reaccion("think", 0.55, 6);
@@ -780,6 +896,7 @@ export class EstudioSabio {
       case "bien":
         this.colorMeta.copy(COLOR.bien);
         this.destello = 1;
+        this.lanzarDestellos(this.baja ? 90 : 190);
         this.dirigir([{ toma: "general", dur: 1.6, corte: true }, { toma: "gradas", dur: 3, corte: true }, { toma: "alas", dur: 3, corte: true }]);
         this.jugRig.pose = "cheer";
         this.jugRig.seated = false;
@@ -803,6 +920,7 @@ export class EstudioSabio {
         this.reaccion("clap", 0.9, 4);
         this.reaccion("cheer", 0.3, 3);
         this.lanzarConfeti(120, ["#3be0c8", "#ffe08a", "#ffffff"]);
+        this.lanzarDestellos(this.baja ? 90 : 190);
         setTimeout(() => {
           if (this.fase === "segura") {
             this.jugRig.seated = true;
@@ -811,8 +929,11 @@ export class EstudioSabio {
         }, 2200);
         break;
       case "mal":
+        // un golpe rojo y enseguida el apagón: la sala queda casi a oscuras y vuelve despacio, en rojo
         this.colorMeta.copy(COLOR.mal);
-        this.destello = 1;
+        this.color.copy(COLOR.mal);
+        this.destello = 0.7;
+        this.apagonDesde = this.t;
         this.jugRig.seated = true;
         this.dirigir([{ toma: "concursante", dur: 1.8, corte: true }, { toma: "general", dur: 5, corte: true }]);
         this.jugRig.pose = "gasp";
@@ -834,7 +955,22 @@ export class EstudioSabio {
         this.reaccion("cheer", 0.7, 9);
         this.reaccion("clap", 0.3, 9);
         this.lanzarConfeti(420, ["#ffe08a", "#f3c95a", "#ffffff", "#3be0c8", "#ff8bd0"]);
+        this.lanzarDestellos(this.baja ? 120 : 260);
         this.lampara.visible = true;
+        break;
+      case "podio":
+        // la noche de los sabios terminó: los tres primeros en el podio, el público de pie
+        this.colorMeta.copy(COLOR.gano);
+        this.destello = 1;
+        this.dirigir([{ toma: "podio", dur: 8 }, { toma: "publico", dur: 3, corte: true }, { toma: "grua", dur: 6, corte: true }]);
+        for (const p of this.publico) {
+          p.parado = true;
+          p.r.seated = false;
+        }
+        this.reaccion("cheer", 0.6, 9);
+        this.reaccion("clap", 0.4, 9);
+        this.lanzarConfeti(this.baja ? 200 : 360, ["#ffe08a", "#f3c95a", "#ffffff", "#b9bfc9", "#c98a52"]);
+        this.lanzarDestellos(this.baja ? 100 : 220, new THREE.Vector3(0, 1.4, PODIO.z));
         break;
       case "fin":
         this.colorMeta.copy(COLOR.calma);
@@ -845,13 +981,105 @@ export class EstudioSabio {
         this.reaccion("clap", 0.7, 3);
         break;
     }
-    if (f !== "gano") {
+    if (f !== "gano" && f !== "podio") {
       for (const p of this.publico)
         if (p.parado) {
           p.parado = false;
           p.r.seated = true;
         }
       this.etanRig.seated = true;
+    }
+  }
+
+  // ================================================================ el podio de la noche de los sabios
+  /** Los tres primeros de la noche, de pie en su grada del podio (oro, plata y bronce), con su nombre arriba. */
+  mostrarPodio(lista: EnElPodio[]) {
+    this.quitarPodio();
+    const grupo = new THREE.Group();
+    const recursos: { dispose: () => void }[] = [];
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.6, envMap: this.envTex, envMapIntensity: 0.7 });
+    const b = new GeoBuilder();
+    const COLORES = ["#d6a21e", "#b9bfc9", "#b5733a"];
+    for (let k = 0; k < 3; k++) {
+      const h = PODIO.alto[k];
+      b.box(0.74, h, 0.62, COLORES[k], { x: PODIO.x[k], y: DAIS_H + h / 2, z: PODIO.z });
+      b.box(0.8, 0.03, 0.68, "#fff1c4", { x: PODIO.x[k], y: DAIS_H + h + 0.012, z: PODIO.z });
+    }
+    const malla = new THREE.Mesh(b.build(), mat);
+    grupo.add(malla);
+    recursos.push(malla.geometry, mat);
+    const letrero = (texto: string, w: number, h: number, borde: string, fuente: string) => {
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(256 * (w / h));
+      cv.height = 256;
+      const g = cv.getContext("2d")!;
+      if (borde) caja(g, 6, 40, cv.width - 12, 176, 88, "rgba(10,8,30,0.88)", borde, 8);
+      g.font = fuente;
+      g.fillStyle = borde ? "#ffffff" : "#2a1a00";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText(texto, cv.width / 2, 130);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, toneMapped: false }));
+      sp.scale.set(w, h, 1);
+      recursos.push(tex, sp.material);
+      return sp;
+    };
+    const sprites: THREE.Sprite[] = [];
+    // el número de cada grada del podio, al frente
+    for (let k = 0; k < 3; k++) {
+      const n = letrero(String(k + 1), 0.32, 0.32, "", "900 200px Georgia, serif");
+      n.position.set(PODIO.x[k], DAIS_H + PODIO.alto[k] * 0.5, PODIO.z + 0.34);
+      grupo.add(n);
+      sprites.push(n);
+    }
+    const figuras: Figure[] = [];
+    const rigs: Rig[] = [];
+    lista.slice(0, 3).forEach((p, i) => {
+      const f = new Figure(p.look);
+      const r = newRig(PODIO.x[i], PODIO.z, 1);
+      r.y = DAIS_H + PODIO.alto[i] + 0.02;
+      r.yaw = 0;
+      r.pose = i === 0 ? "cheer" : "clap";
+      grupo.add(f.root);
+      figuras.push(f);
+      rigs.push(r);
+      const nombre = letrero(p.nombre.slice(0, 16), 1.1, 0.26, ["#ffd36a", "#e6ebf2", "#e0a070"][i], "800 120px system-ui, sans-serif");
+      nombre.position.set(PODIO.x[i], r.y + 1.36, PODIO.z);
+      grupo.add(nombre);
+      sprites.push(nombre);
+    });
+    this.scene.add(grupo);
+    this.podio = { grupo, figuras, rigs, sprites, recursos };
+    // el asiento de quien concursa queda vacío; Etán se para a un lado y aplaude
+    this.jugador.root.visible = false;
+    if (!this.etanAntes) this.etanAntes = { x: this.etanRig.x, z: this.etanRig.z, yaw: this.etanRig.yaw };
+    this.etanRig.x = -1.75;
+    this.etanRig.z = PODIO.z - 0.2;
+    this.etanRig.yaw = Math.atan2(PODIO.x[0] - this.etanRig.x, PODIO.z - this.etanRig.z);
+    this.etanRig.seated = false;
+    this.etanRig.y = DAIS_H;
+    this.etanRig.pose = "clap";
+    this.pantalla.dibujar({ k: "mensaje", titulo: lista[0] ? lista[0].nombre : "La noche de los sabios", sub: "LA NOCHE DE LOS SABIOS  ·  PROVERBIOS 13:20" });
+    this.setFase("podio");
+  }
+
+  private quitarPodio() {
+    if (this.podio) {
+      this.scene.remove(this.podio.grupo);
+      for (const f of this.podio.figuras) f.dispose();
+      for (const r of this.podio.recursos) r.dispose();
+      this.podio = null;
+    }
+    this.jugador.root.visible = true;
+    if (this.etanAntes) {
+      this.etanRig.x = this.etanAntes.x;
+      this.etanRig.z = this.etanAntes.z;
+      this.etanRig.yaw = this.etanAntes.yaw;
+      this.etanRig.y = DAIS_H + 0.17;
+      this.etanRig.seated = true;
+      this.etanAntes = null;
     }
   }
 
@@ -1071,6 +1299,66 @@ export class EstudioSabio {
     this.scene.add(this.confeti);
   }
 
+  /** Destellos dorados que saltan alrededor de quien acertó (o del podio) y se apagan titilando. */
+  private lanzarDestellos(n: number, centro = new THREE.Vector3(ASIENTO.concursante.x, 1.05, ASIENTO.concursante.z)) {
+    this.quitarDestellos();
+    if (!this.chispaTex) {
+      this.chispaTex = texturaRadial("rgba(255,255,255,1)", "rgba(255,255,255,0)");
+      this.recursos.push(this.chispaTex);
+    }
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = new Float32Array(n * 3);
+    const c = new THREE.Color();
+    const oros = ["#fff3c4", "#ffe08a", "#f3c95a", "#ffd36a", "#ffffff"];
+    for (let i = 0; i < n; i++) {
+      // una esfera de chispas que se abre hacia arriba y a los lados
+      const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u);
+      const v = 0.9 + Math.random() * 2.2;
+      pos.set([centro.x + (Math.random() - 0.5) * 0.25, centro.y + (Math.random() - 0.5) * 0.3, centro.z + (Math.random() - 0.5) * 0.25], i * 3);
+      vel.set([r * Math.cos(a) * v, Math.abs(u) * v * 0.9 + 0.6, r * Math.sin(a) * v], i * 3);
+      c.set(oros[i % oros.length]);
+      col.set([c.r, c.g, c.b], i * 3);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    this.destellos = new THREE.Points(
+      g,
+      new THREE.PointsMaterial({ size: 0.16, map: this.chispaTex, vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+    );
+    this.destellosVel = vel;
+    this.destellosDesde = this.t;
+    this.scene.add(this.destellos);
+  }
+
+  private quitarDestellos() {
+    if (!this.destellos) return;
+    this.scene.remove(this.destellos);
+    this.destellos.geometry.dispose();
+    (this.destellos.material as THREE.Material).dispose();
+    this.destellos = null;
+    this.destellosVel = null;
+  }
+
+  private animarDestellos(dt: number) {
+    if (!this.destellos || !this.destellosVel) return;
+    const a = this.destellos.geometry.attributes.position as THREE.BufferAttribute;
+    const v = this.destellosVel;
+    const freno = Math.exp(-dt * 1.6);
+    for (let i = 0; i < a.count; i++) {
+      v[i * 3] *= freno;
+      v[i * 3 + 1] = v[i * 3 + 1] * freno - 0.9 * dt;
+      v[i * 3 + 2] *= freno;
+      a.setXYZ(i, a.getX(i) + v[i * 3] * dt, Math.max(0.05, a.getY(i) + v[i * 3 + 1] * dt), a.getZ(i) + v[i * 3 + 2] * dt);
+    }
+    a.needsUpdate = true;
+    const vida = this.t - this.destellosDesde;
+    const m = this.destellos.material as THREE.PointsMaterial;
+    // titilan mientras se apagan
+    m.opacity = Math.max(0, 1 - vida / 2.6) * (0.75 + 0.25 * Math.sin(this.t * 38));
+    m.size = 0.16 * (1 + 0.35 * Math.sin(this.t * 23));
+    if (vida > 2.7) this.quitarDestellos();
+  }
+
   // ================================================================ cada cuadro
   /** Para probar con el panel oculto (sin cuadros del navegador): avanza el tiempo y dibuja una vez. */
   simular(segundos: number) {
@@ -1081,6 +1369,7 @@ export class EstudioSabio {
       this.animarLuces(0.033);
       this.animarGente(0.033);
       this.animarConfeti(0.033);
+      this.animarDestellos(0.033);
     }
     this.renderer.render(this.scene, this.camera);
   }
@@ -1099,45 +1388,87 @@ export class EstudioSabio {
     this.animarLuces(dt);
     this.animarGente(dt);
     this.animarConfeti(dt);
+    this.animarDestellos(dt);
     this.renderer.render(this.scene, this.camera);
   };
+
+  /** El latido de la duda: dos golpes (como un corazón) unas 72 veces por minuto. */
+  private latido(): number {
+    const f = (this.t * 1.2) % 1;
+    return Math.exp(-(((f - 0.06) / 0.045) ** 2)) + 0.65 * Math.exp(-(((f - 0.27) / 0.05) ** 2));
+  }
+
+  /** Cuánto de apagón hay ahora (0 = nada, 1 = casi a oscuras): un golpe rojo, la sala a oscuras y vuelve despacio. */
+  private apagon(): number {
+    const a = this.t - this.apagonDesde;
+    if (this.fase !== "mal" || a < 0.14) return 0;
+    if (a < 0.3) return (a - 0.14) / 0.16;
+    if (a < 1.15) return 1;
+    if (a < 2.7) return 1 - (a - 1.15) / 1.55;
+    return 0;
+  }
 
   private animarLuces(dt: number) {
     this.color.lerp(this.colorMeta, 1 - Math.exp(-dt * 4));
     this.destello = Math.max(0, this.destello - dt * 1.4);
-    const pulso = this.fase === "suspenso" || this.fase === "confirmar" ? 0.65 + Math.sin(this.t * 3.2) * 0.35 : 1;
+    const duda = this.fase === "duda";
+    const enSuspenso = this.fase === "suspenso";
+    const pulso = enSuspenso || this.fase === "confirmar" ? 0.65 + Math.sin(this.t * 3.2) * 0.35 : duda ? 0.3 + 0.9 * this.latido() : 1;
+    // la sala baja en la duda y en el suspenso; en el apagón, casi a oscuras
+    const apagon = this.apagon();
+    const luz = (1 - 0.93 * apagon) * (enSuspenso ? 0.26 : duda ? 0.55 : 1);
     const flash = this.destello * this.destello;
-    this.anillo.color.copy(this.color).multiplyScalar(0.9 + flash * 2.5);
+    this.anillo.color.copy(this.color).multiplyScalar((0.9 + flash * 2.5) * (luz < 1 ? Math.max(0.25, luz) : 1));
     for (const [i, r] of this.anillos.entries()) {
       const m = r.material as THREE.MeshBasicMaterial;
-      m.color.copy(this.color).multiplyScalar((0.7 + 0.3 * Math.sin(this.t * 1.6 - i)) * pulso + flash * 2);
+      m.color.copy(this.color).multiplyScalar(((0.7 + 0.3 * Math.sin(this.t * 1.6 - i)) * pulso + flash * 2) * luz);
     }
-    this.fondoBrillo.color.copy(this.color).multiplyScalar(0.85 * pulso + flash * 1.6);
+    this.fondoBrillo.color.copy(this.color).multiplyScalar((0.85 * pulso + flash * 1.6) * luz);
     this.contra.color.copy(this.color);
-    this.contra.intensity = 1.6 + flash * 6;
-    this.hemi.intensity = this.fase === "suspenso" ? 0.38 : 0.7 + flash * 0.6;
-    // focos de los asientos: en el suspenso queda solo el del que concursa
-    const objetivoJ = this.fase === "suspenso" || this.fase === "confirmar" ? 5.5 : 3.2;
-    const objetivoE = this.fase === "suspenso" ? 0.8 : 2.6;
-    this.focoJugador.intensity += (objetivoJ - this.focoJugador.intensity) * (1 - Math.exp(-dt * 3));
-    this.focoEtan.intensity += (objetivoE - this.focoEtan.intensity) * (1 - Math.exp(-dt * 3));
+    this.contra.intensity = (1.6 + flash * 6) * luz;
+    this.hemi.intensity = (enSuspenso ? 0.4 : duda ? 0.6 : 0.7 + flash * 0.6) * luz;
+    this.relleno.intensity = 0.9 * luz;
+    // focos de los asientos: en el suspenso manda el foco de arriba; en la duda, la luz va sobre Etán
+    const objetivoJ = (enSuspenso ? 0.6 : this.fase === "confirmar" ? 5.5 : duda ? 2.2 : 3.2) * luz;
+    const objetivoE = (enSuspenso ? 0.3 : duda ? 6.5 : 2.6) * luz;
+    // en el apagón la luz se va de golpe; si no, cambia suave
+    const suave = apagon > 0.01 ? 1 : 1 - Math.exp(-dt * 3);
+    this.focoJugador.intensity += (objetivoJ - this.focoJugador.intensity) * suave;
+    this.focoEtan.intensity += (objetivoE - this.focoEtan.intensity) * suave;
+    this.focoEtan.color.set(duda ? "#ffd8a8" : "#fff2d8");
+    // el foco que cae sobre el atril: en un tercio de segundo baja del techo y se va cerrando mientras dura el suspenso
+    const ts = this.t - this.suspensoDesde;
+    const caida = enSuspenso ? Math.min(1, ts / 0.32) : 0;
+    const cierre = enSuspenso ? Math.min(1, ts / Math.max(0.5, this.suspensoDur)) : 0;
+    const anchoHaz = 1 - 0.32 * cierre;
+    this.conoCenital.visible = enSuspenso || this.conoCenitalMat.opacity > 0.01;
+    this.conoCenital.scale.set(anchoHaz, Math.max(0.001, enSuspenso ? caida : this.conoCenital.scale.y), anchoHaz);
+    this.conoCenitalMat.opacity += ((enSuspenso ? (0.22 + 0.16 * cierre) * caida : 0) - this.conoCenitalMat.opacity) * (1 - Math.exp(-dt * 10));
+    this.charcoLuz.visible = this.conoCenital.visible;
+    this.charcoLuz.scale.setScalar(anchoHaz);
+    this.charcoLuzMat.opacity += ((enSuspenso ? 0.85 * caida : 0) - this.charcoLuzMat.opacity) * (1 - Math.exp(-dt * 10));
+    const objetivoC = enSuspenso ? (28 + 18 * cierre) * caida : 0;
+    this.focoCenital.intensity += (objetivoC - this.focoCenital.intensity) * (1 - Math.exp(-dt * (enSuspenso ? 16 : 4)));
+    this.focoCenital.angle = 0.17 - 0.05 * cierre;
     // las gradas: las subidas en oro, la de ahora late, las seguras en turquesa
     for (let i = 0; i < GRADAS; i++) {
       const n = i + 1;
       const m = this.gradaMat[i];
-      if (n <= this.grada) m.color.set("#f3b93a").multiplyScalar(1.2 + flash * 0.8);
-      else if (n === this.grada + 1 && this.fase !== "portada" && this.fase !== "mirando") m.color.set("#ffffff").multiplyScalar(0.5 + 0.5 * Math.abs(Math.sin(this.t * 3)));
-      else if ((GRADAS_SEGURAS as readonly number[]).includes(n)) m.color.set("#1f8f80");
-      else m.color.set("#262566");
+      if (n <= this.grada) m.color.set("#f3b93a").multiplyScalar((1.2 + flash * 0.8) * luz);
+      else if (n === this.grada + 1 && this.fase !== "portada" && this.fase !== "mirando") m.color.set("#ffffff").multiplyScalar((0.5 + 0.5 * Math.abs(Math.sin(this.t * 3))) * luz);
+      else if ((GRADAS_SEGURAS as readonly number[]).includes(n)) m.color.set("#1f8f80").multiplyScalar(luz);
+      else m.color.set("#262566").multiplyScalar(luz);
     }
     // las columnas se encienden con el avance (una por cada dos gradas, la séptima en la cima)
     for (let k = 0; k < 7; k++) {
       const en = this.grada >= Math.min(GRADAS, (k + 1) * 2 + (k === 6 ? 1 : 0));
-      this.columnasLuz[k].color.set(en ? "#ffd36a" : "#34348a").multiplyScalar(en ? 1.3 + flash : 0.8 + 0.2 * Math.sin(this.t * 0.9 + k));
+      this.columnasLuz[k].color.set(en ? "#ffd36a" : "#34348a").multiplyScalar((en ? 1.3 + flash : 0.8 + 0.2 * Math.sin(this.t * 0.9 + k)) * luz);
     }
+    // la pantalla grande también se apaga un momento en el apagón
+    (this.pantalla.mesh.material as THREE.MeshBasicMaterial).color.setScalar(0.3 + 0.7 * (1 - 0.93 * apagon));
     // los conos de luz: barren lento; en el suspenso apuntan al que concursa; al acertar giran rápido
     this.conoMat.color.copy(this.color);
-    this.conoMat.opacity = (this.fase === "suspenso" ? 0.1 : 0.15) + flash * 0.25;
+    this.conoMat.opacity = ((enSuspenso ? 0.05 : duda ? 0.08 : 0.15) + flash * 0.25) * luz;
     const rapido = this.fase === "bien" || this.fase === "segura" || this.fase === "gano" ? 3.2 : 0.35;
     for (const c of this.conos) {
       c.fase += dt * rapido;
@@ -1162,6 +1493,12 @@ export class EstudioSabio {
     this.jugRig.t += dt;
     this.etan.update(this.etanRig);
     this.jugador.update(this.jugRig);
+    if (this.podio)
+      this.podio.figuras.forEach((f, i) => {
+        const r = this.podio!.rigs[i];
+        r.t += dt;
+        f.update(r);
+      });
     for (const p of this.publico) {
       p.r.t += dt;
       if (p.reac && this.t >= p.desde && this.t < p.hasta) p.r.pose = p.reac;
@@ -1236,6 +1573,8 @@ export class EstudioSabio {
       this.confeti.geometry.dispose();
       (this.confeti.material as THREE.Material).dispose();
     }
+    this.quitarDestellos();
+    this.quitarPodio();
     for (const r of this.recursos) r.dispose();
     this.crowd.dispose();
     this.etan.dispose();
