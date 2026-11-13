@@ -11,7 +11,11 @@ import {
   CELDAS, DAMAS_CHINAS, HOYOS, PUNTAS_POR_JUGADORES, VECINOS, celdaEn, damasChinas, enfrente, hoyosDePunta, jugadaValida, movimientosDe, todasLasJugadas,
 } from "./mesa/damas-chinas";
 import { PAREJAS, TAMANOS_MEMORIA, decidirMemoria, memoria, type EstadoMemoria } from "./mesa/memoria";
-import { BASTA, CATEGORIAS_BASTA, LETRAS_BASTA, basta, normalizarBasta, palabrasDe, revisarRespuesta, type EstadoBasta } from "./mesa/basta";
+import { BASTA, CATEGORIAS_BASTA, LETRAS_BASTA, basta, normalizarBasta, palabrasDe, ponerListaBasta, revisarRespuesta, type EstadoBasta } from "./mesa/basta";
+import * as LISTA_BASTA from "../server/mesa-basta-lista";
+
+// la lista del «Basta» vive en el servidor: aquí se pone como lo hace él al arrancar
+ponerListaBasta(LISTA_BASTA);
 
 type Modulo<E> = {
   alTiempo(e: E, ahora: number, azar: () => number): E | null;

@@ -16,7 +16,6 @@ import {
   anotar, copiar, entero, entre, mal, mezclar, puestosPor,
   type Aplicado, type Azar, type ConEventos, type ConfigMesa, type FinMesa, type ModuloMesa, type Nivel,
 } from "./comun";
-import { LIBROS_BASTA, LIBROS_OTROS, LUGARES_BASTA, OBJETOS_BASTA, PERSONAJES_BASTA } from "./basta-lista";
 import { BASTA, CATEGORIAS_BASTA, LETRAS_BASTA, limpiarRespuestaBasta, normalizarBasta, type CatBasta } from "./basta-reglas";
 
 export * from "./basta-reglas";
@@ -35,12 +34,17 @@ const armar = (l: string[], otros: Record<string, string> = {}): Entrada[] => {
   for (const [o, canon] of Object.entries(otros)) out.push({ canon, norm: normalizarBasta(o) });
   return out;
 };
-const LISTA: Record<CatBasta, Entrada[]> = {
-  personaje: armar(PERSONAJES_BASTA),
-  lugar: armar(LUGARES_BASTA),
-  libro: armar(LIBROS_BASTA, LIBROS_OTROS),
-  objeto: armar(OBJETOS_BASTA),
-};
+export type ListaBasta = { PERSONAJES_BASTA: string[]; LUGARES_BASTA: string[]; LIBROS_BASTA: string[]; LIBROS_OTROS: Record<string, string>; OBJETOS_BASTA: string[] };
+let LISTA: Record<CatBasta, Entrada[]> = { personaje: [], lugar: [], libro: [], objeto: [] };
+/** La lista vive solo en el servidor (server/mesa-basta-lista.ts): el servidor la pone al arrancar (y las pruebas). */
+export function ponerListaBasta(l: ListaBasta) {
+  LISTA = {
+    personaje: armar(l.PERSONAJES_BASTA),
+    lugar: armar(l.LUGARES_BASTA),
+    libro: armar(l.LIBROS_BASTA, l.LIBROS_OTROS),
+    objeto: armar(l.OBJETOS_BASTA),
+  };
+}
 export const palabrasDe = (cat: CatBasta, letra: string) => [...new Set(LISTA[cat].filter((x) => x.norm.startsWith(letra.toLowerCase())).map((x) => x.canon))];
 
 function distancia(a: string, b: string, tope = 2): number {

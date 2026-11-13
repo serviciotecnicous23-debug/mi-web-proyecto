@@ -833,3 +833,44 @@ partida sigue siendo de personas.
 
 Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
 pruebas (`shared/mesa-clasicos.test.ts`) cuentan todas las jugadas del ajedrez en posiciones conocidas («perft»).
+
+### 9c. Los juegos de grupo tradicionales (13 de noviembre de 2026)
+
+Pedido de Luis: juegos de grupo tradicionales («predeterminados») con un diseño excelente, para jugar en grupo y solo,
+y sobre todo con animaciones y vida. Nada parecido a UNO ni a Monopoly. Son siete, todos sin marca, con dibujos y
+nombres propios:
+
+| Juego | Jugadores | Cómo se juega |
+|---|---|---|
+| 🎴 Lotería bíblica | 2 a 12 | 54 figuras propias; el cantor saca una carta cada pocos segundos con su copla y su versículo; cada uno marca su tabla y canta «¡Lotería!» (una línea, las esquinas, el centro o la tabla llena) |
+| 🎲 Generala | 2 a 8 | Cinco dados, tres tiros y la planilla de once casillas; la generala servida gana la partida |
+| 🪜 Escaleras de Jacob | 2 a 6 | Las escaleras suben (Génesis 28:12) y cada una enseña una virtud; las serpientes bajan y cada caída enseña algo |
+| ⭐ Damas chinas | 2 a 6 | La estrella de 121 hoyos; saltos encadenados hasta la punta de enfrente |
+| 🃏 Memoria bíblica | 1 a 6 | Parejas de un personaje y su versículo; solo, contra el reloj |
+| ✍️ «Basta» bíblico | 2 a 12 | Una letra: personaje, lugar, libro y objeto; el servidor revisa con su lista (100 si nadie más lo puso, 50 repetido) |
+| 🖍️ Dibuja y adivina | 1 a 12 | Uno dibuja una palabra de la Biblia y los demás eligen entre ocho (sin texto libre); solo, práctica de dibujo |
+
+**Archivos.** Las reglas en `shared/mesa/` (`loteria.ts` con `loteria-cartas.ts`, `generala.ts`, `escaleras.ts`,
+`damas-chinas.ts`, `memoria.ts`, `basta.ts` con `basta-reglas.ts` y la lista solo del servidor `basta-lista.ts`,
+`dibuja.ts`, lo común en `comun.ts`, el catálogo en `juegos.ts` y su lugar en la mesa en `tradicionales.ts`). Las
+pantallas en `client/src/games/templo/mesa/` (`LoteriaUI`, `GeneralaUI`, `EscalerasUI`, `DamasChinasUI`, `MemoriaUI`,
+`BastaUI`, `DibujaUI`, con `figuras.tsx`, `Carta.tsx`, `Dado.tsx`, `vida.tsx`, `mesa.css` y `mesa-sonido.ts`). Las mesas
+del patio 3D en `ciudad/mesas3d.ts` (`MESAS_PATIO` en `shared/mesa/juegos.ts`). Pruebas en
+`shared/mesa-tradicionales.test.ts`. En desarrollo, `/mesa-prueba/<juego>` los corre en el navegador sin servidor.
+
+**El reloj propio.** Estos juegos no son de un turno a la vez: el cantor canta aunque nadie tenga la carta, el «Basta»
+da 6 segundos después del «¡Basta!», la memoria tapa las cartas y los compañeros marcan con su ritmo. Por eso llevan
+`relojPropio`: el juego decide sus turnos, sus relojes y a sus compañeros, y la sala solo lo pone al día con la hora
+(`alTiempo` cuando llega `proximoCambio`). `porQueNo` dice por qué no vale una jugada («Esa figura todavía no ha
+salido»), y `opciones` es lo que elige el anfitrión (la figura y el ritmo de la lotería, cuántas cartas en la memoria).
+
+**La vida.** Las cartas vuelan y se dan vuelta, los frijolitos caen, los dados son cubos que ruedan, las fichas saltan
+casilla por casilla y suben o se deslizan, las canicas saltan encadenadas, la letra del «Basta» gira como una tómbola,
+los trazos del dibujo se dibujan solos; confeti, sellos («¡LOTERÍA!», «¡BASTA!»), sonidos sintetizados de cada jugada y
+el golpe final de la banda sonora (`jer-golpe`). Nada con forma de cruz (la estrella es de cinco puntas, el sol tiene
+muchos rayos, el águila sube con las alas en V, el dorso de las cartas es una lámpara en su medallón).
+
+**Cómo agregar contenido.** Una carta de la lotería: al final de `loteria-cartas.ts` (id nuevo, copla, versículo
+comprobado) y su dibujo en `figuras.tsx`. Una escalera o una serpiente: en `escaleras.ts` (que no empiece donde termina
+otra; la prueba lo vigila). Una pareja de la memoria: en `PAREJAS` de `memoria.ts`. Una palabra del «Basta»: en su
+categoría de `basta-lista.ts`. Una palabra para dibujar: al final de `PALABRAS_DIBUJA`.

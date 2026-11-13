@@ -23,7 +23,7 @@ import { generala } from "@shared/mesa/generala";
 import { escaleras } from "@shared/mesa/escaleras";
 import { damasChinas } from "@shared/mesa/damas-chinas";
 import { memoria, PAREJAS } from "@shared/mesa/memoria";
-import { basta } from "@shared/mesa/basta";
+import { basta, ponerListaBasta } from "@shared/mesa/basta";
 import { dibuja } from "@shared/mesa/dibuja";
 import { CARTAS_LOTERIA } from "@shared/mesa/loteria-cartas";
 import { DefsFiguras, Figura, IDS_FIGURAS } from "./figuras";
@@ -176,6 +176,9 @@ function Galeria() {
     </div>
   );
 }
+
+// en desarrollo, el «Basta» de prueba necesita la lista (en la web de verdad vive solo en el servidor)
+void import("../../../../../server/mesa-basta-lista").then((l) => ponerListaBasta(l));
 
 export default function PruebaMesa() {
   const [, p] = useRoute("/mesa-prueba/:juego");

@@ -1,6 +1,7 @@
 /**
  * La lista del «Basta» bíblico: los nombres que valen en cada categoría (como se escriben en la Reina-Valera 1960).
- * La usa SOLO el servidor (shared/mesa/basta.ts): la pantalla no la importa, así no viaja al teléfono.
+ * Vive SOLO en el servidor: al arrancar, server/juegos-grupo.ts se la da al juego (`ponerListaBasta` de
+ * shared/mesa/basta.ts). Así la lista no viaja al teléfono.
  *
  * Para agregar: el nombre con sus tildes, en su categoría (las mayúsculas y las tildes no importan al comparar). Los
  * primeros de cada letra son los más conocidos: los compañeros de la computadora los eligen más (y así a veces se

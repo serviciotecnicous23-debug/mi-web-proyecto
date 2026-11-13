@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-juegos-de-grupo",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Siete juegos de grupo en el patio: lotería bíblica, generala, escaleras de Jacob y más",
+    puntos: [
+      "🎴 Lotería bíblica: 54 figuras dibujadas para el juego. El cantor saca cada carta con su copla y su versículo (y hasta la dice en voz alta); marca tu tabla con frijolitos y canta «¡Lotería!».",
+      "🎲 Generala con dados de verdad que ruedan, 🪜 escaleras de Jacob que suben (y serpientes que enseñan algo al bajar) y ⭐ damas chinas con saltos encadenados en la estrella.",
+      "🃏 Memoria bíblica (junta a cada personaje con su versículo), ✍️ «Basta» bíblico con una letra y cuatro categorías, y 🖍️ «Dibuja y adivina».",
+      "🤖 Todos se juegan con tu gente o solo, con compañeros de la computadora (menos dibujar, donde solo miran). Y en el patio hay seis mesas nuevas con gente jugando.",
+    ],
+  },
+  {
     id: "2026-11-13-domino",
     fecha: "13 de noviembre de 2026",
     titulo: "El dominó llegó al patio",

@@ -26,6 +26,8 @@ import { BANCO } from "./jerusalen-banco";
 import { BANCO_SABIO } from "./sabio-banco";
 import { ESGRIMA_BANCO, QUIEN_BANCO } from "./juegos-grupo-banco";
 import { MESAS, ORDEN_MESAS, esMesa } from "@shared/mesa/index";
+import { ponerListaBasta } from "@shared/mesa/basta";
+import * as LISTA_BASTA from "./mesa-basta-lista";
 import { azarConSemilla, esNivelBot, jugadaValida, nombreDeBot, opcionesElegidas, quienesJuegan, type AsientoMesa, type MesaVista, type NivelBot, type ResultadoMesa } from "@shared/mesa";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { VERSICULOS_RAPIDOS } from "@shared/ciudad";
@@ -70,6 +72,9 @@ CREATE TABLE IF NOT EXISTS "game_juegos_jugadores" (
 CREATE INDEX IF NOT EXISTS "idx_game_juegos_jugadores_titular" ON "game_juegos_jugadores" ("titular", "juego");
 ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_dia" text;
 ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_hoy" integer NOT NULL DEFAULT 0;`;
+
+// la lista de palabras del «Basta» bíblico vive solo aquí, en el servidor
+ponerListaBasta(LISTA_BASTA);
 
 // ================================================================ en memoria
 type Miembro = {
