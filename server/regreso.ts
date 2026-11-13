@@ -27,6 +27,7 @@ import { MURO_META, MURO_TRAMOS } from "@shared/muro";
 import { arcoDeTemporada, capituloDelDia, enTexas } from "@shared/capitulos";
 import { diaJugado } from "./invitar";
 import { anotarAlbum } from "./album";
+import { revisarAprendiz } from "./mentores";
 import {
   NOMBRE_SEMILLA, PRENDA_REGRESO, REGRESO_CADA, REGRESO_DESDE, REGRESO_VALIDO, REGRESO_VESTIDO, diasEntre, esVuelta, puedeRecibir, regaloDeRegreso,
   semillaDeRegreso, yaRecibido, type BarrioMientras, type CasaMientras, type CiudadMientras, type FilaRegreso, type RegaloRecibido, type RegaloRegreso,
@@ -94,10 +95,12 @@ export function registrarVisita(titular: number, userId: number): Promise<void> 
   return p;
 }
 
-/** Lo demás de cada visita: el día jugado (para el premio de los amigos invitados) y lo nuevo del álbum. */
+/** Lo demás de cada visita: el día jugado (para el premio de los amigos invitados), lo nuevo del álbum y los pasos del aprendiz. */
 async function alVisitar(titular: number, userId: number, hoy: string): Promise<void> {
   await diaJugado(titular, userId, hoy).catch((err) => console.error("[invitar] día jugado:", err));
   await anotarAlbum(titular).catch((err) => console.error("[album] anotar:", err));
+  // si tiene mentor, se miran sus pasos (y el premio de los dos sale enseguida)
+  await revisarAprendiz(userId);
 }
 
 async function anotar(titular: number, userId: number, hoy: string): Promise<void> {

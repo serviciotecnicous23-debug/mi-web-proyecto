@@ -157,6 +157,8 @@ export type Modal =
   | { kind: "personaje"; id: string }
   /** La historia de la temporada (shared/capitulos.ts). */
   | { kind: "capitulos" }
+  /** Los mentores para los nuevos (MentoresUI.tsx). */
+  | { kind: "mentores" }
   /** El libro de la restauración (shared/restauracion.ts). */
   | { kind: "libro" }
   | { kind: "visita"; personajeId: number; nombre: string }

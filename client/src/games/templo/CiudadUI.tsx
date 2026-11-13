@@ -25,6 +25,8 @@ import { MapaView, MiniMapa } from "./MapaUI";
 import { CatedraView } from "./CatedraUI";
 import { BarrioView } from "./BarrioUI";
 import { PersonajeView } from "./PersonajesUI";
+import { DichosView } from "./DichosUI";
+import { MentoresView } from "./MentoresUI";
 import { RachaPill } from "./RachaUI";
 import { JuntosChip } from "./BarrioCopa";
 import { SiguiendoChip, seguirVecino } from "./Acompanar";
@@ -41,7 +43,7 @@ import type { CiudadWorld } from "./ciudad/mundo";
 import { diaEnJerusalen, proximaFiestaGrande } from "@shared/anio";
 import { escalonNombre, type JerusalenEstado } from "@shared/jerusalen";
 import {
-  BIEN, BIENES, CONSEJOS_ANCIANOS, EDIFICIOS, FRASES, GESTOS, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
+  BIEN, BIENES, EDIFICIOS, FRASES, GESTOS, NIVELES_CASA, VERSICULOS_RAPIDOS, VERSO_ALFOLI, VERSO_CASA, VERSO_DADOR, VERSO_HONRA, VERSO_HOSPEDAJE,
   VERSO_PLAZA, VERSO_PULPITO, VERSO_SIERVOS, VERSO_VISITA, bienDeFiesta, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVisita, type CiudadEstado,
 } from "@shared/ciudad";
 import { FIESTA } from "@shared/calendario";
@@ -52,6 +54,7 @@ import { OficiosView } from "./TallerUI";
 import { ArcaView } from "./ArcaUI";
 import { AlbumView } from "./AlbumUI";
 import { usarInvitacionGuardada } from "./InvitarUI";
+import { EVENTO_MENTOR, traerMentores } from "./MentoresUI";
 import type { TallerEstado } from "@shared/taller";
 import { FotoDeCasa } from "./FotoCasaUI";
 import { RegalarBoton, RegalosRecibidos } from "./RegalosUI";
@@ -172,6 +175,39 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
   useEffect(() => {
     void usarInvitacionGuardada();
   }, []);
+  // los mentores (shared/mentores.ts): en la ciudad se marcan el mentor y los aprendices (para encontrarse), y quien
+  // acaba de llegar recibe una vez por día la invitación a elegir un mentor
+  useEffect(() => {
+    if (!city) return;
+    let vivo = true;
+    let invitado = false;
+    const poner = () =>
+      void traerMentores().then((m) => {
+        if (!vivo || !m) return;
+        const marcas = new Map<number, string>();
+        if (m.miMentor) marcas.set(m.miMentor.userId, "🎓 tu mentor");
+        for (const a of m.aprendices) marcas.set(a.userId, "🌱 tu aprendiz");
+        city.marcarMentores(marcas);
+        if (!invitado && m.yo.puedeElegir && m.posibles.length) {
+          invitado = true;
+          const clave = `jer-mentor-aviso-${new Date().toDateString()}`;
+          try {
+            if (localStorage.getItem("jer-mentor-aviso") !== clave) {
+              localStorage.setItem("jer-mentor-aviso", clave);
+              setTimeout(() => vivo && gameStore.toast(`🎓 Acabas de llegar: elige un mentor que te acompañe (${m.posibles[0].nombre} te puede guiar). Míralo en Misiones → Mentores.`, "gold"), 9000);
+            }
+          } catch {
+            /* sin almacenamiento */
+          }
+        }
+      });
+    poner();
+    window.addEventListener(EVENTO_MENTOR, poner);
+    return () => {
+      vivo = false;
+      window.removeEventListener(EVENTO_MENTOR, poner);
+    };
+  }, [city]);
   useEffect(() => {
     if (!verGestos) return;
     const t = setTimeout(() => setVerGestos(false), 8000);
@@ -412,7 +448,10 @@ export function CiudadModal({ modal }: { modal: Modal }) {
     case "anuncios":
       return <AnunciosView />;
     case "ancianos":
-      return <AncianosView n={modal.n} />;
+      // los ancianos de la puerta y el dicho de hoy (shared/dichos.ts)
+      return <DichosView />;
+    case "mentores":
+      return <MentoresView />;
     case "escuela":
       return <EscuelaView tab={modal.tab} />;
     case "palacio":
@@ -1165,21 +1204,6 @@ function AnunciosView() {
 }
 
 /** Los ancianos sentados a la puerta (Rut 4:1-2) dan un consejo de los Proverbios. */
-function AncianosView({ n }: { n: number }) {
-  const consejo = CONSEJOS_ANCIANOS[n % CONSEJOS_ANCIANOS.length];
-  return (
-    <Card title="Los ancianos de la puerta" onClose={cerrar} testid="ciudad-ancianos">
-      <div className="space-y-3 p-4 text-sm">
-        <p className="leading-relaxed">Booz subió a la puerta y se sentó allí, con diez ancianos de la ciudad, para tratar las causas del pueblo (Rut 4:1-2). Los ancianos de Jerusalén te dan un consejo:</p>
-        <VerseBox text={consejo.text} refName={consejo.ref} />
-        <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={cerrar} data-testid="button-ancianos-gracias">
-          Gracias, padres
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
 /** El palacio, la escuela y el mercado: por ahora solo edificios (sus caminos son de la etapa 3). */
 function EdificioView({ id }: { id: EdificioId }) {
   const e = EDIFICIOS[id];

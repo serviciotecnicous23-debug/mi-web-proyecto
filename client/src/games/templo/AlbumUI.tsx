@@ -9,6 +9,7 @@ import { articulo } from "@shared/mercado";
 import { COLECCIONES, EN_EL_ALBUM, TITULOS_ESPECIALES, VERSO_ALBUM, nombreDeTitulo, type AlbumEstado, type TituloId } from "@shared/album";
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
+import { ListaDichos } from "./DichosUI";
 
 type Resp = AlbumEstado & { message?: string };
 async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: Resp | null }> {
@@ -124,6 +125,8 @@ export function AlbumView() {
           </section>
         );
       })}
+      {/* los dichos de los ancianos de la puerta (shared/dichos.ts) */}
+      <ListaDichos tengo={a.dichos ?? []} />
       <VerseBox text={VERSO_ALBUM.text} refName={VERSO_ALBUM.ref} />
       {a.titulo && (
         <Button size="sm" variant="ghost" disabled={busy} onClick={() => void elegir(null)}>

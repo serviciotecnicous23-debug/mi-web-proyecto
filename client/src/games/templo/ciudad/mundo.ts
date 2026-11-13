@@ -491,6 +491,14 @@ export class CiudadWorld {
         this.audio.trumpet(true);
         gameStore.toast(gozo > 0 ? `🤝 ¡${nombre} ya juega contigo en Jerusalén! +${gozo} de gozo y la faja del buen amigo.` : `🤝 ¡${nombre} ya juega contigo en Jerusalén! Te llegó la faja del buen amigo.`, "gold");
       },
+      // los mentores (shared/mentores.ts): te eligieron, tu aprendiz cumplió un paso, se encontraron en la ciudad…
+      onMentor: (m) => {
+        if (m.gozo > 0 || m.fin) this.audio.trumpet(true);
+        gameStore.toast(m.texto, m.gozo > 0 || m.fin ? "gold" : "info");
+        if (m.gozoTotal != null) this.ponerGozo(m.gozoTotal);
+        if (m.gozo > 0) this.flotar(`+${m.gozo} de gozo`);
+        window.dispatchEvent(new CustomEvent("jer-mentor"));
+      },
       onFuera: (motivo) => gameStore.toast(motivo, "warn"),
       onEstado: (e) => {
         this.redEstado = e;
@@ -853,16 +861,23 @@ export class CiudadWorld {
     }
   }
 
+  /** El mentor y los aprendices de quien juega (por su cuenta): su nombre lleva la marca y se ve desde más lejos. */
+  private marcasMentor = new Map<number, string>();
+  marcarMentores(marcas: Map<number, string>) {
+    this.marcasMentor = marcas;
+  }
+
   private letrerosDeVecinos(now: number) {
     const r = this.player.rig;
     for (const v of this.vecinos.values()) {
       const cabeza = new THREE.Vector3(v.rig.x, v.rig.y + 1.95, v.rig.z);
-      const cerca = dist(r.x, r.z, v.rig.x, v.rig.z) < 16;
+      const info = this.infos.get(v.id);
+      const marca = info ? this.marcasMentor.get(info.u) : undefined;
+      const cerca = dist(r.x, r.z, v.rig.x, v.rig.z) < (marca ? 40 : 16);
       if (cerca) {
         // el nombre y lo que está haciendo (el nombre lo escribió una persona: siempre como texto)
-        const info = this.infos.get(v.id);
         const icono = ACTIVIDADES_CIUDAD[v.obj.a ?? 0] ?? "";
-        const texto = `${info?.nombre ?? "Vecino"}${icono ? ` ${icono}` : ""}`;
+        const texto = `${marca ? `${marca} · ` : ""}${info?.nombre ?? "Vecino"}${icono ? ` ${icono}` : ""}`;
         if (v.etiqueta.textContent !== texto) {
           v.etiqueta.textContent = texto;
           v.etiqueta.title = icono ? ACTIVIDAD_CIUDAD_TEXTO[v.obj.a ?? 0] : "";

@@ -1628,6 +1628,7 @@ function ModalBody({ modal }: { modal: Modal }) {
     case "concurso":
     case "tesoro":
     case "personaje":
+    case "mentores":
       return <CiudadModal modal={modal} />;
     case "registro":
       return <RegistroView personajeId={modal.personajeId} nombre={modal.nombre} volver={modal.volver} />;

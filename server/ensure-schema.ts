@@ -37,6 +37,8 @@ import { TALLER_SQL } from "./taller";
 import { COSAS_SQL } from "./intercambio";
 import { ARCA_SQL } from "./arca";
 import { INVITAR_SQL } from "./invitar";
+import { MENTORES_SQL } from "./mentores";
+import { DICHOS_SQL } from "./dichos";
 import { ALBUM_SQL } from "./album";
 import { GOZO_DIA_SQL } from "./gozo";
 import { CAMINO_SQL } from "./camino-dia";
@@ -1208,6 +1210,9 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(ARCA_SQL);
       await pool.query(INVITAR_SQL);
       await pool.query(ALBUM_SQL);
+      // los mentores para los nuevos y los dichos de los ancianos de la puerta
+      await pool.query(MENTORES_SQL);
+      await pool.query(DICHOS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (obras): ${err?.message}`);
     }
