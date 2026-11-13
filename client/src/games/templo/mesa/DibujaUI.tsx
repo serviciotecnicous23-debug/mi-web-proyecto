@@ -125,8 +125,14 @@ function Lienzo({ trazos, puedo, color, grosor, alTrazo }: { trazos: Trazo[]; pu
           if (!t) return;
           const [x, y] = punto(e);
           const n = t.p.length;
-          if (Math.hypot(x - t.p[n - 2], y - t.p[n - 1]) < 6 || n >= DIBUJA.maxPorTrazo * 2) return;
+          if (Math.hypot(x - t.p[n - 2], y - t.p[n - 1]) < 6) return;
           t.p.push(x, y);
+          // un trazo muy largo se manda en partes (cada jugada pesa poco) y sigue desde el último punto
+          if (t.p.length >= DIBUJA.maxPorTrazo * 2) {
+            pendientes.current.push(t);
+            alTrazo(t);
+            propio.current = { c: t.c, g: t.g, p: [x, y] };
+          }
           pintar();
         }}
         onPointerUp={() => {

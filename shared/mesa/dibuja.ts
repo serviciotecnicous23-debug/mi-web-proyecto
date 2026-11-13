@@ -35,7 +35,8 @@ export const DIBUJA = {
   porAcierto: 20,
   maxTrazos: 260,
   maxPuntos: 7000,
-  maxPorTrazo: 400,
+  /** Puntos por trazo (así cada jugada pesa menos de 4.000 caracteres, el tope de la sala). */
+  maxPorTrazo: 220,
 } as const;
 export const COLORES_DIBUJA = ["#2a1a10", "#d9483a", "#2f7fd0", "#2e9e5b", "#e0a21a", "#8a54b8", "#7a4a22", "#ffffff"];
 export const GROSORES_DIBUJA = [3, 6, 12, 22];
