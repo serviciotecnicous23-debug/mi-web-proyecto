@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-noche-con-companeros",
+    fecha: "13 de noviembre de 2026",
+    titulo: "«La noche de los sabios» también se juega solo",
+    puntos: [
+      "🌙 Quien abre la noche puede agregar compañeros de la computadora (🌱 fácil, 🌿 normal o 🌳 difícil): con dos ya se puede empezar, aunque no haya nadie más en línea.",
+      "🤖 Contestan con su propio tiempo y no siempre aciertan: el difícil es rápido y sabe mucho. Se ven como tales, con 🤖 junto al nombre.",
+      "🏅 Con compañeros la noche es de práctica: hasta 4 de gozo y sin puntos para la copa del barrio.",
+    ],
+  },
+  {
     id: "2026-11-13-companeros-en-el-patio",
     fecha: "13 de noviembre de 2026",
     titulo: "Juega solo cualquier juego del patio",

@@ -347,10 +347,20 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
     else onSalir();
   }
 
-  async function quitar(pid: number) {
-    const r = await pedir<{ noche: NocheVista }>(`/noche/${id}/quitar`, { a: pid });
+  async function quitar(pid: number, bot = false) {
+    const r = await pedir<{ noche: NocheVista }>(bot ? `/noche/${id}/bot` : `/noche/${id}/quitar`, bot ? { quitar: pid } : { a: pid });
     if (r.ok && r.data?.noche) aplicar(r.data.noche);
     else setAviso(r.data?.message || "No se pudo.");
+  }
+
+  /** Quien abrió la sala agrega un compañero de la computadora (para jugar solo o completar la noche). */
+  async function agregarBot(nivel: "facil" | "normal" | "dificil") {
+    setEnviando(true);
+    setAviso(null);
+    const r = await pedir<{ noche: NocheVista }>(`/noche/${id}/bot`, { nivel });
+    setEnviando(false);
+    if (r.ok && r.data?.noche) aplicar(r.data.noche);
+    else setAviso(r.data?.message || "No se pudo agregar el compañero.");
   }
 
   if (error)
@@ -393,12 +403,12 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
             />
             <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" data-testid="noche-sala">
               {n.jugadores.map((j) => (
-                <li key={j.pid} className={`flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12.5px] ${j.yo ? "bg-amber-400/20 ring-1 ring-amber-300/60" : "bg-black/30"}`}>
-                  <span aria-hidden="true">{ICONO_CAMINO[j.camino]}</span>
+                <li key={j.pid} className={`flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12.5px] ${j.yo ? "bg-amber-400/20 ring-1 ring-amber-300/60" : j.bot ? "bg-sky-900/40" : "bg-black/30"}`}>
+                  <span aria-hidden="true">{j.bot ? { facil: "🌱", normal: "🌿", dificil: "🌳" }[j.bot] : ICONO_CAMINO[j.camino]}</span>
                   <span className="min-w-0 flex-1 truncate font-bold">{j.nombre}</span>
                   {j.anfitrion && <Crown className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-label="abrió la sala" />}
                   {n.soyAnfitrion && !j.yo && (
-                    <button type="button" className="rounded-full p-0.5 text-amber-100/60 hover:bg-white/10 hover:text-white" onClick={() => void quitar(j.pid)} aria-label={`Sacar a ${j.nombre} de la sala`} data-testid={`noche-quitar-${j.pid}`}>
+                    <button type="button" className="rounded-full p-0.5 text-amber-100/60 hover:bg-white/10 hover:text-white" onClick={() => void quitar(j.pid, !!j.bot)} aria-label={j.bot ? `Quitar a ${j.nombre}` : `Sacar a ${j.nombre} de la sala`} data-testid={`noche-quitar-${j.pid}`}>
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -413,6 +423,33 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
             <p className="text-center text-[11px] text-amber-100/70">
               {n.jugadores.length} de {NOCHE_MAX} · la sala se cierra sola en {Math.ceil(espera / 60)} min si nadie la empieza
             </p>
+            {n.soyAnfitrion && n.jugadores.length < NOCHE_MAX && (
+              <div className="space-y-1.5 rounded-xl bg-sky-950/40 p-2.5" data-testid="noche-companeros">
+                <p className="text-center text-[12px] font-bold text-sky-100">🤖 ¿No hay nadie? Juega con compañeros de la computadora</p>
+                <div className="flex justify-center gap-1.5">
+                  {(
+                    [
+                      ["facil", "🌱 Fácil"],
+                      ["normal", "🌿 Normal"],
+                      ["dificil", "🌳 Difícil"],
+                    ] as const
+                  ).map(([nivel, texto]) => (
+                    <button
+                      key={nivel}
+                      type="button"
+                      disabled={enviando}
+                      className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-bold hover:bg-white/20 disabled:opacity-50"
+                      onClick={() => void agregarBot(nivel)}
+                      aria-label={`Agregar un compañero de la computadora, nivel ${texto.slice(3).toLowerCase()}`}
+                      data-testid={`noche-bot-${nivel}`}
+                    >
+                      {texto}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-[10.5px] text-sky-100/70">Con ellos la noche es de práctica: hasta 4 de gozo y sin puntos para la copa.</p>
+              </div>
+            )}
             <button type="button" className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-sm font-bold hover:bg-white/20" onClick={() => setInvitar(true)} data-testid="noche-invitar-abrir">
               <UserPlus className="h-4 w-4" /> Invitar a vecinos y amigos en línea
             </button>
