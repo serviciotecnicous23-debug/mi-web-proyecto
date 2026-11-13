@@ -529,6 +529,41 @@ export function estudioPorId(id: string): Estudio | undefined {
   return ESTUDIOS.find((e) => e.id === id);
 }
 
+// ---------------------------------------------------------------- el orden de las opciones
+/**
+ * El orden en que se muestran las opciones de una pregunta: `orden[i]` es la opción original que va en
+ * el lugar i. Con la misma semilla sale siempre el mismo orden (así, pedirla otra vez no lo cambia), y
+ * entre semillas distintas la buena cae en cualquier lugar por igual.
+ *
+ * La práctica de las secciones tiene la buena casi siempre primera (41 de 46): todo lo que muestre
+ * preguntas de práctica (la sección, las reuniones en las casas) las revuelve con esto.
+ */
+export function ordenDeOpciones(n: number, semilla: number): number[] {
+  const out = Array.from({ length: Math.max(0, Math.floor(n)) }, (_, i) => i);
+  // se mezcla la semilla antes, para que semillas seguidas (1, 2, 3…) no den órdenes parecidos
+  let x = (Math.imul((semilla | 0) ^ 0x5bd1e995, 2654435761) ^ 0x9e3779b9) >>> 0 || 1;
+  const paso = () => {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    x >>>= 0;
+    return x;
+  };
+  paso();
+  paso();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = paso() % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** La pregunta de práctica con sus opciones en el orden de la semilla y la buena en su nuevo lugar. */
+export function opcionesEnOrden(q: PreguntaPractica, semilla: number): { ops: string[]; ok: number; orden: number[] } {
+  const orden = ordenDeOpciones(q.ops.length, semilla);
+  return { ops: orden.map((k) => q.ops[k]), ok: orden.indexOf(q.ok), orden };
+}
+
 // ---------------------------------------------------------------- respuestas de la API
 export type IntentoExamen = { aciertos: number; de: number; fecha: string };
 export type MiEstudio = {

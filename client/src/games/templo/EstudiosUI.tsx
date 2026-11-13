@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   CAMINOS_ESTUDIO, ESTUDIOS, EXAMEN_APRUEBA, EXAMEN_INTENTOS, EXAMEN_PREGUNTAS, MERITO_ESTUDIO, MERITO_SECCION, estudioPorId,
   type CaminoEstudio, type EstudiosDe, type EstudiosEstado, type ExamenResultado, type MiEstudio, type PreguntaExamen, type SeccionEstudio,
+  ordenDeOpciones,
 } from "@shared/estudios";
 import { GOZO } from "@shared/mercado";
 import { avisarMisiones } from "./online";
@@ -229,6 +230,9 @@ function Seccion({ id, seccion, hecha, alTerminar }: { id: string; seccion: stri
   const [elegidas, setElegidas] = useState<Record<number, number>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // las opciones van revueltas (en los datos la buena casi siempre es la primera): un orden nuevo cada
+  // vez que se abre la sección, fijo mientras está abierta
+  const [semilla] = useState(() => Math.floor(Math.random() * 2_000_000_000));
   if (!e || !s) return null;
   const todasBien = s.preguntas.every((p, i) => elegidas[i] === p.ok);
   const terminar = async () => {
@@ -262,7 +266,8 @@ function Seccion({ id, seccion, hecha, alTerminar }: { id: string; seccion: stri
         return (
           <div key={p.p} className="space-y-1.5 rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
             <p className="font-semibold">{p.p}</p>
-            {p.ops.map((o, k) => {
+            {ordenDeOpciones(p.ops.length, semilla + i * 7919).map((k) => {
+              const o = p.ops[k];
               const estado = el === undefined ? "" : k === p.ok && el === k ? "bien" : el === k ? "mal" : "";
               return (
                 <button

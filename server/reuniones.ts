@@ -7,7 +7,7 @@ import type { Express, Request, Response } from "express";
 import { titularEstudios } from "./estudios";
 import { pool } from "./db";
 import { ventajasDeBarrio } from "./barrio-obras";
-import { ESTUDIOS } from "@shared/estudios";
+import { ESTUDIOS, opcionesEnOrden } from "@shared/estudios";
 import { REUNION_MINUTOS, REUNION_PREMIO, type ReunionesEstado, type ReunionLeccion, type ReunionRespuesta, type ReunionVista } from "@shared/reuniones";
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
@@ -86,9 +86,16 @@ async function reuniones(yo: number, where: string, params: unknown[], orden = "
   });
 }
 
-/** Una pregunta de la sección, la misma para todos en esa reunión. */
+/**
+ * Una pregunta de la sección, la misma para todos en esa reunión, con las opciones revueltas: el orden
+ * es fijo para la reunión (todos ven lo mismo y al pedirla otra vez no cambia), y la buena no queda
+ * siempre en el mismo lugar (en la práctica de los estudios casi siempre era la primera). `ok` y la
+ * opción que se responde van en el orden que se muestra.
+ */
 function preguntaDe(id: number, preguntas: { p: string; ops: string[]; ok: number; por: string }[]) {
-  return preguntas[id % preguntas.length];
+  const q = preguntas[id % preguntas.length];
+  const { ops, ok, orden } = opcionesEnOrden(q, id);
+  return { p: q.p, ops, ok, por: q.por, orden };
 }
 
 export function registerReunionesRoutes(app: Express) {
@@ -232,6 +239,7 @@ export function registerReunionesRoutes(app: Express) {
       const sec = seccionDe(r.estudio, r.seccion);
       if (!sec || !sec.s.preguntas.length) return res.status(404).json({ message: "Esa reunión no existe." });
       const q = preguntaDe(id, sec.s.preguntas);
+      if (opcion >= q.ops.length) return res.status(400).json({ message: "Respuesta no válida" });
       const correcta = opcion === q.ok;
       const { rows: ins } = await pool.query(
         `INSERT INTO game_meeting_attendance (meeting_id, character_id, correct) VALUES ($1, $2, $3)

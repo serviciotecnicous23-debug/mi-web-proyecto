@@ -13,6 +13,15 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-12-opciones-revueltas",
+    fecha: "12 de noviembre de 2026",
+    titulo: "Las preguntas ya no tienen la respuesta siempre en el mismo lugar",
+    puntos: [
+      "🔀 En la práctica de los estudios y en la pregunta de las reuniones en las casas, la respuesta buena casi siempre era la primera: ahora las opciones van revueltas.",
+      "🏆 En el concurso de la semana, las opciones también quedan parejas: la buena puede estar en cualquier lugar.",
+    ],
+  },
+  {
     id: "2026-11-12-temporada-2",
     fecha: "12 de noviembre de 2026",
     titulo: "Ya está lista la historia de la temporada 2: la gran Pascua de Ezequías",

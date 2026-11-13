@@ -7,6 +7,7 @@ import type { Express, Request, Response } from "express";
 import { titularEstudios } from "./estudios";
 import { pool } from "./db";
 import { BANCO } from "./jerusalen-banco";
+import { ordenDeOpciones } from "@shared/estudios";
 import { CONCURSO_PREGUNTAS, CONCURSO_PREMIOS, CONCURSO_SEGUNDOS, type ConcursoEstado, type ConcursoRespuesta } from "@shared/concurso";
 import { diaClave, evento, forgetJer, personajeDe, type PersonajeFila } from "./jerusalen";
 import { semanaClave } from "./misiones";
@@ -50,9 +51,14 @@ function mezclar<T>(lista: T[], seed: number): T[] {
 function preguntasDe(semana: string) {
   return mezclar(BANCO, semilla(`concurso:${semana}`)).slice(0, CONCURSO_PREGUNTAS);
 }
-/** Las opciones de una pregunta, en un orden fijo para esa semana. */
+/**
+ * Las opciones de una pregunta, en un orden fijo para esa semana. Van con `ordenDeOpciones`: la mezcla de
+ * arriba (para elegir las preguntas) dejaba la buena primera en un tercio de las preguntas y segunda solo
+ * en una de cada seis.
+ */
 function opcionesDe(semana: string, q: (typeof BANCO)[number]): string[] {
-  return mezclar([q.correcta, ...q.falsas], semilla(`opciones:${semana}:${q.id}`));
+  const todas = [q.correcta, ...q.falsas];
+  return ordenDeOpciones(todas.length, semilla(`opciones:${semana}:${q.id}`)).map((k) => todas[k]);
 }
 
 function diasRestantes(dia = diaClave()): number {
@@ -184,7 +190,7 @@ export function registerConcursoRoutes(app: Express) {
       const elegidas = mezclar(otras, (Date.now() ^ (ch.id * 2654435761)) >>> 0).slice(0, 5);
       res.setHeader("Cache-Control", "no-store");
       res.json({
-        preguntas: elegidas.map((q) => ({ id: q.id, texto: q.pregunta, opciones: mezclar([q.correcta, ...q.falsas], (Date.now() + q.id.length * 977) >>> 0), correcta: q.correcta, explica: q.explica, ref: q.ref })),
+        preguntas: elegidas.map((q) => ({ id: q.id, texto: q.pregunta, opciones: ordenDeOpciones(1 + q.falsas.length, semilla(`practica:${Date.now()}:${ch.id}:${q.id}`)).map((k) => [q.correcta, ...q.falsas][k]), correcta: q.correcta, explica: q.explica, ref: q.ref })),
       });
     } catch (err) {
       console.error("[concurso] práctica:", err);
