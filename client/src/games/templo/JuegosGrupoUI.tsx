@@ -445,7 +445,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
       </section>
 
       {sala.juego === "tribus" && <TribusEspera sala={sala} ocupado={ocupado} hacer={hacer} />}
-      {sala.juego === "mesa" && sala.soyAnfitrion && sala.estado !== "jugando" && <CompanerosPanel sala={sala} ocupado={ocupado} hacer={hacer} />}
+      {sala.soyAnfitrion && sala.estado !== "jugando" && <CompanerosPanel sala={sala} ocupado={ocupado} hacer={hacer} />}
 
       <section aria-labelledby="juegos-gente">
         <h3 id="juegos-gente" className="mb-2 flex items-center gap-2 font-serif text-base font-bold">
@@ -542,18 +542,47 @@ function OpcionesMesa({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: bool
 }
 
 /** Los compañeros de la computadora: el anfitrión los agrega (con su nivel) para jugar solo o completar la mesa. */
+/** Cuántos en total conviene para jugar con la computadora en cada juego (al tocar «Llenar»). */
+function objetivoCompaneros(sala: SalaVista): number {
+  if (sala.juego === "mesa") return sala.max;
+  if (sala.juego === "tribus") return Math.min(sala.max, Math.max(4, sala.tribus * 2));
+  if (sala.juego === "muro") return Math.min(sala.max, 3);
+  return Math.min(sala.max, 4);
+}
+
+const NOTA_COMPANEROS: Partial<Record<SalaVista["juego"], string>> = {
+  esgrima: "Contestan con su tiempo: el fácil se equivoca más y tarda; el difícil es rápido.",
+  tribus: "Se reparten en las tribus; si en su tribu hay personas, les dejan contestar primero.",
+  quien: "Esperan algunas pistas antes de adivinar: el difícil necesita menos.",
+  carrera: "Corren su recorrido por su cuenta: en la tabla ves por qué lugar va cada uno.",
+  muro: "Cargan piedras con ustedes: cuantos más, más alto el muro (y la meta).",
+};
+
 function CompanerosPanel({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: boolean; hacer: (ruta: string, body?: unknown) => Promise<boolean> }) {
   const bots = sala.miembros.filter((m) => m.bot).length;
   const lleno = sala.miembros.length >= sala.max;
+  const faltan = Math.max(0, objetivoCompaneros(sala) - sala.miembros.length);
+  const [llenando, setLlenando] = useState(false);
+  async function llenar() {
+    setLlenando(true);
+    for (let k = 0; k < faltan; k++) if (!(await hacer("bot", { nivel: "normal" }))) break;
+    setLlenando(false);
+  }
   return (
     <section aria-labelledby="juegos-companeros" className="space-y-2 rounded-2xl border border-sky-200 bg-sky-50/70 p-3 dark:border-sky-900/60 dark:bg-sky-950/20" data-testid="juegos-companeros">
       <h3 id="juegos-companeros" className="font-serif text-base font-bold">
         🤖 Compañeros de la computadora
       </h3>
       <p className="text-[12px] text-stone-600 dark:text-stone-300">
-        {sala.miembros.length === 1 ? "¿No hay nadie? Agrega compañeros y juega solo." : "Completa la mesa con compañeros de la computadora."} Con ellos la partida es de
+        {sala.miembros.length === 1 ? "¿No hay nadie? Agrega compañeros y juega solo." : "Completa la sala con compañeros de la computadora."} Con ellos la partida es de
         práctica: hasta 10 de gozo por día, sin copa ni prendas.
       </p>
+      {NOTA_COMPANEROS[sala.juego] && <p className="text-[11px] text-stone-500">{NOTA_COMPANEROS[sala.juego]}</p>}
+      {faltan > 0 && (
+        <Button size="sm" disabled={ocupado || llenando} onClick={() => void llenar()} data-testid="juegos-llenar">
+          🤖 Llenar con la computadora ({faltan === 1 ? "1 compañero" : `${faltan} compañeros`})
+        </Button>
+      )}
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Agregar un compañero de la computadora">
         {(Object.keys(NIVELES_BOT) as NivelBot[]).map((n) => (
           <Button key={n} size="sm" variant="secondary" disabled={ocupado || lleno} onClick={() => void hacer("bot", { nivel: n })} title={NIVELES_BOT[n].detalle} aria-label={`Agregar un compañero de la computadora, nivel ${NIVELES_BOT[n].nombre.toLowerCase()}`} data-testid={`juegos-bot-${n}`}>

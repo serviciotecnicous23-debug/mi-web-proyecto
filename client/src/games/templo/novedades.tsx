@@ -13,6 +13,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-companeros-en-el-patio",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Juega solo cualquier juego del patio",
+    puntos: [
+      "🤖 En la esgrima, las doce tribus, «¿Quién soy?», la carrera y el muro ya puedes agregar compañeros de la computadora (🌱 fácil, 🌿 normal o 🌳 difícil) y jugar aunque no haya nadie más.",
+      "⚔️ Contestan con su propio tiempo y no siempre aciertan. En las tribus dejan contestar primero a las personas de su tribu, y en «¿Quién soy?» esperan algunas pistas antes de adivinar.",
+      "🏃 En la carrera corren su recorrido (en la tabla ves por qué lugar va cada uno) y en el muro cargan piedras con ustedes.",
+      "⚡ Con «🤖 Llenar con la computadora» completas la sala de un toque. Con compañeros la partida es de práctica: hasta 10 de gozo por día, sin copa ni prendas.",
+    ],
+  },
+  {
     id: "2026-11-13-juegos-de-grupo",
     fecha: "13 de noviembre de 2026",
     titulo: "Siete juegos de grupo en el patio: lotería bíblica, generala, escaleras de Jacob y más",
