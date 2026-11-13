@@ -37,8 +37,8 @@ export type JuegoTradicional = {
   modo: "todos";
   relojMs: number;
   opciones: OpcionMesa[];
-  /** La pantalla del juego trae su reloj, sus asientos y quién juega: la sala no los repite. */
-  pantallaCompleta: true;
+  /** Lleva su propio reloj (y su pantalla trae sus asientos y quién juega): la sala solo lo pone al día con la hora. */
+  relojPropio: true;
   estadoInicial(asientos: AsientoT[], azar: Azar, opciones?: Record<string, unknown>, ahora?: number): EstadoTradicional;
   turnoDe(e: EstadoTradicional): number | null;
   pendientes(e: EstadoTradicional): number[];
@@ -52,6 +52,8 @@ export type JuegoTradicional = {
   jugadaDeBot(e: EstadoTradicional, asiento: number, nivel: Nivel, azar: Azar): unknown;
   alTiempo(e: EstadoTradicional, ahora: number, azar: Azar): EstadoTradicional | null;
   proximoCambio(e: EstadoTradicional, ahora: number): number | null;
+  /** Alguien se fue a mitad de partida y sigue la computadora en su asiento. */
+  cambiarAsiento(e: EstadoTradicional, asiento: number, nuevo: AsientoT): EstadoTradicional;
 };
 
 type ModuloConVista = ModuloMesa<unknown, unknown, unknown, Record<string, unknown>> & {
@@ -103,7 +105,7 @@ function aMesa(id: JuegoMesaId): JuegoTradicional {
     modo: "todos",
     relojMs: 0,
     opciones: def.opciones,
-    pantallaCompleta: true,
+    relojPropio: true,
     estadoInicial(asientos, azar, opciones, ahora = Date.now()) {
       return {
         m: mod.estadoInicial({ bots: asientos.map((x) => x.bot), opciones: opcionesValidas(id, opciones) }, azar, ahora),
@@ -144,6 +146,9 @@ function aMesa(id: JuegoMesaId): JuegoTradicional {
     },
     proximoCambio(e, ahora) {
       return mod.proximoCambio(e.m, ahora);
+    },
+    cambiarAsiento(e, a, nuevo) {
+      return { m: mod.ponerBot(e.m, a, nuevo.bot), nombres: e.nombres.map((x, i) => (i === a ? nuevo.nombre : x)) };
     },
   };
 }

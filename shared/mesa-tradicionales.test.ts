@@ -533,12 +533,12 @@ test("basta: una partida de compañeros juega las cinco rondas", () => {
 import { MESAS_TRADICIONALES, MESA_TRADICIONAL, tituloConNombres } from "./mesa/tradicionales";
 import { JUEGOS_MESA, MESAS_PATIO, ORDEN_MESAS, opcionesValidas } from "./mesa/juegos";
 
-test("en la sala: los seis juegos con su nombre, su versículo y sus opciones; nadie «tiene que jugar» (el módulo lleva su reloj)", () => {
+test("en la sala: los siete juegos con su nombre, su versículo y sus opciones; nadie «tiene que jugar» (el módulo lleva su reloj)", () => {
   assert.deepEqual(MESAS_TRADICIONALES.map((j) => j.id), ORDEN_MESAS);
   for (const j of MESAS_TRADICIONALES) {
     assert.ok(j.nombre && j.icono && j.verso.text && j.verso.ref && j.como.length === 3, j.id);
     assert.equal(j.modo, "todos");
-    assert.ok(j.pantallaCompleta);
+    assert.ok(j.relojPropio);
     const e = j.estadoInicial([{ n: 0, nombre: "Ana", bot: null }, { n: 1, nombre: "Rubén 🤖", bot: "normal" }], azarCon(1), {}, 0);
     assert.deepEqual(j.pendientes(e), []);
     assert.equal(j.turnoDe(e), null);
@@ -658,4 +658,24 @@ test("dibuja: solo (o con compañeros de la computadora, que solo miran) es prá
   assert.equal(new Set(e.usadas).size, e.usadas.length, "sin repetir palabras");
   const g = dibuja.estadoInicial({ bots: [null, null, null, null] }, azar, 0);
   assert.equal(new Set(g.orden).size, 4);
+});
+
+test("en la sala: si alguien se va a mitad de partida, la computadora sigue en su asiento (y juega)", () => {
+  const j = MESA_TRADICIONAL.escaleras;
+  const azar = azarCon(71);
+  let e = j.estadoInicial([{ n: 0, nombre: "Ana", bot: null }, { n: 1, nombre: "Luis", bot: null }], azar, {}, 0);
+  e = j.cambiarAsiento(e, 1, { n: 1, nombre: "Rubén 🤖", bot: "normal" });
+  assert.equal(e.nombres[1], "Rubén 🤖");
+  // Ana se va también: ya juega la computadora en los dos asientos, y la partida termina sola
+  e = j.cambiarAsiento(e, 0, { n: 0, nombre: "Débora 🤖", bot: "facil" });
+  let ahora = 0;
+  for (let k = 0; k < 20000 && !j.terminado(e); k++) {
+    const p = j.proximoCambio(e, ahora);
+    if (p == null) break;
+    ahora += Math.max(1, p);
+    e = j.alTiempo(e, ahora, azar) ?? e;
+  }
+  const fin = j.terminado(e)!;
+  assert.ok(fin && fin.ganadores.length === 1);
+  assert.match(fin.titulo, /Rubén 🤖|Débora 🤖/);
 });
