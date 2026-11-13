@@ -7,8 +7,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, ShoppingBasket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ARTICULOS, HORNO_MAX, LETREROS, PUESTOS_MERCADO, RECETAS, SEMILLAS, articulo, calendarioDeTemporada, precioHoy, precioVentaHoy, type Articulo, type Categoria, type MercadoEstado, type RecetaId, type TabMercado, type TiempoDeVenta,
+  ARTICULOS, HORNO_MAX, LETREROS, NOMBRE_RANURA, PUESTOS_MERCADO, RANURAS, RECETAS, SEMILLAS, articulo, calendarioDeTemporada, precioHoy, precioVentaHoy, ranuraDe,
+  type Articulo, type Categoria, type MercadoEstado, type Ranura, type RecetaId, type TabMercado, type TiempoDeVenta,
 } from "@shared/mercado";
+import type { FigureLook } from "./three/characters";
+import { MunecoQueGira, Probador } from "./ProbadorUI";
 import type { CasaPrivada } from "@shared/ciudad";
 import { MAX_POR_MUEBLE, mueble } from "@shared/casa-interior";
 import { AYUDA_MUEBLES } from "@shared/economia";
@@ -124,7 +127,7 @@ const DONDE_SE_USA: Record<Categoria, string> = {
   mueble: "Los muebles van dentro de tu casa: entra por tu puerta, toca «Remodelar» y ponlos donde quieras. Tus vecinos pueden entrar a verlos.",
   semilla: "Las semillas se siembran en el huerto de tu casa: entra a tu casa y sal por la puerta del huerto (o Tu casa → 🌾 Huerto → «Ir a mi huerto»).",
   adorno: "Al comprarlo, el adorno se pone solo en la puerta de tu casa si queda lugar: tus vecinos lo ven. Lo cambias en Tu casa → 🪔 Adornos y ropa.",
-  ropa: "Al comprarla te la pones enseguida y tus vecinos te ven con ella. La cambias en Tu casa → 🪔 Adornos y ropa.",
+  ropa: "Toca 👁️ para probártela antes de comprarla. Al comprarla te la pones enseguida y tus vecinos te ven con ella: túnicas, mantos, fajas, turbantes y velos, sandalias, el cayado, el rollo y el zurrón. La cambias en Tu casa → 🪔 Adornos y ropa.",
   letrero: "Después de comprarlo eliges el nombre de tu casa en Tu casa → 🪔 Adornos y ropa.",
 };
 
@@ -226,10 +229,13 @@ export function MercadoView({
   alCambiar,
   alEntrarACasa,
   alCambiarBienes,
+  look,
 }: {
   tab?: TabMercado;
   alCambiar?: (m: MercadoEstado) => void;
   alEntrarACasa?: () => void;
+  /** La vestidura del personaje (para el probador). */
+  look?: FigureLook;
   /** Lo que cambió al comprar o vender entre vecinos (gozo y alfolí). */
   alCambiarBienes?: (d: { gozo: number; bienes: { harina: number; aceite: number; corderos: number } }) => void;
 }) {
@@ -246,6 +252,8 @@ export function MercadoView({
   const [siguiente, setSiguiente] = useState<{ a: Articulo; colocado?: boolean; puesto?: boolean } | null>(null);
   // la foto en grande de un artículo (al tocar su foto)
   const [viendo, setViendo] = useState<{ a: Articulo; url: string } | null>(null);
+  // el probador: la prenda puesta en tu personaje, girando
+  const [probando, setProbando] = useState<Articulo | null>(null);
   const puesto = PUESTOS_MERCADO.find((p) => p.tab === inicial);
   const tabs: [TabMercado, string][] = [
     ["semilla", "Semillas"],
@@ -304,6 +312,33 @@ export function MercadoView({
             </div>
           </div>
         )}
+        {probando && m && (
+          <Probador look={look ?? "aprendiz"} ropa={m.ropa} prueba={probando.id} titulo="El probador del tejedor" onCerrar={() => setProbando(null)}>
+            {m.armario.includes(probando.id) ? (
+              <Button size="sm" variant="secondary" disabled>
+                Ya es tuya
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                disabled={busy || m.gozo < precioHoy(probando, m.dia)}
+                onClick={() =>
+                  void hacer("/mercado/comprar", { articulo: probando.id, cantidad: 1 }, (d) => {
+                    gameStore.toast(`Compraste: ${probando.nombre}`, "gold");
+                    setSiguiente({ a: probando, colocado: d.colocado, puesto: d.puesto });
+                    setProbando(null);
+                  })
+                }
+                data-testid="probador-comprar"
+              >
+                Comprar · ✨ {precioHoy(probando, m.dia)}
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => setProbando(null)}>
+              Seguir mirando
+            </Button>
+          </Probador>
+        )}
         {!m && !error && (
           <p className="flex items-center gap-2 text-stone-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abriendo los puestos…
@@ -359,6 +394,11 @@ export function MercadoView({
                         {precio < a.precio && <span className="block text-[10px] text-stone-400 line-through">{a.precio}</span>}
                         <span className="block font-black text-amber-700 dark:text-amber-300">✨ {precio}</span>
                       </span>
+                      {a.categoria === "ropa" && (
+                        <Button size="sm" variant="secondary" className="px-2" title="Probártela: tu personaje con esta prenda, girando" onClick={() => setProbando(a)} data-testid={`probar-${a.id}`}>
+                          👁️
+                        </Button>
+                      )}
                       {a.categoria === "ropa" && (!a.deTemporada || temporadas[a.id]?.hoy) && (
                         <Button
                           size="sm"
@@ -442,7 +482,20 @@ export type Ofrecido = { ganado: number; doble: string | null; subio: number | n
 /** Lo nuevo de la casa: el huerto, el horno, los adornos, la ropa y el letrero (dentro de «Tu casa»). */
 export type ParteCasa = "huerto" | "horno" | "adornos" | "ropa" | "letrero";
 
-export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { alCambiar?: (m: MercadoEstado) => void; alOfrecer?: (r: Ofrecido) => void; partes?: ParteCasa[]; alIrAlMercado?: () => void }) {
+export function CasaExtras({
+  alCambiar,
+  alOfrecer,
+  partes,
+  alIrAlMercado,
+  look,
+}: {
+  alCambiar?: (m: MercadoEstado) => void;
+  alOfrecer?: (r: Ofrecido) => void;
+  partes?: ParteCasa[];
+  alIrAlMercado?: () => void;
+  /** La vestidura del personaje (para el probador de la ropa). */
+  look?: FigureLook;
+}) {
   const { m, recibido, error, busy, hacer, recargar } = useMercado(alCambiar);
   /** ¿Se muestra esta parte? (sin `partes`, todas) */
   const ver = (p: ParteCasa) => !partes || partes.includes(p);
@@ -450,14 +503,17 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
   const [ofreciendo, setOfreciendo] = useState(false);
   const [avisoHorno, setAvisoHorno] = useState<string | null>(null);
   const [ahora, setAhora] = useState(() => Date.now());
+  // la ropa que se está eligiendo (se ve en el muñeco que gira antes de ponérsela)
+  const [borrador, setBorrador] = useState<Record<Ranura, string | null> | null>(null);
   useEffect(() => {
     const t = setInterval(() => setAhora(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   if (!m) return error ? <p className="rounded-xl bg-red-50 p-2.5 text-xs text-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p> : null;
   const adornosTengo = m.armario.filter((id) => articulo(id)?.categoria === "adorno");
-  const mantos = m.armario.filter((id) => id.startsWith("manto-"));
-  const fajas = m.armario.filter((id) => id.startsWith("faja-"));
+  const deRanura = (r: Ranura) => m.armario.filter((id) => ranuraDe(articulo(id)) === r);
+  const ropaVista = borrador ?? m.ropa;
+  const cambioRopa = !!borrador && RANURAS.some((r) => (borrador[r] ?? null) !== (m.ropa[r] ?? null));
   const semillasTengo = (["trigo", "cebada", "olivo"] as const).filter((s) => (m.semillas[s] || 0) > 0);
   return (
     <div className="space-y-3" data-testid="casa-extras">
@@ -663,29 +719,63 @@ export function CasaExtras({ alCambiar, alOfrecer, partes, alIrAlMercado }: { al
 
       {ver("ropa") && (
       <section className="space-y-2 rounded-xl border border-sky-200 p-3 dark:border-sky-900/60" data-testid="casa-ropa">
-        <p className="font-black">Tu ropa</p>
-        {mantos.length + fajas.length ? (
-          <div className="space-y-1.5 text-xs">
-            <div className="flex flex-wrap items-center gap-1">
-              Manto:
-              {[null, ...mantos].map((id) => (
-                <button key={id ?? "sin"} type="button" disabled={busy} onClick={() => void hacer("/casa/ropa", { manto: id, faja: m.ropa.faja })} className={`rounded-full px-2 py-0.5 font-bold ${m.ropa.manto === id ? "bg-sky-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`} data-testid={`ropa-${id ?? "sin-manto"}`}>
-                  {id ? articulo(id)?.nombre : "Sin manto"}
-                </button>
-              ))}
+        <p className="font-black">Tu ropa, de pies a cabeza</p>
+        {m.armario.some((id) => ranuraDe(articulo(id))) ? (
+          <div className="space-y-2 text-xs">
+            <MunecoQueGira look={look ?? "aprendiz"} ropa={ropaVista} alto={250} />
+            {RANURAS.map((r) => {
+              const tengo = deRanura(r);
+              if (!tengo.length) return null;
+              return (
+                <div key={r} className="flex flex-wrap items-center gap-1" data-testid={`ropa-ranura-${r}`}>
+                  <span className="w-16 shrink-0 font-semibold text-stone-500">{NOMBRE_RANURA[r]}:</span>
+                  {[null, ...tengo].map((id) => (
+                    <button
+                      key={id ?? "sin"}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setBorrador({ ...ropaVista, [r]: id })}
+                      className={`rounded-full px-2 py-0.5 font-bold ${(ropaVista[r] ?? null) === id ? "bg-sky-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`}
+                      data-testid={`ropa-${id ?? `sin-${r}`}`}
+                    >
+                      {id ? `${articulo(id)?.icono ?? ""} ${articulo(id)?.nombre}` : "Nada"}
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="bg-sky-600 font-bold hover:bg-sky-500"
+                disabled={busy || !cambioRopa}
+                onClick={() =>
+                  void hacer("/casa/ropa", ropaVista, () => {
+                    setBorrador(null);
+                    gameStore.toast("Te pusiste tu ropa nueva: tus vecinos ya te ven así.", "gold");
+                  })
+                }
+                data-testid="ropa-ponermela"
+              >
+                Ponérmela
+              </Button>
+              {cambioRopa && (
+                <Button size="sm" variant="ghost" onClick={() => setBorrador(null)}>
+                  Como estaba
+                </Button>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-1">
-              Faja:
-              {[null, ...fajas].map((id) => (
-                <button key={id ?? "sin"} type="button" disabled={busy} onClick={() => void hacer("/casa/ropa", { manto: m.ropa.manto, faja: id })} className={`rounded-full px-2 py-0.5 font-bold ${m.ropa.faja === id ? "bg-sky-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`} data-testid={`ropa-${id ?? "sin-faja"}`}>
-                  {id ? articulo(id)?.nombre : "Sin faja"}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-stone-400">Tus vecinos ven tu ropa en la ciudad. En el templo se sirve con las vestiduras sagradas (Éxodo 28:2).</p>
+            <p className="text-[10px] text-stone-400">Elige y mira cómo te queda en el muñeco (gíralo con el dedo); después toca «Ponérmela». Tus vecinos ven tu ropa en la ciudad. En el templo se sirve con las vestiduras sagradas (Éxodo 28:2).</p>
           </div>
         ) : (
-          <p className="text-[11px] text-stone-500">Compra un manto o una faja en el mercado: tus vecinos los verán.</p>
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 text-[11px] text-stone-500">Compra ropa al tejedor del mercado (túnicas, mantos, fajas, turbantes, velos, sandalias, el cayado, el rollo o el zurrón): tus vecinos te verán con ella.</p>
+            {alIrAlMercado && (
+              <Button size="sm" variant="secondary" className="shrink-0" onClick={alIrAlMercado}>
+                Ir al mercado
+              </Button>
+            )}
+          </div>
         )}
       </section>
       )}

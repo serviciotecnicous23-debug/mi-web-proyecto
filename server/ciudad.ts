@@ -27,7 +27,7 @@ import {
 import { leerInterior, leerMuebles, planoDe, porQueNoCabe, validarInterior, type Colocado, type InteriorEstado } from "@shared/casa-interior";
 import { estrellasDeFila, leerObras, obrasHechas, ventajasDeColumna } from "@shared/obras";
 import { leerOficios } from "@shared/taller";
-import { huertitoDe } from "@shared/huerto";
+import { huertitoDe, usosDelDia } from "@shared/huerto";
 import { obrasDeBarrio, ventajasDeBarrio } from "./barrio-obras";
 import { vistaArca } from "./arca";
 
@@ -622,7 +622,7 @@ export function registerCiudadRoutes(app: Express) {
     const c = await casaVisita(personajeId, yo);
     if (!c) return null;
     const { rows } = await pool.query(
-      `SELECT h.interior, h.letrero, ch.muebles, ch.gozo FROM game_houses h JOIN game_characters ch ON ch.id = h.character_id WHERE h.character_id = $1`,
+      `SELECT h.interior, h.letrero, h.labranza, ch.muebles, ch.gozo FROM game_houses h JOIN game_characters ch ON ch.id = h.character_id WHERE h.character_id = $1`,
       [personajeId],
     );
     const r = rows[0] || {};
@@ -651,6 +651,8 @@ export function registerCiudadRoutes(app: Express) {
         bendiciones: c.visita.bendiciones,
         yaBendije: c.visita.yaBendije,
         gozo: esMia ? Number(r.gozo || 0) : 0,
+        // lo que el dueño ya usó hoy en su casa: descansar, cocinar y leer el rollo (server/casa-usar.ts)
+        ...(esMia ? { usos: usosDelDia(r.labranza, diaClave()) } : {}),
       },
     };
   }

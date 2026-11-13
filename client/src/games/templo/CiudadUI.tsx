@@ -590,7 +590,7 @@ function MercadoModal({ tab }: { tab?: TabMercado }) {
     city?.actualizarPrivada(privada);
   }, []);
   const { entrarACasa } = ctx;
-  return <MercadoView tab={tab} alCambiar={alCambiar} alEntrarACasa={entrarACasa ? () => entrarACasa({ remodelar: true }) : undefined} alCambiarBienes={alCambiarBienes} />;
+  return <MercadoView tab={tab} alCambiar={alCambiar} alEntrarACasa={entrarACasa ? () => entrarACasa({ remodelar: true }) : undefined} alCambiarBienes={alCambiarBienes} look={ctx.city?.lookJugador()} />;
 }
 
 function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
@@ -617,7 +617,7 @@ function CasaExtrasConMundo({ partes }: { partes?: ParteCasa[] }) {
     gameStore.close();
     ultimo.current.city?.irA("mercado");
   }, []);
-  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} alIrAlMercado={alIrAlMercado} />;
+  return <CasaExtras alCambiar={alCambiar} alOfrecer={alOfrecer} partes={partes} alIrAlMercado={alIrAlMercado} look={ctx.city?.lookJugador()} />;
 }
 
 /** Las obras de tu casa: lo edificado se ve en la ciudad y el gozo baja (shared/obras.ts). */

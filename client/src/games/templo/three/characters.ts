@@ -6,6 +6,7 @@
  */
 import * as THREE from "three";
 import { C, GeoBuilder, matrixOf, shinyMat, type Tf } from "./builder";
+import type { RopaVista } from "@shared/mercado";
 
 // ---------------------------------------------------------------- pose y animación
 export type Pose = "idle" | "walk" | "cheer" | "kneel" | "play" | "sit" | "bow" | "offer" | "clap" | "gasp" | "talk" | "think" | "wave" | "point";
@@ -511,7 +512,7 @@ export type FigureLook = "aprendiz" | "sacerdote" | "turno" | "principal" | "sum
 
 const STONES = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff", "#e07a2a", "#8c8c8c", "#7d3c98", "#e6c84a", "#1d1a17", "#4f7a37"];
 
-function figureParts(look: FigureLook) {
+function figureParts(look: FigureLook, tocado = true) {
   const m = new GeoBuilder(), s = new GeoBuilder();
   const armM = new GeoBuilder(), armS = new GeoBuilder();
   const armLM = new GeoBuilder(), armLS = new GeoBuilder();
@@ -599,8 +600,10 @@ function figureParts(look: FigureLook) {
   }
   m.sphere(r + 0.012, hair, { y: headY + 0.012 }, 16, 6, Math.PI * 2, 1.15);
   m.add(new THREE.SphereGeometry(r + 0.01, 16, 8, OPEN_START, OPEN_LEN, 0, 1.7), hair, { y: headY + 0.01 });
-  // tocados
-  if (high) {
+  // tocados (sin tocado si lleva un turbante o un velo del mercado: shared/mercado.ts, la ropa de pies a cabeza)
+  if (!tocado) {
+    /* la cabeza la cubre la ropa */
+  } else if (high) {
     // mitra de lino con la lámina de oro: SANTIDAD A JEHOVÁ (Éxodo 28:36-38)
     for (let k = 0; k < 4; k++) m.torus(r + 0.02 - k * 0.012, 0.045, linen, { y: headY + 0.135 + k * 0.06, rx: Math.PI / 2 }, 6, 18);
     m.sphere(r * 0.86, linen, { y: headY + 0.29 }, 14, 8, Math.PI * 2, 1.45);
@@ -659,8 +662,13 @@ export class Figure {
   private footL = new THREE.Group();
   private footR = new THREE.Group();
   look: FigureLook | null = null;
-  private ropa: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null = null;
+  private ropa: RopaVista | null = null;
   private ropaG: THREE.Group | null = null;
+  /** Las sandalias (en cada pie) y lo que lleva en la mano por su ropa (el cayado o el rollo). */
+  private sandalias: THREE.Mesh[] = [];
+  /** Lleva un turbante o un velo: la vestidura se dibuja sin su tocado (la tiara, la mitra, la corona o la cinta). */
+  private sinTocado = false;
+  private accesorio: { obj: THREE.Object3D; lado: "R" | "L" } | null = null;
   /** El regazo con la túnica (se ve cuando está sentado). */
   private regazo: THREE.Mesh | null = null;
 
@@ -683,29 +691,74 @@ export class Figure {
   }
 
   /**
-   * La ropa que compró en el mercado de la ciudad: un manto abierto por delante y una faja. En el
-   * templo no se usa (se sirve con las vestiduras sagradas, Éxodo 28:2).
+   * La ropa que compró en el mercado de la ciudad, de pies a cabeza: la túnica con sus franjas (y bordados), el manto
+   * abierto por delante, la faja, el turbante o el velo, las sandalias, el cayado o el rollo en la mano y el zurrón.
+   * En el templo no se usa (se sirve con las vestiduras sagradas, Éxodo 28:2).
    */
-  setRopa(ropa: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null | undefined) {
-    const r =
-      ropa && (ropa.manto || ropa.faja)
-        ? { manto: ropa.manto, faja: ropa.faja, ...(ropa.manto && ropa.mantoOro ? { mantoOro: true as const } : {}), ...(ropa.faja && ropa.fajaOro ? { fajaOro: true as const } : {}) }
-        : null;
+  setRopa(ropa: RopaVista | null | undefined) {
+    const r: RopaVista | null = ropa && Object.values(ropa).some(Boolean) ? { ...ropa } : null;
+    if (r) {
+      if (!r.manto) delete r.mantoOro;
+      if (!r.faja) delete r.fajaOro;
+      for (const k of Object.keys(r) as (keyof RopaVista)[]) if (r[k] === undefined) delete r[k];
+    }
     if (JSON.stringify(r) === JSON.stringify(this.ropa)) return;
     this.ropa = r;
+    // con turbante o velo, la vestidura va sin su tocado: se vuelve a armar (y la ropa se pone encima)
+    const sin = !!r?.cabeza;
+    if (sin !== this.sinTocado && this.look) {
+      this.sinTocado = sin;
+      const l = this.look;
+      this.look = null;
+      this.setLook(l);
+      return;
+    }
     this.ponerRopa(r);
   }
 
-  private ponerRopa(r: { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true } | null) {
+  private quitarRopa() {
     if (this.ropaG) {
       this.body.remove(this.ropaG);
       this.ropaG.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
       this.ropaG = null;
     }
+    for (const s of this.sandalias) {
+      s.parent?.remove(s);
+      s.geometry.dispose();
+    }
+    this.sandalias = [];
+    if (this.accesorio) {
+      const brazo = this.accesorio.lado === "R" ? this.armR : this.armL;
+      brazo.remove(this.accesorio.obj);
+      this.accesorio.obj.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
+      this.accesorio = null;
+    }
+  }
+
+  private ponerRopa(r: RopaVista | null) {
+    this.quitarRopa();
     if (!r) return;
     const b = new GeoBuilder();
-    // la orla de oro de la ropa fina del artesano (shared/taller.ts): brilla como el metal
+    // la orla de oro de la ropa fina del artesano (shared/taller.ts) y los bordados: brillan como el metal
     const oro = new GeoBuilder();
+    if (r.tunica) {
+      // la túnica sobre la vestidura, con dos franjas de los hombros al ruedo y el ruedo del color de las franjas
+      const perfil = [[0.272, 0.055], [0.264, 0.2], [0.235, 0.42], [0.203, 0.58], [0.192, 0.68], [0.132, 0.752], [0.06, 0.765]].map(([x, y]) => new THREE.Vector2(x, y));
+      b.add(new THREE.LatheGeometry(perfil, 20), r.tunica);
+      const franja = r.franja ?? r.tunica;
+      const encima = perfil.map((v) => new THREE.Vector2(v.x + 0.004, v.y));
+      for (const centro of [-0.42, 0.42]) b.add(new THREE.LatheGeometry(encima.slice(0, 6), 2, centro - 0.055, 0.11), franja);
+      b.torus(0.271, 0.012, franja, { y: 0.085, rx: Math.PI / 2 }, 4, 22);
+      if (r.bordado) {
+        // los bordados: dos bandas de oro (en el ruedo y en el cuello) y flores de colores en el ruedo
+        oro.torus(0.27, 0.007, C.oro, { y: 0.115, rx: Math.PI / 2 }, 3, 22);
+        oro.torus(0.13, 0.008, C.oro, { y: 0.748, rx: Math.PI / 2 }, 3, 16);
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2;
+          b.sphere(0.014, k % 2 ? C.carmesi : C.azul, { x: Math.sin(a) * 0.272, y: 0.1, z: Math.cos(a) * 0.272 }, 5, 4);
+        }
+      }
+    }
     if (r.manto) {
       // el manto cae de los hombros y queda abierto por delante
       const perfil = [[0.245, 0.24], [0.238, 0.42], [0.218, 0.58], [0.2, 0.7], [0.14, 0.768], [0.07, 0.785]].map(([x, y]) => new THREE.Vector2(x, y));
@@ -727,14 +780,74 @@ export class Figure {
         oro.box(0.06, 0.05, 0.02, C.oro, { x: -0.08, y: 0.43, z: 0.236 });
       }
     }
-    if (b.empty) return;
-    const g = new THREE.Group();
-    const mesh = new THREE.Mesh(b.build(), matteFor());
-    mesh.castShadow = true;
-    g.add(mesh);
-    if (!oro.empty) g.add(new THREE.Mesh(oro.build(), shinyMat()));
-    this.ropaG = g;
-    this.body.add(g);
+    if (r.cabeza) {
+      const hy = 0.97;
+      if (r.cabeza.forma === "turbante") {
+        // el lino enrollado: tres vueltas, la copa de arriba y el nudo al frente
+        for (let k = 0; k < 3; k++) b.torus(0.205 - k * 0.022, 0.042, r.cabeza.color, { y: hy + 0.11 + k * 0.052, rx: Math.PI / 2, rz: k * 0.4 }, 6, 18);
+        b.sphere(0.175, r.cabeza.color, { y: hy + 0.15 }, 14, 8, Math.PI * 2, 1.25);
+        b.sphere(0.04, r.cabeza.color, { y: hy + 0.16, z: 0.205, sx: 1.3 }, 6, 5);
+      } else {
+        // el velo: cubre la cabeza (deja la cara libre) y cae sobre los hombros y la espalda
+        b.add(new THREE.SphereGeometry(0.232, 16, 10, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, 0, 2.15), r.cabeza.color, { y: hy + 0.01 });
+        const caida = [[0.21, 0.6], [0.235, 0.68], [0.24, 0.8], [0.232, 0.9]].map(([x, y]) => new THREE.Vector2(x, y));
+        b.add(new THREE.LatheGeometry(caida, 16, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9), r.cabeza.color);
+      }
+    }
+    if (r.bolsa) {
+      // el zurrón cuelga a un lado, con su correa cruzada sobre el pecho
+      b.sphere(0.075, r.bolsa, { x: -0.235, y: 0.36, z: 0.05, sx: 0.7, sy: 1.05 }, 8, 6);
+      b.box(0.1, 0.04, 0.02, r.bolsa, { x: -0.235, y: 0.43, z: 0.09 });
+      b.torus(0.25, 0.01, r.bolsa, { y: 0.57, rz: 0.75, ry: Math.PI / 2 }, 3, 20);
+    }
+    if (!b.empty || !oro.empty) {
+      const g = new THREE.Group();
+      if (!b.empty) {
+        const mesh = new THREE.Mesh(b.build(), matteFor());
+        mesh.castShadow = true;
+        g.add(mesh);
+      }
+      if (!oro.empty) g.add(new THREE.Mesh(oro.build(), shinyMat()));
+      this.ropaG = g;
+      this.body.add(g);
+    }
+    if (r.pies) {
+      // las sandalias asoman bajo la túnica: la suela, los dedos y dos correas de lado a lado (se ven de arriba; nada
+      // en forma de cruz) y la del tobillo
+      const sb = new GeoBuilder();
+      sb.box(0.12, 0.018, 0.3, "#5a3d26", { y: 0.009, z: 0.12 });
+      sb.sphere(0.05, "#d39a6c", { y: 0.035, z: 0.22, sx: 1.05, sy: 0.55, sz: 1.2 }, 8, 5);
+      for (const z of [0.15, 0.23]) sb.box(0.125, 0.024, 0.035, r.pies, { y: 0.05, z });
+      sb.torus(0.05, 0.009, r.pies, { y: 0.075, z: 0.0, rx: Math.PI / 2 }, 3, 10);
+      const geo = sb.build();
+      for (const f of [this.footL, this.footR]) {
+        const m = new THREE.Mesh(f === this.footL ? geo : geo.clone(), matteFor());
+        f.add(m);
+        this.sandalias.push(m);
+      }
+    }
+    if (r.mano) {
+      const ab = new GeoBuilder();
+      let lado: "R" | "L" = "R";
+      if (r.mano === "cayado") {
+        // el cayado del pastor: la vara y la curva de arriba (Salmos 23:4)
+        ab.cyl(0.016, 0.019, 1.32, "#7a5a3a", { y: 0.1, z: 0.05, rx: 0.06 }, 6);
+        ab.add(new THREE.TorusGeometry(0.075, 0.016, 5, 12, Math.PI * 1.15), "#7a5a3a", { y: 0.79, z: 0.12, ry: Math.PI / 2, rz: -0.25 });
+      } else {
+        // el rollo en la otra mano: el pergamino enrollado con sus dos varas
+        lado = "L";
+        ab.cyl(0.035, 0.035, 0.22, "#efe1bd", { y: -0.02, z: 0.07, rz: Math.PI / 2 }, 10);
+        for (const sx of [-1, 1]) ab.cyl(0.011, 0.011, 0.07, "#5e3a1f", { x: sx * 0.14, y: -0.02, z: 0.07, rz: Math.PI / 2 }, 5);
+        ab.torus(0.036, 0.006, C.carmesi, { y: -0.02, z: 0.07, ry: Math.PI / 2 }, 3, 10);
+      }
+      const obj = new THREE.Group();
+      obj.add(new THREE.Mesh(ab.build(), matteFor()));
+      obj.position.set(0, -0.33, 0);
+      // si la mano ya lleva algo (una herramienta), el accesorio espera a que se suelte
+      obj.visible = !this.enManos[lado];
+      (lado === "R" ? this.armR : this.armL).add(obj);
+      this.accesorio = { obj, lado };
+    }
   }
 
   setLook(look: FigureLook) {
@@ -743,21 +856,21 @@ export class Figure {
     for (const g of [this.body, this.armL, this.armR]) {
       for (const c of [...g.children]) {
         if (c === this.armL || c === this.armR) continue;
-        // lo que lleva en las manos o a la espalda se queda
+        // lo que lleva en las manos o a la espalda se queda (y la ropa se vuelve a poner abajo)
         if (c === this.enManos.R || c === this.enManos.L || c === this.enManos.espalda) continue;
+        if (c === this.ropaG || c === this.accesorio?.obj) continue;
         g.remove(c);
         (c as THREE.Mesh).geometry?.dispose();
       }
     }
-    const p = figureParts(look);
+    const p = figureParts(look, !this.sinTocado);
     this.ponerRegazo(p.robe);
     const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder) => {
       if (!mb.empty) g.add(new THREE.Mesh(mb.build(), matteFor()));
       if (!sb.empty) g.add(new THREE.Mesh(sb.build(), shinyMat()));
     };
     put(this.body, p.m, p.s);
-    // la ropa del mercado se vuelve a poner sobre la vestidura nueva
-    this.ropaG = null;
+    // la ropa del mercado se vuelve a poner sobre la vestidura nueva (sin tocado si la vestidura ya tiene el suyo)
     if (this.ropa) this.ponerRopa(this.ropa);
     put(this.armR, p.armM, p.armS);
     put(this.armL, p.armLM, p.armLS);
@@ -799,6 +912,8 @@ export class Figure {
       obj.position.set(0, -0.33, 0);
       brazo.add(obj);
     }
+    // el cayado o el rollo de su ropa se guarda mientras la mano lleva otra cosa
+    if (this.accesorio?.lado === lado) this.accesorio.obj.visible = !obj;
   }
 
   /** Pone algo a la espalda (un fardo de gavillas, una bolsa) o lo quita con null. */

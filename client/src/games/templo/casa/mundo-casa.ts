@@ -20,14 +20,15 @@ import { gameStore, type CasaHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
 import { relojEnLinea } from "@shared/calendario";
 import {
-  ALTURA_PISO, CELDA, abierto, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, pieza, planoDe, porQueNoCabe, type Colocado, type Cuarto, type InteriorEstado, type Plano,
+  ALTURA_PISO, CELDA, abierto, celdasDe, celdasFijas, cuartoEn, lugarLibre, medidas, mueble, muebleBase, pieza, planoDe, porQueNoCabe, usoDe,
+  type Colocado, type Cuarto, type InteriorEstado, type Plano, type UsoMueble, type UsosDeHoy,
 } from "@shared/casa-interior";
 import type { Camino } from "@shared/caminos";
 import { estacionesPara, type EdificioDef, type EstacionDef } from "./edificios";
 import type { SalaDef, SalaEstado } from "@shared/restauracion";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
-import { LLAMA, construirMueble } from "./muebles3d";
+import { ASIENTO, LECHO_ALTO, LLAMA, construirMueble } from "./muebles3d";
 
 const PLAYER_R = 0.22;
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
@@ -145,6 +146,14 @@ export class CasaWorld {
   private zonas: Zona[] = [];
   private siervos: Siervo[] = [];
   private llamas: Llama[] = [];
+  /** Cuántas llamas son fijas (el horno y las lámparas de las paredes): las de los muebles van después. */
+  private llamasFijas = 1;
+  /** La luz del día que entra por las ventanas (se ve de día y se apaga de noche). */
+  private rayos: THREE.Mesh[] = [];
+  private rayosMat = new THREE.MeshBasicMaterial({ color: "#fff1c4", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  /** Sentado, acostado o trabajando en un mueble (la casa viva): `idx` es el mueble. */
+  private postura: { tipo: "sentado" | "acostado" | "cocina" | "lee"; idx: number; pies?: V2; giro?: number; alto?: number } | null = null;
+  private rolloEnMano: THREE.Group | null = null;
   private remodelando = false;
   private sel = -1;
   private marcaSel: THREE.Group;
@@ -371,11 +380,6 @@ export class CasaWorld {
                 g.box(GROSOR, h, CELDA + GROSOR, color, { x: xx, y: y0 + h / 2, z: this.wz(z + 0.5) }, 0.04);
                 this.rects[p].push([xx - GROSOR / 2, this.wz(z) - GROSOR / 2, xx + GROSOR / 2, this.wz(z + 1) + GROSOR / 2]);
               }
-              // una ventanita con su marco en el muro alto del fondo
-              if (lado === "N" && h >= alto - 0.01 && !otro && est !== "tienda" && x % 4 === 2) {
-                g.box(CELDA * 0.56, 0.42, 0.03, "#6b4a2e", { x: this.wx(x + 0.5), y: y0 + 1.5, z: this.wz(z) + GROSOR / 2 + 0.012 });
-                g.box(CELDA * 0.4, 0.28, 0.035, "#3a2a1c", { x: this.wx(x + 0.5), y: y0 + 1.5, z: this.wz(z) + GROSOR / 2 + 0.02 });
-              }
             }
       // la tienda: los postes de pelo de cabra
       if (est === "tienda" && p === 0) {
@@ -396,7 +400,10 @@ export class CasaWorld {
         const [ax, az] = pl.escalera.arriba;
         this.rects[1].push([this.wx(ax), this.wz(az + 1) + 0.12, this.wx(ax + 1), this.wz(az + 1) + 0.45]);
       }
-      this.pisos[p].add(meshPair(g));
+      // la casa viva: ventanas con luz, tapices, repisas, lámparas y el techo (solo en las casas)
+      const brillo = new GeoBuilder();
+      if (!this.opts.edificio) this.decorar(g, brillo, p);
+      this.pisos[p].add(meshPair(g, brillo));
     }
   }
 
@@ -444,6 +451,108 @@ export class CasaWorld {
     }
     g.cyl(0.04, 0.06, 0.8, "#6e5a43", { x: cx + ancho * 0.35, y: 0.4, z: zf + 0.15 }, 6);
     g.sphere(0.32, "#7b8a5c", { x: cx + ancho * 0.35, y: 1.0, z: zf + 0.15, sy: 0.75 }, 8, 6);
+  }
+
+  /**
+   * La casa viva: lo que hace que la casa se sienta habitada, en los muros que dan afuera de cada cuarto con techo.
+   * En el muro del fondo, por tramos: ventanas con celosía (sin cruces) por donde entra la luz del día, tapices con
+   * granadas y repisas con vasijas; en los costados, lámparas que de noche alumbran; arriba, el techo con sus vigas asoma
+   * sobre el muro del fondo (sin tapar la vista de la casa de muñecas).
+   */
+  private decorar(g: GeoBuilder, brillo: GeoBuilder, p: 0 | 1) {
+    const pl = this.plano;
+    const est = this.estilo();
+    const y0 = this.yPiso(p);
+    const alto = est === "tienda" ? 1.75 : MURO;
+    const tela = est === "tienda" ? "#3a2e26" : est === "adobe" ? "#b8946a" : "#cbbd9e";
+    for (const cu of pl.cuartos.filter((c) => c.piso === p && !c.cielo)) {
+      const zN = this.wz(cu.z) + GROSOR / 2 + 0.012;
+      // el muro del fondo, por tramos de 4 celdas
+      let tramo = cu.x;
+      for (let x = cu.x; x + 2 <= cu.x + cu.w; x += 4, tramo++) {
+        const celdas = [x, x + 1];
+        const afuera = celdas.every((cx) => !cuartoEn(pl, cx, cu.z - 1, p) && !this.esPuertaHuerto(cx, cu.z));
+        if (!afuera) continue;
+        const cx = this.wx(x + 1);
+        const tipo = est === "tienda" ? (tramo % 2 ? 1 : 2) : tramo % 3;
+        if (tipo === 0) this.ventana(g, cx, y0, zN);
+        else if (tipo === 1) this.tapizDePared(g, cx, y0, zN, alto);
+        else this.repisa(g, brillo, cx, y0, zN);
+      }
+      // las lámparas de los costados (en el medio de cada muro que da afuera)
+      const zm = cu.z + Math.floor(cu.d / 2);
+      for (const [lx, sx] of [[cu.x, -1], [cu.x + cu.w - 1, 1]] as [number, number][]) {
+        if (cuartoEn(pl, lx + sx, zm, p) || cu.d < 3) continue;
+        const x = this.wx(sx < 0 ? lx : lx + 1) - sx * (GROSOR / 2 + 0.06);
+        const z = this.wz(zm + 0.5);
+        const y = y0 + (est === "tienda" ? 1.0 : 1.15);
+        g.box(0.14, 0.04, 0.12, C.cedroOsc, { x, y: y - 0.03, z });
+        g.lathe([[0, 0], [0.05, 0.0], [0.065, 0.02], [0.05, 0.035], [0, 0.035]], "#c98a5a", { x, y, z }, 10);
+        g.cone(0.016, 0.05, "#ffd36b", { x: x - sx * 0.05, y: y + 0.06, z }, 5);
+        this.agregarLlama(x - sx * 0.05, y + 0.06 - this.yPiso(p), z, p, 0.6);
+      }
+      // el techo con sus vigas asoma sobre el muro del fondo
+      if (!cuartoEn(pl, cu.x, cu.z - 1, p)) {
+        const ancho = cu.w * CELDA;
+        g.box(ancho + GROSOR, 0.07, 0.62, tela, { x: this.wx(cu.x + cu.w / 2), y: y0 + alto + 0.03, z: this.wz(cu.z) + 0.3 }, 0.04);
+        for (let k = 0; k <= Math.floor(ancho / 0.9); k++) {
+          const x = this.wx(cu.x) + 0.15 + k * 0.9;
+          if (x > this.wx(cu.x + cu.w) - 0.1) break;
+          g.box(0.11, 0.11, 0.78, est === "tienda" ? "#5a4636" : C.cedroOsc, { x, y: y0 + alto - 0.04, z: this.wz(cu.z) + 0.38 });
+        }
+      }
+    }
+    this.llamasFijas = this.llamas.length;
+  }
+
+  /** Una ventana en el muro del fondo: el marco, la celosía de tablillas verticales y la luz del día que entra. */
+  private ventana(g: GeoBuilder, x: number, y0: number, z: number) {
+    const w = 0.62, h = 0.72, y = y0 + 1.42;
+    g.box(w + 0.12, h + 0.12, 0.04, C.cedroOsc, { x, y, z });
+    g.box(w, h, 0.03, "#9cc3d8", { x, y, z: z + 0.012 });
+    for (let k = 0; k < 4; k++) g.box(0.035, h, 0.05, C.cedro, { x: x - w / 2 + 0.1 + k * ((w - 0.2) / 3), y, z: z + 0.03 });
+    g.box(w + 0.2, 0.06, 0.14, C.cedroOsc, { x, y: y - h / 2 - 0.05, z: z + 0.05 });
+    g.lathe([[0, 0], [0.05, 0], [0.07, 0.05], [0.04, 0.1], [0.045, 0.12], [0, 0.12]], "#b8673a", { x: x + 0.2, y: y - h / 2 - 0.02, z: z + 0.06 }, 10);
+    // el rayo de luz: de la ventana al piso, hacia adentro
+    const geo = new THREE.BufferGeometry();
+    const a = [x - w / 2, y + h / 2, z + 0.02], b = [x + w / 2, y + h / 2, z + 0.02], c = [x + w / 2, y - h / 2, z + 0.02], d = [x - w / 2, y - h / 2, z + 0.02];
+    const piso = y0 + 0.01, lejos = z + 1.5;
+    const e = [x - w / 2 - 0.15, piso, lejos + 0.6], f = [x + w / 2 + 0.15, piso, lejos + 0.6], gg = [x + w / 2 + 0.1, piso, lejos], hh = [x - w / 2 - 0.1, piso, lejos];
+    const caras = [a, b, f, a, f, e, d, c, gg, d, gg, hh, a, d, hh, a, hh, e, b, c, gg, b, gg, f];
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(caras.flat(), 3));
+    const rayo = new THREE.Mesh(geo, this.rayosMat);
+    rayo.renderOrder = 2;
+    rayo.userData.piso = y0 > 0.1 ? 1 : 0;
+    this.rayos.push(rayo);
+    this.scene.add(rayo);
+  }
+
+  /** Un tapiz colgado de su vara en el muro: cenefas, granadas bordadas y una vid (nada en forma de cruz). */
+  private tapizDePared(g: GeoBuilder, x: number, y0: number, z: number, alto: number) {
+    const w = 0.92, h = Math.min(1.0, alto - 0.75), top = y0 + Math.min(alto - 0.25, 1.95);
+    g.cyl(0.02, 0.02, w + 0.16, C.cedro, { x, y: top + 0.02, z: z + 0.03, rz: Math.PI / 2 }, 8);
+    for (const sx of [-1, 1]) g.sphere(0.035, C.cedroOsc, { x: x + sx * (w / 2 + 0.08), y: top + 0.02, z: z + 0.03 }, 8, 6);
+    g.box(w, h, 0.02, "#8a2a24", { x, y: top - h / 2, z: z + 0.02 }, 0.03);
+    g.box(w - 0.08, h - 0.08, 0.022, "#27468f", { x, y: top - h / 2, z: z + 0.022 });
+    g.box(w - 0.16, h - 0.16, 0.024, "#e8d9b0", { x, y: top - h / 2, z: z + 0.024 });
+    for (let i = 0; i < 3; i++) {
+      const px = x - w / 2 + 0.22 + i * ((w - 0.44) / 2), py = top - h / 2 + 0.04;
+      g.sphere(0.055, "#a33a2c", { x: px, y: py, z: z + 0.036, sz: 0.3 }, 8, 6);
+      g.cone(0.025, 0.04, "#7a2a22", { x: px, y: py + 0.065, z: z + 0.036 }, 5);
+    }
+    g.box(w - 0.24, 0.012, 0.026, "#4f7a37", { x, y: top - h / 2 - 0.16, z: z + 0.03 });
+    for (let i = 0; i < 12; i++) g.box(0.012, 0.07, 0.01, "#e2c27a", { x: x - w / 2 + 0.05 + i * ((w - 0.1) / 11), y: top - h - 0.035, z: z + 0.02 });
+  }
+
+  /** Una repisa en el muro con sus vasijas, un cuenco y una lamparita de barro. */
+  private repisa(g: GeoBuilder, brillo: GeoBuilder, x: number, y0: number, z: number) {
+    const y = y0 + 1.32, w = 0.92;
+    g.box(w, 0.04, 0.2, C.cedro, { x, y, z: z + 0.1 });
+    for (const sx of [-1, 1]) g.box(0.04, 0.16, 0.14, C.cedroOsc, { x: x + sx * (w / 2 - 0.12), y: y - 0.1, z: z + 0.07 });
+    for (const [dx, h, a, c] of [[-0.3, 0.26, 0.08, "#b8673a"], [-0.12, 0.18, 0.06, "#c98a5a"], [0.28, 0.22, 0.07, "#a8744a"]] as [number, number, number, string][])
+      g.lathe([[0, 0], [a * 0.6, 0], [a, h * 0.4], [a * 0.75, h * 0.8], [a * 0.4, h * 0.9], [a * 0.45, h], [0, h]], c, { x: x + dx, y: y + 0.02, z: z + 0.1 }, 10);
+    g.lathe([[0, 0], [0.06, 0], [0.08, 0.04], [0.075, 0.045]], "#b8673a", { x: x + 0.08, y: y + 0.02, z: z + 0.1 }, 10);
+    brillo.cyl(0.03, 0.03, 0.01, C.bronce, { x: x + 0.08, y: y + 0.075, z: z + 0.1 }, 8);
   }
 
   private construirHorno(g: GeoBuilder) {
@@ -498,7 +607,7 @@ export class CasaWorld {
     }
     this.mallas = [];
     // las llamas de los muebles se rehacen; las fijas (el horno) quedan
-    for (const l of this.llamas.splice(1)) {
+    for (const l of this.llamas.splice(this.llamasFijas)) {
       this.scene.remove(l.glow);
       l.glow.material.dispose();
     }
@@ -888,6 +997,8 @@ export class CasaWorld {
 
   remodelar(on: boolean) {
     if (!this.estado.esMia) return;
+    // sentado o acostado: primero se levanta (si no, quedaría en el aire al mover ese mueble)
+    if (on && this.postura) this.levantarse();
     this.remodelando = on;
     this.sel = -1;
     this.ruta = [];
@@ -1040,6 +1151,141 @@ export class CasaWorld {
     this.items = estado.interior.map((c) => ({ ...c }));
     this.sel = -1;
     this.dibujarMuebles();
+    this.pushHud();
+  }
+
+  // ================================================================ los muebles que se usan (la casa viva)
+  /** ¿La casa tiene puesto el estante de rollos? (entonces en la mesa se lee el rollo) */
+  private hayEstante(): boolean {
+    return this.items.some((c) => muebleBase(c.m) === "estante");
+  }
+
+  /** El mueble que se puede usar ahí cerca (en el piso donde se está), con lo que se hace con él. */
+  private usoCerca(): { idx: number; m: string; uso: UsoMueble } | null {
+    if (this.opts.edificio || this.remodelando) return null;
+    const r = this.player.rig;
+    const estante = this.hayEstante();
+    let mejor: { idx: number; m: string; uso: UsoMueble } | null = null;
+    let d0 = 0.8;
+    this.items.forEach((c, idx) => {
+      if (c.p !== this.piso) return;
+      const uso = usoDe(c.m, estante);
+      const mu = mueble(c.m);
+      if (!uso || !mu) return;
+      // la visita solo se sienta (descansar, cocinar y leer son del dueño)
+      if (!this.estado.esMia && uso !== "sentarse") return;
+      const [w, d] = medidas(mu, c.r);
+      const dx = Math.max(this.wx(c.x) - r.x, 0, r.x - this.wx(c.x + w));
+      const dz = Math.max(this.wz(c.z) - r.z, 0, r.z - this.wz(c.z + d));
+      const dist = Math.hypot(dx, dz);
+      if (dist < d0) {
+        d0 = dist;
+        mejor = { idx, m: c.m, uso };
+      }
+    });
+    return mejor;
+  }
+
+  /** El centro, el frente (hacia donde mira) y el fondo de un mueble puesto. */
+  private geometriaDe(idx: number): { cx: number; cz: number; fx: number; fz: number; hx: number; hz: number; largo: number } | null {
+    const c = this.items[idx];
+    const mu = c && mueble(c.m);
+    if (!c || !mu) return null;
+    const [w, d] = medidas(mu, c.r);
+    const th = -c.r * (Math.PI / 2);
+    return {
+      cx: this.wx(c.x + w / 2),
+      cz: this.wz(c.z + d / 2),
+      fx: Math.sin(th),
+      fz: Math.cos(th),
+      // la cabecera de los lechos está hacia -x del mueble sin girar
+      hx: -Math.cos(th),
+      hz: Math.sin(th),
+      largo: mu.w * CELDA,
+    };
+  }
+
+  /**
+   * Usar el mueble de ahí cerca: sentarse, acostarse a descansar, arrodillarse a cocinar en el fogón o leer el rollo. La
+   * pantalla pide al servidor lo que da (descansar, cocinar y leer); aquí solo se ve.
+   */
+  usar(uso: UsoMueble): boolean {
+    const u = this.usoCerca();
+    if (!u || u.uso !== uso) return false;
+    const geo = this.geometriaDe(u.idx);
+    if (!geo) return false;
+    const r = this.player.rig;
+    const base = muebleBase(u.m);
+    this.ruta = [];
+    this.player.vx = this.player.vz = 0;
+    this.marca.mesh.visible = false;
+    const y0 = this.yPiso(this.piso);
+    if (uso === "sentarse") {
+      r.x = geo.cx + geo.fx * 0.04;
+      r.z = geo.cz + geo.fz * 0.04;
+      r.y = y0 + (ASIENTO[base] ?? 0.2);
+      r.yaw = Math.atan2(geo.fx, geo.fz);
+      r.seated = true;
+      r.pose = "sit";
+      this.postura = { tipo: "sentado", idx: u.idx };
+    } else if (uso === "descansar") {
+      // acostado de espaldas, con la cabeza en la almohada
+      const pies: V2 = [geo.cx - geo.hx * geo.largo * 0.48, geo.cz - geo.hz * geo.largo * 0.48];
+      r.pose = "idle";
+      r.seated = false;
+      this.postura = { tipo: "acostado", idx: u.idx, pies, giro: Math.atan2(-geo.hx, -geo.hz), alto: y0 + (LECHO_ALTO[base] ?? 0.38) };
+    } else {
+      // de pie (o de rodillas en el fogón) delante del mueble, mirándolo
+      r.x = geo.cx + geo.fx * 0.62;
+      r.z = geo.cz + geo.fz * 0.62;
+      r.yaw = Math.atan2(-geo.fx, -geo.fz);
+      r.pose = uso === "cocinar" ? "kneel" : "offer";
+      this.postura = { tipo: uso === "cocinar" ? "cocina" : "lee", idx: u.idx };
+      if (uso === "leer") {
+        const b = new GeoBuilder();
+        b.cyl(0.035, 0.035, 0.24, "#efe1bd", { y: -0.02, z: 0.08, rz: Math.PI / 2 }, 10);
+        for (const sx of [-1, 1]) b.cyl(0.011, 0.011, 0.07, "#5e3a1f", { x: sx * 0.15, y: -0.02, z: 0.08, rz: Math.PI / 2 }, 5);
+        this.rolloEnMano = meshPair(b);
+        this.player.fig.enMano(this.rolloEnMano, "L");
+      }
+    }
+    this.audio.page();
+    vibrar(12);
+    this.pushHud();
+    return true;
+  }
+
+  /** Levantarse del mueble (con un botón, o al moverse). */
+  levantarse() {
+    const pz = this.postura;
+    if (!pz) return;
+    const r = this.player.rig;
+    const geo = this.geometriaDe(pz.idx);
+    this.postura = null;
+    r.seated = false;
+    r.pose = "idle";
+    r.y = this.yPiso(this.piso);
+    if (pz.tipo === "sentado" || pz.tipo === "acostado") {
+      // se para al frente del mueble (o al lado del lecho)
+      if (geo) {
+        r.x = geo.cx + geo.fx * 0.75;
+        r.z = geo.cz + geo.fz * 0.75;
+        [r.x, r.z] = collide(r.x, r.z, PLAYER_R, this.rects[this.piso], this.circles[this.piso]);
+      }
+    }
+    const root = this.player.fig.root;
+    root.rotation.set(0, r.yaw, 0, "XYZ");
+    if (this.rolloEnMano) {
+      this.player.fig.enMano(null, "L");
+      disposeGroup(this.rolloEnMano);
+      this.rolloEnMano = null;
+    }
+    this.pushHud();
+  }
+
+  /** Lo que el servidor dice que ya se usó hoy (después de usar un mueble). */
+  ponerUsos(usos: UsosDeHoy) {
+    this.estado = { ...this.estado, usos };
     this.pushHud();
   }
 
@@ -1215,7 +1461,10 @@ export class CasaWorld {
     const live = !this.paused && !gameStore.busy;
     if (live) {
       if (this.remodelando) this.toqueRemodelar();
-      else if (!this.trabajando) this.movePlayer(dt);
+      else if (this.postura) {
+        // sentado o acostado: moverse (o tocar el piso) es levantarse
+        if (this.entrada.empuja || this.entrada.tomarToque()) this.levantarse();
+      } else if (!this.trabajando) this.movePlayer(dt);
       else this.entrada.tomarToque();
       this.updateZonas();
       this.updateTrabajo(now);
@@ -1234,6 +1483,12 @@ export class CasaWorld {
     r.t += dt;
     this.player.fig.root.visible = !this.remodelando || this.vistaPiso === this.piso;
     this.player.fig.update(r);
+    const pz = this.postura;
+    if (pz?.tipo === "acostado" && pz.pies) {
+      const root = this.player.fig.root;
+      root.position.set(pz.pies[0], pz.alto ?? 0.38, pz.pies[1]);
+      root.rotation.set(-Math.PI / 2, pz.giro ?? 0, 0, "YXZ");
+    }
     for (const s of this.siervos) {
       s.rig.t += dt;
       // trabajan: se inclinan y vuelven, cada uno a su ritmo
@@ -1270,6 +1525,8 @@ export class CasaWorld {
     this.scene.background = this.fondo;
     (this.suelo.material as THREE.MeshLambertMaterial).color.set("#3a3326").lerp(c.set("#b79a6a"), dia);
     this.renderer.toneMappingExposure = 0.95 + 0.12 * dia;
+    this.rayosMat.opacity = 0.11 * dia;
+    for (const ry of this.rayos) ry.visible = dia > 0.05 && (this.vistaPiso === 1 || ry.userData.piso === 0);
     // las llamas más cercanas encienden las luces de verdad; todas brillan y titilan
     const visibles = this.llamas.filter((l) => l.piso === 0 || this.vistaPiso === 1);
     visibles.sort((a, b) => Math.hypot(a.x - this.camTarget.x, a.z - this.camTarget.z) - Math.hypot(b.x - this.camTarget.x, b.z - this.camTarget.z));
@@ -1435,6 +1692,14 @@ export class CasaWorld {
       cambios: this.cambios,
       bendiciones: this.estado.bendiciones,
       yaBendije: this.estado.yaBendije,
+      uso: (() => {
+        if (this.postura) return null;
+        const u = this.usoCerca();
+        const mu = u ? mueble(u.m) : null;
+        if (!u || !mu) return null;
+        return { m: u.m, nombre: mu.nombre, icono: mu.icono, uso: u.uso, hecho: u.uso !== "sentarse" && !!this.estado.usos?.[u.uso] };
+      })(),
+      postura: this.postura?.tipo ?? null,
       edificio: e
         ? {
             id: e.id,
@@ -1536,6 +1801,8 @@ export class CasaWorld {
     this.crowd.dispose();
     this.sombras.dispose();
     for (const l of this.llamas) l.glow.material.dispose();
+    this.rayosMat.dispose();
+    if (this.rolloEnMano) disposeGroup(this.rolloEnMano);
     this.scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry) m.geometry.dispose();

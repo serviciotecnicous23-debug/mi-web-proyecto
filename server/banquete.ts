@@ -7,6 +7,8 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { diaClave, forgetJer, nombreDe, personajeDe, type PersonajeFila } from "./jerusalen";
 import { anotarGasto, sumarGozo } from "./gozo";
+import { guisoDeHoy } from "./casa-usar";
+import { USOS_CASA } from "@shared/casa-interior";
 import { sumarALaCopa } from "./barrio-juntos";
 import { difundirAlBarrio, ubicacionDe } from "./ciudad-red";
 import { enFilaCasa, leerBienes, recoger } from "./ciudad";
@@ -204,13 +206,16 @@ export function registerBanqueteRoutes(app: Express) {
         [bid, ch.casa, hoy, BANQUETE.maxInvitados],
       );
       if (!ok.length) return res.status(409).json({ message: "La mesa ya está llena: ¡llegó mucha gente!" });
-      await sumarGozo(ch.casa, BANQUETE.gozoInvitado, "banquete-invitado");
+      // si el anfitrión cocinó hoy el guiso en su fogón (la casa viva), cada invitado gana un poco más
+      const guiso = await guisoDeHoy(b.anfitrionId);
+      const ganado = BANQUETE.gozoInvitado + (guiso ? USOS_CASA.cocinar.banquete : 0);
+      await sumarGozo(ch.casa, ganado, "banquete-invitado");
       await pool.query(`UPDATE game_houses SET offered = offered + $2 WHERE character_id = $1`, [b.anfitrionId, BANQUETE.honraPorInvitado]);
       forgetJer();
       await sumarALaCopa(ch.id, "banquete", 1);
       const { rows: g } = await pool.query(`SELECT gozo FROM game_characters WHERE id = $1`, [ch.casa]);
       const [despues] = await banquetes(ch, `b.id = $3`, [bid]);
-      const r: SentarseRespuesta = { gozo: BANQUETE.gozoInvitado, gozoTotal: Number(g[0]?.gozo || 0), honra: BANQUETE.honraPorInvitado, banquete: despues ?? b };
+      const r: SentarseRespuesta = { gozo: ganado, gozoTotal: Number(g[0]?.gozo || 0), honra: BANQUETE.honraPorInvitado, banquete: despues ?? b, ...(guiso ? { guiso: true } : {}) };
       res.json(r);
     } catch (err) {
       console.error("[banquete] sentarse:", err);

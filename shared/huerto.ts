@@ -337,6 +337,8 @@ export type LabranzaGuardada = {
   misiones: MisionesGuardadas | null;
   /** rincones dejados para el pobre hoy */
   rincones: { dia: string; n: number };
+  /** lo que se usó hoy en la casa por dentro: descansar, cocinar en el fogón y leer el rollo (shared/casa-interior.ts) */
+  usos: { dia: string; hechos: string[] };
 };
 
 const entero = (v: unknown, max = 1_000_000) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
@@ -352,6 +354,7 @@ export function leerLabranza(v: unknown): LabranzaGuardada {
   const ab = objeto(o.abono);
   const m = o.misiones && typeof o.misiones === "object" ? objeto(o.misiones) : null;
   const r = objeto(o.rincones);
+  const u = objeto(o.usos);
   const herramientas = { azada: nivel12(h.azada), cantaro: nivel12(h.cantaro), hoz: nivel12(h.hoz) };
   const nuevo = !("agua" in o);
   return {
@@ -370,7 +373,15 @@ export function leerLabranza(v: unknown): LabranzaGuardada {
         }
       : null,
     rincones: { dia: textoDia(r.dia), n: entero(r.n, 100) },
+    usos: { dia: textoDia(u.dia), hechos: Array.isArray(u.hechos) ? u.hechos.filter((x): x is string => x === "descansar" || x === "cocinar" || x === "leer") : [] },
   };
+}
+
+/** Lo que ya se usó ese día en la casa por dentro (descansar, cocinar y leer el rollo), desde la columna `labranza`. */
+export function usosDelDia(labranza: unknown, dia: string): { descansar: boolean; cocinar: boolean; leer: boolean } {
+  const u = leerLabranza(labranza).usos;
+  const hechos = u.dia === dia ? u.hechos : [];
+  return { descansar: hechos.includes("descansar"), cocinar: hechos.includes("cocinar"), leer: hechos.includes("leer") };
 }
 
 /** Las tareas de hoy (si cambió el día, empiezan de nuevo con las del día). */

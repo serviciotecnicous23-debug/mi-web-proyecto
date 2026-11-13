@@ -190,6 +190,10 @@ export type CasaHud = {
   cambios: boolean;
   bendiciones: number;
   yaBendije: boolean;
+  /** El mueble que se puede usar ahí cerca (sentarse, descansar, cocinar o leer) y si ya se usó hoy. */
+  uso?: { m: string; nombre: string; icono: string; uso: "sentarse" | "descansar" | "cocinar" | "leer"; hecho: boolean } | null;
+  /** Si está sentado, acostado o trabajando en un mueble (para «Levantarse»). */
+  postura?: "sentado" | "acostado" | "cocina" | "lee" | null;
   /** Dentro de un edificio de la ciudad (la escuela, el palacio o la cámara): sus estaciones y su maestro. */
   edificio?: {
     id: "escuela" | "palacio" | "camara";

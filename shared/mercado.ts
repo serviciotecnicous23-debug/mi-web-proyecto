@@ -21,6 +21,10 @@ import { PRENDAS_JUEGOS } from "./juegos-grupo";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
+/** Dónde se lleva cada prenda (la casa viva: de pies a cabeza). El manto y la faja salen de su id («manto-», «faja-»). */
+export type Ranura = "tunica" | "manto" | "faja" | "cabeza" | "pies" | "mano" | "bolsa";
+export const RANURAS: Ranura[] = ["tunica", "manto", "faja", "cabeza", "pies", "mano", "bolsa"];
+export const NOMBRE_RANURA: Record<Ranura, string> = { tunica: "Túnica", manto: "Manto", faja: "Faja", cabeza: "Cabeza", pies: "Pies", mano: "En la mano", bolsa: "Zurrón" };
 export type TabMercado = Categoria | "vender" | "vecinos" | "intercambio" | "taller";
 export type Articulo = {
   id: string;
@@ -42,6 +46,15 @@ export type Articulo = {
   fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
   deTemporada?: { estacion: EstacionId } | { eventos: string[] };
+  /** La ropa de pies a cabeza: dónde se lleva (sin esto, el manto y la faja salen de su id). */
+  ranura?: Ranura;
+  /** La túnica: el color de sus franjas, y si lleva bordados. */
+  franja?: string;
+  bordado?: true;
+  /** La forma: un turbante o un velo en la cabeza; un cayado o un rollo en la mano. */
+  forma?: "turbante" | "velo" | "cayado" | "rollo";
+  /** Lo nuevo de la casa viva (tiene su propia colección en el álbum: las de antes no cambian). */
+  serie?: "casa-viva";
 };
 
 /** La ropa del año: cada estación y cada fiesta grande trae su prenda, que solo se vende en su tiempo. */
@@ -70,6 +83,33 @@ const ROPA_DE_SIEMPRE: Articulo[] = [
   { id: "faja-azul", categoria: "ropa", nombre: "Faja azul", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, azul.", color: "#2f5aa8" },
   { id: "faja-verde", categoria: "ropa", nombre: "Faja verde", icono: "🎗️", precio: 20, detalle: "Faja en la cintura, verde.", color: "#3d7a4a" },
 ];
+
+/**
+ * La ropa de pies a cabeza (la casa viva): túnicas con franjas, turbantes y velos, sandalias, el cayado, el rollo y el
+ * zurrón. Se ven en el personaje (Figure.setRopa) y en el probador. Nada tiene forma de cruz.
+ */
+export const ROPA_DE_PIES_A_CABEZA: Articulo[] = [
+  { id: "tunica-franjas-azul", categoria: "ropa", ranura: "tunica", nombre: "Túnica con franjas azules", icono: "👘", precio: 55, detalle: "De lino claro, con dos franjas azules de los hombros al ruedo.", color: "#efe6cf", franja: "#2f5aa8", serie: "casa-viva" },
+  { id: "tunica-franjas-granate", categoria: "ropa", ranura: "tunica", nombre: "Túnica con franjas granate", icono: "👘", precio: 55, detalle: "Color arena, con dos franjas granate.", color: "#e8dcc4", franja: "#8a2f3a", serie: "casa-viva" },
+  { id: "tunica-olivo", categoria: "ropa", ranura: "tunica", nombre: "Túnica verde olivo", icono: "👘", precio: 55, detalle: "Verde olivo, con franjas claras.", color: "#7a8a4a", franja: "#e8d9b0", serie: "casa-viva" },
+  { id: "tunica-bordada", categoria: "ropa", ranura: "tunica", nombre: "Túnica bordada", icono: "👘", precio: 110, detalle: "De lino fino, con bordados de colores en el cuello y en el ruedo.", color: "#f3ecd8", franja: "#c99a3b", bordado: true, serie: "casa-viva" },
+  { id: "turbante-lino", categoria: "ropa", ranura: "cabeza", forma: "turbante", nombre: "Turbante de lino", icono: "👳", precio: 35, detalle: "Lino blanco enrollado sobre la cabeza.", color: "#f2ead8", serie: "casa-viva" },
+  { id: "turbante-azul", categoria: "ropa", ranura: "cabeza", forma: "turbante", nombre: "Turbante azul", icono: "👳", precio: 45, detalle: "Lino teñido de azul.", color: "#2f5aa8", serie: "casa-viva" },
+  { id: "velo-lino", categoria: "ropa", ranura: "cabeza", forma: "velo", nombre: "Velo de lino", icono: "🧕", precio: 35, detalle: "Cae de la cabeza a los hombros.", color: "#f4efe4", serie: "casa-viva" },
+  { id: "velo-rosa", categoria: "ropa", ranura: "cabeza", forma: "velo", nombre: "Velo rosa pálido", icono: "🧕", precio: 45, detalle: "Como la flor del almendro.", color: "#e8c4cf", serie: "casa-viva" },
+  { id: "sandalias-cuero", categoria: "ropa", ranura: "pies", nombre: "Sandalias de cuero", icono: "🩴", precio: 25, detalle: "Suela de cuero y correas atadas al tobillo.", color: "#7a5634", serie: "casa-viva" },
+  { id: "sandalias-rojas", categoria: "ropa", ranura: "pies", nombre: "Sandalias con correas rojas", icono: "🩴", precio: 45, detalle: "Correas teñidas de rojo.", color: "#a3243b", serie: "casa-viva" },
+  { id: "cayado", categoria: "ropa", ranura: "mano", forma: "cayado", nombre: "Cayado de pastor", icono: "🐑", precio: 50, detalle: "«Tu vara y tu cayado me infundirán aliento» (Salmos 23:4).", color: "#7a5a3a", serie: "casa-viva" },
+  { id: "rollo", categoria: "ropa", ranura: "mano", forma: "rollo", nombre: "Rollo de las Escrituras", icono: "📜", precio: 60, detalle: "«…en ella había un rollo de libro» (Ezequiel 2:9). Lo llevas en la mano.", color: "#efe1bd", serie: "casa-viva" },
+  { id: "zurron-cuero", categoria: "ropa", ranura: "bolsa", nombre: "Zurrón de cuero", icono: "👝", precio: 30, detalle: "«…las puso en el saco pastoril, en el zurrón que traía» (1 Samuel 17:40). Cuelga a un lado.", color: "#8a6a42", serie: "casa-viva" },
+];
+
+/** Dónde se lleva una prenda (null si no es ropa). */
+export function ranuraDe(a: Articulo | undefined): Ranura | null {
+  if (!a || a.categoria !== "ropa") return null;
+  if (a.ranura) return a.ranura;
+  return a.id.startsWith("manto-") ? "manto" : a.id.startsWith("faja-") ? "faja" : null;
+}
 
 /**
  * La ropa fina del artesano (shared/taller.ts): con 4 iguales del fardo hace la misma prenda con su orla de oro, que se
@@ -106,6 +146,8 @@ export const ARTICULOS: Articulo[] = [
   ...ROPA_DE_SIEMPRE,
   // la ropa del año: solo en su estación o en su fiesta
   ...ROPA_DEL_ANIO,
+  // la ropa de pies a cabeza (la casa viva): túnicas, turbantes y velos, sandalias, el cayado, el rollo y el zurrón
+  ...ROPA_DE_PIES_A_CABEZA,
   // los trajes de los sabios: no se venden, se ganan en «¿Quién es sabio?» (shared/sabio.ts, TRAJES_SABIOS)
   ...TRAJES_SABIOS.map((t): Articulo => ({
     id: t.id,
@@ -261,8 +303,9 @@ export function lugaresAdornos(nivel: number): number {
 export function ofertasDelDia(dia: string): string[] {
   let x = 2166136261;
   for (const ch of dia) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
-  // la ropa de temporada no entra en las ofertas (las ofertas de cada día quedan como antes)
-  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo && !a.deTemporada);
+  // la ropa de temporada y lo de la casa viva (serie) no entran en las ofertas: las ofertas de cada día quedan como antes
+  // (si la lista crece, cambian las de todos los días). Lo que se agregue al mercado lleva su serie.
+  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo && !a.deTemporada && !a.serie);
   const a = x % lista.length;
   const b = (a + 1 + ((x >>> 8) % (lista.length - 1))) % lista.length;
   return [lista[a].id, lista[b].id];
@@ -308,21 +351,68 @@ export const PUESTOS_MERCADO: { tab: Categoria | "vender"; nombre: string; icono
   { tab: "vender", nombre: "El mercader", icono: "⚖️", dice: "Te compro lo de tu alfolí con pesa cabal. Si quieres más, véndeselo a tus vecinos en «Vecinos»." },
 ];
 
-/** Cómo se ve la ropa de alguien: los colores del manto y la faja, y si son finos (con su orla de oro). */
-export type RopaVista = { manto?: string; faja?: string; mantoOro?: true; fajaOro?: true };
+/**
+ * Cómo se ve la ropa de alguien: los colores del manto y la faja (y si son finos, con su orla de oro), y lo de pies a
+ * cabeza: la túnica con sus franjas, el turbante o el velo, las sandalias, lo que lleva en la mano y el zurrón.
+ */
+export type RopaVista = {
+  manto?: string;
+  faja?: string;
+  mantoOro?: true;
+  fajaOro?: true;
+  tunica?: string;
+  franja?: string;
+  bordado?: true;
+  cabeza?: { forma: "turbante" | "velo"; color: string };
+  pies?: string;
+  mano?: "cayado" | "rollo";
+  bolsa?: string;
+};
+/** La ropa puesta, por ranura (la columna `ropa` de cada personaje). */
+export type RopaIds = Partial<Record<Ranura, string | null>>;
 
-/** Los colores de la ropa elegida (para dibujarla). */
-export function coloresDeIds(r: { manto?: string | null; faja?: string | null } | null | undefined): RopaVista {
+/** Los colores de la ropa elegida (para dibujarla). Solo cuenta lo que es de esa ranura. */
+export function coloresDeIds(r: RopaIds | null | undefined): RopaVista {
   const out: RopaVista = {};
-  const m = r?.manto ? articulo(r.manto) : undefined;
-  const f = r?.faja ? articulo(r.faja) : undefined;
-  if (m?.categoria === "ropa" && m.color) {
+  const de = (ranura: Ranura) => {
+    const id = r?.[ranura];
+    const a = id ? articulo(id) : undefined;
+    return a && ranuraDe(a) === ranura ? a : undefined;
+  };
+  const m = de("manto");
+  const f = de("faja");
+  if (m?.color) {
     out.manto = m.color;
     if (m.fina) out.mantoOro = true;
   }
-  if (f?.categoria === "ropa" && f.color) {
+  if (f?.color) {
     out.faja = f.color;
     if (f.fina) out.fajaOro = true;
+  }
+  const t = de("tunica");
+  if (t?.color) {
+    out.tunica = t.color;
+    if (t.franja) out.franja = t.franja;
+    if (t.bordado) out.bordado = true;
+  }
+  const c = de("cabeza");
+  if (c?.color && (c.forma === "turbante" || c.forma === "velo")) out.cabeza = { forma: c.forma, color: c.color };
+  const p = de("pies");
+  if (p?.color) out.pies = p.color;
+  const mano = de("mano");
+  if (mano?.forma === "cayado" || mano?.forma === "rollo") out.mano = mano.forma;
+  const b = de("bolsa");
+  if (b?.color) out.bolsa = b.color;
+  return out;
+}
+
+/** La ropa puesta como se guarda: solo los ids que son de su ranura. */
+export function leerRopaIds(v: unknown): Record<Ranura, string | null> {
+  const o = v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const out = {} as Record<Ranura, string | null>;
+  for (const r of RANURAS) {
+    const id = o[r];
+    out[r] = typeof id === "string" && ranuraDe(articulo(id)) === r ? id : null;
   }
   return out;
 }
@@ -409,7 +499,8 @@ export type MercadoEstado = {
   ofertas: string[];
   semillas: Record<string, number>;
   armario: string[];
-  ropa: { manto: string | null; faja: string | null };
+  /** La ropa puesta, de pies a cabeza (cada ranura con su id o null). */
+  ropa: Record<Ranura, string | null>;
   adornos: string[];
   lugares: number;
   huerto: Parcela[];
@@ -439,4 +530,6 @@ export type MercadoEstado = {
   fardo: Record<string, number>;
   /** El huerto de la casa: el agua, el abono, las herramientas, las gavillas y las tareas del día (shared/huerto.ts). */
   labranza?: import("./huerto").LabranzaVista;
+  /** Lo que ya se usó hoy en la casa: descansar, cocinar y leer el rollo (shared/casa-interior.ts). */
+  usos?: import("./casa-interior").UsosDeHoy;
 };

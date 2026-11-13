@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { construirMueble } from "./muebles3d";
 import { construirAdornoSuelto } from "../ciudad/escenario";
 import { Figure, newRig } from "../three/characters";
-import { articulo } from "@shared/mercado";
+import { articulo, coloresDeIds, ranuraDe } from "@shared/mercado";
 
 const TAM = 200;
 let dibujante: THREE.WebGLRenderer | null = null;
@@ -50,10 +50,11 @@ function modelo(id: string): { obj: THREE.Object3D; liberar: () => void } | null
     return { obj: g, liberar: () => g.traverse((o) => (o as THREE.Mesh).geometry?.dispose()) };
   }
   if (a.categoria === "ropa" && a.color) {
-    // la prenda puesta en un aprendiz, un poco de lado para que se vea el manto o la faja
+    // la prenda puesta en un aprendiz, un poco de lado para que se vea (de pies a cabeza: la túnica, el turbante o el
+    // velo, las sandalias, el cayado o el rollo, el zurrón; el manto y la faja, con su orla de oro si son finos)
     const f = new Figure("aprendiz");
-    // la ropa fina del artesano, con su orla de oro (shared/taller.ts)
-    f.setRopa(id.startsWith("manto") ? { manto: a.color, ...(a.fina ? { mantoOro: true as const } : {}) } : { faja: a.color, ...(a.fina ? { fajaOro: true as const } : {}) });
+    const ranura = ranuraDe(a);
+    f.setRopa(ranura ? coloresDeIds({ [ranura]: id }) : null);
     const r = newRig(0, 0);
     r.yaw = 0.55;
     r.t = 0;
