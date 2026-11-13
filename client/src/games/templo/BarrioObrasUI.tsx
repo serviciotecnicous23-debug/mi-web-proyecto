@@ -11,6 +11,7 @@ import {
 } from "@shared/barrio-obras";
 import { gameStore } from "./store";
 import { VerseBox, fmt } from "./ui";
+import { Gozo, Ico } from "./iconos";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -65,7 +66,7 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
         <section className="space-y-2 rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/20" data-testid="barrio-obra-actual">
           <p className="text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">La obra de ahora · {e.hechas.length + 1} de {OBRAS_BARRIO.length}</p>
           <p className="flex items-center gap-2 font-serif text-lg font-black">
-            <span className="text-2xl">{actual.icono}</span> {actual.nombre}
+            <span className="text-2xl"><Ico e={actual.icono ?? ""} /></span> {actual.nombre}
           </p>
           <p className="text-xs text-stone-600 dark:text-stone-300">{actual.detalle}</p>
           <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">✓ Para todo el barrio: {actual.ventaja}</p>
@@ -74,7 +75,7 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
           </div>
           <p className="flex flex-wrap justify-between gap-1 text-xs tabular-nums">
             <span>
-              ✨ {fmt(e.actual.aportado)} de {fmt(e.actual.meta)} · faltan {fmt(falta)}
+              <Gozo n={fmt(e.actual.aportado)} /> de {fmt(e.actual.meta)} · faltan {fmt(falta)}
             </span>
             <span className="text-stone-500">
               {e.actual.aportantes} {e.actual.aportantes === 1 ? "vecino dio" : "vecinos dieron"}
@@ -93,7 +94,7 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
             )}
           </div>
           <p className="text-[11px] text-stone-500">
-            Tienes ✨ {fmt(e.gozo)}. Diste {fmt(e.mio.enEsta)} a esta obra y {fmt(e.mio.total)} en todas. Se puede dar hasta {fmt(APORTE_MAXIMO_DIA)} por día (hoy te quedan {fmt(e.mio.puedeHoy)}), para que la obra sea de todos. Cada 10 de gozo suma un punto para la copa del barrio.
+            Tienes <Gozo n={fmt(e.gozo)} />. Diste {fmt(e.mio.enEsta)} a esta obra y {fmt(e.mio.total)} en todas. Se puede dar hasta {fmt(APORTE_MAXIMO_DIA)} por día (hoy te quedan {fmt(e.mio.puedeHoy)}), para que la obra sea de todos. Cada 10 de gozo suma un punto para la copa del barrio.
           </p>
           <p className="text-[11px] italic text-stone-500">
             «{actual.verso.text}» ({actual.verso.ref})
@@ -111,9 +112,9 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
             const ahora = e.actual?.id === o.id;
             return (
               <li key={o.id} className={`flex items-start gap-2 rounded-lg px-2 py-1.5 text-xs ${hecha ? "bg-emerald-50 dark:bg-emerald-950/30" : ahora ? "bg-amber-100/70 dark:bg-amber-900/30" : "opacity-70"}`} data-testid={`barrio-obra-${o.id}`}>
-                <span className="text-lg leading-none">{o.icono}</span>
+                <span className="text-lg leading-none"><Ico e={o.icono ?? ""} /></span>
                 <span className="min-w-0 flex-1">
-                  <b>{o.nombre}</b> · ✨ {fmt(o.meta)}
+                  <b>{o.nombre}</b> · <Gozo n={fmt(o.meta)} />
                   <br />
                   <span className="text-stone-600 dark:text-stone-300">{o.ventaja}</span>
                 </span>
@@ -124,7 +125,7 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
         </ol>
       </section>
       <section className="space-y-1" data-testid="barrio-constructores">
-        <p className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">🪨 Los constructores del barrio</p>
+        <p className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300"><Ico e="🪨" /> Los constructores del barrio</p>
         {e.constructores.length ? (
           <ol className="grid grid-cols-1 gap-0.5 text-xs sm:grid-cols-2">
             {e.constructores.map((c, i) => (
@@ -132,7 +133,7 @@ export function ObrasDelBarrio({ alGozo }: { alGozo?: (gozo: number) => void }) 
                 <span className="truncate">
                   {i + 1}. {c.nombre}
                 </span>
-                <span className="tabular-nums">✨ {fmt(c.gozo)}</span>
+                <span className="tabular-nums"><Gozo n={fmt(c.gozo)} /></span>
               </li>
             ))}
           </ol>

@@ -15,6 +15,7 @@ import type { CiudadWorld, MapaVista } from "./ciudad/mundo";
 import type { Rect } from "./layout";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD, ZONA_SIERVOS, personajeCiudad, type RecadoEstado } from "@shared/personajes";
 import { arcoDeTemporada, type CapituloId, type CapitulosVista } from "@shared/capitulos";
+import { Ico } from "./iconos";
 
 /** Lo que el mapa pide aparte (cambia cada día): el recado de hoy y el lugar del capítulo de la semana. */
 type ExtrasMapa = {
@@ -418,7 +419,7 @@ export function MapaView({ city }: { city: CiudadWorld | null }) {
                 }}
                 data-testid="mapa-ir-recado"
               >
-                📜 Tu recado: {ex.recado.nombre}
+                <Ico e="📜" /> Tu recado: {ex.recado.nombre}
               </Button>
             )}
             {ex?.capitulo && (
@@ -432,7 +433,7 @@ export function MapaView({ city }: { city: CiudadWorld | null }) {
                 }}
                 data-testid="mapa-ir-capitulo"
               >
-                {ex.capitulo.icono} {ex.capitulo.titulo}
+                <Ico e={ex.capitulo.icono ?? ""} /> {ex.capitulo.titulo}
               </Button>
             )}
           </div>

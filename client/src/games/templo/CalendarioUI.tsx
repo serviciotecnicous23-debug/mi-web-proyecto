@@ -10,6 +10,7 @@ import { ARTICULOS, enTemporada } from "@shared/mercado";
 import { MESES } from "@shared/calendario";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
+import { Ico } from "./iconos";
 
 const BIEN: Record<string, string> = { harina: "la harina", aceite: "el aceite", corderos: "los corderos" };
 const SEMILLA: Record<string, string> = { trigo: "el trigo", cebada: "la cebada", olivo: "los olivos" };
@@ -56,7 +57,7 @@ export function CalendarioView() {
             {d.civilTexto} · año {d.hebreo.anio} del calendario hebreo
           </p>
           <p className="mt-2 flex items-center gap-2 font-bold">
-            <span className="text-xl">{e.icono}</span> {e.nombre}
+            <span className="text-xl"><Ico e={e.icono ?? ""} /></span> {e.nombre}
             <span className="ml-auto flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold">
               {d.llueve ? <CloudRain className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />} {d.llueve ? "hoy llueve" : "hoy no llueve"}
               <span className="opacity-80" data-testid="calendario-manana">· mañana {manana.llueve ? "🌧️ llueve" : "☀️ no llueve"}</span>
@@ -67,14 +68,14 @@ export function CalendarioView() {
 
         <section className="grid gap-2 sm:grid-cols-3" data-testid="calendario-efectos">
           <div className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">🌱 En tu huerto</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500"><Ico e="🌱" /> En tu huerto</p>
             <p className="mt-0.5 leading-snug">
               {e.cultivo ? <>Crece más rápido {SEMILLA[e.cultivo]} (un cuarto menos de espera).</> : e.lento > 1 ? <>Con el frío, todo tarda un poco más.</> : <>Todo crece a su ritmo.</>}
               {d.llueve ? " Hoy llueve: lo que siembres hoy queda regado." : manana.llueve ? " Mañana llueve: lo que siembres mañana quedará regado." : e.lluvia === 0 ? " No llueve: hay que regar." : ""}
             </p>
           </div>
           <div className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">⚖️ En el mercado</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500"><Ico e="⚖️" /> En el mercado</p>
             <p className="mt-0.5 leading-snug">
               {sube.length ? <>Los mercaderes buscan más {sube.join(" y ")}. </> : null}
               {baja.length ? <>Hay abundancia de {baja.join(" y ")}: la buscan menos.</> : null}
@@ -83,7 +84,7 @@ export function CalendarioView() {
             </p>
           </div>
           <div className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">🔥 En el templo</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500"><Ico e="🔥" /> En el templo</p>
             <p className="mt-0.5 leading-snug">
               {b.merito > 1 ? <>El servicio vale ×{b.merito.toLocaleString("es-419")}{b.hora ? ` (${b.hora})` : ""}.</> : <>Un día de servicio normal.</>}
               {b.gozo > 1 ? <> Los encargos dan ×{b.gozo.toLocaleString("es-419")} de gozo.</> : null}
@@ -97,7 +98,7 @@ export function CalendarioView() {
             {d.eventos.map((a) => (
               <div key={a.evento.id} className="space-y-1.5 rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30">
                 <p className="font-bold">
-                  {a.evento.icono} {a.evento.nombre}
+                  <Ico e={a.evento.icono ?? ""} /> {a.evento.nombre}
                   {a.de > 1 ? <span className="ml-1 text-xs font-semibold text-stone-500">· día {a.dia} de {a.de}</span> : null}
                 </p>
                 <p className="leading-snug">{a.evento.efecto}</p>
@@ -113,7 +114,7 @@ export function CalendarioView() {
           <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 dark:divide-stone-700 dark:border-stone-700">
             {vienen.map((p) => (
               <li key={`${p.evento.id}-${p.iso}`} className="flex items-center gap-2 px-3 py-2">
-                <span className="w-6 shrink-0 text-center text-lg">{p.evento.icono}</span>
+                <span className="w-6 shrink-0 text-center text-lg"><Ico e={p.evento.icono ?? ""} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{p.evento.nombre}</span>
                   <span className="block text-[11px] text-stone-500">{p.texto}</span>
@@ -130,7 +131,7 @@ export function CalendarioView() {
             {ESTACIONES.map((x) => (
               <div key={x.id} className={`rounded-xl p-2 text-xs ${x.id === e.id ? "bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-stone-50 dark:bg-stone-800/60"}`}>
                 <p className="font-bold">
-                  {x.icono} {x.nombre}
+                  <Ico e={x.icono ?? ""} /> {x.nombre}
                 </p>
                 <p className="text-[11px] text-stone-500">{x.meses.filter((m) => m !== 13).map(nombreMes).join(", ")}</p>
               </div>

@@ -20,6 +20,7 @@ import { sabioRed } from "./sabio-red";
 import { sonido } from "./sabio-sonido";
 import type { EstudioSabio } from "./estudio/estudio-sabio";
 import type { FigureLook } from "./three/characters";
+import { Ico } from "./iconos";
 
 const lookDe = (c: Camino): FigureLook => (c === "profecia" ? "profeta" : c === "realeza" ? "oficial" : "sacerdote");
 type Entrada = { noche: NocheVista | null; invitaciones: InvitacionNoche[]; hoy: number; jugadas: number; ganadas: number };
@@ -568,7 +569,7 @@ export function NocheView({ id, onSalir, estudio, mirar = false }: { id: number;
           <p className="sabio-titulo font-serif text-xl font-black">{fin.puesto ? `Quedaste en el puesto ${fin.puesto}` : "La noche terminó"}</p>
           {n.juego || fin.puesto ? (
             <p className="text-sm font-bold" data-testid="noche-fin-gozo">
-              ✨ +{fin.gozo} de gozo{fin.topeGozo ? " (llegaste al tope de hoy)" : ""}
+              <Ico e="✨" /> +{fin.gozo} de gozo{fin.topeGozo ? " (llegaste al tope de hoy)" : ""}
             </p>
           ) : null}
           <p className="font-serif text-[12px] italic text-amber-100/80">
@@ -653,7 +654,7 @@ function Invitar({ id, onCerrar }: { id: number; onCerrar: () => void }) {
   return (
     <div className="absolute inset-0 z-20 flex items-end justify-center bg-black/70 p-3 sm:items-center" onClick={onCerrar} data-testid="noche-invitar">
       <div className="max-h-full w-full max-w-md overflow-y-auto rounded-2xl border border-amber-300/50 bg-[#150e36] p-3" onClick={(e) => e.stopPropagation()}>
-        <p className="font-serif text-lg font-black text-amber-200">🌙 ¿A quién invitas?</p>
+        <p className="font-serif text-lg font-black text-amber-200"><Ico e="🌙" /> ¿A quién invitas?</p>
         <p className="text-[12px] text-amber-100/75">Les llega tu invitación con el código de la sala. También puedes pasarles el código por WhatsApp.</p>
         {amigos === null ? (
           <div className="flex justify-center py-4">

@@ -17,6 +17,7 @@ import { CiudadCtx } from "./CiudadUI";
 import { avisarMisiones } from "./online";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
+import { Ico } from "./iconos";
 
 async function pedir<T>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T | null }> {
   try {
@@ -130,7 +131,7 @@ function Lista({ estado, abrir }: { estado: EstudiosEstado; abrir: (id: string) 
         return (
           <div key={c}>
             <p className="mb-1 font-black">
-              {CAMINOS_ESTUDIO[c].icono} {CAMINOS_ESTUDIO[c].nombre}
+              <Ico e={CAMINOS_ESTUDIO[c].icono ?? ""} /> {CAMINOS_ESTUDIO[c].nombre}
             </p>
             <ul className="space-y-1.5">
               {lista.map((e) => {
@@ -144,7 +145,7 @@ function Lista({ estado, abrir }: { estado: EstudiosEstado; abrir: (id: string) 
                       className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left hover:bg-amber-50 dark:hover:bg-amber-950/20 ${m?.aprobado ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20" : "border-stone-200 dark:border-stone-700"}`}
                       data-testid={`estudio-${e.id}`}
                     >
-                      <span className="text-2xl">{e.icono}</span>
+                      <span className="text-2xl"><Ico e={e.icono ?? ""} /></span>
                       <span className="min-w-0 flex-1">
                         <span className="block font-bold">{e.titulo}</span>
                         <span className="block text-[11px] text-stone-500">
@@ -482,7 +483,7 @@ export function EstudiosDeOtro({ personajeId }: { personajeId: number }) {
         <ul className="mt-1 space-y-0.5" data-testid="vecino-registros">
           {d.registros.map((a) => (
             <li key={a.id}>
-              {a.icono} {a.titulo} ·{" "}
+              <Ico e={a.icono ?? ""} /> {a.titulo} ·{" "}
               <b>
                 {a.mejor}/{a.de}
               </b>

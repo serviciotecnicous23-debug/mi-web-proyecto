@@ -10,6 +10,7 @@ import { gameStore } from "./store";
 import { pedirBarrio } from "./barrio-chat";
 import { useJuntos } from "./juntos";
 import { COPA_PUNTOS, JUNTOS_SEGUNDOS, MISIONES_JUNTOS, PREMIO_COPA, APORTE_COPA, VERSO_COPA, type CopaEstado, type MisionJuntos } from "@shared/barrio-juntos";
+import { Ico } from "./iconos";
 
 const miles = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -79,7 +80,7 @@ export function CopaDelBarrio() {
     <div className="space-y-3" data-testid="barrio-copa">
       {e.premio && (
         <div className="rounded-xl bg-gradient-to-r from-amber-300 to-amber-500 p-3 text-center text-sm font-black text-amber-950 shadow" data-testid="barrio-copa-premio">
-          🏆 {e.premio.barrio} quedó en el puesto {e.premio.puesto} de la copa la semana pasada: +{e.premio.gozo} de gozo para ti
+          <Ico e="🏆" /> {e.premio.barrio} quedó en el puesto {e.premio.puesto} de la copa la semana pasada: +{e.premio.gozo} de gozo para ti
         </div>
       )}
       {e.hoy && (
@@ -87,7 +88,7 @@ export function CopaDelBarrio() {
           <p className="text-[11px] font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">La misión del barrio de hoy</p>
           <p className="flex items-start gap-2 text-[15px] font-black leading-snug">
             <span className="text-2xl leading-none" aria-hidden="true">
-              {e.hoy.mision.icono}
+              <Ico e={e.hoy.mision.icono ?? ""} />
             </span>
             <span>{e.hoy.mision.titulo}</span>
           </p>
@@ -183,7 +184,7 @@ export function CopaDelBarrio() {
           {COMO.map((c) => (
             <li key={c.texto} className="flex items-center justify-between gap-2">
               <span>
-                {c.icono} {c.texto}
+                <Ico e={c.icono ?? ""} /> {c.texto}
               </span>
               <span className="shrink-0 font-black text-amber-800 dark:text-amber-300">+{c.puntos}</span>
             </li>

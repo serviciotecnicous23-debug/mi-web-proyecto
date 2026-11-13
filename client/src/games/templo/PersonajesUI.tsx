@@ -13,6 +13,7 @@ import { avisarRacha } from "./online";
 import { Card, VerseBox } from "./ui";
 import { PERSONAJES_CIUDAD, personajeCiudad, type Chisme, type ChismesVista, type RecadoEstado } from "@shared/personajes";
 import { arcoDeTemporada, type CapituloId } from "@shared/capitulos";
+import { Ico } from "./iconos";
 
 const API = "/api/jerusalen";
 
@@ -131,7 +132,7 @@ export function PersonajeView({ id }: { id: string }) {
             className="flex w-full items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-left text-xs dark:border-amber-800 dark:bg-amber-950/30"
             data-testid="personaje-capitulo"
           >
-            <span className="text-lg">{cap.icono}</span>
+            <span className="text-lg"><Ico e={cap.icono ?? ""} /></span>
             <span className="min-w-0 flex-1">
               Esta semana, en la historia de la temporada: <b>«{cap.titulo}»</b>
               {cap.guia === p.id ? ` · ${p.nombre} guía este capítulo` : ""}

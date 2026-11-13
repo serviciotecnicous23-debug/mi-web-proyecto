@@ -15,6 +15,7 @@ import { Medalla } from "./medalla";
 import { Estrellas } from "./ObrasUI";
 import { gameStore, type Modal } from "./store";
 import { Card, VerseBox } from "./ui";
+import { Ico } from "./iconos";
 
 type Pestana = "servicio" | "estudios" | "juegos" | "casa" | "logros";
 const PESTANAS: { id: Pestana; nombre: string; icono: string }[] = [
@@ -51,7 +52,7 @@ export function BotonRegistro({ personajeId, nombre, mio, className = "" }: { pe
       onClick={() => abrirRegistro(personajeId, nombre)}
       data-testid="button-abrir-registro"
     >
-      📜 {mio ? "Ver mi registro" : "Ver su registro"}
+      <Ico e="📜" /> {mio ? "Ver mi registro" : "Ver su registro"}
     </Button>
   );
 }
@@ -144,7 +145,7 @@ export function RegistroView({ personajeId, nombre, volver }: { personajeId: num
                   }`}
                   data-testid={`registro-pestana-${p.id}`}
                 >
-                  {p.icono} {p.nombre}
+                  <Ico e={p.icono ?? ""} /> {p.nombre}
                 </button>
               ))}
             </div>
@@ -180,7 +181,7 @@ function Cabecera({ r }: { r: RegistroJugador }) {
         </span>
         <div className="min-w-0">
           <p className="truncate font-serif text-xl font-black leading-tight">{r.nombre}</p>
-          {r.titulo && <p className="mt-0.5 inline-block rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-black uppercase tracking-wide text-amber-950">✨ {r.titulo}</p>}
+          {r.titulo && <p className="mt-0.5 inline-block rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-black uppercase tracking-wide text-amber-950"><Ico e="🎖️" /> {r.titulo}</p>}
           <p className="mt-0.5 text-xs text-stone-600 dark:text-stone-300">
             {r.desde ? `En Jerusalén desde el ${fecha(r.desde)}` : "Recién llegado a Jerusalén"}
             {r.barrio ? ` · ${nombreDeBarrio(r.barrio)}` : ""}
@@ -210,7 +211,7 @@ function Dato({ icono, valor, nombre }: { icono: string; valor: string; nombre: 
     <div className="rounded-xl bg-white/75 px-1.5 py-1.5 dark:bg-black/25">
       <p className="text-base font-black leading-none tabular-nums">
         <span className="mr-0.5 text-sm" aria-hidden="true">
-          {icono}
+          <Ico e={icono} />
         </span>
         {valor}
       </p>
@@ -249,7 +250,7 @@ function Servicio({ r }: { r: RegistroJugador }) {
         <div key={p.id} className="rounded-2xl border border-amber-200 bg-white/70 p-3 dark:border-amber-900/60 dark:bg-black/20" data-testid={`registro-personaje-${p.id}`}>
           <div className="flex items-center gap-2">
             <span className="text-2xl" aria-hidden="true">
-              {CAMINOS[p.camino].icono}
+              <Ico e={CAMINOS[p.camino].icono ?? ""} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{p.nombre}</p>
@@ -268,7 +269,7 @@ function Servicio({ r }: { r: RegistroJugador }) {
             <ul className="mt-2 space-y-0.5 text-xs">
               {p.cargos.map((c) => (
                 <li key={`${c.temporada}-${c.cargo}`} className="flex items-center gap-1.5">
-                  <span aria-hidden="true">🏅</span>
+                  <span aria-hidden="true"><Ico e="🏅" /></span>
                   <span className={c.perdido ? "text-stone-400 line-through" : "font-semibold"}>
                     Temporada {c.temporada}: {c.cargo}
                   </span>
@@ -293,7 +294,7 @@ function Estudios({ r }: { r: RegistroJugador }) {
             {e.aprobados.map((a) => (
               <li key={a.id} className="flex items-center gap-2 rounded-xl bg-emerald-50 px-2.5 py-1.5 dark:bg-emerald-950/30">
                 <span className="text-lg" aria-hidden="true">
-                  {a.icono}
+                  <Ico e={a.icono ?? ""} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{a.titulo}</span>
@@ -317,7 +318,7 @@ function Estudios({ r }: { r: RegistroJugador }) {
               <li key={c.id} className="space-y-1 rounded-xl border border-stone-200 px-2.5 py-1.5 dark:border-stone-700">
                 <p className="flex items-center justify-between gap-2 text-xs font-semibold">
                   <span>
-                    {c.icono} {c.titulo}
+                    <Ico e={c.icono ?? ""} /> {c.titulo}
                   </span>
                   <span className="tabular-nums text-stone-500">
                     {c.secciones} de {c.de} secciones
@@ -342,7 +343,7 @@ function Estudios({ r }: { r: RegistroJugador }) {
               <li key={c.area} className="rounded-xl border border-violet-200 bg-violet-50/60 px-2.5 py-1.5 dark:border-violet-900/60 dark:bg-violet-950/20">
                 <p className="flex items-center justify-between gap-2 text-xs">
                   <span className="font-semibold">
-                    {c.icono} {c.nombre}
+                    <Ico e={c.icono ?? ""} /> {c.nombre}
                   </span>
                   <span className="font-black text-violet-800 dark:text-violet-300">{c.grado}</span>
                 </p>
@@ -450,13 +451,13 @@ function CasaYBarrio({ r }: { r: RegistroJugador }) {
               <Estrellas n={r.casa.estrellas} className="text-lg" />
             </p>
             <p className="text-xs text-stone-500">
-              ✨ {fmt(r.casa.bendiciones)} {r.casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
+              <Ico e="🙏" /> {fmt(r.casa.bendiciones)} {r.casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
             {obras.length ? (
               <ul className="mt-1.5 flex flex-wrap gap-1">
                 {obras.map((o) => (
                   <li key={o.id} className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
-                    {o.icono} {o.nombre}
+                    <Ico e={o.icono ?? ""} /> {o.nombre}
                   </li>
                 ))}
               </ul>
@@ -473,7 +474,7 @@ function CasaYBarrio({ r }: { r: RegistroJugador }) {
           {datos.map(([icono, n, nombre]) => (
             <div key={nombre} className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 ${n > 0 ? "bg-amber-50 dark:bg-amber-950/30" : "bg-stone-50 opacity-70 dark:bg-stone-900/40"}`}>
               <span className="text-lg" aria-hidden="true">
-                {icono}
+                <Ico e={icono} />
               </span>
               <span>
                 <span className="block text-sm font-black tabular-nums leading-none">{fmt(n)}</span>
@@ -511,7 +512,7 @@ function Logros({ r }: { r: RegistroJugador }) {
           {r.album.colecciones.map((c) => (
             <li key={c.id} className="flex items-center gap-2 text-xs">
               <span className="w-5 text-center" aria-hidden="true">
-                {c.icono}
+                <Ico e={c.icono ?? ""} />
               </span>
               <span className={`min-w-0 flex-1 truncate ${c.completa ? "font-bold text-emerald-800 dark:text-emerald-300" : ""}`}>
                 {c.nombre}

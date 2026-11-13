@@ -13,6 +13,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-iconos",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Íconos de verdad en lugar de emojis",
+    puntos: [
+      "🖼️ Los botones, las pestañas, las listas y las tablas del juego muestran íconos dibujados, todos del mismo estilo, en lugar de emojis: tu casa, las obras, el huerto, el álbum, los estudios, las fiestas, los juegos y mucho más.",
+      "🔥 El gozo tiene su moneda: una llama dorada (el fuego del ministerio). La ves en el mercado, el artesano, el arca, las obras y los regalos.",
+      "🫒 Íconos propios para lo del juego: la lámpara de aceite, el pan, la harina, el aceite, la oveja y el olivo.",
+    ],
+  },
+  {
     id: "2026-11-13-personajes-proporciones",
     fecha: "13 de noviembre de 2026",
     titulo: "Personajes con proporciones de verdad",

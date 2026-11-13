@@ -18,6 +18,7 @@ import {
 import { MAX_POR_MUEBLE } from "@shared/casa-interior";
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
+import { Gozo, Ico } from "./iconos";
 
 type Resp<T> = { ok: boolean; data: (T & { message?: string }) | null };
 async function pedir<T>(path: string, body?: unknown): Promise<Resp<T>> {
@@ -137,15 +138,15 @@ export function ArtesanoView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number)
       {enCurso && t.artesano && (
         <div className="space-y-1.5 rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800 dark:bg-amber-950/20" data-testid="artesano-en-curso">
           <p className="font-black">
-            ✨ Haciendo: {enCurso.icono} {enCurso.nombre}
+            <Ico e="✨" /> Haciendo: <Ico e={enCurso.icono ?? ""} /> {enCurso.nombre}
           </p>
           <Barra hecho={t.artesano.total - faltaArtesano} total={t.artesano.total} />
           <p className="text-xs">{faltaArtesano > 0 ? `Falta ${falta(faltaArtesano)}. El artesano trabaja aunque no estés.` : "¡Lista! Trayéndola…"}</p>
         </div>
       )}
       <p className="flex flex-wrap gap-x-3 gap-y-1 rounded-lg bg-stone-100 px-3 py-2 text-xs font-semibold dark:bg-stone-800">
-        <span>Tienes: ✨ {t.gozo} de gozo</span>
-        <span>📚 {t.estudios} {t.estudios === 1 ? "estudio aprobado" : "estudios aprobados"}</span>
+        <span>Tienes: <Gozo n={t.gozo} /> de gozo</span>
+        <span><Ico e="📚" /> {t.estudios} {t.estudios === 1 ? "estudio aprobado" : "estudios aprobados"}</span>
       </p>
       <Err e={error} />
       {mias.length ? (
@@ -158,7 +159,7 @@ export function ArtesanoView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number)
             return (
               <li key={a.id} className="rounded-xl border border-stone-200 p-2.5 dark:border-stone-700" data-testid={`artesano-${a.id}`}>
                 <div className="flex items-start gap-2">
-                  <span className="text-2xl leading-none">{a.icono}</span>
+                  <span className="text-2xl leading-none"><Ico e={a.icono ?? ""} /></span>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold">
                       {a.nombre}{" "}
@@ -174,7 +175,7 @@ export function ArtesanoView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number)
                       {fina.color && <span className="ml-1.5 inline-block h-3 w-3 rounded-full align-middle ring-2 ring-amber-400" style={{ background: fina.color }} />}
                     </p>
                     <p className="text-[11px] text-stone-500">
-                      Jornal ✨ {jornalDeFina(a)} · ⏳ {horasTexto(horasDeFina(a))} · 📚 pide {estudiosDeFina(a)} {estudiosDeFina(a) === 1 ? "estudio" : "estudios"}
+                      Jornal <Gozo n={jornalDeFina(a)} /> · ⏳ {horasTexto(horasDeFina(a))} · 📚 pide {estudiosDeFina(a)} {estudiosDeFina(a) === 1 ? "estudio" : "estudios"}
                       {a.categoria === "mueble" ? " · en tu casa suma +6 a las estrellas" : " · lleva su orla de oro: se ve en la ciudad"}
                     </p>
                   </div>
@@ -193,7 +194,7 @@ export function ArtesanoView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number)
                     }
                     data-testid={`artesano-hacer-${a.id}`}
                   >
-                    Llevar {IGUALES} al artesano · ✨ {jornalDeFina(a)}
+                    Llevar {IGUALES} al artesano · <Gozo n={jornalDeFina(a)} />
                   </Button>
                 )}
               </li>
@@ -238,7 +239,7 @@ export function OficiosView({ alCambiar, alIrAlMercado }: { alCambiar?: (t: Tall
       <Err e={error} />
       <section className="space-y-2 rounded-xl border border-stone-200 p-3 dark:border-stone-700" data-testid="oficios-redil">
         <p className="flex items-baseline justify-between gap-2 font-black">
-          <span>🐑 Tu redil</span>
+          <span><Ico e="🐑" /> Tu redil</span>
           <span className="text-xs font-semibold text-stone-500">
             {t.redil.ovejas} de {t.redil.max} ovejas
           </span>
@@ -306,7 +307,7 @@ export function OficiosView({ alCambiar, alIrAlMercado }: { alCambiar?: (t: Tall
             {tejiendo && t.telar && (
               <div className="space-y-1" data-testid="telar-en-curso">
                 <p className="text-xs font-bold">
-                  Tejiendo: {tejiendo.icono} {tejiendo.nombre}
+                  Tejiendo: <Ico e={tejiendo.icono ?? ""} /> {tejiendo.nombre}
                 </p>
                 <Barra hecho={t.telar.total - faltaTelar} total={t.telar.total} color="from-rose-300 to-rose-500" />
                 <p className="text-[11px] text-stone-500">{faltaTelar > 0 ? `Falta ${falta(faltaTelar)}.` : "¡Listo! Trayéndolo…"}</p>
@@ -318,7 +319,7 @@ export function OficiosView({ alCambiar, alIrAlMercado }: { alCambiar?: (t: Tall
                 const a = articulo(r.da);
                 return (
                   <li key={id} className="flex items-center gap-2 rounded-lg bg-stone-50 p-2 text-xs dark:bg-stone-800/60" data-testid={`telar-${id}`}>
-                    <span className="text-xl">{r.icono}</span>
+                    <span className="text-xl"><Ico e={r.icono ?? ""} /></span>
                     <span className="min-w-0 flex-1">
                       <b>{r.nombre}</b>
                       <span className="block text-[11px] text-stone-500">
@@ -407,7 +408,7 @@ export function IntercambioView({ alCambiarGozo }: { alCambiarGozo?: (gozo: numb
                   <b>
                     {x.cantidad} × {nombreDeCosa(x.cosa)}
                   </b>{" "}
-                  a ✨ {x.precio} c/u
+                  a <Gozo n={x.precio} /> c/u
                   {x.fueraDeTiempo && <span className="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-900 dark:bg-violet-900/40 dark:text-violet-200">fuera de su tiempo</span>}
                   {a?.fina && <span className="ml-1 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-950">pieza fina</span>}
                   <span className="block text-[11px] text-stone-500">
@@ -438,7 +439,7 @@ export function IntercambioView({ alCambiarGozo }: { alCambiarGozo?: (gozo: numb
             <div key={x.id} className="flex items-center gap-2 rounded-xl bg-amber-50/70 p-2 text-xs dark:bg-amber-950/20">
               <span className="text-xl">{iconoDeCosa(x.cosa)}</span>
               <span className="min-w-0 flex-1">
-                Quedan <b>{x.cantidad}</b> × {nombreDeCosa(x.cosa)} a ✨ {x.precio} c/u · cierra en {falta(x.quedan)}
+                Quedan <b>{x.cantidad}</b> × {nombreDeCosa(x.cosa)} a <Gozo n={x.precio} /> c/u · cierra en {falta(x.quedan)}
               </span>
               <Button size="sm" variant="ghost" className="h-7 px-2" disabled={busy} onClick={() => void hacer(`/cosas/${x.id}/cerrar`, {})} title="Cerrar el puesto (lo que quede vuelve a ti)" data-testid={`cerrar-cosa-${x.id}`}>
                 <X className="h-3.5 w-3.5" />
@@ -482,7 +483,7 @@ export function IntercambioView({ alCambiarGozo }: { alCambiarGozo?: (gozo: numb
               </label>
               <label className="space-y-1">
                 <span className="block font-semibold">
-                  Precio c/u (✨ {elegida.min} a {elegida.max})
+                  Precio c/u (<Gozo n={elegida.min} /> a {elegida.max})
                 </span>
                 <span className="flex items-center gap-1">
                   <button type="button" className="rounded-full bg-stone-100 p-1 dark:bg-stone-800" onClick={() => setPrecio(Math.max(elegida.min, p - 1))} aria-label="Más barato">
@@ -498,7 +499,7 @@ export function IntercambioView({ alCambiarGozo }: { alCambiarGozo?: (gozo: numb
               </label>
             </div>
             <p className="text-[11px] text-stone-500">
-              {elegida.fueraDeTiempo ? "Fuera de su tiempo vale más: hoy el mercado no la vende. " : ""}Si se vende todo: ✨ {total} − {diezmoDe(total)} de diezmo = <b>✨ {total - diezmoDe(total)}</b> para ti. Si no se vende en 48 horas, vuelve a ti.
+              {elegida.fueraDeTiempo ? "Fuera de su tiempo vale más: hoy el mercado no la vende. " : ""}Si se vende todo: <Gozo n={total} /> − {diezmoDe(total)} de diezmo = <b><Gozo n={total - diezmoDe(total)} /></b> para ti. Si no se vende en 48 horas, vuelve a ti.
             </p>
             <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={busy || e.mios.length >= PUESTOS_COSAS_MAX} onClick={() => void hacer("/cosas", { cosa: elegida.cosa, cantidad: cant, precio: p }, () => { gameStore.toast(`Abriste tu puesto: ${cant} × ${nombreDeCosa(elegida.cosa).toLowerCase()} a ✨ ${p} c/u`, "gold"); setCosa(null); })} data-testid="cosa-abrir">
               {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Store className="mr-1 h-4 w-4" />} Abrir el puesto

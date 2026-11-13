@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { INVITAR, VERSO_AMIGO, VERSO_INVITAR, enlaceDeInvitacion, normalizarCodigo, type InvitarEstado } from "@shared/invitar";
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
+import { Gozo } from "./iconos";
 
 const CLAVE = "jer-invita";
 
@@ -105,7 +106,7 @@ export function InvitarAmigo() {
         <UserPlus className="h-4 w-4" /> Invita a un amigo
       </p>
       <p className="text-xs text-stone-600 dark:text-stone-300">
-        Cuando tu amigo entre con tu enlace (con su cuenta aprobada) y juegue {INVITAR.dias} días, tú ganas ✨ {INVITAR.gozoQuienInvita} y él ✨ {INVITAR.gozoInvitado}, y los dos reciben la faja del buen amigo.
+        Cuando tu amigo entre con tu enlace (con su cuenta aprobada) y juegue {INVITAR.dias} días, tú ganas <Gozo n={INVITAR.gozoQuienInvita} /> y él <Gozo n={INVITAR.gozoInvitado} />, y los dos reciben la faja del buen amigo.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-lg bg-white px-3 py-1.5 font-mono text-base font-black tracking-[0.2em] ring-1 ring-teal-300 dark:bg-stone-900 dark:ring-teal-800" data-testid="invitar-codigo">

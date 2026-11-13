@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ARCA_MINIMO, ARCA_TITULO_DESDE, VERSO_ARCA, VERSO_ARCA_LLENA, VERSO_DADOR, type ArcaEstado } from "@shared/arca";
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
+import { Gozo, Ico } from "./iconos";
 
 type Resp = ArcaEstado & { message?: string; dado?: number; llenaAhora?: boolean };
 async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: Resp | null }> {
@@ -97,7 +98,7 @@ export function ArcaView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number) => 
             </p>
             {a.causa && (
               <p className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-[13px] font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100" data-testid="arca-causa">
-                🤲 Si la ciudad llena el arca: {a.causa}
+                <Ico e="🤲" /> Si la ciudad llena el arca: {a.causa}
               </p>
             )}
             <section className={`space-y-1.5 rounded-xl border p-3 ${a.llena ? "border-amber-400 bg-gradient-to-br from-amber-100 to-yellow-50 dark:border-amber-700 dark:from-amber-950/40 dark:to-stone-900" : "border-amber-200 dark:border-amber-900/60"}`} data-testid="arca-avance">
@@ -118,7 +119,7 @@ export function ArcaView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number) => 
             {!a.llena && (
               <section className="space-y-2 rounded-xl bg-stone-50 p-3 dark:bg-stone-800/60" data-testid="arca-dar">
                 <p className="text-xs">
-                  Tienes ✨ {fmt(a.gozo)} de gozo. Hoy diste {fmt(a.hoy)}{a.quedaHoy > 0 ? ` y puedes dar ${fmt(a.quedaHoy)} más` : ": mañana puedes dar más"}. En la temporada diste {fmt(a.mio)}.
+                  Tienes <Gozo n={fmt(a.gozo)} /> de gozo. Hoy diste {fmt(a.hoy)}{a.quedaHoy > 0 ? ` y puedes dar ${fmt(a.quedaHoy)} más` : ": mañana puedes dar más"}. En la temporada diste {fmt(a.mio)}.
                 </p>
                 {montos.length ? (
                   <div className="flex flex-wrap gap-1.5">
@@ -137,7 +138,7 @@ export function ArcaView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number) => 
               </section>
             )}
             <section className="space-y-1" data-testid="arca-libro">
-              <p className="font-black">📜 El libro del arca</p>
+              <p className="font-black"><Ico e="📜" /> El libro del arca</p>
               {a.libro.length ? (
                 <ol className="space-y-0.5 text-xs">
                   {a.libro.map((x, i) => (
@@ -145,7 +146,7 @@ export function ArcaView({ alCambiarGozo }: { alCambiarGozo?: (gozo: number) => 
                       <span>
                         {i + 1}. {x.nombre}
                       </span>
-                      <span className="tabular-nums">✨ {fmt(x.gozo)}</span>
+                      <span className="tabular-nums"><Gozo n={fmt(x.gozo)} /></span>
                     </li>
                   ))}
                 </ol>

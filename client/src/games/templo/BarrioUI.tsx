@@ -33,6 +33,7 @@ import { CopaDelBarrio } from "./BarrioCopa";
 import { PuebloDelBarrio } from "./BarrioPueblo";
 import { invitarVecino, irConVecino } from "./Acompanar";
 import { NombreConRegistro } from "./RegistroUI";
+import { Ico } from "./iconos";
 
 type Pestana = "charla" | "vecinos" | "emblema" | "copa" | "obras" | "pueblo";
 
@@ -414,7 +415,7 @@ function Charla({
               onClick={() => setFrases(!frases)}
               data-testid="barrio-frases"
             >
-              💬 Frases y versículos
+              <Ico e="💬" /> Frases y versículos
             </button>
             {!chat.soloFrases && (
               <span className={`text-[11px] tabular-nums ${[...texto].length > CHAT_MAX ? "font-bold text-red-600" : "text-stone-500"}`}>
@@ -638,7 +639,7 @@ function EmblemaYLema({ vista, propio, onVista }: { vista: BarrioVista; propio: 
   return (
     <div className="space-y-3">
       <div className="rounded-2xl bg-gradient-to-b from-amber-100 to-amber-50 p-3 text-center dark:from-amber-950/50 dark:to-transparent" data-testid="barrio-emblema">
-        <div className="text-5xl leading-none">{vista.emblema.icono}</div>
+        <div className="text-5xl leading-none"><Ico e={vista.emblema.icono ?? ""} /></div>
         <p className="mt-1 font-serif text-base font-bold text-amber-900 dark:text-amber-200">{vista.emblema.nombre}</p>
         <p className="text-[11px] font-semibold text-amber-800/80 dark:text-amber-300/80">{vista.emblema.ref}</p>
       </div>
@@ -655,7 +656,7 @@ function EmblemaYLema({ vista, propio, onVista }: { vista: BarrioVista; propio: 
             className={`relative flex flex-col items-center gap-0.5 rounded-xl border px-1 py-2 text-center ${v.mio.emblema === e.id ? "border-amber-500 bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "border-amber-200 bg-white hover:bg-amber-50 dark:border-amber-900/60 dark:bg-stone-900"}`}
             data-testid={`barrio-voto-emblema-${e.id}`}
           >
-            <span className="text-2xl leading-none">{e.icono}</span>
+            <span className="text-2xl leading-none"><Ico e={e.icono ?? ""} /></span>
             <span className="text-[10.5px] font-semibold leading-tight">{e.nombre}</span>
             {(v.emblemas[e.id] || 0) > 0 && (
               <span className="absolute right-1 top-1 min-w-[1.1rem] rounded-full bg-amber-500 px-1 text-[10px] font-black leading-4 text-amber-950">{v.emblemas[e.id]}</span>

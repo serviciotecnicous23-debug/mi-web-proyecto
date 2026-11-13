@@ -12,6 +12,7 @@ import { Card } from "./ui";
 import type { CaminoHoy, IrA, PasoCamino } from "@shared/camino";
 import { SALAS, salasDe, type RestauracionVista } from "@shared/restauracion";
 import type { CiudadWorld } from "./ciudad/mundo";
+import { Ico } from "./iconos";
 
 async function traerCamino(): Promise<CaminoHoy | null> {
   try {
@@ -103,7 +104,7 @@ export function SiguientePaso() {
   if (!p) return null;
   return (
     <div className="pointer-events-auto flex max-w-[min(100%,26rem)] items-center gap-1.5 self-start rounded-2xl bg-black/55 tpl-vidrio py-1 pl-2 pr-1 text-[11px] font-semibold text-white shadow-lg" data-testid="siguiente-paso">
-      <span className="shrink-0 text-base leading-none">{p.icono}</span>
+      <span className="shrink-0 text-base leading-none"><Ico e={p.icono ?? ""} /></span>
       <button type="button" className="min-w-0 flex-1 text-left leading-tight" onClick={() => gameStore.push({ kind: "misiones" })} title="El camino de hoy">
         <span className="block text-[10px] font-black uppercase tracking-wider text-amber-300">
           Siguiente paso · {camino.hechos} de {camino.pasos.length}
@@ -164,7 +165,7 @@ export function CaminoHoyBloque() {
       </ul>
       {camino.cofre.recibido ? (
         <p className="text-center text-xs font-bold text-emerald-700 dark:text-emerald-300" data-testid="camino-cofre-recibido">
-          🎁 Ya abriste el cofre de hoy. Mañana habrá otro camino.
+          <Ico e="🎁" /> Ya abriste el cofre de hoy. Mañana habrá otro camino.
         </p>
       ) : (
         <Button

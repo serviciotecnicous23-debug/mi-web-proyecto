@@ -9,6 +9,7 @@ import { CONCURSO_PREGUNTAS, CONCURSO_PREMIOS, CONCURSO_SEGUNDOS, VERSO_CONCURSO
 import { gameStore } from "./store";
 import { Card, VerseBox } from "./ui";
 import { NombreConRegistro } from "./RegistroUI";
+import { Ico } from "./iconos";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -102,7 +103,7 @@ export function ConcursoView() {
           className="w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#2a1d63] via-[#1d1450] to-[#120c2e] p-3 text-left text-amber-50 shadow-lg ring-1 ring-amber-300/60 transition hover:ring-amber-300"
           data-testid="button-abrir-sabio"
         >
-          <p className="font-serif text-lg font-black text-amber-200">🏛️ ¿Quién es sabio?</p>
+          <p className="font-serif text-lg font-black text-amber-200"><Ico e="🏛️" /> ¿Quién es sabio?</p>
           <p className="text-xs text-amber-50/90">El gran concurso de la casa de la sabiduría: quince gradas, cuatro comodines, tablas y los trajes de los sabios.</p>
         </button>
         {error && <p className="rounded-xl bg-amber-50 p-2.5 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{error}</p>}
@@ -161,7 +162,7 @@ export function ConcursoView() {
             </p>
             {e.campeones && (
               <p className="rounded-xl bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30" data-testid="concurso-campeones">
-                🏆 Campeones de la semana pasada: <b>{e.campeones.nombres.join(" · ")}</b>
+                <Ico e="🏆" /> Campeones de la semana pasada: <b>{e.campeones.nombres.join(" · ")}</b>
               </p>
             )}
             {e.mio?.esperando ? (

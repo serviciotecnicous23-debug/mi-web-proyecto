@@ -86,6 +86,7 @@ function VisitaRegaloYBanquete({ personajeId }: { personajeId: number }) {
   );
 }
 import { OBRAS, type ObrasEstado } from "@shared/obras";
+import { ConIcono, Ico } from "./iconos";
 
 /** La ciudad que corre y lo último que dijo el servidor de ella (con cómo cambiarlo). */
 export const CiudadCtx = createContext<{
@@ -152,7 +153,11 @@ function Reloj({ hora, fecha, fase, icono }: { hora: number; fecha: string; fase
         <circle cx={12 + Math.cos(a + Math.PI) * 7} cy={12 + Math.sin(a + Math.PI) * 7} r="3" fill={night ? "#e8ecff" : "#ffd66b"} />
       </svg>
       <span className="min-w-0 truncate">
-        {icono ? `${icono} ` : ""}
+        {icono ? (
+          <>
+            <Ico e={icono} />{" "}
+          </>
+        ) : null}
         {fecha} · {fase}
       </span>
     </div>
@@ -278,7 +283,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
               onClick={() => open({ kind: "fiesta", id: c.fiesta!.id })}
               data-testid="ciudad-fiesta"
             >
-              {c.fiesta.icono} {c.fiesta.nombre}
+              <Ico e={c.fiesta.icono ?? ""} /> {c.fiesta.nombre}
               {c.fiesta.de > 1 ? ` · día ${c.fiesta.dia} de ${c.fiesta.de}` : ""}
               {c.fiesta.merito > 1.01 ? ` · mérito ×${c.fiesta.merito.toLocaleString("es-419")} en el templo` : ""}
             </button>
@@ -364,7 +369,7 @@ export function CiudadHudLayer({ paused, onPause, big, onFull }: { paused: boole
                   }}
                   data-testid={`ciudad-gesto-${g.id}`}
                 >
-                  <span aria-hidden="true">{g.icono}</span>
+                  <span aria-hidden="true"><Ico e={g.icono ?? ""} /></span>
                 </button>
               ))}
             </div>
@@ -534,7 +539,7 @@ function MuroAnuncio() {
   return (
     <section className="rounded-xl border border-stone-300 p-3 dark:border-stone-700" data-testid="anuncios-muro">
       <p className="flex items-baseline justify-between gap-2 font-black">
-        <span>🧱 El muro caído</span>
+        <span><Ico e="🧱" /> El muro caído</span>
         <span className="text-xs font-semibold text-stone-500">
           {m.construidos} de {m.tramos} tramos
         </span>
@@ -714,7 +719,7 @@ function CasaView({ inicial }: { inicial?: string }) {
               className={`rounded-full px-3 py-1 text-xs font-bold ${pestana === id ? "bg-amber-400 text-amber-950" : "bg-stone-100 dark:bg-stone-800"}`}
               data-testid={`casa-pestana-${id}`}
             >
-              {nombre}
+              <ConIcono texto={nombre} />
             </button>
           ))}
         </div>
@@ -751,7 +756,7 @@ function CasaView({ inicial }: { inicial?: string }) {
                 {hechas ? `${hechas} de ${OBRAS.length} obras edificadas.` : "Edifica tu casa con el gozo que ganas: cada obra la ven tus vecinos."}
               </span>
               <Button size="sm" className="rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={() => setPestana("obras")} data-testid="casa-ir-obras">
-                🧱 Obras de tu casa
+                <Ico e="🧱" /> Obras de tu casa
               </Button>
               <FotoDeCasa />
             </div>
@@ -863,7 +868,7 @@ function SiervosPanel() {
       <ul className="space-y-1.5">
         {p.siervos.map((tarea, i) => (
           <li key={i} className="flex items-center gap-2 rounded-lg bg-amber-50/70 px-2 py-1.5 dark:bg-amber-950/20">
-            <span className="w-5 text-center">{BIEN[tarea].icono}</span>
+            <span className="w-5 text-center"><Ico e={BIEN[tarea].icono ?? ""} /></span>
             <span className="min-w-0 flex-1 text-[13px]">
               <b>Siervo {i + 1}:</b> {BIEN[tarea].tarea.toLowerCase()} ({BIEN[tarea].porHora.toLocaleString("es-419")} por hora)
             </span>
@@ -895,7 +900,7 @@ function SiervosPanel() {
       <div className="grid grid-cols-3 gap-1.5 text-center" data-testid="ciudad-alfoli">
         {BIENES.map((b) => (
           <div key={b.id} className={`rounded-lg p-1.5 ${doble === b.id ? "bg-amber-200/70 dark:bg-amber-800/40" : "bg-stone-100 dark:bg-stone-800"}`}>
-            <p className="text-lg leading-none">{b.icono}</p>
+            <p className="text-lg leading-none"><Ico e={b.icono ?? ""} /></p>
             <p className="text-sm font-black tabular-nums">
               {p.bienes[b.id]}
               <span className="text-[10px] font-semibold text-stone-500">/{p.capacidad}</span>
@@ -992,7 +997,7 @@ function VisitaView({ personajeId, nombre }: { personajeId: number; nombre: stri
               )}
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="visita-bendiciones">
-              ✨ {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
+              <Ico e="🙏" /> {fmt(casa.bendiciones)} {casa.bendiciones === 1 ? "bendición" : "bendiciones"} de sus vecinos
             </p>
             <BotonRegistro personajeId={personajeId} nombre={casa.nombre} mio={casa.esMia} />
             {entrarACasa && (
@@ -1073,7 +1078,7 @@ function AnunciosView() {
           {hoy.fiesta ? (
             <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
               <p className="font-bold">
-                {hoy.fiesta.fiesta.icono} {hoy.fiesta.fiesta.nombre}
+                <Ico e={hoy.fiesta.fiesta.icono ?? ""} /> {hoy.fiesta.fiesta.nombre}
                 {hoy.fiesta.fiesta.duracion > 1 ? ` · día ${hoy.fiesta.dia} de ${hoy.fiesta.fiesta.duracion}` : ""}
               </p>
               <Button
@@ -1110,7 +1115,7 @@ function AnunciosView() {
 
         <MuroAnuncio />
         <button type="button" onClick={() => gameStore.push({ kind: "tesoro" })} className="flex w-full items-center gap-2 rounded-xl border border-amber-200 p-3 text-left dark:border-amber-900/60" data-testid="anuncios-tesoro">
-          <span className="text-2xl">🏛️</span>
+          <span className="text-2xl"><Ico e="🏛️" /></span>
           <span className="min-w-0 flex-1">
             <b>El tesoro del templo</b>
             <span className="block text-[11px] text-stone-500">El diezmo de las ventas, la provisión para los que empiezan y las casas más bendecidas de la semana.</span>
@@ -1454,7 +1459,7 @@ function VecinoView({ id }: { id: number }) {
         </p>
         {v.titulo && (
           <p className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-950 ring-1 ring-amber-300 dark:bg-amber-900/40 dark:text-amber-100" data-testid="vecino-titulo">
-            🏅 {v.titulo}
+            <Ico e="🏅" /> {v.titulo}
           </p>
         )}
         {paso === "ficha" && <LogrosDeOtro personajeId={v.id} />}
@@ -1624,7 +1629,7 @@ function MeritoCamino({ camino }: { camino: "sacerdocio" | "profecia" | "realeza
       aria-label={`Mérito ${online.merito}${online.puesto ? `, puesto ${online.puesto} entre los ${quien}` : ""}`}
       data-testid="ciudad-merito"
     >
-      🏅 <span className="tabular-nums">{online.merito}</span> mérito
+      <Ico e="🏅" /> <span className="tabular-nums">{online.merito}</span> mérito
       {online.puesto ? <span className="font-bold">· {online.puesto}.º</span> : null}
     </button>
   );

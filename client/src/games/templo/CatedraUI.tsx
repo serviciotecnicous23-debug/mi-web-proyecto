@@ -12,6 +12,7 @@ import { Card } from "./ui";
 import { CiudadCtx } from "./CiudadUI";
 import { gameStore } from "./store";
 import { servidoReciente } from "./servido";
+import { Ico } from "./iconos";
 
 async function pedir<T>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: (T & { message?: string; agotada?: boolean }) | null }> {
   try {
@@ -107,7 +108,7 @@ export function CatedraView({ area }: { area: CatedraArea }) {
         {grado && cuenta && (
           <p className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-stone-600 dark:text-stone-300" data-testid="catedra-grado">
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
-              🎓 {grado.nombre} · {cuenta.aprendidas} de {cuenta.total}
+              <Ico e="🎓" /> {grado.nombre} · {cuenta.aprendidas} de {cuenta.total}
             </span>
             <span>
               Hoy: {cuenta.hoy} de {cuenta.max}
@@ -137,7 +138,7 @@ export function CatedraView({ area }: { area: CatedraArea }) {
             </p>
             {leccion.sobre && GRUPOS_CATEDRA[leccion.sobre] && (
               <p className="rounded-xl bg-orange-50 px-3 py-1.5 text-[12px] font-semibold text-orange-900 dark:bg-orange-950/30 dark:text-orange-200" data-testid="catedra-sobre">
-                🔥 Sobre lo que serviste hace poco: {GRUPOS_CATEDRA[leccion.sobre]}
+                <Ico e="🔥" /> Sobre lo que serviste hace poco: {GRUPOS_CATEDRA[leccion.sobre]}
               </p>
             )}
             <p className="rounded-xl bg-amber-50 p-3 font-serif text-[15px] leading-snug dark:bg-amber-950/30" data-testid="catedra-ensena">
@@ -185,7 +186,7 @@ export function CatedraView({ area }: { area: CatedraArea }) {
                 </p>
                 {otra && (
                   <Button className="w-full rounded-full bg-orange-600 font-bold text-white hover:bg-orange-500" onClick={() => setVuelta((v) => v + 1)} data-testid="catedra-otra">
-                    📜 Otra lección
+                    <Ico e="📜" /> Otra lección
                   </Button>
                 )}
                 <Button

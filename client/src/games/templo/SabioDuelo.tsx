@@ -11,6 +11,7 @@ import { ICONO_CAMINO } from "./barrio-chat";
 import { LETRAS, Presentador, RELACION, Reloj, miles, pedir, primerNombre } from "./sabio-comun";
 import { sabioRed } from "./sabio-red";
 import { sonido } from "./sabio-sonido";
+import { Ico } from "./iconos";
 
 // ================================================================ la sala de los duelos
 export function DuelosLobby({ onEntrar, onVolver }: { onEntrar: (id: number) => void; onVolver: () => void }) {
@@ -472,7 +473,7 @@ export function DueloView({ id, onSalir, onCambiar }: { id: number; onSalir: () 
           <p className="text-sm font-bold">
             {miles(d.yo.puntos)} – {miles(d.rival.puntos)}
           </p>
-          <p className="text-sm">✨ +{fin.gozo} de gozo</p>
+          <p className="text-sm"><Ico e="✨" /> +{fin.gozo} de gozo</p>
           {fin.premio && (
             <p className="rounded-xl bg-amber-400/20 p-2 text-sm font-black" data-testid="sabio-duelo-premio">
               ¡Ganaste el {fin.premio}! Ya está en el armario de tu casa.
@@ -518,7 +519,7 @@ function Lado({ nombre, detalle, icono, puntos, listo, derecha }: { nombre: stri
   return (
     <div className={`min-w-0 rounded-2xl bg-black/30 px-2.5 py-2 ${derecha ? "text-right" : ""}`} title={detalle}>
       <p className={`flex items-center gap-1 truncate text-[12px] font-black ${derecha ? "justify-end" : ""}`}>
-        <span aria-hidden="true">{icono}</span> <span className="truncate">{nombre}</span>
+        <span aria-hidden="true"><Ico e={icono} /></span> <span className="truncate">{nombre}</span>
         {listo && <span className="text-emerald-300" aria-label="ya respondió">✓</span>}
       </p>
       <p className="font-serif text-xl font-black tabular-nums text-amber-200">{miles(puntos)}</p>

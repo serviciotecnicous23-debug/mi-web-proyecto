@@ -74,6 +74,7 @@ import type { CiudadEstado } from "@shared/ciudad";
 import { GOZO } from "@shared/mercado";
 import { guardarInvitacionDeLaUrl } from "./InvitarUI";
 import { NombreConRegistro, RegistroView } from "./RegistroUI";
+import { Ico } from "./iconos";
 
 const GAME_HEIGHT = "min(calc(100dvh - var(--app-nav-h, 64px) - var(--app-tabbar-h, 0px) - var(--radio-mini-h, 0px) - 76px), 900px)";
 const WorldCtx = createContext<TempleWorld | null>(null);
@@ -1113,7 +1114,7 @@ function TitleScreen(props: {
         {phase === "title" && !confirmNew && loggedIn && props.estado && <EnLineaEntrada estado={props.estado} onOnline={props.onOnline} />}
         {ahora !== null && ahora > 0 && (
           <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-100">
-            🔥 {ahora} {ahora === 1 ? "persona sirviendo" : "personas sirviendo"} en el templo ahora
+            <Ico e="🔥" /> {ahora} {ahora === 1 ? "persona sirviendo" : "personas sirviendo"} en el templo ahora
           </p>
         )}
         <ul className="max-w-sm space-y-1 text-left text-xs text-white/75">
@@ -1355,7 +1356,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                     title="Con dos o más sacerdotes sirviendo a la vez, los deberes valen ×1,2"
                     data-testid="templo-juntos"
                   >
-                    🤝 {hud.sacerdotes} sirviendo juntos · ×1,2
+                    <Ico e="🤝" /> {hud.sacerdotes} sirviendo juntos · ×1,2
                   </div>
                 )}
                 <GananciaEnLinea />
@@ -1409,7 +1410,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
                 {hud.bread}/12
               </div>
             )}
-            {hud.incense !== null && <Dots icon={<span className="text-[10px]">🌿</span>} label="Incienso en el altar de oro" value={hud.incense} max={4} color="#a78bfa" />}
+            {hud.incense !== null && <Dots icon={<span className="text-[10px]"><Ico e="🌿" /></span>} label="Incienso en el altar de oro" value={hud.incense} max={4} color="#a78bfa" />}
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -1535,7 +1536,7 @@ function HudLayer({ paused, onPause, big, onFull, online }: { paused: boolean; o
         )}
         {c && (
           <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 tpl-vidrio py-1 pl-2 pr-1 text-sm font-bold backdrop-blur" data-testid="templo-carga">
-            <span className="text-lg">{ITEMS[c.type].icono}</span>
+            <span className="text-lg"><Ico e={ITEMS[c.type].icono ?? ""} /></span>
             <span className="tabular-nums">
               {c.count}/{c.cap}
             </span>
@@ -1625,10 +1626,10 @@ function PauseMenu(props: {
           <p className="text-center text-sm italic text-amber-100/90">«Generación a generación celebrará tus obras» (Salmo 145:4)</p>
           <p className="text-sm text-white/85">El templo vuelve a las ruinas y empiezas otra vez la historia como aprendiz de Azarías. Es opcional: también puedes seguir sirviendo como estás.</p>
           <ul className="space-y-1.5 rounded-xl bg-white/5 p-3 text-[13px] leading-snug">
-            <li>👑 Tu cargo de <b>{RANKS[props.rangoMax]?.nombre}</b> queda en tu historial y en la tabla.</li>
-            <li>🏆 Te quedas con tus copas, logros, jornadas con sus estrellas y adornos.</li>
-            <li>📖 También tu libro de versículos, la racha del desafío del día y tu gloria (nunca baja).</li>
-            <li>✨ Ganas <b>+{extra} % de gozo</b> para siempre y un regalo de gozo para empezar.</li>
+            <li><Ico e="👑" /> Tu cargo de <b>{RANKS[props.rangoMax]?.nombre}</b> queda en tu historial y en la tabla.</li>
+            <li><Ico e="🏆" /> Te quedas con tus copas, logros, jornadas con sus estrellas y adornos.</li>
+            <li><Ico e="📖" /> También tu libro de versículos, la racha del desafío del día y tu gloria (nunca baja).</li>
+            <li><Ico e="✨" /> Ganas <b>+{extra} % de gozo</b> para siempre y un regalo de gozo para empezar.</li>
             <li className="text-white/70">🔄 Vuelven a empezar: los lugares restaurados, los levitas, las mejoras, el cargo de esta generación y las preguntas.</li>
           </ul>
           <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" onClick={props.onGen} data-testid="button-templo-generacion-si">
@@ -2511,8 +2512,8 @@ function CaminoView() {
         {hud.daily && (
           <div className={`rounded-xl border p-3 ${hud.daily.done ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30" : "border-sky-300 bg-sky-50 dark:bg-sky-950/30"}`} data-testid="templo-desafio">
             <p className="mb-2 flex items-center justify-between text-sm font-black">
-              <span>📅 Desafío del día {hud.daily.done && "· ¡cumplido!"}</span>
-              <span className="text-xs font-bold text-orange-600">🔥 {hud.daily.streak} {hud.daily.streak === 1 ? "día" : "días"} seguidos</span>
+              <span><Ico e="📅" /> Desafío del día {hud.daily.done && "· ¡cumplido!"}</span>
+              <span className="text-xs font-bold text-orange-600"><Ico e="🔥" /> {hud.daily.streak} {hud.daily.streak === 1 ? "día" : "días"} seguidos</span>
             </p>
             <div className="space-y-1.5">
               {hud.daily.goals.map((g) => (
@@ -2714,11 +2715,11 @@ function ComunidadView() {
           {ahora ? (
             ahora.jugando > 0 ? (
               <>
-                <b className="text-orange-600">🔥 {ahora.jugando}</b> {ahora.jugando === 1 ? "persona sirviendo" : "personas sirviendo"} ahora · {ahora.jugadores} en la tabla
+                <b className="text-orange-600"><Ico e="🔥" /> {ahora.jugando}</b> {ahora.jugando === 1 ? "persona sirviendo" : "personas sirviendo"} ahora · {ahora.jugadores} en la tabla
               </>
             ) : (
               <>
-                <b className="text-orange-600">🏆 {ahora.jugadores}</b> {ahora.jugadores === 1 ? "persona" : "personas"} en la tabla de gloria
+                <b className="text-orange-600"><Ico e="🏆" /> {ahora.jugadores}</b> {ahora.jugadores === 1 ? "persona" : "personas"} en la tabla de gloria
               </>
             )
           ) : (
@@ -3016,14 +3017,14 @@ function OnlineLobby({
             {estado.jerusalen.fiesta ? (
               <>
                 {" · "}
-                {estado.jerusalen.fiesta.icono} <b>{estado.jerusalen.fiesta.nombre}</b>
+                <Ico e={estado.jerusalen.fiesta.icono ?? ""} /> <b>{estado.jerusalen.fiesta.nombre}</b>
                 {estado.jerusalen.fiesta.de > 1 ? ` (día ${estado.jerusalen.fiesta.dia} de ${estado.jerusalen.fiesta.de})` : ""}
                 {estado.jerusalen.fiesta.merito > 1.01 ? ` · el servicio vale ×${estado.jerusalen.fiesta.merito.toLocaleString("es-419")}` : ""}
               </>
             ) : estado.jerusalen.proxima ? (
               <>
                 {" "}
-                · {estado.jerusalen.proxima.icono} {estado.jerusalen.proxima.nombre}{" "}
+                · <Ico e={estado.jerusalen.proxima.icono ?? ""} /> {estado.jerusalen.proxima.nombre}{" "}
                 {estado.jerusalen.proxima.enDias != null ? (estado.jerusalen.proxima.enDias === 1 ? "mañana" : `en ${estado.jerusalen.proxima.enDias} días`) : `en ${estado.jerusalen.proxima.enMinutos} min`}
               </>
             ) : null}
@@ -3058,7 +3059,7 @@ function OnlineLobby({
                   className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm ${x.activo ? "bg-amber-400/25 ring-1 ring-amber-300" : "bg-white/10 hover:bg-white/20"}`}
                   data-testid={`personaje-${x.camino}`}
                 >
-                  <span className="text-xl">{CAMINOS[x.camino].icono}</span>
+                  <span className="text-xl"><Ico e={CAMINOS[x.camino].icono ?? ""} /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block font-bold">{x.nombre}</span>
                     <span className="block text-[11px] text-white/70">
@@ -3085,7 +3086,7 @@ function OnlineLobby({
                       data-testid={`nuevo-${c}`}
                     >
                       <span className="block text-sm font-bold">
-                        {CAMINOS[c].icono} {CAMINOS[c].nombre}
+                        <Ico e={CAMINOS[c].icono ?? ""} /> {CAMINOS[c].nombre}
                       </span>
                       <span className="block text-white/70">{CAMINOS[c].resumen}</span>
                     </button>
@@ -3114,7 +3115,7 @@ function OnlineLobby({
                     data-testid={`camino-${c}`}
                   >
                     <span className="block text-sm font-bold">
-                      {CAMINOS[c].icono} {CAMINOS[c].nombre}
+                      <Ico e={CAMINOS[c].icono ?? ""} /> {CAMINOS[c].nombre}
                     </span>
                     <span className="block text-white/70">{CAMINOS[c].resumen}</span>
                   </button>
@@ -3184,7 +3185,7 @@ function OnlineLobby({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-lg font-black">{p.nombre}</p>
                 <p className="text-xs text-sky-100">
-                  {CAMINOS[p.camino].icono} {nombreEscalonCamino(p.camino, estado.mio?.escalon, escalonNombre(estado.mio?.escalon))}
+                  <Ico e={CAMINOS[p.camino].icono ?? ""} /> {nombreEscalonCamino(p.camino, estado.mio?.escalon, escalonNombre(estado.mio?.escalon))}
                   {estado.mio?.cargo && t.dePrueba ? " (de prueba)" : ""} · {fmt(estado.mio?.merito || 0)} de mérito
                 </p>
                 <p className="text-[11px] text-sky-100/80" data-testid="templo-estudios-estado">
@@ -3224,7 +3225,7 @@ function OnlineLobby({
               ? "Llegas a la puerta de tu casa. El templo está subiendo la escalinata (o en «Ir a…»)."
               : `Llegas a la puerta de tu casa. Tu servicio está en ${CAMINOS[p.camino].lugar}.`}
             </p>
-            {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100">🔥 {estado.enLinea} sirviendo en el templo en línea ahora</p>}
+            {estado.enLinea > 0 && <p className="text-center text-xs text-amber-100"><Ico e="🔥" /> {estado.enLinea} sirviendo en el templo en línea ahora</p>}
           </section>
         )}
         <section className="overflow-hidden rounded-2xl bg-[#fffaf0] text-stone-800 shadow-2xl dark:bg-[#1f1a12] dark:text-stone-100">
@@ -3323,7 +3324,7 @@ function TemporadaPanel({ estado, onEstado }: { estado: JerusalenEstado; onEstad
             className={`rounded-full px-3 py-1 text-xs font-bold ${ver === c ? "bg-amber-400 text-amber-950" : "bg-stone-100 dark:bg-stone-800"}`}
             data-testid={`temporada-camino-${c}`}
           >
-            {CAMINOS[c].icono} {quienes(c).charAt(0).toUpperCase() + quienes(c).slice(1)}
+            <Ico e={CAMINOS[c].icono ?? ""} /> {quienes(c).charAt(0).toUpperCase() + quienes(c).slice(1)}
             {c === camino ? " (tú)" : ""}
           </button>
         ))}
@@ -3613,7 +3614,7 @@ function FiestaView({ id }: { id: FiestaId }) {
     <Card
       title={
         <span className="flex items-center gap-2">
-          <span aria-hidden="true">{f.icono}</span> {f.nombre}
+          <span aria-hidden="true"><Ico e={f.icono ?? ""} /></span> {f.nombre}
         </span>
       }
       testid="templo-fiesta"
@@ -3852,7 +3853,7 @@ function FiestasTab() {
             <li key={f.id} className={`rounded-xl border p-2.5 ${ahora ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30" : "border-stone-200 dark:border-stone-700"}`}>
               <div className="flex items-baseline justify-between gap-2">
                 <p className="font-bold">
-                  <span aria-hidden="true">{f.icono}</span> {f.nombre} {ahora && <span className="text-xs text-amber-700 dark:text-amber-300">(hoy)</span>}
+                  <span aria-hidden="true"><Ico e={f.icono ?? ""} /></span> {f.nombre} {ahora && <span className="text-xs text-amber-700 dark:text-amber-300">(hoy)</span>}
                 </p>
                 {vivida && <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-label="Ya la celebraste" />}
               </div>

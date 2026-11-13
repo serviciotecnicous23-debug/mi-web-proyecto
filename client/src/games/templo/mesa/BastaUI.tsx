@@ -9,6 +9,7 @@ import { BASTA, CATEGORIAS_BASTA, LETRAS_BASTA, NOMBRE_CAT_BASTA, limpiarRespues
 import type { BastaVista, JugadaBasta } from "@shared/mesa/basta";
 import { mesaSonido } from "./mesa-sonido";
 import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
+import { Ico } from "../iconos";
 
 type Resp = Record<CatBasta, string>;
 const vacio = (): Resp => ({ personaje: "", lugar: "", libro: "", objeto: "" });
@@ -163,7 +164,7 @@ export function BastaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMes
           {CATEGORIAS_BASTA.map((c) => (
             <label key={c} className="flex items-center gap-2 rounded-2xl border-2 border-amber-300 bg-white px-3 py-2 shadow-sm focus-within:border-amber-500 dark:bg-stone-900">
               <span className="text-2xl" aria-hidden="true">
-                {NOMBRE_CAT_BASTA[c].icono}
+                <Ico e={NOMBRE_CAT_BASTA[c].icono ?? ""} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[11px] font-black uppercase tracking-wide text-amber-800">{NOMBRE_CAT_BASTA[c].nombre}</span>
@@ -214,7 +215,7 @@ export function BastaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMes
                 <th className="px-1 py-1">Quién</th>
                 {CATEGORIAS_BASTA.map((c) => (
                   <th key={c} className="px-1 py-1">
-                    {NOMBRE_CAT_BASTA[c].icono} {NOMBRE_CAT_BASTA[c].nombre.split(" ")[0]}
+                    <Ico e={NOMBRE_CAT_BASTA[c].icono ?? ""} /> {NOMBRE_CAT_BASTA[c].nombre.split(" ")[0]}
                   </th>
                 ))}
                 <th className="px-1 py-1 text-right">Puntos</th>

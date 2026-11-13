@@ -12,6 +12,7 @@ import { nombreDeBarrio } from "@shared/ciudad";
 import { avisarMisiones } from "./online";
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
+import { Ico } from "./iconos";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -66,7 +67,7 @@ export function ReunionCasa() {
       {mia ? (
         mia.faltan > 0 ? (
           <p className="rounded-lg bg-violet-50 p-2 text-xs dark:bg-violet-950/30" data-testid="casa-reunion-activa">
-            📖 Tu casa está abierta: «{mia.titulo}». Quedan {minutos(mia.faltan)} · {mia.asistentes} {mia.asistentes === 1 ? "vecino vino" : "vecinos vinieron"}.
+            <Ico e="📖" /> Tu casa está abierta: «{mia.titulo}». Quedan {minutos(mia.faltan)} · {mia.asistentes} {mia.asistentes === 1 ? "vecino vino" : "vecinos vinieron"}.
           </p>
         ) : (
           <p className="rounded-lg bg-stone-100 p-2 text-xs dark:bg-stone-800" data-testid="casa-reunion-hecha">
@@ -84,7 +85,7 @@ export function ReunionCasa() {
           >
             {e.secciones.map((s, i) => (
               <option key={`${s.estudio}:${s.seccion}`} value={i}>
-                {s.icono} {s.titulo}
+                {s.titulo}
               </option>
             ))}
           </select>
@@ -136,7 +137,7 @@ export function ReunionVisita({ personajeId, alAcertar }: { personajeId: number;
   return (
     <section className="space-y-2 rounded-xl border-2 border-violet-300 bg-violet-50/60 p-3 dark:border-violet-800 dark:bg-violet-950/20" data-testid="visita-reunion">
       <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-        📖 Reunión en esta casa · quedan {minutos(leccion.faltan)}
+        <Ico e="📖" /> Reunión en esta casa · quedan {minutos(leccion.faltan)}
       </p>
       <p className="font-serif text-lg font-black">{leccion.titulo}</p>
       <p className="text-[11px] text-stone-500">De «{leccion.estudio}», enseñado por {leccion.anfitrion}.</p>
