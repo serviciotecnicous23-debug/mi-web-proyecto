@@ -367,7 +367,8 @@ export function construirMueble(id: string): THREE.Group | null {
       const w = W - 0.16, d = D - 0.18;
       g.box(w, 0.3, d, MADERA_OSC, { y: 0.21 });
       g.add(new THREE.CylinderGeometry(d / 2, d / 2, w, 16, 1, false, 0, Math.PI), MADERA, { y: 0.36, rz: Math.PI / 2, sx: 0.7 });
-      for (const t of [-0.36, 0, 0.36]) {
+      // dos bandas de bronce a los lados; la chapa de la cerradura, sobre la madera del medio (nada en forma de cruz)
+      for (const t of [-0.34, 0.34]) {
         brillo.box(0.04, 0.31, d + 0.01, C.bronce, { x: t * w, y: 0.21 });
         brillo.add(new THREE.TorusGeometry(d / 2 + 0.005, 0.012, 3, 12, Math.PI), C.bronce, { x: t * w, y: 0.36, ry: Math.PI / 2, sy: 0.7 });
       }
@@ -397,8 +398,9 @@ export function construirMueble(id: string): THREE.Group | null {
     }
     case "tapiz": {
       // el bastidor de cedro y el tapiz de lana: cenefas, granadas bordadas, una vid y los flecos (nada en forma de cruz)
+      // los postes terminan bajo la vara (no sobresalen por arriba)
       for (const sx of [-1, 1]) {
-        g.box(0.06, 1.35, 0.06, MADERA_OSC, { x: sx * (W / 2 - 0.08), y: 0.675 });
+        g.box(0.06, 1.29, 0.06, MADERA_OSC, { x: sx * (W / 2 - 0.08), y: 0.645 });
         g.box(0.06, 0.05, 0.34, MADERA_OSC, { x: sx * (W / 2 - 0.08), y: 0.025 });
       }
       g.cyl(0.025, 0.025, W - 0.04, MADERA, { y: 1.3, rz: Math.PI / 2 }, 8);

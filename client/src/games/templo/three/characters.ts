@@ -812,12 +812,12 @@ export class Figure {
       this.body.add(g);
     }
     if (r.pies) {
-      // las sandalias asoman bajo la túnica: la suela, los dedos y las correas cruzadas sobre el pie (se ven de arriba)
+      // las sandalias asoman bajo la túnica: la suela, los dedos y dos correas de lado a lado (se ven de arriba; nada
+      // en forma de cruz) y la del tobillo
       const sb = new GeoBuilder();
       sb.box(0.12, 0.018, 0.3, "#5a3d26", { y: 0.009, z: 0.12 });
       sb.sphere(0.05, "#d39a6c", { y: 0.035, z: 0.22, sx: 1.05, sy: 0.55, sz: 1.2 }, 8, 5);
-      for (const z of [0.16, 0.24]) sb.box(0.125, 0.022, 0.03, r.pies, { y: 0.05, z });
-      sb.box(0.03, 0.022, 0.12, r.pies, { y: 0.056, z: 0.2 });
+      for (const z of [0.15, 0.23]) sb.box(0.125, 0.024, 0.035, r.pies, { y: 0.05, z });
       sb.torus(0.05, 0.009, r.pies, { y: 0.075, z: 0.0, rx: Math.PI / 2 }, 3, 10);
       const geo = sb.build();
       for (const f of [this.footL, this.footR]) {
