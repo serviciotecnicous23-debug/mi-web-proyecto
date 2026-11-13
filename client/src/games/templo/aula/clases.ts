@@ -15,6 +15,7 @@ import {
 import { CATEDRAS, GRUPOS_CATEDRA, gradoCatedra, type CatedraArea, type CatedraRespuesta, type LeccionVista } from "@shared/catedras";
 import { FRASES, RELOJ_CATEDRA, RELOJ_EXAMEN, RELOJ_PRACTICA, burbujasDeSeccion, burbujasDeTexto, conNombre, frase, medallaDeNota, type MaestroId } from "@shared/aula";
 import { GOZO } from "@shared/mercado";
+import { REPASO_RANGO, SEGUNDOS_RANGO, examenRango, type FinParte, type PreguntaRango, type RespuestaRango } from "@shared/examenes-rango";
 import { AulaCerrada, type Director } from "./director";
 import { sonidoAula } from "./aula-sonido";
 
@@ -22,7 +23,11 @@ export type PedidoAula =
   | { que: "menu" }
   | { que: "seccion"; estudio: string; seccion: string }
   | { que: "examen"; estudio: string }
-  | { que: "catedra"; area: CatedraArea };
+  | { que: "catedra"; area: CatedraArea }
+  /** Una parte de un examen de rango (shared/examenes-rango.ts); «corrido»: al aprobarla, sigue con la próxima. */
+  | { que: "rango"; examen: string; parte: number; corrido?: boolean }
+  /** El repaso de la temporada para los cargos altos. */
+  | { que: "repaso" };
 
 /** Lo que sigue después de una clase: otra clase, el menú del aula o salir. */
 export type Siguiente = PedidoAula | { que: "salir" };
@@ -408,5 +413,120 @@ export async function claseCatedra(
     { id: "menu", label: "📜 Volver al aula", primaria: true },
     { id: "salir", label: meta.cierre },
   ]);
+  return el === "salir" ? { que: "salir" } : { que: "menu" };
+}
+
+// ================================================================ los exámenes de rango (y el repaso de la temporada)
+/**
+ * Una parte de un examen de rango (o el repaso): el servidor da las preguntas de a una y lleva el reloj; cada respuesta
+ * se corrige al momento (la respuesta llega solo después de responder). La última, con suspenso. Al final, la nota; si
+ * con ella quedó aprobado el examen, la prenda y el premio; y si se va de corrido, sigue con la próxima parte.
+ */
+export async function claseRango(
+  d: Director,
+  o: { examen: string; parte: number; corrido: boolean; alGozo?: (n: number) => void; alAviso?: (t: string, tono: "gold" | "info") => void },
+): Promise<Siguiente> {
+  const repaso = o.examen === "repaso";
+  const def = repaso ? null : examenRango(o.examen);
+  if (!repaso && !def) return { que: "menu" };
+  const p = def?.partes.find((x) => x.n === o.parte);
+  if (!repaso && !p) return { que: "menu" };
+  const sem = semillaDe();
+  const nombre = repaso ? "El repaso de la temporada" : def!.nombre;
+  const n = repaso ? REPASO_RANGO.preguntas : p!.preguntas;
+  const aprueba = repaso ? REPASO_RANGO.aprueba : p!.aprueba;
+  d.limpiar();
+  d.progreso(repaso ? "🎖️ El repaso de la temporada" : `🎖️ ${def!.nombre} · parte ${o.parte} de ${def!.partes.length}${o.corrido ? " · de corrido" : ""}`);
+  d.fase("ensena");
+  d.pizarra({ k: "titulo", titulo: nombre, sub: repaso ? "Para seguir en un cargo alto" : `Parte ${o.parte}: ${p!.titulo}` });
+  sonidoAula.pagina();
+  d.reaccion("atentos", 1, 3);
+  await d.decir(
+    repaso
+      ? `${d.nombre}, para seguir en un cargo alto se repasa cada temporada. Son ${n} preguntas de ${SEGUNDOS_RANGO} segundos y se aprueba con ${aprueba}. Te corrijo una por una.`
+      : `${d.nombre}, hoy das la parte ${o.parte} del examen de ${def!.rango.toLowerCase()}: «${p!.titulo}». ${p!.tema} Son ${n} preguntas de ${SEGUNDOS_RANGO} segundos y se aprueba con ${aprueba}. Te corrijo una por una.`,
+    { sigue: "Empezar" },
+  );
+  let fin: FinParte | null = null;
+  for (let vuelta = 0; vuelta < 20 && !fin; vuelta++) {
+    const r = await conReintento<{ pregunta?: PreguntaRango; fin?: FinParte }>(d, () => api("/rango/pregunta", { examen: o.examen, parte: o.parte, corrido: o.corrido }), "No se pudo traer la pregunta.");
+    if (!r) {
+      const el = await d.acciones([{ id: "menu", label: "📜 Volver al aula", primaria: true }, { id: "salir", label: "Salir del aula" }]);
+      return el === "salir" ? { que: "salir" } : { que: "menu" };
+    }
+    if (r.fin) {
+      // (la pregunta que se dejó sin responder venció y cerró el intento)
+      fin = r.fin;
+      break;
+    }
+    const pq = r.pregunta!;
+    const ultima = pq.n >= pq.de;
+    d.fase("pregunta");
+    void d.decir(pq.pregunta, { sigue: null, ms: 300, gesto: "senala" }).catch(() => undefined);
+    const manos = window.setTimeout(() => d.escena?.manos(2), 2600);
+    const i = await d.preguntar({ n: pq.n, de: pq.de, etiqueta: `${repaso ? "Repaso" : `Parte ${o.parte}`} · pregunta ${pq.n} de ${pq.de}`, texto: pq.pregunta, opciones: pq.opciones }, Math.max(1, pq.restan), true);
+    window.clearTimeout(manos);
+    if (i < 0) {
+      d.marcar({ bloqueada: true });
+      await d.decir(f(d, FRASES.tiempo, sem + pq.n), { sigue: null, ms: 800 });
+    }
+    const res = await conReintento<RespuestaRango>(d, () => api("/rango/respuesta", { examen: o.examen, parte: o.parte, opcion: i }), "No se pudo corregir la respuesta.");
+    if (!res) return { que: "menu" };
+    if (typeof res.gozoTotal === "number") o.alGozo?.(res.gozoTotal);
+    if (ultima) {
+      d.suspenso(true);
+      await d.decir(f(d, FRASES.suspenso, sem), { tono: "suspenso", sigue: null, ms: 3000, gesto: "piensa" });
+      d.suspenso(false);
+    }
+    const buena = pq.opciones.indexOf(res.correcta);
+    if (res.bien) {
+      d.marcar({ correcta: buena >= 0 ? buena : i, elegida: null });
+      d.fase("bien");
+      sonidoAula.bien();
+      sonidoAula.aplauso(ultima ? 0.9 : 0.45);
+      await d.decir(`${f(d, FRASES.bien, sem + pq.n)} ${res.explica}`, { ref: res.ref, tono: "bien", sigue: res.fin ? "Ver la nota" : "Siguiente", gesto: "aplaude" });
+    } else {
+      d.marcar({ correcta: buena >= 0 ? buena : null, mala: i >= 0 ? i : null, elegida: null });
+      d.fase("mal");
+      sonidoAula.mal();
+      await d.decir(`${res.tarde ? "Llegó tarde: cuenta como no respondida. " : ""}Era «${res.correcta}». ${res.explica}`, { ref: res.ref, tono: "mal", sigue: res.fin ? "Ver la nota" : "Siguiente", gesto: "explica" });
+    }
+    if (res.fin) fin = res.fin;
+  }
+  if (!fin) return { que: "menu" };
+
+  // la nota de la parte, con su medalla; si con ella quedó aprobado el examen, la prenda y el premio
+  d.quitarPregunta();
+  const metal = medallaDeNota(fin.aciertos, fin.de, fin.aprueba);
+  d.pizarra({ k: "nota", aciertos: fin.aciertos, de: fin.de, titulo: fin.examenAprobado ? "¡Examen aprobado!" : fin.aprobada ? "¡Parte aprobada!" : nombre, sub: repaso ? "Repaso de la temporada" : `Parte ${o.parte}: ${p!.titulo}`, metal });
+  d.fase(fin.aprobada ? "aprobado" : "nota");
+  sonidoAula.medalla(metal);
+  if (fin.aprobada) sonidoAula.aplauso(fin.examenAprobado ? 1.3 : 0.9);
+  if (fin.examenAprobado && fin.premio) o.alAviso?.(`🎖️ ¡Aprobaste el ${nombre.toLowerCase()}! +${fin.premio.merito} de mérito · +${fin.premio.gozo} de gozo${fin.prenda ? ` · ${fin.prenda.nombre}` : ""}`, "gold");
+  else if (fin.aprobada) o.alAviso?.(repaso ? "🎖️ Repaso de la temporada aprobado: tu cargo alto sigue al día." : `🎖️ Parte ${o.parte} aprobada: queda guardada.`, "gold");
+  const esperaMin = Math.max(1, Math.ceil(fin.espera / 60));
+  d.nota({
+    aciertos: fin.aciertos,
+    de: fin.de,
+    metal,
+    titulo: fin.examenAprobado ? (fin.deCorrido ? "⭐ ¡Aprobado de corrido!" : "🎖️ ¡Examen aprobado!") : fin.aprobada ? "¡Parte aprobada!" : "Todavía no",
+    sub:
+      fin.examenAprobado && fin.premio
+        ? `+${fin.premio.merito} de mérito · +${fin.premio.gozo} de gozo${fin.prenda ? ` · ganaste «${fin.prenda.nombre}»` : ""}`
+        : fin.aprobada
+          ? "Queda guardada: sigue cuando quieras."
+          : `Se aprueba con ${fin.aprueba}. Repasa y vuelve en ${esperaMin} minutos, con preguntas nuevas.`,
+    lineas: [nombre, ...(def && fin.examenAprobado ? def.abre.slice(0, 2) : [])],
+  });
+  const dice = fin.aprobada ? (fin.de - fin.aciertos === 0 ? FRASES.perfecto : FRASES.aprobado) : fin.aciertos >= fin.aprueba - 1 ? FRASES.casi : FRASES.noAun;
+  await d.decir(f(d, dice, sem), { tono: fin.aprobada ? "bien" : "normal", sigue: null, ms: 500, gesto: fin.aprobada ? "aplaude" : "habla" });
+  // ¿sigue (de corrido o no) con la próxima parte?
+  const proxima = !repaso && fin.aprobada && !fin.examenAprobado ? def!.partes.find((x) => x.n > o.parte) : undefined;
+  const el = await d.acciones([
+    ...(proxima ? [{ id: "seguir", label: o.corrido ? `🏃 Seguir de corrido: parte ${proxima.n}` : `▶ Parte ${proxima.n}: «${proxima.titulo}»`, primaria: true }] : []),
+    { id: "menu", label: "📜 Volver al aula", primaria: !proxima },
+    { id: "salir", label: "Salir del aula" },
+  ]);
+  if (el === "seguir" && proxima) return { que: "rango", examen: o.examen, parte: proxima.n, corrido: o.corrido };
   return el === "salir" ? { que: "salir" } : { que: "menu" };
 }

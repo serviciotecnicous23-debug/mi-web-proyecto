@@ -13,6 +13,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-examenes-de-rango",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Los exámenes de rango: cada escalón de tu camino tiene su examen",
+    puntos: [
+      "🎖️ En el aula de tu camino hay cuatro exámenes de rango: uno para cada escalón, del segundo al quinto (por ejemplo: sacerdote de turno, vidente o escriba del rey; y hasta sumo sacerdote, varón de Dios o canciller del rey).",
+      "🧩 Cada examen tiene 3 o 4 partes. Das cada parte cuando quieras y queda guardada; si no la apruebas, repasa y vuelve en 15 minutos con preguntas nuevas. También puedes darlo todo de corrido: tiene su sello y un poco más de gozo.",
+      "🏛️ Para ser «de turno» (vidente, escriba del rey) hace falta el examen de ese escalón, y para recibir un cargo al cerrar la temporada, el examen del cargo. Los cargos altos piden además un repaso corto cada temporada.",
+      "🥻 Cada examen aprobado da mérito, gozo y su prenda propia (no se vende: se gana), que entra en tu álbum. Con el examen del tercer escalón enseñas en las reuniones: quien va a tu reunión gana un poco más de gozo.",
+      "📜 Lo que te falta lo ves en «Para hoy» y en la ventana de la temporada.",
+    ],
+  },
+  {
     id: "2026-11-13-sabio-vivo",
     fecha: "13 de noviembre de 2026",
     titulo: "«¿Quién es sabio?» más vivo, y la noche de los sabios para jugar en grupo",

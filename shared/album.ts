@@ -17,7 +17,7 @@ export const VERSO_ALBUM: Verso = {
 };
 
 /** Las de siempre y una por cada historia de la temporada («historia-senaquerib», «historia-pascua-ezequias»…). */
-export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | `historia-${string}`;
+export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | "rangos" | `historia-${string}`;
 export type TituloEspecialId = "dador-alegre" | "buen-amigo" | "idoneo" | "oido-sabio" | "coleccionista" | "gran-coleccionista";
 export type TituloId = ColeccionId | TituloEspecialId;
 
@@ -46,6 +46,14 @@ export const COLECCIONES: Coleccion[] = [
     texto: "No se vende: los trajes de los sabios, el mejor vestido, la faja del buen amigo y el manto de Elías (el de los mentores).",
     items: ids((a) => a.exclusivo === "sabio" || a.exclusivo === "regreso" || a.exclusivo === "amigo" || a.exclusivo === "mentor"),
     titulo: "Tesoro de Jerusalén",
+  },
+  {
+    id: "rangos",
+    nombre: "Las prendas de los rangos",
+    icono: "🎖️",
+    texto: "Una por cada examen de rango aprobado, en los tres caminos (se ganan en el aula).",
+    items: ids((a) => a.exclusivo === "rango"),
+    titulo: "Diligente en la Palabra",
   },
   // las prendas de cada historia de la temporada (shared/capitulos.ts): una colección por historia, con su título
   ...ARCOS.map(

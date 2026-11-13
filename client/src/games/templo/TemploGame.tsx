@@ -61,6 +61,7 @@ import { CapitulosView } from "./CapitulosUI";
 import { LibroView } from "./CaminoHoyUI";
 import { SabioView } from "./SabioUI";
 import { AulaView } from "./AulaUI";
+import { RangoAviso } from "./RangoUI";
 import { LlamadaEntrante, RetoEntrante } from "./SabioLlamada";
 import { InvitacionEntrante } from "./Acompanar";
 import { CasaHudLayer } from "./CasaUI";
@@ -3362,7 +3363,10 @@ function TemporadaView() {
           </span>
         </button>
         {estado ? (
-          <TemporadaPanel estado={estado} onEstado={setEstado} />
+          <>
+            <RangoAviso />
+            <TemporadaPanel estado={estado} onEstado={setEstado} />
+          </>
         ) : error ? (
           <p className="py-6 text-center text-sm">No se pudo cargar la temporada. Revisa tu conexión.</p>
         ) : (

@@ -12,6 +12,7 @@ import { REUNION_MINUTOS, REUNION_PREMIO, type ReunionesEstado, type ReunionLecc
 import { diaClave, evento, filaMerito, forgetJer, personajeDe, temporadaDe, type PersonajeFila } from "./jerusalen";
 import { avanzarMision } from "./misiones";
 import { sumarGozo } from "./gozo";
+import { GOZO_REUNION_MAESTRO } from "@shared/examenes-rango";
 
 export const REUNIONES_SQL = `
 CREATE TABLE IF NOT EXISTS "game_house_meetings" (
@@ -58,6 +59,8 @@ async function reuniones(yo: number, where: string, params: unknown[], orden = "
             GREATEST(0, EXTRACT(EPOCH FROM (m.ends_at - now())))::int AS faltan,
             (SELECT count(*)::int FROM game_meeting_attendance a WHERE a.meeting_id = m.id) AS asistentes,
             EXISTS (SELECT 1 FROM game_meeting_attendance a WHERE a.meeting_id = m.id AND a.character_id = $1) AS ya,
+            EXISTS (SELECT 1 FROM game_rango_examenes rx JOIN game_characters c7 ON c7.id = rx.character_id
+                     WHERE c7.user_id = c.user_id AND c7.game = c.game AND rx.examen ~ '-(3|4|5)$') AS maestro,
             c.name, u.display_name, u.username
        FROM game_house_meetings m
        JOIN game_characters c ON c.id = m.host_character_id
@@ -82,6 +85,7 @@ async function reuniones(yo: number, where: string, params: unknown[], orden = "
       asistentes: Number(r.asistentes),
       mia: Number(r.host_character_id) === yo,
       yaFui: r.ya === true,
+      maestro: r.maestro === true,
     };
   });
 }
@@ -259,12 +263,13 @@ export function registerReunionesRoutes(app: Express) {
         );
         if (premiado.length) {
           await sumarMerito(ch.id, REUNION_PREMIO.meritoVecino);
-          await sumarGozo(ch.casa, REUNION_PREMIO.gozoVecino, "reuniones");
+          // si la da alguien con examen de rango 3 o más, enseña en las reuniones: un poco más de gozo
+          await sumarGozo(ch.casa, REUNION_PREMIO.gozoVecino + (r.maestro ? GOZO_REUNION_MAESTRO : 0), "reuniones");
           await pool.query(`UPDATE game_houses SET offered = offered + $2 WHERE character_id = $1`, [r.anfitrionId, REUNION_PREMIO.honraCasa]);
           await sumarGozo(r.anfitrionId, REUNION_PREMIO.gozoCasa, "reuniones");
           forgetJer();
           out.merito = REUNION_PREMIO.meritoVecino;
-          out.gozo = REUNION_PREMIO.gozoVecino;
+          out.gozo = REUNION_PREMIO.gozoVecino + (r.maestro ? GOZO_REUNION_MAESTRO : 0);
         }
         const misiones = await avanzarMision(ch, "reunion", 1).catch(() => []);
         if (misiones.length) out.misiones = misiones;

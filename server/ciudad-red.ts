@@ -85,6 +85,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
   const { rows } = await pool.query(
     `SELECT u.id AS user_id, u.is_active, u.display_name, u.username, c.id, c.name, c.path, c.ropa, c.city_banned_at, h.barrio, h.plot,
             COALESCE(sm.merit, 0)::int AS merito, o.office,
+            EXISTS (SELECT 1 FROM game_rango_examenes rx WHERE rx.character_id = c.id AND rx.examen = COALESCE(c.path, 'sacerdocio') || '-2') AS turno_ok,
             (SELECT t.titulo FROM game_characters t WHERE t.id = h.character_id) AS titulo
        FROM users u
        JOIN game_characters c ON c.user_id = u.id AND c.game = $2
@@ -103,7 +104,7 @@ async function cargarJugador(userId: number): Promise<Jugador | null> {
     info: {
       id: Number(r.id),
       nombre: nombreDe(r),
-      escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
+      escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito), r.turno_ok === true),
       barrio: Number(r.barrio),
       casa: Number(r.plot),
       u: Number(r.user_id),

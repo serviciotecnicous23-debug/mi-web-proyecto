@@ -156,6 +156,8 @@ export function registerMercadoRoutes(app: Express) {
             ? "La faja del buen amigo no se vende: se gana invitando a un amigo que juega 3 días."
             : a.exclusivo === "mentor"
             ? "El manto de Elías no se vende: lo reciben el mentor y su aprendiz cuando el aprendiz termina sus pasos."
+            : a.exclusivo === "rango"
+            ? "Las prendas de los rangos no se venden: se ganan aprobando el examen de rango en el aula."
             : a.exclusivo === "temporada"
             ? "Esa prenda no se vende: se gana con la historia de la temporada."
             : a.exclusivo === "regreso"

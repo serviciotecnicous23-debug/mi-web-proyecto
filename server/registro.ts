@@ -11,6 +11,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { esAdmin, escalonPorMerito, nombreDe, temporadaDe } from "./jerusalen";
 import { titularEstudios } from "./estudios";
+import { tieneExamenTurno } from "./examenes-rango";
 import { logrosDe } from "./logros-en-linea";
 import { ventajasDeBarrio } from "./barrio-obras";
 import { BANCO_CATEDRAS } from "./catedras-banco";
@@ -89,7 +90,7 @@ async function armarRegistro(userId: number, titular: number): Promise<Recordado
       [p.id],
     );
     const vigente = cargos.find((c) => Number(c.season) === t.n && !c.lost_at)?.office as EscalonId | undefined;
-    const escalon = vigente || escalonPorMerito(merito);
+    const escalon = vigente || escalonPorMerito(merito, await tieneExamenTurno(Number(p.id), camino));
     personajes.push({
       id: Number(p.id),
       nombre: nombreDe(p),

@@ -16,6 +16,7 @@ import { PRENDAS_CAPITULOS } from "./capitulos";
 import { PRENDA_REGRESO } from "./regreso";
 import { PRENDA_AMIGO } from "./invitar";
 import { PRENDA_MENTOR } from "./mentores";
+import { PRENDAS_RANGO } from "./examenes-rango";
 import { diaEnJerusalen, factorPrecio, mediodiaDe, type DiaJerusalen, type EstacionId } from "./anio";
 
 export type Categoria = "semilla" | "adorno" | "ropa" | "letrero" | "mueble";
@@ -34,7 +35,7 @@ export type Articulo = {
    * Jerusalén después de una semana o más (shared/regreso.ts); «taller»: las piezas finas, que hace el artesano con 4
    * iguales (shared/taller.ts); «amigo»: la faja del buen amigo, al invitar a un amigo que juega 3 días (shared/invitar.ts).
    */
-  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo" | "mentor";
+  exclusivo?: "sabio" | "temporada" | "regreso" | "taller" | "amigo" | "mentor" | "rango";
   /** Una pieza fina del artesano (shared/taller.ts): el artículo de donde sale (con 4 iguales). */
   fina?: string;
   /** De temporada: solo se vende en su estación o en los días de sus eventos del año (shared/anio.ts). Quien la compra, la guarda. */
@@ -158,6 +159,17 @@ export const ARTICULOS: Articulo[] = [
     color: PRENDA_MENTOR.color,
     exclusivo: "mentor",
   },
+  // las prendas de cada rango: tampoco se venden, se ganan aprobando el examen de rango (shared/examenes-rango.ts)
+  ...Object.values(PRENDAS_RANGO).map((p): Articulo => ({
+    id: p.id,
+    categoria: "ropa",
+    nombre: p.nombre,
+    icono: p.id.startsWith("manto") ? "🥻" : "🎖️",
+    precio: 0,
+    detalle: `Se gana al aprobar su examen de rango. ${p.detalle} «${p.verso.text}» (${p.verso.ref}).`,
+    color: p.color,
+    exclusivo: "rango",
+  })),
   // la ropa fina del artesano: tampoco se vende (shared/taller.ts)
   ...ROPA_FINA,
   // el letrero de la casa

@@ -22,6 +22,7 @@ import { sirviendoJuntos } from "./presencia-templo";
 import { avanzarMision, misionesPorDeberes } from "./misiones";
 import { GOZO, sumarGozo } from "./gozo";
 import { registrarVisita } from "./regreso";
+import { tieneExamenTurno } from "./examenes-rango";
 import {
   CARGOS_DE_PRUEBA, CONSTANCIA_SEGUNDOS, DEBERES, DIAS_ACTIVO, DIAS_AVISO, DIAS_PIERDE, ESPERA_PREGUNTA, HORA_COMPLETA,
   JERUSALEN_JUEGO, MAX_PERSONAJES, MERITO_CONSTANCIA, MERITO_DEBER, MERITO_INSTRUCCION, MERITO_MIN_CARGO, MERITO_PREGUNTA, MERITO_TURNO, PARTES_INSTRUCCION,
@@ -312,7 +313,7 @@ async function revisarCargos(season: number, alCerrar = false) {
     [season, DIAS_PIERDE],
   );
   const { rows } = await pool.query(
-    `SELECT o.character_id, o.can_high, o.can_mid, o.office, c.user_id, c.path, u.is_active
+    `SELECT o.character_id, o.can_high, o.can_mid, o.can_jefe, o.office, c.user_id, c.path, u.is_active
        FROM game_offices o
        JOIN game_characters c ON c.id = o.character_id
        JOIN users u ON u.id = c.user_id
@@ -334,7 +335,7 @@ async function revisarCargos(season: number, alCerrar = false) {
       const l = libres[camino];
       if (l.sumo > 0 && r.can_high) ahora = "sumo";
       else if (l.principal > 0 && r.can_mid !== false) ahora = "principal";
-      else if (l.jefe > 0) ahora = "jefe";
+      else if (l.jefe > 0 && r.can_jefe !== false) ahora = "jefe";
       if (ahora) {
         l[ahora]--;
         usados.add(quien);
@@ -379,8 +380,10 @@ async function cerrarTemporada(n: number) {
       return;
     }
     // Candidatos: quienes sirvieron en los últimos días y juntaron el mérito mínimo, sin importar
-    // el juego local. Principal: aprobó «El sacerdocio de Aarón». Sumo: ya fue principal (o sumo) en
-    // una temporada y aprobó «El Día de la Expiación». Los estudios aprobados son para siempre.
+    // el juego local. Cada cargo pide el examen de rango de su escalón (shared/examenes-rango.ts): jefe el 3,
+    // principal el 4 y sumo el 5. Principal: además aprobó «El sacerdocio de Aarón» (o el estudio de su camino).
+    // Sumo: ya fue principal (o sumo) en una temporada y aprobó «El Día de la Expiación». Los cargos altos piden
+    // el saber al día: el examen 4 o 5 aprobado en esta temporada, o el repaso de esta temporada.
     const { rows } = await client.query(
       `SELECT m.character_id, m.merit,
               EXISTS (SELECT 1 FROM game_offices p
@@ -390,7 +393,13 @@ async function cerrarTemporada(n: number) {
                          AND s.study_id = CASE c.path WHEN 'profecia' THEN $6 WHEN 'realeza' THEN $7 ELSE $4 END) AS estudio_principal,
               EXISTS (SELECT 1 FROM game_studies s JOIN game_characters c2 ON c2.id = s.character_id
                        WHERE c2.user_id = c.user_id AND c2.game = c.game AND s.approved_at IS NOT NULL
-                         AND s.study_id = CASE c.path WHEN 'profecia' THEN $8 WHEN 'realeza' THEN $9 ELSE $5 END) AS estudio_sumo
+                         AND s.study_id = CASE c.path WHEN 'profecia' THEN $8 WHEN 'realeza' THEN $9 ELSE $5 END) AS estudio_sumo,
+              EXISTS (SELECT 1 FROM game_rango_examenes x WHERE x.character_id = m.character_id AND x.examen = COALESCE(c.path, 'sacerdocio') || '-3') AS examen3,
+              EXISTS (SELECT 1 FROM game_rango_examenes x WHERE x.character_id = m.character_id AND x.examen = COALESCE(c.path, 'sacerdocio') || '-4') AS examen4,
+              EXISTS (SELECT 1 FROM game_rango_examenes x WHERE x.character_id = m.character_id AND x.examen = COALESCE(c.path, 'sacerdocio') || '-5') AS examen5,
+              (EXISTS (SELECT 1 FROM game_rango_examenes x WHERE x.character_id = m.character_id AND x.temporada >= $1
+                         AND x.examen IN (COALESCE(c.path, 'sacerdocio') || '-4', COALESCE(c.path, 'sacerdocio') || '-5'))
+                OR EXISTS (SELECT 1 FROM game_rango r WHERE r.character_id = m.character_id AND r.clave = 'repaso:T' || $1::text AND r.aprobada_at IS NOT NULL)) AS al_dia
          FROM game_season_merit m
          JOIN game_characters c ON c.id = m.character_id
          JOIN users u ON u.id = c.user_id
@@ -406,8 +415,16 @@ async function cerrarTemporada(n: number) {
     for (const r of rows) {
       candidatos++;
       await client.query(
-        `INSERT INTO game_offices (season, character_id, position, merit, can_high, can_mid) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
-        [n + 1, r.character_id, candidatos, r.merit, r.fue_principal === true && r.estudio_sumo === true, r.estudio_principal === true],
+        `INSERT INTO game_offices (season, character_id, position, merit, can_high, can_mid, can_jefe) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+        [
+          n + 1,
+          r.character_id,
+          candidatos,
+          r.merit,
+          r.fue_principal === true && r.estudio_sumo === true && r.examen5 === true && r.al_dia === true,
+          r.estudio_principal === true && r.examen4 === true && r.al_dia === true,
+          r.examen3 === true,
+        ],
       );
     }
     await client.query(`UPDATE game_seasons SET candidates = $3 WHERE game = $1 AND season = $2`, [JUEGO, n, candidatos]);
@@ -535,7 +552,8 @@ async function yaSirvioBastante(characterId: number): Promise<boolean> {
 /** Todos los personajes de una cuenta (uno por camino), con su escalón de esta temporada. */
 async function personajesDe(userId: number, activo: number | null, season: number): Promise<JerusalenEstado["personajes"]> {
   const { rows } = await pool.query(
-    `SELECT c.id, c.name, c.path, c.user_id, u.display_name, u.username, COALESCE(m.merit, 0)::int AS merito, o.office
+    `SELECT c.id, c.name, c.path, c.user_id, u.display_name, u.username, COALESCE(m.merit, 0)::int AS merito, o.office,
+            EXISTS (SELECT 1 FROM game_rango_examenes rx WHERE rx.character_id = c.id AND rx.examen = COALESCE(c.path, 'sacerdocio') || '-2') AS turno_ok
        FROM game_characters c JOIN users u ON u.id = c.user_id
        LEFT JOIN game_season_merit m ON m.character_id = c.id AND m.season = $3
        LEFT JOIN game_offices o ON o.character_id = c.id AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
@@ -546,7 +564,7 @@ async function personajesDe(userId: number, activo: number | null, season: numbe
     id: Number(r.id),
     nombre: nombreDe(r),
     camino: caminoDe(r.path),
-    escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
+    escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito), r.turno_ok === true),
     merito: Number(r.merito),
     activo: Number(r.id) === activo,
   }));
@@ -565,8 +583,9 @@ function nombreElegido(nombre: string, camino: Camino): { valor: string | null }
   return error ? { error } : { valor: limpiarNombreLibre(nombre) };
 }
 
-export function escalonPorMerito(merito: number): EscalonId {
-  return merito >= MERITO_TURNO ? "turno" : "sacerdote";
+/** El escalón por el mérito de la temporada: «de turno» (vidente, escriba del rey) pide además el examen 2 de su camino. */
+export function escalonPorMerito(merito: number, examenTurno: boolean): EscalonId {
+  return merito >= MERITO_TURNO && examenTurno ? "turno" : "sacerdote";
 }
 
 async function estadoDe(req: Request): Promise<JerusalenEstado> {
@@ -603,10 +622,11 @@ async function estadoDe(req: Request): Promise<JerusalenEstado> {
     const o = of[0];
     const cargo = o && o.office && !o.lost_at ? (o.office as EscalonId) : null;
     const sinServir = ch.dias_sin_servir === null ? null : Math.floor(ch.dias_sin_servir);
+    const turnoOk = await tieneExamenTurno(ch.id, ch.camino);
     mio = {
       merito,
       puesto: merito > 0 && r ? Number(r.puesto) : null,
-      escalon: cargo || escalonPorMerito(merito),
+      escalon: cargo || escalonPorMerito(merito, turnoOk),
       cargo,
       deberes: r ? Number(r.duties) : 0,
       respondidas: r ? Number(r.answered) : 0,
@@ -920,7 +940,7 @@ export function registerJerusalenRoutes(app: Express) {
         return {
           merito,
           ganado,
-          escalon: (of[0]?.office as EscalonId) || escalonPorMerito(merito),
+          escalon: (of[0]?.office as EscalonId) || escalonPorMerito(merito, await tieneExamenTurno(ch.id, ch.camino)),
           hoy: { segundos: Math.round(despues), factor: factorDelDia(despues) },
           ...(constancia ? { constancia } : {}),
           ...(juntos ? { juntos } : {}),

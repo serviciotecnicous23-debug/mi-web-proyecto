@@ -29,6 +29,7 @@ import { INVITAR, type InvitarEstado } from "@shared/invitar";
 import { PASOS, type MentoresEstado } from "@shared/mentores";
 import { GOZO_DICHO, delTema, type DichosEstado } from "@shared/dichos";
 import { articulo } from "@shared/mercado";
+import { irAlAulaDeRango, useRangoFalta } from "./RangoUI";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -75,6 +76,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       vivo = false;
     };
   }, []);
+  // el examen de rango que falta (para el turno, para el cargo o el repaso de la temporada)
+  const rango = useRangoFalta();
   if (!d) return null;
   const abrir = (m: Parameters<typeof gameStore.push>[0]) => {
     gameStore.close();
@@ -83,6 +86,8 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
   const lineas: Linea[] = [];
   // la racha de servicio va primero: es lo que se pierde si no se sirve hoy
   if (d.racha) lineas.push(...lineasDeRacha(d.racha).filter((l) => l.id === "racha"));
+  // el examen de rango que falta: se da por partes en el aula del camino
+  if (rango?.falta) lineas.push({ id: "rango", icono: "🎖️", texto: rango.falta.texto, boton: { texto: "Al aula", hacer: () => irAlAulaDeRango(rango) } });
   // el año de Jerusalén (shared/anio.ts): lo que se celebra hoy y la estación (con la lluvia)
   {
     const dj = diaEnJerusalen();

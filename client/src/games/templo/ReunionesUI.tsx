@@ -3,6 +3,7 @@
  * que estudiaste, ir a la reunión de un vecino (su versículo, la idea clave y una pregunta) y la
  * lista de las reuniones de ahora en los anuncios de la plaza.
  */
+import { GOZO_REUNION_MAESTRO } from "@shared/examenes-rango";
 import { useEffect, useState } from "react";
 import { BookOpen, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -195,6 +196,7 @@ export function ReunionesAnuncios({ alIr }: { alIr?: (r: ReunionVista) => void }
             <li key={r.id} className="flex items-center gap-2 rounded-lg bg-violet-50/70 px-2 py-1.5 text-xs dark:bg-violet-950/20">
               <span className="min-w-0 flex-1">
                 <b>{r.anfitrion}</b> enseña «{r.titulo}» · {nombreDeBarrio(r.barrio)}, casa {r.parcela + 1} · quedan {minutos(r.faltan)}
+                {r.maestro ? ` · 🎓 con examen de rango: +${GOZO_REUNION_MAESTRO} de gozo` : ""}
                 {r.yaFui ? " · ya fuiste" : ""}
               </span>
               {alIr && !r.yaFui && (
