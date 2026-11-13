@@ -668,8 +668,14 @@ un botón dice lo que se puede hacer, y «Levantarse» lo termina.
 - Estas prendas no tienen pieza fina (el artesano sigue con los mantos y las fajas). Van en una colección nueva del
   álbum, «De pies a cabeza»; las colecciones de antes no cambian, así que nadie pierde un título.
 
-**Para probar** (scratchpad de la parte 4): `reg5079/casa_viva_api.py` (37) y `shared/casa-viva.test.ts` (4). Con los
-5 muebles nuevos, hacer las 44 piezas finas cuesta 12.090 de gozo (`shared/taller.test.ts`).
+**Las ofertas del día no cambian**: lo de la casa viva (con `serie`) no entra en `ofertasDelDia`, porque las ofertas
+salen de una cuenta sobre el largo de la lista y, si la lista crece, cambian las de todos los días. Lo que se agregue al
+mercado después también debe llevar su `serie`.
+
+**Para probar** (scratchpad de la parte 4): `reg5079/casa_viva_api.py` (38) y `shared/casa-viva.test.ts` (5). Con los
+5 muebles nuevos, hacer las 44 piezas finas cuesta 12.090 de gozo (`shared/taller.test.ts`). `POST /casa/ropa` guarda
+solo las partes que llegan (null deja la parte sin nada): las pruebas que comparan la ropa completa con solo el manto y
+la faja deben mirar solo esas dos.
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 

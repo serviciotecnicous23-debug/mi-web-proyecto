@@ -303,8 +303,9 @@ export function lugaresAdornos(nivel: number): number {
 export function ofertasDelDia(dia: string): string[] {
   let x = 2166136261;
   for (const ch of dia) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
-  // la ropa de temporada no entra en las ofertas (las ofertas de cada día quedan como antes)
-  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo && !a.deTemporada);
+  // la ropa de temporada y lo de la casa viva (serie) no entran en las ofertas: las ofertas de cada día quedan como antes
+  // (si la lista crece, cambian las de todos los días). Lo que se agregue al mercado lleva su serie.
+  const lista = ARTICULOS.filter((a) => a.categoria !== "letrero" && !a.exclusivo && !a.deTemporada && !a.serie);
   const a = x % lista.length;
   const b = (a + 1 + ((x >>> 8) % (lista.length - 1))) % lista.length;
   return [lista[a].id, lista[b].id];

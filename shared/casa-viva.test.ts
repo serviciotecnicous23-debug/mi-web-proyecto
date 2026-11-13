@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MUEBLES, PLANOS, ROLLO_DEL_DIA, USOS_CASA, celdasFijas, cuartoEn, mueble, rolloDelDia, usoDe, validarInterior } from "./casa-interior";
-import { ARTICULOS, RANURAS, ROPA_DE_PIES_A_CABEZA, articulo, coloresDeIds, leerRopaIds, ranuraDe } from "./mercado";
+import { ARTICULOS, RANURAS, ROPA_DE_PIES_A_CABEZA, articulo, coloresDeIds, leerRopaIds, ofertasDelDia, precioHoy, ranuraDe } from "./mercado";
 import { COLECCIONES } from "./album";
 
 /** Los cuartos de antes de la casa viva (para comprobar que lo puesto antes sigue cabiendo igual). */
@@ -53,6 +53,17 @@ test("los muebles nuevos: en el mercado, con su pieza fina y en su colección de
   assert.equal(muebles.items.length, MUEBLES.filter((m) => !m.exclusivo && !m.serie).length);
   assert.ok(!COLECCIONES.find((c) => c.id === "muebles-finos")!.items.some((i) => mueble(i)?.serie));
   assert.ok(!COLECCIONES.find((c) => c.id === "ropa")!.items.some((i) => articulo(i)?.serie));
+});
+
+test("las ofertas de cada día quedan como antes: lo nuevo no cambia la cuenta", () => {
+  // lo que estaba en oferta antes de la casa viva (calculado con el código de antes: igual en 392 días)
+  assert.deepEqual(ofertasDelDia("2026-11-13"), ["toldo", "manto-granate"]);
+  assert.deepEqual(ofertasDelDia("2026-12-25"), ["vasijas", "manto-olivo"]);
+  assert.equal(precioHoy(articulo("trigo")!, "2026-11-13"), articulo("trigo")!.precio, "hoy el trigo no está en oferta");
+  for (let i = 1; i <= 60; i++) {
+    const dia = `2027-01-${String(((i - 1) % 28) + 1).padStart(2, "0")}`;
+    for (const id of ofertasDelDia(dia)) assert.ok(!articulo(id)?.serie, `${dia}: ${id}`);
+  }
 });
 
 test("los muebles que se usan: sentarse, descansar, cocinar y leer el rollo", () => {
