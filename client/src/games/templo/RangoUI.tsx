@@ -10,6 +10,7 @@ import { aulaDeCamino } from "@shared/aula";
 import type { ExamenVista, ParteVista, RangoEstado } from "@shared/examenes-rango";
 import type { PedidoAula } from "./aula/clases";
 import { gameStore } from "./store";
+import { Ico } from "./iconos";
 
 async function traerRango(): Promise<RangoEstado | null> {
   try {
@@ -45,7 +46,7 @@ export function RangoAviso() {
   if (!r?.falta) return null;
   return (
     <div className="mb-3 flex items-center gap-3 rounded-2xl border border-violet-300 bg-violet-50 p-3 text-left text-sm dark:border-violet-800 dark:bg-violet-950/30" data-testid="rango-aviso">
-      <span className="text-2xl">🎖️</span>
+      <span className="text-2xl"><Ico e="🎖️" /></span>
       <span className="min-w-0 flex-1">
         <span className="block font-black">Exámenes de rango</span>
         <span className="block text-xs text-stone-700 dark:text-stone-300">{r.falta.texto} Se dan por partes en el aula, cuando quieras.</span>
@@ -75,7 +76,7 @@ export function MenuRango({ rango, abrir }: { rango: RangoEstado; abrir: (p: Ped
   const rp = rango.repaso;
   return (
     <div className="space-y-1.5" data-testid="aula-rango">
-      <p className="px-1 text-[11px] font-black uppercase tracking-[0.14em] text-amber-200/90">🎖️ Exámenes de rango</p>
+      <p className="px-1 text-[11px] font-black uppercase tracking-[0.14em] text-amber-200/90"><Ico e="🎖️" /> Exámenes de rango</p>
       {rango.falta && (
         <p className="rounded-xl bg-amber-100/95 px-3 py-1.5 text-[12px] font-semibold leading-snug text-[#5a3a1a]" data-testid="aula-rango-falta">
           {rango.falta.texto}

@@ -15,6 +15,7 @@ import {
   APORTE_MINIMO_CAPITULO, PRENDAS_CAPITULOS, PUNTOS_CAPITULO, arcoDeTemporada, fechaEnPalabras, horaEnPalabras, type Capitulo, type CapituloVista, type CapitulosVista,
   type GraciasRespuesta,
 } from "@shared/capitulos";
+import { Ico } from "./iconos";
 
 export async function traerCapitulos(): Promise<CapitulosVista | null> {
   try {
@@ -172,7 +173,7 @@ export function CapitulosView() {
             {cv && cap && (
               <section className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/60 dark:bg-amber-950/10" data-testid="capitulo-detalle">
                 <div className="flex items-start gap-3">
-                  <span className="text-4xl leading-none">{cap.icono}</span>
+                  <span className="text-4xl leading-none"><Ico e={cap.icono ?? ""} /></span>
                   <div className="min-w-0">
                     <p className="font-serif text-xl font-black">{cap.titulo}</p>
                     <p className="text-[11px] text-stone-500">
@@ -265,7 +266,7 @@ export function CapitulosView() {
 
             <section className="space-y-2 rounded-2xl border border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50 p-3 dark:border-orange-900 dark:from-orange-950/30 dark:to-stone-900" data-testid="capitulos-fiesta">
               <p className="flex items-center gap-2 font-serif text-lg font-black">
-                <PartyPopper className="h-5 w-5 text-orange-600" /> {arco.fiesta.icono} {arco.fiesta.titulo}
+                <PartyPopper className="h-5 w-5 text-orange-600" /> <Ico e={arco.fiesta.icono ?? ""} /> {arco.fiesta.titulo}
               </p>
               <p className="text-xs font-bold text-orange-800 dark:text-orange-300">
                 Del {fechaEnPalabras(v.fiesta.desde)} al {fechaEnPalabras(v.fiesta.hasta)}, en la plaza. La gran alabanza: el {fechaEnPalabras(v.fiesta.vivo.dia)}, de las {horaEnPalabras(v.fiesta.vivo.desde)} a las {horaEnPalabras(v.fiesta.vivo.hasta)} (hora de Texas).

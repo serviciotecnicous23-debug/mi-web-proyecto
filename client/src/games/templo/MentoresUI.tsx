@@ -16,6 +16,7 @@ import { ICONO_CAMINO } from "./barrio-chat";
 import { NombreConRegistro } from "./RegistroUI";
 import { MENTORES, PASOS, VERSO_APRENDIZ, VERSO_JUNTOS, VERSO_MANTO, VERSO_MENTOR, type Companero, type MentoresEstado, type PasoVista } from "@shared/mentores";
 import type { Dicho } from "@shared/dichos";
+import { Ico } from "./iconos";
 
 /** Llega por la red de la ciudad cuando algo cambió con tu mentor o tus aprendices: las ventanas abiertas se ponen al día. */
 export const EVENTO_MENTOR = "jer-mentor";
@@ -120,7 +121,7 @@ function Juntos({ c, juntosHoy, onJuntos, busy }: { c: Companero; juntosHoy: boo
           <HeartHandshake className="mr-1 h-3.5 w-3.5" /> Nos encontramos
         </Button>
       )}
-      {juntosHoy && <span className="self-center text-[11px] font-semibold text-violet-700 dark:text-violet-300">🤝 Ya se encontraron hoy</span>}
+      {juntosHoy && <span className="self-center text-[11px] font-semibold text-violet-700 dark:text-violet-300"><Ico e="🤝" /> Ya se encontraron hoy</span>}
     </div>
   );
 }
@@ -222,7 +223,7 @@ export function Mentores() {
                       {ICONO_CAMINO[m.camino]} <NombreConRegistro personajeId={m.personajeId} nombre={m.nombre} />
                     </b>
                     {m.sugerido && <span className="ml-1 rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-black text-white">⭐ Sugerido</span>}
-                    {m.titulo && <span className="ml-1 text-[11px] text-amber-700 dark:text-amber-300">🏅 {m.titulo}</span>}
+                    {m.titulo && <span className="ml-1 text-[11px] text-amber-700 dark:text-amber-300"><Ico e="🏅" /> {m.titulo}</span>}
                     <span className="block text-[11px] text-stone-500">
                       {m.relacion === "amigo" ? "Está entre tus amigos" : m.relacion === "ambos" ? "Vive en tu barrio y está entre tus amigos" : "Vive en tu barrio"} · {m.dias} días en Jerusalén
                       {m.guiados ? ` · ya guió a ${m.guiados}` : ""} · {m.enLinea ? `● en línea${m.donde ? ` (${m.donde})` : ""}` : "no está ahora"}
@@ -281,7 +282,7 @@ export function Mentores() {
         </div>
       )}
 
-      {nada && yo.motivoMentor && <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="mentores-motivo">🎓 {yo.motivoMentor}</p>}
+      {nada && yo.motivoMentor && <p className="text-xs text-stone-600 dark:text-stone-300" data-testid="mentores-motivo"><Ico e="🎓" /> {yo.motivoMentor}</p>}
       {(e.miMentor || e.aprendices.length > 0) && (
         <p className="text-center font-serif text-[12px] italic text-stone-500">
           «{e.miMentor ? VERSO_JUNTOS.text : VERSO_MANTO.text}» <span className="not-italic font-semibold">— {e.miMentor ? VERSO_JUNTOS.ref : VERSO_MANTO.ref}</span>

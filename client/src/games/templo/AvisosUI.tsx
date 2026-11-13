@@ -10,6 +10,7 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { TIPOS_AVISO, type AvisosVista, type TipoAviso } from "@shared/avisos";
 import { gameStore } from "./store";
 import { Card } from "./ui";
+import { Ico } from "./iconos";
 
 export async function pedirAvisos(cambio?: Partial<Record<TipoAviso | "activo", boolean>>): Promise<AvisosVista | null> {
   try {
@@ -110,7 +111,7 @@ export function AvisosView() {
                   />
                   <span className="min-w-0">
                     <span className="font-bold">
-                      {t.icono} {t.titulo}
+                      <Ico e={t.icono ?? ""} /> {t.titulo}
                     </span>
                     <span className="block text-[12px] text-stone-500 dark:text-stone-400">{t.texto}</span>
                   </span>

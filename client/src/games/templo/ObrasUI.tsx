@@ -13,6 +13,7 @@ import {
 import { mueble } from "@shared/casa-interior";
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
+import { Gozo, Ico } from "./iconos";
 
 type Respuesta = ObrasEstado & { message?: string; empezada?: ObraId; costo?: number };
 
@@ -166,7 +167,7 @@ export function ObrasCasa({ alCambiar }: { alCambiar?: (o: ObrasEstado) => void 
       {enObra && o.curso && (
         <div className="space-y-1.5 rounded-xl border border-orange-300 bg-orange-50/70 p-3 dark:border-orange-900/60 dark:bg-orange-950/20" data-testid="obras-en-curso">
           <p className="flex items-center gap-2 font-black">
-            <Hammer className="h-4 w-4" /> En obra: {enObra.icono} {enObra.nombre}
+            <Hammer className="h-4 w-4" /> En obra: <Ico e={enObra.icono ?? ""} /> {enObra.nombre}
             {o.curso.rapido && <span className="rounded-full bg-orange-200 px-2 py-0.5 text-[10px] font-bold text-orange-900">con más obreros</span>}
           </p>
           <div className="h-2.5 overflow-hidden rounded-full bg-orange-100 dark:bg-orange-950/50">
@@ -176,16 +177,16 @@ export function ObrasCasa({ alCambiar }: { alCambiar?: (o: ObrasEstado) => void 
         </div>
       )}
       <p className="flex flex-wrap gap-x-3 gap-y-1 rounded-lg bg-stone-100 px-3 py-2 text-xs font-semibold dark:bg-stone-800" data-testid="obras-tienes">
-        <span>Tienes: ✨ {o.gozo} de gozo</span>
-        <span>🌾 {o.harina} de flor de harina</span>
-        <span>🫒 {o.aceite} de aceite</span>
-        <span>📚 {o.estudios} {o.estudios === 1 ? "estudio aprobado" : "estudios aprobados"}</span>
+        <span>Tienes: <Gozo n={o.gozo} /> de gozo</span>
+        <span><Ico e="🌾" /> {o.harina} de flor de harina</span>
+        <span><Ico e="🫒" /> {o.aceite} de aceite</span>
+        <span><Ico e="📚" /> {o.estudios} {o.estudios === 1 ? "estudio aprobado" : "estudios aprobados"}</span>
       </p>
       {error && <p className="rounded-lg bg-rose-50 p-2 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200" data-testid="obras-error">{error}</p>}
       {(["patio", "casa", "fina"] as GrupoObra[]).map((g) => (
         <section key={g} className="space-y-1.5">
           <h3 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
-            {GRUPOS_OBRA[g].icono} {GRUPOS_OBRA[g].nombre} <span className="font-semibold normal-case tracking-normal text-stone-500">· {GRUPOS_OBRA[g].texto}</span>
+            <Ico e={GRUPOS_OBRA[g].icono ?? ""} /> {GRUPOS_OBRA[g].nombre} <span className="font-semibold normal-case tracking-normal text-stone-500">· {GRUPOS_OBRA[g].texto}</span>
           </h3>
           {OBRAS.filter((ob) => ob.grupo === g).map((ob) => {
             const v = o.obras.find((x) => x.id === ob.id)!;
@@ -199,7 +200,7 @@ export function ObrasCasa({ alCambiar }: { alCambiar?: (o: ObrasEstado) => void 
                 data-testid={`obra-${ob.id}`}
               >
                 <div className="flex items-start gap-2">
-                  <span className="text-2xl leading-none">{ob.icono}</span>
+                  <span className="text-2xl leading-none"><Ico e={ob.icono ?? ""} /></span>
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-baseline justify-between gap-x-2 font-bold">
                       <span>{ob.nombre}</span>
@@ -208,7 +209,7 @@ export function ObrasCasa({ alCambiar }: { alCambiar?: (o: ObrasEstado) => void 
                     <p className="text-xs text-stone-600 dark:text-stone-300">{ob.detalle}</p>
                     {ob.ventaja && <p className="mt-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">✓ {ob.ventaja}</p>}
                     <p className="mt-0.5 text-[11px] text-stone-500">
-                      ✨ {c.gozo} de gozo · 🌾 {c.harina} de harina{c.aceite ? ` · 🫒 ${c.aceite} de aceite` : ""} · ⏳ {horas(c.horas)}
+                      <Gozo n={c.gozo} /> de gozo · 🌾 {c.harina} de harina{c.aceite ? ` · 🫒 ${c.aceite} de aceite` : ""} · ⏳ {horas(c.horas)}
                     </p>
                     <p className="mt-0.5 text-[11px] italic text-stone-500">
                       «{ob.verso.text}» ({ob.verso.ref})
@@ -218,7 +219,7 @@ export function ObrasCasa({ alCambiar }: { alCambiar?: (o: ObrasEstado) => void 
                 {v.estado === "hecha" ? (
                   <p className="mt-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">✓ Edificada: la ven tus vecinos.</p>
                 ) : v.estado === "en-obra" ? (
-                  <p className="mt-1.5 text-xs font-bold text-orange-700 dark:text-orange-300">🔨 En obra</p>
+                  <p className="mt-1.5 text-xs font-bold text-orange-700 dark:text-orange-300"><Ico e="🔨" /> En obra</p>
                 ) : v.estado === "bloqueada" ? (
                   <p className="mt-1.5 text-xs text-stone-500">🔒 {v.motivo}</p>
                 ) : (

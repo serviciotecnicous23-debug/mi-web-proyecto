@@ -24,6 +24,7 @@ import { api, claseCatedra, claseExamen, claseRango, claseSeccion, type PedidoAu
 import { MenuRango } from "./RangoUI";
 import type { RangoEstado } from "@shared/examenes-rango";
 import { sonidoAula } from "./aula/aula-sonido";
+import { Ico } from "./iconos";
 
 const LETRAS = ["A", "B", "C", "D", "E"];
 
@@ -511,7 +512,7 @@ function Menu({ def, camino, nombre, estudios, rango, abrir }: { def: (typeof AU
           <Portrait who={def.catedra.maestro.id} size={38} />
           <span className="min-w-0 flex-1">
             <span className="block font-serif text-[15px] font-black text-[#8f2a17]">
-              {cat.icono} {cat.nombre}
+              <Ico e={cat.icono ?? ""} /> {cat.nombre}
             </span>
             <span className="block text-[11.5px] font-semibold text-[#5a3a1a]">
               Con {def.catedra.maestro.nombre}: hasta {CATEDRA_POR_DIA} lecciones por día en tu camino, cada una con su pregunta.
@@ -530,7 +531,7 @@ function Menu({ def, camino, nombre, estudios, rango, abrir }: { def: (typeof AU
         visibles.map(({ c, lista }) => (
           <div key={c} className="space-y-1.5">
             <p className="px-1 text-[11px] font-black uppercase tracking-[0.14em] text-amber-200/90">
-              {CAMINOS_ESTUDIO[c].icono} {c === "comun" ? "Para todos" : CAMINOS_ESTUDIO[c].nombre}
+              <Ico e={CAMINOS_ESTUDIO[c].icono ?? ""} /> {c === "comun" ? "Para todos" : CAMINOS_ESTUDIO[c].nombre}
             </p>
             {lista.map((e) => {
               const m = mio(e.id);
@@ -541,7 +542,7 @@ function Menu({ def, camino, nombre, estudios, rango, abrir }: { def: (typeof AU
               return (
                 <div key={e.id} className="aula-tarjeta" data-testid={`aula-estudio-${e.id}`}>
                   <button type="button" className="flex w-full items-center gap-3 text-left" onClick={() => setAbierto(ver ? null : e.id)} aria-expanded={ver}>
-                    <span className="text-2xl">{e.icono}</span>
+                    <span className="text-2xl"><Ico e={e.icono ?? ""} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-serif text-[15px] font-black leading-tight text-[#2a1a10]">{e.titulo}</span>
                       <span className="block text-[11.5px] font-semibold text-[#6b4a2a]">

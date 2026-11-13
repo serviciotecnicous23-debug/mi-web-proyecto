@@ -25,6 +25,7 @@ import {
   FRASES_SALA, GOZO_JUEGOS_DIA, JUEGOS, ORDEN_JUEGOS, PRENDAS_JUEGOS, QUIEN, SALA_MAX, TRIBUS, TRIBUS_EQUIPOS, VERSO_PATIO,
   type EsgrimaVista, type InvitableSala, type JuegoId, type MuroVista, type CarreraVista, type PatioEstado, type QuienVista, type SalaVista, type TribusVista,
 } from "@shared/juegos-grupo";
+import { Ico } from "./iconos";
 
 const cerrar = () => gameStore.close();
 const seg = (ms: number) => Math.max(0, Math.ceil(ms / 1000));
@@ -145,7 +146,7 @@ export function JuegosGrupoView() {
 
   const titulo = sala ? (
     <span className="flex items-center gap-2">
-      <span aria-hidden="true">{JUEGOS[sala.juego].icono}</span>
+      <span aria-hidden="true"><Ico e={JUEGOS[sala.juego].icono ?? ""} /></span>
       <span className="truncate">{JUEGOS[sala.juego].nombre}</span>
       <span className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-xs font-black tracking-widest text-amber-950" data-testid="juegos-codigo-titulo">
         {sala.codigo}
@@ -230,7 +231,7 @@ function PatioInicio({ patio, onRecargar }: { patio: PatioEstado | null; onRecar
                 data-testid={`juegos-crear-${id}`}
               >
                 <span className="text-3xl leading-none" aria-hidden="true">
-                  {j.icono}
+                  <Ico e={j.icono ?? ""} />
                 </span>
                 <span className="min-w-0">
                   <span className="block font-serif text-[15px] font-bold">{j.nombre}</span>
@@ -281,7 +282,7 @@ function PatioInicio({ patio, onRecargar }: { patio: PatioEstado | null; onRecar
             {patio.salas.map((s) => (
               <li key={s.codigo} className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-2 dark:border-amber-800/50 dark:bg-stone-900">
                 <span className="text-2xl" aria-hidden="true">
-                  {JUEGOS[s.juego].icono}
+                  <Ico e={JUEGOS[s.juego].icono ?? ""} />
                 </span>
                 <span className="min-w-0 flex-1 text-[13px] leading-snug">
                   <b>{JUEGOS[s.juego].nombre}</b> de {s.anfitrion}
@@ -322,7 +323,7 @@ function LoMio({ patio }: { patio: PatioEstado }) {
               className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${tiene ? "bg-white text-stone-800 shadow dark:bg-stone-800 dark:text-stone-100" : "bg-stone-200/70 text-stone-500 dark:bg-stone-800/60"}`}
             >
               <span className="inline-block h-3 w-3 rounded-full border border-black/20" style={{ background: tiene ? p.color : "transparent" }} aria-hidden="true" />
-              {JUEGOS[p.juego].icono} {p.nombre}
+              <Ico e={JUEGOS[p.juego].icono ?? ""} /> {p.nombre}
               {tiene ? " ✓" : ""}
             </span>
           );
@@ -408,7 +409,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
                 className={`rounded-full px-3 py-1 text-[12px] font-bold shadow-sm ${id === sala.juego ? "bg-amber-500 text-amber-950" : "bg-white text-stone-700 hover:bg-amber-50 dark:bg-stone-800 dark:text-stone-200"}`}
                 data-testid={`juegos-elegir-${id}`}
               >
-                {JUEGOS[id].icono} {JUEGOS[id].nombre}
+                <Ico e={JUEGOS[id].icono ?? ""} /> {JUEGOS[id].nombre}
               </button>
             ))}
           </div>
@@ -427,7 +428,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
                 }`}
                 data-testid={`juegos-mesa-${id}`}
               >
-                <span className="text-base">{MESAS[id].icono}</span> {MESAS[id].nombre}
+                <span className="text-base"><Ico e={MESAS[id].icono ?? ""} /></span> {MESAS[id].nombre}
                 <span className="block text-[10px] font-semibold text-stone-500">
                   {MESAS[id].min === MESAS[id].max ? `${MESAS[id].min} jugadores` : `de ${MESAS[id].min} a ${MESAS[id].max} jugadores`}
                 </span>
@@ -491,7 +492,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
         )}
         {def.enElPatio && yo && !yo.enPatio && (
           <Button variant="secondary" onClick={alPatio} data-testid="juegos-ir-patio">
-            🎲 Ir al patio
+            <Ico e="🎲" /> Ir al patio
           </Button>
         )}
         <Button variant="outline" disabled={ocupado} onClick={() => void hacer("salir")} data-testid="juegos-salir">
@@ -586,7 +587,7 @@ function CompanerosPanel({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: b
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Agregar un compañero de la computadora">
         {(Object.keys(NIVELES_BOT) as NivelBot[]).map((n) => (
           <Button key={n} size="sm" variant="secondary" disabled={ocupado || lleno} onClick={() => void hacer("bot", { nivel: n })} title={NIVELES_BOT[n].detalle} aria-label={`Agregar un compañero de la computadora, nivel ${NIVELES_BOT[n].nombre.toLowerCase()}`} data-testid={`juegos-bot-${n}`}>
-            {NIVELES_BOT[n].icono} {NIVELES_BOT[n].nombre}
+            <Ico e={NIVELES_BOT[n].icono ?? ""} /> {NIVELES_BOT[n].nombre}
           </Button>
         ))}
       </div>
@@ -637,7 +638,7 @@ function TribusEspera({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: bool
               data-testid={`juegos-tribu-${n}`}
             >
               <span className="block text-[14px] font-black" style={{ color: t.color }}>
-                {t.icono} {t.nombre}
+                <Ico e={t.icono ?? ""} /> {t.nombre}
               </span>
               <span className="block text-stone-600 dark:text-stone-300">{dentro.length ? dentro.map((m) => m.nombre).join(", ") : "nadie todavía"}</span>
             </button>
@@ -876,7 +877,7 @@ function TribusJuego({ p }: { p: TribusVista }) {
         {p.tribus.map((t) => (
           <div key={t.n} className={`rounded-xl border-2 p-2 text-[12px] ${t.n === p.enTurno && p.fase !== "revelar" ? "shadow-lg ring-2 ring-amber-300" : ""}`} style={{ borderColor: t.color, background: p.miTribu === t.n ? `${t.color}1f` : undefined }}>
             <p className="font-black" style={{ color: t.color }}>
-              {t.icono} {t.nombre}
+              <Ico e={t.icono ?? ""} /> {t.nombre}
             </p>
             <p className="text-xl font-black tabular-nums">{t.puntos}</p>
             <p className="truncate text-[11px] text-stone-500">{t.miembros.join(", ")}</p>
@@ -889,7 +890,7 @@ function TribusJuego({ p }: { p: TribusVista }) {
           {mia && (
             <>
               {" "}
-              · tu tribu: {mia.icono} {mia.nombre}
+              · tu tribu: <Ico e={mia.icono ?? ""} /> {mia.nombre}
             </>
           )}
         </span>
@@ -898,7 +899,7 @@ function TribusJuego({ p }: { p: TribusVista }) {
       {(p.fase === "pregunta" || p.fase === "robo") && <Barra ms={ms} total={p.segundos * 1000} color={p.fase === "robo" ? "bg-violet-500" : "bg-amber-500"} />}
       {p.fase === "preparar" && (
         <div className="rounded-2xl bg-gradient-to-b from-amber-700 to-amber-900 p-6 text-center text-amber-50">
-          <p className="text-4xl">🛡️</p>
+          <p className="text-4xl"><Ico e="🛡️" /></p>
           <p className="mt-2 font-serif text-xl font-bold">Empieza la tribu de {enTurno.nombre}</p>
           <p className="text-sm text-amber-200">Si una tribu falla, las demás pueden robarle la pregunta.</p>
         </div>
@@ -1042,7 +1043,7 @@ function MuroPanel({ p }: { p: MuroVista }) {
   return (
     <div className="space-y-3" data-testid="juegos-muro">
       <div className="rounded-2xl bg-gradient-to-b from-stone-600 to-stone-800 p-4 text-center text-white">
-        <p className="text-4xl">🧱</p>
+        <p className="text-4xl"><Ico e="🧱" /></p>
         <p className="font-serif text-xl font-bold">{p.fase === "preparar" ? `¡A la obra en ${seg(ms)}!` : `${p.puestas} de ${p.meta} piedras`}</p>
         <p className="text-sm text-stone-200">{p.fase === "obra" ? `Quedan ${reloj(ms)} · ${p.llevo ? "llevas una piedra: ve al muro" : "toma una piedra de la cantera"}` : "Toma piedras de la cantera y llévalas al muro."}</p>
       </div>
@@ -1053,7 +1054,7 @@ function MuroPanel({ p }: { p: MuroVista }) {
         {p.aportes.map((a) => (
           <li key={a.pj} className={`flex justify-between rounded-lg px-2 py-0.5 ${a.yo ? "bg-amber-100 font-bold dark:bg-amber-900/40" : ""}`}>
             <span>{a.nombre}</span>
-            <span className="tabular-nums">🪨 {a.n}</span>
+            <span className="tabular-nums"><Ico e="🪨" /> {a.n}</span>
           </li>
         ))}
       </ul>
@@ -1101,7 +1102,7 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
           {[...r.tribus].sort((a, b) => b.puntos - a.puntos).map((t) => (
             <div key={t.n} className="rounded-xl border-2 p-2 text-[12px]" style={{ borderColor: t.color }}>
               <p className="font-black" style={{ color: t.color }}>
-                {t.icono} {t.nombre}
+                <Ico e={t.icono ?? ""} /> {t.nombre}
               </p>
               <p className="text-xl font-black tabular-nums">{t.puntos}</p>
               <p className="truncate text-[11px] text-stone-500">{t.miembros.join(", ")}</p>
@@ -1134,12 +1135,12 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
               <>
                 {r.mio.practica ? (
                   <p data-testid="juegos-practica">
-                    ✨ <b>+{r.mio.gozo} de gozo</b> · partida de práctica con compañeros de la computadora (hasta 10 de gozo por día, sin copa ni prendas)
+                    <Ico e="✨" /> <b>+{r.mio.gozo} de gozo</b> · partida de práctica con compañeros de la computadora (hasta 10 de gozo por día, sin copa ni prendas)
                     {r.mio.topeHoy ? ". Ya llegaste al tope de práctica de hoy." : "."}
                   </p>
                 ) : (
                   <p>
-                    ✨ <b>+{r.mio.gozo} de gozo</b>
+                    <Ico e="✨" /> <b>+{r.mio.gozo} de gozo</b>
                     {r.mio.topeHoy ? ` (llegaste al tope de hoy en los juegos: ${GOZO_JUEGOS_DIA})` : ""} · 🏆 +{r.mio.copa} para la copa de tu barrio
                   </p>
                 )}
@@ -1188,7 +1189,7 @@ export function BotonPatio() {
       aria-label={sala ? `El patio de los juegos: estás en la sala ${sala.codigo}` : "El patio de los juegos"}
       data-testid="button-ciudad-juegos"
     >
-      <span aria-hidden="true">🎲</span>
+      <span aria-hidden="true"><Ico e="🎲" /></span>
       {sala && <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />}
     </button>
   );
@@ -1277,7 +1278,7 @@ export function InvitacionSalaAviso() {
     <div className="pointer-events-auto absolute inset-x-2 top-2 z-[64] mx-auto max-w-md rounded-2xl border border-violet-300/70 bg-gradient-to-b from-violet-900 to-violet-950 p-3 text-violet-50 shadow-2xl shadow-black/60" data-testid="ciudad-invitacion-juego" role="dialog" aria-label={`${inv.de} te invita a jugar`}>
       <div className="flex items-start gap-2">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500 text-xl shadow-lg" aria-hidden="true">
-          {JUEGOS[inv.juego].icono}
+          <Ico e={JUEGOS[inv.juego].icono ?? ""} />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text-violet-200">Te invitan a jugar · {restan} s</p>

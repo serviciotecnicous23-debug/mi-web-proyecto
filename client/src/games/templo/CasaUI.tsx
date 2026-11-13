@@ -12,6 +12,7 @@ import { MUEBLES, USOS_CASA, VERSO_CAMARAS, type InteriorEstado, type UsoMueble,
 import { gameStore, useGame } from "./store";
 import { avisarMisiones } from "./online";
 import type { CasaWorld } from "./casa/mundo-casa";
+import { Ico } from "./iconos";
 
 const sombra = "[text-shadow:0_1px_2px_rgba(0,0,0,.85)]";
 const lados = { paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))", paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))" };
@@ -137,7 +138,7 @@ export function CasaHudLayer({
       >
         <div className="flex min-w-0 flex-col items-start gap-1">
           <span className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 py-1 pl-1.5 pr-3 text-xs font-black text-amber-950 shadow-lg" data-testid="casa-titulo">
-            {ed ? <span className="text-sm leading-none">{ed.icono}</span> : <Home className="h-4 w-4 shrink-0" />}
+            {ed ? <span className="text-sm leading-none"><Ico e={ed.icono ?? ""} /></span> : <Home className="h-4 w-4 shrink-0" />}
             <span className="min-w-0 truncate">{titulo}</span>
           </span>
           {!ed && (
@@ -223,7 +224,7 @@ export function CasaHudLayer({
             className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-gradient-to-b from-sky-300 to-sky-500 px-4 py-2 text-sm font-black text-sky-950 shadow-lg ring-2 ring-white/70 active:scale-95 disabled:from-stone-400 disabled:to-stone-500 disabled:text-white/80"
             data-testid={`casa-usar-${c.uso.uso}`}
           >
-            {usando ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-base leading-none">{BOTON_USO[c.uso.uso].icono}</span>}
+            {usando ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-base leading-none"><Ico e={BOTON_USO[c.uso.uso].icono ?? ""} /></span>}
             {c.uso.hecho ? BOTON_USO[c.uso.uso].hecho : `${BOTON_USO[c.uso.uso].texto} · ${c.uso.icono} ${c.uso.nombre}`}
           </button>
         )}
@@ -235,7 +236,7 @@ export function CasaHudLayer({
             </button>
             {onHuerto && (
               <button type="button" onClick={onHuerto} className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-lime-300 to-emerald-500 px-4 py-2 text-sm font-black text-emerald-950 shadow-lg active:scale-95" data-testid="casa-huerto">
-                🌾 Mi huerto
+                <Ico e="🌾" /> Mi huerto
               </button>
             )}
             <button type="button" onClick={() => gameStore.push({ kind: "casa" })} className="flex items-center gap-1.5 rounded-full bg-black/55 px-4 py-2 text-sm font-bold shadow-lg active:scale-95" data-testid="casa-ventana">
@@ -266,7 +267,7 @@ export function CasaHudLayer({
                             className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95 ${z.guia ? "bg-gradient-to-b from-sky-300 to-sky-500 text-sky-950 ring-2 ring-white/80" : "bg-sky-950/70 text-white"}`}
                             data-testid={`edificio-zona-${z.id}`}
                           >
-                            <span className="text-sm leading-none">{z.icono}</span> {z.nombre}
+                            <span className="text-sm leading-none"><Ico e={z.icono ?? ""} /></span> {z.nombre}
                           </button>
                         ))}
                     </div>
@@ -295,7 +296,7 @@ export function CasaHudLayer({
                     className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95 ${s.siguiente ? "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-2 ring-white/80" : "bg-black/55 text-white"}`}
                     data-testid={`edificio-ir-${s.id}`}
                   >
-                    <span className="text-sm leading-none">{s.icono}</span> {s.nombre}
+                    <span className="text-sm leading-none"><Ico e={s.icono ?? ""} /></span> {s.nombre}
                   </button>
                 ))}
             </div>
@@ -349,7 +350,7 @@ export function CasaHudLayer({
             {c.seleccion && (
               <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-emerald-500/15 p-2" data-testid="casa-seleccion">
                 <span className="min-w-0 flex-1 truncate font-bold">
-                  {c.seleccion.icono} {c.seleccion.nombre}
+                  <Ico e={c.seleccion.icono ?? ""} /> {c.seleccion.nombre}
                 </span>
                 <button type="button" onClick={() => mundo.girar()} className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold" data-testid="casa-girar">
                   <RotateCw className="h-3.5 w-3.5" /> Girar
@@ -375,7 +376,7 @@ export function CasaHudLayer({
                       className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold hover:bg-white/20 disabled:opacity-40"
                       data-testid={`casa-arcon-${m.id}`}
                     >
-                      <span className="text-base">{m.icono}</span> {m.nombre}
+                      <span className="text-base"><Ico e={m.icono ?? ""} /></span> {m.nombre}
                       <span className="rounded-full bg-amber-400 px-1.5 text-[10px] font-black text-amber-950">×{c.disponibles[m.id]}</span>
                     </button>
                   ))}

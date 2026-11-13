@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { diaEnJerusalen, loQuePaso, proximaFiestaGrande, type LoQuePaso } from "@shared/anio";
 import { VERSO_BIENVENIDA, VERSO_REGRESO, type RegaloRecibido, type RegresoVista } from "@shared/regreso";
+import { Ico } from "./iconos";
 
 const CLAVE = "jerusalen-ultima-visita";
 const minuscula = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -196,7 +197,7 @@ export function MientrasNoEstabas({ personajeId }: { personajeId?: number | null
         <ul className="mt-1 flex flex-wrap gap-1">
           {r.eventos.map((e) => (
             <li key={e.evento.id} className="rounded-full bg-white/10 px-2 py-0.5 font-semibold">
-              {e.evento.icono} {nombreEvento(e)}
+              <Ico e={e.evento.icono ?? ""} /> {nombreEvento(e)}
             </li>
           ))}
         </ul>
@@ -205,13 +206,13 @@ export function MientrasNoEstabas({ personajeId }: { personajeId?: number | null
       )}
       {r.antes.id !== r.ahora.id && (
         <p className="mt-1.5">
-          {r.ahora.icono} <b>Empezó {minuscula(r.ahora.nombre)}</b>: {r.ahora.texto}
+          <Ico e={r.ahora.icono ?? ""} /> <b>Empezó {minuscula(r.ahora.nombre)}</b>: {r.ahora.texto}
         </p>
       )}
 
       {regalo && (
         <div className="mt-2 rounded-lg border border-amber-200/40 bg-amber-300/10 px-2.5 py-2 text-amber-50" data-testid="regreso-regalo">
-          <p className="font-black text-amber-200">🎁 Tu regalo de regreso</p>
+          <p className="font-black text-amber-200"><Ico e="🎁" /> Tu regalo de regreso</p>
           {!recibido && <p className="mt-0.5">{textoRegalo(regalo)}</p>}
           {regalo.prenda && (
             <p className="mt-0.5 text-[11px] italic text-amber-100/85">
@@ -263,7 +264,7 @@ export function MientrasNoEstabas({ personajeId }: { personajeId?: number | null
       <Bloque titulo="En la ciudad" items={itemsCiudad} testid="regreso-ciudad" />
 
       <p className="mt-2 text-sky-100/85">
-        Hoy: {hoy.hebreo.texto} · {hoy.estacion.icono} {hoy.estacion.nombre}
+        Hoy: {hoy.hebreo.texto} · <Ico e={hoy.estacion.icono ?? ""} /> {hoy.estacion.nombre}
         {prox ? ` · ${prox.evento.icono} ${prox.evento.nombre} ${prox.enDias === 1 ? "mañana" : `en ${prox.enDias} días`}` : ""}.
       </p>
       <p className="mt-1 font-semibold text-amber-200">Entra a la ciudad: tu huerto, tus encargos y tu racha te esperan.</p>

@@ -18,6 +18,7 @@ import { DamasPantalla } from "./Damas";
 import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
 import { DominoPantalla } from "./Domino";
 import { PANTALLAS_TRADICIONALES } from "./Tradicionales";
+import { Ico } from "../iconos";
 
 export type PantallaMesaProps<V = unknown, J = unknown> = {
   vista: V;
@@ -90,7 +91,7 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
     return (
       <div className="space-y-2" data-testid="mesa-juego">
         <h3 className="font-serif text-lg font-black">
-          {juego.icono} {juego.nombre}
+          <Ico e={juego.icono ?? ""} /> {juego.nombre}
         </h3>
         <Pantalla vista={m.vista} jugadas={m.jugadas} miAsiento={m.miAsiento} juegan={m.juegan} asientos={m.asientos} ultima={m.ultima} jugar={(j) => void jugar(j)} ocupado={false} />
       </div>
@@ -116,11 +117,11 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
     <div className="space-y-3" data-testid="mesa-juego">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-serif text-lg font-black">
-          {juego.icono} {juego.nombre}
+          <Ico e={juego.icono ?? ""} /> {juego.nombre}
         </h3>
         {quedaMs !== null && (
           <span className={`rounded-full px-2 py-0.5 text-[12px] font-black tabular-nums ${quedaMs < 8000 ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300" : "bg-stone-100 dark:bg-stone-800"}`} data-testid="mesa-reloj">
-            ⏳ {Math.ceil(quedaMs / 1000)} s
+            <Ico e="⏳" /> {Math.ceil(quedaMs / 1000)} s
           </span>
         )}
       </div>

@@ -767,6 +767,19 @@ Así quedan de unas 5 cabezas (antes, unas 3) sin cambiar la altura, los pies, l
 nombres. La ropa del mercado se proporciona igual. Las caras ya no llevan las mejillas pintadas. Para algo nuevo que va
 sobre el cuerpo: armarlo con las medidas de siempre y pasarlo por `proporcionarCuerpo` (lo de la mano, en `MANO_Y`).
 
+## 7g. Los íconos (13 de noviembre de 2026)
+
+`client/src/games/templo/iconos.tsx`: los emojis ya no son la imagen de las cosas en la pantalla.
+- `Ico` dibuja el ícono de un emoji: de línea (lucide, el mismo trazo) para las acciones y los lugares, y propios para
+  lo del juego (`IcoGozo`, `IcoLampara`, `IcoPan`, `IcoHarina`, `IcoAceite`, `IcoOveja`, `IcoOlivo`). Si un emoji no
+  tiene ícono todavía, se ve el emoji: para agregar uno, una fila en `ICONOS`.
+- `ConIcono` cambia el emoji del principio de un texto («🏠 Tu casa») y `Gozo` es la moneda (la llama dorada).
+- Nada en forma de cruz: no se usan la espada, la balanza, las estrellitas de cuatro puntas ni los íconos de iglesia o
+  del «+»; las espadas cruzadas (⚔️) se dibujan como un escudo.
+- Las pantallas dibujan con `Ico` lo escrito («🌾 …»), lo que viene de los datos (`{x.icono}`) y los íconos pasados
+  como propiedad. Dentro de un `<option>` va solo el texto. Lo que se arma como texto (los avisos, los toasts) sigue
+  con el emoji. Faltan los letreros 3D de los círculos (`tpl-pad`).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

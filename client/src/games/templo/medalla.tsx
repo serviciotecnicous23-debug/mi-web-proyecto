@@ -3,6 +3,7 @@
  * muestra cuánto falta para la siguiente. El dibujo del logro (su emoji) va en el centro.
  */
 import { useId } from "react";
+import { Ico } from "./iconos";
 
 const METALES = [
   ["#f5f5f4", "#d6d3d1", "#a8a29e"], // sin ganar
@@ -58,7 +59,7 @@ export function Medalla({ icono, metal, progreso = 0, size = 44, titulo }: { ico
         <path d="M8.6 15.5 A14.5 14.5 0 0 1 16.5 7.6" stroke="#fff" strokeWidth="1.1" fill="none" opacity={metal ? 0.7 : 0.5} strokeLinecap="round" />
       </svg>
       <span className={`relative -mt-[6%] leading-none ${metal ? "" : "opacity-55 grayscale"}`} style={{ fontSize: size * 0.4 }}>
-        {icono}
+        <Ico e={icono} />
       </span>
     </span>
   );

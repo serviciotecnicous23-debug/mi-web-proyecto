@@ -11,6 +11,7 @@ import { diaEnJerusalen } from "@shared/anio";
 import { CATEGORIAS_REGALO, FRASES_REGALO, VERSO_REGALO, type ParaRegalar, type RegalosEstado } from "@shared/regalos";
 import { gameStore } from "./store";
 import { hace } from "./ui";
+import { Gozo, Ico } from "./iconos";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -82,7 +83,7 @@ export function RegalarBoton({ personajeId, alGozo }: { personajeId: number; alG
   return (
     <section className="space-y-2 rounded-xl border border-rose-200 bg-rose-50/60 p-3 text-xs dark:border-rose-900/60 dark:bg-rose-950/20" data-testid="regalar">
       <p className="flex items-center justify-between gap-2 font-black">
-        <span>🎁 Un regalo para {para?.nombre ?? "tu vecino"}</span>
+        <span><Ico e="🎁" /> Un regalo para {para?.nombre ?? "tu vecino"}</span>
         <button type="button" className="text-[11px] font-semibold underline" onClick={() => setAbierto(false)}>
           Cerrar
         </button>
@@ -92,7 +93,7 @@ export function RegalarBoton({ personajeId, alGozo }: { personajeId: number; alG
       {para?.puede && (
         <>
           <p className="text-[11px] text-stone-600 dark:text-stone-300">
-            Tienes ✨ {para.gozo}. Hoy puedes mandar {para.quedanHoy} {para.quedanHoy === 1 ? "regalo" : "regalos"} más. Lo de temporada, solo en su tiempo.
+            Tienes <Gozo n={para.gozo} />. Hoy puedes mandar {para.quedanHoy} {para.quedanHoy === 1 ? "regalo" : "regalos"} más. Lo de temporada, solo en su tiempo.
           </p>
           <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
             {CATEGORIAS_REGALO.map((cat) => {
@@ -112,7 +113,7 @@ export function RegalarBoton({ personajeId, alGozo }: { personajeId: number; alG
                         className={`rounded-full px-2 py-1 text-[11px] font-semibold disabled:opacity-40 ${elegido === a.id ? "bg-rose-500 text-white" : "bg-white dark:bg-stone-800"}`}
                         data-testid={`regalo-${a.id}`}
                       >
-                        {a.icono} {a.nombre} · {precio}
+                        <Ico e={a.icono ?? ""} /> {a.nombre} · {precio}
                       </button>
                     ))}
                   </div>
@@ -165,7 +166,7 @@ export function RegalosRecibidos() {
   if (!r) return null;
   return (
     <section className="space-y-1.5 rounded-xl border border-rose-200 p-3 text-xs dark:border-rose-900/60" data-testid="regalos-recibidos">
-      <p className="font-black">🎁 Regalos que te dieron</p>
+      <p className="font-black"><Ico e="🎁" /> Regalos que te dieron</p>
       {r.recibidos.length ? (
         <ul className="space-y-1">
           {r.recibidos.map((g) => (

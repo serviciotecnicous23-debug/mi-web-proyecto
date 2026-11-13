@@ -30,6 +30,7 @@ import { PASOS, type MentoresEstado } from "@shared/mentores";
 import { GOZO_DICHO, delTema, type DichosEstado } from "@shared/dichos";
 import { articulo } from "@shared/mercado";
 import { irAlAulaDeRango, useRangoFalta } from "./RangoUI";
+import { Ico } from "./iconos";
 
 async function traer<T>(path: string): Promise<T | null> {
   try {
@@ -300,7 +301,7 @@ export function ParaHoy({ misiones }: { misiones: MisionesEstado }) {
       <ul className="space-y-1">
         {lineas.map((l) => (
           <li key={l.id} className="flex items-center gap-2 text-[13px]" data-testid={`para-hoy-${l.id}`}>
-            <span className="w-5 shrink-0 text-center">{l.icono}</span>
+            <span className="w-5 shrink-0 text-center"><Ico e={l.icono ?? ""} /></span>
             <span className="min-w-0 flex-1">{l.texto}</span>
             {l.boton && (
               <Button size="sm" variant="secondary" className="h-7 shrink-0" onClick={l.boton.hacer}>

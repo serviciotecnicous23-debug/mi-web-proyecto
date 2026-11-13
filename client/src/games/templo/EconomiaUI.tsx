@@ -13,6 +13,7 @@ import {
 import { gameStore } from "./store";
 import { Card } from "./ui";
 import type { TermometroGozo } from "@shared/obras";
+import { Gozo, Ico } from "./iconos";
 
 /** Los nombres de las fuentes del termómetro (server/gozo.ts). */
 const FUENTE_NOMBRE: Record<string, string> = {
@@ -47,7 +48,7 @@ function TermometroAdmin() {
     <section className="space-y-2 rounded-xl border border-sky-200 bg-sky-50/50 p-3 text-xs dark:border-sky-900/60 dark:bg-sky-950/20" data-testid="termometro-gozo">
       <p className="font-black">🌡️ El termómetro del gozo (solo administración)</p>
       <p className="text-[11px] text-stone-600 dark:text-stone-300">
-        Últimos 7 días: entró ✨ {Math.round(entra)} y salió ✨ {Math.round(sale)}
+        Últimos 7 días: entró <Gozo n={Math.round(entra)} /> y salió <Gozo n={Math.round(sale)} />
         {entra > 0 ? ` (se gastó el ${Math.round((sale / entra) * 100)} %)` : ""}. Guardado: ✨ {t.guardado.total} entre {t.guardado.personas} personas (la mitad tiene menos de {t.guardado.mediana}; {t.guardado.conMil} con 1.000 o más; el que más, {t.guardado.maximo}). Tesoro: ✨ {t.tesoro}.
       </p>
       <table className="w-full text-[11px]">
@@ -172,7 +173,7 @@ export function PuestosView({ alCambiar }: { alCambiar?: (d: { gozo: number; bie
                   <b>
                     {x.cantidad} de {BIEN_MERCADO_NOMBRE[x.bien]}
                   </b>{" "}
-                  a ✨ {x.precio} c/u
+                  a <Gozo n={x.precio} /> c/u
                   <span className="block text-[11px] text-stone-500">
                     De {x.vendedor} · cierra en {horas(x.quedan)}
                   </span>
@@ -200,7 +201,7 @@ export function PuestosView({ alCambiar }: { alCambiar?: (d: { gozo: number; bie
             <div key={x.id} className="flex items-center gap-2 rounded-xl bg-amber-50/70 p-2 text-xs dark:bg-amber-950/20">
               <span className="text-xl">{ICONO[x.bien]}</span>
               <span className="min-w-0 flex-1">
-                Quedan <b>{x.cantidad}</b> de {BIEN_MERCADO_NOMBRE[x.bien]} a ✨ {x.precio} c/u · cierra en {horas(x.quedan)}
+                Quedan <b>{x.cantidad}</b> de {BIEN_MERCADO_NOMBRE[x.bien]} a <Gozo n={x.precio} /> c/u · cierra en {horas(x.quedan)}
               </span>
               <Button size="sm" variant="ghost" className="h-7 px-2" disabled={busy} onClick={() => void hacer(`/puestos/${x.id}/cerrar`, {})} title="Cerrar el puesto (lo que quede vuelve a tu alfolí)">
                 <X className="h-3.5 w-3.5" />
@@ -237,7 +238,7 @@ export function PuestosView({ alCambiar }: { alCambiar?: (d: { gozo: number; bie
             </span>
           </label>
           <label className="space-y-1">
-            <span className="block font-semibold">Precio c/u (✨ {rango.min} a {rango.max})</span>
+            <span className="block font-semibold">Precio c/u (<Gozo n={rango.min} /> a {rango.max})</span>
             <span className="flex items-center gap-1">
               <button type="button" className="rounded-full bg-stone-100 p-1 dark:bg-stone-800" onClick={() => setPrecio(Math.max(rango.min, p - 1))} aria-label="Más barato">
                 <Minus className="h-3.5 w-3.5" />
@@ -252,7 +253,7 @@ export function PuestosView({ alCambiar }: { alCambiar?: (d: { gozo: number; bie
           </label>
         </div>
         <p className="text-[11px] text-stone-500">
-          El mercader te pagaría ✨ {rango.mercader} c/u hoy. Si se vende todo: ✨ {total} − {diezmoDe(total)} de diezmo = <b>✨ {total - diezmoDe(total)}</b> para ti. Si no se vende en 48 horas, vuelve a tu alfolí.
+          El mercader te pagaría <Gozo n={rango.mercader} /> c/u hoy. Si se vende todo: <Gozo n={total} /> − {diezmoDe(total)} de diezmo = <b><Gozo n={total - diezmoDe(total)} /></b> para ti. Si no se vende en 48 horas, vuelve a tu alfolí.
         </p>
         <Button className="w-full rounded-full bg-amber-500 font-bold text-amber-950 hover:bg-amber-400" disabled={busy || tengo < 1 || e.mios.length >= PUESTOS_MAX} onClick={() => void hacer("/puestos", { bien, cantidad: cant, precio: p }, () => gameStore.toast(`Abriste tu puesto: ${cant} de ${BIEN_MERCADO_NOMBRE[bien]} a ✨ ${p} c/u`, "gold"))} data-testid="puesto-abrir">
           {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Store className="mr-1 h-4 w-4" />} Abrir el puesto
@@ -263,7 +264,7 @@ export function PuestosView({ alCambiar }: { alCambiar?: (d: { gozo: number; bie
       <button type="button" onClick={() => gameStore.push({ kind: "tesoro" })} className="flex w-full items-center gap-2 rounded-xl bg-stone-50 p-2.5 text-left text-xs dark:bg-stone-800/60" data-testid="ver-tesoro">
         <Landmark className="h-5 w-5 shrink-0 text-amber-600" />
         <span className="min-w-0 flex-1">
-          <b>El tesoro del templo: ✨ {e.tesoro}</b>
+          <b>El tesoro del templo: <Gozo n={e.tesoro} /></b>
           <span className="block text-[11px] text-stone-500">De ahí sale la provisión para los que empiezan y el premio de las casas más bendecidas.</span>
         </span>
       </button>
@@ -306,10 +307,10 @@ export function TesoroView() {
             <div className="rounded-xl bg-gradient-to-r from-amber-100 to-amber-50 p-3 text-center dark:from-amber-950/50 dark:to-transparent">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">Hay en el tesoro</p>
               <p className="font-serif text-3xl font-black" data-testid="tesoro-saldo">
-                ✨ {t.balance}
+                <Gozo n={t.balance} />
               </p>
               <p className="text-[11px] text-stone-500">
-                Entró ✨ {t.entro} · salió ✨ {t.salio}
+                Entró <Gozo n={t.entro} /> · salió <Gozo n={t.salio} />
               </p>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-300">
@@ -334,7 +335,7 @@ export function TesoroView() {
             <section className="space-y-1.5" data-testid="tesoro-casas">
               <p className="font-black">Las casas más bendecidas de esta semana</p>
               <p className="text-[11px] text-stone-500">
-                Al terminar la semana, el tesoro premia a las tres primeras: ✨ {t.premios.join(" · ")}. Adorna tu casa y visita a tus vecinos: las bendiciones se dejan dentro de cada casa.
+                Al terminar la semana, el tesoro premia a las tres primeras: <Gozo n={t.premios.join(" · ")} />. Adorna tu casa y visita a tus vecinos: las bendiciones se dejan dentro de cada casa.
               </p>
               {t.casas.length ? (
                 <ol className="space-y-1 text-xs">
@@ -342,7 +343,7 @@ export function TesoroView() {
                     <li key={c.personajeId} className="flex items-center gap-2 rounded-lg bg-stone-50 px-2 py-1 dark:bg-stone-800/60">
                       <b className="w-5 text-center">{i + 1}</b>
                       <span className="min-w-0 flex-1 truncate">{c.nombre}</span>
-                      <span>🙏 {c.bendiciones}</span>
+                      <span><Ico e="🙏" /> {c.bendiciones}</span>
                     </li>
                   ))}
                 </ol>

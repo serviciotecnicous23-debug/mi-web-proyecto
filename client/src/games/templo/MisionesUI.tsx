@@ -12,6 +12,7 @@ import { AvisosInvitacion } from "./AvisosUI";
 import { CaminoHoyBloque } from "./CaminoHoyUI";
 import { InvitarAmigo } from "./InvitarUI";
 import { Mentores } from "./MentoresUI";
+import { Ico } from "./iconos";
 
 export async function traerMisiones(): Promise<{ ok: boolean; data: (MisionesEstado & { message?: string }) | null }> {
   try {
@@ -79,7 +80,7 @@ export function MisionesModal() {
                   >
                     {e.fiesta && <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Encargo de la fiesta · {e.fiesta} · el doble de gozo</p>}
                     <p className="flex items-start gap-2 font-semibold">
-                      <span className="text-lg leading-none">{e.icono}</span>
+                      <span className="text-lg leading-none"><Ico e={e.icono ?? ""} /></span>
                       <span className="min-w-0 flex-1">{e.titulo}</span>
                       <span className="shrink-0 text-xs font-black">{e.hecho ? "✓" : `${e.progreso}/${e.meta}`}</span>
                     </p>
@@ -129,7 +130,7 @@ export function MisionesModal() {
             </section>
 
             <p className="rounded-xl bg-stone-50 p-2.5 text-xs dark:bg-stone-900/40">
-              🤝 <b>Servir juntos:</b> con {JUNTOS_DESDE} o más sacerdotes en el templo a la vez, cada deber vale ×{FACTOR_JUNTOS.toLocaleString("es-419")}. Invita a tus vecinos a servir contigo.
+              <Ico e="🤝" /> <b>Servir juntos:</b> con {JUNTOS_DESDE} o más sacerdotes en el templo a la vez, cada deber vale ×{FACTOR_JUNTOS.toLocaleString("es-419")}. Invita a tus vecinos a servir contigo.
             </p>
           </>
         )}

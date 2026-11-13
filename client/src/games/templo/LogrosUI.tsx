@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Award } from "lucide-react";
 import { Medalla } from "./medalla";
 import { LOGROS_EN_LINEA, type LogrosDe } from "@shared/logros-en-linea";
+import { Ico } from "./iconos";
 
 async function traer(path: string): Promise<LogrosDe | null> {
   try {
@@ -68,7 +69,7 @@ export function LogrosDeOtro({ personajeId }: { personajeId: number }) {
     <div className="flex flex-wrap gap-1" data-testid="logros-de-otro">
       {ganados.map((x) => (
         <span key={x.id} className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200" title={LOGROS_EN_LINEA[x.id].como}>
-          {LOGROS_EN_LINEA[x.id].icono} {LOGROS_EN_LINEA[x.id].nombre}
+          <Ico e={LOGROS_EN_LINEA[x.id].icono ?? ""} /> {LOGROS_EN_LINEA[x.id].nombre}
         </span>
       ))}
     </div>

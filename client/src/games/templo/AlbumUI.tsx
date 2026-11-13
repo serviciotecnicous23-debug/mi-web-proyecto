@@ -10,6 +10,7 @@ import { COLECCIONES, EN_EL_ALBUM, TITULOS_ESPECIALES, VERSO_ALBUM, nombreDeTitu
 import { gameStore } from "./store";
 import { VerseBox } from "./ui";
 import { ListaDichos } from "./DichosUI";
+import { Ico } from "./iconos";
 
 type Resp = AlbumEstado & { message?: string };
 async function pedir(path: string, body?: unknown): Promise<{ ok: boolean; data: Resp | null }> {
@@ -59,11 +60,11 @@ export function AlbumView() {
   return (
     <div className="space-y-3" data-testid="album">
       <p className="rounded-xl bg-amber-50/70 p-2.5 text-[13px] dark:bg-amber-950/20">
-        📚 <b>Tu álbum</b>: todo lo que tuviste alguna vez queda aquí, aunque lo vendas o lo regales. Llevas <b data-testid="album-total">{total}</b> de {EN_EL_ALBUM.size} cosas.
+        <Ico e="📚" /> <b>Tu álbum</b>: todo lo que tuviste alguna vez queda aquí, aunque lo vendas o lo regales. Llevas <b data-testid="album-total">{total}</b> de {EN_EL_ALBUM.size} cosas.
       </p>
       {error && <p className="rounded-lg bg-rose-50 p-2 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">{error}</p>}
       <section className="space-y-1.5" data-testid="album-titulos">
-        <p className="font-black">🏅 Tus títulos {a.titulo && <span className="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] text-amber-950">muestras: {nombreDeTitulo(a.titulo)}</span>}</p>
+        <p className="font-black"><Ico e="🏅" /> Tus títulos {a.titulo && <span className="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] text-amber-950">muestras: {nombreDeTitulo(a.titulo)}</span>}</p>
         <div className="flex flex-wrap gap-1.5">
           {todos.map((t) => {
             const g = ganados.has(t.id);
@@ -93,7 +94,7 @@ export function AlbumView() {
         return (
           <section key={c.id} className={`rounded-xl border p-2.5 ${completa ? "border-amber-400 bg-amber-50/60 dark:border-amber-700 dark:bg-amber-950/20" : "border-stone-200 dark:border-stone-700"}`} data-testid={`album-${c.id}`}>
             <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => setAbierta(abierto ? null : c.id)} aria-expanded={abierto}>
-              <span className="text-xl">{c.icono}</span>
+              <span className="text-xl"><Ico e={c.icono ?? ""} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold">
                   {c.nombre} {completa && <span className="text-[11px] text-amber-700 dark:text-amber-300">· 🏅 {c.titulo}</span>}

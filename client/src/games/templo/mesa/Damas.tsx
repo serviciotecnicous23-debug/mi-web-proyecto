@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type { VistaDamas } from "@shared/mesa/damas";
 import type { PantallaMesaProps } from "./index";
 import { CoronaSvg, TECLAS_ANIMACION, usePiezasAnimadas } from "./tablero";
+import { Ico } from "../iconos";
 
 const CLARA = "#efe0bf";
 const OSCURA = "#7a5230";
@@ -146,7 +147,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
           ¡Hay que comer!{validas[0].length > 2 ? ` Te puedes comer ${validas[0].length - 1} seguidas.` : ""}
         </p>
       )}
-      {vista.ultima?.corona && <p className="text-[12px] font-bold text-amber-700 dark:text-amber-300">👑 ¡Una ficha se coronó!</p>}
+      {vista.ultima?.corona && <p className="text-[12px] font-bold text-amber-700 dark:text-amber-300"><Ico e="👑" /> ¡Una ficha se coronó!</p>}
       <style>{TECLAS_ANIMACION}</style>
     </div>
   );

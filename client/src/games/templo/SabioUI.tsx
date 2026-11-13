@@ -27,6 +27,7 @@ import {
   type PreguntaVista, type PublicoVista, type RespuestaSabio, type SabioEstado, type TablaDe, type TablaVista,
 } from "@shared/sabio";
 import { NOMBRE_NOCHE, NOCHE_MAX, NOCHE_MIN, type NocheEnVivo, type NocheVista } from "@shared/sabio-noche";
+import { Ico } from "./iconos";
 
 const azar = <T,>(l: T[]) => l[Math.floor(Math.random() * l.length)];
 
@@ -939,7 +940,7 @@ export function SabioView() {
         <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden="true">
           {flotan.map((f) => (
             <span key={f.id} className="sabio-flota absolute bottom-16 text-3xl" style={{ left: `${f.x}%` }}>
-              {f.icono}
+              <Ico e={f.icono ?? ""} />
             </span>
           ))}
         </div>
@@ -1156,7 +1157,7 @@ function ElegirAmigo({
   return (
     <div className="absolute inset-0 z-20 flex items-end justify-center bg-black/70 p-3 sm:items-center" onClick={onCerrar} data-testid="sabio-elegir-amigo">
       <div className="max-h-full w-full max-w-md overflow-y-auto rounded-2xl border border-amber-300/50 bg-[#150e36] p-3" onClick={(e) => e.stopPropagation()}>
-        <p className="font-serif text-lg font-black text-amber-200">🤝 ¿A quién llamas?</p>
+        <p className="font-serif text-lg font-black text-amber-200"><Ico e="🤝" /> ¿A quién llamas?</p>
         <p className="text-[12px] text-amber-100/75">
           Un amigo o vecino que esté ahora en la ciudad tiene {LLAMADA_S} segundos para darte su consejo (y te los sumamos al reloj). El reloj sigue corriendo mientras eliges.
         </p>
@@ -1271,7 +1272,7 @@ function Portada({
     <div className={`mx-auto w-full max-w-2xl space-y-3 pt-2 ${hay3d ? "sabio-panel mt-[24vh] rounded-t-3xl px-2.5 pt-3" : ""}`} data-testid="sabio-portada">
       {estado.premioSemana && (
         <div className="rounded-2xl bg-gradient-to-r from-amber-300 to-amber-500 p-3 text-center text-sm font-black text-amber-950 shadow-lg" data-testid="sabio-premio-semana">
-          🏆 Quedaste en el puesto {estado.premioSemana.puesto} de la semana pasada: +{estado.premioSemana.gozo} de gozo
+          <Ico e="🏆" /> Quedaste en el puesto {estado.premioSemana.puesto} de la semana pasada: +{estado.premioSemana.gozo} de gozo
         </div>
       )}
       {primero && (
@@ -1328,10 +1329,10 @@ function Portada({
         <Dato titulo="Victorias" valor={String(y.ganadas)} />
         <Dato titulo="Sabiduría" valor={miles(y.total)} />
       </div>
-      {y.siguiente && <p className="text-center text-[11px] text-amber-100/70">Siguiente título: {y.siguiente.icono} {y.siguiente.nombre} — {y.siguiente.requisito.toLowerCase()}.</p>}
+      {y.siguiente && <p className="text-center text-[11px] text-amber-100/70">Siguiente título: <Ico e={y.siguiente.icono ?? ""} /> {y.siguiente.nombre} — {y.siguiente.requisito.toLowerCase()}.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-[11.5px]" data-testid="sabio-consejos">
         <span>
-          🤝 Consejos dados: <b>{y.consejos}</b> · acertados: <b>{y.consejosBuenos}</b>
+          <Ico e="🤝" /> Consejos dados: <b>{y.consejos}</b> · acertados: <b>{y.consejosBuenos}</b>
           {y.consejosBuenos < CONSEJOS_FAJA ? ` (faltan ${CONSEJOS_FAJA - y.consejosBuenos} para la faja del buen consejero)` : " · ¡ya tienes la faja!"}
         </span>
         <label className="flex cursor-pointer items-center gap-1.5 font-bold">
@@ -1524,7 +1525,7 @@ function Reglas() {
       <div className="space-y-1.5">
         {ORDEN_COMODINES.map((c) => (
           <p key={c}>
-            {COMODINES[c].icono} <b>{COMODINES[c].nombre}:</b> {COMODINES[c].texto} <span className="italic text-amber-200/80">«{COMODINES[c].verso.text}» {COMODINES[c].verso.ref}</span>
+            <Ico e={COMODINES[c].icono ?? ""} /> <b>{COMODINES[c].nombre}:</b> {COMODINES[c].texto} <span className="italic text-amber-200/80">«{COMODINES[c].verso.text}» {COMODINES[c].verso.ref}</span>
           </p>
         ))}
       </div>
@@ -1810,7 +1811,7 @@ function MirarView({ id, onSalir, estudio }: { id: number; onSalir: () => void; 
               className="flex flex-col items-center rounded-xl bg-white/10 py-1.5 text-[11px] font-bold hover:bg-white/20 disabled:opacity-50"
               data-testid={`sabio-aplauso-${a.id}`}
             >
-              <span className="text-xl leading-none">{a.icono}</span>
+              <span className="text-xl leading-none"><Ico e={a.icono ?? ""} /></span>
               {a.texto}
             </button>
           ))}
@@ -1827,7 +1828,7 @@ function MirarView({ id, onSalir, estudio }: { id: number; onSalir: () => void; 
         <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden" aria-hidden="true">
           {flotan.map((f) => (
             <span key={f.id} className="sabio-flota absolute bottom-16 text-3xl" style={{ left: `${f.x}%` }}>
-              {f.icono}
+              <Ico e={f.icono ?? ""} />
             </span>
           ))}
         </div>
@@ -1850,7 +1851,7 @@ function Fin({ fin, estado, onOtra, onPortada, ocupado, aviso }: { fin: FinParti
       <div className="sabio-pregunta rounded-2xl p-4">
         <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200/80">Puntos de sabiduría</p>
         <p className="font-serif text-4xl font-black text-amber-200" data-testid="sabio-fin-puntos">{miles(fin.puntos)}</p>
-        <p className="mt-1 text-sm font-bold">✨ +{fin.gozo} de gozo{fin.topeGozo ? " (llegaste al tope de hoy)" : ""}</p>
+        <p className="mt-1 text-sm font-bold"><Ico e="✨" /> +{fin.gozo} de gozo{fin.topeGozo ? " (llegaste al tope de hoy)" : ""}</p>
       </div>
       {fin.correcta && !gano && (
         <p className="rounded-xl bg-white/5 p-2.5 text-[12.5px]">
@@ -1859,7 +1860,7 @@ function Fin({ fin, estado, onOtra, onPortada, ocupado, aviso }: { fin: FinParti
       )}
       {fin.tituloNuevo && fin.titulo && (
         <p className="rounded-xl bg-amber-400/20 p-2.5 text-sm font-black" data-testid="sabio-fin-titulo">
-          Nuevo título: {fin.titulo.icono} {fin.titulo.nombre}
+          Nuevo título: <Ico e={fin.titulo.icono ?? ""} /> {fin.titulo.nombre}
         </p>
       )}
       {fin.premios.length > 0 && (

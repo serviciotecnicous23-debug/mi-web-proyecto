@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BANQUETE, VERSO_BANQUETE, VERSO_INVITADO, type BanquetesEstado, type SentarseRespuesta } from "@shared/banquete";
 import { gameStore } from "./store";
+import { Gozo, Ico } from "./iconos";
 
 async function pedir<T>(path: string, body?: unknown): Promise<{ ok: boolean; data: (T & { message?: string }) | null }> {
   try {
@@ -46,9 +47,9 @@ export function BanqueteCasa({ alGozo }: { alGozo?: (gozo: number) => void }) {
   if (!e) return null;
   return (
     <section className="space-y-1.5 rounded-xl border border-amber-300 bg-amber-50/60 p-3 text-xs dark:border-amber-900/60 dark:bg-amber-950/20" data-testid="banquete-casa">
-      <p className="font-black">🍞 Un banquete en tu casa</p>
+      <p className="font-black"><Ico e="🍞" /> Un banquete en tu casa</p>
       <p className="text-[11px] text-stone-600 dark:text-stone-300">
-        Abre tu casa {BANQUETE.minutos} minutos con pan y aceite. Cada vecino que llegue a tu puerta y se siente a tu mesa gana {BANQUETE.gozoInvitado} de gozo y puntos para la copa del barrio, y tu casa gana {BANQUETE.honraPorInvitado} de honra por cada uno (hasta {BANQUETE.maxInvitados}). Cuesta ✨ {BANQUETE.gozo}, {BANQUETE.harina} de flor de harina y {BANQUETE.aceite} de aceite. Una vez por día.
+        Abre tu casa {BANQUETE.minutos} minutos con pan y aceite. Cada vecino que llegue a tu puerta y se siente a tu mesa gana {BANQUETE.gozoInvitado} de gozo y puntos para la copa del barrio, y tu casa gana {BANQUETE.honraPorInvitado} de honra por cada uno (hasta {BANQUETE.maxInvitados}). Cuesta <Gozo n={BANQUETE.gozo} />, {BANQUETE.harina} de flor de harina y {BANQUETE.aceite} de aceite. Una vez por día.
       </p>
       {e.mio ? (
         <p className="rounded-lg bg-white/70 p-2 font-semibold dark:bg-stone-900/50" data-testid="banquete-mio">
@@ -91,7 +92,7 @@ export function BanqueteVisita({ personajeId, alGozo }: { personajeId: number; a
   };
   return (
     <section className="space-y-1.5 rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs dark:border-amber-900/60 dark:bg-amber-950/20" data-testid="banquete-visita">
-      <p className="font-black">🍞 {b.anfitrion} tiene un banquete</p>
+      <p className="font-black"><Ico e="🍞" /> {b.anfitrion} tiene un banquete</p>
       <p className="text-[11px] text-stone-600 dark:text-stone-300">
         Quedan {minutos(b.faltan)} · {b.invitados} de {BANQUETE.maxInvitados} a la mesa. Siéntate y gana {BANQUETE.gozoInvitado} de gozo (hasta {BANQUETE.sentadasPorDia} mesas por día).
       </p>

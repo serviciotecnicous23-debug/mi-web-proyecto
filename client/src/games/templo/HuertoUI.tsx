@@ -10,6 +10,7 @@ import { GOZO_HUERTO, HERRAMIENTAS, HERRAMIENTAS_IDS, NOMBRE_FUENTE, VERSOS_HUER
 import type { MercadoEstado } from "@shared/mercado";
 import { gameStore, useGame } from "./store";
 import type { HuertoWorld } from "./casa/huerto3d";
+import { Ico } from "./iconos";
 
 const sombra = "[text-shadow:0_1px_2px_rgba(0,0,0,.85)]";
 const lados = { paddingLeft: "calc(0.5rem + var(--tpl-sl, 0px))", paddingRight: "calc(0.5rem + var(--tpl-sr, 0px))" };
@@ -63,7 +64,7 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
       <div className="absolute inset-x-0 top-0 flex flex-col gap-1.5 bg-gradient-to-b from-black/60 via-black/25 to-transparent pb-5" style={{ ...lados, paddingTop: "calc(0.5rem + var(--tpl-st, 0px))" }}>
         <div className="flex items-start justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1 rounded-full bg-gradient-to-b from-lime-300 to-emerald-500 py-1 pl-2 pr-3 text-xs font-black text-emerald-950 shadow-lg" data-testid="huerto-titulo">
-            🌾 <span className="truncate">El huerto de tu casa</span>
+            <Ico e="🌾" /> <span className="truncate">El huerto de tu casa</span>
           </span>
           <div className="pointer-events-auto flex shrink-0 gap-1.5">
             <button type="button" onClick={() => setVer(ver === "ayuda" ? null : "ayuda")} className="rounded-full bg-black/45 p-1.5 shadow-lg active:scale-95" aria-label="Cómo se trabaja el huerto" data-testid="huerto-ayuda">
@@ -80,7 +81,7 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
         {lab && (
           <div className="flex flex-wrap gap-1 text-[11px] font-bold" data-testid="huerto-recursos">
             <span className={`rounded-full px-2 py-0.5 ${lab.agua ? "bg-sky-900/60" : "bg-red-900/70"} ${sombra}`} title={NOMBRE_FUENTE[lab.fuente]}>
-              🏺 {lab.agua}/{lab.carga} {lab.agua === 1 ? "riego" : "riegos"}
+              <Ico e="🏺" /> {lab.agua}/{lab.carga} {lab.agua === 1 ? "riego" : "riegos"}
             </span>
             <span className={`rounded-full bg-amber-900/60 px-2 py-0.5 ${sombra}`} title={lab.abono.ovejas ? `${lab.abono.ovejas} ovejas en tu redil` : "Sin ovejas en tu redil"}>
               🐑 {lab.abono.hay} de abono{lab.abono.proxima && lab.abono.hay < lab.abono.tope ? ` · otro en ${tiempo(lab.abono.proxima)}` : ""}
@@ -131,7 +132,7 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
               {PASOS.map((p) => (
                 <li key={p.titulo} className="rounded-xl bg-white/5 p-2">
                   <p className="font-bold">
-                    {p.icono} {p.titulo}
+                    <Ico e={p.icono ?? ""} /> {p.titulo}
                   </p>
                   <p className="text-[12px] text-white/80">{p.texto}</p>
                   <p className="mt-0.5 text-[11px] italic text-amber-100/70">
@@ -150,7 +151,7 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
                 const tiene = lab?.herramientas[id] === 2;
                 return (
                   <div key={id} className="flex items-center gap-2 rounded-xl bg-white/5 p-2" data-testid={`huerto-herramienta-${id}`}>
-                    <span className="text-2xl">{t.icono}</span>
+                    <span className="text-2xl"><Ico e={t.icono ?? ""} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-bold">{tiene ? t.mejor.nombre : t.nombre}</span>
                       <span className="block text-[11px] text-white/70">{tiene ? `✓ ${t.mejor.ventaja}` : `${t.mejor.nombre}: ${t.mejor.ventaja}`}</span>
@@ -222,7 +223,7 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
                     className="flex items-center gap-1 rounded-full bg-gradient-to-b from-lime-300 to-emerald-500 px-3 py-1.5 text-xs font-black text-emerald-950 shadow-lg active:scale-95 disabled:from-stone-500 disabled:to-stone-600 disabled:text-white/70"
                     data-testid={`huerto-accion-${a.id}${a.extra?.semilla ? `-${String(a.extra.semilla)}` : a.extra?.rincon ? "-rincon" : ""}`}
                   >
-                    <span className="text-sm leading-none">{a.icono}</span> {a.nombre}
+                    <span className="text-sm leading-none"><Ico e={a.icono ?? ""} /></span> {a.nombre}
                   </button>
                 ))}
               </div>
@@ -236,17 +237,17 @@ export function HuertoHudLayer({ mundo, onSalir, alGozo }: { mundo: HuertoWorld;
           <div className="pointer-events-auto flex flex-wrap justify-center gap-1.5" data-testid="huerto-ir">
             {h.llevando ? (
               <button type="button" onClick={() => mundo.irA("granero")} className="rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-3 py-1.5 text-xs font-black text-amber-950 shadow-lg active:scale-95" data-testid="huerto-ir-granero">
-                🌾 Ir al granero
+                <Ico e="🌾" /> Ir al granero
               </button>
             ) : (
               <>
                 {gavillas > 0 && (
                   <button type="button" onClick={() => mundo.irA("gavillas")} className="rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-3 py-1.5 text-xs font-black text-amber-950 shadow-lg active:scale-95" data-testid="huerto-ir-gavillas">
-                    🧺 Ir a las gavillas
+                    <Ico e="🧺" /> Ir a las gavillas
                   </button>
                 )}
                 <button type="button" onClick={() => mundo.irA("pozo")} className="rounded-full bg-black/55 px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95" data-testid="huerto-ir-pozo">
-                  🏺 Ir al pozo
+                  <Ico e="🏺" /> Ir al pozo
                 </button>
                 {m.huerto.map((_, i) => (
                   <button key={i} type="button" onClick={() => mundo.irA(i)} className="rounded-full bg-black/55 px-3 py-1.5 text-xs font-bold shadow-lg active:scale-95" data-testid={`huerto-ir-surco-${i}`}>

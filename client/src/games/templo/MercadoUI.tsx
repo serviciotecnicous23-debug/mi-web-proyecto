@@ -22,6 +22,7 @@ import { gameStore } from "./store";
 import { Card } from "./ui";
 import { vistaDe } from "./casa/vistas3d";
 import { EstacionDelHuerto } from "./CalendarioUI";
+import { Gozo, Ico } from "./iconos";
 
 type RespuestaMercado = MercadoEstado & { message?: string; cosecha?: { bien: string; cuanto: number }; vendido?: number; comprado?: string; colocado?: boolean; puesto?: boolean; alFardo?: boolean };
 
@@ -101,7 +102,7 @@ function VistaArticulo({ a, onVer }: { a: Articulo; onVer: (url: string) => void
   if (!url)
     return (
       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-2xl dark:bg-stone-800" aria-hidden="true">
-        {a.icono}
+        <Ico e={a.icono} />
       </span>
     );
   return (
@@ -168,7 +169,7 @@ function SiguientePaso({ s, onCerrar, alEntrarACasa }: { s: { a: Articulo; coloc
     <div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-[13px] text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100" data-testid="mercado-siguiente">
       <p>
         <b>
-          {s.a.icono} {s.a.nombre}: ¿y ahora?
+          <Ico e={s.a.icono} /> {s.a.nombre}: ¿y ahora?
         </b>{" "}
         {p.texto}
       </p>
@@ -213,7 +214,7 @@ function RopaQueVuelve({ temporadas, armario }: { temporadas: Record<string, Tie
             <li key={a.id} className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 shrink-0 rounded-full ring-1 ring-black/20" style={{ background: a.color }} />
               <span className="min-w-0 flex-1 truncate">
-                {a.icono} {a.nombre}
+                <Ico e={a.icono} /> {a.nombre}
               </span>
               <span className="shrink-0 font-semibold text-stone-500">{v == null ? "más adelante" : v === 1 ? "mañana" : `en ${v} días`}</span>
             </li>
@@ -280,7 +281,7 @@ export function MercadoView({
         {puesto && (
           <p className="rounded-xl bg-amber-50/70 p-2.5 text-[13px] dark:bg-amber-950/20" data-testid="mercado-puesto">
             <b>
-              {puesto.icono} {puesto.nombre}:
+              <Ico e={puesto.icono} /> {puesto.nombre}:
             </b>{" "}
             «{puesto.dice}»
           </p>
@@ -303,7 +304,7 @@ export function MercadoView({
                 <img src={viendo.url} alt={viendo.a.nombre} className="h-full w-full object-contain" />
               </div>
               <p className="mt-3 font-black">
-                {viendo.a.icono} {viendo.a.nombre}
+                <Ico e={viendo.a.icono} /> {viendo.a.nombre}
               </p>
               <p className="mt-1 text-[12px] text-stone-500">{viendo.a.detalle}</p>
               <Button className="mt-3 w-full" variant="secondary" onClick={() => setViendo(null)}>
@@ -331,7 +332,7 @@ export function MercadoView({
                 }
                 data-testid="probador-comprar"
               >
-                Comprar · ✨ {precioHoy(probando, m.dia)}
+                Comprar · <Gozo n={precioHoy(probando, m.dia)} />
               </Button>
             )}
             <Button size="sm" variant="ghost" onClick={() => setProbando(null)}>
@@ -392,7 +393,7 @@ export function MercadoView({
                       </span>
                       <span className="shrink-0 text-right">
                         {precio < a.precio && <span className="block text-[10px] text-stone-400 line-through">{a.precio}</span>}
-                        <span className="block font-black text-amber-700 dark:text-amber-300">✨ {precio}</span>
+                        <span className="block font-black text-amber-700 dark:text-amber-300"><Gozo n={precio} /></span>
                       </span>
                       {a.categoria === "ropa" && (
                         <Button size="sm" variant="secondary" className="px-2" title="Probártela: tu personaje con esta prenda, girando" onClick={() => setProbando(a)} data-testid={`probar-${a.id}`}>
@@ -449,7 +450,7 @@ export function MercadoView({
                 {(["harina", "aceite", "corderos"] as const).map((b) => (
                   <div key={b} className={`flex items-center gap-2 rounded-xl border p-2.5 ${m.demanda === b ? "border-emerald-300 dark:border-emerald-800" : "border-stone-200 dark:border-stone-700"}`}>
                     <span className="min-w-0 flex-1">
-                      <b>{mayuscula(NOMBRE_BIEN[b])}</b>: tienes {m.bienes[b]} · ✨ {m.precios[b]} cada uno{m.demanda === b ? " (¡lo buscan hoy!)" : ""}
+                      <b>{mayuscula(NOMBRE_BIEN[b])}</b>: tienes {m.bienes[b]} · <Gozo n={m.precios[b]} /> cada uno{m.demanda === b ? " (¡lo buscan hoy!)" : ""}
                       {m.vendidosHoy[b] > 0 && (
                         <span className="block text-[11px] text-stone-500">
                           Hoy ya le vendieron {m.vendidosHoy[b]} en la ciudad{m.precios[b] < precioVentaHoy(b, m.dia) ? `: antes pagaba ✨ ${precioVentaHoy(b, m.dia)}` : ""}.
@@ -521,8 +522,8 @@ export function CasaExtras({
       {ver("huerto") && (
       <section className="space-y-2 rounded-xl border border-emerald-200 p-3 dark:border-emerald-900/60" data-testid="casa-huerto">
         <p className="flex items-baseline justify-between font-black">
-          <span>🌾 Tu huerto</span>
-          <span className="text-xs font-semibold text-stone-500">✨ {m.gozo} de gozo</span>
+          <span><Ico e="🌾" /> Tu huerto</span>
+          <span className="text-xs font-semibold text-stone-500"><Gozo n={m.gozo} /> de gozo</span>
         </p>
         <p className="text-[12px] text-stone-600 dark:text-stone-300">
           Detrás de tu casa, por la puerta del fondo. Allí se trabaja de verdad: aras con la azada, siembras, sacas agua del pozo y riegas, arrancas las malas hierbas, espantas las aves, abonas con lo de tu redil y siegas con la hoz. Las gavillas se llevan al granero: de ahí van al alfolí.
@@ -535,7 +536,7 @@ export function CasaExtras({
             const listo = !!p.semilla && (p.listo || f === 0);
             return (
               <div key={i} className="rounded-lg border border-stone-200 p-2 text-center text-xs dark:border-stone-700" data-testid={`parcela-${i}`}>
-                <p className="text-xl">{p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : p.arado ? "🟫" : "🪨"}</p>
+                <p className="text-xl"><Ico e={(p.semilla ? (listo ? articulo(p.semilla)?.icono : "🌱") : p.arado ? "🟫" : "🪨") ?? ""} /></p>
                 <p className="font-semibold">
                   Surco {i + 1}: {p.semilla ? (listo ? "¡listo para segar!" : tiempo(f)) : p.arado ? "arado" : "sin arar"}
                 </p>
@@ -552,14 +553,14 @@ export function CasaExtras({
         </div>
         {m.labranza && (
           <p className="text-[11px] text-stone-500" data-testid="huerto-labranza">
-            🏺 {m.labranza.agua} de {m.labranza.carga} riegos · 🐑 {m.labranza.abono.hay} de abono
+            <Ico e="🏺" /> {m.labranza.agua} de {m.labranza.carga} riegos · 🐑 {m.labranza.abono.hay} de abono
             {m.labranza.gavillas.harina + m.labranza.gavillas.aceite > 0 ? ` · 🧺 ${m.labranza.gavillas.harina + m.labranza.gavillas.aceite} gavillas esperan el granero` : ""}
             {m.labranza.misiones.length ? ` · tareas de hoy ${m.labranza.misiones.filter((x) => x.cumplida).length}/${m.labranza.misiones.length}` : ""}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" className="bg-emerald-600 font-bold hover:bg-emerald-500" onClick={() => (gameStore.close(), window.dispatchEvent(new Event("jer-huerto")))} data-testid="huerto-ir">
-            🌾 Ir a mi huerto
+            <Ico e="🌾" /> Ir a mi huerto
           </Button>
           {!semillasTengo.length && alIrAlMercado && (
             <Button size="sm" variant="secondary" onClick={alIrAlMercado} data-testid="huerto-ir-mercado">
@@ -576,7 +577,7 @@ export function CasaExtras({
         <p className="flex items-baseline justify-between font-black">
           <span>Tu horno · prepara tus ofrendas</span>
           <span className="text-xs font-semibold text-stone-500">
-            🌾 {m.bienes.harina} · 🫒 {m.bienes.aceite}
+            <Ico e="🌾" /> {m.bienes.harina} · 🫒 {m.bienes.aceite}
           </span>
         </p>
         <p className="text-[11px] text-stone-500">Con lo del alfolí prepara ofrendas que valen más honra que los bienes sueltos. Tardan en el horno: vuelve a sacarlas.</p>
@@ -587,7 +588,7 @@ export function CasaExtras({
             const f = Math.max(0, m.horno.faltan - Math.floor((ahora - recibido) / 1000));
             return (
               <div className="flex items-center gap-2 rounded-lg bg-orange-50/70 p-2 dark:bg-orange-950/20" data-testid="horno-ocupado">
-                <span className="text-2xl">{r.icono}</span>
+                <span className="text-2xl"><Ico e={r.icono} /></span>
                 <span className="min-w-0 flex-1 text-xs">
                   <b>
                     {m.horno.cantidad} × {r.nombre}
@@ -622,7 +623,7 @@ export function CasaExtras({
               const alcanza = pide.every(([b, n]) => m.bienes[b] >= n * cuantas);
               return (
                 <div key={id} className="flex items-center gap-2 rounded-lg border border-stone-200 p-2 dark:border-stone-700">
-                  <span className="text-2xl">{r.icono}</span>
+                  <span className="text-2xl"><Ico e={r.icono} /></span>
                   <span className="min-w-0 flex-1 text-xs">
                     <b>{r.nombre}</b> · {r.minutos} min
                     <br />
@@ -638,7 +639,7 @@ export function CasaExtras({
         )}
         <div className="flex items-center gap-2 text-xs">
           <span className="min-w-0 flex-1">
-            Preparadas: {RECETAS.tortas.icono} {m.preparadas.tortas} · {RECETAS.aceitePuro.icono} {m.preparadas.aceitePuro}
+            Preparadas: <Ico e={RECETAS.tortas.icono} /> {m.preparadas.tortas} · <Ico e={RECETAS.aceitePuro.icono} /> {m.preparadas.aceitePuro}
           </span>
           <Button
             size="sm"
@@ -699,7 +700,7 @@ export function CasaExtras({
                   className={`rounded-full px-2.5 py-1 text-xs font-bold ${puesto ? "bg-amber-400 text-amber-950" : "bg-stone-100 dark:bg-stone-800"} disabled:opacity-40`}
                   data-testid={`adorno-${id}`}
                 >
-                  {articulo(id)?.icono} {articulo(id)?.nombre} {puesto ? "✓" : ""}
+                  <Ico e={articulo(id)?.icono ?? ""} /> {articulo(id)?.nombre} {puesto ? "✓" : ""}
                 </button>
               );
             })}
@@ -738,7 +739,13 @@ export function CasaExtras({
                       className={`rounded-full px-2 py-0.5 font-bold ${(ropaVista[r] ?? null) === id ? "bg-sky-500 text-white" : "bg-stone-100 dark:bg-stone-800"}`}
                       data-testid={`ropa-${id ?? `sin-${r}`}`}
                     >
-                      {id ? `${articulo(id)?.icono ?? ""} ${articulo(id)?.nombre}` : "Nada"}
+                      {id ? (
+                        <>
+                          <Ico e={articulo(id)?.icono ?? ""} /> {articulo(id)?.nombre}
+                        </>
+                      ) : (
+                        "Nada"
+                      )}
                     </button>
                   ))}
                 </div>

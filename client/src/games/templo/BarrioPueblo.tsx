@@ -9,6 +9,7 @@ import { gameStore } from "./store";
 import { VERSO_PUEBLO, type PedidoPuebloVista, type PuebloEstado } from "@shared/pueblo";
 import { AYUDA_GOZO_DIA, type BienAyuda } from "@shared/ayuda";
 import type { MisionCumplida } from "@shared/misiones";
+import { Ico } from "./iconos";
 
 const NOMBRE_BIEN: Record<BienAyuda, [string, string, string]> = {
   harina: ["harina", "harinas", "🌾"],
@@ -88,7 +89,7 @@ export function PuebloDelBarrio() {
             En las casas que todavía no tienen dueño viven <b>{e.familias}</b> {e.familias === 1 ? "familia" : "familias"} del pueblo de Jerusalén. Cada día alguna pide algo; dales de tu alfolí.
           </>
         ) : (
-          <>🏘️ Todas las casas de tu barrio ya tienen dueño, así que aquí no quedan familias del pueblo: ¡tu barrio está lleno de vecinos! Lo que ellos piden para su ofrenda está en los «Anuncios de la ciudad».</>
+          <><Ico e="🏘️" /> Todas las casas de tu barrio ya tienen dueño, así que aquí no quedan familias del pueblo: ¡tu barrio está lleno de vecinos! Lo que ellos piden para su ofrenda está en los «Anuncios de la ciudad».</>
         )}
       </p>
       {e.pedidos.length === 0 ? (
@@ -103,7 +104,7 @@ export function PuebloDelBarrio() {
               <li key={p.parcela} className={`space-y-2 rounded-xl p-3 ring-1 ${p.cumplido ? "bg-emerald-50 ring-emerald-200 dark:bg-emerald-950/30 dark:ring-emerald-800" : "bg-amber-50 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-900"}`} data-testid={`pueblo-pedido-${p.parcela}`}>
                 <p className="flex items-start gap-2 text-[13px] leading-snug">
                   <span className="text-2xl leading-none" aria-hidden="true">
-                    {p.familia.icono}
+                    <Ico e={p.familia.icono ?? ""} />
                   </span>
                   <span className="min-w-0">
                     <b>
@@ -117,7 +118,7 @@ export function PuebloDelBarrio() {
                   <div className={`h-full rounded-full ${p.cumplido ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${(p.recibido / p.cantidad) * 100}%` }} />
                 </div>
                 <p className="text-xs font-bold">
-                  {icono} {p.recibido} de {p.cantidad} {p.cantidad === 1 ? uno : varios}
+                  <Ico e={icono} /> {p.recibido} de {p.cantidad} {p.cantidad === 1 ? uno : varios}
                   {p.miAporte > 0 ? ` · tú diste ${p.miAporte}` : ""}
                   {p.cumplido ? " · ✓ cumplido" : ` · faltan ${falta}`}
                 </p>

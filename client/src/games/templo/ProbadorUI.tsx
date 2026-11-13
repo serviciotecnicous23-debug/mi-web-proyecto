@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { X } from "lucide-react";
 import { Figure, newRig, type FigureLook } from "./three/characters";
 import { RANURAS, articulo, coloresDeIds, ranuraDe, type RopaIds } from "@shared/mercado";
+import { Ico } from "./iconos";
 
 type Props = {
   /** La vestidura del personaje (la de su escalón y su camino). */
@@ -169,7 +170,7 @@ export function Probador({ look, ropa, prueba, titulo, onCerrar, children }: Pro
         {a && (
           <p className="text-center text-[12px] text-stone-500">
             <b className="text-stone-800 dark:text-stone-100">
-              {a.icono} {a.nombre}
+              <Ico e={a.icono ?? ""} /> {a.nombre}
             </b>{" "}
             · {a.detalle}
           </p>
