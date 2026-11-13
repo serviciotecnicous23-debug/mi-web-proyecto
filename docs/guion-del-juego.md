@@ -820,3 +820,15 @@ partida sigue siendo de personas.
 3. Su pantalla en `client/src/games/templo/mesa/` (`PantallaMesaProps`), con su línea en `PANTALLAS_MESA`: el tablero
    dibujado, las piezas que se mueven animadas y la última jugada marcada. La música la pone la banda sonora
    («juegos-mesa» para los de tablero; los de grupo, «juegos-grupo»).
+
+**Los juegos de mesa clásicos** (13 de noviembre de 2026), cada uno con su computadora que piensa con límite de tiempo
+(fácil 30–40 ms, normal 120–160 ms, difícil 280–380 ms; así no frena al servidor):
+
+| Juego | Reglas | La computadora |
+|---|---|---|
+| ♟️ Ajedrez (Proverbios 24:6) | Completas: enroque, al paso, coronación a elegir, jaque mate, ahogado, tablas por 50 jugadas, por repetición o sin material; reloj de 60 s | Alfa-beta con tablas de casillas y capturas hasta que se calman; el fácil a veces juega cualquier cosa |
+| ⚫ Damas (Apocalipsis 3:11) | A la española: el peón come hacia adelante, la dama vuela, comer es obligatorio y la mayor cantidad; tablas a las 50 jugadas solo de damas; reloj de 45 s | Alfa-beta mirando el material, el avance y el centro |
+| 🔴 Cuatro en raya (Proverbios 30:24) | 7 × 6, gana quien junta cuatro; reloj de 30 s | Alfa-beta con las 69 ventanas de cuatro |
+
+Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
+pruebas (`shared/mesa-clasicos.test.ts`) cuentan todas las jugadas del ajedrez en posiciones conocidas («perft»).

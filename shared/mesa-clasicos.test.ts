@@ -145,8 +145,9 @@ test("damas: la salida, comer obligatorio y la mayor cantidad", () => {
   // blanca en (5,2)=42 con negra en (4,3)=35: puede comer saltando a (3,4)=28; además tiene un paso libre en (4,1)
   const come = damasCon({ 42: 1, 35: -1, 0: -1 });
   assert.deepEqual(DAMAS.jugadasValidas(come, 0), [[42, 28]], "si se puede comer, hay que comer");
-  // dos caminos: comer una (42→28) o dos seguidas con la otra ficha (46→28? no): 46=(5,6) come (4,5)=37 → (3,4)=28, y luego (2,3)=19 → (1,2)=10
-  const mayor = damasCon({ 42: 1, 35: -1, 46: 1, 37: -1, 19: -1, 63: -1 });
+  // la ficha de (5,2)=42 puede comer una: (4,1)=33 y cae en (3,0)=24; la de (5,6)=46 come dos seguidas: (4,5)=37 → (3,4)=28 y
+  // (2,3)=19 → (1,2)=10. Hay que comer la mayor cantidad: solo vale la de dos
+  const mayor = damasCon({ 42: 1, 33: -1, 46: 1, 37: -1, 19: -1, 63: -1 });
   assert.deepEqual(DAMAS.jugadasValidas(mayor, 0), [[46, 28, 10]], "hay que comer la mayor cantidad");
   const despues = DAMAS.aplicar(mayor, 0, [46, 28, 10], azarConSemilla(1));
   assert.equal(despues.t[37], 0);
@@ -159,10 +160,10 @@ test("damas: el peón no come hacia atrás, la dama vuela y se corona al llegar 
   // blanca en (3,4)=28 con una negra detrás, en (4,3)=35, y (5,2)=42 libre: el peón no puede comerla
   const atras = damasCon({ 28: 1, 35: -1, 7: -1 });
   assert.ok(DAMAS.jugadasValidas(atras, 0).every((j) => j.length === 2 && j[1] >> 3 === 2), "solo pasos hacia adelante");
-  // la dama blanca en (7,0)=56 vuela por la diagonal y come a distancia: negra en (4,3)=35, cae en (3,4)=28, (2,5)=21 o (1,6)=14
+  // la dama blanca en (7,0)=56 vuela por la diagonal y come a distancia: negra en (4,3)=35, cae en (3,4)=28, (2,5)=21, (1,6)=14 o (0,7)=7
   const dama = damasCon({ 56: 2, 35: -1, 6: -1 });
   const js = DAMAS.jugadasValidas(dama, 0);
-  assert.deepEqual(js.map((j) => j[1]).sort((a, b) => a - b), [14, 21, 28]);
+  assert.deepEqual(js.map((j) => j[1]).sort((a, b) => a - b), [7, 14, 21, 28]);
   assert.ok(js.every((j) => j[0] === 56 && j.length === 2));
   const sinComer = damasCon({ 56: 2, 7: -1 });
   assert.equal(DAMAS.jugadasValidas(sinComer, 0).length, 6, "vuela hasta la otra punta");
@@ -177,7 +178,11 @@ test("damas: el peón no come hacia atrás, la dama vuela y se corona al llegar 
 
 test("damas: la computadora come cuando conviene y una partida entera termina bien", () => {
   const azar = azarConSemilla(5);
-  assert.deepEqual(mejorJugadaDamas(damasCon({ 42: 1, 35: -1, 46: 1, 37: -1, 19: -1, 63: -1 }).t, 0, "dificil", azar), [46, 28, 10]);
+  assert.deepEqual(mejorJugadaDamas(damasCon({ 42: 1, 33: -1, 46: 1, 37: -1, 19: -1, 63: -1 }).t, 0, "dificil", azar), [46, 28, 10]);
+  // con dos comidas posibles, elige la que no deja que le coman: (5,2)=42 come (4,3)=35 y cae en (3,4)=28, donde la negra
+  // de (2,5)=21 se la comería… salvo que no pueda: la computadora difícil siempre devuelve una jugada que vale
+  const dos = damasCon({ 42: 1, 35: -1, 21: -1, 46: 1, 37: -1, 0: -1 });
+  assert.ok(jugadaValida(DAMAS, dos, 0, mejorJugadaDamas(dos.t, 0, "dificil", azar)));
   let e = DAMAS.estadoInicial(asientos, azar);
   for (let k = 0; k < 220 && !DAMAS.terminado(e); k++) {
     const a = DAMAS.turnoDe(e)!;

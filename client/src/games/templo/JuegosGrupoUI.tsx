@@ -519,7 +519,7 @@ function CompanerosPanel({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: b
       </p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Agregar un compañero de la computadora">
         {(Object.keys(NIVELES_BOT) as NivelBot[]).map((n) => (
-          <Button key={n} size="sm" variant="secondary" disabled={ocupado || lleno} onClick={() => void hacer("bot", { nivel: n })} title={NIVELES_BOT[n].detalle} data-testid={`juegos-bot-${n}`}>
+          <Button key={n} size="sm" variant="secondary" disabled={ocupado || lleno} onClick={() => void hacer("bot", { nivel: n })} title={NIVELES_BOT[n].detalle} aria-label={`Agregar un compañero de la computadora, nivel ${NIVELES_BOT[n].nombre.toLowerCase()}`} data-testid={`juegos-bot-${n}`}>
             {NIVELES_BOT[n].icono} {NIVELES_BOT[n].nombre}
           </Button>
         ))}
