@@ -11,6 +11,7 @@ import { registerMisionesRoutes } from "./misiones";
 import { registerMercadoRoutes } from "./mercado";
 import { registerEconomiaRoutes } from "./economia";
 import { registerCatedrasRoutes } from "./catedras";
+import { registerRangoRoutes } from "./examenes-rango";
 import { registerBarrioRoutes } from "./barrio";
 import { registerBarrioJuntosRoutes } from "./barrio-juntos";
 import { registerAcompanarRoutes } from "./acompanar";
@@ -3695,6 +3696,8 @@ ${urls}
   registerMercadoRoutes(app);
   registerEconomiaRoutes(app);
   registerCatedrasRoutes(app);
+  // los exámenes de rango de cada camino (por partes, en el aula)
+  registerRangoRoutes(app);
   // El barrio como clan: la charla del barrio, su emblema y su lema, y sus vecinos.
   registerBarrioRoutes(app);
   // la misión del barrio de hoy y la copa de los barrios

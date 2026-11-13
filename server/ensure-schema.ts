@@ -15,6 +15,7 @@ import { MISIONES_SQL } from "./misiones";
 import { MERCADO_SQL } from "./mercado";
 import { ECONOMIA_SQL } from "./economia";
 import { CATEDRAS_SQL } from "./catedras";
+import { RANGO_SQL } from "./examenes-rango";
 import { BARRIO_SQL } from "./barrio";
 import { BARRIO_JUNTOS_SQL } from "./barrio-juntos";
 import { PUEBLO_SQL } from "./pueblo";
@@ -1143,6 +1144,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(CATEDRAS_SQL);
     } catch (err: any) {
       console.log(`  Migration note (cátedras): ${err?.message}`);
+    }
+    try {
+      // Los exámenes de rango: cada parte, cada examen aprobado y el repaso de la temporada (y can_jefe en los cargos)
+      await pool.query(RANGO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (exámenes de rango): ${err?.message}`);
     }
     try {
       // El barrio como clan: su charla, su emblema y su lema

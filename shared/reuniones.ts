@@ -33,6 +33,8 @@ export type ReunionVista = {
   /** ¿Es la mía? ¿Ya fui? */
   mia: boolean;
   yaFui: boolean;
+  /** Quien la da aprobó el examen de rango 3 (o más) de su camino: enseña en las reuniones (shared/examenes-rango.ts). */
+  maestro?: boolean;
 };
 
 export type ReunionesEstado = {

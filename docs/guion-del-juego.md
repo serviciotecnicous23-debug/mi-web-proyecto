@@ -112,8 +112,8 @@ reloj, cuatro comodines, llamadas a un amigo de verdad, público que mira y apla
 
 ### La temporada (28 días)
 - El mérito de la temporada ordena a los sacerdotes: **sacerdote → sacerdote de turno (150 de mérito) → jefe
-  de un turno (12) → principal sacerdote (3) → sumo sacerdote (1)**; los más altos piden además aprobar sus
-  estudios.
+  de un turno (12) → principal sacerdote (3) → sumo sacerdote (1)**; cada escalón pide su examen de rango (ver «Los
+  exámenes de rango») y los más altos, además, sus estudios y el repaso de cada temporada.
 - La casa crece con la honra: **tienda → casa de adobe → casa de piedra con patio → casa con aposento alto**, y se
   edifica con el gozo: las obras de la casa (capítulo 7) y sus estrellas.
 - Al cerrar, empieza otra temporada. Las historias van en `PROGRAMA` (`shared/capitulos.ts`): una nueva se
@@ -155,6 +155,32 @@ clase en `clases.ts` y su director en `director.ts`), la pantalla en `AulaUI.tsx
   `aula/aula-sonido.ts` y se pueden apagar.
 - Las reglas del servidor no cambian: nada llega antes de tiempo. En el examen de los estudios, cada pregunta tiene su
   propio orden de opciones (`server/orden-examen.ts`): antes la buena caía en la misma letra en todo el examen.
+
+### Los exámenes de rango
+Cada camino tiene cinco escalones y, para cada escalón del 2 al 5, un examen propio sobre lo que debe saber ese rango
+(`shared/examenes-rango.ts`; las 423 preguntas, con su cita RVR1960 literal, están SOLO en el servidor:
+`server/examenes-rango-banco.ts`, generado y comprobado desde los bancos de la sesión del aula). Se da en el aula del
+camino, con el maestro (`aula/clases.ts`, `claseRango`, y la sección del menú en `RangoUI.tsx`).
+
+| Escalón | Partes | Preguntas por parte | Se aprueba con | Premio (una vez) |
+|---|---|---|---|---|
+| 2 (de turno, vidente, escriba del rey) | 3 | 6 | 5 | 40 de mérito y 30 de gozo |
+| 3 (jefe de un turno, anciano de la escuela, oficial del rey) | 3 | 7 | 6 | 60 y 50 |
+| 4 (principal, profeta del rey, consejero del rey) | 4 | 7 | 6 | 80 y 80 |
+| 5 (sumo sacerdote, varón de Dios, canciller del rey) | 4 | 8 | 7 | 100 y 120 |
+
+- **Por partes**: cada parte se da cuando uno quiere y queda guardada. El servidor manda las preguntas de a una, sin la
+  respuesta, con las opciones en su orden (`server/orden-examen.ts`), y lleva el reloj (40 s): la que se responde tarde,
+  o la que se dejó y venció, cuenta como mala. Si se falla, hay que esperar 15, 30 y después 60 minutos, y vuelve con
+  preguntas que todavía no salieron. El examen N pide el N−1.
+- **De corrido**: todas las partes a la primera en menos de 3 horas: el sello ⭐ y 20 de gozo más. Sin obligar.
+- **Lo que abre**: el examen 2, ser «de turno» con 150 de mérito; el 3, el 4 y el 5, poder recibir su cargo al cerrar
+  la temporada (`cerrarTemporada`, `can_jefe`, `can_mid` y `can_high` en `server/jerusalen.ts`). Cada uno da su prenda
+  (`exclusivo: "rango"`, colección «Las prendas de los rangos», título «Diligente en la Palabra»), y con el 3 se enseña
+  en las reuniones: quien va gana 2 de gozo más.
+- **El repaso de la temporada**: los cargos altos (principal y sumo) piden el saber al día: el examen 4 o 5 aprobado en
+  esa temporada, o un repaso de 6 preguntas (se aprueba con 5) de los bancos 4 y 5.
+- **Los avisos**: lo que falta sale en «Para hoy» y en la ventana de la temporada, con un botón al aula.
 
 ### El año (el calendario real)
 El año no se acaba: cada día real es un día en Jerusalén. Las fiestas de Levítico 23 caen en su fecha hebrea

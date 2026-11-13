@@ -37,10 +37,10 @@ export type EscalonId = "sacerdote" | "turno" | "jefe" | "principal" | "sumo";
 /** La escalera del sacerdocio, de abajo hacia arriba. */
 export const ESCALONES: { id: EscalonId; nombre: string; cupo: number | null; como: string }[] = [
   { id: "sacerdote", nombre: "Sacerdote", cupo: null, como: "Al consagrarte en Jerusalén en línea (no hace falta haber jugado la historia)" },
-  { id: "turno", nombre: "Sacerdote de turno", cupo: null, como: `Con ${MERITO_TURNO} de mérito en la temporada` },
-  { id: "jefe", nombre: "Jefe de un turno", cupo: 12, como: "Los 12 siguientes en mérito al cerrar la temporada" },
-  { id: "principal", nombre: "Principal sacerdote", cupo: 3, como: "Los 3 siguientes en mérito que aprobaron el estudio «El sacerdocio de Aarón»" },
-  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que ya fue principal sacerdote y aprobó «El Día de la Expiación»" },
+  { id: "turno", nombre: "Sacerdote de turno", cupo: null, como: `Con ${MERITO_TURNO} de mérito en la temporada y su examen de rango` },
+  { id: "jefe", nombre: "Jefe de un turno", cupo: 12, como: "Los 12 siguientes en mérito al cerrar la temporada, con su examen de rango" },
+  { id: "principal", nombre: "Principal sacerdote", cupo: 3, como: "Los 3 siguientes en mérito que aprobaron el estudio «El sacerdocio de Aarón» y su examen de rango (y su repaso cada temporada)" },
+  { id: "sumo", nombre: "Sumo sacerdote", cupo: 1, como: "El de más mérito que ya fue principal sacerdote y aprobó «El Día de la Expiación» y su examen de rango (y su repaso cada temporada)" },
 ];
 
 export const CARGOS_CON_CUPO: EscalonId[] = ["sumo", "principal", "jefe"];

@@ -20,7 +20,9 @@ import { servidoReciente } from "./servido";
 import { Aula3D } from "./aula/Aula3D";
 import type { AulaEscena } from "./aula/escena";
 import { AulaCerrada, Director, type VistaClase } from "./aula/director";
-import { api, claseCatedra, claseExamen, claseSeccion, type PedidoAula, type Siguiente } from "./aula/clases";
+import { api, claseCatedra, claseExamen, claseRango, claseSeccion, type PedidoAula, type Siguiente } from "./aula/clases";
+import { MenuRango } from "./RangoUI";
+import type { RangoEstado } from "@shared/examenes-rango";
 import { sonidoAula } from "./aula/aula-sonido";
 
 const LETRAS = ["A", "B", "C", "D", "E"];
@@ -64,6 +66,7 @@ export function AulaView({ aula: aulaId, pedido: inicial }: { aula: AulaId; pedi
   const [hay3d, setHay3d] = useState(false);
   const [conSonido, setConSonido] = useState(sonidoAula.activo());
   const [estudios, setEstudios] = useState<EstudiosEstado | null>(null);
+  const [rango, setRango] = useState<RangoEstado | null>(null);
   const escena = useRef<AulaEscena | null>(null);
   const director = useRef<Director | null>(null);
   const maestro: MaestroAula = pedido.que === "catedra" ? def.catedra.maestro : def.maestro;
@@ -79,6 +82,18 @@ export function AulaView({ aula: aulaId, pedido: inicial }: { aula: AulaId; pedi
     void api<EstudiosEstado>("/estudios").then((r) => r.ok && r.data && setEstudios(r.data));
   }, []);
   useEffect(() => recargarEstudios(), [recargarEstudios]);
+  // los exámenes de rango del camino de quien estudia (se dan en el aula de su camino); al volver al menú, al día
+  const deEsteCamino = !!quien && quien.camino === def.camino;
+  useEffect(() => {
+    if (!deEsteCamino || pedido.que !== "menu") return;
+    let vivo = true;
+    void api<RangoEstado>("/rango").then((r) => vivo && r.ok && r.data && setRango(r.data));
+    if (estudios) recargarEstudios();
+    return () => {
+      vivo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deEsteCamino, pedido]);
 
   const salir = useCallback(() => {
     director.current?.cerrar();
@@ -120,6 +135,14 @@ export function AulaView({ aula: aulaId, pedido: inicial }: { aula: AulaId; pedi
       guion = claseExamen(d, { estudioId: pedido.estudio, alGuardar: setEstudios, alAviso: avisar });
     } else if (pedido.que === "catedra") {
       guion = claseCatedra(d, { area: pedido.area, pista: servidoReciente(quien.personajeId ?? undefined), alGozo: (n) => city?.ponerGozo(n), alAviso: avisar });
+    } else if (pedido.que === "rango" || pedido.que === "repaso") {
+      guion = claseRango(d, {
+        examen: pedido.que === "repaso" ? "repaso" : pedido.examen,
+        parte: pedido.que === "repaso" ? 0 : pedido.parte,
+        corrido: pedido.que === "rango" && !!pedido.corrido,
+        alGozo: (n) => city?.ponerGozo(n),
+        alAviso: avisar,
+      });
     }
     guion
       ?.then(seguir)
@@ -223,6 +246,7 @@ export function AulaView({ aula: aulaId, pedido: inicial }: { aula: AulaId; pedi
             camino={quien.camino}
             nombre={quien.nombre}
             estudios={estudios}
+            rango={deEsteCamino ? rango : null}
             abrir={(p) => {
               sonidoAula.pagina();
               const est = p.que === "seccion" || p.que === "examen" ? ESTUDIOS.find((x) => x.id === p.estudio) : null;
@@ -455,7 +479,7 @@ function Nota({ nota }: { nota: NonNullable<VistaClase["nota"]> }) {
 }
 
 // ================================================================ el menú: ¿qué aprendemos hoy?
-function Menu({ def, camino, nombre, estudios, abrir }: { def: (typeof AULAS)[AulaId]; camino: Camino; nombre: string; estudios: EstudiosEstado | null; abrir: (p: PedidoAula) => void }) {
+function Menu({ def, camino, nombre, estudios, rango, abrir }: { def: (typeof AULAS)[AulaId]; camino: Camino; nombre: string; estudios: EstudiosEstado | null; rango: RangoEstado | null; abrir: (p: PedidoAula) => void }) {
   const [abierto, setAbierto] = useState<string | null>(null);
   const [todos, setTodos] = useState(false);
   const deEsta = camino === def.camino;
@@ -496,6 +520,7 @@ function Menu({ def, camino, nombre, estudios, abrir }: { def: (typeof AULAS)[Au
           <BookOpen className="h-5 w-5 shrink-0 text-[#8f2a17]" />
         </button>
       )}
+      {rango && <MenuRango rango={rango} abrir={abrir} />}
       {!estudios && (
         <p className="flex items-center gap-2 px-1 text-xs text-amber-100/80">
           <Loader2 className="h-4 w-4 animate-spin" /> Trayendo tus rollos…

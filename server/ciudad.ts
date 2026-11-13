@@ -15,7 +15,7 @@ import { diaClave, escalonPorMerito, evento, hoyEnJerusalen, nombreDe, personaje
 import { avanzarMision } from "./misiones";
 import { coloresDeRopa } from "./ropa";
 import { RECETAS, guardarPreparadas, leerPreparadas, type Preparadas } from "@shared/mercado";
-import { CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
+import { MERITO_TURNO, CARGOS_DE_PRUEBA, JERUSALEN_JUEGO, type EscalonId } from "@shared/jerusalen";
 import { nivelBarrio } from "./barrio-juntos";
 import { registrarVisita } from "./regreso";
 import { diaEnJerusalen } from "@shared/anio";
@@ -43,7 +43,10 @@ const PERSONA_MERITO_CARGO = `(SELECT COALESCE(MAX(sm.merit), 0)::int FROM game_
                  WHERE c3.user_id = c.user_id AND c3.game = c.game AND sm.season = $3) AS merito,
               (SELECT o.office FROM game_offices o JOIN game_characters c4 ON c4.id = o.character_id
                  WHERE c4.user_id = c.user_id AND c4.game = c.game AND o.season = $3 AND o.office IS NOT NULL AND o.lost_at IS NULL
-                 ORDER BY CASE o.office WHEN 'sumo' THEN 0 WHEN 'principal' THEN 1 ELSE 2 END LIMIT 1) AS office`;
+                 ORDER BY CASE o.office WHEN 'sumo' THEN 0 WHEN 'principal' THEN 1 ELSE 2 END LIMIT 1) AS office,
+              EXISTS (SELECT 1 FROM game_season_merit sm6 JOIN game_characters c6 ON c6.id = sm6.character_id
+                        JOIN game_rango_examenes rx ON rx.character_id = c6.id AND rx.examen = COALESCE(c6.path, 'sacerdocio') || '-2'
+                       WHERE c6.user_id = c.user_id AND c6.game = c.game AND sm6.season = $3 AND sm6.merit >= ${MERITO_TURNO}) AS turno_ok`;
 
 /** La casa del personaje; si todavía no tiene, la primera parcela libre. */
 async function asegurarCasa(ch: PersonajeFila): Promise<{ casa: CasaFila; nueva: boolean }> {
@@ -267,7 +270,7 @@ export async function casasDelBarrio(barrio: number): Promise<(CasaVista & { use
         personajeId: id,
         // la casa es de la persona: lleva el nombre del personaje con que juega ahora
         nombre: nombreDe({ ...r, name: r.actual ?? r.name }),
-        escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
+        escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito), r.turno_ok === true),
         esMia: false,
         adornos: Array.isArray(r.adornos) ? (r.adornos as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 8) : [],
         letrero: (r.letrero as string | null) ?? null,
@@ -582,7 +585,7 @@ export function registerCiudadRoutes(app: Express) {
       visita: {
         personajeId: Number(r.character_id),
         nombre: nombreDe({ ...r, name: r.actual ?? r.name }),
-        escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito)),
+        escalon: (r.office as EscalonId | null) || escalonPorMerito(Number(r.merito), r.turno_ok === true),
         barrio: Number(r.barrio),
         parcela: Number(r.plot),
         nivel: Number(r.level),
