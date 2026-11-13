@@ -4202,6 +4202,9 @@ ${urls}
       // allowed_payment_method_types en Checkout.
       stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-10-28.endive" });
       console.log("[stripe] Payment processing initialized");
+      if (isProduction && !stripeWebhookSecret) {
+        console.warn("[stripe] Falta STRIPE_WEBHOOK_SECRET: los pagos se cobran, pero las donaciones no se registran hasta definirlo");
+      }
     } catch (err) {
       console.warn("[stripe] Could not initialize Stripe:", err);
     }
@@ -4271,8 +4274,14 @@ ${urls}
     try {
       if (stripeWebhookSecret) {
         event = stripe.webhooks.constructEvent(req.rawBody, sig, stripeWebhookSecret);
+      } else if (isProduction) {
+        // Sin la clave del webhook no se puede comprobar que el aviso venga de
+        // Stripe y cualquiera podría registrar donaciones falsas. Con 503, Stripe
+        // lo reintenta y se registra cuando se defina STRIPE_WEBHOOK_SECRET.
+        console.error("[stripe] Aviso rechazado: falta STRIPE_WEBHOOK_SECRET");
+        return res.status(503).json({ message: "El webhook de Stripe no está configurado" });
       } else {
-        // If no webhook secret, trust the event (dev only)
+        // Solo en desarrollo: sin clave del webhook se acepta el aviso tal cual
         event = req.body;
       }
     } catch (err: any) {
