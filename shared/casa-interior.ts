@@ -13,6 +13,8 @@
  */
 import type { Articulo } from "./mercado";
 
+type Verso = { text: string; ref: string };
+
 /** Lado de una celda en metros. */
 export const CELDA = 0.6;
 /** Altura del piso de arriba (terrado y aposento alto). */
@@ -53,6 +55,12 @@ const MUEBLES_DEL_MERCADO: Mueble[] = [
   { id: "palomar", categoria: "mueble", nombre: "Palomar", icono: "🕊️", precio: 40, w: 1, d: 1, capa: 1, nivelMin: 2, detalle: "Palomas para la ofrenda (Levítico 1:14). Pide casa con patio." },
   { id: "estante", categoria: "mueble", nombre: "Estante de rollos", icono: "📜", precio: 90, w: 2, d: 1, capa: 1, nivelMin: 1, detalle: "Rollos de las Escrituras para leer en casa. Pide casa de adobe o mayor." },
   { id: "brasero", categoria: "mueble", nombre: "Brasero", icono: "🔥", precio: 65, w: 1, d: 1, capa: 1, luz: true, nivelMin: 1, detalle: "Brasas para las noches frías (Jeremías 36:22). Pide casa de adobe o mayor." },
+  // la casa viva (13 de noviembre de 2026): muebles que se usan
+  { id: "fogon", categoria: "mueble", nombre: "Fogón de piedras", icono: "🍲", precio: 45, w: 1, d: 1, capa: 1, luz: true, serie: "casa-viva", detalle: "Tres piedras, las brasas y la olla: cocina aquí un guiso para tu banquete." },
+  { id: "cantaros", categoria: "mueble", nombre: "Cántaros de barro", icono: "🏺", precio: 28, w: 1, d: 1, capa: 1, serie: "casa-viva", detalle: "Tres cántaros para el agua y el aceite de cada día." },
+  { id: "baul", categoria: "mueble", nombre: "Baúl de acacia", icono: "🧰", precio: 55, w: 2, d: 1, capa: 1, serie: "casa-viva", detalle: "Con herrajes de bronce, para guardar las mantas de la casa." },
+  { id: "lecho-cobertor", categoria: "mueble", nombre: "Lecho con cobertor", icono: "🛌", precio: 95, w: 2, d: 2, capa: 1, nivelMin: 1, serie: "casa-viva", detalle: "Cama ancha de cedro con su cobertor tejido de colores, para descansar. Pide casa de adobe o mayor." },
+  { id: "tapiz", categoria: "mueble", nombre: "Tapiz bordado", icono: "🧶", precio: 65, w: 2, d: 1, capa: 1, serie: "casa-viva", detalle: "Lana teñida con granadas bordadas, colgada de su bastidor de cedro." },
 ];
 
 /**
@@ -80,6 +88,11 @@ const NOMBRE_FINO: Record<string, string> = {
   palomar: "Palomar dorado",
   estante: "Estante de rollos dorado",
   brasero: "Brasero dorado",
+  fogon: "Fogón con aro de oro",
+  cantaros: "Cántaros con bordes de oro",
+  baul: "Baúl de acacia dorado",
+  "lecho-cobertor": "Lecho con cobertor de oro",
+  tapiz: "Tapiz bordado de oro",
 };
 /** Cuánto vale una pieza fina comparada con la pieza de donde sale (4 piezas y el jornal del artesano). */
 export const VALOR_FINA = 6;
@@ -186,6 +199,8 @@ const CUARTOS_PIEDRA: Cuarto[] = [
   { id: "oeste", nombre: "El cuarto del oeste", x: 0, z: 4, w: 4, d: 8, piso: 0 },
   { id: "patio", nombre: "El patio", x: 4, z: 4, w: 6, d: 8, piso: 0, cielo: true },
   { id: "este", nombre: "El cuarto del este", x: 10, z: 4, w: 4, d: 8, piso: 0 },
+  // más espacio (la casa viva): el cuarto de los huéspedes, al lado del cuarto del este (2 Reyes 4:10)
+  { id: "huespedes", nombre: "El cuarto de los huéspedes", x: 14, z: 4, w: 4, d: 8, piso: 0 },
 ];
 const PASOS_PIEDRA: Abertura[] = [
   { x: 6, z: 4, lado: "N", piso: 0 },
@@ -195,40 +210,46 @@ const PASOS_PIEDRA: Abertura[] = [
   { x: 9, z: 7, lado: "E", piso: 0 },
   { x: 9, z: 8, lado: "E", piso: 0 },
   ...puertaS(6, 11),
+  { x: 13, z: 7, lado: "E", piso: 0 },
+  { x: 13, z: 8, lado: "E", piso: 0 },
 ];
 /** La escalera de piedra del patio sube al terrado (llega a su borde sur, que se deja sin pretil). */
 const ESCALERA_PIEDRA = { celdas: [[9, 4], [9, 5], [9, 6], [9, 7]] as [number, number][], abajo: [9, 8] as [number, number], arriba: [9, 3] as [number, number] };
 const LLEGADA_TERRADO: Abertura = { x: 9, z: 3, lado: "S", piso: 1 };
 
 export const PLANOS: Plano[] = [
-  // 0 · la tienda: un solo espacio
+  // 0 · la tienda: un espacio y, al lado, el rincón del toldo (más espacio, la casa viva)
   {
-    W: 8,
+    W: 11,
     D: 6,
-    cuartos: [{ id: "tienda", nombre: "La tienda", x: 0, z: 0, w: 8, d: 6, piso: 0 }],
-    aberturas: puertaS(3, 5),
+    cuartos: [
+      { id: "tienda", nombre: "La tienda", x: 0, z: 0, w: 8, d: 6, piso: 0 },
+      { id: "toldo", nombre: "El rincón del toldo", x: 8, z: 1, w: 3, d: 4, piso: 0 },
+    ],
+    aberturas: [...puertaS(3, 5), { x: 7, z: 2, lado: "E", piso: 0 }, { x: 7, z: 3, lado: "E", piso: 0 }],
     puerta: [3, 5],
     horno: [6, 1],
     huerto: [[4, 0], [5, 0]],
-    maxMuebles: 10,
+    maxMuebles: 14,
   },
-  // 1 · la casa de adobe: el cuarto grande y la despensa
+  // 1 · la casa de adobe: el cuarto grande, la despensa y la alcoba (más espacio, la casa viva)
   {
     W: 13,
     D: 7,
     cuartos: [
       { id: "casa", nombre: "El cuarto de la casa", x: 0, z: 0, w: 10, d: 7, piso: 0 },
       { id: "despensa", nombre: "La despensa", x: 10, z: 0, w: 3, d: 4, piso: 0 },
+      { id: "alcoba", nombre: "La alcoba", x: 10, z: 4, w: 3, d: 3, piso: 0 },
     ],
-    aberturas: [{ x: 9, z: 1, lado: "E", piso: 0 }, { x: 9, z: 2, lado: "E", piso: 0 }, ...puertaS(4, 6)],
+    aberturas: [{ x: 9, z: 1, lado: "E", piso: 0 }, { x: 9, z: 2, lado: "E", piso: 0 }, ...puertaS(4, 6), { x: 9, z: 5, lado: "E", piso: 0 }],
     puerta: [4, 6],
     horno: [8, 1],
     huerto: [[2, 0], [3, 0]],
-    maxMuebles: 18,
+    maxMuebles: 24,
   },
   // 2 · la casa de piedra con patio: cuatro espacios y el terrado con su pretil (Deuteronomio 22:8)
   {
-    W: 14,
+    W: 18,
     D: 12,
     cuartos: [...CUARTOS_PIEDRA, { id: "terrado", nombre: "El terrado", x: 0, z: 0, w: 14, d: 4, piso: 1, cielo: true }],
     aberturas: [...PASOS_PIEDRA, LLEGADA_TERRADO],
@@ -237,11 +258,11 @@ export const PLANOS: Plano[] = [
     arbol: [4, 11],
     escalera: ESCALERA_PIEDRA,
     huerto: [[11, 0], [12, 0]],
-    maxMuebles: 28,
+    maxMuebles: 36,
   },
   // 3 · con aposento alto: sobre el terrado, el aposento de paredes (2 Reyes 4:10)
   {
-    W: 14,
+    W: 18,
     D: 12,
     cuartos: [
       ...CUARTOS_PIEDRA,
@@ -254,7 +275,7 @@ export const PLANOS: Plano[] = [
     arbol: [4, 11],
     escalera: ESCALERA_PIEDRA,
     huerto: [[11, 0], [12, 0]],
-    maxMuebles: 40,
+    maxMuebles: 50,
   },
 ];
 
@@ -416,6 +437,80 @@ export type InteriorEstado = {
   yaBendije: boolean;
   gozo: number;
 };
+
+// ---------------------------------------------------------------- los muebles que se usan
+/** Lo que se hace con un mueble puesto: sentarse, descansar en el lecho, cocinar en el fogón o leer el rollo. */
+export type UsoMueble = "sentarse" | "descansar" | "cocinar" | "leer";
+const USO_BASE: Record<string, UsoMueble> = {
+  silla: "sentarse",
+  "banco-cedro": "sentarse",
+  cojines: "sentarse",
+  estera: "sentarse",
+  lecho: "descansar",
+  "lecho-cobertor": "descansar",
+  fogon: "cocinar",
+  estante: "leer",
+};
+/**
+ * Lo que se hace con un mueble (las piezas finas, como el mueble de donde salen). En la mesa se lee el rollo si la casa
+ * tiene el estante de rollos: se toma de ahí y se lee en la mesa.
+ */
+export function usoDe(m: string, hayEstante = false): UsoMueble | null {
+  const base = muebleBase(m);
+  if (base === "mesa" || base === "mesa-pan") return hayEstante ? "leer" : "sentarse";
+  return USO_BASE[base] ?? null;
+}
+
+/** Lo que dan los usos de los muebles: una vez por día cada uno (el servidor lleva la cuenta). */
+export const USOS_CASA = {
+  descansar: {
+    titulo: "Descansar",
+    icono: "🛏️",
+    gozo: 3,
+    verso: { text: "En paz me acostaré, y asimismo dormiré; Porque solo tú, Jehová, me haces vivir confiado.", ref: "Salmos 4:8" } as Verso,
+  },
+  cocinar: {
+    titulo: "Cocinar en el fogón",
+    icono: "🍲",
+    gozo: 3,
+    /** Lo que pide del alfolí el guiso. */
+    harina: 2,
+    aceite: 1,
+    /** Lo que gana cada invitado de más si hoy abres tu banquete con el guiso. */
+    banquete: 1,
+    verso: { text: "Mejor es la comida de legumbres donde hay amor, Que de buey engordado donde hay odio.", ref: "Proverbios 15:17" } as Verso,
+  },
+  leer: { titulo: "Leer el rollo", icono: "📜", gozo: 2 },
+} as const;
+
+/** El rollo del día: un versículo distinto cada día, el mismo para todos (se lee en la casa). */
+export const ROLLO_DEL_DIA: Verso[] = [
+  { text: "Lámpara es a mis pies tu palabra, Y lumbrera a mi camino.", ref: "Salmos 119:105" },
+  { text: "Nunca se apartará de tu boca este libro de la ley, sino que de día y de noche meditarás en él, para que guardes y hagas conforme a todo lo que en él está escrito; porque entonces harás prosperar tu camino, y todo te saldrá bien.", ref: "Josué 1:8" },
+  { text: "Y estas palabras que yo te mando hoy, estarán sobre tu corazón; y las repetirás a tus hijos, y hablarás de ellas estando en tu casa, y andando por el camino, y al acostarte, y cuando te levantes.", ref: "Deuteronomio 6:6-7" },
+  { text: "Sino que en la ley de Jehová está su delicia, Y en su ley medita de día y de noche.", ref: "Salmos 1:2" },
+  { text: "Si Jehová no edificare la casa, En vano trabajan los que la edifican; Si Jehová no guardare la ciudad, En vano vela la guardia.", ref: "Salmos 127:1" },
+  { text: "En mi corazón he guardado tus dichos, Para no pecar contra ti.", ref: "Salmos 119:11" },
+  { text: "Sécase la hierba, marchítase la flor; mas la palabra del Dios nuestro permanece para siempre.", ref: "Isaías 40:8" },
+  { text: "Él respondió y dijo: Escrito está: No sólo de pan vivirá el hombre, sino de toda palabra que sale de la boca de Dios.", ref: "Mateo 4:4" },
+  { text: "Toda la Escritura es inspirada por Dios, y útil para enseñar, para redargüir, para corregir, para instruir en justicia,", ref: "2 Timoteo 3:16" },
+  { text: "La ley de Jehová es perfecta, que convierte el alma; El testimonio de Jehová es fiel, que hace sabio al sencillo.", ref: "Salmos 19:7" },
+  { text: "¡Oh, cuánto amo yo tu ley! Todo el día es ella mi meditación.", ref: "Salmos 119:97" },
+  { text: "Fueron halladas tus palabras, y yo las comí; y tu palabra me fue por gozo y por alegría de mi corazón; porque tu nombre se invocó sobre mí, oh Jehová Dios de los ejércitos.", ref: "Jeremías 15:16" },
+  { text: "Y perseverando unánimes cada día en el templo, y partiendo el pan en las casas, comían juntos con alegría y sencillez de corazón,", ref: "Hechos 2:46" },
+  { text: "La palabra de Cristo more en abundancia en vosotros, enseñándoos y exhortándoos unos a otros en toda sabiduría, cantando con gracia en vuestros corazones al Señor con salmos e himnos y cánticos espirituales.", ref: "Colosenses 3:16" },
+];
+
+export function rolloDelDia(dia: string): Verso {
+  let h = 2166136261;
+  for (const ch of `rollo:${dia}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return ROLLO_DEL_DIA[h % ROLLO_DEL_DIA.length];
+}
+
+/** La respuesta al usar un mueble de la casa (`POST /api/jerusalen/casa/usar`). */
+export type UsoRespuesta = { uso: Exclude<UsoMueble, "sentarse">; gozo: number; gozoTotal: number; verso: Verso; yaHoy: false; guiso?: boolean };
+/** Lo que ya se usó hoy en la casa (para la pantalla). */
+export type UsosDeHoy = { descansar: boolean; cocinar: boolean; leer: boolean };
 
 /** El versículo de la casa amueblada. */
 export const VERSO_CAMARAS = {

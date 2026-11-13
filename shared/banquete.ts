@@ -51,4 +51,5 @@ export type BanquetesEstado = {
   sentadasHoy: number;
   gozo: number;
 };
-export type SentarseRespuesta = { gozo: number; gozoTotal: number; honra: number; banquete: BanqueteVista };
+/** `guiso`: el anfitrión cocinó hoy en su fogón (la casa viva): el invitado ganó un poco más. */
+export type SentarseRespuesta = { gozo: number; gozoTotal: number; honra: number; banquete: BanqueteVista; guiso?: true };

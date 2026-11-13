@@ -17,7 +17,7 @@ export const VERSO_ALBUM: Verso = {
 };
 
 /** Las de siempre y una por cada historia de la temporada («historia-senaquerib», «historia-pascua-ezequias»…). */
-export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | "rangos" | "juegos" | `historia-${string}`;
+export type ColeccionId = "muebles" | "muebles-finos" | "ropa" | "ropa-del-anio" | "ropa-fina" | "adornos" | "ganado" | "rangos" | "juegos" | "casa-viva" | "de-pies-a-cabeza" | `historia-${string}`;
 export type TituloEspecialId = "dador-alegre" | "buen-amigo" | "idoneo" | "oido-sabio" | "coleccionista" | "gran-coleccionista";
 export type TituloId = ColeccionId | TituloEspecialId;
 
@@ -26,9 +26,10 @@ const ids = (f: (a: Articulo) => boolean) => ARTICULOS.filter(f).map((a) => a.id
 export type Coleccion = { id: ColeccionId; nombre: string; icono: string; texto: string; items: string[]; titulo: string };
 
 export const COLECCIONES: Coleccion[] = [
-  { id: "muebles", nombre: "Los muebles", icono: "🪑", texto: "Todos los muebles del mercado.", items: ids((a) => a.categoria === "mueble" && !a.exclusivo), titulo: "Buen mayordomo" },
+  // lo nuevo de la casa viva va en sus propias colecciones: las de antes no cambian (nadie pierde un título)
+  { id: "muebles", nombre: "Los muebles", icono: "🪑", texto: "Todos los muebles del mercado.", items: ids((a) => a.categoria === "mueble" && !a.exclusivo && !a.serie), titulo: "Buen mayordomo" },
   { id: "adornos", nombre: "Los adornos", icono: "🪔", texto: "Los adornos de la puerta y el patio.", items: ids((a) => a.categoria === "adorno" && !a.exclusivo), titulo: "Casa alegre" },
-  { id: "ropa", nombre: "La ropa de siempre", icono: "🧥", texto: "Los mantos y las fajas que siempre se venden.", items: ids((a) => a.categoria === "ropa" && !a.exclusivo && !a.deTemporada), titulo: "Bien vestido" },
+  { id: "ropa", nombre: "La ropa de siempre", icono: "🧥", texto: "Los mantos y las fajas que siempre se venden.", items: ids((a) => a.categoria === "ropa" && !a.exclusivo && !a.deTemporada && !a.serie), titulo: "Bien vestido" },
   {
     id: "ropa-del-anio",
     nombre: "La ropa del año",
@@ -37,7 +38,9 @@ export const COLECCIONES: Coleccion[] = [
     items: ids((a) => a.categoria === "ropa" && !a.exclusivo && !!a.deTemporada),
     titulo: "Guarda los tiempos",
   },
-  { id: "muebles-finos", nombre: "Los muebles finos", icono: "✨", texto: "Los muebles dorados que hace el artesano con 4 iguales.", items: ids((a) => a.categoria === "mueble" && a.exclusivo === "taller"), titulo: "Artífice" },
+  { id: "muebles-finos", nombre: "Los muebles finos", icono: "✨", texto: "Los muebles dorados que hace el artesano con 4 iguales.", items: ids((a) => a.categoria === "mueble" && a.exclusivo === "taller" && !a.serie), titulo: "Artífice" },
+  { id: "casa-viva", nombre: "La casa viva", icono: "🏡", texto: "El fogón, los cántaros, el baúl, el lecho con cobertor y el tapiz.", items: ids((a) => a.categoria === "mueble" && !a.exclusivo && a.serie === "casa-viva"), titulo: "Casa viva" },
+  { id: "de-pies-a-cabeza", nombre: "De pies a cabeza", icono: "👘", texto: "Las túnicas, los turbantes y los velos, las sandalias, el cayado, el rollo y el zurrón.", items: ids((a) => a.categoria === "ropa" && !a.exclusivo && a.serie === "casa-viva"), titulo: "De pies a cabeza" },
   { id: "ropa-fina", nombre: "La ropa fina", icono: "🧵", texto: "La ropa bordada de oro que hace el artesano con 4 iguales.", items: ids((a) => a.categoria === "ropa" && a.exclusivo === "taller"), titulo: "Bordador de oro" },
   {
     id: "ganado",

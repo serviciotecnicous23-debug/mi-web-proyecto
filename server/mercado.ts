@@ -6,13 +6,14 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ARTICULOS, HORNO_GRANDE, LETREROS, RECETAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, lugaresAdornos, ofertasDelDia,
-  precioHoy, precioVentaHoy, type BienMercado, type MercadoEstado,
+  ARTICULOS, HORNO_GRANDE, LETREROS, RANURAS, RECETAS, articulo, demandaDelDia, enTemporada, guardarPreparadas, leerPreparadas, leerRopaIds, lugaresAdornos, ofertasDelDia,
+  precioHoy, precioVentaHoy, ranuraDe, type BienMercado, type MercadoEstado, type Ranura,
 } from "@shared/mercado";
 import { MAX_POR_MUEBLE, leerInterior, leerMuebles, mueble, muebleBase } from "@shared/casa-interior";
 import { FARDO_MAX, leerFardo } from "@shared/taller";
 import { AYUDA_MUEBLES, DIEZMO } from "@shared/economia";
 import { COLUMNAS_HUERTO, HUERTO_SQL, registerHuertoRoutes, vistaDelHuerto, type FilaHuerto } from "./huerto";
+import { registerCasaUsarRoutes, usosDeHoy } from "./casa-usar";
 import { alTesoro, contarVentaMercader, preciosMercaderHoy, vendidosHoy } from "./economia";
 import { diaClave, personajeDe, type PersonajeFila } from "./jerusalen";
 import { enFilaCasa, leerBienes, olvidarBarrio, recoger } from "./ciudad";
@@ -60,7 +61,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
   ]);
   const nivel = Number(h[0]?.level || 0);
   const semillas = objeto(c[0]?.semillas);
-  const ropa = objeto(c[0]?.ropa);
+  const ropa = leerRopaIds(c[0]?.ropa);
   const bienes = leerBienes(h[0]?.goods);
   const prep = leerPreparadas(h[0]?.preparadas);
   // lo que dan las obras de la casa (shared/obras.ts): más huerto, la cisterna y el horno de barro
@@ -73,7 +74,7 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     ofertas: ofertasDelDia(dia),
     semillas: Object.fromEntries(Object.entries(semillas).map(([k, v]) => [k, Math.max(0, Number(v) || 0)])),
     armario: lista(c[0]?.armario),
-    ropa: { manto: typeof ropa.manto === "string" ? ropa.manto : null, faja: typeof ropa.faja === "string" ? ropa.faja : null },
+    ropa,
     adornos: lista(h[0]?.adornos),
     lugares: lugaresAdornos(nivel),
     huerto: hu?.huerto ?? [],
@@ -94,6 +95,8 @@ async function estadoMercado(ch: PersonajeFila): Promise<MercadoEstado> {
     cisterna: v.cisterna,
     fardo: leerFardo(c[0]?.fardo),
     ...(hu ? { labranza: hu.labranza } : {}),
+    // lo que ya se usó hoy en la casa por dentro (shared/casa-interior.ts)
+    usos: usosDeHoy(h[0]?.labranza),
   };
 }
 
@@ -238,7 +241,8 @@ export function registerMercadoRoutes(app: Express) {
         );
         colocado = ok.length > 0;
       } else if (a.categoria === "ropa") {
-        const campo = a.id.startsWith("manto-") ? "manto" : "faja";
+        // donde se lleva (de pies a cabeza: la túnica, la cabeza, los pies, la mano o el zurrón; el manto y la faja)
+        const campo: Ranura = ranuraDe(a) ?? (a.id.startsWith("manto-") ? "manto" : "faja");
         const { rows: r } = await pool.query(
           `UPDATE game_characters SET ropa = jsonb_set(COALESCE(ropa, '{}'::jsonb), ARRAY[$2::text], to_jsonb($3::text)) WHERE id = $1 RETURNING ropa`,
           [ch.id, campo, a.id],
@@ -293,8 +297,9 @@ export function registerMercadoRoutes(app: Express) {
       if (!ch) return;
       const { rows } = await pool.query(`SELECT armario FROM game_characters WHERE id = $1`, [ch.casa]);
       const tiene = new Set(lista(rows[0]?.armario));
-      const elegir = (v: unknown, prefijo: string) => (typeof v === "string" && v.startsWith(prefijo) && tiene.has(v) ? v : null);
-      const ropa = { manto: elegir(req.body?.manto, "manto-"), faja: elegir(req.body?.faja, "faja-") };
+      // de pies a cabeza: cada ranura con algo del armario que sea de esa ranura (lo que no venga queda sin nada)
+      const elegir = (v: unknown, r: Ranura) => (typeof v === "string" && tiene.has(v) && ranuraDe(articulo(v)) === r ? v : null);
+      const ropa = Object.fromEntries(RANURAS.map((r) => [r, elegir(req.body?.[r], r)])) as Record<Ranura, string | null>;
       await pool.query(`UPDATE game_characters SET ropa = $2::jsonb WHERE id = $1`, [ch.id, JSON.stringify(ropa)]);
       // los vecinos que lo ven reciben otra vez su ficha (con la ropa nueva)
       refrescarFicha(ch.id, { ropa: coloresDeRopa(ropa) });
@@ -407,6 +412,8 @@ export function registerMercadoRoutes(app: Express) {
   // el huerto de la casa: arar, sembrar, regar, llenar el cántaro, arrancar hierbas, espantar aves, abonar, segar y
   // llevar las gavillas al granero (server/huerto.ts)
   registerHuertoRoutes(app, { jugador, responder });
+  // los muebles que se usan en la casa: descansar, cocinar en el fogón y leer el rollo (server/casa-usar.ts)
+  registerCasaUsarRoutes(app, { jugador });
 }
 
 export { ARTICULOS, sumarGozo };
