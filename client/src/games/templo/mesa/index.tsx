@@ -17,6 +17,7 @@ import { AjedrezPantalla } from "./Ajedrez";
 import { DamasPantalla } from "./Damas";
 import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
 import { DominoPantalla } from "./Domino";
+import { ParchisPantalla } from "./Parchis";
 import { PANTALLAS_TRADICIONALES } from "./Tradicionales";
 import { Ico } from "../iconos";
 
@@ -39,6 +40,7 @@ export const PANTALLAS_MESA: Record<string, ComponentType<PantallaMesaProps<any,
   damas: DamasPantalla,
   ajedrez: AjedrezPantalla,
   domino: DominoPantalla,
+  parchis: ParchisPantalla,
   ...PANTALLAS_TRADICIONALES,
 };
 
