@@ -16,6 +16,9 @@
  * `client/src/games/templo/mesa/` (y su línea en `PANTALLAS_MESA`).
  */
 import type { Verso } from "./ciudad";
+import type { OpcionMesa } from "./mesa/juegos";
+
+export type { OpcionMesa };
 
 export type NivelBot = "facil" | "normal" | "dificil";
 
@@ -72,7 +75,7 @@ export interface JuegoDeMesa<E = unknown, J = unknown, V = unknown> {
   relojMs: number;
   /** Cuánto «piensa» un compañero de la computadora antes de jugar (ms, por nivel). */
   pensarMs?: Partial<Record<NivelBot, [number, number]>>;
-  estadoInicial(asientos: AsientoMesa[], azar: Azar, opciones?: Record<string, unknown>): E;
+  estadoInicial(asientos: AsientoMesa[], azar: Azar, opciones?: Record<string, unknown>, ahora?: number): E;
   /** Modo «turnos»: el asiento que juega ahora (null si terminó). */
   turnoDe(e: E): number | null;
   /** Modo «todos»: los asientos que todavía deben jugar en esta vuelta. */
@@ -80,11 +83,36 @@ export interface JuegoDeMesa<E = unknown, J = unknown, V = unknown> {
   jugadasValidas(e: E, asiento: number): J[];
   /** Más rápido que buscar en `jugadasValidas` (para juegos con muchas jugadas). */
   esValida?(e: E, asiento: number, j: J): boolean;
-  aplicar(e: E, asiento: number, j: J, azar: Azar): E;
+  aplicar(e: E, asiento: number, j: J, azar: Azar, ahora?: number): E;
   terminado(e: E): ResultadoMesa | null;
   vistaPara(e: E, asiento: number | null): V;
   jugadaDeBot(e: E, asiento: number, nivel: NivelBot, azar: Azar): J;
   jugadaPorTiempo?(e: E, asiento: number, azar: Azar): J;
+  /**
+   * Los juegos con reloj propio (la lotería canta una carta cada pocos segundos, el «Basta» cierra la ronda, la memoria
+   * tapa las cartas): ellos deciden sus turnos, sus relojes y cuándo juegan sus compañeros de la computadora, y la sala
+   * solo los pone al día con la hora (`alTiempo` cuando llega `proximoCambio`). Su pantalla trae sus asientos y su reloj.
+   */
+  relojPropio?: boolean;
+  alTiempo?(e: E, ahora: number, azar: Azar): E | null;
+  proximoCambio?(e: E, ahora: number): number | null;
+  /** Por qué no vale una jugada (para decírselo a la persona), o null si vale. */
+  porQueNo?(e: E, asiento: number, j: J, ahora: number): string | null;
+  /** Un asiento cambió de dueño (alguien se fue y sigue la computadora): el juego se entera. */
+  cambiarAsiento?(e: E, asiento: number, nuevo: AsientoMesa): E;
+  /** Lo que el anfitrión elige antes de empezar (la figura de la lotería, el ritmo del cantor, cuántas cartas…). */
+  opciones?: OpcionMesa[];
+}
+
+/** Las opciones que eligió el anfitrión, solo las que existen (y si falta alguna, la de siempre). */
+export function opcionesElegidas(juego: Pick<JuegoDeMesa, "opciones">, x: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  const o = x && typeof x === "object" ? (x as Record<string, unknown>) : {};
+  for (const op of juego.opciones ?? []) {
+    const v = o[op.id];
+    out[op.id] = typeof v === "string" && op.valores.some((w) => w.id === v) ? v : op.inicial;
+  }
+  return out;
 }
 
 /** Dos jugadas son la misma si tienen lo mismo (las jugadas son datos simples: números, textos, listas). */

@@ -155,7 +155,7 @@ export function JuegosGrupoView() {
     "🎲 El patio de los juegos"
   );
   return (
-    <Card title={titulo} onClose={cerrar} wide testid="juegos-ventana">
+    <Card title={titulo} onClose={cerrar} wide ancha={!!sala && sala.juego === "mesa" && sala.estado !== "espera" && !!MESAS[sala.mesa ?? ""]?.relojPropio} testid="juegos-ventana">
       <div ref={cuerpo} className="space-y-3 p-4">
         {aviso && !sala && <Aviso texto={aviso} tono="info" />}
         {!sala ? (
@@ -435,6 +435,7 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
             ))}
           </div>
         )}
+        {mesaDef?.opciones?.length ? <OpcionesMesa sala={sala} ocupado={ocupado} hacer={hacer} /> : null}
         <ul className="list-disc space-y-0.5 pl-5 text-[13px] leading-snug text-stone-700 dark:text-stone-200">
           {(mesaDef?.como ?? def.como).map((c) => (
             <li key={c}>{c}</li>
@@ -501,6 +502,42 @@ function SalaEspera({ sala }: { sala: SalaVista }) {
 
       <Frases sala={sala} />
     </>
+  );
+}
+
+/** Lo que el anfitrión elige del juego de mesa (los demás lo ven). */
+function OpcionesMesa({ sala, ocupado, hacer }: { sala: SalaVista; ocupado: boolean; hacer: (ruta: string, body?: unknown) => Promise<boolean> }) {
+  const def = MESAS[sala.mesa ?? ""];
+  if (!def?.opciones?.length) return null;
+  const elegidas = { ...Object.fromEntries(def.opciones.map((o) => [o.id, o.inicial])), ...(sala.opcionesMesa ?? {}) };
+  return (
+    <div className="space-y-1.5 rounded-xl border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-800/50 dark:bg-amber-950/20" data-testid="juegos-opciones-mesa">
+      {def.opciones.map((op) => (
+        <div key={op.id} className="flex flex-wrap items-center gap-1.5" role="group" aria-label={op.nombre}>
+          <span className="w-20 shrink-0 text-[12px] font-black text-amber-900 dark:text-amber-200">{op.nombre}</span>
+          {op.valores.map((v) => {
+            const si = elegidas[op.id] === v.id;
+            return sala.soyAnfitrion ? (
+              <button
+                key={v.id}
+                type="button"
+                aria-pressed={si}
+                disabled={ocupado}
+                onClick={() => !si && void hacer("juego", { opciones: { ...elegidas, [op.id]: v.id } })}
+                className={`rounded-full border px-2.5 py-1 text-[12px] font-bold ${si ? "border-amber-500 bg-amber-200 text-amber-950" : "border-stone-200 bg-white text-stone-700 hover:bg-amber-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"}`}
+                data-testid={`juegos-opcion-${op.id}-${v.id}`}
+              >
+                {v.nombre}
+              </button>
+            ) : si ? (
+              <span key={v.id} className="rounded-full bg-amber-200 px-2.5 py-1 text-[12px] font-bold text-amber-950">
+                {v.nombre}
+              </span>
+            ) : null;
+          })}
+        </div>
+      ))}
+    </div>
   );
 }
 

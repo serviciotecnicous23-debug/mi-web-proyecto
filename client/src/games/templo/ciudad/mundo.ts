@@ -55,6 +55,7 @@ import { EscenaHistoria, type EscenaDeHistoria } from "./capitulos3d";
 import { EscenaPascua } from "./pascua3d";
 import { ArcaJoas } from "./arca3d";
 import { EscenaJuegos, construirPatio } from "./patio3d";
+import { ASIENTOS_PATIO, MesasPatio } from "./mesas3d";
 import { juegosRed } from "../juegos-red";
 import { JUEGOS } from "@shared/juegos-grupo";
 import { arcoDeTemporada, type CapituloId, type CapitulosVista, type MomentoFiesta } from "@shared/capitulos";
@@ -152,7 +153,7 @@ type Npc = {
   path: V2[];
   speed: number;
   wait: number;
-  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo";
+  kind: "paseo" | "anciano" | "nino" | "guardia" | "alumno" | "levita" | "peregrino" | "siervo" | "mercader" | "pueblo" | "jugador";
   item?: ItemType;
   home?: V2;
   yaw?: number;
@@ -239,6 +240,7 @@ export class CiudadWorld {
   private arca = new ArcaJoas();
   /** El patio de los juegos (shared/juegos-grupo.ts): la carrera y el muro que se juegan caminando, y la sala de ahora. */
   private juegos!: EscenaJuegos;
+  private mesasPatio!: MesasPatio;
   private quitarJuegos: (() => void) | null = null;
   private juegoAntes: { codigo: string; estado: string } | null = null;
   private historiaT = 0;
@@ -398,6 +400,9 @@ export class CiudadWorld {
     this.scene.add(construirPatio());
     this.juegos = new EscenaJuegos(this.overlay);
     this.scene.add(this.juegos.group);
+    // las mesas de la lotería, la generala, las escaleras, las damas chinas, la memoria y el «Basta», con su gente
+    this.mesasPatio = new MesasPatio(this.overlay);
+    this.scene.add(this.mesasPatio.group);
 
     // mi barrio completo; los otros, siluetas hasta que se entra en su área
     this.barrios.set(estado.barrio.n, { n: estado.barrio.n, area: estado.barrio.area, casas: estado.barrio.casas, detalle: true, nivelBarrio: estado.barrio.nivelBarrio, obrasBarrio: estado.barrio.obrasBarrio });
@@ -2435,6 +2440,8 @@ export class CiudadWorld {
     for (const [x, z] of [[53.5, 1.4], [54.6, 5.2], [58.4, 4.6]] as V2[]) this.npc("nino", [x, z], {});
     // y en el patio de los juegos
     for (const [x, z] of [[55.2, -58.6], [59.4, -61.2]] as V2[]) this.npc("nino", [x, z], {});
+    // los que juegan en las mesas de los juegos de grupo (sentados en sus banquitos)
+    for (const a of ASIENTOS_PATIO) this.npc("jugador", [a.x, a.z], { yaw: a.yaw, sit: true });
     // guardias a la puerta del palacio y alumnos en los bancos de la escuela
     for (const x of [15.4, 18.6]) this.npc("guardia", [x, 19.4], { yaw: Math.PI });
     for (const x of [10.2, 11.8, 23.4]) this.npc("alumno", [x, -22.05], { yaw: 0, sit: true });
@@ -2466,7 +2473,7 @@ export class CiudadWorld {
     const handle = this.crowd.add(look.variant, look.colors);
     if (!handle) return null;
     const rig = newRig(at[0], at[1], look.scale);
-    rig.y = P.alturaCiudad(at[0], at[1]) + (o.sit && kind === "anciano" ? 0.22 : 0);
+    rig.y = P.alturaCiudad(at[0], at[1]) + (o.sit && (kind === "anciano" || kind === "jugador") ? 0.22 : 0);
     if (o.yaw !== undefined) rig.yaw = o.yaw;
     if (o.sit) rig.pose = "sit";
     const n: Npc = { handle, rig, path: [], speed: kind === "nino" ? 1.6 : 1.2 + Math.random() * 0.5, wait: Math.random() * 3, kind, home: at, yaw: o.yaw };
@@ -2626,6 +2633,15 @@ export class CiudadWorld {
           if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
           r.pose = cerca(6) ? "talk" : Math.sin(r.t * 0.5 + r.z) > 0.92 ? "point" : "idle";
           break;
+        case "jugador": {
+          // los que juegan en las mesas del patio: sentados, piensan su jugada, juegan, conversan y a veces festejan
+          r.moving = 0;
+          r.seated = true;
+          if (n.yaw !== undefined) r.yaw = turn(r.yaw, n.yaw, dt * 3);
+          const ciclo = (r.t * 0.42 + r.x * 0.9 + r.z * 0.4) % 6;
+          r.pose = ciclo < 1.6 ? "think" : ciclo < 2.4 ? "point" : ciclo < 4.2 ? "sit" : ciclo < 5.3 ? "talk" : Math.sin(r.x * 3.1 + r.z) > 0.3 ? "clap" : "sit";
+          break;
+        }
         case "alumno":
         case "levita":
         case "guardia":
@@ -2697,6 +2713,7 @@ export class CiudadWorld {
     for (const h of this.historias) h.animar(dt, now, p.rig.x, p.rig.z, this.noche());
     this.arca.animar(now / 1000);
     this.juegos.animar(dt, this.time, { x: p.rig.x, y: p.rig.y, z: p.rig.z, yaw: p.rig.yaw });
+    this.mesasPatio.animar(p.rig.x, p.rig.z);
     this.crowd.flush();
     this.shadows.end();
     this.items.end();

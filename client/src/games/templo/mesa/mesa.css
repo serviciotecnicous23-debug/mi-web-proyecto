@@ -1,0 +1,162 @@
+/* Los juegos de mesa del patio: animaciones con vida (todas cortas, y quietas si la persona pide menos movimiento). */
+.mesa-raiz {
+  --mesa-oro: #f1c232;
+  --mesa-tinta: #3a2616;
+  --mesa-papel: #fbf3df;
+  --mesa-papel-2: #f1e2bd;
+  position: relative;
+}
+.mesa-papel {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 80% 90%, rgba(150, 100, 40, 0.12), transparent 50%),
+    linear-gradient(135deg, var(--mesa-papel), var(--mesa-papel-2));
+}
+.mesa-pano {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.14), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.035) 0 2px, transparent 2px 5px),
+    linear-gradient(160deg, #2f7a4c, #1d5233);
+  box-shadow: inset 0 0 0 6px #7a4a22, inset 0 0 0 9px #a8642f, inset 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.mesa-madera {
+  background:
+    repeating-linear-gradient(95deg, rgba(0, 0, 0, 0.06) 0 3px, transparent 3px 11px),
+    linear-gradient(160deg, #b8763c, #7a4a22);
+}
+
+/* una carta que llega volando y se da vuelta */
+@keyframes mesa-llega {
+  0% { transform: translate(40%, -60%) rotate(18deg) rotateY(90deg) scale(0.6); opacity: 0; }
+  55% { transform: translate(0, 0) rotate(-3deg) rotateY(0deg) scale(1.06); opacity: 1; }
+  100% { transform: rotate(0) scale(1); }
+}
+.mesa-llega { animation: mesa-llega 0.75s cubic-bezier(0.2, 0.8, 0.25, 1) both; transform-origin: center; }
+
+/* el frijolito cae y rebota */
+@keyframes mesa-frijol {
+  0% { transform: translateY(-140%) scale(1.6) rotate(-40deg); opacity: 0; }
+  60% { transform: translateY(8%) scale(0.95) rotate(8deg); opacity: 1; }
+  80% { transform: translateY(-6%) scale(1.04) rotate(-4deg); }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+.mesa-frijol { animation: mesa-frijol 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+
+@keyframes mesa-late {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 194, 50, 0.75); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 7px rgba(241, 194, 50, 0); }
+}
+.mesa-late { animation: mesa-late 1.1s ease-in-out infinite; }
+
+@keyframes mesa-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.mesa-pop { animation: mesa-pop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+
+@keyframes mesa-sello {
+  0% { transform: translate(-50%, -50%) scale(3) rotate(-14deg); opacity: 0; }
+  45% { transform: translate(-50%, -50%) scale(0.92) rotate(-8deg); opacity: 1; }
+  60% { transform: translate(-50%, -50%) scale(1.04) rotate(-9deg); }
+  85% { transform: translate(-50%, -50%) scale(1) rotate(-9deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-9deg); opacity: 0; }
+}
+.mesa-sello {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 30;
+  pointer-events: none;
+  animation: mesa-sello 2.2s ease-out both;
+}
+
+@keyframes mesa-sacude {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-4px) rotate(-6deg); }
+  40% { transform: translateX(4px) rotate(5deg); }
+  60% { transform: translateX(-3px) rotate(-4deg); }
+  80% { transform: translateX(2px) rotate(2deg); }
+}
+.mesa-sacude { animation: mesa-sacude 0.5s ease-in-out both; }
+
+@keyframes mesa-flota {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.mesa-flota { animation: mesa-flota 2.4s ease-in-out infinite; }
+
+@keyframes mesa-brillo {
+  0% { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+.mesa-brilla {
+  background-image: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: mesa-brillo 1.6s linear infinite;
+}
+
+/* el dado de verdad: un cubo con sus seis caras */
+.mesa-dado {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.25, 1.05);
+}
+.mesa-dado-cara {
+  position: absolute;
+  inset: 0;
+  border-radius: 18%;
+  background: radial-gradient(circle at 30% 25%, #ffffff, #f2ece0 55%, #d9cfbd);
+  box-shadow: inset 0 0 0 1.5px rgba(58, 38, 22, 0.45), inset -3px -4px 8px rgba(0, 0, 0, 0.12);
+  backface-visibility: hidden;
+}
+.mesa-punto {
+  position: absolute;
+  width: 19%;
+  height: 19%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6b4a3a, #2a1a10);
+  transform: translate(-50%, -50%);
+}
+
+/* la carta de la memoria que se da vuelta */
+.mesa-voltea { perspective: 700px; }
+.mesa-voltea-dentro {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.3, 0.9, 0.3, 1.1);
+}
+.mesa-voltea-dentro.abierta { transform: rotateY(180deg); }
+.mesa-voltea-cara {
+  display: block;
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mesa-voltea-cara.frente { transform: rotateY(180deg); }
+
+@keyframes mesa-letra {
+  0% { transform: translateY(-60%) scale(0.8); opacity: 0.2; filter: blur(2px); }
+  100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
+}
+.mesa-letra { animation: mesa-letra 0.12s linear both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-llega, .mesa-frijol, .mesa-late, .mesa-pop, .mesa-sello, .mesa-sacude, .mesa-flota, .mesa-brilla, .mesa-letra { animation-duration: 0.01s !important; animation-iteration-count: 1 !important; }
+  .mesa-dado, .mesa-voltea-dentro { transition-duration: 0.01s !important; }
+}
+
+/* las cabeceras de tabla de la web van en letra técnica: en las mesas, la letra de siempre */
+.mesa-raiz th {
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}

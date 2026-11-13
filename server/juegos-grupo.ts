@@ -26,7 +26,9 @@ import { BANCO } from "./jerusalen-banco";
 import { BANCO_SABIO } from "./sabio-banco";
 import { ESGRIMA_BANCO, QUIEN_BANCO } from "./juegos-grupo-banco";
 import { MESAS, ORDEN_MESAS, esMesa } from "@shared/mesa/index";
-import { azarConSemilla, esNivelBot, jugadaValida, nombreDeBot, quienesJuegan, type AsientoMesa, type MesaVista, type NivelBot, type ResultadoMesa } from "@shared/mesa";
+import { ponerListaBasta } from "@shared/mesa/basta";
+import * as LISTA_BASTA from "./mesa-basta-lista";
+import { azarConSemilla, esNivelBot, jugadaValida, nombreDeBot, opcionesElegidas, quienesJuegan, type AsientoMesa, type MesaVista, type NivelBot, type ResultadoMesa } from "@shared/mesa";
 import { JERUSALEN_JUEGO } from "@shared/jerusalen";
 import { VERSICULOS_RAPIDOS } from "@shared/ciudad";
 import type { Camino } from "@shared/caminos";
@@ -70,6 +72,9 @@ CREATE TABLE IF NOT EXISTS "game_juegos_jugadores" (
 CREATE INDEX IF NOT EXISTS "idx_game_juegos_jugadores_titular" ON "game_juegos_jugadores" ("titular", "juego");
 ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_dia" text;
 ALTER TABLE "game_juegos_grupo" ADD COLUMN IF NOT EXISTS "practica_hoy" integer NOT NULL DEFAULT 0;`;
+
+// la lista de palabras del «Basta» bíblico vive solo aquí, en el servidor
+ponerListaBasta(LISTA_BASTA);
 
 // ================================================================ en memoria
 type Miembro = {
@@ -185,6 +190,8 @@ type Sala = {
   juego: JuegoId;
   /** El juego de mesa elegido (si `juego` es «mesa»). */
   mesa: string | null;
+  /** Lo que eligió el anfitrión para ese juego de mesa (shared/mesa.ts, `opciones`). */
+  opcionesMesa: Record<string, string>;
   /** Cuántos compañeros de la computadora se agregaron (para sus números y nombres). */
   botN: number;
   /** La partida empezó con compañeros de la computadora: es de práctica (poco gozo; sin copa, prendas, logros ni tablas). */
@@ -295,9 +302,11 @@ function prepararTurnos(p: PartidaMesa, ahora: number) {
 /** Aplica una jugada (ya validada) de un asiento y prepara los turnos que siguen. */
 function aplicarMesa(p: PartidaMesa & { participo: Set<number> }, a: number, j: unknown, ahora: number, porTiempo = false) {
   const juego = MESAS[p.id];
-  p.estado = juego.aplicar(p.estado, a, j, p.azar);
+  p.estado = juego.aplicar(p.estado, a, j, p.azar, ahora);
   p.n++;
-  p.ultima = { asiento: a, jugada: j, n: p.n };
+  // en los juegos con reloj propio la jugada puede ser secreta (lo que escribe cada uno en el «Basta», lo que eligió en
+  // «Dibuja y adivina»): no se reparte; esos juegos animan con sus propios eventos
+  p.ultima = { asiento: a, jugada: juego.relojPropio ? null : j, n: p.n };
   if (!porTiempo) p.participo.add(p.cuentas[a]);
   p.desde.delete(a);
   p.botEn.delete(a);
@@ -429,7 +438,7 @@ function empezarPartida(s: Sala, ahora: number, rapido: boolean): Partida {
       const p: PartidaMesa & typeof base = {
         juego: "mesa",
         id: juego.id,
-        estado: juego.estadoInicial(asientos, azar),
+        estado: juego.estadoInicial(asientos, azar, opcionesElegidas(juego, s.opcionesMesa), ahora),
         asientos,
         cuentas: orden.map((m) => m.u),
         azar,
@@ -509,6 +518,9 @@ function proximoCambio(s: Sala, ahora: number): number | null {
       let t = Infinity;
       for (const en of p.botEn.values()) t = Math.min(t, en);
       for (const [a, d] of p.desde) if (!p.asientos[a]?.bot) t = Math.min(t, d + juego.relojMs + GRACIA_MS);
+      // los juegos con reloj propio dicen cuándo cambia algo solo (otra carta, el fin de la ronda, un compañero que juega)
+      const propio = juego.proximoCambio?.(p.estado, ahora);
+      if (propio != null) t = Math.min(t, ahora + propio);
       return t === Infinity ? null : quedan(t);
     }
   }
@@ -559,6 +571,15 @@ function avanzarUnPaso(s: Sala, p: Partida, ahora: number, dentro: Set<number>):
       if (!juego) {
         terminar(s, ahora, "Ese juego de mesa ya no está.");
         return true;
+      }
+      // los juegos con reloj propio se ponen al día con la hora
+      if (juego.alTiempo) {
+        const x = juego.alTiempo(p.estado, ahora, p.azar);
+        if (x) {
+          p.estado = x;
+          p.n++;
+          return true;
+        }
       }
       const fin = juego.terminado(p.estado);
       if (fin) {
@@ -1259,6 +1280,7 @@ function vistaPara(s: Sala, u: number, ahora: number, pres = conectados(s)): Sal
     codigo: s.codigo,
     juego: s.juego,
     mesa: s.mesa,
+    opcionesMesa: s.opcionesMesa,
     tribus: s.tribus,
     estado: s.estado,
     ver: s.ver,
@@ -1362,6 +1384,9 @@ function cederAsiento(s: Sala, p: Extract<Partida, { juego: "mesa" }>, u: number
   // si el estado del juego guarda los asientos (para los nombres del resultado), también se pone al día
   const e = p.estado as { asientos?: AsientoMesa[] } | null;
   if (e && Array.isArray(e.asientos) && e.asientos[a]) e.asientos[a] = { ...e.asientos[a], nombre: b.nombre, bot: b.bot };
+  // y si el juego lleva sus propios compañeros, se entera de que en ese asiento juega ahora la computadora
+  const juegoMesa = MESAS[p.id];
+  if (juegoMesa?.cambiarAsiento) p.estado = juegoMesa.cambiarAsiento(p.estado, a, p.asientos[a]);
   p.desde.delete(a);
   p.botEn.delete(a);
   prepararTurnos(p, ahora);
@@ -1551,6 +1576,7 @@ export function registerJuegosGrupoRoutes(app: Express) {
         codigo: nuevoCodigo(),
         juego,
         mesa,
+        opcionesMesa: {},
         botN: 0,
         practica: false,
         tribus: 2,
@@ -1661,9 +1687,14 @@ export function registerJuegosGrupoRoutes(app: Express) {
     }
     if (body.mesa !== undefined && s.juego === "mesa") {
       if (!esMesa(body.mesa)) return { error: 400, message: "Ese juego de mesa no existe." };
-      if (body.mesa !== s.mesa) for (const x of s.miembros) x.listo = !!x.bot;
+      if (body.mesa !== s.mesa) {
+        for (const x of s.miembros) x.listo = !!x.bot;
+        s.opcionesMesa = {};
+      }
       s.mesa = body.mesa;
     }
+    // lo que se elige de ese juego de mesa (solo lo que existe)
+    if (body.opciones !== undefined && s.juego === "mesa" && s.mesa && MESAS[s.mesa]) s.opcionesMesa = opcionesElegidas(MESAS[s.mesa], body.opciones);
     if (body.tribus !== undefined) {
       const n = Math.floor(Number(body.tribus));
       if (!Number.isFinite(n) || n < TRIBUS.minEquipos || n > TRIBUS.maxEquipos) return { error: 400, message: `Pueden ser de ${TRIBUS.minEquipos} a ${TRIBUS.maxEquipos} tribus.` };
@@ -1730,9 +1761,12 @@ export function registerJuegosGrupoRoutes(app: Express) {
     const juego = MESAS[p.id];
     const a = p.cuentas.indexOf(m.u);
     if (a < 0) return { error: 403, message: "En esta partida estás mirando: no tienes asiento." };
-    if (!quienesJuegan(juego, p.estado).includes(a)) return { error: 409, message: "Todavía no es tu turno." };
+    // en los juegos con reloj propio, el turno lo lleva el juego (y dice por qué no vale una jugada)
+    if (!juego.relojPropio && !quienesJuegan(juego, p.estado).includes(a)) return { error: 409, message: "Todavía no es tu turno." };
     const j = body.jugada;
-    if (j === undefined || JSON.stringify(j).length > 4000 || !jugadaValida(juego, p.estado, a, j)) return { error: 400, message: "Esa jugada no vale." };
+    if (j === undefined || JSON.stringify(j).length > 4000) return { error: 400, message: "Esa jugada no vale." };
+    const motivo = juego.porQueNo ? juego.porQueNo(p.estado, a, j, ahora) : jugadaValida(juego, p.estado, a, j) ? null : "Esa jugada no vale.";
+    if (motivo) return { error: 400, message: motivo };
     aplicarMesa(p, a, j, ahora);
     const fin = juego.terminado(p.estado);
     if (fin) {

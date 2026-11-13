@@ -17,6 +17,7 @@ import { AjedrezPantalla } from "./Ajedrez";
 import { DamasPantalla } from "./Damas";
 import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
 import { DominoPantalla } from "./Domino";
+import { PANTALLAS_TRADICIONALES } from "./Tradicionales";
 
 export type PantallaMesaProps<V = unknown, J = unknown> = {
   vista: V;
@@ -37,6 +38,7 @@ export const PANTALLAS_MESA: Record<string, ComponentType<PantallaMesaProps<any,
   damas: DamasPantalla,
   ajedrez: AjedrezPantalla,
   domino: DominoPantalla,
+  ...PANTALLAS_TRADICIONALES,
 };
 
 /** Avisa a la banda sonora qué juego está abierto (y que se cerró al salir). */
@@ -82,6 +84,16 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
       <p className="flex items-center gap-2 text-sm">
         <Loader2 className="h-4 w-4 animate-spin" /> Este juego de mesa todavía no está en tu versión: actualiza el juego.
       </p>
+    );
+
+  if (juego.relojPropio)
+    return (
+      <div className="space-y-2" data-testid="mesa-juego">
+        <h3 className="font-serif text-lg font-black">
+          {juego.icono} {juego.nombre}
+        </h3>
+        <Pantalla vista={m.vista} jugadas={m.jugadas} miAsiento={m.miAsiento} juegan={m.juegan} asientos={m.asientos} ultima={m.ultima} jugar={(j) => void jugar(j)} ocupado={false} />
+      </div>
     );
 
   const meToca = m.miAsiento !== null && m.juegan.includes(m.miAsiento);
