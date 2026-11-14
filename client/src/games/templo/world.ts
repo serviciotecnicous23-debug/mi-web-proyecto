@@ -47,6 +47,7 @@ import { sabioRed } from "./sabio-red";
 import { Presencia } from "./motor/presencia";
 import { RED_TICK_MS } from "@shared/ciudad";
 import { haciaElPiso } from "./motor/camara";
+import { Polvo } from "./ciudad/clima";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -272,6 +273,8 @@ export class TempleWorld {
   private heapLabel: HTMLDivElement;
   private pillarTags: HTMLDivElement[];
   private camTarget = new THREE.Vector3(POS.start[0], 0, POS.start[1]);
+  /** El polvo que flota en la luz de los atrios (docs/guia-visual.md, sección 7). */
+  private polvo: Polvo | null = null;
   private time = 0;
   // calendario hebreo y fiestas (shared/calendario.ts) y juicios del sacerdote (casos.ts)
   private fecha!: Fecha;
@@ -329,6 +332,8 @@ export class TempleWorld {
     this.vis = buildWorld();
     this.scene.add(this.vis.root, this.crowd.group, this.shadows.mesh, this.items.group, this.fx.group);
     if (coarse) this.fx.density = 0.7;
+    this.polvo = new Polvo(coarse, 0);
+    this.scene.add(this.polvo.group);
     this.fireLight.position.set(POS.altar[0], 2.6, POS.altar[1]);
     this.lampLight.position.copy(this.vis.stations.candelero.anchors.light);
     this.holyLight.position.copy(this.vis.holiestLightPos);
@@ -3084,6 +3089,8 @@ export class TempleWorld {
   private animate(dt: number, live: boolean, now: number) {
     const s = this.s;
     this.updateSky();
+    // el polvo brilla con el sol alto (poco al amanecer y al atardecer, nada de noche)
+    this.polvo?.update(dt, THREE.MathUtils.clamp(Math.sin((Math.PI * (s.time - DAWN)) / (DUSK - DAWN)) * 1.6, 0, 1), this.camTarget.x, this.camTarget.z);
     this.updateCamera(dt);
     this.updateFade(dt);
     this.animateStations(dt);
@@ -3720,6 +3727,7 @@ export class TempleWorld {
     this.presencia?.destruir();
     this.entrada.destruir();
     this.marca?.dispose();
+    this.polvo?.dispose();
     document.removeEventListener("visibilitychange", this.onVisibility);
     window.removeEventListener("pagehide", this.onPageHide);
     this.resizeObs.disconnect();

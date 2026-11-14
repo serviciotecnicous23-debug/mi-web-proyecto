@@ -32,6 +32,7 @@ import { haciaElPiso } from "../motor/camara";
 import { ASIENTO, LECHO_ALTO, LLAMA, construirMueble } from "./muebles3d";
 import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro } from "./choques";
 import { Vista } from "../motor/vista";
+import { Polvo } from "../ciudad/clima";
 
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
 const MURO = 2.3;
@@ -144,6 +145,9 @@ export class CasaWorld {
   private llamasFijas = 1;
   /** La luz del día que entra por las ventanas (se ve de día y se apaga de noche). */
   private rayos: THREE.Mesh[] = [];
+  /** El polvo que flota en los rayos de sol del cuarto y cuánto día hay (lo calcula updateLuz). */
+  private polvo: Polvo | null = null;
+  private diaLuz = 1;
   private rayosMat = new THREE.MeshBasicMaterial({ color: "#fff1c4", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
   /** Sentado, acostado o trabajando en un mueble (la casa viva): `idx` es el mueble. */
   private postura: { tipo: "sentado" | "acostado" | "cocina" | "lee"; idx: number; pies?: V2; giro?: number; alto?: number } | null = null;
@@ -252,6 +256,8 @@ export class CasaWorld {
     this.rects = fijos.rects;
     this.circles = fijos.circles;
     this.scene.add(this.pisos[0], this.pisos[1], this.mueblesGrupo, this.crowd.group, this.sombras.mesh);
+    this.polvo = new Polvo(coarse, 0, { radio: 4.2, alto: 2.3, cuantas: 0.45 });
+    this.scene.add(this.polvo.group);
     this.marcaSel = new THREE.Group();
     this.scene.add(this.marcaSel);
     this.overlay = new Overlay(container, this.camera);
@@ -1484,6 +1490,7 @@ export class CasaWorld {
     for (const s of this.siervos) this.sombras.add(s.rig.x, 0, s.rig.z, 0.8);
     this.sombras.end();
     this.updateLuz(now);
+    this.polvo?.update(dt, this.diaLuz, this.camTarget.x, this.camTarget.z);
     this.updateCamera(dt);
     this.updateEtiquetas(dt);
     this.overlay.update(now);
@@ -1496,6 +1503,7 @@ export class CasaWorld {
     const t = relojEnLinea().hora;
     const e = t >= 0.22 && t <= 0.78 ? Math.sin((Math.PI * (t - 0.22)) / 0.56) : -0.4;
     const dia = THREE.MathUtils.smoothstep(e, -0.08, 0.3);
+    this.diaLuz = dia;
     const c = this.tmpColor;
     // de noche la casa queda en penumbra, pero se ve para jugar (y las lámparas alumbran)
     this.hemi.intensity = 1.0 + 0.3 * dia;
@@ -1768,6 +1776,7 @@ export class CasaWorld {
     this.running = false;
     cancelAnimationFrame(this.raf);
     const canvas = this.renderer.domElement;
+    this.polvo?.dispose();
     this.entrada.destruir();
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();

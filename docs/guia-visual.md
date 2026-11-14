@@ -86,6 +86,9 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Lo que ya está hecho, para copiarlo en un lugar nuevo: la hierba con viento por bloques (`ciudad/suelo-vivo.ts`), el
   polvo en la luz (`Polvo`, en `ciudad/clima.ts`), las hortalizas con hojas (`hortaliza`, en `ciudad/escenario.ts`) y la
   animación con resortes (`inercia`, en `three/characters.ts`). Ninguna planta ni mata es un cubo.
+- El agua se pinta con `C.agua` (o un celeste parecido) y acostada: así tiene sola sus ondas, el reflejo del cielo y
+  el destello del sol (`DETALLE_AGUA`, en `three/builder.ts`). Un agua con su propio material lleva `conOndas`.
+- La ropa de torno pasa por `conPliegues` (en `three/characters.ts`), y lo que va encima, con los mismos números.
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
   aberturas de dos celdas o más y círculos que no tapan un paso.
 

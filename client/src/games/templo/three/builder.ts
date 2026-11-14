@@ -195,6 +195,15 @@ export function configurarDetalle(bajo: boolean) {
   detalleBajo = bajo;
 }
 
+/** Las ondas del agua: la inclinación de la superficie en (q = x, z del mundo) al tiempo w. */
+const ONDAS = `
+vec2 ondasAgua(vec2 q, float w) {
+  float gx = cos(q.x * 9.0 + w * 3.1 + sin(q.y * 6.0 + w)) * 0.6 + cos((q.x + q.y) * 14.0 - w * 4.2) * 0.4;
+  float gz = cos(q.y * 8.0 - w * 2.7 + sin(q.x * 5.0 - w * 0.8)) * 0.6 + cos((q.x - q.y) * 12.0 + w * 3.6) * 0.4;
+  return vec2(gx, gz);
+}
+`;
+
 const DETALLE_PARS = `
 varying vec3 vMundo;
 uniform float uTiempo;
@@ -261,6 +270,33 @@ const DETALLE_RELIEVE = `
   normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
 }
 #endif
+// el agua acostada (la superficie de un pozo, una fuente o un estanque): ondas que se mueven y le cambian la normal
+float dAguaN = dAgua * step(0.85, dot(normal, normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0))));
+#ifndef DETALLE_BAJO
+if (dAguaN > 0.0) {
+  vec2 dOnda = ondasAgua(vMundo.xz, uTiempo);
+  normal = normalize(normal + mat3(viewMatrix) * vec3(dOnda.x, 0.0, dOnda.y) * 0.14 * dLejos);
+}
+#endif
+`;
+
+/**
+ * El brillo del agua (docs/guia-visual.md, sección 7): el cielo que se refleja, más fuerte a ras del agua, y el destello
+ * del sol en las ondas. Solo en el agua acostada que reconoce DETALLE_COLOR.
+ */
+const DETALLE_AGUA = `
+#if NUM_DIR_LIGHTS > 0
+if (dAguaN > 0.0) {
+  vec3 dV = normalize(vViewPosition);
+  vec3 dL = directionalLights[0].direction;
+  float dEsp = pow(max(dot(normal, normalize(dL + dV)), 0.0), 90.0);
+  float dFres = pow(1.0 - max(dot(normal, dV), 0.0), 4.0);
+  vec3 dSol = directionalLights[0].color;
+  outgoingLight = mix(outgoingLight, outgoingLight * 0.55 + vec3(0.62, 0.74, 0.86) * dSol * 0.45, clamp(dFres * 0.85 + 0.12, 0.0, 1.0) * dAguaN);
+  outgoingLight += dSol * dEsp * 1.25 * dAguaN;
+}
+#endif
+#include <opaque_fragment>
 `;
 
 function conDetalle<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, metal: boolean): M {
@@ -291,11 +327,30 @@ dMundo = instanceMatrix * dMundo;
 vMundo = (modelMatrix * dMundo).xyz;`,
       );
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", `#include <common>\n${DETALLE_PARS}`)
+      .replace("#include <common>", `#include <common>\n${DETALLE_PARS}\n${ONDAS}`)
       .replace("#include <color_fragment>", DETALLE_COLOR)
-      .replace("#include <normal_fragment_maps>", DETALLE_RELIEVE);
+      .replace("#include <normal_fragment_maps>", DETALLE_RELIEVE)
+      .replace("#include <opaque_fragment>", DETALLE_AGUA);
   };
   mat.customProgramCacheKey = () => `templo-detalle-${metal ? "metal" : "mate"}-${detalleBajo ? "bajo" : "alto"}`;
+  return mat;
+}
+
+/** El agua que tiene su propio material con brillo (el mar de bronce): las mismas ondas que el agua de siempre. */
+export function conOndas<M extends THREE.MeshPhongMaterial>(mat: M): M {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTiempo = tiempoMateriales;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vMundoO;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvMundoO = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", `#include <common>\nvarying vec3 vMundoO;\nuniform float uTiempo;\n${ONDAS}`)
+      .replace(
+        "#include <normal_fragment_maps>",
+        "#include <normal_fragment_maps>\n{ vec2 o = ondasAgua(vMundoO.xz, uTiempo); normal = normalize(normal + mat3(viewMatrix) * vec3(o.x, 0.0, o.y) * 0.12); }",
+      );
+  };
+  mat.customProgramCacheKey = () => "templo-agua-ondas";
   return mat;
 }
 

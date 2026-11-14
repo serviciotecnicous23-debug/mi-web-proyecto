@@ -14,6 +14,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-caras-agua",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Caras, manos y agua de verdad",
+    puntos: [
+      "👳 Las personas tienen ojos almendrados con su brillo, la nariz fina y una boca que sonríe apenas.",
+      "👏 Las manos tienen su palma y su pulgar (antes eran bolitas).",
+      "👘 La ropa cae con pliegues: la túnica y el manto se ondulan hacia el ruedo, y la túnica y el manto del mercado siguen la tela con sus franjas y su orla.",
+      "⛲ El agua de los pozos, las fuentes, el estanque de Siloé y el mar de bronce se mueve en ondas, refleja el cielo y brilla con el sol.",
+      "☀️ En el templo y en tu casa también flota el polvo en la luz.",
+    ],
+  },
+  {
     id: "2026-11-13-mesas-con-vida",
     fecha: "13 de noviembre de 2026",
     titulo: "Los juegos de mesa, con más vida",
