@@ -1,8 +1,8 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
 import type {
-  AcademiaEstado, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, NivelEstado, PasoExamen, RespuestaRepaso, ResultadoExamen,
-  VerificacionAcademia,
+  AcademiaEstado, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen, RespuestaRepaso,
+  ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
 
 export class ErrorAcademia extends Error {
@@ -95,6 +95,21 @@ export function useCertificado(codigo: string | undefined) {
     enabled: !!codigo,
     retry: false,
   });
+}
+
+export function useMatricula() {
+  return useQuery<{ matricula: MatriculaInfo | null; reglamento: string; honor: string }, ErrorAcademia>({
+    queryKey: ["academia", "matricula"],
+    queryFn: () => pedir("GET", "/api/academia/matricula"),
+    retry: false,
+  });
+}
+
+/** Matricularse: aceptar el reglamento académico y el código de honor. */
+export const matricularme = () => pedir<MatriculaInfo>("POST", "/api/academia/matricula", { reglamento: true, honor: true });
+
+export function useCarne() {
+  return useQuery<CarneVista, ErrorAcademia>({ queryKey: ["academia", "carne"], queryFn: () => pedir("GET", "/api/academia/carne"), retry: false });
 }
 
 /** La verificación pública de un documento (sin cuenta). */

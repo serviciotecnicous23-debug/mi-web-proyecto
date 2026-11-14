@@ -2,9 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, EXAMEN_INTEGRAL, NIVELES, PACTOS, PATRON_CODIGO, PESOS_NIVEL, VERSICULOS_NIVEL, calificacion, citaVisible,
-  codigoDe, enlaceBiblia, esperaFinalMin, leccionPublica, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, parsearCita, puntajeVersiculo,
-  todasLasMaterias, veVistaPrevia,
+  APRUEBA, APRUEBA_INTEGRAL, CODIGO_HONOR, DIAS_PAUSA, ESPECIALIDADES, EXAMEN_INTEGRAL, HONORES, NIVELES, PACTOS, PATRON_CODIGO, PESOS_NIVEL, REGLAMENTO,
+  VERSICULOS_NIVEL, calificacion, citaVisible, codigoDe, enlaceBiblia, esperaFinalMin, estatusDe, leccionPublica, materiaAprobada, medallaDe, normalizarCodigo,
+  notaExamen, notaMateria, numeroMatricula, parsearCita, puntajeVersiculo, todasLasMaterias, veVistaPrevia,
 } from "./academia";
 
 test("el catálogo: 5 niveles con 8, 9, 10, 10 y 8 materias, y 12 especialidades de 5", () => {
@@ -103,6 +103,31 @@ test("los códigos de los documentos: AAF-XXXX-XXXX en base 32 sin letras confus
   assert.equal(normalizarCodigo("aaf7k2mq9xd"), "AAF-7K2M-Q9XD");
   assert.equal(normalizarCodigo("AAF-OIL0-1234"), "AAF-0110-1234", "la O es 0; la I y la L son 1");
   assert.ok(!PATRON_CODIGO.test(normalizarCodigo("CERT-ABC123")));
+});
+
+test("la matrícula y el estatus: número AAF-año-número y el estatus sale del avance", () => {
+  assert.equal(numeroMatricula(2026, 42), "AAF-2026-00042");
+  const base = { retirado: false, nivelActual: 1, completados: [] as number[], honores: false, lecciones: 0, diasSinEstudiar: 0, siguienteDisponible: false };
+  assert.equal(estatusDe(base).clave, "aspirante");
+  assert.equal(estatusDe(base).texto, "Aspirante · Nivel 1 · Fundamentos de la fe");
+  assert.equal(estatusDe({ ...base, lecciones: 3 }).texto, "Estudiante · Nivel 1 · Fundamentos de la fe");
+  assert.equal(estatusDe({ ...base, lecciones: 3, diasSinEstudiar: 31 }).clave, "pausa");
+  assert.equal(estatusDe({ ...base, lecciones: 3, diasSinEstudiar: 30 }).clave, "activo", "a los 30 días todavía está activo");
+  const egresado = estatusDe({ ...base, lecciones: 32, completados: [1], nivelActual: 2, honores: true });
+  assert.deepEqual(egresado, { clave: "egresado", texto: "Egresado del Nivel 1 · Fundamentos de la fe", nivel: 1, honores: true });
+  assert.equal(estatusDe({ ...base, lecciones: 40, completados: [1], nivelActual: 2, siguienteDisponible: true }).texto, "Estudiante · Nivel 2 · Discipulado");
+  assert.equal(estatusDe({ ...base, lecciones: 200, completados: [1, 2, 3, 4, 5], nivelActual: 5 }).texto, "Graduado de la Academia");
+  assert.equal(estatusDe({ ...base, retirado: true, lecciones: 5 }).clave, "retirado");
+});
+
+test("el reglamento académico dice los mismos números que el sistema", () => {
+  assert.equal(REGLAMENTO.secciones.length, 10);
+  const todo = REGLAMENTO.secciones.flatMap((s) => s.puntos).join(" ");
+  for (const dato of [`aprueba con ${APRUEBA}`, `con ${APRUEBA_INTEGRAL}`, "30 minutos", "24 horas", `${DIAS_PAUSA} días`, `${HONORES} o más`, "examen final (70 %)", "tercer fallo", CODIGO_HONOR]) {
+    assert.ok(todo.includes(dato), `el reglamento debe decir «${dato}»`);
+  }
+  assert.ok(todo.includes("No es un título universitario oficial"));
+  assert.ok(CODIGO_HONOR.includes("Colosenses 3:23"));
 });
 
 test("la vista previa es para administración y profesores", () => {

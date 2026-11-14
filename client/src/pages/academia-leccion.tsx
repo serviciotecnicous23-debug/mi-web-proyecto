@@ -216,7 +216,11 @@ export default function AcademiaLeccion() {
           {l.anterior ? (
             <Link href={`/academia/leccion/${l.anterior}`}><Button variant="outline" className="w-full sm:w-auto"><ArrowLeft className="w-4 h-4 mr-1" /> Lección anterior</Button></Link>
           ) : <span />}
-          {conSesion ? (
+          {conSesion && !l.matriculado ? (
+            <Link href="/academia/matricula">
+              <Button size="lg" className="fire-btn-primary h-12 w-full" data-testid="leccion-matricularme">Matricularme para guardar mi avance <ArrowRight className="w-4 h-4 ml-2" /></Button>
+            </Link>
+          ) : conSesion ? (
             <Button size="lg" className="fire-btn-primary h-12" onClick={terminar} disabled={!todas || terminando} data-testid="leccion-completar">
               {completada ? "Seguir" : "Completar lección"} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -224,7 +228,8 @@ export default function AcademiaLeccion() {
             <a href={loginUrl()}><Button size="lg" className="fire-btn-primary h-12 w-full">Entrar para guardar mi avance</Button></a>
           )}
         </div>
-        {conSesion && !todas && <p className="text-xs text-muted-foreground mt-2 text-right">Termina el repaso para continuar.</p>}
+        {conSesion && !l.matriculado && <p className="text-xs text-muted-foreground mt-2 text-right">Sin matrícula puedes leer la lección y practicar el repaso; para completarla y guardar tu avance, matricúlate.</p>}
+        {conSesion && l.matriculado && !todas && <p className="text-xs text-muted-foreground mt-2 text-right">Termina el repaso para continuar.</p>}
       </article>
     </Layout>
   );

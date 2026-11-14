@@ -919,6 +919,8 @@ export type AcademiaEstado = {
   vistaPrevia: boolean;
   conSesion: boolean;
   alumno: { inscritoEn: string; racha: number; leccionesHechas: number; materiasAprobadas: number } | null;
+  /** La matrícula (null si todavía no se matriculó: sin ella se lee, pero no se guarda el avance). */
+  matricula: MatriculaInfo | null;
   /**
    * Lo siguiente: una lección, el examen final si ya terminó las lecciones (leccionId null) o, con todas las materias
    * del nivel aprobadas, el cierre del nivel (`nivel`: el examen integral o el pacto).
@@ -984,13 +986,17 @@ export type DocumentoAcademia = {
 export type VerificacionAcademia = {
   valido: boolean;
   codigo: string;
-  tipo: TipoDocumento;
+  /** Un certificado (de materia o de nivel) o el carné de estudiante. */
+  tipo: TipoDocumento | "carne";
   documento: string;
   nivel: string | null;
   nombre: string;
   emitido: string;
   honores: boolean;
   revocado: string | null;
+  /** En el carné: el número de matrícula y el estatus del alumno hoy. */
+  matricula?: string | null;
+  estatus?: string | null;
   academia: string;
   aclaracion: string;
 };
@@ -1056,6 +1062,8 @@ export type MateriaDetalle = {
   examen: ExamenEstado | null;
   /** El código del certificado de la materia, cuando está aprobada. */
   certificado: string | null;
+  /** Con sesión y matrícula: puede guardar su avance (versículo, examen). */
+  matriculado: boolean;
   vistaPrevia: boolean;
   conSesion: boolean;
 };
@@ -1085,6 +1093,8 @@ export type LeccionVista = {
   anterior: string | null;
   siguiente: string | null;
   publica: boolean;
+  /** Con sesión y matrícula: puede responder el repaso y guardar su avance. */
+  matriculado: boolean;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };
@@ -1120,3 +1130,169 @@ export type PasoExamen =
   | { paso: "objetiva"; pregunta: PreguntaExamen }
   | { paso: "escrita"; escrita: EscritaExamen }
   | { paso: "fin"; resultado: ResultadoExamen };
+
+// ---------------------------------------------------------------- la matrícula, el estatus y el reglamento
+
+/** El número de matrícula: AAF-año-número. Es correlativo, por eso el carné se verifica con otro código, al azar. */
+export function numeroMatricula(anio: number, n: number): string {
+  return `AAF-${anio}-${String(n).padStart(5, "0")}`;
+}
+
+/** El estatus del alumno como se muestra (en su carné y en su perfil): sin notas. */
+export type EstatusVista = {
+  clave: EstatusAlumno;
+  /** «Estudiante · Nivel 1 · Fundamentos de la fe», «Egresado del Nivel 1 · Fundamentos de la fe»… */
+  texto: string;
+  nivel: number;
+  /** Cerró algún nivel con honores: cuadro de honor. */
+  honores: boolean;
+};
+
+export type DatosEstatus = {
+  retirado: boolean;
+  /** El nivel en que está (sube al completar uno). */
+  nivelActual: number;
+  /** Los niveles completos. */
+  completados: number[];
+  honores: boolean;
+  /** Lecciones terminadas en total. */
+  lecciones: number;
+  diasSinEstudiar: number;
+  /** El nivel siguiente al último completo ya tiene materias disponibles. */
+  siguienteDisponible: boolean;
+};
+
+const nombreNivel = (n: number) => NIVELES.find((x) => x.n === n)?.nombre ?? "";
+
+/** El estatus a partir del avance (docs/academia.md, «La matrícula y el estatus»). */
+export function estatusDe(d: DatosEstatus): EstatusVista {
+  const ultimo = d.completados.length ? Math.max(...d.completados) : 0;
+  const honores = d.honores;
+  if (d.retirado) return { clave: "retirado", texto: "Retirado", nivel: d.nivelActual, honores };
+  if (ultimo >= 5) return { clave: "graduado", texto: "Graduado de la Academia", nivel: 5, honores };
+  if (ultimo >= 1 && !d.siguienteDisponible) return { clave: "egresado", texto: `Egresado del Nivel ${ultimo} · ${nombreNivel(ultimo)}`, nivel: ultimo, honores };
+  const n = Math.max(1, d.nivelActual);
+  if (d.lecciones === 0) return { clave: "aspirante", texto: `Aspirante · Nivel ${n} · ${nombreNivel(n)}`, nivel: n, honores };
+  if (d.diasSinEstudiar > DIAS_PAUSA) return { clave: "pausa", texto: `Estudiante en pausa · Nivel ${n} · ${nombreNivel(n)}`, nivel: n, honores };
+  return { clave: "activo", texto: `Estudiante · Nivel ${n} · ${nombreNivel(n)}`, nivel: n, honores };
+}
+
+export type MatriculaInfo = {
+  numero: string;
+  promocion: number;
+  /** Cuándo se matriculó (aceptó el reglamento y el código de honor). */
+  desde: string;
+  estatus: EstatusVista;
+};
+
+/** El carné digital: acredita la matrícula y se verifica con su QR (un código al azar, no el número de matrícula). */
+export type CarneVista = MatriculaInfo & {
+  nombre: string;
+  foto: string | null;
+  codigo: string;
+  verificar: string;
+  qr: string;
+};
+
+/** El código de honor que se acepta al matricularse (y antes de cada examen). */
+export const CODIGO_HONOR =
+  "Me comprometo a estudiar y a hacer cada examen yo solo, sin ayuda de otras personas, sin copiar ni pegar textos ajenos, con sinceridad, de corazón, como para el Señor y no para los hombres (Colosenses 3:23).";
+
+export type SeccionReglamento = { titulo: string; puntos: string[] };
+
+const ordinal = (n: number) => (n === 3 ? "tercer" : n === 2 ? "segundo" : `${n}.º`);
+
+/**
+ * El reglamento académico (página pública /academia/reglamento). Sus números salen de las mismas reglas que usa el
+ * sistema, así que nunca dicen otra cosa. Si cambia algo de fondo, sube la versión: queda guardada en cada matrícula.
+ */
+export const REGLAMENTO: { version: string; titulo: string; base: string; intro: string; secciones: SeccionReglamento[] } = {
+  version: "2026-11",
+  titulo: "Reglamento académico",
+  base: LEMA.ref,
+  intro: `Este reglamento ordena la vida académica de la ${NOMBRE_ACADEMIA}. Al matricularte lo aceptas, junto con el código de honor.`,
+  secciones: [
+    {
+      titulo: "1. La academia",
+      puntos: [
+        `La ${NOMBRE_ACADEMIA} es el instituto de formación ministerial del Ministerio Avivando el Fuego: forma en la Palabra de Dios a creyentes, obreros, maestros y pastores, por niveles y a su propio ritmo.`,
+        "Es gratuita y se cursa en la web, desde la computadora o el teléfono.",
+        `Sus certificados y diplomas son formación ministerial. ${ACLARACION_DOCUMENTOS}`,
+      ],
+    },
+    {
+      titulo: "2. La matrícula",
+      puntos: [
+        "Para estudiar se necesita una cuenta en la web y matricularse: aceptar este reglamento y el código de honor. Sin matrícula se pueden leer las lecciones, pero no guardar el avance.",
+        "La matrícula da un número personal (AAF-año-número) y una promoción, que es el año en que ingresaste. El carné digital la acredita.",
+        "La matrícula es personal: cada alumno estudia con su propia cuenta.",
+      ],
+    },
+    {
+      titulo: "3. Los niveles y el avance",
+      puntos: [
+        `La academia tiene ${NIVELES.length} niveles en ${ETAPAS.length} etapas. Cada nivel tiene materias, y cada materia, lecciones cortas con su repaso, un versículo de memoria y un examen final.`,
+        `Cada alumno avanza a su ritmo. Una materia se aprueba con el examen final aprobado y una nota de ${APRUEBA} o más.`,
+        "Un nivel se cierra con todas sus materias aprobadas, el examen integral, los versículos de memoria que pide y su pacto. Las especialidades se abren al terminar el Nivel 2.",
+      ],
+    },
+    {
+      titulo: "4. La evaluación",
+      puntos: [
+        `Las notas van de 0 a 100. Una materia se aprueba con ${APRUEBA}; el examen integral de un nivel, con ${APRUEBA_INTEGRAL}.`,
+        `En el Nivel 1, la nota de la materia sale del examen final (${PESOS_NIVEL[1].final} %), los repasos de las lecciones (${PESOS_NIVEL[1].repasos} %) y el versículo de memoria (${PESOS_NIVEL[1].versiculo} %).`,
+        "El examen final tiene una parte objetiva, con un tiempo para cada pregunta que lleva el servidor, y una parte escrita que el sistema corrige al instante, idea por idea.",
+        `Si no apruebas, puedes intentarlo otra vez después de ${ESPERA_FINAL_MIN[0]} minutos y, desde el segundo fallo, después de ${ESPERA_FINAL_MIN[1] / 60} horas. Desde el ${ordinal(FALLOS_PARA_REPASAR)} fallo hay que volver a leer las lecciones antes de intentarlo. Cada intento trae preguntas distintas.`,
+        `Un nivel se cierra con honores cuando el promedio de sus materias es de ${HONORES} o más.`,
+      ],
+    },
+    {
+      titulo: "5. El código de honor",
+      puntos: [
+        CODIGO_HONOR,
+        "Las respuestas pegadas o dudosas quedan marcadas para que las revise la Dirección académica.",
+        "Hacer trampa, copiar o dar el examen por otra persona anula el examen y puede anular los documentos obtenidos.",
+      ],
+    },
+    {
+      titulo: "6. La revisión de las notas",
+      puntos: [
+        "Todo lo corrige el sistema. La Dirección académica puede revisar cualquier respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
+        "Si no estás de acuerdo con una nota, puedes pedir que se revise, una vez por examen y dentro de los 7 días.",
+      ],
+    },
+    {
+      titulo: "7. El estatus del alumno",
+      puntos: [
+        "Aspirante: te matriculaste y aún no terminas tu primera lección.",
+        "Estudiante activo: estudias con regularidad.",
+        `Estudiante en pausa: pasaron ${DIAS_PAUSA} días sin estudiar. Vuelves a estar activo en cuanto estudias.`,
+        "Egresado del nivel: completaste un nivel y el siguiente todavía no está disponible.",
+        "Graduado de la Academia: completaste el Nivel 5.",
+        "Cuadro de honor: cerraste un nivel con honores.",
+      ],
+    },
+    {
+      titulo: "8. Los documentos",
+      puntos: [
+        "Cada materia aprobada y cada nivel completo dan un certificado con un código y un QR. Cualquiera puede verificarlos en la web, sin ver las notas.",
+        "El carné digital acredita tu matrícula y también se verifica con su QR.",
+        "La Dirección académica puede corregir o revocar un documento, siempre con un motivo.",
+      ],
+    },
+    {
+      titulo: "9. La privacidad",
+      puntos: [
+        "Tus notas las ven solo tú, tus profesores y la Dirección académica. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
+        "Si borras tu cuenta, se borra todo tu avance en la academia y tus documentos dejan de verificarse.",
+      ],
+    },
+    {
+      titulo: "10. La doctrina",
+      puntos: [
+        "La academia enseña conforme a la Biblia (Reina-Valera 1960) y a la declaración de fe del Ministerio Avivando el Fuego.",
+        "Donde los cristianos tienen posturas distintas, se presentan con respeto y se indica la posición del ministerio.",
+      ],
+    },
+  ],
+};

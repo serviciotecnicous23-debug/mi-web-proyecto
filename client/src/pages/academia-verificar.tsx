@@ -63,9 +63,14 @@ export default function AcademiaVerificar() {
             )}
             <dl className="mt-4 grid gap-2 text-[15px]">
               <div><dt className="text-sm text-muted-foreground">Alumno</dt><dd className="font-semibold">{resultado.nombre}</dd></div>
-              <div><dt className="text-sm text-muted-foreground">Documento</dt><dd>{resultado.documento}{resultado.honores ? ", con honores" : ""}</dd></div>
-              {resultado.nivel && <div><dt className="text-sm text-muted-foreground">Nivel</dt><dd>{resultado.nivel}</dd></div>}
-              <div><dt className="text-sm text-muted-foreground">Emitido</dt><dd>{format(new Date(resultado.emitido), "dd 'de' MMMM 'de' yyyy", { locale: es })}</dd></div>
+              <div><dt className="text-sm text-muted-foreground">Documento</dt><dd>{resultado.documento}{resultado.honores && resultado.tipo !== "carne" ? ", con honores" : ""}</dd></div>
+              {resultado.matricula && <div><dt className="text-sm text-muted-foreground">Matrícula</dt><dd className="tracking-wider" data-testid="verificar-matricula">{resultado.matricula}</dd></div>}
+              {resultado.estatus ? (
+                <div><dt className="text-sm text-muted-foreground">Estatus</dt><dd data-testid="verificar-estatus">{resultado.estatus}{resultado.honores ? " · Cuadro de honor" : ""}</dd></div>
+              ) : (
+                resultado.nivel && <div><dt className="text-sm text-muted-foreground">Nivel</dt><dd>{resultado.nivel}</dd></div>
+              )}
+              <div><dt className="text-sm text-muted-foreground">{resultado.tipo === "carne" ? "Matriculado desde" : "Emitido"}</dt><dd>{format(new Date(resultado.emitido), "dd 'de' MMMM 'de' yyyy", { locale: es })}</dd></div>
               <div><dt className="text-sm text-muted-foreground">Código</dt><dd className="tracking-wider">{resultado.codigo}</dd></div>
             </dl>
             <p className="text-xs text-muted-foreground mt-5">{resultado.academia}. {resultado.aclaracion}</p>

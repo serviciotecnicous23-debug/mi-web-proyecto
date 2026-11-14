@@ -10,12 +10,14 @@ import type { Express, Request } from "express";
 import { randomBytes } from "node:crypto";
 import { toDataURL } from "qrcode";
 import { pool } from "./db";
-import { resolveSiteUrl } from "@shared/site";
 import {
   ACLARACION_DOCUMENTOS, HONORES, NIVELES, NOMBRE_ACADEMIA, PATRON_CODIGO, codigoDe, materiaPorId, normalizarCodigo, puedeRevisar,
   type DocumentoAcademia, type MateriaDef, type NivelDef, type TipoDocumento, type VerificacionAcademia,
 } from "@shared/academia";
-import { alumnoDe, frenar } from "./academia-comun";
+import { alumnoDe, enlaceVerificar, frenar } from "./academia-comun";
+import { verificacionDeCarne } from "./academia-matricula";
+
+export { enlaceVerificar } from "./academia-comun";
 
 type FilaDocumento = {
   codigo: string;
@@ -31,9 +33,6 @@ type FilaDocumento = {
   revocado_at: string | null;
   motivo: string | null;
 };
-
-const SITIO = resolveSiteUrl(process.env.SITE_URL);
-export const enlaceVerificar = (codigo: string) => `${SITIO}/academia/verificar/${codigo}`;
 
 async function nombreDe(userId: number): Promise<string> {
   const { rows } = await pool.query(`SELECT display_name, username FROM users WHERE id = $1`, [userId]);
@@ -175,7 +174,15 @@ export function registerAcademiaDocumentosRoutes(app: Express) {
       const codigo = normalizarCodigo(String(req.params.codigo || ""));
       if (!PATRON_CODIGO.test(codigo)) return res.status(404).json({ message: "Ese código no tiene el formato de la academia (AAF-XXXX-XXXX)." });
       const f = await porCodigo(codigo);
-      if (!f) return res.status(404).json({ message: "No encontramos un documento con ese código." });
+      if (!f) {
+        // ¿es el código de un carné de estudiante?
+        const carne = await verificacionDeCarne(codigo);
+        if (carne) {
+          res.setHeader("Cache-Control", "no-store");
+          return res.json(carne);
+        }
+        return res.status(404).json({ message: "No encontramos un documento con ese código." });
+      }
       const nv = nivelDelDocumento(f);
       const out: VerificacionAcademia = {
         valido: !f.revocado_at,

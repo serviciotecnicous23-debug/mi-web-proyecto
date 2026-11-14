@@ -5,6 +5,7 @@
 import type { Request, Response } from "express";
 import { pool } from "./db";
 import { getBibleChapter } from "./bible";
+import { resolveSiteUrl } from "@shared/site";
 import {
   citaVisible, enlaceBiblia, materiaAprobada, notaMateria, parsearCita, pesosDe, veVistaPrevia,
   type Componentes, type MateriaDef,
@@ -115,7 +116,12 @@ CREATE TABLE IF NOT EXISTS "academia_certificados" (
   "revocado_at" timestamp,
   "motivo" text,
   UNIQUE ("user_id", "tipo", "ref")
-);`;
+);
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "honor_at" timestamp;
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "reglamento_version" text;
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "carne_codigo" text;
+CREATE UNIQUE INDEX IF NOT EXISTS "academia_alumnos_carne_idx" ON "academia_alumnos" ("carne_codigo");
+CREATE SEQUENCE IF NOT EXISTS "academia_matricula_seq";`;
 
 // ---------------------------------------------------------------- quién la ve
 
@@ -160,6 +166,29 @@ export async function alumnoDe(req: Request, res: Response): Promise<{ userId: n
   }
   return { userId: acceso.userId, acceso };
 }
+
+/** ¿Se matriculó? (aceptó el reglamento y el código de honor y tiene su número). */
+export async function estaMatriculado(userId: number): Promise<boolean> {
+  const { rows } = await pool.query(`SELECT 1 FROM academia_alumnos WHERE user_id = $1 AND matricula IS NOT NULL AND reglamento_at IS NOT NULL`, [userId]);
+  return rows.length > 0;
+}
+
+export const MENSAJE_MATRICULA = "Para guardar tu avance, primero matricúlate en la academia: aceptas el reglamento académico y el código de honor.";
+
+/** Como alumnoDe, pero además matriculado: lo piden las rutas que guardan avance (sin matrícula se lee, no se guarda). */
+export async function matriculadoDe(req: Request, res: Response): Promise<{ userId: number; acceso: Acceso } | null> {
+  const a = await alumnoDe(req, res);
+  if (!a) return null;
+  if (!(await estaMatriculado(a.userId))) {
+    res.status(409).json({ message: MENSAJE_MATRICULA, matricula: false });
+    return null;
+  }
+  return a;
+}
+
+/** La dirección pública de la verificación de un documento o de un carné (la del QR). */
+const SITIO = resolveSiteUrl(process.env.SITE_URL);
+export const enlaceVerificar = (codigo: string) => `${SITIO}/academia/verificar/${codigo}`;
 
 // ---------------------------------------------------------------- fila por persona y freno
 

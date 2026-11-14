@@ -56,6 +56,17 @@ export function ChipEstado({ estado }: { estado: EstadoMateria }) {
   return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${e.clase}`}>{estado === "aprobada" ? <CheckCircle2 className="w-3 h-3" /> : estado === "en-preparacion" ? <Lock className="w-3 h-3" /> : null}{e.texto}</span>;
 }
 
+/** Para quien todavía no se matriculó: sin matrícula se lee, pero no se guarda el avance. */
+export function AvisoMatricula({ texto }: { texto: string }) {
+  return (
+    <div className="glass-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 border border-orange-500/30" role="note" data-testid="aviso-matricula">
+      <ShieldCheck className="w-5 h-5 text-orange-500 shrink-0" />
+      <p className="text-sm flex-1">{texto}</p>
+      <Link href="/academia/matricula"><span className="inline-flex items-center rounded-md bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 cursor-pointer">Matricularme</span></Link>
+    </div>
+  );
+}
+
 export function AvisoVistaPrevia() {
   return (
     <div className="max-w-6xl mx-auto px-4 mt-6">

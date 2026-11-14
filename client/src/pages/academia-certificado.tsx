@@ -59,7 +59,7 @@ export default function AcademiaCertificado() {
         )}
         <div className="flex flex-wrap gap-2 mb-6">
           <Button onClick={pdf} disabled={generando} className="fire-btn-primary" data-testid="certificado-pdf"><Download className="w-4 h-4 mr-1.5" /> {generando ? "Generando…" : "Descargar PDF"}</Button>
-          <Button variant="outline" onClick={imprimirDocumento}><FileText className="w-4 h-4 mr-1.5" /> Imprimir</Button>
+          <Button variant="outline" onClick={() => imprimirDocumento()}><FileText className="w-4 h-4 mr-1.5" /> Imprimir</Button>
           <Button variant="outline" onClick={copiar}>{copiado ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />} {copiado ? "Enlace copiado" : "Copiar el enlace de verificación"}</Button>
         </div>
         <DocumentoAjustado>
