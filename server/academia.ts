@@ -15,8 +15,10 @@ import { BANCOS, CONTENIDO } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, frenar, marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaMatriculado, frenar, marcarEstudio, matriculadoDe, recalcularMateria,
+  textoDeCita, MENSAJE_CERRADA,
 } from "./academia-comun";
+import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
@@ -126,7 +128,8 @@ export function registerAcademiaRoutes(app: Express) {
           };
         }
       }
-      const out: AcademiaEstado = { abierta: acceso.abierta, vistaPrevia: acceso.vistaPrevia, conSesion: !!userId, alumno, continuar, etapas: ETAPAS, niveles, especialidades };
+      const matricula = userId ? await matriculaDe(userId) : null;
+      const out: AcademiaEstado = { abierta: acceso.abierta, vistaPrevia: acceso.vistaPrevia, conSesion: !!userId, alumno, matricula, continuar, etapas: ETAPAS, niveles, especialidades };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
     } catch (err) {
@@ -169,6 +172,7 @@ export function registerAcademiaRoutes(app: Express) {
         versiculo,
         examen: userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null,
         certificado: userId && estado === "aprobada" ? (await codigoDocumento(userId, "materia", m.id)) ?? (await emitirMateria(userId, m, fila?.nota ?? 0)) : null,
+        matriculado: userId ? await estaMatriculado(userId) : false,
         vistaPrevia: acceso.vistaPrevia,
         conSesion: !!userId,
       };
@@ -227,6 +231,7 @@ export function registerAcademiaRoutes(app: Express) {
         anterior: l.indice > 0 ? ms[l.indice - 1].id : null,
         siguiente: l.indice < ms.length - 1 ? ms[l.indice + 1].id : null,
         publica,
+        matriculado: userId ? await estaMatriculado(userId) : false,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -280,10 +285,10 @@ export function registerAcademiaRoutes(app: Express) {
     }
   });
 
-  // Terminar la lección: pide el repaso respondido bien. Guarda la nota privada (si la hay) y suma el día de estudio.
+  // Terminar la lección: pide el repaso respondido bien y la matrícula. Guarda la nota privada y suma el día de estudio.
   app.post("/api/academia/leccion/:leccionId/completar", async (req, res) => {
     try {
-      const a = await alumnoDe(req, res);
+      const a = await matriculadoDe(req, res);
       if (!a) return;
       const id = String(req.params.leccionId || "");
       const l = leccionPorId(id);
@@ -360,10 +365,10 @@ export function registerAcademiaRoutes(app: Express) {
     }
   });
 
-  // Comprobar el orden de las fichas. Bien a la primera = 100; luego 80 y 60 como mínimo (shared/academia.ts).
+  // Comprobar el orden de las fichas. Bien a la primera = 100; luego 80 y 60 como mínimo (shared/academia.ts). Pide matrícula.
   app.post("/api/academia/versiculo/:materiaId", async (req, res) => {
     try {
-      const a = await alumnoDe(req, res);
+      const a = await matriculadoDe(req, res);
       if (!a) return;
       const m = materiaPorId(String(req.params.materiaId || ""));
       if (!m || !m.disponible || !m.memoria) return res.status(404).json({ message: "Esa materia no tiene versículo de memoria." });
@@ -407,4 +412,5 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaExamenRoutes(app);
   registerAcademiaNivelRoutes(app);
   registerAcademiaDocumentosRoutes(app);
+  registerAcademiaMatriculaRoutes(app);
 }

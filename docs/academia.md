@@ -102,6 +102,21 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 - **Firmas:** por ahora, la línea de la Dirección académica y el sello del Ministerio; los nombres y las firmas los da
   Luis.
 
+**La matrícula y el estatus** (`server/academia-matricula.ts`, páginas `/academia/matricula`, `/academia/carne` y
+`/academia/reglamento`):
+- **Matricularse** es aceptar el reglamento académico (`REGLAMENTO`) y el código de honor (`CODIGO_HONOR`). Da un número
+  correlativo `AAF-año-número` (secuencia `academia_matricula_seq`) y la promoción (el año, hora de Texas). Se guarda la
+  versión del reglamento aceptada.
+- **Sin matrícula se lee, pero no se guarda:** completar una lección y el versículo responden 409 (`matriculadoDe`), y
+  los exámenes ponen «matricularte en la academia» en lo que falta. El repaso se puede practicar.
+- **El estatus** sale del avance (`estatusDe`): aspirante (sin lecciones terminadas), estudiante activo, en pausa
+  (más de `DIAS_PAUSA` días sin estudiar; vuelve a activo al estudiar), egresado del nivel (lo completó y el siguiente no
+  está disponible), graduado de la academia (Nivel 5) y la marca de cuadro de honor. Nunca muestra notas.
+- **El carné digital** lleva la foto (o las iniciales), el nombre, el número, la promoción, el estatus y un QR. El QR usa
+  un código al azar (`carne_codigo`), no el número de matrícula, que es correlativo y dejaría recorrer los nombres. Se
+  verifica en la misma página de los certificados, con el estatus de hoy, y se descarga en PDF de tamaño tarjeta.
+- **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
+
 **El examen final** (`EXAMEN_FINAL` en `shared/academia.ts`):
 
 | Nivel | Parte A | Parte B | Peso A/B | Tiempo |
@@ -244,6 +259,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 - `server/academia-nivel.ts`: el cierre del nivel (integral, versículos, pacto y nivel completo).
 - `server/academia-documentos.ts`: los certificados (emisión, vista con QR y verificación pública). Usa la librería
   `qrcode` en el servidor.
+- `server/academia-matricula.ts`: la matrícula, el estatus y el carné (y su verificación).
 - `server/academia-correccion.ts`: el corrector, con su prueba en `server/academia-correccion.test.ts`.
 - `server/academia/`: los tipos, el contenido, los bancos y el registro. **Solo servidor.**
 - `client/src/pages/academia*.tsx` y `client/src/components/academia/` (`examen.tsx` es la pantalla común de los
@@ -253,7 +269,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 
 | Tabla | Qué guarda |
 |---|---|
-| `academia_alumnos` | Matrícula, promoción, estatus, nivel, mentor, reglamento y racha |
+| `academia_alumnos` | Matrícula, promoción, estatus, nivel, mentor, reglamento aceptado (fecha y versión), código de honor, código del carné y racha |
 | `academia_lecciones` | Vista, completada, repaso (`{pregunta: {primera, ok}}`) y nota privada |
 | `academia_pruebas` | Una fila por examen (`<materia>:final` y `nivel-<n>:integral`): intentos, fallos, mejor, última, vistas, el intento en curso en jsonb, `curso_at`, `fallo_at`, `aprobada_at` y el resultado con su revisión |
 | `academia_niveles` | El cierre de cada nivel: el pacto aceptado, el nivel completo y su promedio |
@@ -281,7 +297,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `GET integral/:nivel` y `POST integral/:nivel/empezar`, `/paso`, `/respuesta` y `/escrita` | El examen integral: las mismas rutas que el final |
 | `GET certificados` | Mis documentos (emite los que falten) |
 | `GET certificado/:codigo` | Un documento completo, con su QR: para su dueño y la Dirección académica |
-| `GET verificar/:codigo` | La verificación pública, sin cuenta y sin notas |
+| `GET verificar/:codigo` | La verificación pública (certificado o carné), sin cuenta y sin notas |
+| `GET matricula` y `POST matricula` | Mi matrícula; matricularme: `{reglamento: true, honor: true}` |
+| `GET carne` | Mi carné, con su QR (pide matrícula) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
 
 **Vista previa:** mientras `site_content.academia_abierta` no sea `1`, solo la ven los roles de `ROLES_VISTA_PREVIA`
@@ -299,7 +317,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | Fase | Qué sale | Estado |
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
-| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente y los certificados con QR verificable; faltan la matrícula, el reglamento, el carné, el estatus en el perfil, la pestaña en Clases, las cuentas pendientes y el audio |
+| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la matrícula, el reglamento, el estatus y el carné; faltan el expediente y la constancia, la insignia en el perfil, la pestaña en Clases, las cuentas pendientes y el audio |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |

@@ -114,15 +114,15 @@ export function DocumentoVista({ d }: { d: DocumentoAcademia }) {
 }
 
 /** Muestra el documento a su tamaño real o, en pantallas angostas, achicado para que entre entero. */
-export function DocumentoAjustado({ children }: { children: ReactNode }) {
+export function DocumentoAjustado({ children, ancho = ANCHO }: { children: ReactNode; ancho?: number }) {
   const caja = useRef<HTMLDivElement>(null);
   const hoja = useRef<HTMLDivElement>(null);
   const [escala, setEscala] = useState(1);
   const [alto, setAlto] = useState<number | null>(null);
   useEffect(() => {
     const medir = () => {
-      const ancho = caja.current?.clientWidth ?? ANCHO;
-      const s = Math.min(1, ancho / ANCHO);
+      const disponible = caja.current?.clientWidth ?? ancho;
+      const s = Math.min(1, disponible / ancho);
       setEscala(s);
       setAlto((hoja.current?.scrollHeight ?? 566) * s);
     };
@@ -130,28 +130,32 @@ export function DocumentoAjustado({ children }: { children: ReactNode }) {
     const ro = new ResizeObserver(medir);
     if (caja.current) ro.observe(caja.current);
     return () => ro.disconnect();
-  }, []);
+  }, [ancho]);
   return (
     <div ref={caja} className="w-full" style={{ height: alto ?? undefined }}>
-      <div ref={hoja} id="documento-escala" style={{ width: `${ANCHO}px`, transform: `scale(${escala})`, transformOrigin: "top left" }}>
+      <div ref={hoja} id="documento-escala" style={{ width: `${ancho}px`, transform: `scale(${escala})`, transformOrigin: "top left" }}>
         {children}
       </div>
     </div>
   );
 }
 
-/** Descarga el documento en PDF (A4 apaisado), a tamaño real aunque en pantalla se vea achicado. */
-export async function descargarPdf(archivo: string): Promise<void> {
-  const el = document.getElementById("documento-academia");
+/** Qué capturar para el PDF: el certificado (A4 apaisado) o el carné (tamaño tarjeta, 85,6 × 54 mm). */
+export type OpcionesPdf = { id?: string; ancho?: number; mm?: number; fondo?: string };
+
+/** Descarga el documento en PDF a tamaño real, aunque en pantalla se vea achicado. */
+export async function descargarPdf(archivo: string, op: OpcionesPdf = {}): Promise<void> {
+  const el = document.getElementById(op.id ?? "documento-academia");
   const escala = document.getElementById("documento-escala");
   if (!el) return;
+  const ancho = op.ancho ?? ANCHO;
   const antes = escala?.style.transform ?? "";
   if (escala) escala.style.transform = "none";
   try {
     const html2canvas = (await import("html2canvas")).default;
     const { jsPDF } = await import("jspdf");
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#fffbeb", logging: false, width: ANCHO, height: el.scrollHeight, windowWidth: 900 });
-    const pdfAncho = 297;
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: op.fondo ?? "#fffbeb", logging: false, width: ancho, height: el.scrollHeight, windowWidth: ancho + 100 });
+    const pdfAncho = op.mm ?? 297;
     const pdfAlto = (canvas.height / canvas.width) * pdfAncho;
     const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [pdfAncho, pdfAlto] });
     pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pdfAncho, pdfAlto);
@@ -162,8 +166,8 @@ export async function descargarPdf(archivo: string): Promise<void> {
 }
 
 /** Abre el documento solo, para imprimirlo en una hoja apaisada. */
-export function imprimirDocumento(): void {
-  const el = document.getElementById("documento-academia");
+export function imprimirDocumento(id = "documento-academia"): void {
+  const el = document.getElementById(id);
   if (!el) return;
   const w = window.open("", "_blank");
   if (!w) return;

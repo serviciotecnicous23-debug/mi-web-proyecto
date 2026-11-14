@@ -13,7 +13,7 @@ import { APRUEBA, NOMBRE_COMPONENTE, examenDe, materiaPorId, type MateriaDetalle
 import {
   responderVersiculo, tiempoTexto, useMateria, versiculoEstudio, versiculoPractica, type VersiculoEstudio, type VersiculoPractica,
 } from "@/components/academia/api";
-import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
+import { AvisoMatricula, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -230,7 +230,10 @@ export default function AcademiaMateria() {
           </ol>
         </section>
 
-        {m.disponible && d.versiculo && d.conSesion && <Versiculo materiaId={m.id} estado={d.versiculo} />}
+        {m.disponible && d.versiculo && d.conSesion && d.matriculado && <Versiculo materiaId={m.id} estado={d.versiculo} />}
+        {m.disponible && d.versiculo && d.conSesion && !d.matriculado && (
+          <AvisoMatricula texto={`Versículo de memoria · ${d.versiculo.ref}. Para practicarlo y guardar tu puntaje, matricúlate en la academia.`} />
+        )}
 
         {/* Examen final */}
         {m.disponible && medida && (

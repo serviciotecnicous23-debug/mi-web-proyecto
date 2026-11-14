@@ -3,7 +3,7 @@
 import { Link } from "wouter";
 import { motion } from "motion/react";
 import {
-  ArrowRight, Award, BookOpen, CheckCircle2, Flame, GraduationCap, Layers, ListChecks, PenLine, PlayCircle, ScrollText, Sparkles, Timer,
+  ArrowRight, Award, BookOpen, CheckCircle2, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle, ScrollText, Sparkles, Timer,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -115,10 +115,33 @@ export default function AcademiaPage() {
               {e.alumno.materiasAprobadas === 1 ? "materia aprobada" : "materias aprobadas"}
             </p>
           )}
+          {e.matricula && (
+            <p className="text-sm text-muted-foreground mt-2" data-testid="academia-matricula">
+              <IdCard className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Matrícula {e.matricula.numero} · {e.matricula.estatus.texto}
+              {e.matricula.estatus.honores ? " · Cuadro de honor" : ""} · <Link href="/academia/carne" className="underline">Mi carné</Link>
+            </p>
+          )}
         </motion.div>
       </section>
 
       {e.vistaPrevia && <AvisoVistaPrevia />}
+
+      {/* ═══ LA MATRÍCULA ═══ */}
+      {e.conSesion && !e.matricula && (
+        <section className="max-w-6xl mx-auto px-4 pt-8" data-testid="matricula-invitacion">
+          <div className="glass-card p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4 border border-orange-500/30">
+            <IdCard className="w-10 h-10 text-orange-500 shrink-0" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl md:text-2xl font-bold">Matricúlate en la academia</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Acepta el reglamento académico y el código de honor, y recibe tu número de matrícula y tu carné. Sin matrícula puedes leer las lecciones, pero no
+                guardar tu avance.
+              </p>
+            </div>
+            <Link href="/academia/matricula"><Button className="fire-btn-primary h-12 px-7" data-testid="academia-matricularme">Matricularme</Button></Link>
+          </div>
+        </section>
+      )}
 
       {/* ═══ MIS CERTIFICADOS ═══ */}
       {docs.data && docs.data.length > 0 && (
@@ -254,6 +277,10 @@ export default function AcademiaPage() {
             </p>
           </div>
         </div>
+        <p className="text-sm text-muted-foreground mt-6 flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/academia/reglamento" className="inline-flex items-center gap-1.5 underline" data-testid="academia-reglamento"><ScrollText className="w-4 h-4" /> Reglamento académico</Link>
+          <Link href="/academia/verificar" className="inline-flex items-center gap-1.5 underline"><Award className="w-4 h-4" /> Verificar un documento</Link>
+        </p>
       </section>
     </Layout>
   );

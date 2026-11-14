@@ -13,7 +13,7 @@ import {
   type CierreResumen, type ExamenEstado, type NivelDef, type NivelEstado, type RequisitoNivel,
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
-import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
+import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, estaMatriculado, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
 import { codigoDocumento, emitirNivel } from "./academia-documentos";
 
@@ -40,7 +40,9 @@ async function aprobadasDe(userId: number, nv: NivelDef): Promise<{ id: string; 
 export async function estadoIntegral(userId: number, nv: NivelDef): Promise<ExamenEstado> {
   const f = await filaDe(userId, claveIntegral(nv.n));
   const faltan = nv.materias.length - (await aprobadasDe(userId, nv)).length;
-  const falta = faltan > 0 ? [faltan === 1 ? "aprobar la materia que falta del nivel" : `aprobar las ${faltan} materias que faltan del nivel`] : [];
+  const falta: string[] = [];
+  if (!(await estaMatriculado(userId))) falta.push("matricularte en la academia");
+  if (faltan > 0) falta.push(faltan === 1 ? "aprobar la materia que falta del nivel" : `aprobar las ${faltan} materias que faltan del nivel`);
   return { ...estadoBase(f, EXAMEN_INTEGRAL[nv.n], APRUEBA_INTEGRAL), falta, aprobado: !!f.aprobada_at, repasar: [] };
 }
 

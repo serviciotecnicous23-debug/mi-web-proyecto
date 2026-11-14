@@ -325,6 +325,9 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                   <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Se aprueba con {estado.aprueba}. Al terminar verás la revisión completa, con la explicación de cada pregunta.</li>
                 </ul>
                 {estado.falta.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">Para darlo te falta {estado.falta.join(" y ")}.</p>}
+                {estado.falta.some((f) => f.startsWith("matricularte")) && (
+                  <Link href="/academia/matricula"><Button className="fire-btn-primary mt-3" data-testid="examen-matricularme">Matricularme</Button></Link>
+                )}
                 {estado.espera > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">Podrás intentarlo otra vez en {tiempoTexto(estado.espera)}.</p>}
                 {estado.repasar.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">Antes de intentarlo otra vez, vuelve a leer las lecciones de la materia.</p>}
                 {!estado.falta.length && !estado.espera && !estado.repasar.length && (
