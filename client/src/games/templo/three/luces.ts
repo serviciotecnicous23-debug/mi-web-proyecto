@@ -83,6 +83,49 @@ let sombraMat: THREE.MeshBasicMaterial | null = null;
  * más. Va a `alto` sobre el piso (encima de una alfombra).
  */
 export function sombraDeContacto(w: number, d: number, alto = 0.03): THREE.Mesh {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w / 0.6, d / 0.6).rotateX(-Math.PI / 2), materialSombra());
+  m.position.y = alto;
+  m.renderOrder = 1;
+  return m;
+}
+
+const sombrasMats = new Map<number, THREE.MeshBasicMaterial>();
+/**
+ * Muchas sombras de contacto en una sola malla (las casas de un barrio): cada una con su centro, las medidas de lo que se
+ * apoya, su giro y su altura. Afuera, al sol, van más suaves (`opacidad`).
+ */
+export function sombrasDeContacto(lista: { x: number; z: number; w: number; d: number; giro?: number; y: number }[], opacidad = 1): THREE.Mesh | null {
+  if (!lista.length) return null;
+  const base = materialSombra();
+  let mat = opacidad >= 1 ? base : sombrasMats.get(opacidad);
+  if (!mat) {
+    mat = base.clone();
+    mat.opacity = opacidad;
+    sombrasMats.set(opacidad, mat);
+  }
+  const pos: number[] = [], uv: number[] = [];
+  const t = [[0, 0], [1, 0], [1, 1], [0, 1]];
+  for (const s of lista) {
+    const hw = s.w / 0.6 / 2, hd = s.d / 0.6 / 2, c = Math.cos(s.giro ?? 0), sn = Math.sin(s.giro ?? 0);
+    const P = (a: number, b: number) => [s.x + a * c + b * sn, s.y, s.z - a * sn + b * c];
+    const q = [P(-hw, -hd), P(hw, -hd), P(hw, hd), P(-hw, hd)];
+    // mirando hacia arriba
+    for (const k of [0, 2, 1, 0, 3, 2]) {
+      pos.push(q[k][0], q[k][1], q[k][2]);
+      uv.push(t[k][0], t[k][1]);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.computeBoundingSphere();
+  const m = new THREE.Mesh(g, mat);
+  m.renderOrder = 1;
+  m.name = "sombras-de-contacto";
+  return m;
+}
+
+function materialSombra(): THREE.MeshBasicMaterial {
   if (!sombraTex || !sombraMat) {
     const n = 64;
     const data = new Uint8Array(n * n * 4);
@@ -100,10 +143,7 @@ export function sombraDeContacto(w: number, d: number, alto = 0.03): THREE.Mesh 
     sombraTex.needsUpdate = true;
     sombraMat = new THREE.MeshBasicMaterial({ map: sombraTex, color: "#000000", transparent: true, depthWrite: false, toneMapped: false });
   }
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w / 0.6, d / 0.6).rotateX(-Math.PI / 2), sombraMat);
-  m.position.y = alto;
-  m.renderOrder = 1;
-  return m;
+  return sombraMat;
 }
 
 /** Dibuja algo aparte (la foto de un mueble, el muñeco del probador) sin los fuegos del mundo que está abierto. */

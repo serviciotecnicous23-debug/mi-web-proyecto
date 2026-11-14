@@ -84,18 +84,20 @@ export class Telas {
    * - Con `caida`, baja hacia `bajo` (un rumbo horizontal) tanto como `caida` de un borde al otro, y con `faldon`, del
    *   borde bajo cuelga una franja con un diente por franja, de su color (`faldon` es lo que cuelga).
    * - Da sombra (salvo con `sombra: false`): una copia quieta, 10 cm más abajo que la tela, que solo tapa el sol.
+   * - `cuelga` es cuánto baja en el medio (7 cm si no se dice) y `franja`, el ancho de cada franja (30 cm si no se dice).
    */
   toldo(
     centro: [number, number, number], eje: [number, number], largo: number, ancho: number,
     color: THREE.ColorRepresentation | THREE.ColorRepresentation[], viento = 0.7,
-    o: { caida?: number; bajo?: [number, number]; faldon?: number; sombra?: boolean } = {},
+    o: { caida?: number; bajo?: [number, number]; faldon?: number; sombra?: boolean; cuelga?: number; franja?: number } = {},
   ) {
     const el = Math.hypot(eje[0], eje[1]) || 1;
     const ex = eje[0] / el, ez = eje[1] / el;
     // el otro lado del toldo (al través) y la fase
     const tx = -ez, tz = ex;
     const colores = (Array.isArray(color) ? color : [color]).map((q) => new THREE.Color(q));
-    const nu = Array.isArray(color) ? Math.max(colores.length, Math.round(largo / 0.3)) : 6, nv = 6;
+    const nu = Array.isArray(color) ? Math.max(colores.length, Math.round(largo / (o.franja ?? 0.3))) : 6, nv = 6;
+    const cuelga = o.cuelga ?? 0.07;
     const fase = ((centro[0] * 12.9898 + centro[2] * 78.233) % 6.283 + 6.283) % 6.283;
     // la caída hacia `bajo`: cuánto baja por metro hacia ese lado, y la normal del paño, inclinada hacia allá
     const bl = o.bajo ? Math.hypot(o.bajo[0], o.bajo[1]) || 1 : 1;
@@ -108,7 +110,7 @@ export class Telas {
       const u = i / nu, v = j / nv;
       const libre = Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
       const dx = ex * (u - 0.5) * largo + tx * (v - 0.5) * ancho, dz = ez * (u - 0.5) * largo + tz * (v - 0.5) * ancho;
-      return { p: [centro[0] + dx, centro[1] - 0.07 * libre - pend * (dx * bx + dz * bz) - baja, centro[2] + dz], libre };
+      return { p: [centro[0] + dx, centro[1] - cuelga * libre - pend * (dx * bx + dz * bz) - baja, centro[2] + dz], libre };
     };
     const vert = (i: number, j: number, c: THREE.Color) => {
       const { p, libre } = punto(i, j);

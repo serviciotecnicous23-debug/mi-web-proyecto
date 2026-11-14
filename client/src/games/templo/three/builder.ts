@@ -262,6 +262,9 @@ diffuseColor.rgb *= 1.0 - dPiedra * smoothstep(0.62, 0.94, dRuido(dp * 0.3 + 3.7
 
 const DETALLE_RELIEVE = `
 #include <normal_fragment_maps>
+#ifndef DETALLE_TELA_REL
+#define DETALLE_TELA_REL 0.05
+#endif
 #ifndef DETALLE_BAJO
 {
   vec3 dPv = -vViewPosition;
@@ -277,7 +280,7 @@ const DETALLE_RELIEVE = `
   // veía ondulada como la arena; y el metal acostado (el piso de oro) pulido, no arrugado
   // de cerca la piedra y el revoque van con un tercio del relieve (si no, un muro a pocos metros parece papel arrugado);
   // a la distancia de la ciudad y de los atrios, con todo
-  float dFuerza = (dPiedra * 0.24 * mix(0.35, 1.0, smoothstep(5.0, 18.0, length(vViewPosition))) + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1 * (1.0 - 0.85 * dAcostada)) * dLejos;
+  float dFuerza = (dPiedra * 0.24 * mix(0.35, 1.0, smoothstep(5.0, 18.0, length(vViewPosition))) + dMadera * 0.14 + dVerde * 0.2 + dTela * DETALLE_TELA_REL * (1.0 - 0.8 * dAcostada) + dMetal * 0.1 * (1.0 - 0.85 * dAcostada)) * dLejos;
   normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
 }
 #endif
@@ -310,10 +313,11 @@ if (dAguaN > 0.0) {
 #include <opaque_fragment>
 `;
 
-function conDetalle<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, metal: boolean): M {
+function conDetalle<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, metal: boolean, liso = false): M {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTiempo = tiempoMateriales;
     if (metal) shader.defines = { ...(shader.defines ?? {}), DETALLE_METAL: "" };
+    if (liso) shader.defines = { ...(shader.defines ?? {}), DETALLE_TELA_REL: "0.0" };
     if (detalleBajo) shader.defines = { ...(shader.defines ?? {}), DETALLE_BAJO: "" };
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vMundo;\nuniform float uTiempo;")
@@ -343,7 +347,7 @@ vMundo = (modelMatrix * dMundo).xyz;`,
       .replace("#include <normal_fragment_maps>", DETALLE_RELIEVE)
       .replace("#include <opaque_fragment>", DETALLE_AGUA);
   };
-  mat.customProgramCacheKey = () => `templo-detalle-${metal ? "metal" : "mate"}-${detalleBajo ? "bajo" : "alto"}`;
+  mat.customProgramCacheKey = () => `templo-detalle-${metal ? "metal" : "mate"}-${detalleBajo ? "bajo" : "alto"}${liso ? "-liso" : ""}`;
   return mat;
 }
 
@@ -372,6 +376,16 @@ let shiny: THREE.MeshPhongMaterial | null = null;
 export function matteMat() {
   if (!matte) matte = conFuegos(conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false), "detalle");
   return matte;
+}
+
+let matteLiso: THREE.MeshLambertMaterial | null = null;
+/**
+ * El de siempre, pero lo de color de tela va liso, sin el relieve fino (las casas de adobe: su revoque cae como tela y,
+ * con el sol rasante, ese relieve lo arrugaba como papel). El grano de color queda.
+ */
+export function matteMatLiso() {
+  if (!matteLiso) matteLiso = conFuegos(conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false, true), "detalle-liso");
+  return matteLiso;
 }
 
 export function shinyMat() {
