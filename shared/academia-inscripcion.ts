@@ -130,6 +130,17 @@ const parrafo = (v: unknown, max: number) =>
     : "";
 const NOMBRE_VALIDO = /^\p{L}[\p{L}\p{M}'’. -]*$/u;
 
+/** Unos nombres o unos apellidos limpios y bien escritos, o el error (`que`: «tus nombres», «los apellidos»…). */
+export function limpiarNombre(valor: unknown, que: string): { valor: string; error: string | null } {
+  const v = nombrePropio(linea(valor, LIMITES.nombre + 20));
+  const Que = que.charAt(0).toUpperCase() + que.slice(1);
+  if (!v) return { valor: v, error: `Escribe ${que}.` };
+  if (v.length < 2) return { valor: v, error: `${Que} parecen incompletos.` };
+  if (v.length > LIMITES.nombre) return { valor: v, error: `Usa hasta ${LIMITES.nombre} letras.` };
+  if (!NOMBRE_VALIDO.test(v)) return { valor: v, error: "Usa solo letras (sin números ni símbolos)." };
+  return { valor: v, error: null };
+}
+
 /** La edad cumplida en una fecha. */
 export function edadEn(nacimiento: string, hoy: Date): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(nacimiento);
@@ -150,12 +161,9 @@ export function validarFicha(entrada: unknown, hoy = new Date()): { ok: true; fi
   const e = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
   const errores: ErroresFicha = {};
   const nombre = (campo: "nombres" | "apellidos", que: string) => {
-    const v = nombrePropio(linea(e[campo], LIMITES.nombre + 20));
-    if (!v) errores[campo] = `Escribe tus ${que}.`;
-    else if (v.length < 2) errores[campo] = `Tus ${que} parecen incompletos.`;
-    else if (v.length > LIMITES.nombre) errores[campo] = `Usa hasta ${LIMITES.nombre} letras.`;
-    else if (!NOMBRE_VALIDO.test(v)) errores[campo] = "Usa solo letras (sin números ni símbolos).";
-    return v;
+    const { valor, error } = limpiarNombre(e[campo], `tus ${que}`);
+    if (error) errores[campo] = error;
+    return valor;
   };
   const nombres = nombre("nombres", "nombres");
   const apellidos = nombre("apellidos", "apellidos");

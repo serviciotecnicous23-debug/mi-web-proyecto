@@ -74,23 +74,20 @@ export const CAPACIDADES: readonly CapacidadDef[] = [
   {
     id: "revisar",
     texto: "Revisar respuestas escritas y cambiar notas",
-    detalle: "Siempre con un motivo, que queda registrado.",
+    detalle: "Confirmar la nota del corrector o cambiarla, siempre con un motivo que queda registrado y que ve el alumno; responder los pedidos de revisión.",
     alcance: { direccion: "todos", profesor: "todos", iglesia: "no", alumno: "no" },
-    pronto: true,
   },
   {
     id: "documentos",
     texto: "Corregir o revocar documentos",
-    detalle: "El nombre de un certificado o su revocación, siempre con un motivo.",
+    detalle: "Revocar un certificado o volver a darlo por válido, y corregir el nombre del alumno, siempre con un motivo.",
     alcance: { direccion: "todos", profesor: "no", iglesia: "no", alumno: "no" },
-    pronto: true,
   },
   {
     id: "abrir",
     texto: "Abrir o cerrar la academia para todos",
     detalle: "Solo la Administración y el Director del Ministerio.",
     alcance: { direccion: "todos", profesor: "no", iglesia: "no", alumno: "no" },
-    pronto: true,
     textoTodos: "Administración y Director",
   },
 ];

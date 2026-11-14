@@ -7,8 +7,8 @@ import { pool } from "./db";
 import { getBibleChapter } from "./bible";
 import { resolveSiteUrl } from "@shared/site";
 import {
-  citaVisible, enlaceBiblia, materiaAprobada, notaMateria, parsearCita, pesosDe, veVistaPrevia,
-  type Componentes, type MateriaDef,
+  APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita,
+  pesosDe, veVistaPrevia, type Componentes, type MateriaDef, type MedidaExamen, type NivelN,
 } from "@shared/academia";
 import { BANCOS } from "./academia/index";
 
@@ -143,11 +143,44 @@ CREATE TABLE IF NOT EXISTS "academia_inscripciones" (
   "updated_at" timestamp NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS "academia_inscripciones_iglesia_idx" ON "academia_inscripciones" ("iglesia_id");
-ALTER TABLE "academia_inscripciones" ADD COLUMN IF NOT EXISTS "foto_url" text;`;
+ALTER TABLE "academia_inscripciones" ADD COLUMN IF NOT EXISTS "foto_url" text;
+CREATE TABLE IF NOT EXISTS "academia_intentos" (
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "clave" text NOT NULL,
+  "intento" integer NOT NULL,
+  "objetiva" integer NOT NULL,
+  "escrita" integer NOT NULL,
+  "nota" integer NOT NULL,
+  "nota_auto" integer NOT NULL,
+  "aciertos" integer NOT NULL,
+  "de" integer NOT NULL,
+  "respuestas" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "cerrado_at" timestamp NOT NULL DEFAULT now(),
+  PRIMARY KEY ("user_id", "clave", "intento")
+);
+CREATE TABLE IF NOT EXISTS "academia_apelaciones" (
+  "id" serial PRIMARY KEY,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "clave" text NOT NULL,
+  "intento" integer NOT NULL,
+  "mensaje" text NOT NULL,
+  "estado" text NOT NULL DEFAULT 'pendiente',
+  "respuesta" text,
+  "resuelta_por" integer,
+  "resuelta_at" timestamp,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  UNIQUE ("user_id", "clave")
+);
+CREATE INDEX IF NOT EXISTS "academia_apelaciones_estado_idx" ON "academia_apelaciones" ("estado", "created_at");`;
 
 // ---------------------------------------------------------------- quién la ve
 
 let abiertaCache = { hasta: 0, valor: false };
+
+/** Olvida lo guardado de la apertura (al abrir o cerrar la academia desde el panel). */
+export function olvidarApertura(): void {
+  abiertaCache = { hasta: 0, valor: false };
+}
 
 /** La academia abierta a todos (la abre Luis desde la Dirección académica; mientras tanto, vista previa). */
 export async function academiaAbierta(): Promise<boolean> {
@@ -250,6 +283,56 @@ export async function nombreAcademico(userId: number): Promise<string> {
   const r = rows[0];
   const ficha = r?.nombres ? `${r.nombres} ${r.apellidos ?? ""}`.replace(/\s+/g, " ").trim() : "";
   return ficha || String(r?.display_name || r?.username || "Estudiante").trim();
+}
+
+/** El examen de una clave de academia_pruebas: su título, su página, su medida y la nota para aprobar. */
+export type ContextoExamen = {
+  clave: string;
+  /** «Examen final de «La salvación»», «Examen integral del Nivel 1 · Fundamentos de la fe». */
+  titulo: string;
+  /** «el examen final de «La salvación»», para las frases de los avisos. */
+  enFrase: string;
+  ruta: string;
+  medida: MedidaExamen;
+  aprueba: number;
+  materia: MateriaDef | null;
+  nivel: number | null;
+};
+
+export function contextoExamen(clave: string): ContextoExamen | null {
+  const fin = /^(.+):final$/.exec(clave);
+  if (fin) {
+    const m = materiaPorId(fin[1]);
+    if (!m) return null;
+    return { clave, titulo: `Examen final de «${m.titulo}»`, enFrase: `el examen final de «${m.titulo}»`, ruta: `/academia/examen/${m.id}`, medida: examenDe(m), aprueba: APRUEBA, materia: m, nivel: null };
+  }
+  const int = /^nivel-(\d+):integral$/.exec(clave);
+  if (int) {
+    const n = Number(int[1]);
+    const nv = NIVELES.find((x) => x.n === n);
+    if (!nv) return null;
+    return {
+      clave, titulo: `Examen integral del Nivel ${n} · ${nv.nombre}`, enFrase: `el examen integral del Nivel ${n}`, ruta: `/academia/integral/${n}`,
+      medida: EXAMEN_INTEGRAL[n as NivelN], aprueba: APRUEBA_INTEGRAL, materia: null, nivel: n,
+    };
+  }
+  return null;
+}
+
+/** Deja un aviso en la campana a cada cuenta de la lista. No manda correos ni avisos al teléfono. */
+export async function avisarA(userIds: number[], titulo: string, contenido: string, enlace: string): Promise<void> {
+  const ids = [...new Set(userIds.filter((x) => Number.isInteger(x) && x > 0))];
+  if (!ids.length) return;
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, title, content, link) SELECT unnest($1::int[]), 'academia', $2, $3, $4`,
+    [ids, titulo.slice(0, 200), contenido.slice(0, 1000), enlace],
+  );
+}
+
+/** Las cuentas activas con alguno de esos roles (menos una). */
+export async function cuentasConRoles(roles: readonly string[], excepto = 0): Promise<number[]> {
+  const { rows } = await pool.query(`SELECT id FROM users WHERE is_active AND role = ANY($1::text[]) AND id <> $2`, [[...roles], excepto]);
+  return rows.map((r: any) => Number(r.id));
 }
 
 /** La dirección pública de la verificación de un documento o de un carné (la del QR). */

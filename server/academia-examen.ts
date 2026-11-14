@@ -17,15 +17,20 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, esperaFinalMin, examenDe, materiaPorId, medallaDe, notaExamen,
-  type CorreccionVista, type ExamenEstado, type MateriaDef, type MedidaExamen, type PasoExamen, type ResultadoExamen,
+  APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, esperaFinalMin, examenDe, materiaPorId, medallaDe,
+  notaExamen, type Apelable, type ApelacionVista, type CorreccionVista, type ExamenEstado, type MateriaDef, type MedidaExamen, type PasoExamen,
+  type ResultadoExamen,
 } from "@shared/academia";
+import { ROLES_ACADEMIA } from "@shared/academia-permisos";
 import { BANCOS, escritaPorId, preguntaPorId } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
 import { corregirEscrita, type ClaveEscrita } from "./academia-correccion";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import { elegirEscritas, elegirFinal } from "./academia-eleccion";
-import { alumnoDe, asegurarAlumno, asegurarMateria, claveFinal, enFila, estaInscrito, frenar, marcarEstudio, recalcularMateria } from "./academia-comun";
+import {
+  alumnoDe, asegurarAlumno, asegurarMateria, avisarA, claveFinal, contextoExamen, cuentasConRoles, enFila, estaInscrito, frenar, inscritoDe, marcarEstudio,
+  nombreAcademico, recalcularMateria,
+} from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
 
 export { elegirFinal } from "./academia-eleccion";
@@ -280,6 +285,13 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
 
   // las preguntas de este intento quedan «vistas» (el próximo trae otras); si ya casi no quedan nuevas, se empieza otra vuelta
   const f = await filaDe(userId, clave);
+  // el registro del intento: sus partes y su nota (si la Dirección académica cambia una escrita, se recalcula con esto)
+  const numero = Number(f.intentos || 1);
+  await pool.query(
+    `INSERT INTO academia_intentos (user_id, clave, intento, objetiva, escrita, nota, nota_auto, aciertos, de, respuestas)
+     VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9::jsonb) ON CONFLICT (user_id, clave, intento) DO NOTHING`,
+    [userId, clave, numero, objetiva, escrita, nota, aciertos, de, JSON.stringify(c.respuestas.map((r) => ({ id: r.id, bien: r.bien, tarde: r.tarde })))],
+  );
   let vistas = new Set([...lista(f.vistas), ...c.ids, ...c.escritas]);
   const nuevasFinal = ev.final.filter((p) => !vistas.has(p.id)).length;
   if (nuevasFinal < medida.objetivas) vistas = new Set([...c.ids, ...c.escritas]);
@@ -309,6 +321,7 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
     return { ...n.correccion, pregunta: e?.pregunta ?? "", texto: n.texto, modelo: e?.modelo ?? "" };
   });
   const resultado: ResultadoExamen = {
+    intento: numero,
     nota,
     objetiva,
     escrita,
@@ -323,6 +336,39 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
   };
   await pool.query(`UPDATE academia_pruebas SET resultado = $3::jsonb WHERE user_id = $1 AND clave = $2`, [userId, clave, JSON.stringify(resultado)]);
   return resultado;
+}
+
+// ---------------------------------------------------------------- el pedido de revisión (docs/academia.md, «La revisión»)
+
+/** El pedido de revisión de un examen, si lo hay. */
+async function apelacionDe(userId: number, clave: string): Promise<ApelacionVista | null> {
+  const { rows } = await pool.query(`SELECT estado, mensaje, created_at, respuesta, resuelta_at FROM academia_apelaciones WHERE user_id = $1 AND clave = $2`, [userId, clave]);
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    estado: r.estado === "resuelta" ? "resuelta" : "pendiente",
+    mensaje: r.mensaje,
+    creada: new Date(r.created_at).toISOString(),
+    respuesta: r.respuesta ?? null,
+    resuelta: r.resuelta_at ? new Date(r.resuelta_at).toISOString() : null,
+  };
+}
+
+/** Si se puede pedir la revisión del último intento: una vez por examen, dentro de DIAS_APELACION días. */
+async function apelableDe(userId: number, clave: string): Promise<Apelable & { intento: number | null }> {
+  const [{ rows: ap }, { rows: p }, { rows: it }] = await Promise.all([
+    pool.query(`SELECT 1 FROM academia_apelaciones WHERE user_id = $1 AND clave = $2`, [userId, clave]),
+    pool.query(`SELECT intentos, resultado IS NOT NULL AS hay, curso IS NOT NULL AS en_curso, updated_at FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, clave]),
+    pool.query(`SELECT intento, cerrado_at FROM academia_intentos WHERE user_id = $1 AND clave = $2 ORDER BY intento DESC LIMIT 1`, [userId, clave]),
+  ]);
+  if (ap.length) return { puede: false, hasta: null, porque: "Ya pediste la revisión de este examen: se pide una sola vez.", intento: null };
+  const f = p[0];
+  if (!f?.hay || f.en_curso) return { puede: false, hasta: null, porque: "Todavía no tienes un intento cerrado de este examen.", intento: null };
+  const intento = Number(f.intentos || 1);
+  const cerrado = it[0] && Number(it[0].intento) === intento ? new Date(it[0].cerrado_at) : new Date(f.updated_at);
+  const hasta = new Date(cerrado.getTime() + DIAS_APELACION * 86_400_000);
+  if (Date.now() > hasta.getTime()) return { puede: false, hasta: hasta.toISOString(), porque: `El plazo para pedir la revisión (${DIAS_APELACION} días) ya pasó.`, intento };
+  return { puede: true, hasta: hasta.toISOString(), porque: null, intento };
 }
 
 // ---------------------------------------------------------------- las rutas
@@ -350,9 +396,14 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
       const ev = resolver(req, res);
       if (!ev) return;
       const estado = await ev.estado(a.userId);
-      const { rows } = await pool.query(`SELECT resultado FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [a.userId, ev.clave]);
+      const [{ rows }, apelacion, ap] = await Promise.all([
+        pool.query(`SELECT resultado FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [a.userId, ev.clave]),
+        apelacionDe(a.userId, ev.clave),
+        apelableDe(a.userId, ev.clave),
+      ]);
+      const { intento: _i, ...apelable } = ap;
       res.setHeader("Cache-Control", "no-store");
-      res.json({ estado, ultimo: rows[0]?.resultado ?? null });
+      res.json({ estado, ultimo: rows[0]?.resultado ?? null, apelacion, apelable });
     } catch (err) {
       console.error("[academia] examen:", err);
       res.sendStatus(500);
@@ -491,6 +542,44 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     }
   });
 
+  // Pedir la revisión del último intento: una vez por examen, dentro de DIAS_APELACION días, con un mensaje. Avisa a
+  // quienes revisan (la Dirección académica y los profesores).
+  app.post(`${base}/apelacion`, async (req, res) => {
+    try {
+      const a = await inscritoDe(req, res);
+      if (!a) return;
+      const ev = resolver(req, res);
+      if (!ev) return;
+      const mensaje = typeof req.body?.mensaje === "string" ? req.body.mensaje.replace(/\s+/g, " ").trim().slice(0, 1000) : "";
+      if (mensaje.length < 15) return res.status(400).json({ message: "Cuéntanos en unas palabras qué quieres que se revise (al menos 15 letras)." });
+      if (frenar(`aap:${a.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const out = await enFila(a.userId, async () => {
+        const ap = await apelableDe(a.userId, ev.clave);
+        if (!ap.puede || !ap.intento) return { error: 409, message: ap.porque ?? "No se puede pedir la revisión de este examen." };
+        const ins = await pool.query(
+          `INSERT INTO academia_apelaciones (user_id, clave, intento, mensaje) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, clave) DO NOTHING RETURNING id`,
+          [a.userId, ev.clave, ap.intento, mensaje],
+        );
+        if (!ins.rows[0]) return { error: 409, message: "Ya pediste la revisión de este examen: se pide una sola vez." };
+        return { ok: await apelacionDe(a.userId, ev.clave) };
+      });
+      if ("error" in out) return res.status(out.error as number).json({ message: out.message });
+      const ctx = contextoExamen(ev.clave);
+      const revisores = await cuentasConRoles([...ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles, ...ROLES_ACADEMIA.find((r) => r.id === "profesor")!.roles], a.userId);
+      void avisarA(
+        revisores,
+        "Pedido de revisión de un examen",
+        `${await nombreAcademico(a.userId)} pidió que se revise ${ctx?.enFrase ?? "su examen"}: «${mensaje.slice(0, 160)}${mensaje.length > 160 ? "…" : ""}»`,
+        "/academia/direccion?tab=revisar",
+      ).catch((err) => console.error("[academia] aviso de apelación:", err));
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ apelacion: out.ok });
+    } catch (err) {
+      console.error("[academia] apelación:", err);
+      res.sendStatus(500);
+    }
+  });
+
   // SOLO EN DESARROLLO (no existe en la web publicada): la opción correcta de la pregunta en pantalla y la respuesta
   // modelo de la escrita que toca, para las pruebas automáticas.
   if (process.env.NODE_ENV !== "production") {
@@ -546,6 +635,10 @@ export function registerAcademiaExamenRoutes(app: Express) {
         [a.userId, minutos],
       );
       if (req.body?.lecciones === true) await pool.query(`UPDATE academia_lecciones SET vista_at = vista_at - make_interval(mins => $2::int) WHERE user_id = $1`, [a.userId, minutos]);
+      if (req.body?.intentos === true) {
+        await pool.query(`UPDATE academia_intentos SET cerrado_at = cerrado_at - make_interval(mins => $2::int) WHERE user_id = $1`, [a.userId, minutos]);
+        await pool.query(`UPDATE academia_pruebas SET updated_at = updated_at - make_interval(mins => $2::int) WHERE user_id = $1`, [a.userId, minutos]);
+      }
       res.json({ ok: true, minutos });
     });
   }

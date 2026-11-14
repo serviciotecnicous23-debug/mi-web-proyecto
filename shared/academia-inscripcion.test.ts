@@ -1,8 +1,8 @@
 // Pruebas de la ficha de inscripción y de la inscripción en cada materia: npx tsx --test shared/academia-inscripcion.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { NIVELES, REGLAMENTO, ESPECIALIDADES, requisitosMateria } from "./academia";
-import { EDAD_MINIMA, FICHA_VACIA, PAISES, edadEn, nombreCompleto, nombrePropio, paisDeCuenta, repartirNombre, validarFicha } from "./academia-inscripcion";
+import { DIAS_APELACION, NIVELES, REGLAMENTO, ESPECIALIDADES, requisitosMateria } from "./academia";
+import { EDAD_MINIMA, FICHA_VACIA, PAISES, edadEn, limpiarNombre, nombreCompleto, nombrePropio, paisDeCuenta, repartirNombre, validarFicha } from "./academia-inscripcion";
 
 const HOY = new Date(Date.UTC(2026, 10, 14));
 const buena = { ...FICHA_VACIA, nombres: "Luis Alberto", apellidos: "Rodríguez Pérez", pais: "Estados Unidos", tiempoFe: "1-3" };
@@ -114,4 +114,17 @@ test("el reglamento habla de la inscripción, de la aprobación al instante y de
   assert.ok(todo.includes("aprobada al instante"));
   assert.ok(todo.includes("iglesia aliada"));
   assert.ok(!/matric[uú]l(ate|arse|arte)/i.test(todo), "ya no pide «matricularse»: se inscribe");
+});
+
+test("limpiar un nombre (lo usa también la Dirección académica al corregirlo)", () => {
+  assert.deepEqual(limpiarNombre("  ana   maría ", "los nombres"), { valor: "Ana María", error: null });
+  assert.equal(limpiarNombre("", "los nombres").error, "Escribe los nombres.");
+  assert.equal(limpiarNombre("A", "los apellidos").error, "Los apellidos parecen incompletos.");
+  assert.ok(limpiarNombre("Ana2", "los nombres").error);
+  assert.ok(limpiarNombre("x".repeat(70), "los nombres").error);
+});
+
+test("el reglamento dice el plazo para pedir la revisión de un examen", () => {
+  const todo = REGLAMENTO.secciones.flatMap((s) => s.puntos).join(" ");
+  assert.ok(todo.includes(`dentro de los ${DIAS_APELACION} días`));
 });

@@ -5,13 +5,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, Clock, Layers, PenLine, ShieldCheck, Timer, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, Clock, Layers, MessageSquareQuote, PenLine, ShieldCheck, Timer, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { EscritaExamen, PasoExamen, PreguntaExamen, ResultadoExamen } from "@shared/academia";
-import { empezarExamen, entregarEscrita, pasoExamen, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
+import { DIAS_APELACION, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
+import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
 const LETRAS = ["A", "B", "C", "D", "E", "F"];
@@ -229,13 +229,80 @@ function Resultado({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
                 )}
               </ul>
               {w.avisos.map((a) => <p key={a} className="text-sm text-orange-700 dark:text-orange-300">{a}</p>)}
-              {w.revisar && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Quedó para que la revise la Dirección académica; la nota puede cambiar.</p>}
+              {w.revision && (
+                <p className="text-sm mt-2 rounded-lg bg-sky-500/10 px-3 py-2 flex items-start gap-2" data-testid="escrita-revisada">
+                  <ShieldCheck className="w-4 h-4 mt-0.5 text-sky-600 shrink-0" />
+                  <span>La revisó la Dirección académica: tu nota pasó de {w.revision.antes} a {w.revision.nota}. Motivo: «{w.revision.motivo}»</span>
+                </p>
+              )}
+              {w.revisar && !w.revision && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Quedó para que la revise la Dirección académica; la nota puede cambiar.</p>}
               {w.modelo && <p className="text-sm mt-3"><span className="font-semibold">Una respuesta modelo:</span> {w.modelo}</p>}
             </div>
           ))}
         </>
       )}
     </div>
+  );
+}
+
+const fechaLarga = (iso: string) => new Date(iso).toLocaleDateString("es", { day: "numeric", month: "long" });
+
+/** Pedir que se revise el último intento (una vez por examen, dentro de DIAS_APELACION días), y cómo va ese pedido. */
+function PedirRevision({ base, apelacion, apelable, alPedir }: { base: string; apelacion: ApelacionVista | null; apelable: Apelable; alPedir: () => void }) {
+  const [abierto, setAbierto] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (apelacion) {
+    return (
+      <section className={`glass-card p-5 mt-6 border ${apelacion.estado === "pendiente" ? "border-orange-500/40" : "border-emerald-500/40"}`} data-testid="examen-apelacion" data-estado={apelacion.estado}>
+        <p className="font-semibold flex items-center gap-2"><MessageSquareQuote className="w-4 h-4 text-orange-600" /> {apelacion.estado === "pendiente" ? "Pediste que se revise este examen" : "Respondieron tu pedido de revisión"}</p>
+        <p className="text-sm text-muted-foreground mt-1">El {fechaLarga(apelacion.creada)} escribiste: «{apelacion.mensaje}»</p>
+        {apelacion.estado === "pendiente" ? (
+          <p className="text-sm mt-2">La Dirección académica lo está revisando. Te llegará un aviso a la campana con la respuesta.</p>
+        ) : (
+          <p className="text-sm mt-2"><span className="font-semibold">Respuesta{apelacion.resuelta ? ` (${fechaLarga(apelacion.resuelta)})` : ""}:</span> {apelacion.respuesta}</p>
+        )}
+      </section>
+    );
+  }
+  if (!apelable.puede) return null;
+  const enviar = async () => {
+    setOcupado(true);
+    setError(null);
+    try {
+      await pedirRevision(base, mensaje);
+      setAbierto(false);
+      alPedir();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <section className="glass-card p-5 mt-6" data-testid="examen-pedir-revision">
+      <p className="font-semibold flex items-center gap-2"><MessageSquareQuote className="w-4 h-4 text-orange-600" /> ¿No estás de acuerdo con tu nota?</p>
+      <p className="text-sm text-muted-foreground mt-1">
+        Puedes pedir que la Dirección académica revise este examen, una sola vez{apelable.hasta ? `, hasta el ${fechaLarga(apelable.hasta)}` : ` y dentro de los ${DIAS_APELACION} días`}.
+      </p>
+      {abierto ? (
+        <div className="mt-3 space-y-2">
+          <Textarea
+            value={mensaje} onChange={(e) => setMensaje(e.target.value)} rows={3} maxLength={1000} className="text-[16px]"
+            placeholder="Cuéntanos qué quieres que se revise y por qué. Por ejemplo: en la respuesta escrita expliqué la idea del arrepentimiento con otras palabras."
+            data-testid="apelacion-mensaje"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button className="fire-btn-primary" onClick={enviar} disabled={ocupado || mensaje.trim().length < 15} data-testid="apelacion-enviar">{ocupado ? "Enviando…" : "Pedir la revisión"}</Button>
+            <Button variant="ghost" onClick={() => setAbierto(false)} disabled={ocupado}>Cancelar</Button>
+          </div>
+          {error && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
+        </div>
+      ) : (
+        <Button variant="outline" className="mt-3" onClick={() => setAbierto(true)} data-testid="apelacion-abrir">Pedir que se revise</Button>
+      )}
+    </section>
   );
 }
 
@@ -304,7 +371,12 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
 
         {paso?.paso === "objetiva" && <Objetiva p={paso.pregunta} ocupado={ocupado} alResponder={(k) => accion(() => responderExamen(base, k))} />}
         {paso?.paso === "escrita" && <Escrita e={paso.escrita} ocupado={ocupado} alEntregar={(t, pg) => accion(() => entregarEscrita(base, t, pg))} />}
-        {paso?.paso === "fin" && <Resultado r={paso.resultado} destino={destino} aprueba={estado.aprueba} />}
+        {paso?.paso === "fin" && (
+          <>
+            <Resultado r={paso.resultado} destino={destino} aprueba={estado.aprueba} />
+            <PedirRevision base={base} apelacion={q.data.apelacion} apelable={q.data.apelable} alPedir={() => void q.refetch()} />
+          </>
+        )}
 
         {!paso && !estado.enCurso && (
           <div className="space-y-5" data-testid="examen-inicio">
@@ -354,7 +426,12 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
             {ultimo && (
               <div>
                 <Button variant="outline" onClick={() => setVerUltimo(!verUltimo)}>{verUltimo ? "Ocultar" : "Ver"} la revisión del último intento</Button>
-                {verUltimo && <div className="mt-6"><Resultado r={ultimo} destino={destino} aprueba={estado.aprueba} /></div>}
+                {verUltimo && (
+                  <div className="mt-6">
+                    <Resultado r={ultimo} destino={destino} aprueba={estado.aprueba} />
+                    <PedirRevision base={base} apelacion={q.data.apelacion} apelable={q.data.apelable} alPedir={() => void q.refetch()} />
+                  </div>
+                )}
               </div>
             )}
           </div>

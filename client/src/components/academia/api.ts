@@ -1,11 +1,13 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
 import type {
-  AcademiaEstado, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen, RespuestaRepaso,
-  ResultadoExamen, VerificacionAcademia,
+  AcademiaEstado, Apelable, ApelacionVista, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen,
+  RespuestaRepaso, ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
 import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
-import type { ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, MateriaSeguimiento } from "@shared/academia-direccion";
+import type {
+  ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoRevision, RevisionPanel,
+} from "@shared/academia-direccion";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -61,7 +63,7 @@ export const baseExamen = (materiaId: string) => `/api/academia/examen/${encodeU
 export const baseIntegral = (nivel: number | string) => `/api/academia/integral/${encodeURIComponent(String(nivel))}`;
 
 export function useExamen(base: string | undefined) {
-  return useQuery<{ estado: ExamenEstado; ultimo: ResultadoExamen | null }, ErrorAcademia>({
+  return useQuery<{ estado: ExamenEstado; ultimo: ResultadoExamen | null; apelacion: ApelacionVista | null; apelable: Apelable }, ErrorAcademia>({
     queryKey: ["academia", "examen", base],
     queryFn: () => pedir("GET", base!),
     enabled: !!base,
@@ -171,6 +173,38 @@ export function useDireccionMateria(id: string | undefined) {
 export function useExpediente() {
   return useQuery<AlumnoDetalle, ErrorAcademia>({ queryKey: ["academia", "expediente"], queryFn: () => pedir("GET", "/api/academia/expediente"), retry: false });
 }
+
+// ---------------------------------------------------------------- la revisión (fase A3)
+
+export function useRevision(activo = true) {
+  return useQuery<RevisionPanel, ErrorAcademia>({ queryKey: ["academia", "direccion", "revision"], queryFn: () => pedir("GET", "/api/academia/direccion/revision"), enabled: activo, retry: false });
+}
+
+export function useEscritasAlumno(id: string | undefined, activo = true) {
+  return useQuery<{ escritas: ItemRevision[] }, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "escritas", id],
+    queryFn: () => pedir("GET", `/api/academia/direccion/alumno/${encodeURIComponent(id!)}/escritas`),
+    enabled: !!id && activo,
+    retry: false,
+  });
+}
+
+export function useHistorial(activo = true) {
+  return useQuery<{ historial: HistorialItem[] }, ErrorAcademia>({ queryKey: ["academia", "direccion", "historial"], queryFn: () => pedir("GET", "/api/academia/direccion/historial"), enabled: activo, retry: false });
+}
+
+/** Confirmar la nota de una escrita, o cambiarla con su motivo (el servidor recalcula el examen, la materia y el nivel). */
+export const revisarEscrita = (id: number, cuerpo: { accion: "confirmar" | "cambiar"; nota?: number; motivo: string }) =>
+  pedir<ResultadoRevision>("POST", `/api/academia/direccion/revision/${id}`, cuerpo);
+export const responderApelacion = (id: number, respuesta: string) => pedir<ApelacionItem>("POST", `/api/academia/direccion/apelacion/${id}`, { respuesta });
+export const accionDocumento = (codigo: string, accion: "revocar" | "restaurar", motivo: string) =>
+  pedir<{ codigo: string; revocado: boolean }>("POST", `/api/academia/direccion/documento/${encodeURIComponent(codigo)}/${accion}`, { motivo });
+export const corregirNombre = (alumnoId: number, cuerpo: { nombres: string; apellidos: string; motivo: string }) =>
+  pedir<{ nombre: string; documentos: number }>("POST", `/api/academia/direccion/alumno/${alumnoId}/nombre`, cuerpo);
+export const cambiarApertura = (abierta: boolean) => pedir<{ abierta: boolean }>("POST", "/api/academia/direccion/apertura", { abierta });
+
+/** Pedir la revisión del último intento de un examen (una vez por examen). */
+export const pedirRevision = (base: string, mensaje: string) => pedir<{ apelacion: ApelacionVista }>("POST", `${base}/apelacion`, { mensaje });
 
 export type ReporteCsv = "alumnos.csv" | "avance.csv" | "materias.csv";
 export const enlaceReporte = (archivo: ReporteCsv) => `/api/academia/direccion/exportar/${archivo}`;
