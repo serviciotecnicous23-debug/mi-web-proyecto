@@ -9,7 +9,7 @@ import type { EnMesa, Ficha, JugadaColocar, JugadaDomino, VistaDomino } from "@s
 import type { PantallaMesaProps } from "./index";
 import { TECLAS_ANIMACION } from "./tablero";
 import { mesaSonido } from "./mesa-sonido";
-import { Sello, useJugadaNueva } from "./vida";
+import { Sello, useJugadaNueva, useMiTurno } from "./vida";
 
 const PUNTOS: Record<number, [number, number][]> = {
   0: [],
@@ -81,7 +81,7 @@ export function FichaDomino({ a, b, parada = false, oculta = false, className = 
 }
 
 /** La fila de la mesa, en renglones que van y vuelven (los dobles, de pie). */
-function Fila({ mesa }: { mesa: EnMesa[] }) {
+function Fila({ mesa, yo }: { mesa: EnMesa[]; yo: number }) {
   const CAP = 13;
   const ultima = mesa.reduce((m, x) => Math.max(m, x.n), -1);
   const renglones: EnMesa[][] = [];
@@ -111,7 +111,7 @@ function Fila({ mesa }: { mesa: EnMesa[] }) {
                 <div
                   key={f.n}
                   className={`relative flex h-full items-center justify-center ${nueva ? "z-10" : ""}`}
-                  style={{ width: `${((doble ? 1 : 2) / CAP) * 100}%`, animation: nueva ? "mesa-aparece 320ms cubic-bezier(.3,1.5,.5,1)" : undefined }}
+                  style={{ width: `${((doble ? 1 : 2) / CAP) * 100}%`, animation: nueva ? `${f.quien === yo ? "domino-llega-abajo" : "domino-llega-arriba"} 440ms cubic-bezier(.25,1.25,.5,1)` : undefined }}
                 >
                   <FichaDomino a={a} b={b} parada={doble} className={`${doble ? "h-full w-full" : "h-1/2 w-full"} ${nueva ? "drop-shadow-[0_0_8px_rgba(253,230,138,0.95)]" : ""}`} />
                 </div>
@@ -147,6 +147,7 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
   }
 
   // cada ficha suena al asentarse en la mesa; robar suena a madera y pasar, a un golpecito
+  useMiTurno(miAsiento !== null && juegan.includes(miAsiento));
   useJugadaNueva(ultima, () => {
     const j = ultima?.jugada;
     if (j === "robar") mesaSonido.pieza();
@@ -211,7 +212,7 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
       </div>
       {/* la mesa */}
       <div className="relative w-full max-w-[30rem] rounded-3xl p-3 shadow-[inset_0_2px_14px_rgba(0,0,0,0.5),0_8px_22px_rgba(0,0,0,0.3)]" style={{ background: "radial-gradient(ellipse at 50% 35%, #1f7a4d, #0f4d2f 75%)", border: "8px solid #5c3a1a" }}>
-        <Fila mesa={vista.mesa} />
+        <Fila mesa={vista.mesa} yo={yo} />
         <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-emerald-50/90">
           <span>Mano {vista.mano}</span>
           {puntas && (
@@ -300,7 +301,14 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
           )}
         </div>
       )}
-      <style>{TECLAS_ANIMACION}</style>
+      <style>{TECLAS_ANIMACION + DOMINO_LLEGA}</style>
     </div>
   );
 }
+
+/** La ficha nueva se desliza desde quien la jugó: las mías suben desde la mano; las de los demás bajan desde arriba. */
+const DOMINO_LLEGA = `
+@keyframes domino-llega-abajo { 0% { transform: translateY(160%) scale(.8) rotate(-10deg); opacity: 0 } 60% { transform: translateY(-8%) scale(1.06) rotate(1deg); opacity: 1 } 100% { transform: none } }
+@keyframes domino-llega-arriba { 0% { transform: translateY(-160%) scale(.8) rotate(10deg); opacity: 0 } 60% { transform: translateY(8%) scale(1.06) rotate(-1deg); opacity: 1 } 100% { transform: none } }
+@media (prefers-reduced-motion: reduce) { [style*="domino-llega"] { animation: none !important } }
+`;

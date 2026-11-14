@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { COLUMNAS, FILAS, type VistaCuatro } from "@shared/mesa/cuatro-en-raya";
 import type { PantallaMesaProps } from "./index";
 import { mesaSonido } from "./mesa-sonido";
-import { useJugadaNueva } from "./vida";
+import { useJugadaNueva, useMiTurno } from "./vida";
+import { VetaMadera } from "./tablero";
 
 const FICHA = [
   { nombre: "granate", fondo: "radial-gradient(circle at 35% 30%, #fecaca, #dc2626 45%, #7f1d1d)", borde: "#7f1d1d" },
@@ -40,6 +41,7 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
   const mio = (miAsiento ?? 0) as 0 | 1;
   const alto = 0.62; // la franja de arriba, donde asoma la ficha antes de soltarla (en filas)
   // la ficha suena al llegar al fondo; la línea de cuatro, con su brillo
+  useMiTurno(miAsiento !== null && juegan.includes(miAsiento));
   useJugadaNueva(ultima, () => setTimeout(() => mesaSonido.cae(), 300));
   const habiaLinea = useRef(linea.size > 0);
   useEffect(() => {
@@ -60,7 +62,7 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
           </span>
         ))}
       </div>
-      <div className="relative w-full max-w-[24rem] select-none" style={{ aspectRatio: `${COLUMNAS} / ${FILAS + alto}` }} onMouseLeave={() => setEncima(null)}>
+      <div className="relative max-w-[24rem] select-none" style={{ width: "min(100%, max(16rem, calc(100dvh - 22rem)))", aspectRatio: `${COLUMNAS} / ${FILAS + alto}` }} onMouseLeave={() => setEncima(null)}>
         <div className="absolute inset-x-[3%] top-0 grid grid-cols-7" style={{ height: `${(alto / (FILAS + alto)) * 100}%` }}>
           {Array.from({ length: COLUMNAS }, (_, c) => (
             <div key={c} className="relative">
@@ -76,6 +78,7 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
           className="absolute inset-x-0 bottom-0 grid grid-cols-7 grid-rows-6 gap-[1.6%] rounded-3xl p-[3%] shadow-[inset_0_2px_10px_rgba(0,0,0,0.45),0_10px_26px_rgba(0,0,0,0.3)]"
           style={{ top: `${(alto / (FILAS + alto)) * 100}%`, background: "linear-gradient(160deg, #8b5a2b, #4a2c12)" }}
         >
+          <VetaMadera className="rounded-3xl" />
           {Array.from({ length: FILAS * COLUMNAS }, (_, k) => {
             const f = FILAS - 1 - Math.floor(k / COLUMNAS);
             const c = k % COLUMNAS;

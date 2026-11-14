@@ -8,7 +8,7 @@ import type { VistaDamas } from "@shared/mesa/damas";
 import type { PantallaMesaProps } from "./index";
 import { CoronaSvg, Estallido, TECLAS_ANIMACION, VetaMadera, usePiezasAnimadas } from "./tablero";
 import { mesaSonido } from "./mesa-sonido";
-import { useJugadaNueva } from "./vida";
+import { useJugadaNueva, useMiTurno } from "./vida";
 import { Ico } from "../iconos";
 
 const CLARA = "#efe0bf";
@@ -60,6 +60,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
   // cada salto suena como madera; al comer, el golpe; al coronarse, el arpegio
   const total = vista.fichas[0] + vista.fichas[1];
   const totalAntes = useRef(total);
+  useMiTurno(miAsiento !== null && juegan.includes(miAsiento));
   useJugadaNueva(ultima, () => {
     const saltos = Math.max(1, (vista.ultima?.camino.length ?? 2) - 1);
     const comio = total < totalAntes.current;
@@ -99,7 +100,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
   return (
     <div className="flex flex-col items-center gap-2" data-testid="mesa-damas">
       {fila(alReves ? 0 : 1)}
-      <div className="relative aspect-square w-full max-w-[25rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ background: "linear-gradient(145deg, #5a3a1e, #2e1d0e)" }}>
+      <div className="relative aspect-square max-w-[25rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ width: "min(100%, max(16rem, calc(100dvh - 24rem)))", background: "linear-gradient(145deg, #5a3a1e, #2e1d0e)" }}>
         <div className="relative h-full w-full overflow-hidden rounded-md">
           <div className="grid h-full w-full grid-cols-8 grid-rows-8">
             {Array.from({ length: 64 }, (_, k) => {

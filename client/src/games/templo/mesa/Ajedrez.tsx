@@ -9,7 +9,7 @@ import type { PantallaMesaProps } from "./index";
 import { NOMBRE_PIEZA, PiezaAjedrez } from "./piezas-ajedrez";
 import { Estallido, TECLAS_ANIMACION, VetaMadera, usePiezasAnimadas } from "./tablero";
 import { mesaSonido } from "./mesa-sonido";
-import { useJugadaNueva } from "./vida";
+import { useJugadaNueva, useMiTurno } from "./vida";
 
 const VALOR = [0, 1, 3, 3, 5, 9, 0];
 const CLARA = "#f0dcb4";
@@ -47,6 +47,7 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
   // cada jugada suena al posarse la pieza: la madera, comer o el jaque
   const comidas = vista.comidas[0].length + vista.comidas[1].length;
   const comidasAntes = useRef(comidas);
+  useMiTurno(miAsiento !== null && juegan.includes(miAsiento));
   useJugadaNueva(ultima, () => {
     const comio = comidas > comidasAntes.current;
     setTimeout(() => (comio ? mesaSonido.comer() : mesaSonido.pieza()), 240);
@@ -87,7 +88,7 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
   return (
     <div className="flex flex-col items-center gap-2" data-testid="mesa-ajedrez">
       {fila(arriba)}
-      <div className="relative aspect-square w-full max-w-[25rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ background: "linear-gradient(145deg, #6b4423, #3d2512)" }}>
+      <div className="relative aspect-square max-w-[25rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ width: "min(100%, max(16rem, calc(100dvh - 24rem)))", background: "linear-gradient(145deg, #6b4423, #3d2512)" }}>
         <div className="relative h-full w-full overflow-hidden rounded-md">
           <div className="grid h-full w-full grid-cols-8 grid-rows-8">
             {Array.from({ length: 64 }, (_, k) => {
@@ -148,7 +149,7 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
                 }}
               >
                 <div key={movida ? `m${ultima?.n ?? 0}` : "q"} className="h-full w-full" style={movida ? { animation: "mesa-asienta 340ms 240ms both" } : undefined}>
-                  <PiezaAjedrez v={p.v} className="h-full w-full p-[5%] drop-shadow-[0_2px_1.5px_rgba(0,0,0,0.35)]" />
+                  <PiezaAjedrez v={p.v} className="h-full w-full p-[5%]" />
                 </div>
               </div>
             );
@@ -192,6 +193,24 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
         </div>
       </div>
       {fila(abajo)}
+      {/* la última jugada, en palabras (para seguir lo que hizo la computadora) */}
+      {vista.ultima && (
+        <p className="max-w-[25rem] text-center text-[12px] font-semibold text-stone-600 dark:text-stone-300" data-testid="mesa-ajedrez-ultima">
+          {(() => {
+            const u = vista.ultima;
+            const lado = (vista.turno === 0 ? 1 : 0) as 0 | 1;
+            const quien = (asientos[lado]?.nombre ?? (lado === 0 ? "Blancas" : "Negras")).replace(/\s*🤖\s*$/u, "");
+            const pieza = NOMBRE_PIEZA[Math.abs(vista.t[u.a])] ?? "pieza";
+            if (u.enroque) return `${quien} se enrocó.`;
+            return `${quien}: ${u.corona ? "peón" : pieza} de ${nombreCasilla(u.de)} a ${nombreCasilla(u.a)}${u.come ? ", y come" : ""}${u.corona ? `, y se corona ${pieza}` : ""}.`;
+          })()}
+        </p>
+      )}
+      {vista.fin?.como === "mate" && (
+        <p className="rounded-full bg-red-700 px-3 py-0.5 text-[13px] font-black text-white shadow" style={{ animation: "mesa-aparece 220ms ease-out" }} data-testid="mesa-jaque-mate">
+          ¡Jaque mate!
+        </p>
+      )}
       {vista.jaque !== null && !vista.fin && (
         <p className="rounded-full bg-red-600 px-3 py-0.5 text-[13px] font-black text-white shadow" style={{ animation: "mesa-aparece 220ms ease-out" }} data-testid="mesa-jaque">
           ¡Jaque!

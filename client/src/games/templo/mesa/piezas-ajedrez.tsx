@@ -4,8 +4,27 @@
  */
 import type { ReactElement } from "react";
 
-const MARFIL = { relleno: "#fbf5e9", trazo: "#3b2a1a", detalle: "#c9b08a" };
-const EBANO = { relleno: "#2d2119", trazo: "#f1e4c8", detalle: "#8a6a48" };
+// el relleno es un degradado (luz arriba a la izquierda, sombra abajo): la pieza se ve tallada, no plana
+const MARFIL = { relleno: "url(#aj-marfil)", trazo: "#3b2a1a", detalle: "#c9b08a" };
+const EBANO = { relleno: "url(#aj-ebano)", trazo: "#f1e4c8", detalle: "#8a6a48" };
+
+/** Los degradados del marfil y del ébano (los mismos en cada pieza; el navegador usa el primero que encuentra). */
+function Degradados() {
+  return (
+    <defs>
+      <linearGradient id="aj-marfil" x1="0.15" y1="0" x2="0.85" y2="1">
+        <stop offset="0" stopColor="#fffdf6" />
+        <stop offset="0.55" stopColor="#f3e8d2" />
+        <stop offset="1" stopColor="#d6c19c" />
+      </linearGradient>
+      <linearGradient id="aj-ebano" x1="0.15" y1="0" x2="0.85" y2="1">
+        <stop offset="0" stopColor="#5a4636" />
+        <stop offset="0.5" stopColor="#2d2119" />
+        <stop offset="1" stopColor="#140d08" />
+      </linearGradient>
+    </defs>
+  );
+}
 
 function Base({ c }: { c: typeof MARFIL }) {
   return (
@@ -105,6 +124,7 @@ export function PiezaAjedrez({ v, className = "" }: { v: number; className?: str
   if (!forma) return null;
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true" style={{ filter: "drop-shadow(0 2px 1.5px rgba(0,0,0,.35))" }}>
+      <Degradados />
       {forma(v > 0 ? MARFIL : EBANO)}
     </svg>
   );

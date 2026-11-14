@@ -21,6 +21,7 @@ import { VERSICULOS_RAPIDOS } from "@shared/ciudad";
 import { MESAS, ORDEN_MESAS } from "@shared/mesa/index";
 import { NIVELES_BOT, type NivelBot } from "@shared/mesa";
 import { MesaFinal, MesaJuego, useMusicaDeJuego } from "./mesa";
+import { Confeti } from "./mesa/vida";
 import {
   FRASES_SALA, GOZO_JUEGOS_DIA, JUEGOS, ORDEN_JUEGOS, PRENDAS_JUEGOS, QUIEN, SALA_MAX, TRIBUS, TRIBUS_EQUIPOS, VERSO_PATIO,
   type EsgrimaVista, type InvitableSala, type JuegoId, type MuroVista, type CarreraVista, type PatioEstado, type QuienVista, type SalaVista, type TribusVista,
@@ -1072,11 +1073,15 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
   const [ocupado, setOcupado] = useState(false);
   const yaSono = useRef(false);
   const gane = !!r?.puestos.find((x) => x.yo)?.gano;
+  // al ganar, confeti (una vez, al llegar el resultado)
+  const [confeti, setConfeti] = useState(0);
   useEffect(() => {
     if (!r || yaSono.current) return;
     yaSono.current = true;
-    if (gane) audio?.trumpet(true);
-    else audio?.page();
+    if (gane) {
+      audio?.trumpet(true);
+      setConfeti((x) => x + 1);
+    } else audio?.page();
     // el golpe corto de la banda sonora al ganar o perder
     window.dispatchEvent(new CustomEvent("jer-golpe", { detail: gane ? "victoria" : "derrota" }));
   }, [r, gane, audio]);
@@ -1089,9 +1094,12 @@ function ResultadoView({ sala }: { sala: SalaVista }) {
     setOcupado(false);
   }
   return (
-    <div className="space-y-3" data-testid="juegos-resultado">
+    <div className="relative space-y-3" data-testid="juegos-resultado">
+      <Confeti disparo={confeti} />
       <div className={`rounded-2xl p-4 text-center ${r.cumplido === false ? "bg-stone-200 dark:bg-stone-800" : "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950"}`}>
-        <p className="text-4xl">{r.juego === "muro" ? (r.cumplido ? "🧱" : "⏳") : r.juego === "mesa" && r.mesa ? (MESAS[r.mesa]?.icono ?? "🎲") : "🏆"}</p>
+        <p className="text-4xl">
+          <Ico e={r.juego === "muro" ? (r.cumplido ? "🧱" : "⏳") : r.juego === "mesa" && r.mesa ? (MESAS[r.mesa]?.icono ?? "🎲") : "🏆"} />
+        </p>
         <p className="font-serif text-xl font-black" data-testid="juegos-resultado-titulo">
           {r.titulo}
         </p>

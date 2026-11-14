@@ -126,7 +126,7 @@ function Ficha({ p, h, color, n, brilla, apagada }: { p: P; h: number; color: nu
         <circle r="1.15" fill="none" stroke="#ffffff" strokeOpacity=".45" strokeWidth=".22" />
         <circle cx="-.55" cy="-.6" r=".5" fill="#fff" opacity=".75" />
         {n !== null && (
-          <text y=".62" textAnchor="middle" fontSize="1.7" fontWeight="900" fill="#fff" stroke={OSCURO[color]} strokeWidth=".25" paintOrder="stroke" fontFamily="system-ui, sans-serif">
+          <text y=".72" textAnchor="middle" fontSize="2.05" fontWeight="900" fill="#fff" stroke={OSCURO[color]} strokeWidth=".32" paintOrder="stroke" fontFamily="system-ui, sans-serif">
             {n}
           </text>
         )}
@@ -351,7 +351,14 @@ export function ParchisPantalla({ vista: v, jugadas, miAsiento, asientos, jugar,
       case "turno": {
         programar(ANIMA.turno, () => {
           setTurnoVisto(e.a);
-          if (yo(e.a)) mesaSonido.turno();
+          if (yo(e.a)) {
+            mesaSonido.turno();
+            try {
+              navigator.vibrate?.(35);
+            } catch {
+              /* sin vibración */
+            }
+          }
           if (e.otra) decir(yo(e.a) ? { texto: "¡Sacaste 6! Tira otra vez", color: "#b8862a" } : { texto: `${nombre(e.a)} sacó 6: tira otra vez`, color: "#b8862a" }, 1400);
         });
         break;
