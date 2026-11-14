@@ -217,14 +217,18 @@ async function actividadDe(ids: number[], limite = 60): Promise<ActividadItem[]>
 /** El detalle de un alumno: su ficha (con permiso), su avance, sus niveles, sus certificados y su actividad. */
 async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDetalle> {
   const id = fila.userId;
-  const [avances, { rows: nv }, { rows: cs }, actividad, ficha, { rows: mt }] = await Promise.all([
+  const [avances, { rows: nv }, { rows: cs }, actividad, ficha] = await Promise.all([
     avancesPorAlumno([id]),
     pool.query(`SELECT nivel, pacto_at, completado_at, promedio FROM academia_niveles WHERE user_id = $1 ORDER BY nivel`, [id]),
     pool.query(`SELECT codigo, tipo, ref, titulo, nombre, nota, honores, via, emitido_at, revocado_at, motivo FROM academia_certificados WHERE user_id = $1 ORDER BY emitido_at`, [id]),
     actividadDe([id], 30),
     contacto ? fichaDe(id) : Promise.resolve(null),
-    pool.query(`SELECT u.id, u.display_name, u.username FROM academia_alumnos a JOIN users u ON u.id = a.mentor_user_id AND u.is_active WHERE a.user_id = $1`, [id]),
   ]);
+  // el mentor, después: así la ficha no abre más conexiones a la vez (avancesPorAlumno ya hace cinco consultas juntas)
+  const { rows: mt } = await pool.query(
+    `SELECT u.id, u.display_name, u.username FROM academia_alumnos a JOIN users u ON u.id = a.mentor_user_id AND u.is_active WHERE a.user_id = $1`,
+    [id],
+  );
   return {
     fila,
     ficha,

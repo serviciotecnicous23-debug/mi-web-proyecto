@@ -161,14 +161,18 @@ export async function misAsignaciones(userId: number): Promise<MiAsignacion[]> {
 
 // ---------------------------------------------------------------- escritura
 
-/** La fecha límite: un instante del futuro (el final del día que eligió el profesor, en su hora), hasta un año. */
-function venceDe(v: unknown): { valor: string | null; error?: string } {
+/**
+ * La fecha límite: un instante del futuro (el final del día que eligió el profesor, en su hora), hasta un año. Va a la
+ * base como fecha de JavaScript, no como texto: las columnas guardan la hora sin zona y el driver las escribe y las lee
+ * en la hora del servidor, igual que las que pone la base sola (con texto en UTC se correría si el servidor no está en UTC).
+ */
+function venceDe(v: unknown): { valor: Date | null; error?: string } {
   if (v == null || v === "") return { valor: null };
   const t = typeof v === "string" ? Date.parse(v) : NaN;
   if (!Number.isFinite(t)) return { valor: null, error: "La fecha límite no es válida." };
   if (t < Date.now()) return { valor: null, error: "La fecha límite ya pasó: elige una fecha de hoy en adelante." };
   if (t > Date.now() + 366 * 86_400_000) return { valor: null, error: "La fecha límite puede ser, como mucho, dentro de un año." };
-  return { valor: new Date(t).toISOString() };
+  return { valor: new Date(t) };
 }
 
 async function registrar(req: Request, accion: string, texto: string): Promise<void> {
@@ -286,7 +290,7 @@ export function registerAcademiaAsignacionesRoutes(app: Express) {
       // conservar la misma fecha (aunque ya haya pasado) no es poner una fecha pasada
       const anterior = antes[0].vence_at ? new Date(antes[0].vence_at).getTime() : null;
       const pedido = typeof req.body?.venceAt === "string" ? Date.parse(req.body.venceAt) : NaN;
-      const vence = anterior != null && Number.isFinite(pedido) && Math.abs(pedido - anterior) < 60_000 ? { valor: new Date(anterior).toISOString() } : venceDe(req.body?.venceAt);
+      const vence = anterior != null && Number.isFinite(pedido) && Math.abs(pedido - anterior) < 60_000 ? { valor: new Date(anterior) } : venceDe(req.body?.venceAt);
       if (vence.error) return res.status(400).json({ message: vence.error });
       const { rows } = await pool.query(
         `UPDATE academia_asignaciones SET obligatoria = $3, vence_at = $4, indicaciones = $5 WHERE id = $1 AND course_id = $2 RETURNING materia_id`,

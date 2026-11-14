@@ -26,13 +26,20 @@ async function registrar(req: Request, accion: string, alumnoId: number, texto: 
 /** Las personas que acompaña un mentor, con su avance (sin notas ni contacto). */
 export async function acompanadosDe(mentorId: number): Promise<Acompanado[]> {
   const filas = await filasDe({ userId: mentorId, role: "", alcance: "todos", iglesiaId: null }, false, undefined, mentorId);
-  const avances = await avancesPorAlumno(filas.map((f) => f.userId));
-  const ahora = Date.now();
+  const ids = filas.map((f) => f.userId);
+  // los días sin estudiar se cuentan en la base (las horas se guardan sin zona: restarlas aquí dependería del servidor)
+  const [avances, { rows: ds }] = await Promise.all([
+    avancesPorAlumno(ids),
+    ids.length
+      ? pool.query(`SELECT user_id, EXTRACT(EPOCH FROM now() - ultima_at)::float / 86400 AS dias FROM academia_alumnos WHERE user_id = ANY($1::int[])`, [ids])
+      : Promise.resolve({ rows: [] as any[] }),
+  ]);
+  const sinEstudiar = new Map((ds as any[]).map((r) => [Number(r.user_id), Math.max(0, Math.floor(Number(r.dias ?? 0)))]));
   return filas
     .map((f): Acompanado => {
       const materias = avances.get(f.userId) ?? [];
       const enCurso = materias.filter((m) => m.estado !== "aprobada").map((m) => ({ materiaId: m.id, titulo: m.titulo, lecciones: m.lecciones, de: m.de }));
-      const dias = Math.floor((ahora - Date.parse(f.ultima)) / 86_400_000);
+      const dias = sinEstudiar.get(f.userId) ?? 0;
       return {
         userId: f.userId,
         nombre: f.nombre,
