@@ -4,7 +4,8 @@
  *
  * - El alumno ve sus documentos completos, con la nota o el promedio; la Dirección académica también.
  * - La verificación pública dice si el documento es válido, de quién es, qué es y cuándo se emitió, sin notas.
- * - Cada documento guarda el nombre del alumno del día en que se emitió, como un diploma impreso.
+ * - Cada documento guarda el nombre del alumno del día en que se emitió, como un diploma impreso: el de su ficha de
+ *   inscripción (server/academia-inscripcion.ts).
  */
 import type { Express, Request } from "express";
 import { randomBytes } from "node:crypto";
@@ -14,7 +15,7 @@ import {
   ACLARACION_DOCUMENTOS, HONORES, NIVELES, NOMBRE_ACADEMIA, PATRON_CODIGO, codigoDe, materiaPorId, normalizarCodigo, puedeRevisar,
   type DocumentoAcademia, type MateriaDef, type NivelDef, type TipoDocumento, type VerificacionAcademia,
 } from "@shared/academia";
-import { alumnoDe, enlaceVerificar, frenar } from "./academia-comun";
+import { alumnoDe, enlaceVerificar, frenar, nombreAcademico } from "./academia-comun";
 import { verificacionDeCarne } from "./academia-matricula";
 
 export { enlaceVerificar } from "./academia-comun";
@@ -34,16 +35,11 @@ type FilaDocumento = {
   motivo: string | null;
 };
 
-async function nombreDe(userId: number): Promise<string> {
-  const { rows } = await pool.query(`SELECT display_name, username FROM users WHERE id = $1`, [userId]);
-  return String(rows[0]?.display_name || rows[0]?.username || "Estudiante").trim();
-}
-
 /** Guarda un documento si todavía no existe (uno por alumno, tipo y materia o nivel). Devuelve su código. */
 async function emitir(userId: number, tipo: TipoDocumento, ref: string, titulo: string, nota: number | null, honores: boolean, via = "cursada"): Promise<string> {
   const ya = await pool.query(`SELECT codigo FROM academia_certificados WHERE user_id = $1 AND tipo = $2 AND ref = $3`, [userId, tipo, ref]);
   if (ya.rows[0]) return ya.rows[0].codigo as string;
-  const nombre = await nombreDe(userId);
+  const nombre = await nombreAcademico(userId);
   for (let intento = 0; intento < 5; intento++) {
     const codigo = codigoDe(randomBytes(5));
     try {

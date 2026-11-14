@@ -65,7 +65,7 @@ import gsap from "gsap";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ROLES } from "@shared/roles";
-import { veVistaPrevia } from "@shared/academia-acceso";
+import { useAcademiaVisible } from "@/lib/academia-visible";
 import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -111,12 +111,22 @@ type DesktopNavGroupData = {
 };
 
 /**
- * La Academia en «Formación»: mientras está en vista previa, solo para la administración y los profesores
- * (docs/academia.md). Cuando Luis la abra, va para todos.
+ * La Academia primero en «Formación», y las clases de la Escuela como «Clases en vivo» (docs/academia.md, «La Academia
+ * primero»). Mientras está en vista previa, solo para la administración y los profesores; cuando Luis la abra, para todos.
  */
-function conAcademia<G extends { title: string; links: { href: string; label: string; icon: typeof Home }[] }>(grupos: G[], role: string | null | undefined): G[] {
-  if (!veVistaPrevia(role)) return grupos;
-  return grupos.map((g) => (g.title.startsWith("Forma") ? { ...g, links: [{ href: "/academia", label: "Academia", icon: GraduationCap }, ...g.links] } : g));
+function conAcademia<G extends { title: string; links: { href: string; label: string; icon: typeof Home }[] }>(grupos: G[], visible: boolean): G[] {
+  if (!visible) return grupos;
+  return grupos.map((g) =>
+    g.title.startsWith("Forma")
+      ? {
+          ...g,
+          links: [
+            { href: "/academia", label: "Academia", icon: GraduationCap },
+            ...g.links.map((l) => (l.href === "/capacitaciones" ? { ...l, label: "Clases en vivo", icon: Video } : l)),
+          ],
+        }
+      : g,
+  );
 }
 
 const memberDesktopNavGroups: DesktopNavGroupData[] = [
@@ -490,6 +500,7 @@ function NotificationBell() {
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const conLaAcademia = useAcademiaVisible();
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   // Sin sesión no hay avisos: el globo del ícono se borra.
@@ -589,7 +600,7 @@ export function Navbar() {
         {/* Desktop navigation — public or member */}
         <div className={`hidden items-center gap-0.5 ${user ? "lg:flex" : "xl:flex"}`}>
           {user
-            ? conAcademia(memberDesktopNavGroups, user.role).map((group) => (
+            ? conAcademia(memberDesktopNavGroups, conLaAcademia).map((group) => (
                 <DesktopNavGroup key={group.title} group={group} location={location} />
               ))
             : publicDesktopNavItems.map((item) => {
@@ -815,7 +826,7 @@ export function Navbar() {
 
             {/* Grouped navigation — dynamic by auth state */}
             <div className="space-y-1">
-              {(user ? conAcademia(memberMobileNavGroups, user.role) : publicMobileNavGroups).map((group) => (
+              {(user ? conAcademia(memberMobileNavGroups, conLaAcademia) : conAcademia(publicMobileNavGroups, conLaAcademia)).map((group) => (
                 <MobileNavGroup
                   key={group.title}
                   group={group}

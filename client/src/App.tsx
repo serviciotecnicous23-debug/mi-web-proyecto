@@ -77,7 +77,7 @@ const AcademiaIntegral = lazy(() => import("@/pages/academia-integral"));
 const AcademiaCertificado = lazy(() => import("@/pages/academia-certificado"));
 const AcademiaVerificar = lazy(() => import("@/pages/academia-verificar"));
 const AcademiaReglamento = lazy(() => import("@/pages/academia-reglamento"));
-const AcademiaMatricula = lazy(() => import("@/pages/academia-matricula"));
+const AcademiaInscripcion = lazy(() => import("@/pages/academia-inscripcion"));
 const AcademiaCarne = lazy(() => import("@/pages/academia-carne"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
 const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
@@ -145,7 +145,8 @@ function Router() {
       <Route path="/academia/verificar/:codigo" component={AcademiaVerificar} />
       <Route path="/academia/verificar" component={AcademiaVerificar} />
       <Route path="/academia/reglamento" component={AcademiaReglamento} />
-      <Route path="/academia/matricula" component={AcademiaMatricula} />
+      <Route path="/academia/inscripcion" component={AcademiaInscripcion} />
+      <Route path="/academia/matricula" component={AcademiaInscripcion} />
       <Route path="/academia/carne" component={AcademiaCarne} />
       <Route path="/alianza" component={AlianzaPage} />
       <Route path="/ficha-ministerial" component={FichaMinisterialPage} />

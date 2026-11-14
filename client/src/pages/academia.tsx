@@ -11,6 +11,7 @@ import { loginUrl } from "@/lib/login-redirect";
 import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type MateriaResumen } from "@shared/academia";
 import { useAcademiaEstado, useCertificados } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
+import { PestanasClases } from "@/components/academia/pestanas-clases";
 
 function TarjetaMateria({ m }: { m: MateriaResumen }) {
   const contenido = (
@@ -59,6 +60,7 @@ export default function AcademiaPage() {
         <div className="hero-grid-bg absolute inset-0" />
         <div className="glow-orb w-[420px] h-[420px] -top-40 left-1/2 -translate-x-1/2 bg-orange-600/20" />
         <motion.div className="relative z-10 max-w-5xl mx-auto px-4 text-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          {e.conSesion && <PestanasClases actual="academia" className="mb-8" />}
           <span className="glass-pill inline-flex items-center gap-2 mb-5 text-xs"><GraduationCap className="w-3.5 h-3.5" /> Instituto de formación ministerial</span>
           <h1 className="heading-display font-display text-4xl md:text-6xl mb-5" data-testid="academia-titulo">
             Academia <span className="fire-text">Avivando el Fuego</span>
@@ -84,7 +86,13 @@ export default function AcademiaPage() {
             ))}
           </dl>
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-            {e.continuar ? (
+            {e.conSesion && (!e.matricula || !e.ficha) ? (
+              <Link href="/academia/inscripcion">
+                <Button size="lg" className="fire-btn-primary w-full sm:w-auto h-12 px-7 text-base" data-testid="academia-inscribirme">
+                  <IdCard className="w-5 h-5 mr-2" /> {e.matricula ? "Completar mi inscripción" : "Inscribirme en la academia"}
+                </Button>
+              </Link>
+            ) : e.continuar ? (
               <Link
                 href={
                   e.continuar.nivel
@@ -96,7 +104,15 @@ export default function AcademiaPage() {
               >
                 <Button size="lg" className="fire-btn-primary w-full sm:w-auto h-12 px-7 text-base" data-testid="academia-continuar">
                   <PlayCircle className="w-5 h-5 mr-2" />
-                  {e.continuar.nivel ? `Cerrar el nivel: ${e.continuar.titulo.toLowerCase()}` : e.continuar.leccionId ? `Continuar: lección ${e.continuar.n} de ${e.continuar.de}` : "Ir al examen final"}
+                  {e.continuar.nivel
+                    ? `Cerrar el nivel: ${e.continuar.titulo.toLowerCase()}`
+                    : e.continuar.inscribirse
+                      ? e.alumno?.materiasAprobadas
+                        ? "Inscribirme en la siguiente materia"
+                        : "Inscribirme en mi primera materia"
+                      : e.continuar.leccionId
+                        ? `Continuar: lección ${e.continuar.n} de ${e.continuar.de}`
+                        : "Ir al examen final"}
                 </Button>
               </Link>
             ) : !e.conSesion ? (
@@ -108,7 +124,7 @@ export default function AcademiaPage() {
               <Button variant="outline" size="lg" className="btn-fire-glow w-full sm:w-auto h-12">Ver el plan de estudios</Button>
             </a>
           </div>
-          {e.continuar && <p className="text-sm text-muted-foreground mt-3">{e.continuar.materia} · {e.continuar.titulo}</p>}
+          {e.continuar && e.matricula && e.ficha && <p className="text-sm text-muted-foreground mt-3">{e.continuar.materia} · {e.continuar.titulo}</p>}
           {e.alumno && (
             <p className="text-sm text-muted-foreground mt-2" data-testid="academia-alumno">
               <Flame className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Racha de estudio: {e.alumno.racha} {e.alumno.racha === 1 ? "día" : "días"} · {e.alumno.leccionesHechas} {e.alumno.leccionesHechas === 1 ? "lección" : "lecciones"} · {e.alumno.materiasAprobadas}{" "}
@@ -118,7 +134,8 @@ export default function AcademiaPage() {
           {e.matricula && (
             <p className="text-sm text-muted-foreground mt-2" data-testid="academia-matricula">
               <IdCard className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Matrícula {e.matricula.numero} · {e.matricula.estatus.texto}
-              {e.matricula.estatus.honores ? " · Cuadro de honor" : ""} · <Link href="/academia/carne" className="underline">Mi carné</Link>
+              {e.matricula.estatus.honores ? " · Cuadro de honor" : ""} · <Link href="/academia/carne" className="underline">Mi carné</Link> ·{" "}
+              <Link href="/academia/inscripcion" className="underline" data-testid="academia-mi-inscripcion">Mi inscripción</Link>
             </p>
           )}
         </motion.div>
@@ -126,19 +143,20 @@ export default function AcademiaPage() {
 
       {e.vistaPrevia && <AvisoVistaPrevia />}
 
-      {/* ═══ LA MATRÍCULA ═══ */}
-      {e.conSesion && !e.matricula && (
-        <section className="max-w-6xl mx-auto px-4 pt-8" data-testid="matricula-invitacion">
+      {/* ═══ LA INSCRIPCIÓN ═══ */}
+      {e.conSesion && (!e.matricula || !e.ficha) && (
+        <section className="max-w-6xl mx-auto px-4 pt-8" data-testid="inscripcion-invitacion">
           <div className="glass-card p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4 border border-orange-500/30">
             <IdCard className="w-10 h-10 text-orange-500 shrink-0" />
             <div className="flex-1">
-              <h2 className="font-display text-xl md:text-2xl font-bold">Matricúlate en la academia</h2>
+              <h2 className="font-display text-xl md:text-2xl font-bold">{e.matricula ? "Completa tu inscripción" : "Inscríbete en la academia"}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Acepta el reglamento académico y el código de honor, y recibe tu número de matrícula y tu carné. Sin matrícula puedes leer las lecciones, pero no
-                guardar tu avance.
+                {e.matricula
+                  ? `Ya tienes tu matrícula ${e.matricula.numero}. Llena tu ficha de inscripción para seguir guardando tu avance: tus certificados llevarán ese nombre.`
+                  : "Llena tu ficha, acepta el reglamento académico y el código de honor, y recibe tu número de matrícula y tu carné. Es gratuita y queda aprobada al instante. Sin inscripción puedes leer la primera lección de cada materia, pero no guardar tu avance."}
               </p>
             </div>
-            <Link href="/academia/matricula"><Button className="fire-btn-primary h-12 px-7" data-testid="academia-matricularme">Matricularme</Button></Link>
+            <Link href="/academia/inscripcion"><Button className="fire-btn-primary h-12 px-7" data-testid="academia-inscripcion">{e.matricula ? "Completar mi ficha" : "Inscribirme"}</Button></Link>
           </div>
         </section>
       )}

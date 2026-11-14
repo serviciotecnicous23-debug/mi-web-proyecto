@@ -13,6 +13,8 @@ import {
   useAllSchedules, useCarteleraStats,
 } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
+import { PestanasClases } from "@/components/academia/pestanas-clases";
+import { useAcademiaVisible } from "@/lib/academia-visible";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ import { useLocation } from "wouter";
 
 export default function Capacitaciones() {
   const { user, isLoading: authLoading } = useAuth();
+  const conLaAcademia = useAcademiaVisible();
   const [, navigate] = useLocation();
   // Abre en "Cursos" (a eso viene un miembro, como en Classroom o Coursera); ?tab= abre
   // otra pestaña (por ejemplo, un aviso de la cartelera).
@@ -97,11 +100,14 @@ export default function Capacitaciones() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <PestanasClases actual="vivo" className="mb-6" />
         <div className="text-center mb-6">
           <GraduationCap className="w-12 h-12 text-primary mx-auto mb-3" />
-          <h1 className="text-3xl font-bold mb-2" data-testid="text-capacitaciones-title">Capacitaciones</h1>
+          <h1 className="text-3xl font-bold mb-2" data-testid="text-capacitaciones-title">{conLaAcademia ? "Clases en vivo" : "Capacitaciones"}</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Centro de formación ministerial — Cursos, sesiones, horarios y anuncios en un solo lugar.
+            {conLaAcademia
+              ? "Los cursos de la Escuela con maestro: sesiones en vivo, horarios y anuncios. Para estudiar a tu ritmo, entra a la Academia."
+              : "Centro de formación ministerial — Cursos, sesiones, horarios y anuncios en un solo lugar."}
           </p>
         </div>
 

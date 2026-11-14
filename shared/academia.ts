@@ -889,6 +889,17 @@ export function leccionPorId(id: string): { materia: MateriaDef; leccion: Leccio
 export function nivelDe(n: NivelN): NivelDef {
   return NIVELES[n - 1];
 }
+/**
+ * Lo que falta para inscribirse en una materia: el nivel anterior completo. Las materias de una especialidad piden el
+ * Nivel 2, y las avanzadas, el 3 (docs/academia.md, «La inscripción»).
+ */
+export function requisitosMateria(m: MateriaDef, nivelesCompletos: number[]): string[] {
+  const pide = m.nivel ? m.nivel - 1 : m.avanzada ? 3 : 2;
+  const hecho = nivelesCompletos.length ? Math.max(...nivelesCompletos) : 0;
+  if (pide < 1 || hecho >= pide) return [];
+  return [`completar el Nivel ${pide} · ${NIVELES[pide - 1]?.nombre ?? ""}`.trim()];
+}
+
 /** La primera lección de cada materia del Nivel 1 la puede leer un visitante. */
 export function leccionPublica(id: string): boolean {
   const l = LECCION_POR_ID.get(id);
@@ -919,13 +930,16 @@ export type AcademiaEstado = {
   vistaPrevia: boolean;
   conSesion: boolean;
   alumno: { inscritoEn: string; racha: number; leccionesHechas: number; materiasAprobadas: number } | null;
-  /** La matrícula (null si todavía no se matriculó: sin ella se lee, pero no se guarda el avance). */
+  /** La matrícula (null si todavía no se inscribió: sin inscripción se lee, pero no se guarda el avance). */
   matricula: MatriculaInfo | null;
+  /** Llenó su ficha de inscripción (quien se matriculó antes de la ficha debe completarla). */
+  ficha: boolean;
   /**
    * Lo siguiente: una lección, el examen final si ya terminó las lecciones (leccionId null) o, con todas las materias
-   * del nivel aprobadas, el cierre del nivel (`nivel`: el examen integral o el pacto).
+   * del nivel aprobadas, el cierre del nivel (`nivel`: el examen integral o el pacto). Sin ninguna materia en curso, la
+   * presentación de la siguiente, para inscribirse en ella (`inscribirse`).
    */
-  continuar: { leccionId: string | null; titulo: string; materiaId: string; materia: string; n: number; de: number; nivel?: number } | null;
+  continuar: { leccionId: string | null; titulo: string; materiaId: string; materia: string; n: number; de: number; nivel?: number; inscribirse?: boolean } | null;
   etapas: EtapaDef[];
   niveles: (Omit<NivelDef, "materias"> & { materias: MateriaResumen[]; cierre: CierreResumen | null })[];
   especialidades: (Omit<EspecialidadDef, "materias"> & { materias: MateriaResumen[] })[];
@@ -1062,8 +1076,14 @@ export type MateriaDetalle = {
   examen: ExamenEstado | null;
   /** El código del certificado de la materia, cuando está aprobada. */
   certificado: string | null;
-  /** Con sesión y matrícula: puede guardar su avance (versículo, examen). */
+  /** Con sesión e inscrito en la academia (ficha y matrícula). */
   matriculado: boolean;
+  /** Desde cuándo está inscrito en esta materia (null si no lo está: se ve su presentación). */
+  inscrita: string | null;
+  /** Lo que falta para poder inscribirse (el nivel anterior). */
+  requisitos: string[];
+  /** Dirección académica o profesor: puede leer las lecciones sin inscribirse (no se guarda su avance). */
+  docente: boolean;
   vistaPrevia: boolean;
   conSesion: boolean;
 };
@@ -1093,8 +1113,13 @@ export type LeccionVista = {
   anterior: string | null;
   siguiente: string | null;
   publica: boolean;
-  /** Con sesión y matrícula: puede responder el repaso y guardar su avance. */
+  conSesion: boolean;
+  /** Inscrito en la academia (ficha y matrícula). */
   matriculado: boolean;
+  /** Inscrito en la materia: puede completar la lección y guardar su avance. */
+  inscrita: boolean;
+  /** La lee la Dirección académica o un profesor sin estar inscrito: no se guarda nada. */
+  docente: boolean;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };
@@ -1180,7 +1205,7 @@ export function estatusDe(d: DatosEstatus): EstatusVista {
 export type MatriculaInfo = {
   numero: string;
   promocion: number;
-  /** Cuándo se matriculó (aceptó el reglamento y el código de honor). */
+  /** Cuándo se inscribió (aceptó el reglamento y el código de honor). */
   desde: string;
   estatus: EstatusVista;
 };
@@ -1194,7 +1219,7 @@ export type CarneVista = MatriculaInfo & {
   qr: string;
 };
 
-/** El código de honor que se acepta al matricularse (y antes de cada examen). */
+/** El código de honor que se acepta al inscribirse (y antes de cada examen). */
 export const CODIGO_HONOR =
   "Me comprometo a estudiar y a hacer cada examen yo solo, sin ayuda de otras personas, sin copiar ni pegar textos ajenos, con sinceridad, de corazón, como para el Señor y no para los hombres (Colosenses 3:23).";
 
@@ -1207,10 +1232,10 @@ const ordinal = (n: number) => (n === 3 ? "tercer" : n === 2 ? "segundo" : `${n}
  * sistema, así que nunca dicen otra cosa. Si cambia algo de fondo, sube la versión: queda guardada en cada matrícula.
  */
 export const REGLAMENTO: { version: string; titulo: string; base: string; intro: string; secciones: SeccionReglamento[] } = {
-  version: "2026-11",
+  version: "2026-11-14",
   titulo: "Reglamento académico",
   base: LEMA.ref,
-  intro: `Este reglamento ordena la vida académica de la ${NOMBRE_ACADEMIA}. Al matricularte lo aceptas, junto con el código de honor.`,
+  intro: `Este reglamento ordena la vida académica de la ${NOMBRE_ACADEMIA}. Al inscribirte lo aceptas, junto con el código de honor.`,
   secciones: [
     {
       titulo: "1. La academia",
@@ -1221,11 +1246,13 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       ],
     },
     {
-      titulo: "2. La matrícula",
+      titulo: "2. La inscripción",
       puntos: [
-        "Para estudiar se necesita una cuenta en la web y matricularse: aceptar este reglamento y el código de honor. Sin matrícula se pueden leer las lecciones, pero no guardar el avance.",
-        "La matrícula da un número personal (AAF-año-número) y una promoción, que es el año en que ingresaste. El carné digital la acredita.",
-        "La matrícula es personal: cada alumno estudia con su propia cuenta.",
+        "Para estudiar se necesita una cuenta en la web e inscribirse en la academia: llenar la ficha de inscripción y aceptar este reglamento y el código de honor. La inscripción es gratuita y queda aprobada al instante.",
+        "La inscripción da un número de matrícula personal (AAF-año-número) y una promoción, que es el año en que ingresaste. El carné digital la acredita.",
+        "Cada materia tiene su propia inscripción, desde su página, donde se ve lo que se aprende, cómo es y cómo se evalúa. La primera lección de cada materia del Nivel 1 se puede leer sin inscribirse; las demás, el versículo de memoria y el examen piden estar inscrito.",
+        "Tus certificados llevan el nombre de tu ficha. Una vez emitido un certificado, ese nombre solo lo corrige la Dirección académica.",
+        "La inscripción es personal: cada alumno estudia con su propia cuenta.",
       ],
     },
     {
@@ -1264,7 +1291,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
     {
       titulo: "7. El estatus del alumno",
       puntos: [
-        "Aspirante: te matriculaste y aún no terminas tu primera lección.",
+        "Aspirante: te inscribiste y aún no terminas tu primera lección.",
         "Estudiante activo: estudias con regularidad.",
         `Estudiante en pausa: pasaron ${DIAS_PAUSA} días sin estudiar. Vuelves a estar activo en cuanto estudias.`,
         "Egresado del nivel: completaste un nivel y el siguiente todavía no está disponible.",
@@ -1284,7 +1311,9 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       titulo: "9. La privacidad",
       puntos: [
         "Tus notas las ven solo tú, tus profesores y la Dirección académica. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
-        "Si borras tu cuenta, se borra todo tu avance en la academia y tus documentos dejan de verificarse.",
+        "Los datos de tu ficha (nombre, país, iglesia y contacto) los ven la Dirección académica y, si elegiste una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus documentos: no se publican ni se comparten con nadie más.",
+        "Puedes corregir los datos de tu ficha cuando quieras, desde tu inscripción.",
+        "Si borras tu cuenta, se borra todo tu avance en la academia, también tu ficha, y tus documentos dejan de verificarse.",
       ],
     },
     {

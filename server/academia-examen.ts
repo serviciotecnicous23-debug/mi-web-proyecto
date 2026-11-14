@@ -25,7 +25,7 @@ import type { PreguntaObjetiva } from "./academia/tipos";
 import { corregirEscrita, type ClaveEscrita } from "./academia-correccion";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import { elegirEscritas, elegirFinal } from "./academia-eleccion";
-import { alumnoDe, asegurarAlumno, asegurarMateria, claveFinal, enFila, estaMatriculado, frenar, marcarEstudio, recalcularMateria } from "./academia-comun";
+import { alumnoDe, asegurarAlumno, asegurarMateria, claveFinal, enFila, estaInscrito, frenar, marcarEstudio, recalcularMateria } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
 
 export { elegirFinal } from "./academia-eleccion";
@@ -145,7 +145,8 @@ export async function estadoExamen(userId: number, m: MateriaDef): Promise<Exame
   const { rows: v } = await pool.query(`SELECT aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   const { rows: mat } = await pool.query(`SELECT estado FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   const falta: string[] = [];
-  if (!(await estaMatriculado(userId))) falta.push("matricularte en la academia");
+  if (!(await estaInscrito(userId))) falta.push("inscribirte en la academia");
+  else if (!mat[0]) falta.push("inscribirte en esta materia");
   const pendientes = ids.filter((id) => !completadas.has(id)).length;
   if (pendientes) falta.push(pendientes === ids.length ? `completar las ${ids.length} lecciones` : `completar ${pendientes === 1 ? "1 lección" : `${pendientes} lecciones`}`);
   if (m.memoria && !v[0]?.aprendido_at) falta.push("aprender el versículo de memoria");
