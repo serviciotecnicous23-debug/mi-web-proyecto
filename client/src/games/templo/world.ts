@@ -48,7 +48,7 @@ import { Presencia } from "./motor/presencia";
 import { RED_TICK_MS } from "@shared/ciudad";
 import { haciaElPiso } from "./motor/camara";
 import { Polvo } from "./ciudad/clima";
-import { apagarFuegos, ponerFuegos, titila, type Fuego } from "./three/luces";
+import { apagarFuegos, ponerFuegos, ponerTecho, titila, type Fuego } from "./three/luces";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -349,6 +349,10 @@ export class TempleWorld {
       return [frente ? TEMPLE.porchX - 0.5 : COURT.minX, COURT.minZ, COURT.maxX, COURT.maxZ];
     };
     this.fuegos = [...this.vis.torches, ...this.vis.braseros].map((p) => ({ x: p.x, y: p.y, z: p.z, fuerza: 0, recorte: atrioDe(p.x, p.z) }));
+    // la penumbra del Lugar Santo: bajo el techo de la casa de Jehová la luz del cielo casi no llega; por la puerta entra
+    // de a poco, y lo alumbran el sol que entra de lado y, de noche, las siete lámparas del candelero
+    const mw = TEMPLE.wall / 2;
+    ponerTecho([TEMPLE.backX - mw, -TEMPLE.halfW - mw, TEMPLE.frontX + mw, TEMPLE.halfW + mw], [TEMPLE.floor - 0.1, TEMPLE.floor + TEMPLE.height + 0.05], 0.3, 2.2);
     this.fireLight.position.set(POS.altar[0], 2.6, POS.altar[1]);
     this.lampLight.position.copy(this.vis.stations.candelero.anchors.light);
     this.holyLight.position.copy(this.vis.holiestLightPos);

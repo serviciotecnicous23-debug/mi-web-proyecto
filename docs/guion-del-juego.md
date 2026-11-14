@@ -857,6 +857,18 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - En el material compartido, la «tela» acostada (la tierra de un piso, una alfombra) ya casi no tiene relieve: con la luz
   baja de una lámpara se veía ondulada como arena.
 
+## 7m. El Lugar Santo por dentro (14 de noviembre de 2026)
+
+- **Las paredes** (`carve`, en `three/structures.ts`): tableros enmarcados, cada uno con su marco aparte (no hay líneas
+  que se crucen). El fondo es más oscuro (`FONDO`) y la talla en oro claro (`TALLA`): querubines, palmeras con una copa
+  de siete hojas que suben y caen (nada en forma de cruz) y flores abiertas. Abajo va el zócalo y arriba el friso con
+  flores. Antes era oro sobre oro y no se leía.
+- **El piso de oro**: láminas de oro pulido (`tiles`, armado con `sinGastarAzar` para no cambiar el azar del templo), y
+  el metal acostado tiene menos ruido y relieve en el material compartido (antes parecía papel arrugado).
+- **La penumbra** (`ponerTecho`, en `three/luces.ts`): dentro de la casa de Jehová la luz del cielo baja a un tercio. El
+  sol que entra de lado y las lámparas siguen iguales, y por la puerta la luz entra de a poco. El techo (`techoMeshes`)
+  se aclara al entrar como los muros, pero sigue dando sombra.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

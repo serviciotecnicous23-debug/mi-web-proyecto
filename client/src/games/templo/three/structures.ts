@@ -20,6 +20,16 @@ function mulberry32(seed: number) {
 }
 let rnd = mulberry32(715);
 const rr = (a: number, b: number) => a + (b - a) * rnd();
+/** Arma algo nuevo sin gastar el azar compartido: lo que se arma después queda igual que antes. */
+function sinGastarAzar<X>(armar: () => X): X {
+  const guardado = rnd;
+  rnd = () => 0.5;
+  try {
+    return armar();
+  } finally {
+    rnd = guardado;
+  }
+}
 function pick<X>(arr: readonly X[]): X {
   return arr[Math.floor(rnd() * arr.length)];
 }
@@ -276,6 +286,8 @@ export type SkyUniforms = {
 export type WorldVisual = {
   root: THREE.Group;
   fadeMeshes: THREE.Mesh[];
+  /** El techo de la casa de Jehová: se aclara al entrar pero sigue dando sombra (la penumbra del Lugar Santo). */
+  techoMeshes: THREE.Mesh[];
   stations: Record<StationId, StationVisual>;
   gateDoors: THREE.Object3D[];
   holyDoors: THREE.Object3D[];
@@ -588,6 +600,8 @@ function buildCourts(root: THREE.Group, out: Partial<WorldVisual>) {
 function buildTemple(root: THREE.Group, out: Partial<WorldVisual>) {
   const solid = new GeoBuilder(), solidS = new GeoBuilder();
   const fade = new GeoBuilder(), fadeS = new GeoBuilder();
+  // el techo se aclara como los muros al entrar, pero sigue dando sombra: adentro queda la penumbra del Lugar Santo
+  const techo = new GeoBuilder();
   const F = T.floor;
   const H = T.height;
   const outerHalf = T.halfW + T.wall;
@@ -602,9 +616,9 @@ function buildTemple(root: THREE.Group, out: Partial<WorldVisual>) {
     const x0 = T.stepsX - ((T.stepsX - T.porchX) * i) / 3;
     solid.box((T.stepsX - T.porchX) / 3 + 0.02, h, 2 * outerHalf, vary(C.piedraClara, 0.04), { x: x0 - (T.stepsX - T.porchX) / 6, y: h / 2, z: 0 });
   }
-  // piso de oro del interior (1 Reyes 6:30)
-  solidS.box(T.frontX - T.backX, 0.02, 2 * T.halfW, C.oroOsc, { x: (T.frontX + T.backX) / 2, y: F + 0.01, z: 0 });
-  for (let x = T.backX + 0.6; x < T.frontX; x += 1.2) solidS.box(0.03, 0.025, 2 * T.halfW, C.oro, { x, y: F + 0.015, z: 0 });
+  // piso de oro del interior (1 Reyes 6:30): láminas de oro pulido sobre el piso de ciprés, con sus juntas
+  solidS.box(T.frontX - T.backX, 0.02, 2 * T.halfW, "#8a6414", { x: (T.frontX + T.backX) / 2, y: F + 0.005, z: 0 });
+  solidS.raw(sinGastarAzar(() => tiles(T.backX, -T.halfW, T.frontX, T.halfW, 1.15, [C.oro, "#d9a832", C.oroOsc, "#e6bb4a"], F + 0.012, 0.008, 0.06)));
   // piso del pórtico
   solid.raw(tiles(T.frontX + T.wall, -T.halfW, T.porchX, T.halfW, 0.7, [C.piedraClara, C.piedra], F + 0.005, 0.025, 0.05));
 
@@ -659,45 +673,64 @@ function buildTemple(root: THREE.Group, out: Partial<WorldVisual>) {
   annex(solid, "z", -outerHalf, outerHalf, westX - annexW / 2, -1);
 
   // techo de cedro con pretil y cornisa dorada (se desvanece)
-  fade.box(T.frontX + T.wall - westX, 0.22, 2 * outerHalf, C.cedroOsc, { x: (T.frontX + T.wall + westX) / 2, y: F + H + 0.11, z: 0 });
-  for (let x = westX + 0.5; x < T.frontX + T.wall; x += 1.1) fade.box(0.16, 0.06, 2 * outerHalf - 0.2, C.cedro, { x, y: F + H + 0.25, z: 0 });
+  techo.box(T.frontX + T.wall - westX, 0.22, 2 * outerHalf, C.cedroOsc, { x: (T.frontX + T.wall + westX) / 2, y: F + H + 0.11, z: 0 });
+  for (let x = westX + 0.5; x < T.frontX + T.wall; x += 1.1) techo.box(0.16, 0.06, 2 * outerHalf - 0.2, C.cedro, { x, y: F + H + 0.25, z: 0 });
   fadeS.box(T.frontX + T.wall - westX + 0.1, 0.1, 0.1, C.oro, { x: (T.frontX + T.wall + westX) / 2, y: F + H, z: outerHalf + 0.05 });
   fadeS.box(T.frontX + T.wall - westX + 0.1, 0.1, 0.1, C.oro, { x: (T.frontX + T.wall + westX) / 2, y: F + H, z: -outerHalf - 0.05 });
   fade.box(T.frontX + T.wall - westX, 0.36, 0.14, C.piedraClara, { x: (T.frontX + T.wall + westX) / 2, y: F + H + 0.4, z: outerHalf - 0.07 });
   fade.box(T.frontX + T.wall - westX, 0.36, 0.14, C.piedraClara, { x: (T.frontX + T.wall + westX) / 2, y: F + H + 0.4, z: -outerHalf + 0.07 });
 
-  // interior cubierto de oro con querubines, palmeras y botones de flores (1 Reyes 6:29)
+  // interior cubierto de oro con querubines, palmeras y botones de flores (1 Reyes 6:29), en tableros enmarcados: el
+  // fondo de cada tablero más oscuro y la talla en oro claro, para que se lea (oro sobre oro no se veía); abajo el
+  // zócalo y arriba el friso con flores abiertas. Cada tablero tiene su marco aparte (no hay líneas que se crucen).
+  const FONDO = "#9a7016", TALLA = "#f0c95a";
   const carve = (b: GeoBuilder, axis: "x" | "z", from: number, to: number, at: number, faceSign: number) => {
     const len = to - from;
     if (axis === "x") b.box(len, H - 0.1, 0.03, C.oro, { x: (from + to) / 2, y: F + H / 2, z: at + faceSign * 0.016 });
     else b.box(0.03, H - 0.1, len, C.oro, { x: at + faceSign * 0.016, y: F + H / 2, z: (from + to) / 2 });
+    // una pieza en el plano de la pared, a una profundidad (rot: giro dentro de ese plano)
+    const pieza = (p: number, y: number, w: number, h: number, prof: number, color: string, rot = 0) => {
+      if (axis === "x") b.box(w, h, 0.02, color, { x: p, y, z: at + faceSign * prof, rz: rot });
+      else b.box(0.02, h, w, color, { x: at + faceSign * prof, y, z: p, rx: -rot });
+    };
+    const flor = (p: number, y: number, r: number, prof: number) => {
+      pieza(p, y, r * 0.75, r * 0.75, prof, TALLA, 0.785);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        pieza(p + Math.cos(a) * r, y + Math.sin(a) * r, r * 0.45, r * 0.7, prof, TALLA, a + Math.PI / 2);
+      }
+    };
+    // el zócalo con su filete y el friso de arriba
+    const medio = (from + to) / 2;
+    pieza(medio, F + 0.32, len - 0.08, 0.5, 0.034, FONDO);
+    pieza(medio, F + 0.6, len - 0.08, 0.05, 0.05, TALLA);
+    pieza(medio, F + H - 0.55, len - 0.08, 0.34, 0.034, FONDO);
+    pieza(medio, F + H - 0.36, len - 0.08, 0.04, 0.05, TALLA);
+    pieza(medio, F + H - 0.74, len - 0.08, 0.04, 0.05, TALLA);
+    for (let p = from + 0.45; p < to - 0.3; p += 0.75) flor(p, F + H - 0.55, 0.075, 0.05);
     let k = 0;
     for (let p = from + 0.45; p < to - 0.3; p += 0.75, k++) {
-      for (const [row, y] of [[0, F + 1.3], [1, F + 3.5]] as [number, number][]) {
-        // pieza en el plano de la pared (rot: giro dentro de ese plano)
-        const put = (dx: number, dy: number, w: number, h: number, rot = 0) => {
-          if (axis === "x") b.box(w, h, 0.03, C.oroOsc, { x: p + dx, y: y + dy, z: at + faceSign * 0.045, rz: rot });
-          else b.box(0.03, h, w, C.oroOsc, { x: at + faceSign * 0.045, y: y + dy, z: p + dx, rx: -rot });
-        };
+      for (const [row, y] of [[0, F + 1.55], [1, F + 3.75]] as [number, number][]) {
+        // el tablero: el fondo y su marco
+        pieza(p, y, 0.62, 1.7, 0.034, FONDO);
+        pieza(p, y + 0.86, 0.66, 0.05, 0.05, C.oro);
+        pieza(p, y - 0.86, 0.66, 0.05, 0.05, C.oro);
+        pieza(p - 0.31, y, 0.05, 1.7, 0.05, C.oro);
+        pieza(p + 0.31, y, 0.05, 1.7, 0.05, C.oro);
+        // la talla, en oro claro sobre el fondo
+        const put = (dx: number, dy: number, w: number, h: number, rot = 0) => pieza(p + dx, y + dy, w, h, 0.052, TALLA, rot);
         const motif = (k + row) % 3;
         if (motif === 0) {
-          // palmera: tronco y abanico de hojas
-          put(0, -0.05, 0.05, 0.8);
-          for (const a of [-1.15, -0.6, 0, 0.6, 1.15]) put(Math.sin(a) * 0.13, 0.42 + Math.cos(a) * 0.12, 0.035, 0.3, -a);
+          // palmera: el tronco y su copa de siete hojas, que suben y caen alrededor (nada en forma de cruz)
+          put(0, -0.15, 0.06, 1.0);
+          for (const a of [-2.0, -1.3, -0.65, 0, 0.65, 1.3, 2.0]) put(Math.sin(a) * 0.17, 0.42 + Math.cos(a) * 0.16, 0.045, 0.34, -a);
         } else if (motif === 1) {
           // querubín con las alas hacia arriba
-          put(0, 0.02, 0.12, 0.3);
-          put(0, 0.26, 0.1, 0.1, 0.785);
-          put(-0.15, 0.18, 0.05, 0.38, 0.72);
-          put(0.15, 0.18, 0.05, 0.38, -0.72);
-        } else {
-          // flor abierta
-          put(0, 0, 0.1, 0.1, 0.785);
-          for (let i = 0; i < 6; i++) {
-            const a = (i / 6) * Math.PI * 2;
-            put(Math.cos(a) * 0.13, Math.sin(a) * 0.13, 0.06, 0.09, a + Math.PI / 2);
-          }
-        }
+          put(0, -0.05, 0.14, 0.4);
+          put(0, 0.25, 0.12, 0.12, 0.785);
+          put(-0.17, 0.15, 0.06, 0.46, 0.72);
+          put(0.17, 0.15, 0.06, 0.46, -0.72);
+        } else flor(p, y, 0.15, 0.052);
       }
     }
   };
@@ -750,6 +783,7 @@ function buildTemple(root: THREE.Group, out: Partial<WorldVisual>) {
   addMeshes(root, solid, solidS, { cast: true });
   const fadeMeshes = addMeshes(root, fade, fadeS, { cast: true, fade: true });
   out.fadeMeshes = fadeMeshes;
+  out.techoMeshes = addMeshes(root, techo, null, { cast: true, fade: true });
 
   // puertas del Lugar Santo: de ciprés cubiertas de oro, con querubines y palmeras (1 Reyes 6:34-35)
   const doors: THREE.Object3D[] = [];

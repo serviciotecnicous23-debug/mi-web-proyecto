@@ -245,7 +245,13 @@ float dH = dPiedra * (dRuido(dp * 0.9) * 0.65 + dRuido(dp * 3.2) * 0.35)
          + dTela * dRuido(dp * 11.0)
          + dMetal * dRuido(dp * vec3(22.0, 1.5, 22.0));
 #endif
-float dAmp = (dPiedra * 0.15 + dMadera * 0.17 + dVerde * 0.24 + dTela * 0.06 + dMetal * 0.1) * dLejos;
+// lo acostado (un piso, una mesa): el metal pulido y la tierra apisonada van más lisos
+#ifdef FLAT_SHADED
+float dAcostada = 0.0;
+#else
+float dAcostada = step(0.85, dot(normalize(vNormal), normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0))));
+#endif
+float dAmp = (dPiedra * 0.15 + dMadera * 0.17 + dVerde * 0.24 + dTela * 0.06 + dMetal * 0.1 * (1.0 - 0.6 * dAcostada)) * dLejos;
 diffuseColor.rgb *= 1.0 + (dH - 0.5) * dAmp;
 // el agua (azul claro): un brillo que se mueve
 float dAgua = (1.0 - dMetal) * step(dc.r * 1.25, dc.b) * step(dc.g * 0.95, dc.b) * step(0.45, dLum) * step(0.25, dSat);
@@ -268,9 +274,8 @@ const DETALLE_RELIEVE = `
   float dDet = dot(dPx, dR1);
   vec3 dGrad = sign(dDet) * (dHx * dR1 + dHy * dR2);
   // la tela acostada (la tierra apisonada de un piso, una alfombra) casi sin relieve: con la luz baja de una lámpara se
-  // veía ondulada como la arena
-  float dAcostada = step(0.85, dot(normal, normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0))));
-  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1) * dLejos;
+  // veía ondulada como la arena; y el metal acostado (el piso de oro) pulido, no arrugado
+  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1 * (1.0 - 0.85 * dAcostada)) * dLejos;
   normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
 }
 #endif
