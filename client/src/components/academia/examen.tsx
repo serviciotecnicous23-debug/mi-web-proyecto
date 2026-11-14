@@ -447,7 +447,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                 <h2 className="font-semibold text-lg mb-3">Antes de empezar</h2>
                 <ul className="space-y-2 text-[15px]">
                   {destino.detalle && <li className="flex gap-2"><Layers className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{destino.detalle}</li>}
-                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte A: {medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
+                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{medida.escritas > 0 ? "Parte A: " : ""}{medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
                   {medida.escritas > 0 && (
                     <li className="flex gap-2"><PenLine className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte B: {medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} con tus palabras, {medida.minutosEscrita} minutos cada una.</li>
                   )}
@@ -464,7 +464,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                   </li>
                 </ul>
                 {estado.cerrado && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300" data-testid="examen-cerrado">{estado.cerrado}</p>}
-                {!estado.cerrado && estado.falta.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">Para darlo te falta {estado.falta.join(" y ")}.</p>}
+                {!estado.cerrado && estado.falta.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">{destino.tipo === "mini" || destino.tipo === "diagnostico" ? "Para darla" : "Para darlo"} te falta {estado.falta.join(" y ")}.</p>}
                 {estado.falta.includes("inscribirte en la academia") && (
                   <Link href={`/academia/inscripcion?volver=${encodeURIComponent(window.location.pathname)}`}>
                     <Button className="fire-btn-primary mt-3" data-testid="examen-inscribirme">Inscribirme en la academia</Button>
