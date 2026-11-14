@@ -885,6 +885,20 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
   da de costado, y el revoque se veía arrugado.
 - **El estudio** (`estudio/estudio-sabio.ts`): las siete columnas con estrías (`columnaEstriada`), collarín y basa doble.
 
+## 7o. El huerto, más vivo (14 de noviembre de 2026)
+
+- **Lo sembrado se mece** (`matteMatViento`, en `three/builder.ts`, con `mallaViento` en `casa/huerto3d.ts`): el material
+  de siempre más el viento, que crece con el alto de la planta (el pie queda quieto) y trae ráfagas.
+- **Los surcos** (`tierraDelSurco`): un corte con dos lomos redondeados y la hondonada más oscura, que corre a lo largo
+  del surco con los extremos redondeados y el lomo que sube y baja (sin azar: lo sembrado sale igual que antes). Sin arar,
+  un lomo bajo y duro. Los charcos quedan en la hondonada.
+- **El suelo de una pieza** (`pisoConTono`, que ahora acepta un color por punto): el campo labrado pasa suave a los
+  caminos y a la hierba, con la sombra junto al cerco, al muro, al pozo y al granero.
+- **La hierba con viento** (`hierbaCon`, en `ciudad/suelo-vivo.ts`): la misma de la ciudad, al pie del cerco, del muro y
+  de los árboles, con su propio azar (el cerco y los olivos salen igual que antes).
+- **La luz de la puerta**: de noche la luz de la casa alumbra el campo cercano (un fuego que vale solo para el dibujo del
+  huerto).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

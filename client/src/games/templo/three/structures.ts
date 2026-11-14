@@ -161,13 +161,17 @@ export function tiles(
 
 /**
  * Un piso liso (la tierra apisonada, el yeso del terrado) con su tono: la cara de arriba en cuadritos de `paso`, con
- * manchas suaves (la tierra pisada nunca es pareja) y la sombra junto a los muros que da `tono(x, z)`.
+ * manchas suaves (la tierra pisada nunca es pareja) y la sombra junto a los muros que da `tono(x, z)`. El color puede
+ * cambiar de un punto a otro (el campo que pasa al camino, en el huerto).
  */
-export function pisoConTono(minX: number, minZ: number, maxX: number, maxZ: number, color: string, y: number, paso: number, tono?: (x: number, z: number) => number) {
+export function pisoConTono(
+  minX: number, minZ: number, maxX: number, maxZ: number, color: string | ((x: number, z: number) => THREE.Color), y: number, paso: number,
+  tono?: (x: number, z: number) => number,
+) {
   const nx = Math.max(1, Math.round((maxX - minX) / paso)), nz = Math.max(1, Math.round((maxZ - minZ) / paso));
   const sx = (maxX - minX) / nx, sz = (maxZ - minZ) / nz;
   const pos: number[] = [], nor: number[] = [], col: number[] = [];
-  const c = new THREE.Color(color);
+  const fijo = typeof color === "string" ? new THREE.Color(color) : null;
   // las manchas: dos ondas cruzadas (sin azar, así no cambia lo que se arma después)
   const k = (x: number, z: number) => (1 + Math.sin(x * 2.3 + z * 1.1) * 0.025 + Math.sin(x * 0.9 - z * 3.1 + 1.7) * 0.02) * (tono ? tono(x, z) : 1);
   for (let i = 0; i < nx; i++)
@@ -177,6 +181,7 @@ export function pisoConTono(minX: number, minZ: number, maxX: number, maxZ: numb
         pos.push(x, y, z);
         nor.push(0, 1, 0);
         const f = k(x, z);
+        const c = fijo ?? (color as (x: number, z: number) => THREE.Color)(x, z);
         col.push(c.r * f, c.g * f, c.b * f);
       }
     }

@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-huerto-vivo",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El huerto, más vivo",
+    puntos: [
+      "🌾 El trigo, la cebada y los olivitos se mecen con el viento: más arriba que abajo, con ráfagas que pasan por el campo.",
+      "🧱 Los surcos tienen sus lomos de tierra redondeados, con la hondonada en el medio, y el suelo pasa suave del campo a los caminos.",
+      "🌿 Al pie del cerco, del muro de la casa y alrededor de los árboles crece hierba que se mueve con el viento.",
+      "🔥 De noche la luz de la casa sale por la puerta y alumbra el campo cercano.",
+    ],
+  },
+  {
     id: "2026-11-14-aula-estudio",
     fecha: "14 de noviembre de 2026",
     titulo: "El aula y el estudio, más finos",

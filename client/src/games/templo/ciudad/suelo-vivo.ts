@@ -235,6 +235,42 @@ function piedrasYMatas(r: () => number, coarse: boolean): { ciudad: GeoBuilder; 
 
 export type SueloVivo = { grupo: THREE.Group; dispose(): void };
 
+/**
+ * La hierba con viento en otro lugar (el huerto): las matas que se le den, en una sola malla de instancias, con el mismo
+ * viento que la ciudad. `verde` es la parte de matas verdes (el resto, secas).
+ */
+export function hierbaCon(matas: { x: number; y: number; z: number; s: number }[], verde = 0.4, semilla = 11): SueloVivo {
+  const grupo = new THREE.Group();
+  grupo.name = "hierba";
+  const r = azar(semilla);
+  const geo = geometriaMata();
+  const mat = materialHierba();
+  const hierba = new THREE.InstancedMesh(geo, mat, Math.max(1, matas.length));
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  matas.forEach((a, i) => {
+    e.set((r() - 0.5) * 0.12, r() * Math.PI * 2, (r() - 0.5) * 0.12);
+    q.setFromEuler(e);
+    p.set(a.x, a.y, a.z);
+    s.setScalar(a.s * (0.75 + r() * 0.5));
+    hierba.setMatrixAt(i, m.compose(p, q, s));
+    hierba.setColorAt(i, new THREE.Color(r() < verde ? VERDE[Math.floor(r() * 3)] : SECA[Math.floor(r() * 3)]));
+  });
+  hierba.count = matas.length;
+  hierba.instanceMatrix.needsUpdate = true;
+  if (hierba.instanceColor) hierba.instanceColor.needsUpdate = true;
+  hierba.computeBoundingSphere();
+  hierba.receiveShadow = true;
+  grupo.add(hierba);
+  return {
+    grupo,
+    dispose() {
+      geo.dispose();
+      mat.dispose();
+      hierba.dispose();
+    },
+  };
+}
+
 /** Arma el suelo vivo de la ciudad (una vez, al entrar a la ciudad). */
 export function construirSueloVivo(coarse: boolean): SueloVivo {
   const grupo = new THREE.Group();
