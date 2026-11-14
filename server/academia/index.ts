@@ -5,10 +5,16 @@
  */
 import type { BancoMateria, LeccionContenido, PreguntaObjetiva } from "./tipos";
 import { N1_SALVACION } from "./contenido/n1-salvacion";
+import { N1_ORACION } from "./contenido/n1-oracion";
+import { N1_BIBLIA } from "./contenido/n1-biblia";
+import { N1_ESPIRITU } from "./contenido/n1-espiritu";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
+import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
+import { BANCO_N1_BIBLIA } from "./bancos/n1-biblia";
+import { BANCO_N1_ESPIRITU } from "./bancos/n1-espiritu";
 
-const LECCIONES: LeccionContenido[] = [...N1_SALVACION];
-const BANCOS_LISTA: BancoMateria[] = [BANCO_N1_SALVACION];
+const LECCIONES: LeccionContenido[] = [...N1_SALVACION, ...N1_ORACION, ...N1_BIBLIA, ...N1_ESPIRITU];
+const BANCOS_LISTA: BancoMateria[] = [BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU];
 
 export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
 export const BANCOS = new Map(BANCOS_LISTA.map((b) => [b.materia, b]));
