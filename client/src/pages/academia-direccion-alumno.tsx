@@ -15,6 +15,7 @@ import type { AlumnoDetalle } from "@shared/academia-direccion";
 import { accionDocumento, corregirNombre, useDireccionAlumno, useEscritasAlumno } from "@/components/academia/api";
 import { TarjetaRevision } from "@/components/academia/revision";
 import { MentorAlumno } from "@/components/academia/mentores";
+import { useArea } from "@/components/academia/area";
 import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, ListaActividad, NivelesYCertificados, TablaAvance, fecha, hace } from "@/components/academia/seguimiento";
 
@@ -137,7 +138,7 @@ function Escritas({ id, propio }: { id: string; propio: boolean }) {
     <section className="space-y-3" data-testid="alumno-escritas">
       <h2 className="font-semibold flex items-center gap-2"><PenLine className="w-4 h-4 text-orange-600" /> Respuestas escritas</h2>
       {lista.length === 0 ? <p className="text-sm text-muted-foreground">Todavía no escribió en ningún examen.</p> : lista.map((it) => <TarjetaRevision key={it.id} item={it} puedeRevisar={!propio} conAlumno={false} />)}
-      {propio && lista.length > 0 && <p className="text-xs text-muted-foreground">Son tus propias respuestas: las revisa otra persona de la Dirección académica o un profesor.</p>}
+      {propio && lista.length > 0 && <p className="text-xs text-muted-foreground">Son tus propias respuestas: no las puedes revisar tú mismo. Vale la nota automática, salvo que las revise otro administrador.</p>}
     </section>
   );
 }
@@ -174,7 +175,7 @@ function Ficha({ d, propio }: { d: AlumnoDetalle; propio: boolean }) {
           </div>
         ))}
       </dl>
-      {!f && <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Los datos de contacto los ven la Dirección académica y la iglesia del alumno.</p>}
+      {!f && <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Los datos de contacto los ven la Administración de la academia y la iglesia del alumno.</p>}
       {f && <p className="text-xs text-muted-foreground mt-4">Ficha actualizada el {fecha(f.actualizada)}.</p>}
       {d.puede.documentos && f && !propio && <CorregirNombre d={d} />}
     </section>
@@ -184,6 +185,7 @@ function Ficha({ d, propio }: { d: AlumnoDetalle; propio: boolean }) {
 export default function AcademiaDireccionAlumno() {
   const { alumnoId } = useParams<{ alumnoId: string }>();
   const { user } = useAuth();
+  const area = useArea();
   const q = useDireccionAlumno(alumnoId);
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -194,7 +196,7 @@ export default function AcademiaDireccionAlumno() {
           {q.error?.status === 401 ? (
             <a href={loginUrl()}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>
           ) : (
-            <Link href="/academia/direccion"><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
+            <Link href={area.base}><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
           )}
         </div>
       </Layout>
@@ -206,7 +208,7 @@ export default function AcademiaDireccionAlumno() {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-4 pt-6 pb-16 space-y-6">
-        <Link href="/academia/direccion?tab=alumnos" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Panel de seguimiento</Link>
+        <Link href={`${area.base}?tab=alumnos`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Los alumnos</Link>
         <header className="flex items-start gap-4">
           {d.ficha?.foto && <img src={d.ficha.foto} alt={`Foto del carné de ${a.nombre}`} className="w-20 h-[100px] rounded-xl object-cover border border-orange-500/40 shrink-0" data-testid="alumno-foto" />}
           <div className="min-w-0">

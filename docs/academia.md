@@ -9,8 +9,15 @@ creyente (orar, creer en Jesús, lo básico) hasta formar obreros, maestros y pa
 - **Es académica, no un juego.** La estructura, la evaluación y los registros vienen de los institutos bíblicos y de las
   plataformas académicas. Del juego solo se toma la seguridad técnica de los exámenes: las preguntas viven en el
   servidor, llegan de a una, con reloj y con las opciones en otro orden.
-- **Todo se corrige solo.** No siempre habrá un profesor disponible. Quien tenga el cargo puede revisar y cambiar una
-  nota, siempre con un motivo.
+- **Todo se corrige solo.** No siempre habrá un profesor disponible. Solo la Administración de la academia puede
+  revisar y cambiar una nota, siempre con un motivo.
+- **Dos áreas separadas** (lo pidió Luis):
+  - **La academia** (`/academia`), donde se estudia: cada alumno ve solo lo suyo. El administrador también puede
+    estudiar como alumno, y su avance de alumno va aparte.
+  - **La administración de la academia**, desde el panel de administración de la web (`/admin/academia`): la maneja
+    **solo el administrador**. Los maestros, los líderes y los pastores de las iglesias aliadas entran desde su propio
+    panel (`/maestro/academia`, `/mi-iglesia/academia`) y **solo ven** la información de sus alumnos: no cambian notas,
+    contenido, documentos, mentores ni la apertura.
 - **Formación ministerial del ministerio, no un título universitario oficial.** En Texas, la THECB no regula los
   estudios solo religiosos, pero protege «college» y «university» en el nombre. Por eso nunca se usan Licenciatura,
   Maestría, Doctorado, Universidad ni Seminario.
@@ -60,6 +67,19 @@ Cada lección trata una sola idea y dura de 5 a 10 minutos. Tiene estas partes:
 5. **Para la vida:** una aplicación y una nota privada.
 6. **Repaso:** preguntas con la respuesta al instante. Sin el repaso respondido bien no se puede terminar la lección.
 
+**Primero se lee (que no se responda sin leer):** el repaso se abre recién cuando pasó el tiempo de lectura de la lección
+(`segundosDeLectura`: el 40 % de sus minutos, entre 1 y 3 minutos) y, si la lección tiene un video de YouTube, cuando se
+vieron de corrido sus primeros 2 minutos (o el video entero, si dura menos: `videoQuePide`).
+- El servidor guarda cuándo se abrió la lección (`academia_lecciones.abierta_at`) y cuánto video se vio (`video_seg`).
+  El reproductor (`client/src/components/academia/video-youtube.tsx`, con la API de YouTube) avisa cada 5 segundos lo
+  visto de corrido desde el principio; adelantar no suma, y el servidor nunca cuenta más video que el tiempo que pasó.
+- Mientras falte, la lección muestra cuánto queda con una cuenta regresiva, y `POST repaso` responde 409 con lo que falta
+  (`BloqueoRepaso`). La primera lección pública también lo pide; la vista de la Administración, no.
+
+**Las opciones del repaso** salen equilibradas: en cada bloque de 4 preguntas la respuesta correcta cae una vez en cada
+lugar (`lugaresDeLaBuena`, en `server/academia-orden.ts`, con su prueba), así nunca es «casi siempre la tercera». Los
+exámenes usan el mismo reparto.
+
 Además, cada materia tiene su **versículo de memoria**: primero se estudia y después se arma con fichas, sin mirarlo.
 
 ## 3. El sistema de evaluación
@@ -76,6 +96,9 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 | Versículo de memoria | Fichas en orden: 100 a la primera, 80 a la segunda y 60 como mínimo | El sistema |
 | Examen final | Parte A objetiva y Parte B escrita; la revisión completa se ve al terminar | El sistema (revisable) |
 | Examen integral del nivel | Con todas las materias del nivel aprobadas: 40 preguntas, 5 de cada materia del Nivel 1, y 2 escritas de materias distintas; se aprueba con 75 | El sistema (revisable) |
+| Examen de suficiencia | Para aprobar una materia sin cursarla: 25 preguntas de todas sus lecciones y 2 escritas, una sola vez, antes del examen final; pide 85 y 75 a la vez | El sistema (revisable) |
+| Prueba diagnóstica | 2 preguntas de cada materia con contenido, 45 segundos cada una, cada 30 días: solo sugiere por dónde empezar | El sistema |
+| Repaso del versículo | Vuelve a los 1, 3, 7 y 21 días de aprenderlo; al pasar el último queda dominado | El sistema |
 | Mini pruebas, escritos breves, práctica y proyecto | Desde las fases siguientes | Sistema, líder o 2 profesores |
 
 **El cierre del nivel** (`server/academia-nivel.ts`, página `/academia/nivel/:n`):
@@ -95,8 +118,8 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
   Al verificar se aceptan minúsculas, espacios y la O por el 0 (`normalizarCodigo`).
 - **El documento:** el mismo diseño del certificado de la Escuela, con el nombre del día en que se emitió, la nota o el
   promedio, «con honores» en el del nivel, las líneas de la Dirección académica y del Ministerio, el QR que lleva a la
-  verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Dirección académica; se
-  descarga en PDF o se imprime.
+  verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Administración; se
+  descarga en PDF o se imprime. Si la materia se aprobó por suficiencia, lo dice.
 - **La verificación pública** (sin cuenta, la abre el QR): válido o revocado, el nombre, el documento, el nivel y la
   fecha, **sin notas**. La casilla «Verificar» de Certificados también acepta estos códigos.
 - **Firmas:** por ahora, la línea de la Dirección académica y el sello del Ministerio; los nombres y las firmas los da
@@ -106,7 +129,7 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 `/academia/matricula` lleva a la misma página). Como en los sistemas académicos (Moodle, Canvas, Populi): una ficha de
 admisión con campos propios y, después, la matriculación en cada curso desde su página de presentación.
 - **Sin aprobación:** la inscripción en la academia y en cada materia queda aprobada al instante (lo pidió Luis). La
-  Dirección académica la sigue en su panel y recibe un aviso en la campana con cada inscripción (ver «Los avisos»).
+  Administración la sigue en su panel y recibe un aviso en la campana con cada inscripción (ver «Los avisos»).
 - **En la academia**, un asistente de cuatro pasos con barra de avance:
   1. Bienvenida: qué es la academia, cómo se estudia y cómo es la inscripción.
   2. Tus datos, la **ficha** (`academia_inscripciones`):
@@ -123,7 +146,7 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
   - quien pone su fecha de nacimiento debe tener 13 años o más (`EDAD_MINIMA`).
   La ficha sugiere lo que ya se sabe de la cuenta: el nombre repartido, el país, el teléfono y la iglesia.
 - **El nombre de los documentos** es el de la ficha (`nombreAcademico`). La primera ficha de quien ya tenía certificados
-  les pone ese nombre. Con un certificado emitido, el nombre queda fijo y lo corrige la Dirección académica; lo demás de
+  les pone ese nombre. Con un certificado emitido, el nombre queda fijo y lo corrige la Administración; lo demás de
   la ficha se corrige cuando se quiera.
 - **Quien se matriculó antes de la ficha** debe completarla para seguir guardando su avance (la página lo lleva directo
   a «Tus datos»).
@@ -140,8 +163,9 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
 - **Sin inscripción en la materia**, lo mismo: la primera lección y su repaso sí; las demás lecciones, completar, el
   versículo y el examen responden 409 `{materia: false}` (`inscritoEnMateriaDe`). Los exámenes ponen «inscribirte en la
   academia» o «inscribirte en esta materia» en lo que falta.
-- **Vista docente:** la Dirección académica y los profesores (`puedeRevisar`) leen todas las lecciones y el versículo
-  sin inscribirse. Pueden responder el repaso, pero no se guarda nada y no cuentan como alumnos.
+- **Vista de la Administración:** el administrador (`puedeRevisar`, solo `admin`) lee todas las lecciones y el
+  versículo sin inscribirse, para revisarlas. Puede responder el repaso, pero no se guarda nada. Si se inscribe en una
+  materia, la cursa como cualquier alumno y su avance se guarda.
 
 **La matrícula y el estatus** (`server/academia-matricula.ts`, páginas `/academia/carne` y `/academia/reglamento`):
 - **La matrícula** se da al inscribirse: un número correlativo `AAF-año-número` (secuencia `academia_matricula_seq`) y
@@ -155,11 +179,23 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
   del perfil o las iniciales. Se borra con la cuenta.
 - **El carné digital** lleva la foto (o las iniciales), el nombre, el número, la promoción, el estatus y un QR. El QR usa
   un código al azar (`carne_codigo`), no el número de matrícula, que es correlativo y dejaría recorrer los nombres. Se
-  verifica en la misma página de los certificados, con el estatus de hoy, y se descarga en PDF de tamaño tarjeta.
+  verifica en la misma página de los certificados, con el estatus de hoy.
+- **El diseño del carné** (`client/src/components/academia/carne-lienzo.ts`) se dibuja en un lienzo de 1012 × 638 (la
+  proporción de una tarjeta, 85,6 × 54 mm): fondo oscuro con el degradado del fuego, chispas, borde dorado, el logo del
+  Ministerio, la foto o las iniciales y el QR sobre blanco; el reverso, con el lema, el reglamento y cómo verificarlo.
+- **Las descargas no dependen de capturar la pantalla** (por eso no salen en blanco ni se congelan):
+  - «Descargar en PDF»: una hoja carta con el frente y el reverso a tamaño real de tarjeta y marcas de corte (jsPDF).
+  - «Descargar imagen»: el frente en PNG, para el teléfono.
+  - «Imprimir»: la misma hoja; el botón no se puede apretar dos veces seguidas.
+  - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`).
 - **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
 
-**El panel de seguimiento** (`server/academia-direccion.ts`, página `/academia/direccion`). Lo pidió Luis: quién está
-inscrito en cada materia, por dónde va y los reportes, en el área de reportes y de administración. Tiene 5 pestañas:
+**El panel de seguimiento** (`server/academia-direccion.ts`). Lo pidió Luis: quién está inscrito en cada materia, por
+dónde va y los reportes, en el área de reportes y de administración. Está en el área de quien mira (`area.ts`):
+`/admin/academia` para la Administración (con una tarjeta grande «Academia» en el panel de administración),
+`/maestro/academia` para el equipo y `/mi-iglesia/academia` para las iglesias aliadas; las rutas viejas
+`/academia/direccion/…` llevan al área que corresponde (`RedirigirPanelAcademia`). Arriba dice en qué área se está y si
+se puede cambiar algo o solo ver. Tiene estas pestañas:
 - **Resumen:**
   - los indicadores: inscritos, nuevos de la semana y del mes, activos, materias aprobadas y promedio;
   - la tabla de las materias, con inscritos, en curso, aprobadas, promedio y avance medio;
@@ -167,10 +203,11 @@ inscrito en cada materia, por dónde va y los reportes, en el área de reportes 
   - quiénes se detuvieron (con materias en curso y 14 días o más sin estudiar);
   - la actividad reciente.
 - **Alumnos:** la tabla con búsqueda y filtros (estatus, materia en curso, iglesia y país). Cada alumno abre su página
-  (`/academia/direccion/alumno/:id`) con su ficha y su foto, su avance en cada materia, sus niveles, sus certificados y su
+  (`<área>/alumno/:id`) con su ficha y su foto, su avance en cada materia, sus niveles, sus certificados y su
   actividad.
-- **Materias:** cada una abre su seguimiento (`/academia/direccion/materia/:id`): quiénes están inscritos y por dónde va
+- **Materias:** cada una abre su seguimiento (`<área>/materia/:id`): quiénes están inscritos y por dónde va
   cada uno (lecciones, versículo, examen y nota).
+- **Para revisar, Contenido e Historial:** solo para la Administración.
 - **Registro:** las inscripciones en la academia y en cada materia, las materias aprobadas y los niveles completos, con
   filtros.
 - **Roles y permisos:** la matriz, tal como la comprueba el servidor.
@@ -182,17 +219,23 @@ están en Reportes → «Academia» (se carga aparte), y Administración tiene e
 **Roles y permisos** (`shared/academia-permisos.ts`, con su prueba). Es una matriz de capacidades, como los roles de
 Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
 
-| Capacidad | Dirección académica (admin, director, staff_global) | Profesor (maestro_ministerio, obrero) | Iglesia aliada (admin_iglesia, maestro_iglesia) | Alumno |
+| Capacidad | Administración (admin) | Maestros y líderes, solo ver (director, staff_global, maestro_ministerio, obrero) | Pastores e iglesias aliadas, solo ver (admin_iglesia, maestro_iglesia) | Alumno |
 |---|---|---|---|---|
-| Entrar al panel | Todos | Todos | Los de su iglesia | — |
+| Entrar al seguimiento | Todos | Todos | Los de su iglesia | — |
 | Ver quién está inscrito y por dónde va | Todos | Todos | Los de su iglesia | Lo suyo |
 | Ver las notas y los exámenes | Todos | Todos | Los de su iglesia | Lo suyo |
 | Ver la ficha con el contacto | Todos | — | Los de su iglesia | Lo suyo |
 | Descargar los reportes | Todos | — | Los de su iglesia | — |
 | Recibir los avisos de inscripción | Todos | — | Los de su iglesia | — |
-| Revisar escritas, cambiar notas y responder pedidos de revisión | Todos | Todos | — | — |
+| Revisar escritas, cambiar notas y responder pedidos de revisión | Todos | — | — | — |
 | Revocar o restaurar documentos y corregir el nombre | Todos | — | — | — |
-| Abrir o cerrar la academia | Administración y Director | — | — | — |
+| Revisar el contenido, aprobar materias y la declaración de fe, retirar preguntas | Todos | — | — | — |
+| Elegir mentores | Todos | — | — | — |
+| Abrir o cerrar la academia | Todos | — | — | — |
+
+Solo el administrador maneja la academia: ni el Director del Ministerio, ni los maestros, ni los pastores cambian nada
+(lo pidió Luis). Una prueba lo vigila (`shared/academia-permisos.test.ts`). En la Escuela, cada maestro sigue manejando su
+propio curso (y puede asignarle materias de la academia, ver «Las asignaciones»).
 
 - «Los de su iglesia»: los alumnos cuya ficha eligió la iglesia aliada de la cuenta (`users.church_id`). Sin iglesia
   asignada no ve a nadie.
@@ -202,7 +245,7 @@ Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
 
 **Los avisos** (`avisarInscripcion`, en `server/academia-inscripcion.ts`):
 - Cada inscripción nueva (en la academia o en una materia) deja un aviso en la campana:
-  - a la Dirección académica (admin, director y staff_global);
+  - a la Administración (admin);
   - a quienes dirigen la iglesia aliada del alumno (admin_iglesia y maestro_iglesia de esa iglesia).
 - El aviso abre al alumno en el panel. Nadie recibe el aviso de su propia inscripción, e inscribirse dos veces no avisa
   dos veces.
@@ -210,8 +253,7 @@ Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
 
 **La revisión** (`server/academia-revision.ts`, fase A3). En el panel, la pestaña «Para revisar» (con su número) tiene:
 - **Los pedidos de revisión:** el alumno pide desde el resultado de su examen que se revise su último intento. Se pide una
-  vez por examen, dentro de `DIAS_APELACION` (7) días, con un mensaje. Llega un aviso a la Dirección académica y a los
-  profesores. Quien revisa ve el mensaje y las escritas de ese intento, cambia la nota si corresponde y responde; el
+  vez por examen, dentro de `DIAS_APELACION` (7) días, con un mensaje. Llega un aviso a la Administración. Quien revisa ve el mensaje y las escritas de ese intento, cambia la nota si corresponde y responde; el
   alumno recibe un aviso y ve la respuesta en su examen.
 - **Las escritas marcadas** por el corrector (nota dudosa, texto pegado, copia de la pregunta, lista de palabras o fuera
   de tiempo). Cada tarjeta muestra la pregunta, la respuesta, las ideas de la clave con su peso y si el corrector las
@@ -226,33 +268,33 @@ Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
    - si pasa a aprobada, recibe su certificado;
    - si deja de estarlo, vuelve a «en curso» y su certificado se revoca solo, con el motivo (`PREFIJO_AUTO`).
    - Un certificado que revocó una corrección de nota vuelve a valer si la nota vuelve a alcanzar; uno que revocó la
-     Dirección a mano, no.
+     Administración a mano, no.
 4. El nivel: se completa si ya cumple todo, o se reabre (con su certificado revocado) si dejó de cumplir.
 
 El resultado que ve el alumno se actualiza con la nota nueva y el motivo. Los intentos de antes del registro de intentos
 se recalculan con su último resultado guardado, si es ese intento; si no, la nota de la escrita cambia y la del examen no.
 
 **Las reglas de la revisión:**
-- Nadie revisa lo suyo: sus respuestas, su pedido de revisión, sus documentos o su nombre (lo hace otra persona).
+- Nadie revisa lo suyo: sus respuestas, su pedido de revisión, sus documentos o su nombre (lo hace otra persona). Si el
+  único administrador también estudia, lo suyo queda con la nota automática.
 - Los documentos se revocan o se vuelven a dar por válidos con un motivo, y el nombre se corrige en la ficha y en los
   documentos vigentes; el alumno recibe un aviso de cada cosa.
-- La Administración y el Director abren la academia desde el resumen del panel, con una confirmación que explica qué
+- Solo la Administración abre la academia, desde el resumen del panel, con una confirmación que explica qué
   pasa, y la pueden volver a poner en vista previa.
 - **El historial** (pestaña «Historial»: `audit_log` con `entity_type` «academia») guarda cada cambio de nota, cada
   pedido respondido, cada documento revocado o restaurado, cada nombre corregido, cada observación y aprobación del
   contenido, cada pregunta retirada o vuelta a usar y cada apertura, con quién, a quién, cuándo y por qué.
 
 **La revisión del contenido** (`server/academia-calidad.ts`, pestaña «Contenido» del panel y página
-`/academia/direccion/contenido/:materiaId`). Es el filtro doctrinal: Luis o un pastor que él nombre lee cada materia
-antes de abrirla.
+`/admin/academia/contenido/:materiaId`). Es el filtro doctrinal: el administrador lee cada materia antes de abrirla y
+la aprueba **como administrador**, no como alumno (la pantalla lo dice).
 - **La lista:** cada materia con contenido, su estado en la revisión doctrinal (aprobada, por revisar o «cambió
   después de aprobarla»), sus observaciones abiertas, las preguntas que el análisis marca y las retiradas del banco.
 - **La materia:** sus lecciones (se leen en el lector, como las ve el alumno), el banco del examen con la respuesta, la
   explicación y la cita de cada pregunta, las escritas con su clave y su respuesta modelo, y el repaso de cada lección.
-- **Las observaciones:** sobre toda la materia o sobre una lección. La Dirección académica recibe un aviso en la
-  campana. La resuelve quien la dejó o la Dirección académica, contando qué se hizo (qué se corrigió o por qué no hace
-  falta cambiarlo); si la resuelve otra persona, quien la dejó recibe la respuesta en un aviso.
-- **La aprobación:** la da la Dirección académica, sin observaciones abiertas, con notas opcionales. Guarda la
+- **Las observaciones:** sobre toda la materia o sobre una lección. La resuelve el administrador, contando qué se hizo
+  (qué se corrigió o por qué no hace falta cambiarlo).
+- **La aprobación:** la da el administrador, sin observaciones abiertas, con notas opcionales. Guarda la
   **huella** del contenido (`huellaDe`, en `server/academia-banco.ts`: la ficha de la materia, sus lecciones y su
   banco, sin contar «disponible»). Si después cambia el contenido, la aprobación deja de estar vigente y hay que
   revisarla otra vez. Se puede quitar con un motivo.
@@ -273,7 +315,7 @@ del examen integral de su nivel (`academia_intentos`, que guarda en cada respues
 - Con menos de 8 intentos de una pregunta (5 respuestas de una escrita) no se saca ninguna conclusión: «pocos datos».
 - Las que hay que mirar salen primero, de lo más grave a lo menos (`gravedad`).
 
-**Retirar una pregunta del banco** (`academia_preguntas_retiradas`): la Dirección académica la retira con un motivo y
+**Retirar una pregunta del banco** (`academia_preguntas_retiradas`): el administrador la retira con un motivo y
 deja de salir en los intentos nuevos (del final y del integral); las notas ya dadas no cambian. Se vuelve a usar con un
 motivo. **El banco nunca queda corto** (`porQueNoSeRetira`, con su prueba): el final queda con el doble de las preguntas
 del examen y cada lección con más de las que el examen saca de ella; las escritas, con el doble de las que pide el
@@ -296,12 +338,12 @@ Las del repaso no se retiran: se corrigen en el contenido.
   falta se ven al entrar.
 
 **Los mentores** (`server/academia-mentores.ts`, capacidad «mentores»):
-- La Dirección académica elige el mentor de cualquier alumno, y quienes dirigen una iglesia aliada, el de sus alumnos
-  (con alguien de su iglesia), desde la página del alumno en el panel, buscando por nombre o usuario. Se cambia o se
+- La Administración elige el mentor de cualquier alumno, desde la página del alumno en el panel, buscando por nombre o
+  usuario. Se cambia o se
   quita. El mentor y el alumno reciben un aviso en la campana.
 - El mentor ve en «Mis acompañados» (`/academia/acompanados`, y una tarjeta en la portada) el estatus, las lecciones,
   las materias aprobadas y las que tiene en curso de cada persona que acompaña. **Sin notas ni datos de contacto**: el
-  aviso de privacidad de la inscripción dice que esos los ven solo la Dirección y su iglesia.
+  aviso de privacidad de la inscripción dice que esos los ven solo la Administración y su iglesia.
 - **Se detuvo** quien tiene materias en curso y no estudia hace `DIAS_DETENIDO_MENTOR` (7) días o más: sale primero y
   marcado. Se calcula al leerlo.
 - El alumno ve a su mentor en su expediente. Si se borra la cuenta del mentor, sus acompañados quedan sin mentor.
@@ -367,15 +409,37 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   - La materia se aprueba con 70 de nota y el examen aprobado.
 
 **Equivalencias (fase A4):**
-- La prueba diagnóstica solo sugiere por dónde empezar.
-- El **examen de suficiencia** es la única manera de saltar una materia:
-  - 25 preguntas de todas las lecciones, 2 escritas y el versículo;
-  - se aprueba con 85 en la parte objetiva y 75 en la escrita;
-  - hay **una sola oportunidad** por materia.
-- Topes:
-  - Niveles 1 y 2: el examen integral sigue siendo obligatorio.
-  - Niveles 3 a 5: como máximo la mitad de las materias por suficiencia o convalidación.
-  - La práctica, el sermón y el proyecto nunca se convalidan.
+- **El examen de suficiencia** (`server/academia-suficiencia.ts`, página `/academia/suficiencia/:materiaId`) es la única
+  manera de aprobar una materia sin cursarla. Usa el mismo motor que el final (`evaluacionSuficiencia`):
+  - Pide estar inscrito en la academia y en la materia, el nivel anterior completo y el versículo de memoria aprendido.
+  - 25 preguntas del banco del final, repartidas por todas las lecciones, y 2 escritas (`medidaSuficiencia`).
+  - Se aprueba con las dos partes a la vez: 85 la objetiva y 75 la escrita (`apruebaSuficiencia`).
+  - **Una sola oportunidad** por materia, y solo si todavía no se dio su examen final (`ExamenEstado.cerrado` dice por
+    qué no se puede). Si no aprueba, la cursa; no hay espera.
+  - Aprobada, la materia queda con `via = 'suficiencia'` y la nota del examen, y su certificado lo dice. El resultado no
+    muestra las preguntas con su respuesta: salen del banco del final, que se da si no aprueba.
+  - La página de la materia la ofrece mientras corresponde (`MateriaDetalle.suficiencia`).
+  - Topes: en los Niveles 1 y 2 se pueden aprobar todas así (el examen integral del nivel se da igual); en los
+    Niveles 3 a 5, como máximo la mitad (`topeSuficiencia`). La práctica, el sermón y el proyecto nunca se convalidan.
+  - La revisión de sus escritas recalcula como en el final (`reconsiderarSuficiencia`).
+- **La prueba diagnóstica** (`server/academia-diagnostico.ts`, páginas `/academia/diagnostico` y
+  `/academia/diagnostico/prueba`): 2 preguntas de cada materia con contenido, 45 segundos cada una, sin escritas. **No
+  aprueba nada ni cambia el avance:** guarda el resultado por materia (`academia_diagnosticos`) y sugiere el nivel que
+  le toca, por qué materia empezar y cuáles podría aprobar por suficiencia (las que respondió todas bien:
+  `sugerenciaDiagnostico`, con su prueba). Se repite cada 30 días; la sugerencia se recalcula al leerla.
+- **El repaso espaciado del versículo** (`server/academia-versiculos.ts`, página `/academia/repaso`): cada versículo
+  aprendido vuelve a los 1, 3, 7 y 21 días (`siguienteRepaso`, con su prueba). Se repasa armando sus fichas en orden;
+  bien, pasa a la caja siguiente; mal, vuelve a la primera y a mañana (y se muestra el texto). Al pasar el de los 21
+  días queda dominado (`dominado_at`). No cambia la nota de la materia: el puntaje del versículo es el de cuando se
+  aprendió. La portada avisa cuántos tocan hoy.
+- **La declaración de fe** (`shared/academia-declaracion.ts`, página `/academia/declaracion-de-fe`): 17 artículos con
+  sus citas (RV1960), escritos con la bibliografía pentecostal (Pearlman, Duffield y Van Cleave, Horton). Cinco artículos
+  llevan `aConfirmar`, los puntos en que las iglesias pentecostales difieren: la perseverancia (6), las lenguas como
+  señal inicial (9), la sanidad en la expiación (11), el ministerio de la mujer (13) y el rapto y el milenio (16).
+  - La aprueba el administrador en la pestaña «Contenido» (`POST direccion/declaracion/aprobar`), con la huella del
+    texto (`huellaDeclaracion`): si el texto cambia, hay que aprobarla otra vez.
+  - Mientras no esté aprobada, la página la muestra como **borrador** con los puntos a confirmar. Se enlaza desde la
+    portada y el reglamento.
 
 ## 4. El contenido: normas para que nada sea inventado ni errado
 
@@ -385,7 +449,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - Fechas, nombres y datos de historia se comprueban en dos fuentes serias.
    - Si la Biblia no dice algo, se dice así.
 4. **Doctrina:**
-   - Se sigue la declaración de fe del ministerio, que hay que aprobar antes del Nivel 2.
+   - Se sigue la declaración de fe del ministerio (`shared/academia-declaracion.ts`), que hay que aprobar antes del
+     Nivel 2.
    - Donde los evangélicos difieren, se presenta con respeto y se marca la posición del ministerio.
 5. **Citas:** las de la Biblia salen de la RV1960 de la web. Las frases entre comillas deben ser literales.
 6. **Bibliografía:** cada materia cita obras que usan los institutos bíblicos hispanos, y cada título (autor y
@@ -413,7 +478,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - Cada video se revisa antes de usarlo.
 8. **Control de calidad:**
    - Automático: ids únicos, opciones distintas, explicación y cita, banco de 3 veces el examen, cada objetivo medido.
-   - Revisión doctrinal (Luis o un pastor que él nombre), en la pestaña «Contenido» del panel.
+   - Revisión doctrinal (el administrador), en la pestaña «Contenido» del panel.
    - Piloto: Luis cursa la materia completa.
    - Análisis de las preguntas cuando ya hay alumnos, en la misma pestaña.
 
@@ -472,6 +537,12 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   `client/src/components/academia/asignaciones.tsx` (la pestaña del aula y las tarjetas) y `mentores.tsx`; la página
   `client/src/pages/academia-acompanados.tsx`.
 - `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
+- `server/academia-suficiencia.ts`, `server/academia-diagnostico.ts` y `server/academia-versiculos.ts`: la suficiencia,
+  la prueba diagnóstica y el repaso espaciado (fase A4). `server/academia-orden.ts`: el reparto de la respuesta
+  correcta en el repaso y los exámenes, con su prueba. `shared/academia-declaracion.ts`: la declaración de fe.
+- `client/src/components/academia/area.ts` y `entrada-panel.tsx`: el área de quien mira el panel y la tarjeta
+  «Academia» de los paneles. `video-youtube.tsx`: el reproductor que cuenta lo visto. `carne-lienzo.ts` y
+  `expediente-pdf.ts`: el carné dibujado y los PDF.
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
 - `client/src/lib/academia-visible.ts` y `client/src/components/academia/pestanas-clases.tsx`: si la academia se ve y
@@ -496,7 +567,11 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `academia_intentos` | Cada intento cerrado de un examen: la parte objetiva, la escrita, la nota (y la del corrector), los aciertos y cada respuesta objetiva (para el análisis de preguntas) |
 | `academia_apelaciones` | Los pedidos de revisión: el examen y el intento, el mensaje del alumno, la respuesta, quién respondió y cuándo (uno por examen) |
 | `academia_inscripciones` | La ficha de inscripción: nombres, apellidos, país, ciudad, teléfono, nacimiento, iglesia aliada u otra, pastor, tiempo en la fe, bautismo, ministerio, cómo conoció la academia, qué espera aprender, la foto del carné (`foto_url`) y sus fechas |
-| `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
+| `academia_versiculos` | Intentos, fallos, puntaje, la caja del repaso espaciado, cuándo vuelve, cuántos repasos y cuándo quedó dominado |
+| `academia_diagnosticos` | Cada prueba diagnóstica: la fecha, los aciertos por materia y el total |
+
+`academia_lecciones` también guarda cuándo se abrió la lección (`abierta_at`) y cuánto video se vio de corrido
+(`video_inicio`, `video_seg`), para abrir el repaso.
 
 Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la cuenta de quien la dejó, queda sin nombre):
 
@@ -504,7 +579,7 @@ Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la 
 |---|---|
 | `academia_preguntas_retiradas` | Las preguntas retiradas del banco: el id, el motivo, quién y cuándo |
 | `academia_contenido_notas` | Las observaciones de la revisión: la materia, la lección (o ninguna), el texto, quién, cuándo y cómo se resolvió |
-| `academia_contenido_aprobaciones` | La aprobación doctrinal de cada materia: quién, cuándo, las notas y la huella del contenido aprobado |
+| `academia_contenido_aprobaciones` | La aprobación doctrinal de cada materia (y de la declaración de fe, con el id `declaracion-de-fe`): quién, cuándo, las notas y la huella del contenido aprobado |
 | `academia_asignaciones` | Las materias asignadas a un curso de la Escuela: el curso (se borran con él), la materia, si es obligatoria, la fecha límite, las indicaciones y quién la asignó |
 
 El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
@@ -516,7 +591,8 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET estado` | Catálogo con el avance del alumno y «Continuar» |
 | `GET materia/:materiaId` | La materia con su sílabo |
 | `GET leccion/:leccionId` | La lección, con los versículos ya resueltos |
-| `POST repaso` | Una respuesta del repaso: `{leccionId, preguntaId, opcion}` |
+| `POST repaso` | Una respuesta del repaso: `{leccionId, preguntaId, opcion}` (409 con lo que falta si todavía no se leyó la lección) |
+| `POST leccion/:leccionId/video` | Lo visto de corrido del video: `{segundos}` |
 | `POST leccion/:leccionId/completar` y `POST leccion/:leccionId/reflexion` | Terminar la lección y guardar la nota privada |
 | `GET versiculo/:materiaId` | El texto; con `?practica=1`, las fichas sin el texto |
 | `POST versiculo/:materiaId` | El orden de las fichas: `{orden}` |
@@ -527,7 +603,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `POST nivel/:n/pacto` | Aceptar el pacto: `{acepto: true}`, con el integral aprobado |
 | `GET integral/:nivel` y `POST integral/:nivel/empezar`, `/paso`, `/respuesta` y `/escrita` | El examen integral: las mismas rutas que el final |
 | `GET certificados` | Mis documentos (emite los que falten) |
-| `GET certificado/:codigo` | Un documento completo, con su QR: para su dueño y la Dirección académica |
+| `GET certificado/:codigo` | Un documento completo, con su QR: para su dueño y la Administración |
 | `GET verificar/:codigo` | La verificación pública (certificado o carné), sin cuenta y sin notas |
 | `GET abierta` | Si la academia ya está abierta para todos (el menú y la barra de la app) |
 | `GET inscripcion` | Mi ficha, mi matrícula, las iglesias aliadas, lo que se sabe de mi cuenta y si mi nombre ya es fijo |
@@ -554,6 +630,13 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET direccion/personas?q=` y `POST direccion/alumno/:alumnoId/mentor` | Buscar a quién elegir como mentor y elegirlo `{mentorId}` (o quitarlo con `null`) |
 | `GET acompanados` | Mis acompañados como mentor: su avance, sin notas ni contacto |
 | `POST examen/:materiaId/apelacion` y `POST integral/:nivel/apelacion` | El alumno pide la revisión de su último intento: `{mensaje}` |
+| `GET suficiencia/:materiaId` y `POST suficiencia/:materiaId/empezar`, `/paso`, `/respuesta`, `/escrita` y `/apelacion` | El examen de suficiencia: las mismas rutas que el final |
+| `GET diagnostico` | Mi última prueba diagnóstica, con la sugerencia de hoy, y cuántas preguntas tiene |
+| `GET diagnostico/prueba` y `POST diagnostico/prueba/empezar`, `/paso` y `/respuesta` | La prueba diagnóstica |
+| `GET versiculos/repaso` | Mis versículos con su repaso: cuáles tocan hoy y cuándo vuelven los demás |
+| `GET versiculos/repaso/:materiaId` y `POST versiculos/repaso/:materiaId` | Las fichas de un versículo para repasarlo y el orden: `{orden}` |
+| `GET declaracion` | Si la declaración de fe está aprobada |
+| `POST direccion/declaracion/aprobar` y `/desaprobar` | Aprobar la declaración de fe `{notas}` o quitar la aprobación `{motivo}` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
@@ -563,7 +646,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 
 **Pruebas:**
 - Locales: el corrector, la elección de preguntas y el catálogo
-  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts server/academia-analisis.test.ts server/academia-banco.test.ts shared/academia-escuela.test.ts`).
+  (`npx tsx --test server/academia*.test.ts shared/academia*.test.ts`).
 - De la API: `academia_api.py` en el scratchpad de la sesión de la academia. Usa el servidor «mi-web-academia» en el
   puerto 5082 y PGlite en memoria en el 55442.
 - En el navegador usar 127.0.0.4; las otras sesiones usan localhost y de 127.0.0.1 a 127.0.0.3.
@@ -575,7 +658,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
 | A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Hecho: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura, el historial, el análisis de preguntas, retirar preguntas del banco, la revisión doctrinal del contenido, las asignaciones a los cursos de la Escuela (con sus columnas en la planilla) y los mentores |
-| A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
+| A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | Sigue: la suficiencia, la prueba diagnóstica, el repaso espaciado del versículo y la declaración de fe (por aprobar) hechos, con las dos áreas separadas (solo el administrador maneja la academia), la lectura antes del repaso, las opciones equilibradas, el carné nuevo y los PDF; faltan las mini pruebas, los escritos breves y las 9 materias |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
 | A6 · Niveles 4 y 5 y primeras especialidades | Proyecto final y defensa | |
 | A7 · Más especialidades y extras | Avisos (con permiso), lectura sin conexión, ceremonia y segunda opinión con IA (con permiso, por su costo) | |

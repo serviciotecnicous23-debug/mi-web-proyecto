@@ -312,7 +312,7 @@ export function sugerenciaDiagnostico(porMateria: DiagnosticoMateria[], nivelesC
   const nombre = `el Nivel ${nivel.n} · ${nivel.nombre}`;
   let texto: string;
   if (!empezar) {
-    texto = `Respondiste bien todas las preguntas de ${nombre}. Puedes aprobar sus materias por suficiencia: una sola vez por materia, con 25 preguntas y 2 respuestas escritas (se aprueba con ${SUFICIENCIA.apruebaObjetiva} y ${SUFICIENCIA.apruebaEscrita}). El examen integral del nivel se da igual.`;
+    texto = `Respondiste bien todas las preguntas de ${nombre}. Puedes aprobar sus materias por suficiencia: una sola vez por materia, con ${SUFICIENCIA.objetivas} preguntas y ${SUFICIENCIA.escritas} respuestas escritas (se aprueba con ${SUFICIENCIA.apruebaObjetiva} y ${SUFICIENCIA.apruebaEscrita}). El examen integral del nivel se da igual.`;
   } else if (domina.length) {
     texto = `Empieza por «${empezar.titulo}». Parece que ya conoces ${listaY(domina.map((m) => `«${m.titulo}»`))}: si quieres, da su examen de suficiencia; si no, cúrsala como las demás.`;
   } else {
@@ -362,8 +362,8 @@ export const DIAS_APELACION = 7;
 
 /** Mientras la academia está en vista previa, la ven estos roles (shared/roles.ts). */
 export { ROLES_VISTA_PREVIA, veVistaPrevia } from "./academia-acceso";
-/** Quienes pueden revisar y cambiar notas (Dirección académica y profesores). */
-export const ROLES_REVISION = ["admin", "director", "staff_global", "maestro_ministerio", "obrero"] as const;
+/** Quienes administran la academia: revisan y cambian notas y leen las lecciones sin inscribirse (solo la Administración). */
+export const ROLES_REVISION = ["admin"] as const;
 export function puedeRevisar(role: string | null | undefined): boolean {
   return !!role && (ROLES_REVISION as readonly string[]).includes(role);
 }
@@ -1173,10 +1173,14 @@ export type MateriaDetalle = {
   inscrita: string | null;
   /** Lo que falta para poder inscribirse (el nivel anterior). */
   requisitos: string[];
-  /** Dirección académica o profesor: puede leer las lecciones sin inscribirse (no se guarda su avance). */
+  /** La Administración: puede leer las lecciones sin inscribirse (no se guarda su avance). */
   docente: boolean;
   vistaPrevia: boolean;
   conSesion: boolean;
+  /** Cómo se aprobó (null mientras no está aprobada). */
+  via: "cursada" | "suficiencia" | "convalidada" | null;
+  /** El examen de suficiencia, mientras se puede ofrecer: antes del examen final y sin haberlo dado (null si no). */
+  suficiencia: { enCurso: boolean } | null;
 };
 
 export type BloqueVista =
@@ -1190,6 +1194,29 @@ export type BloqueVista =
   | { t: "imagen"; src: string; alt: string; pie?: string };
 
 export type PreguntaVista = { id: string; texto: string; opciones: string[] };
+
+/**
+ * Lo mínimo para abrir el repaso de una lección (que no se responda sin leerla): leer el 40 % de sus minutos (entre 1
+ * y 3 minutos) y, si tiene un video de YouTube, ver de corrido sus primeros 2 minutos (o entero, si dura menos). El
+ * servidor cuenta el tiempo desde que se abrió la lección y el del video, que nunca suma más que el tiempo que pasó.
+ */
+export const LECTURA = { parte: 0.4, minimo: 60, maximo: 180, video: 120 } as const;
+export function segundosDeLectura(minutos: number): number {
+  return Math.round(Math.min(LECTURA.maximo, Math.max(LECTURA.minimo, minutos * 60 * LECTURA.parte)));
+}
+/** El id de un video de YouTube (o null si no es de YouTube). */
+export function idYouTube(url: string): string | null {
+  const m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/.exec(url);
+  return m ? m[1] : null;
+}
+/** Cuánto video pide una lección: el primero de YouTube, 2 minutos o lo que dure (null si no tiene). */
+export function videoQuePide(bloques: readonly { t: string; url?: string; minutos?: number }[]): number | null {
+  const v = bloques.find((b) => b.t === "video" && !!b.url && !!idYouTube(b.url));
+  if (!v) return null;
+  return v.minutos && v.minutos * 60 < LECTURA.video ? Math.round(v.minutos * 60) : LECTURA.video;
+}
+/** Lo que falta (en segundos) para abrir el repaso: de lectura y de video (null si la lección no tiene video). */
+export type BloqueoRepaso = { lectura: number; video: number | null; videoPide: number | null };
 
 export type LeccionVista = {
   materia: { id: string; titulo: string };
@@ -1209,8 +1236,10 @@ export type LeccionVista = {
   matriculado: boolean;
   /** Inscrito en la materia: puede completar la lección y guardar su avance. */
   inscrita: boolean;
-  /** La lee la Dirección académica o un profesor sin estar inscrito: no se guarda nada. */
+  /** La lee la Administración sin estar inscrita en la materia: no se guarda nada. */
   docente: boolean;
+  /** Lo que falta para abrir el repaso (null: ya está abierto, o es la vista docente). */
+  bloqueo: BloqueoRepaso | null;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };
@@ -1356,7 +1385,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
         "Para estudiar se necesita una cuenta en la web e inscribirse en la academia: llenar la ficha de inscripción y aceptar este reglamento y el código de honor. La inscripción es gratuita y queda aprobada al instante.",
         "La inscripción da un número de matrícula personal (AAF-año-número) y una promoción, que es el año en que ingresaste. El carné digital la acredita.",
         "Cada materia tiene su propia inscripción, desde su página, donde se ve lo que se aprende, cómo es y cómo se evalúa. La primera lección de cada materia del Nivel 1 se puede leer sin inscribirse; las demás, el versículo de memoria y el examen piden estar inscrito.",
-        "Tus certificados llevan el nombre de tu ficha. Una vez emitido un certificado, ese nombre solo lo corrige la Dirección académica.",
+        "Tus certificados llevan el nombre de tu ficha. Una vez emitido un certificado, ese nombre solo lo corrige la Administración de la academia.",
         "La inscripción es personal: cada alumno estudia con su propia cuenta.",
       ],
     },
@@ -1382,14 +1411,14 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       titulo: "5. El código de honor",
       puntos: [
         CODIGO_HONOR,
-        "Las respuestas pegadas o dudosas quedan marcadas para que las revise la Dirección académica.",
+        "Las respuestas pegadas o dudosas quedan marcadas para que las revise la Administración de la academia.",
         "Hacer trampa, copiar o dar el examen por otra persona anula el examen y puede anular los documentos obtenidos.",
       ],
     },
     {
       titulo: "6. La revisión de las notas",
       puntos: [
-        "Todo lo corrige el sistema. La Dirección académica puede revisar cualquier respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
+        "Todo lo corrige el sistema. Solo la Administración de la academia puede revisar una respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
         `Si no estás de acuerdo con una nota, puedes pedir que se revise, una vez por examen y dentro de los ${DIAS_APELACION} días.`,
       ],
     },
@@ -1409,14 +1438,14 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       puntos: [
         "Cada materia aprobada y cada nivel completo dan un certificado con un código y un QR. Cualquiera puede verificarlos en la web, sin ver las notas.",
         "El carné digital acredita tu matrícula y también se verifica con su QR.",
-        "La Dirección académica puede corregir o revocar un documento, siempre con un motivo.",
+        "Solo la Administración de la academia puede corregir o revocar un documento, siempre con un motivo.",
       ],
     },
     {
       titulo: "9. La privacidad",
       puntos: [
-        "Tus notas las ven solo tú, tus profesores y la Dirección académica. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
-        "Los datos de tu ficha (nombre, país, iglesia y contacto) los ven la Dirección académica y, si elegiste una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus documentos: no se publican ni se comparten con nadie más.",
+        "Tus notas las ven tú y la Administración de la academia; los maestros del ministerio y los líderes de tu iglesia aliada pueden consultarlas, sin cambiar nada. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
+        "Los datos de tu ficha (nombre, país, iglesia y contacto) los ven la Administración de la academia y, si elegiste una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus documentos: no se publican ni se comparten con nadie más.",
         "Puedes corregir los datos de tu ficha cuando quieras, desde tu inscripción.",
         "Si borras tu cuenta, se borra todo tu avance en la academia, también tu ficha, y tus documentos dejan de verificarse.",
       ],

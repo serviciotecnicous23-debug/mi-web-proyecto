@@ -26,6 +26,7 @@ import { BANCOS, escritaPorId, preguntaPorId } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
 import { corregirEscrita, type ClaveEscrita } from "./academia-correccion";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
+import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
 import { elegirEscritas, elegirFinal } from "./academia-eleccion";
 import {
   alumnoDe, asegurarAlumno, asegurarMateria, avisarA, claveFinal, contextoExamen, cuentasConRoles, enFila, estaInscrito, frenar, inscritoDe, marcarEstudio,
@@ -47,6 +48,8 @@ type Curso = {
   escritaEnviada: boolean;
   notasEscritas: NotaB[];
   semilla: number;
+  /** El lugar de la buena en cada pregunta (los intentos nuevos: cada 4 preguntas usan las 4 letras). */
+  lugares?: number[];
 };
 export type FilaPrueba = {
   intentos: number;
@@ -99,11 +102,13 @@ export type Evaluacion = {
    * preguntas salen del banco del examen final, que se da después.
    */
   revisionCompleta?: boolean;
+  /** Si se puede pedir la revisión de un intento (por defecto sí). La diagnóstica no: no tiene nota. */
+  apelable?: boolean;
 };
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
-function leerCurso(v: unknown): Curso | null {
+export function leerCurso(v: unknown): Curso | null {
   if (!v || typeof v !== "object") return null;
   const c = v as Partial<Curso>;
   if (!Array.isArray(c.ids) || typeof c.i !== "number") return null;
@@ -111,6 +116,7 @@ function leerCurso(v: unknown): Curso | null {
     ids: lista(c.ids), i: c.i, enviada: c.enviada === true, respuestas: Array.isArray(c.respuestas) ? c.respuestas : [],
     escritas: lista(c.escritas), e: Number(c.e) || 0, escritaEnviada: c.escritaEnviada === true,
     notasEscritas: Array.isArray(c.notasEscritas) ? c.notasEscritas : [], semilla: Number(c.semilla) || 1,
+    lugares: Array.isArray(c.lugares) ? c.lugares.map((x) => Number(x) || 0) : undefined,
   };
 }
 
@@ -132,6 +138,8 @@ async function guardarCurso(userId: number, clave: string, c: Curso, reloj: "aho
 }
 
 function opcionesDe(p: PreguntaObjetiva, c: Curso, lugar: number): string[] {
+  // los intentos de antes de repartir la buena siguen con su orden de siempre
+  if (c.lugares) return opcionesConBuenaEn(p.id, p.correcta, p.falsas, c.semilla, c.lugares[lugar] ?? 0);
   return opcionesDeExamen(p.id, p.correcta, p.falsas, c.semilla, lugar);
 }
 
@@ -383,7 +391,8 @@ async function apelacionDe(userId: number, clave: string): Promise<ApelacionVist
 }
 
 /** Si se puede pedir la revisión del último intento: una vez por examen, dentro de DIAS_APELACION días. */
-async function apelableDe(userId: number, clave: string): Promise<Apelable & { intento: number | null }> {
+async function apelableDe(userId: number, clave: string, ev?: Evaluacion): Promise<Apelable & { intento: number | null }> {
+  if (ev?.apelable === false) return { puede: false, hasta: null, porque: "Esta prueba no tiene nota: no se pide su revisión.", intento: null };
   const [{ rows: ap }, { rows: p }, { rows: it }] = await Promise.all([
     pool.query(`SELECT 1 FROM academia_apelaciones WHERE user_id = $1 AND clave = $2`, [userId, clave]),
     pool.query(`SELECT intentos, resultado IS NOT NULL AS hay, curso IS NOT NULL AS en_curso, updated_at FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, clave]),
@@ -427,7 +436,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
       const [{ rows }, apelacion, ap] = await Promise.all([
         pool.query(`SELECT resultado FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [a.userId, ev.clave]),
         apelacionDe(a.userId, ev.clave),
-        apelableDe(a.userId, ev.clave),
+        apelableDe(a.userId, ev.clave, ev),
       ]);
       const { intento: _i, ...apelable } = ap;
       res.setHeader("Cache-Control", "no-store");
@@ -461,8 +470,10 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
         // las preguntas que retiró la Dirección académica (por el análisis de preguntas) ya no salen
         const retiradas = await preguntasRetiradas();
         const semilla = (Math.imul(a.userId, 7919) + (Number(f.intentos || 0) + 1) * 104729 + numeroDe(ev.clave.replace(/:final$/, ""))) | 0;
+        const ids = elegirFinal(ev.final.filter((p) => !retiradas.has(p.id)), vistas, ev.medida.objetivas, semilla, ev.grupo);
         const c: Curso = {
-          ids: elegirFinal(ev.final.filter((p) => !retiradas.has(p.id)), vistas, ev.medida.objetivas, semilla, ev.grupo),
+          ids,
+          lugares: lugaresDeLaBuena(ids.length, semilla),
           i: 0,
           enviada: false,
           respuestas: [],
@@ -585,7 +596,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
       if (mensaje.length < 15) return res.status(400).json({ message: "Cuéntanos en unas palabras qué quieres que se revise (al menos 15 letras)." });
       if (frenar(`aap:${a.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
       const out = await enFila(a.userId, async () => {
-        const ap = await apelableDe(a.userId, ev.clave);
+        const ap = await apelableDe(a.userId, ev.clave, ev);
         if (!ap.puede || !ap.intento) return { error: 409, message: ap.porque ?? "No se puede pedir la revisión de este examen." };
         const ins = await pool.query(
           `INSERT INTO academia_apelaciones (user_id, clave, intento, mensaje) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, clave) DO NOTHING RETURNING id`,
@@ -596,12 +607,13 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
       });
       if ("error" in out) return res.status(out.error as number).json({ message: out.message });
       const ctx = contextoExamen(ev.clave);
-      const revisores = await cuentasConRoles([...ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles, ...ROLES_ACADEMIA.find((r) => r.id === "profesor")!.roles], a.userId);
+      // solo la Administración revisa (los maestros y líderes solo ven el seguimiento)
+      const revisores = await cuentasConRoles(ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles, a.userId);
       void avisarA(
         revisores,
         "Pedido de revisión de un examen",
         `${await nombreAcademico(a.userId)} pidió que se revise ${ctx?.enFrase ?? "su examen"}: «${mensaje.slice(0, 160)}${mensaje.length > 160 ? "…" : ""}»`,
-        "/academia/direccion?tab=revisar",
+        "/admin/academia?tab=revisar",
       ).catch((err) => console.error("[academia] aviso de apelación:", err));
       res.setHeader("Cache-Control", "no-store");
       res.json({ apelacion: out.ok });

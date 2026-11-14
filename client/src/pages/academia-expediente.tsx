@@ -1,7 +1,8 @@
 // Mi expediente académico (kárdex): las materias en las que me inscribí con su avance y su nota, mis niveles y mis
 // certificados (GET /api/academia/expediente). Se imprime tal cual.
+import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, BookOpen, FileText, IdCard } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, FileText, IdCard } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
@@ -9,9 +10,13 @@ import { ACLARACION_DOCUMENTOS, NOMBRE_ACADEMIA } from "@shared/academia";
 import { useExpediente } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { ChipEstatus, NivelesYCertificados, TablaAvance, fecha } from "@/components/academia/seguimiento";
+import { descargarExpedientePdf } from "@/components/academia/expediente-pdf";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AcademiaExpediente() {
   const q = useExpediente();
+  const { toast } = useToast();
+  const [bajando, setBajando] = useState(false);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {
@@ -48,6 +53,24 @@ export default function AcademiaExpediente() {
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
             <Link href="/academia/carne"><Button variant="outline" size="sm"><IdCard className="w-4 h-4 mr-1.5" /> Mi carné</Button></Link>
+            <Button
+              size="sm"
+              className="fire-btn-primary"
+              disabled={bajando}
+              data-testid="expediente-pdf"
+              onClick={async () => {
+                setBajando(true);
+                try {
+                  await descargarExpedientePdf(d);
+                } catch (e: any) {
+                  toast({ title: "No se pudo descargar", description: e?.message ?? "Inténtalo otra vez.", variant: "destructive" });
+                } finally {
+                  setBajando(false);
+                }
+              }}
+            >
+              <Download className="w-4 h-4 mr-1.5" /> {bajando ? "Preparando…" : "Descargar PDF"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => window.print()}><FileText className="w-4 h-4 mr-1.5" /> Imprimir</Button>
           </div>
         </header>

@@ -260,16 +260,16 @@ function Aprobacion({ d }: { d: ContenidoDetalle }) {
               ? `La aprobó ${a!.por} el ${fecha(a!.fecha)}.`
               : a
                 ? `La aprobó ${a.por} el ${fecha(a.fecha)}, pero después cambiaron sus lecciones o su banco de preguntas. Vuelve a revisarla y apruébala otra vez.`
-                : "Léela completa (las lecciones, el banco del examen y el repaso), deja las observaciones que haga falta y apruébala cuando esté bien. Lo recomendado es abrir la academia con todas sus materias aprobadas."}
+                : "Léela completa (las lecciones, el banco del examen y el repaso), deja las observaciones que haga falta y apruébala cuando esté bien. La apruebas como administrador, no como alumno: tu avance de alumno va aparte. Lo recomendado es abrir la academia con todas sus materias aprobadas."}
           </p>
           {a?.notas && <p className="text-sm mt-1">Notas: «{a.notas}»</p>}
-          {!d.puede.aprobar && <p className="text-xs text-muted-foreground mt-1">La aprobación la da la Dirección académica.</p>}
+          {!d.puede.aprobar && <p className="text-xs text-muted-foreground mt-1">La aprobación la da solo el administrador de la academia.</p>}
         </div>
         {d.puede.aprobar && !modo && (
           <div className="flex flex-wrap gap-2">
             {!vigente && (
               <Button className="fire-btn-primary" onClick={() => setModo("aprobar")} disabled={abiertas > 0} data-testid="contenido-aprobar">
-                <ShieldCheck className="w-4 h-4 mr-1.5" /> {a ? "Aprobarla otra vez" : "Aprobar la materia"}
+                <ShieldCheck className="w-4 h-4 mr-1.5" /> {a ? "Aprobarla otra vez" : "Aprobar como administrador"}
               </Button>
             )}
             {a && (
@@ -390,7 +390,7 @@ function Lecciones({ d }: { d: ContenidoDetalle }) {
     setError(null);
     try {
       await observarContenido(d.materia.id, texto, leccion || null);
-      toast({ title: "Observación guardada", description: "La Dirección académica la ve en la campana y en esta página." });
+      toast({ title: "Observación guardada", description: "Queda en la lista de esta materia hasta que se resuelva." });
       setTexto("");
       void qc.invalidateQueries({ queryKey: ["academia", "direccion"] });
     } catch (e: any) {
@@ -432,7 +432,7 @@ function Lecciones({ d }: { d: ContenidoDetalle }) {
       <section className="glass-card p-5 space-y-4" data-testid="contenido-observaciones">
         <div>
           <h2 className="font-semibold">Observaciones</h2>
-          <p className="text-sm text-muted-foreground">Lo que hay que corregir o aclarar: una afirmación sin base, una cita, una pregunta confusa. La resuelve quien la dejó o la Dirección académica, contando qué se hizo.</p>
+          <p className="text-sm text-muted-foreground">Lo que hay que corregir o aclarar: una afirmación sin base, una cita, una pregunta confusa. La resuelve el administrador, contando qué se hizo.</p>
         </div>
         {d.puede.observar && (
           <div className="rounded-xl border border-border p-4 space-y-3">
@@ -569,7 +569,7 @@ export default function AcademiaDireccionContenido() {
           {q.error?.status === 401 ? (
             <a href={loginUrl()}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>
           ) : (
-            <Link href="/academia/direccion?tab=contenido"><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
+            <Link href="/admin/academia?tab=contenido"><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
           )}
         </div>
       </Layout>
@@ -584,7 +584,7 @@ export default function AcademiaDireccionContenido() {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-4 pt-6 pb-16 space-y-6">
-        <Link href="/academia/direccion?tab=contenido" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
+        <Link href="/admin/academia?tab=contenido" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" /> Revisión del contenido
         </Link>
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">

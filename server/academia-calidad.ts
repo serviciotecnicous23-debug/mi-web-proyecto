@@ -27,7 +27,7 @@ import { permisoDe } from "./academia-direccion";
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
 const limpio = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, max) : "");
-const quien = (nombre: unknown, usuario: unknown) => String(nombre || usuario || "La Dirección académica");
+const quien = (nombre: unknown, usuario: unknown) => String(nombre || usuario || "La Administración");
 const corto = (t: string, n = 90) => (t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t);
 const puede = (role: string, c: Capacidad) => alcanceDe(role, c) !== "no";
 const ROLES_DIRECCION = ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles;
@@ -283,7 +283,7 @@ export function registerAcademiaCalidadRoutes(app: Express) {
       const donde = leccion ? `la lección «${leccion.titulo}» de «${m.titulo}»` : `la materia «${m.titulo}»`;
       await registrar(req, "academia.contenido.observar", `Dejó una observación sobre ${donde}.`, texto);
       void cuentasConRoles(ROLES_DIRECCION, p.userId)
-        .then((ids) => avisarA(ids, `Observación sobre «${m.titulo}»`, `${nombreDe(req)} dejó una observación sobre ${donde}: ${corto(texto, 300)}`, `/academia/direccion/contenido/${m.id}`))
+        .then((ids) => avisarA(ids, `Observación sobre «${m.titulo}»`, `${nombreDe(req)} dejó una observación sobre ${donde}: ${corto(texto, 300)}`, `/admin/academia/contenido/${m.id}`))
         .catch(() => undefined);
       res.status(201).json({ id: Number(rows[0].id) });
     } catch (err) {
@@ -306,7 +306,7 @@ export function registerAcademiaCalidadRoutes(app: Express) {
       if (!n) return res.status(404).json({ message: "No existe esa observación." });
       if (n.resuelta_at) return res.status(409).json({ message: "Esa observación ya estaba resuelta." });
       if (Number(n.user_id) !== p.userId && !puede(p.role, "aprobar")) {
-        return res.status(403).json({ message: "La resuelve quien la dejó o la Dirección académica." });
+        return res.status(403).json({ message: "La resuelve quien la dejó o el administrador de la academia." });
       }
       const { rowCount } = await pool.query(
         `UPDATE academia_contenido_notas SET resuelta_por = $2, resuelta_at = now(), respuesta = $3 WHERE id = $1 AND resuelta_at IS NULL`,
@@ -316,7 +316,7 @@ export function registerAcademiaCalidadRoutes(app: Express) {
       const titulo = materiaPorId(String(n.materia_id))?.titulo ?? String(n.materia_id);
       await registrar(req, "academia.contenido.resolver", `Resolvió una observación sobre «${titulo}»: «${corto(String(n.texto))}».`, respuesta);
       if (n.user_id && Number(n.user_id) !== p.userId) {
-        void avisarA([Number(n.user_id)], `Resolvieron tu observación sobre «${titulo}»`, `${nombreDe(req)} respondió: ${corto(respuesta, 300)}`, `/academia/direccion/contenido/${n.materia_id}`).catch(() => undefined);
+        void avisarA([Number(n.user_id)], `Resolvieron tu observación sobre «${titulo}»`, `${nombreDe(req)} respondió: ${corto(respuesta, 300)}`, `/admin/academia/contenido/${n.materia_id}`).catch(() => undefined);
       }
       res.json({ id });
     } catch (err) {

@@ -10,6 +10,7 @@ import {
   useCourseSchedule, useCreateCourseScheduleEntry, useDeleteCourseScheduleEntry,
 } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
+import { TarjetaAcademiaPanel } from "@/components/academia/entrada-panel";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -134,6 +135,8 @@ export default function MaestroPanel() {
           </h1>
           <p className="text-muted-foreground text-sm">Gestiona tus clases, materiales y estudiantes</p>
         </div>
+
+        {!selectedCourseId && <TarjetaAcademiaPanel base="/maestro/academia" />}
 
         {!selectedCourseId ? (
           <CourseList userId={user.id} onSelect={setSelectedCourseId} />

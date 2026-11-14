@@ -83,8 +83,14 @@ const AcademiaDireccionAlumno = lazy(() => import("@/pages/academia-direccion-al
 const AcademiaDireccionMateria = lazy(() => import("@/pages/academia-direccion-materia"));
 const AcademiaDireccionContenido = lazy(() => import("@/pages/academia-direccion-contenido"));
 const AcademiaAcompanados = lazy(() => import("@/pages/academia-acompanados"));
+const RedirigirPanelAcademia = lazy(() => import("@/components/academia/entrada-panel").then((m) => ({ default: m.RedirigirPanelAcademia })));
 const AcademiaExpediente = lazy(() => import("@/pages/academia-expediente"));
 const AcademiaCarne = lazy(() => import("@/pages/academia-carne"));
+const AcademiaSuficiencia = lazy(() => import("@/pages/academia-suficiencia"));
+const AcademiaDiagnostico = lazy(() => import("@/pages/academia-diagnostico"));
+const AcademiaDiagnosticoPrueba = lazy(() => import("@/pages/academia-diagnostico").then((m) => ({ default: m.AcademiaDiagnosticoPrueba })));
+const AcademiaRepaso = lazy(() => import("@/pages/academia-repaso"));
+const AcademiaDeclaracion = lazy(() => import("@/pages/academia-declaracion"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
 const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
 const MiIglesiaPage = lazy(() => import("@/pages/mi-iglesia"));
@@ -156,10 +162,26 @@ function Router() {
       <Route path="/academia/carne" component={AcademiaCarne} />
       <Route path="/academia/expediente" component={AcademiaExpediente} />
       <Route path="/academia/acompanados" component={AcademiaAcompanados} />
-      <Route path="/academia/direccion" component={AcademiaDireccion} />
-      <Route path="/academia/direccion/alumno/:alumnoId" component={AcademiaDireccionAlumno} />
-      <Route path="/academia/direccion/materia/:materiaId" component={AcademiaDireccionMateria} />
-      <Route path="/academia/direccion/contenido/:materiaId" component={AcademiaDireccionContenido} />
+      <Route path="/academia/suficiencia/:materiaId" component={AcademiaSuficiencia} />
+      <Route path="/academia/diagnostico/prueba" component={AcademiaDiagnosticoPrueba} />
+      <Route path="/academia/diagnostico" component={AcademiaDiagnostico} />
+      <Route path="/academia/repaso" component={AcademiaRepaso} />
+      <Route path="/academia/declaracion-de-fe" component={AcademiaDeclaracion} />
+      {/* La administración de la academia: la Administración desde su panel; los maestros y las iglesias, solo para ver */}
+      <Route path="/admin/academia" component={AcademiaDireccion} />
+      <Route path="/admin/academia/alumno/:alumnoId" component={AcademiaDireccionAlumno} />
+      <Route path="/admin/academia/materia/:materiaId" component={AcademiaDireccionMateria} />
+      <Route path="/admin/academia/contenido/:materiaId" component={AcademiaDireccionContenido} />
+      <Route path="/maestro/academia" component={AcademiaDireccion} />
+      <Route path="/maestro/academia/alumno/:alumnoId" component={AcademiaDireccionAlumno} />
+      <Route path="/maestro/academia/materia/:materiaId" component={AcademiaDireccionMateria} />
+      <Route path="/mi-iglesia/academia" component={AcademiaDireccion} />
+      <Route path="/mi-iglesia/academia/alumno/:alumnoId" component={AcademiaDireccionAlumno} />
+      <Route path="/mi-iglesia/academia/materia/:materiaId" component={AcademiaDireccionMateria} />
+      <Route path="/academia/direccion" component={RedirigirPanelAcademia} />
+      <Route path="/academia/direccion/alumno/:alumnoId" component={RedirigirPanelAcademia} />
+      <Route path="/academia/direccion/materia/:materiaId" component={RedirigirPanelAcademia} />
+      <Route path="/academia/direccion/contenido/:materiaId" component={RedirigirPanelAcademia} />
       <Route path="/alianza" component={AlianzaPage} />
       <Route path="/ficha-ministerial" component={FichaMinisterialPage} />
       <Route path="/ficha-ministerial/:userId" component={FichaMinisterialPage} />

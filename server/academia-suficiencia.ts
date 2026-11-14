@@ -71,7 +71,7 @@ export async function aprobarPorSuficiencia(userId: number, m: MateriaDef, nota:
   const { rows: v } = await pool.query(`SELECT puntaje FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   await pool.query(
     `UPDATE academia_materias SET estado = 'aprobada', via = 'suficiencia', nota = $3, componentes = $4::jsonb, aprobada_at = COALESCE(aprobada_at, now())
-      WHERE user_id = $1 AND materia_id = $2`,
+      WHERE user_id = $1 AND materia_id = $2 AND (estado <> 'aprobada' OR via = 'suficiencia')`,
     [userId, m.id, nota, JSON.stringify({ final: nota, versiculo: Number(v[0]?.puntaje ?? 0) })],
   );
   const { rows: c } = await pool.query(`SELECT codigo FROM academia_certificados WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`, [userId, m.id]);

@@ -10,6 +10,7 @@ import type {
 } from "@shared/academia-direccion";
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
+import type { DiagnosticoVista, RepasoVersiculos } from "@shared/academia";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -272,6 +273,42 @@ export const buscarPersonas = (q: string) => pedir<{ personas: PersonaBuscada[] 
 export const elegirMentor = (alumnoId: number, mentorId: number | null) =>
   pedir<{ mentor: { userId: number; nombre: string } | null }>("POST", `/api/academia/direccion/alumno/${alumnoId}/mentor`, { mentorId });
 
+// ---------------------------------------------------------------- suficiencia, diagnóstica, repaso y declaración (fase A4)
+
+/** El examen de suficiencia de una materia y la prueba diagnóstica: las mismas rutas que el examen final. */
+export const baseSuficiencia = (materiaId: string) => `/api/academia/suficiencia/${encodeURIComponent(materiaId)}`;
+export const baseDiagnostico = "/api/academia/diagnostico/prueba";
+
+/** Mi última prueba diagnóstica (con la sugerencia de hoy) y cuántas preguntas tiene. */
+export function useDiagnostico(activo = true) {
+  return useQuery<{ ultimo: DiagnosticoVista | null; preguntas: number }, ErrorAcademia>({
+    queryKey: ["academia", "diagnostico"],
+    queryFn: () => pedir("GET", "/api/academia/diagnostico"),
+    enabled: activo,
+    retry: false,
+  });
+}
+
+/** Mis versículos aprendidos con su repaso espaciado. */
+export function useRepasoVersiculos(activo = true) {
+  return useQuery<RepasoVersiculos, ErrorAcademia>({ queryKey: ["academia", "repaso-versiculos"], queryFn: () => pedir("GET", "/api/academia/versiculos/repaso"), enabled: activo, retry: false });
+}
+export type VersiculoParaRepasar = { materiaId: string; materia: string; ref: string; fichas: { id: string; t: string }[]; caja: number; toca: boolean };
+export const versiculoParaRepasar = (materiaId: string) => pedir<VersiculoParaRepasar>("GET", `/api/academia/versiculos/repaso/${encodeURIComponent(materiaId)}`);
+export const responderRepasoVersiculo = (materiaId: string, orden: string[]) =>
+  pedir<{ bien: boolean; hasta: number; total: number; caja: number; dominado: boolean; dias: number | null }>("POST", `/api/academia/versiculos/repaso/${encodeURIComponent(materiaId)}`, { orden });
+
+/** Si la declaración de fe ya está aprobada (si no, se muestra como borrador). */
+export function useDeclaracion() {
+  return useQuery<{ aprobacion: { por: string; fecha: string } | null; cambio: boolean }, ErrorAcademia>({
+    queryKey: ["academia", "declaracion"],
+    queryFn: () => pedir("GET", "/api/academia/declaracion"),
+    retry: false,
+  });
+}
+export const aprobarDeclaracion = (notas: string) => pedir<{ aprobada: boolean }>("POST", "/api/academia/direccion/declaracion/aprobar", { notas });
+export const desaprobarDeclaracion = (motivo: string) => pedir<{ aprobada: boolean }>("POST", "/api/academia/direccion/declaracion/desaprobar", { motivo });
+
 /** Pedir la revisión del último intento de un examen (una vez por examen). */
 export const pedirRevision = (base: string, mensaje: string) => pedir<{ apelacion: ApelacionVista }>("POST", `${base}/apelacion`, { mensaje });
 
@@ -283,6 +320,10 @@ export const verificarDocumento = (codigo: string) => pedir<VerificacionAcademia
 
 export const responderRepaso = (leccionId: string, preguntaId: string, opcion: number) =>
   pedir<RespuestaRepaso>("POST", "/api/academia/repaso", { leccionId, preguntaId, opcion });
+
+/** Lo visto de corrido del video de la lección (para abrir el repaso). */
+export const avanceVideo = (leccionId: string, segundos: number) =>
+  pedir<{ visto: number; falta: number }>("POST", `/api/academia/leccion/${encodeURIComponent(leccionId)}/video`, { segundos });
 
 export const completarLeccion = (leccionId: string, reflexion: string) =>
   pedir<{ completada: boolean; siguiente: string | null }>("POST", `/api/academia/leccion/${encodeURIComponent(leccionId)}/completar`, { reflexion });

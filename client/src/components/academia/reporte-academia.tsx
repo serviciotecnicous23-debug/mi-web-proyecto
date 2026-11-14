@@ -25,7 +25,7 @@ export default function ReporteAcademia() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <p className="text-sm text-muted-foreground">Academia Avivando el Fuego: inscripciones, avance y notas de los alumnos.</p>
         <div className="flex flex-wrap gap-2">
-          <Link href="/academia/direccion"><Button size="sm" className="fire-btn-primary"><GraduationCap className="w-4 h-4 mr-1.5" /> Abrir el panel de seguimiento</Button></Link>
+          <Link href="/admin/academia"><Button size="sm" className="fire-btn-primary"><GraduationCap className="w-4 h-4 mr-1.5" /> Abrir la administración de la academia</Button></Link>
           {d.puede.exportar &&
             REPORTES.map((r) => (
               <a key={r.archivo} href={enlaceReporte(r.archivo)} download>
@@ -42,13 +42,13 @@ export default function ReporteAcademia() {
       </div>
       <section className="glass-card p-5">
         <h3 className="font-semibold mb-3">Materias</h3>
-        <TablaMaterias materias={d.materias} enlace={(id) => `/academia/direccion/materia/${id}`} />
+        <TablaMaterias materias={d.materias} enlace={(id) => `/admin/academia/materia/${id}`} />
       </section>
       <div className="grid gap-5 lg:grid-cols-2">
         <Barras titulo="Alumnos por estatus" filas={ORDEN_ESTATUS.map((k) => ({ nombre: NOMBRE_ESTATUS[k], n: d.estatus[k] }))} />
         <section className="glass-card p-5">
           <h3 className="font-semibold mb-3">Actividad reciente</h3>
-          <ListaActividad items={d.actividad.slice(0, 8)} enlaceAlumno={(id) => `/academia/direccion/alumno/${id}`} />
+          <ListaActividad items={d.actividad.slice(0, 8)} enlaceAlumno={(id) => `/admin/academia/alumno/${id}`} />
         </section>
       </div>
     </div>

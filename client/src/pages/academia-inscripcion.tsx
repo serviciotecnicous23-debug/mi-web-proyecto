@@ -164,7 +164,7 @@ function AvisoPrivacidad() {
     <aside className="glass-card p-5 border border-emerald-500/30 text-sm space-y-2" data-testid="inscripcion-privacidad">
       <p className="font-semibold flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Tus datos, protegidos</p>
       <p>
-        Los ven la Dirección académica y, si eliges una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus
+        Los ven la Administración de la academia y, si eliges una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus
         documentos: no se publican ni se comparten con nadie más.
       </p>
       <p className="text-muted-foreground">Puedes corregirlos cuando quieras. Si borras tu cuenta, tu ficha se borra con ella.</p>
@@ -268,7 +268,7 @@ function FormularioFicha({ f, cambiar, errores, iglesias, nombreFijo }: {
               <Input {...input("apellidos", { autoComplete: "family-name", maxLength: LIMITES.nombre, disabled: nombreFijo })} />
             </Campo>
           </div>
-          {nombreFijo && <p className="text-xs text-muted-foreground">Tu nombre ya figura en tus certificados. Para corregirlo, escribe a la Dirección académica.</p>}
+          {nombreFijo && <p className="text-xs text-muted-foreground">Tu nombre ya figura en tus certificados. Para corregirlo, escribe a la Administración de la academia.</p>}
         </Seccion>
 
         <Seccion titulo="Dónde vives">
@@ -288,7 +288,7 @@ function FormularioFicha({ f, cambiar, errores, iglesias, nombreFijo }: {
           </div>
         </Seccion>
 
-        <Seccion titulo="Contacto" nota="Opcional. Solo para que la Dirección académica pueda acompañarte.">
+        <Seccion titulo="Contacto" nota="Opcional. Solo para que la Administración de la academia y tu iglesia puedan acompañarte.">
           <div className="grid gap-4 md:grid-cols-2">
             <Campo id="ficha-telefono" etiqueta="Teléfono o WhatsApp" error={errores.telefono} ayuda="Con el código de país si vives fuera de Estados Unidos.">
               <Input {...input("telefono", { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: LIMITES.telefono, placeholder: "+1 512 555 0123" }, true)} />

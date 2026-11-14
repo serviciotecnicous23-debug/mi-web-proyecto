@@ -1290,6 +1290,10 @@ export const academiaLecciones = pgTable(
     completadaAt: timestamp("completada_at"),
     repaso: jsonb("repaso").notNull().default({}),
     reflexion: text("reflexion"),
+    /** Para abrir el repaso: cuándo se abrió por primera vez y el video visto de corrido (segundos). */
+    abiertaAt: timestamp("abierta_at"),
+    videoInicio: timestamp("video_inicio"),
+    videoSeg: integer("video_seg").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.leccionId] })],
 );

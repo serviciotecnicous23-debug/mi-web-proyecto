@@ -111,19 +111,19 @@ async function guardarFicha(userId: number, f: FichaInscripcion): Promise<void> 
 /**
  * Avisa en la campana a la Dirección académica, y a quienes dirigen la iglesia aliada del alumno, que alguien se
  * inscribió (docs/academia.md, «Los avisos»). No manda correos ni avisos al teléfono, y nadie recibe el aviso de su
- * propia inscripción. El enlace abre al alumno en el panel de seguimiento.
+ * propia inscripción. El enlace abre al alumno en el panel de cada uno: la administración o «Mi iglesia».
  */
 export async function avisarInscripcion(alumnoId: number, titulo: string, contenido: string): Promise<void> {
   const direccion = ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles;
   const iglesia = ROLES_ACADEMIA.find((r) => r.id === "iglesia")!.roles;
   await pool.query(
     `INSERT INTO notifications (user_id, type, title, content, link)
-     SELECT u.id, 'academia', $3, $4, $5 FROM users u
+     SELECT u.id, 'academia', $3, $4, CASE WHEN u.role = ANY($2::text[]) THEN $5 ELSE $7 END FROM users u
       WHERE u.is_active AND u.id <> $1
         AND (u.role = ANY($2::text[])
              OR (u.role = ANY($6::text[]) AND u.church_id IS NOT NULL
                  AND u.church_id = (SELECT iglesia_id FROM academia_inscripciones WHERE user_id = $1)))`,
-    [alumnoId, [...direccion], titulo, contenido, `/academia/direccion/alumno/${alumnoId}`, [...iglesia]],
+    [alumnoId, [...direccion], titulo, contenido, `/admin/academia/alumno/${alumnoId}`, [...iglesia], `/mi-iglesia/academia/alumno/${alumnoId}`],
   );
 }
 
@@ -184,7 +184,7 @@ export function registerAcademiaInscripcionRoutes(app: Express) {
           return {
             error: 409,
             cuerpo: {
-              message: "Tu nombre ya figura en tus certificados. Para corregirlo, escribe a la Dirección académica.",
+              message: "Tu nombre ya figura en tus certificados. Para corregirlo, escribe a la Administración de la academia.",
               errores: { nombres: "Este nombre ya figura en tus certificados." },
             },
           };

@@ -93,6 +93,7 @@ function evaluacionDiagnostico(): Evaluacion {
     },
     yaAprobado: "",
     revisionCompleta: false,
+    apelable: false,
   };
 }
 

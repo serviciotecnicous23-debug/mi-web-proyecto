@@ -1,6 +1,6 @@
 // El reglamento académico de la academia (shared/academia.ts, REGLAMENTO): página pública, sin cuenta.
 import { Link } from "wouter";
-import { ArrowLeft, ScrollText } from "lucide-react";
+import { ArrowLeft, BookOpen, ScrollText } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { LEMA, NOMBRE_ACADEMIA, REGLAMENTO } from "@shared/academia";
@@ -14,6 +14,11 @@ export default function AcademiaReglamento() {
         <h1 className="heading-display font-display text-3xl md:text-5xl mt-1 flex items-center gap-3" data-testid="reglamento-titulo"><ScrollText className="w-9 h-9 text-orange-500" /> {REGLAMENTO.titulo}</h1>
         <p className="accent-serif text-lg mt-4">«{LEMA.frase}» <span className="text-sm not-italic text-muted-foreground">({LEMA.ref})</span></p>
         <p className="text-muted-foreground mt-4">{REGLAMENTO.intro}</p>
+        <p className="mt-3 text-sm">
+          <Link href="/academia/declaracion-de-fe" className="inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-300 underline" data-testid="reglamento-declaracion">
+            <BookOpen className="w-4 h-4" /> Lo que la academia enseña: la declaración de fe del Ministerio
+          </Link>
+        </p>
         <div className="mt-8 space-y-7">
           {REGLAMENTO.secciones.map((s) => (
             <section key={s.titulo} data-testid="reglamento-seccion">

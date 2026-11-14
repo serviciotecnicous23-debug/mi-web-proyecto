@@ -208,6 +208,9 @@ CREATE TABLE IF NOT EXISTS "academia_diagnosticos" (
   "created_at" timestamp NOT NULL DEFAULT now()
 );
 ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "dominado_at" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "abierta_at" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_inicio" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_seg" integer NOT NULL DEFAULT 0;
 ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "repasos" integer NOT NULL DEFAULT 0;
 CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
   "materia_id" text PRIMARY KEY,
