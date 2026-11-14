@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-mercado",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El mercado con toldos de franjas",
+    puntos: [
+      "⛺ Los cuatro puestos del mercado tienen toldos de tela a franjas, más bajos hacia la plaza y con un faldón de dientes: se mecen con el viento y dan sombra.",
+      "🧵 El tejedor cuelga sus mantos de una vara y la brisa los mueve. Cada mostrador tiene al frente un paño del color de su puesto, con su orla.",
+      "🌾 Más mercancía: los brotes de olivo del sembrador, los cuencos del alfarero, los rollos de tela del tejedor, y las especias y las pesas del mercader, con sacos atados.",
+      "🏠 El toldo de colores que se compra para la casa también es de tela: se mece y da sombra en el patio o en el terrado. Junto al pozo de la plaza, la piedra se ve mojada.",
+    ],
+  },
+  {
     id: "2026-11-14-telas-viento",
     fecha: "14 de noviembre de 2026",
     titulo: "Banderas y toldos con viento",

@@ -912,6 +912,26 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - **El patio**: el empedrado con la sombra junto a los muros (no en la puerta). **El campamento asirio**: las fogatas
   titilan de noche.
 
+## 7q. El mercado: toldos de franjas y puestos (14 de noviembre de 2026)
+
+- **Los toldos** (`Telas.toldo`, en `three/telas.ts`):
+  - pueden ser de franjas (varios colores, de unos 30 cm cada una);
+  - pueden bajar hacia un lado (`caida` y `bajo`) y llevar en el borde bajo un faldón con dientes (`faldon`), del color de
+    cada franja;
+  - todo toldo da sombra: una copia quieta, 10 cm más abajo, que no se ve y solo tapa el sol (`soloSombra`). Así la tela
+    que se mueve no se hace sombra a sí misma. También la dan los del patio de los juegos y el del púlpito.
+- **Los puestos del mercado** (`buildPlaza`, en `ciudad/escenario.ts`):
+  - cada uno con su toldo de franjas, alto atrás y más bajo hacia la plaza, y sus palos con perilla;
+  - el mostrador de tabla sobre caballetes, con un estante abajo, un paño al frente con su orla (el viento apenas lo
+    mueve) y su sombra de contacto;
+  - la mercancía nueva: brotes de olivo y sacos de semilla (el sembrador), cuencos apilados (el alfarero), rollos de tela
+    y mantos colgados de una vara que se mecen (el tejedor), las especias en sus cuencos, las pesas y los sacos atados
+    (el mercader);
+  - lo nuevo va con colores fijos: el azar compartido se gasta como antes y el resto de la ciudad queda igual.
+- **El enlosado de la plaza**: más oscuro junto al pozo (la piedra mojada) y delante de los puestos.
+- **El toldo de colores de las casas** (el adorno `toldo`): de tela con viento y con sombra. Cada casa arma sus telas en
+  sus medidas y `Telas.juntar` las lleva a su lugar (cada casa ondea a su tiempo). La foto de la tienda también lo trae.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
