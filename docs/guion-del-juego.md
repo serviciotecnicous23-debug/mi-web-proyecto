@@ -810,6 +810,20 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
   (inclinarse al arrancar o frenar y ladearse en las curvas); el cuerpo gira un poco con cada paso (`twist`), los brazos
   van un poco detrás del paso, y en quietud la respiración es más pausada y el peso pasa de un pie al otro.
 
+## 7j. Caras, manos, pliegues y agua (14 de noviembre de 2026)
+
+- **La cara** (`face` y la cara de `figureParts`, en `three/characters.ts`): ojos almendrados con su brillo, la nariz
+  fina y la boca, un arco chico que sonríe apenas (`BOCA`). La barba la tapa en Azarías y en el rey.
+- **Las manos**: la palma un poco aplanada y el pulgar adelante (`manoPueblo` y los brazos de las figuras).
+- **Los pliegues** (`conPliegues`): la tela de un torno se abomba hacia afuera cerca del ruedo, nunca hacia adentro (así
+  no asoma lo que va debajo). La túnica y el manto del mercado, con sus franjas, su orla y sus bordes, pasan por la misma
+  función con los mismos números, y la orla sigue a la tela.
+- **El agua** (`DETALLE_AGUA` y `ondasAgua` en `three/builder.ts`): lo que el material reconoce como agua y está
+  acostado tiene ondas que se mueven, el reflejo del cielo (más fuerte a ras del agua) y el destello del sol. El mar de
+  bronce tiene su propio material y lleva las mismas ondas (`conOndas`). Un agua nueva usa el color `C.agua`.
+- **El polvo en la luz** también en el templo (`world.ts`) y en la casa por dentro (`casa/mundo-casa.ts`, en un radio
+  chico y con menos motas), con el tamaño que se le da a `Polvo`.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
