@@ -98,6 +98,10 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   lo sembrado con `matteMatViento` (en `three/builder.ts`), con el pie quieto en la tierra.
 - Toda tela (bandera, estandarte, banderín, toldo) se arma con `Telas` (en `three/telas.ts`) y se mece con el viento;
   nunca es una caja quieta.
+  Un toldo da sombra con una copia quieta que no se ve (la arma `Telas.toldo`): lo que se mueve no se hace sombra a sí
+  mismo.
+- Lo nuevo en un lugar que ya existe no gasta el azar compartido (`vary`, `jar`, los árboles): va con colores fijos o con
+  su propio azar, así lo demás queda igual.
 - Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
   con el rectángulo donde alumbra (y, si hay pisos, las alturas `alto` y su `alcance`); los materiales de siempre ya lo
   reciben (`conFuegos`). Lo que se dibuja aparte con su propia luz (una foto, un muñeco) va dentro de `sinFuegos`.
