@@ -14,6 +14,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-lugar-santo",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El Lugar Santo por dentro",
+    puntos: [
+      "🏛️ Las paredes de oro tienen tableros enmarcados: los querubines, las palmeras y las flores abiertas se leen en oro claro sobre un fondo más oscuro, con su zócalo y su friso de flores (1 Reyes 6:29).",
+      "✨ El piso es de láminas de oro pulido con sus juntas, y ya no parece papel arrugado (1 Reyes 6:30).",
+      "🌅 Bajo el techo de la casa de Jehová hay penumbra: de día entra una franja de sol por el lado y de noche lo alumbran las siete lámparas del candelero.",
+    ],
+  },
+  {
     id: "2026-11-14-casa-luz",
     fecha: "14 de noviembre de 2026",
     titulo: "La casa por dentro, con su luz y su piso",

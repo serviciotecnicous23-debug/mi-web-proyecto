@@ -18,7 +18,21 @@ export const fuegosMateriales = {
   uFuegosRect: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
   uFuegosAlto: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
   uNumFuegos: { value: 0 },
+  /** La sombra de techo: una caja (x0, z0, x1, z1) y sus alturas, cuánta luz del cielo queda adentro y el ancho de la puerta. */
+  uTecho: { value: new THREE.Vector4() },
+  uTechoAlto: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
+
+/**
+ * La sombra de techo (docs/guia-visual.md, sección 7): bajo un techo la luz del cielo casi no llega, y adentro queda en
+ * penumbra; el sol que entra de lado y las lámparas siguen iguales. Es la luz «de rebote» que three no calcula. Una sola
+ * caja por mundo (la casa de Jehová), por el medio de los muros: la cara de adentro queda en penumbra y la de afuera no.
+ * Por la puerta (el lado x1) la luz del cielo entra de a poco, en `puerta` metros.
+ */
+export function ponerTecho(caja: [number, number, number, number], alto: [number, number], queda: number, puerta = 1.5) {
+  fuegosMateriales.uTecho.value.set(caja[0], caja[1], caja[2], caja[3]);
+  fuegosMateriales.uTechoAlto.value.set(alto[0], alto[1], queda, puerta);
+}
 
 export type Fuego = {
   x: number; y: number; z: number; fuerza: number;
@@ -54,6 +68,7 @@ export function ponerFuegos(fuegos: Fuego[], cerca?: { x: number; z: number }) {
 /** Apaga todos (al salir de un mundo, para que el siguiente no herede sus fuegos). */
 export function apagarFuegos() {
   fuegosMateriales.uNumFuegos.value = 0;
+  fuegosMateriales.uTechoAlto.value.w = 0;
 }
 
 /** Dibuja algo aparte (la foto de un mueble, el muñeco del probador) sin los fuegos del mundo que está abierto. */
@@ -78,7 +93,16 @@ uniform vec4 uFuegos[${MAX_FUEGOS}];
 uniform vec4 uFuegosRect[${MAX_FUEGOS}];
 uniform vec4 uFuegosAlto[${MAX_FUEGOS}];
 uniform int uNumFuegos;
+uniform vec4 uTecho;
+uniform vec4 uTechoAlto;
 varying vec3 vFuegoP;
+float bajoTecho(vec3 p) {
+  if (uTechoAlto.w <= 0.0) return 1.0;
+  float d = smoothstep(uTecho.x, uTecho.x + 0.12, p.x) * (1.0 - smoothstep(uTecho.z - uTechoAlto.w, uTecho.z, p.x))
+          * smoothstep(uTecho.y, uTecho.y + 0.12, p.z) * (1.0 - smoothstep(uTecho.w - 0.12, uTecho.w, p.z))
+          * step(uTechoAlto.x, p.y) * step(p.y, uTechoAlto.y);
+  return mix(1.0, uTechoAlto.z, d);
+}
 vec3 luzDeFuegos(vec3 p, vec3 n) {
   vec3 l = vec3(0.0);
   for (int i = 0; i < ${MAX_FUEGOS}; i++) {
@@ -113,6 +137,8 @@ export function conFuegos<M extends THREE.MeshLambertMaterial | THREE.MeshPhongM
     shader.uniforms.uFuegosRect = fuegosMateriales.uFuegosRect;
     shader.uniforms.uFuegosAlto = fuegosMateriales.uFuegosAlto;
     shader.uniforms.uNumFuegos = fuegosMateriales.uNumFuegos;
+    shader.uniforms.uTecho = fuegosMateriales.uTecho;
+    shader.uniforms.uTechoAlto = fuegosMateriales.uTechoAlto;
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vFuegoP;")
       .replace(
@@ -128,6 +154,7 @@ export function conFuegos<M extends THREE.MeshLambertMaterial | THREE.MeshPhongM
       );
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", `#include <common>\n${FUEGOS_PARS}`)
+      .replace("#include <lights_fragment_begin>", "#include <lights_fragment_begin>\nirradiance *= bajoTecho(vFuegoP);")
       .replace("#include <opaque_fragment>", "outgoingLight += diffuseColor.rgb * luzDeFuegos(vFuegoP, normal) * 2.4;\n#include <opaque_fragment>");
   };
   // la clave del material de antes (con sus detalles) más la de los fuegos: cada clase de material, su programa

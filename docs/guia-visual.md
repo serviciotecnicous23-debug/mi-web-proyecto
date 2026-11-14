@@ -97,6 +97,10 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
   con el rectángulo donde alumbra (y, si hay pisos, las alturas `alto` y su `alcance`); los materiales de siempre ya lo
   reciben (`conFuegos`). Lo que se dibuja aparte con su propia luz (una foto, un muñeco) va dentro de `sinFuegos`.
+- Un lugar techado que se ve por dentro lleva su sombra de techo (`ponerTecho`, en `three/luces.ts`): bajo techo la luz
+  del cielo casi no llega. Si el techo se aclara para ver adentro, igual da sombra.
+- Una talla o un adorno sobre un fondo del mismo material (oro sobre oro, piedra sobre piedra) va en un tablero con el
+  fondo más oscuro y la talla más clara, para que se lea a la distancia de la cámara.
 - Todo mueble o pieza que se apoya en el piso lleva su sombra de contacto (como `sombraDeMueble`, en
   `casa/mundo-casa.ts`), y los pisos, la sombra junto a los muros (`tono`).
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
