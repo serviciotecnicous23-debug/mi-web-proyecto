@@ -3,9 +3,11 @@
  * granate y de oro que caen con rebote, la ficha que asoma sobre la columna antes de soltarla, la última jugada marcada y
  * la línea de cuatro que brilla.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { COLUMNAS, FILAS, type VistaCuatro } from "@shared/mesa/cuatro-en-raya";
 import type { PantallaMesaProps } from "./index";
+import { mesaSonido } from "./mesa-sonido";
+import { useJugadaNueva } from "./vida";
 
 const FICHA = [
   { nombre: "granate", fondo: "radial-gradient(circle at 35% 30%, #fecaca, #dc2626 45%, #7f1d1d)", borde: "#7f1d1d" },
@@ -37,6 +39,14 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
   if (typeof ultima?.jugada === "number") for (let f = FILAS - 1; f >= 0 && ultimaCasilla < 0; f--) if (vista.t[f * COLUMNAS + ultima.jugada] !== null) ultimaCasilla = f * COLUMNAS + ultima.jugada;
   const mio = (miAsiento ?? 0) as 0 | 1;
   const alto = 0.62; // la franja de arriba, donde asoma la ficha antes de soltarla (en filas)
+  // la ficha suena al llegar al fondo; la línea de cuatro, con su brillo
+  useJugadaNueva(ultima, () => setTimeout(() => mesaSonido.cae(), 300));
+  const habiaLinea = useRef(linea.size > 0);
+  useEffect(() => {
+    if (linea.size && !habiaLinea.current) setTimeout(() => mesaSonido.linea(), 420);
+    habiaLinea.current = linea.size > 0;
+  }, [linea.size]);
+  const ordenLinea = vista.linea ?? [];
 
   return (
     <div className="flex flex-col items-center gap-2" data-testid="mesa-cuatro-en-raya">
@@ -84,6 +94,13 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
                   </span>
                 )}
                 {nueva && !linea.size && <span className="pointer-events-none absolute inset-[-6%] rounded-full ring-2 ring-amber-300/70" />}
+                {linea.has(i) && (
+                  <span
+                    className="pointer-events-none absolute inset-[-20%] rounded-full"
+                    style={{ background: "radial-gradient(circle, rgba(255,240,170,.9), rgba(250,200,60,.35) 45%, rgba(250,200,60,0) 70%)", animation: `mesa-destello 800ms ${380 + ordenLinea.indexOf(i) * 140}ms ease-out both` }}
+                    aria-hidden="true"
+                  />
+                )}
               </div>
             );
           })}
@@ -104,7 +121,7 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
           ))}
         </div>
       </div>
-      <style>{"@keyframes cuatro-cae{0%{transform:translateY(var(--caida))}70%{transform:translateY(4%)}85%{transform:translateY(-3%)}100%{transform:translateY(0)}}"}</style>
+      <style>{"@keyframes cuatro-cae{0%{transform:translateY(var(--caida))}70%{transform:translateY(4%)}85%{transform:translateY(-3%)}100%{transform:translateY(0)}}@keyframes mesa-destello{0%{opacity:.95;transform:scale(.6)}100%{opacity:0;transform:scale(1.7)}}"}</style>
     </div>
   );
 }

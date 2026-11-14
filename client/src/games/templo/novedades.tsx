@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-mesas-con-vida",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Los juegos de mesa, con más vida",
+    puntos: [
+      "🔥 El tres en raya tiene tablero nuevo: madera con nueve hoyos tallados y fichas propias, la llama y la gota de agua. Al ganar, la línea se traza con luz de oro.",
+      "🎵 Cada juego suena como de verdad: la madera del ajedrez y las damas al posar la pieza, el golpe al comer, el aviso del jaque, la ficha que cae en el cuatro en raya y la ficha de dominó que se asienta.",
+      "🏆 Al comer salta un estallido, la pieza que llega se asienta con un saltito, la dama que se corona brilla, los cuatro en raya se encienden uno tras otro y cada mano del dominó termina con su sello («¡Dominó!» o «¡Tranque!»).",
+      "👀 El parchís se ve mejor en el teléfono: los jugadores de a dos, una flecha en cada salida que dice hacia dónde se da la vuelta y un aro en la última ficha que se movió.",
+    ],
+  },
+  {
     id: "2026-11-13-parchis",
     fecha: "13 de noviembre de 2026",
     titulo: "El parchís llega al patio, con un tablero propio",

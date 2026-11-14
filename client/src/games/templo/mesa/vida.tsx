@@ -199,6 +199,22 @@ export function useMusicaDeJuego(juego: string) {
   }, [juego]);
 }
 
+/** Llama a `alNueva` cuando llega una jugada nueva (`ultima.n` sube); al abrir la pantalla no repite lo viejo. */
+export function useJugadaNueva(ultima: { n: number } | null | undefined, alNueva: () => void) {
+  const visto = useRef<number | null>(null);
+  const fn = useRef(alNueva);
+  fn.current = alNueva;
+  const n = ultima?.n ?? 0;
+  useEffect(() => {
+    if (visto.current === null) {
+      visto.current = n;
+      return;
+    }
+    if (n > visto.current) fn.current();
+    visto.current = n;
+  }, [n]);
+}
+
 /** El aviso de un error de la jugada (se borra solo). */
 export function useAvisoCorto(ms = 2600): [string | null, (m: string | null) => void] {
   const [m, setM] = useState<string | null>(null);

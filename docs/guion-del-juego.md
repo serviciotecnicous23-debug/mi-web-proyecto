@@ -975,6 +975,17 @@ cada uno quede abajo a la izquierda. Medidas en `mesa/parchis-geo.ts`; reglas en
 - Para ver cada animación en desarrollo: `/mesa-prueba/parchis?escena=comer|meta|barrera|tres|fin` (y `?dados=3,5` fija
   los primeros tiros).
 
+**Más vida en las mesas** (pedido de Luis, 13 de noviembre: «están chulos, pero muy básicos»):
+- El tres en raya ya no usa la «✕» (una equis es una cruz): sus fichas son la llama y la gota (`FichaTres`), en un tablero
+  de madera con nueve hoyos tallados (sin líneas que se crucen); la línea ganadora se traza con luz de oro.
+- Cada pantalla da su propio sonido a las jugadas (`mesaSonido`: `pieza`, `comer`, `jaque`, `cae`, `ficha`, `linea`), con
+  `useJugadaNueva` de `mesa/vida.tsx`; la mesa ya no suena con el clic de siempre.
+- En `mesa/tablero.tsx`: `Estallido` (al comer), `VetaMadera` y las animaciones `mesa-asienta` (la pieza que llega) y
+  `mesa-destello` (la corona de las damas, los cuatro en raya). El dominó cierra cada mano con su sello.
+- OJO: lo que cambia al pasar el dedo no debe quitar el elemento que está bajo el dedo (la vista previa del tres en raya
+  es solo CSS): si se cambia, el navegador pierde el toque.
+- Para probar en desarrollo, con la computadora: `/mesa-prueba/<ajedrez|damas|domino|cuatro-en-raya|tres-en-raya|parchis>`.
+
 Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
 pruebas (`shared/mesa-clasicos.test.ts`) cuentan todas las jugadas del ajedrez en posiciones conocidas («perft»).
 

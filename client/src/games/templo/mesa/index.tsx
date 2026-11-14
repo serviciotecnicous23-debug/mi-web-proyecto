@@ -64,7 +64,6 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
   const [aviso, setAviso] = useState<string | null>(null);
   const [ahora, setAhora] = useState(() => Date.now());
   const recibido = useRef({ en: Date.now(), reloj: m.relojMs });
-  const ultimaN = useRef(m.ultima?.n ?? 0);
   useMusicaDeJuego(m.id);
 
   // el reloj del turno corre en la pantalla entre aviso y aviso del servidor
@@ -75,12 +74,7 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
     const t = setInterval(() => setAhora(Date.now()), 250);
     return () => clearInterval(t);
   }, []);
-  // cada jugada nueva suena (la mía y la de los demás)
-  useEffect(() => {
-    const n = m.ultima?.n ?? 0;
-    if (n > ultimaN.current) city?.audio.click();
-    ultimaN.current = n;
-  }, [m.ultima?.n, city]);
+  // (cada pantalla da su propio sonido a las jugadas: la madera, el dado, la ficha que cae…)
 
   if (!juego || !Pantalla)
     return (

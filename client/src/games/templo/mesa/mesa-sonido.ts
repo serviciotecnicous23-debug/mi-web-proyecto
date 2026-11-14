@@ -159,6 +159,37 @@ export const mesaSonido = {
     nota(659, 0, 0.12, "triangle", 0.14);
     nota(988, 0.09, 0.2, "triangle", 0.14);
   },
+  /** Una pieza de madera que se posa en el tablero. */
+  pieza() {
+    golpe(0, 0.05, 950, 0.34, 3);
+    golpe(0.028, 0.035, 1700, 0.12, 4);
+  },
+  /** Comer: un golpe más hondo y la pieza que se va deslizando. */
+  comer() {
+    golpe(0, 0.08, 520, 0.42, 2);
+    golpe(0.05, 0.05, 1100, 0.18, 3);
+    nota(440, 0.03, 0.2, "triangle", 0.07, 250);
+  },
+  /** ¡Jaque! Dos notas de aviso. */
+  jaque() {
+    nota(880, 0, 0.16, "square", 0.07);
+    nota(698, 0.14, 0.26, "square", 0.07);
+  },
+  /** La ficha que cae por la columna y rebota en el fondo. */
+  cae() {
+    golpe(0, 0.03, 2300, 0.14, 4);
+    golpe(0.04, 0.06, 1150, 0.34, 3);
+    golpe(0.13, 0.035, 1500, 0.12, 4);
+  },
+  /** Una ficha de dominó que se asienta en la mesa. */
+  ficha() {
+    golpe(0, 0.035, 1900, 0.32, 5);
+    golpe(0.045, 0.03, 2500, 0.14, 6);
+  },
+  /** La línea ganadora: un brillo que sube. */
+  linea() {
+    [784, 988, 1175, 1568].forEach((f, i) => nota(f, i * 0.07, 0.32, "triangle", 0.12));
+  },
   /** ¡Ganó! Una fanfarria corta con aplausos. */
   fiesta() {
     [523, 659, 784, 1047].forEach((f, i) => nota(f, i * 0.12, 0.5, "triangle", 0.15));

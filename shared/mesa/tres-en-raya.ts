@@ -61,7 +61,7 @@ export const TRES_EN_RAYA: JuegoDeMesa<EstadoTres, JugadaTres, VistaTres> = {
   icono: "⭕",
   corto: "Junta tres en línea antes que el otro.",
   como: [
-    "Dos jugadores se turnan para poner su ficha en el tablero de 3 × 3.",
+    "Dos jugadores se turnan para poner su ficha (la llama o la gota) en uno de los nueve hoyos del tablero.",
     "Gana quien junta tres en línea: de lado, de arriba abajo o en diagonal.",
     "Si se llena el tablero sin línea, es empate.",
   ],
