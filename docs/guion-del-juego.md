@@ -999,6 +999,10 @@ cada uno quede abajo a la izquierda. Medidas en `mesa/parchis-geo.ts`; reglas en
 - OJO: lo que cambia al pasar el dedo no debe quitar el elemento que está bajo el dedo (la vista previa del tres en raya
   es solo CSS): si se cambia, el navegador pierde el toque.
 - Para probar en desarrollo, con la computadora: `/mesa-prueba/<ajedrez|damas|domino|cuatro-en-raya|tres-en-raya|parchis>`.
+- Segunda vuelta (14 de noviembre): `useMiTurno` (aviso y vibración al empezar mi turno, solo al cambiar), confeti al ganar
+  en el resultado del patio, piezas del ajedrez talladas (degradados `aj-marfil`/`aj-ebano`), la última jugada del
+  ajedrez en palabras y el «¡Jaque mate!», la ficha del dominó que se desliza desde quien la jugó, los tableros con
+  `min(100%, max(16rem, calc(100dvh - 24rem)))` para que quepan en el alto, y la veta en el cuatro en raya.
 
 Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
 pruebas (`shared/mesa-clasicos.test.ts`) cuentan todas las jugadas del ajedrez en posiciones conocidas («perft»).

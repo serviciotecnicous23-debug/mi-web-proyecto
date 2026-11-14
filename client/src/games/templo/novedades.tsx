@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-mesas-a-detalle",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Los juegos de mesa, a detalle",
+    puntos: [
+      "🎵 Cuando te toca jugar, suena un aviso y el teléfono vibra un poquito: ya no hace falta estar mirando mientras juega la computadora.",
+      "🏆 Al ganar una partida del patio, cae confeti sobre el resultado.",
+      "♟️ Las piezas del ajedrez se ven talladas, con su luz y su sombra, y debajo del tablero se lee la última jugada («caballo de g8 a f6»); al terminar con jaque mate, se dice.",
+      "🎲 En el dominó, la ficha nueva llega deslizándose desde quien la jugó. Los tableros del ajedrez, las damas y el cuatro en raya caben en la pantalla de la computadora sin tener que bajar, y los números de tus fichas del parchís se leen mejor.",
+    ],
+  },
+  {
     id: "2026-11-14-caras-agua",
     fecha: "14 de noviembre de 2026",
     titulo: "Caras, manos y agua de verdad",

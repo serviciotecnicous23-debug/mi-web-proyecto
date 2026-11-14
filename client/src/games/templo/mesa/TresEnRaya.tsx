@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
 import type { VistaTres } from "@shared/mesa/tres-en-raya";
 import type { PantallaMesaProps } from "./index";
 import { mesaSonido } from "./mesa-sonido";
-import { useJugadaNueva } from "./vida";
+import { useJugadaNueva, useMiTurno } from "./vida";
 
 const NOMBRE = ["la llama", "la gota"] as const;
 
@@ -52,6 +52,7 @@ export function TresEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, asi
   const linea = vista.linea ?? [];
   const enLinea = new Set(linea);
   const mio = (miAsiento ?? 0) as 0 | 1;
+  useMiTurno(miAsiento !== null && juegan.includes(miAsiento));
   useJugadaNueva(ultima, () => mesaSonido.pieza());
   // la línea ganadora suena una vez, cuando aparece
   const habiaLinea = useRef(linea.length > 0);

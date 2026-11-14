@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Volume2, VolumeX } from "lucide-react";
-import { oirSonidoMesa, ponerSonidoMesa, sonidoMesaApagado } from "./mesa-sonido";
+import { mesaSonido, oirSonidoMesa, ponerSonidoMesa, sonidoMesaApagado } from "./mesa-sonido";
 import "./mesa.css";
 
 /** Un color por asiento (se ven bien sobre papel y sobre el paño). */
@@ -213,6 +213,25 @@ export function useJugadaNueva(ultima: { n: number } | null | undefined, alNueva
     if (n > visto.current) fn.current();
     visto.current = n;
   }, [n]);
+}
+
+/**
+ * Cuando me empieza a tocar: suena el aviso del turno y el teléfono vibra un poquito (donde se puede). Solo cuando cambia
+ * de «no me toca» a «me toca», no al abrir la pantalla.
+ */
+export function useMiTurno(meToca: boolean) {
+  const antes = useRef(meToca);
+  useEffect(() => {
+    if (meToca && !antes.current) {
+      mesaSonido.turno();
+      try {
+        navigator.vibrate?.(35);
+      } catch {
+        /* sin vibración */
+      }
+    }
+    antes.current = meToca;
+  }, [meToca]);
 }
 
 /** El aviso de un error de la jugada (se borra solo). */
