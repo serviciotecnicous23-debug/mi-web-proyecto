@@ -14,6 +14,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-manto-templo",
+    fecha: "14 de noviembre de 2026",
+    titulo: "La ropa que se mueve y el templo de noche",
+    puntos: [
+      "👘 La túnica y el manto se mueven al caminar: el ruedo se queda atrás al arrancar, pasa de largo al frenar, se abre en las curvas y las rodillas empujan la tela con cada paso.",
+      "✨ Las campanillas, las granadas y las orlas de oro siguen a la tela, y en quietud la ropa se mece apenas con la brisa.",
+      "🧱 El piso de los atrios es un enlosado de verdad: losas de largos distintos en hileras trabadas, con sus bordes, sus tonos y el camino gastado de la puerta al altar. La plaza y el patio de la ciudad también lo tienen.",
+      "🌅 Junto a los muros y a la casa de Jehová el piso tiene su sombra, y con el sol bajo cada losa brilla distinto.",
+      "🔥 De noche las antorchas y los braseros alumbran con luz tibia que titila el piso, los muros y a la gente que pasa cerca.",
+    ],
+  },
+  {
     id: "2026-11-14-mesas-a-detalle",
     fecha: "14 de noviembre de 2026",
     titulo: "Los juegos de mesa, a detalle",

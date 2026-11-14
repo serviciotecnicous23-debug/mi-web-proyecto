@@ -5,6 +5,7 @@
  */
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { conFuegos } from "./luces";
 
 export const C = {
   piedra: "#e3d5b6",
@@ -359,13 +360,18 @@ let matte: THREE.MeshLambertMaterial | null = null;
 let shiny: THREE.MeshPhongMaterial | null = null;
 
 export function matteMat() {
-  if (!matte) matte = conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false);
+  if (!matte) matte = conFuegos(conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false), "detalle");
   return matte;
 }
 
 export function shinyMat() {
-  if (!shiny) shiny = conDetalle(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") }), true);
+  if (!shiny) shiny = shinyMatPropio();
   return shiny;
+}
+
+/** Un metal como el compartido pero propio (lo que se mueve con su dueño, como el oro de la ropa de los personajes). */
+export function shinyMatPropio() {
+  return conFuegos(conDetalle(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") }), true), "metal");
 }
 
 /** Arma un grupo con una malla mate y otra brillante (si hay piezas de metal). */

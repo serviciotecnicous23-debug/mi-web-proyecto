@@ -15,7 +15,7 @@ import {
   type HelperId, type ItemType, type StationId, type UpgradeId,
 } from "./data";
 import {
-  CHOIR_FLOOR, CHOIR_SPOTS, DOOR_RECT, GATE_RECT, HELPER_HOME, MAX_QUEUE, OUTER, OUTER_GATE, POS, PRAY_SPOTS, STATIC_CIRCLES,
+  CHOIR_FLOOR, CHOIR_SPOTS, COURT, DOOR_RECT, GATE_RECT, HELPER_HOME, MAX_QUEUE, OUTER, OUTER_GATE, POS, PRAY_SPOTS, STATIC_CIRCLES,
   STATIC_RECTS, TEMPLE, VEIL_RECT, WAIT_SPOTS, floorHeight, insideTemple, queueSlot, type Rect, type V2,
 } from "./layout";
 import { GAME_SLUG, applyOffline, genBonus, gloria, nuevaGeneracion, progressView, sanitize, saveLocal, saveRemote, submitScore, type PileId, type SaveData } from "./state";
@@ -48,6 +48,7 @@ import { Presencia } from "./motor/presencia";
 import { RED_TICK_MS } from "@shared/ciudad";
 import { haciaElPiso } from "./motor/camara";
 import { Polvo } from "./ciudad/clima";
+import { apagarFuegos, ponerFuegos, titila, type Fuego } from "./three/luces";
 
 // ---------------------------------------------------------------- reglas
 const DAY = 240; // segundos de juego por día
@@ -275,6 +276,11 @@ export class TempleWorld {
   private camTarget = new THREE.Vector3(POS.start[0], 0, POS.start[1]);
   /** El polvo que flota en la luz de los atrios (docs/guia-visual.md, sección 7). */
   private polvo: Polvo | null = null;
+  /** La luz de las antorchas y de los braseros en los atrios, de noche (three/luces.ts). */
+  private fuegos: Fuego[] = [];
+  private nivelFuegos = 0;
+  /** Cuánto es de día (de 0 a 1), lo calcula updateSky. */
+  private dia = 1;
   private time = 0;
   // calendario hebreo y fiestas (shared/calendario.ts) y juicios del sacerdote (casos.ts)
   private fecha!: Fecha;
@@ -334,6 +340,15 @@ export class TempleWorld {
     if (coarse) this.fx.density = 0.7;
     this.polvo = new Polvo(coarse, 0);
     this.scene.add(this.polvo.group);
+    // cada antorcha y cada brasero alumbra su atrio (sin pasar el muro); los braseros, cuando se ganan. Los que están
+    // frente a la casa de Jehová no alumbran detrás de la fachada (el Lugar Santo tiene sus lámparas)
+    const anchoCasa = TEMPLE.halfW + TEMPLE.wall + TEMPLE.annex + 2;
+    const atrioDe = (x: number, z: number): [number, number, number, number] => {
+      if (x > COURT.maxX) return [OUTER.minX, OUTER.minZ, OUTER.maxX, OUTER.maxZ];
+      const frente = x > TEMPLE.porchX && Math.abs(z) < anchoCasa;
+      return [frente ? TEMPLE.porchX - 0.5 : COURT.minX, COURT.minZ, COURT.maxX, COURT.maxZ];
+    };
+    this.fuegos = [...this.vis.torches, ...this.vis.braseros].map((p) => ({ x: p.x, y: p.y, z: p.z, fuerza: 0, recorte: atrioDe(p.x, p.z) }));
     this.fireLight.position.set(POS.altar[0], 2.6, POS.altar[1]);
     this.lampLight.position.copy(this.vis.stations.candelero.anchors.light);
     this.holyLight.position.copy(this.vis.holiestLightPos);
@@ -3252,10 +3267,18 @@ export class TempleWorld {
     this.lampLight.intensity = lit ? 9 * flick : 0;
     if (lit) for (let i = 0; i < LAMPS; i++) this.fx.flame(`lamp${i}`, this.vis.stations.candelero.anchors[`lamp${i}`], dt, 0.8);
     // antorchas de noche
-    if (night || s.time > DUSK - 0.05) {
+    const encendidas = night || s.time > DUSK - 0.05;
+    if (encendidas) {
       for (let i = 0; i < this.vis.torches.length; i++) this.fx.flame(`t${i}`, this.vis.torches[i], dt, 1.6);
       if (this.vis.adornos.braseros?.visible) for (let i = 0; i < this.vis.braseros.length; i++) this.fx.flame(`b${i}`, this.vis.braseros[i], dt, 2.2);
     }
+    // y su luz: se enciende de a poco con la oscuridad y titila
+    const objetivo = encendidas ? THREE.MathUtils.smoothstep(1 - this.dia, 0.3, 0.9) : 0;
+    this.nivelFuegos += (objetivo - this.nivelFuegos) * Math.min(1, dt * 2.5);
+    const conBraseros = this.vis.adornos.braseros?.visible ? 1.2 : 0;
+    const nt = this.vis.torches.length;
+    this.fuegos.forEach((f, i) => (f.fuerza = this.nivelFuegos * titila(this.time, i) * (i < nt ? 1 : conBraseros)));
+    ponerFuegos(this.fuegos, this.camTarget);
     // incienso
     if (s.built.altarIncienso && (s.incense > 0 || this.prayer)) this.fx.incense("inc", this.vis.stations.altarIncienso.anchors.top, dt, this.prayer ? 3 : 0.8);
     // horno y prensa
@@ -3463,6 +3486,7 @@ export class TempleWorld {
     const u = this.vis.skyUniforms;
     const e = t >= 0.22 && t <= 0.78 ? Math.sin((Math.PI * (t - 0.22)) / 0.56) : -Math.min(1, Math.min(Math.abs(t - 0.22), Math.abs(t - 0.78), t + 0.22, 1.22 - t) * 4);
     const day = THREE.MathUtils.smoothstep(e, -0.08, 0.28);
+    this.dia = day;
     const warm = 1 - THREE.MathUtils.smoothstep(e, 0.05, 0.45);
     const az = Math.PI * Math.min(1, Math.max(0, (t - 0.22) / 0.56));
     const sunDir = new THREE.Vector3(Math.cos(az), Math.max(0.12, Math.sin(az) * 0.95), 0.42).normalize();
@@ -3728,6 +3752,7 @@ export class TempleWorld {
     this.entrada.destruir();
     this.marca?.dispose();
     this.polvo?.dispose();
+    apagarFuegos();
     document.removeEventListener("visibilitychange", this.onVisibility);
     window.removeEventListener("pagehide", this.onPageHide);
     this.resizeObs.disconnect();
