@@ -10,12 +10,14 @@ import { pool } from "./db";
 import {
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
+  bloqueoDe, segundosDeLectura, videoQuePide, type BloqueoRepaso,
 } from "@shared/academia";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
-import { numeroDe, opcionesDeExamen } from "./orden-examen";
+import { numeroDe } from "./orden-examen";
+import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, frenar, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
   marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
@@ -25,7 +27,10 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
 import { registerAcademiaMentoresRoutes } from "./academia-mentores";
-import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
+import { claveSuficiencia, registerAcademiaSuficienciaRoutes } from "./academia-suficiencia";
+import { registerAcademiaDiagnosticoRoutes } from "./academia-diagnostico";
+import { registerAcademiaVersiculosRoutes } from "./academia-versiculos";
+import { estadoExamen, leerCurso, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
 
@@ -33,10 +38,14 @@ export { ACADEMIA_SQL } from "./academia-comun";
 
 type FilaLeccion = { leccion_id: string; completada: boolean; repaso: Record<string, { primera?: boolean; ok?: boolean }>; reflexion: string | null };
 
-/** El orden de las opciones de un repaso: fijo para cada persona (y para los visitantes), distinto en cada pregunta. */
-const semillaRepaso = (userId: number | null) => (userId ? Math.imul(userId, 2654435761) : 12345) | 0;
-function opcionesRepaso(p: PreguntaObjetiva, userId: number | null, lugar: number): string[] {
-  return opcionesDeExamen(p.id, p.correcta, p.falsas, semillaRepaso(userId), lugar);
+/**
+ * El orden de las opciones de un repaso: fijo para cada persona (y para los visitantes), con la buena en un lugar
+ * distinto en cada pregunta de la lección (server/academia-orden.ts).
+ */
+const semillaRepaso = (userId: number | null, leccionId: string) => ((userId ? Math.imul(userId, 2654435761) : 12345) ^ numeroDe(leccionId)) | 0;
+function opcionesRepaso(p: PreguntaObjetiva, userId: number | null, lugar: number, leccionId: string, total: number): string[] {
+  const semilla = semillaRepaso(userId, leccionId);
+  return opcionesConBuenaEn(p.id, p.correcta, p.falsas, semilla, lugaresDeLaBuena(total, semilla)[lugar] ?? 0);
 }
 
 function estadoDe(m: MateriaDef, fila: { estado: string } | undefined, hechas: number): EstadoMateria {
@@ -46,18 +55,22 @@ function estadoDe(m: MateriaDef, fila: { estado: string } | undefined, hechas: n
   return "disponible";
 }
 
-/** Las fichas del versículo de memoria (grupos de unas 3 palabras). */
-export function fichasDe(texto: string): string[] {
-  const ws = texto.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
-  const out: string[] = [];
-  for (let i = 0; i < ws.length; i += 3) out.push(ws.slice(i, i + 3).join(" "));
-  if (out.length > 1 && !out[out.length - 1].includes(" ")) {
-    const ultima = out.pop()!;
-    out[out.length - 1] += ` ${ultima}`;
-  }
-  return out;
+
+export { fichasDe };
+
+/** Lo que le falta a un alumno para abrir el repaso de una lección (null si ya la completó). */
+async function faltaParaRepaso(userId: number, minutos: number, leccionId: string): Promise<BloqueoRepaso | null> {
+  const contenido = CONTENIDO.get(leccionId);
+  const pideVideo = contenido ? videoQuePide(contenido.bloques) : null;
+  const { rows } = await pool.query(
+    `SELECT completada_at, EXTRACT(EPOCH FROM now() - COALESCE(abierta_at, now()))::float AS leidos, video_seg
+       FROM academia_lecciones WHERE user_id = $1 AND leccion_id = $2`,
+    [userId, leccionId],
+  );
+  const f = rows[0];
+  if (f?.completada_at) return null;
+  return bloqueoDe(minutos, pideVideo, Number(f?.leidos ?? 0), Number(f?.video_seg ?? 0));
 }
-const idFicha = (userId: number, materiaId: string, i: number) => numeroDe(`${userId}|${materiaId}|${i}`).toString(36);
 
 export function registerAcademiaRoutes(app: Express) {
   // ---------------------------------------------------------------- el catálogo y el avance del alumno
@@ -161,23 +174,32 @@ export function registerAcademiaRoutes(app: Express) {
       if (!m) return res.status(404).json({ message: "No existe esa materia." });
       const userId = acceso.userId;
       let lec = new Map<string, { vista: boolean; completada: boolean }>();
-      let fila: { estado: string; nota: number | null; inicio: string } | undefined;
+      let fila: { estado: string; nota: number | null; inicio: string; via: string } | undefined;
+      let suf: { intentos: number; curso: unknown } | undefined;
       let completos: number[] = [];
       let versiculo: MateriaDetalle["versiculo"] = m.memoria ? { ref: m.memoria, aprendido: false, puntaje: null, intentos: 0 } : null;
       if (userId) {
-        const [{ rows: l }, { rows: mt }, { rows: v }] = await Promise.all([
+        const [{ rows: l }, { rows: mt }, { rows: v }, { rows: sf }] = await Promise.all([
           pool.query(`SELECT leccion_id, completada_at IS NOT NULL AS completada FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`, [userId, m.lecciones.map((x) => x.id)]),
-          pool.query(`SELECT estado, nota, inicio_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
+          pool.query(`SELECT estado, nota, inicio_at, via FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
+          pool.query(`SELECT intentos, curso FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveSuficiencia(m.id)]),
         ]);
         lec = new Map(l.map((r: any) => [r.leccion_id, { vista: true, completada: !!r.completada }]));
-        fila = mt[0] ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota), inicio: new Date(mt[0].inicio_at).toISOString() } : undefined;
+        fila = mt[0]
+          ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota), inicio: new Date(mt[0].inicio_at).toISOString(), via: String(mt[0].via || "cursada") }
+          : undefined;
+        suf = sf[0] ? { intentos: Number(sf[0].intentos || 0), curso: sf[0].curso } : undefined;
         completos = await nivelesCompletos(userId);
         if (versiculo && v[0]) versiculo = { ref: m.memoria!, aprendido: !!v[0].aprendido_at, puntaje: v[0].puntaje == null ? null : Number(v[0].puntaje), intentos: Number(v[0].intentos || 0) };
       }
       const hechas = m.lecciones.filter((x) => lec.get(x.id)?.completada).length;
       const estado = estadoDe(m, fila, hechas);
       const componentes = userId && m.disponible ? await componentesDe(userId, m) : {};
+      const examen = userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null;
+      // La suficiencia se ofrece a quien no aprobó la materia ni dio su examen final, y solo una vez (o si la está dando).
+      const sufEnCurso = !!leerCurso(suf?.curso);
+      const suficiencia = examen && estado !== "aprobada" && !examen.intentos && !examen.enCurso && (!suf?.intentos || sufEnCurso) ? { enCurso: sufEnCurso } : null;
       const out: MateriaDetalle = {
         materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada })) },
         pesos: pesosDe(m),
@@ -186,7 +208,7 @@ export function registerAcademiaRoutes(app: Express) {
         componentes,
         medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         versiculo,
-        examen: userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null,
+        examen,
         certificado: userId && estado === "aprobada" ? (await codigoDocumento(userId, "materia", m.id)) ?? (await emitirMateria(userId, m, fila?.nota ?? 0)) : null,
         matriculado: userId ? await estaInscrito(userId) : false,
         inscrita: fila?.inicio ?? null,
@@ -194,6 +216,8 @@ export function registerAcademiaRoutes(app: Express) {
         docente: !!userId && puedeRevisar(acceso.role),
         vistaPrevia: acceso.vistaPrevia,
         conSesion: !!userId,
+        via: estado === "aprobada" ? ((fila?.via as MateriaDetalle["via"]) ?? "cursada") : null,
+        suficiencia,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -230,13 +254,19 @@ export function registerAcademiaRoutes(app: Express) {
       let fila: FilaLeccion | undefined;
       if (userId && !docente) {
         const { rows } = await pool.query(
-          `INSERT INTO academia_lecciones (user_id, leccion_id) VALUES ($1, $2)
-           ON CONFLICT (user_id, leccion_id) DO UPDATE SET vista_at = now()
-           RETURNING leccion_id, completada_at IS NOT NULL AS completada, repaso, reflexion`,
+          `INSERT INTO academia_lecciones (user_id, leccion_id, abierta_at) VALUES ($1, $2, now())
+           ON CONFLICT (user_id, leccion_id) DO UPDATE SET vista_at = now(), abierta_at = COALESCE(academia_lecciones.abierta_at, now())
+           RETURNING leccion_id, completada_at IS NOT NULL AS completada, repaso, reflexion,
+                     EXTRACT(EPOCH FROM now() - abierta_at)::float AS leidos, video_seg`,
           [userId, id],
         );
         fila = rows[0];
       }
+      // el repaso se abre después de leer (y de ver el video, si tiene): el servidor cuenta el tiempo
+      const pide = { lectura: segundosDeLectura(l.leccion.minutos), video: videoQuePide(contenido.bloques) };
+      const bloqueo: BloqueoRepaso | null = docente || fila?.completada
+        ? null
+        : bloqueoDe(l.leccion.minutos, pide.video, Number((fila as any)?.leidos ?? 0), Number((fila as any)?.video_seg ?? 0));
       const bloques: BloqueVista[] = await Promise.all(
         contenido.bloques.map(async (b): Promise<BloqueVista> => {
           if (b.t !== "versiculo") return b;
@@ -245,7 +275,8 @@ export function registerAcademiaRoutes(app: Express) {
         }),
       );
       const banco = BANCOS.get(l.materia.id);
-      const repaso = (banco?.repaso[id] ?? []).map((p, i) => ({ id: p.id, texto: p.texto, opciones: opcionesRepaso(p, userId, i), hecha: !!fila?.repaso?.[p.id]?.ok }));
+      const preguntasRepaso = banco?.repaso[id] ?? [];
+      const repaso = preguntasRepaso.map((p, i) => ({ id: p.id, texto: p.texto, opciones: opcionesRepaso(p, userId, i, id, preguntasRepaso.length), hecha: !!fila?.repaso?.[p.id]?.ok }));
       const ms = l.materia.lecciones;
       const out: LeccionVista = {
         materia: { id: l.materia.id, titulo: l.materia.titulo },
@@ -264,11 +295,43 @@ export function registerAcademiaRoutes(app: Express) {
         matriculado,
         inscrita,
         docente,
+        bloqueo,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
     } catch (err) {
       console.error("[academia] lección:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // El avance del video de la lección (lo visto de corrido desde el principio): nunca cuenta más que el tiempo que pasó
+  // desde que se empezó a ver. Sirve para abrir el repaso (shared/academia.ts, «LECTURA»).
+  app.post("/api/academia/leccion/:leccionId/video", async (req, res) => {
+    try {
+      const acceso = await accesoDe(req);
+      if (!acceso.userId) return res.status(401).json({ message: "Entra con tu cuenta." });
+      if (!acceso.ver) return res.status(403).json({ message: MENSAJE_CERRADA });
+      const id = String(req.params.leccionId || "");
+      const l = leccionPorId(id);
+      const contenido = CONTENIDO.get(id);
+      if (!l || !contenido) return res.status(404).json({ message: "Esa lección no existe." });
+      const pide = videoQuePide(contenido.bloques);
+      if (pide == null) return res.json({ visto: 0, falta: 0 });
+      if (frenar(`lv:${acceso.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const seg = Math.max(0, Math.min(36000, Math.floor(Number(req.body?.segundos) || 0)));
+      const { rows } = await pool.query(
+        `UPDATE academia_lecciones
+            SET video_inicio = COALESCE(video_inicio, now()),
+                video_seg = GREATEST(video_seg, LEAST($3::int, FLOOR(EXTRACT(EPOCH FROM now() - COALESCE(video_inicio, now())))::int))
+          WHERE user_id = $1 AND leccion_id = $2
+          RETURNING video_seg`,
+        [acceso.userId, id, seg],
+      );
+      const visto = Number(rows[0]?.video_seg ?? 0);
+      res.json({ visto, falta: Math.max(0, pide - visto) });
+    } catch (err) {
+      console.error("[academia] video de la lección:", err);
       res.sendStatus(500);
     }
   });
@@ -297,8 +360,18 @@ export function registerAcademiaRoutes(app: Express) {
       const lugar = preguntas.findIndex((p) => p.id === preguntaId);
       if (lugar < 0) return res.status(404).json({ message: "Esa pregunta no es de esta lección." });
       const p = preguntas[lugar];
-      const opciones = opcionesRepaso(p, userId, lugar);
+      const opciones = opcionesRepaso(p, userId, lugar, leccionId, preguntas.length);
       if (opcion >= opciones.length) return res.status(400).json({ message: "Respuesta no válida." });
+      // antes de responder hay que leer la lección (y ver el video, si tiene): lo cuenta el servidor
+      if (userId && (publica || inscrita)) {
+        const falta = await faltaParaRepaso(userId, l.leccion.minutos, leccionId);
+        if (falta && (falta.lectura > 0 || (falta.video ?? 0) > 0)) {
+          return res.status(409).json({
+            message: falta.lectura > 0 ? "Primero lee la lección: el repaso se abre en un momento." : "Primero mira los primeros minutos del video de la lección.",
+            bloqueo: falta,
+          });
+        }
+      }
       const bien = opciones[opcion] === p.correcta;
       let todas = false;
       if (userId && (publica || inscrita)) {
@@ -462,4 +535,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);
   registerAcademiaMentoresRoutes(app);
+  registerAcademiaSuficienciaRoutes(app);
+  registerAcademiaDiagnosticoRoutes(app);
+  registerAcademiaVersiculosRoutes(app);
 }

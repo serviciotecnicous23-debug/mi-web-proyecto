@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/layout";
+import { TarjetaAcademiaPanel } from "@/components/academia/entrada-panel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +136,8 @@ export default function MiIglesiaPage() {
               <Badge className="ml-auto bg-green-500/20 text-green-400">{currentChurch.allianceStatus}</Badge>
             )}
           </div>
+
+          <TarjetaAcademiaPanel base="/mi-iglesia/academia" />
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

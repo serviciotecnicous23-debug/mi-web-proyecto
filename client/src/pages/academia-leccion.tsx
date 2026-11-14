@@ -2,19 +2,48 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle2, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, Save, Target, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, PlayCircle, Save, Target, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
-import type { LeccionVista, RespuestaRepaso } from "@shared/academia";
-import { completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
+import { idYouTube, type BloqueoRepaso, type LeccionVista, type RespuestaRepaso } from "@shared/academia";
+import { avanceVideo, completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
 import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 
 type Intento = { elegida: number; r: RespuestaRepaso };
 
-function PreguntaRepaso({ leccionId, p, n, alResponder }: { leccionId: string; p: LeccionVista["repaso"][number]; n: number; alResponder: (bien: boolean, todas: boolean) => void }) {
+const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.max(0, Math.ceil(s)) % 60).padStart(2, "0")}`;
+
+/** Mientras no se lee la lección (y no se ve el video, si tiene), el repaso queda cerrado: lo cuenta el servidor. */
+function RepasoCerrado({ lectura, video, videoPide, sinVideo }: { lectura: number; video: number | null; videoPide: number | null; sinVideo: number | null }) {
+  return (
+    <div className="glass-card p-5 border border-orange-500/40" role="status" data-testid="repaso-cerrado">
+      <p className="font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-orange-500" /> El repaso se abre cuando termines la lección</p>
+      <p className="text-sm text-muted-foreground mt-1">Lee la lección con calma{videoPide ? " y mira el video" : ""}: así el repaso te sirve de verdad.</p>
+      <ul className="mt-3 space-y-1.5 text-sm">
+        <li className="flex items-center gap-2" data-testid="repaso-falta-lectura">
+          {lectura > 0 ? <Clock className="w-4 h-4 text-orange-500" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+          {lectura > 0 ? `Lectura: faltan ${mmss(lectura)}` : "Lectura: lista"}
+        </li>
+        {videoPide != null && video != null && (
+          <li className="flex items-center gap-2" data-testid="repaso-falta-video">
+            {video > 0 ? <PlayCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+            {video > 0
+              ? `Video: mira de corrido sus primeros ${videoPide >= 120 ? "2 minutos" : mmss(videoPide)} (faltan ${mmss(video)}; adelantarlo no cuenta)`
+              : "Video: listo"}
+          </li>
+        )}
+        {videoPide != null && video != null && video > 0 && sinVideo != null && sinVideo > 0 && (
+          <li className="text-xs text-muted-foreground pl-6" data-testid="repaso-sin-video">¿No carga el video? El repaso se abre igual en {mmss(sinVideo)}.</li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function PreguntaRepaso({ leccionId, p, n, alResponder, alBloquear }: { leccionId: string; p: LeccionVista["repaso"][number]; n: number; alResponder: (bien: boolean, todas: boolean) => void; alBloquear: (b: BloqueoRepaso) => void }) {
   const [intentos, setIntentos] = useState<Intento[]>([]);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +58,7 @@ function PreguntaRepaso({ leccionId, p, n, alResponder }: { leccionId: string; p
       setIntentos((xs) => [...xs, { elegida: k, r }]);
       alResponder(r.bien, r.todas);
     } catch (e: any) {
+      if (e?.status === 409 && e.datos?.bloqueo) alBloquear(e.datos.bloqueo as BloqueoRepaso);
       setError(e.message);
     } finally {
       setOcupado(false);
@@ -81,14 +111,33 @@ export default function AcademiaLeccion() {
   const [reflexion, setReflexion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [terminando, setTerminando] = useState(false);
+  // lo que falta para abrir el repaso: la lectura baja sola cada segundo; el video, con lo que cuenta el servidor
+  const [bloqueo, setBloqueo] = useState<BloqueoRepaso | null>(null);
 
   useEffect(() => {
     if (q.data) {
       setBien(new Set(q.data.repaso.filter((p) => p.hecha).map((p) => p.id)));
       setReflexion(q.data.progreso?.reflexion ?? "");
+      setBloqueo(q.data.bloqueo);
       window.scrollTo({ top: 0 });
     }
   }, [q.data?.leccion.id]);
+
+  // la lectura y la espera sin video bajan solas cada segundo (el servidor lleva la cuenta de verdad)
+  const corre = !!bloqueo && (bloqueo.lectura > 0 || ((bloqueo.video ?? 0) > 0 && (bloqueo.sinVideo ?? 0) > 0));
+  useEffect(() => {
+    if (!corre) return;
+    const t = window.setInterval(
+      () =>
+        setBloqueo((b) => {
+          if (!b) return b;
+          const sinVideo = b.sinVideo == null ? null : Math.max(0, b.sinVideo - 1);
+          return { ...b, lectura: Math.max(0, b.lectura - 1), sinVideo, video: sinVideo === 0 ? 0 : b.video };
+        }),
+      1000,
+    );
+    return () => window.clearInterval(t);
+  }, [corre]);
 
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
@@ -137,6 +186,23 @@ export default function AcademiaLeccion() {
   const materia = `/academia/materia/${l.materia.id}`;
   const todas = l.repaso.every((p) => bien.has(p.id));
   const completada = !!l.progreso?.completada;
+  const repasoAbierto = !bloqueo || (bloqueo.lectura <= 0 && (bloqueo.video == null || bloqueo.video <= 0));
+  // el primer video de YouTube es el que cuenta para abrir el repaso
+  const videoQueCuenta = l.bloques.findIndex((b) => b.t === "video" && !!idYouTube(b.url));
+  const alVerVideo = async (segundos: number) => {
+    if (!bloqueo || bloqueo.video == null || bloqueo.video <= 0) return;
+    if (!conSesion) {
+      // sin cuenta no se guarda: se cuenta aquí
+      setBloqueo((b) => (b && b.videoPide != null ? { ...b, video: Math.max(0, b.videoPide - segundos) } : b));
+      return;
+    }
+    try {
+      const r = await avanceVideo(l.leccion.id, segundos);
+      setBloqueo((b) => (b ? { ...b, video: b.sinVideo === 0 ? 0 : r.falta } : b));
+    } catch {
+      // se vuelve a intentar con el próximo aviso
+    }
+  };
 
   const guardar = async () => {
     setGuardando(true);
@@ -195,7 +261,7 @@ export default function AcademiaLeccion() {
         {l.docente && (
           <div className="glass-card p-4 mb-6 text-sm flex items-start gap-3 border border-sky-500/30" role="note" data-testid="leccion-vista-docente">
             <Eye className="w-5 h-5 text-sky-600 shrink-0" />
-            <span><strong>Vista docente.</strong> Lees la lección sin estar inscrito: puedes responder el repaso, pero no se guarda nada.</span>
+            <span><strong>Vista de la Administración.</strong> Lees la lección sin estar inscrito, para revisarla: puedes responder el repaso, pero no se guarda nada. Para cursarla como alumno, inscríbete en la materia.</span>
           </div>
         )}
 
@@ -209,7 +275,7 @@ export default function AcademiaLeccion() {
           <p className="text-lg leading-8 italic">{l.paraEmpezar}</p>
         </section>
 
-        <section>{l.bloques.map((b, i) => <BloqueLeccion key={i} b={b} />)}</section>
+        <section>{l.bloques.map((b, i) => <BloqueLeccion key={i} b={b} alVerVideo={i === videoQueCuenta ? alVerVideo : undefined} />)}</section>
 
         <section className="my-10 rounded-2xl p-6 text-center bg-gradient-to-br from-orange-500/15 to-amber-400/10 border border-orange-500/20" data-testid="idea-clave">
           <p className="data-label mb-2 flex justify-center items-center gap-1.5"><Lightbulb className="w-4 h-4" /> La idea clave</p>
@@ -236,19 +302,24 @@ export default function AcademiaLeccion() {
         <section className="mb-10" data-testid="repaso">
           <h2 className="font-display text-2xl font-bold mb-1 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Repaso</h2>
           <p className="text-sm text-muted-foreground mb-4">Responde bien cada pregunta para terminar la lección. Cuenta lo que aciertes a la primera.</p>
-          <div className="space-y-4">
-            {l.repaso.map((p, i) => (
-              <PreguntaRepaso
-                key={p.id}
-                leccionId={l.leccion.id}
-                p={p}
-                n={i + 1}
-                alResponder={(ok) => {
-                  if (ok) setBien((s) => new Set(s).add(p.id));
-                }}
-              />
-            ))}
-          </div>
+          {!repasoAbierto && bloqueo ? (
+            <RepasoCerrado lectura={bloqueo.lectura} video={bloqueo.video} videoPide={bloqueo.videoPide} sinVideo={bloqueo.sinVideo} />
+          ) : (
+            <div className="space-y-4">
+              {l.repaso.map((p, i) => (
+                <PreguntaRepaso
+                  key={p.id}
+                  leccionId={l.leccion.id}
+                  p={p}
+                  n={i + 1}
+                  alResponder={(ok) => {
+                    if (ok) setBien((s) => new Set(s).add(p.id));
+                  }}
+                  alBloquear={(b) => setBloqueo(b)}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">

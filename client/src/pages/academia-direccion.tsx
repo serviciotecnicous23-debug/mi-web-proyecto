@@ -1,8 +1,8 @@
-// El panel de seguimiento de la Dirección académica (server/academia-direccion.ts): el resumen, los alumnos con su
-// avance, las materias, la revisión del contenido (server/academia-calidad.ts), el registro de inscripciones y los roles
-// y permisos. Cada rol ve lo que le toca
-// (shared/academia-permisos.ts): la Dirección, todo; los profesores, sin los datos de contacto; las iglesias aliadas,
-// solo a los alumnos de su iglesia.
+// El panel de la academia (server/academia-direccion.ts): el resumen, los alumnos con su avance, las materias, la
+// revisión del contenido (server/academia-calidad.ts), el registro de inscripciones y los roles y permisos. Cada rol ve
+// lo que le toca (shared/academia-permisos.ts): la Administración (solo el administrador) la maneja desde el panel de
+// administración; el equipo del ministerio solo consulta, sin datos de contacto; las iglesias aliadas consultan a los
+// alumnos de su iglesia. Nadie más cambia nada.
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,16 +12,20 @@ import {
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
 import { NOMBRE_ACADEMIA, NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia";
-import { CAPACIDADES, ROLES_ACADEMIA, TEXTO_ALCANCE, rolAcademia } from "@shared/academia-permisos";
+import { CAPACIDADES, ROLES_ACADEMIA, rolAcademia, textoCelda } from "@shared/academia-permisos";
+import { PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion";
+import { useArea } from "@/components/academia/area";
 import type { ActividadItem, AlumnoFila, DireccionResumen } from "@shared/academia-direccion";
 import {
-  cambiarApertura, enlaceReporte, useContenido, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
+  aprobarDeclaracion, cambiarApertura, desaprobarDeclaracion, enlaceReporte, useContenido, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
 } from "@/components/academia/api";
-import type { ContenidoResumen } from "@shared/academia-calidad";
+import type { ContenidoLista, ContenidoResumen } from "@shared/academia-calidad";
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
@@ -29,8 +33,11 @@ import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, h
 const ORDEN_ESTATUS: EstatusAlumno[] = ["aspirante", "activo", "pausa", "egresado", "graduado", "retirado"];
 const SELECT =
   "h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring";
-const enlaceAlumno = (id: number) => `/academia/direccion/alumno/${id}`;
-const enlaceMateria = (id: string) => `/academia/direccion/materia/${id}`;
+/** Los enlaces dentro del panel (en el área de quien mira: administración, maestro o «Mi iglesia»). */
+function useEnlaces() {
+  const { base } = useArea();
+  return { alumno: (id: number) => `${base}/alumno/${id}`, materia: (id: string) => `${base}/materia/${id}`, contenido: (id: string) => `${base}/contenido/${id}` };
+}
 const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const REPORTES: { archivo: ReporteCsv; texto: string }[] = [
@@ -77,7 +84,7 @@ function Apertura({ abierta, irA }: { abierta: boolean; irA: (tab: string) => vo
           <p className="text-sm text-muted-foreground">
             {abierta
               ? "Todos los miembros la ven en el menú y en la barra de la app, y los visitantes ven su catálogo."
-              : "Solo la administración, los profesores y las iglesias aliadas la ven. Ábrela cuando el Nivel 1 esté revisado."}
+              : "Por ahora la ven solo la Administración y, para consultar, los maestros y las iglesias aliadas. Ábrela cuando el Nivel 1 esté revisado."}
           </p>
           {!abierta && c && (
             <p className="text-sm mt-1.5" data-testid="apertura-revision">
@@ -121,6 +128,7 @@ function Apertura({ abierta, irA }: { abierta: boolean; irA: (tab: string) => vo
 }
 
 function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }) {
+  const enlaces = useEnlaces();
   const t = d.totales;
   const porRevisar = d.pendientes.escritas + d.pendientes.apelaciones;
   return (
@@ -149,7 +157,7 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
           <h3 className="font-semibold">Materias: quiénes están inscritos y cuánto avanzan</h3>
           <Button variant="ghost" size="sm" onClick={() => irA("materias")}>Ver todas</Button>
         </div>
-        <TablaMaterias materias={d.materias} enlace={enlaceMateria} />
+        <TablaMaterias materias={d.materias} enlace={enlaces.materia} />
       </section>
 
       <div className="grid gap-5 lg:grid-cols-3">
@@ -169,7 +177,7 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
               {d.detenidos.map((a) => (
                 <li key={a.userId} className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
-                    <Link href={enlaceAlumno(a.userId)} className="font-medium hover:underline">{a.nombre}</Link>
+                    <Link href={enlaces.alumno(a.userId)} className="font-medium hover:underline">{a.nombre}</Link>
                     <span className="block text-xs text-muted-foreground truncate">{a.enCurso.join(" · ")}</span>
                   </span>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{hace(a.ultima)}</span>
@@ -183,7 +191,7 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
             <h3 className="font-semibold">Actividad reciente</h3>
             <Button variant="ghost" size="sm" onClick={() => irA("registro")}>Ver el registro</Button>
           </div>
-          <ListaActividad items={d.actividad.slice(0, 10)} enlaceAlumno={enlaceAlumno} />
+          <ListaActividad items={d.actividad.slice(0, 10)} enlaceAlumno={enlaces.alumno} />
         </section>
       </div>
     </div>
@@ -191,6 +199,7 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
 }
 
 function Alumnos({ resumen }: { resumen: DireccionResumen }) {
+  const enlaces = useEnlaces();
   const q = useDireccionAlumnos();
   const [texto, setTexto] = useState("");
   const [estatus, setEstatus] = useState("");
@@ -262,7 +271,7 @@ function Alumnos({ resumen }: { resumen: DireccionResumen }) {
             {filtrados.map((a: AlumnoFila) => (
               <tr key={a.userId} className="border-b border-border/60 last:border-0 align-top">
                 <td className="py-2.5 px-4">
-                  <Link href={enlaceAlumno(a.userId)} className="font-medium hover:underline">{a.nombre}</Link>
+                  <Link href={enlaces.alumno(a.userId)} className="font-medium hover:underline">{a.nombre}</Link>
                   <span className="block text-xs text-muted-foreground tracking-wider">{a.matricula}</span>
                 </td>
                 <td className="py-2.5 px-3">{a.iglesia || <span className="text-muted-foreground">—</span>}</td>
@@ -337,6 +346,7 @@ function Revisar() {
 }
 
 function Historial() {
+  const enlaces = useEnlaces();
   const q = useHistorial();
   if (q.isLoading) return <p className="text-muted-foreground">Cargando el historial…</p>;
   if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
@@ -352,7 +362,7 @@ function Historial() {
             <li key={h.id} className="text-sm border-b border-border/60 pb-3 last:border-0">
               <p>
                 <span className="font-semibold">{h.por}</span> {h.texto.charAt(0).toLowerCase() + h.texto.slice(1)}
-                {h.alumno && <> · <Link href={enlaceAlumno(h.alumno.userId)} className="underline">{h.alumno.nombre}</Link></>}
+                {h.alumno && <> · <Link href={enlaces.alumno(h.alumno.userId)} className="underline">{h.alumno.nombre}</Link></>}
               </p>
               {h.motivo && <p className="text-muted-foreground mt-0.5">Motivo: «{h.motivo}»</p>}
               <p className="text-xs text-muted-foreground mt-0.5">{new Date(h.fecha).toLocaleString("es")}</p>
@@ -380,14 +390,120 @@ function EstadoRevision({ m }: { m: ContenidoResumen }) {
   return <span className={`${CHIP} bg-muted`}><Clock className="w-3 h-3" aria-hidden="true" /> Por revisar</span>;
 }
 
+// ---------------------------------------------------------------- la declaración de fe
+
+/** La declaración de fe del Ministerio: la aprueba el administrador; mientras no, los alumnos la ven como borrador. */
+function TarjetaDeclaracion({ declaracion }: { declaracion: ContenidoLista["declaracion"] }) {
+  const qc = useQueryClient();
+  const [modo, setModo] = useState<"" | "aprobar" | "quitar">("");
+  const [texto, setTexto] = useState("");
+  const [leida, setLeida] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const a = declaracion.aprobacion;
+  const vigente = !!a?.vigente;
+  const enviar = async () => {
+    setOcupado(true);
+    setError(null);
+    try {
+      if (modo === "aprobar") await aprobarDeclaracion(texto);
+      else await desaprobarDeclaracion(texto);
+      setModo("");
+      setTexto("");
+      setLeida(false);
+      void qc.invalidateQueries({ queryKey: ["academia"] });
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <section
+      className={`glass-card p-5 border ${vigente ? "border-emerald-500/40" : "border-orange-500/40"}`}
+      data-testid="contenido-declaracion"
+      data-estado={vigente ? "aprobada" : a ? "cambio" : "pendiente"}
+    >
+      <div className="flex flex-col md:flex-row md:items-start gap-3">
+        {vigente ? <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" aria-hidden="true" /> : <AlertTriangle className="w-6 h-6 text-orange-500 shrink-0" aria-hidden="true" />}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold">Declaración de fe del Ministerio · {vigente ? "aprobada" : a ? "cambió después de aprobarla" : "borrador sin aprobar"}</p>
+          <p className="text-sm text-muted-foreground">
+            {vigente
+              ? `La aprobó ${a!.por}, como administrador, el ${fecha(a!.fecha)}. Los alumnos la ven como la declaración oficial de la academia.`
+              : a
+                ? `La aprobó ${a.por} el ${fecha(a.fecha)}, pero después cambió su texto. Léela otra vez y apruébala.`
+                : `Es lo que la academia enseña. Mientras no la apruebes, los alumnos la ven como borrador. Antes de aprobarla, decide estos ${declaracion.puntos} puntos en que las iglesias pentecostales difieren. Si alguno debe decir otra cosa, no la apruebes todavía: pide el cambio y se corrige el texto.`}
+          </p>
+          {a?.notas && <p className="text-sm mt-1">Notas: «{a.notas}»</p>}
+        </div>
+        {!modo && (
+          <div className="flex flex-wrap gap-2">
+            <Link href="/academia/declaracion-de-fe">
+              <Button variant="outline"><BookOpen className="w-4 h-4 mr-1.5" /> Leerla completa</Button>
+            </Link>
+            {!vigente && (
+              <Button className="fire-btn-primary" onClick={() => setModo("aprobar")} data-testid="declaracion-aprobar">
+                <ShieldCheck className="w-4 h-4 mr-1.5" /> {a ? "Aprobarla otra vez" : "Aprobar como administrador"}
+              </Button>
+            )}
+            {a && (
+              <Button variant="outline" onClick={() => setModo("quitar")} data-testid="declaracion-desaprobar">
+                Quitar la aprobación
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      {!vigente && (
+        <ol className="mt-4 space-y-2 text-sm" data-testid="declaracion-puntos">
+          {PUNTOS_A_CONFIRMAR.map((p) => (
+            <li key={p.n} className="rounded-lg bg-orange-500/10 p-3">
+              <strong>Artículo {p.n} · {p.titulo}.</strong> {p.aConfirmar}
+            </li>
+          ))}
+        </ol>
+      )}
+      {modo && (
+        <div className="mt-4 rounded-xl border border-border p-4 space-y-3">
+          {modo === "aprobar" && (
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox checked={leida} onCheckedChange={(v) => setLeida(v === true)} className="mt-0.5" data-testid="declaracion-leida" />
+              <span>La leí completa y estoy de acuerdo con los {declaracion.puntos} puntos tal como están escritos.</span>
+            </label>
+          )}
+          <label className="text-sm block">
+            {modo === "aprobar" ? "Notas de la aprobación (opcional): con quién la revisaste" : "Motivo (queda en el historial)"}
+            <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={2} maxLength={500} className="mt-1 text-[16px]" data-testid="declaracion-texto" />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="fire-btn-primary"
+              onClick={enviar}
+              disabled={ocupado || (modo === "aprobar" ? !leida : texto.trim().length < 8)}
+              data-testid="declaracion-confirmar"
+            >
+              {ocupado ? "Guardando…" : modo === "aprobar" ? "Sí, aprobarla" : "Sí, quitar la aprobación"}
+            </Button>
+            <Button variant="ghost" onClick={() => setModo("")} disabled={ocupado}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mt-3" role="alert">{error}</p>}
+    </section>
+  );
+}
+
 function Contenido() {
+  const enlaces = useEnlaces();
   const q = useContenido();
   if (q.isLoading) return <p className="text-muted-foreground">Cargando la revisión del contenido…</p>;
   if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
-  const { materias, total, aprobadas, abiertas } = q.data;
+  const { materias, total, aprobadas, abiertas, declaracion } = q.data;
   const mirar = materias.reduce((s, m) => s + m.alertas, 0);
   return (
     <div className="space-y-4" data-testid="direccion-contenido">
+      <TarjetaDeclaracion declaracion={declaracion} />
       <p className="text-sm text-muted-foreground">
         La revisión doctrinal: lee cada materia completa (sus lecciones, el banco del examen y el repaso), deja observaciones y apruébala antes de abrir la academia. Cuando haya alumnos, el análisis de preguntas marca las que conviene revisar.
       </p>
@@ -412,7 +528,7 @@ function Contenido() {
             {materias.map((m) => (
               <tr key={m.id} className="border-b border-border/60 last:border-0 align-top" data-testid="fila-contenido" data-materia={m.id}>
                 <td className="py-2.5 px-4">
-                  <Link href={`/academia/direccion/contenido/${m.id}`} className="font-medium hover:underline">{m.titulo}</Link>
+                  <Link href={enlaces.contenido(m.id)} className="font-medium hover:underline">{m.titulo}</Link>
                   <span className="block text-xs text-muted-foreground">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · {m.lecciones} lecciones</span>
                 </td>
                 <td className="py-2.5 px-3">
@@ -438,6 +554,7 @@ function Contenido() {
 }
 
 function Registro() {
+  const enlaces = useEnlaces();
   const q = useDireccionActividad();
   const [tipo, setTipo] = useState<"" | ActividadItem["tipo"]>("");
   if (q.isLoading) return <p className="text-muted-foreground">Cargando el registro…</p>;
@@ -459,19 +576,25 @@ function Registro() {
         ))}
       </div>
       <section className="glass-card p-5" data-testid="direccion-registro">
-        <ListaActividad items={items} enlaceAlumno={enlaceAlumno} vacio="Nada en el registro con este filtro." />
+        <ListaActividad items={items} enlaceAlumno={enlaces.alumno} vacio="Nada en el registro con este filtro." />
       </section>
-      <p className="text-xs text-muted-foreground">Cada inscripción en la academia y en cada materia llega también como aviso a la campana de la Dirección académica y de quienes dirigen la iglesia del alumno.</p>
+      <p className="text-xs text-muted-foreground">Cada inscripción en la academia y en cada materia llega también como aviso a la campana de la Administración y de quienes dirigen la iglesia del alumno.</p>
     </div>
   );
 }
 
 function Permisos({ role }: { role: string | null | undefined }) {
   const mio = rolAcademia(role);
+  // los alumnos no tienen columna: en la academia cada uno ve solo lo suyo
+  const columnas = ROLES_ACADEMIA.filter((r) => r.id !== "alumno");
   return (
     <div className="space-y-5" data-testid="direccion-permisos">
       <section className="glass-card p-5">
         <h3 className="font-semibold flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-orange-600" /> Quién es quién en la academia</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Hay dos áreas separadas. En la <strong>academia</strong> se estudia: cada alumno ve solo lo suyo. La <strong>administración de la academia</strong> la maneja
+          solo la Administración, desde el panel de administración; los maestros, los líderes y las iglesias aliadas solo ven el seguimiento, desde su propio panel.
+        </p>
         <ul className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
           {ROLES_ACADEMIA.map((r) => (
             <li key={r.id} className={`rounded-xl border p-3 ${r.id === mio ? "border-orange-500" : "border-border"}`}>
@@ -487,7 +610,7 @@ function Permisos({ role }: { role: string | null | undefined }) {
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b border-border">
               <th className="py-2.5 px-4 font-medium">Qué se puede hacer</th>
-              {ROLES_ACADEMIA.map((r) => (
+              {columnas.map((r) => (
                 <th key={r.id} className={`py-2.5 px-3 font-medium ${r.id === mio ? "text-foreground" : ""}`}>{r.nombre}</th>
               ))}
             </tr>
@@ -497,12 +620,11 @@ function Permisos({ role }: { role: string | null | undefined }) {
               <tr key={c.id} className="border-b border-border/60 last:border-0 align-top">
                 <td className="py-2.5 px-4">
                   <span className="font-medium">{c.texto}</span>
-                  {c.pronto && <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px]">Próximamente</span>}
                   <span className="block text-xs text-muted-foreground">{c.detalle}</span>
                 </td>
-                {ROLES_ACADEMIA.map((r) => (
+                {columnas.map((r) => (
                   <td key={r.id} className={`py-2.5 px-3 whitespace-nowrap ${r.id === mio ? "font-semibold" : ""} ${c.alcance[r.id] === "no" ? "text-muted-foreground" : ""}`}>
-                    {c.alcance[r.id] === "todos" && c.textoTodos ? c.textoTodos : TEXTO_ALCANCE[c.alcance[r.id]]}
+                    {textoCelda(r.id, c.alcance[r.id])}
                   </td>
                 ))}
               </tr>
@@ -516,6 +638,8 @@ function Permisos({ role }: { role: string | null | undefined }) {
 
 export default function AcademiaDireccion() {
   const { user } = useAuth();
+  const area = useArea();
+  const enlaces = useEnlaces();
   const q = useDireccionResumen();
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
@@ -530,7 +654,7 @@ export default function AcademiaDireccion() {
           <Lock className="w-12 h-12 mx-auto text-orange-500" />
           <p className="text-lg mt-4 mb-6">{q.error?.message ?? "No se pudo cargar el panel."}</p>
           {sinSesion ? (
-            <a href={loginUrl("/academia/direccion")}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>
+            <a href={loginUrl(area.base)}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>
           ) : (
             <Link href="/academia"><Button variant="outline" className="h-12 px-7">Volver a la academia</Button></Link>
           )}
@@ -539,18 +663,23 @@ export default function AcademiaDireccion() {
     );
   }
   const d = q.data;
-  const rol = ROLES_ACADEMIA.find((r) => r.id === d.rol);
+  const administra = d.rol === "direccion";
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-16">
-        <Link href="/academia" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
+        <Link href={area.volver.href} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> {area.volver.texto}</Link>
         <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
-            <p className="data-label text-orange-600 dark:text-orange-300">{NOMBRE_ACADEMIA} · Dirección académica</p>
-            <h1 className="heading-display font-display text-3xl md:text-5xl mt-1" data-testid="direccion-titulo">Panel de seguimiento</h1>
+            <p className="data-label text-orange-600 dark:text-orange-300">{NOMBRE_ACADEMIA}</p>
+            <h1 className="heading-display font-display text-3xl md:text-5xl mt-1" data-testid="direccion-titulo">
+              {administra ? "Administración de la academia" : d.alcance === "iglesia" ? "Los alumnos de tu iglesia" : "Seguimiento de la academia"}
+            </h1>
             <p className="text-sm text-muted-foreground mt-2" data-testid="direccion-alcance">
-              {rol?.nombre}: {d.alcance === "iglesia" ? `ves a los alumnos de ${d.iglesia?.nombre ?? "tu iglesia"}.` : "ves a todos los alumnos de la academia."}
-              {!d.puede.contacto && " Los datos de contacto los ven la Dirección académica y las iglesias."}
+              {administra
+                ? "Aquí manejas la academia: los alumnos, la revisión de notas, el contenido, los documentos y la apertura. Para estudiar, entra a la academia como cualquier alumno."
+                : d.alcance === "iglesia"
+                  ? `Ves a los alumnos de ${d.iglesia?.nombre ?? "tu iglesia"}: su avance, sus notas y su ficha. Solo para ver; la academia la administra la Administración.`
+                  : "Ves a todos los alumnos: su avance y sus notas, sin sus datos de contacto. Solo para ver; la academia la administra la Administración."}
             </p>
           </div>
           {d.puede.exportar && (
@@ -588,7 +717,7 @@ export default function AcademiaDireccion() {
           <TabsContent value="materias">
             <section className="glass-card p-5">
               <p className="text-sm text-muted-foreground mb-3">Toca una materia para ver quiénes están inscritos y por dónde va cada uno.</p>
-              <TablaMaterias materias={d.materias} enlace={enlaceMateria} />
+              <TablaMaterias materias={d.materias} enlace={enlaces.materia} />
             </section>
           </TabsContent>
           <TabsContent value="contenido">{tab === "contenido" && d.puede.contenido && <Contenido />}</TabsContent>

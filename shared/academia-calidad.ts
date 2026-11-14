@@ -40,6 +40,8 @@ export type ContenidoResumen = {
 /** La lista de la revisión del contenido, con lo que falta para abrir la academia. */
 export type ContenidoLista = {
   materias: ContenidoResumen[];
+  /** La declaración de fe: su aprobación y cuántos puntos hay que confirmar. */
+  declaracion: { aprobacion: AprobacionContenido | null; puntos: number };
   /** Materias con contenido, cuántas tienen la aprobación vigente y cuántas observaciones siguen abiertas. */
   total: number;
   aprobadas: number;

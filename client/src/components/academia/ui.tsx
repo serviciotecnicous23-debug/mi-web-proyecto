@@ -3,7 +3,8 @@ import { Link } from "wouter";
 import { BookOpen, CheckCircle2, Clock, ExternalLink, GraduationCap, Headphones, Lock, ShieldCheck, Sparkles, Video } from "lucide-react";
 import { LinkEmbed } from "@/components/media/LinkEmbed";
 import { Layout } from "@/components/layout";
-import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla } from "@shared/academia";
+import { VideoYouTube } from "./video-youtube";
+import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla, idYouTube } from "@shared/academia";
 
 // El número va con el color del texto del tema (se lee en claro y en oscuro); la medalla la dan el aro y el fondo.
 const COLOR_MEDALLA: Record<Medalla, { aro: string; fondo: string }> = {
@@ -76,8 +77,8 @@ export function AvisoVistaPrevia() {
       <div className="glass-card p-4 flex items-start gap-3 border border-orange-500/30" role="note" data-testid="academia-vista-previa">
         <ShieldCheck className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
         <p className="text-sm">
-          <strong>Vista previa.</strong> Por ahora solo la administración y los profesores ven la academia. Revisa el contenido y, cuando el Nivel 1 esté
-          completo y aprobado, se abrirá para todos.
+          <strong>Vista previa.</strong> Por ahora la ven solo la Administración y, para consultar, los maestros y las iglesias aliadas. Cuando el Nivel 1
+          esté completo y aprobado, se abrirá para todos.
         </p>
       </div>
     </div>
@@ -113,7 +114,7 @@ export function Cargando() {
 }
 
 /** Un bloque de una lección: texto, versículo (de la RV1960 de la web), lista, nota, video, audio o imagen. */
-export function BloqueLeccion({ b }: { b: BloqueVista }) {
+export function BloqueLeccion({ b, alVerVideo }: { b: BloqueVista; alVerVideo?: (segundos: number) => void }) {
   switch (b.t) {
     case "subtitulo":
       return <h2 className="font-display font-semibold text-xl md:text-2xl mt-8 mb-3">{b.texto}</h2>;
@@ -150,7 +151,7 @@ export function BloqueLeccion({ b }: { b: BloqueVista }) {
       return (
         <figure className="my-6">
           <p className="data-label mb-2 flex items-center gap-1.5"><Video className="w-3.5 h-3.5" /> Video{b.minutos ? ` · ${b.minutos} min` : ""}</p>
-          <LinkEmbed url={b.url} />
+          {alVerVideo && idYouTube(b.url) ? <VideoYouTube id={idYouTube(b.url)!} titulo={b.titulo} alProgresar={alVerVideo} /> : <LinkEmbed url={b.url} />}
           <figcaption className="text-sm text-muted-foreground mt-2">
             {b.titulo} · Fuente: {b.fuente}{" "}
             <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 hover:underline">

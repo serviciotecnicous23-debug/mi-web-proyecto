@@ -13,7 +13,7 @@
 import type { Express, Request } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA_INTEGRAL, NIVELES, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
+  APRUEBA_INTEGRAL, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
   type MateriaDef, type NivelDef, type ResultadoExamen,
 } from "@shared/academia";
 import { limpiarNombre, nombreCompleto } from "@shared/academia-inscripcion";
@@ -23,14 +23,17 @@ import {
   avisarA, claveFinal, claveIntegral, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, type ContextoExamen,
 } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
+import { aprobarPorSuficiencia } from "./academia-suficiencia";
 import { estadoNivel, revisarNivel } from "./academia-nivel";
 import { permisoDe } from "./academia-direccion";
 
 /** Nadie revisa lo suyo: sus respuestas, su pedido de revisión, sus documentos o su nombre (lo hace otra persona). */
-const MENSAJE_PROPIO = "No puedes revisar ni cambiar lo tuyo: debe hacerlo otra persona de la Dirección académica o un profesor.";
+const MENSAJE_PROPIO = "No puedes revisar ni cambiar lo tuyo: como alumno, lo tuyo lo revisa otro administrador (o vale la nota automática).";
 
-/** El motivo de un certificado que revocó (o volvió a emitir) una corrección de nota, no una decisión de la Dirección. */
-export const PREFIJO_AUTO = "Nota corregida por la Dirección académica:";
+/** El motivo de un certificado que revocó (o volvió a emitir) una corrección de nota, no una decisión de la Administración. */
+export const PREFIJO_AUTO = "Nota corregida por la Administración de la academia:";
+/** El mismo motivo, como se escribía antes (los certificados revocados entonces también se restauran). */
+const PREFIJO_AUTO_ANTES = "Nota corregida por la Dirección académica:";
 
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
 /** «del examen final de «…»», «del examen integral del Nivel 1»: «de» + «el» se contrae. */
@@ -71,7 +74,7 @@ function itemDe(r: any): ItemRevision {
     marcas: det.marcas ?? [],
     notaAuto: Number(r.nota_auto),
     notaFinal: r.nota_final == null ? null : Number(r.nota_final),
-    revision: r.revisada_at ? { por: String(r.rev_nombre || r.rev_usuario || "La Dirección académica"), fecha: iso(r.revisada_at)!, motivo: r.motivo ?? "" } : null,
+    revision: r.revisada_at ? { por: String(r.rev_nombre || r.rev_usuario || "La Administración"), fecha: iso(r.revisada_at)!, motivo: r.motivo ?? "" } : null,
     apelacion: r.apelacion_id == null ? null : Number(r.apelacion_id),
     fecha: iso(r.created_at)!,
   };
@@ -103,7 +106,7 @@ async function apelacionesDe(donde: string, params: unknown[], limite: number): 
       estado: r.estado === "resuelta" ? ("resuelta" as const) : ("pendiente" as const),
       respuesta: r.respuesta ?? null,
       resuelta: iso(r.resuelta_at),
-      por: r.resuelta_por ? String(r.rev_nombre || r.rev_usuario || "La Dirección académica") : null,
+      por: r.resuelta_por ? String(r.rev_nombre || r.rev_usuario || "La Administración") : null,
       escritas: await itemsDe(`r.user_id = $1 AND r.clave = $2 AND r.intento = $3`, [r.user_id, r.clave, r.intento], "r.id", 20),
     })),
   );
@@ -139,10 +142,10 @@ async function restaurarSiFueNota(userId: number, tipo: "materia" | "nivel", ref
   await pool.query(
     `UPDATE academia_certificados
         SET nota = COALESCE($4, nota),
-            revocado_at = CASE WHEN motivo LIKE $5 THEN NULL ELSE revocado_at END,
-            motivo = CASE WHEN motivo LIKE $5 THEN NULL ELSE motivo END
+            revocado_at = CASE WHEN motivo LIKE $5 OR motivo LIKE $6 THEN NULL ELSE revocado_at END,
+            motivo = CASE WHEN motivo LIKE $5 OR motivo LIKE $6 THEN NULL ELSE motivo END
       WHERE user_id = $1 AND tipo = $2 AND ref = $3`,
-    [userId, tipo, ref, nota, `${PREFIJO_AUTO}%`],
+    [userId, tipo, ref, nota, `${PREFIJO_AUTO}%`, `${PREFIJO_AUTO_ANTES}%`],
   );
 }
 
@@ -165,7 +168,35 @@ async function reconsiderarNivel(userId: number, nv: NivelDef, motivo: string): 
 }
 
 /** La materia, recalculada sin quedarse pegada en «aprobada»: con la nota nueva puede aprobarse o volver a estar en curso. */
+/**
+ * Una escrita revisada de un examen de suficiencia: vuelve a mirar las dos partes (85 y 75). Si ahora aprueba, la materia
+ * queda aprobada por suficiencia; si deja de aprobar y estaba aprobada así, vuelve a estar en curso (se cursa) y su
+ * certificado se revoca con el motivo.
+ */
+async function reconsiderarSuficiencia(userId: number, m: MateriaDef, objetiva: number, escrita: number, nota: number, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
+  const ok = apruebaSuficiencia(objetiva, escrita);
+  const { rows } = await pool.query(`SELECT estado, via FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  const estaba = rows[0]?.estado === "aprobada";
+  if (ok) {
+    if (estaba && rows[0].via !== "suficiencia") return { nota, aprobada: true, cambio: null };
+    await aprobarPorSuficiencia(userId, m, nota);
+    await restaurarSiFueNota(userId, "materia", m.id, nota);
+    return { nota, aprobada: true, cambio: estaba ? null : "aprobada" };
+  }
+  if (estaba && rows[0].via === "suficiencia") {
+    await pool.query(
+      `UPDATE academia_materias SET estado = 'en-curso', via = 'cursada', nota = NULL, componentes = '{}'::jsonb, aprobada_at = NULL WHERE user_id = $1 AND materia_id = $2`,
+      [userId, m.id],
+    );
+    await revocarPorNota(userId, "materia", m.id, motivo);
+    return { nota, aprobada: false, cambio: "desaprobada" };
+  }
+  return { nota, aprobada: estaba, cambio: null };
+}
+
 async function reconsiderarMateria(userId: number, m: MateriaDef, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
+  const { rows: ya } = await pool.query(`SELECT estado, via, nota FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  if (ya[0]?.estado === "aprobada" && ya[0].via === "suficiencia") return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
   const nota = notaMateria(pesosDe(m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
@@ -254,7 +285,11 @@ export async function recalcularTrasRevision(userId: number, ctx: ContextoExamen
   );
   let materia: ResultadoRevision["materia"] = null;
   let nivel: ResultadoRevision["nivel"] = null;
-  if (ctx.materia) {
+  if (ctx.materia && ctx.tipo === "suficiencia") {
+    materia = await reconsiderarSuficiencia(userId, ctx.materia, it.objetiva, escrita, nota, motivo);
+    const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
+    if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);
+  } else if (ctx.materia) {
     materia = await reconsiderarMateria(userId, ctx.materia, motivo);
     const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
     if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);
@@ -386,7 +421,7 @@ export function registerAcademiaRevisionRoutes(app: Express) {
         void avisarA(
           [alumno],
           "Revisaron tu respuesta escrita",
-          `La Dirección académica revisó tu respuesta escrita ${delExamen(ctx)}: tu nota pasó de ${antes} a ${nueva}. Motivo: ${motivo}`,
+          `La Administración de la academia revisó tu respuesta escrita ${delExamen(ctx)}: tu nota pasó de ${antes} a ${nueva}. Motivo: ${motivo}`,
           ctx.ruta,
         ).catch((err) => console.error("[academia] aviso de revisión:", err));
       }
@@ -451,7 +486,7 @@ export function registerAcademiaRevisionRoutes(app: Express) {
         void avisarA(
           [alumno],
           accion === "revocar" ? "Revocaron uno de tus certificados" : "Tu certificado vuelve a ser válido",
-          `${accion === "revocar" ? "La Dirección académica revocó" : "La Dirección académica volvió a dar por válido"} tu certificado «${rows[0].titulo}» (${codigo}). Motivo: ${motivo}`,
+          `${accion === "revocar" ? "La Administración de la academia revocó" : "La Administración de la academia volvió a dar por válido"} tu certificado «${rows[0].titulo}» (${codigo}). Motivo: ${motivo}`,
           "/academia/expediente",
         ).catch(() => undefined);
         res.json({ codigo, revocado: accion === "revocar" });
@@ -482,7 +517,7 @@ export function registerAcademiaRevisionRoutes(app: Express) {
       const { rowCount } = await pool.query(`UPDATE academia_certificados SET nombre = $2 WHERE user_id = $1 AND revocado_at IS NULL`, [id, nuevo]);
       const cuantos = rowCount ?? 0;
       await registrar(req, "academia.nombre", id, `Corrigió el nombre «${antes}» a «${nuevo}» en la ficha y en ${cuantos} ${cuantos === 1 ? "documento" : "documentos"}.`, motivo);
-      void avisarA([id], "Corrigieron tu nombre en la academia", `La Dirección académica corrigió tu nombre a «${nuevo}» en tu ficha y en tus documentos. Motivo: ${motivo}`, "/academia/inscripcion").catch(() => undefined);
+      void avisarA([id], "Corrigieron tu nombre en la academia", `La Administración de la academia corrigió tu nombre a «${nuevo}» en tu ficha y en tus documentos. Motivo: ${motivo}`, "/academia/inscripcion").catch(() => undefined);
       res.json({ nombre: nuevo, documentos: rowCount ?? 0 });
     } catch (err) {
       console.error("[academia] corregir nombre:", err);

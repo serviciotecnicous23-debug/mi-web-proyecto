@@ -12,11 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import type { ApelacionItem, ItemRevision } from "@shared/academia-direccion";
 import { responderApelacion, revisarEscrita } from "@/components/academia/api";
 import { fecha, hace } from "@/components/academia/seguimiento";
+import { useArea } from "@/components/academia/area";
 
 const CHIP = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs whitespace-nowrap";
 
 export function TarjetaRevision({ item, puedeRevisar, conAlumno = true }: { item: ItemRevision; puedeRevisar: boolean; conAlumno?: boolean }) {
   const qc = useQueryClient();
+  const { base } = useArea();
   const { toast } = useToast();
   const efectiva = item.notaFinal ?? item.notaAuto;
   const [cambiando, setCambiando] = useState(false);
@@ -49,7 +51,7 @@ export function TarjetaRevision({ item, puedeRevisar, conAlumno = true }: { item
         <div className="min-w-0">
           {conAlumno && (
             <p className="font-semibold">
-              <Link href={`/academia/direccion/alumno/${item.alumno.userId}`} className="hover:underline">{item.alumno.nombre}</Link>
+              <Link href={`${base}/alumno/${item.alumno.userId}`} className="hover:underline">{item.alumno.nombre}</Link>
               {item.alumno.matricula && <span className="text-xs text-muted-foreground tracking-wider"> · {item.alumno.matricula}</span>}
             </p>
           )}
@@ -141,6 +143,7 @@ export function TarjetaRevision({ item, puedeRevisar, conAlumno = true }: { item
 
 export function TarjetaApelacion({ a, puedeRevisar }: { a: ApelacionItem; puedeRevisar: boolean }) {
   const qc = useQueryClient();
+  const { base } = useArea();
   const { toast } = useToast();
   const [respuesta, setRespuesta] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -164,7 +167,7 @@ export function TarjetaApelacion({ a, puedeRevisar }: { a: ApelacionItem; puedeR
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-semibold">
-            <Link href={`/academia/direccion/alumno/${a.alumno.userId}`} className="hover:underline">{a.alumno.nombre}</Link>
+            <Link href={`${base}/alumno/${a.alumno.userId}`} className="hover:underline">{a.alumno.nombre}</Link>
             {a.alumno.matricula && <span className="text-xs text-muted-foreground tracking-wider"> · {a.alumno.matricula}</span>}
           </p>
           <p className="text-sm text-muted-foreground">{a.examen.titulo} · intento {a.examen.intento} · pidió la revisión {hace(a.fecha)}</p>

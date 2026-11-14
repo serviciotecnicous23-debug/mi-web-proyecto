@@ -1290,6 +1290,10 @@ export const academiaLecciones = pgTable(
     completadaAt: timestamp("completada_at"),
     repaso: jsonb("repaso").notNull().default({}),
     reflexion: text("reflexion"),
+    /** Para abrir el repaso: cuándo se abrió por primera vez y el video visto de corrido (segundos). */
+    abiertaAt: timestamp("abierta_at"),
+    videoInicio: timestamp("video_inicio"),
+    videoSeg: integer("video_seg").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.leccionId] })],
 );
@@ -1358,6 +1362,9 @@ export const academiaVersiculos = pgTable(
     aprendidoAt: timestamp("aprendido_at"),
     caja: integer("caja").notNull().default(0),
     proximoAt: timestamp("proximo_at"),
+    /** El repaso espaciado: cuándo quedó dominado y cuántos repasos hizo. */
+    dominadoAt: timestamp("dominado_at"),
+    repasos: integer("repasos").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.materiaId] })],
 );
@@ -1447,6 +1454,13 @@ export const academiaAsignaciones = pgTable("academia_asignaciones", {
   userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [unique("academia_asignaciones_course_id_materia_id_key").on(t.courseId, t.materiaId)]);
+
+/** La última prueba diagnóstica de cada persona: cómo le fue en cada materia y la sugerencia. */
+export const academiaDiagnosticos = pgTable("academia_diagnosticos", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  resultado: jsonb("resultado").notNull().default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 /** La aprobación doctrinal de cada materia (la da la Dirección académica antes de abrir la academia). */
 export const academiaContenidoAprobaciones = pgTable("academia_contenido_aprobaciones", {

@@ -252,6 +252,100 @@ export const SUFICIENCIA = {
   topeNivelesAltos: 0.5,
 } as const;
 
+/** La suficiencia se aprueba con las dos partes a la vez: 85 la objetiva y 75 la escrita. */
+export function apruebaSuficiencia(objetiva: number, escrita: number): boolean {
+  return objetiva >= SUFICIENCIA.apruebaObjetiva && escrita >= SUFICIENCIA.apruebaEscrita;
+}
+
+// ---------------------------------------------------------------- la prueba diagnóstica
+
+/**
+ * La prueba diagnóstica: 2 preguntas de cada materia con contenido, 45 segundos cada una. Solo sugiere por dónde
+ * empezar y qué materias se podrían aprobar por suficiencia: no da nada por aprobado. Se repite cada 30 días.
+ */
+export const DIAGNOSTICO = { porMateria: 2, segundos: 45, diasEntre: 30 } as const;
+
+export type DiagnosticoMateria = { id: string; titulo: string; nivel: number | null; aciertos: number; de: number };
+export type SugerenciaDiagnostico = {
+  texto: string;
+  /** El nivel que le toca (el siguiente al último completo). */
+  nivel: number | null;
+  empezar: { materiaId: string; titulo: string } | null;
+  /** Las materias de ese nivel que respondió todas bien: podría aprobarlas por suficiencia. */
+  suficiencia: { materiaId: string; titulo: string }[];
+};
+export type DiagnosticoVista = {
+  fecha: string;
+  aciertos: number;
+  de: number;
+  porMateria: DiagnosticoMateria[];
+  sugerencia: SugerenciaDiagnostico;
+  /** Desde cuándo se puede repetir (null si ya se puede). */
+  repetirDesde: string | null;
+};
+
+const listaY = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`);
+
+/**
+ * La sugerencia de la prueba diagnóstica: el nivel que le toca, por qué materia empezar (la primera que ni domina ni
+ * aprobó) y cuáles podría aprobar por suficiencia (las que respondió todas bien y todavía puede darla: no la dio ni dio
+ * su examen final; las de `sinSuficiencia` se cursan aunque las domine). Sin base de datos.
+ */
+export function sugerenciaDiagnostico(
+  porMateria: DiagnosticoMateria[],
+  nivelesCompletos: number[],
+  aprobadas: string[],
+  sinSuficiencia: readonly string[] = [],
+): SugerenciaDiagnostico {
+  const hecho = nivelesCompletos.length ? Math.max(...nivelesCompletos) : 0;
+  const nivel = NIVELES.find((n) => n.n === hecho + 1);
+  if (!nivel || !nivel.materias.some((m) => m.disponible)) {
+    return { texto: "Ya completaste los niveles que tienen contenido. Te avisaremos cuando se abra el siguiente.", nivel: nivel?.n ?? null, empezar: null, suficiencia: [] };
+  }
+  const aprob = new Set(aprobadas);
+  const pendientes = nivel.materias.filter((m) => m.disponible && !aprob.has(m.id));
+  if (!pendientes.length) {
+    return { texto: `Ya aprobaste las materias del Nivel ${nivel.n}: te falta cerrar el nivel con su examen integral y lo que pide.`, nivel: nivel.n, empezar: null, suficiencia: [] };
+  }
+  const res = new Map(porMateria.map((r) => [r.id, r]));
+  const cerradas = new Set(sinSuficiencia);
+  const domina = pendientes.filter((m) => {
+    const r = res.get(m.id);
+    return !!r && r.de > 0 && r.aciertos === r.de && !cerradas.has(m.id);
+  });
+  const suficiencia = domina.map((m) => ({ materiaId: m.id, titulo: m.titulo }));
+  const primera = pendientes.find((m) => !domina.includes(m));
+  const empezar = primera ? { materiaId: primera.id, titulo: primera.titulo } : null;
+  const nombre = `el Nivel ${nivel.n} · ${nivel.nombre}`;
+  let texto: string;
+  if (!empezar) {
+    texto = `Respondiste bien todas las preguntas de ${nombre}. Puedes aprobar sus materias por suficiencia: una sola vez por materia, con ${SUFICIENCIA.objetivas} preguntas y ${SUFICIENCIA.escritas} respuestas escritas (se aprueba con ${SUFICIENCIA.apruebaObjetiva} y ${SUFICIENCIA.apruebaEscrita}). El examen integral del nivel se da igual.`;
+  } else if (domina.length) {
+    texto = `Empieza por «${empezar.titulo}». Parece que ya conoces ${listaY(domina.map((m) => `«${m.titulo}»`))}: si quieres, da su examen de suficiencia; si no, cúrsala como las demás.`;
+  } else {
+    texto = `Empieza por «${empezar.titulo}» y sigue en orden: ${nombre} es para ti.`;
+  }
+  return { texto, nivel: nivel.n, empezar, suficiencia };
+}
+
+// ---------------------------------------------------------------- el repaso espaciado del versículo
+
+/** El versículo de memoria vuelve a los 1, 3, 7 y 21 días de aprenderlo; al pasar el último repaso queda dominado. */
+export const REPASO_VERSICULO_DIAS = [1, 3, 7, 21] as const;
+/** La caja de quien pasó todos los repasos. */
+export const CAJA_DOMINADO = REPASO_VERSICULO_DIAS.length + 1;
+
+/** La caja después de un repaso (bien: la siguiente; mal: vuelve a la primera) y en cuántos días vuelve (null: dominado). */
+export function siguienteRepaso(caja: number, bien: boolean): { caja: number; dias: number | null } {
+  if (!bien) return { caja: 1, dias: REPASO_VERSICULO_DIAS[0] };
+  const nueva = Math.min(Math.max(1, caja) + 1, CAJA_DOMINADO);
+  return { caja: nueva, dias: nueva >= CAJA_DOMINADO ? null : REPASO_VERSICULO_DIAS[nueva - 1] };
+}
+
+/** Un versículo aprendido, con su repaso. */
+export type VersiculoRepaso = { materiaId: string; materia: string; ref: string; caja: number; toca: boolean; proximo: string | null; dominado: string | null };
+export type RepasoVersiculos = { versiculos: VersiculoRepaso[]; pendientes: number; dominados: number };
+
 /** El versículo de memoria: puntaje según los intentos para ordenarlo (100, 80, 60 como mínimo). */
 export function puntajeVersiculo(intentosFallidos: number): number {
   return Math.max(60, 100 - 20 * Math.max(0, intentosFallidos));
@@ -275,8 +369,8 @@ export const DIAS_APELACION = 7;
 
 /** Mientras la academia está en vista previa, la ven estos roles (shared/roles.ts). */
 export { ROLES_VISTA_PREVIA, veVistaPrevia } from "./academia-acceso";
-/** Quienes pueden revisar y cambiar notas (Dirección académica y profesores). */
-export const ROLES_REVISION = ["admin", "director", "staff_global", "maestro_ministerio", "obrero"] as const;
+/** Quienes administran la academia: revisan y cambian notas y leen las lecciones sin inscribirse (solo la Administración). */
+export const ROLES_REVISION = ["admin"] as const;
 export function puedeRevisar(role: string | null | undefined): boolean {
   return !!role && (ROLES_REVISION as readonly string[]).includes(role);
 }
@@ -1065,6 +1159,8 @@ export type ExamenEstado = {
   espera: number;
   /** Después de 3 fallos: volver a abrir estas lecciones antes del siguiente intento. */
   repasar: string[];
+  /** Si ya no se puede dar, por qué (la suficiencia se da una sola vez; la diagnóstica, cada 30 días). */
+  cerrado?: string | null;
 };
 
 export type MateriaDetalle = {
@@ -1084,10 +1180,14 @@ export type MateriaDetalle = {
   inscrita: string | null;
   /** Lo que falta para poder inscribirse (el nivel anterior). */
   requisitos: string[];
-  /** Dirección académica o profesor: puede leer las lecciones sin inscribirse (no se guarda su avance). */
+  /** La Administración: puede leer las lecciones sin inscribirse (no se guarda su avance). */
   docente: boolean;
   vistaPrevia: boolean;
   conSesion: boolean;
+  /** Cómo se aprobó (null mientras no está aprobada). */
+  via: "cursada" | "suficiencia" | "convalidada" | null;
+  /** El examen de suficiencia, mientras se puede ofrecer: antes del examen final y sin haberlo dado (null si no). */
+  suficiencia: { enCurso: boolean } | null;
 };
 
 export type BloqueVista =
@@ -1101,6 +1201,41 @@ export type BloqueVista =
   | { t: "imagen"; src: string; alt: string; pie?: string };
 
 export type PreguntaVista = { id: string; texto: string; opciones: string[] };
+
+/**
+ * Lo mínimo para abrir el repaso de una lección (que no se responda sin leerla): leer el 40 % de sus minutos (entre 1
+ * y 3 minutos) y, si tiene un video de YouTube, ver de corrido sus primeros 2 minutos (o entero, si dura menos). El
+ * servidor cuenta el tiempo desde que se abrió la lección y el del video, que nunca suma más que el tiempo que pasó.
+ */
+export const LECTURA = { parte: 0.4, minimo: 60, maximo: 180, video: 120, margen: 120 } as const;
+export function segundosDeLectura(minutos: number): number {
+  return Math.round(Math.min(LECTURA.maximo, Math.max(LECTURA.minimo, minutos * 60 * LECTURA.parte)));
+}
+/** El id de un video de YouTube (o null si no es de YouTube). */
+export function idYouTube(url: string): string | null {
+  const m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/.exec(url);
+  return m ? m[1] : null;
+}
+/** Cuánto video pide una lección: el primero de YouTube, 2 minutos o lo que dure (null si no tiene). */
+export function videoQuePide(bloques: readonly { t: string; url?: string; minutos?: number }[]): number | null {
+  const v = bloques.find((b) => b.t === "video" && !!b.url && !!idYouTube(b.url));
+  if (!v) return null;
+  return v.minutos && v.minutos * 60 < LECTURA.video ? Math.round(v.minutos * 60) : LECTURA.video;
+}
+/**
+ * Lo que falta (en segundos) para abrir el repaso: de lectura y de video (null si la lección no tiene video). Si el video
+ * no se puede ver (no carga, está bloqueado o lo quitaron), el repaso se abre igual cuando pasó el tiempo de la lectura,
+ * el del video y un margen (`sinVideo`): nadie queda trabado.
+ */
+export type BloqueoRepaso = { lectura: number; video: number | null; videoPide: number | null; sinVideo: number | null };
+
+/** Lo que falta para abrir el repaso, con los segundos desde que se abrió la lección y lo visto de corrido del video. */
+export function bloqueoDe(minutos: number, pideVideo: number | null, leidos: number, videoSeg: number): BloqueoRepaso {
+  const lectura = Math.max(0, Math.ceil(segundosDeLectura(minutos) - leidos));
+  if (pideVideo == null) return { lectura, video: null, videoPide: null, sinVideo: null };
+  const sinVideo = Math.max(0, Math.ceil(segundosDeLectura(minutos) + pideVideo + LECTURA.margen - leidos));
+  return { lectura, video: sinVideo === 0 ? 0 : Math.max(0, pideVideo - videoSeg), videoPide: pideVideo, sinVideo };
+}
 
 export type LeccionVista = {
   materia: { id: string; titulo: string };
@@ -1120,8 +1255,10 @@ export type LeccionVista = {
   matriculado: boolean;
   /** Inscrito en la materia: puede completar la lección y guardar su avance. */
   inscrita: boolean;
-  /** La lee la Dirección académica o un profesor sin estar inscrito: no se guarda nada. */
+  /** La lee la Administración sin estar inscrita en la materia: no se guarda nada. */
   docente: boolean;
+  /** Lo que falta para abrir el repaso (null: ya está abierto, o es la vista docente). */
+  bloqueo: BloqueoRepaso | null;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };
@@ -1267,7 +1404,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
         "Para estudiar se necesita una cuenta en la web e inscribirse en la academia: llenar la ficha de inscripción y aceptar este reglamento y el código de honor. La inscripción es gratuita y queda aprobada al instante.",
         "La inscripción da un número de matrícula personal (AAF-año-número) y una promoción, que es el año en que ingresaste. El carné digital la acredita.",
         "Cada materia tiene su propia inscripción, desde su página, donde se ve lo que se aprende, cómo es y cómo se evalúa. La primera lección de cada materia del Nivel 1 se puede leer sin inscribirse; las demás, el versículo de memoria y el examen piden estar inscrito.",
-        "Tus certificados llevan el nombre de tu ficha. Una vez emitido un certificado, ese nombre solo lo corrige la Dirección académica.",
+        "Tus certificados llevan el nombre de tu ficha. Una vez emitido un certificado, ese nombre solo lo corrige la Administración de la academia.",
         "La inscripción es personal: cada alumno estudia con su propia cuenta.",
       ],
     },
@@ -1293,14 +1430,14 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       titulo: "5. El código de honor",
       puntos: [
         CODIGO_HONOR,
-        "Las respuestas pegadas o dudosas quedan marcadas para que las revise la Dirección académica.",
+        "Las respuestas pegadas o dudosas quedan marcadas para que las revise la Administración de la academia.",
         "Hacer trampa, copiar o dar el examen por otra persona anula el examen y puede anular los documentos obtenidos.",
       ],
     },
     {
       titulo: "6. La revisión de las notas",
       puntos: [
-        "Todo lo corrige el sistema. La Dirección académica puede revisar cualquier respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
+        "Todo lo corrige el sistema. Solo la Administración de la academia puede revisar una respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
         `Si no estás de acuerdo con una nota, puedes pedir que se revise, una vez por examen y dentro de los ${DIAS_APELACION} días.`,
       ],
     },
@@ -1320,14 +1457,14 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       puntos: [
         "Cada materia aprobada y cada nivel completo dan un certificado con un código y un QR. Cualquiera puede verificarlos en la web, sin ver las notas.",
         "El carné digital acredita tu matrícula y también se verifica con su QR.",
-        "La Dirección académica puede corregir o revocar un documento, siempre con un motivo.",
+        "Solo la Administración de la academia puede corregir o revocar un documento, siempre con un motivo.",
       ],
     },
     {
       titulo: "9. La privacidad",
       puntos: [
-        "Tus notas las ven solo tú, tus profesores y la Dirección académica. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
-        "Los datos de tu ficha (nombre, país, iglesia y contacto) los ven la Dirección académica y, si elegiste una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus documentos: no se publican ni se comparten con nadie más.",
+        "Tus notas las ven tú y la Administración de la academia; los maestros del ministerio y los líderes de tu iglesia aliada pueden consultarlas, sin cambiar nada. En tu carné y en tu perfil se muestran tu estatus y tu nivel, sin notas.",
+        "Los datos de tu ficha (nombre, país, iglesia y contacto) los ven la Administración de la academia y, si elegiste una iglesia aliada, quienes la dirigen. Se usan solo para acompañarte en tus estudios y para tus documentos: no se publican ni se comparten con nadie más.",
         "Puedes corregir los datos de tu ficha cuando quieras, desde tu inscripción.",
         "Si borras tu cuenta, se borra todo tu avance en la academia, también tu ficha, y tus documentos dejan de verificarse.",
       ],

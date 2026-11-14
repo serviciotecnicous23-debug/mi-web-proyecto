@@ -140,32 +140,10 @@ export function DocumentoAjustado({ children, ancho = ANCHO }: { children: React
   );
 }
 
-/** Qué capturar para el PDF: el certificado (A4 apaisado) o el carné (tamaño tarjeta, 85,6 × 54 mm). */
-export type OpcionesPdf = { id?: string; ancho?: number; mm?: number; fondo?: string };
-
-/** Descarga el documento en PDF a tamaño real, aunque en pantalla se vea achicado. */
-export async function descargarPdf(archivo: string, op: OpcionesPdf = {}): Promise<void> {
-  const el = document.getElementById(op.id ?? "documento-academia");
-  const escala = document.getElementById("documento-escala");
-  if (!el) return;
-  const ancho = op.ancho ?? ANCHO;
-  const antes = escala?.style.transform ?? "";
-  if (escala) escala.style.transform = "none";
-  try {
-    const html2canvas = (await import("html2canvas")).default;
-    const { jsPDF } = await import("jspdf");
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: op.fondo ?? "#fffbeb", logging: false, width: ancho, height: el.scrollHeight, windowWidth: ancho + 100 });
-    const pdfAncho = op.mm ?? 297;
-    const pdfAlto = (canvas.height / canvas.width) * pdfAncho;
-    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [pdfAncho, pdfAlto] });
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pdfAncho, pdfAlto);
-    pdf.save(archivo);
-  } finally {
-    if (escala) escala.style.transform = antes;
-  }
-}
-
-/** Abre el documento solo, para imprimirlo en una hoja apaisada. */
+/**
+ * Abre el documento solo, para imprimirlo en una hoja apaisada. Imprime una sola vez y cuando ya cargaron sus imágenes
+ * (el logo y el QR), para que la hoja no salga en blanco. (El PDF se dibuja aparte: certificado-pdf.ts.)
+ */
 export function imprimirDocumento(id = "documento-academia"): void {
   const el = document.getElementById(id);
   if (!el) return;
@@ -173,10 +151,24 @@ export function imprimirDocumento(id = "documento-academia"): void {
   if (!w) return;
   w.document.write(`<!DOCTYPE html><html><head><title>${NOMBRE_ACADEMIA}</title><style>
     body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
-    @media print { body { margin: 0; } @page { size: landscape; margin: 0; } }
+    @media print { body { margin: 0; min-height: 0; } @page { size: A4 landscape; margin: 8mm; } }
   </style></head><body>`);
   w.document.write(el.outerHTML);
   w.document.write(`</body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 500);
+  let impreso = false;
+  let vueltas = 0;
+  const listas = () => Array.from(w.document.images).every((i) => i.complete);
+  const imprimir = () => {
+    if (impreso || w.closed) return;
+    if (!listas() && vueltas++ < 40) {
+      setTimeout(imprimir, 150);
+      return;
+    }
+    impreso = true;
+    w.focus();
+    w.print();
+  };
+  w.onload = imprimir;
+  setTimeout(imprimir, 300);
 }

@@ -31,6 +31,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   // la academia: su avance, sus exámenes y sus respuestas escritas (docs/academia.md)
   ["academia_respuestas", (id) => sql`user_id = ${id}`],
   ["academia_intentos", (id) => sql`user_id = ${id}`],
+  ["academia_diagnosticos", (id) => sql`user_id = ${id}`],
   ["academia_apelaciones", (id) => sql`user_id = ${id}`],
   ["academia_pruebas", (id) => sql`user_id = ${id}`],
   ["academia_versiculos", (id) => sql`user_id = ${id}`],

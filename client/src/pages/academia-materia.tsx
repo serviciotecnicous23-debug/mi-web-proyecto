@@ -11,7 +11,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
-import { APRUEBA, NIVELES, NOMBRE_COMPONENTE, examenDe, leccionPublica, materiaPorId, type MateriaDetalle, type Pesos } from "@shared/academia";
+import { APRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, type MateriaDetalle, type Pesos } from "@shared/academia";
 import {
   inscribirmeEnMateria, responderVersiculo, tiempoTexto, useMateria, versiculoEstudio, versiculoPractica, type VersiculoEstudio, type VersiculoPractica,
 } from "@/components/academia/api";
@@ -346,8 +346,8 @@ export default function AcademiaMateria() {
           <div className="glass-card p-4 flex items-start gap-3 border border-sky-500/30" role="note" data-testid="materia-vista-docente">
             <Eye className="w-5 h-5 text-sky-600 mt-0.5 shrink-0" />
             <p className="text-sm">
-              <strong>Vista docente.</strong> Como Dirección académica o profesor, puedes leer todas las lecciones sin inscribirte; no se guarda tu avance. Para
-              cursarla como alumno, inscríbete en la materia.
+              <strong>Vista de la Administración.</strong> Como administrador puedes leer todas las lecciones sin inscribirte; no se guarda tu avance. Para
+              cursarla como alumno, inscríbete en la materia: tu avance de alumno va aparte.
             </p>
           </div>
         )}
@@ -404,7 +404,9 @@ export default function AcademiaMateria() {
             {ex ? (
               <>
                 {ex.aprobado ? (
-                  <p className="text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Aprobaste el examen y la materia.</p>
+                  <p className="text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2" data-testid="materia-aprobada-via">
+                    <CheckCircle2 className="w-5 h-5" /> {d.via === "suficiencia" ? "Aprobaste la materia por suficiencia." : "Aprobaste el examen y la materia."}
+                  </p>
                 ) : ex.falta.length ? (
                   <p className="text-sm">Para darlo te falta {ex.falta.join(" y ")}.</p>
                 ) : ex.espera > 0 ? (
@@ -424,6 +426,21 @@ export default function AcademiaMateria() {
             ) : (
               <p className="text-sm">Entra con tu cuenta para dar el examen.</p>
             )}
+          </section>
+        )}
+
+        {/* Suficiencia: para quien ya sabe lo que enseña la materia (una sola vez, antes del examen final) */}
+        {m.disponible && inscrito && d.suficiencia && (
+          <section className="glass-card p-5 border border-orange-500/30" data-testid="materia-suficiencia">
+            <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><Award className="w-5 h-5 text-orange-500" /> ¿Ya sabes lo que enseña esta materia?</h2>
+            <p className="text-sm text-muted-foreground">
+              Puedes aprobarla con el examen de suficiencia: {SUFICIENCIA.objetivas} preguntas de todas sus lecciones y {SUFICIENCIA.escritas} respuestas escritas, después de
+              aprender su versículo. Se aprueba con {SUFICIENCIA.apruebaObjetiva} en la parte A y {SUFICIENCIA.apruebaEscrita} en la B, y se da una sola vez, antes del examen
+              final. Si no apruebas, la cursas como siempre.
+            </p>
+            <Link href={`/academia/suficiencia/${m.id}`}>
+              <Button variant="outline" className="mt-4" data-testid="materia-ir-suficiencia">{d.suficiencia.enCurso ? "Seguir con la suficiencia" : "Ver el examen de suficiencia"}</Button>
+            </Link>
           </section>
         )}
 

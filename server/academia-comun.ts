@@ -4,10 +4,11 @@
  */
 import type { Request, Response } from "express";
 import { pool } from "./db";
+import { numeroDe } from "./orden-examen";
 import { getBibleChapter } from "./bible";
 import { resolveSiteUrl } from "@shared/site";
 import {
-  APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita,
+  APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, SUFICIENCIA, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita,
   pesosDe, veVistaPrevia, type Componentes, type MateriaDef, type MedidaExamen, type NivelN,
 } from "@shared/academia";
 import { BANCOS } from "./academia/index";
@@ -201,6 +202,16 @@ CREATE TABLE IF NOT EXISTS "academia_asignaciones" (
   "created_at" timestamp NOT NULL DEFAULT now(),
   UNIQUE ("course_id", "materia_id")
 );
+CREATE TABLE IF NOT EXISTS "academia_diagnosticos" (
+  "user_id" integer PRIMARY KEY REFERENCES "users"("id") ON DELETE CASCADE,
+  "resultado" jsonb NOT NULL DEFAULT '{}'::jsonb,
+  "created_at" timestamp NOT NULL DEFAULT now()
+);
+ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "dominado_at" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "abierta_at" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_inicio" timestamp;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_seg" integer NOT NULL DEFAULT 0;
+ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "repasos" integer NOT NULL DEFAULT 0;
 CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
   "materia_id" text PRIMARY KEY,
   "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,
@@ -227,6 +238,19 @@ export async function preguntasRetiradas(): Promise<Set<string>> {
 export function olvidarRetiradas(): void {
   retiradasCache = { hasta: 0, ids: new Set<string>() };
 }
+
+/** Las fichas del versículo de memoria (grupos de unas 3 palabras). */
+export function fichasDe(texto: string): string[] {
+  const ws = texto.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  const out: string[] = [];
+  for (let i = 0; i < ws.length; i += 3) out.push(ws.slice(i, i + 3).join(" "));
+  if (out.length > 1 && !out[out.length - 1].includes(" ")) {
+    const ultima = out.pop()!;
+    out[out.length - 1] += ` ${ultima}`;
+  }
+  return out;
+}
+export const idFicha = (userId: number, materiaId: string, i: number) => numeroDe(`${userId}|${materiaId}|${i}`).toString(36);
 
 /** Olvida lo guardado de la apertura (al abrir o cerrar la academia desde el panel). */
 export function olvidarApertura(): void {
@@ -339,6 +363,7 @@ export async function nombreAcademico(userId: number): Promise<string> {
 /** El examen de una clave de academia_pruebas: su título, su página, su medida y la nota para aprobar. */
 export type ContextoExamen = {
   clave: string;
+  tipo: "final" | "integral" | "suficiencia" | "diagnostico";
   /** «Examen final de «La salvación»», «Examen integral del Nivel 1 · Fundamentos de la fe». */
   titulo: string;
   /** «el examen final de «La salvación»», para las frases de los avisos. */
@@ -355,7 +380,7 @@ export function contextoExamen(clave: string): ContextoExamen | null {
   if (fin) {
     const m = materiaPorId(fin[1]);
     if (!m) return null;
-    return { clave, titulo: `Examen final de «${m.titulo}»`, enFrase: `el examen final de «${m.titulo}»`, ruta: `/academia/examen/${m.id}`, medida: examenDe(m), aprueba: APRUEBA, materia: m, nivel: null };
+    return { clave, tipo: "final", titulo: `Examen final de «${m.titulo}»`, enFrase: `el examen final de «${m.titulo}»`, ruta: `/academia/examen/${m.id}`, medida: examenDe(m), aprueba: APRUEBA, materia: m, nivel: null };
   }
   const int = /^nivel-(\d+):integral$/.exec(clave);
   if (int) {
@@ -363,11 +388,32 @@ export function contextoExamen(clave: string): ContextoExamen | null {
     const nv = NIVELES.find((x) => x.n === n);
     if (!nv) return null;
     return {
-      clave, titulo: `Examen integral del Nivel ${n} · ${nv.nombre}`, enFrase: `el examen integral del Nivel ${n}`, ruta: `/academia/integral/${n}`,
+      clave, tipo: "integral", titulo: `Examen integral del Nivel ${n} · ${nv.nombre}`, enFrase: `el examen integral del Nivel ${n}`, ruta: `/academia/integral/${n}`,
       medida: EXAMEN_INTEGRAL[n as NivelN], aprueba: APRUEBA_INTEGRAL, materia: null, nivel: n,
     };
   }
+  const suf = /^(.+):suficiencia$/.exec(clave);
+  if (suf) {
+    const m = materiaPorId(suf[1]);
+    if (!m) return null;
+    return {
+      clave, tipo: "suficiencia", titulo: `Examen de suficiencia de «${m.titulo}»`, enFrase: `el examen de suficiencia de «${m.titulo}»`, ruta: `/academia/suficiencia/${m.id}`,
+      medida: medidaSuficiencia(m), aprueba: SUFICIENCIA.apruebaObjetiva, materia: m, nivel: null,
+    };
+  }
+  if (clave === "diagnostico") {
+    return {
+      clave, tipo: "diagnostico", titulo: "Prueba diagnóstica", enFrase: "la prueba diagnóstica", ruta: "/academia/diagnostico",
+      medida: { objetivas: 0, banco: 0, escritas: 0, pesoObjetiva: 100, segundos: 45, minutosEscrita: 0 }, aprueba: 0, materia: null, nivel: null,
+    };
+  }
   return null;
+}
+
+/** El examen de suficiencia de una materia: 25 preguntas y 2 escritas, con los pesos y el tiempo de su examen final. */
+export function medidaSuficiencia(m: MateriaDef): MedidaExamen {
+  const f = examenDe(m);
+  return { objetivas: SUFICIENCIA.objetivas, banco: BANCOS.get(m.id)?.final.length ?? 0, escritas: SUFICIENCIA.escritas, pesoObjetiva: f.pesoObjetiva, segundos: f.segundos, minutosEscrita: f.minutosEscrita };
 }
 
 /** Deja un aviso en la campana a cada cuenta de la lista. No manda correos ni avisos al teléfono. */
@@ -509,6 +555,11 @@ export async function componentesDe(userId: number, m: MateriaDef): Promise<Comp
 
 /** Vuelve a calcular la nota de la materia y la guarda. Devuelve la nota y si quedó aprobada. */
 export async function recalcularMateria(userId: number, m: MateriaDef): Promise<{ nota: number; aprobada: boolean; componentes: Componentes }> {
+  const { rows: ya } = await pool.query(`SELECT estado, via, nota, componentes FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  if (ya[0]?.estado === "aprobada" && ya[0].via === "suficiencia") {
+    // aprobada por suficiencia: su nota es la del examen de suficiencia, no la de los componentes del curso
+    return { nota: Number(ya[0].nota ?? 0), aprobada: true, componentes: (ya[0].componentes ?? {}) as Componentes };
+  }
   const componentes = await componentesDe(userId, m);
   const nota = notaMateria(pesosDe(m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);

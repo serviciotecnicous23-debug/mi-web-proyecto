@@ -7,7 +7,8 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useCertificado } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
-import { DocumentoAjustado, DocumentoVista, descargarPdf, imprimirDocumento } from "@/components/academia/documento";
+import { DocumentoAjustado, DocumentoVista, imprimirDocumento } from "@/components/academia/documento";
+import { descargarCertificadoPdf } from "@/components/academia/certificado-pdf";
 
 export default function AcademiaCertificado() {
   const { codigo } = useParams<{ codigo: string }>();
@@ -32,7 +33,7 @@ export default function AcademiaCertificado() {
   const pdf = async () => {
     setGenerando(true);
     try {
-      await descargarPdf(archivo);
+      await descargarCertificadoPdf(d, archivo);
     } catch {
       imprimirDocumento();
     } finally {

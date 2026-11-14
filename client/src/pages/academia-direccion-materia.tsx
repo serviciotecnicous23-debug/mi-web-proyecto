@@ -8,9 +8,11 @@ import { loginUrl } from "@/lib/login-redirect";
 import { enlaceReporte, useDireccionMateria } from "@/components/academia/api";
 import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, Indicador, Medidor, fecha, hace } from "@/components/academia/seguimiento";
+import { useArea } from "@/components/academia/area";
 
 export default function AcademiaDireccionMateria() {
   const { materiaId } = useParams<{ materiaId: string }>();
+  const area = useArea();
   const q = useDireccionMateria(materiaId);
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -21,7 +23,7 @@ export default function AcademiaDireccionMateria() {
           {q.error?.status === 401 ? (
             <a href={loginUrl()}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>
           ) : (
-            <Link href="/academia/direccion?tab=materias"><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
+            <Link href={`${area.base}?tab=materias`}><Button variant="outline" className="h-12 px-7">Volver al panel</Button></Link>
           )}
         </div>
       </Layout>
@@ -31,7 +33,7 @@ export default function AcademiaDireccionMateria() {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-16 space-y-6">
-        <Link href="/academia/direccion?tab=materias" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Panel de seguimiento</Link>
+        <Link href={`${area.base}?tab=materias`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Las materias</Link>
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
             <p className="data-label text-orange-600 dark:text-orange-300">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · Seguimiento de la materia</p>
@@ -69,7 +71,7 @@ export default function AcademiaDireccionMateria() {
               {alumnos.map((a) => (
                 <tr key={a.userId} className="border-b border-border/60 last:border-0 align-top">
                   <td className="py-2.5 px-4">
-                    <Link href={`/academia/direccion/alumno/${a.userId}`} className="font-medium hover:underline">{a.nombre}</Link>
+                    <Link href={`${area.base}/alumno/${a.userId}`} className="font-medium hover:underline">{a.nombre}</Link>
                     <span className="block text-xs text-muted-foreground">{[a.matricula, a.iglesia].filter(Boolean).join(" · ")}</span>
                     <span className="block mt-1"><ChipEstatus e={a.estatus} /></span>
                   </td>
