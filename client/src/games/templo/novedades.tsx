@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-edificios",
+    fecha: "14 de noviembre de 2026",
+    titulo: "La muralla, el palacio y la plaza, de piedra labrada",
+    puntos: [
+      "🛡️ La muralla tiene por dentro sillares grandes y un zócalo de piedras almohadilladas. Las torres de las esquinas y las de la puerta oriental, con su tronera, son de piedra labrada por los cuatro lados.",
+      "🧱 Los tramos del muro que levantamos juntos son de piedra nueva labrada: cada tramo con sus piedras, como lo levantó cada familia.",
+      "👑 El palacio del rey es de piedras grandes y costosas, almohadilladas, con su hilera de vigas de cedro. Las ventanas tienen marco de piedra y la puerta grande, sus jambas y su dintel.",
+      "🏛️ La cámara de los sacerdotes y la casa de la sabiduría son de sillares, con cornisa, pretil y puertas entre jambas. La escuela de los profetas tiene su zócalo de piedras.",
+    ],
+  },
+  {
     id: "2026-11-14-casas",
     fecha: "14 de noviembre de 2026",
     titulo: "Las casas de los barrios, de piedra y de barro",

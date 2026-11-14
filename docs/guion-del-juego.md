@@ -958,6 +958,28 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - **Lo que pesa**: unos 5.700 vértices por casa (el doble que antes) y un barrio entero se arma en unos 70 ms. Por eso
   las juntas derechas no llevan bisel (se distinguen por el tono) y las grillas del revoque y del terrado son gruesas.
 
+## 7s. La muralla, el palacio y la plaza, de piedra labrada (14 de noviembre de 2026)
+
+- **La almohadilla** (`sillares` con `almohadilla: { alto, margen }`, en `ciudad/muros-casa.ts`): la cara de la piedra
+  levantada en el medio, con un margen labrado alrededor, como las piedras grandes de los muros de Jerusalén.
+- **La muralla** (`muro`, `caraDeMuralla` y `torreDeSillares`, en `ciudad/escenario.ts`):
+  - por dentro (lo que mira a la ciudad), sillares grandes con un zócalo de piedras almohadilladas y las manchas de la
+    lluvia; por fuera queda de piedra lisa (casi no se ve) y la hilera oscura de abajo va solo por fuera;
+  - las hiladas son las mismas en todos los tramos (`HILADAS_MURALLA`), así se siguen de uno a otro y en las torres;
+  - las torres de las esquinas y las de la puerta oriental, de sillares por los cuatro lados (la tronera en la cara de
+    adentro); el arco del paso, de sillares por las dos caras;
+  - el fondo de las juntas, un plano del color del mortero (`morteroDeCara`).
+- **El muro que se reconstruye** (`construirMuroCaido`): los tramos levantados, de piedra nueva labrada por dentro (cada
+  tramo con sus piedras, como en Nehemías 3), y el tramo en obra, labrado hasta donde llega.
+- **El palacio** (`buildPalacio`): piedras grandes y costosas, almohadilladas, de hasta tres metros (1 Reyes 7:9-10), en
+  sus tres hileras de colores y la de arriba, con la hilera de vigas de cedro (con sus puntas en el frente), la
+  albardilla sobre los muros, las ventanas en tres hileras con marco de piedra (ya no tapan la puerta) y la puerta entre
+  jambas y bajo su dintel; el pórtico del trono, también almohadillado. `blockWall` se sigue llamando sin usar lo que arma,
+  solo para gastar el azar del templo como antes.
+- **La cámara de los sacerdotes y la casa de la sabiduría**: sillares como las casas de piedra, con el remate de cornisa,
+  pretil y terrado (`remateDeSillares`), y las puertas entre jambas. **La escuela de los profetas**: su zócalo de piedras.
+- **Lo que pesa**: la muralla entera, unos 87 mil vértices (el zócalo es de una sola hilada de piedras grandes).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
