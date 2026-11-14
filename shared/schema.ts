@@ -1436,6 +1436,18 @@ export const academiaContenidoNotas = pgTable("academia_contenido_notas", {
   respuesta: text("respuesta"),
 });
 
+/** Las materias de la Academia asignadas a un curso de la Escuela (obligatorias u opcionales, con fecha límite). */
+export const academiaAsignaciones = pgTable("academia_asignaciones", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  materiaId: text("materia_id").notNull(),
+  obligatoria: boolean("obligatoria").notNull().default(true),
+  venceAt: timestamp("vence_at"),
+  indicaciones: text("indicaciones"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [unique("academia_asignaciones_course_id_materia_id_key").on(t.courseId, t.materiaId)]);
+
 /** La aprobación doctrinal de cada materia (la da la Dirección académica antes de abrir la academia). */
 export const academiaContenidoAprobaciones = pgTable("academia_contenido_aprobaciones", {
   materiaId: text("materia_id").primaryKey(),

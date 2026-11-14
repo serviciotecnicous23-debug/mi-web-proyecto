@@ -190,6 +190,17 @@ CREATE TABLE IF NOT EXISTS "academia_contenido_notas" (
   "respuesta" text
 );
 CREATE INDEX IF NOT EXISTS "academia_contenido_notas_materia_idx" ON "academia_contenido_notas" ("materia_id", "resuelta_at");
+CREATE TABLE IF NOT EXISTS "academia_asignaciones" (
+  "id" serial PRIMARY KEY,
+  "course_id" integer NOT NULL REFERENCES "courses"("id") ON DELETE CASCADE,
+  "materia_id" text NOT NULL,
+  "obligatoria" boolean NOT NULL DEFAULT true,
+  "vence_at" timestamp,
+  "indicaciones" text,
+  "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  UNIQUE ("course_id", "materia_id")
+);
 CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
   "materia_id" text PRIMARY KEY,
   "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,

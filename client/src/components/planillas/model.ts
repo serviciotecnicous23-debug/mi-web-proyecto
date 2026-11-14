@@ -4,6 +4,7 @@
  * sola consulta al servidor (/api/courses/:id/planillas).
  */
 import { COURSE_CATEGORIES, DAYS_OF_WEEK, ENROLLMENT_STATUSES } from "@shared/schema";
+import { textoAvance, type AcademiaEnPlanilla } from "@shared/academia-escuela";
 
 export type GradeItem = { key: string; label: string; weight?: number | null };
 export type AttendanceStatus = "presente" | "ausente" | "tardanza" | "excusado";
@@ -53,6 +54,8 @@ export type PlanillaData = {
   sessions: PlanillaSession[];
   students: PlanillaStudent[];
   attendance: { sessionId: number; userId: number; status: string }[];
+  /** Las materias de la Academia asignadas al curso y el avance de cada alumno (columnas de la hoja de notas). */
+  academia?: AcademiaEnPlanilla | null;
   generatedAt: string;
   /** Curso de ejemplo con datos ficticios (no viene del servidor). */
   example?: boolean;
@@ -373,19 +376,25 @@ export function sheetRows(key: SheetKey, data: PlanillaData, options: SheetOptio
         }),
       ];
     }
-    case "notas":
+    case "notas": {
+      const academia = data.academia?.asignaciones ?? [];
       return [
-        ["N°", "Nombre", ...items.map((it) => (it.weight ? `${it.label} (${it.weight} %)` : it.label)), "Promedio", "Nota final", "Estado", "Observaciones"],
+        [
+          "N°", "Nombre", ...items.map((it) => (it.weight ? `${it.label} (${it.weight} %)` : it.label)), ...academia.map((a) => `Academia: ${a.titulo}`),
+          "Promedio", "Nota final", "Estado", "Observaciones",
+        ],
         ...students.map((s, i) => [
           i + 1,
           s.name,
           ...items.map((it) => s.scores[it.key] || ""),
+          ...academia.map((a) => textoAvance(data.academia?.avance[s.userId]?.[a.id])),
           fmtNumber(averageFor(s.scores, items)),
           s.grade || "",
           statusLabel(s.status),
           s.observations || "",
         ]),
       ];
+    }
     case "seguimiento":
       return [
         ["N°", "Nombre", "Teléfono", "Correo", "Asistencias", "Clases tomadas", "% asistencia", "Última asistencia", "Faltas seguidas", "Nota final", "Estado", "¿Contactar?"],

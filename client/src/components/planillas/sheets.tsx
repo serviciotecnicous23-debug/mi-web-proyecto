@@ -12,6 +12,7 @@ import {
   scheduleText, statusLabel, studentAttendance,
   type PlanillaData, type PlanillaSession, type SheetKey, type SheetOptions,
 } from "./model";
+import { textoAvance } from "@shared/academia-escuela";
 
 export type GradeDraft = Record<number, { scores: Record<string, string>; grade: string; observations: string }>;
 
@@ -334,11 +335,13 @@ export function NotasSheet({
   const blankScores = options.blank || !realItems.length;
   const blankAll = options.blank && !editing;
   const weights = realItems.reduce((a, it) => a + (it.weight || 0), 0);
-  const cols = items.length + 6;
+  // las materias de la Academia asignadas al curso: su nota sale sola (no se escribe a mano)
+  const academia = data.academia?.asignaciones ?? [];
+  const cols = items.length + academia.length + 6;
   return (
     <SheetFrame
       data={data}
-      landscape={items.length > 4}
+      landscape={items.length + academia.length > 4}
       title="Planilla de notas"
       subtitle={
         blankAll
@@ -358,6 +361,12 @@ export function NotasSheet({
               <th key={it.key} className="col-nota">
                 {it.label}
                 {it.weight ? <span className="th-sub">{it.weight} %</span> : null}
+              </th>
+            ))}
+            {academia.map((a) => (
+              <th key={`academia-${a.id}`} className="col-nota" data-testid="planilla-academia">
+                {a.titulo}
+                <span className="th-sub">Academia · {a.obligatoria ? "obligatoria" : "opcional"}</span>
               </th>
             ))}
             <th className="col-nota">Promedio</th>
@@ -388,6 +397,9 @@ export function NotasSheet({
                       />
                     ) : blankScores ? "" : scores[it.key] || ""}
                   </td>
+                ))}
+                {academia.map((a) => (
+                  <td key={`academia-${a.id}`} className="col-nota celda-chica">{blankAll ? "" : textoAvance(data.academia?.avance[s.userId]?.[a.id])}</td>
                 ))}
                 <td className="col-nota celda-promedio">{blankAll ? "" : fmtNumber(avg)}</td>
                 <td className="col-nota col-final">

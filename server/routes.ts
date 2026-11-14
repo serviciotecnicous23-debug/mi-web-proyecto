@@ -76,6 +76,7 @@ import { registerPrayerWallRoutes } from "./prayer-wall";
 import { eliminarCuentaPropia } from "./account-deletion";
 import { registerReportRoutes } from "./reports";
 import { registerAcademiaRoutes } from "./academia";
+import { academiaEnPlanilla } from "./academia-asignaciones";
 import { DEFAULT_AZURACAST_BASE_URL, AZURACAST_STATION_SHORTCODE } from "@shared/radio";
 import {
   DEFAULT_AZURACAST_HLS_URL,
@@ -2601,6 +2602,11 @@ ${urls}
         storage.listCourseAttendance(courseId),
         course.teacherId ? storage.getUser(course.teacherId) : Promise.resolve(undefined),
       ]);
+      // las materias de la Academia asignadas al curso, con el avance de cada alumno (sus columnas en la hoja de notas)
+      const academia = await academiaEnPlanilla(courseId, roster.map((r) => r.userId)).catch((err) => {
+        console.error("Planillas, academia:", err);
+        return null;
+      });
       res.setHeader("Cache-Control", "no-store");
       res.json({
         course: {
@@ -2649,6 +2655,7 @@ ${urls}
           completedAt: r.completedAt,
         })),
         attendance,
+        academia,
         generatedAt: new Date().toISOString(),
       });
     } catch (err) {

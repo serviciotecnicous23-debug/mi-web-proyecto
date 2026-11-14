@@ -280,6 +280,32 @@ del examen y cada lección con más de las que el examen saca de ella; las escri
 examen y nunca menos de 2. Si no se puede, la pantalla dice por qué: entonces la pregunta se corrige en el contenido.
 Las del repaso no se retiran: se corrigen en el contenido.
 
+**Las asignaciones a los cursos de la Escuela** (`server/academia-asignaciones.ts`, pestaña «Academia» del aula):
+- Quien dirige un curso de la Escuela (la administración, o el maestro a cargo de ESE curso, como en
+  `canManageCourse`) le asigna materias publicadas de la academia: obligatorias u opcionales, con fecha límite (el
+  final del día que elige, en su hora) e indicaciones. Cada materia, una vez por curso; se cambia o se quita (quitarla
+  no borra lo que cada alumno hizo en la materia).
+- En el aula ve cómo va cada alumno inscrito y aprobado en el curso: sin empezar, en curso (con sus lecciones),
+  aprobada (con su nota, y si fue a tiempo) o vencida (pasó la fecha sin aprobarla). Todo se calcula al leerlo
+  (`estadoAsignacion`, en `shared/academia-escuela.ts`, con su prueba).
+- **La planilla del curso** trae en la hoja de notas una columna por cada materia asignada, con la nota que sale sola
+  (y en el Excel): no se escribe a mano.
+- Los alumnos del curso ven sus asignaciones en el aula, en la portada de la academia («Materias asignadas», primero
+  las pendientes) y en la página de la materia. Mientras la academia esté en vista previa no las ven y no se les avisa;
+  ya abierta, cada asignación nueva les deja un aviso en la campana. No hay recordatorios de fondo: la fecha y lo que
+  falta se ven al entrar.
+
+**Los mentores** (`server/academia-mentores.ts`, capacidad «mentores»):
+- La Dirección académica elige el mentor de cualquier alumno, y quienes dirigen una iglesia aliada, el de sus alumnos
+  (con alguien de su iglesia), desde la página del alumno en el panel, buscando por nombre o usuario. Se cambia o se
+  quita. El mentor y el alumno reciben un aviso en la campana.
+- El mentor ve en «Mis acompañados» (`/academia/acompanados`, y una tarjeta en la portada) el estatus, las lecciones,
+  las materias aprobadas y las que tiene en curso de cada persona que acompaña. **Sin notas ni datos de contacto**: el
+  aviso de privacidad de la inscripción dice que esos los ven solo la Dirección y su iglesia.
+- **Se detuvo** quien tiene materias en curso y no estudia hace `DIAS_DETENIDO_MENTOR` (7) días o más: sale primero y
+  marcado. Se calcula al leerlo.
+- El alumno ve a su mentor en su expediente. Si se borra la cuenta del mentor, sus acompañados quedan sin mentor.
+
 **La Academia primero** (lo pidió Luis: en las clases de la Escuela no se está dando clase):
 - Para quien ve la academia (la vista previa o, cuando se abra, todos), el botón «Clases» de la barra de la app pasa a
   «Academia», y también el acceso de Inicio y el primer enlace de «Formación» en el menú.
@@ -440,6 +466,11 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   banco (retirar y volver a usar). `server/academia-analisis.ts`: las cifras del análisis, sin base de datos.
   `server/academia-banco.ts`: la guarda del banco y la huella del contenido, sin base de datos. Los tipos, en
   `shared/academia-calidad.ts`; la página, `client/src/pages/academia-direccion-contenido.tsx`.
+- `server/academia-asignaciones.ts`: las asignaciones a los cursos de la Escuela (y sus columnas en la planilla,
+  `academiaEnPlanilla`). `server/academia-mentores.ts`: los mentores. Los tipos y el estado de cada asignación, en
+  `shared/academia-escuela.ts` (liviano: lo usan el aula y la planilla sin cargar el catálogo).
+  `client/src/components/academia/asignaciones.tsx` (la pestaña del aula y las tarjetas) y `mentores.tsx`; la página
+  `client/src/pages/academia-acompanados.tsx`.
 - `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
@@ -474,6 +505,9 @@ Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la 
 | `academia_preguntas_retiradas` | Las preguntas retiradas del banco: el id, el motivo, quién y cuándo |
 | `academia_contenido_notas` | Las observaciones de la revisión: la materia, la lección (o ninguna), el texto, quién, cuándo y cómo se resolvió |
 | `academia_contenido_aprobaciones` | La aprobación doctrinal de cada materia: quién, cuándo, las notas y la huella del contenido aprobado |
+| `academia_asignaciones` | Las materias asignadas a un curso de la Escuela: el curso (se borran con él), la materia, si es obligatoria, la fecha límite, las indicaciones y quién la asignó |
+
+El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 
 **Rutas** (`/api/academia/…`). Los parámetros no se llaman `:id`, porque `app.param("id")` exige números.
 
@@ -514,6 +548,11 @@ Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la 
 | `POST direccion/contenido/:materiaId/observacion` y `POST direccion/contenido/observacion/:notaId/resolver` | Dejar una observación `{texto, leccionId}` y resolverla `{respuesta}` |
 | `POST direccion/contenido/:materiaId/aprobar` y `/desaprobar` | Aprobar la materia `{notas}` (sin observaciones abiertas) o quitar la aprobación `{motivo}` |
 | `POST direccion/pregunta/:preguntaId/retirar` y `/restaurar` | Retirar una pregunta del banco o volver a usarla: `{motivo}` |
+| `GET curso/:cursoId/asignaciones` | Las asignaciones de un curso de la Escuela: con cada alumno para quien lo dirige, con lo suyo para un alumno inscrito |
+| `POST curso/:cursoId/asignaciones`, `POST curso/:cursoId/asignaciones/:asignacionId` y `/quitar` | Asignar `{materiaId, obligatoria, venceAt, indicaciones}`, cambiar `{obligatoria, venceAt, indicaciones}` o quitar |
+| `GET mis-asignaciones` | Las asignaciones de todos mis cursos, con mi avance |
+| `GET direccion/personas?q=` y `POST direccion/alumno/:alumnoId/mentor` | Buscar a quién elegir como mentor y elegirlo `{mentorId}` (o quitarlo con `null`) |
+| `GET acompanados` | Mis acompañados como mentor: su avance, sin notas ni contacto |
 | `POST examen/:materiaId/apelacion` y `POST integral/:nivel/apelacion` | El alumno pide la revisión de su último intento: `{mensaje}` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
@@ -524,7 +563,7 @@ Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la 
 
 **Pruebas:**
 - Locales: el corrector, la elección de preguntas y el catálogo
-  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts server/academia-analisis.test.ts server/academia-banco.test.ts`).
+  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts server/academia-analisis.test.ts server/academia-banco.test.ts shared/academia-escuela.test.ts`).
 - De la API: `academia_api.py` en el scratchpad de la sesión de la academia. Usa el servidor «mi-web-academia» en el
   puerto 5082 y PGlite en memoria en el 55442.
 - En el navegador usar 127.0.0.4; las otras sesiones usan localhost y de 127.0.0.1 a 127.0.0.3.
@@ -535,7 +574,7 @@ Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la 
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
 | A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
-| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Sigue: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura, el historial, el análisis de preguntas, retirar preguntas del banco y la revisión doctrinal del contenido están hechos; faltan las asignaciones a los cursos de la Escuela y los mentores |
+| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Hecho: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura, el historial, el análisis de preguntas, retirar preguntas del banco, la revisión doctrinal del contenido, las asignaciones a los cursos de la Escuela (con sus columnas en la planilla) y los mentores |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
 | A6 · Niveles 4 y 5 y primeras especialidades | Proyecto final y defensa | |

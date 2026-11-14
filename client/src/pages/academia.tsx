@@ -12,6 +12,8 @@ import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type MateriaResumen } from "@s
 import { useAcademiaEstado, useCertificados } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";
+import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
+import { TarjetaAcompanados } from "@/components/academia/mentores";
 import { useAuth } from "@/hooks/use-auth";
 import { alcanceDe } from "@shared/academia-permisos";
 
@@ -159,6 +161,9 @@ export default function AcademiaPage() {
           </Link>
         </div>
       )}
+
+      {e.conSesion && <TarjetaAcompanados activo />}
+      {e.conSesion && <MisAsignacionesPortada activo />}
 
       {/* ═══ LA INSCRIPCIÓN ═══ */}
       {e.conSesion && (!e.matricula || !e.ficha) && (
