@@ -340,18 +340,70 @@ const SKIN = 3, ROBE = 0, ACCENT = 1, HEAD = 2, HAIR = 4, FIXED = 5;
 const OPEN_START = Math.PI / 2 + 0.72;
 const OPEN_LEN = Math.PI * 2 - 1.44;
 const EYE = "#1d1a17";
+/** El color de la boca: más oscuro que cualquier piel, para que se vea en todas. */
+const BOCA = "#6b3328";
 
+/** Un torno con el perfil dado ([radio, alto]): la ropa lleva más lados que antes, para que se vean los pliegues. */
+function torno(pts: number[][], seg = 20, phiStart = 0, phiLength = Math.PI * 2): THREE.LatheGeometry {
+  return new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg, phiStart, phiLength);
+}
+
+/**
+ * Los pliegues de la ropa (docs/guia-visual.md, sección 6): la tela de un torno se ondula hacia abajo, con n pliegues
+ * más hondos cerca del ruedo (yRuedo) y ninguno arriba de yLibre (donde la ciñe el cinto o la sostienen los hombros).
+ * Son dos ondas sumadas: la tela no cae en un dibujo perfecto. La tela solo se abomba hacia afuera (los valles quedan
+ * donde estaba), así no asoma lo que va debajo, como el cinto bajo el manto. Lo que va sobre la tela (franjas, orlas,
+ * bordes) se pasa por aquí con los mismos números y sigue los mismos pliegues.
+ */
+function conPliegues<G extends THREE.LatheGeometry>(geo: G, n: number, hondo: number, yLibre: number, yRuedo: number): G {
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const t = THREE.MathUtils.clamp((yLibre - y) / (yLibre - yRuedo), 0, 1);
+    if (t <= 0 || Math.hypot(x, z) < 1e-4) continue;
+    const a = Math.atan2(x, z);
+    const onda = Math.sin(a * n) * 0.7 + Math.sin(a * (n + 3) + 1.3) * 0.3;
+    const k = 1 + (0.5 + 0.5 * onda) * hondo * t * t;
+    p.setXYZ(i, x * k, y, z * k);
+  }
+  geo.computeVertexNormals();
+  // la costura del torno (adelante) con una sola normal, para que no se vea una raya
+  const { segments, points, phiLength } = geo.parameters;
+  if (Math.abs(phiLength - Math.PI * 2) < 1e-6) {
+    const nr = geo.attributes.normal, np = points.length;
+    for (let j = 0; j < np; j++) {
+      const a = j, b = segments * np + j;
+      const nx = nr.getX(a) + nr.getX(b), ny = nr.getY(a) + nr.getY(b), nz = nr.getZ(a) + nr.getZ(b);
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nr.setXYZ(a, nx / l, ny / l, nz / l);
+      nr.setXYZ(b, nx / l, ny / l, nz / l);
+    }
+  }
+  return geo;
+}
+
+/**
+ * La cara (docs/guia-visual.md, sección 6): ojos almendrados con su brillo, la nariz fina y una boca que sonríe apenas
+ * (un arco chico). Sin mejillas pintadas.
+ */
 function face(b: SlotBuilder, headY: number, r: number, big = 1) {
   for (const sg of [-1, 1]) {
-    b.add(new THREE.SphereGeometry(0.03 * big, 8, 6), FIXED, EYE, { x: sg * 0.075, y: headY + 0.02, z: r * 0.88, sz: 0.55 });
-    b.add(new THREE.SphereGeometry(0.01 * big, 5, 4), FIXED, "#ffffff", { x: sg * 0.075 - 0.01, y: headY + 0.035, z: r * 0.9 + 0.012 });
+    b.add(new THREE.SphereGeometry(0.03 * big, 10, 6), FIXED, EYE, { x: sg * 0.075, y: headY + 0.02, z: r * 0.88, sx: 1.2, sy: 0.85, sz: 0.55 });
+    b.add(new THREE.SphereGeometry(0.01 * big, 5, 4), FIXED, "#ffffff", { x: sg * 0.075 - 0.01, y: headY + 0.032, z: r * 0.9 + 0.012 });
     b.add(new THREE.SphereGeometry(0.035, 6, 5), SKIN, "#fff", { x: sg * r * 0.98, y: headY - 0.01, z: 0, sz: 0.6 }); // orejas
   }
-  b.add(new THREE.SphereGeometry(0.03, 6, 5), SKIN, "#fff", { x: 0, y: headY - 0.025, z: r * 0.98 });
+  b.add(new THREE.SphereGeometry(0.021, 6, 5), SKIN, "#fff", { x: 0, y: headY - 0.02, z: r * 0.98, sx: 0.7, sy: 1.2, sz: 0.9 });
+  b.add(new THREE.TorusGeometry(0.08, 0.0055, 3, 6, 0.55), FIXED, BOCA, { y: headY - 0.072 + 0.08, z: r * 0.915, rz: -Math.PI / 2 - 0.275 });
+}
+
+/** La mano: la palma un poco aplanada y el pulgar adelante (antes era una esfera). */
+function manoPueblo(b: SlotBuilder) {
+  b.add(new THREE.SphereGeometry(0.05, 8, 6), SKIN, "#fff", { y: -0.335, sx: 0.78, sy: 1.15, sz: 0.95 });
+  b.add(new THREE.SphereGeometry(0.02, 5, 4), SKIN, "#fff", { y: -0.318, z: 0.04, sy: 1.5 });
 }
 
 function robe(b: SlotBuilder, hem: number, top: number, slot = ROBE) {
-  b.add(new THREE.LatheGeometry([[0, 0.05], [hem, 0.05], [hem - 0.01, 0.2], [hem - 0.04, 0.42], [0.19, 0.58], [0.18, 0.68], [0.12, top], [0, top + 0.01]].map(([x, y]) => new THREE.Vector2(x, y)), 14), slot);
+  b.add(conPliegues(torno([[0, 0.05], [hem, 0.05], [hem - 0.01, 0.2], [hem - 0.04, 0.42], [0.19, 0.58], [0.18, 0.68], [0.12, top], [0, top + 0.01]]), 9, 0.075, 0.42, 0.05), slot);
 }
 
 export type CrowdVariant = "hombre" | "mujer" | "nino" | "anciano" | "levita" | "noble";
@@ -370,7 +422,7 @@ function bodyGeometry(v: CrowdVariant): THREE.BufferGeometry {
   }
   // manto sobre los hombros
   if (v === "hombre" || v === "anciano" || v === "noble") {
-    b.add(new THREE.LatheGeometry([[0.225, 0.4], [0.222, 0.56], [0.2, 0.7], [0.14, 0.77], [0.1, 0.78]].map(([x, y]) => new THREE.Vector2(x, y)), 14), ACCENT);
+    b.add(conPliegues(torno([[0.225, 0.4], [0.222, 0.56], [0.2, 0.7], [0.14, 0.77], [0.1, 0.78]]), 7, 0.055, 0.62, 0.4), ACCENT);
     if (v === "noble") for (let k = 0; k < 10; k++) b.add(new THREE.SphereGeometry(0.018, 4, 3), FIXED, C.oro, { x: Math.cos((k / 10) * 6.28) * 0.227, y: 0.41, z: Math.sin((k / 10) * 6.28) * 0.227 });
   }
   if (v === "mujer") b.add(new THREE.TorusGeometry(0.21, 0.035, 5, 16), ACCENT, "#fff", { y: 0.46, rx: Math.PI / 2 });
@@ -431,7 +483,7 @@ function armGeometry(): THREE.BufferGeometry {
   const b = new SlotBuilder();
   b.add(new THREE.CylinderGeometry(0.06, 0.078, 0.3, 8), ROBE, "#fff", { y: -0.14 });
   b.add(new THREE.SphereGeometry(0.062, 8, 6), ROBE, "#fff", { y: 0 });
-  b.add(new THREE.SphereGeometry(0.055, 8, 6), SKIN, "#fff", { y: -0.33 });
+  manoPueblo(b);
   return proporcionarBrazo(b.build());
 }
 
@@ -650,10 +702,10 @@ function figureParts(look: FigureLook, tocado = true) {
   // el profeta: vestido de pelo (2 Reyes 1:8); el siervo del rey: túnica azul
   if (look === "profeta") robeCol = "#6b4f35";
   if (look === "oficial") robeCol = "#2f5f8a";
-  lathe([[0, 0.05], [0.26, 0.05], [0.25, 0.2], [0.22, 0.42], [0.19, 0.58], [0.18, 0.68], [0.12, 0.75], [0, 0.76]], robeCol);
+  m.add(conPliegues(torno([[0, 0.05], [0.26, 0.05], [0.25, 0.2], [0.22, 0.42], [0.19, 0.58], [0.18, 0.68], [0.12, 0.75], [0, 0.76]]), 9, 0.045, 0.42, 0.05), robeCol);
   if (high) {
     // manto del efod, todo de azul, con campanillas de oro y granadas en el borde (Éxodo 28:31-35)
-    lathe([[0.265, 0.2], [0.24, 0.42], [0.205, 0.58], [0.192, 0.7], [0.13, 0.765], [0.0, 0.77]], C.azul);
+    m.add(conPliegues(torno([[0.265, 0.2], [0.24, 0.42], [0.205, 0.58], [0.192, 0.7], [0.13, 0.765], [0.0, 0.77]]), 9, 0.03, 0.45, 0.2), C.azul);
     for (let k = 0; k < 18; k++) {
       const a = (k / 18) * Math.PI * 2;
       const gold = k % 2 === 0;
@@ -686,27 +738,29 @@ function figureParts(look: FigureLook, tocado = true) {
   } else if (look === "profeta") {
     // cinto de cuero y manto sobre los hombros
     m.torus(0.208, 0.024, "#4a2f1a", { y: 0.43, rx: Math.PI / 2 }, 5, 16);
-    lathe([[0.235, 0.36], [0.225, 0.5], [0.205, 0.62], [0.19, 0.7], [0.13, 0.76], [0.06, 0.775]], "#8b6b47");
+    m.add(conPliegues(torno([[0.235, 0.36], [0.225, 0.5], [0.205, 0.62], [0.19, 0.7], [0.13, 0.76], [0.06, 0.775]]), 7, 0.055, 0.6, 0.36), "#8b6b47");
   } else if (look === "oficial") {
     // cinto bordado de oro y una franja clara
     s.torus(0.21, 0.02, C.oro, { y: 0.43, rx: Math.PI / 2 }, 5, 18);
     m.box(0.05, 0.3, 0.015, "#e8d9b0", { x: 0.0, y: 0.27, z: 0.215 });
   } else if (look === "rey") {
     // manto carmesí con orla de oro
-    lathe([[0.27, 0.12], [0.25, 0.4], [0.225, 0.58], [0.2, 0.7], [0.14, 0.77], [0.1, 0.78]], C.carmesi);
+    m.add(conPliegues(torno([[0.27, 0.12], [0.25, 0.4], [0.225, 0.58], [0.2, 0.7], [0.14, 0.77], [0.1, 0.78]]), 9, 0.03, 0.5, 0.12), C.carmesi);
     s.torus(0.27, 0.014, C.oro, { y: 0.13, rx: Math.PI / 2 }, 4, 20);
     s.torus(0.21, 0.024, C.oro, { y: 0.45, rx: Math.PI / 2 }, 5, 18);
   }
   // cuello y cabeza
   m.cyl(0.06, 0.07, 0.08, skin, { y: 0.78 }, 8);
   m.sphere(r, skin, { y: headY }, 16, 12);
+  // la cara (como la del pueblo): ojos almendrados con su brillo, la nariz fina y la boca (la barba la tapa)
   for (const sg of [-1, 1]) {
-    m.sphere(0.03, EYE, { x: sg * 0.075, y: headY + 0.02, z: r * 0.88, sz: 0.55 }, 8, 6);
-    m.sphere(0.01, "#ffffff", { x: sg * 0.075 - 0.01, y: headY + 0.035, z: r * 0.9 + 0.012 }, 5, 4);
+    m.sphere(0.03, EYE, { x: sg * 0.075, y: headY + 0.02, z: r * 0.88, sx: 1.2, sy: 0.85, sz: 0.55 }, 10, 6);
+    m.sphere(0.01, "#ffffff", { x: sg * 0.075 - 0.01, y: headY + 0.032, z: r * 0.9 + 0.012 }, 5, 4);
     m.sphere(0.035, skin, { x: sg * r * 0.98, y: headY - 0.01, z: 0, sz: 0.6 }, 6, 5);
     m.box(0.065, 0.016, 0.01, old ? "#f2efe8" : hair, { x: sg * 0.075, y: headY + 0.07, z: r * 0.875, rz: sg * -0.12 });
   }
-  m.sphere(0.03, skin, { y: headY - 0.025, z: r * 0.98 }, 6, 5);
+  m.sphere(0.021, skin, { y: headY - 0.02, z: r * 0.98, sx: 0.7, sy: 1.2, sz: 0.9 }, 6, 5);
+  if (!old && look !== "rey") m.add(new THREE.TorusGeometry(0.08, 0.0055, 3, 6, 0.55), BOCA, { y: headY - 0.072 + 0.08, z: r * 0.915, rz: -Math.PI / 2 - 0.275 });
   // barba y cabello
   if (old) {
     m.cone(0.14, 0.42, hair, { y: headY - 0.25, z: 0.1, rx: Math.PI + 0.22 }, 12);
@@ -747,7 +801,9 @@ function figureParts(look: FigureLook, tocado = true) {
     bm.cyl(0.06, 0.078, 0.3, sleeve, { y: -0.14 }, 8);
     bm.sphere(0.062, sleeve, {}, 8, 6);
     if (high) bm.cyl(0.075, 0.078, 0.05, linen, { y: -0.29 }, 8);
-    bm.sphere(0.055, skin, { y: -0.33 }, 8, 6);
+    // la mano: la palma un poco aplanada y el pulgar adelante
+    bm.sphere(0.05, skin, { y: -0.335, sx: 0.78, sy: 1.15, sz: 0.95 }, 8, 6);
+    bm.sphere(0.02, skin, { y: -0.318, z: 0.04, sy: 1.5 }, 5, 4);
     void bs;
   }
   // trompeta de plata (sacerdote de turno) e incensario de oro (principal)
@@ -861,10 +917,11 @@ export class Figure {
     if (r.tunica) {
       // la túnica sobre la vestidura, con dos franjas de los hombros al ruedo y el ruedo del color de las franjas
       const perfil = [[0.272, 0.055], [0.264, 0.2], [0.235, 0.42], [0.203, 0.58], [0.192, 0.68], [0.132, 0.752], [0.06, 0.765]].map(([x, y]) => new THREE.Vector2(x, y));
-      b.add(new THREE.LatheGeometry(perfil, 20), r.tunica);
+      const pl = (g: THREE.LatheGeometry) => conPliegues(g, 9, 0.02, 0.42, 0.055);
+      b.add(pl(new THREE.LatheGeometry(perfil, 20)), r.tunica);
       const franja = r.franja ?? r.tunica;
       const encima = perfil.map((v) => new THREE.Vector2(v.x + 0.004, v.y));
-      for (const centro of [-0.42, 0.42]) b.add(new THREE.LatheGeometry(encima.slice(0, 6), 2, centro - 0.055, 0.11), franja);
+      for (const centro of [-0.42, 0.42]) b.add(pl(new THREE.LatheGeometry(encima.slice(0, 6), 4, centro - 0.055, 0.11)), franja);
       b.torus(0.271, 0.012, franja, { y: 0.085, rx: Math.PI / 2 }, 4, 22);
       if (r.bordado) {
         // los bordados: dos bandas de oro (en el ruedo y en el cuello) y flores de colores en el ruedo
@@ -879,14 +936,15 @@ export class Figure {
     if (r.manto) {
       // el manto cae de los hombros y queda abierto por delante
       const perfil = [[0.245, 0.24], [0.238, 0.42], [0.218, 0.58], [0.2, 0.7], [0.14, 0.768], [0.07, 0.785]].map(([x, y]) => new THREE.Vector2(x, y));
-      b.add(new THREE.LatheGeometry(perfil, 18, 0.75, Math.PI * 2 - 1.5), r.manto);
+      const pm = (g: THREE.LatheGeometry) => conPliegues(g, 7, 0.035, 0.6, 0.24);
+      b.add(pm(new THREE.LatheGeometry(perfil, 22, 0.75, Math.PI * 2 - 1.5)), r.manto);
       if (r.mantoOro) {
         // el ruedo y los dos bordes de la abertura
         const ruedo = [[0.249, 0.235], [0.252, 0.25], [0.248, 0.29], [0.243, 0.29]].map(([x, y]) => new THREE.Vector2(x, y));
-        oro.add(new THREE.LatheGeometry(ruedo, 18, 0.75, Math.PI * 2 - 1.5), C.oro);
+        oro.add(pm(new THREE.LatheGeometry(ruedo, 22, 0.75, Math.PI * 2 - 1.5)), C.oro);
         const borde = perfil.map((v) => new THREE.Vector2(v.x + 0.005, v.y));
-        oro.add(new THREE.LatheGeometry(borde, 2, 0.75, 0.09), C.oro);
-        oro.add(new THREE.LatheGeometry(borde, 2, Math.PI * 2 - 0.84, 0.09), C.oro);
+        oro.add(pm(new THREE.LatheGeometry(borde, 2, 0.75, 0.09)), C.oro);
+        oro.add(pm(new THREE.LatheGeometry(borde, 2, Math.PI * 2 - 0.84, 0.09)), C.oro);
       }
     }
     if (r.faja) {
