@@ -1,0 +1,107 @@
+/**
+ * La luz de los fuegos (docs/guia-visual.md, sección 7): de noche, cada fuego (una antorcha, un brasero) alumbra con luz
+ * tibia que titila el piso, los muros y a la gente que pasa cerca. No son luces de three (cada una le cuesta a todo lo
+ * que se dibuja y cambiar cuántas hay obliga a rearmar los materiales): es una cuenta chica dentro de los materiales de
+ * siempre, con los fuegos más cercanos a la cámara (hasta MAX_FUEGOS). Cada fuego alumbra solo dentro de su rectángulo,
+ * para que la luz no pase al otro lado de un muro. De día no hay ninguno y no cuesta nada.
+ */
+import * as THREE from "three";
+
+export const MAX_FUEGOS = 12;
+
+/** Los fuegos de este cuadro: la posición de la llama y su fuerza, y el rectángulo donde alumbra. */
+export const fuegosMateriales = {
+  uFuegos: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
+  uFuegosRect: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
+  uNumFuegos: { value: 0 },
+};
+
+export type Fuego = { x: number; y: number; z: number; fuerza: number; recorte?: [number, number, number, number] };
+
+/**
+ * Pone los fuegos de este cuadro. Con `cerca` (lo que mira la cámara), los lejanos se apagan de a poco (de 20 a 30 m,
+ * fuera de la vista) y, si hay más de MAX_FUEGOS, quedan los más cercanos.
+ */
+export function ponerFuegos(fuegos: Fuego[], cerca?: { x: number; z: number }) {
+  const lejos = (f: Fuego) => (cerca ? Math.hypot(f.x - cerca.x, f.z - cerca.z) : 0);
+  const fuerza = (f: Fuego) => f.fuerza * (1 - THREE.MathUtils.smoothstep(lejos(f), 20, 30));
+  let lista = fuegos.filter((f) => fuerza(f) > 0.001);
+  if (lista.length > MAX_FUEGOS) lista = [...lista].sort((a, b) => lejos(a) - lejos(b));
+  const n = Math.min(MAX_FUEGOS, lista.length);
+  for (let i = 0; i < n; i++) {
+    const f = lista[i];
+    fuegosMateriales.uFuegos.value[i].set(f.x, f.y, f.z, fuerza(f));
+    const r = f.recorte ?? [-1e5, -1e5, 1e5, 1e5];
+    fuegosMateriales.uFuegosRect.value[i].set(r[0], r[1], r[2], r[3]);
+  }
+  fuegosMateriales.uNumFuegos.value = n;
+}
+
+/** Apaga todos (al salir de un mundo, para que el siguiente no herede sus fuegos). */
+export function apagarFuegos() {
+  fuegosMateriales.uNumFuegos.value = 0;
+}
+
+/** Cuánto titila un fuego (de 0,8 a 1,1): tres ondas sin compás, cada fuego con su fase. */
+export function titila(t: number, i: number) {
+  const f = i * 2.399;
+  return 0.95 + Math.sin(t * 11 + f) * 0.06 + Math.sin(t * 6.3 + f * 1.7) * 0.05 + Math.sin(t * 17 + f * 2.9) * 0.03;
+}
+
+const FUEGOS_PARS = `
+uniform vec4 uFuegos[${MAX_FUEGOS}];
+uniform vec4 uFuegosRect[${MAX_FUEGOS}];
+uniform int uNumFuegos;
+varying vec3 vFuegoP;
+vec3 luzDeFuegos(vec3 p, vec3 n) {
+  vec3 l = vec3(0.0);
+  for (int i = 0; i < ${MAX_FUEGOS}; i++) {
+    if (i >= uNumFuegos) break;
+    vec4 f = uFuegos[i];
+    vec4 rc = uFuegosRect[i];
+    vec3 d = f.xyz - p;
+    float r = length(d);
+    if (r > 8.0 || p.x < rc.x - 0.06 || p.z < rc.y - 0.06 || p.x > rc.z + 0.06 || p.z > rc.w + 0.06) continue;
+    // cae con la distancia como una luz de verdad y se apaga del todo a los 8 m
+    float v = 1.0 - r * r / 64.0;
+    float caida = v * v / (1.0 + r * r * 0.35);
+    float lam = max(dot(n, normalize(mat3(viewMatrix) * d)), 0.0);
+    l += caida * lam * f.w;
+  }
+  return l * vec3(1.0, 0.5, 0.18);
+}
+`;
+
+/**
+ * Agrega la luz de los fuegos a un material de three (Lambert o Phong): suma la luz tibia por el color propio de cada
+ * punto, así la piedra clara se enciende y la junta sigue oscura, también en la sombra de la luna.
+ */
+export function conFuegos<M extends THREE.MeshLambertMaterial | THREE.MeshPhongMaterial>(mat: M, clave: string): M {
+  const antes = mat.onBeforeCompile;
+  const claveAntes = mat.customProgramCacheKey;
+  mat.onBeforeCompile = (shader, renderer) => {
+    antes.call(mat, shader, renderer);
+    shader.uniforms.uFuegos = fuegosMateriales.uFuegos;
+    shader.uniforms.uFuegosRect = fuegosMateriales.uFuegosRect;
+    shader.uniforms.uNumFuegos = fuegosMateriales.uNumFuegos;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vFuegoP;")
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+{
+  vec4 fP = vec4(transformed, 1.0);
+#ifdef USE_INSTANCING
+  fP = instanceMatrix * fP;
+#endif
+  vFuegoP = (modelMatrix * fP).xyz;
+}`,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", `#include <common>\n${FUEGOS_PARS}`)
+      .replace("#include <opaque_fragment>", "outgoingLight += diffuseColor.rgb * luzDeFuegos(vFuegoP, normal) * 2.4;\n#include <opaque_fragment>");
+  };
+  // la clave del material de antes (con sus detalles) más la de los fuegos: cada clase de material, su programa
+  mat.customProgramCacheKey = () => `${clave}-fuegos|${claveAntes.call(mat)}`;
+  return mat;
+}

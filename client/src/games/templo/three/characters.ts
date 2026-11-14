@@ -5,7 +5,8 @@
  * - El aprendiz, Azarías y el rey Ezequías tienen mallas propias con sus vestiduras (Éxodo 28).
  */
 import * as THREE from "three";
-import { C, GeoBuilder, GeoFigura, matrixOf, shinyMat, type Tf } from "./builder";
+import { C, GeoBuilder, GeoFigura, matrixOf, shinyMat, shinyMatPropio, type Tf } from "./builder";
+import { conFuegos } from "./luces";
 
 // ---------------------------------------------------------------- las proporciones (docs/guia-visual.md, sección 6)
 /**
@@ -110,22 +111,42 @@ export type Rig = {
   /** Sentado (en un banco o una silla): las poses de brazos se hacen sentado, sin saltar. */
   seated?: boolean;
   /** La inercia de la animación (resortes): lo calcula computePose. */
-  _ani?: { t: number; w: number; yaw: number; lean: number; leanV: number; bank: number; bankV: number };
+  _ani?: Inercia;
+};
+
+type Inercia = {
+  t: number; w: number; yaw: number; lean: number; leanV: number; bank: number; bankV: number;
+  /** La tela: dónde estaba el cuerpo, el ruedo que lo sigue con un resorte (al costado y adelante) y su giro. */
+  px: number; pz: number; hx: number; hz: number; hvx: number; hvz: number; g: number; gv: number;
 };
 
 export function newRig(x = 0, z = 0, scale = 1): Rig {
   return { x, y: 0, z, yaw: 0, phase: Math.random() * 6, moving: 0, carrying: false, pose: "idle", t: Math.random() * 10, scale };
 }
 
-type PoseOut = { bob: number; tilt: number; sway: number; twist: number; armL: number; armR: number; outL: number; outR: number; footL: number; footR: number; liftL: number; liftR: number; drop: number };
-const po: PoseOut = { bob: 0, tilt: 0, sway: 0, twist: 0, armL: 0, armR: 0, outL: 0, outR: 0, footL: 0, footR: 0, liftL: 0, liftR: 0, drop: 0 };
+/**
+ * La pose del momento. La tela (telaX, telaZ, telaGiro y telaPaso) es cuánto se corre el ruedo de la ropa: al costado
+ * y adelante, su giro y lo que avanza el pie izquierdo (el derecho va al revés). La usa telaMueve en la tarjeta.
+ */
+type PoseOut = {
+  bob: number; tilt: number; sway: number; twist: number; armL: number; armR: number; outL: number; outR: number;
+  footL: number; footR: number; liftL: number; liftR: number; drop: number;
+  telaX: number; telaZ: number; telaGiro: number; telaPaso: number;
+};
+const po: PoseOut = { bob: 0, tilt: 0, sway: 0, twist: 0, armL: 0, armR: 0, outL: 0, outR: 0, footL: 0, footR: 0, liftL: 0, liftR: 0, drop: 0, telaX: 0, telaZ: 0, telaGiro: 0, telaPaso: 0 };
+
+/** Más rápido que esto en un cuadro es un salto (entrar a otro lugar): la tela no se arrastra. */
+const SALTO = 9;
 
 /**
  * La inercia (docs/guia-visual.md, sección 6): resortes un poco blandos (amortiguación de 0,5 a 0,8, no rígidos). El
  * cuerpo se inclina al arrancar y se asienta al frenar, y se ladea en las curvas.
+ *
+ * La tela es un resorte más blando (amortiguación de alrededor de 0,4): el ruedo se queda atrás al andar (el aire), se
+ * abre hacia afuera en las curvas y el giro del cuerpo lo deja un poco atrás. Al frenar pasa un poco de largo y vuelve.
  */
 function inercia(r: Rig) {
-  const a = (r._ani ??= { t: r.t, w: r.moving, yaw: r.yaw, lean: 0, leanV: 0, bank: 0, bankV: 0 });
+  const a = (r._ani ??= { t: r.t, w: r.moving, yaw: r.yaw, lean: 0, leanV: 0, bank: 0, bankV: 0, px: r.x, pz: r.z, hx: 0, hz: 0, hvx: 0, hvz: 0, g: 0, gv: 0 });
   const dt = r.t - a.t;
   if (dt > 0 && dt < 0.2) {
     const acel = (r.moving - a.w) / dt;
@@ -140,10 +161,30 @@ function inercia(r: Rig) {
     a.bankV += (objBank - a.bank) * 60 * dt;
     a.bankV *= Math.exp(-9 * dt);
     a.bank += a.bankV * dt;
+    // la tela: la velocidad vista desde el cuerpo (adelante y al costado) y la vuelta
+    let vx = (r.x - a.px) / dt, vz = (r.z - a.pz) / dt;
+    if (Math.hypot(vx, vz) > SALTO) vx = vz = 0;
+    const sn = Math.sin(r.yaw), cs = Math.cos(r.yaw);
+    const vAde = vx * sn + vz * cs, vCos = vx * cs - vz * sn;
+    const vuelta = dy / dt;
+    const objX = THREE.MathUtils.clamp(-vCos * 0.02 - vAde * vuelta * 0.008, -0.08, 0.08);
+    const objZ = THREE.MathUtils.clamp(-vAde * 0.02, -0.08, 0.08);
+    const objG = THREE.MathUtils.clamp(-vuelta * 0.06, -0.25, 0.25);
+    const n = Math.ceil(dt * 60), h = dt / n;
+    for (let k = 0; k < n; k++) {
+      a.hvx += ((objX - a.hx) * 48 - a.hvx * 5.5) * h;
+      a.hvz += ((objZ - a.hz) * 48 - a.hvz * 5.5) * h;
+      a.hx += a.hvx * h;
+      a.hz += a.hvz * h;
+      a.gv += ((objG - a.g) * 40 - a.gv * 5) * h;
+      a.g += a.gv * h;
+    }
   }
   a.t = r.t;
   a.w = r.moving;
   a.yaw = r.yaw;
+  a.px = r.x;
+  a.pz = r.z;
   return a;
 }
 
@@ -260,15 +301,83 @@ export function computePose(r: Rig): PoseOut {
     po.liftL = po.liftR = 0;
     po.twist = 0;
   }
+  // la tela: el resorte, un vaivén chico con los pasos y, en quietud, la brisa
+  po.telaX = a.hx + Math.sin(r.phase - 0.6) * 0.008 * w + (Math.sin(r.t * 0.9) * 0.003 + Math.sin(r.t * 2.3 + 1.7) * 0.0012) * quieto;
+  po.telaZ = a.hz + Math.sin(r.t * 0.7 + 2.1) * 0.0025 * quieto;
+  po.telaGiro = a.g;
+  po.telaPaso = (po.footL - po.footR) / 2;
   return po;
 }
 
+// ---------------------------------------------------------------- la tela que se mueve
+/**
+ * La tela (docs/guia-visual.md, sección 6), en la tarjeta de video: de la cintura para abajo la ropa sigue al ruedo
+ * (que se mueve con un resorte, en computePose), tanto más cuanto más abajo. El corrimiento depende solo de la altura:
+ * todas las capas (la túnica, el manto, la orla, las campanillas) se corren juntas y ninguna atraviesa a la otra. Abajo
+ * de las rodillas, la pierna que avanza empuja la tela de adelante y la que queda atrás, la de atrás. Las alturas son
+ * las del cuerpo ya proporcionado.
+ */
+const TELA_SUELTA = alturaNueva(0.55).toFixed(4);
+const TELA_RODILLA = alturaNueva(0.3).toFixed(4);
+const TELA_RUEDO = Y_PIES.toFixed(4);
+const TELA_GLSL = `
+vec3 telaMueve(vec3 p, vec4 t) {
+  float u = clamp((${TELA_SUELTA} - p.y) / (${TELA_SUELTA} - ${TELA_RUEDO}), 0.0, 1.0);
+  float w = u * u;
+  float ga = t.z * w;
+  float cg = cos(ga), sg = sin(ga);
+  p.xz = vec2(p.x * cg + p.z * sg, p.z * cg - p.x * sg);
+  p.x += t.x * w;
+  p.z += t.y * w;
+  float rod = clamp((${TELA_RODILLA} - p.y) / (${TELA_RODILLA} - ${TELA_RUEDO}), 0.0, 1.0);
+  float lado = mix(t.w, -t.w, smoothstep(-0.12, 0.12, p.x));
+  float frente = smoothstep(-0.12, 0.16, p.z);
+  p.z += (max(lado, 0.0) * frente + min(lado, 0.0) * (1.0 - frente)) * 0.42 * rod;
+  return p;
+}
+`;
+
+/** Agrega la tela a un material: `fuente` es de dónde sale el corrimiento (un atributo por persona o un uniforme). */
+function parcheTela(vs: string, declarar: string, fuente: string) {
+  return vs
+    .replace("#include <common>", `#include <common>\n${declarar}\n${TELA_GLSL}`)
+    .replace("#include <begin_vertex>", `#include <begin_vertex>\ntransformed = telaMueve(transformed, ${fuente});`);
+}
+
+/** El material mate de la ropa de un personaje con malla propia: cada uno tiene el suyo, con su corrimiento. */
+function telaMate(u: { value: THREE.Vector4 }) {
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTela = u;
+    shader.vertexShader = parcheTela(shader.vertexShader, "uniform vec4 uTela;", "uTela");
+  };
+  mat.customProgramCacheKey = () => "templo-tela-mate";
+  return conFuegos(mat, "tela");
+}
+
+/** El oro que va en la ropa (la orla, las campanillas, el efod): brilla como el metal y se mueve con la tela. */
+function telaOro(u: { value: THREE.Vector4 }) {
+  const mat = shinyMatPropio();
+  const antes = mat.onBeforeCompile;
+  const clave = mat.customProgramCacheKey;
+  mat.onBeforeCompile = (shader, renderer) => {
+    antes.call(mat, shader, renderer);
+    shader.uniforms.uTela = u;
+    shader.vertexShader = parcheTela(shader.vertexShader, "uniform vec4 uTela;", "uTela");
+  };
+  mat.customProgramCacheKey = () => `${clave.call(mat)}-tela`;
+  return mat;
+}
+
 // ---------------------------------------------------------------- materiales y piezas
-/** Material del pueblo: elige el color de cada pieza según su "casilla" (túnica, manto, velo, piel, cabello). */
+/**
+ * Material del pueblo: elige el color de cada pieza según su "casilla" (túnica, manto, velo, piel, cabello). La tela de
+ * cada persona se corre con su atributo `tela` (los brazos y los pies lo tienen en cero).
+ */
 function crowdMaterial() {
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader
+    shader.vertexShader = parcheTela(shader.vertexShader, "attribute vec4 tela;", "tela")
       .replace(
         "#include <common>",
         `#include <common>
@@ -283,8 +392,8 @@ if (slot < 0.5) sc = c0; else if (slot < 1.5) sc = c1; else if (slot < 2.5) sc =
 vColor.rgb = sc;`,
       );
   };
-  mat.customProgramCacheKey = () => "templo-pueblo";
-  return mat;
+  mat.customProgramCacheKey = () => "templo-pueblo-tela";
+  return conFuegos(mat, "pueblo");
 }
 
 /** Como GeoBuilder, pero cada pieza guarda su casilla de color (5 = color fijo). */
@@ -510,12 +619,17 @@ class SlotPool {
   mesh: THREE.InstancedMesh;
   used: boolean[];
   attrs: THREE.InstancedBufferAttribute[];
+  /** El corrimiento de la tela de cada uno (en los brazos y los pies queda en cero). */
+  tela: THREE.InstancedBufferAttribute;
   constructor(geo: THREE.BufferGeometry, mat: THREE.Material, cap: number) {
     this.attrs = [0, 1, 2, 3, 4].map((i) => {
       const a = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
       geo.setAttribute(`c${i}`, a);
       return a;
     });
+    this.tela = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4);
+    this.tela.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute("tela", this.tela);
     this.mesh = new THREE.InstancedMesh(geo, mat, cap);
     this.mesh.count = 0;
     this.mesh.frustumCulled = false;
@@ -596,7 +710,9 @@ export class Crowd {
     tmpV.set(r.x, r.y + (p.bob - p.drop) * s, r.z);
     tmpS.set(s, s, s);
     tmpB.compose(tmpV, tmpQ, tmpS);
-    this.bodies[h.variant].mesh.setMatrixAt(h.body, tmpB);
+    const cuerpo = this.bodies[h.variant];
+    cuerpo.mesh.setMatrixAt(h.body, tmpB);
+    cuerpo.tela.setXYZW(h.body, p.telaX, p.telaZ, p.telaGiro, p.telaPaso);
     // brazos (se cuelgan del hombro)
     for (let k = 0; k < 2; k++) {
       const sg = k === 0 ? -1 : 1;
@@ -623,7 +739,10 @@ export class Crowd {
   }
 
   flush() {
-    for (const pool of Object.values(this.bodies)) pool.mesh.instanceMatrix.needsUpdate = true;
+    for (const pool of Object.values(this.bodies)) {
+      pool.mesh.instanceMatrix.needsUpdate = true;
+      pool.tela.needsUpdate = true;
+    }
     this.arms.mesh.instanceMatrix.needsUpdate = true;
     this.feet.mesh.instanceMatrix.needsUpdate = true;
   }
@@ -844,6 +963,10 @@ export class Figure {
   private accesorio: { obj: THREE.Object3D; lado: "R" | "L" } | null = null;
   /** El regazo con la túnica (se ve cuando está sentado). */
   private regazo: THREE.Mesh | null = null;
+  /** La tela que se mueve: el corrimiento de este personaje y sus materiales (el mate y el oro de la ropa). */
+  private uTela = { value: new THREE.Vector4() };
+  private matTela = telaMate(this.uTela);
+  private oroTela = telaOro(this.uTela);
 
   constructor(look: FigureLook) {
     this.root.add(this.body, this.footL, this.footR);
@@ -978,11 +1101,11 @@ export class Figure {
     if (!b.empty || !oro.empty) {
       const g = new THREE.Group();
       if (!b.empty) {
-        const mesh = new THREE.Mesh(proporcionarCuerpo(b.build()), matteFor());
+        const mesh = new THREE.Mesh(proporcionarCuerpo(b.build()), this.matTela);
         mesh.castShadow = true;
         g.add(mesh);
       }
-      if (!oro.empty) g.add(new THREE.Mesh(proporcionarCuerpo(oro.build()), shinyMat()));
+      if (!oro.empty) g.add(new THREE.Mesh(proporcionarCuerpo(oro.build()), this.oroTela));
       this.ropaG = g;
       this.body.add(g);
     }
@@ -1042,8 +1165,9 @@ export class Figure {
     this.ponerRegazo(p.robe);
     const put = (g: THREE.Group, mb: GeoBuilder, sb: GeoBuilder, brazo = false) => {
       const prop = (geo: THREE.BufferGeometry) => (brazo ? proporcionarBrazo(geo) : proporcionarCuerpo(geo));
-      if (!mb.empty) g.add(new THREE.Mesh(prop(mb.build()), matteFor()));
-      if (!sb.empty) g.add(new THREE.Mesh(prop(sb.build()), shinyMat()));
+      // el cuerpo lleva la tela que se mueve; los brazos, los materiales de siempre
+      if (!mb.empty) g.add(new THREE.Mesh(prop(mb.build()), brazo ? matteFor() : this.matTela));
+      if (!sb.empty) g.add(new THREE.Mesh(prop(sb.build()), brazo ? shinyMat() : this.oroTela));
     };
     put(this.body, p.m, p.s);
     // la ropa del mercado se vuelve a poner sobre la vestidura nueva (sin tocado si la vestidura ya tiene el suyo)
@@ -1114,16 +1238,19 @@ export class Figure {
     this.armR.rotation.set(p.armR, 0, p.outR);
     this.footL.position.set(-0.085, p.liftL, p.footL);
     this.footR.position.set(0.085, p.liftR, p.footR);
+    this.uTela.value.set(p.telaX, p.telaZ, p.telaGiro, p.telaPaso);
   }
 
   dispose() {
     this.root.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
+    this.matTela.dispose();
+    this.oroTela.dispose();
   }
 }
 
 let figMat: THREE.MeshLambertMaterial | null = null;
 function matteFor() {
-  if (!figMat) figMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  if (!figMat) figMat = conFuegos(new THREE.MeshLambertMaterial({ vertexColors: true }), "figura");
   return figMat;
 }
 

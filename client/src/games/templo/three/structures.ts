@@ -67,36 +67,85 @@ function wedge(w: number, h: number, d: number): THREE.BufferGeometry {
   return g;
 }
 
-/** Piso de baldosas con tonos variados. */
-export function tiles(minX: number, minZ: number, maxX: number, maxZ: number, size: number, palette: string[], y: number, gap: number, jitter: number) {
+/**
+ * El enlosado (docs/guia-visual.md, sección 7): losas de piedra en hileras trabadas, de largos distintos (no una
+ * cuadrícula de baño), cada una con su bisel (los bordes agarran la luz), su tono, una inclinación apenas distinta (con el
+ * sol bajo cada losa brilla distinto) y la junta más sucia. `tono(x, z)` oscurece o aclara cada punto: la sombra junto a
+ * los muros y el desgaste del camino. Las hileras van a lo largo del lado más largo.
+ */
+export function tiles(
+  minX: number, minZ: number, maxX: number, maxZ: number, size: number, palette: string[], y: number, gap: number, jitter: number,
+  tono?: (x: number, z: number) => number,
+) {
+  // el azar compartido avanza como antes, así lo que se arma después queda igual; las losas tienen su propio azar
   const nx = Math.max(1, Math.round((maxX - minX) / size));
   const nz = Math.max(1, Math.round((maxZ - minZ) / size));
-  const sx = (maxX - minX) / nx, sz = (maxZ - minZ) / nz;
-  const n = nx * nz * 6;
-  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  for (let i = 0; i < nx * nz * 2; i++) rnd();
+  const az = mulberry32((Math.round(minX * 131 + minZ * 977 + maxX * 37 + maxZ * 613 + size * 1009 + y * 7919) | 0) + 1);
+  const porX = maxX - minX >= maxZ - minZ;
+  const [u0, u1, v0, v1] = porX ? [minX, maxX, minZ, maxZ] : [minZ, maxZ, minX, maxX];
+  const pos: number[] = [], nor: number[] = [], col: number[] = [];
   const c = new THREE.Color();
-  let k = 0;
-  for (let i = 0; i < nx; i++)
-    for (let j = 0; j < nz; j++) {
-      const x0 = minX + i * sx + gap, x1 = minX + (i + 1) * sx - gap, z0 = minZ + j * sz + gap, z1 = minZ + (j + 1) * sz - gap;
-      c.set(palette[Math.floor(rnd() * palette.length)]);
-      const f = 1 + (rnd() - 0.5) * jitter;
-      const v = [x0, z0, x0, z1, x1, z0, x1, z0, x0, z1, x1, z1];
-      for (let q = 0; q < 6; q++) {
-        pos[k * 3] = v[q * 2];
-        pos[k * 3 + 1] = y;
-        pos[k * 3 + 2] = v[q * 2 + 1];
-        nor[k * 3 + 1] = 1;
-        col[k * 3] = c.r * f;
-        col[k * 3 + 1] = c.g * f;
-        col[k * 3 + 2] = c.b * f;
-        k++;
-      }
+  const alto = y + 0.01, bajo = y - 0.016;
+  const bisel = Math.min(0.055, size * 0.05);
+  // un punto (u, alto, v) en el mundo
+  const P = (u: number, h: number, v: number) => (porX ? [u, h, v] : [v, h, u]);
+  const cara = (pts: number[][], n: number[] | null, cols: number[]) => {
+    const [a, b, cc, d] = pts;
+    // la normal de la cara (o la que se le da) y el orden para que mire hacia arriba
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [cc[0] - a[0], cc[1] - a[1], cc[2] - a[2]];
+    let fn = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    const orden = fn[1] < 0 ? [0, 3, 2, 0, 2, 1] : [0, 1, 2, 0, 2, 3];
+    if (fn[1] < 0) fn = fn.map((q) => -q);
+    const l = Math.hypot(fn[0], fn[1], fn[2]) || 1;
+    const nn = n ?? fn.map((q) => q / l);
+    for (const i of orden) {
+      pos.push(...[a, b, cc, d][i]);
+      nor.push(...nn);
+      const k = cols[i] * (tono ? tono([a, b, cc, d][i][0], [a, b, cc, d][i][2]) : 1);
+      col.push(c.r * k, c.g * k, c.b * k);
     }
+  };
+  const losa = (ua: number, va: number, ub: number, vb: number) => {
+    const xa = ua + gap, xb = ub - gap, za = va + gap, zb = vb - gap;
+    if (xb - xa < bisel * 2.5 || zb - za < bisel * 2.5) return;
+    c.set(palette[Math.floor(az() * palette.length)]);
+    const r = az();
+    // algunas losas más gastadas y otras repuestas (más claras)
+    const f = (1 + (az() - 0.5) * jitter * 1.8) * (r < 0.08 ? 0.88 : r > 0.95 ? 1.06 : 1);
+    const ia = xa + bisel, ib = xb - bisel, ja = za + bisel, jb = zb - bisel;
+    // la cara de arriba, apenas inclinada
+    const tu = (az() - 0.5) * 0.07, tv = (az() - 0.5) * 0.07;
+    const tn = porX ? [tu, 1, tv] : [tv, 1, tu];
+    const tl = Math.hypot(tn[0], tn[1], tn[2]);
+    cara([P(ia, alto, ja), P(ib, alto, ja), P(ib, alto, jb), P(ia, alto, jb)], tn.map((q) => q / tl), [f, f, f, f]);
+    // los cuatro biseles: abajo, en la junta, más oscuros
+    const o = f * 0.86;
+    cara([P(xa, bajo, za), P(xb, bajo, za), P(ib, alto, ja), P(ia, alto, ja)], null, [o, o, f, f]);
+    cara([P(ib, alto, jb), P(ia, alto, jb), P(xa, bajo, zb), P(xb, bajo, zb)], null, [f, f, o, o]);
+    cara([P(xa, bajo, za), P(ia, alto, ja), P(ia, alto, jb), P(xa, bajo, zb)], null, [o, f, f, o]);
+    cara([P(ib, alto, ja), P(xb, bajo, za), P(xb, bajo, zb), P(ib, alto, jb)], null, [f, o, o, f]);
+  };
+  // las hileras (de ancho apenas distinto) y en cada una losas de largo distinto: las juntas no se alinean
+  let v = v0;
+  while (v < v1 - 1e-6) {
+    let w = size * (0.8 + az() * 0.4);
+    if (v1 - (v + w) < size * 0.45) w = v1 - v;
+    let u = u0;
+    let primera = true;
+    while (u < u1 - 1e-6) {
+      let l = size * (primera ? 0.45 + az() * 1.3 : 0.95 + az() * 1.05);
+      primera = false;
+      if (u1 - (u + l) < size * 0.5) l = u1 - u;
+      losa(u, v, u + l, v + w);
+      u += l;
+    }
+    v += w;
+  }
   const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
-  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   return g;
 }
 
@@ -349,16 +398,53 @@ export function palmTree(b: GeoBuilder, x: number, y: number, z: number, s: numb
 }
 
 // ---------------------------------------------------------------- atrios, muros y puertas
+/** Cuánto oscurece un muro el piso a esta distancia (la sombra de rincón, docs/guia-visual.md, sección 3). */
+function sombraDeMuro(d: number, alcance = 1.1, fuerza = 0.26) {
+  if (d >= alcance) return 1;
+  const s = 1 - Math.max(0, d) / alcance;
+  return 1 - fuerza * s * s;
+}
+
+/** La distancia de un punto a un rectángulo (cero adentro). */
+function aRect(x: number, z: number, x0: number, z0: number, x1: number, z1: number) {
+  return Math.hypot(Math.max(0, x0 - x, x - x1), Math.max(0, z0 - z, z - z1));
+}
+
+/**
+ * El tono del piso de los atrios: la sombra junto a los muros (no en las puertas) y junto a la casa de Jehová, y el
+ * camino gastado de la puerta del gran atrio hasta las gradas del pórtico y alrededor del altar (la piedra pisada se
+ * pule y se aclara).
+ */
+function tonoAtrios(x: number, z: number): number {
+  let k = 1;
+  if (x <= COURT.maxX) {
+    const lados = [x - COURT.minX, z - COURT.minZ, COURT.maxZ - z];
+    if (Math.abs(z) > GATE.halfWidth) lados.push(COURT.maxX - x);
+    k *= sombraDeMuro(Math.min(...lados));
+    k *= sombraDeMuro(aRect(x, z, T.backX - T.wall - 0.4, -(T.halfW + T.wall + T.annex) - 0.1, T.porchX, T.halfW + T.wall + T.annex + 0.1), 0.9, 0.22);
+  } else if (x >= OUTER.minX) {
+    const lados = [z - OUTER.minZ, OUTER.maxZ - z];
+    if (Math.abs(z) > GATE.halfWidth) lados.push(x - OUTER.minX);
+    if (Math.abs(z) > OUTER_GATE.halfWidth) lados.push(OUTER.maxX - x);
+    k *= sombraDeMuro(Math.min(...lados));
+  } else k *= sombraDeMuro(GATE.halfWidth - Math.abs(z), 0.8, 0.2);
+  // el camino gastado
+  const camino = x > T.stepsX ? 1 - THREE.MathUtils.smoothstep(Math.abs(z), 1.2, 2.2) : 0;
+  const altar = 1 - THREE.MathUtils.smoothstep(Math.hypot(x - POS.altar[0], z - POS.altar[1]), 3, 4.6);
+  return k * (1 + 0.055 * Math.max(camino, altar * 0.8));
+}
+
 function buildCourts(root: THREE.Group, out: Partial<WorldVisual>) {
   const m = new GeoBuilder();
   const s = new GeoBuilder();
   // pisos
-  m.raw(tiles(COURT.minX, COURT.minZ, COURT.maxX, COURT.maxZ, 1.0, [C.piedra, C.piedraClara, C.piedra, "#e8dcc0"], 0.0, 0.03, 0.08));
-  m.box(COURT.maxX - COURT.minX, 0.06, COURT.maxZ - COURT.minZ, C.junta, { x: 0, y: -0.035, z: 0 });
-  m.raw(tiles(OUTER.minX, OUTER.minZ, OUTER.maxX, OUTER.maxZ, 1.4, ["#d8c69e", "#cfbb92", "#e0d0ac"], 0.0, 0.04, 0.08));
-  m.box(OUTER.maxX - OUTER.minX, 0.06, OUTER.maxZ - OUTER.minZ, "#a99472", { x: (OUTER.minX + OUTER.maxX) / 2, y: -0.035, z: 0 });
-  m.raw(tiles(COURT.maxX, -GATE.halfWidth, OUTER.minX, GATE.halfWidth, 0.8, [C.piedra, C.piedraClara], 0.0, 0.03, 0.06));
-  m.box(OUTER.minX - COURT.maxX, 0.06, GATE.halfWidth * 2, C.junta, { x: (COURT.maxX + OUTER.minX) / 2, y: -0.035, z: 0 });
+  m.raw(tiles(COURT.minX, COURT.minZ, COURT.maxX, COURT.maxZ, 1.0, [C.piedra, C.piedraClara, C.piedra, "#e8dcc0"], 0.0, 0.03, 0.08, tonoAtrios));
+  // la junta, con la tierra de años (más oscura que la de los muros)
+  m.box(COURT.maxX - COURT.minX, 0.06, COURT.maxZ - COURT.minZ, "#a89167", { x: 0, y: -0.035, z: 0 });
+  m.raw(tiles(OUTER.minX, OUTER.minZ, OUTER.maxX, OUTER.maxZ, 1.4, ["#d8c69e", "#cfbb92", "#e0d0ac"], 0.0, 0.04, 0.08, tonoAtrios));
+  m.box(OUTER.maxX - OUTER.minX, 0.06, OUTER.maxZ - OUTER.minZ, "#9d8765", { x: (OUTER.minX + OUTER.maxX) / 2, y: -0.035, z: 0 });
+  m.raw(tiles(COURT.maxX, -GATE.halfWidth, OUTER.minX, GATE.halfWidth, 0.8, [C.piedra, C.piedraClara], 0.0, 0.03, 0.06, tonoAtrios));
+  m.box(OUTER.minX - COURT.maxX, 0.06, GATE.halfWidth * 2, "#a89167", { x: (COURT.maxX + OUTER.minX) / 2, y: -0.035, z: 0 });
 
   // muros del atrio de los sacerdotes
   const w = COURT.wall;

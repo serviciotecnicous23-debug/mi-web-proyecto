@@ -824,6 +824,23 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - **El polvo en la luz** también en el templo (`world.ts`) y en la casa por dentro (`casa/mundo-casa.ts`, en un radio
   chico y con menos motas), con el tamaño que se le da a `Polvo`.
 
+## 7k. La ropa que se mueve, el enlosado y la luz de los fuegos (14 de noviembre de 2026)
+
+- **La tela que se mueve** (`telaMueve` y la tela de `computePose`, en `three/characters.ts`): un resorte blando por
+  persona (en `inercia`) lleva el ruedo. Se queda atrás al andar, pasa de largo al frenar, se abre en las curvas y el
+  giro del cuerpo lo deja un poco atrás. Abajo de las rodillas, la pierna que avanza empuja la tela de adelante.
+  - El corrimiento depende solo de la altura, así todas las capas (la túnica, el manto, la orla, las campanillas) se
+    corren juntas y ninguna atraviesa a la otra. No hizo falta partir la malla.
+  - El pueblo lo lleva en el atributo `tela` de cada persona; los personajes con malla propia, en su uniforme `uTela`
+    (cada uno tiene su material de ropa y su oro).
+- **El enlosado** (`tiles`, en `three/structures.ts`): losas de largos distintos en hileras trabadas, con bisel, tono e
+  inclinación propios y la junta más sucia. Con `tono(x, z)` el piso de los atrios tiene la sombra junto a los muros y a
+  la casa de Jehová y el camino gastado (`tonoAtrios`). El azar compartido avanza como antes (lo demás no cambia).
+- **La luz de los fuegos** (`three/luces.ts`): de noche las antorchas y los braseros alumbran el piso, los muros y a la
+  gente con luz tibia que titila. Es una cuenta dentro de los materiales (`conFuegos`), no luces de three. Hay hasta 12
+  fuegos, los más cercanos a la cámara, y cada uno solo dentro de su atrio (no pasa los muros ni la fachada). Al salir
+  del templo se apagan (`apagarFuegos`).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

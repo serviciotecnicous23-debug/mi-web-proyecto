@@ -75,6 +75,9 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   - en quietud, respiración y cambio de peso cada tanto; nadie queda congelado;
   - anticipación antes de un gesto (agacharse, levantar, entregar) y asentamiento al terminar;
   - giros con aceleración y frenado (nunca de golpe).
+- La ropa ya se mueve sola (`telaMueve`, en `three/characters.ts`): el ruedo sigue al cuerpo con un resorte (se queda
+  atrás, pasa de largo al frenar, se abre en las curvas) y las rodillas empujan la tela. El cuerpo de un personaje usa
+  los materiales de su tela (`matTela`, `oroTela`): lo nuevo que vaya en el cuerpo se arma igual y se mueve con ella.
 - El cuerpo de choque (`PLAYER_R`) y las alturas de los asientos no cambian al cambiar el dibujo.
 
 ## 7. Los escenarios
@@ -89,6 +92,10 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - El agua se pinta con `C.agua` (o un celeste parecido) y acostada: así tiene sola sus ondas, el reflejo del cielo y
   el destello del sol (`DETALLE_AGUA`, en `three/builder.ts`). Un agua con su propio material lleva `conOndas`.
 - La ropa de torno pasa por `conPliegues` (en `three/characters.ts`), y lo que va encima, con los mismos números.
+- Un piso de piedra se arma con `tiles` (losas trabadas con bisel), nunca con una cuadrícula pareja, y con `tono` lleva
+  la sombra junto a los muros y el desgaste de los caminos.
+- Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
+  con el rectángulo donde alumbra; los materiales de siempre ya lo reciben (`conFuegos`).
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
   aberturas de dos celdas o más y círculos que no tapan un paso.
 
@@ -124,6 +131,8 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   chicas (las mallas usan color por vértice).
 - Lo caro (oclusión en pantalla, sombras grandes, resplandor a resolución completa) solo en calidad alta.
 - Se juntan las mallas que no se mueven (`meshPair`) y se reutilizan geometrías y materiales.
+- La luz de los fuegos de noche no usa luces de three (cada una le cuesta a todo): va dentro de los materiales
+  (`conFuegos`), con hasta 12 fuegos, los más cercanos a la cámara. De día no cuesta nada.
 
 ## 12. Cómo se revisa algo nuevo
 1. ¿Usa la paleta, la tubería de imagen y los componentes de la pantalla?
