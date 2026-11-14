@@ -195,7 +195,7 @@ export class Polvo {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(this.col, 3));
-    this.mat = new THREE.PointsMaterial({ size: 0.15, map: texturaPunto(), vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.mat = new THREE.PointsMaterial({ size: 0.13, map: texturaPunto(), vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
     this.pts = new THREE.Points(geo, this.mat);
     this.pts.frustumCulled = false;
     this.group.add(this.pts);
@@ -217,7 +217,7 @@ export class Polvo {
     this.group.visible = this.nivel > 0.01;
     if (!this.group.visible) return;
     this.reloj += dt;
-    this.mat.opacity = 0.75 * this.nivel;
+    this.mat.opacity = 0.55 * this.nivel;
     const t = this.reloj;
     for (let i = 0; i < this.n; i++) {
       const o = i * 3, f = this.fase[i];

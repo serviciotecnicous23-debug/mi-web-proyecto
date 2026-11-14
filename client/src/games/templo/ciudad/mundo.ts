@@ -2777,7 +2777,9 @@ export class CiudadWorld {
     this.palomas.update(dt, this.noche() ? 0 : 1, this.camTarget.x, this.camTarget.z);
     this.lluvia.update(dt, this.camTarget.x, this.camTarget.z);
     this.petalos.update(dt, this.camTarget.x, this.camTarget.z);
-    this.polvo.update(dt, this.noche() ? 0 : 1 - this.lluvia.intensidad, this.camTarget.x, this.camTarget.z);
+    // el polvo brilla con el sol alto: poco al amanecer y al atardecer, nada de noche ni con lluvia
+    const sol = THREE.MathUtils.clamp(Math.sin((Math.PI * (t - DAWN)) / (DUSK - DAWN)) * 1.6, 0, 1);
+    this.polvo.update(dt, sol * (1 - this.lluvia.intensidad), this.camTarget.x, this.camTarget.z);
     this.lamparas.update(dt, this.noche());
     if (this.invierno || t < DAWN + 0.02 || t > DUSK - 0.05) {
       // braseros de la plaza, de la puerta y del palacio, solo los cercanos

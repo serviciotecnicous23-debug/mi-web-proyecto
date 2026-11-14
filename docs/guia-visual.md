@@ -83,6 +83,9 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Vegetación que se mueve con el viento (olivos, palmeras, parras, hierba), con el mismo viento para todo.
 - Agua con brillo y movimiento (fuentes, pozos, el mar de bronce).
 - Partículas con sentido: polvo en los rayos de luz, humo del horno, chispas del altar, pétalos en su estación.
+- Lo que ya está hecho, para copiarlo en un lugar nuevo: la hierba con viento por bloques (`ciudad/suelo-vivo.ts`), el
+  polvo en la luz (`Polvo`, en `ciudad/clima.ts`), las hortalizas con hojas (`hortaliza`, en `ciudad/escenario.ts`) y la
+  animación con resortes (`inercia`, en `three/characters.ts`). Ninguna planta ni mata es un cubo.
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
   aberturas de dos celdas o más y círculos que no tapan un paso.
 
