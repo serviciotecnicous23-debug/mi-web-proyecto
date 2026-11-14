@@ -7,7 +7,7 @@
 export type RolAcademia = "direccion" | "profesor" | "iglesia" | "alumno";
 /** Sobre quién: todos los alumnos, los de su iglesia aliada, solo lo suyo, o nada. */
 export type Alcance = "todos" | "iglesia" | "propio" | "no";
-export type Capacidad = "panel" | "avance" | "notas" | "contacto" | "exportar" | "avisos" | "revisar" | "documentos" | "abrir";
+export type Capacidad = "panel" | "avance" | "notas" | "contacto" | "exportar" | "avisos" | "revisar" | "documentos" | "contenido" | "aprobar" | "banco" | "abrir";
 
 export type RolDef = { id: RolAcademia; nombre: string; quienes: string; roles: readonly string[] };
 
@@ -81,6 +81,24 @@ export const CAPACIDADES: readonly CapacidadDef[] = [
     id: "documentos",
     texto: "Corregir o revocar documentos",
     detalle: "Revocar un certificado o volver a darlo por válido, y corregir el nombre del alumno, siempre con un motivo.",
+    alcance: { direccion: "todos", profesor: "no", iglesia: "no", alumno: "no" },
+  },
+  {
+    id: "contenido",
+    texto: "Revisar el contenido y dejar observaciones",
+    detalle: "Leer cada materia con sus lecciones y su banco de preguntas, ver el análisis de las preguntas y dejar observaciones.",
+    alcance: { direccion: "todos", profesor: "todos", iglesia: "no", alumno: "no" },
+  },
+  {
+    id: "aprobar",
+    texto: "Aprobar una materia en la revisión doctrinal",
+    detalle: "Dar por revisado y aprobado el contenido de una materia antes de abrirla, o quitar esa aprobación con un motivo.",
+    alcance: { direccion: "todos", profesor: "no", iglesia: "no", alumno: "no" },
+  },
+  {
+    id: "banco",
+    texto: "Retirar o volver a usar una pregunta del banco",
+    detalle: "Según el análisis de preguntas: la retirada ya no sale en los intentos nuevos (las notas ya dadas no cambian).",
     alcance: { direccion: "todos", profesor: "no", iglesia: "no", alumno: "no" },
   },
   {

@@ -22,6 +22,7 @@ import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricu
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
+import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
@@ -456,4 +457,5 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
+  registerAcademiaCalidadRoutes(app);
 }

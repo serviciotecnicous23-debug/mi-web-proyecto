@@ -171,11 +171,51 @@ CREATE TABLE IF NOT EXISTS "academia_apelaciones" (
   "created_at" timestamp NOT NULL DEFAULT now(),
   UNIQUE ("user_id", "clave")
 );
-CREATE INDEX IF NOT EXISTS "academia_apelaciones_estado_idx" ON "academia_apelaciones" ("estado", "created_at");`;
+CREATE INDEX IF NOT EXISTS "academia_apelaciones_estado_idx" ON "academia_apelaciones" ("estado", "created_at");
+CREATE TABLE IF NOT EXISTS "academia_preguntas_retiradas" (
+  "pregunta_id" text PRIMARY KEY,
+  "motivo" text NOT NULL,
+  "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" timestamp NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS "academia_contenido_notas" (
+  "id" serial PRIMARY KEY,
+  "materia_id" text NOT NULL,
+  "leccion_id" text,
+  "texto" text NOT NULL,
+  "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "resuelta_por" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "resuelta_at" timestamp,
+  "respuesta" text
+);
+CREATE INDEX IF NOT EXISTS "academia_contenido_notas_materia_idx" ON "academia_contenido_notas" ("materia_id", "resuelta_at");
+CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
+  "materia_id" text PRIMARY KEY,
+  "user_id" integer REFERENCES "users"("id") ON DELETE SET NULL,
+  "aprobada_at" timestamp NOT NULL DEFAULT now(),
+  "notas" text,
+  "huella" text
+);`;
 
 // ---------------------------------------------------------------- quién la ve
 
 let abiertaCache = { hasta: 0, valor: false };
+
+let retiradasCache = { hasta: 0, ids: new Set<string>() };
+
+/** Las preguntas que el análisis de preguntas retiró del banco: ya no salen en los intentos nuevos. */
+export async function preguntasRetiradas(): Promise<Set<string>> {
+  if (Date.now() < retiradasCache.hasta) return retiradasCache.ids;
+  const { rows } = await pool.query(`SELECT pregunta_id FROM academia_preguntas_retiradas`);
+  retiradasCache = { hasta: Date.now() + 30_000, ids: new Set(rows.map((r: any) => String(r.pregunta_id))) };
+  return retiradasCache.ids;
+}
+
+/** Olvida lo guardado de las retiradas (al retirar o volver a usar una pregunta). */
+export function olvidarRetiradas(): void {
+  retiradasCache = { hasta: 0, ids: new Set<string>() };
+}
 
 /** Olvida lo guardado de la apertura (al abrir o cerrar la academia desde el panel). */
 export function olvidarApertura(): void {

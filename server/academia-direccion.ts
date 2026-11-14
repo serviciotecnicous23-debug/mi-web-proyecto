@@ -324,7 +324,10 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         actividad: await actividadDe(ids, 40),
         abierta: await academiaAbierta(),
         pendientes: await pendientesDe(p),
-        puede: { exportar: puede(p, "exportar"), contacto: puede(p, "contacto"), revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), abrir: puede(p, "abrir") },
+        puede: {
+          exportar: puede(p, "exportar"), contacto: puede(p, "contacto"), revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), abrir: puede(p, "abrir"),
+          contenido: puede(p, "contenido"), aprobar: puede(p, "aprobar"), banco: puede(p, "banco"),
+        },
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);

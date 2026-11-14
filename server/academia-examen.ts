@@ -29,7 +29,7 @@ import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import { elegirEscritas, elegirFinal } from "./academia-eleccion";
 import {
   alumnoDe, asegurarAlumno, asegurarMateria, avisarA, claveFinal, contextoExamen, cuentasConRoles, enFila, estaInscrito, frenar, inscritoDe, marcarEstudio,
-  nombreAcademico, recalcularMateria,
+  nombreAcademico, preguntasRetiradas, recalcularMateria,
 } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
 
@@ -274,6 +274,13 @@ async function guardarEscrita(userId: number, clave: string, c: Curso, e: ClaveE
   await guardarCurso(userId, clave, c, "parar");
 }
 
+/** El texto de la opción que eligió (para el análisis de preguntas: qué opción falsa confunde más). */
+function elegidaDe(r: RespuestaA, c: Curso, lugar: number): string | null {
+  if (r.opcion < 0) return null;
+  const p = preguntaPorId(r.id);
+  return p ? opcionesDe(p, c, lugar)[r.opcion] ?? null : null;
+}
+
 /** Cierra el intento: la nota del examen, lo que queda aprobado, la revisión completa y la espera si no aprobó. */
 async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<ResultadoExamen> {
   const { medida, clave } = ev;
@@ -290,10 +297,11 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
   await pool.query(
     `INSERT INTO academia_intentos (user_id, clave, intento, objetiva, escrita, nota, nota_auto, aciertos, de, respuestas)
      VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9::jsonb) ON CONFLICT (user_id, clave, intento) DO NOTHING`,
-    [userId, clave, numero, objetiva, escrita, nota, aciertos, de, JSON.stringify(c.respuestas.map((r) => ({ id: r.id, bien: r.bien, tarde: r.tarde })))],
+    [userId, clave, numero, objetiva, escrita, nota, aciertos, de, JSON.stringify(c.respuestas.map((r, lugar) => ({ id: r.id, bien: r.bien, tarde: r.tarde, elegida: elegidaDe(r, c, lugar) })))],
   );
   let vistas = new Set([...lista(f.vistas), ...c.ids, ...c.escritas]);
-  const nuevasFinal = ev.final.filter((p) => !vistas.has(p.id)).length;
+  const retiradas = await preguntasRetiradas();
+  const nuevasFinal = ev.final.filter((p) => !vistas.has(p.id) && !retiradas.has(p.id)).length;
   if (nuevasFinal < medida.objetivas) vistas = new Set([...c.ids, ...c.escritas]);
   await pool.query(
     `UPDATE academia_pruebas SET ultima = $3, mejor = GREATEST(COALESCE(mejor, 0), $3), vistas = $4::jsonb, curso = NULL, curso_at = NULL, updated_at = now()
@@ -429,13 +437,15 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
         if (est.espera > 0) return { error: 429, message: `Repasa con calma y vuelve en ${minutosTexto(est.espera)}.`, espera: est.espera };
         if (est.repasar.length) return { error: 409, message: "Antes de intentarlo otra vez, vuelve a leer las lecciones de la materia.", repasar: est.repasar };
         const vistas = new Set(lista(f.vistas));
+        // las preguntas que retiró la Dirección académica (por el análisis de preguntas) ya no salen
+        const retiradas = await preguntasRetiradas();
         const semilla = (Math.imul(a.userId, 7919) + (Number(f.intentos || 0) + 1) * 104729 + numeroDe(ev.clave.replace(/:final$/, ""))) | 0;
         const c: Curso = {
-          ids: elegirFinal(ev.final, vistas, ev.medida.objetivas, semilla, ev.grupo),
+          ids: elegirFinal(ev.final.filter((p) => !retiradas.has(p.id)), vistas, ev.medida.objetivas, semilla, ev.grupo),
           i: 0,
           enviada: false,
           respuestas: [],
-          escritas: elegirEscritas(ev.escritas, vistas, ev.medida.escritas, semilla, ev.grupoEscrita),
+          escritas: elegirEscritas(ev.escritas.filter((e) => !retiradas.has(e.id)), vistas, ev.medida.escritas, semilla, ev.grupoEscrita),
           e: 0,
           escritaEnviada: false,
           notasEscritas: [],

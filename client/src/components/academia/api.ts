@@ -8,6 +8,7 @@ import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/ac
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoRevision, RevisionPanel,
 } from "@shared/academia-direccion";
+import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -202,6 +203,34 @@ export const accionDocumento = (codigo: string, accion: "revocar" | "restaurar",
 export const corregirNombre = (alumnoId: number, cuerpo: { nombres: string; apellidos: string; motivo: string }) =>
   pedir<{ nombre: string; documentos: number }>("POST", `/api/academia/direccion/alumno/${alumnoId}/nombre`, cuerpo);
 export const cambiarApertura = (abierta: boolean) => pedir<{ abierta: boolean }>("POST", "/api/academia/direccion/apertura", { abierta });
+
+// ---------------------------------------------------------------- la calidad del contenido (fase A3)
+
+/** La revisión del contenido: cada materia con su aprobación, sus observaciones abiertas y las alertas del análisis. */
+export function useContenido(activo = true) {
+  return useQuery<ContenidoLista, ErrorAcademia>({ queryKey: ["academia", "direccion", "contenido"], queryFn: () => pedir("GET", "/api/academia/direccion/contenido"), enabled: activo, retry: false });
+}
+
+/** Una materia en la revisión del contenido: lecciones, observaciones, banco con sus respuestas y análisis de preguntas. */
+export function useContenidoMateria(id: string | undefined) {
+  return useQuery<ContenidoDetalle, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "contenido", id],
+    queryFn: () => pedir("GET", `/api/academia/direccion/contenido/${encodeURIComponent(id!)}`),
+    enabled: !!id,
+    retry: false,
+  });
+}
+
+const baseContenido = (materiaId: string) => `/api/academia/direccion/contenido/${encodeURIComponent(materiaId)}`;
+export const observarContenido = (materiaId: string, texto: string, leccionId: string | null) =>
+  pedir<{ id: number }>("POST", `${baseContenido(materiaId)}/observacion`, { texto, leccionId });
+export const resolverObservacion = (id: number, respuesta: string) =>
+  pedir<{ id: number }>("POST", `/api/academia/direccion/contenido/observacion/${id}/resolver`, { respuesta });
+export const aprobarContenido = (materiaId: string, notas: string) => pedir<{ aprobada: boolean }>("POST", `${baseContenido(materiaId)}/aprobar`, { notas });
+export const desaprobarContenido = (materiaId: string, motivo: string) => pedir<{ aprobada: boolean }>("POST", `${baseContenido(materiaId)}/desaprobar`, { motivo });
+/** Retirar una pregunta del banco (ya no sale en los intentos nuevos) o volver a usarla. */
+export const accionPregunta = (preguntaId: string, accion: "retirar" | "restaurar", motivo: string) =>
+  pedir<{ retirada: boolean }>("POST", `/api/academia/direccion/pregunta/${encodeURIComponent(preguntaId)}/${accion}`, { motivo });
 
 /** Pedir la revisión del último intento de un examen (una vez por examen). */
 export const pedirRevision = (base: string, mensaje: string) => pedir<{ apelacion: ApelacionVista }>("POST", `${base}/apelacion`, { mensaje });

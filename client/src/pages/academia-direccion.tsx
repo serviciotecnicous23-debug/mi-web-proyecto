@@ -1,12 +1,13 @@
 // El panel de seguimiento de la Dirección académica (server/academia-direccion.ts): el resumen, los alumnos con su
-// avance, las materias, el registro de inscripciones y los roles y permisos. Cada rol ve lo que le toca
+// avance, las materias, la revisión del contenido (server/academia-calidad.ts), el registro de inscripciones y los roles
+// y permisos. Cada rol ve lo que le toca
 // (shared/academia-permisos.ts): la Dirección, todo; los profesores, sin los datos de contacto; las iglesias aliadas,
 // solo a los alumnos de su iglesia.
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, BookOpen, ClipboardCheck, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
+  AlertTriangle, ArrowLeft, BookCheck, BookOpen, ClipboardCheck, Clock, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,9 @@ import { NOMBRE_ACADEMIA, NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/aca
 import { CAPACIDADES, ROLES_ACADEMIA, TEXTO_ALCANCE, rolAcademia } from "@shared/academia-permisos";
 import type { ActividadItem, AlumnoFila, DireccionResumen } from "@shared/academia-direccion";
 import {
-  cambiarApertura, enlaceReporte, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
+  cambiarApertura, enlaceReporte, useContenido, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
 } from "@/components/academia/api";
+import type { ContenidoResumen } from "@shared/academia-calidad";
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
@@ -44,8 +46,11 @@ function conOtros(filas: { nombre: string; n: number }[], tope = 7) {
   return [...filas.slice(0, tope), { nombre: "Otros", n: resto }];
 }
 
-function Apertura({ abierta }: { abierta: boolean }) {
+function Apertura({ abierta, irA }: { abierta: boolean; irA: (tab: string) => void }) {
   const qc = useQueryClient();
+  const contenido = useContenido(!abierta);
+  const c = contenido.data;
+  const faltan = c ? c.total - c.aprobadas : 0;
   const [confirmando, setConfirmando] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +79,14 @@ function Apertura({ abierta }: { abierta: boolean }) {
               ? "Todos los miembros la ven en el menú y en la barra de la app, y los visitantes ven su catálogo."
               : "Solo la administración, los profesores y las iglesias aliadas la ven. Ábrela cuando el Nivel 1 esté revisado."}
           </p>
+          {!abierta && c && (
+            <p className="text-sm mt-1.5" data-testid="apertura-revision">
+              {faltan > 0 ? <AlertTriangle className="w-4 h-4 inline -mt-0.5 mr-1 text-orange-500" aria-hidden="true" /> : <ShieldCheck className="w-4 h-4 inline -mt-0.5 mr-1 text-emerald-600" aria-hidden="true" />}
+              Revisión doctrinal: {c.aprobadas} de {c.total} materias aprobadas
+              {c.abiertas > 0 && ` · ${c.abiertas} ${c.abiertas === 1 ? "observación abierta" : "observaciones abiertas"}`}.{" "}
+              <button type="button" className="underline" onClick={() => irA("contenido")}>Ver la revisión</button>
+            </p>
+          )}
         </div>
         {!confirmando && (
           <Button variant={abierta ? "outline" : "default"} className={abierta ? "" : "fire-btn-primary"} onClick={() => setConfirmando(true)} data-testid="apertura-cambiar">
@@ -88,6 +101,12 @@ function Apertura({ abierta }: { abierta: boolean }) {
               ? "La academia dejará de verse para los miembros y los visitantes. Los alumnos inscritos no pierden nada de su avance."
               : "Al abrirla, la verán todos los miembros (el botón «Academia» en la barra y en el menú), los visitantes verán el catálogo y la primera lección de cada materia, y cualquiera con cuenta podrá inscribirse."}
           </p>
+          {!abierta && faltan > 0 && (
+            <p className="text-sm font-medium" data-testid="apertura-faltan">
+              <AlertTriangle className="w-4 h-4 inline -mt-0.5 mr-1 text-orange-500" aria-hidden="true" />
+              Faltan {faltan === 1 ? "1 materia" : `${faltan} materias`} por aprobar en la revisión doctrinal. Puedes abrirla igual, pero lo recomendado es aprobarlas antes.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button className="fire-btn-primary" onClick={cambiar} disabled={ocupado} data-testid="apertura-confirmar">
               {ocupado ? "Guardando…" : abierta ? "Sí, volver a la vista previa" : "Sí, abrirla para todos"}
@@ -106,7 +125,7 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
   const porRevisar = d.pendientes.escritas + d.pendientes.apelaciones;
   return (
     <div className="space-y-6">
-      {d.puede.abrir && <Apertura abierta={d.abierta} />}
+      {d.puede.abrir && <Apertura abierta={d.abierta} irA={irA} />}
       {d.puede.revisar && porRevisar > 0 && (
         <button type="button" onClick={() => irA("revisar")} className="glass-card w-full p-4 flex items-center gap-3 text-left border border-orange-500/40 hover:-translate-y-0.5 transition" data-testid="direccion-por-revisar">
           <ClipboardCheck className="w-5 h-5 text-orange-500 shrink-0" />
@@ -324,7 +343,7 @@ function Historial() {
   const items = q.data.historial;
   return (
     <section className="glass-card p-5" data-testid="direccion-historial">
-      <p className="text-sm text-muted-foreground mb-4">Cada cambio de nota, cada pedido de revisión respondido, cada documento revocado o restaurado, cada nombre corregido y cada apertura de la academia, con quién lo hizo y por qué.</p>
+      <p className="text-sm text-muted-foreground mb-4">Cada cambio de nota, cada pedido de revisión respondido, cada documento revocado o restaurado, cada nombre corregido, cada observación y aprobación del contenido, cada pregunta retirada del banco y cada apertura de la academia, con quién lo hizo y por qué.</p>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Todavía no hay cambios.</p>
       ) : (
@@ -352,6 +371,71 @@ const FILTRO_REGISTRO: { id: "" | ActividadItem["tipo"]; texto: string }[] = [
   { id: "aprobada", texto: "Materias aprobadas" },
   { id: "nivel", texto: "Niveles completos" },
 ];
+
+const CHIP = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs whitespace-nowrap";
+
+function EstadoRevision({ m }: { m: ContenidoResumen }) {
+  if (m.aprobacion?.vigente) return <span className={`${CHIP} bg-emerald-500/15 font-medium`}><ShieldCheck className="w-3 h-3" aria-hidden="true" /> Aprobada</span>;
+  if (m.aprobacion) return <span className={`${CHIP} bg-orange-500/15 font-medium`}><AlertTriangle className="w-3 h-3" aria-hidden="true" /> Cambió después de aprobarla</span>;
+  return <span className={`${CHIP} bg-muted`}><Clock className="w-3 h-3" aria-hidden="true" /> Por revisar</span>;
+}
+
+function Contenido() {
+  const q = useContenido();
+  if (q.isLoading) return <p className="text-muted-foreground">Cargando la revisión del contenido…</p>;
+  if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
+  const { materias, total, aprobadas, abiertas } = q.data;
+  const mirar = materias.reduce((s, m) => s + m.alertas, 0);
+  return (
+    <div className="space-y-4" data-testid="direccion-contenido">
+      <p className="text-sm text-muted-foreground">
+        La revisión doctrinal: lee cada materia completa (sus lecciones, el banco del examen y el repaso), deja observaciones y apruébala antes de abrir la academia. Cuando haya alumnos, el análisis de preguntas marca las que conviene revisar.
+      </p>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+        <Indicador etiqueta="Materias aprobadas" valor={`${aprobadas} de ${total}`} nota="en la revisión doctrinal" testId="contenido-aprobadas" />
+        <Indicador etiqueta="Observaciones abiertas" valor={abiertas} />
+        <Indicador etiqueta="Preguntas para mirar" valor={mirar} nota="según el análisis de preguntas" />
+      </div>
+      <div className="glass-card p-0 overflow-x-auto">
+        <table className="w-full text-sm" data-testid="tabla-contenido">
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <th className="py-2.5 px-4 font-medium">Materia</th>
+              <th className="py-2.5 px-3 font-medium">Revisión doctrinal</th>
+              <th className="py-2.5 px-3 font-medium text-right">Observaciones abiertas</th>
+              <th className="py-2.5 px-3 font-medium text-right">Para mirar</th>
+              <th className="py-2.5 px-3 font-medium text-right">Retiradas</th>
+              <th className="py-2.5 px-4 font-medium">Banco</th>
+            </tr>
+          </thead>
+          <tbody>
+            {materias.map((m) => (
+              <tr key={m.id} className="border-b border-border/60 last:border-0 align-top" data-testid="fila-contenido" data-materia={m.id}>
+                <td className="py-2.5 px-4">
+                  <Link href={`/academia/direccion/contenido/${m.id}`} className="font-medium hover:underline">{m.titulo}</Link>
+                  <span className="block text-xs text-muted-foreground">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · {m.lecciones} lecciones</span>
+                </td>
+                <td className="py-2.5 px-3">
+                  <EstadoRevision m={m} />
+                  {m.aprobacion && <span className="block text-xs text-muted-foreground mt-1">{m.aprobacion.por} · {fecha(m.aprobacion.fecha)}</span>}
+                </td>
+                <td className="py-2.5 px-3 text-right tabular-nums">{m.abiertas || "—"}</td>
+                <td className="py-2.5 px-3 text-right tabular-nums">{m.alertas || "—"}</td>
+                <td className="py-2.5 px-3 text-right tabular-nums">{m.retiradas || "—"}</td>
+                <td className="py-2.5 px-4 whitespace-nowrap text-muted-foreground">{m.preguntas} preguntas · {m.escritas} escritas</td>
+              </tr>
+            ))}
+            {!materias.length && (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-muted-foreground">Todavía no hay materias con contenido.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function Registro() {
   const q = useDireccionActividad();
@@ -435,7 +519,7 @@ export default function AcademiaDireccion() {
   const q = useDireccionResumen();
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    return t && ["resumen", "revisar", "alumnos", "materias", "registro", "historial", "permisos"].includes(t) ? t : "resumen";
+    return t && ["resumen", "revisar", "alumnos", "materias", "contenido", "registro", "historial", "permisos"].includes(t) ? t : "resumen";
   });
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -493,6 +577,7 @@ export default function AcademiaDireccion() {
             )}
             <TabsTrigger value="alumnos" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-alumnos"><Users className="w-4 h-4" /> Alumnos</TabsTrigger>
             <TabsTrigger value="materias" className="flex-1 min-w-[110px] gap-1.5"><BookOpen className="w-4 h-4" /> Materias</TabsTrigger>
+            {d.puede.contenido && <TabsTrigger value="contenido" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-contenido"><BookCheck className="w-4 h-4" /> Contenido</TabsTrigger>}
             <TabsTrigger value="registro" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-registro"><History className="w-4 h-4" /> Registro</TabsTrigger>
             {d.puede.revisar && <TabsTrigger value="historial" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-historial"><FileClock className="w-4 h-4" /> Historial</TabsTrigger>}
             <TabsTrigger value="permisos" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-permisos"><ShieldCheck className="w-4 h-4" /> Roles y permisos</TabsTrigger>
@@ -506,6 +591,7 @@ export default function AcademiaDireccion() {
               <TablaMaterias materias={d.materias} enlace={enlaceMateria} />
             </section>
           </TabsContent>
+          <TabsContent value="contenido">{tab === "contenido" && d.puede.contenido && <Contenido />}</TabsContent>
           <TabsContent value="registro">{tab === "registro" && <Registro />}</TabsContent>
           <TabsContent value="historial">{tab === "historial" && d.puede.revisar && <Historial />}</TabsContent>
           <TabsContent value="permisos"><Permisos role={user?.role} /></TabsContent>

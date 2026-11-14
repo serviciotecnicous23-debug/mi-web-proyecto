@@ -63,6 +63,15 @@ test("el alumno solo ve lo suyo y no entra al panel", () => {
   assert.equal(alcanceDe("miembro", "exportar"), "no");
 });
 
+test("el contenido: lo revisan la Dirección y los profesores; lo aprueba y retira preguntas solo la Dirección", () => {
+  for (const role of ["admin", "director", "staff_global", "maestro_ministerio", "obrero"]) assert.equal(alcanceDe(role, "contenido"), "todos", role);
+  for (const role of ["admin_iglesia", "maestro_iglesia", "miembro"]) assert.equal(alcanceDe(role, "contenido"), "no", role);
+  for (const c of ["aprobar", "banco"] as const) {
+    for (const role of ["admin", "director", "staff_global"]) assert.equal(alcanceDe(role, c), "todos", `${role} ${c}`);
+    for (const role of ["maestro_ministerio", "obrero", "admin_iglesia", "maestro_iglesia", "miembro"]) assert.equal(alcanceDe(role, c), "no", `${role} ${c}`);
+  }
+});
+
 test("abrir la academia: solo la Administración y el Director del Ministerio", () => {
   assert.equal(alcanceDe("admin", "abrir"), "todos");
   assert.equal(alcanceDe("director", "abrir"), "todos");

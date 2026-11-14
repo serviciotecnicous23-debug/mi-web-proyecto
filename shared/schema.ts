@@ -1415,6 +1415,37 @@ export const academiaIntentos = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.clave, t.intento] })],
 );
 
+/** Las preguntas retiradas del banco por el análisis de preguntas: ya no salen en los intentos nuevos. */
+export const academiaPreguntasRetiradas = pgTable("academia_preguntas_retiradas", {
+  preguntaId: text("pregunta_id").primaryKey(),
+  motivo: text("motivo").notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Las observaciones de la revisión del contenido de cada materia (y de sus lecciones). */
+export const academiaContenidoNotas = pgTable("academia_contenido_notas", {
+  id: serial("id").primaryKey(),
+  materiaId: text("materia_id").notNull(),
+  leccionId: text("leccion_id"),
+  texto: text("texto").notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  resueltaPor: integer("resuelta_por").references(() => users.id, { onDelete: "set null" }),
+  resueltaAt: timestamp("resuelta_at"),
+  respuesta: text("respuesta"),
+});
+
+/** La aprobación doctrinal de cada materia (la da la Dirección académica antes de abrir la academia). */
+export const academiaContenidoAprobaciones = pgTable("academia_contenido_aprobaciones", {
+  materiaId: text("materia_id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  aprobadaAt: timestamp("aprobada_at").notNull().defaultNow(),
+  notas: text("notas"),
+  /** La huella del contenido que se aprobó: si el contenido cambia después, la aprobación deja de estar vigente. */
+  huella: text("huella"),
+});
+
 /** Los pedidos de revisión de un examen (uno por examen, dentro de los días que dice el reglamento). */
 export const academiaApelaciones = pgTable(
   "academia_apelaciones",

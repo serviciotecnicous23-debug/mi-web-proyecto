@@ -60,7 +60,11 @@ export type DireccionResumen = {
   abierta: boolean;
   /** Respuestas escritas por revisar y pedidos de revisión pendientes (para quien revisa). */
   pendientes: { escritas: number; apelaciones: number };
-  puede: { exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean };
+  puede: {
+    exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean;
+    /** La revisión del contenido: verla y dejar observaciones, aprobar materias y retirar preguntas del banco. */
+    contenido: boolean; aprobar: boolean; banco: boolean;
+  };
 };
 
 export type MateriaAvance = {
