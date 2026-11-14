@@ -409,6 +409,52 @@ export function matteMatViento() {
   return matteViento;
 }
 
+/**
+ * La onda de una tela (three/telas.ts): cuánto se corre el punto por su normal y cuánto se inclina la normal. Crece con
+ * lo libre del paño (aTela.x: 0 donde está atado, 1 en la punta), lo recorren ondas y pasan ráfagas; cada paño tiene su
+ * fase (aTela.y). La normal se inclina hacia donde crece lo libre (aTela.zw, o hacia abajo si es un estandarte colgado).
+ */
+const ONDA_TELA = `
+vec2 ondaTela(vec3 p) {
+  vec4 wp = modelMatrix * vec4(p, 1.0);
+  float l = aTela.x;
+  float raf = 0.55 + 0.45 * sin(uTiempo * 0.7 + wp.x * 0.05 + wp.z * 0.03 + aTela.y);
+  float fase = uTiempo * 3.4 + aTela.y + l * 5.5 - wp.y * 0.4;
+  float a = 0.1 * raf;
+  return vec2(a * l * sin(fase), a * (sin(fase) + l * 5.5 * cos(fase)) * 0.6);
+}
+`;
+
+let matteTela: THREE.MeshLambertMaterial | null = null;
+/**
+ * El material de las telas con viento (las banderas, los estandartes, los banderines): el de siempre, por las dos caras,
+ * con la onda de la tela. Solo para las mallas de three/telas.ts, que traen el atributo aTela.
+ */
+export function matteMatTela() {
+  if (matteTela) return matteTela;
+  const mat = conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), false);
+  const antes = mat.onBeforeCompile;
+  const clave = mat.customProgramCacheKey;
+  mat.onBeforeCompile = (shader, renderer) => {
+    antes.call(mat, shader, renderer);
+    shader.vertexShader = shader.vertexShader
+      // después de la declaración del reloj (la pone conDetalle), así la función ya lo conoce
+      .replace("uniform float uTiempo;", `uniform float uTiempo;\nattribute vec4 aTela;\n${ONDA_TELA}`)
+      .replace(
+        "#include <beginnormal_vertex>",
+        `#include <beginnormal_vertex>
+{
+  vec3 eT = length(aTela.zw) > 0.01 ? vec3(aTela.z, 0.0, aTela.w) : vec3(0.0, -1.0, 0.0);
+  objectNormal = normalize(objectNormal - eT * ondaTela(position).y);
+}`,
+      )
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed += normal * ondaTela(position).x;");
+  };
+  mat.customProgramCacheKey = () => `${clave.call(mat)}-tela`;
+  matteTela = conFuegos(mat, "tela-viento");
+  return matteTela;
+}
+
 /** Un metal como el compartido pero propio (lo que se mueve con su dueño, como el oro de la ropa de los personajes). */
 export function shinyMatPropio() {
   return conFuegos(conDetalle(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") }), true), "metal");

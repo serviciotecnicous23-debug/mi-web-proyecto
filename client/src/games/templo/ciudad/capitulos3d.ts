@@ -14,6 +14,7 @@
  */
 import * as THREE from "three";
 import { C, GeoBuilder } from "../three/builder";
+import { Telas } from "../three/telas";
 import { Crowd, Figure, leviteColors, newRig, randomVisitor, type CrowdHandle, type Pose, type Rig } from "../three/characters";
 import { jar } from "../three/structures";
 import type { Overlay } from "../three/overlay";
@@ -300,8 +301,10 @@ export function construirFiesta(): THREE.Group {
   // el toldo de colores sobre el púlpito (cuatro postes y la tela; Nehemías 8:4 habla del púlpito)
   const [ux, uz] = P.PULPITO;
   for (const dx of [-1.75, 1.75]) for (const dz of [-1.25, 1.25]) b.cyl(0.06, 0.07, 3.3, C.cedroOsc, { x: ux + dx, y: Y + 1.65, z: uz + dz }, 6);
+  // la tela de franjas, que cuelga un poco y se mece con el viento (three/telas.ts)
   const telas = ["#c9455a", "#e8c56a", "#2f6fb8", "#f2efe6"];
-  for (let k = 0; k < 4; k++) b.box(0.9, 0.06, 2.7, telas[k], { x: ux - 1.35 + k * 0.9, y: Y + 3.32 + (k % 2) * 0.05, z: uz });
+  const tejido = new Telas();
+  for (let k = 0; k < 4; k++) tejido.toldo([ux - 1.35 + k * 0.9, Y + 3.32 + (k % 2) * 0.05, uz], [0, 1], 2.7, 0.9, telas[k]);
   // cántaros con ramas de palmera alrededor de la plaza
   const lugares: [number, number][] = [[50.5, -10.8], [66.0, -10.8], [70.6, -5.0], [70.6, 5.0], [45.6, -9.6]];
   for (const [x, z] of lugares) {
@@ -312,6 +315,7 @@ export function construirFiesta(): THREE.Group {
     }
   }
   meshes(g, b, null, true);
+  g.add(tejido.malla());
   return g;
 }
 
@@ -568,7 +572,11 @@ export class EscenaHistoria implements EscenaDeHistoria {
 
   /** Cada cuadro: la gente se mueve, el Rabsaces grita si estás cerca de la puerta y de noche arden las fogatas. */
   animar(dt: number, now: number, jx: number, jz: number, noche: boolean) {
-    if (this.fogatas) this.fogatas.visible = noche;
+    if (this.fogatas) {
+      this.fogatas.visible = noche;
+      // las fogatas titilan: tres ondas sin compás en el brillo de todas
+      if (noche) (this.fogatas.material as THREE.MeshBasicMaterial).color.setScalar(0.84 + Math.sin(now * 0.011) * 0.09 + Math.sin(now * 0.027 + 1.3) * 0.05 + Math.sin(now * 0.043) * 0.03);
+    }
     for (const p of this.gente) {
       const r = p.rig;
       r.t += dt;

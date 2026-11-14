@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-telas-viento",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Banderas y toldos con viento",
+    puntos: [
+      "🏛️ Las banderas de las tribus del patio y del templo, los estandartes del rey, los de la escuela y los de los barrios son de tela y se mecen con el viento.",
+      "🎉 En la portada del patio, los banderines de las tribus cuelgan de una cuerda en curva y se mueven.",
+      "🌅 El toldo de la mesa de juegos y el del púlpito en la fiesta cuelgan un poco entre sus costuras y se mecen.",
+      "🔥 El piso del patio tiene su sombra junto a los muros, y de noche las fogatas del campamento asirio titilan.",
+    ],
+  },
+  {
     id: "2026-11-14-huerto-vivo",
     fecha: "14 de noviembre de 2026",
     titulo: "El huerto, más vivo",

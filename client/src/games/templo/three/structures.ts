@@ -5,6 +5,7 @@
  */
 import * as THREE from "three";
 import { C, GeoBuilder, conOndas, matteMat, shinyMat } from "./builder";
+import { Telas } from "./telas";
 import { CHOIR_FLOOR, COURT, GATE, LAVERS, OUTER, OUTER_GATE, POS, TEMPLE as T } from "../layout";
 import type { StationId } from "../data";
 
@@ -1378,11 +1379,14 @@ const TRIBUS = ["#b3242f", "#c9c24a", "#2e8b57", "#1f9e6e", "#2a4fbf", "#e8f4ff"
 
 function buildAdornos(root: THREE.Group, out: Partial<WorldVisual>) {
   const groups: Record<string, THREE.Group> = {};
-  const make = (id: string, fill: (m: GeoBuilder, s: GeoBuilder) => void) => {
+  const make = (id: string, fill: (m: GeoBuilder, s: GeoBuilder, telas: Telas) => void) => {
     const g = new THREE.Group();
     const m = new GeoBuilder(), s = new GeoBuilder();
-    fill(m, s);
+    // las telas con viento (three/telas.ts), si el adorno tiene banderas
+    const telas = new Telas();
+    fill(m, s, telas);
     addMeshes(g, m, s, { cast: true });
+    if (!telas.vacia) g.add(telas.malla());
     g.visible = false;
     root.add(g);
     groups[id] = g;
@@ -1395,15 +1399,15 @@ function buildAdornos(root: THREE.Group, out: Partial<WorldVisual>) {
     }
   });
   // estandartes de las doce tribus en el gran atrio (Números 2:2)
-  make("estandartes", (m, s) => {
+  make("estandartes", (m, s, telas) => {
     for (let i = 0; i < 12; i++) {
       const side = i < 6 ? -1 : 1;
       const x = OUTER.minX + 1.6 + (i % 6) * 2.4;
       const z = side * (OUTER.maxZ - 1.9);
       m.cyl(0.04, 0.05, 3.3, C.cedroOsc, { x, y: 1.65, z }, 6);
       s.sphere(0.07, C.oro, { x, y: 3.34, z }, 6, 5);
-      m.box(0.04, 0.95, 0.7, TRIBUS[i], { x, y: 2.75, z: z - side * 0.37 });
-      m.box(0.05, 0.12, 0.72, C.oroOsc, { x, y: 2.28, z: z - side * 0.37 });
+      // la bandera de su tribu, de tela, atada al asta y con su filo de oro abajo
+      telas.pano([x, 3.23, z - side * 0.04], [0, -side], 0.72, 1.05, TRIBUS[i], "asta", { orla: C.oroOsc });
     }
   });
   // lirios y granados en macetas de piedra (1 Reyes 7:19-20)
