@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-13-parchis",
+    fecha: "13 de noviembre de 2026",
+    titulo: "El parchís llega al patio, con un tablero propio",
+    puntos: [
+      "🎲 En «Juegos de mesa» ya está el parchís, de 2 a 4, con las reglas de siempre: se sale con 5, comer da 20, llegar da 10, las barreras no se pasan y con 6 se tira otra vez (con tres seises, la ficha vuelve a casa).",
+      "👑 Su tablero es «el estadio», todo en círculos: la pista redonda, los caminos de llegada en un anillo por dentro y la corona de laurel en el centro, que es la meta. Tu color queda siempre abajo a la izquierda.",
+      "🏆 Tocas el dado y rueda en el centro; las fichas saltan casilla por casilla, la ficha comida vuela de vuelta a su casa y al llegar a la corona hay luz y fiesta.",
+      "🤖 Juega solo con compañeros de la computadora (🌱 fácil, 🌿 normal o 🌳 difícil): esperan a que se vea cada jugada antes de mover. Quien crea la sala elige 4 fichas o 2 (la partida corta).",
+    ],
+  },
+  {
     id: "2026-11-13-escenarios",
     fecha: "13 de noviembre de 2026",
     titulo: "Una ciudad con más vida",

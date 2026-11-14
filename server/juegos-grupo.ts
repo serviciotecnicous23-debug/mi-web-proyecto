@@ -291,13 +291,15 @@ function prepararTurnos(p: PartidaMesa, ahora: number) {
       p.botEn.delete(k);
     }
   }
+  // lo que tarda la pantalla en mostrar la última jugada (el dado, la ficha que avanza): el reloj y la computadora esperan
+  const espera = Math.max(0, Math.min(8000, juego.esperaMs?.(p.estado) ?? 0));
   for (const a of juegan) {
     if (p.desde.has(a)) continue;
-    p.desde.set(a, ahora);
+    p.desde.set(a, ahora + espera);
     const nivel = p.asientos[a]?.bot;
     if (nivel) {
       const [x, y] = juego.pensarMs?.[nivel] ?? [900, 2200];
-      p.botEn.set(a, ahora + x + (y - x) * Math.random());
+      p.botEn.set(a, ahora + espera + x + (y - x) * Math.random());
     }
   }
 }

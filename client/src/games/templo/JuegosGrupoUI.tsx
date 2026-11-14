@@ -156,7 +156,7 @@ export function JuegosGrupoView() {
     "🎲 El patio de los juegos"
   );
   return (
-    <Card title={titulo} onClose={cerrar} wide ancha={!!sala && sala.juego === "mesa" && sala.estado !== "espera" && !!MESAS[sala.mesa ?? ""]?.relojPropio} testid="juegos-ventana">
+    <Card title={titulo} onClose={cerrar} wide ancha={!!sala && sala.juego === "mesa" && sala.estado !== "espera" && !!(MESAS[sala.mesa ?? ""]?.relojPropio || MESAS[sala.mesa ?? ""]?.ancha)} testid="juegos-ventana">
       <div ref={cuerpo} className="space-y-3 p-4">
         {aviso && !sala && <Aviso texto={aviso} tono="info" />}
         {!sala ? (

@@ -8,12 +8,13 @@ import { CUATRO_EN_RAYA } from "./cuatro-en-raya";
 import { DAMAS } from "./damas";
 import { AJEDREZ } from "./ajedrez";
 import { DOMINO } from "./domino";
+import { PARCHIS_MESA } from "./parchis";
 import { MESAS_TRADICIONALES } from "./tradicionales";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CualquierJuego = JuegoDeMesa<any, any, any>;
 
-const LISTA: CualquierJuego[] = [AJEDREZ, DAMAS, DOMINO, CUATRO_EN_RAYA, TRES_EN_RAYA, ...MESAS_TRADICIONALES];
+const LISTA: CualquierJuego[] = [AJEDREZ, DAMAS, DOMINO, PARCHIS_MESA, CUATRO_EN_RAYA, TRES_EN_RAYA, ...MESAS_TRADICIONALES];
 
 export const MESAS: Record<string, CualquierJuego> = Object.fromEntries(LISTA.map((j) => [j.id, j]));
 

@@ -2,7 +2,9 @@
  * SOLO EN DESARROLLO (no existe en la web publicada): una página para ver y probar cada mesa del patio con los
  * módulos puros corriendo en el navegador (el asiento 0 es la persona y los demás, compañeros de la computadora), y
  * la galería de las figuras. En la web de verdad todo lo decide el servidor.
- * Se abre en /mesa-prueba/<juego> (loteria, generala, escaleras, damas-chinas, memoria, basta o galeria).
+ * Se abre en /mesa-prueba/<juego> (loteria, generala, escaleras, damas-chinas, memoria, basta, parchis o galeria).
+ * El parchís acepta escenas para ver cada animación: ?escena=comer|meta|barrera|tres|fin (y ?dados=3,5 fija los
+ * primeros tiros).
  */
 import {
   useEffect,
@@ -30,6 +32,9 @@ import { DefsFiguras, Figura, IDS_FIGURAS } from "./figuras";
 import { CartaLoteria } from "./Carta";
 import { conNombres, type PropsMesa } from "./vida";
 import { UI_MESAS, type JuegoMesaId } from "./mesas";
+import { azarConSemilla, type AsientoMesa, type NivelBot } from "@shared/mesa";
+import { CASA, META, PARCHIS, PARCHIS_MESA, type EstadoParchis, type JugadaParchis } from "@shared/mesa/parchis";
+import { ParchisPantalla } from "./Parchis";
 
 type ModuloConVista = ModuloMesa<
   unknown,
@@ -124,6 +129,78 @@ function Corredor({
   );
 }
 
+// ---------------------------------------------------------------- el parchís (un juego de mesa con turnos)
+const posEn = (color: number, casilla: number) => (casilla - PARCHIS.salida[color] + PARCHIS.casillas) % PARCHIS.casillas;
+/** Escenas para ver cada animación (la persona es el asiento 0, amarillo). */
+const ESCENAS_PARCHIS: Record<string, { fichas: (n: number) => number[][]; dados: number[] }> = {
+  comer: { fichas: (n) => [[posEn(0, 15), 30, CASA, CASA], [CASA, CASA, CASA, CASA], [posEn(2, 18), 20, CASA, CASA], [CASA, CASA, CASA, CASA]].slice(0, n), dados: [3] },
+  meta: { fichas: (n) => [[68, 30, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA]].slice(0, n), dados: [3] },
+  // (los tiros fijos son para todos, en orden: la persona saca 4, los compañeros 1, 2 y 3, y la persona saca 6)
+  barrera: { fichas: (n) => [[posEn(0, 20), posEn(0, 16), 40, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA]].slice(0, n), dados: [4, 1, 2, 3, 6] },
+  tres: { fichas: (n) => [[10, CASA, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA]].slice(0, n), dados: [6, 6, 6] },
+  fin: { fichas: (n) => [[META, META, META, 69], [10, 30, CASA, CASA], [CASA, CASA, CASA, CASA], [CASA, CASA, CASA, CASA]].slice(0, n), dados: [2] },
+};
+
+function CorredorParchis({ n, nivel, escena, dados, opciones }: { n: number; nivel: NivelBot; escena: string | null; dados: number[]; opciones: Record<string, unknown> }) {
+  const asientos = useMemo<AsientoMesa[]>(() => Array.from({ length: n }, (_, i) => ({ n: i, nombre: i ? nombreDeBot(i + 3) : "Luis", bot: i ? nivel : null })), [n, nivel]);
+  // los tiros fijos primero (los de la escena o los de ?dados=), después al azar
+  const tiros = useRef([...(escena ? (ESCENAS_PARCHIS[escena]?.dados ?? []) : []), ...dados]);
+  const azarBot = useMemo(() => azarConSemilla(Date.now() & 0xffff), []);
+  const azarDado = useMemo(() => {
+    const base = azarConSemilla((Date.now() >> 3) & 0xffff);
+    return () => {
+      const v = tiros.current.shift();
+      return v ? (v - 0.5) / 6 : base();
+    };
+  }, []);
+  const [e, setE] = useState<EstadoParchis>(() => {
+    const x = PARCHIS_MESA.estadoInicial(asientos, azarBot, opciones);
+    const esc = escena ? ESCENAS_PARCHIS[escena] : undefined;
+    return esc ? { ...x, fichas: esc.fichas(n), llegada: esc.fichas(n).map((l) => l.map(() => 0)) } : x;
+  });
+  const [ultima, setUltima] = useState<{ asiento: number; jugada: unknown; n: number } | null>(null);
+  const eRef = useRef(e);
+  eRef.current = e;
+  const aplicar = (a: number, j: JugadaParchis) => {
+    const x = PARCHIS_MESA.aplicar(eRef.current, a, j, azarDado);
+    if (x === eRef.current) return false;
+    eRef.current = x;
+    setE(x);
+    setUltima((u) => ({ asiento: a, jugada: j, n: (u?.n ?? 0) + 1 }));
+    return true;
+  };
+  // los compañeros de la computadora juegan como en la sala: esperan a que se vea la jugada y piensan un poco
+  useEffect(() => {
+    if (PARCHIS_MESA.terminado(e) || !asientos[e.turno]?.bot) return;
+    const [x, y] = PARCHIS_MESA.pensarMs?.[nivel] ?? [600, 1200];
+    const id = setTimeout(() => aplicar(e.turno, PARCHIS_MESA.jugadaDeBot(e, e.turno, nivel, azarBot)), (PARCHIS_MESA.esperaMs?.(e) ?? 0) + x + (y - x) * Math.random());
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [e]);
+  const fin = PARCHIS_MESA.terminado(e);
+  const juegan = fin ? [] : [e.turno];
+  return (
+    <div className="space-y-3">
+      <ParchisPantalla
+        vista={PARCHIS_MESA.vistaPara(e, 0)}
+        jugadas={PARCHIS_MESA.jugadasValidas(e, 0)}
+        miAsiento={0}
+        juegan={juegan}
+        asientos={asientos.map((x) => ({ ...x, yo: x.n === 0 }))}
+        ultima={ultima}
+        jugar={(j) => void aplicar(0, j)}
+        ocupado={e.turno !== 0 || !!fin}
+      />
+      {fin && (
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm" data-testid="prueba-fin">
+          <p className="font-bold">{fin.titulo}</p>
+          <p>{fin.detalle.map((d, a) => `${asientos[a].nombre}: ${d}`).join(" · ")}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Galeria() {
   const q = new URLSearchParams(window.location.search);
   const desde = Number(q.get("desde") || 0);
@@ -190,14 +267,16 @@ export default function PruebaMesa() {
   const nivel = (q.get("nivel") as Nivel) || "normal";
   const mirar = q.get("mirar") === "1";
   const opciones = Object.fromEntries(
-    [...q.entries()].filter(([k]) => !["n", "nivel", "mirar"].includes(k)),
+    [...q.entries()].filter(([k]) => !["n", "nivel", "mirar", "escena", "dados"].includes(k)),
   );
+  const escena = q.get("escena");
+  const dados = (q.get("dados") ?? "").split(",").map(Number).filter((x) => x >= 1 && x <= 6);
   const [vuelta, setVuelta] = useState(0);
   return (
     <div className="min-h-screen bg-[#fffaf0] text-stone-800">
       <div className="mx-auto max-w-5xl space-y-3 p-3">
         <nav className="flex flex-wrap gap-2 text-sm">
-          {(["galeria", ...Object.keys(MODULOS)] as string[]).map((j) => (
+          {(["galeria", ...Object.keys(MODULOS), "parchis"] as string[]).map((j) => (
             <Link
               key={j}
               href={`/mesa-prueba/${j}`}
@@ -218,6 +297,8 @@ export default function PruebaMesa() {
         </nav>
         {juego === "galeria" ? (
           <Galeria />
+        ) : (juego as string) === "parchis" ? (
+          <CorredorParchis key={vuelta} n={Math.max(2, Math.min(4, n))} nivel={nivel as NivelBot} escena={escena} dados={dados} opciones={opciones} />
         ) : MODULOS[juego] ? (
           <Corredor
             key={`${juego}-${vuelta}`}

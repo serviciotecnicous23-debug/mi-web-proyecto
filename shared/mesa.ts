@@ -102,6 +102,13 @@ export interface JuegoDeMesa<E = unknown, J = unknown, V = unknown> {
   cambiarAsiento?(e: E, asiento: number, nuevo: AsientoMesa): E;
   /** Lo que el anfitrión elige antes de empezar (la figura de la lotería, el ritmo del cantor, cuántas cartas…). */
   opciones?: OpcionMesa[];
+  /**
+   * Cuánto tarda la pantalla en mostrar la última jugada (el dado que rueda, la ficha que avanza casilla por casilla):
+   * el reloj del turno siguiente y los compañeros de la computadora esperan eso antes de empezar. Sin esto, 0.
+   */
+  esperaMs?(e: E): number;
+  /** La ventana ancha mientras se juega (un tablero grande con su panel al lado), como los juegos con reloj propio. */
+  ancha?: boolean;
 }
 
 /** Las opciones que eligió el anfitrión, solo las que existen (y si falta alguna, la de siempre). */
