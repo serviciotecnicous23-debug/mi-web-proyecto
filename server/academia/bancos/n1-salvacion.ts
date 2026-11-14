@@ -1,0 +1,471 @@
+/**
+ * El banco de «La salvación: nueva vida en Cristo» (Nivel 1). SOLO SERVIDOR: aquí están las respuestas y las claves
+ * de corrección de lo escrito. Las preguntas salen de a una y sin la respuesta (server/academia-examen.ts).
+ *
+ * - Los ids nunca se reusan: si una pregunta se corrige, conserva su id; si se retira, su id no se vuelve a usar.
+ * - Cada pregunta del final dice qué lección y qué objetivo del sílabo mide (la tabla de especificaciones) y con qué
+ *   nivel de Bloom. El examen sale repartido por lecciones.
+ * - Las explicaciones parafrasean la Escritura; las frases entre comillas son literales de la RV1960 (las comprueba
+ *   scripts/academia/verificar.ts).
+ */
+import type { BancoMateria } from "../tipos";
+
+export const BANCO_N1_SALVACION: BancoMateria = {
+  materia: "n1-salvacion",
+  repaso: {
+    "n1-salvacion-1": [
+      {
+        id: "n1-salvacion-1-r1", leccion: 1, objetivo: "o1", bloom: "recordar",
+        texto: "¿Qué respondió Pedro cuando Jesús preguntó quién decían ellos que era Él?",
+        correcta: "Que Jesús es el Cristo, el Hijo del Dios viviente",
+        falsas: ["Que era Juan el Bautista que había resucitado", "Que era uno de los profetas antiguos", "Que era un buen maestro de la ley"],
+        explica: "Pedro confesó que Jesús es el Cristo, el Hijo del Dios viviente, y Jesús le dijo que eso se lo había revelado el Padre.",
+        ref: "Mateo 16:16-17",
+      },
+      {
+        id: "n1-salvacion-1-r2", leccion: 1, objetivo: "o1", bloom: "comprender",
+        texto: "Según Juan 1:1-3, ¿qué es verdad acerca del Verbo?",
+        correcta: "Existía desde el principio, era Dios y todo fue hecho por medio de Él",
+        falsas: ["Empezó a existir cuando nació en Belén", "Fue el primer ángel que Dios creó", "Fue un hombre que llegó a ser Dios por su santidad"],
+        explica: "Juan enseña que el Verbo, que es Jesús, ya existía en el principio, estaba con Dios y era Dios, y que todas las cosas fueron hechas por medio de Él.",
+        ref: "Juan 1:1-3",
+      },
+      {
+        id: "n1-salvacion-1-r3", leccion: 1, objetivo: "o1", bloom: "comprender",
+        texto: "¿Qué reciben los que reciben a Jesús y creen en su nombre?",
+        correcta: "La potestad de ser hechos hijos de Dios",
+        falsas: ["La promesa de no volver a tener problemas", "Un lugar más importante que los demás", "El cielo como premio por sus obras"],
+        explica: "A los que reciben a Jesús y creen en su nombre, Dios les da la potestad de ser hechos sus hijos. Es obra de Dios, no de la sangre ni de la voluntad humana.",
+        ref: "Juan 1:12-13",
+      },
+    ],
+    "n1-salvacion-2": [
+      {
+        id: "n1-salvacion-2-r1", leccion: 2, objetivo: "o2", bloom: "recordar",
+        texto: "Según Romanos 3:23, ¿quiénes han pecado?",
+        correcta: "Todos",
+        falsas: ["Solo las personas muy malas", "Solo quienes no van a la iglesia", "Nadie que se esfuerce lo suficiente"],
+        explica: "Romanos 3:23 dice que todos pecaron y están destituidos de la gloria de Dios: nadie queda fuera.",
+        ref: "Romanos 3:23",
+      },
+      {
+        id: "n1-salvacion-2-r2", leccion: 2, objetivo: "o2", bloom: "recordar",
+        texto: "Según Romanos 6:23, ¿qué es la dádiva (el regalo) de Dios?",
+        correcta: "La vida eterna en Cristo Jesús, Señor nuestro",
+        falsas: ["Una vida sin problemas", "El perdón a cambio de buenas obras", "La riqueza y el éxito"],
+        explica: "La paga del pecado es muerte, pero la dádiva de Dios es vida eterna en Cristo Jesús, Señor nuestro.",
+        ref: "Romanos 6:23",
+      },
+      {
+        id: "n1-salvacion-2-r3", leccion: 2, objetivo: "o2", bloom: "comprender",
+        texto: "Según Romanos 5:8, ¿cuándo murió Cristo por nosotros?",
+        correcta: "Cuando todavía éramos pecadores",
+        falsas: ["Cuando ya éramos buenos", "Cuando lo merecimos", "Después de que dejamos de pecar"],
+        explica: "Dios muestra su amor en que Cristo murió por nosotros siendo aún pecadores: no esperó a que fuéramos buenos.",
+        ref: "Romanos 5:8",
+      },
+    ],
+    "n1-salvacion-3": [
+      {
+        id: "n1-salvacion-3-r1", leccion: 3, objetivo: "o3", bloom: "comprender",
+        texto: "¿Qué significa arrepentirse?",
+        correcta: "Cambiar de mentalidad y volverse a Dios, dejando el pecado",
+        falsas: ["Sentir lástima de uno mismo", "Prometer que nunca más se va a fallar", "Hacer penitencia para pagar los pecados"],
+        explica: "Arrepentirse es cambiar de mentalidad y de dirección: volverse a Dios. Hechos 3:19 promete que entonces los pecados son borrados.",
+        ref: "Hechos 3:19",
+      },
+      {
+        id: "n1-salvacion-3-r2", leccion: 3, objetivo: "o3", bloom: "recordar",
+        texto: "Según Efesios 2:8-9, ¿cómo somos salvos?",
+        correcta: "Por gracia, por medio de la fe",
+        falsas: ["Por nuestras buenas obras", "Por pertenecer a una iglesia", "Por cumplir los mandamientos sin fallar"],
+        explica: "Por gracia somos salvos por medio de la fe; no es de nosotros, es don de Dios; no por obras, para que nadie se gloríe.",
+        ref: "Efesios 2:8-9",
+      },
+      {
+        id: "n1-salvacion-3-r3", leccion: 3, objetivo: "o3", bloom: "recordar",
+        texto: "Según Romanos 10:9, ¿qué se confiesa con la boca?",
+        correcta: "Que Jesús es el Señor",
+        falsas: ["Todos los pecados delante de la iglesia", "Que uno ya no va a pecar más", "Que uno es una buena persona"],
+        explica: "Romanos 10:9 dice que quien confiesa con su boca que Jesús es el Señor y cree en su corazón que Dios lo levantó de los muertos, será salvo.",
+        ref: "Romanos 10:9",
+      },
+    ],
+    "n1-salvacion-4": [
+      {
+        id: "n1-salvacion-4-r1", leccion: 4, objetivo: "o4", bloom: "recordar",
+        texto: "¿Qué le dijo Jesús a Nicodemo que hacía falta para ver el reino de Dios?",
+        correcta: "Nacer de nuevo",
+        falsas: ["Cumplir mejor la ley", "Dar más ofrendas en el templo", "Ser descendiente de Abraham"],
+        explica: "Jesús le dijo que el que no nace de nuevo no puede ver el reino de Dios.",
+        ref: "Juan 3:3",
+      },
+      {
+        id: "n1-salvacion-4-r2", leccion: 4, objetivo: "o4", bloom: "comprender",
+        texto: "Según 2 Corintios 5:17, ¿qué es el que está en Cristo?",
+        correcta: "Una nueva criatura: las cosas viejas pasaron",
+        falsas: ["Alguien que ya nunca tendrá problemas", "Alguien que debe empezar de cero con su propio esfuerzo", "La misma persona de antes, solo que perdonada"],
+        explica: "Si alguno está en Cristo, es una nueva criatura: las cosas viejas pasaron y todas son hechas nuevas.",
+        ref: "2 Corintios 5:17",
+      },
+      {
+        id: "n1-salvacion-4-r3", leccion: 4, objetivo: "o4", bloom: "comprender",
+        texto: "¿Para qué escribió Juan, según 1 Juan 5:13?",
+        correcta: "Para que los creyentes sepan que tienen vida eterna",
+        falsas: ["Para que los creyentes duden siempre de su salvación", "Para que ganen la vida eterna con sus obras", "Para explicar que nadie puede estar seguro"],
+        explica: "Juan escribió a los que creen en el nombre del Hijo de Dios «para que sepáis que tenéis vida eterna».",
+        ref: "1 Juan 5:13",
+      },
+    ],
+  },
+  final: [
+    // ---- Lección 1 · ¿Quién es Jesús? (objetivo o1)
+    {
+      id: "n1-salvacion-f01", leccion: 1, objetivo: "o1", bloom: "recordar",
+      texto: "¿Qué significa el título Cristo?",
+      correcta: "El Ungido: el Salvador prometido por Dios",
+      falsas: ["El que vino de Galilea", "El hijo de José el carpintero", "El maestro de la ley"],
+      explica: "Cristo (en griego) significa lo mismo que Mesías (en hebreo): el Ungido, el Salvador prometido. Andrés le dijo a su hermano que habían hallado al Mesías.",
+      ref: "Juan 1:41",
+    },
+    {
+      id: "n1-salvacion-f02", leccion: 1, objetivo: "o1", bloom: "recordar",
+      texto: "En el Evangelio de Juan, ¿a quién se refiere el Verbo?",
+      correcta: "A Jesús, la Palabra de Dios",
+      falsas: ["A Juan el Bautista", "A la ley de Moisés", "A un ángel enviado por Dios"],
+      explica: "Juan llama a Jesús el Verbo, y dice que ese Verbo se hizo hombre y vivió entre nosotros.",
+      ref: "Juan 1:14",
+    },
+    {
+      id: "n1-salvacion-f03", leccion: 1, objetivo: "o1", bloom: "recordar",
+      texto: "Según Juan 1:3, ¿qué fue hecho por medio del Verbo?",
+      correcta: "Todas las cosas",
+      falsas: ["Solo los seres humanos", "Solo los ángeles", "Nada, porque el Verbo fue creado después"],
+      explica: "Juan enseña que todas las cosas fueron hechas por medio del Verbo y que sin Él nada de lo que existe fue hecho.",
+      ref: "Juan 1:3",
+    },
+    {
+      id: "n1-salvacion-f04", leccion: 1, objetivo: "o1", bloom: "comprender",
+      texto: "¿Qué significa que el Verbo se hizo carne?",
+      correcta: "Que Dios se hizo hombre en Jesús",
+      falsas: ["Que Jesús solo parecía un hombre", "Que un hombre llegó a ser Dios", "Que la Biblia se escribió en papel"],
+      explica: "El Hijo eterno de Dios se hizo hombre de verdad y vivió entre nosotros: es verdadero Dios y verdadero hombre.",
+      ref: "Juan 1:14",
+    },
+    {
+      id: "n1-salvacion-f05", leccion: 1, objetivo: "o1", bloom: "recordar",
+      texto: "¿Quién le reveló a Pedro que Jesús es el Cristo?",
+      correcta: "El Padre que está en los cielos",
+      falsas: ["Su hermano Andrés", "Los fariseos", "Su propia inteligencia"],
+      explica: "Jesús le dijo a Pedro que eso no se lo había revelado ningún hombre, sino su Padre que está en los cielos.",
+      ref: "Mateo 16:17",
+    },
+    {
+      id: "n1-salvacion-f06", leccion: 1, objetivo: "o1", bloom: "comprender",
+      texto: "Según Juan 1:12-13, ¿cómo se llega a ser hijo de Dios?",
+      correcta: "Recibiendo a Jesús y creyendo en su nombre",
+      falsas: ["Naciendo en una familia cristiana", "Esforzándose por ser buena persona", "Por haber sido bautizado, aunque no crea"],
+      explica: "A los que reciben a Jesús y creen en su nombre, Dios les da la potestad de ser sus hijos: no por la sangre ni por la voluntad humana, sino por Dios.",
+      ref: "Juan 1:12-13",
+    },
+    {
+      id: "n1-salvacion-f07", leccion: 1, objetivo: "o1", bloom: "recordar",
+      texto: "¿Qué pasó con Jesús al tercer día después de su muerte?",
+      correcta: "Resucitó",
+      falsas: ["Su cuerpo fue llevado al templo", "Se apareció solo como un espíritu", "Fue sepultado otra vez"],
+      explica: "Cristo murió por nuestros pecados, fue sepultado y resucitó al tercer día, conforme a las Escrituras.",
+      ref: "1 Corintios 15:3-4",
+    },
+    {
+      id: "n1-salvacion-f08", leccion: 1, objetivo: "o1", bloom: "comprender",
+      texto: "¿Cuál de estas frases describe mejor a Jesús?",
+      correcta: "Es verdadero Dios y verdadero hombre",
+      falsas: ["Es solo un hombre muy sabio", "Es solo Dios, sin ser hombre de verdad", "Es un ángel con forma humana"],
+      explica: "El Verbo era Dios y se hizo hombre: por eso Jesús es verdadero Dios y verdadero hombre.",
+      ref: "Juan 1:1-14",
+    },
+    // ---- Lección 2 · El evangelio: el pecado y el regalo de Dios (objetivo o2)
+    {
+      id: "n1-salvacion-f09", leccion: 2, objetivo: "o2", bloom: "recordar",
+      texto: "¿Qué significa la palabra evangelio?",
+      correcta: "Buena noticia",
+      falsas: ["Ley de Dios", "Libro sagrado", "Oración antigua"],
+      explica: "Evangelio quiere decir buena noticia: la noticia de lo que Dios hizo por nosotros en Cristo. Jesús llamó a arrepentirse y creer en el evangelio.",
+      ref: "Marcos 1:15",
+    },
+    {
+      id: "n1-salvacion-f10", leccion: 2, objetivo: "o2", bloom: "comprender",
+      texto: "¿Qué es el pecado?",
+      correcta: "Apartarse de lo que Dios quiere y vivir a nuestra manera",
+      falsas: ["Solo cometer crímenes graves", "Tener problemas en la vida", "No ir a la iglesia los domingos"],
+      explica: "Pecar es apartarse de la voluntad de Dios; por eso todos pecamos y nos quedamos cortos de su gloria.",
+      ref: "Romanos 3:23",
+    },
+    {
+      id: "n1-salvacion-f11", leccion: 2, objetivo: "o2", bloom: "recordar",
+      texto: "Según Romanos 6:23, ¿cuál es la paga del pecado?",
+      correcta: "La muerte",
+      falsas: ["La pobreza", "La enfermedad", "Una tristeza pasajera"],
+      explica: "La paga del pecado es muerte: la separación de Dios.",
+      ref: "Romanos 6:23",
+    },
+    {
+      id: "n1-salvacion-f12", leccion: 2, objetivo: "o2", bloom: "comprender",
+      texto: "Según Juan 3:16, ¿por qué dio Dios a su Hijo?",
+      correcta: "Porque amó al mundo",
+      falsas: ["Porque los hombres lo merecían", "Porque estaba obligado", "Para castigar al mundo"],
+      explica: "Dios amó tanto al mundo que dio a su Hijo unigénito.",
+      ref: "Juan 3:16",
+    },
+    {
+      id: "n1-salvacion-f13", leccion: 2, objetivo: "o2", bloom: "recordar",
+      texto: "Según Juan 3:16, ¿qué tiene todo aquel que cree en el Hijo?",
+      correcta: "Vida eterna",
+      falsas: ["Riquezas en la tierra", "Una vida sin pruebas", "Un lugar de honor en la iglesia"],
+      explica: "Todo aquel que cree en el Hijo no se pierde, sino que tiene vida eterna.",
+      ref: "Juan 3:16",
+    },
+    {
+      id: "n1-salvacion-f14", leccion: 2, objetivo: "o2", bloom: "comprender",
+      texto: "¿Qué nos separa de Dios?",
+      correcta: "Nuestro pecado",
+      falsas: ["Nuestra pobreza", "No saber leer la Biblia", "Vivir lejos de un templo"],
+      explica: "Isaías enseña que nuestras iniquidades hacen separación entre nosotros y Dios.",
+      ref: "Isaías 59:2",
+    },
+    {
+      id: "n1-salvacion-f15", leccion: 2, objetivo: "o2", bloom: "comprender",
+      texto: "En la vida del creyente, las buenas obras son:",
+      correcta: "El fruto de la salvación, no su precio",
+      falsas: ["El precio para ganar la salvación", "Algo que no le importa a Dios", "Una forma de pagar los pecados"],
+      explica: "Somos salvos por gracia y creados en Cristo Jesús para buenas obras: las obras vienen después, como fruto.",
+      ref: "Efesios 2:10",
+    },
+    {
+      id: "n1-salvacion-f16", leccion: 2, objetivo: "o2", bloom: "comprender",
+      texto: "¿Quién tomó la iniciativa para salvarnos?",
+      correcta: "Dios, por su amor",
+      falsas: ["El ser humano, buscando a Dios", "Los profetas del Antiguo Testamento", "La iglesia"],
+      explica: "Dios muestra su amor para con nosotros en que Cristo murió por nosotros siendo aún pecadores.",
+      ref: "Romanos 5:8",
+    },
+    // ---- Lección 3 · Arrepentimiento y fe (objetivo o3)
+    {
+      id: "n1-salvacion-f17", leccion: 3, objetivo: "o3", bloom: "comprender",
+      texto: "Arrepentirse es:",
+      correcta: "Cambiar de mentalidad y de dirección, volviéndose a Dios",
+      falsas: ["Sentir miedo del castigo", "Hacer muchas buenas obras", "Ir más seguido a la iglesia"],
+      explica: "Arrepentirse es cambiar de mentalidad y volverse a Dios; entonces los pecados son borrados.",
+      ref: "Hechos 3:19",
+    },
+    {
+      id: "n1-salvacion-f18", leccion: 3, objetivo: "o3", bloom: "recordar",
+      texto: "Según Hechos 3:19, ¿qué pasa con los pecados de quien se arrepiente y se convierte?",
+      correcta: "Son borrados",
+      falsas: ["Quedan anotados para el juicio", "Se perdonan solo los pequeños", "Se pagan con sacrificios"],
+      explica: "Pedro llamó a arrepentirse y convertirse para que los pecados sean borrados.",
+      ref: "Hechos 3:19",
+    },
+    {
+      id: "n1-salvacion-f19", leccion: 3, objetivo: "o3", bloom: "comprender",
+      texto: "La fe que salva es:",
+      correcta: "Confiar personalmente en Jesús y en lo que hizo por nosotros",
+      falsas: ["Solo saber que Jesús existió", "Tener un sentimiento bonito", "Creer en uno mismo"],
+      explica: "Con el corazón se cree para justicia: la fe que salva es confianza personal en Cristo, no solo información.",
+      ref: "Romanos 10:10",
+    },
+    {
+      id: "n1-salvacion-f20", leccion: 3, objetivo: "o3", bloom: "comprender",
+      texto: "¿Qué es la gracia?",
+      correcta: "El favor de Dios que no merecemos",
+      falsas: ["Un premio por portarse bien", "La buena suerte de una persona", "Un talento natural"],
+      explica: "Por gracia somos salvos: la salvación es un don de Dios, no algo que ganamos.",
+      ref: "Efesios 2:8",
+    },
+    {
+      id: "n1-salvacion-f21", leccion: 3, objetivo: "o3", bloom: "comprender",
+      texto: "Según Efesios 2:9, ¿por qué la salvación no es por obras?",
+      correcta: "Para que nadie se gloríe",
+      falsas: ["Porque Dios no ve las obras", "Porque las obras están prohibidas", "Porque solo cuentan las obras de los pastores"],
+      explica: "La salvación no es por obras, para que nadie se gloríe: toda la gloria es de Dios.",
+      ref: "Efesios 2:9",
+    },
+    {
+      id: "n1-salvacion-f22", leccion: 3, objetivo: "o3", bloom: "recordar",
+      texto: "Según Romanos 10:9, ¿qué hay que creer en el corazón?",
+      correcta: "Que Dios levantó a Jesús de los muertos",
+      falsas: ["Que uno nunca más va a pecar", "Que Jesús fue solo un profeta", "Que todas las religiones son iguales"],
+      explica: "Quien cree en su corazón que Dios levantó a Jesús de los muertos, y confiesa que Jesús es el Señor, será salvo.",
+      ref: "Romanos 10:9",
+    },
+    {
+      id: "n1-salvacion-f23", leccion: 3, objetivo: "o3", bloom: "aplicar",
+      texto: "Cuando alguien hace una oración para recibir a Jesús, ¿qué es lo que lo salva?",
+      correcta: "La fe en Jesús que esas palabras expresan",
+      falsas: ["Repetir las palabras exactas", "Que la oración sea larga", "Que la diga un pastor"],
+      explica: "Con el corazón se cree para justicia y con la boca se confiesa para salvación: lo que salva es la fe en Cristo, no la fórmula.",
+      ref: "Romanos 10:10",
+    },
+    // ---- Lección 4 · La seguridad de la salvación y el nuevo nacimiento (objetivo o4)
+    {
+      id: "n1-salvacion-f24", leccion: 4, objetivo: "o4", bloom: "recordar",
+      texto: "¿Quién era Nicodemo?",
+      correcta: "Un fariseo, principal entre los judíos, que fue a ver a Jesús de noche",
+      falsas: ["Un cobrador de impuestos", "Un soldado romano", "Uno de los doce apóstoles"],
+      explica: "Nicodemo era un fariseo, un principal entre los judíos, que vino a Jesús de noche.",
+      ref: "Juan 3:1-2",
+    },
+    {
+      id: "n1-salvacion-f25", leccion: 4, objetivo: "o4", bloom: "comprender",
+      texto: "Nacer de nuevo es:",
+      correcta: "Recibir de Dios una vida nueva por el Espíritu",
+      falsas: ["Volver a nacer físicamente", "Empezar de cero con fuerza de voluntad", "Cambiar de religión"],
+      explica: "Jesús explicó que lo que nace del Espíritu, espíritu es: el nuevo nacimiento es obra del Espíritu Santo.",
+      ref: "Juan 3:5-6",
+    },
+    {
+      id: "n1-salvacion-f26", leccion: 4, objetivo: "o4", bloom: "recordar",
+      texto: "Según Juan 3:5, ¿de qué hay que nacer para entrar en el reino de Dios?",
+      correcta: "De agua y del Espíritu",
+      falsas: ["De padres creyentes", "De la ley y los profetas", "De la carne y la sangre"],
+      explica: "Jesús dijo que el que no nace de agua y del Espíritu no puede entrar en el reino de Dios.",
+      ref: "Juan 3:5",
+    },
+    {
+      id: "n1-salvacion-f27", leccion: 4, objetivo: "o4", bloom: "comprender",
+      texto: "Según 2 Corintios 5:17, el que está en Cristo:",
+      correcta: "Es una nueva criatura",
+      falsas: ["Sigue siendo el mismo de antes", "Ya no puede tener tentaciones", "Debe ganarse cada día su salvación"],
+      explica: "Si alguno está en Cristo, es una nueva criatura: las cosas viejas pasaron.",
+      ref: "2 Corintios 5:17",
+    },
+    {
+      id: "n1-salvacion-f28", leccion: 4, objetivo: "o4", bloom: "recordar",
+      texto: "Según 1 Juan 5:12, el que tiene al Hijo…",
+      correcta: "Tiene la vida",
+      falsas: ["Tendrá la vida si hace suficientes obras", "Debe ganarse la vida cada día", "Nunca vuelve a tener dudas"],
+      explica: "El que tiene al Hijo tiene la vida; el que no tiene al Hijo de Dios no tiene la vida.",
+      ref: "1 Juan 5:12",
+    },
+    {
+      id: "n1-salvacion-f29", leccion: 4, objetivo: "o4", bloom: "aplicar",
+      texto: "Si un creyente cae en pecado, ¿qué debe hacer?",
+      correcta: "Confesar su pecado a Dios y recibir su perdón",
+      falsas: ["Esconderlo y seguir como si nada", "Volver a bautizarse", "Pensar que Dios ya no lo quiere"],
+      explica: "Si confesamos nuestros pecados, Dios es fiel y justo para perdonarnos y limpiarnos de toda maldad.",
+      ref: "1 Juan 1:9",
+    },
+    {
+      id: "n1-salvacion-f30", leccion: 4, objetivo: "o4", bloom: "comprender",
+      texto: "¿En qué se apoya la seguridad de la salvación?",
+      correcta: "En la promesa de Dios en su Palabra",
+      falsas: ["En lo que uno siente cada día", "En no tener nunca dudas", "En la opinión de los demás"],
+      explica: "Juan escribió para que los que creen sepan que tienen vida eterna: la seguridad descansa en lo que Dios dijo.",
+      ref: "1 Juan 5:13",
+    },
+  ],
+  escritas: [
+    {
+      id: "n1-salvacion-e1",
+      tipo: "corta",
+      pregunta: "Con tus palabras, explica qué es la gracia y por qué la salvación no se gana con buenas obras. Si puedes, escribe un versículo que lo enseñe.",
+      ideas: [
+        {
+          id: "regalo", peso: 30, texto: "Que la salvación es un regalo: un favor de Dios que no merecemos.",
+          formas: ["regalo*", "dadiva*", "don", "dones", "favor", "inmerecid*", "gratis", "gratuit*", "sin merec*", "no merec*"],
+        },
+        { id: "dios", peso: 10, texto: "Que viene de Dios.", formas: ["dios", "senor", "jesus", "cristo", "jesucristo"] },
+        {
+          id: "no-obras", peso: 30, negativa: true, texto: "Que no se gana con obras ni con el esfuerzo propio.",
+          formas: [
+            "no por obras", "no por (buenas|nuestras|mis|sus|tus|las) obras", "sin obras", "no se gana*", "no (la|lo) gana*",
+            "no (podemos|puedo|puede|pueden) gana*", "nadie (se|la|lo|puede) gana*", "no (depende|viene) de (nuestras|las|mis|sus|nuestro|mi) (obras|esfuerzo*|merito*)",
+            "no es un premio", "no se compra*", "no se paga*", "no (podemos|puedo) pagar*", "no por (ser|portarnos|portarse|hacer|cumplir)",
+          ],
+        },
+        { id: "fe", peso: 20, texto: "Que se recibe por medio de la fe.", formas: ["fe", "creer", "creemos", "creyendo", "cree", "creo", "confia*", "confianza", "recib*"] },
+      ],
+      citas: ["Efesios 2:8-9", "Romanos 6:23", "Romanos 3:24", "Tito 3:5", "Romanos 11:6", "Gálatas 2:16", "Romanos 4:4-5", "Romanos 5:8"],
+      pesoCita: 10,
+      errores: [
+        {
+          id: "por-obras", anula: "no-obras",
+          texto: "La salvación no es por obras: las buenas obras son fruto de la salvación, no su precio (Efesios 2:8-10).",
+          formas: [
+            "por obras", "por (nuestras|mis|sus|tus|las|buenas) obras", "con obras", "con (nuestras|mis|sus|tus|las|buenas) obras",
+            "(se|la|lo) gana*", "(ganarla|ganarse|ganarlo|ganarnos|ganandola|ganandose)", "hay que gana*", "ganar* la salvacion", "ganar* el cielo",
+            "con esfuerzo", "con (mucho|nuestro|propio|su|mi|tanto) esfuerzo", "por ser (buena|buen|buenas|buenos) (persona|personas|gente)",
+          ],
+        },
+        {
+          id: "fe-y-obras", anula: "no-obras",
+          texto: "Somos salvos solo por la fe en Cristo; las obras no se suman como pago (Efesios 2:8-9; Romanos 3:28).",
+          formas: ["no solo por (la|obras|fe)", "no solamente por (la|obras|fe)", "fe y obras", "fe mas obras"],
+        },
+      ],
+      modelo:
+        "La gracia es un regalo de Dios: su favor que no merecemos. La salvación no se gana con buenas obras ni con esfuerzo propio, porque es un don que recibimos por fe en Jesús, como dice Efesios 2:8-9.",
+    },
+    {
+      id: "n1-salvacion-e2",
+      tipo: "corta",
+      pregunta: "Explica con tus palabras qué es el evangelio: cuál es nuestro problema y qué hizo Dios para resolverlo.",
+      ideas: [
+        { id: "pecado", peso: 25, texto: "Que todos hemos pecado.", formas: ["pecado*", "pecador*", "pecamos", "peque", "pecaron", "pecar", "desobedec*", "rebel*", "maldad"] },
+        {
+          id: "consecuencia", peso: 20, texto: "Que el pecado nos separa de Dios y su paga es la muerte.",
+          formas: ["muerte", "morir", "separa*", "lejos de dios", "condena*", "perdid*", "paga", "castigo"],
+        },
+        { id: "amor", peso: 15, texto: "Que Dios nos amó y envió a su Hijo.", formas: ["amor", "amo", "ama", "envio", "dio a su hijo", "entrego a su hijo", "mando a su hijo"] },
+        {
+          id: "cruz", peso: 25, texto: "Que Cristo murió en la cruz por nosotros y resucitó.",
+          formas: ["murio", "cruz", "resucit*", "resurreccion", "en nuestro lugar", "por nosotros", "por nuestros pecados", "sacrificio"],
+        },
+        { id: "recibir", peso: 15, texto: "Que la vida eterna se recibe creyendo en Él.", formas: ["vida eterna", "salvacion", "salva*", "fe", "cree*", "creer", "recib*", "perdon*"] },
+      ],
+      errores: [
+        {
+          id: "por-obras",
+          texto: "La salvación no se gana: es un regalo de Dios en Cristo (Efesios 2:8-9).",
+          formas: ["por (nuestras|mis|sus|las|buenas) obras", "ganar* la salvacion", "ganar* el cielo", "por ser (buena|buen|buenos|buenas) (persona|personas|gente)"],
+        },
+      ],
+      modelo:
+        "Nuestro problema es el pecado: todos hemos pecado y la paga del pecado es la muerte, que nos separa de Dios. Pero Dios nos amó y envió a su Hijo Jesús, que murió en la cruz por nosotros y resucitó. Quien cree en Él recibe el perdón y la vida eterna.",
+    },
+    {
+      id: "n1-salvacion-e3",
+      tipo: "corta",
+      pregunta: "¿Qué significa nacer de nuevo, y por qué un creyente puede estar seguro de su salvación?",
+      ideas: [
+        {
+          id: "espiritu", peso: 30, texto: "Que nacer de nuevo es recibir vida nueva por el Espíritu Santo.",
+          formas: ["espiritu", "vida nueva", "nueva vida", "nueva criatura", "nuevo corazon", "corazon nuevo", "regenera*", "nace* de dios"],
+        },
+        {
+          id: "obra-dios", peso: 15, texto: "Que es obra de Dios y no de nuestro esfuerzo.",
+          formas: ["obra de dios", "dios (lo|nos|la) (hace|da|dio|regala)", "regalo", "don", "no (es|por) (nuestro|mi|propio) esfuerzo", "no por (esfuerzo|obras)", "no depende de (nosotros|mi|nuestro)"],
+        },
+        {
+          id: "promesa", peso: 35, texto: "Que la seguridad se apoya en la promesa de Dios en su Palabra.",
+          formas: ["promesa*", "prometi*", "palabra de dios", "su palabra", "la biblia (dice|ensena|promete)", "escrito", "dios (dice|dijo)", "tiene la vida", "tiene al hijo", "para que sepa*", "1 juan 5"],
+        },
+        {
+          id: "no-sentimientos", peso: 10, negativa: true, texto: "Que no depende de lo que sentimos.",
+          formas: ["no depende de (sentim*|emocion*|lo|como)", "no se basa en (sentim*|emocion*)", "no se apoya en (sentim*|emocion*)", "aunque no sient*", "no por (sentir*|sentim*|emocion*)", "aunque dud*", "aunque tenga dudas"],
+        },
+      ],
+      citas: ["Juan 3:3-7", "2 Corintios 5:17", "1 Juan 5:11-13", "Juan 1:12-13", "Tito 3:5", "Juan 10:28", "Romanos 8:16", "Juan 5:24"],
+      pesoCita: 10,
+      errores: [
+        {
+          id: "sentimientos", anula: "no-sentimientos",
+          texto: "La seguridad no depende de lo que sentimos, sino de la promesa de Dios (1 Juan 5:13).",
+          formas: ["depende de (lo|como|mis|nuestros|los) (siento|sentimos|sentimiento*|emocion*|sienta)", "si (me|lo|nos) (siento|sentimos) (salvo|salvos|bien)"],
+        },
+      ],
+      modelo:
+        "Nacer de nuevo es recibir una vida nueva por obra del Espíritu Santo cuando creemos en Jesús; no es por nuestro esfuerzo. El creyente puede estar seguro porque se apoya en la promesa de Dios: el que tiene al Hijo tiene la vida (1 Juan 5:12), aunque no siempre lo sienta.",
+    },
+  ],
+};

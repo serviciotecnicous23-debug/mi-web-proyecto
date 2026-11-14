@@ -8,6 +8,7 @@
  */
 import { pool } from "./db";
 import { STORED_FILES_SQL } from "./file-store";
+import { ACADEMIA_SQL } from "./academia-comun";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
 import { ESTUDIOS_SQL } from "./estudios";
@@ -1083,6 +1084,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
     await pool.query(CREATE_TABLES_SQL);
     // Archivos guardados en la base (fotos, documentos, audios) cuando no hay S3/R2.
     await pool.query(STORED_FILES_SQL);
+    try {
+      // La Academia Avivando el Fuego (docs/academia.md): alumnos, lecciones, exámenes, respuestas escritas y materias
+      await pool.query(ACADEMIA_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (academia): ${err?.message}`);
+    }
     // Puntajes de los juegos (una fila por persona y juego).
     try {
       await pool.query(GAME_SCORES_SQL);
