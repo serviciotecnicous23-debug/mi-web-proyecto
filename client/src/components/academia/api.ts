@@ -1,7 +1,7 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
 import type {
-  AcademiaEstado, ExamenEstado, LeccionVista, MateriaDetalle, PasoExamen, RespuestaRepaso, ResultadoExamen,
+  AcademiaEstado, ExamenEstado, LeccionVista, MateriaDetalle, NivelEstado, PasoExamen, RespuestaRepaso, ResultadoExamen,
 } from "@shared/academia";
 
 export class ErrorAcademia extends Error {
@@ -53,14 +53,29 @@ export function useLeccion(id: string | undefined) {
   });
 }
 
-export function useExamen(materiaId: string | undefined) {
+/** La ruta de un examen en el servidor: el final de una materia o el integral de un nivel (el mismo motor). */
+export const baseExamen = (materiaId: string) => `/api/academia/examen/${encodeURIComponent(materiaId)}`;
+export const baseIntegral = (nivel: number | string) => `/api/academia/integral/${encodeURIComponent(String(nivel))}`;
+
+export function useExamen(base: string | undefined) {
   return useQuery<{ estado: ExamenEstado; ultimo: ResultadoExamen | null }, ErrorAcademia>({
-    queryKey: ["academia", "examen", materiaId],
-    queryFn: () => pedir("GET", `/api/academia/examen/${encodeURIComponent(materiaId!)}`),
-    enabled: !!materiaId,
+    queryKey: ["academia", "examen", base],
+    queryFn: () => pedir("GET", base!),
+    enabled: !!base,
     retry: false,
   });
 }
+
+export function useNivel(n: string | undefined) {
+  return useQuery<NivelEstado, ErrorAcademia>({
+    queryKey: ["academia", "nivel", n],
+    queryFn: () => pedir("GET", `/api/academia/nivel/${encodeURIComponent(n!)}`),
+    enabled: !!n,
+    retry: false,
+  });
+}
+
+export const aceptarPacto = (n: number) => pedir<NivelEstado>("POST", `/api/academia/nivel/${n}/pacto`, { acepto: true });
 
 export const responderRepaso = (leccionId: string, preguntaId: string, opcion: number) =>
   pedir<RespuestaRepaso>("POST", "/api/academia/repaso", { leccionId, preguntaId, opcion });
@@ -79,12 +94,10 @@ export const versiculoPractica = (materiaId: string) => pedir<VersiculoPractica>
 export const responderVersiculo = (materiaId: string, orden: string[]) =>
   pedir<{ bien: boolean; hasta: number; total: number; puntaje: number | null }>("POST", `/api/academia/versiculo/${encodeURIComponent(materiaId)}`, { orden });
 
-export const empezarExamen = (materiaId: string) => pedir<PasoExamen>("POST", `/api/academia/examen/${encodeURIComponent(materiaId)}/empezar`, { compromiso: true });
-export const pasoExamen = (materiaId: string) => pedir<PasoExamen>("POST", `/api/academia/examen/${encodeURIComponent(materiaId)}/paso`, {});
-export const responderExamen = (materiaId: string, opcion: number) =>
-  pedir<PasoExamen>("POST", `/api/academia/examen/${encodeURIComponent(materiaId)}/respuesta`, { opcion });
-export const entregarEscrita = (materiaId: string, texto: string, pegado: boolean) =>
-  pedir<PasoExamen>("POST", `/api/academia/examen/${encodeURIComponent(materiaId)}/escrita`, { texto, pegado });
+export const empezarExamen = (base: string) => pedir<PasoExamen>("POST", `${base}/empezar`, { compromiso: true });
+export const pasoExamen = (base: string) => pedir<PasoExamen>("POST", `${base}/paso`, {});
+export const responderExamen = (base: string, opcion: number) => pedir<PasoExamen>("POST", `${base}/respuesta`, { opcion });
+export const entregarEscrita = (base: string, texto: string, pegado: boolean) => pedir<PasoExamen>("POST", `${base}/escrita`, { texto, pegado });
 
 /** «45 minutos», «2 horas»: para las esperas. */
 export function tiempoTexto(seg: number): string {

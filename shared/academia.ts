@@ -203,6 +203,43 @@ export function esperaFinalMin(fallos: number): number {
 export const ESCRITA = { corta: { min: 15, max: 60 }, breve: { min: 80, max: 300 } } as const;
 export type TipoEscrita = keyof typeof ESCRITA;
 
+// ---------------------------------------------------------------- el cierre de cada nivel
+
+/**
+ * El examen integral de cada nivel: preguntas de los bancos de todas sus materias, repartidas por materia, y respuestas
+ * escritas de materias distintas. Se da con todas las materias del nivel aprobadas y repasa el nivel entero.
+ */
+export const EXAMEN_INTEGRAL: Record<NivelN, MedidaExamen> = {
+  1: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 80, segundos: 60, minutosEscrita: 6 },
+  2: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 70, segundos: 60, minutosEscrita: 6 },
+  3: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
+  4: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
+  5: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
+};
+/** El examen integral se aprueba con 75 (más que una materia: abarca todo el nivel). */
+export const APRUEBA_INTEGRAL = 75;
+/** Versículos de memoria aprendidos que pide cada nivel para cerrarlo. */
+export const VERSICULOS_NIVEL: Record<NivelN, number> = { 1: 4, 2: 8, 3: 0, 4: 0, 5: 0 };
+
+/** El pacto con que se cierra un nivel (como el pacto de cada clase de Saddleback CLASS). */
+export type PactoDef = { titulo: string; base: string; intro: string; compromisos: { texto: string; ref: string }[]; cierre: string };
+export const PACTOS: Partial<Record<NivelN, PactoDef>> = {
+  1: {
+    titulo: "El pacto del creyente",
+    base: "Josué 24:15",
+    intro: "Con gratitud por lo que Dios hizo en mi vida por medio de Jesucristo, y con la ayuda del Espíritu Santo, me comprometo a:",
+    compromisos: [
+      { texto: "Seguir a Jesucristo como mi Señor y Salvador todos los días de mi vida.", ref: "Lucas 9:23" },
+      { texto: "Buscar a Dios cada día en la oración y en la lectura de su Palabra.", ref: "Josué 1:8" },
+      { texto: "Obedecer al Señor en el bautismo y participar de la Santa Cena con un corazón preparado.", ref: "Mateo 28:19" },
+      { texto: "Congregarme con fidelidad, servir con mis dones y dar con alegría.", ref: "Hebreos 10:25" },
+      { texto: "Vivir en santidad, confesar pronto mis pecados y perdonar como fui perdonado.", ref: "Efesios 4:32" },
+      { texto: "Compartir mi fe y acompañar a otros en sus primeros pasos con Cristo.", ref: "Marcos 16:15" },
+    ],
+    cierre: "Pero yo y mi casa serviremos a Jehová (Josué 24:15).",
+  },
+};
+
 /** El examen de suficiencia: la única manera de aprobar una materia sin cursarla (más exigente que el final). */
 export const SUFICIENCIA = {
   objetivas: 25,
@@ -882,17 +919,43 @@ export type AcademiaEstado = {
   vistaPrevia: boolean;
   conSesion: boolean;
   alumno: { inscritoEn: string; racha: number; leccionesHechas: number; materiasAprobadas: number } | null;
-  /** Lo siguiente: una lección, o el examen final si ya terminó las lecciones (leccionId null). */
-  continuar: { leccionId: string | null; titulo: string; materiaId: string; materia: string; n: number; de: number } | null;
+  /**
+   * Lo siguiente: una lección, el examen final si ya terminó las lecciones (leccionId null) o, con todas las materias
+   * del nivel aprobadas, el cierre del nivel (`nivel`: el examen integral o el pacto).
+   */
+  continuar: { leccionId: string | null; titulo: string; materiaId: string; materia: string; n: number; de: number; nivel?: number } | null;
   etapas: EtapaDef[];
-  niveles: (Omit<NivelDef, "materias"> & { materias: MateriaResumen[] })[];
+  niveles: (Omit<NivelDef, "materias"> & { materias: MateriaResumen[]; cierre: CierreResumen | null })[];
   especialidades: (Omit<EspecialidadDef, "materias"> & { materias: MateriaResumen[] })[];
+};
+
+/** El cierre de un nivel en la portada: null mientras el nivel no tiene todas sus materias disponibles. */
+export type CierreResumen = { integralAprobado: boolean; pacto: boolean; completado: string | null };
+
+export type RequisitoNivel = { id: "materias" | "integral" | "versiculos" | "pacto"; texto: string; hecho: boolean; detalle: string };
+
+/** El nivel y lo que falta para cerrarlo: materias, examen integral, versículos y pacto. */
+export type NivelEstado = {
+  nivel: Omit<NivelDef, "materias">;
+  materias: { total: number; disponibles: number; aprobadas: number; promedio: number | null };
+  versiculos: { pide: number; aprendidos: number };
+  /** null mientras el nivel no tiene todas sus materias disponibles. */
+  integral: ExamenEstado | null;
+  pacto: (PactoDef & { aceptado: string | null }) | null;
+  requisitos: RequisitoNivel[];
+  completado: string | null;
+  promedio: number | null;
+  honores: boolean;
+  vistaPrevia: boolean;
+  conSesion: boolean;
 };
 
 export type LeccionEstado = { id: string; titulo: string; minutos: number; base: string; vista: boolean; completada: boolean };
 
 export type ExamenEstado = {
   medida: MedidaExamen;
+  /** La nota con que se aprueba: 70 el final de una materia, 75 el integral de un nivel. */
+  aprueba: number;
   /** Lo que falta para poder darlo (vacío si ya se puede). */
   falta: string[];
   intentos: number;

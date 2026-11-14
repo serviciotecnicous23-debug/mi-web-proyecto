@@ -91,6 +91,14 @@ CREATE TABLE IF NOT EXISTS "academia_versiculos" (
   "caja" integer NOT NULL DEFAULT 0,
   "proximo_at" timestamp,
   PRIMARY KEY ("user_id", "materia_id")
+);
+CREATE TABLE IF NOT EXISTS "academia_niveles" (
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "nivel" integer NOT NULL,
+  "pacto_at" timestamp,
+  "completado_at" timestamp,
+  "promedio" integer,
+  PRIMARY KEY ("user_id", "nivel")
 );`;
 
 // ---------------------------------------------------------------- quién la ve
@@ -217,6 +225,8 @@ export async function textoDeCita(ref: string): Promise<VersiculoResuelto> {
 // ---------------------------------------------------------------- la nota de la materia
 
 const claveFinal = (materiaId: string) => `${materiaId}:final`;
+/** La clave del examen integral de un nivel en academia_pruebas. */
+export const claveIntegral = (nivel: number) => `nivel-${nivel}:integral`;
 
 /**
  * Los componentes de la nota de una materia:

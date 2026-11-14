@@ -72,6 +72,8 @@ const AcademiaPage = lazy(() => import("@/pages/academia"));
 const AcademiaMateria = lazy(() => import("@/pages/academia-materia"));
 const AcademiaLeccion = lazy(() => import("@/pages/academia-leccion"));
 const AcademiaExamen = lazy(() => import("@/pages/academia-examen"));
+const AcademiaNivel = lazy(() => import("@/pages/academia-nivel"));
+const AcademiaIntegral = lazy(() => import("@/pages/academia-integral"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
 const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
 const MiIglesiaPage = lazy(() => import("@/pages/mi-iglesia"));
@@ -132,6 +134,8 @@ function Router() {
       <Route path="/academia/materia/:materiaId" component={AcademiaMateria} />
       <Route path="/academia/leccion/:leccionId" component={AcademiaLeccion} />
       <Route path="/academia/examen/:materiaId" component={AcademiaExamen} />
+      <Route path="/academia/nivel/:n" component={AcademiaNivel} />
+      <Route path="/academia/integral/:nivel" component={AcademiaIntegral} />
       <Route path="/alianza" component={AlianzaPage} />
       <Route path="/ficha-ministerial" component={FichaMinisterialPage} />
       <Route path="/ficha-ministerial/:userId" component={FichaMinisterialPage} />

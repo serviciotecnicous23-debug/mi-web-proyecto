@@ -1335,6 +1335,19 @@ export const academiaVersiculos = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.materiaId] })],
 );
 
+/** El cierre de cada nivel: el pacto aceptado y el nivel completo, con su promedio (server/academia-nivel.ts). */
+export const academiaNiveles = pgTable(
+  "academia_niveles",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    nivel: integer("nivel").notNull(),
+    pactoAt: timestamp("pacto_at"),
+    completadoAt: timestamp("completado_at"),
+    promedio: integer("promedio"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.nivel] })],
+);
+
 // ========== DIEZMOS Y OFRENDAS ==========
 
 export const tithes = pgTable("tithes", {

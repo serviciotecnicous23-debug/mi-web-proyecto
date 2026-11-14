@@ -75,7 +75,18 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 | Repaso | Al final de cada lección, con la explicación y la cita al instante | El sistema |
 | Versículo de memoria | Fichas en orden: 100 a la primera, 80 a la segunda y 60 como mínimo | El sistema |
 | Examen final | Parte A objetiva y Parte B escrita; la revisión completa se ve al terminar | El sistema (revisable) |
-| Mini pruebas, escritos breves, examen integral, práctica y proyecto | Desde las fases siguientes | Sistema, líder o 2 profesores |
+| Examen integral del nivel | Con todas las materias del nivel aprobadas: 40 preguntas, 5 de cada materia del Nivel 1, y 2 escritas de materias distintas; se aprueba con 75 | El sistema (revisable) |
+| Mini pruebas, escritos breves, práctica y proyecto | Desde las fases siguientes | Sistema, líder o 2 profesores |
+
+**El cierre del nivel** (`server/academia-nivel.ts`, página `/academia/nivel/:n`):
+- **Requisitos:** las materias del nivel aprobadas, el examen integral, los versículos de memoria que pide el nivel
+  (`VERSICULOS_NIVEL`: 4 en el Nivel 1) y el pacto (`PACTOS`).
+- **El examen integral** usa el mismo motor que el final de cada materia (reloj, una pregunta por pantalla, intentos con
+  espera de 30 minutos y 24 horas, preguntas nuevas en cada intento y revisión completa). Sale repartido por materia.
+- **El pacto del creyente** (Nivel 1, Josué 24:15): seis compromisos con su versículo. Se acepta al final, después de
+  aprobar el integral.
+- **El nivel completo:** con todo eso se guarda la fecha y el promedio de sus materias (desde 90, «con honores») y el
+  alumno pasa al nivel siguiente. El documento del nivel, con su código y su QR, llega en la parte siguiente de A2.
 
 **El examen final** (`EXAMEN_FINAL` en `shared/academia.ts`):
 
@@ -212,10 +223,15 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   - los versículos (`textoDeCita`);
   - la nota de la materia (`recalcularMateria`).
 - `server/academia.ts`: el catálogo, la materia, la lección, el repaso, completar, la nota privada y el versículo.
-- `server/academia-examen.ts`: el examen.
+- `server/academia-examen.ts`: el motor de los exámenes. Una `Evaluacion` (clave, medida, nota para aprobar, banco,
+  reparto, requisitos y qué pasa al cerrar) sirve para el final de una materia y para el integral de un nivel, con las
+  mismas rutas (`rutasDeEvaluacion`).
+- `server/academia-eleccion.ts`: qué preguntas trae cada intento, con su prueba en `server/academia-eleccion.test.ts`.
+- `server/academia-nivel.ts`: el cierre del nivel (integral, versículos, pacto y nivel completo).
 - `server/academia-correccion.ts`: el corrector, con su prueba en `server/academia-correccion.test.ts`.
 - `server/academia/`: los tipos, el contenido, los bancos y el registro. **Solo servidor.**
-- `client/src/pages/academia*.tsx` y `client/src/components/academia/`.
+- `client/src/pages/academia*.tsx` y `client/src/components/academia/` (`examen.tsx` es la pantalla común de los
+  exámenes).
 
 **Tablas** (aditivas; se borran con la cuenta en `server/account-deletion.ts`):
 
@@ -223,7 +239,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 |---|---|
 | `academia_alumnos` | Matrícula, promoción, estatus, nivel, mentor, reglamento y racha |
 | `academia_lecciones` | Vista, completada, repaso (`{pregunta: {primera, ok}}`) y nota privada |
-| `academia_pruebas` | Una fila por examen (`<materia>:final`): intentos, fallos, mejor, última, vistas, el intento en curso en jsonb, `curso_at`, `fallo_at`, `aprobada_at` y el resultado con su revisión |
+| `academia_pruebas` | Una fila por examen (`<materia>:final` y `nivel-<n>:integral`): intentos, fallos, mejor, última, vistas, el intento en curso en jsonb, `curso_at`, `fallo_at`, `aprobada_at` y el resultado con su revisión |
+| `academia_niveles` | El cierre de cada nivel: el pacto aceptado, el nivel completo y su promedio |
 | `academia_respuestas` | Lo escrito, con la nota automática, el detalle, la marca para revisar y la revisión humana (nota final, revisor, motivo) |
 | `academia_materias` | Estado, nota, componentes y vía (cursada, suficiencia o convalidada) |
 | `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
@@ -242,13 +259,17 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `GET examen/:materiaId` | El estado del examen y el último resultado |
 | `POST examen/:materiaId/empezar` | `{compromiso: true}` |
 | `POST examen/:materiaId/paso`, `POST examen/:materiaId/respuesta` y `POST examen/:materiaId/escrita` | El examen en curso: `{opcion}` en la objetiva; `{texto, pegado}` en la escrita |
-| `GET dev/correcta/:materiaId` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
+| `GET nivel/:n` | El nivel y lo que falta para cerrarlo |
+| `POST nivel/:n/pacto` | Aceptar el pacto: `{acepto: true}`, con el integral aprobado |
+| `GET integral/:nivel` y `POST integral/:nivel/empezar`, `/paso`, `/respuesta` y `/escrita` | El examen integral: las mismas rutas que el final |
+| `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
 
 **Vista previa:** mientras `site_content.academia_abierta` no sea `1`, solo la ven los roles de `ROLES_VISTA_PREVIA`
 (administración y profesores con cuenta aprobada).
 
 **Pruebas:**
-- Locales: el corrector y el catálogo (`npx tsx --test …`).
+- Locales: el corrector, la elección de preguntas y el catálogo
+  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts`).
 - De la API: `academia_api.py` en el scratchpad de la sesión de la academia. Usa el servidor «mi-web-academia» en el
   puerto 5082 y PGlite en memoria en el 55442.
 - En el navegador usar 127.0.0.4; las otras sesiones usan localhost y de 127.0.0.1 a 127.0.0.3.
@@ -258,7 +279,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | Fase | Qué sale | Estado |
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
-| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas); faltan el examen integral, los documentos y la matrícula |
+| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral y el pacto del creyente; faltan los documentos (certificados y diploma con QR) y la matrícula |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |

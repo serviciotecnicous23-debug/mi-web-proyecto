@@ -18,6 +18,7 @@ import {
   accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, frenar, marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA,
 } from "./academia-comun";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
+import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 
 export { ACADEMIA_SQL } from "./academia-comun";
 
@@ -87,14 +88,32 @@ export function registerAcademiaRoutes(app: Express) {
           medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         };
       };
-      const niveles = NIVELES.map(({ materias: ms, ...n }) => ({ ...n, materias: ms.map(resumen) }));
+      const cierres = userId ? await cierresDe(userId) : new Map();
+      const sinAvance = { integralAprobado: false, pacto: false, completado: null };
+      const niveles = NIVELES.map(({ materias: ms, ...n }) => ({
+        ...n,
+        materias: ms.map(resumen),
+        cierre: integralDisponible({ ...n, materias: ms }) ? cierres.get(n.n) ?? sinAvance : null,
+      }));
       const especialidades = ESPECIALIDADES.map(({ materias: ms, ...e }) => ({ ...e, materias: ms.map(resumen) }));
-      // Continuar: la primera materia en curso (o la primera disponible), en su primera lección sin terminar
+      // Continuar: la primera materia en curso (o la primera disponible), en su primera lección sin terminar; con las
+      // materias de un nivel aprobadas, el cierre de ese nivel (el examen integral y después el pacto).
       let continuar: AcademiaEstado["continuar"] = null;
       if (userId) {
         const todas = NIVELES.flatMap((n) => n.materias).filter((m) => m.disponible);
         const m = todas.find((x) => materias.get(x.id)?.estado === "en-curso") ?? todas.find((x) => materias.get(x.id)?.estado !== "aprobada");
-        if (m) {
+        const porCerrar = niveles.find((n) => n.cierre && !n.cierre.completado && n.materias.every((x) => x.estado === "aprobada"));
+        if (porCerrar && (!m || m.nivel! > porCerrar.n)) {
+          continuar = {
+            leccionId: null,
+            titulo: porCerrar.cierre!.integralAprobado ? "El pacto del creyente" : "Examen integral",
+            materiaId: "",
+            materia: `Nivel ${porCerrar.n} · ${porCerrar.nombre}`,
+            n: 0,
+            de: 0,
+            nivel: porCerrar.n,
+          };
+        } else if (m) {
           const k = m.lecciones.findIndex((x) => !completadas.has(x.id));
           continuar = {
             leccionId: k >= 0 ? m.lecciones[k].id : null,
@@ -384,4 +403,5 @@ export function registerAcademiaRoutes(app: Express) {
   });
 
   registerAcademiaExamenRoutes(app);
+  registerAcademiaNivelRoutes(app);
 }
