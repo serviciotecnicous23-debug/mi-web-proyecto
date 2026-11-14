@@ -946,9 +946,85 @@ export type NivelEstado = {
   completado: string | null;
   promedio: number | null;
   honores: boolean;
+  /** El código del certificado del nivel, cuando está completo. */
+  certificado: string | null;
   vistaPrevia: boolean;
   conSesion: boolean;
 };
+
+// ---------------------------------------------------------------- los documentos
+
+export type TipoDocumento = "materia" | "nivel";
+
+/** Un documento de la academia (certificado de materia o de nivel), como lo ven su dueño y la Dirección académica. */
+export type DocumentoAcademia = {
+  codigo: string;
+  tipo: TipoDocumento;
+  /** El id de la materia o el número del nivel. */
+  ref: string;
+  /** El título de la materia, o lo que recibe el nivel («Certificado en Fundamentos de la Fe»). */
+  titulo: string;
+  nivel: { n: number; nombre: string } | null;
+  /** El nombre del alumno al emitirse. */
+  nombre: string;
+  /** La nota de la materia o el promedio del nivel. */
+  nota: number | null;
+  honores: boolean;
+  via: string;
+  emitido: string;
+  revocado: string | null;
+  motivo: string | null;
+  /** La dirección pública de la verificación (la del QR). */
+  verificar: string;
+  /** El QR de la verificación como imagen PNG (data URL), solo en la vista del documento. */
+  qr: string | null;
+};
+
+/** Lo que muestra la verificación pública: sin notas (las notas las ven el alumno y sus profesores). */
+export type VerificacionAcademia = {
+  valido: boolean;
+  codigo: string;
+  tipo: TipoDocumento;
+  documento: string;
+  nivel: string | null;
+  nombre: string;
+  emitido: string;
+  honores: boolean;
+  revocado: string | null;
+  academia: string;
+  aclaracion: string;
+};
+
+/** El código de un documento: AAF-XXXX-XXXX, en base 32 de Crockford (sin I, L, O ni U para no confundirse). */
+export const PATRON_CODIGO = /^AAF-[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/;
+const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/** El código a partir de 5 bytes al azar (40 bits: imposible de adivinar). */
+export function codigoDe(bytes: Uint8Array): string {
+  let bits = 0;
+  let valor = 0;
+  let out = "";
+  for (const b of bytes.slice(0, 5)) {
+    valor = (valor << 8) | b;
+    bits += 8;
+    while (bits >= 5) {
+      out += CROCKFORD[(valor >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+    valor &= (1 << bits) - 1;
+  }
+  out = out.padEnd(8, "0");
+  return `AAF-${out.slice(0, 4)}-${out.slice(4, 8)}`;
+}
+
+/** Lo que escribe la persona, llevado al código: mayúsculas, sin espacios, O por 0 e I o L por 1 (como Crockford). */
+export function normalizarCodigo(s: string): string {
+  const limpio = s.trim().toUpperCase().replace(/[\s_.]+/g, "");
+  const m = /^AAF-?([0-9A-Z]{4})-?([0-9A-Z]{4})$/.exec(limpio);
+  if (!m) return limpio;
+  const fijo = (x: string) => x.replace(/O/g, "0").replace(/[IL]/g, "1");
+  return `AAF-${fijo(m[1])}-${fijo(m[2])}`;
+}
 
 export type LeccionEstado = { id: string; titulo: string; minutos: number; base: string; vista: boolean; completada: boolean };
 
@@ -978,6 +1054,8 @@ export type MateriaDetalle = {
   medalla: Medalla | null;
   versiculo: { ref: string; aprendido: boolean; puntaje: number | null; intentos: number } | null;
   examen: ExamenEstado | null;
+  /** El código del certificado de la materia, cuando está aprobada. */
+  certificado: string | null;
   vistaPrevia: boolean;
   conSesion: boolean;
 };

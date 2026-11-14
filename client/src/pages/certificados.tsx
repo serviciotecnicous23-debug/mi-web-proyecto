@@ -177,16 +177,36 @@ export default function CertificadosPage() {
     enabled: !!user,
   });
 
+  // Los documentos de la Academia Avivando el Fuego (si la persona puede verla; si no, no se muestran).
+  const { data: documentosAcademia = [] } = useQuery<any[]>({
+    queryKey: ["academia", "certificados"],
+    queryFn: async () => {
+      const res = await fetch("/api/academia/certificados", { credentials: "include" });
+      return res.ok ? res.json() : [];
+    },
+    enabled: !!user,
+    retry: false,
+  });
+
   const handleVerify = async () => {
     if (!verifyCode.trim()) return;
     setVerifying(true);
     setVerifyResult(null);
     try {
-      const res = await fetch(`/api/certificates/verify/${verifyCode.trim()}`);
-      if (res.ok) {
-        setVerifyResult(await res.json());
+      // Los códigos de la academia (AAF-XXXX-XXXX) se verifican en la academia; los demás, en la Escuela.
+      if (/^\s*aaf/i.test(verifyCode)) {
+        const res = await fetch(`/api/academia/verificar/${encodeURIComponent(verifyCode.trim())}`);
+        const d = await res.json().catch(() => null);
+        if (!res.ok || !d) setVerifyResult({ error: d?.message || "Documento no encontrado" });
+        else if (!d.valido) setVerifyResult({ error: "Ese documento de la academia fue revocado." });
+        else setVerifyResult({ studentName: d.nombre, courseName: `${d.documento}${d.honores ? ", con honores" : ""}${d.nivel ? ` (${d.nivel})` : ""}`, issuedAt: d.emitido, academia: d.academia });
       } else {
-        setVerifyResult({ error: "Certificado no encontrado" });
+        const res = await fetch(`/api/certificates/verify/${verifyCode.trim()}`);
+        if (res.ok) {
+          setVerifyResult(await res.json());
+        } else {
+          setVerifyResult({ error: "Certificado no encontrado" });
+        }
       }
     } catch {
       setVerifyResult({ error: "Error al verificar" });
@@ -355,6 +375,30 @@ export default function CertificadosPage() {
           </div>
         )}
 
+        {/* Academia Avivando el Fuego */}
+        {documentosAcademia.length > 0 && (
+          <div data-testid="certificados-academia">
+            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2"><Award className="h-5 w-5 text-orange-600" /> De la Academia Avivando el Fuego</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {documentosAcademia.map((d: any) => (
+                <a key={d.codigo} href={`/academia/certificado/${d.codigo}`} className="block">
+                  <Card className="hover:shadow-lg transition-all border-l-4 border-l-orange-400 hover:border-l-orange-600 h-full">
+                    <CardContent className="pt-6">
+                      <h3 className="font-semibold">{d.titulo}</h3>
+                      {d.nivel && <p className="text-sm text-muted-foreground">Nivel {d.nivel.n} · {d.nivel.nombre}</p>}
+                      <div className="flex justify-between items-center mt-3">
+                        <span className="text-xs text-muted-foreground">{format(new Date(d.emitido), "dd MMM yyyy", { locale: es })}</span>
+                        {d.nota != null && <Badge variant="secondary">{d.tipo === "nivel" ? "Promedio" : "Nota"}: {d.nota}</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 tracking-wider">{d.codigo}</p>
+                    </CardContent>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Verification */}
         <Card>
           <CardHeader>
@@ -364,7 +408,7 @@ export default function CertificadosPage() {
           <CardContent>
             <div className="flex gap-2 max-w-md">
               <Input
-                placeholder="Ej: CERT-ABC123..."
+                placeholder="Ej: CERT-ABC123… o AAF-XXXX-XXXX"
                 value={verifyCode}
                 onChange={(e) => setVerifyCode(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleVerify()}
@@ -381,7 +425,7 @@ export default function CertificadosPage() {
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-green-600 mb-2">
                       <CheckCircle className="h-5 w-5" />
-                      <span className="font-semibold">Certificado Válido</span>
+                      <span className="font-semibold">{verifyResult.academia ? `Documento válido · ${verifyResult.academia}` : "Certificado Válido"}</span>
                     </div>
                     <p className="text-sm"><strong>Estudiante:</strong> {verifyResult.studentName || verifyResult.certificate?.studentName}</p>
                     <p className="text-sm"><strong>Curso:</strong> {verifyResult.courseName || verifyResult.certificate?.courseName}</p>

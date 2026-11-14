@@ -2,8 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, EXAMEN_INTEGRAL, NIVELES, PACTOS, PESOS_NIVEL, VERSICULOS_NIVEL, calificacion, citaVisible, enlaceBiblia,
-  esperaFinalMin, leccionPublica, materiaAprobada, medallaDe, notaExamen, notaMateria, parsearCita, puntajeVersiculo, todasLasMaterias, veVistaPrevia,
+  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, EXAMEN_INTEGRAL, NIVELES, PACTOS, PATRON_CODIGO, PESOS_NIVEL, VERSICULOS_NIVEL, calificacion, citaVisible,
+  codigoDe, enlaceBiblia, esperaFinalMin, leccionPublica, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, parsearCita, puntajeVersiculo,
+  todasLasMaterias, veVistaPrevia,
 } from "./academia";
 
 test("el catálogo: 5 niveles con 8, 9, 10, 10 y 8 materias, y 12 especialidades de 5", () => {
@@ -86,6 +87,22 @@ test("el cierre del Nivel 1: integral de 40 con 75 para aprobar, 4 versículos y
   for (const c of pacto.compromisos) assert.ok(parsearCita(c.ref), c.ref);
   // los requisitos que se muestran del Nivel 1 son los que se comprueban
   assert.deepEqual(NIVELES[0].requisitos, ["Las 8 materias aprobadas", "El examen integral del nivel", "4 versículos de memoria", "El pacto del creyente"]);
+});
+
+test("los códigos de los documentos: AAF-XXXX-XXXX en base 32 sin letras confusas, y se corrige lo que se escribe", () => {
+  assert.equal(codigoDe(new Uint8Array([0, 0, 0, 0, 0])), "AAF-0000-0000");
+  assert.equal(codigoDe(new Uint8Array([255, 255, 255, 255, 255])), "AAF-ZZZZ-ZZZZ");
+  assert.equal(codigoDe(new Uint8Array([0x08, 0x42, 0x10, 0x84, 0x21])), "AAF-1111-1111");
+  for (let i = 0; i < 200; i++) {
+    const c = codigoDe(Uint8Array.from({ length: 5 }, (_, k) => (i * 37 + k * 101) % 256));
+    assert.match(c, PATRON_CODIGO);
+    assert.doesNotMatch(c.slice(4), /[ILOU]/);
+  }
+  assert.equal(normalizarCodigo(" aaf-7k2m-q9xd "), "AAF-7K2M-Q9XD");
+  assert.equal(normalizarCodigo("AAF 7K2M Q9XD"), "AAF-7K2M-Q9XD");
+  assert.equal(normalizarCodigo("aaf7k2mq9xd"), "AAF-7K2M-Q9XD");
+  assert.equal(normalizarCodigo("AAF-OIL0-1234"), "AAF-0110-1234", "la O es 0; la I y la L son 1");
+  assert.ok(!PATRON_CODIGO.test(normalizarCodigo("CERT-ABC123")));
 });
 
 test("la vista previa es para administración y profesores", () => {

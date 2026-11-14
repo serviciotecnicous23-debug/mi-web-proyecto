@@ -86,7 +86,21 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 - **El pacto del creyente** (Nivel 1, Josué 24:15): seis compromisos con su versículo. Se acepta al final, después de
   aprobar el integral.
 - **El nivel completo:** con todo eso se guarda la fecha y el promedio de sus materias (desde 90, «con honores») y el
-  alumno pasa al nivel siguiente. El documento del nivel, con su código y su QR, llega en la parte siguiente de A2.
+  alumno pasa al nivel siguiente.
+
+**Los documentos** (`server/academia-documentos.ts`, páginas `/academia/certificado/:codigo` y `/academia/verificar`):
+- **Cuándo salen:** el certificado de cada materia, al aprobarla en el examen, y el del nivel, al completarlo. Lo
+  aprobado antes de que existieran recibe su documento la primera vez que se piden (`asegurarDocumentos`).
+- **El código:** `AAF-XXXX-XXXX`, en base 32 de Crockford (sin I, L, O ni U), con 40 bits al azar: no se puede adivinar.
+  Al verificar se aceptan minúsculas, espacios y la O por el 0 (`normalizarCodigo`).
+- **El documento:** el mismo diseño del certificado de la Escuela, con el nombre del día en que se emitió, la nota o el
+  promedio, «con honores» en el del nivel, las líneas de la Dirección académica y del Ministerio, el QR que lleva a la
+  verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Dirección académica; se
+  descarga en PDF o se imprime.
+- **La verificación pública** (sin cuenta, la abre el QR): válido o revocado, el nombre, el documento, el nivel y la
+  fecha, **sin notas**. La casilla «Verificar» de Certificados también acepta estos códigos.
+- **Firmas:** por ahora, la línea de la Dirección académica y el sello del Ministerio; los nombres y las firmas los da
+  Luis.
 
 **El examen final** (`EXAMEN_FINAL` en `shared/academia.ts`):
 
@@ -228,6 +242,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   mismas rutas (`rutasDeEvaluacion`).
 - `server/academia-eleccion.ts`: qué preguntas trae cada intento, con su prueba en `server/academia-eleccion.test.ts`.
 - `server/academia-nivel.ts`: el cierre del nivel (integral, versículos, pacto y nivel completo).
+- `server/academia-documentos.ts`: los certificados (emisión, vista con QR y verificación pública). Usa la librería
+  `qrcode` en el servidor.
 - `server/academia-correccion.ts`: el corrector, con su prueba en `server/academia-correccion.test.ts`.
 - `server/academia/`: los tipos, el contenido, los bancos y el registro. **Solo servidor.**
 - `client/src/pages/academia*.tsx` y `client/src/components/academia/` (`examen.tsx` es la pantalla común de los
@@ -241,6 +257,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `academia_lecciones` | Vista, completada, repaso (`{pregunta: {primera, ok}}`) y nota privada |
 | `academia_pruebas` | Una fila por examen (`<materia>:final` y `nivel-<n>:integral`): intentos, fallos, mejor, última, vistas, el intento en curso en jsonb, `curso_at`, `fallo_at`, `aprobada_at` y el resultado con su revisión |
 | `academia_niveles` | El cierre de cada nivel: el pacto aceptado, el nivel completo y su promedio |
+| `academia_certificados` | Los documentos: código, alumno, tipo (materia o nivel), título, nombre del día de emisión, nota, honores, vía, fecha y revocación con su motivo |
 | `academia_respuestas` | Lo escrito, con la nota automática, el detalle, la marca para revisar y la revisión humana (nota final, revisor, motivo) |
 | `academia_materias` | Estado, nota, componentes y vía (cursada, suficiencia o convalidada) |
 | `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
@@ -262,6 +279,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `GET nivel/:n` | El nivel y lo que falta para cerrarlo |
 | `POST nivel/:n/pacto` | Aceptar el pacto: `{acepto: true}`, con el integral aprobado |
 | `GET integral/:nivel` y `POST integral/:nivel/empezar`, `/paso`, `/respuesta` y `/escrita` | El examen integral: las mismas rutas que el final |
+| `GET certificados` | Mis documentos (emite los que falten) |
+| `GET certificado/:codigo` | Un documento completo, con su QR: para su dueño y la Dirección académica |
+| `GET verificar/:codigo` | La verificación pública, sin cuenta y sin notas |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
 
 **Vista previa:** mientras `site_content.academia_abierta` no sea `1`, solo la ven los roles de `ROLES_VISTA_PREVIA`
@@ -279,7 +299,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | Fase | Qué sale | Estado |
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
-| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral y el pacto del creyente; faltan los documentos (certificados y diploma con QR) y la matrícula |
+| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente y los certificados con QR verificable; faltan la matrícula, el reglamento, el carné, el estatus en el perfil, la pestaña en Clases, las cuentas pendientes y el audio |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |

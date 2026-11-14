@@ -1,7 +1,8 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
 import type {
-  AcademiaEstado, ExamenEstado, LeccionVista, MateriaDetalle, NivelEstado, PasoExamen, RespuestaRepaso, ResultadoExamen,
+  AcademiaEstado, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, NivelEstado, PasoExamen, RespuestaRepaso, ResultadoExamen,
+  VerificacionAcademia,
 } from "@shared/academia";
 
 export class ErrorAcademia extends Error {
@@ -76,6 +77,28 @@ export function useNivel(n: string | undefined) {
 }
 
 export const aceptarPacto = (n: number) => pedir<NivelEstado>("POST", `/api/academia/nivel/${n}/pacto`, { acepto: true });
+
+/** Mis documentos de la academia (con `activo: false` no se piden: por ejemplo, sin sesión). */
+export function useCertificados(activo = true) {
+  return useQuery<DocumentoAcademia[], ErrorAcademia>({
+    queryKey: ["academia", "certificados"],
+    queryFn: () => pedir("GET", "/api/academia/certificados"),
+    enabled: activo,
+    retry: false,
+  });
+}
+
+export function useCertificado(codigo: string | undefined) {
+  return useQuery<DocumentoAcademia, ErrorAcademia>({
+    queryKey: ["academia", "certificado", codigo],
+    queryFn: () => pedir("GET", `/api/academia/certificado/${encodeURIComponent(codigo!)}`),
+    enabled: !!codigo,
+    retry: false,
+  });
+}
+
+/** La verificación pública de un documento (sin cuenta). */
+export const verificarDocumento = (codigo: string) => pedir<VerificacionAcademia>("GET", `/api/academia/verificar/${encodeURIComponent(codigo.trim())}`);
 
 export const responderRepaso = (leccionId: string, preguntaId: string, opcion: number) =>
   pedir<RespuestaRepaso>("POST", "/api/academia/repaso", { leccionId, preguntaId, opcion });

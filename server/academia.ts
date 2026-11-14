@@ -19,6 +19,7 @@ import {
 } from "./academia-comun";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
+import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
 
 export { ACADEMIA_SQL } from "./academia-comun";
 
@@ -167,6 +168,7 @@ export function registerAcademiaRoutes(app: Express) {
         medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         versiculo,
         examen: userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null,
+        certificado: userId && estado === "aprobada" ? (await codigoDocumento(userId, "materia", m.id)) ?? (await emitirMateria(userId, m, fila?.nota ?? 0)) : null,
         vistaPrevia: acceso.vistaPrevia,
         conSesion: !!userId,
       };
@@ -404,4 +406,5 @@ export function registerAcademiaRoutes(app: Express) {
 
   registerAcademiaExamenRoutes(app);
   registerAcademiaNivelRoutes(app);
+  registerAcademiaDocumentosRoutes(app);
 }
