@@ -8,8 +8,7 @@ import { numeroDe } from "./orden-examen";
 import { getBibleChapter } from "./bible";
 import { resolveSiteUrl } from "@shared/site";
 import {
-  APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, SUFICIENCIA, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita,
-  pesosDe, veVistaPrevia, type Componentes, type MateriaDef, type MedidaExamen, type NivelN,
+  tieneEscritoBreve, miniPruebasDe, MEDIDA_MINI, APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, SUFICIENCIA, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita, pesosDe, veVistaPrevia, type Componentes, type MateriaDef, type MedidaExamen, type NivelN,
 } from "@shared/academia";
 import { BANCOS } from "./academia/index";
 
@@ -363,7 +362,7 @@ export async function nombreAcademico(userId: number): Promise<string> {
 /** El examen de una clave de academia_pruebas: su título, su página, su medida y la nota para aprobar. */
 export type ContextoExamen = {
   clave: string;
-  tipo: "final" | "integral" | "suficiencia" | "diagnostico";
+  tipo: "final" | "integral" | "suficiencia" | "diagnostico" | "mini" | "breve";
   /** «Examen final de «La salvación»», «Examen integral del Nivel 1 · Fundamentos de la fe». */
   titulo: string;
   /** «el examen final de «La salvación»», para las frases de los avisos. */
@@ -399,6 +398,25 @@ export function contextoExamen(clave: string): ContextoExamen | null {
     return {
       clave, tipo: "suficiencia", titulo: `Examen de suficiencia de «${m.titulo}»`, enFrase: `el examen de suficiencia de «${m.titulo}»`, ruta: `/academia/suficiencia/${m.id}`,
       medida: medidaSuficiencia(m), aprueba: SUFICIENCIA.apruebaObjetiva, materia: m, nivel: null,
+    };
+  }
+  const mini = /^(.+):mini-(\d+)$/.exec(clave);
+  if (mini) {
+    const m = materiaPorId(mini[1]);
+    if (!m) return null;
+    return {
+      clave, tipo: "mini", titulo: `Mini prueba ${mini[2]} de «${m.titulo}»`, enFrase: `la mini prueba ${mini[2]} de «${m.titulo}»`, ruta: `/academia/mini/${m.id}/${mini[2]}`,
+      medida: MEDIDA_MINI, aprueba: APRUEBA, materia: m, nivel: null,
+    };
+  }
+  const breve = /^(.+):breve$/.exec(clave);
+  if (breve) {
+    const m = materiaPorId(breve[1]);
+    if (!m) return null;
+    // una sola escrita que vale toda la nota (la parte objetiva pesa 0)
+    return {
+      clave, tipo: "breve", titulo: `Escrito breve de «${m.titulo}»`, enFrase: `el escrito breve de «${m.titulo}»`, ruta: `/academia/escrito/${m.id}`,
+      medida: { objetivas: 0, banco: 0, escritas: 1, pesoObjetiva: 0, segundos: 0, minutosEscrita: 0 }, aprueba: APRUEBA, materia: m, nivel: null,
     };
   }
   if (clave === "diagnostico") {
@@ -516,6 +534,9 @@ export async function textoDeCita(ref: string): Promise<VersiculoResuelto> {
 // ---------------------------------------------------------------- la nota de la materia
 
 const claveFinal = (materiaId: string) => `${materiaId}:final`;
+/** La mini prueba `n` de una materia y su escrito breve (Nivel 2 en adelante). */
+export const claveMini = (materiaId: string, n: number) => `${materiaId}:mini-${n}`;
+export const claveBreve = (materiaId: string) => `${materiaId}:breve`;
 /** La clave del examen integral de un nivel en academia_pruebas. */
 export const claveIntegral = (nivel: number) => `nivel-${nivel}:integral`;
 
@@ -550,6 +571,15 @@ export async function componentesDe(userId: number, m: MateriaDef): Promise<Comp
   comps.versiculo = Number(v[0]?.puntaje ?? 0);
   const { rows: f } = await pool.query(`SELECT mejor FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveFinal(m.id)]);
   comps.final = Number(f[0]?.mejor ?? 0);
+  // Nivel 2 en adelante: las mini pruebas (el promedio de la mejor de cada una; la que no se dio cuenta 0) y el escrito breve
+  const minis = miniPruebasDe(m);
+  if (minis.length || tieneEscritoBreve(m)) {
+    const claves = [...minis.map((g) => claveMini(m.id, g.n)), claveBreve(m.id)];
+    const { rows: pr } = await pool.query(`SELECT clave, mejor FROM academia_pruebas WHERE user_id = $1 AND clave = ANY($2::text[])`, [userId, claves]);
+    const mejor = new Map((pr as any[]).map((r) => [String(r.clave), Number(r.mejor ?? 0)]));
+    if (minis.length) comps.mini = Math.round(minis.reduce((s, g) => s + (mejor.get(claveMini(m.id, g.n)) ?? 0), 0) / minis.length);
+    if (tieneEscritoBreve(m)) comps.escritos = mejor.get(claveBreve(m.id)) ?? 0;
+  }
   return comps;
 }
 

@@ -180,6 +180,40 @@ export const EXAMEN_FINAL: Record<NivelN, MedidaExamen> = {
 export function examenDe(m: MateriaDef): MedidaExamen {
   return EXAMEN_FINAL[m.nivel ?? 3];
 }
+
+/**
+ * Las mini pruebas (Nivel 2 en adelante): cada 3 lecciones, 6 preguntas de un banco de 18, 45 segundos cada una, sin
+ * escritas. Hay 3 intentos (cada uno con preguntas nuevas) y cuenta el mejor. Muestran la revisión al terminar: sirven
+ * para aprender. Su nota, en promedio, es el componente «mini» de la materia (las que no se dieron cuentan 0).
+ */
+export const MINI_PRUEBA = { objetivas: 6, banco: 18, segundos: 45, intentos: 3, cada: 3 } as const;
+export const MEDIDA_MINI: MedidaExamen = {
+  objetivas: MINI_PRUEBA.objetivas, banco: MINI_PRUEBA.banco, escritas: 0, pesoObjetiva: 100, segundos: MINI_PRUEBA.segundos, minutosEscrita: 0,
+};
+/** Las mini pruebas de una materia: su número y las lecciones que mide (de 3 en 3). Ninguna si el nivel no las pesa. */
+export function miniPruebasDe(m: MateriaDef): { n: number; lecciones: number[] }[] {
+  if (!pesosDe(m).mini) return [];
+  const out: { n: number; lecciones: number[] }[] = [];
+  for (let i = 0; i < m.lecciones.length; i += MINI_PRUEBA.cada) {
+    out.push({ n: out.length + 1, lecciones: m.lecciones.slice(i, i + MINI_PRUEBA.cada).map((_, j) => i + j + 1) });
+  }
+  return out;
+}
+
+/**
+ * El escrito breve (Nivel 2 en adelante): de 80 a 300 palabras, con ideas y citas, que corrige el sistema (y puede
+ * revisar la Administración). Se entrega después de las lecciones; hay 2 entregas y cuenta la mejor. Es el componente
+ * «escritos» de la materia.
+ */
+export const ESCRITO_BREVE = { entregas: 2 } as const;
+export function tieneEscritoBreve(m: MateriaDef): boolean {
+  return pesosDe(m).escritos > 0;
+}
+
+/** Una mini prueba en la página de la materia. */
+export type MiniEstado = { n: number; lecciones: number[]; intentos: number; mejor: number | null; enCurso: boolean; falta: string[]; cerrado: string | null };
+/** El escrito breve en la página de la materia. */
+export type BreveEstado = { entregas: number; maxEntregas: number; mejor: number | null; falta: string[] };
 /** Margen por la conexión: una respuesta que llega hasta 6 s después del tiempo todavía vale. */
 export const MARGEN_SEGUNDOS = 6;
 /** Margen de la parte escrita (escribir en el teléfono). */
@@ -797,6 +831,59 @@ const COMPARTIR_FE: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 1: la primera del Nivel 2, con mini pruebas y escrito breve. */
+const PANORAMA_AT: MateriaDef = {
+  id: "n2-panorama-at",
+  nivel: 2,
+  orden: 1,
+  titulo: "Panorama del Antiguo Testamento",
+  resumen: "La historia de la redención de Génesis a Malaquías: creación, patriarcas, éxodo, ley, reyes, profetas, exilio y regreso.",
+  base: "Lucas 24:27; Romanos 15:4",
+  memoria: "Romanos 15:4",
+  lecciones: lecciones("n2-panorama-at", [
+    ["Cómo se organiza el Antiguo Testamento", "Lucas 24:27, 44; Romanos 15:4; Génesis 3:15"],
+    ["Los comienzos: Génesis", "Génesis 1:27; 12:1-3; 15:6; 50:20"],
+    ["Éxodo y pacto: de Egipto al Sinaí", "Éxodo 12:13; 19:5-6; 20:2-3; Deuteronomio 6:4-5"],
+    ["La tierra y el reino", "Josué 1:8-9; 1 Samuel 16:7; 2 Samuel 7:16; 2 Reyes 25:9"],
+    ["Los poetas y los profetas", "Salmos 1:1-2; Proverbios 1:7; Jeremías 31:31-33; Isaías 53:5"],
+    ["Exilio, regreso y la espera del Mesías", "Esdras 1:1-3; Nehemías 6:15; Malaquías 3:1; Gálatas 4:4"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo conozca la historia del Antiguo Testamento de principio a fin y la lea como la primera parte de una sola historia: Dios cumpliendo su promesa de salvación, que llega a su plenitud en Jesucristo (Lucas 24:27). Conocer el Antiguo Testamento da raíces a la fe y enseña a confiar en un Dios que cumple lo que promete (Romanos 15:4).",
+    objetivos: [
+      { id: "o1", texto: "Nombrar las secciones del Antiguo Testamento y ubicar sus libros principales.", bloom: "recordar" },
+      { id: "o2", texto: "Resumir los grandes momentos de la historia del Antiguo Testamento, de la creación al regreso del exilio.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar las promesas y los pactos de Dios con Abraham, con Israel en el Sinaí y con David, y cómo se cumplen en Cristo.", bloom: "analizar" },
+      { id: "o4", texto: "Describir la misión de los profetas e identificar profecías del Mesías cumplidas en Jesús.", bloom: "analizar" },
+      { id: "o5", texto: "Recitar Romanos 15:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La estructura del Antiguo Testamento, su historia, sus pactos y sus promesas del Mesías.",
+      ser: "Confianza en un Dios fiel, que cumple sus promesas aun cuando su pueblo falla.",
+      hacer: "Leer el Antiguo Testamento con orden y descubrir a Cristo en sus páginas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Henrietta C. Mears", titulo: "Lo que nos dice la Biblia", editorial: "Vida" },
+        { autor: "Samuel J. Schultz", titulo: "Habla el Antiguo Testamento", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Pablo Hoff", titulo: "El Pentateuco", editorial: "Vida" },
+        { autor: "Henry H. Halley", titulo: "Compendio manual de la Biblia" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 1): Génesis 1-11", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/genesis-1-11/", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2): Génesis 12-50", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/genesis-12-50/", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1): Éxodo 1-18", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/exodo-1-18/", minutos: 7 },
+      { tipo: "lectura", titulo: "Lucas 24: Jesús explica las Escrituras", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=24" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -830,7 +917,7 @@ export const NIVELES: NivelDef[] = [
     descripcion: "Conocer la Biblia de principio a fin, las doctrinas fundamentales y la vida del discípulo que sirve y comparte su fe.",
     requisitos: ["Las 9 materias aprobadas", "El examen integral del nivel", "8 versículos de memoria", "3 conversaciones de evangelismo registradas", "Servir 1 mes en un ministerio"],
     materias: [
-      enPreparacion(2, 1, "n2-panorama-at", "Panorama del Antiguo Testamento", "La historia de la redención de Génesis a Malaquías: creación, patriarcas, éxodo, ley, reyes, profetas, exilio y regreso."),
+      PANORAMA_AT,
       enPreparacion(2, 2, "n2-panorama-nt", "Panorama del Nuevo Testamento", "La vida de Jesús, la iglesia en Hechos, las cartas, Apocalipsis y el tiempo entre los testamentos."),
       enPreparacion(2, 3, "n2-doctrinas", "Doctrinas fundamentales", "Las grandes verdades de la fe según la declaración de fe del ministerio."),
       enPreparacion(2, 4, "n2-disciplinas", "Disciplinas espirituales", "Oración, ayuno, adoración, meditación, diario espiritual y el día del Señor."),
@@ -1188,6 +1275,25 @@ export type MateriaDetalle = {
   via: "cursada" | "suficiencia" | "convalidada" | null;
   /** El examen de suficiencia, mientras se puede ofrecer: antes del examen final y sin haberlo dado (null si no). */
   suficiencia: { enCurso: boolean } | null;
+  /** Las mini pruebas (Nivel 2 en adelante; vacío si la materia no las tiene o no hay sesión). */
+  minis: MiniEstado[];
+  /** El escrito breve (Nivel 2 en adelante; null si la materia no lo tiene o no hay sesión). */
+  breve: BreveEstado | null;
+};
+
+/** El escrito breve de una materia, para el alumno. */
+export type EscritoBreveVista = {
+  materia: { id: string; titulo: string };
+  pregunta: string;
+  min: number;
+  max: number;
+  entregas: number;
+  maxEntregas: number;
+  mejor: number | null;
+  falta: string[];
+  cerrado: string | null;
+  /** La última entrega corregida (con la respuesta modelo solo después de la última). */
+  ultimo: ResultadoExamen | null;
 };
 
 export type BloqueVista =

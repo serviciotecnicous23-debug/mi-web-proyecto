@@ -103,7 +103,9 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 | Examen de suficiencia | Para aprobar una materia sin cursarla: 25 preguntas de todas sus lecciones y 2 escritas, una sola vez, antes del examen final; pide 85 y 75 a la vez | El sistema (revisable) |
 | Prueba diagnóstica | 2 preguntas de cada materia con contenido, 45 segundos cada una, cada 30 días: solo sugiere por dónde empezar | El sistema |
 | Repaso del versículo | Vuelve a los 1, 3, 7 y 21 días de aprenderlo; al pasar el último queda dominado | El sistema |
-| Mini pruebas, escritos breves, práctica y proyecto | Desde las fases siguientes | Sistema, líder o 2 profesores |
+| Mini prueba (Nivel 2 en adelante) | Cada 3 lecciones: 6 preguntas de un banco de 18, 45 s cada una, sin escritas; 3 intentos con preguntas nuevas y cuenta el mejor; revisión completa al terminar | El sistema |
+| Escrito breve (Nivel 2 en adelante) | De 80 a 300 palabras, con ideas y citas, después de las lecciones; 2 entregas y cuenta la mejor | El sistema (revisable) |
+| Práctica ministerial y proyecto | Desde las fases siguientes | El líder o 2 profesores |
 
 **El cierre del nivel** (`server/academia-nivel.ts`, página `/academia/nivel/:n`):
 - **Requisitos:** las materias del nivel aprobadas, el examen integral, los versículos de memoria que pide el nivel
@@ -415,6 +417,28 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 - **Nivel 1:** examen final 70 %, repasos 15 % y versículo 15 %.
   - Los repasos valen 60 por hacerlos todos y hasta 40 más por los aciertos a la primera.
   - La materia se aprueba con 70 de nota y el examen aprobado.
+- **Nivel 2:** examen final 50 %, mini pruebas 25 %, escrito breve 15 % y versículo 10 % (`PESOS_NIVEL`).
+  - Mini pruebas: el promedio de la mejor nota de cada una; la que no se da cuenta 0.
+  - Escrito breve: la mejor de sus entregas (con la revisión de la Administración, si la hubo).
+  - Sin mini pruebas ni escrito, la nota no llega a 70: hay que hacerlos. Y el examen final sigue siendo necesario.
+
+**Las mini pruebas** (`server/academia-mini.ts`, página `/academia/mini/:materiaId/:n`):
+- Una cada 3 lecciones (`miniPruebasDe`: en una materia de 6 lecciones, la 1 mide las lecciones 1 a 3 y la 2, las 4 a
+  6). Se abren al completar las lecciones de su grupo.
+- 6 preguntas de su banco de 18 (`MEDIDA_MINI`), repartidas por lección, 45 segundos cada una, sin escritas.
+- 3 intentos, cada uno con preguntas nuevas, sin espera; cuenta el mejor y después se cierra (`ExamenEstado.cerrado`).
+- Usan el motor de los exámenes (`evaluacionMini`, clave `<materia>:mini-<n>`), con la revisión completa al terminar
+  y sin pedidos de revisión (no tienen escritas).
+
+**El escrito breve** (`server/academia-escrito.ts`, página `/academia/escrito/:materiaId`):
+- Una consigna por materia, con su clave de corrección (`breve` en el banco, de tipo «breve»: 80 a 300 palabras).
+- Se entrega después de completar las lecciones, sin reloj. Lo que no llega a 80 palabras o pasa de 300 no gasta la
+  entrega. Hay 2 entregas y cuenta la mejor (`ESCRITO_BREVE`).
+- Después de la primera se ve qué ideas encontró el corrector y cuáles faltan; la respuesta modelo, solo después de
+  la última (si no, la segunda se copiaría).
+- Cada entrega queda como un intento (`academia_intentos`, con la escrita como toda la nota) y su respuesta en
+  `academia_respuestas` (clave `<materia>:breve`): la Administración la revisa y cambia su nota como cualquier escrita,
+  con el recálculo en cadena (contexto «breve»).
 
 **Equivalencias (fase A4):**
 - **El examen de suficiencia** (`server/academia-suficiencia.ts`, página `/academia/suficiencia/:materiaId`) es la única
@@ -503,6 +527,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - El repaso de cada lección: 3 preguntas.
    - El final: 3 veces el examen, con `leccion`, `objetivo` y `bloom` en cada pregunta.
    - Las escritas, con su clave.
+   - Desde el Nivel 2, además: `mini`, las preguntas de cada mini prueba (18 por mini prueba, de las lecciones de su
+     grupo, al menos 6 por lección) y `breve`, el escrito breve con su clave (la respuesta modelo, de 80 a 300 palabras,
+     debe sacar 90 o más).
    - **Los ids nunca se reusan.**
 4. Regístralos en `server/academia/index.ts`.
 5. Corre las pruebas: `npx tsx --test server/academia-correccion.test.ts shared/academia.test.ts`, y después
@@ -545,6 +572,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   `client/src/components/academia/asignaciones.tsx` (la pestaña del aula y las tarjetas) y `mentores.tsx`; la página
   `client/src/pages/academia-acompanados.tsx`.
 - `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
+- `server/academia-mini.ts` y `server/academia-escrito.ts`: las mini pruebas y el escrito breve del Nivel 2 en adelante;
+  las páginas `client/src/pages/academia-mini.tsx` y `academia-escrito.tsx` (la revisión de una escrita es
+  `EscritaCorregida`, en `examen.tsx`).
 - `server/academia-suficiencia.ts`, `server/academia-diagnostico.ts` y `server/academia-versiculos.ts`: la suficiencia,
   la prueba diagnóstica y el repaso espaciado (fase A4). `server/academia-orden.ts`: el reparto de la respuesta
   correcta en el repaso y los exámenes, con su prueba. `shared/academia-declaracion.ts`: la declaración de fe.
@@ -645,6 +675,8 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET versiculos/repaso/:materiaId` y `POST versiculos/repaso/:materiaId` | Las fichas de un versículo para repasarlo y el orden: `{orden}` |
 | `GET declaracion` | Si la declaración de fe está aprobada |
 | `POST direccion/declaracion/aprobar` y `/desaprobar` | Aprobar la declaración de fe `{notas}` o quitar la aprobación `{motivo}` |
+| `GET mini/:materiaId/:n` y `POST mini/:materiaId/:n/empezar`, `/paso` y `/respuesta` | Una mini prueba: las mismas rutas que el final |
+| `GET escrito/:materiaId` y `POST escrito/:materiaId` | El escrito breve: la consigna, las entregas y la última corrección; entregarlo `{texto, pegado}` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
@@ -666,7 +698,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
 | A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Hecho: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura, el historial, el análisis de preguntas, retirar preguntas del banco, la revisión doctrinal del contenido, las asignaciones a los cursos de la Escuela (con sus columnas en la planilla) y los mentores |
-| A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | Sigue: la suficiencia, la prueba diagnóstica, el repaso espaciado del versículo y la declaración de fe (por aprobar) hechos, con las dos áreas separadas (solo el administrador maneja la academia), la lectura antes del repaso, las opciones equilibradas, el carné nuevo y los PDF; faltan las mini pruebas, los escritos breves y las 9 materias |
+| A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | Sigue: la suficiencia, la prueba diagnóstica, el repaso espaciado del versículo y la declaración de fe (por aprobar) hechos, con las dos áreas separadas (solo el administrador maneja la academia), la lectura antes del repaso, las opciones equilibradas, el carné nuevo y los PDF; con las mini pruebas, el escrito breve, la nota del Nivel 2 y su primera materia, «Panorama del Antiguo Testamento» (6 lecciones, 18 de repaso, 45 del final, 2 mini pruebas de 18, 4 escritas y el escrito breve); faltan las otras 8 materias, el examen integral del Nivel 2 y sus requisitos (evangelismo y servicio) |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
 | A6 · Niveles 4 y 5 y primeras especialidades | Proyecto final y defensa | |
 | A7 · Más especialidades y extras | Avisos (con permiso), lectura sin conexión, ceremonia y segunda opinión con IA (con permiso, por su costo) | |

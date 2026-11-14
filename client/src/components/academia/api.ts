@@ -1,6 +1,6 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
-import type {
+import type { EscritoBreveVista,
   AcademiaEstado, Apelable, ApelacionVista, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen,
   RespuestaRepaso, ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
@@ -277,6 +277,19 @@ export const elegirMentor = (alumnoId: number, mentorId: number | null) =>
 
 /** El examen de suficiencia de una materia y la prueba diagnóstica: las mismas rutas que el examen final. */
 export const baseSuficiencia = (materiaId: string) => `/api/academia/suficiencia/${encodeURIComponent(materiaId)}`;
+export const baseMini = (materiaId: string, n: number) => `/api/academia/mini/${encodeURIComponent(materiaId)}/${n}`;
+
+/** El escrito breve de una materia (Nivel 2 en adelante) y entregarlo. */
+export function useEscrito(materiaId: string | undefined) {
+  return useQuery<EscritoBreveVista, ErrorAcademia>({
+    queryKey: ["academia", "escrito", materiaId],
+    queryFn: () => pedir("GET", `/api/academia/escrito/${encodeURIComponent(materiaId!)}`),
+    enabled: !!materiaId,
+    retry: false,
+  });
+}
+export const entregarEscrito = (materiaId: string, texto: string, pegado: boolean) =>
+  pedir<EscritoBreveVista>("POST", `/api/academia/escrito/${encodeURIComponent(materiaId)}`, { texto, pegado });
 export const baseDiagnostico = "/api/academia/diagnostico/prueba";
 
 /** Mi última prueba diagnóstica (con la sugerencia de hoy) y cuántas preguntas tiene. */

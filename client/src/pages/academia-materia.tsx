@@ -5,13 +5,16 @@ import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Info, Library, Lock, RotateCcw,
-  Sparkles, Target, Timer, Users, Video,
+  ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
-import { APRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, type MateriaDetalle, type Pesos } from "@shared/academia";
+import {
+  APRUEBA, ESCRITO_BREVE, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, tieneEscritoBreve,
+  type MateriaDetalle, type Pesos,
+} from "@shared/academia";
 import {
   inscribirmeEnMateria, responderVersiculo, tiempoTexto, useMateria, versiculoEstudio, versiculoPractica, type VersiculoEstudio, type VersiculoPractica,
 } from "@/components/academia/api";
@@ -145,7 +148,12 @@ function Nota({ d }: { d: MateriaDetalle }) {
           ))}
         </tbody>
       </table>
-      <p className="text-xs text-muted-foreground mt-3">Se aprueba con {APRUEBA} de nota y el examen final aprobado. Repasos: 60 por hacerlos todos y hasta 40 más por los aciertos a la primera.</p>
+      <p className="text-xs text-muted-foreground mt-3">
+        Se aprueba con {APRUEBA} de nota y el examen final aprobado.
+        {d.pesos.repasos ? " Repasos: 60 por hacerlos todos y hasta 40 más por los aciertos a la primera." : ""}
+        {d.pesos.mini ? " Mini pruebas: el promedio de la mejor nota de cada una (la que no se da cuenta 0)." : ""}
+        {d.pesos.escritos ? " Escrito breve: la mejor de sus entregas." : ""}
+      </p>
     </div>
   );
 }
@@ -186,6 +194,16 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
             <Sparkles className="w-6 h-6 text-orange-500" />
             <p className="font-semibold mt-2">Versículo de memoria</p>
             <p className="text-sm text-muted-foreground mt-1">{m.memoria}: lo lees varias veces y después lo armas sin mirar.</p>
+          </div>
+        )}
+        {def && (miniPruebasDe(def).length > 0 || tieneEscritoBreve(def)) && (
+          <div className="glass-card p-5">
+            <ListChecks className="w-6 h-6 text-orange-500" />
+            <p className="font-semibold mt-2">Mini pruebas y escrito breve</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Una mini prueba cada {MINI_PRUEBA.cada} lecciones ({MINI_PRUEBA.objetivas} preguntas, {MINI_PRUEBA.intentos} intentos, cuenta el mejor) y un escrito breve de
+              80 a 300 palabras con citas de la Biblia.
+            </p>
           </div>
         )}
         {medida && (
@@ -390,6 +408,44 @@ export default function AcademiaMateria() {
             volver={aqui}
             boton="Completar mi inscripción"
           />
+        )}
+
+        {/* Nivel 2 en adelante: las mini pruebas y el escrito breve */}
+        {m.disponible && inscrito && d.minis.length > 0 && (
+          <section className="glass-card p-5" data-testid="materia-minis">
+            <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Mini pruebas</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Cada {MINI_PRUEBA.cada} lecciones, {MINI_PRUEBA.objetivas} preguntas de {MINI_PRUEBA.segundos} segundos. Tienes {MINI_PRUEBA.intentos} intentos, cada uno con
+              preguntas nuevas, y cuenta el mejor. Juntas pesan el {d.pesos.mini} % de la nota.
+            </p>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {d.minis.map((x) => (
+                <li key={x.n} className="rounded-xl border border-border p-4" data-testid="materia-mini" data-n={x.n}>
+                  <p className="font-semibold">Mini prueba {x.n} · lecciones {x.lecciones[0]} a {x.lecciones[x.lecciones.length - 1]}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{x.mejor != null ? `Mejor nota: ${x.mejor}` : "Todavía sin dar"} · intentos: {x.intentos} de {MINI_PRUEBA.intentos}</p>
+                  {x.falta.length > 0 && <p className="text-xs mt-1">Para darla te falta {x.falta.join(" y ")}.</p>}
+                  {x.cerrado && <p className="text-xs mt-1">{x.cerrado}</p>}
+                  <Link href={`/academia/mini/${m.id}/${x.n}`}>
+                    <Button size="sm" variant="outline" className="mt-3" data-testid="materia-ir-mini">{x.enCurso ? "Seguir con la mini prueba" : x.intentos ? "Ver la mini prueba" : "Dar la mini prueba"}</Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {m.disponible && inscrito && d.breve && (
+          <section className="glass-card p-5" data-testid="materia-breve">
+            <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><PenLine className="w-5 h-5 text-orange-500" /> Escrito breve</h2>
+            <p className="text-sm text-muted-foreground">
+              Una respuesta de 80 a 300 palabras, con tus palabras y con citas de la Biblia, después de las lecciones. {ESCRITO_BREVE.entregas} entregas; cuenta la mejor.
+              Pesa el {d.pesos.escritos} % de la nota.
+            </p>
+            <p className="text-sm mt-2">{d.breve.mejor != null ? `Mejor nota: ${d.breve.mejor}` : "Todavía sin entregar"} · entregas: {d.breve.entregas} de {d.breve.maxEntregas}</p>
+            {d.breve.falta.length > 0 && <p className="text-xs mt-1">Para entregarlo te falta {d.breve.falta.join(" y ")}.</p>}
+            <Link href={`/academia/escrito/${m.id}`}>
+              <Button size="sm" variant="outline" className="mt-3" data-testid="materia-ir-escrito">{d.breve.entregas ? "Ver mi escrito" : "Escribirlo"}</Button>
+            </Link>
+          </section>
         )}
 
         {/* Examen final */}
