@@ -34,9 +34,18 @@ export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
 export const BANCOS = new Map(BANCOS_LISTA.map((b) => [b.materia, b]));
 
 const PREGUNTAS = new Map<string, PreguntaObjetiva>();
+/** De qué materia es cada pregunta y cada escrita (el examen integral se reparte por materia). */
+const MATERIA_DE = new Map<string, string>();
 for (const b of BANCOS_LISTA) {
   for (const lista of Object.values(b.repaso)) for (const p of lista) PREGUNTAS.set(p.id, p);
-  for (const p of b.final) PREGUNTAS.set(p.id, p);
+  for (const p of b.final) {
+    PREGUNTAS.set(p.id, p);
+    MATERIA_DE.set(p.id, b.materia);
+  }
+  for (const e of b.escritas) MATERIA_DE.set(e.id, b.materia);
+}
+export function materiaDe(id: string): string | undefined {
+  return MATERIA_DE.get(id);
 }
 export function preguntaPorId(id: string): PreguntaObjetiva | undefined {
   return PREGUNTAS.get(id);

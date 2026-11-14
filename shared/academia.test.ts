@@ -2,8 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  APRUEBA, ESPECIALIDADES, NIVELES, PESOS_NIVEL, calificacion, citaVisible, enlaceBiblia, esperaFinalMin, leccionPublica, materiaAprobada,
-  medallaDe, notaExamen, notaMateria, parsearCita, puntajeVersiculo, todasLasMaterias, veVistaPrevia,
+  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, EXAMEN_INTEGRAL, NIVELES, PACTOS, PESOS_NIVEL, VERSICULOS_NIVEL, calificacion, citaVisible, enlaceBiblia,
+  esperaFinalMin, leccionPublica, materiaAprobada, medallaDe, notaExamen, notaMateria, parsearCita, puntajeVersiculo, todasLasMaterias, veVistaPrevia,
 } from "./academia";
 
 test("el catálogo: 5 niveles con 8, 9, 10, 10 y 8 materias, y 12 especialidades de 5", () => {
@@ -73,6 +73,19 @@ test("la primera lección de cada materia del Nivel 1 es pública; las demás, n
     assert.ok(leccionPublica(`${id}-1`), id);
     assert.ok(!leccionPublica(`${id}-4`), id);
   }
+});
+
+test("el cierre del Nivel 1: integral de 40 con 75 para aprobar, 4 versículos y el pacto con sus citas", () => {
+  assert.equal(EXAMEN_INTEGRAL[1].objetivas, 40);
+  assert.equal(EXAMEN_INTEGRAL[1].escritas, 2);
+  assert.equal(APRUEBA_INTEGRAL, 75);
+  assert.equal(VERSICULOS_NIVEL[1], 4);
+  const pacto = PACTOS[1]!;
+  assert.ok(pacto.compromisos.length >= 5);
+  assert.ok(parsearCita(pacto.base), pacto.base);
+  for (const c of pacto.compromisos) assert.ok(parsearCita(c.ref), c.ref);
+  // los requisitos que se muestran del Nivel 1 son los que se comprueban
+  assert.deepEqual(NIVELES[0].requisitos, ["Las 8 materias aprobadas", "El examen integral del nivel", "4 versículos de memoria", "El pacto del creyente"]);
 });
 
 test("la vista previa es para administración y profesores", () => {

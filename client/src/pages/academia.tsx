@@ -84,10 +84,18 @@ export default function AcademiaPage() {
           </dl>
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
             {e.continuar ? (
-              <Link href={e.continuar.leccionId ? `/academia/leccion/${e.continuar.leccionId}` : `/academia/materia/${e.continuar.materiaId}`}>
+              <Link
+                href={
+                  e.continuar.nivel
+                    ? `/academia/nivel/${e.continuar.nivel}`
+                    : e.continuar.leccionId
+                      ? `/academia/leccion/${e.continuar.leccionId}`
+                      : `/academia/materia/${e.continuar.materiaId}`
+                }
+              >
                 <Button size="lg" className="fire-btn-primary w-full sm:w-auto h-12 px-7 text-base" data-testid="academia-continuar">
                   <PlayCircle className="w-5 h-5 mr-2" />
-                  {e.continuar.leccionId ? `Continuar: lección ${e.continuar.n} de ${e.continuar.de}` : "Ir al examen final"}
+                  {e.continuar.nivel ? `Cerrar el nivel: ${e.continuar.titulo.toLowerCase()}` : e.continuar.leccionId ? `Continuar: lección ${e.continuar.n} de ${e.continuar.de}` : "Ir al examen final"}
                 </Button>
               </Link>
             ) : !e.conSesion ? (
@@ -142,6 +150,21 @@ export default function AcademiaPage() {
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {n.materias.map((m) => <TarjetaMateria key={m.id} m={m} />)}
                       </div>
+                      {n.cierre && (
+                        <Link href={`/academia/nivel/${n.n}`} className="block mt-3" data-testid={`cierre-nivel-${n.n}`}>
+                          <div className="glass-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 hover:-translate-y-0.5 transition">
+                            <div className="flex items-center gap-2 font-semibold">
+                              {n.cierre.completado ? <GraduationCap className="w-5 h-5 text-emerald-600" /> : <ScrollText className="w-5 h-5 text-orange-500" />}
+                              {n.cierre.completado ? `Nivel ${n.n} completado` : "Cierre del nivel"}
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground sm:ml-2">
+                              <span className="inline-flex items-center gap-1">{n.cierre.integralAprobado ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Examen integral</span>
+                              <span className="inline-flex items-center gap-1">{n.cierre.pacto ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Pacto</span>
+                            </div>
+                            <span className="sm:ml-auto text-sm text-orange-600 dark:text-orange-300 inline-flex items-center gap-1">Ver los requisitos <ArrowRight className="w-4 h-4" /></span>
+                          </div>
+                        </Link>
+                      )}
                       <p className="text-xs text-muted-foreground mt-3">Para el {n.recibe.toLowerCase().startsWith("diplomado") ? "diplomado" : n.recibe.toLowerCase().startsWith("diploma") ? "diploma" : "certificado"}: {n.requisitos.join(" · ")}.</p>
                     </div>
                   );
