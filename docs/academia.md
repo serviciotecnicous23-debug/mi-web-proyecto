@@ -239,8 +239,46 @@ se recalculan con su último resultado guardado, si es ese intento; si no, la no
 - La Administración y el Director abren la academia desde el resumen del panel, con una confirmación que explica qué
   pasa, y la pueden volver a poner en vista previa.
 - **El historial** (pestaña «Historial»: `audit_log` con `entity_type` «academia») guarda cada cambio de nota, cada
-  pedido respondido, cada documento revocado o restaurado, cada nombre corregido y cada apertura, con quién, a quién,
-  cuándo y por qué.
+  pedido respondido, cada documento revocado o restaurado, cada nombre corregido, cada observación y aprobación del
+  contenido, cada pregunta retirada o vuelta a usar y cada apertura, con quién, a quién, cuándo y por qué.
+
+**La revisión del contenido** (`server/academia-calidad.ts`, pestaña «Contenido» del panel y página
+`/academia/direccion/contenido/:materiaId`). Es el filtro doctrinal: Luis o un pastor que él nombre lee cada materia
+antes de abrirla.
+- **La lista:** cada materia con contenido, su estado en la revisión doctrinal (aprobada, por revisar o «cambió
+  después de aprobarla»), sus observaciones abiertas, las preguntas que el análisis marca y las retiradas del banco.
+- **La materia:** sus lecciones (se leen en el lector, como las ve el alumno), el banco del examen con la respuesta, la
+  explicación y la cita de cada pregunta, las escritas con su clave y su respuesta modelo, y el repaso de cada lección.
+- **Las observaciones:** sobre toda la materia o sobre una lección. La Dirección académica recibe un aviso en la
+  campana. La resuelve quien la dejó o la Dirección académica, contando qué se hizo (qué se corrigió o por qué no hace
+  falta cambiarlo); si la resuelve otra persona, quien la dejó recibe la respuesta en un aviso.
+- **La aprobación:** la da la Dirección académica, sin observaciones abiertas, con notas opcionales. Guarda la
+  **huella** del contenido (`huellaDe`, en `server/academia-banco.ts`: la ficha de la materia, sus lecciones y su
+  banco, sin contar «disponible»). Si después cambia el contenido, la aprobación deja de estar vigente y hay que
+  revisarla otra vez. Se puede quitar con un motivo.
+- **La apertura** dice cuántas materias están aprobadas y, al confirmar, avisa si falta alguna. No la impide: lo
+  recomendado es abrir con todas aprobadas.
+
+**El análisis de preguntas** (`server/academia-analisis.ts`, con su prueba), como el informe estadístico de los
+cuestionarios de Moodle (teoría clásica de los tests). Sale de los intentos cerrados del examen final de la materia y
+del examen integral de su nivel (`academia_intentos`, que guarda en cada respuesta la opción elegida):
+- **Facilidad:** qué parte de los intentos acertó la pregunta. Menos de 25 % es «muy difícil»; más de 95 %, «muy fácil».
+- **Discriminación:** la correlación punto biserial entre acertarla y el resto del examen (de −1 a 1). Si es negativa
+  («discrimina al revés»), la aciertan más los que peor van y hay que revisarla; menos de 0,15 «discrimina poco».
+- **Sin tiempo:** cuántos dejaron vencer el reloj (desde 20 % se marca). Cuentan como error, no como una opción elegida.
+- **La falsa más elegida:** cuántos la eligieron y qué parte de los errores fue; si confunde a muchos, puede ser la
+  redacción.
+- **Las escritas:** la nota media, cuántas deja el corrector para revisar y cuántas cambia la revisión (y en cuánto). Si
+  la revisión las cambia seguido, a la clave le faltan formas.
+- Con menos de 8 intentos de una pregunta (5 respuestas de una escrita) no se saca ninguna conclusión: «pocos datos».
+- Las que hay que mirar salen primero, de lo más grave a lo menos (`gravedad`).
+
+**Retirar una pregunta del banco** (`academia_preguntas_retiradas`): la Dirección académica la retira con un motivo y
+deja de salir en los intentos nuevos (del final y del integral); las notas ya dadas no cambian. Se vuelve a usar con un
+motivo. **El banco nunca queda corto** (`porQueNoSeRetira`, con su prueba): el final queda con el doble de las preguntas
+del examen y cada lección con más de las que el examen saca de ella; las escritas, con el doble de las que pide el
+examen y nunca menos de 2. Si no se puede, la pantalla dice por qué: entonces la pregunta se corrige en el contenido.
+Las del repaso no se retiran: se corrigen en el contenido.
 
 **La Academia primero** (lo pidió Luis: en las clases de la Escuela no se está dando clase):
 - Para quien ve la academia (la vista previa o, cuando se abra, todos), el botón «Clases» de la barra de la app pasa a
@@ -349,9 +387,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - Cada video se revisa antes de usarlo.
 8. **Control de calidad:**
    - Automático: ids únicos, opciones distintas, explicación y cita, banco de 3 veces el examen, cada objetivo medido.
-   - Revisión doctrinal (Luis o un pastor que él nombre).
+   - Revisión doctrinal (Luis o un pastor que él nombre), en la pestaña «Contenido» del panel.
    - Piloto: Luis cursa la materia completa.
-   - Análisis de las preguntas cuando ya hay alumnos.
+   - Análisis de las preguntas cuando ya hay alumnos, en la misma pestaña.
 
 ## 5. Cómo agregar una materia
 
@@ -370,7 +408,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 4. Regístralos en `server/academia/index.ts`.
 5. Corre las pruebas: `npx tsx --test server/academia-correccion.test.ts shared/academia.test.ts`, y después
    `npx tsx scripts/academia/verificar.ts`, que comprueba citas, bancos y claves contra la Biblia de la web.
-6. Revisión doctrinal y piloto. Después, `disponible: true`.
+6. Revisión doctrinal (la materia aparece sola en la pestaña «Contenido» del panel) y piloto. Después,
+   `disponible: true` (eso no cambia la huella de la aprobación).
 
 ## 6. La parte técnica
 
@@ -397,6 +436,10 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 - `server/academia-direccion.ts`: el panel de seguimiento, los reportes en CSV (`server/academia-csv.ts`) y el expediente.
 - `server/academia-revision.ts`: la revisión (la cola, el cambio de nota en cadena, los pedidos de revisión, los
   documentos, la apertura y el historial). `client/src/components/academia/revision.tsx`: las tarjetas de la revisión.
+- `server/academia-calidad.ts`: la revisión del contenido (observaciones y aprobación), el análisis de preguntas y el
+  banco (retirar y volver a usar). `server/academia-analisis.ts`: las cifras del análisis, sin base de datos.
+  `server/academia-banco.ts`: la guarda del banco y la huella del contenido, sin base de datos. Los tipos, en
+  `shared/academia-calidad.ts`; la página, `client/src/pages/academia-direccion-contenido.tsx`.
 - `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
@@ -423,6 +466,14 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `academia_apelaciones` | Los pedidos de revisión: el examen y el intento, el mensaje del alumno, la respuesta, quién respondió y cuándo (uno por examen) |
 | `academia_inscripciones` | La ficha de inscripción: nombres, apellidos, país, ciudad, teléfono, nacimiento, iglesia aliada u otra, pastor, tiempo en la fe, bautismo, ministerio, cómo conoció la academia, qué espera aprender, la foto del carné (`foto_url`) y sus fechas |
 | `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
+
+Del contenido (no son de un alumno: no se borran con una cuenta; si se borra la cuenta de quien la dejó, queda sin nombre):
+
+| Tabla | Qué guarda |
+|---|---|
+| `academia_preguntas_retiradas` | Las preguntas retiradas del banco: el id, el motivo, quién y cuándo |
+| `academia_contenido_notas` | Las observaciones de la revisión: la materia, la lección (o ninguna), el texto, quién, cuándo y cómo se resolvió |
+| `academia_contenido_aprobaciones` | La aprobación doctrinal de cada materia: quién, cuándo, las notas y la huella del contenido aprobado |
 
 **Rutas** (`/api/academia/…`). Los parámetros no se llaman `:id`, porque `app.param("id")` exige números.
 
@@ -459,6 +510,10 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `POST direccion/alumno/:alumnoId/nombre` | Corregir el nombre en la ficha y en los documentos vigentes: `{nombres, apellidos, motivo}` |
 | `POST direccion/apertura` | Abrir la academia para todos o volver a la vista previa: `{abierta}` |
 | `GET direccion/historial` | El historial de los cambios de la academia |
+| `GET direccion/contenido` y `GET direccion/contenido/:materiaId` | La revisión del contenido: la lista y una materia con su banco y el análisis de sus preguntas |
+| `POST direccion/contenido/:materiaId/observacion` y `POST direccion/contenido/observacion/:notaId/resolver` | Dejar una observación `{texto, leccionId}` y resolverla `{respuesta}` |
+| `POST direccion/contenido/:materiaId/aprobar` y `/desaprobar` | Aprobar la materia `{notas}` (sin observaciones abiertas) o quitar la aprobación `{motivo}` |
+| `POST direccion/pregunta/:preguntaId/retirar` y `/restaurar` | Retirar una pregunta del banco o volver a usarla: `{motivo}` |
 | `POST examen/:materiaId/apelacion` y `POST integral/:nivel/apelacion` | El alumno pide la revisión de su último intento: `{mensaje}` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
@@ -469,7 +524,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 
 **Pruebas:**
 - Locales: el corrector, la elección de preguntas y el catálogo
-  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts`).
+  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts server/academia-analisis.test.ts server/academia-banco.test.ts`).
 - De la API: `academia_api.py` en el scratchpad de la sesión de la academia. Usa el servidor «mi-web-academia» en el
   puerto 5082 y PGlite en memoria en el 55442.
 - En el navegador usar 127.0.0.4; las otras sesiones usan localhost y de 127.0.0.1 a 127.0.0.3.
@@ -480,7 +535,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
 | A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
-| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Sigue: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura y el historial están hechos; faltan el análisis de preguntas, la revisión del contenido, las asignaciones a los cursos de la Escuela y los mentores |
+| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Sigue: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura, el historial, el análisis de preguntas, retirar preguntas del banco y la revisión doctrinal del contenido están hechos; faltan las asignaciones a los cursos de la Escuela y los mentores |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
 | A6 · Niveles 4 y 5 y primeras especialidades | Proyecto final y defensa | |
