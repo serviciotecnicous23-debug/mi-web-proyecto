@@ -252,6 +252,93 @@ export const SUFICIENCIA = {
   topeNivelesAltos: 0.5,
 } as const;
 
+/** La suficiencia se aprueba con las dos partes a la vez: 85 la objetiva y 75 la escrita. */
+export function apruebaSuficiencia(objetiva: number, escrita: number): boolean {
+  return objetiva >= SUFICIENCIA.apruebaObjetiva && escrita >= SUFICIENCIA.apruebaEscrita;
+}
+
+// ---------------------------------------------------------------- la prueba diagnóstica
+
+/**
+ * La prueba diagnóstica: 2 preguntas de cada materia con contenido, 45 segundos cada una. Solo sugiere por dónde
+ * empezar y qué materias se podrían aprobar por suficiencia: no da nada por aprobado. Se repite cada 30 días.
+ */
+export const DIAGNOSTICO = { porMateria: 2, segundos: 45, diasEntre: 30 } as const;
+
+export type DiagnosticoMateria = { id: string; titulo: string; nivel: number | null; aciertos: number; de: number };
+export type SugerenciaDiagnostico = {
+  texto: string;
+  /** El nivel que le toca (el siguiente al último completo). */
+  nivel: number | null;
+  empezar: { materiaId: string; titulo: string } | null;
+  /** Las materias de ese nivel que respondió todas bien: podría aprobarlas por suficiencia. */
+  suficiencia: { materiaId: string; titulo: string }[];
+};
+export type DiagnosticoVista = {
+  fecha: string;
+  aciertos: number;
+  de: number;
+  porMateria: DiagnosticoMateria[];
+  sugerencia: SugerenciaDiagnostico;
+  /** Desde cuándo se puede repetir (null si ya se puede). */
+  repetirDesde: string | null;
+};
+
+const listaY = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`);
+
+/**
+ * La sugerencia de la prueba diagnóstica: el nivel que le toca, por qué materia empezar (la primera que ni domina ni
+ * aprobó) y cuáles podría aprobar por suficiencia (las que respondió todas bien). Sin base de datos.
+ */
+export function sugerenciaDiagnostico(porMateria: DiagnosticoMateria[], nivelesCompletos: number[], aprobadas: string[]): SugerenciaDiagnostico {
+  const hecho = nivelesCompletos.length ? Math.max(...nivelesCompletos) : 0;
+  const nivel = NIVELES.find((n) => n.n === hecho + 1);
+  if (!nivel || !nivel.materias.some((m) => m.disponible)) {
+    return { texto: "Ya completaste los niveles que tienen contenido. Te avisaremos cuando se abra el siguiente.", nivel: nivel?.n ?? null, empezar: null, suficiencia: [] };
+  }
+  const aprob = new Set(aprobadas);
+  const pendientes = nivel.materias.filter((m) => m.disponible && !aprob.has(m.id));
+  if (!pendientes.length) {
+    return { texto: `Ya aprobaste las materias del Nivel ${nivel.n}: te falta cerrar el nivel con su examen integral y lo que pide.`, nivel: nivel.n, empezar: null, suficiencia: [] };
+  }
+  const res = new Map(porMateria.map((r) => [r.id, r]));
+  const domina = pendientes.filter((m) => {
+    const r = res.get(m.id);
+    return !!r && r.de > 0 && r.aciertos === r.de;
+  });
+  const suficiencia = domina.map((m) => ({ materiaId: m.id, titulo: m.titulo }));
+  const primera = pendientes.find((m) => !domina.includes(m));
+  const empezar = primera ? { materiaId: primera.id, titulo: primera.titulo } : null;
+  const nombre = `el Nivel ${nivel.n} · ${nivel.nombre}`;
+  let texto: string;
+  if (!empezar) {
+    texto = `Respondiste bien todas las preguntas de ${nombre}. Puedes aprobar sus materias por suficiencia: una sola vez por materia, con 25 preguntas y 2 respuestas escritas (se aprueba con ${SUFICIENCIA.apruebaObjetiva} y ${SUFICIENCIA.apruebaEscrita}). El examen integral del nivel se da igual.`;
+  } else if (domina.length) {
+    texto = `Empieza por «${empezar.titulo}». Parece que ya conoces ${listaY(domina.map((m) => `«${m.titulo}»`))}: si quieres, da su examen de suficiencia; si no, cúrsala como las demás.`;
+  } else {
+    texto = `Empieza por «${empezar.titulo}» y sigue en orden: ${nombre} es para ti.`;
+  }
+  return { texto, nivel: nivel.n, empezar, suficiencia };
+}
+
+// ---------------------------------------------------------------- el repaso espaciado del versículo
+
+/** El versículo de memoria vuelve a los 1, 3, 7 y 21 días de aprenderlo; al pasar el último repaso queda dominado. */
+export const REPASO_VERSICULO_DIAS = [1, 3, 7, 21] as const;
+/** La caja de quien pasó todos los repasos. */
+export const CAJA_DOMINADO = REPASO_VERSICULO_DIAS.length + 1;
+
+/** La caja después de un repaso (bien: la siguiente; mal: vuelve a la primera) y en cuántos días vuelve (null: dominado). */
+export function siguienteRepaso(caja: number, bien: boolean): { caja: number; dias: number | null } {
+  if (!bien) return { caja: 1, dias: REPASO_VERSICULO_DIAS[0] };
+  const nueva = Math.min(Math.max(1, caja) + 1, CAJA_DOMINADO);
+  return { caja: nueva, dias: nueva >= CAJA_DOMINADO ? null : REPASO_VERSICULO_DIAS[nueva - 1] };
+}
+
+/** Un versículo aprendido, con su repaso. */
+export type VersiculoRepaso = { materiaId: string; materia: string; ref: string; caja: number; toca: boolean; proximo: string | null; dominado: string | null };
+export type RepasoVersiculos = { versiculos: VersiculoRepaso[]; pendientes: number; dominados: number };
+
 /** El versículo de memoria: puntaje según los intentos para ordenarlo (100, 80, 60 como mínimo). */
 export function puntajeVersiculo(intentosFallidos: number): number {
   return Math.max(60, 100 - 20 * Math.max(0, intentosFallidos));
@@ -1065,6 +1152,8 @@ export type ExamenEstado = {
   espera: number;
   /** Después de 3 fallos: volver a abrir estas lecciones antes del siguiente intento. */
   repasar: string[];
+  /** Si ya no se puede dar, por qué (la suficiencia se da una sola vez; la diagnóstica, cada 30 días). */
+  cerrado?: string | null;
 };
 
 export type MateriaDetalle = {

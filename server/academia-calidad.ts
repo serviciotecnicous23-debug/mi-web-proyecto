@@ -19,9 +19,10 @@ import type {
   AprobacionContenido, ContenidoDetalle, ContenidoLista, ContenidoResumen, EscritaAnalisis, ObservacionContenido, PreguntaAnalisis,
 } from "@shared/academia-calidad";
 import { BANCOS, materiaDe } from "./academia/index";
-import { huellaDe, porQueNoSeRetira } from "./academia-banco";
+import { huellaDe, huellaDeclaracion, porQueNoSeRetira } from "./academia-banco";
+import { ID_DECLARACION, PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion";
 import { ANALISIS, cifrasDeEscritas, cifrasDePreguntas, gravedad, type CifrasPregunta, type IntentoRegistrado } from "./academia-analisis";
-import { avisarA, claveFinal, claveIntegral, cuentasConRoles, frenar, olvidarRetiradas } from "./academia-comun";
+import { accesoDe, avisarA, claveFinal, claveIntegral, cuentasConRoles, frenar, olvidarRetiradas } from "./academia-comun";
 import { permisoDe } from "./academia-direccion";
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
@@ -99,8 +100,10 @@ async function aprobacionesDe(): Promise<Map<string, AprobacionContenido>> {
   );
   const out = new Map<string, AprobacionContenido>();
   for (const r of rows as any[]) {
-    const m = materiaPorId(String(r.materia_id));
-    out.set(String(r.materia_id), { por: quien(r.display_name, r.username), fecha: iso(r.aprobada_at), notas: r.notas ?? null, vigente: !!m && r.huella === huellaDe(m) });
+    const id = String(r.materia_id);
+    const m = materiaPorId(id);
+    const vigente = id === ID_DECLARACION ? r.huella === huellaDeclaracion() : !!m && r.huella === huellaDe(m);
+    out.set(id, { por: quien(r.display_name, r.username), fecha: iso(r.aprobada_at), notas: r.notas ?? null, vigente });
   }
   return out;
 }
@@ -139,6 +142,7 @@ export async function listaDeContenido(): Promise<ContenidoLista> {
   });
   return {
     materias: filas,
+    declaracion: { aprobacion: aprobaciones.get(ID_DECLARACION) ?? null, puntos: PUNTOS_A_CONFIRMAR.length },
     total: filas.length,
     aprobadas: filas.filter((f) => f.aprobacion?.vigente).length,
     abiertas: filas.reduce((s, f) => s + f.abiertas, 0),
@@ -361,6 +365,55 @@ export function registerAcademiaCalidadRoutes(app: Express) {
       res.json({ aprobada: false });
     } catch (err) {
       console.error("[academia] contenido, desaprobar:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // La declaración de fe: si está aprobada (la página la muestra como borrador mientras no lo esté).
+  app.get("/api/academia/declaracion", async (req, res) => {
+    try {
+      const acceso = await accesoDe(req);
+      if (!acceso.ver) return res.status(403).json({ message: "La Academia Avivando el Fuego abre muy pronto." });
+      const a = (await aprobacionesDe()).get(ID_DECLARACION) ?? null;
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ aprobacion: a && a.vigente ? { por: a.por, fecha: a.fecha } : null, cambio: !!a && !a.vigente });
+    } catch (err) {
+      console.error("[academia] declaración de fe:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // Aprobar la declaración de fe (la Dirección académica), o quitar la aprobación con un motivo.
+  app.post("/api/academia/direccion/declaracion/aprobar", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "aprobar");
+      if (!p) return;
+      const notas = limpio(req.body?.notas, 500) || null;
+      await pool.query(
+        `INSERT INTO academia_contenido_aprobaciones (materia_id, user_id, aprobada_at, notas, huella) VALUES ($1, $2, now(), $3, $4)
+         ON CONFLICT (materia_id) DO UPDATE SET user_id = EXCLUDED.user_id, aprobada_at = now(), notas = EXCLUDED.notas, huella = EXCLUDED.huella`,
+        [ID_DECLARACION, p.userId, notas, huellaDeclaracion()],
+      );
+      await registrar(req, "academia.declaracion.aprobar", "Aprobó la declaración de fe del Ministerio.", notas);
+      res.json({ aprobada: true });
+    } catch (err) {
+      console.error("[academia] aprobar la declaración:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  app.post("/api/academia/direccion/declaracion/desaprobar", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "aprobar");
+      if (!p) return;
+      const motivo = limpio(req.body?.motivo, 500);
+      if (motivo.length < 8) return res.status(400).json({ message: "Escribe el motivo: queda en el historial." });
+      const { rowCount } = await pool.query(`DELETE FROM academia_contenido_aprobaciones WHERE materia_id = $1`, [ID_DECLARACION]);
+      if (!rowCount) return res.status(409).json({ message: "La declaración de fe no estaba aprobada." });
+      await registrar(req, "academia.declaracion.desaprobar", "Quitó la aprobación de la declaración de fe.", motivo);
+      res.json({ aprobada: false });
+    } catch (err) {
+      console.error("[academia] desaprobar la declaración:", err);
       res.sendStatus(500);
     }
   });

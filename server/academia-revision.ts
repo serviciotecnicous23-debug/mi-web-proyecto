@@ -13,7 +13,7 @@
 import type { Express, Request } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA_INTEGRAL, NIVELES, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
+  APRUEBA_INTEGRAL, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
   type MateriaDef, type NivelDef, type ResultadoExamen,
 } from "@shared/academia";
 import { limpiarNombre, nombreCompleto } from "@shared/academia-inscripcion";
@@ -23,6 +23,7 @@ import {
   avisarA, claveFinal, claveIntegral, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, type ContextoExamen,
 } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
+import { aprobarPorSuficiencia } from "./academia-suficiencia";
 import { estadoNivel, revisarNivel } from "./academia-nivel";
 import { permisoDe } from "./academia-direccion";
 
@@ -165,7 +166,35 @@ async function reconsiderarNivel(userId: number, nv: NivelDef, motivo: string): 
 }
 
 /** La materia, recalculada sin quedarse pegada en «aprobada»: con la nota nueva puede aprobarse o volver a estar en curso. */
+/**
+ * Una escrita revisada de un examen de suficiencia: vuelve a mirar las dos partes (85 y 75). Si ahora aprueba, la materia
+ * queda aprobada por suficiencia; si deja de aprobar y estaba aprobada así, vuelve a estar en curso (se cursa) y su
+ * certificado se revoca con el motivo.
+ */
+async function reconsiderarSuficiencia(userId: number, m: MateriaDef, objetiva: number, escrita: number, nota: number, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
+  const ok = apruebaSuficiencia(objetiva, escrita);
+  const { rows } = await pool.query(`SELECT estado, via FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  const estaba = rows[0]?.estado === "aprobada";
+  if (ok) {
+    if (estaba && rows[0].via !== "suficiencia") return { nota, aprobada: true, cambio: null };
+    await aprobarPorSuficiencia(userId, m, nota);
+    await restaurarSiFueNota(userId, "materia", m.id, nota);
+    return { nota, aprobada: true, cambio: estaba ? null : "aprobada" };
+  }
+  if (estaba && rows[0].via === "suficiencia") {
+    await pool.query(
+      `UPDATE academia_materias SET estado = 'en-curso', via = 'cursada', nota = NULL, componentes = '{}'::jsonb, aprobada_at = NULL WHERE user_id = $1 AND materia_id = $2`,
+      [userId, m.id],
+    );
+    await revocarPorNota(userId, "materia", m.id, motivo);
+    return { nota, aprobada: false, cambio: "desaprobada" };
+  }
+  return { nota, aprobada: estaba, cambio: null };
+}
+
 async function reconsiderarMateria(userId: number, m: MateriaDef, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
+  const { rows: ya } = await pool.query(`SELECT estado, via, nota FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  if (ya[0]?.estado === "aprobada" && ya[0].via === "suficiencia") return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
   const nota = notaMateria(pesosDe(m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
@@ -254,7 +283,11 @@ export async function recalcularTrasRevision(userId: number, ctx: ContextoExamen
   );
   let materia: ResultadoRevision["materia"] = null;
   let nivel: ResultadoRevision["nivel"] = null;
-  if (ctx.materia) {
+  if (ctx.materia && ctx.tipo === "suficiencia") {
+    materia = await reconsiderarSuficiencia(userId, ctx.materia, it.objetiva, escrita, nota, motivo);
+    const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
+    if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);
+  } else if (ctx.materia) {
     materia = await reconsiderarMateria(userId, ctx.materia, motivo);
     const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
     if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);

@@ -15,7 +15,7 @@ import { BANCOS, CONTENIDO } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, frenar, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
   marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
@@ -25,6 +25,9 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
 import { registerAcademiaMentoresRoutes } from "./academia-mentores";
+import { registerAcademiaSuficienciaRoutes } from "./academia-suficiencia";
+import { registerAcademiaDiagnosticoRoutes } from "./academia-diagnostico";
+import { registerAcademiaVersiculosRoutes } from "./academia-versiculos";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
@@ -46,18 +49,8 @@ function estadoDe(m: MateriaDef, fila: { estado: string } | undefined, hechas: n
   return "disponible";
 }
 
-/** Las fichas del versículo de memoria (grupos de unas 3 palabras). */
-export function fichasDe(texto: string): string[] {
-  const ws = texto.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
-  const out: string[] = [];
-  for (let i = 0; i < ws.length; i += 3) out.push(ws.slice(i, i + 3).join(" "));
-  if (out.length > 1 && !out[out.length - 1].includes(" ")) {
-    const ultima = out.pop()!;
-    out[out.length - 1] += ` ${ultima}`;
-  }
-  return out;
-}
-const idFicha = (userId: number, materiaId: string, i: number) => numeroDe(`${userId}|${materiaId}|${i}`).toString(36);
+
+export { fichasDe };
 
 export function registerAcademiaRoutes(app: Express) {
   // ---------------------------------------------------------------- el catálogo y el avance del alumno
@@ -462,4 +455,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);
   registerAcademiaMentoresRoutes(app);
+  registerAcademiaSuficienciaRoutes(app);
+  registerAcademiaDiagnosticoRoutes(app);
+  registerAcademiaVersiculosRoutes(app);
 }

@@ -60,7 +60,21 @@ export type FilaPrueba = {
   pasados_fallo: number | null;
 };
 
-/** Un examen de la academia: el final de una materia o el integral de un nivel. */
+/** Las partes de un intento cerrado, para que cada evaluación decida con sus reglas (la suficiencia pide las dos). */
+export type PartesIntento = { objetiva: number; escrita: number; respuestas: { id: string; bien: boolean }[] };
+
+/** Lo que decide una evaluación al cerrar un intento. */
+export type CierreEvaluacion = {
+  /** Si quedó aprobado lo que se evalúa (la materia o el nivel): si no, cuenta como un fallo, con su espera. */
+  aprobada: boolean;
+  materia: ResultadoExamen["materia"];
+  /** Si el examen quedó aprobado (si no se dice, la nota contra `aprueba`). */
+  examenAprobado?: boolean;
+  /** Sin espera para otro intento (la suficiencia se da una vez; la diagnóstica, cada 30 días). */
+  sinEspera?: boolean;
+};
+
+/** Un examen de la academia: el final de una materia, el integral de un nivel, la suficiencia o la diagnóstica. */
 export type Evaluacion = {
   /** Su fila en academia_pruebas. */
   clave: string;
@@ -77,9 +91,14 @@ export type Evaluacion = {
   /** Al empezar un intento (alumno, materia y racha). */
   alEmpezar: (userId: number) => Promise<void>;
   /** Al cerrar un intento: si quedó aprobado lo que se evalúa (la materia o el nivel) y la parte de la materia. */
-  alCerrar: (userId: number, nota: number) => Promise<{ aprobada: boolean; materia: ResultadoExamen["materia"] }>;
+  alCerrar: (userId: number, nota: number, partes: PartesIntento) => Promise<CierreEvaluacion>;
   /** Para los mensajes: «esta materia», «el examen integral». */
   yaAprobado: string;
+  /**
+   * Si el resultado muestra cada pregunta con su respuesta (por defecto sí). La suficiencia y la diagnóstica no: sus
+   * preguntas salen del banco del examen final, que se da después.
+   */
+  revisionCompleta?: boolean;
 };
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
@@ -308,7 +327,7 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
       WHERE user_id = $1 AND clave = $2`,
     [userId, clave, nota, JSON.stringify([...vistas])],
   );
-  const cierre = await ev.alCerrar(userId, nota);
+  const cierre = await ev.alCerrar(userId, nota, { objetiva, escrita, respuestas: c.respuestas.map((r) => ({ id: r.id, bien: r.bien })) });
   const { rows } = await pool.query(
     `UPDATE academia_pruebas
         SET fallos = fallos + CASE WHEN $3 THEN 0 ELSE 1 END,
@@ -318,13 +337,14 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
     [userId, clave, cierre.aprobada],
   );
   const fallos = Number(rows[0]?.fallos || 0);
-  const revision = c.respuestas.map((r, lugar) => {
+  const completa = ev.revisionCompleta !== false;
+  const revision = !completa ? [] : c.respuestas.map((r, lugar) => {
     const p = preguntaPorId(r.id);
     if (!p) return { texto: "(pregunta retirada)", opciones: [], elegida: -1, correcta: -1, bien: false, tarde: r.tarde, explica: "", ref: "" };
     const opciones = opcionesDe(p, c, lugar);
     return { texto: p.texto, opciones, elegida: r.opcion, correcta: opciones.indexOf(p.correcta), bien: r.bien, tarde: r.tarde, explica: p.explica, ref: p.ref };
   });
-  const escritas = c.notasEscritas.map((n) => {
+  const escritas = !completa ? [] : c.notasEscritas.map((n) => {
     const e = escritaPorId(n.id);
     return { ...n.correccion, pregunta: e?.pregunta ?? "", texto: n.texto, modelo: e?.modelo ?? "" };
   });
@@ -333,14 +353,14 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
     nota,
     objetiva,
     escrita,
-    aprobado: nota >= ev.aprueba,
+    aprobado: cierre.examenAprobado ?? nota >= ev.aprueba,
     medalla: medallaDe(nota),
     aciertos,
     de,
     revision,
     escritas,
     materia: cierre.materia,
-    espera: cierre.aprobada ? 0 : esperaFinalMin(fallos) * 60,
+    espera: cierre.aprobada || cierre.sinEspera ? 0 : esperaFinalMin(fallos) * 60,
   };
   await pool.query(`UPDATE academia_pruebas SET resultado = $3::jsonb WHERE user_id = $1 AND clave = $2`, [userId, clave, JSON.stringify(resultado)]);
   return resultado;
@@ -433,6 +453,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
         const curso = leerCurso(f.curso);
         if (curso) return { paso: await pasoActual(a.userId, ev, curso, f.pasados_curso) };
         if (est.aprobado) return { error: 409, message: ev.yaAprobado };
+        if (est.cerrado) return { error: 409, message: est.cerrado };
         if (est.falta.length) return { error: 409, message: `Antes del examen te falta ${est.falta.join(" y ")}.` };
         if (est.espera > 0) return { error: 429, message: `Repasa con calma y vuelve en ${minutosTexto(est.espera)}.`, espera: est.espera };
         if (est.repasar.length) return { error: 409, message: "Antes de intentarlo otra vez, vuelve a leer las lecciones de la materia.", repasar: est.repasar };
