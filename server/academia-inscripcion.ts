@@ -8,16 +8,20 @@
  * - En cada materia: desde su presentación (lo que se aprende, cómo es y cómo se evalúa). La fila de academia_materias
  *   es la inscripción: sin ella no se abren sus lecciones (salvo la primera, que es pública), ni el versículo ni el
  *   examen.
+ * - Cada inscripción avisa en la campana a la Dirección académica y a quienes dirigen la iglesia aliada del alumno
+ *   (avisarInscripcion). No pide aprobación: queda aprobada al instante.
  * - /api/academia/abierta: si la academia ya está abierta para todos (lo usan el menú y la barra de la app).
  */
 import type { Express } from "express";
 import { pool } from "./db";
 import { REGLAMENTO, materiaPorId, requisitosMateria } from "@shared/academia";
+import { ROLES_ACADEMIA } from "@shared/academia-permisos";
 import {
   FICHA_VACIA, nombreCompleto, paisDeCuenta, repartirNombre, validarFicha,
   type FichaInscripcion, type FichaVista, type IglesiaOpcion, type InscripcionEstado,
 } from "@shared/academia-inscripcion";
-import { academiaAbierta, alumnoDe, enFila, frenar, inscritaEnMateria, inscritoDe } from "./academia-comun";
+import { academiaAbierta, alumnoDe, enFila, frenar, inscritaEnMateria, inscritoDe, nombreAcademico } from "./academia-comun";
+import { isOwnFileUrl } from "./file-storage";
 import { matricular, matriculaDe } from "./academia-matricula";
 
 let iglesiasCache = { hasta: 0, lista: [] as IglesiaOpcion[] };
@@ -59,6 +63,7 @@ export async function fichaDe(userId: number): Promise<FichaVista | null> {
     comoConocio: r.como_conocio ?? "",
     espera: r.espera ?? "",
     iglesiaNombre: r.iglesia_nombre ?? null,
+    foto: r.foto_url ?? null,
     creada: new Date(r.created_at).toISOString(),
     actualizada: new Date(r.updated_at).toISOString(),
   };
@@ -102,6 +107,28 @@ async function guardarFicha(userId: number, f: FichaInscripcion): Promise<void> 
     ],
   );
 }
+
+/**
+ * Avisa en la campana a la Dirección académica, y a quienes dirigen la iglesia aliada del alumno, que alguien se
+ * inscribió (docs/academia.md, «Los avisos»). No manda correos ni avisos al teléfono, y nadie recibe el aviso de su
+ * propia inscripción. El enlace abre al alumno en el panel de seguimiento.
+ */
+export async function avisarInscripcion(alumnoId: number, titulo: string, contenido: string): Promise<void> {
+  const direccion = ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles;
+  const iglesia = ROLES_ACADEMIA.find((r) => r.id === "iglesia")!.roles;
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, title, content, link)
+     SELECT u.id, 'academia', $3, $4, $5 FROM users u
+      WHERE u.is_active AND u.id <> $1
+        AND (u.role = ANY($2::text[])
+             OR (u.role = ANY($6::text[]) AND u.church_id IS NOT NULL
+                 AND u.church_id = (SELECT iglesia_id FROM academia_inscripciones WHERE user_id = $1)))`,
+    [alumnoId, [...direccion], titulo, contenido, `/academia/direccion/alumno/${alumnoId}`, [...iglesia]],
+  );
+}
+
+const avisar = (alumnoId: number, titulo: string, contenido: string) =>
+  void avisarInscripcion(alumnoId, titulo, contenido).catch((err) => console.error("[academia] aviso de inscripción:", err));
 
 /** Los niveles que el alumno ya completó. */
 export async function nivelesCompletos(userId: number): Promise<number[]> {
@@ -166,13 +193,41 @@ export function registerAcademiaInscripcionRoutes(app: Express) {
         // La primera ficha de quien ya tenía certificados (emitidos antes de que existiera la ficha): toman su nombre.
         if (!antes) await pool.query(`UPDATE academia_certificados SET nombre = $2 WHERE user_id = $1 AND revocado_at IS NULL`, [a.userId, nombreCompleto(f)]);
         const matricula = ya ?? (await matricular(a.userId));
-        return { ok: { ficha: await fichaDe(a.userId), matricula, nueva: !ya } };
+        return { ok: { ficha: await fichaDe(a.userId), matricula, nueva: !ya }, primera: !antes };
       });
       if ("error" in out) return res.status(out.error as number).json(out.cuerpo);
+      // La primera ficha (una inscripción nueva, o la de quien ya tenía matrícula): aviso a la Dirección académica.
+      if (out.primera) {
+        avisar(
+          a.userId,
+          out.ok.nueva ? "Nueva inscripción en la academia" : "Inscripción completada en la academia",
+          `${nombreCompleto(f)} (${out.ok.matricula.numero}) ${out.ok.nueva ? "se inscribió en la academia" : "completó su ficha de inscripción"}${f.pais ? `, desde ${f.pais}` : ""}.`,
+        );
+      }
       res.setHeader("Cache-Control", "no-store");
       res.json(out.ok);
     } catch (err) {
       console.error("[academia] inscribirse:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // La foto de mi carné: un archivo ya subido a la web (POST /api/upload/file?carpeta=academia), o null para quitarla
+  // (vuelve la foto de perfil o las iniciales). No acepta enlaces de afuera.
+  app.post("/api/academia/foto", async (req, res) => {
+    try {
+      const a = await inscritoDe(req, res);
+      if (!a) return;
+      if (frenar(`af:${a.userId}`, 1000)) return res.status(429).json({ message: "Espera un momento." });
+      const url = req.body?.url;
+      if (url !== null && (typeof url !== "string" || url.length > 500 || url.startsWith("data:") || !isOwnFileUrl(url))) {
+        return res.status(400).json({ message: "Esa foto no es válida. Súbela desde tu teléfono o tu computadora." });
+      }
+      await pool.query(`UPDATE academia_inscripciones SET foto_url = $2, updated_at = now() WHERE user_id = $1`, [a.userId, url]);
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ foto: url });
+    } catch (err) {
+      console.error("[academia] foto del carné:", err);
       res.sendStatus(500);
     }
   });
@@ -188,9 +243,10 @@ export function registerAcademiaInscripcionRoutes(app: Express) {
       if (frenar(`aim:${a.userId}`, 500)) return res.status(429).json({ message: "Espera un momento." });
       const falta = requisitosMateria(m, await nivelesCompletos(a.userId));
       if (falta.length) return res.status(409).json({ message: `Para inscribirte en esta materia te falta ${falta.join(" y ")}.`, falta });
-      await enFila(a.userId, () =>
-        pool.query(`INSERT INTO academia_materias (user_id, materia_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [a.userId, m.id]),
+      const { rows: nueva } = await enFila(a.userId, () =>
+        pool.query(`INSERT INTO academia_materias (user_id, materia_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING materia_id`, [a.userId, m.id]),
       );
+      if (nueva.length) avisar(a.userId, `Inscripción en «${m.titulo}»`, `${await nombreAcademico(a.userId)} se inscribió en «${m.titulo}».`);
       res.setHeader("Cache-Control", "no-store");
       res.json({ inscrita: await inscritaEnMateria(a.userId, m.id) });
     } catch (err) {

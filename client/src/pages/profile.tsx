@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { withAccents } from "@shared/labels";
+import { InsigniaAcademia } from "@/components/academia/insignia-perfil";
 /**
  * "Eliminar mi cuenta": lo exigen las tiendas de apps y es un derecho de cada persona.
  * Pide la contraseña y escribir ELIMINAR; el servidor borra lo personal y deja la cuenta
@@ -432,6 +433,7 @@ export default function Profile() {
                       {user.isActive ? "Aprobado" : "Pre-aprobado"}
                     </Badge>
                   </div>
+                  <InsigniaAcademia />
                   {(user.email || user.phone) && (
                     <div className="mt-3 text-xs text-muted-foreground space-y-1">
                       {user.email && <p data-testid="text-profile-email">{user.email}</p>}

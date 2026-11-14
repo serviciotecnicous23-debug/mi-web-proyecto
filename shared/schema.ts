@@ -1274,6 +1274,8 @@ export const academiaInscripciones = pgTable("academia_inscripciones", {
   ministerio: text("ministerio"),
   comoConocio: text("como_conocio"),
   espera: text("espera"),
+  /** La foto del carné (un archivo subido a la web, carpeta «academia»). */
+  fotoUrl: text("foto_url"),
   privacidadAt: timestamp("privacidad_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

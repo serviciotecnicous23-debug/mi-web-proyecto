@@ -1213,7 +1213,10 @@ export type MatriculaInfo = {
 /** El carné digital: acredita la matrícula y se verifica con su QR (un código al azar, no el número de matrícula). */
 export type CarneVista = MatriculaInfo & {
   nombre: string;
+  /** La foto del carné (la que subió para el carné o, si no, la de su perfil). */
   foto: string | null;
+  /** Subió una foto propia para el carné (no es la de su perfil). */
+  fotoPropia: boolean;
   codigo: string;
   verificar: string;
   qr: string;

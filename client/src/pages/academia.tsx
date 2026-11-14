@@ -3,7 +3,7 @@
 import { Link } from "wouter";
 import { motion } from "motion/react";
 import {
-  ArrowRight, Award, BookOpen, CheckCircle2, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle, ScrollText, Sparkles, Timer,
+  ArrowRight, Award, BookOpen, CheckCircle2, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type MateriaResumen } from "@s
 import { useAcademiaEstado, useCertificados } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";
+import { useAuth } from "@/hooks/use-auth";
+import { alcanceDe } from "@shared/academia-permisos";
 
 function TarjetaMateria({ m }: { m: MateriaResumen }) {
   const contenido = (
@@ -45,6 +47,8 @@ const PASOS = [
 ];
 
 export default function AcademiaPage() {
+  const { user } = useAuth();
+  const conPanel = alcanceDe(user?.role, "panel") !== "no" && !!user?.isActive;
   const q = useAcademiaEstado();
   const docs = useCertificados(!!q.data?.conSesion && !!q.data?.alumno);
   if (q.isLoading) return <Cargando />;
@@ -135,13 +139,26 @@ export default function AcademiaPage() {
             <p className="text-sm text-muted-foreground mt-2" data-testid="academia-matricula">
               <IdCard className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Matrícula {e.matricula.numero} · {e.matricula.estatus.texto}
               {e.matricula.estatus.honores ? " · Cuadro de honor" : ""} · <Link href="/academia/carne" className="underline">Mi carné</Link> ·{" "}
-              <Link href="/academia/inscripcion" className="underline" data-testid="academia-mi-inscripcion">Mi inscripción</Link>
+              <Link href="/academia/inscripcion" className="underline" data-testid="academia-mi-inscripcion">Mi inscripción</Link> ·{" "}
+              <Link href="/academia/expediente" className="underline" data-testid="academia-mi-expediente">Mi expediente</Link>
             </p>
           )}
         </motion.div>
       </section>
 
       {e.vistaPrevia && <AvisoVistaPrevia />}
+
+      {conPanel && (
+        <div className="max-w-6xl mx-auto px-4 mt-6">
+          <Link href="/academia/direccion">
+            <span className="glass-card p-4 flex items-center gap-3 hover:-translate-y-0.5 transition cursor-pointer" data-testid="academia-panel">
+              <Users className="w-5 h-5 text-orange-500 shrink-0" />
+              <span className="flex-1 text-sm"><strong>Panel de seguimiento.</strong> Quiénes están inscritos, por dónde va cada uno, el registro de inscripciones y los reportes.</span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
+            </span>
+          </Link>
+        </div>
+      )}
 
       {/* ═══ LA INSCRIPCIÓN ═══ */}
       {e.conSesion && (!e.matricula || !e.ficha) && (
