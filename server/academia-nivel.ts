@@ -15,6 +15,7 @@ import {
 import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
+import { codigoDocumento, emitirNivel } from "./academia-documentos";
 
 export function nivelDe(n: unknown): NivelDef | undefined {
   const k = Number(n);
@@ -112,6 +113,7 @@ export async function estadoNivel(userId: number | null, nv: NivelDef, vistaPrev
     completado,
     promedio: p,
     honores: !!completado && p != null && p >= HONORES,
+    certificado: userId && completado ? (await codigoDocumento(userId, "nivel", String(nv.n))) ?? (await emitirNivel(userId, nv, p)) : null,
     vistaPrevia,
     conSesion: !!userId,
   };
@@ -128,6 +130,8 @@ export async function revisarNivel(userId: number, nv: NivelDef): Promise<boolea
     [userId, nv.n, e.materias.promedio],
   );
   await pool.query(`UPDATE academia_alumnos SET nivel = GREATEST(nivel, $2) WHERE user_id = $1`, [userId, Math.min(5, nv.n + 1)]);
+  // el nivel completo recibe su certificado al instante
+  await emitirNivel(userId, nv, e.materias.promedio);
   return true;
 }
 

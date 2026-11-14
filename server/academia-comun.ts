@@ -99,6 +99,22 @@ CREATE TABLE IF NOT EXISTS "academia_niveles" (
   "completado_at" timestamp,
   "promedio" integer,
   PRIMARY KEY ("user_id", "nivel")
+);
+CREATE TABLE IF NOT EXISTS "academia_certificados" (
+  "id" serial PRIMARY KEY,
+  "codigo" text NOT NULL UNIQUE,
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "tipo" text NOT NULL,
+  "ref" text NOT NULL,
+  "titulo" text NOT NULL,
+  "nombre" text NOT NULL,
+  "nota" integer,
+  "honores" boolean NOT NULL DEFAULT false,
+  "via" text NOT NULL DEFAULT 'cursada',
+  "emitido_at" timestamp NOT NULL DEFAULT now(),
+  "revocado_at" timestamp,
+  "motivo" text,
+  UNIQUE ("user_id", "tipo", "ref")
 );`;
 
 // ---------------------------------------------------------------- quién la ve

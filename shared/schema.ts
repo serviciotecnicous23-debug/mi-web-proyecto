@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer, jsonb, customType, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, jsonb, customType, primaryKey, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -1346,6 +1346,27 @@ export const academiaNiveles = pgTable(
     promedio: integer("promedio"),
   },
   (t) => [primaryKey({ columns: [t.userId, t.nivel] })],
+);
+
+/** Los documentos de la academia: certificados de materia y de nivel, con su código verificable (server/academia-documentos.ts). */
+export const academiaCertificados = pgTable(
+  "academia_certificados",
+  {
+    id: serial("id").primaryKey(),
+    codigo: text("codigo").notNull().unique(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tipo: text("tipo").notNull(),
+    ref: text("ref").notNull(),
+    titulo: text("titulo").notNull(),
+    nombre: text("nombre").notNull(),
+    nota: integer("nota"),
+    honores: boolean("honores").notNull().default(false),
+    via: text("via").notNull().default("cursada"),
+    emitidoAt: timestamp("emitido_at").notNull().defaultNow(),
+    revocadoAt: timestamp("revocado_at"),
+    motivo: text("motivo"),
+  },
+  (t) => [unique().on(t.userId, t.tipo, t.ref)],
 );
 
 // ========== DIEZMOS Y OFRENDAS ==========

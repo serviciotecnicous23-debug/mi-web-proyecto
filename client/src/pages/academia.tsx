@@ -9,7 +9,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type MateriaResumen } from "@shared/academia";
-import { useAcademiaEstado } from "@/components/academia/api";
+import { useAcademiaEstado, useCertificados } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
 function TarjetaMateria({ m }: { m: MateriaResumen }) {
@@ -45,6 +45,7 @@ const PASOS = [
 
 export default function AcademiaPage() {
   const q = useAcademiaEstado();
+  const docs = useCertificados(!!q.data?.conSesion && !!q.data?.alumno);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403 || !q.data) return <PantallaCerrada mensaje={q.error?.message} />;
   const e = q.data;
@@ -118,6 +119,24 @@ export default function AcademiaPage() {
       </section>
 
       {e.vistaPrevia && <AvisoVistaPrevia />}
+
+      {/* ═══ MIS CERTIFICADOS ═══ */}
+      {docs.data && docs.data.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 pt-10" data-testid="mis-certificados">
+          <p className="data-label text-orange-600 dark:text-orange-300">Tus documentos</p>
+          <h2 className="font-display text-2xl md:text-3xl font-bold mt-1 mb-4 flex items-center gap-2"><Award className="w-6 h-6 text-orange-500" /> Mis certificados</h2>
+          <div className="flex flex-wrap gap-2">
+            {docs.data.map((d) => (
+              <Link key={d.codigo} href={`/academia/certificado/${d.codigo}`}>
+                <span className="glass-pill inline-flex items-center gap-1.5 text-sm cursor-pointer hover:-translate-y-0.5 transition" data-testid="certificado-enlace">
+                  {d.tipo === "nivel" ? <GraduationCap className="w-4 h-4 text-orange-500" /> : <Award className="w-4 h-4 text-orange-500" />}
+                  {d.titulo}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ═══ EL CAMINO ═══ */}
       <section id="camino" className="max-w-6xl mx-auto px-4 py-14 scroll-mt-24">

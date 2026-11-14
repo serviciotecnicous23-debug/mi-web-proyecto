@@ -138,7 +138,11 @@ export default function AcademiaNivel() {
             <h2 className="font-display text-2xl md:text-3xl font-bold mt-3">¡Completaste el Nivel {nv.n}!</h2>
             <p className="text-muted-foreground mt-2">El {fecha(e.completado)}, con un promedio de <strong className="text-foreground">{e.promedio}</strong>{e.honores ? ", con honores" : ""}.</p>
             {e.honores && <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 dark:text-orange-300"><Sparkles className="w-4 h-4" /> Cuadro de honor: promedio de {HONORES} o más</p>}
-            <p className="text-sm mt-4">Pronto podrás descargar tu documento del nivel, con su código de verificación.</p>
+            {e.certificado && (
+              <Link href={`/academia/certificado/${e.certificado}`}>
+                <Button size="lg" className="fire-btn-primary h-12 px-7 mt-5" data-testid="nivel-certificado"><Award className="w-4 h-4 mr-2" /> Ver tu {nv.recibe.split(" ")[0].toLowerCase()} del nivel</Button>
+              </Link>
+            )}
           </section>
         )}
 

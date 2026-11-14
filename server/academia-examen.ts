@@ -26,6 +26,7 @@ import { corregirEscrita, type ClaveEscrita } from "./academia-correccion";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import { elegirEscritas, elegirFinal } from "./academia-eleccion";
 import { alumnoDe, asegurarAlumno, asegurarMateria, claveFinal, enFila, frenar, marcarEstudio, recalcularMateria } from "./academia-comun";
+import { emitirMateria } from "./academia-documentos";
 
 export { elegirFinal } from "./academia-eleccion";
 
@@ -173,6 +174,8 @@ export function evaluacionDeMateria(m: MateriaDef): Evaluacion {
     },
     alCerrar: async (userId) => {
       const materia = await recalcularMateria(userId, m);
+      // la materia aprobada recibe su certificado al instante
+      if (materia.aprobada) await emitirMateria(userId, m, materia.nota);
       return { aprobada: materia.aprobada, materia: { nota: materia.nota, aprobada: materia.aprobada, medalla: materia.aprobada ? medallaDe(materia.nota) : null } };
     },
     yaAprobado: "Ya aprobaste esta materia.",

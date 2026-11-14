@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, ArrowRight, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Info, Library, RotateCcw, Sparkles, Target, Timer, Video,
+  ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Info, Library, RotateCcw, Sparkles, Target, Timer, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -188,6 +188,11 @@ export default function AcademiaMateria() {
             <div className="mt-5 max-w-md"><BarraAvance valor={hechas} de={m.lecciones.length} etiqueta={`${hechas} de ${m.lecciones.length} lecciones`} /></div>
           )}
           <div className="mt-6 flex flex-wrap gap-3">
+            {d.certificado && (
+              <Link href={`/academia/certificado/${d.certificado}`}>
+                <Button size="lg" className="fire-btn-primary h-12" data-testid="materia-certificado"><Award className="w-4 h-4 mr-2" /> Ver tu certificado</Button>
+              </Link>
+            )}
             {m.disponible && siguiente && (
               <Link href={`/academia/leccion/${siguiente.id}`}>
                 <Button size="lg" className="fire-btn-primary h-12" data-testid="materia-continuar">{hechas ? "Continuar" : "Empezar"}: {siguiente.titulo} <ArrowRight className="w-4 h-4 ml-2" /></Button>
