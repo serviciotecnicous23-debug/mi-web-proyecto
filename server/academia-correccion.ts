@@ -168,11 +168,34 @@ function negada(ws: string[], desde: number): boolean {
   return false;
 }
 
-/** La idea aparece afirmada (o, si es una idea negativa, aparece tal cual). */
-function aparece(ws: string[], formas: string[], negativa: boolean): boolean {
+/** Las negaciones del verbo: si una se cuela entre las palabras de una forma, la frase ya no afirma lo mismo. */
+const NIEGAN_VERBO = new Set(["no", "nunca", "jamas", "tampoco"]);
+
+const niegaVerbo = (token: string) =>
+  token.startsWith("(") ? token.slice(1, -1).split("|").some((a) => NIEGAN_VERBO.has(a)) : NIEGAN_VERBO.has(token);
+
+/**
+ * ¿Se coló una negación del verbo entre las palabras de lo encontrado, que la forma no trae?
+ * «el bautismo no salva» no afirma «el bautismo salva», aunque la forma admita 2 palabras de más en medio.
+ */
+function negacionDentro(ws: string[], m: { desde: number; hasta: number }, forma: string): boolean {
+  let enTexto = 0;
+  for (let j = m.desde; j <= m.hasta; j++) if (NIEGAN_VERBO.has(ws[j])) enTexto++;
+  const enForma = normalizar(forma).trim().split(/\s+/).filter(niegaVerbo).length;
+  return enTexto > enForma;
+}
+
+/**
+ * La idea aparece afirmada (o, si es una idea negativa, aparece tal cual). Con `estricta`, la de los conceptos
+ * errados, tampoco vale lo que tiene una negación metida entre sus palabras: un error mal marcado anula una idea.
+ */
+function aparece(ws: string[], formas: string[], negativa: boolean, estricta = false): boolean {
   for (const f of formas) {
     for (const m of buscarForma(ws, f)) {
-      if (negativa || !negada(ws, m.desde)) return true;
+      if (negativa) return true;
+      if (negada(ws, m.desde)) continue;
+      if (estricta && negacionDentro(ws, m, f)) continue;
+      return true;
     }
   }
   return false;
@@ -236,7 +259,7 @@ export function corregirEscrita(clave: ClaveEscrita, texto: string, op: Opciones
   const marcas: string[] = [];
 
   // conceptos errados afirmados (anulan la idea que contradicen)
-  const errores = (clave.errores ?? []).filter((e) => aparece(ws, e.formas, false));
+  const errores = (clave.errores ?? []).filter((e) => aparece(ws, e.formas, false, true));
   const anuladas = new Set(errores.map((e) => e.anula).filter(Boolean) as string[]);
   for (const e of errores) {
     avisos.push(e.texto);
