@@ -379,6 +379,36 @@ export function shinyMat() {
   return shiny;
 }
 
+let matteViento: THREE.MeshLambertMaterial | null = null;
+/**
+ * El material de lo sembrado (el trigo, la cebada, los olivitos del huerto): el de siempre, más el viento. La planta se
+ * mece más arriba que abajo (el pie queda quieto en la tierra), con ráfagas que pasan por el campo, como la hierba.
+ */
+export function matteMatViento() {
+  if (matteViento) return matteViento;
+  const mat = conDetalle(new THREE.MeshLambertMaterial({ vertexColors: true }), false);
+  const antes = mat.onBeforeCompile;
+  const clave = mat.customProgramCacheKey;
+  mat.onBeforeCompile = (shader, renderer) => {
+    antes.call(mat, shader, renderer);
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <begin_vertex>",
+      `#include <begin_vertex>
+{
+  float vAlto = smoothstep(0.03, 0.6, transformed.y);
+  vec4 vWp = modelMatrix * vec4(transformed, 1.0);
+  float vRafaga = 0.5 + 0.5 * sin(uTiempo * 0.6 - vWp.x * 0.25 - vWp.z * 0.1);
+  float vMece = vAlto * vAlto * (0.45 + 0.55 * vRafaga);
+  transformed.x += (sin(uTiempo * 2.1 + vWp.x * 1.3 + vWp.z * 0.7) * 0.035 + 0.025) * vMece;
+  transformed.z += cos(uTiempo * 1.7 + vWp.x * 0.9 + vWp.z * 0.4) * 0.02 * vMece;
+}`,
+    );
+  };
+  mat.customProgramCacheKey = () => `${clave.call(mat)}-viento`;
+  matteViento = conFuegos(mat, "viento");
+  return matteViento;
+}
+
 /** Un metal como el compartido pero propio (lo que se mueve con su dueño, como el oro de la ropa de los personajes). */
 export function shinyMatPropio() {
   return conFuegos(conDetalle(new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new THREE.Color("#7a5a20") }), true), "metal");

@@ -16,7 +16,10 @@ import { Vista } from "../motor/vista";
 import { BlobShadows, Figure, newRig, type FigureLook, type Rig } from "../three/characters";
 import { NavGrid, collide } from "../three/nav";
 import { Overlay, Ring } from "../three/overlay";
-import { C, GeoBuilder, avanzarMateriales, disposeGroup, matteMat, meshPair } from "../three/builder";
+import { C, GeoBuilder, avanzarMateriales, disposeGroup, matteMat, matteMatViento, meshPair } from "../three/builder";
+import { pisoConTono } from "../three/structures";
+import { apagarFuegos, ponerFuegos, titila, type Fuego } from "../three/luces";
+import { hierbaCon, type SueloVivo } from "../ciudad/suelo-vivo";
 import type { TempleAudio } from "../audio";
 import { gameStore, type AccionHuertoHud, type HuertoHud } from "../store";
 import type { Circle, Rect, V2 } from "../layout";
@@ -122,6 +125,59 @@ function malla(b: GeoBuilder, sombra = true): THREE.Mesh {
   m.castShadow = sombra;
   m.receiveShadow = true;
   return m;
+}
+
+/** Lo sembrado se mece con el viento (matteMatViento): más arriba que abajo, el pie queda quieto en la tierra. */
+function mallaViento(b: GeoBuilder): THREE.Mesh {
+  const m = new THREE.Mesh(b.build(), matteMatViento());
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+/**
+ * El corte del surco ([desplazamiento, alto, tono]): arado, dos lomos redondeados con su hondonada (más oscura) y la
+ * tierra que baja a los lados; sin arar, un lomo bajo y duro.
+ */
+const PERFIL_ARADO: [number, number, number][] = [
+  [-0.41, 0.012, 0.78], [-0.33, 0.045, 0.86], [-0.24, 0.1, 1.0], [-0.15, 0.122, 1.08], [-0.07, 0.098, 0.95], [0, 0.072, 0.8],
+  [0.07, 0.098, 0.95], [0.15, 0.122, 1.08], [0.24, 0.1, 1.0], [0.33, 0.045, 0.86], [0.41, 0.012, 0.78],
+];
+const PERFIL_DURO: [number, number, number][] = [[-0.41, 0.012, 0.85], [-0.28, 0.04, 0.96], [-0.1, 0.055, 1.02], [0.1, 0.055, 1.02], [0.28, 0.04, 0.96], [0.41, 0.012, 0.85]];
+
+/**
+ * La tierra de un surco: el corte que corre a lo largo del surco, con los extremos que bajan redondeados y el lomo que
+ * sube y baja un poco (la azada no deja nada parejo). Sin azar: lo que se siembra encima sale igual que antes.
+ */
+function tierraDelSurco(z: number, arado: boolean, color: string, semilla: number): THREE.BufferGeometry {
+  const perfil = arado ? PERFIL_ARADO : PERFIL_DURO;
+  const x0 = -LARGO / 2 - 0.12, x1 = LARGO / 2 + 0.12, n = 52, m = perfil.length;
+  const base = new THREE.Color(color);
+  const f = semilla * 1.7;
+  const pos: number[] = [], col: number[] = [], idx: number[] = [];
+  for (let i = 0; i <= n; i++) {
+    const x = x0 + ((x1 - x0) * i) / n;
+    const punta = Math.sqrt(Math.max(0, Math.min(1, (x - x0) / 0.22, (x1 - x) / 0.22)));
+    const onda = 1 + Math.sin(x * 7.3 + f) * 0.1 + Math.sin(x * 13.7 + f * 2.3) * 0.06;
+    for (const [dz, h, tono] of perfil) {
+      pos.push(x, 0.012 + (h - 0.012) * onda * punta, z + dz);
+      const k = tono * (1 + Math.sin(x * 21 + dz * 37 + f) * 0.04);
+      col.push(base.r * k, base.g * k, base.b * k);
+    }
+  }
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < m - 1; j++) {
+      const a = i * m + j, b = a + 1, c = a + m, d = c + 1;
+      idx.push(a, b, d, a, d, c);
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const sin = g.toNonIndexed();
+  g.dispose();
+  return sin;
 }
 
 // ---------------------------------------------------------------- herramientas y lo que se lleva (en la mano)
@@ -300,6 +356,11 @@ export class HuertoWorld {
   private sol = new THREE.DirectionalLight("#fff0d0", 1.5);
   private suelo: THREE.Mesh;
   private estaticos = new THREE.Group();
+  /** La hierba con viento junto al cerco, al muro y a los árboles (ciudad/suelo-vivo.ts). */
+  private hierba: SueloVivo | null = null;
+  /** La luz de la casa que sale por la puerta, de noche (three/luces.ts), y cuánto es de día (lo calcula updateLuz). */
+  private luzPuerta: Fuego = { x: 0, y: 1.15, z: ZCASA + 0.2, fuerza: 0, recorte: [-6.6, ZCASA - 0.05, 6.6, 40], alto: [-0.3, 3], alcance: 5.5 };
+  private dia = 1;
   private surcos: SurcoVisual[] = [];
   private gavillasG = new THREE.Group();
   private efectos = new THREE.Group();
@@ -466,11 +527,44 @@ export class HuertoWorld {
     const s = new GeoBuilder();
     const rnd = mulberry32(7);
     const lab = this._estado.labranza;
-    // la tierra del campo y los caminos
+    // el suelo de una pieza: el campo labrado que pasa suave a los caminos y a la hierba, con la sombra junto al cerco,
+    // al muro de la casa, al pozo y al granero (docs/guia-visual.md, sección 3)
     const finCampo = zSurco(n - 1) + 0.75;
-    m.box(LARGO + 1.4, 0.03, finCampo - (Z0 - 0.75), "#8e7350", { x: 0, y: 0.0, z: (finCampo + Z0 - 0.75) / 2 }, 0.04);
-    for (const sx of [-1, 1]) m.box(1.0, 0.025, zS - ZCASA, "#c7b38a", { x: sx * (LARGO / 2 + 1.25), y: 0.005, z: (zS + ZCASA) / 2 }, 0.03);
-    m.box(LARGO + 3.6, 0.025, 1.1, "#c7b38a", { x: 0, y: 0.005, z: ZCASA + 0.85 }, 0.03);
+    const campo = new THREE.Color(this.colorDelCampo()), camino = new THREE.Color("#c7b38a"), labrado = new THREE.Color("#8e7350");
+    const enRect = (x: number, z: number, x0: number, z0: number, x1: number, z1: number, borde: number) =>
+      1 - THREE.MathUtils.smoothstep(Math.hypot(Math.max(x0 - x, x - x1, 0), Math.max(z0 - z, z - z1, 0)), 0, borde);
+    const colorSuelo = (x: number, z: number) => {
+      const c = campo.clone();
+      c.lerp(camino, Math.max(
+        enRect(x, z, -(LARGO / 2 + 1.75), ZCASA, -(LARGO / 2 + 0.75), zS, 0.3),
+        enRect(x, z, LARGO / 2 + 0.75, ZCASA, LARGO / 2 + 1.75, zS, 0.3),
+        enRect(x, z, -(LARGO + 3.6) / 2, ZCASA + 0.3, (LARGO + 3.6) / 2, ZCASA + 1.4, 0.3),
+      ));
+      return c.lerp(labrado, enRect(x, z, -(LARGO / 2 + 0.7), Z0 - 0.75, LARGO / 2 + 0.7, finCampo, 0.35));
+    };
+    const granW = (lab?.granero ? 2.2 : 1.8) / 2;
+    const sombra = (d: number, alcance: number, fuerza: number) => (d >= alcance ? 1 : 1 - fuerza * (1 - Math.max(0, d) / alcance) ** 2);
+    const tonoSuelo = (x: number, z: number) =>
+      sombra(Math.min(6.4 - Math.abs(x), zS + 0.6 - z, z - ZCASA), 0.8, 0.28)
+      * sombra(Math.hypot(x - POZO[0], z - POZO[1]) - 0.62, 0.5, 0.25)
+      * sombra(Math.hypot(Math.max(Math.abs(x - GRANERO[0]) - granW, 0), Math.max(Math.abs(z - GRANERO[1]) - granW, 0)), 0.5, 0.25);
+    m.raw(pisoConTono(-6.4, ZCASA, 6.4, zS + 0.6, colorSuelo, 0.012, 0.25, tonoSuelo));
+    // la hierba con viento: al pie del cerco y del muro de la casa, y alrededor de los árboles (no en el campo ni en los caminos)
+    // (con su propio azar: las piedras, el cerco y los olivos salen igual que antes)
+    const rh = mulberry32(97);
+    const matas: { x: number; y: number; z: number; s: number }[] = [];
+    const mata = (x: number, z: number) => matas.push({ x: x + (rh() - 0.5) * 0.18, y: 0.012, z: z + (rh() - 0.5) * 0.18, s: 0.22 + rh() * 0.12 });
+    for (let z = ZCASA + 0.5; z < zS + 0.3; z += 0.32) for (const sx of [-1, 1]) mata(sx * (6.0 - rh() * 0.25), z);
+    for (let x = -5.9; x < 5.9; x += 0.32) mata(x, zS + 0.25 - rh() * 0.2);
+    for (let x = -6.1; x < 6.1; x += 0.36) if (Math.abs(x) > 1.0 && (x < 1.4 || x > 2.5)) mata(x, ZCASA + 0.22);
+    for (const [x, z] of [[-5.4, ZCASA + 0.9], [5.5, ZCASA + 0.95], [-5.5, zS - 0.2], [5.45, zS - 0.1], [-2.6, -2.8]] as [number, number][])
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + rh();
+        mata(x + Math.cos(a) * 0.4, z + Math.sin(a) * 0.4);
+      }
+    this.hierba?.dispose();
+    this.hierba = hierbaCon(matas, 0.45, 23);
+    g.add(this.hierba.grupo);
     // piedras sueltas y matas en los bordes
     for (let i = 0; i < 40; i++) {
       const x = (rnd() - 0.5) * 12.4, z = ZCASA + rnd() * (zS - ZCASA);
@@ -644,12 +738,11 @@ export class HuertoWorld {
     const b = new GeoBuilder();
     const arado = !!p.arado || !!p.semilla;
     const mojado = !!p.regado;
-    const tierra = arado ? (mojado ? "#4f3b28" : "#6b5033") : "#a98d62";
-    b.box(LARGO + 0.25, 0.06, ANCHO + 0.2, tierra, { y: 0.03, z }, 0.05);
+    const tierra = arado ? (mojado ? "#4a3725" : "#654b30") : "#a28860";
+    b.raw(tierraDelSurco(z, arado, tierra, i + 1));
     if (arado) {
-      for (const dz of [-0.15, 0.15]) b.box(LARGO + 0.1, 0.09, 0.17, mojado ? "#45331f" : "#5d4529", { y: 0.075, z: z + dz }, 0.07);
-      b.box(LARGO + 0.1, 0.02, 0.06, mojado ? "#3a2b1b" : "#4e3a22", { y: 0.065, z });
-      if (mojado) for (let k = 0; k < 6; k++) b.sphere(0.06 + rnd() * 0.05, "#5d6f82", { x: (rnd() - 0.5) * LARGO, y: 0.058, z: z + (rnd() - 0.5) * 0.3, sy: 0.08 }, 6, 3);
+      // los charcos quedan en la hondonada entre los dos lomos
+      if (mojado) for (let k = 0; k < 6; k++) b.sphere(0.06 + rnd() * 0.05, "#5d6f82", { x: (rnd() - 0.5) * LARGO, y: 0.078, z: z + (rnd() - 0.5) * 0.08, sy: 0.08 }, 6, 3);
       if (p.abono) for (let k = 0; k < 26; k++) b.sphere(0.02 + rnd() * 0.015, "#2e2116", { x: (rnd() - 0.5) * LARGO, y: 0.12, z: z + (rnd() - 0.5) * 0.42, sy: 0.6 }, 4, 3);
     } else {
       // sin arar: tierra dura, rastrojo seco y piedritas
@@ -664,7 +757,7 @@ export class HuertoWorld {
       if (p.semilla) {
         const pb = new GeoBuilder();
         plantasDelTramo(pb, p.semilla, a.etapa, k, z, rnd);
-        if (!pb.empty) tg.add(malla(pb));
+        if (!pb.empty) tg.add(mallaViento(pb));
       }
       g.add(tg);
       tramos.push(tg);
@@ -1544,7 +1637,11 @@ export class HuertoWorld {
     }
     if (this.refrescoEn && now > this.refrescoEn) void this.refrescar();
     this.animate(dt, now);
+    // la luz de la casa sale por la puerta y alumbra el campo cercano, de noche (y apenas de día); vale solo para este dibujo
+    this.luzPuerta.fuerza = (0.2 + 0.8 * (1 - this.dia)) * 1.15 * titila(this.time, 3);
+    ponerFuegos([this.luzPuerta]);
     (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
+    apagarFuegos();
     this.hudT += dt;
     if (this.hudT > 0.15) {
       this.hudT = 0;
@@ -1578,6 +1675,7 @@ export class HuertoWorld {
     const t = relojEnLinea().hora;
     const e = t >= 0.22 && t <= 0.78 ? Math.sin((Math.PI * (t - 0.22)) / 0.56) : -0.4;
     const dia = THREE.MathUtils.smoothstep(e, -0.08, 0.3);
+    this.dia = dia;
     const lluvia = this.lluvia.intensidad;
     const c = this.tmpColor;
     this.hemi.intensity = (1.0 + 0.35 * dia) * (1 - lluvia * 0.2);
@@ -1745,6 +1843,8 @@ export class HuertoWorld {
     this.player.fig.dispose();
     this.sombras.dispose();
     this.lluvia.dispose();
+    this.hierba?.dispose();
+    apagarFuegos();
     this.scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry && m.geometry !== _gotaGeo) m.geometry.dispose();
