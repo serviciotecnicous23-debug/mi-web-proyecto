@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-aula-estudio",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El aula y el estudio, más finos",
+    puntos: [
+      "🔥 En el aula todas las lámparas alumbran la sala con su luz tibia, y ya no le llega la luz de las lámparas del edificio de atrás.",
+      "🧱 La cámara de los sacerdotes tiene losas trabadas; la escuela, tierra apisonada; y junto a los muros el piso tiene su sombra.",
+      "🌅 Cada banco se asienta con su sombra, y de cerca los muros de revoque se ven lisos, sin parecer papel arrugado.",
+      "🏛️ Las siete columnas del estudio de «¿Quién es sabio?» tienen sus estrías, su collarín y su basa de oro.",
+    ],
+  },
+  {
     id: "2026-11-14-lugar-santo",
     fecha: "14 de noviembre de 2026",
     titulo: "El Lugar Santo por dentro",

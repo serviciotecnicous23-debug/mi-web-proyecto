@@ -869,6 +869,22 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
   sol que entra de lado y las lámparas siguen iguales, y por la puerta la luz entra de a poco. El techo (`techoMeshes`)
   se aclara al entrar como los muros, pero sigue dando sombra.
 
+## 7n. El aula y el estudio (14 de noviembre de 2026)
+
+- **El aula** (`aula/escena.ts`):
+  - las lámparas alumbran con la luz de los fuegos (antes, una luz de three por lámpara); `pintar` las pone justo antes
+    de dibujar y las quita después;
+  - el piso: losas trabadas (`tiles`) en la cámara, tierra apisonada (`pisoConTono`) en la escuela y tablas en el
+    palacio, con la sombra junto a los muros;
+  - cada banco lleva su sombra de contacto (`sombraDeContacto`, ahora en `three/luces.ts`, la misma de los muebles).
+- **La luz de cada mundo vale solo para su dibujo**: la casa (y cada edificio) se sigue dibujando detrás del aula, y el
+  aula recibía la luz de sus lámparas. Ahora el templo, la casa y el aula ponen sus fuegos (y el templo su sombra de
+  techo) justo antes de dibujarse y los quitan después.
+- **Los muros de cerca**: el relieve de la piedra y del revoque baja de cerca (a un tercio a 5 m) y vuelve entero a la
+  distancia de la ciudad. Los fuegos alumbran con una normal más suave (`NORMAL_FUEGO`): una lámpara pegada a un muro le
+  da de costado, y el revoque se veía arrugado.
+- **El estudio** (`estudio/estudio-sabio.ts`): las siete columnas con estrías (`columnaEstriada`), collarín y basa doble.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

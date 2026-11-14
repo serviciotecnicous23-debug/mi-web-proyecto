@@ -275,7 +275,9 @@ const DETALLE_RELIEVE = `
   vec3 dGrad = sign(dDet) * (dHx * dR1 + dHy * dR2);
   // la tela acostada (la tierra apisonada de un piso, una alfombra) casi sin relieve: con la luz baja de una lámpara se
   // veía ondulada como la arena; y el metal acostado (el piso de oro) pulido, no arrugado
-  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1 * (1.0 - 0.85 * dAcostada)) * dLejos;
+  // de cerca la piedra y el revoque van con un tercio del relieve (si no, un muro a pocos metros parece papel arrugado);
+  // a la distancia de la ciudad y de los atrios, con todo
+  float dFuerza = (dPiedra * 0.24 * mix(0.35, 1.0, smoothstep(5.0, 18.0, length(vViewPosition))) + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1 * (1.0 - 0.85 * dAcostada)) * dLejos;
   normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
 }
 #endif
