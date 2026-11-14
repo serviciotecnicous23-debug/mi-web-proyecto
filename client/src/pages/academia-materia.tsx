@@ -233,7 +233,7 @@ export default function AcademiaMateria() {
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-orange-500" /> Examen final</h2>
             <ul className="text-sm text-muted-foreground space-y-1 mb-4">
               <li>Parte A: {medida.objetivas} preguntas objetivas, {medida.segundos} segundos cada una, repartidas por todas las lecciones.</li>
-              <li>Parte B: {medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} desde tu celular ({medida.minutosEscrita} minutos cada una), con corrección automática.</li>
+              <li>Parte B: {medida.escritas === 1 ? `una respuesta escrita desde tu celular (${medida.minutosEscrita} minutos)` : `${medida.escritas} respuestas escritas desde tu celular (${medida.minutosEscrita} minutos cada una)`}, con corrección automática.</li>
               <li>Pesa {medida.pesoObjetiva} % la parte objetiva y {100 - medida.pesoObjetiva} % la escrita. Se aprueba con {APRUEBA}.</li>
             </ul>
             {ex ? (

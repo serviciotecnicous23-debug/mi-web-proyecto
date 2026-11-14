@@ -5,10 +5,11 @@ import { LinkEmbed } from "@/components/media/LinkEmbed";
 import { Layout } from "@/components/layout";
 import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla } from "@shared/academia";
 
-const COLOR_MEDALLA: Record<Medalla, { aro: string; fondo: string; texto: string }> = {
-  oro: { aro: "#c9a227", fondo: "rgba(201,162,39,.16)", texto: "#8a6d10" },
-  plata: { aro: "#9aa3ad", fondo: "rgba(154,163,173,.18)", texto: "#5b6470" },
-  bronce: { aro: "#b4743c", fondo: "rgba(180,116,60,.16)", texto: "#7c4a1f" },
+// El número va con el color del texto del tema (se lee en claro y en oscuro); la medalla la dan el aro y el fondo.
+const COLOR_MEDALLA: Record<Medalla, { aro: string; fondo: string }> = {
+  oro: { aro: "#c9a227", fondo: "rgba(201,162,39,.18)" },
+  plata: { aro: "#a8b0ba", fondo: "rgba(168,176,186,.2)" },
+  bronce: { aro: "#b4743c", fondo: "rgba(180,116,60,.18)" },
 };
 
 /** La nota con su medalla académica (oro desde 95, plata desde 85, bronce desde 70). */
@@ -18,8 +19,8 @@ export function NotaMedalla({ nota, medalla, grande = false }: { nota: number; m
   return (
     <div className="flex items-center gap-3" data-testid="nota-medalla">
       <div
-        className={`${tam} rounded-full flex items-center justify-center font-display font-bold shrink-0`}
-        style={{ border: `3px solid ${c?.aro ?? "rgba(148,148,148,.5)"}`, background: c?.fondo ?? "transparent", color: c?.texto ?? undefined }}
+        className={`${tam} rounded-full flex items-center justify-center font-display font-bold shrink-0 text-foreground`}
+        style={{ border: `3px solid ${c?.aro ?? "rgba(148,148,148,.5)"}`, background: c?.fondo ?? "transparent" }}
         aria-label={`Nota ${nota} de 100`}
       >
         {nota}

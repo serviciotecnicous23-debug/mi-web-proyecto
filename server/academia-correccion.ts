@@ -18,7 +18,7 @@
  *
  * Las claves viven SOLO en el servidor (server/academia/bancos/): el alumno nunca ve las formas aceptadas.
  */
-import { BIBLE_BOOK_CHAPTERS } from "@shared/bible";
+import { BIBLE_BOOK_CHAPTERS, bibleBookLabel } from "@shared/bible";
 import { ESCRITA, type CorreccionVista, type TipoEscrita } from "@shared/academia";
 
 export type Idea = {
@@ -208,7 +208,7 @@ export function citasEscritas(texto: string): CitaEscrita[] {
     const desde = Number(m[3]);
     const hasta = m[4] ? Math.max(desde, Number(m[4])) : desde;
     if (capitulo < 1 || capitulo > BIBLE_BOOK_CHAPTERS[libro] || desde < 1) continue;
-    out.push({ libro, capitulo, desde, hasta, texto: m[0].replace(/^[^a-z0-9]/, "").trim() });
+    out.push({ libro, capitulo, desde, hasta, texto: `${bibleBookLabel(libro)} ${capitulo}:${desde}${hasta > desde ? `-${hasta}` : ""}` });
   }
   return out;
 }
