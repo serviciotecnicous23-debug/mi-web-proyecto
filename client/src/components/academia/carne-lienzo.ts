@@ -64,6 +64,22 @@ function lineas(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max
   return out;
 }
 
+/** Como `lineas`, pero corta entre las partes separadas por « · » («Estudiante · Nivel 1» / «Fundamentos de la fe»). */
+function lineasPorPartes(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max: number): string[] {
+  const out: string[] = [];
+  let actual = "";
+  for (const parte of texto.split(" · ")) {
+    const prueba = actual ? `${actual} · ${parte}` : parte;
+    if (!actual || ctx.measureText(prueba).width <= ancho) actual = prueba;
+    else {
+      out.push(actual);
+      actual = parte;
+    }
+  }
+  if (actual) out.push(actual);
+  return out.flatMap((l) => (ctx.measureText(l).width <= ancho ? [l] : lineas(ctx, l, ancho, max))).slice(0, max);
+}
+
 /** El fondo común: oscuro, con brasas, el borde dorado y la franja de fuego abajo. */
 function fondo(ctx: CanvasRenderingContext2D, W: number, H: number) {
   redondeado(ctx, 0, 0, W, H, 44);
@@ -151,7 +167,7 @@ export async function dibujarFrente(c: CarneVista): Promise<HTMLCanvasElement> {
   encabezado(ctx, logo, "Carné de estudiante · Instituto de formación ministerial");
 
   // la foto (o las iniciales)
-  const fx = 48, fy = 170, fw = 196, fh = 244;
+  const fx = 48, fy = 176, fw = 240, fh = 300;
   ctx.save();
   redondeado(ctx, fx, fy, fw, fh, 22);
   ctx.clip();
@@ -178,12 +194,12 @@ export async function dibujarFrente(c: CarneVista): Promise<HTMLCanvasElement> {
   ctx.stroke();
 
   // los datos
-  const tx = 276, anchoTexto = 440;
+  const tx = 320, anchoTexto = 384;
   ctx.fillStyle = "#ffffff";
   ctx.font = `bold 42px ${SERIF}`;
   const nombre = lineas(ctx, c.nombre, anchoTexto, 2);
-  nombre.forEach((l, i) => ctx.fillText(l, tx, 214 + i * 48));
-  let y = 214 + nombre.length * 48 + 10;
+  nombre.forEach((l, i) => ctx.fillText(l, tx, 226 + i * 48));
+  let y = 226 + nombre.length * 48 + 14;
   ctx.fillStyle = DORADO;
   ctx.font = `bold 19px ${SANS}`;
   ctx.fillText("MATRÍCULA", tx, y);
@@ -196,9 +212,10 @@ export async function dibujarFrente(c: CarneVista): Promise<HTMLCanvasElement> {
   y += 116;
   ctx.fillStyle = NARANJA;
   ctx.font = `bold 25px ${SANS}`;
-  lineas(ctx, c.estatus.texto, anchoTexto, 2).forEach((l, i) => ctx.fillText(l, tx, y + i * 31));
+  const estatus = lineasPorPartes(ctx, c.estatus.texto, anchoTexto, 2);
+  estatus.forEach((l, i) => ctx.fillText(l, tx, y + i * 31));
   if (c.estatus.honores) {
-    const by = y + (lineas(ctx, c.estatus.texto, anchoTexto, 2).length * 31) - 4;
+    const by = y + estatus.length * 31 - 4;
     ctx.font = `bold 18px ${SANS}`;
     const t = "CUADRO DE HONOR";
     const w = ctx.measureText(t).width + 28;
@@ -213,7 +230,7 @@ export async function dibujarFrente(c: CarneVista): Promise<HTMLCanvasElement> {
   }
 
   // el QR sobre blanco
-  const qx = 744, qy = 172, qs = 220;
+  const qx = 728, qy = 176, qs = 236;
   redondeado(ctx, qx, qy, qs, qs, 18);
   ctx.fillStyle = "#ffffff";
   ctx.fill();
@@ -284,6 +301,18 @@ function bajar(nombre: string, blob: Blob) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/** La cara del carné en JPEG sobre blanco (las esquinas redondeadas no salen negras): el PDF pesa poco. */
+function comoJpeg(lienzo: HTMLCanvasElement): string {
+  const c = document.createElement("canvas");
+  c.width = lienzo.width;
+  c.height = lienzo.height;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(lienzo, 0, 0);
+  return c.toDataURL("image/jpeg", 0.92);
+}
+
 const archivo = (c: CarneVista, ext: string) => `carne-${c.numero}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-") + `.${ext}`;
 
 /** La imagen del frente (para el teléfono). */
@@ -297,7 +326,7 @@ export async function descargarCarneImagen(c: CarneVista): Promise<void> {
 /** El PDF para imprimir: una hoja carta con el frente y el reverso a tamaño real y las marcas de corte. */
 export async function descargarCarnePdf(c: CarneVista): Promise<void> {
   const [frente, reverso, { jsPDF }] = await Promise.all([dibujarFrente(c), dibujarReverso(c), import("jspdf")]);
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter", compress: true });
   const { ancho: w, alto: h } = LIENZO.mm;
   const x = (215.9 - w) / 2;
   const y1 = 40;
@@ -309,8 +338,8 @@ export async function descargarCarnePdf(c: CarneVista): Promise<void> {
   pdf.setFontSize(9.5);
   pdf.setTextColor(90);
   pdf.text("Imprímelo al 100 % (tamaño real). Recorta el frente y el reverso por las marcas y pégalos espalda con espalda.", 107.95, 27, { align: "center" });
-  pdf.addImage(frente.toDataURL("image/png"), "PNG", x, y1, w, h);
-  pdf.addImage(reverso.toDataURL("image/png"), "PNG", x, y2, w, h);
+  pdf.addImage(comoJpeg(frente), "JPEG", x, y1, w, h);
+  pdf.addImage(comoJpeg(reverso), "JPEG", x, y2, w, h);
   // marcas de corte en las esquinas
   pdf.setDrawColor(120);
   pdf.setLineWidth(0.2);

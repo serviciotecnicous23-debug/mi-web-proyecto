@@ -17,21 +17,28 @@ const CREMA: Color = [255, 251, 235]; // #fffbeb
 type Estilo = "normal" | "bold" | "italic" | "bolditalic";
 type Trozo = { t: string; estilo?: Estilo; color?: Color; tam?: number };
 
-/** Una imagen de la web como data URL (null si no carga: el PDF sale igual, sin ella). */
-async function imagenComoDato(src: string): Promise<string | null> {
-  try {
-    const r = await fetch(src);
-    if (!r.ok) return null;
-    const b = await r.blob();
-    return await new Promise((ok) => {
-      const fr = new FileReader();
-      fr.onload = () => ok(String(fr.result));
-      fr.onerror = () => ok(null);
-      fr.readAsDataURL(b);
-    });
-  } catch {
-    return null;
-  }
+/**
+ * Una imagen de la web, achicada a `lado` píxeles como máximo (el logo original pesa 1,5 MB), como data URL PNG. Null si
+ * no carga: el PDF sale igual, sin ella.
+ */
+function imagenReducida(src: string, lado: number): Promise<string | null> {
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const k = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.naturalWidth * k));
+        c.height = Math.max(1, Math.round(img.naturalHeight * k));
+        c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+        ok(c.toDataURL("image/png"));
+      } catch {
+        ok(null);
+      }
+    };
+    img.onerror = () => ok(null);
+    img.src = src;
+  });
 }
 
 function bajar(nombre: string, blob: Blob) {
@@ -46,8 +53,8 @@ function bajar(nombre: string, blob: Blob) {
 }
 
 export async function descargarCertificadoPdf(d: DocumentoAcademia, archivo: string): Promise<void> {
-  const [{ jsPDF }, logo, sello] = await Promise.all([import("jspdf"), imagenComoDato("/icons/logo-transparent.png?v4"), imagenComoDato("/icons/icon-192.png?v=6")]);
-  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const [{ jsPDF }, logo, sello] = await Promise.all([import("jspdf"), imagenReducida("/icons/logo-transparent.png?v4", 260), imagenReducida("/icons/icon-192.png?v=6", 160)]);
+  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
   const W = 297;
   const H = 210;
   const cx = W / 2;

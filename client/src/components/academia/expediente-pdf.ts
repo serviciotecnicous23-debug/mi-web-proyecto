@@ -9,7 +9,7 @@ const ESTADO: Record<string, string> = { aprobada: "Aprobada", "en-curso": "En c
 
 export async function descargarExpedientePdf(d: AlumnoDetalle): Promise<void> {
   const { jsPDF } = await import("jspdf");
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter", compress: true });
   const M = 16;
   const ANCHO = 215.9 - M * 2;
   const ALTO = 279.4;
