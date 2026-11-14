@@ -332,7 +332,7 @@ function buildPlaza(root: THREE.Group, fuegos: THREE.Vector3[]) {
   // el pozo de la plaza
   const [px, pz] = POZO;
   m.cyl(1.0, 1.08, 0.85, C.piedra, { x: px, y: Y + 0.42, z: pz }, 16, true);
-  m.cyl(0.92, 0.92, 0.05, "#3d5f70", { x: px, y: Y + 0.55, z: pz }, 16);
+  m.cyl(0.92, 0.92, 0.05, "#4e8fae", { x: px, y: Y + 0.55, z: pz }, 16);
   m.torus(1.02, 0.09, C.piedraClara, { x: px, y: Y + 0.86, z: pz, rx: Math.PI / 2 }, 6, 20);
   for (const sg of [-1, 1]) m.box(0.14, 1.7, 0.14, C.cedroOsc, { x: px + sg * 0.85, y: Y + 1.5, z: pz });
   m.box(1.9, 0.12, 0.12, C.cedroOsc, { x: px, y: Y + 2.32, z: pz });

@@ -4,7 +4,7 @@
  * y restaurado. Todo se dibuja con figuras simples pintadas por vértice y unidas en pocas mallas.
  */
 import * as THREE from "three";
-import { C, GeoBuilder, matteMat, shinyMat } from "./builder";
+import { C, GeoBuilder, conOndas, matteMat, shinyMat } from "./builder";
 import { CHOIR_FLOOR, COURT, GATE, LAVERS, OUTER, OUTER_GATE, POS, TEMPLE as T } from "../layout";
 import type { StationId } from "../data";
 
@@ -823,7 +823,7 @@ function buildSea(out: Partial<WorldVisual>): StationVisual {
   addMeshes(st.built, null, s);
   const water = new THREE.Mesh(
     new THREE.CircleGeometry(2.08, 32).rotateX(-Math.PI / 2),
-    new THREE.MeshPhongMaterial({ color: "#4f9fc4", shininess: 110, specular: new THREE.Color("#ffffff"), transparent: true, opacity: 0.92 }),
+    conOndas(new THREE.MeshPhongMaterial({ color: "#4f9fc4", shininess: 110, specular: new THREE.Color("#ffffff"), transparent: true, opacity: 0.92 })),
   );
   water.position.set(x, 1.98, z);
   st.built.add(water);

@@ -183,11 +183,16 @@ export class Polvo {
   private fase: Float32Array;
   private n: number;
   private suelo: number;
+  private radio: number;
+  private alto: number;
   private mat: THREE.PointsMaterial;
 
-  constructor(coarse: boolean, suelo: number) {
-    this.n = coarse ? 70 : 160;
+  /** `radio` y `alto`: hasta dónde flotan alrededor de la cámara (en un cuarto, menos que en la calle). */
+  constructor(coarse: boolean, suelo: number, opts: { radio?: number; alto?: number; cuantas?: number } = {}) {
+    this.n = Math.round((coarse ? 70 : 160) * (opts.cuantas ?? 1));
     this.suelo = suelo;
+    this.radio = opts.radio ?? 12;
+    this.alto = opts.alto ?? 4.5;
     this.pos = new Float32Array(this.n * 3);
     this.col = new Float32Array(this.n * 3);
     this.fase = new Float32Array(this.n);
@@ -203,9 +208,9 @@ export class Polvo {
   }
 
   private colocar(i: number, cx: number, cz: number) {
-    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 12;
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * this.radio;
     this.pos[i * 3] = cx + Math.cos(a) * r;
-    this.pos[i * 3 + 1] = this.suelo + 0.3 + Math.random() * 4.2;
+    this.pos[i * 3 + 1] = this.suelo + 0.3 + Math.random() * (this.alto - 0.3);
     this.pos[i * 3 + 2] = cz + Math.sin(a) * r;
     this.fase[i] = Math.random() * Math.PI * 2;
   }
@@ -231,7 +236,8 @@ export class Polvo {
       this.col[o] = k;
       this.col[o + 1] = k * 0.93;
       this.col[o + 2] = k * 0.74;
-      if (Math.abs(this.pos[o] - cx) > 13 || Math.abs(this.pos[o + 2] - cz) > 13 || this.pos[o + 1] < this.suelo + 0.1 || this.pos[o + 1] > this.suelo + 5) this.colocar(i, cx, cz);
+      const lejos = this.radio + 1;
+      if (Math.abs(this.pos[o] - cx) > lejos || Math.abs(this.pos[o + 2] - cz) > lejos || this.pos[o + 1] < this.suelo + 0.1 || this.pos[o + 1] > this.suelo + this.alto + 0.5) this.colocar(i, cx, cz);
     }
     (this.pts.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
     (this.pts.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
