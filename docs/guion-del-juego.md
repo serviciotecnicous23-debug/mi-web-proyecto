@@ -960,6 +960,20 @@ partida sigue siendo de personas.
 | ⚫ Damas (Apocalipsis 3:11) | A la española: el peón come hacia adelante, la dama vuela, comer es obligatorio y la mayor cantidad; tablas a las 50 jugadas solo de damas; reloj de 45 s | Alfa-beta mirando el material, el avance y el centro |
 | 🁫 Dominó (Eclesiastés 4:9) | Doble seis, de 2 a 4 (con 4, por parejas: 0 y 2 contra 1 y 3); 7 fichas cada uno y, con menos de 4, se roba del pozo. La primera mano la abre el doble más alto; las demás, quien ganó. Dominó o tranque (gana quien tiene menos); se anota lo que les queda a los demás; a 100. Al terminar la mano se destapa todo y quien ganó toca «Siguiente mano». Reloj de 25 s | Fácil al azar; normal suelta las más pesadas y los dobles; difícil además guarda opciones, recuerda quién pasó (le deja números que no tiene al rival) y no le cierra el paso al compañero |
 | 🔴 Cuatro en raya (Proverbios 30:24) | 7 × 6, gana quien junta cuatro; reloj de 30 s | Alfa-beta con las 69 ventanas de cuatro |
+| 🟡 Parchís (1 Corintios 9:24) | A la española, de 2 a 4 (con 2, frente a frente) y 4 fichas (o 2, la partida corta): se sale con 5 y es obligatorio; 68 casillas con 12 seguros; comer manda a casa y da 20; llegar a la meta (con el número justo) da 10; dos del mismo color son barrera y nadie pasa; con 6 se repite y hay que abrir la barrera; con tres seises la última ficha movida vuelve a casa; si el dado no deja mover, el turno pasa solo. Reloj de 25 s por jugada (tirar y mover) | Fácil casi al azar (pero come); normal come, se pone en seguro y no queda a tiro; difícil además mira el peligro de todas sus fichas y hace barreras delante de los rivales. En 200 partidas, el difícil le gana al fácil 81 % y al normal 57 % |
+
+**El tablero del parchís, «el estadio»** (aprobado por Luis el 13 de noviembre de 2026; el clásico tiene forma de cruz y
+Luis no quiere nada que se le parezca): todo en círculos, sin brazos. La pista es un anillo de 68 casillas que se recorre
+en contra de las agujas del reloj (una flecha blanca en cada salida); por dentro, un anillo con el camino de llegada de
+cada color (un arco de 7 casillas que sigue la misma vuelta); en el centro, la corona de laurel (la meta, 1 Corintios
+9:25) con el paño verde donde rueda el dado. Las casas están en las esquinas y el tablero se gira para que el color de
+cada uno quede abajo a la izquierda. Medidas en `mesa/parchis-geo.ts`; reglas en `shared/mesa/parchis.ts`.
+- Cada jugada anota sus eventos (el dado, el camino, la comida, la llegada, los tres seises…) y la pantalla
+  (`mesa/Parchis.tsx`) los anima en orden con los tiempos de `ANIMA`. El gancho opcional `esperaMs` del marco
+  (`shared/mesa.ts`) le dice a la sala cuánto tarda en verse la jugada: el reloj del turno siguiente y la computadora
+  esperan eso, así nada se adelanta a la animación. `ancha` pide la ventana ancha (el tablero con su panel al lado).
+- Para ver cada animación en desarrollo: `/mesa-prueba/parchis?escena=comer|meta|barrera|tres|fin` (y `?dados=3,5` fija
+  los primeros tiros).
 
 Las piezas del ajedrez están dibujadas en `mesa/piezas-ajedrez.tsx` (el rey lleva corona con una perla, sin cruz). Las
 pruebas (`shared/mesa-clasicos.test.ts`) cuentan todas las jugadas del ajedrez en posiciones conocidas («perft»).

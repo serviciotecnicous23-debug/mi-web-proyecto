@@ -17,6 +17,7 @@ import type { PantallaMesaProps } from "./index";
 import { Dado } from "./Dado";
 import { mesaSonido } from "./mesa-sonido";
 import { BotonSonido, Confeti, Sello, useEventosNuevos } from "./vida";
+import { Crown, House } from "lucide-react";
 import {
   CASA_FORMA, CLARO, COLOR, D, GEO, NOMBRE_COLOR, OSCURO, anguloCamino, anguloCasilla, centroCasa, f2, huecoCasa,
   huecosDe, lugarCompartido, lugarDe, punto, sector, type P,
@@ -76,6 +77,16 @@ function Tablero({ giro, activos }: { giro: number; activos: boolean[] }) {
         <path key={k} d={x.d} fill={x.fill} stroke="#a88552" strokeWidth=".22" />
       ))}
       {casillas.map((x, k) => (x.marca ? <circle key={k} cx={f2(x.marca.x)} cy={f2(x.marca.y)} r="1.15" fill="none" stroke={x.aro} strokeWidth=".45" /> : null))}
+      {/* en cada salida, hacia dónde se da la vuelta */}
+      {PARCHIS.salida.map((k, c) => {
+        const a = anguloCasilla(k);
+        const p = punto(GEO.ro - 1.55, a, giro);
+        return (
+          <g key={c} transform={`translate(${f2(p.x)} ${f2(p.y)}) rotate(${f2(a + giro - 90)})`} opacity={activos[c] ? 0.95 : 0.4}>
+            <path d="M-.55 -.85L.45 0L-.55 .85" fill="none" stroke="#fff" strokeWidth=".5" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+        );
+      })}
       {/* el anillo de los caminos de llegada */}
       <path d={`${sector(GEO.rl, GEO.ri, 0, 180)}${sector(GEO.rl, GEO.ri, 180, 360)}`} fill="#dcc393" />
       {[0, 1, 2, 3].map((c) => (
@@ -545,6 +556,15 @@ export function ParchisPantalla({ vista: v, jugadas, miAsiento, asientos, jugar,
                   );
                 return <circle key={x.id} cx={f2(x.p.x)} cy={f2(x.p.y)} r={f2(2.4 + u * 2.5)} fill="none" stroke={x.color} strokeWidth={f2(1 * (1 - u) + 0.15)} opacity={f2(1 - u)} />;
               })}
+              {/* la última jugada: un aro en la ficha que se movió */}
+              {!animando &&
+                !final &&
+                (() => {
+                  const u = [...(v.eventos as Ev[])].reverse().find((x) => x.t === "mueve");
+                  if (!u || u.t !== "mueve" || v.fichas[u.a]?.[u.f] !== u.hasta) return null;
+                  const p = quietas[u.a][u.f];
+                  return <circle cx={f2(p.x)} cy={f2(p.y)} r="2.65" fill="none" stroke={COLOR[v.colores[u.a]]} strokeWidth=".45" strokeDasharray="1 .7" opacity=".9" />;
+                })()}
               {/* adónde llegaría la ficha elegida */}
               {pPrevia && <circle cx={f2(pPrevia.x)} cy={f2(pPrevia.y)} r="2.3" fill="none" stroke="#fff" strokeWidth=".6" strokeDasharray=".8 .6" className="pq-late" />}
               {/* las fichas */}
@@ -559,7 +579,7 @@ export function ParchisPantalla({ vista: v, jugadas, miAsiento, asientos, jugar,
                     key={j.f}
                     cx={f2(p.x)}
                     cy={f2(p.y)}
-                    r="3.4"
+                    r="4.6"
                     fill="transparent"
                     className="cursor-pointer"
                     onClick={() => jugar(j)}
@@ -641,7 +661,7 @@ export function ParchisPantalla({ vista: v, jugadas, miAsiento, asientos, jugar,
             </div>
           )}
           {/* cada jugador: su color, lo que le queda y lo que avanzó */}
-          <ul className="space-y-1.5" data-testid="parchis-jugadores">
+          <ul className="grid grid-cols-2 gap-1.5 md:grid-cols-1" data-testid="parchis-jugadores">
             {Array.from({ length: n }, (_, a) => {
               const c = v.colores[a];
               const l = v.fichas[a] ?? [];
@@ -653,18 +673,22 @@ export function ParchisPantalla({ vista: v, jugadas, miAsiento, asientos, jugar,
                 <li key={a} className={`rounded-xl px-2.5 py-1.5 transition ${juega ? "bg-amber-100 shadow ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-white/70 dark:bg-stone-800/70"}`}>
                   <div className="flex items-center gap-2">
                     <span className={`h-4 w-4 shrink-0 rounded-full shadow-inner ${juega ? "mesa-late" : ""}`} style={{ background: `radial-gradient(circle at 35% 30%, ${CLARO[c]}, ${COLOR[c]} 60%, ${OSCURO[c]})` }} />
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold">
+                    <span className="min-w-0 flex-1 truncate text-[12px] font-bold sm:text-[13px]">
                       {nombre(a)}
                       {asientos[a]?.bot ? " 🤖" : ""}
                       {a === mi ? " (tú)" : ""}
                     </span>
-                    <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">{NOMBRE_COLOR[c]}</span>
+                    <span className="hidden text-[11px] font-semibold text-stone-500 sm:inline dark:text-stone-400">{NOMBRE_COLOR[c]}</span>
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
-                    <span>🏠 {enCasa}</span>
-                    <span>👑 {enMeta} de {v.nFichas}</span>
+                    <span className="inline-flex items-center gap-1" title="En casa">
+                      <House className="h-3.5 w-3.5 text-[#8a5a32] dark:text-amber-200" aria-hidden /> {enCasa}
+                    </span>
+                    <span className="inline-flex items-center gap-1" title="En la corona">
+                      <Crown className="h-3.5 w-3.5 text-[#b88a1e] dark:text-amber-300" aria-hidden /> {enMeta}/{v.nFichas}
+                    </span>
                     {v.comio[a] ? <span>comió {v.comio[a]}</span> : null}
-                    <span className="ml-auto h-1.5 w-20 overflow-hidden rounded-full bg-stone-300/60">
+                    <span className="ml-auto h-1.5 w-10 overflow-hidden rounded-full bg-stone-300/60 sm:w-20">
                       <span className="block h-full rounded-full transition-all duration-700" style={{ width: `${Math.round(avance * 100)}%`, background: COLOR[c] }} />
                     </span>
                   </div>
