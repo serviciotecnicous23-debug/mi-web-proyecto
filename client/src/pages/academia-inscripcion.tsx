@@ -41,7 +41,7 @@ function volverDe(search: string): string | null {
 }
 
 function soloFicha(f: FichaVista): FichaInscripcion {
-  const { iglesiaNombre: _n, creada: _c, actualizada: _a, ...ficha } = f;
+  const { iglesiaNombre: _n, foto: _f, creada: _c, actualizada: _a, ...ficha } = f;
   return ficha;
 }
 
@@ -422,6 +422,7 @@ function Listo({ m, volver, nueva }: { m: MatriculaInfo; volver: string | null; 
         <p className="font-display text-3xl font-bold tracking-wider fire-text mt-1" data-testid="inscripcion-numero">{m.numero}</p>
         <p className="text-sm text-muted-foreground mt-2">Promoción {m.promocion} · desde el {fechaLarga(m.desde)}</p>
         <p className="mt-2 font-semibold">{m.estatus.texto}</p>
+        <p className="text-sm text-muted-foreground mt-3">En tu carné puedes poner tu foto: ábrelo y toca «Poner mi foto».</p>
         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
           {volver && (
             <Link href={volver}><Button className="fire-btn-primary h-12 px-7 w-full sm:w-auto" data-testid="inscripcion-volver">Seguir donde estaba <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
@@ -581,7 +582,11 @@ export default function AcademiaInscripcion() {
                 </Button>
               </div>
               <ResumenFicha f={soloFicha(d.ficha)} iglesias={d.iglesias} iglesiaNombre={d.ficha.iglesiaNombre} />
-              <p className="text-xs text-muted-foreground mt-4">Actualizada el {fechaLarga(d.ficha.actualizada)}.</p>
+              <p className="text-sm mt-4">
+                {d.ficha.foto ? "Tu carné lleva tu foto." : "Tu carné todavía no tiene una foto propia."}{" "}
+                <Link href="/academia/carne" className="underline" data-testid="inscripcion-foto-carne">{d.ficha.foto ? "Cambiarla" : "Poner mi foto"}</Link>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">Actualizada el {fechaLarga(d.ficha.actualizada)}.</p>
             </section>
           </div>
         ) : (

@@ -2,6 +2,7 @@
 // Estilos en línea para que el PDF (tamaño tarjeta, 85,6 × 54 mm) salga igual que en pantalla.
 import { useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Download, FileText, IdCard, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { NOMBRE_ACADEMIA, type CarneVista } from "@shared/academia";
 import { useCarne } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { DocumentoAjustado, descargarPdf, imprimirDocumento } from "@/components/academia/documento";
+import { FotoCarne } from "@/components/academia/foto-carne";
 
 const ANCHO_CARNE = 540;
 const fechaCorta = (iso: string) => new Date(iso).toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -79,6 +81,7 @@ export function Carne({ c }: { c: CarneVista }) {
 }
 
 export default function AcademiaCarne() {
+  const qc = useQueryClient();
   const q = useCarne();
   const [generando, setGenerando] = useState(false);
   if (q.isLoading) return <Cargando />;
@@ -119,8 +122,16 @@ export default function AcademiaCarne() {
         </div>
         <div className="max-w-[540px]">
           <DocumentoAjustado ancho={ANCHO_CARNE}>
-            <Carne c={c} />
+            <Carne key={c.foto ?? "sin-foto"} c={c} />
           </DocumentoAjustado>
+        </div>
+        <div className="max-w-[540px] mt-6">
+          <FotoCarne
+            foto={c.foto}
+            propia={c.fotoPropia}
+            iniciales={iniciales(c.nombre)}
+            alGuardar={() => void qc.invalidateQueries({ queryKey: ["academia"] })}
+          />
         </div>
         <p className="text-sm text-muted-foreground mt-6 flex items-start gap-2">
           <ShieldCheck className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" />

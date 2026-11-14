@@ -130,7 +130,9 @@ export function registerAcademiaMatriculaRoutes(app: Express) {
       if (!a) return;
       const m = (await matriculaDe(a.userId))!;
       const { rows } = await pool.query(
-        `SELECT a.carne_codigo, u.avatar_url FROM academia_alumnos a JOIN users u ON u.id = a.user_id WHERE a.user_id = $1`,
+        `SELECT a.carne_codigo, COALESCE(i.foto_url, u.avatar_url) AS foto, (i.foto_url IS NOT NULL) AS foto_propia
+           FROM academia_alumnos a JOIN users u ON u.id = a.user_id LEFT JOIN academia_inscripciones i ON i.user_id = a.user_id
+          WHERE a.user_id = $1`,
         [a.userId],
       );
       const r = rows[0];
@@ -138,7 +140,8 @@ export function registerAcademiaMatriculaRoutes(app: Express) {
       const out: CarneVista = {
         ...m,
         nombre: await nombreAcademico(a.userId),
-        foto: r.avatar_url || null,
+        foto: r.foto || null,
+        fotoPropia: !!r.foto_propia,
         codigo: r.carne_codigo,
         verificar,
         qr: await toDataURL(verificar, { margin: 1, width: 240, errorCorrectionLevel: "M", color: { dark: "#1c1917", light: "#ffffff" } }),

@@ -5,6 +5,7 @@ import type {
   ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
 import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
+import type { ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, MateriaSeguimiento } from "@shared/academia-direccion";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -113,6 +114,9 @@ export type ResultadoInscripcion = { ficha: FichaVista; matricula: MatriculaInfo
 export const inscribirme = (ficha: FichaInscripcion, aceptaciones?: { reglamento: boolean; honor: boolean }) =>
   pedir<ResultadoInscripcion>("POST", "/api/academia/inscripcion", { ficha, ...aceptaciones });
 
+/** La foto de mi carné: la dirección de un archivo ya subido a la web, o null para quitarla. */
+export const guardarFotoCarne = (url: string | null) => pedir<{ foto: string | null }>("POST", "/api/academia/foto", { url });
+
 /** Inscribirme en una materia, desde su presentación. */
 export const inscribirmeEnMateria = (materiaId: string) =>
   pedir<{ inscrita: string }>("POST", `/api/academia/materia/${encodeURIComponent(materiaId)}/inscripcion`, {});
@@ -120,6 +124,56 @@ export const inscribirmeEnMateria = (materiaId: string) =>
 export function useCarne() {
   return useQuery<CarneVista, ErrorAcademia>({ queryKey: ["academia", "carne"], queryFn: () => pedir("GET", "/api/academia/carne"), retry: false });
 }
+
+// ---------------------------------------------------------------- el panel de seguimiento y el expediente
+
+export function useDireccionResumen() {
+  return useQuery<DireccionResumen, ErrorAcademia>({ queryKey: ["academia", "direccion", "resumen"], queryFn: () => pedir("GET", "/api/academia/direccion/resumen"), retry: false });
+}
+
+export function useDireccionAlumnos(activo = true) {
+  return useQuery<{ alumnos: AlumnoFila[]; puede: { exportar: boolean; contacto: boolean } }, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "alumnos"],
+    queryFn: () => pedir("GET", "/api/academia/direccion/alumnos"),
+    enabled: activo,
+    retry: false,
+  });
+}
+
+export function useDireccionActividad(activo = true) {
+  return useQuery<{ actividad: ActividadItem[] }, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "actividad"],
+    queryFn: () => pedir("GET", "/api/academia/direccion/actividad"),
+    enabled: activo,
+    retry: false,
+  });
+}
+
+export function useDireccionAlumno(id: string | undefined) {
+  return useQuery<AlumnoDetalle, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "alumno", id],
+    queryFn: () => pedir("GET", `/api/academia/direccion/alumno/${encodeURIComponent(id!)}`),
+    enabled: !!id,
+    retry: false,
+  });
+}
+
+export function useDireccionMateria(id: string | undefined) {
+  return useQuery<MateriaSeguimiento, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "materia", id],
+    queryFn: () => pedir("GET", `/api/academia/direccion/materia/${encodeURIComponent(id!)}`),
+    enabled: !!id,
+    retry: false,
+  });
+}
+
+/** Mi expediente académico (kárdex). */
+export function useExpediente() {
+  return useQuery<AlumnoDetalle, ErrorAcademia>({ queryKey: ["academia", "expediente"], queryFn: () => pedir("GET", "/api/academia/expediente"), retry: false });
+}
+
+export type ReporteCsv = "alumnos.csv" | "avance.csv" | "materias.csv";
+export const enlaceReporte = (archivo: ReporteCsv) => `/api/academia/direccion/exportar/${archivo}`;
 
 /** La verificación pública de un documento (sin cuenta). */
 export const verificarDocumento = (codigo: string) => pedir<VerificacionAcademia>("GET", `/api/academia/verificar/${encodeURIComponent(codigo.trim())}`);

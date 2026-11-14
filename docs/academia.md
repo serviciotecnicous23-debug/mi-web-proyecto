@@ -106,8 +106,7 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 `/academia/matricula` lleva a la misma página). Como en los sistemas académicos (Moodle, Canvas, Populi): una ficha de
 admisión con campos propios y, después, la matriculación en cada curso desde su página de presentación.
 - **Sin aprobación:** la inscripción en la academia y en cada materia queda aprobada al instante (lo pidió Luis). La
-  Dirección académica la sigue en su panel (fase siguiente: avisos en la campana a la administración y registro de
-  inscripciones).
+  Dirección académica la sigue en su panel y recibe un aviso en la campana con cada inscripción (ver «Los avisos»).
 - **En la academia**, un asistente de cuatro pasos con barra de avance:
   1. Bienvenida: qué es la academia, cómo se estudia y cómo es la inscripción.
   2. Tus datos, la **ficha** (`academia_inscripciones`):
@@ -150,10 +149,64 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
 - **El estatus** sale del avance (`estatusDe`): aspirante (sin lecciones terminadas), estudiante activo, en pausa
   (más de `DIAS_PAUSA` días sin estudiar; vuelve a activo al estudiar), egresado del nivel (lo completó y el siguiente no
   está disponible), graduado de la academia (Nivel 5) y la marca de cuadro de honor. Nunca muestra notas.
+- **La foto del carné:** el alumno la pone desde su carné. La elige, la encuadra en el marco del carné (4:5: se arrastra y
+  se acerca) y se guarda recortada a 600 × 750 en la carpeta «academia» (`POST /api/upload/file` y después
+  `POST /api/academia/foto`, que solo acepta archivos subidos a la web). Se puede quitar. Sin foto propia, el carné usa la
+  del perfil o las iniciales. Se borra con la cuenta.
 - **El carné digital** lleva la foto (o las iniciales), el nombre, el número, la promoción, el estatus y un QR. El QR usa
   un código al azar (`carne_codigo`), no el número de matrícula, que es correlativo y dejaría recorrer los nombres. Se
   verifica en la misma página de los certificados, con el estatus de hoy, y se descarga en PDF de tamaño tarjeta.
 - **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
+
+**El panel de seguimiento** (`server/academia-direccion.ts`, página `/academia/direccion`). Lo pidió Luis: quién está
+inscrito en cada materia, por dónde va y los reportes, en el área de reportes y de administración. Tiene 5 pestañas:
+- **Resumen:**
+  - los indicadores: inscritos, nuevos de la semana y del mes, activos, materias aprobadas y promedio;
+  - la tabla de las materias, con inscritos, en curso, aprobadas, promedio y avance medio;
+  - los alumnos por estatus, por país y por iglesia;
+  - quiénes se detuvieron (con materias en curso y 14 días o más sin estudiar);
+  - la actividad reciente.
+- **Alumnos:** la tabla con búsqueda y filtros (estatus, materia en curso, iglesia y país). Cada alumno abre su página
+  (`/academia/direccion/alumno/:id`) con su ficha y su foto, su avance en cada materia, sus niveles, sus certificados y su
+  actividad.
+- **Materias:** cada una abre su seguimiento (`/academia/direccion/materia/:id`): quiénes están inscritos y por dónde va
+  cada uno (lecciones, versículo, examen y nota).
+- **Registro:** las inscripciones en la academia y en cada materia, las materias aprobadas y los niveles completos, con
+  filtros.
+- **Roles y permisos:** la matriz, tal como la comprueba el servidor.
+
+Los reportes en CSV (`GET direccion/exportar/alumnos.csv`, `avance.csv` y `materias.csv`) se abren en Excel con las
+tildes bien (UTF-8 con BOM). Ninguna celda se toma como fórmula (`server/academia-csv.ts`, con su prueba). También
+están en Reportes → «Academia» (se carga aparte), y Administración tiene el acceso al panel.
+
+**Roles y permisos** (`shared/academia-permisos.ts`, con su prueba). Es una matriz de capacidades, como los roles de
+Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
+
+| Capacidad | Dirección académica (admin, director, staff_global) | Profesor (maestro_ministerio, obrero) | Iglesia aliada (admin_iglesia, maestro_iglesia) | Alumno |
+|---|---|---|---|---|
+| Entrar al panel | Todos | Todos | Los de su iglesia | — |
+| Ver quién está inscrito y por dónde va | Todos | Todos | Los de su iglesia | Lo suyo |
+| Ver las notas y los exámenes | Todos | Todos | Los de su iglesia | Lo suyo |
+| Ver la ficha con el contacto | Todos | — | Los de su iglesia | Lo suyo |
+| Descargar los reportes | Todos | — | Los de su iglesia | — |
+| Recibir los avisos de inscripción | Todos | — | Los de su iglesia | — |
+| Revisar escritas y cambiar notas (A3) | Todos | Todos | — | — |
+| Corregir o revocar documentos (A3) | Todos | — | — | — |
+| Abrir o cerrar la academia (A3) | Administración y Director | — | — | — |
+
+- «Los de su iglesia»: los alumnos cuya ficha eligió la iglesia aliada de la cuenta (`users.church_id`). Sin iglesia
+  asignada no ve a nadie.
+- **El expediente** (`/academia/expediente`, `GET /api/academia/expediente`): el alumno ve sus materias con su avance, su
+  nota y su certificado, sus niveles y sus certificados, y lo imprime. El perfil muestra su estatus, sin notas, con los
+  enlaces al carné y al expediente.
+
+**Los avisos** (`avisarInscripcion`, en `server/academia-inscripcion.ts`):
+- Cada inscripción nueva (en la academia o en una materia) deja un aviso en la campana:
+  - a la Dirección académica (admin, director y staff_global);
+  - a quienes dirigen la iglesia aliada del alumno (admin_iglesia y maestro_iglesia de esa iglesia).
+- El aviso abre al alumno en el panel. Nadie recibe el aviso de su propia inscripción, e inscribirse dos veces no avisa
+  dos veces.
+- No manda correos ni avisos al teléfono.
 
 **La Academia primero** (lo pidió Luis: en las clases de la Escuela no se está dando clase):
 - Para quien ve la academia (la vista previa o, cuando se abra, todos), el botón «Clases» de la barra de la app pasa a
@@ -307,6 +360,10 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 - `server/academia-inscripcion.ts`: la inscripción en la academia (la ficha) y en cada materia, y si la academia ya
   está abierta para todos. La ficha, sus opciones y su validación están en `shared/academia-inscripcion.ts`, con su
   prueba.
+- `server/academia-direccion.ts`: el panel de seguimiento, los reportes en CSV (`server/academia-csv.ts`) y el expediente.
+- `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
+- `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
+  medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
 - `client/src/lib/academia-visible.ts` y `client/src/components/academia/pestanas-clases.tsx`: si la academia se ve y
   las pestañas «Academia | Clases en vivo». Los usan el menú, la barra de la app, Inicio y Capacitaciones, así que no
   importan el catálogo.
@@ -326,7 +383,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `academia_certificados` | Los documentos: código, alumno, tipo (materia o nivel), título, nombre del día de emisión, nota, honores, vía, fecha y revocación con su motivo |
 | `academia_respuestas` | Lo escrito, con la nota automática, el detalle, la marca para revisar y la revisión humana (nota final, revisor, motivo) |
 | `academia_materias` | La inscripción en la materia (`inicio_at`), estado, nota, componentes y vía (cursada, suficiencia o convalidada) |
-| `academia_inscripciones` | La ficha de inscripción: nombres, apellidos, país, ciudad, teléfono, nacimiento, iglesia aliada u otra, pastor, tiempo en la fe, bautismo, ministerio, cómo conoció la academia, qué espera aprender y sus fechas |
+| `academia_inscripciones` | La ficha de inscripción: nombres, apellidos, país, ciudad, teléfono, nacimiento, iglesia aliada u otra, pastor, tiempo en la fe, bautismo, ministerio, cómo conoció la academia, qué espera aprender, la foto del carné (`foto_url`) y sus fechas |
 | `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
 
 **Rutas** (`/api/academia/…`). Los parámetros no se llaman `:id`, porque `app.param("id")` exige números.
@@ -353,6 +410,10 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `GET inscripcion` | Mi ficha, mi matrícula, las iglesias aliadas, lo que se sabe de mi cuenta y si mi nombre ya es fijo |
 | `POST inscripcion` | Inscribirme o corregir mi ficha: `{ficha, reglamento: true, honor: true}` (las aceptaciones, la primera vez) |
 | `POST materia/:materiaId/inscripcion` | Inscribirme en una materia (pide la academia y el nivel anterior) |
+| `POST foto` | La foto del carné: `{url}` de un archivo subido a la web, o `{url: null}` para quitarla |
+| `GET expediente` | Mi expediente: mis materias con su avance y su nota, mis niveles y mis certificados |
+| `GET direccion/resumen`, `GET direccion/alumnos`, `GET direccion/alumno/:alumnoId`, `GET direccion/materia/:materiaId` y `GET direccion/actividad` | El panel de seguimiento (cada rol, con su alcance) |
+| `GET direccion/exportar/:archivo` | Los reportes: `alumnos.csv`, `avance.csv` y `materias.csv` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
@@ -362,7 +423,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 
 **Pruebas:**
 - Locales: el corrector, la elección de preguntas y el catálogo
-  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts`).
+  (`npx tsx --test server/academia-correccion.test.ts server/academia-eleccion.test.ts shared/academia.test.ts shared/academia-inscripcion.test.ts shared/academia-permisos.test.ts server/academia-csv.test.ts`).
 - De la API: `academia_api.py` en el scratchpad de la sesión de la academia. Usa el servidor «mi-web-academia» en el
   puerto 5082 y PGlite en memoria en el 55442.
 - En el navegador usar 127.0.0.4; las otras sesiones usan localhost y de 127.0.0.1 a 127.0.0.3.
@@ -372,7 +433,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | Fase | Qué sale | Estado |
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
-| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné y la Academia primero en Clases; faltan el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la constancia, la insignia en el perfil, las cuentas pendientes y el audio |
+| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |

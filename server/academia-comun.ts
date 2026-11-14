@@ -142,7 +142,8 @@ CREATE TABLE IF NOT EXISTS "academia_inscripciones" (
   "created_at" timestamp NOT NULL DEFAULT now(),
   "updated_at" timestamp NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS "academia_inscripciones_iglesia_idx" ON "academia_inscripciones" ("iglesia_id");`;
+CREATE INDEX IF NOT EXISTS "academia_inscripciones_iglesia_idx" ON "academia_inscripciones" ("iglesia_id");
+ALTER TABLE "academia_inscripciones" ADD COLUMN IF NOT EXISTS "foto_url" text;`;
 
 // ---------------------------------------------------------------- quién la ve
 

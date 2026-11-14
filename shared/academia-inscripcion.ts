@@ -71,8 +71,8 @@ export const FICHA_VACIA: FichaInscripcion = {
   tiempoFe: "", bautismo: "", ministerio: "", comoConocio: "", espera: "",
 };
 
-/** La ficha como la devuelve el servidor: con el nombre de la iglesia aliada y sus fechas. */
-export type FichaVista = FichaInscripcion & { iglesiaNombre: string | null; creada: string; actualizada: string };
+/** La ficha como la devuelve el servidor: con el nombre de la iglesia aliada, la foto del carné y sus fechas. */
+export type FichaVista = FichaInscripcion & { iglesiaNombre: string | null; foto: string | null; creada: string; actualizada: string };
 
 export type IglesiaOpcion = { id: number; nombre: string; lugar: string };
 

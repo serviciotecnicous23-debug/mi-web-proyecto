@@ -14,7 +14,7 @@ import {
   useLiveStreamConfig, useUpdateLiveStream,
   useAdminUserDetail,
 } from "@/hooks/use-users";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { RadioLibraryAdmin } from "@/components/admin/RadioLibraryAdmin";
 import { isAdminRole } from "@/lib/utils";
@@ -840,6 +840,9 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold" data-testid="text-admin-title">Panel de Administración</h1>
             <p className="text-muted-foreground mt-1">Gestiona miembros, cursos, eventos, contenido y mensajes del ministerio.</p>
           </div>
+          <Link href="/academia/direccion">
+            <Button variant="outline" className="gap-2" data-testid="admin-academia-direccion"><GraduationCap className="h-4 w-4" /> Academia: panel de seguimiento</Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Link } from "wouter";
 import { COURSE_CATEGORIES } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminRole } from "@/lib/utils";
 import { Layout } from "@/components/layout";
+
+const ReporteAcademia = lazy(() => import("@/components/academia/reporte-academia"));
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -254,7 +256,7 @@ export default function ReportesPage() {
 
         {/* ===== DETAILED TABS ===== */}
         <Tabs defaultValue="members">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8">
             <TabsTrigger value="members" className="text-xs">Miembros</TabsTrigger>
             <TabsTrigger value="courses" className="text-xs">Cursos</TabsTrigger>
             <TabsTrigger value="finance" className="text-xs">Finanzas</TabsTrigger>
@@ -262,6 +264,7 @@ export default function ReportesPage() {
             <TabsTrigger value="library" className="text-xs">Biblioteca</TabsTrigger>
             <TabsTrigger value="live" className="text-xs gap-1"><Video className="h-3 w-3" /> En Vivo</TabsTrigger>
             <TabsTrigger value="engagement" className="text-xs">Engagement</TabsTrigger>
+            <TabsTrigger value="academia" className="text-xs" data-testid="reportes-tab-academia">Academia</TabsTrigger>
           </TabsList>
 
           {/* ===== MEMBERS TAB ===== */}
@@ -1018,6 +1021,13 @@ export default function ReportesPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ===== ACADEMIA (el resumen del panel de seguimiento) ===== */}
+          <TabsContent value="academia" className="space-y-4">
+            <Suspense fallback={<p className="text-muted-foreground py-6">Cargando…</p>}>
+              <ReporteAcademia />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
