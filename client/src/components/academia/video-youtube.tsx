@@ -1,7 +1,7 @@
 // El video de YouTube de una lección, con la API del reproductor (www.youtube.com/iframe_api): cuenta lo visto de
 // corrido desde el principio (adelantar no suma) y lo avisa cada 5 segundos, para abrir el repaso cuando se vieron
 // los primeros minutos (shared/academia.ts, «LECTURA»). El servidor nunca cuenta más que el tiempo que pasó.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -33,9 +33,14 @@ export function VideoYouTube({ id, titulo, alProgresar }: { id: string; titulo: 
   const caja = useRef<HTMLDivElement>(null);
   const avisar = useRef(alProgresar);
   avisar.current = alProgresar;
+  const [fallo, setFallo] = useState(false);
   useEffect(() => {
     let vivo = true;
     let player: any = null;
+    // si el reproductor no llega a cargar (red lenta, bloqueado), se avisa: el repaso se abre igual con el tiempo
+    const espera = window.setTimeout(() => {
+      if (vivo && !player) setFallo(true);
+    }, 12000);
     let reloj: number | undefined;
     let visto = 0;
     let avisado = -1;
@@ -57,6 +62,9 @@ export function VideoYouTube({ id, titulo, alProgresar }: { id: string; titulo: 
         height: "100%",
         playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
+          onError: () => {
+            if (vivo) setFallo(true);
+          },
           onStateChange: (e: any) => {
             if (e.data === YT.PlayerState.PLAYING) {
               if (!reloj) reloj = window.setInterval(tick, 1000);
@@ -71,6 +79,7 @@ export function VideoYouTube({ id, titulo, alProgresar }: { id: string; titulo: 
     });
     return () => {
       vivo = false;
+      window.clearTimeout(espera);
       if (reloj) window.clearInterval(reloj);
       try {
         player?.destroy?.();
@@ -80,8 +89,15 @@ export function VideoYouTube({ id, titulo, alProgresar }: { id: string; titulo: 
     };
   }, [id]);
   return (
-    <div className="aspect-video w-full rounded-xl overflow-hidden bg-black" data-testid="video-youtube">
+    <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black" data-testid="video-youtube">
       <div ref={caja} className="w-full h-full" title={titulo} />
+      {fallo && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center text-sm text-white bg-black/85" role="status" data-testid="video-no-carga">
+          <p>No se pudo cargar el video aquí.</p>
+          <a href={`https://www.youtube.com/watch?v=${id}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">Verlo en YouTube</a>
+          <p className="text-xs text-white/70">El repaso se abre igual cuando pase el tiempo de la lección.</p>
+        </div>
+      )}
     </div>
   );
 }

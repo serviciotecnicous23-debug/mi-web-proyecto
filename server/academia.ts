@@ -10,7 +10,7 @@ import { pool } from "./db";
 import {
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
-  segundosDeLectura, videoQuePide, type BloqueoRepaso,
+  bloqueoDe, segundosDeLectura, videoQuePide, type BloqueoRepaso,
 } from "@shared/academia";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
@@ -69,11 +69,7 @@ async function faltaParaRepaso(userId: number, minutos: number, leccionId: strin
   );
   const f = rows[0];
   if (f?.completada_at) return null;
-  return {
-    lectura: Math.max(0, Math.ceil(segundosDeLectura(minutos) - Number(f?.leidos ?? 0))),
-    video: pideVideo == null ? null : Math.max(0, pideVideo - Number(f?.video_seg ?? 0)),
-    videoPide: pideVideo,
-  };
+  return bloqueoDe(minutos, pideVideo, Number(f?.leidos ?? 0), Number(f?.video_seg ?? 0));
 }
 
 export function registerAcademiaRoutes(app: Express) {
@@ -270,13 +266,7 @@ export function registerAcademiaRoutes(app: Express) {
       const pide = { lectura: segundosDeLectura(l.leccion.minutos), video: videoQuePide(contenido.bloques) };
       const bloqueo: BloqueoRepaso | null = docente || fila?.completada
         ? null
-        : fila
-          ? {
-              lectura: Math.max(0, Math.ceil(pide.lectura - Number((fila as any).leidos ?? 0))),
-              video: pide.video == null ? null : Math.max(0, pide.video - Number((fila as any).video_seg ?? 0)),
-              videoPide: pide.video,
-            }
-          : { lectura: pide.lectura, video: pide.video, videoPide: pide.video };
+        : bloqueoDe(l.leccion.minutos, pide.video, Number((fila as any)?.leidos ?? 0), Number((fila as any)?.video_seg ?? 0));
       const bloques: BloqueVista[] = await Promise.all(
         contenido.bloques.map(async (b): Promise<BloqueVista> => {
           if (b.t !== "versiculo") return b;

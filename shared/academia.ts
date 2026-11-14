@@ -1207,7 +1207,7 @@ export type PreguntaVista = { id: string; texto: string; opciones: string[] };
  * y 3 minutos) y, si tiene un video de YouTube, ver de corrido sus primeros 2 minutos (o entero, si dura menos). El
  * servidor cuenta el tiempo desde que se abrió la lección y el del video, que nunca suma más que el tiempo que pasó.
  */
-export const LECTURA = { parte: 0.4, minimo: 60, maximo: 180, video: 120 } as const;
+export const LECTURA = { parte: 0.4, minimo: 60, maximo: 180, video: 120, margen: 120 } as const;
 export function segundosDeLectura(minutos: number): number {
   return Math.round(Math.min(LECTURA.maximo, Math.max(LECTURA.minimo, minutos * 60 * LECTURA.parte)));
 }
@@ -1222,8 +1222,20 @@ export function videoQuePide(bloques: readonly { t: string; url?: string; minuto
   if (!v) return null;
   return v.minutos && v.minutos * 60 < LECTURA.video ? Math.round(v.minutos * 60) : LECTURA.video;
 }
-/** Lo que falta (en segundos) para abrir el repaso: de lectura y de video (null si la lección no tiene video). */
-export type BloqueoRepaso = { lectura: number; video: number | null; videoPide: number | null };
+/**
+ * Lo que falta (en segundos) para abrir el repaso: de lectura y de video (null si la lección no tiene video). Si el video
+ * no se puede ver (no carga, está bloqueado o lo quitaron), el repaso se abre igual cuando pasó el tiempo de la lectura,
+ * el del video y un margen (`sinVideo`): nadie queda trabado.
+ */
+export type BloqueoRepaso = { lectura: number; video: number | null; videoPide: number | null; sinVideo: number | null };
+
+/** Lo que falta para abrir el repaso, con los segundos desde que se abrió la lección y lo visto de corrido del video. */
+export function bloqueoDe(minutos: number, pideVideo: number | null, leidos: number, videoSeg: number): BloqueoRepaso {
+  const lectura = Math.max(0, Math.ceil(segundosDeLectura(minutos) - leidos));
+  if (pideVideo == null) return { lectura, video: null, videoPide: null, sinVideo: null };
+  const sinVideo = Math.max(0, Math.ceil(segundosDeLectura(minutos) + pideVideo + LECTURA.margen - leidos));
+  return { lectura, video: sinVideo === 0 ? 0 : Math.max(0, pideVideo - videoSeg), videoPide: pideVideo, sinVideo };
+}
 
 export type LeccionVista = {
   materia: { id: string; titulo: string };

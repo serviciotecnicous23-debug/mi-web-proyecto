@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  CAJA_DOMINADO, LECTURA, NIVELES, REPASO_VERSICULO_DIAS, SUFICIENCIA, apruebaSuficiencia, idYouTube, segundosDeLectura, siguienteRepaso,
+  CAJA_DOMINADO, LECTURA, NIVELES, REPASO_VERSICULO_DIAS, SUFICIENCIA, apruebaSuficiencia, bloqueoDe, idYouTube, segundosDeLectura, siguienteRepaso,
   sugerenciaDiagnostico, videoQuePide, type DiagnosticoMateria,
 } from "./academia";
 import { DECLARACION_FE, PUNTOS_A_CONFIRMAR } from "./academia-declaracion";
@@ -108,6 +108,17 @@ test("el video pide sus primeros 2 minutos, o entero si dura menos", () => {
   assert.equal(videoQuePide([{ t: "video", url: yt, minutos: 10 }]), LECTURA.video);
   assert.equal(videoQuePide([{ t: "video", url: yt }]), LECTURA.video);
   assert.equal(videoQuePide([{ t: "video", url: yt, minutos: 1.5 }]), 90);
+});
+
+test("el candado del repaso: lectura, video y, si el video no se puede ver, se abre igual con el tiempo", () => {
+  // una lección de 5 minutos: 120 s de lectura; con video, 120 s de video y 120 de margen
+  assert.deepEqual(bloqueoDe(5, null, 0, 0), { lectura: 120, video: null, videoPide: null, sinVideo: null });
+  assert.deepEqual(bloqueoDe(5, null, 130, 0), { lectura: 0, video: null, videoPide: null, sinVideo: null });
+  assert.deepEqual(bloqueoDe(5, 120, 0, 0), { lectura: 120, video: 120, videoPide: 120, sinVideo: 360 });
+  assert.deepEqual(bloqueoDe(5, 120, 200, 60), { lectura: 0, video: 60, videoPide: 120, sinVideo: 160 });
+  assert.deepEqual(bloqueoDe(5, 120, 200, 130), { lectura: 0, video: 0, videoPide: 120, sinVideo: 160 });
+  assert.deepEqual(bloqueoDe(5, 120, 360, 0), { lectura: 0, video: 0, videoPide: 120, sinVideo: 0 }, "sin poder ver el video, a los 6 minutos se abre igual");
+  assert.equal(LECTURA.margen, 120);
 });
 
 test("la declaración de fe: artículos numerados en orden, con citas, y sus puntos a confirmar", () => {

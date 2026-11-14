@@ -17,7 +17,7 @@ type Intento = { elegida: number; r: RespuestaRepaso };
 const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.max(0, Math.ceil(s)) % 60).padStart(2, "0")}`;
 
 /** Mientras no se lee la lección (y no se ve el video, si tiene), el repaso queda cerrado: lo cuenta el servidor. */
-function RepasoCerrado({ lectura, video, videoPide }: { lectura: number; video: number | null; videoPide: number | null }) {
+function RepasoCerrado({ lectura, video, videoPide, sinVideo }: { lectura: number; video: number | null; videoPide: number | null; sinVideo: number | null }) {
   return (
     <div className="glass-card p-5 border border-orange-500/40" role="status" data-testid="repaso-cerrado">
       <p className="font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-orange-500" /> El repaso se abre cuando termines la lección</p>
@@ -34,6 +34,9 @@ function RepasoCerrado({ lectura, video, videoPide }: { lectura: number; video: 
               ? `Video: mira de corrido sus primeros ${videoPide >= 120 ? "2 minutos" : mmss(videoPide)} (faltan ${mmss(video)}; adelantarlo no cuenta)`
               : "Video: listo"}
           </li>
+        )}
+        {videoPide != null && video != null && video > 0 && sinVideo != null && sinVideo > 0 && (
+          <li className="text-xs text-muted-foreground pl-6" data-testid="repaso-sin-video">¿No carga el video? El repaso se abre igual en {mmss(sinVideo)}.</li>
         )}
       </ul>
     </div>
@@ -120,11 +123,21 @@ export default function AcademiaLeccion() {
     }
   }, [q.data?.leccion.id]);
 
+  // la lectura y la espera sin video bajan solas cada segundo (el servidor lleva la cuenta de verdad)
+  const corre = !!bloqueo && (bloqueo.lectura > 0 || ((bloqueo.video ?? 0) > 0 && (bloqueo.sinVideo ?? 0) > 0));
   useEffect(() => {
-    if (!bloqueo || bloqueo.lectura <= 0) return;
-    const t = window.setInterval(() => setBloqueo((b) => (b ? { ...b, lectura: Math.max(0, b.lectura - 1) } : b)), 1000);
+    if (!corre) return;
+    const t = window.setInterval(
+      () =>
+        setBloqueo((b) => {
+          if (!b) return b;
+          const sinVideo = b.sinVideo == null ? null : Math.max(0, b.sinVideo - 1);
+          return { ...b, lectura: Math.max(0, b.lectura - 1), sinVideo, video: sinVideo === 0 ? 0 : b.video };
+        }),
+      1000,
+    );
     return () => window.clearInterval(t);
-  }, [bloqueo ? bloqueo.lectura > 0 : false]);
+  }, [corre]);
 
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
@@ -185,7 +198,7 @@ export default function AcademiaLeccion() {
     }
     try {
       const r = await avanceVideo(l.leccion.id, segundos);
-      setBloqueo((b) => (b ? { ...b, video: r.falta } : b));
+      setBloqueo((b) => (b ? { ...b, video: b.sinVideo === 0 ? 0 : r.falta } : b));
     } catch {
       // se vuelve a intentar con el próximo aviso
     }
@@ -248,7 +261,7 @@ export default function AcademiaLeccion() {
         {l.docente && (
           <div className="glass-card p-4 mb-6 text-sm flex items-start gap-3 border border-sky-500/30" role="note" data-testid="leccion-vista-docente">
             <Eye className="w-5 h-5 text-sky-600 shrink-0" />
-            <span><strong>Vista docente.</strong> Lees la lección sin estar inscrito: puedes responder el repaso, pero no se guarda nada.</span>
+            <span><strong>Vista de la Administración.</strong> Lees la lección sin estar inscrito, para revisarla: puedes responder el repaso, pero no se guarda nada. Para cursarla como alumno, inscríbete en la materia.</span>
           </div>
         )}
 
@@ -290,7 +303,7 @@ export default function AcademiaLeccion() {
           <h2 className="font-display text-2xl font-bold mb-1 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Repaso</h2>
           <p className="text-sm text-muted-foreground mb-4">Responde bien cada pregunta para terminar la lección. Cuenta lo que aciertes a la primera.</p>
           {!repasoAbierto && bloqueo ? (
-            <RepasoCerrado lectura={bloqueo.lectura} video={bloqueo.video} videoPide={bloqueo.videoPide} />
+            <RepasoCerrado lectura={bloqueo.lectura} video={bloqueo.video} videoPide={bloqueo.videoPide} sinVideo={bloqueo.sinVideo} />
           ) : (
             <div className="space-y-4">
               {l.repaso.map((p, i) => (
