@@ -74,7 +74,11 @@ vieron de corrido sus primeros 2 minutos (o el video entero, si dura menos: `vid
   El reproductor (`client/src/components/academia/video-youtube.tsx`, con la API de YouTube) avisa cada 5 segundos lo
   visto de corrido desde el principio; adelantar no suma, y el servidor nunca cuenta más video que el tiempo que pasó.
 - Mientras falte, la lección muestra cuánto queda con una cuenta regresiva, y `POST repaso` responde 409 con lo que falta
-  (`BloqueoRepaso`). La primera lección pública también lo pide; la vista de la Administración, no.
+  (`BloqueoRepaso`, calculado en `bloqueoDe`, con su prueba). La primera lección pública también lo pide; la vista de la
+  Administración, no.
+- **Nadie queda trabado:** si el video no se puede ver (no carga, lo bloquean o lo quitaron), el repaso se abre igual
+  cuando pasó el tiempo de la lectura, el del video y un margen de 2 minutos (`sinVideo`). El reproductor avisa que no
+  cargó y deja el enlace para verlo en YouTube.
 
 **Las opciones del repaso** salen equilibradas: en cada bloque de 4 preguntas la respuesta correcta cae una vez en cada
 lugar (`lugaresDeLaBuena`, en `server/academia-orden.ts`, con su prueba), así nunca es «casi siempre la tercera». Los
