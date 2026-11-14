@@ -25,7 +25,7 @@ export default function AcademiaReglamento() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground mt-10">Versión {REGLAMENTO.version} del reglamento académico.</p>
-        <Link href="/academia/matricula"><Button className="fire-btn-primary mt-4 h-12 px-7">Matricularme</Button></Link>
+        <Link href="/academia/inscripcion"><Button className="fire-btn-primary mt-4 h-12 px-7">Inscribirme en la academia</Button></Link>
       </div>
     </Layout>
   );

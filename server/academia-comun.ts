@@ -121,7 +121,28 @@ ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "honor_at" timestamp;
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "reglamento_version" text;
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "carne_codigo" text;
 CREATE UNIQUE INDEX IF NOT EXISTS "academia_alumnos_carne_idx" ON "academia_alumnos" ("carne_codigo");
-CREATE SEQUENCE IF NOT EXISTS "academia_matricula_seq";`;
+CREATE SEQUENCE IF NOT EXISTS "academia_matricula_seq";
+CREATE TABLE IF NOT EXISTS "academia_inscripciones" (
+  "user_id" integer PRIMARY KEY REFERENCES "users"("id") ON DELETE CASCADE,
+  "nombres" text NOT NULL,
+  "apellidos" text NOT NULL,
+  "pais" text NOT NULL,
+  "ciudad" text,
+  "telefono" text,
+  "nacimiento" text,
+  "iglesia_id" integer,
+  "iglesia_otra" text,
+  "pastor" text,
+  "tiempo_fe" text,
+  "bautismo" text,
+  "ministerio" text,
+  "como_conocio" text,
+  "espera" text,
+  "privacidad_at" timestamp NOT NULL DEFAULT now(),
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "updated_at" timestamp NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS "academia_inscripciones_iglesia_idx" ON "academia_inscripciones" ("iglesia_id");`;
 
 // ---------------------------------------------------------------- quién la ve
 
@@ -167,23 +188,67 @@ export async function alumnoDe(req: Request, res: Response): Promise<{ userId: n
   return { userId: acceso.userId, acceso };
 }
 
-/** ¿Se matriculó? (aceptó el reglamento y el código de honor y tiene su número). */
-export async function estaMatriculado(userId: number): Promise<boolean> {
-  const { rows } = await pool.query(`SELECT 1 FROM academia_alumnos WHERE user_id = $1 AND matricula IS NOT NULL AND reglamento_at IS NOT NULL`, [userId]);
-  return rows.length > 0;
+/**
+ * ¿Está inscrito en la academia? Llenó su ficha de inscripción, aceptó el reglamento y el código de honor y tiene su
+ * número de matrícula (server/academia-inscripcion.ts).
+ */
+export async function inscripcionDe(userId: number): Promise<{ matriculado: boolean; ficha: boolean }> {
+  const { rows } = await pool.query(
+    `SELECT EXISTS (SELECT 1 FROM academia_alumnos WHERE user_id = $1 AND matricula IS NOT NULL AND reglamento_at IS NOT NULL) AS matriculado,
+            EXISTS (SELECT 1 FROM academia_inscripciones WHERE user_id = $1) AS ficha`,
+    [userId],
+  );
+  return { matriculado: !!rows[0]?.matriculado, ficha: !!rows[0]?.ficha };
 }
 
-export const MENSAJE_MATRICULA = "Para guardar tu avance, primero matricúlate en la academia: aceptas el reglamento académico y el código de honor.";
+export async function estaInscrito(userId: number): Promise<boolean> {
+  const e = await inscripcionDe(userId);
+  return e.matriculado && e.ficha;
+}
 
-/** Como alumnoDe, pero además matriculado: lo piden las rutas que guardan avance (sin matrícula se lee, no se guarda). */
-export async function matriculadoDe(req: Request, res: Response): Promise<{ userId: number; acceso: Acceso } | null> {
+export const MENSAJE_INSCRIPCION =
+  "Para guardar tu avance, primero inscríbete en la academia: llenas tu ficha y aceptas el reglamento académico y el código de honor.";
+export const MENSAJE_FICHA = "Para seguir guardando tu avance, completa tu ficha de inscripción en la academia.";
+export const MENSAJE_MATERIA = "Primero inscríbete en esta materia: desde su página ves lo que vas a aprender y cómo se evalúa.";
+
+/** Como alumnoDe, pero además inscrito en la academia: lo piden las rutas que guardan avance. */
+export async function inscritoDe(req: Request, res: Response): Promise<{ userId: number; acceso: Acceso } | null> {
   const a = await alumnoDe(req, res);
   if (!a) return null;
-  if (!(await estaMatriculado(a.userId))) {
-    res.status(409).json({ message: MENSAJE_MATRICULA, matricula: false });
+  const e = await inscripcionDe(a.userId);
+  if (!e.matriculado || !e.ficha) {
+    res.status(409).json({ message: e.matriculado ? MENSAJE_FICHA : MENSAJE_INSCRIPCION, inscripcion: false });
     return null;
   }
   return a;
+}
+
+/** Desde cuándo está inscrito en la materia (null si no lo está). La fila de academia_materias es la inscripción. */
+export async function inscritaEnMateria(userId: number, materiaId: string): Promise<string | null> {
+  const { rows } = await pool.query(`SELECT inicio_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, materiaId]);
+  return rows[0] ? new Date(rows[0].inicio_at).toISOString() : null;
+}
+
+/** Como inscritoDe, pero además inscrito en la materia: lo piden el versículo, completar una lección y el examen. */
+export async function inscritoEnMateriaDe(req: Request, res: Response, materiaId: string): Promise<{ userId: number; acceso: Acceso } | null> {
+  const a = await inscritoDe(req, res);
+  if (!a) return null;
+  if (!(await inscritaEnMateria(a.userId, materiaId))) {
+    res.status(409).json({ message: MENSAJE_MATERIA, materia: false, materiaId });
+    return null;
+  }
+  return a;
+}
+
+/** El nombre de los documentos: el de la ficha de inscripción (o, sin ficha, el de la cuenta). */
+export async function nombreAcademico(userId: number): Promise<string> {
+  const { rows } = await pool.query(
+    `SELECT i.nombres, i.apellidos, u.display_name, u.username FROM users u LEFT JOIN academia_inscripciones i ON i.user_id = u.id WHERE u.id = $1`,
+    [userId],
+  );
+  const r = rows[0];
+  const ficha = r?.nombres ? `${r.nombres} ${r.apellidos ?? ""}`.replace(/\s+/g, " ").trim() : "";
+  return ficha || String(r?.display_name || r?.username || "Estudiante").trim();
 }
 
 /** La dirección pública de la verificación de un documento o de un carné (la del QR). */

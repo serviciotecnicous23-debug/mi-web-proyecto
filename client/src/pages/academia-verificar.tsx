@@ -70,7 +70,7 @@ export default function AcademiaVerificar() {
               ) : (
                 resultado.nivel && <div><dt className="text-sm text-muted-foreground">Nivel</dt><dd>{resultado.nivel}</dd></div>
               )}
-              <div><dt className="text-sm text-muted-foreground">{resultado.tipo === "carne" ? "Matriculado desde" : "Emitido"}</dt><dd>{format(new Date(resultado.emitido), "dd 'de' MMMM 'de' yyyy", { locale: es })}</dd></div>
+              <div><dt className="text-sm text-muted-foreground">{resultado.tipo === "carne" ? "Inscrito desde" : "Emitido"}</dt><dd>{format(new Date(resultado.emitido), "dd 'de' MMMM 'de' yyyy", { locale: es })}</dd></div>
               <div><dt className="text-sm text-muted-foreground">Código</dt><dd className="tracking-wider">{resultado.codigo}</dd></div>
             </dl>
             <p className="text-xs text-muted-foreground mt-5">{resultado.academia}. {resultado.aclaracion}</p>

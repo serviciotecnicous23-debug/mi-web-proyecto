@@ -4,6 +4,7 @@ import type {
   AcademiaEstado, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen, RespuestaRepaso,
   ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
+import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -97,16 +98,24 @@ export function useCertificado(codigo: string | undefined) {
   });
 }
 
-export function useMatricula() {
-  return useQuery<{ matricula: MatriculaInfo | null; reglamento: string; honor: string }, ErrorAcademia>({
-    queryKey: ["academia", "matricula"],
-    queryFn: () => pedir("GET", "/api/academia/matricula"),
+/** Mi inscripción en la academia: la ficha, la matrícula, las iglesias aliadas y lo que ya se sabe de mi cuenta. */
+export function useInscripcion() {
+  return useQuery<InscripcionEstado, ErrorAcademia>({
+    queryKey: ["academia", "inscripcion"],
+    queryFn: () => pedir("GET", "/api/academia/inscripcion"),
     retry: false,
   });
 }
 
-/** Matricularse: aceptar el reglamento académico y el código de honor. */
-export const matricularme = () => pedir<MatriculaInfo>("POST", "/api/academia/matricula", { reglamento: true, honor: true });
+export type ResultadoInscripcion = { ficha: FichaVista; matricula: MatriculaInfo; nueva: boolean };
+
+/** Inscribirme (con el reglamento y el código de honor, la primera vez) o corregir mi ficha. */
+export const inscribirme = (ficha: FichaInscripcion, aceptaciones?: { reglamento: boolean; honor: boolean }) =>
+  pedir<ResultadoInscripcion>("POST", "/api/academia/inscripcion", { ficha, ...aceptaciones });
+
+/** Inscribirme en una materia, desde su presentación. */
+export const inscribirmeEnMateria = (materiaId: string) =>
+  pedir<{ inscrita: string }>("POST", `/api/academia/materia/${encodeURIComponent(materiaId)}/inscripcion`, {});
 
 export function useCarne() {
   return useQuery<CarneVista, ErrorAcademia>({ queryKey: ["academia", "carne"], queryFn: () => pedir("GET", "/api/academia/carne"), retry: false });

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useAcademiaVisible } from "@/lib/academia-visible";
 import { useClubSummary, useMyEnrollments } from "@/hooks/use-portada";
 import { bibleBookLabel } from "@shared/bible";
 
@@ -46,6 +47,8 @@ function plural(n: number, uno: string, varios: string) {
 
 export function MemberToday({ agenda }: { agenda: TodayAgendaItem[] }) {
   const { user } = useAuth();
+  const conLaAcademia = useAcademiaVisible();
+  const accesos = conLaAcademia ? QUICK.map((q) => (q.href === "/capacitaciones" ? { href: "/academia", label: "Academia", icon: GraduationCap } : q)) : QUICK;
   const active = !!user?.isActive;
   const { data: club } = useClubSummary(active);
   const { data: enrollments } = useMyEnrollments();
@@ -210,7 +213,7 @@ export function MemberToday({ agenda }: { agenda: TodayAgendaItem[] }) {
         </div>
 
         <nav aria-label="Accesos rápidos" className="grid grid-cols-3 gap-3" data-testid="today-quick">
-          {QUICK.map((q) => {
+          {accesos.map((q) => {
             const Icon = q.icon;
             return (
               <Link key={q.href} href={q.href} className="today-quick">

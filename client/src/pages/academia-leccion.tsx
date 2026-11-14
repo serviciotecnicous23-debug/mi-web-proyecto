@@ -2,15 +2,15 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, ListChecks, PenLine, Save, Target, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, Save, Target, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
 import type { LeccionVista, RespuestaRepaso } from "@shared/academia";
-import { completarLeccion, guardarReflexion, responderRepaso, useLeccion } from "@/components/academia/api";
-import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada } from "@/components/academia/ui";
+import { completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
+import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 
 type Intento = { elegida: number; r: RespuestaRepaso };
 
@@ -102,6 +102,26 @@ export default function AcademiaLeccion() {
       </Layout>
     );
   }
+  if (q.error?.status === 409) {
+    const datos = q.error.datos ?? {};
+    const materia = typeof datos.materiaId === "string" ? `/academia/materia/${datos.materiaId}` : "/academia";
+    return (
+      <Layout>
+        <div className="max-w-xl mx-auto px-4 py-20 text-center" data-testid="leccion-cerrada">
+          <Lock className="w-12 h-12 mx-auto text-orange-500" />
+          <p className="text-lg mt-4 mb-6">{q.error.message}</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            {datos.inscripcion === false ? (
+              <Link href={enlaceInscripcion(materia)}><Button className="fire-btn-primary h-12 px-7 w-full" data-testid="leccion-inscribirme-academia"><IdCard className="w-4 h-4 mr-2" /> Inscribirme en la academia</Button></Link>
+            ) : (
+              <Link href={materia}><Button className="fire-btn-primary h-12 px-7 w-full" data-testid="leccion-ir-materia">Ver la materia e inscribirme <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
+            )}
+            <Link href="/academia"><Button variant="outline" className="h-12 w-full">Volver a la academia</Button></Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   if (!q.data) {
     return (
       <Layout>
@@ -113,7 +133,8 @@ export default function AcademiaLeccion() {
     );
   }
   const l = q.data;
-  const conSesion = !!l.progreso;
+  const conSesion = l.conSesion;
+  const materia = `/academia/materia/${l.materia.id}`;
   const todas = l.repaso.every((p) => bien.has(p.id));
   const completada = !!l.progreso?.completada;
 
@@ -126,6 +147,18 @@ export default function AcademiaLeccion() {
       toast({ title: "No se pudo guardar", description: e.message, variant: "destructive" });
     } finally {
       setGuardando(false);
+    }
+  };
+  const inscribir = async () => {
+    setTerminando(true);
+    try {
+      await inscribirmeEnMateria(l.materia.id);
+      await qc.invalidateQueries({ queryKey: ["academia"] });
+      toast({ title: `Te inscribiste en «${l.materia.titulo}»`, description: "Ya puedes completar esta lección y seguir con las demás." });
+    } catch (e: any) {
+      toast({ title: "No se pudo inscribir", description: e.message, variant: "destructive" });
+    } finally {
+      setTerminando(false);
     }
   };
   const terminar = async () => {
@@ -159,6 +192,12 @@ export default function AcademiaLeccion() {
         {!conSesion && l.publica && (
           <div className="glass-card p-4 mb-6 text-sm">Estás leyendo una lección abierta. <a href={loginUrl()} className="text-orange-600 dark:text-orange-300 font-medium hover:underline">Entra o crea tu cuenta</a> para guardar tu avance y recibir tu certificado.</div>
         )}
+        {l.docente && (
+          <div className="glass-card p-4 mb-6 text-sm flex items-start gap-3 border border-sky-500/30" role="note" data-testid="leccion-vista-docente">
+            <Eye className="w-5 h-5 text-sky-600 shrink-0" />
+            <span><strong>Vista docente.</strong> Lees la lección sin estar inscrito: puedes responder el repaso, pero no se guarda nada.</span>
+          </div>
+        )}
 
         <section className="glass-card p-5 mb-8">
           <p className="data-label mb-2 flex items-center gap-1.5"><Target className="w-3.5 h-3.5" /> Al terminar esta lección podrás</p>
@@ -181,7 +220,7 @@ export default function AcademiaLeccion() {
           <h2 className="font-display text-2xl font-bold mb-2 flex items-center gap-2"><PenLine className="w-5 h-5 text-orange-500" /> Para la vida</h2>
           <p className="text-[16px] leading-7 mb-3">{l.paraLaVida.texto}</p>
           <label className="block text-sm font-medium mb-2" htmlFor="reflexion">{l.paraLaVida.pregunta}</label>
-          {conSesion ? (
+          {conSesion && !l.docente ? (
             <>
               <Textarea id="reflexion" value={reflexion} onChange={(e) => setReflexion(e.target.value.slice(0, 2000))} rows={4} placeholder="Escribe aquí tu respuesta (solo tú la puedes ver)" />
               <div className="mt-2 flex items-center gap-3">
@@ -216,10 +255,16 @@ export default function AcademiaLeccion() {
           {l.anterior ? (
             <Link href={`/academia/leccion/${l.anterior}`}><Button variant="outline" className="w-full sm:w-auto"><ArrowLeft className="w-4 h-4 mr-1" /> Lección anterior</Button></Link>
           ) : <span />}
-          {conSesion && !l.matriculado ? (
-            <Link href="/academia/matricula">
-              <Button size="lg" className="fire-btn-primary h-12 w-full" data-testid="leccion-matricularme">Matricularme para guardar mi avance <ArrowRight className="w-4 h-4 ml-2" /></Button>
+          {conSesion && l.docente ? (
+            <Link href={materia}><Button variant="outline" size="lg" className="h-12 w-full">Volver a la materia</Button></Link>
+          ) : conSesion && !l.matriculado ? (
+            <Link href={enlaceInscripcion(materia)}>
+              <Button size="lg" className="fire-btn-primary h-12 w-full" data-testid="leccion-inscribirme-academia">Inscribirme para guardar mi avance <ArrowRight className="w-4 h-4 ml-2" /></Button>
             </Link>
+          ) : conSesion && !l.inscrita ? (
+            <Button size="lg" className="fire-btn-primary h-12" onClick={inscribir} disabled={terminando} data-testid="leccion-inscribirme-materia">
+              {terminando ? "Inscribiendo…" : "Inscribirme en esta materia"} <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           ) : conSesion ? (
             <Button size="lg" className="fire-btn-primary h-12" onClick={terminar} disabled={!todas || terminando} data-testid="leccion-completar">
               {completada ? "Seguir" : "Completar lección"} <ArrowRight className="w-4 h-4 ml-2" />
@@ -228,8 +273,13 @@ export default function AcademiaLeccion() {
             <a href={loginUrl()}><Button size="lg" className="fire-btn-primary h-12 w-full">Entrar para guardar mi avance</Button></a>
           )}
         </div>
-        {conSesion && !l.matriculado && <p className="text-xs text-muted-foreground mt-2 text-right">Sin matrícula puedes leer la lección y practicar el repaso; para completarla y guardar tu avance, matricúlate.</p>}
-        {conSesion && l.matriculado && !todas && <p className="text-xs text-muted-foreground mt-2 text-right">Termina el repaso para continuar.</p>}
+        {conSesion && !l.docente && !l.matriculado && (
+          <p className="text-xs text-muted-foreground mt-2 text-right">Sin inscripción puedes leer esta lección y practicar el repaso; para completarla y guardar tu avance, inscríbete en la academia y en la materia.</p>
+        )}
+        {conSesion && !l.docente && l.matriculado && !l.inscrita && (
+          <p className="text-xs text-muted-foreground mt-2 text-right">Esta lección se lee sin inscribirte; para completarla y seguir con las demás, inscríbete en la materia. Tu repaso no se pierde.</p>
+        )}
+        {conSesion && l.inscrita && l.matriculado && !todas && <p className="text-xs text-muted-foreground mt-2 text-right">Termina el repaso para continuar.</p>}
       </article>
     </Layout>
   );

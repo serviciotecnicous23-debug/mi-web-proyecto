@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { BookOpen, Gamepad2, GraduationCap, Home, Menu, Radio, Video } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAcademiaVisible } from "@/lib/academia-visible";
 
 /**
  * Barra inferior del celular, como en las apps (YouVersion, Hallow, Church Center):
@@ -16,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
  */
 // Pantallas de cuenta y la escena para transmisiones: van sin barra.
 const SIN_BARRA = ["/login", "/registro", "/forgot-password", "/reset-password", "/verificar-email", "/radio-live-scene"];
-type Tab = { href: string; label: string; icon: typeof Home; testId: string };
+type Tab = { href: string; label: string; icon: typeof Home; testId: string; tambien?: string[] };
 
 const VISITOR_TABS: Tab[] = [
   { href: "/", label: "Inicio", icon: Home, testId: "tab-inicio" },
@@ -34,6 +35,9 @@ const MEMBER_TABS: Tab[] = [
   { href: "/juegos", label: "Juegos", icon: Gamepad2, testId: "tab-juegos" },
 ];
 
+// Con la academia visible, «Clases» lleva a la Academia (y las clases en vivo quedan como su segunda pestaña).
+const TAB_ACADEMIA: Tab = { href: "/academia", label: "Academia", icon: GraduationCap, testId: "tab-clases", tambien: ["/capacitaciones", "/mis-capacitaciones"] };
+
 function isActive(location: string, href: string) {
   return href === "/" ? location === "/" : location === href || location.startsWith(href + "/");
 }
@@ -41,7 +45,8 @@ function isActive(location: string, href: string) {
 export function MobileTabBar() {
   const [location] = useLocation();
   const { user } = useAuth();
-  const tabs = user ? MEMBER_TABS : VISITOR_TABS;
+  const conLaAcademia = useAcademiaVisible();
+  const tabs = user ? (conLaAcademia ? MEMBER_TABS.map((t) => (t.testId === "tab-clases" ? TAB_ACADEMIA : t)) : MEMBER_TABS) : VISITOR_TABS;
   // dentro de la radio la barra sobra (la radio pone la suya)
   const oculta = enLaRadio() || SIN_BARRA.some((p) => location === p || location.startsWith(p + "/"));
 
@@ -57,7 +62,7 @@ export function MobileTabBar() {
     <nav className="tabbar" aria-label="Navegación principal del celular" data-testid="mobile-tabbar">
       {tabs.map((tab) => {
         const Icon = tab.icon;
-        const active = isActive(location, tab.href);
+        const active = isActive(location, tab.href) || !!tab.tambien?.some((h) => isActive(location, h));
         return (
           <Link
             key={tab.href}

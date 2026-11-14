@@ -1,9 +1,9 @@
 /**
  * La matrícula, el estatus y el carné de la academia (docs/academia.md, «La matrícula y el estatus»).
  *
- * - Matricularse es aceptar el reglamento académico y el código de honor (shared/academia.ts, REGLAMENTO y
- *   CODIGO_HONOR). Da un número correlativo (AAF-año-número) y una promoción; sin matrícula se lee, pero no se guarda
- *   el avance (academia-comun.ts, matriculadoDe).
+ * - La matrícula se da al inscribirse (server/academia-inscripcion.ts): la ficha, el reglamento académico y el código
+ *   de honor. Da un número correlativo (AAF-año-número) y una promoción; sin inscripción se lee, pero no se guarda el
+ *   avance (academia-comun.ts, inscritoDe).
  * - El estatus sale del avance real (estatusDe): aspirante, activo, en pausa, egresado, graduado; sin notas.
  * - El carné digital acredita la matrícula. Su QR lleva un código al azar (no el número de matrícula, que es
  *   correlativo y permitiría recorrer los nombres de todos) y se verifica en la misma página de los certificados.
@@ -16,7 +16,7 @@ import {
   ACLARACION_DOCUMENTOS, CODIGO_HONOR, HONORES, NIVELES, NOMBRE_ACADEMIA, REGLAMENTO, codigoDe, estatusDe, numeroMatricula,
   type CarneVista, type EstatusVista, type MatriculaInfo, type VerificacionAcademia,
 } from "@shared/academia";
-import { alumnoDe, asegurarAlumno, diaTexas, enFila, enlaceVerificar, frenar, matriculadoDe } from "./academia-comun";
+import { alumnoDe, asegurarAlumno, diaTexas, enlaceVerificar, inscritoDe, nombreAcademico } from "./academia-comun";
 
 /** El estatus del alumno hoy, a partir de su avance. */
 export async function estatusVista(userId: number): Promise<EstatusVista> {
@@ -54,8 +54,8 @@ export async function matriculaDe(userId: number): Promise<MatriculaInfo | null>
   };
 }
 
-/** Matricula al alumno (si ya lo está, devuelve su matrícula de siempre). */
-async function matricular(userId: number): Promise<MatriculaInfo> {
+/** Matricula al alumno (si ya lo está, devuelve su matrícula de siempre). La llama la inscripción. */
+export async function matricular(userId: number): Promise<MatriculaInfo> {
   const ya = await matriculaDe(userId);
   if (ya) return ya;
   await asegurarAlumno(userId);
@@ -84,8 +84,7 @@ async function matricular(userId: number): Promise<MatriculaInfo> {
 /** La verificación pública de un carné por su código (null si el código no es de un carné). */
 export async function verificacionDeCarne(codigo: string): Promise<VerificacionAcademia | null> {
   const { rows } = await pool.query(
-    `SELECT a.user_id, a.matricula, a.reglamento_at, u.display_name, u.username
-       FROM academia_alumnos a JOIN users u ON u.id = a.user_id
+    `SELECT a.user_id, a.matricula, a.reglamento_at FROM academia_alumnos a
       WHERE a.carne_codigo = $1 AND a.matricula IS NOT NULL AND a.reglamento_at IS NOT NULL`,
     [codigo],
   );
@@ -99,7 +98,7 @@ export async function verificacionDeCarne(codigo: string): Promise<VerificacionA
     tipo: "carne",
     documento: "Carné de estudiante",
     nivel: nv ? `Nivel ${nv.n} · ${nv.nombre}` : null,
-    nombre: String(r.display_name || r.username || "Estudiante"),
+    nombre: await nombreAcademico(Number(r.user_id)),
     emitido: new Date(r.reglamento_at).toISOString(),
     honores: estatus.honores,
     revocado: null,
@@ -111,7 +110,7 @@ export async function verificacionDeCarne(codigo: string): Promise<VerificacionA
 }
 
 export function registerAcademiaMatriculaRoutes(app: Express) {
-  // Mi matrícula (null si todavía no me matriculé) y la versión del reglamento vigente.
+  // Mi matrícula (null si todavía no me inscribí) y la versión del reglamento vigente.
   app.get("/api/academia/matricula", async (req, res) => {
     try {
       const a = await alumnoDe(req, res);
@@ -124,39 +123,21 @@ export function registerAcademiaMatriculaRoutes(app: Express) {
     }
   });
 
-  // Matricularme: aceptar el reglamento académico y el código de honor.
-  app.post("/api/academia/matricula", async (req, res) => {
-    try {
-      const a = await alumnoDe(req, res);
-      if (!a) return;
-      if (req.body?.reglamento !== true || req.body?.honor !== true) {
-        return res.status(400).json({ message: "Para matricularte, acepta el reglamento académico y el código de honor." });
-      }
-      if (frenar(`am:${a.userId}`, 800)) return res.status(429).json({ message: "Espera un momento." });
-      const m = await enFila(a.userId, () => matricular(a.userId));
-      res.setHeader("Cache-Control", "no-store");
-      res.json(m);
-    } catch (err) {
-      console.error("[academia] matricularse:", err);
-      res.sendStatus(500);
-    }
-  });
-
   // Mi carné digital, con su QR de verificación.
   app.get("/api/academia/carne", async (req, res) => {
     try {
-      const a = await matriculadoDe(req, res);
+      const a = await inscritoDe(req, res);
       if (!a) return;
       const m = (await matriculaDe(a.userId))!;
       const { rows } = await pool.query(
-        `SELECT a.carne_codigo, u.display_name, u.username, u.avatar_url FROM academia_alumnos a JOIN users u ON u.id = a.user_id WHERE a.user_id = $1`,
+        `SELECT a.carne_codigo, u.avatar_url FROM academia_alumnos a JOIN users u ON u.id = a.user_id WHERE a.user_id = $1`,
         [a.userId],
       );
       const r = rows[0];
       const verificar = enlaceVerificar(r.carne_codigo);
       const out: CarneVista = {
         ...m,
-        nombre: String(r.display_name || r.username || "Estudiante"),
+        nombre: await nombreAcademico(a.userId),
         foto: r.avatar_url || null,
         codigo: r.carne_codigo,
         verificar,

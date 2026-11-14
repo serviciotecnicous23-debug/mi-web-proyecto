@@ -36,6 +36,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["academia_certificados", (id) => sql`user_id = ${id}`],
   ["academia_lecciones", (id) => sql`user_id = ${id}`],
   ["academia_materias", (id) => sql`user_id = ${id}`],
+  ["academia_inscripciones", (id) => sql`user_id = ${id}`],
   ["academia_alumnos", (id) => sql`user_id = ${id}`],
   ["bible_highlights", (id) => sql`user_id = ${id}`],
   ["bible_notes", (id) => sql`user_id = ${id}`],

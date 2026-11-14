@@ -8,17 +8,18 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puntajeVersiculo,
+  ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
 } from "@shared/academia";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import type { PreguntaObjetiva } from "./academia/tipos";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaMatriculado, frenar, marcarEstudio, matriculadoDe, recalcularMateria,
-  textoDeCita, MENSAJE_CERRADA,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, frenar, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
+  marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
+import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { estadoExamen, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
 import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
@@ -103,8 +104,11 @@ export function registerAcademiaRoutes(app: Express) {
       // materias de un nivel aprobadas, el cierre de ese nivel (el examen integral y después el pacto).
       let continuar: AcademiaEstado["continuar"] = null;
       if (userId) {
+        const completos = [...cierres].filter(([, c]) => !!c.completado).map(([n]) => n);
         const todas = NIVELES.flatMap((n) => n.materias).filter((m) => m.disponible);
-        const m = todas.find((x) => materias.get(x.id)?.estado === "en-curso") ?? todas.find((x) => materias.get(x.id)?.estado !== "aprobada");
+        const m =
+          todas.find((x) => materias.get(x.id)?.estado === "en-curso") ??
+          todas.find((x) => !materias.has(x.id) && !requisitosMateria(x, completos).length);
         const porCerrar = niveles.find((n) => n.cierre && !n.cierre.completado && n.materias.every((x) => x.estado === "aprobada"));
         if (porCerrar && (!m || m.nivel! > porCerrar.n)) {
           continuar = {
@@ -116,6 +120,8 @@ export function registerAcademiaRoutes(app: Express) {
             de: 0,
             nivel: porCerrar.n,
           };
+        } else if (m && !materias.has(m.id)) {
+          continuar = { leccionId: null, titulo: "Presentación de la materia", materiaId: m.id, materia: m.titulo, n: 0, de: m.lecciones.length, inscribirse: true };
         } else if (m) {
           const k = m.lecciones.findIndex((x) => !completadas.has(x.id));
           continuar = {
@@ -128,8 +134,11 @@ export function registerAcademiaRoutes(app: Express) {
           };
         }
       }
-      const matricula = userId ? await matriculaDe(userId) : null;
-      const out: AcademiaEstado = { abierta: acceso.abierta, vistaPrevia: acceso.vistaPrevia, conSesion: !!userId, alumno, matricula, continuar, etapas: ETAPAS, niveles, especialidades };
+      const [matricula, inscripcion] = userId ? await Promise.all([matriculaDe(userId), inscripcionDe(userId)]) : [null, null];
+      const out: AcademiaEstado = {
+        abierta: acceso.abierta, vistaPrevia: acceso.vistaPrevia, conSesion: !!userId, alumno, matricula, ficha: !!inscripcion?.ficha, continuar,
+        etapas: ETAPAS, niveles, especialidades,
+      };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
     } catch (err) {
@@ -147,16 +156,18 @@ export function registerAcademiaRoutes(app: Express) {
       if (!m) return res.status(404).json({ message: "No existe esa materia." });
       const userId = acceso.userId;
       let lec = new Map<string, { vista: boolean; completada: boolean }>();
-      let fila: { estado: string; nota: number | null } | undefined;
+      let fila: { estado: string; nota: number | null; inicio: string } | undefined;
+      let completos: number[] = [];
       let versiculo: MateriaDetalle["versiculo"] = m.memoria ? { ref: m.memoria, aprendido: false, puntaje: null, intentos: 0 } : null;
       if (userId) {
         const [{ rows: l }, { rows: mt }, { rows: v }] = await Promise.all([
           pool.query(`SELECT leccion_id, completada_at IS NOT NULL AS completada FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`, [userId, m.lecciones.map((x) => x.id)]),
-          pool.query(`SELECT estado, nota FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
+          pool.query(`SELECT estado, nota, inicio_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
         ]);
         lec = new Map(l.map((r: any) => [r.leccion_id, { vista: true, completada: !!r.completada }]));
-        fila = mt[0] ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota) } : undefined;
+        fila = mt[0] ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota), inicio: new Date(mt[0].inicio_at).toISOString() } : undefined;
+        completos = await nivelesCompletos(userId);
         if (versiculo && v[0]) versiculo = { ref: m.memoria!, aprendido: !!v[0].aprendido_at, puntaje: v[0].puntaje == null ? null : Number(v[0].puntaje), intentos: Number(v[0].intentos || 0) };
       }
       const hechas = m.lecciones.filter((x) => lec.get(x.id)?.completada).length;
@@ -172,7 +183,10 @@ export function registerAcademiaRoutes(app: Express) {
         versiculo,
         examen: userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null,
         certificado: userId && estado === "aprobada" ? (await codigoDocumento(userId, "materia", m.id)) ?? (await emitirMateria(userId, m, fila?.nota ?? 0)) : null,
-        matriculado: userId ? await estaMatriculado(userId) : false,
+        matriculado: userId ? await estaInscrito(userId) : false,
+        inscrita: fila?.inicio ?? null,
+        requisitos: requisitosMateria(m, completos),
+        docente: !!userId && puedeRevisar(acceso.role),
         vistaPrevia: acceso.vistaPrevia,
         conSesion: !!userId,
       };
@@ -196,10 +210,20 @@ export function registerAcademiaRoutes(app: Express) {
       const publica = leccionPublica(id);
       const userId = acceso.userId;
       if (!userId && !publica) return res.status(401).json({ message: "Entra con tu cuenta para seguir con esta lección." });
+      // Las lecciones (salvo la primera, pública) piden la inscripción en la academia y en la materia. La Dirección
+      // académica y los profesores las leen sin inscribirse, sin guardar nada (vista docente).
+      const [matriculado, inscrita] = userId ? await Promise.all([estaInscrito(userId), inscritaEnMateria(userId, l.materia.id).then(Boolean)]) : [false, false];
+      const docente = !publica && !!userId && !(matriculado && inscrita) && puedeRevisar(acceso.role);
+      if (!publica && !(matriculado && inscrita) && !docente) {
+        return res.status(409).json({
+          message: matriculado ? `Esta lección es de «${l.materia.titulo}». ${MENSAJE_MATERIA}` : MENSAJE_INSCRIPCION,
+          inscripcion: matriculado,
+          materia: inscrita,
+          materiaId: l.materia.id,
+        });
+      }
       let fila: FilaLeccion | undefined;
-      if (userId) {
-        await asegurarAlumno(userId);
-        await asegurarMateria(userId, l.materia.id);
+      if (userId && !docente) {
         const { rows } = await pool.query(
           `INSERT INTO academia_lecciones (user_id, leccion_id) VALUES ($1, $2)
            ON CONFLICT (user_id, leccion_id) DO UPDATE SET vista_at = now()
@@ -231,7 +255,10 @@ export function registerAcademiaRoutes(app: Express) {
         anterior: l.indice > 0 ? ms[l.indice - 1].id : null,
         siguiente: l.indice < ms.length - 1 ? ms[l.indice + 1].id : null,
         publica,
-        matriculado: userId ? await estaMatriculado(userId) : false,
+        conSesion: !!userId,
+        matriculado,
+        inscrita,
+        docente,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -253,7 +280,13 @@ export function registerAcademiaRoutes(app: Express) {
       const l = leccionPorId(leccionId);
       if (!l || !l.materia.disponible) return res.status(404).json({ message: "Esa lección no existe." });
       const userId = acceso.userId;
-      if (!userId && !leccionPublica(leccionId)) return res.status(401).json({ message: "Entra con tu cuenta." });
+      const publica = leccionPublica(leccionId);
+      if (!userId && !publica) return res.status(401).json({ message: "Entra con tu cuenta." });
+      // Se guarda en la primera lección (pública) y en las materias inscritas; la vista docente responde sin guardar.
+      const inscrita = userId ? !!(await inscritaEnMateria(userId, l.materia.id)) : false;
+      if (userId && !publica && !inscrita && !puedeRevisar(acceso.role)) {
+        return res.status(409).json({ message: MENSAJE_MATERIA, materia: false, materiaId: l.materia.id });
+      }
       if (frenar(`rp:${userId ?? req.ip}`, 250)) return res.status(429).json({ message: "Espera un momento." });
       const preguntas = BANCOS.get(l.materia.id)?.repaso[leccionId] ?? [];
       const lugar = preguntas.findIndex((p) => p.id === preguntaId);
@@ -263,7 +296,7 @@ export function registerAcademiaRoutes(app: Express) {
       if (opcion >= opciones.length) return res.status(400).json({ message: "Respuesta no válida." });
       const bien = opciones[opcion] === p.correcta;
       let todas = false;
-      if (userId) {
+      if (userId && (publica || inscrita)) {
         todas = await enFila(userId, async () => {
           const { rows } = await pool.query(
             `INSERT INTO academia_lecciones (user_id, leccion_id) VALUES ($1, $2) ON CONFLICT (user_id, leccion_id) DO UPDATE SET vista_at = academia_lecciones.vista_at
@@ -285,14 +318,15 @@ export function registerAcademiaRoutes(app: Express) {
     }
   });
 
-  // Terminar la lección: pide el repaso respondido bien y la matrícula. Guarda la nota privada y suma el día de estudio.
+  // Terminar la lección: pide el repaso respondido bien y la inscripción en la materia. Guarda la nota privada y suma el
+  // día de estudio.
   app.post("/api/academia/leccion/:leccionId/completar", async (req, res) => {
     try {
-      const a = await matriculadoDe(req, res);
-      if (!a) return;
       const id = String(req.params.leccionId || "");
       const l = leccionPorId(id);
       if (!l || !l.materia.disponible) return res.status(404).json({ message: "Esa lección no existe." });
+      const a = await inscritoEnMateriaDe(req, res, l.materia.id);
+      if (!a) return;
       const reflexion = typeof req.body?.reflexion === "string" ? req.body.reflexion.slice(0, 2000) : null;
       const out = await enFila(a.userId, async () => {
         const { rows } = await pool.query(`SELECT repaso FROM academia_lecciones WHERE user_id = $1 AND leccion_id = $2`, [a.userId, id]);
@@ -347,6 +381,9 @@ export function registerAcademiaRoutes(app: Express) {
       if (!a) return;
       const m = materiaPorId(String(req.params.materiaId || ""));
       if (!m || !m.disponible || !m.memoria) return res.status(404).json({ message: "Esa materia no tiene versículo de memoria." });
+      if (!(await inscritaEnMateria(a.userId, m.id)) && !puedeRevisar(a.acceso.role)) {
+        return res.status(409).json({ message: MENSAJE_MATERIA, materia: false, materiaId: m.id });
+      }
       const v = await textoDeCita(m.memoria);
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
       const { rows } = await pool.query(`SELECT intentos, fallos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [a.userId, m.id]);
@@ -365,13 +402,14 @@ export function registerAcademiaRoutes(app: Express) {
     }
   });
 
-  // Comprobar el orden de las fichas. Bien a la primera = 100; luego 80 y 60 como mínimo (shared/academia.ts). Pide matrícula.
+  // Comprobar el orden de las fichas. Bien a la primera = 100; luego 80 y 60 como mínimo (shared/academia.ts). Pide la
+  // inscripción en la materia.
   app.post("/api/academia/versiculo/:materiaId", async (req, res) => {
     try {
-      const a = await matriculadoDe(req, res);
-      if (!a) return;
       const m = materiaPorId(String(req.params.materiaId || ""));
       if (!m || !m.disponible || !m.memoria) return res.status(404).json({ message: "Esa materia no tiene versículo de memoria." });
+      const a = await inscritoEnMateriaDe(req, res, m.id);
+      if (!a) return;
       if (frenar(`vs:${a.userId}`, 500)) return res.status(429).json({ message: "Espera un momento." });
       const orden = Array.isArray(req.body?.orden) ? req.body.orden.map(String).slice(0, 80) : [];
       const v = await textoDeCita(m.memoria);
@@ -413,4 +451,5 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaNivelRoutes(app);
   registerAcademiaDocumentosRoutes(app);
   registerAcademiaMatriculaRoutes(app);
+  registerAcademiaInscripcionRoutes(app);
 }

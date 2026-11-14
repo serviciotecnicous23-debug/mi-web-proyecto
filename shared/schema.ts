@@ -1252,6 +1252,31 @@ export const academiaAlumnos = pgTable("academia_alumnos", {
   rachaFecha: text("racha_fecha"),
   inscritoAt: timestamp("inscrito_at").notNull().defaultNow(),
   ultimaAt: timestamp("ultima_at").notNull().defaultNow(),
+  honorAt: timestamp("honor_at"),
+  reglamentoVersion: text("reglamento_version"),
+  carneCodigo: text("carne_codigo"),
+});
+
+/** La ficha de inscripción en la academia: los datos del alumno, sus documentos llevan este nombre (server/academia-inscripcion.ts). */
+export const academiaInscripciones = pgTable("academia_inscripciones", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  nombres: text("nombres").notNull(),
+  apellidos: text("apellidos").notNull(),
+  pais: text("pais").notNull(),
+  ciudad: text("ciudad"),
+  telefono: text("telefono"),
+  nacimiento: text("nacimiento"),
+  iglesiaId: integer("iglesia_id"),
+  iglesiaOtra: text("iglesia_otra"),
+  pastor: text("pastor"),
+  tiempoFe: text("tiempo_fe"),
+  bautismo: text("bautismo"),
+  ministerio: text("ministerio"),
+  comoConocio: text("como_conocio"),
+  espera: text("espera"),
+  privacidadAt: timestamp("privacidad_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const academiaLecciones = pgTable(

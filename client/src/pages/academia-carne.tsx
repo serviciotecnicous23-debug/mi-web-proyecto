@@ -90,8 +90,8 @@ export default function AcademiaCarne() {
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-20 text-center">
           <IdCard className="w-12 h-12 mx-auto text-orange-500" />
-          <p className="text-lg mt-4 mb-5">{sinMatricula ? "Tu carné se entrega al matricularte en la academia." : q.error?.message ?? "No se pudo cargar tu carné."}</p>
-          {sinMatricula && <Link href="/academia/matricula"><Button className="fire-btn-primary h-12 px-7">Matricularme</Button></Link>}
+          <p className="text-lg mt-4 mb-5">{sinMatricula ? "Tu carné se entrega al inscribirte en la academia." : q.error?.message ?? "No se pudo cargar tu carné."}</p>
+          {sinMatricula && <Link href="/academia/inscripcion?volver=%2Facademia%2Fcarne"><Button className="fire-btn-primary h-12 px-7">Inscribirme en la academia</Button></Link>}
           {sinSesion && <a href={loginUrl("/academia/carne")}><Button className="fire-btn-primary h-12 px-7">Entrar</Button></a>}
         </div>
       </Layout>
