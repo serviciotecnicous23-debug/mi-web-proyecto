@@ -104,6 +104,8 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   su propio azar, así lo demás queda igual.
 - Un muro de piedra se arma con `sillares` y uno de barro con `revoque` (en `ciudad/muros-casa.ts`): nunca una caja lisa
   con rayas. La piedra, con hiladas trabadas, bisel y esquinas trabadas; el barro, con manchas de lluvia y lomas suaves.
+  Lo grande y antiguo (la muralla, el palacio) lleva piedras grandes almohadilladas; lo que casi no se ve (la muralla
+  por fuera) puede quedar lisa. Dos caras que están a la misma altura parpadean: siempre al menos un centímetro aparte.
 - Una superficie grande del color de la tela (el revoque del adobe) va con `matteMatLiso`: el relieve fino de la tela
   la arruga como papel con el sol rasante.
 - Muchas sombras de contacto de un mismo lugar van en una sola malla (`sombrasDeContacto`, en `three/luces.ts`).

@@ -129,6 +129,11 @@ export type OpcionesSillares = {
   tonoHilada?: (k: number) => number;
   /** Un tono por punto de la cara (las manchas de la lluvia: ver `manchasDeMuro`). */
   tonoPunto?: (u: number, v: number) => number;
+  /**
+   * La almohadilla: la cara de la piedra levantada en el medio (`alto`), con un margen labrado alrededor (`margen`),
+   * como las piedras grandes de los muros de Jerusalén.
+   */
+  almohadilla?: { alto: number; margen: number };
 };
 
 /**
@@ -185,7 +190,24 @@ export function sillares(l: Lienzo, cara: Cara, o: OpcionesSillares) {
     // la cara de la piedra, apenas inclinada: cada una recibe la luz a su modo
     const t1 = (az() - 0.5) * 0.06, t2 = (az() - 0.5) * 0.06;
     const n0 = [N[0] + U[0] * t1, t2, N[2] + U[2] * t1], nl = Math.hypot(n0[0], n0[1], n0[2]);
-    l.quad(I(iu0, iv0), I(iu1, iv0), I(iu1, iv1), I(iu0, iv1), K(iu0, iv0), K(iu1, iv0), K(iu1, iv1), K(iu0, iv1), [n0[0] / nl, n0[1] / nl, n0[2] / nl]);
+    const alm = o.almohadilla;
+    if (alm && iu1 - iu0 > 2 * alm.margen + 0.08 && iv1 - iv0 > 2 * alm.margen + 0.08) {
+      // el margen labrado (al ras, más liso y claro) y la almohadilla levantada en el medio, con su bisel
+      const bu0 = iu0 + alm.margen, bu1 = iu1 - alm.margen, bv0 = iv0 + alm.margen, bv1 = iv1 - alm.margen;
+      const ib = Math.min(alm.alto * 1.2, (bu1 - bu0) / 4, (bv1 - bv0) / 4);
+      const T = (u: number, v: number) => enCara(cara, u, v, sale + alm.alto);
+      const lm = 1.03;
+      l.quad(I(iu0, iv0), I(iu1, iv0), I(bu1, bv0), I(bu0, bv0), K(iu0, iv0, lm), K(iu1, iv0, lm), K(bu1, bv0, lm), K(bu0, bv0, lm), N);
+      l.quad(I(bu0, bv1), I(bu1, bv1), I(iu1, iv1), I(iu0, iv1), K(bu0, bv1, lm), K(bu1, bv1, lm), K(iu1, iv1, lm), K(iu0, iv1, lm), N);
+      l.quad(I(iu0, iv0), I(bu0, bv0), I(bu0, bv1), I(iu0, iv1), K(iu0, iv0, lm), K(bu0, bv0, lm), K(bu0, bv1, lm), K(iu0, iv1, lm), N);
+      l.quad(I(bu1, bv0), I(iu1, iv0), I(iu1, iv1), I(bu1, bv1), K(bu1, bv0, lm), K(iu1, iv0, lm), K(iu1, iv1, lm), K(bu1, bv1, lm), N);
+      const tu0 = bu0 + ib, tu1 = bu1 - ib, tv0 = bv0 + ib, tv1 = bv1 - ib, cb = 0.95;
+      l.quad(I(bu0, bv0), I(bu1, bv0), T(tu1, tv0), T(tu0, tv0), K(bu0, bv0, 0.9), K(bu1, bv0, 0.9), K(tu1, tv0, cb), K(tu0, tv0, cb));
+      l.quad(T(tu0, tv1), T(tu1, tv1), I(bu1, bv1), I(bu0, bv1), K(tu0, tv1, cb), K(tu1, tv1, cb), K(bu1, bv1, 0.9), K(bu0, bv1, 0.9));
+      l.quad(I(bu0, bv0), T(tu0, tv0), T(tu0, tv1), I(bu0, bv1), K(bu0, bv0, 0.9), K(tu0, tv0, cb), K(tu0, tv1, cb), K(bu0, bv1, 0.9));
+      l.quad(T(tu1, tv0), I(bu1, bv0), I(bu1, bv1), T(tu1, tv1), K(tu1, tv0, cb), K(bu1, bv0, 0.9), K(bu1, bv1, 0.9), K(tu1, tv1, cb));
+      l.quad(T(tu0, tv0), T(tu1, tv0), T(tu1, tv1), T(tu0, tv1), K(tu0, tv0, cb), K(tu1, tv0, cb), K(tu1, tv1, cb), K(tu0, tv1, cb), [n0[0] / nl, n0[1] / nl, n0[2] / nl]);
+    } else l.quad(I(iu0, iv0), I(iu1, iv0), I(iu1, iv1), I(iu0, iv1), K(iu0, iv0), K(iu1, iv0), K(iu1, iv1), K(iu0, iv1), [n0[0] / nl, n0[1] / nl, n0[2] / nl]);
     // los biseles, más oscuros hacia la junta
     const j = 0.84;
     l.quad(O(u0, v0), O(u1, v0), I(iu1, iv0), I(iu0, iv0), K(u0, v0, j), K(u1, v0, j), K(iu1, iv0), K(iu0, iv0));
