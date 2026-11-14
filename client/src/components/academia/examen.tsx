@@ -151,20 +151,6 @@ function Escrita({ e, alEntregar, ocupado }: { e: EscritaExamen; alEntregar: (te
 
 function Veredicto({ r, destino, aprueba }: { r: ResultadoExamen; destino: DestinoExamen; aprueba: number }) {
   const otraVez = `Repasa lo que falló y vuelve a intentarlo ${r.espera ? `en ${tiempoTexto(r.espera)}` : "cuando quieras"}: el próximo intento trae otras preguntas.`;
-  if (r.materia) {
-    return (
-      <div className={`mt-5 rounded-xl p-4 ${r.materia.aprobada ? "bg-emerald-500/10" : "bg-orange-500/10"}`}>
-        {r.materia.aprobada ? (
-          <p className="font-semibold flex justify-center items-center gap-2 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-5 h-5" /> ¡Aprobaste la materia con {r.materia.nota}!</p>
-        ) : (
-          <>
-            <p className="font-semibold">Tu nota de la materia es {r.materia.nota}: se aprueba con {aprueba}.</p>
-            <p className="text-sm mt-1">{otraVez}</p>
-          </>
-        )}
-      </div>
-    );
-  }
   if (destino.tipo === "suficiencia") {
     return (
       <div className={`mt-5 rounded-xl p-4 ${r.aprobado ? "bg-emerald-500/10" : "bg-orange-500/10"}`} data-testid="suficiencia-veredicto">
@@ -177,6 +163,20 @@ function Veredicto({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
           <>
             <p className="font-semibold">No alcanzó: la suficiencia pide {SUFICIENCIA.apruebaObjetiva} en la parte A y {SUFICIENCIA.apruebaEscrita} en la parte B a la vez.</p>
             <p className="text-sm mt-1">Era una sola oportunidad. Ahora cursa la materia: sus lecciones te esperan, y lo que ya sabes te va a ayudar.</p>
+          </>
+        )}
+      </div>
+    );
+  }
+  if (r.materia) {
+    return (
+      <div className={`mt-5 rounded-xl p-4 ${r.materia.aprobada ? "bg-emerald-500/10" : "bg-orange-500/10"}`}>
+        {r.materia.aprobada ? (
+          <p className="font-semibold flex justify-center items-center gap-2 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-5 h-5" /> ¡Aprobaste la materia con {r.materia.nota}!</p>
+        ) : (
+          <>
+            <p className="font-semibold">Tu nota de la materia es {r.materia.nota}: se aprueba con {aprueba}.</p>
+            <p className="text-sm mt-1">{otraVez}</p>
           </>
         )}
       </div>
@@ -212,11 +212,18 @@ function Resultado({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
   return (
     <div data-testid="examen-resultado">
       <div className="glass-card p-6 text-center">
-        <p className="data-label mb-3">Resultado del examen</p>
-        <div className="flex justify-center"><NotaMedalla nota={r.nota} medalla={r.medalla} grande /></div>
-        <p className="text-sm text-muted-foreground mt-4">
-          Parte A: {r.aciertos} de {r.de} ({r.objetiva}){destino.tipo === "diagnostico" ? "" : ` · Parte B escrita: ${r.escrita}`}
-        </p>
+        <p className="data-label mb-3">{destino.tipo === "diagnostico" ? "Resultado de la prueba" : "Resultado del examen"}</p>
+        {destino.tipo === "diagnostico" ? (
+          <>
+            <p className="font-display text-5xl font-bold" data-testid="diagnostico-aciertos">{r.aciertos} de {r.de}</p>
+            <p className="text-sm text-muted-foreground mt-2">respuestas bien. No es una nota: solo sirve para saber por dónde empezar.</p>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-center"><NotaMedalla nota={r.nota} medalla={r.medalla} grande /></div>
+            <p className="text-sm text-muted-foreground mt-4">Parte A: {r.aciertos} de {r.de} ({r.objetiva}) · Parte B escrita: {r.escrita}</p>
+          </>
+        )}
         <Veredicto r={r} destino={destino} aprueba={aprueba} />
         <div className="mt-5"><Link href={destino.volver.href}><Button variant="outline">Volver: {destino.volver.texto}</Button></Link></div>
       </div>

@@ -23,6 +23,16 @@ function materiasDiagnostico(): MateriaDef[] {
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
 
+/** Las materias en que ya no puede dar la suficiencia (la dio, o ya dio su examen final): se cursan. */
+async function sinSuficienciaDe(userId: number): Promise<string[]> {
+  const { rows } = await pool.query(
+    `SELECT DISTINCT split_part(clave, ':', 1) AS materia_id FROM academia_pruebas
+      WHERE user_id = $1 AND intentos > 0 AND (clave LIKE '%:suficiencia' OR clave LIKE '%:final')`,
+    [userId],
+  );
+  return (rows as any[]).map((r) => String(r.materia_id));
+}
+
 async function ultimoDe(userId: number): Promise<{ fila: any | null; dias: number }> {
   const { rows } = await pool.query(
     `SELECT resultado, created_at, EXTRACT(EPOCH FROM now() - created_at)::float / 86400 AS dias FROM academia_diagnosticos WHERE user_id = $1`,
@@ -73,11 +83,12 @@ function evaluacionDiagnostico(): Evaluacion {
       const porMateria: DiagnosticoMateria[] = materias
         .filter((m) => cuenta.has(m.id))
         .map((m) => ({ id: m.id, titulo: m.titulo, nivel: m.nivel, ...cuenta.get(m.id)! }));
-      const [completos, { rows: ap }] = await Promise.all([
+      const [completos, { rows: ap }, sinSuf] = await Promise.all([
         nivelesCompletos(userId),
         pool.query(`SELECT materia_id FROM academia_materias WHERE user_id = $1 AND estado = 'aprobada'`, [userId]),
+        sinSuficienciaDe(userId),
       ]);
-      const sugerencia = sugerenciaDiagnostico(porMateria, completos, ap.map((r: any) => String(r.materia_id)));
+      const sugerencia = sugerenciaDiagnostico(porMateria, completos, ap.map((r: any) => String(r.materia_id)), sinSuf);
       const resultado = {
         aciertos: porMateria.reduce((s, x) => s + x.aciertos, 0),
         de: porMateria.reduce((s, x) => s + x.de, 0),
@@ -111,16 +122,17 @@ export function registerAcademiaDiagnosticoRoutes(app: Express) {
       if (!fila) return res.json({ ultimo: null, preguntas: materiasDiagnostico().length * DIAGNOSTICO.porMateria });
       const r = fila.resultado as Omit<DiagnosticoVista, "fecha" | "repetirDesde">;
       // la sugerencia se vuelve a calcular con lo que ya aprobó desde entonces
-      const [completos, { rows: ap }] = await Promise.all([
+      const [completos, { rows: ap }, sinSuf] = await Promise.all([
         nivelesCompletos(acceso.userId),
         pool.query(`SELECT materia_id FROM academia_materias WHERE user_id = $1 AND estado = 'aprobada'`, [acceso.userId]),
+        sinSuficienciaDe(acceso.userId),
       ]);
       const ultimo: DiagnosticoVista = {
         fecha: iso(fila.created_at),
         aciertos: r.aciertos,
         de: r.de,
         porMateria: r.porMateria,
-        sugerencia: sugerenciaDiagnostico(r.porMateria, completos, ap.map((x: any) => String(x.materia_id))),
+        sugerencia: sugerenciaDiagnostico(r.porMateria, completos, ap.map((x: any) => String(x.materia_id)), sinSuf),
         repetirDesde: repetirDesde(fila, dias),
       };
       res.setHeader("Cache-Control", "no-store");

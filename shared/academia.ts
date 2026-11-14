@@ -288,9 +288,15 @@ const listaY = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, 
 
 /**
  * La sugerencia de la prueba diagnóstica: el nivel que le toca, por qué materia empezar (la primera que ni domina ni
- * aprobó) y cuáles podría aprobar por suficiencia (las que respondió todas bien). Sin base de datos.
+ * aprobó) y cuáles podría aprobar por suficiencia (las que respondió todas bien y todavía puede darla: no la dio ni dio
+ * su examen final; las de `sinSuficiencia` se cursan aunque las domine). Sin base de datos.
  */
-export function sugerenciaDiagnostico(porMateria: DiagnosticoMateria[], nivelesCompletos: number[], aprobadas: string[]): SugerenciaDiagnostico {
+export function sugerenciaDiagnostico(
+  porMateria: DiagnosticoMateria[],
+  nivelesCompletos: number[],
+  aprobadas: string[],
+  sinSuficiencia: readonly string[] = [],
+): SugerenciaDiagnostico {
   const hecho = nivelesCompletos.length ? Math.max(...nivelesCompletos) : 0;
   const nivel = NIVELES.find((n) => n.n === hecho + 1);
   if (!nivel || !nivel.materias.some((m) => m.disponible)) {
@@ -302,9 +308,10 @@ export function sugerenciaDiagnostico(porMateria: DiagnosticoMateria[], nivelesC
     return { texto: `Ya aprobaste las materias del Nivel ${nivel.n}: te falta cerrar el nivel con su examen integral y lo que pide.`, nivel: nivel.n, empezar: null, suficiencia: [] };
   }
   const res = new Map(porMateria.map((r) => [r.id, r]));
+  const cerradas = new Set(sinSuficiencia);
   const domina = pendientes.filter((m) => {
     const r = res.get(m.id);
-    return !!r && r.de > 0 && r.aciertos === r.de;
+    return !!r && r.de > 0 && r.aciertos === r.de && !cerradas.has(m.id);
   });
   const suficiencia = domina.map((m) => ({ materiaId: m.id, titulo: m.titulo }));
   const primera = pendientes.find((m) => !domina.includes(m));

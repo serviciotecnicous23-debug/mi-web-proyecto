@@ -36,6 +36,12 @@ test("las materias que respondió todas bien quedan para la suficiencia, y empie
   assert.match(s.texto, /suficiencia/);
 });
 
+test("si ya dio la suficiencia o el final de una materia, no se la sugiere: la cursa aunque la domine", () => {
+  const s = sugerenciaDiagnostico([perfecta(nivel1[0].id), perfecta(nivel1[1].id)], [], [], [nivel1[0].id]);
+  assert.deepEqual(s.suficiencia.map((x) => x.materiaId), [nivel1[1].id]);
+  assert.equal(s.empezar?.materiaId, nivel1[0].id);
+});
+
 test("si domina todo el nivel, no sugiere por dónde empezar: todas por suficiencia y el integral igual", () => {
   const s = sugerenciaDiagnostico(nivel1.map((m) => perfecta(m.id)), [], []);
   assert.equal(s.empezar, null);

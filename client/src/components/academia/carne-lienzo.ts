@@ -346,13 +346,20 @@ export async function imprimirCarne(c: CarneVista): Promise<void> {
     <img src="${reverso.toDataURL("image/png")}" alt="Reverso del carné" />
   </body></html>`);
   w.document.close();
+  // se imprime una sola vez, cuando las dos imágenes ya están cargadas (si no, la hoja saldría en blanco)
   let impreso = false;
+  let vueltas = 0;
+  const listas = () => Array.from(w.document.images).every((i) => i.complete && i.naturalWidth > 0);
   const imprimir = () => {
-    if (impreso) return;
+    if (impreso || w.closed) return;
+    if (!listas() && vueltas++ < 40) {
+      setTimeout(imprimir, 150);
+      return;
+    }
     impreso = true;
     w.focus();
     w.print();
   };
   w.onload = imprimir;
-  setTimeout(imprimir, 900);
+  setTimeout(imprimir, 300);
 }

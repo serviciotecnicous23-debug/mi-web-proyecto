@@ -119,7 +119,9 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 - **El documento:** el mismo diseño del certificado de la Escuela, con el nombre del día en que se emitió, la nota o el
   promedio, «con honores» en el del nivel, las líneas de la Dirección académica y del Ministerio, el QR que lleva a la
   verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Administración; se
-  descarga en PDF o se imprime. Si la materia se aprobó por suficiencia, lo dice.
+  descarga en PDF o se imprime. Si la materia se aprobó por suficiencia, lo dice. El PDF se dibuja directo, con texto
+  de verdad (`client/src/components/academia/certificado-pdf.ts`, A4 apaisado): no es una captura de la pantalla, así
+  que sale nítido y nunca en blanco.
 - **La verificación pública** (sin cuenta, la abre el QR): válido o revocado, el nombre, el documento, el nivel y la
   fecha, **sin notas**. La casilla «Verificar» de Certificados también acepta estos códigos.
 - **Firmas:** por ahora, la línea de la Dirección académica y el sello del Ministerio; los nombres y las firmas los da
@@ -187,7 +189,9 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
   - «Descargar en PDF»: una hoja carta con el frente y el reverso a tamaño real de tarjeta y marcas de corte (jsPDF).
   - «Descargar imagen»: el frente en PNG, para el teléfono.
   - «Imprimir»: la misma hoja; el botón no se puede apretar dos veces seguidas.
-  - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`).
+  - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`), y
+    cada certificado, dibujado con su diseño (`certificado-pdf.ts`).
+  - Imprimir abre el documento solo y espera a que carguen sus imágenes antes de abrir el diálogo, una sola vez.
 - **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
 
 **El panel de seguimiento** (`server/academia-direccion.ts`). Lo pidió Luis: quién está inscrito en cada materia, por

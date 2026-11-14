@@ -16,7 +16,7 @@ const cuando = (iso: string) => {
   return dias <= 0 ? "hoy" : dias === 1 ? "mañana" : `en ${dias} días`;
 };
 
-function Repasar({ v, alTerminar }: { v: VersiculoRepaso; alTerminar: () => void }) {
+function Repasar({ v, alTerminar }: { v: VersiculoRepaso; alTerminar: (materiaId: string) => void }) {
   const [datos, setDatos] = useState<VersiculoParaRepasar | null>(null);
   const [elegidas, setElegidas] = useState<string[]>([]);
   const [resultado, setResultado] = useState<{ bien: boolean; dominado: boolean; dias: number | null; texto?: string } | null>(null);
@@ -42,7 +42,7 @@ function Repasar({ v, alTerminar }: { v: VersiculoRepaso; alTerminar: () => void
       let texto: string | undefined;
       if (!r.bien) texto = (await versiculoEstudio(v.materiaId).catch(() => null))?.texto;
       setResultado({ bien: r.bien, dominado: r.dominado, dias: r.dias, texto });
-      alTerminar();
+      alTerminar(v.materiaId);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -99,13 +99,19 @@ function Repasar({ v, alTerminar }: { v: VersiculoRepaso; alTerminar: () => void
 export default function AcademiaRepaso() {
   const qc = useQueryClient();
   const q = useRepasoVersiculos();
+  // los que ya repasó en esta visita siguen arriba con su resultado, aunque la lista nueva diga que ya no tocan
+  const [hechos, setHechos] = useState<string[]>([]);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   const d = q.data;
   const versiculos = d?.versiculos ?? [];
-  const tocan = versiculos.filter((v) => v.toca);
-  const otros = versiculos.filter((v) => !v.toca);
-  const refrescar = () => void qc.invalidateQueries({ queryKey: ["academia", "repaso-versiculos"] });
+  const tocan = versiculos.filter((v) => v.toca || hechos.includes(v.materiaId));
+  const otros = versiculos.filter((v) => !v.toca && !hechos.includes(v.materiaId));
+  const faltan = tocan.filter((v) => !hechos.includes(v.materiaId)).length;
+  const refrescar = (materiaId: string) => {
+    setHechos((h) => (h.includes(materiaId) ? h : [...h, materiaId]));
+    void qc.invalidateQueries({ queryKey: ["academia", "repaso-versiculos"] });
+  };
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-16 space-y-6">
@@ -123,7 +129,7 @@ export default function AcademiaRepaso() {
         ) : (
           <>
             <section className="space-y-3" data-testid="repaso-hoy">
-              <h2 className="font-semibold text-lg flex items-center gap-2"><BookOpen className="w-5 h-5 text-orange-500" /> Para repasar hoy ({tocan.length})</h2>
+              <h2 className="font-semibold text-lg flex items-center gap-2"><BookOpen className="w-5 h-5 text-orange-500" /> Para repasar hoy ({faltan})</h2>
               {tocan.length === 0 && <p className="text-sm text-muted-foreground">Nada para hoy. ¡Vuelve cuando toque!</p>}
               {tocan.map((v) => (
                 <article key={v.materiaId} className="glass-card p-5" data-testid="repaso-versiculo" data-materia={v.materiaId}>
