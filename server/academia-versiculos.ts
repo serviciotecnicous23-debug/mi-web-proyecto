@@ -100,9 +100,9 @@ export function registerAcademiaVersiculosRoutes(app: Express) {
         const sig = siguienteRepaso(Number(f.caja), bien);
         await pool.query(
           `UPDATE academia_versiculos
-              SET caja = $3, repasos = repasos + 1,
+              SET caja = $3::int, repasos = repasos + 1,
                   proximo_at = CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(days => $4::int) END,
-                  dominado_at = CASE WHEN $3 >= $5 THEN COALESCE(dominado_at, now()) ELSE dominado_at END
+                  dominado_at = CASE WHEN $3::int >= $5::int THEN COALESCE(dominado_at, now()) ELSE dominado_at END
             WHERE user_id = $1 AND materia_id = $2`,
           [a.userId, m.id, sig.caja, sig.dias, CAJA_DOMINADO],
         );
