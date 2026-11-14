@@ -30,9 +30,11 @@ import type { SalaDef, SalaEstado } from "@shared/restauracion";
 import { Entrada, vibrar } from "../motor/entrada";
 import { haciaElPiso } from "../motor/camara";
 import { ASIENTO, LECHO_ALTO, LLAMA, construirMueble } from "./muebles3d";
-import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro } from "./choques";
+import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro, type TramoMuro } from "./choques";
 import { Vista } from "../motor/vista";
 import { Polvo } from "../ciudad/clima";
+import { pisoConTono, tiles } from "../three/structures";
+import { apagarFuegos, ponerFuegos, titila, type Fuego } from "../three/luces";
 
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
 const MURO = 2.3;
@@ -89,7 +91,38 @@ export type CasaOpts = {
 type ZonaId = "salir" | "horno" | "huerto" | "subir" | "bajar" | `est:${string}` | `trab:${string}` | `diar:${string}`;
 type Zona = { id: ZonaId; x: number; z: number; piso: 0 | 1; r: number; ring: Ring; inside: boolean; etiqueta: HTMLDivElement };
 type Siervo = { handle: CrowdHandle; rig: Rig; base: V2; tarea: string };
-type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number };
+/** Una llama de la casa: su brillo y su luz (three/luces.ts), que alumbra el cuarto donde está y solo su piso. */
+type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number; fuego: Fuego };
+
+let sombraTex: THREE.DataTexture | null = null;
+let sombraMat: THREE.MeshBasicMaterial | null = null;
+/**
+ * La sombra de contacto de un mueble (docs/guia-visual.md, sección 3): un rectángulo oscuro y suave bajo sus patas,
+ * para que se asiente en el piso. Las esteras y las alfombras (capa 0) no la llevan.
+ */
+function sombraDeMueble(w: number, d: number): THREE.Mesh {
+  if (!sombraTex || !sombraMat) {
+    const n = 64;
+    const data = new Uint8Array(n * n * 4);
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const u = (i + 0.5) / n, v = (j + 0.5) / n;
+        const dx = Math.max(0, Math.abs(u - 0.5) - 0.3), dy = Math.max(0, Math.abs(v - 0.5) - 0.3);
+        const s = Math.min(1, Math.hypot(dx, dy) / 0.2);
+        const a = (1 - s * s * (3 - 2 * s)) * 0.5;
+        data.set([255, 255, 255, Math.round(a * 255)], (j * n + i) * 4);
+      }
+    sombraTex = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
+    sombraTex.magFilter = THREE.LinearFilter;
+    sombraTex.minFilter = THREE.LinearFilter;
+    sombraTex.needsUpdate = true;
+    sombraMat = new THREE.MeshBasicMaterial({ map: sombraTex, color: "#000000", transparent: true, depthWrite: false, toneMapped: false });
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w / 0.6, d / 0.6).rotateX(-Math.PI / 2), sombraMat);
+  m.position.y = 0.03;
+  m.renderOrder = 1;
+  return m;
+}
 
 let glowTex: THREE.Texture | null = null;
 function texturaBrillo(): THREE.Texture {
@@ -117,7 +150,6 @@ export class CasaWorld {
   private camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
   private hemi = new THREE.HemisphereLight("#fff1d8", "#7a5a3a", 1.1);
   private sol = new THREE.DirectionalLight("#fff0d0", 1.4);
-  private luces: THREE.PointLight[] = [];
   private plano: Plano;
   private fijas: Set<string>;
   private pisos: [THREE.Group, THREE.Group] = [new THREE.Group(), new THREE.Group()];
@@ -237,11 +269,7 @@ export class CasaWorld {
     this.sol.shadow.normalBias = 0.03;
     this.sol.position.set(6, 14, 8);
     this.scene.add(this.hemi, this.sol, this.sol.target);
-    for (let i = 0; i < 4; i++) {
-      const l = new THREE.PointLight("#ffb766", 0, 6, 1.6);
-      this.luces.push(l);
-      this.scene.add(l);
-    }
+    // (las lámparas alumbran con la luz de los fuegos, en updateLuz: todas las que se ven, no solo las cuatro más cercanas)
 
     // el piso de afuera (la calle) para que no quede vacío alrededor
     this.suelo = new THREE.Mesh(new THREE.PlaneGeometry(60, 60).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: "#b79a6a" }));
@@ -347,17 +375,29 @@ export class CasaWorld {
       const cuartos = pl.cuartos.filter((c) => c.piso === p);
       if (!cuartos.length) continue;
       const y0 = this.yPiso(p);
+      // los muros: cada borde de un cuarto que no da al mismo cuarto ni es una abertura (sus choques, en casa/choques.ts)
+      const tramos = tramosDeMuro(pl, p, (x, z) => this.esPuertaHuerto(x, z));
+      const altoDe = (t: TramoMuro) => {
+        const { cu, otro, lado } = t;
+        if (p === 1 && cu.cielo && (!otro || otro.cielo)) return PRETIL;
+        if (lado === "N" || lado === "S") return lado === "N" && !otro ? alto : BAJO;
+        return cu.cielo && otro?.cielo ? PRETIL : est === "tienda" ? alto : COSTADO;
+      };
+      const tono = this.tonoPiso(tramos, altoDe, p);
       for (const cu of cuartos) {
         const colPiso = cu.cielo ? (p === 1 ? "#d8c7a4" : "#bfa274") : est === "tienda" ? "#a88a5a" : est === "adobe" ? "#b39466" : "#cdbf9f";
         const gr = p === 1 ? 0.18 : 0.07;
-        g.box(cu.w * CELDA, gr, cu.d * CELDA, colPiso, { x: this.wx(cu.x + cu.w / 2), y: y0 - gr / 2, z: this.wz(cu.z + cu.d / 2) }, 0.05);
-        // losas de piedra (casa de piedra, cuartos con techo)
-        if (est === "piedra" && !cu.cielo)
-          for (let i = 0; i < cu.w; i += 2) for (let j = 0; j < cu.d; j += 2) if ((i + j) % 4 === 0) g.box(CELDA * 1.9, 0.004, CELDA * 1.9, "#c2b392", { x: this.wx(cu.x + i + 1), y: y0 + 0.002, z: this.wz(cu.z + j + 1) });
+        const x0 = this.wx(cu.x), x1 = this.wx(cu.x + cu.w), z0 = this.wz(cu.z), z1 = this.wz(cu.z + cu.d);
+        // la casa de piedra: losas en los cuartos con techo y el patio empedrado (la base hace de junta, más oscura);
+        // el adobe, la tienda y el terrado: tierra apisonada o yeso, con manchas suaves
+        const losas = est === "piedra" && (!cu.cielo || p === 0);
+        g.box(cu.w * CELDA, gr, cu.d * CELDA, losas ? "#9d8d6c" : colPiso, { x: this.wx(cu.x + cu.w / 2), y: y0 - gr / 2 - 0.004, z: this.wz(cu.z + cu.d / 2) }, 0.05);
+        if (losas && !cu.cielo) g.raw(tiles(x0, z0, x1, z1, 0.62, ["#cdbf9f", "#d5c8a9", "#c5b695", "#d1c3a3"], y0 - 0.002, 0.01, 0.07, tono));
+        else if (losas) g.raw(tiles(x0, z0, x1, z1, 0.9, ["#c4a87b", "#b99d70", "#ccb388", "#bfa477"], y0 - 0.002, 0.025, 0.1, tono));
+        else g.raw(pisoConTono(x0, z0, x1, z1, colPiso, y0, CELDA / 2, tono));
       }
-      // los muros: cada borde de un cuarto que no da al mismo cuarto ni es una abertura (sus choques, en casa/choques.ts)
-      for (const t of tramosDeMuro(pl, p, (x, z) => this.esPuertaHuerto(x, z))) {
-        const { cu, otro, lado, x, z } = t;
+      for (const t of tramos) {
+        const { otro, lado, x, z } = t;
         // la puerta del huerto (en el muro del fondo): se dibuja aparte
         if (t.huerto) continue;
         if (t.abierto) {
@@ -365,10 +405,7 @@ export class CasaWorld {
           if (p === 0 && lado === "S" && !otro) g.box(CELDA, 0.04, GROSOR * 1.6, "#8f8a82", { x: this.wx(x + 0.5), y: 0.02, z: this.wz(z + 1) });
           continue;
         }
-        let h: number;
-        if (p === 1 && cu.cielo && (!otro || otro.cielo)) h = PRETIL;
-        else if (lado === "N" || lado === "S") h = lado === "N" && !otro ? alto : BAJO;
-        else h = cu.cielo && otro?.cielo ? PRETIL : est === "tienda" ? alto : COSTADO;
+        const h = altoDe(t);
         const color = h >= COSTADO - 0.01 ? colMuro : colMuroBajo;
         if (lado === "N" || lado === "S") g.box(CELDA + GROSOR, h, GROSOR, color, { x: this.wx(x + 0.5), y: y0 + h / 2, z: this.wz(lado === "N" ? z : z + 1) }, 0.04);
         else g.box(GROSOR, h, CELDA + GROSOR, color, { x: this.wx(lado === "O" ? x : x + 1), y: y0 + h / 2, z: this.wz(z + 0.5) }, 0.04);
@@ -575,9 +612,49 @@ export class CasaWorld {
     const mat = new THREE.SpriteMaterial({ map: texturaBrillo(), color: "#ffffff", transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     const glow = new THREE.Sprite(mat);
     glow.scale.set(0.55, 0.55, 0.55);
-    glow.position.set(x, y + this.yPiso(piso), z);
+    const y0 = this.yPiso(piso);
+    glow.position.set(x, y + y0, z);
     this.scene.add(glow);
-    this.llamas.push({ x, y: y + this.yPiso(piso), z, piso, glow, fuerza });
+    // su luz alumbra el cuarto donde está (sin pasar sus muros) y solo su piso; un brasero llega más lejos que una lamparita
+    const [cx, cz] = this.celda(x, z);
+    const cu = cuartoEn(this.plano, cx, cz, piso);
+    const m = GROSOR / 2 + 0.02;
+    const recorte: [number, number, number, number] | undefined = cu ? [this.wx(cu.x) - m, this.wz(cu.z) - m, this.wx(cu.x + cu.w) + m, this.wz(cu.z + cu.d) + m] : undefined;
+    const fuego: Fuego = { x, y: y + y0, z, fuerza: 0, recorte, alto: [y0 - 0.3, y0 + ALTURA_PISO - 0.12], alcance: 3.4 + fuerza * 2 };
+    this.llamas.push({ x, y: y + y0, z, piso, glow, fuerza, fuego });
+  }
+
+  /**
+   * El tono del piso p: la sombra junto a los muros (no en las aberturas), más fuerte junto a los altos, y alrededor de
+   * la escalera y del horno (docs/guia-visual.md, sección 3: la sombra de rincón).
+   */
+  private tonoPiso(tramos: TramoMuro[], altoDe: (t: TramoMuro) => number, p: 0 | 1): (x: number, z: number) => number {
+    const obst: { r: Rect; alcance: number; fuerza: number }[] = [];
+    for (const t of tramos) {
+      if (!t.rect) continue;
+      const altoMuro = altoDe(t) >= COSTADO - 0.01;
+      obst.push({ r: t.rect, alcance: altoMuro ? 0.75 : 0.45, fuerza: altoMuro ? 0.3 : 0.16 });
+    }
+    const pl = this.plano;
+    if (p === 0 && pl.escalera) {
+      const xs = pl.escalera.celdas.map((c) => c[0]), zs = pl.escalera.celdas.map((c) => c[1]);
+      obst.push({ r: [this.wx(Math.min(...xs)), this.wz(Math.min(...zs)), this.wx(Math.max(...xs) + 1), this.wz(Math.max(...zs) + 1)], alcance: 0.6, fuerza: 0.22 });
+    }
+    if (p === 0) {
+      const [hx, hz] = pl.horno;
+      const x = this.wx(hx + 0.5), z = this.wz(hz + 0.5);
+      obst.push({ r: [x - 0.27, z - 0.27, x + 0.27, z + 0.27], alcance: 0.45, fuerza: 0.22 });
+    }
+    return (x, z) => {
+      let k = 1;
+      for (const o of obst) {
+        const d = Math.hypot(Math.max(0, o.r[0] - x, x - o.r[2]), Math.max(0, o.r[1] - z, z - o.r[3]));
+        if (d >= o.alcance) continue;
+        const s = 1 - d / o.alcance;
+        k *= 1 - o.fuerza * s * s;
+      }
+      return k;
+    };
   }
 
   // ================================================================ los muebles
@@ -604,6 +681,7 @@ export class CasaWorld {
       const cx = this.wx(c.x + w / 2), cz = this.wz(c.z + d / 2);
       g.position.set(cx, this.yPiso(c.p), cz);
       g.rotation.y = -c.r * (Math.PI / 2);
+      if (mu.capa === 1) g.add(sombraDeMueble(mu.w * CELDA, mu.d * CELDA));
       g.visible = c.p === 0 || this.vistaPiso === 1;
       this.mueblesGrupo.add(g);
       this.mallas.push(g);
@@ -1517,20 +1595,15 @@ export class CasaWorld {
     this.renderer.toneMappingExposure = 0.95 + 0.12 * dia;
     this.rayosMat.opacity = 0.11 * dia;
     for (const ry of this.rayos) ry.visible = dia > 0.05 && (this.vistaPiso === 1 || ry.userData.piso === 0);
-    // las llamas más cercanas encienden las luces de verdad; todas brillan y titilan
-    const visibles = this.llamas.filter((l) => l.piso === 0 || this.vistaPiso === 1);
-    visibles.sort((a, b) => Math.hypot(a.x - this.camTarget.x, a.z - this.camTarget.z) - Math.hypot(b.x - this.camTarget.x, b.z - this.camTarget.z));
-    for (let i = 0; i < this.luces.length; i++) {
-      const l = this.luces[i];
-      const ll = visibles[i];
-      if (!ll) {
-        l.intensity = 0;
-        continue;
-      }
-      const tit = 0.9 + 0.1 * Math.sin(now * 0.012 + i * 2.1) * Math.sin(now * 0.007 + i);
-      l.position.set(ll.x, ll.y + 0.15, ll.z);
-      l.intensity = (0.5 + 1.9 * (1 - dia)) * ll.fuerza * tit;
+    // cada llama que se ve alumbra su cuarto con luz tibia que titila (three/luces.ts); de día, apenas
+    const visibles: Fuego[] = [];
+    const nivel = 0.3 + 0.7 * (1 - dia);
+    for (const [i, ll] of this.llamas.entries()) {
+      if (ll.piso === 1 && this.vistaPiso !== 1) continue;
+      ll.fuego.fuerza = nivel * ll.fuerza * titila(now / 1000, i) * 1.2;
+      visibles.push(ll.fuego);
     }
+    ponerFuegos(visibles, this.camTarget);
     for (const [i, ll] of this.llamas.entries()) {
       const tit = 0.85 + 0.15 * Math.sin(now * 0.013 + i * 1.7);
       const m = ll.glow.material as THREE.SpriteMaterial;
@@ -1777,6 +1850,7 @@ export class CasaWorld {
     cancelAnimationFrame(this.raf);
     const canvas = this.renderer.domElement;
     this.polvo?.dispose();
+    apagarFuegos();
     this.entrada.destruir();
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.resizeObs.disconnect();

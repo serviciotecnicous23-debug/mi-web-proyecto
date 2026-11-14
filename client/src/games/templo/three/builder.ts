@@ -267,7 +267,10 @@ const DETALLE_RELIEVE = `
   vec3 dR2 = cross(normal, dPx);
   float dDet = dot(dPx, dR1);
   vec3 dGrad = sign(dDet) * (dHx * dR1 + dHy * dR2);
-  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 + dMetal * 0.1) * dLejos;
+  // la tela acostada (la tierra apisonada de un piso, una alfombra) casi sin relieve: con la luz baja de una lámpara se
+  // veía ondulada como la arena
+  float dAcostada = step(0.85, dot(normal, normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0))));
+  float dFuerza = (dPiedra * 0.24 + dMadera * 0.14 + dVerde * 0.2 + dTela * 0.05 * (1.0 - 0.8 * dAcostada) + dMetal * 0.1) * dLejos;
   normal = normalize(abs(dDet) * normal - dGrad * dFuerza);
 }
 #endif

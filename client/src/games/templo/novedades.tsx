@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-casa-luz",
+    fecha: "14 de noviembre de 2026",
+    titulo: "La casa por dentro, con su luz y su piso",
+    puntos: [
+      "🔥 De noche cada lámpara, el horno y el brasero alumbran su cuarto con luz tibia que titila: todas las que se ven, no solo las cuatro más cercanas.",
+      "🧱 La casa de piedra tiene losas de verdad en los cuartos y el patio empedrado; la de adobe y la tienda, tierra apisonada y lisa.",
+      "🌅 Junto a los muros, la escalera y el horno el piso tiene su sombra, y cada mueble se asienta con su sombra suave.",
+      "🏛️ La escuela de los profetas y el palacio por dentro también lo tienen.",
+    ],
+  },
+  {
     id: "2026-11-14-manto-templo",
     fecha: "14 de noviembre de 2026",
     titulo: "La ropa que se mueve y el templo de noche",
