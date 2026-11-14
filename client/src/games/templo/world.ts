@@ -281,6 +281,8 @@ export class TempleWorld {
   private nivelFuegos = 0;
   /** Cuánto es de día (de 0 a 1), lo calcula updateSky. */
   private dia = 1;
+  /** La sombra de techo del Lugar Santo (three/luces.ts): se pone justo antes de dibujar y se quita después. */
+  private techo: { caja: [number, number, number, number]; alto: [number, number] } | null = null;
   private time = 0;
   // calendario hebreo y fiestas (shared/calendario.ts) y juicios del sacerdote (casos.ts)
   private fecha!: Fecha;
@@ -352,7 +354,7 @@ export class TempleWorld {
     // la penumbra del Lugar Santo: bajo el techo de la casa de Jehová la luz del cielo casi no llega; por la puerta entra
     // de a poco, y lo alumbran el sol que entra de lado y, de noche, las siete lámparas del candelero
     const mw = TEMPLE.wall / 2;
-    ponerTecho([TEMPLE.backX - mw, -TEMPLE.halfW - mw, TEMPLE.frontX + mw, TEMPLE.halfW + mw], [TEMPLE.floor - 0.1, TEMPLE.floor + TEMPLE.height + 0.05], 0.3, 2.2);
+    this.techo = { caja: [TEMPLE.backX - mw, -TEMPLE.halfW - mw, TEMPLE.frontX + mw, TEMPLE.halfW + mw], alto: [TEMPLE.floor - 0.1, TEMPLE.floor + TEMPLE.height + 0.05] };
     this.fireLight.position.set(POS.altar[0], 2.6, POS.altar[1]);
     this.lampLight.position.copy(this.vis.stations.candelero.anchors.light);
     this.holyLight.position.copy(this.vis.holiestLightPos);
@@ -635,7 +637,11 @@ export class TempleWorld {
     const live = !this.paused && !gameStore.busy;
     if (live) this.simulate(dt);
     this.animate(dt, live, now);
+    // los fuegos (puestos en effects) y la sombra de techo valen solo para este dibujo: a veces se dibujan dos mundos a la
+    // vez (una ventana con su escena encima del templo) y el otro no debe recibir la luz de aquí
+    if (this.techo) ponerTecho(this.techo.caja, this.techo.alto, 0.3, 2.2);
     (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
+    apagarFuegos();
     this.adapt(raw);
     this.timers.hud += dt;
     if (this.timers.hud > 0.1) {

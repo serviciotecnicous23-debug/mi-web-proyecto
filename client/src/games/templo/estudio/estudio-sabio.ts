@@ -387,6 +387,23 @@ function caja(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   g.stroke();
 }
 
+/**
+ * Una columna con estrías (los canales verticales de las columnas de piedra): el radio baja un poco en el medio de cada
+ * canal y las normales suaves hacen que la luz de los focos marque cada uno.
+ */
+function columnaEstriada(rArriba: number, rAbajo: number, alto: number, estrias = 16): THREE.BufferGeometry {
+  const geo = new THREE.CylinderGeometry(rArriba, rAbajo, alto, estrias * 4, 1, true);
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i);
+    const canal = Math.pow(0.5 + 0.5 * Math.cos(Math.atan2(z, x) * estrias), 3);
+    const k = 1 - 0.07 * canal;
+    p.setXYZ(i, x * k, p.getY(i), z * k);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
 /** Siete columnas con su dintel (el emblema del concurso, Proverbios 9:1). */
 function dibujarColumnas(g: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number, n: number, color: string) {
   g.fillStyle = color;
@@ -617,8 +634,11 @@ export class EstudioSabio {
     for (let k = 0; k < 7; k++) {
       const a = Math.PI * (1.12 + (k / 6) * 0.76);
       const x = Math.cos(a) * COLUMNAS_R, z = -1.25 + Math.sin(a) * COLUMNAS_R;
-      b.cyl(0.24, 0.27, 4.6, "#2a2160", { x, y: 2.5, z }, 16);
+      // el fuste con sus estrías y un collarín de oro bajo el capitel
+      b.add(columnaEstriada(0.24, 0.27, 4.6), "#2a2160", { x, y: 2.5, z });
+      m.torus(0.245, 0.022, "#c9a23a", { x, y: 4.52, z, rx: Math.PI / 2 }, 6, 24);
       m.cyl(0.36, 0.36, 0.16, "#c9a23a", { x, y: 0.08, z }, 16);
+      m.cyl(0.31, 0.33, 0.08, "#c9a23a", { x, y: 0.2, z }, 16);
       m.box(0.66, 0.16, 0.66, "#c9a23a", { x, y: 4.86, z });
       m.cyl(0.3, 0.24, 0.18, "#c9a23a", { x, y: 4.7, z }, 16);
     }

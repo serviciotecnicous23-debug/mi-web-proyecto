@@ -97,6 +97,7 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
   con el rectángulo donde alumbra (y, si hay pisos, las alturas `alto` y su `alcance`); los materiales de siempre ya lo
   reciben (`conFuegos`). Lo que se dibuja aparte con su propia luz (una foto, un muñeco) va dentro de `sinFuegos`.
+  Cada mundo pone sus fuegos justo antes de dibujarse y los quita después (`apagarFuegos`): a veces se dibujan dos.
 - Un lugar techado que se ve por dentro lleva su sombra de techo (`ponerTecho`, en `three/luces.ts`): bajo techo la luz
   del cielo casi no llega. Si el techo se aclara para ver adentro, igual da sombra.
 - Una talla o un adorno sobre un fondo del mismo material (oro sobre oro, piedra sobre piedra) va en un tablero con el

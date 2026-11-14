@@ -13,6 +13,8 @@
 import * as THREE from "three";
 import { Vista } from "../motor/vista";
 import { GeoBuilder, disposeGroup, meshPair } from "../three/builder";
+import { apagarFuegos, ponerFuegos, sombraDeContacto, type Fuego } from "../three/luces";
+import { pisoConTono, tiles } from "../three/structures";
 import { BlobShadows, Crowd, Figure, newRig, type CrowdHandle, type FigureLook, type Pose, type Rig } from "../three/characters";
 import { DICEN, type AulaDef, type MaestroAula } from "@shared/aula";
 
@@ -469,7 +471,8 @@ export class AulaEscena {
   private focoMaestro = new THREE.SpotLight("#ffe9c4", 0, 9, 0.5, 0.6, 0);
   private focoAlumno = new THREE.SpotLight("#fff4dc", 0, 8, 0.36, 0.55, 0);
   private focoRollo = new THREE.SpotLight("#ffe2b0", 0, 9, 0.62, 0.7, 0);
-  private lamparas: { luz: THREE.PointLight | null; llama: THREE.Sprite; base: number; fase: number }[] = [];
+  /** Las lámparas: su llama y su luz (three/luces.ts), que alumbra la sala; antes eran luces de verdad, una por lámpara. */
+  private lamparas: { llama: THREE.Sprite; base: number; fase: number; fuego: Fuego }[] = [];
   private haces: THREE.MeshBasicMaterial[] = [];
   private charcos: THREE.MeshBasicMaterial[] = [];
   private polvo: THREE.Points | null = null;
@@ -564,12 +567,21 @@ export class AulaEscena {
     const oscuro = new THREE.Color(madera).multiplyScalar(0.7).getStyle();
     const W = X1 - X0;
 
-    // el piso: tierra apisonada con esteras (escuela), losas (cámara) o tablas de cedro (palacio)
-    b.box(W, 0.1, Z1 - Z0, col.piso, { y: -0.05, z: (Z0 + Z1) / 2 }, 0.08);
+    // el piso: tierra apisonada con esteras (escuela), losas trabadas (cámara) o tablas de cedro (palacio), con la sombra
+    // junto a los muros (docs/guia-visual.md, sección 3)
+    const tonoAula = (x: number, z: number) => {
+      const d = Math.min(x - X0, X1 - x, z - Z0, Z1 - z);
+      if (d >= 0.9) return 1;
+      const s = 1 - Math.max(0, d) / 0.9;
+      return 1 - 0.3 * s * s;
+    };
+    const juntaPiso = new THREE.Color(col.piso).multiplyScalar(0.72).getStyle();
+    b.box(W, 0.1, Z1 - Z0, piedra && !cedro ? juntaPiso : col.piso, { y: -0.052, z: (Z0 + Z1) / 2 }, 0.08);
     if (piedra && !cedro) {
-      for (let x = X0 + 0.75; x < X1; x += 1.5) b.box(0.025, 0.012, Z1 - Z0, new THREE.Color(col.piso).multiplyScalar(0.78).getStyle(), { x, y: 0.005, z: (Z0 + Z1) / 2 });
-      for (let z = Z0 + 0.75; z < Z1; z += 1.5) b.box(W, 0.012, 0.025, new THREE.Color(col.piso).multiplyScalar(0.78).getStyle(), { y: 0.005, z });
-    }
+      const c0 = new THREE.Color(col.piso);
+      const tono = (k: number) => c0.clone().multiplyScalar(k).getStyle();
+      b.raw(tiles(X0, Z0, X1, Z1, 0.95, [col.piso, tono(1.05), tono(0.95), tono(1.02)], -0.004, 0.012, 0.07, tonoAula));
+    } else b.raw(pisoConTono(X0, Z0, X1, Z1, col.piso, 0.0, 0.3, tonoAula));
     if (cedro) for (let x = X0 + 0.3; x < X1; x += 0.6) b.box(0.018, 0.012, Z1 - Z0, oscuro, { x, y: 0.004, z: (Z0 + Z1) / 2 });
     // la tarima del maestro
     b.box(W, TARIMA.h, TARIMA.z1 - Z0, piedra ? new THREE.Color(col.piso).multiplyScalar(0.92).getStyle() : madera, { y: TARIMA.h / 2, z: (Z0 + TARIMA.z1) / 2 }, 0.05);
@@ -660,6 +672,11 @@ export class AulaEscena {
     // los bancos de los alumnos (dos por fila, a los lados del pasillo)
     for (const z of FILAS) {
       for (const xc of [-2.0, 2.0]) {
+        // la sombra de contacto del banco (y del pupitre del palacio, delante)
+        const sb = sombraDeContacto(2.3, cedro ? 0.9 : 0.44, cedro ? 0.02 : 0.025);
+        sb.position.set(xc, sb.position.y, cedro ? z - 0.24 : z);
+        s.add(sb);
+        this.recursos.push(sb.geometry);
         if (piedra && !cedro) {
           // la cámara: bancos de piedra con cojines de lino
           b.box(2.3, ASIENTO_ALTO, 0.44, new THREE.Color(col.piso).multiplyScalar(0.88).getStyle(), { x: xc, y: ASIENTO_ALTO / 2, z }, 0.05);
@@ -791,13 +808,9 @@ export class AulaEscena {
       llama.scale.set(grande ? 0.3 : 0.2, grande ? 0.42 : 0.28, 1);
       s.add(llama);
       this.recursos.push(mat);
-      let luz: THREE.PointLight | null = null;
-      if (grande || (!this.baja && i < 4)) {
-        luz = new THREE.PointLight("#ffb766", grande ? 1.2 : 0.6, grande ? 6 : 4, 1.4);
-        luz.position.set(x, y + 0.05, z);
-        s.add(luz);
-      }
-      this.lamparas.push({ luz, llama, base: grande ? 1.2 : 0.6, fase: Math.random() * 10 });
+      // su luz alumbra la sala (y solo la sala): la de los candeleros llega más lejos que la de una lamparita
+      const fuego: Fuego = { x, y: y + 0.05, z, fuerza: 0, recorte: [X0 - 0.1, Z0 - 0.1, X1 + 0.1, Z1 + 0.1], alto: [-0.3, ALTO + 0.3], alcance: grande ? 6 : 4.2 };
+      this.lamparas.push({ llama, base: grande ? 1.2 : 0.6, fase: Math.random() * 10, fuego });
     });
   }
 
@@ -1210,7 +1223,17 @@ export class AulaEscena {
   simular(segundos: number) {
     const pasos = Math.max(1, Math.round(segundos / 0.033));
     for (let i = 0; i < pasos; i++) this.avanzar(0.033);
+    this.pintar();
+  }
+
+  /**
+   * Dibuja la sala con la luz de sus lámparas (three/luces.ts), que vale solo para este dibujo: el aula se dibuja encima
+   * de un edificio que sigue dibujándose detrás, y uno no recibe la luz del otro.
+   */
+  private pintar() {
+    ponerFuegos(this.lamparas.map((l) => l.fuego));
     (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
+    apagarFuegos();
   }
 
   private cuadro = (now: number) => {
@@ -1223,7 +1246,7 @@ export class AulaEscena {
     const dt = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
     this.last = now;
     this.avanzar(dt);
-    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
+    this.pintar();
   };
 
   private avanzar(dt: number) {
@@ -1271,7 +1294,7 @@ export class AulaEscena {
       const ss = l.llama.scale;
       const base = l.base > 1 ? 0.3 : 0.2;
       ss.set(base * f, base * 1.4 * (1 + Math.sin(l.fase * 9) * 0.06), 1);
-      if (l.luz) l.luz.intensity = l.base * f * (suspenso ? 0.45 : 1) * Math.min(1.1, this.brillo + 0.25);
+      l.fuego.fuerza = l.base * 0.75 * f * (suspenso ? 0.45 : 1) * Math.min(1.1, this.brillo + 0.25);
     }
   }
 
@@ -1412,7 +1435,7 @@ export class AulaEscena {
 
   /** Para las capturas de las pruebas: dibuja ahora mismo. */
   dibujar() {
-    (this.vista ??= new Vista(this.renderer, this.scene, this.camera)).render();
+    this.pintar();
   }
 
   dispose() {

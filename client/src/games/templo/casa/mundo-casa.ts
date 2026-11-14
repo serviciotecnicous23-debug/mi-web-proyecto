@@ -34,7 +34,7 @@ import { GROSOR, PLAYER_R, choquesFijos, choquesMuebles, navDe, tramosDeMuro, ty
 import { Vista } from "../motor/vista";
 import { Polvo } from "../ciudad/clima";
 import { pisoConTono, tiles } from "../three/structures";
-import { apagarFuegos, ponerFuegos, titila, type Fuego } from "../three/luces";
+import { apagarFuegos, ponerFuegos, sombraDeContacto, titila, type Fuego } from "../three/luces";
 
 /** Muros que no tapan la vista (los del fondo y los costados) y los del lado de la cámara (bajos). */
 const MURO = 2.3;
@@ -94,35 +94,6 @@ type Siervo = { handle: CrowdHandle; rig: Rig; base: V2; tarea: string };
 /** Una llama de la casa: su brillo y su luz (three/luces.ts), que alumbra el cuarto donde está y solo su piso. */
 type Llama = { x: number; y: number; z: number; piso: 0 | 1; glow: THREE.Sprite; fuerza: number; fuego: Fuego };
 
-let sombraTex: THREE.DataTexture | null = null;
-let sombraMat: THREE.MeshBasicMaterial | null = null;
-/**
- * La sombra de contacto de un mueble (docs/guia-visual.md, sección 3): un rectángulo oscuro y suave bajo sus patas,
- * para que se asiente en el piso. Las esteras y las alfombras (capa 0) no la llevan.
- */
-function sombraDeMueble(w: number, d: number): THREE.Mesh {
-  if (!sombraTex || !sombraMat) {
-    const n = 64;
-    const data = new Uint8Array(n * n * 4);
-    for (let j = 0; j < n; j++)
-      for (let i = 0; i < n; i++) {
-        const u = (i + 0.5) / n, v = (j + 0.5) / n;
-        const dx = Math.max(0, Math.abs(u - 0.5) - 0.3), dy = Math.max(0, Math.abs(v - 0.5) - 0.3);
-        const s = Math.min(1, Math.hypot(dx, dy) / 0.2);
-        const a = (1 - s * s * (3 - 2 * s)) * 0.5;
-        data.set([255, 255, 255, Math.round(a * 255)], (j * n + i) * 4);
-      }
-    sombraTex = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
-    sombraTex.magFilter = THREE.LinearFilter;
-    sombraTex.minFilter = THREE.LinearFilter;
-    sombraTex.needsUpdate = true;
-    sombraMat = new THREE.MeshBasicMaterial({ map: sombraTex, color: "#000000", transparent: true, depthWrite: false, toneMapped: false });
-  }
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w / 0.6, d / 0.6).rotateX(-Math.PI / 2), sombraMat);
-  m.position.y = 0.03;
-  m.renderOrder = 1;
-  return m;
-}
 
 let glowTex: THREE.Texture | null = null;
 function texturaBrillo(): THREE.Texture {
@@ -681,7 +652,8 @@ export class CasaWorld {
       const cx = this.wx(c.x + w / 2), cz = this.wz(c.z + d / 2);
       g.position.set(cx, this.yPiso(c.p), cz);
       g.rotation.y = -c.r * (Math.PI / 2);
-      if (mu.capa === 1) g.add(sombraDeMueble(mu.w * CELDA, mu.d * CELDA));
+      // la sombra de contacto (las esteras y las alfombras, capa 0, no la llevan)
+      if (mu.capa === 1) g.add(sombraDeContacto(mu.w * CELDA, mu.d * CELDA));
       g.visible = c.p === 0 || this.vistaPiso === 1;
       this.mueblesGrupo.add(g);
       this.mallas.push(g);
@@ -1537,6 +1509,9 @@ export class CasaWorld {
     this.animate(dt, now);
     if (this.vista) this.vista.render(dt);
     else this.renderer.render(this.scene, this.camera);
+    // las lámparas de la casa (puestas en updateLuz) valen solo para este dibujo: el aula se dibuja encima de un edificio
+    // y no debe recibir su luz
+    apagarFuegos();
     this.hudT += dt;
     if (this.hudT > 0.15) {
       this.hudT = 0;

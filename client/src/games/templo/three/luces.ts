@@ -4,6 +4,10 @@
  * que se dibuja y cambiar cuántas hay obliga a rearmar los materiales): es una cuenta chica dentro de los materiales de
  * siempre, con los fuegos más cercanos a la cámara (hasta MAX_FUEGOS). Cada fuego alumbra solo dentro de su rectángulo,
  * para que la luz no pase al otro lado de un muro. De día no hay ninguno y no cuesta nada.
+ *
+ * Cada mundo pone sus fuegos (y su sombra de techo) justo antes de dibujarse y los quita después con apagarFuegos: a
+ * veces se dibujan dos a la vez (el aula encima de un edificio, que sigue dibujándose detrás) y uno no debe recibir la luz
+ * del otro.
  */
 import * as THREE from "three";
 
@@ -71,6 +75,37 @@ export function apagarFuegos() {
   fuegosMateriales.uTechoAlto.value.w = 0;
 }
 
+let sombraTex: THREE.DataTexture | null = null;
+let sombraMat: THREE.MeshBasicMaterial | null = null;
+/**
+ * La sombra de contacto (docs/guia-visual.md, sección 3): un rectángulo oscuro y suave bajo lo que se apoya en el piso
+ * (un mueble, un banco), para que se asiente. `w` y `d` son las medidas de lo que se apoya; la sombra se abre un poco
+ * más. Va a `alto` sobre el piso (encima de una alfombra).
+ */
+export function sombraDeContacto(w: number, d: number, alto = 0.03): THREE.Mesh {
+  if (!sombraTex || !sombraMat) {
+    const n = 64;
+    const data = new Uint8Array(n * n * 4);
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const u = (i + 0.5) / n, v = (j + 0.5) / n;
+        const dx = Math.max(0, Math.abs(u - 0.5) - 0.3), dy = Math.max(0, Math.abs(v - 0.5) - 0.3);
+        const s = Math.min(1, Math.hypot(dx, dy) / 0.2);
+        const a = (1 - s * s * (3 - 2 * s)) * 0.5;
+        data.set([255, 255, 255, Math.round(a * 255)], (j * n + i) * 4);
+      }
+    sombraTex = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
+    sombraTex.magFilter = THREE.LinearFilter;
+    sombraTex.minFilter = THREE.LinearFilter;
+    sombraTex.needsUpdate = true;
+    sombraMat = new THREE.MeshBasicMaterial({ map: sombraTex, color: "#000000", transparent: true, depthWrite: false, toneMapped: false });
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w / 0.6, d / 0.6).rotateX(-Math.PI / 2), sombraMat);
+  m.position.y = alto;
+  m.renderOrder = 1;
+  return m;
+}
+
 /** Dibuja algo aparte (la foto de un mueble, el muñeco del probador) sin los fuegos del mundo que está abierto. */
 export function sinFuegos(dibujar: () => void) {
   const n = fuegosMateriales.uNumFuegos.value;
@@ -125,6 +160,21 @@ vec3 luzDeFuegos(vec3 p, vec3 n) {
 `;
 
 /**
+ * La normal con que alumbra un fuego: la del relieve mezclada con la de la cara lisa. Una lámpara pegada a un muro le da
+ * casi de costado, y con la normal del relieve sola el revoque se veía arrugado como papel.
+ */
+const NORMAL_FUEGO = `vec3 nFuego = normal;
+#ifndef FLAT_SHADED
+{
+  vec3 nLisa = normalize(vNormal);
+#ifdef DOUBLE_SIDED
+  nLisa *= faceDirection;
+#endif
+  nFuego = normalize(mix(normal, nLisa, 0.65));
+}
+#endif`;
+
+/**
  * Agrega la luz de los fuegos a un material de three (Lambert o Phong): suma la luz tibia por el color propio de cada
  * punto, así la piedra clara se enciende y la junta sigue oscura, también en la sombra de la luna.
  */
@@ -155,7 +205,7 @@ export function conFuegos<M extends THREE.MeshLambertMaterial | THREE.MeshPhongM
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", `#include <common>\n${FUEGOS_PARS}`)
       .replace("#include <lights_fragment_begin>", "#include <lights_fragment_begin>\nirradiance *= bajoTecho(vFuegoP);")
-      .replace("#include <opaque_fragment>", "outgoingLight += diffuseColor.rgb * luzDeFuegos(vFuegoP, normal) * 2.4;\n#include <opaque_fragment>");
+      .replace("#include <opaque_fragment>", `${NORMAL_FUEGO}\noutgoingLight += diffuseColor.rgb * luzDeFuegos(vFuegoP, nFuego) * 2.4;\n#include <opaque_fragment>`);
   };
   // la clave del material de antes (con sus detalles) más la de los fuegos: cada clase de material, su programa
   mat.customProgramCacheKey = () => `${clave}-fuegos|${claveAntes.call(mat)}`;
