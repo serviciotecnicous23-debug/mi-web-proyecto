@@ -103,7 +103,7 @@ export type CiudadVisual = {
   enramadas: THREE.Group;
   /** Fuegos de los braseros y de la puerta (de noche). */
   fuegos: THREE.Vector3[];
-  /** Los edificios grandes que se vuelven transparentes si tapan al jugador (el palacio, la escuela y su monte, la cámara). */
+  /** Lo grande que se vuelve transparente si tapa al jugador (el palacio, la escuela y su monte, la cámara, la puerta). */
   ocluyentes: THREE.Group[];
   /** Donde sube el humo del altar, sobre el monte. */
   humo: THREE.Vector3;
@@ -235,11 +235,19 @@ function muro(b: GeoBuilder, axis: "x" | "z", from: number, to: number, at: numb
   for (let p = from + 0.7; p < to - 0.4; p += 2.2) {
     if (axis === "x") b.box(1.0, 0.7, grueso, vary(C.piedraClara, 0.04), { x: p, y: Y + alto + 0.35, z: at });
     else b.box(grueso, 0.7, 1.0, vary(C.piedraClara, 0.04), { x: at, y: Y + alto + 0.35, z: p });
+    // el remate de cada almena, un poco más ancho
+    if (axis === "x") b.box(1.12, 0.09, grueso + 0.1, C.piedraOsc, { x: p, y: Y + alto + 0.745, z: at });
+    else b.box(grueso + 0.1, 0.09, 1.12, C.piedraOsc, { x: at, y: Y + alto + 0.745, z: p });
   }
+  // la cornisa: una hilera que sobresale bajo las almenas (la silueta del muro de cerca)
+  if (axis === "x") b.box(len + 0.1, 0.2, grueso + 0.2, C.piedraClara, { x: mid, y: Y + alto - 0.1, z: at });
+  else b.box(grueso + 0.2, 0.2, len + 0.1, C.piedraClara, { x: at, y: Y + alto - 0.1, z: mid });
 }
 
-function buildMurallas(root: THREE.Group, fuegos: THREE.Vector3[]) {
+function buildMurallas(root: THREE.Group, puerta: THREE.Group, fuegos: THREE.Vector3[]) {
   const b = new GeoBuilder(), s = new GeoBuilder();
+  // la puerta va en su grupo: si tapa al jugador (al pasar bajo el arco), se aclara como los edificios
+  const pb = new GeoBuilder(), ps = new GeoBuilder();
   const N = -72, S = 72, O = -21, E = MURO_ORIENTE;
   muro(b, "z", N, -PUERTA.half - 4, E);
   // al norte de la puerta, el tramo caído se dibuja aparte (construirMuroCaido) y crece con el servicio de todos
@@ -255,23 +263,28 @@ function buildMurallas(root: THREE.Group, fuegos: THREE.Vector3[]) {
   // la puerta oriental: dos torres, el arco y las hojas de cedro abiertas
   for (const sg of [-1, 1]) {
     const zc = sg * (PUERTA.half + 2);
-    b.box(3.6, 7.6, 4, vary(C.piedra, 0.03), { x: E + 0.6, y: Y + 3.8, z: zc });
-    b.box(3.8, 0.9, 4.2, C.piedraOsc, { x: E + 0.6, y: Y + 0.45, z: zc });
-    for (const dz of [-1.4, 0, 1.4]) b.box(0.8, 0.7, 0.8, C.piedraClara, { x: E - 0.9, y: Y + 7.95, z: zc + dz });
-    b.box(0.08, 0.9, 0.5, "#2e2418", { x: E - 1.22, y: Y + 5.2, z: zc }); // tronera
+    pb.box(3.6, 7.6, 4, vary(C.piedra, 0.03), { x: E + 0.6, y: Y + 3.8, z: zc });
+    pb.box(3.8, 0.9, 4.2, C.piedraOsc, { x: E + 0.6, y: Y + 0.45, z: zc });
+    for (const dz of [-1.4, 0, 1.4]) pb.box(0.8, 0.7, 0.8, C.piedraClara, { x: E - 0.9, y: Y + 7.95, z: zc + dz });
+    // la cornisa de la torre, bajo sus almenas
+    pb.box(3.8, 0.22, 4.2, C.piedraClara, { x: E + 0.6, y: Y + 7.5, z: zc });
+    pb.box(0.08, 0.9, 0.5, "#2e2418", { x: E - 1.22, y: Y + 5.2, z: zc }); // tronera
     // hoja de la puerta, abierta hacia adentro
-    b.box(0.16, 4.2, PUERTA.half - 0.1, C.cedro, { x: E - 1.0 - (PUERTA.half - 0.1) / 2, y: Y + 2.1, z: sg * (PUERTA.half - 0.1), ry: Math.PI / 2 });
-    for (let k = 0; k < 4; k++) s.sphere(0.05, C.bronce, { x: E - 1.0 - 0.4 - k * 0.6, y: Y + 1.3 + (k % 2) * 1.4, z: sg * (PUERTA.half - 0.2) }, 5, 4);
+    pb.box(0.16, 4.2, PUERTA.half - 0.1, C.cedro, { x: E - 1.0 - (PUERTA.half - 0.1) / 2, y: Y + 2.1, z: sg * (PUERTA.half - 0.1), ry: Math.PI / 2 });
+    for (let k = 0; k < 4; k++) ps.sphere(0.05, C.bronce, { x: E - 1.0 - 0.4 - k * 0.6, y: Y + 1.3 + (k % 2) * 1.4, z: sg * (PUERTA.half - 0.2) }, 5, 4);
     fuegos.push(new THREE.Vector3(E - 1.6, Y + 3.4, sg * (PUERTA.half + 0.3)));
   }
-  b.box(3.6, 1.6, 2 * PUERTA.half + 0.2, vary(C.piedra, 0.03), { x: E + 0.6, y: Y + 5.4, z: 0 });
-  s.box(0.06, 0.18, 2 * PUERTA.half, C.oroOsc, { x: E - 1.22, y: Y + 4.7, z: 0 });
+  pb.box(3.6, 1.6, 2 * PUERTA.half + 0.2, vary(C.piedra, 0.03), { x: E + 0.6, y: Y + 5.4, z: 0 });
+  ps.box(0.06, 0.18, 2 * PUERTA.half, C.oroOsc, { x: E - 1.22, y: Y + 4.7, z: 0 });
+  // el dintel de la puerta: una piedra que sobresale sobre el paso
+  pb.box(0.5, 0.3, 2 * PUERTA.half + 0.6, C.piedraOsc, { x: E - 1.3, y: Y + 4.45, z: 0 });
   // antorcheros a los lados de la puerta
   for (const sg of [-1, 1]) {
-    s.cyl(0.04, 0.05, 0.9, C.bronceOsc, { x: E - 1.6, y: Y + 2.9, z: sg * (PUERTA.half + 0.3) }, 6);
-    s.lathe([[0, 0], [0.07, 0], [0.16, 0.1], [0.18, 0.16], [0.15, 0.16], [0, 0.08]], C.bronce, { x: E - 1.6, y: Y + 3.33, z: sg * (PUERTA.half + 0.3) }, 10);
+    ps.cyl(0.04, 0.05, 0.9, C.bronceOsc, { x: E - 1.6, y: Y + 2.9, z: sg * (PUERTA.half + 0.3) }, 6);
+    ps.lathe([[0, 0], [0.07, 0], [0.16, 0.1], [0.18, 0.16], [0.15, 0.16], [0, 0.08]], C.bronce, { x: E - 1.6, y: Y + 3.33, z: sg * (PUERTA.half + 0.3) }, 10);
   }
   meshes(root, b, s, true);
+  meshes(puerta, pb, ps, true);
 }
 
 /**
@@ -290,6 +303,8 @@ export function construirMuroCaido(construidos: number, progreso: number): THREE
       b.box(grueso, alto, MURO_TRAMO_LARGO + 0.02, vary("#d8c9a6", 0.03), { x: E, y: Y + alto / 2, z: zc });
       b.box(grueso + 0.06, 0.9, MURO_TRAMO_LARGO + 0.04, C.piedraOsc, { x: E, y: Y + 0.45, z: zc });
       b.box(grueso, 0.7, 1.0, vary(C.piedraClara, 0.04), { x: E, y: Y + alto + 0.35, z: zc });
+      b.box(grueso + 0.1, 0.09, 1.12, C.piedraOsc, { x: E, y: Y + alto + 0.745, z: zc });
+      b.box(grueso + 0.2, 0.2, MURO_TRAMO_LARGO + 0.02, C.piedraClara, { x: E, y: Y + alto - 0.1, z: zc });
     } else if (i === construidos) {
       // en obra: tan alto como las piedras juntadas, con andamio de cedro y piedras listas al pie
       const h = 1.0 + (alto - 1.0) * Math.max(0, Math.min(1, progreso));
@@ -1180,14 +1195,41 @@ function parcelaLibre(m: GeoBuilder, p: Parcela) {
     m.cyl(0.06, 0.09, 0.9, "#6e5a43", { x, y: Y + 0.45, z }, 6);
     for (let k = 0; k < 2; k++) m.add(new THREE.IcosahedronGeometry(0.42, 0), vary(pick(["#7b8a5c", "#5f7f3a"]), 0.1), { x: x + rr(-0.2, 0.2), y: Y + 1.05 + rr(0, 0.2), z: z + rr(-0.2, 0.2), sy: 0.75 });
   } else {
-    // surcos con hortalizas
+    // surcos con hortalizas: el lomo de tierra removida y, en cada surco, una sola clase de mata
     const filas = 4;
     for (let k = 0; k < filas; k++) {
       const z = atras + (p.dir === 1 ? 1 : -1) * (0.55 + k * (largo - 0.8) / (filas - 1));
-      m.box(x1 - x0 - 0.8, 0.06, 0.32, "#8d7350", { x: (x0 + x1) / 2, y: Y + 0.03, z });
-      for (let q = 0; q < 5; q++) m.box(0.2, rr(0.14, 0.26), 0.2, vary(pick([C.hoja, C.hojaClara, C.verdeOliva]), 0.1), { x: x0 + 0.6 + q * ((x1 - x0 - 1.2) / 4), y: Y + 0.12, z });
+      m.cyl(0.17, 0.17, x1 - x0 - 0.8, vary("#7d6444", 0.05), { x: (x0 + x1) / 2, y: Y - 0.09, z, rz: Math.PI / 2 }, 8);
+      const clase = Math.floor(rnd() * 3);
+      for (let q = 0; q < 5; q++) hortaliza(m, x0 + 0.6 + q * ((x1 - x0 - 1.2) / 4) + rr(-0.05, 0.05), Y + 0.07, z + rr(-0.03, 0.03), clase, rr(0.8, 1.15));
     }
   }
+}
+
+/** Una hoja: un rombo fino que sale del centro (x, y, z) hacia `a`, levantado `sube` sobre el suelo. */
+function hojaDeMata(m: GeoBuilder, x: number, y: number, z: number, a: number, sube: number, largo: number, ancho: number, color: THREE.ColorRepresentation) {
+  const c = Math.cos(sube) * largo * 0.5;
+  m.add(new THREE.OctahedronGeometry(1, 0), color, { x: x + Math.cos(a) * c, y: y + Math.sin(sube) * largo * 0.5, z: z - Math.sin(a) * c, ry: a, rz: sube, sx: largo * 0.5, sy: 0.014, sz: ancho * 0.5 });
+}
+
+/**
+ * Una mata de hortaliza con sus hojas (docs/guia-visual.md, sección 7; antes eran cubos): 0 la lechuga en roseta, 1 la
+ * cebolla con sus hojas derechas y 2 la calabacera con hojas anchas a ras del suelo y, a veces, su fruto.
+ */
+function hortaliza(m: GeoBuilder, x: number, y: number, z: number, clase: number, s: number) {
+  if (clase === 0) {
+    for (let k = 0; k < 6; k++) hojaDeMata(m, x, y, z, (k / 6) * Math.PI * 2 + rr(0, 0.5), rr(0.35, 0.65), rr(0.16, 0.21) * s, 0.13 * s, vary(k % 2 ? "#7fae4f" : "#94bf5c", 0.06));
+    return;
+  }
+  if (clase === 1) {
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2 + rr(0, 0.8), inc = rr(0.08, 0.32), h = rr(0.2, 0.3) * s;
+      m.cone(0.016 * s, h, vary("#5d8a4f", 0.08), { x: x + Math.cos(a) * Math.sin(inc) * h * 0.5, y: y + Math.cos(inc) * h * 0.5, z: z - Math.sin(a) * Math.sin(inc) * h * 0.5, ry: a, rz: -inc }, 4);
+    }
+    return;
+  }
+  for (let k = 0; k < 3; k++) hojaDeMata(m, x, y, z, (k / 3) * Math.PI * 2 + rr(0, 0.9), rr(0.1, 0.28), rr(0.22, 0.28) * s, rr(0.17, 0.21) * s, vary("#4f7f3a", 0.08));
+  if (rnd() < 0.5) m.sphere(0.055 * s, "#d9a03a", { x: x + rr(-0.12, 0.12), y: y + 0.03, z: z + rr(-0.12, 0.12), sx: 1.4 }, 5, 4);
 }
 
 /** El suelo de las parcelas (un poco más oscuro que la calle) y el de las calles del barrio. */
@@ -1530,7 +1572,10 @@ export function buildCiudad(): CiudadVisual {
   const fuegos: THREE.Vector3[] = [];
   buildTerreno(root);
   buildMonte(root);
-  buildMurallas(root, fuegos);
+  const puerta = new THREE.Group();
+  puerta.name = "puerta";
+  root.add(puerta);
+  buildMurallas(root, puerta, fuegos);
   buildPlaza(root, fuegos);
   // cada edificio grande en su grupo: si tapa al jugador, se vuelve transparente (mundo.ts)
   const palacio = new THREE.Group();
@@ -1573,7 +1618,7 @@ export function buildCiudad(): CiudadVisual {
     ventanasSiervos,
     enramadas,
     fuegos,
-    ocluyentes: [palacio, escuela, camara, sabiduria],
+    ocluyentes: [palacio, escuela, camara, sabiduria, puerta],
     humo: new THREE.Vector3(3.0, 1.8, 0),
     letreros: {
       templo: new THREE.Vector3(ESCALINATA.x0 + 0.6, 1.6, 0),

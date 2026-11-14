@@ -182,8 +182,11 @@ let detalleBajo = (() => {
     return false;
   }
 })();
-/** El reloj de los materiales (el viento en las hojas y el brillo del agua): lo avanza el mundo que se dibuja. */
-const tiempoMateriales = { value: 0 };
+/**
+ * El reloj de los materiales (el viento en las hojas y el brillo del agua): lo avanza el mundo que se dibuja. Lo usan
+ * también la hierba de la ciudad (ciudad/suelo-vivo.ts), para que todo se mezca con el mismo viento.
+ */
+export const tiempoMateriales = { value: 0 };
 export function avanzarMateriales(dt: number) {
   tiempoMateriales.value = (tiempoMateriales.value + dt) % 3600;
 }

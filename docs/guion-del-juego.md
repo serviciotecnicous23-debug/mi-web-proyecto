@@ -790,6 +790,26 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 `.tpl-fila-mia`), los botones que se hunden al tocarlos y la pestaña elegida (`aria-pressed`) con brillo. Todo respeta
 «reducir el movimiento». Una ventana nueva usa `Card` (`ui.tsx`) y estas piezas.
 
+## 7i. Los escenarios con vida y la animación con resortes (13 de noviembre de 2026)
+
+- **El suelo vivo** (`ciudad/suelo-vivo.ts`): matas de hierba al pie de los muros, en los callejones de atrás de las
+  casas, en las orillas de las calles (fuera de los huertitos), al pie del palacio y de la escuela y alrededor de los
+  árboles; piedritas; y afuera de los muros, el campo con hierba, matas y piedras. Solo se ve: no choca con nada. La
+  hierba va en mallas de instancias por bloques de 40 m (la cámara descarta los que no ve) y se mece en la tarjeta de
+  video con `tiempoMateriales`, el mismo reloj del viento de las hojas. Un lugar nuevo con hierba agrega su franja en
+  `matasDeLaCiudad`.
+- **El polvo en la luz** (`Polvo`, en `ciudad/clima.ts`): motas que brillan con el sol alto; al amanecer y al atardecer
+  casi no se ven, y de noche o con lluvia se apagan.
+- **Las hortalizas** de las parcelas libres (`hortaliza`, en `ciudad/escenario.ts`): lechuga, cebolla y calabacera con
+  sus hojas, sobre lomos de tierra.
+- **Los muros**: cornisa y almenas con remate, con colores fijos para no cambiar el azar de lo que se arma después. La
+  puerta oriental va en su grupo (`puerta`), entre los ocluyentes: se aclara cuando tapa al jugador.
+- **Los letreros 3D** (`three/overlay.ts`): el emoji del principio se cambia por su ícono de línea (`htmlConIcono`, en
+  `iconos.tsx`). Las novedades también se dibujan con `ConIcono`.
+- **La animación con resortes** (`computePose`, en `three/characters.ts`): `inercia` lleva dos resortes un poco blandos
+  (inclinarse al arrancar o frenar y ladearse en las curvas); el cuerpo gira un poco con cada paso (`twist`), los brazos
+  van un poco detrás del paso, y en quietud la respiración es más pausada y el peso pasa de un pie al otro.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

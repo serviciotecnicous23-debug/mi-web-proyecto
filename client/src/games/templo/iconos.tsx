@@ -10,11 +10,14 @@
  * emoji del principio de un texto por su ícono; `<Gozo n={120} />` es la moneda del juego.
  */
 import type { ComponentType, ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
 import {
   Amphora, Armchair, Bed, BookOpen, BrickWall, Brush, CalendarDays, Cloud, CloudRain, CloudSun, Coins, Crown, Dices, Droplet, Eye, Feather, Flame, Footprints, Gavel, Gift,
   GraduationCap, Grape, Hammer, HandHeart, Handshake, Hourglass, House, Key, Landmark, Leaf, Library, Mail, Map as Mapa, Medal, Megaphone,
   MessageCircle, Moon, Mountain, Music, Package, PenLine, Pickaxe, ScrollText, Search, Shield, Shirt, ShoppingBasket, Shovel, Soup, Sprout,
   Store, Sun, Tent, TreePine, Trophy, Users, Waves, Wheat, Wrench,
+  Bird, Brain, ChartNoAxesColumnIncreasing, DoorOpen, Droplets, Flower, Gem, Hand, Layers, PartyPopper, Ribbon, Sofa, Star, Sunrise, UserRound,
 } from "lucide-react";
 
 type IconoProps = { className?: string; "aria-hidden"?: boolean };
@@ -201,6 +204,32 @@ const ICONOS: Record<string, { c: Icono; color?: string }> = {
   "⚔️": { c: Shield, color: "#5a6a7a" },
   "🙌": { c: HandHeart, color: "#a3243b" },
   "📋": { c: ScrollText, color: "#8a6a42" },
+  "🕊️": { c: Bird, color: "#7a8a9a" },
+  "🐦": { c: Bird, color: "#7a8a9a" },
+  "🎺": { c: Megaphone, color: "#b88a1e" },
+  "🎉": { c: PartyPopper, color: "#a3243b" },
+  "🚪": { c: DoorOpen, color: "#8a5a32" },
+  "🌅": { c: Sunrise, color: "#c77a1a" },
+  "👏": { c: Hand, color: "#a8603a" },
+  "🎗️": { c: Ribbon, color: "#a3243b" },
+  "🌸": { c: Flower, color: "#c96a8a" },
+  "⛲": { c: Droplets, color: "#2f6aa8" },
+  "🛋️": { c: Sofa, color: "#8a5a32" },
+  "🩴": { c: Footprints, color: "#7a5634" },
+  "🧥": { c: Shirt, color: "#5b4a8a" },
+  "🧣": { c: Shirt, color: "#a3243b" },
+  "🧕": { c: UserRound, color: "#8a6a7a" },
+  "👳": { c: UserRound, color: "#2f5aa8" },
+  "🧓": { c: UserRound, color: "#7d7466" },
+  "👴": { c: UserRound, color: "#7d7466" },
+  "🧑‍🏫": { c: GraduationCap, color: "#27468f" },
+  "🫙": { c: Amphora, color: "#a8603a" },
+  "💎": { c: Gem, color: "#2f6aa8" },
+  "🪕": { c: Music, color: "#8a5a32" },
+  "⭐": { c: Star, color: "#b88a1e" },
+  "🎴": { c: Layers, color: "#a3243b" },
+  "🃏": { c: Brain, color: "#5b4a8a" },
+  "🪜": { c: ChartNoAxesColumnIncreasing, color: "#8a5a32" },
 };
 
 /** Los emojis que tienen ícono (para separarlos del texto). */
@@ -243,4 +272,34 @@ export function Gozo({ n, className = "" }: { n: ReactNode; className?: string }
       {n}
     </span>
   );
+}
+
+// ---------------------------------------------------------------- para lo que se arma como HTML (los letreros 3D)
+const svgs = new Map<string, string | null>();
+
+/** El dibujo (HTML con su SVG) del ícono de un emoji, o null si no tiene. Se dibuja una vez y se guarda. */
+export function htmlDeIcono(e: string): string | null {
+  if (svgs.has(e)) return svgs.get(e) ?? null;
+  let html: string | null = null;
+  if ((ICONOS[e] ?? ICONOS[e.replace("️", "")]) && typeof document !== "undefined") {
+    try {
+      const div = document.createElement("div");
+      const raiz = createRoot(div);
+      flushSync(() => raiz.render(<Ico e={e} />));
+      html = div.innerHTML || null;
+      raiz.unmount();
+    } catch {
+      html = null;
+    }
+  }
+  svgs.set(e, html);
+  return html;
+}
+
+/** Un texto en HTML que empieza con un emoji (los letreros 3D de los círculos): el emoji pasa a su ícono. */
+export function htmlConIcono(html: string): string {
+  const e = CLAVES.find((k) => html.startsWith(k));
+  if (!e) return html;
+  const ico = htmlDeIcono(e);
+  return ico ? `<span class="tpl-ico">${ico}</span>${html.slice(e.length)}` : html;
 }

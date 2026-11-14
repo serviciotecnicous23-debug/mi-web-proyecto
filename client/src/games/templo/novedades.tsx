@@ -7,11 +7,25 @@
  */
 import { useEffect, useState } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
+import { ConIcono } from "./iconos";
 
 export type Novedad = { id: string; fecha: string; titulo: string; puntos: string[] };
 
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
+  {
+    id: "2026-11-13-escenarios",
+    fecha: "13 de noviembre de 2026",
+    titulo: "Una ciudad con más vida",
+    puntos: [
+      "👣 Las personas caminan con más vida: el cuerpo se inclina al arrancar y se asienta al frenar, se ladea en las curvas y gira un poco con cada paso, y los brazos siguen al paso. Quietas, respiran y cambian el peso de un pie al otro.",
+      "🌾 La hierba crece al pie de los muros, entre las casas, en las orillas de las calles y alrededor de los árboles, y se mece con el viento. Afuera de los muros se ve el campo, con sus matas y sus piedras.",
+      "🌱 Los huertos de las parcelas libres tienen lechugas, cebollas y calabaceras con sus hojas, sobre lomos de tierra.",
+      "☀️ Con el sol alto, el polvo flota en la luz.",
+      "🧱 Los muros tienen cornisa y almenas con remate, y la puerta de la ciudad se aclara cuando pasas bajo el arco, para que no te tape.",
+      "🚪 Los letreros de los lugares muestran íconos dibujados en lugar de emojis.",
+    ],
+  },
   {
     id: "2026-11-13-duelo-contra-la-computadora",
     fecha: "13 de noviembre de 2026",
@@ -870,7 +884,7 @@ export function NovedadesAviso({ primeraVez }: { primeraVez: boolean }) {
           <ul className="mt-2 space-y-1">
             {n.puntos.map((p) => (
               <li key={p} className="flex gap-1.5">
-                <span className="text-amber-300">✦</span> <span>{p}</span>
+                <span className="text-amber-300">✦</span> <ConIcono texto={p} />
               </li>
             ))}
           </ul>
