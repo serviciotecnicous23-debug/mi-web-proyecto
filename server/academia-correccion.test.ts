@@ -65,6 +65,15 @@ test("una respuesta corta baja en proporción", () => {
   assert.ok(corta.avisos.some((a) => a.includes("corta")));
 });
 
+test("«basta»: si la pregunta pide tres de cinco ideas, tres ya dan la nota completa", () => {
+  const e2 = BANCOS.get("n1-espiritu")!.escritas.find((e) => e.id === "n1-espiritu-e2")!;
+  assert.equal(e2.basta, 60);
+  const tres = corregirEscrita(e2, "El Espíritu Santo nos convence de pecado, nos hace nacer de nuevo con una vida nueva y nos da testimonio de que somos hijos de Dios.");
+  assert.ok(tres.nota >= 95, `nota ${tres.nota}`);
+  const dos = corregirEscrita(e2, "El Espíritu Santo nos convence de pecado y también nos hace nacer de nuevo cuando creemos en Jesús.");
+  assert.ok(dos.nota < tres.nota && dos.nota >= 55, `nota ${dos.nota}`);
+});
+
 test("reconoce citas abreviadas y comprueba que existan", () => {
   assert.equal(citasEscritas("como dice Ef 2.8")[0]?.libro, "Efesios");
   assert.equal(citasEscritas("1 Juan 5:13 lo promete")[0]?.libro, "1 Juan");

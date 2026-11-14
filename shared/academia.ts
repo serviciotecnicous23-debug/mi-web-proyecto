@@ -335,6 +335,146 @@ const SALVACION: MateriaDef = {
   disponible: true,
 };
 
+const ORACION: MateriaDef = {
+  id: "n1-oracion",
+  nivel: 1,
+  orden: 2,
+  titulo: "La oración: hablar con Dios",
+  resumen: "Qué es orar, el modelo del Padre Nuestro, la oración de fe y el tiempo diario con Dios.",
+  base: "Mateo 6:5-13; Filipenses 4:6-7",
+  memoria: "Filipenses 4:6",
+  lecciones: lecciones("n1-oracion", [
+    ["Qué es orar", "Mateo 6:5-8"],
+    ["El Padre Nuestro", "Mateo 6:9-13"],
+    ["Orar con fe y perseverar", "Lucas 18:1-8; Marcos 11:24"],
+    ["Mi tiempo diario con Dios y el ayuno", "Marcos 1:35; Mateo 6:16-18"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente aprenda a hablar con Dios como su Padre: qué es orar, cómo orar según el modelo que dio Jesús, cómo perseverar con fe y cómo tener un tiempo diario con Dios, incluido el ayuno bíblico. La oración es la respiración de la vida cristiana (1 Tesalonicenses 5:17).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la oración y las actitudes que enseñó Jesús para orar (Mateo 6:5-8).", bloom: "comprender" },
+      { id: "o2", texto: "Describir las partes del Padre Nuestro y lo que enseña cada una.", bloom: "comprender" },
+      { id: "o3", texto: "Aplicar los principios de la oración con fe y la perseverancia (Lucas 18:1-8; Marcos 11:22-24).", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un tiempo diario con Dios y explicar el propósito bíblico del ayuno.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Filipenses 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la oración, el Padre Nuestro y el ayuno.",
+      ser: "Una relación diaria y confiada con Dios como Padre.",
+      hacer: "Orar cada día con un plan sencillo e interceder por otros.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Richard J. Foster", titulo: "Celebración de la disciplina", editorial: "Peniel", nota: "Capítulos de la oración y el ayuno" },
+        { autor: "E. M. Bounds", titulo: "El poder a través de la oración" },
+      ],
+      complementaria: [
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=3jUPGTb80ms", minutos: 8 },
+      { tipo: "lectura", titulo: "El Sermón del monte: Mateo 6", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=6" },
+    ],
+  },
+  disponible: true,
+};
+
+const BIBLIA: MateriaDef = {
+  id: "n1-biblia",
+  nivel: 1,
+  orden: 3,
+  titulo: "La Biblia, Palabra de Dios",
+  resumen: "Qué es la Biblia, cómo nos llegó, cómo está organizada y cómo leerla y obedecerla cada día.",
+  base: "2 Timoteo 3:16-17; Salmos 119:105",
+  memoria: "Salmos 119:105",
+  lecciones: lecciones("n1-biblia", [
+    ["Qué es la Biblia y cómo nos llegó", "2 Timoteo 3:16-17; 2 Pedro 1:20-21"],
+    ["Cómo está organizada", "Lucas 24:44"],
+    ["Leerla cada día", "Salmos 1:1-3; Josué 1:8"],
+    ["Meditar y obedecer", "Santiago 1:22-25"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente conozca qué es la Biblia, cómo nos llegó y cómo está organizada, y que adquiera el hábito de leerla, meditarla y obedecerla cada día. La Palabra es el alimento del alma (Mateo 4:4).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué significa que la Biblia es inspirada por Dios y para qué nos fue dada.", bloom: "comprender" },
+      { id: "o2", texto: "Describir cómo está organizada la Biblia y encontrar una cita por libro, capítulo y versículo.", bloom: "recordar" },
+      { id: "o3", texto: "Aplicar un plan sencillo para leer la Biblia cada día.", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar por qué hay que meditar la Palabra y ponerla por obra (Santiago 1:22-25).", bloom: "comprender" },
+      { id: "o5", texto: "Recitar Salmos 119:105 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Qué es la Biblia, cómo nos llegó y cómo está organizada.",
+      ser: "Amor por la Palabra y confianza en lo que Dios dice.",
+      hacer: "Leer, meditar y obedecer la Biblia cada día.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Henrietta C. Mears", titulo: "Lo que nos dice la Biblia", editorial: "Vida" },
+        { autor: "Gordon Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Henry H. Halley", titulo: "Compendio manual de la Biblia" },
+        { autor: "Josh McDowell", titulo: "Nueva evidencia que demanda un veredicto", editorial: "Mundo Hispano", nota: "Sobre la confiabilidad de la Biblia" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "¿Qué es la Biblia? ¿Cómo se formó?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=uMOc-YI0iaM" },
+      { tipo: "lectura", titulo: "El Salmo 1", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
+const ESPIRITU: MateriaDef = {
+  id: "n1-espiritu",
+  nivel: 1,
+  orden: 4,
+  titulo: "El Espíritu Santo en mi vida",
+  resumen: "Quién es el Espíritu Santo, lo que hace en el creyente, la promesa del poder y cómo andar en el Espíritu.",
+  base: "Juan 14:16-17; Hechos 1:8",
+  memoria: "Hechos 1:8",
+  lecciones: lecciones("n1-espiritu", [
+    ["Quién es el Espíritu Santo", "Juan 14:16-17, 26"],
+    ["Su obra en el creyente", "Juan 16:7-13; Romanos 8:14-16"],
+    ["La promesa del poder", "Hechos 1:8; 2:1-4, 38-39"],
+    ["Andar en el Espíritu", "Gálatas 5:16-25"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente conozca al Espíritu Santo como una Persona divina, entienda su obra en la vida del creyente, reciba la promesa del poder para ser testigo y aprenda a andar en el Espíritu.",
+    objetivos: [
+      { id: "o1", texto: "Explicar quién es el Espíritu Santo: una Persona divina, el Consolador prometido.", bloom: "comprender" },
+      { id: "o2", texto: "Describir la obra del Espíritu en el creyente: convencer, regenerar, dar testimonio, guiar y ayudar.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar la promesa del bautismo con el Espíritu Santo y lo que ocurrió en Pentecostés.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar lo que significa andar en el Espíritu y reconocer su fruto.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Hechos 1:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La persona y la obra del Espíritu Santo según la Escritura.",
+      ser: "Una vida llena del Espíritu, que da su fruto.",
+      hacer: "Testificar de Cristo con el poder del Espíritu y caminar guiado por Él.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Stanley M. Horton", titulo: "El Espíritu Santo revelado en la Biblia", editorial: "Vida" },
+        { autor: "Ralph M. Riggs", titulo: "El Espíritu mismo" },
+      ],
+      complementaria: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida", nota: "Capítulo del Espíritu Santo" },
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I" },
+      { tipo: "lectura", titulo: "Hechos 1: la promesa del Espíritu", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -348,33 +488,9 @@ export const NIVELES: NivelDef[] = [
     requisitos: ["Las 8 materias aprobadas", "El examen integral del nivel", "4 versículos de memoria", "El pacto del creyente"],
     materias: [
       SALVACION,
-      enPreparacion(1, 2, "n1-oracion", "La oración: hablar con Dios", "Qué es orar, el modelo del Padre Nuestro, la oración de fe y el tiempo diario con Dios.", {
-        memoria: "Filipenses 4:6",
-        lecciones: lecciones("n1-oracion", [
-          ["Qué es orar", "Mateo 6:5-8"],
-          ["El Padre Nuestro", "Mateo 6:9-13"],
-          ["Orar con fe y perseverar", "Lucas 18:1-8; Marcos 11:24"],
-          ["Mi tiempo diario con Dios y el ayuno", "Marcos 1:35; Mateo 6:16-18"],
-        ]),
-      }),
-      enPreparacion(1, 3, "n1-biblia", "La Biblia, Palabra de Dios", "Qué es la Biblia, cómo nos llegó, cómo está organizada y cómo leerla y obedecerla cada día.", {
-        memoria: "Salmos 119:105",
-        lecciones: lecciones("n1-biblia", [
-          ["Qué es la Biblia y cómo nos llegó", "2 Timoteo 3:16-17; 2 Pedro 1:20-21"],
-          ["Cómo está organizada", "Lucas 24:44"],
-          ["Leerla cada día", "Salmos 1:1-3; Josué 1:8"],
-          ["Meditar y obedecer", "Santiago 1:22-25"],
-        ]),
-      }),
-      enPreparacion(1, 4, "n1-espiritu", "El Espíritu Santo en mi vida", "Quién es el Espíritu Santo, lo que hace en el creyente, la promesa del poder y cómo andar en el Espíritu.", {
-        memoria: "Hechos 1:8",
-        lecciones: lecciones("n1-espiritu", [
-          ["Quién es el Espíritu Santo", "Juan 14:16-17, 26"],
-          ["Su obra en el creyente", "Juan 16:7-13; Romanos 8:14-16"],
-          ["La promesa del poder", "Hechos 1:8; 2:1-4, 38-39"],
-          ["Andar en el Espíritu", "Gálatas 5:16-25"],
-        ]),
-      }),
+      ORACION,
+      BIBLIA,
+      ESPIRITU,
       enPreparacion(1, 5, "n1-bautismo-cena", "El bautismo y la Santa Cena", "Las dos ordenanzas que Jesús dejó a su iglesia: qué significan y cómo se viven.", {
         memoria: "Romanos 6:4",
         lecciones: lecciones("n1-bautismo-cena", [

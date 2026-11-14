@@ -69,6 +69,10 @@ test("las citas: con tilde o sin ella, con números de libro y con rangos", () =
 test("la primera lección de cada materia del Nivel 1 es pública; las demás, no", () => {
   assert.ok(leccionPublica("n1-salvacion-1"));
   assert.ok(!leccionPublica("n1-salvacion-2"));
+  for (const id of ["n1-oracion", "n1-biblia", "n1-espiritu"]) {
+    assert.ok(leccionPublica(`${id}-1`), id);
+    assert.ok(!leccionPublica(`${id}-4`), id);
+  }
 });
 
 test("la vista previa es para administración y profesores", () => {

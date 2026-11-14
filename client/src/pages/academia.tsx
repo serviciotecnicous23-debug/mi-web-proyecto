@@ -102,7 +102,8 @@ export default function AcademiaPage() {
           {e.continuar && <p className="text-sm text-muted-foreground mt-3">{e.continuar.materia} · {e.continuar.titulo}</p>}
           {e.alumno && (
             <p className="text-sm text-muted-foreground mt-2" data-testid="academia-alumno">
-              <Flame className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Racha de estudio: {e.alumno.racha} {e.alumno.racha === 1 ? "día" : "días"} · {e.alumno.leccionesHechas} lecciones · {e.alumno.materiasAprobadas} materias aprobadas
+              <Flame className="w-4 h-4 inline -mt-0.5 text-orange-500" /> Racha de estudio: {e.alumno.racha} {e.alumno.racha === 1 ? "día" : "días"} · {e.alumno.leccionesHechas} {e.alumno.leccionesHechas === 1 ? "lección" : "lecciones"} · {e.alumno.materiasAprobadas}{" "}
+              {e.alumno.materiasAprobadas === 1 ? "materia aprobada" : "materias aprobadas"}
             </p>
           )}
         </motion.div>

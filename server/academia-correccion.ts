@@ -56,6 +56,11 @@ export type ClaveEscrita = {
   citas?: string[];
   pesoCita?: number;
   errores?: ConceptoErrado[];
+  /**
+   * Para preguntas del tipo «menciona tres de…»: los puntos que ya valen 100 (por ejemplo, 3 ideas de 20 = 60). Sin
+   * esto, la nota es la proporción de todos los puntos de la clave.
+   */
+  basta?: number;
   /** Una respuesta modelo, para la revisión al terminar y para el profesor. */
   modelo: string;
 };
@@ -267,7 +272,8 @@ export function corregirEscrita(clave: ClaveEscrita, texto: string, op: Opciones
     }
   }
 
-  let nota = total ? (100 * puntos) / total : 0;
+  const meta = clave.basta && clave.basta > 0 ? Math.min(clave.basta, total) : total;
+  let nota = meta ? Math.min(100, (100 * puntos) / meta) : 0;
 
   // la forma de la respuesta
   if (todas.length < 3) {
