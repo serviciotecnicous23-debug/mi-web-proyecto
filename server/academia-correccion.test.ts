@@ -74,6 +74,16 @@ test("«basta»: si la pregunta pide tres de cinco ideas, tres ya dan la nota co
   assert.ok(dos.nota < tres.nota && dos.nota >= 55, `nota ${dos.nota}`);
 });
 
+test("una negación metida en medio no es un concepto errado: «el bautismo no salva» ≠ «el bautismo salva»", () => {
+  const b1 = BANCOS.get("n1-bautismo-cena")!.escritas.find((e) => e.id === "n1-bautismo-cena-e1")!;
+  const bien = corregirEscrita(b1, "El bautismo no salva, porque somos salvos por gracia; el agua no lava los pecados. Simboliza que morimos y resucitamos con Cristo a una vida nueva.");
+  assert.deepEqual(bien.detalle.errores, [], "sin conceptos errados");
+  assert.ok(bien.detalle.ideas.includes("no-salva") && bien.nota >= 75, `nota ${bien.nota}`);
+  const mal = corregirEscrita(b1, "El bautismo salva porque el agua lava los pecados, y simboliza que morimos y resucitamos con Cristo a una vida nueva.");
+  assert.ok(mal.detalle.errores.includes("bautismo-salva"));
+  assert.ok(!mal.detalle.ideas.includes("no-salva") && mal.revisar);
+});
+
 test("reconoce citas abreviadas y comprueba que existan", () => {
   assert.equal(citasEscritas("como dice Ef 2.8")[0]?.libro, "Efesios");
   assert.equal(citasEscritas("1 Juan 5:13 lo promete")[0]?.libro, "1 Juan");

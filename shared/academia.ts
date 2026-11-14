@@ -475,6 +475,195 @@ const ESPIRITU: MateriaDef = {
   disponible: true,
 };
 
+const BAUTISMO_CENA: MateriaDef = {
+  id: "n1-bautismo-cena",
+  nivel: 1,
+  orden: 5,
+  titulo: "El bautismo y la Santa Cena",
+  resumen: "Las dos ordenanzas que Jesús dejó a su iglesia: qué significan y cómo se viven.",
+  base: "Mateo 28:19; 1 Corintios 11:23-26",
+  memoria: "Romanos 6:4",
+  lecciones: lecciones("n1-bautismo-cena", [
+    ["El bautismo en agua", "Mateo 28:19; Romanos 6:3-4"],
+    ["Quién se bautiza y cómo", "Hechos 2:38-41; 8:36-38"],
+    ["La Santa Cena", "Lucas 22:19-20"],
+    ["Participar con el corazón preparado", "1 Corintios 11:23-29"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente entienda las dos ordenanzas que Jesús dejó a su iglesia, el bautismo en agua y la Santa Cena: lo que significan según la Escritura y cómo vivirlas con fe y obediencia. No salvan por sí mismas: son actos de obediencia que proclaman lo que Cristo hizo por nosotros (Romanos 6:4; 1 Corintios 11:26).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es el bautismo en agua y lo que simboliza según Romanos 6:3-4.", bloom: "comprender" },
+      { id: "o2", texto: "Describir quién debe bautizarse y cómo, según los ejemplos del libro de los Hechos.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar qué es la Santa Cena, quién la instituyó y qué representan el pan y la copa.", bloom: "comprender" },
+      { id: "o4", texto: "Prepararse para participar de la Santa Cena examinándose a sí mismo (1 Corintios 11:28).", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Romanos 6:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre el bautismo en agua y la Santa Cena.",
+      ser: "Un corazón obediente y agradecido por la obra de Cristo.",
+      hacer: "Bautizarse como testimonio público y participar de la Cena con reverencia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida", nota: "Capítulo de la iglesia: las ordenanzas" },
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media", nota: "Las ordenanzas de la iglesia" },
+      ],
+      complementaria: [
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Lucas (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=CxiSs-SHTuI" },
+      { tipo: "lectura", titulo: "Romanos 6: sepultados y resucitados con Cristo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=6" },
+    ],
+  },
+  disponible: true,
+};
+
+const IGLESIA: MateriaDef = {
+  id: "n1-iglesia",
+  nivel: 1,
+  orden: 6,
+  titulo: "La iglesia, mi nueva familia",
+  resumen: "Qué es la iglesia, por qué congregarse, cómo servir con tus dones y dar con alegría.",
+  base: "Efesios 2:19-22; Hechos 2:42",
+  memoria: "Hebreos 10:25",
+  lecciones: lecciones("n1-iglesia", [
+    ["Qué es la iglesia", "Efesios 2:19-22"],
+    ["Congregarse", "Hechos 2:42-47; Hebreos 10:24-25"],
+    ["Servir con mis dones", "1 Pedro 4:10"],
+    ["Dar con alegría", "Malaquías 3:10; 2 Corintios 9:6-7"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente entienda que la iglesia es la familia de Dios y el cuerpo de Cristo, y que se integre a ella: congregándose con fidelidad, sirviendo con los dones que Dios le dio y dando con alegría y generosidad. Nadie crece solo: Dios nos puso en un cuerpo (1 Corintios 12:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la iglesia según la Biblia: la familia de Dios, el cuerpo de Cristo y el templo del Espíritu.", bloom: "comprender" },
+      { id: "o2", texto: "Describir las prácticas de la primera iglesia (Hechos 2:42-47) y por qué es importante congregarse.", bloom: "comprender" },
+      { id: "o3", texto: "Identificar sus dones y un lugar donde servir en la iglesia (1 Pedro 4:10).", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar lo que la Biblia enseña sobre el diezmo y la ofrenda, y dar con alegría (2 Corintios 9:7).", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Hebreos 10:25 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Qué es la iglesia según la Biblia y cómo vivía la iglesia del principio.",
+      ser: "Sentido de pertenencia a la familia de Dios y un corazón generoso.",
+      hacer: "Congregarse con fidelidad, servir con sus dones y dar con alegría.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rick Warren", titulo: "Una vida con propósito", editorial: "Vida", nota: "Los propósitos de la familia de Dios y del servicio" },
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida", nota: "Capítulo de la iglesia" },
+      ],
+      complementaria: [
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Efesios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yJgym5MGzM4", minutos: 10 },
+      { tipo: "lectura", titulo: "Hechos 2: la primera iglesia", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const VIDA_NUEVA: MateriaDef = {
+  id: "n1-vida-nueva",
+  nivel: 1,
+  orden: 7,
+  titulo: "Una vida nueva: santidad y victoria",
+  resumen: "La nueva identidad en Cristo, cómo vencer la tentación, levantarse cuando se cae y vivir perdonando.",
+  base: "2 Corintios 5:17; 1 Corintios 10:13",
+  memoria: "1 Corintios 10:13",
+  lecciones: lecciones("n1-vida-nueva", [
+    ["La nueva identidad", "2 Corintios 5:17; Gálatas 2:20"],
+    ["Vencer la tentación", "1 Corintios 10:13; Mateo 4:1-11"],
+    ["Cuando caigo: confesar y levantarme", "1 Juan 1:9; Salmos 51"],
+    ["Perdonar y vivir en paz", "Efesios 4:31-32"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente entienda quién es en Cristo, aprenda a vencer la tentación con las armas que Dios da, sepa qué hacer cuando cae (confesar y levantarse) y viva perdonando como Dios lo perdonó. La santidad no es perfección inmediata, sino una vida nueva que crece cada día por el poder de Dios (Filipenses 1:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar lo que significa ser una nueva criatura en Cristo (2 Corintios 5:17; Gálatas 2:20).", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar las armas con que Jesús venció la tentación: la Palabra, la oración y la huida del pecado.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar y practicar el camino de regreso cuando se cae: confesar, recibir el perdón y levantarse (1 Juan 1:9).", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar por qué el creyente perdona y cómo vivir en paz con los demás (Efesios 4:31-32).", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar 1 Corintios 10:13 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la nueva identidad, la tentación, la confesión y el perdón.",
+      ser: "Una identidad firme en Cristo y un corazón limpio y perdonador.",
+      hacer: "Resistir la tentación, confesar pronto y perdonar a quien le ofende.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Neil T. Anderson", titulo: "Victoria sobre la oscuridad", editorial: "Unilit", nota: "La identidad en Cristo" },
+        { autor: "Jerry Bridges", titulo: "En pos de la santidad" },
+      ],
+      complementaria: [
+        { autor: "John Stott", titulo: "Cristianismo básico", editorial: "Certeza" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Gálatas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=kMJLgLOWb3I" },
+      { tipo: "lectura", titulo: "Colosenses 3: la vida nueva en Cristo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Colosenses&cap=3" },
+    ],
+  },
+  disponible: true,
+};
+
+const COMPARTIR_FE: MateriaDef = {
+  id: "n1-compartir-fe",
+  nivel: 1,
+  orden: 8,
+  titulo: "Compartir mi fe",
+  resumen: "La gran comisión, tu testimonio y cómo explicar el evangelio y acompañar a quien cree.",
+  base: "Marcos 16:15; Hechos 1:8",
+  memoria: "Marcos 16:15",
+  antes: "Evangelismo 1",
+  lecciones: lecciones("n1-compartir-fe", [
+    ["La gran comisión es para mí", "Marcos 16:15; Mateo 28:18-20"],
+    ["Mi testimonio en 3 partes", "Hechos 26; 1 Pedro 3:15"],
+    ["El evangelio en 5 minutos", "Romanos 5:8; 10:9"],
+    ["Orar por alguien y acompañarlo", "Juan 1:40-42"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el nuevo creyente entienda que la gran comisión es para todo discípulo y aprenda a compartir su fe con sencillez: contar su testimonio, explicar el evangelio con la Biblia, orar por las personas y acompañar a quien cree. Marcos 16:15-16 es el corazón de la misión de nuestro ministerio.",
+    objetivos: [
+      { id: "o1", texto: "Explicar la gran comisión y por qué es para todo creyente (Mateo 28:18-20; Marcos 16:15).", bloom: "comprender" },
+      { id: "o2", texto: "Preparar su testimonio personal en tres partes: antes, el encuentro con Cristo y después (Hechos 26; 1 Pedro 3:15).", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar el evangelio en pocos minutos con versículos clave (Romanos 3:23; 6:23; 5:8; 10:9).", bloom: "aplicar" },
+      { id: "o4", texto: "Orar por personas concretas y acompañar a un nuevo creyente en sus primeros pasos (Juan 1:40-42).", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Marcos 16:15 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La gran comisión, el mensaje del evangelio y cómo se acompaña a un nuevo creyente.",
+      ser: "Un corazón compasivo por los que no conocen a Cristo y valentía para hablar de Él.",
+      hacer: "Compartir su testimonio y el evangelio, orar por otros y acompañar a quien cree.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista" },
+        { autor: "Rebecca Manley Pippert", titulo: "Fuera del salero" },
+      ],
+      complementaria: [
+        { autor: "Billy Graham", titulo: "Paz con Dios" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY" },
+      { tipo: "lectura", titulo: "Hechos 8: Felipe y el etíope", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -491,43 +680,10 @@ export const NIVELES: NivelDef[] = [
       ORACION,
       BIBLIA,
       ESPIRITU,
-      enPreparacion(1, 5, "n1-bautismo-cena", "El bautismo y la Santa Cena", "Las dos ordenanzas que Jesús dejó a su iglesia: qué significan y cómo se viven.", {
-        memoria: "Romanos 6:4",
-        lecciones: lecciones("n1-bautismo-cena", [
-          ["El bautismo en agua", "Mateo 28:19; Romanos 6:3-4"],
-          ["Quién se bautiza y cómo", "Hechos 2:38-41; 8:36-38"],
-          ["La Santa Cena", "Lucas 22:19-20"],
-          ["Participar con el corazón preparado", "1 Corintios 11:23-29"],
-        ]),
-      }),
-      enPreparacion(1, 6, "n1-iglesia", "La iglesia, mi nueva familia", "Qué es la iglesia, por qué congregarse, cómo servir con tus dones y dar con alegría.", {
-        memoria: "Hebreos 10:25",
-        lecciones: lecciones("n1-iglesia", [
-          ["Qué es la iglesia", "Efesios 2:19-22"],
-          ["Congregarse", "Hechos 2:42-47; Hebreos 10:24-25"],
-          ["Servir con mis dones", "1 Pedro 4:10"],
-          ["Dar con alegría", "Malaquías 3:10; 2 Corintios 9:6-7"],
-        ]),
-      }),
-      enPreparacion(1, 7, "n1-vida-nueva", "Una vida nueva: santidad y victoria", "La nueva identidad en Cristo, cómo vencer la tentación, levantarse cuando se cae y vivir perdonando.", {
-        memoria: "1 Corintios 10:13",
-        lecciones: lecciones("n1-vida-nueva", [
-          ["La nueva identidad", "2 Corintios 5:17; Gálatas 2:20"],
-          ["Vencer la tentación", "1 Corintios 10:13; Mateo 4:1-11"],
-          ["Cuando caigo: confesar y levantarme", "1 Juan 1:9; Salmos 51"],
-          ["Perdonar y vivir en paz", "Efesios 4:31-32"],
-        ]),
-      }),
-      enPreparacion(1, 8, "n1-compartir-fe", "Compartir mi fe", "La gran comisión, tu testimonio y cómo explicar el evangelio y acompañar a quien cree.", {
-        memoria: "Marcos 16:15",
-        antes: "Evangelismo 1",
-        lecciones: lecciones("n1-compartir-fe", [
-          ["La gran comisión es para mí", "Marcos 16:15; Mateo 28:18-20"],
-          ["Mi testimonio en 3 partes", "Hechos 26; 1 Pedro 3:15"],
-          ["El evangelio en 5 minutos", "Romanos 5:8; 10:9"],
-          ["Orar por alguien y acompañarlo", "Juan 1:40-42"],
-        ]),
-      }),
+      BAUTISMO_CENA,
+      IGLESIA,
+      VIDA_NUEVA,
+      COMPARTIR_FE,
     ],
   },
   {

@@ -116,6 +116,10 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 - `raiz*`: cualquier palabra que empiece así.
 - `(a|b|c*)`: cualquiera de esas.
 - No existe un «opcional». Para eso se escriben dos formas.
+- Las raíces que cambian al conjugarse necesitan las dos formas: `confes*` y `confies*` (confiesa), `arrepent*` y
+  `arrepient*` (me arrepiento), `convert*` y `conviert*` (se convierte), `record*` y `recuerd*` (recuerda).
+- La negación cuenta en las 3 palabras de antes. En los conceptos errados, además, no vale una negación metida entre las
+  palabras de la forma: «el bautismo no salva» no afirma «el bautismo salva».
 - `basta`: cuando la pregunta pide solo algunas de las ideas (por ejemplo «describe tres cosas» y la clave tiene cinco
   de 20 puntos), `basta: 60` hace que 60 puntos de ideas ya den la nota completa.
 - La respuesta modelo de cada clave debe sacar 90 o más (`problemasDeClave`, y la prueba lo vigila).
@@ -162,6 +166,11 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - Ralph M. Riggs, *El Espíritu mismo* (traducción de *The Spirit Himself*; sin editorial comprobada).
    - Henrietta C. Mears, *Lo que nos dice la Biblia* (Vida).
    - Josh McDowell, *Nueva evidencia que demanda un veredicto* (Mundo Hispano).
+   - Stanley M. Horton (ed.), *Teología sistemática: una perspectiva pentecostal* (Vida, 1996; revisada en 1999).
+   - Rick Warren, *Una vida con propósito* (Vida).
+   - Neil T. Anderson, *Victoria sobre la oscuridad* (Unilit).
+   - Sin editorial comprobada (se citan sin ella): Jerry Bridges, *En pos de la santidad*; Rebecca Manley Pippert,
+     *Fuera del salero*.
 7. **Medios:**
    - Videos del ministerio y videos educativos gratuitos de Proyecto Biblia (BibleProject en español), con su fuente.
    - Audio narrado (Estudio de Voz IA).
@@ -249,7 +258,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | Fase | Qué sale | Estado |
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
-| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: materias 2 a 4 hechas («La oración», «La Biblia» y «El Espíritu Santo en mi vida») |
+| A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas); faltan el examen integral, los documentos y la matrícula |
 | A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
