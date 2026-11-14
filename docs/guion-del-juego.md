@@ -841,6 +841,22 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
   fuegos, los más cercanos a la cámara, y cada uno solo dentro de su atrio (no pasa los muros ni la fachada). Al salir
   del templo se apagan (`apagarFuegos`).
 
+## 7l. La casa por dentro: su luz y su piso (14 de noviembre de 2026)
+
+- **La luz de las lámparas** (`casa/mundo-casa.ts`, con `three/luces.ts`): cada llama (las lámparas de las paredes, el
+  horno, las lámparas y el brasero de los muebles) alumbra su cuarto y solo su piso. Antes eran cuatro luces de verdad
+  que seguían a las llamas más cercanas; ahora alumbran todas las que se ven (hasta 12) y cuesta menos.
+  - Cada fuego tiene su alcance (una lamparita llega a unos 4,6 m; el brasero, a 5,6) y las alturas donde alumbra
+    (`alto`), para que la lámpara del aposento alto no alumbre el piso de abajo.
+  - Las fotos de los íconos (`vistas3d.ts`) y el muñeco del probador se dibujan sin los fuegos del lugar (`sinFuegos`).
+- **El piso**: la casa de piedra (y los edificios de piedra) tiene losas (`tiles`) en los cuartos con techo y el patio
+  empedrado; el adobe, la tienda y el terrado, tierra apisonada o yeso con manchas suaves (`pisoConTono`). Todo con la
+  sombra junto a los muros altos y bajos (no en las aberturas), la escalera y el horno (`tonoPiso`).
+- **La sombra de contacto de los muebles** (`sombraDeMueble`): un rectángulo suave bajo cada mueble; las esteras y las
+  alfombras (capa 0) no la llevan.
+- En el material compartido, la «tela» acostada (la tierra de un piso, una alfombra) ya casi no tiene relieve: con la luz
+  baja de una lámpara se veía ondulada como arena.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

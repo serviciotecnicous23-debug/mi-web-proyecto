@@ -9,14 +9,26 @@ import * as THREE from "three";
 
 export const MAX_FUEGOS = 12;
 
-/** Los fuegos de este cuadro: la posición de la llama y su fuerza, y el rectángulo donde alumbra. */
+/**
+ * Los fuegos de este cuadro: la posición de la llama y su fuerza, el rectángulo donde alumbra y, aparte, entre qué
+ * alturas alumbra y hasta qué distancia (una antorcha llega a 8 m; una lamparita de barro, a unos 4).
+ */
 export const fuegosMateriales = {
   uFuegos: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
   uFuegosRect: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
+  uFuegosAlto: { value: Array.from({ length: MAX_FUEGOS }, () => new THREE.Vector4()) },
   uNumFuegos: { value: 0 },
 };
 
-export type Fuego = { x: number; y: number; z: number; fuerza: number; recorte?: [number, number, number, number] };
+export type Fuego = {
+  x: number; y: number; z: number; fuerza: number;
+  /** El rectángulo del piso donde alumbra (x0, z0, x1, z1), para que la luz no pase un muro. */
+  recorte?: [number, number, number, number];
+  /** Entre qué alturas alumbra (para que la lámpara del piso de arriba no alumbre el de abajo). */
+  alto?: [number, number];
+  /** Hasta qué distancia llega (8 m si no se dice). */
+  alcance?: number;
+};
 
 /**
  * Pone los fuegos de este cuadro. Con `cerca` (lo que mira la cámara), los lejanos se apagan de a poco (de 20 a 30 m,
@@ -33,6 +45,8 @@ export function ponerFuegos(fuegos: Fuego[], cerca?: { x: number; z: number }) {
     fuegosMateriales.uFuegos.value[i].set(f.x, f.y, f.z, fuerza(f));
     const r = f.recorte ?? [-1e5, -1e5, 1e5, 1e5];
     fuegosMateriales.uFuegosRect.value[i].set(r[0], r[1], r[2], r[3]);
+    const a = f.alto ?? [-1e5, 1e5];
+    fuegosMateriales.uFuegosAlto.value[i].set(a[0], a[1], f.alcance ?? 8, 0);
   }
   fuegosMateriales.uNumFuegos.value = n;
 }
@@ -40,6 +54,17 @@ export function ponerFuegos(fuegos: Fuego[], cerca?: { x: number; z: number }) {
 /** Apaga todos (al salir de un mundo, para que el siguiente no herede sus fuegos). */
 export function apagarFuegos() {
   fuegosMateriales.uNumFuegos.value = 0;
+}
+
+/** Dibuja algo aparte (la foto de un mueble, el muñeco del probador) sin los fuegos del mundo que está abierto. */
+export function sinFuegos(dibujar: () => void) {
+  const n = fuegosMateriales.uNumFuegos.value;
+  fuegosMateriales.uNumFuegos.value = 0;
+  try {
+    dibujar();
+  } finally {
+    fuegosMateriales.uNumFuegos.value = n;
+  }
 }
 
 /** Cuánto titila un fuego (de 0,8 a 1,1): tres ondas sin compás, cada fuego con su fase. */
@@ -51,6 +76,7 @@ export function titila(t: number, i: number) {
 const FUEGOS_PARS = `
 uniform vec4 uFuegos[${MAX_FUEGOS}];
 uniform vec4 uFuegosRect[${MAX_FUEGOS}];
+uniform vec4 uFuegosAlto[${MAX_FUEGOS}];
 uniform int uNumFuegos;
 varying vec3 vFuegoP;
 vec3 luzDeFuegos(vec3 p, vec3 n) {
@@ -59,12 +85,14 @@ vec3 luzDeFuegos(vec3 p, vec3 n) {
     if (i >= uNumFuegos) break;
     vec4 f = uFuegos[i];
     vec4 rc = uFuegosRect[i];
+    vec4 al = uFuegosAlto[i];
     vec3 d = f.xyz - p;
     float r = length(d);
-    if (r > 8.0 || p.x < rc.x - 0.06 || p.z < rc.y - 0.06 || p.x > rc.z + 0.06 || p.z > rc.w + 0.06) continue;
-    // cae con la distancia como una luz de verdad y se apaga del todo a los 8 m
-    float v = 1.0 - r * r / 64.0;
-    float caida = v * v / (1.0 + r * r * 0.35);
+    if (r > al.z || p.x < rc.x - 0.06 || p.z < rc.y - 0.06 || p.x > rc.z + 0.06 || p.z > rc.w + 0.06 || p.y < al.x || p.y > al.y) continue;
+    // cae con la distancia como una luz de verdad y se apaga del todo en su alcance
+    float q = r / al.z;
+    float v = 1.0 - q * q;
+    float caida = v * v / (1.0 + q * q * 22.0);
     float lam = max(dot(n, normalize(mat3(viewMatrix) * d)), 0.0);
     l += caida * lam * f.w;
   }
@@ -83,6 +111,7 @@ export function conFuegos<M extends THREE.MeshLambertMaterial | THREE.MeshPhongM
     antes.call(mat, shader, renderer);
     shader.uniforms.uFuegos = fuegosMateriales.uFuegos;
     shader.uniforms.uFuegosRect = fuegosMateriales.uFuegosRect;
+    shader.uniforms.uFuegosAlto = fuegosMateriales.uFuegosAlto;
     shader.uniforms.uNumFuegos = fuegosMateriales.uNumFuegos;
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vFuegoP;")

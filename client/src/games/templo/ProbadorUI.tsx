@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { X } from "lucide-react";
 import { Figure, newRig, type FigureLook } from "./three/characters";
+import { sinFuegos } from "./three/luces";
 import { RANURAS, articulo, coloresDeIds, ranuraDe, type RopaIds } from "@shared/mercado";
 import { Ico } from "./iconos";
 
@@ -96,7 +97,8 @@ export function MunecoQueGira({ look, ropa, alto = 300 }: { look: FigureLook; ro
       rig.yaw = g.yaw;
       rig.t += dt;
       fig.update(rig);
-      renderer.render(escena, camara);
+      // con su propia luz, sin los fuegos del lugar donde se está (three/luces.ts)
+      sinFuegos(() => renderer.render(escena, camara));
     };
     raf = requestAnimationFrame(cuadro);
     // girarlo con el dedo

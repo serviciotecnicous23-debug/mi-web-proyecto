@@ -9,6 +9,7 @@ import { construirMueble } from "./muebles3d";
 import { construirAdornoSuelto } from "../ciudad/escenario";
 import { Figure, newRig } from "../three/characters";
 import { articulo, coloresDeIds, ranuraDe } from "@shared/mercado";
+import { sinFuegos } from "../three/luces";
 
 const TAM = 200;
 let dibujante: THREE.WebGLRenderer | null = null;
@@ -83,7 +84,8 @@ function sacar(id: string): string | null {
   cam.far = dist * 4;
   cam.updateProjectionMatrix();
   cam.lookAt(centro);
-  d.render(e, cam);
+  // siempre con la misma luz, sin los fuegos del lugar donde se está (three/luces.ts)
+  sinFuegos(() => d.render(e, cam));
   const url = d.domElement.toDataURL("image/png");
   e.remove(m.obj);
   m.liberar();

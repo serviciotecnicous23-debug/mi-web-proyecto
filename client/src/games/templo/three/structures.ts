@@ -149,6 +149,34 @@ export function tiles(
   return g;
 }
 
+/**
+ * Un piso liso (la tierra apisonada, el yeso del terrado) con su tono: la cara de arriba en cuadritos de `paso`, con
+ * manchas suaves (la tierra pisada nunca es pareja) y la sombra junto a los muros que da `tono(x, z)`.
+ */
+export function pisoConTono(minX: number, minZ: number, maxX: number, maxZ: number, color: string, y: number, paso: number, tono?: (x: number, z: number) => number) {
+  const nx = Math.max(1, Math.round((maxX - minX) / paso)), nz = Math.max(1, Math.round((maxZ - minZ) / paso));
+  const sx = (maxX - minX) / nx, sz = (maxZ - minZ) / nz;
+  const pos: number[] = [], nor: number[] = [], col: number[] = [];
+  const c = new THREE.Color(color);
+  // las manchas: dos ondas cruzadas (sin azar, así no cambia lo que se arma después)
+  const k = (x: number, z: number) => (1 + Math.sin(x * 2.3 + z * 1.1) * 0.025 + Math.sin(x * 0.9 - z * 3.1 + 1.7) * 0.02) * (tono ? tono(x, z) : 1);
+  for (let i = 0; i < nx; i++)
+    for (let j = 0; j < nz; j++) {
+      const x0 = minX + i * sx, x1 = x0 + sx, z0 = minZ + j * sz, z1 = z0 + sz;
+      for (const [x, z] of [[x0, z0], [x0, z1], [x1, z1], [x0, z0], [x1, z1], [x1, z0]]) {
+        pos.push(x, y, z);
+        nor.push(0, 1, 0);
+        const f = k(x, z);
+        col.push(c.r * f, c.g * f, c.b * f);
+      }
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  return g;
+}
+
 export type Course = { h: number; color: string; len: number; inset?: number };
 /** Muro de sillares: hileras de bloques con juntas alternadas. Corre a lo largo de x o de z. */
 export function blockWall(b: GeoBuilder, axis: "x" | "z", from: number, to: number, at: number, thick: number, courses: Course[], y0 = 0) {

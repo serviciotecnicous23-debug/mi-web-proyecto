@@ -95,7 +95,10 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Un piso de piedra se arma con `tiles` (losas trabadas con bisel), nunca con una cuadrícula pareja, y con `tono` lleva
   la sombra junto a los muros y el desgaste de los caminos.
 - Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
-  con el rectángulo donde alumbra; los materiales de siempre ya lo reciben (`conFuegos`).
+  con el rectángulo donde alumbra (y, si hay pisos, las alturas `alto` y su `alcance`); los materiales de siempre ya lo
+  reciben (`conFuegos`). Lo que se dibuja aparte con su propia luz (una foto, un muñeco) va dentro de `sinFuegos`.
+- Todo mueble o pieza que se apoya en el piso lleva su sombra de contacto (como `sombraDeMueble`, en
+  `casa/mundo-casa.ts`), y los pisos, la sombra junto a los muros (`tono`).
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
   aberturas de dos celdas o más y círculos que no tapan un paso.
 
