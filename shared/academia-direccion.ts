@@ -56,7 +56,11 @@ export type DireccionResumen = {
   /** Con materias en curso y 14 días o más sin estudiar. */
   detenidos: AlumnoFila[];
   actividad: ActividadItem[];
-  puede: { exportar: boolean; contacto: boolean };
+  /** La academia ya está abierta para todos (o en vista previa). */
+  abierta: boolean;
+  /** Respuestas escritas por revisar y pedidos de revisión pendientes (para quien revisa). */
+  pendientes: { escritas: number; apelaciones: number };
+  puede: { exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean };
 };
 
 export type MateriaAvance = {
@@ -83,7 +87,65 @@ export type AlumnoDetalle = {
   niveles: { n: number; nombre: string; pacto: string | null; completado: string | null; promedio: number | null }[];
   certificados: DocumentoAcademia[];
   actividad: ActividadItem[];
-  puede: { contacto: boolean };
+  puede: { contacto: boolean; revisar: boolean; documentos: boolean };
 };
 
 export type MateriaSeguimiento = { materia: MateriaReporte; alumnos: (AlumnoFila & { avance: MateriaAvance })[]; puede: { exportar: boolean } };
+
+// ---------------------------------------------------------------- la revisión (fase A3)
+
+export type AlumnoRef = { userId: number; nombre: string; matricula: string | null };
+export type ExamenRef = { clave: string; titulo: string; intento: number };
+
+/** Una respuesta escrita para revisar, con la clave de corrección que la juzgó. */
+export type ItemRevision = {
+  id: number;
+  alumno: AlumnoRef;
+  examen: ExamenRef;
+  pregunta: string;
+  modelo: string;
+  /** Las ideas de la clave: su peso y si el corrector la encontró. */
+  ideas: { texto: string; peso: number; ok: boolean }[];
+  /** Los conceptos errados que el corrector encontró. */
+  errores: string[];
+  citas: string[];
+  texto: string;
+  palabras: number;
+  /** Por qué quedó para revisar: nota dudosa, texto pegado, copia de la pregunta, lista de palabras, fuera de tiempo. */
+  marcas: string[];
+  notaAuto: number;
+  notaFinal: number | null;
+  revision: { por: string; fecha: string; motivo: string } | null;
+  /** Un pedido de revisión pendiente del mismo examen. */
+  apelacion: number | null;
+  fecha: string;
+};
+
+export type ApelacionItem = {
+  id: number;
+  alumno: AlumnoRef;
+  examen: ExamenRef;
+  mensaje: string;
+  fecha: string;
+  estado: "pendiente" | "resuelta";
+  respuesta: string | null;
+  resuelta: string | null;
+  por: string | null;
+  /** Las respuestas escritas de ese intento. */
+  escritas: ItemRevision[];
+};
+
+export type RevisionPanel = { pendientes: ItemRevision[]; apelaciones: ApelacionItem[]; recientes: ItemRevision[] };
+
+/** Lo que pasó al cambiar una nota: el examen, la materia y el nivel, recalculados. */
+export type ResultadoRevision = {
+  item: ItemRevision;
+  recalculado: boolean;
+  examen: { antes: number | null; despues: number | null };
+  materia: { nota: number; aprobada: boolean; cambio: "aprobada" | "desaprobada" | null } | null;
+  nivel: "completo" | "reabierto" | null;
+  mensaje: string;
+};
+
+/** Una entrada del historial de cambios de la academia (notas, documentos, nombres y apertura). */
+export type HistorialItem = { id: number; fecha: string; por: string; accion: string; alumno: AlumnoRef | null; texto: string; motivo: string | null };

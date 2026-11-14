@@ -270,6 +270,8 @@ export const NOMBRE_ESTATUS: Record<EstatusAlumno, string> = {
 };
 /** Días sin estudiar para pasar a «en pausa» (vuelve a activo solo con estudiar). */
 export const DIAS_PAUSA = 30;
+/** Días para pedir la revisión de un examen (una vez por examen), desde que se cerró el intento. */
+export const DIAS_APELACION = 7;
 
 /** Mientras la academia está en vista previa, la ven estos roles (shared/roles.ts). */
 export { ROLES_VISTA_PREVIA, veVistaPrevia } from "./academia-acceso";
@@ -1139,6 +1141,8 @@ export type PreguntaExamen = PreguntaVista & { n: number; de: number; segundos: 
 export type EscritaExamen = { id: string; texto: string; tipo: TipoEscrita; min: number; max: number; minutos: number; quedan: number; n: number; de: number };
 export type RevisionObjetiva = { texto: string; opciones: string[]; elegida: number; correcta: number; bien: boolean; tarde: boolean; explica: string; ref: string };
 export type ResultadoExamen = {
+  /** El número del intento (los resultados de antes del registro de intentos no lo traen). */
+  intento?: number;
   nota: number;
   objetiva: number;
   escrita: number;
@@ -1147,10 +1151,19 @@ export type ResultadoExamen = {
   aciertos: number;
   de: number;
   revision: RevisionObjetiva[];
-  escritas: (CorreccionVista & { pregunta: string; texto: string; modelo: string })[];
+  escritas: (CorreccionVista & { pregunta: string; texto: string; modelo: string; revision?: RevisionEscrita | null })[];
   materia: { nota: number; aprobada: boolean; medalla: Medalla | null } | null;
   espera: number;
 };
+/** Una respuesta escrita que revisó la Dirección académica: la nota nueva, la de antes y el motivo. */
+export type RevisionEscrita = { nota: number; antes: number; motivo: string; fecha: string };
+
+/** El pedido de revisión de un examen, como lo ve el alumno. */
+export type ApelacionVista = { estado: "pendiente" | "resuelta"; mensaje: string; creada: string; respuesta: string | null; resuelta: string | null };
+
+/** Si el alumno puede pedir la revisión del último intento, hasta cuándo, y si no, por qué. */
+export type Apelable = { puede: boolean; hasta: string | null; porque: string | null };
+
 export type PasoExamen =
   | { paso: "objetiva"; pregunta: PreguntaExamen }
   | { paso: "escrita"; escrita: EscritaExamen }
@@ -1288,7 +1301,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       titulo: "6. La revisión de las notas",
       puntos: [
         "Todo lo corrige el sistema. La Dirección académica puede revisar cualquier respuesta y cambiar la nota, siempre con un motivo que queda registrado.",
-        "Si no estás de acuerdo con una nota, puedes pedir que se revise, una vez por examen y dentro de los 7 días.",
+        `Si no estás de acuerdo con una nota, puedes pedir que se revise, una vez por examen y dentro de los ${DIAS_APELACION} días.`,
       ],
     },
     {

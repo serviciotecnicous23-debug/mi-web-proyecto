@@ -190,9 +190,9 @@ Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
 | Ver la ficha con el contacto | Todos | — | Los de su iglesia | Lo suyo |
 | Descargar los reportes | Todos | — | Los de su iglesia | — |
 | Recibir los avisos de inscripción | Todos | — | Los de su iglesia | — |
-| Revisar escritas y cambiar notas (A3) | Todos | Todos | — | — |
-| Corregir o revocar documentos (A3) | Todos | — | — | — |
-| Abrir o cerrar la academia (A3) | Administración y Director | — | — | — |
+| Revisar escritas, cambiar notas y responder pedidos de revisión | Todos | Todos | — | — |
+| Revocar o restaurar documentos y corregir el nombre | Todos | — | — | — |
+| Abrir o cerrar la academia | Administración y Director | — | — | — |
 
 - «Los de su iglesia»: los alumnos cuya ficha eligió la iglesia aliada de la cuenta (`users.church_id`). Sin iglesia
   asignada no ve a nadie.
@@ -207,6 +207,40 @@ Moodle; el servidor la comprueba en cada ruta y el panel la muestra.
 - El aviso abre al alumno en el panel. Nadie recibe el aviso de su propia inscripción, e inscribirse dos veces no avisa
   dos veces.
 - No manda correos ni avisos al teléfono.
+
+**La revisión** (`server/academia-revision.ts`, fase A3). En el panel, la pestaña «Para revisar» (con su número) tiene:
+- **Los pedidos de revisión:** el alumno pide desde el resultado de su examen que se revise su último intento. Se pide una
+  vez por examen, dentro de `DIAS_APELACION` (7) días, con un mensaje. Llega un aviso a la Dirección académica y a los
+  profesores. Quien revisa ve el mensaje y las escritas de ese intento, cambia la nota si corresponde y responde; el
+  alumno recibe un aviso y ve la respuesta en su examen.
+- **Las escritas marcadas** por el corrector (nota dudosa, texto pegado, copia de la pregunta, lista de palabras o fuera
+  de tiempo). Cada tarjeta muestra la pregunta, la respuesta, las ideas de la clave con su peso y si el corrector las
+  encontró, los conceptos errados, las citas y la respuesta modelo. Se confirma la nota o se cambia, con un motivo que
+  queda registrado y que el alumno recibe en un aviso. Cualquier escrita de un alumno se puede revisar desde su página.
+- **Revisadas hace poco** y los pedidos respondidos en los últimos 30 días.
+
+**El cambio de nota recalcula en cadena** (`recalcularTrasRevision`):
+1. La nota del intento (`academia_intentos`: la parte objetiva queda fija y la escrita es el promedio de sus escritas).
+2. La mejor nota del examen.
+3. La materia, que ya no queda pegada en «aprobada»:
+   - si pasa a aprobada, recibe su certificado;
+   - si deja de estarlo, vuelve a «en curso» y su certificado se revoca solo, con el motivo (`PREFIJO_AUTO`).
+   - Un certificado que revocó una corrección de nota vuelve a valer si la nota vuelve a alcanzar; uno que revocó la
+     Dirección a mano, no.
+4. El nivel: se completa si ya cumple todo, o se reabre (con su certificado revocado) si dejó de cumplir.
+
+El resultado que ve el alumno se actualiza con la nota nueva y el motivo. Los intentos de antes del registro de intentos
+se recalculan con su último resultado guardado, si es ese intento; si no, la nota de la escrita cambia y la del examen no.
+
+**Las reglas de la revisión:**
+- Nadie revisa lo suyo: sus respuestas, su pedido de revisión, sus documentos o su nombre (lo hace otra persona).
+- Los documentos se revocan o se vuelven a dar por válidos con un motivo, y el nombre se corrige en la ficha y en los
+  documentos vigentes; el alumno recibe un aviso de cada cosa.
+- La Administración y el Director abren la academia desde el resumen del panel, con una confirmación que explica qué
+  pasa, y la pueden volver a poner en vista previa.
+- **El historial** (pestaña «Historial»: `audit_log` con `entity_type` «academia») guarda cada cambio de nota, cada
+  pedido respondido, cada documento revocado o restaurado, cada nombre corregido y cada apertura, con quién, a quién,
+  cuándo y por qué.
 
 **La Academia primero** (lo pidió Luis: en las clases de la Escuela no se está dando clase):
 - Para quien ve la academia (la vista previa o, cuando se abra, todos), el botón «Clases» de la barra de la app pasa a
@@ -361,6 +395,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   está abierta para todos. La ficha, sus opciones y su validación están en `shared/academia-inscripcion.ts`, con su
   prueba.
 - `server/academia-direccion.ts`: el panel de seguimiento, los reportes en CSV (`server/academia-csv.ts`) y el expediente.
+- `server/academia-revision.ts`: la revisión (la cola, el cambio de nota en cadena, los pedidos de revisión, los
+  documentos, la apertura y el historial). `client/src/components/academia/revision.tsx`: las tarjetas de la revisión.
 - `shared/academia-permisos.ts`: los roles y los permisos de la academia; `shared/academia-direccion.ts`, los tipos del panel.
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
@@ -383,6 +419,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `academia_certificados` | Los documentos: código, alumno, tipo (materia o nivel), título, nombre del día de emisión, nota, honores, vía, fecha y revocación con su motivo |
 | `academia_respuestas` | Lo escrito, con la nota automática, el detalle, la marca para revisar y la revisión humana (nota final, revisor, motivo) |
 | `academia_materias` | La inscripción en la materia (`inicio_at`), estado, nota, componentes y vía (cursada, suficiencia o convalidada) |
+| `academia_intentos` | Cada intento cerrado de un examen: la parte objetiva, la escrita, la nota (y la del corrector), los aciertos y cada respuesta objetiva (para el análisis de preguntas) |
+| `academia_apelaciones` | Los pedidos de revisión: el examen y el intento, el mensaje del alumno, la respuesta, quién respondió y cuándo (uno por examen) |
 | `academia_inscripciones` | La ficha de inscripción: nombres, apellidos, país, ciudad, teléfono, nacimiento, iglesia aliada u otra, pastor, tiempo en la fe, bautismo, ministerio, cómo conoció la academia, qué espera aprender, la foto del carné (`foto_url`) y sus fechas |
 | `academia_versiculos` | Intentos, fallos, puntaje y la caja del repaso espaciado |
 
@@ -414,6 +452,14 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 | `GET expediente` | Mi expediente: mis materias con su avance y su nota, mis niveles y mis certificados |
 | `GET direccion/resumen`, `GET direccion/alumnos`, `GET direccion/alumno/:alumnoId`, `GET direccion/materia/:materiaId` y `GET direccion/actividad` | El panel de seguimiento (cada rol, con su alcance) |
 | `GET direccion/exportar/:archivo` | Los reportes: `alumnos.csv`, `avance.csv` y `materias.csv` |
+| `GET direccion/revision` y `GET direccion/alumno/:alumnoId/escritas` | Lo que hay que revisar (las escritas marcadas, los pedidos de revisión y lo revisado hace poco) y todas las escritas de un alumno |
+| `POST direccion/revision/:respuestaId` | Revisar una escrita: `{accion: "confirmar"}` o `{accion: "cambiar", nota, motivo}` (recalcula en cadena) |
+| `POST direccion/apelacion/:apelacionId` | Responder un pedido de revisión y cerrarlo: `{respuesta}` |
+| `POST direccion/documento/:codigo/revocar` y `/restaurar` | Revocar un documento o volver a darlo por válido: `{motivo}` |
+| `POST direccion/alumno/:alumnoId/nombre` | Corregir el nombre en la ficha y en los documentos vigentes: `{nombres, apellidos, motivo}` |
+| `POST direccion/apertura` | Abrir la academia para todos o volver a la vista previa: `{abierta}` |
+| `GET direccion/historial` | El historial de los cambios de la academia |
+| `POST examen/:materiaId/apelacion` y `POST integral/:nivel/apelacion` | El alumno pide la revisión de su último intento: `{mensaje}` |
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné, con su QR (pide la inscripción) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
@@ -434,7 +480,7 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 |---|---|---|
 | A1 · La base | Motor del examen en dos partes y corrector, formato de lecciones con medios, portada, materia con sílabo, lector, repaso, versículo, examen con revisión y la primera materia completa («La salvación») | Hecho (vista previa) |
 | A2 · Nivel 1 completo | 8 materias, audio, examen integral, certificados y diploma con QR, matrícula, reglamento, carné, expediente, estatus en el perfil, pestaña en Clases y acceso de las cuentas pendientes | Sigue: las 8 materias del Nivel 1 hechas (32 lecciones, 96 de repaso, 240 del final y 24 escritas), el examen integral, el pacto del creyente, los certificados con QR verificable, la inscripción con su ficha y la de cada materia, el reglamento, el estatus, el carné con su foto, la Academia primero en Clases, el panel de seguimiento con sus avisos, reportes y permisos, el expediente y la insignia en el perfil; faltan la constancia, las cuentas pendientes y el audio |
-| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | |
+| A3 · Dirección académica | Revisión de escritas y apelaciones, cambio de notas con motivo, análisis de preguntas, revisión del contenido, asignaciones a los cursos de la Escuela y mentores | Sigue: la revisión de escritas, los pedidos de revisión, el cambio de notas en cadena, los documentos, la apertura y el historial están hechos; faltan el análisis de preguntas, la revisión del contenido, las asignaciones a los cursos de la Escuela y los mentores |
 | A4 · Nivel 2 | Mini pruebas, escritos breves, repaso espaciado, prueba diagnóstica, suficiencia y declaración de fe | |
 | A5 · Nivel 3 | Práctica ministerial, grupos en vivo, enseñanza grabada y portafolio | |
 | A6 · Niveles 4 y 5 y primeras especialidades | Proyecto final y defensa | |

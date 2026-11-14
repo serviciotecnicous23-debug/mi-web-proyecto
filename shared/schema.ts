@@ -1396,6 +1396,43 @@ export const academiaCertificados = pgTable(
   (t) => [unique().on(t.userId, t.tipo, t.ref)],
 );
 
+/** Cada intento cerrado de un examen: sus partes y su nota (la revisión de una escrita la recalcula). */
+export const academiaIntentos = pgTable(
+  "academia_intentos",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    clave: text("clave").notNull(),
+    intento: integer("intento").notNull(),
+    objetiva: integer("objetiva").notNull(),
+    escrita: integer("escrita").notNull(),
+    nota: integer("nota").notNull(),
+    notaAuto: integer("nota_auto").notNull(),
+    aciertos: integer("aciertos").notNull(),
+    de: integer("de").notNull(),
+    respuestas: jsonb("respuestas").notNull().default([]),
+    cerradoAt: timestamp("cerrado_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.clave, t.intento] })],
+);
+
+/** Los pedidos de revisión de un examen (uno por examen, dentro de los días que dice el reglamento). */
+export const academiaApelaciones = pgTable(
+  "academia_apelaciones",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    clave: text("clave").notNull(),
+    intento: integer("intento").notNull(),
+    mensaje: text("mensaje").notNull(),
+    estado: text("estado").notNull().default("pendiente"),
+    respuesta: text("respuesta"),
+    resueltaPor: integer("resuelta_por"),
+    resueltaAt: timestamp("resuelta_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.clave)],
+);
+
 // ========== DIEZMOS Y OFRENDAS ==========
 
 export const tithes = pgTable("tithes", {

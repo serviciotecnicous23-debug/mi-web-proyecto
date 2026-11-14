@@ -14,14 +14,14 @@ import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/ac
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, MateriaAvance, MateriaReporte, MateriaSeguimiento,
 } from "@shared/academia-direccion";
-import { accesoDe, claveFinal, frenar, inscritoDe } from "./academia-comun";
+import { academiaAbierta, accesoDe, claveFinal, frenar, inscritoDe } from "./academia-comun";
 import { fichaDe } from "./academia-inscripcion";
 import { aCsv } from "./academia-csv";
 
 type Permiso = { userId: number; role: string; alcance: Alcance; iglesiaId: number | null };
 
 /** Quien pide el panel y su alcance para una capacidad (o la respuesta de error ya enviada). */
-async function permisoDe(req: Request, res: Response, capacidad: Capacidad): Promise<Permiso | null> {
+export async function permisoDe(req: Request, res: Response, capacidad: Capacidad): Promise<Permiso | null> {
   const acceso = await accesoDe(req);
   if (!acceso.userId) {
     res.status(401).json({ message: "Entra con tu cuenta." });
@@ -251,7 +251,7 @@ async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDet
       };
     }),
     actividad,
-    puede: { contacto },
+    puede: { contacto, revisar: false, documentos: false },
   };
 }
 
@@ -269,6 +269,16 @@ function contar(valores: string[]): { nombre: string; n: number }[] {
   const m = new Map<string, number>();
   for (const v of valores) if (v) m.set(v, (m.get(v) ?? 0) + 1);
   return [...m].map(([nombre, n]) => ({ nombre, n })).sort((a, b) => b.n - a.n || a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/** Lo que espera revisión (solo para quien revisa): las escritas marcadas y los pedidos de revisión pendientes. */
+async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
+  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0 };
+  const { rows } = await pool.query(
+    `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
+            (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones`,
+  );
+  return { escritas: Number(rows[0]?.escritas ?? 0), apelaciones: Number(rows[0]?.apelaciones ?? 0) };
 }
 
 async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: string } | null> {
@@ -312,7 +322,9 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         iglesias: contar(filas.map((f) => f.iglesia || "Sin iglesia")),
         detenidos: filas.filter((f) => f.enCurso.length > 0 && ahora - Date.parse(f.ultima) >= DIAS_DETENIDO * 86_400_000).slice(0, 50),
         actividad: await actividadDe(ids, 40),
-        puede: { exportar: puede(p, "exportar"), contacto: puede(p, "contacto") },
+        abierta: await academiaAbierta(),
+        pendientes: await pendientesDe(p),
+        puede: { exportar: puede(p, "exportar"), contacto: puede(p, "contacto"), revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), abrir: puede(p, "abrir") },
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -361,7 +373,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       const [fila] = await filasDe(p, contacto, id);
       if (!fila) return res.status(404).json({ message: "No existe ese alumno, o no es de tu iglesia." });
       res.setHeader("Cache-Control", "no-store");
-      res.json(await detalleDe(fila, contacto));
+      res.json({ ...(await detalleDe(fila, contacto)), puede: { contacto, revisar: puede(p, "revisar"), documentos: puede(p, "documentos") } });
     } catch (err) {
       console.error("[academia] dirección, alumno:", err);
       res.sendStatus(500);

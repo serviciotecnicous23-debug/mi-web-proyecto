@@ -4,8 +4,9 @@
 // solo a los alumnos de su iglesia.
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, BookOpen, Download, History, LayoutDashboard, Lock, Search, ShieldCheck, Users,
+  ArrowLeft, BookOpen, ClipboardCheck, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,10 @@ import { loginUrl } from "@/lib/login-redirect";
 import { NOMBRE_ACADEMIA, NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia";
 import { CAPACIDADES, ROLES_ACADEMIA, TEXTO_ALCANCE, rolAcademia } from "@shared/academia-permisos";
 import type { ActividadItem, AlumnoFila, DireccionResumen } from "@shared/academia-direccion";
-import { enlaceReporte, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, type ReporteCsv } from "@/components/academia/api";
+import {
+  cambiarApertura, enlaceReporte, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
+} from "@/components/academia/api";
+import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
 
@@ -40,10 +44,79 @@ function conOtros(filas: { nombre: string; n: number }[], tope = 7) {
   return [...filas.slice(0, tope), { nombre: "Otros", n: resto }];
 }
 
+function Apertura({ abierta }: { abierta: boolean }) {
+  const qc = useQueryClient();
+  const [confirmando, setConfirmando] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const cambiar = async () => {
+    setOcupado(true);
+    setError(null);
+    try {
+      await cambiarApertura(!abierta);
+      setConfirmando(false);
+      void qc.invalidateQueries({ queryKey: ["academia"] });
+      void qc.invalidateQueries({ queryKey: ["/api/academia/abierta"] });
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <section className={`glass-card p-5 border ${abierta ? "border-emerald-500/40" : "border-orange-500/40"}`} data-testid="direccion-apertura" data-abierta={abierta}>
+      <div className="flex flex-col md:flex-row md:items-center gap-3">
+        {abierta ? <LockOpen className="w-6 h-6 text-emerald-600 shrink-0" /> : <Lock className="w-6 h-6 text-orange-500 shrink-0" />}
+        <div className="flex-1">
+          <p className="font-semibold">{abierta ? "La academia está abierta para todos" : "La academia está en vista previa"}</p>
+          <p className="text-sm text-muted-foreground">
+            {abierta
+              ? "Todos los miembros la ven en el menú y en la barra de la app, y los visitantes ven su catálogo."
+              : "Solo la administración, los profesores y las iglesias aliadas la ven. Ábrela cuando el Nivel 1 esté revisado."}
+          </p>
+        </div>
+        {!confirmando && (
+          <Button variant={abierta ? "outline" : "default"} className={abierta ? "" : "fire-btn-primary"} onClick={() => setConfirmando(true)} data-testid="apertura-cambiar">
+            {abierta ? "Volver a la vista previa" : "Abrir la academia para todos"}
+          </Button>
+        )}
+      </div>
+      {confirmando && (
+        <div className="mt-4 rounded-xl border border-border p-4 space-y-3">
+          <p className="text-sm">
+            {abierta
+              ? "La academia dejará de verse para los miembros y los visitantes. Los alumnos inscritos no pierden nada de su avance."
+              : "Al abrirla, la verán todos los miembros (el botón «Academia» en la barra y en el menú), los visitantes verán el catálogo y la primera lección de cada materia, y cualquiera con cuenta podrá inscribirse."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button className="fire-btn-primary" onClick={cambiar} disabled={ocupado} data-testid="apertura-confirmar">
+              {ocupado ? "Guardando…" : abierta ? "Sí, volver a la vista previa" : "Sí, abrirla para todos"}
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmando(false)} disabled={ocupado}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mt-3" role="alert">{error}</p>}
+    </section>
+  );
+}
+
 function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }) {
   const t = d.totales;
+  const porRevisar = d.pendientes.escritas + d.pendientes.apelaciones;
   return (
     <div className="space-y-6">
+      {d.puede.abrir && <Apertura abierta={d.abierta} />}
+      {d.puede.revisar && porRevisar > 0 && (
+        <button type="button" onClick={() => irA("revisar")} className="glass-card w-full p-4 flex items-center gap-3 text-left border border-orange-500/40 hover:-translate-y-0.5 transition" data-testid="direccion-por-revisar">
+          <ClipboardCheck className="w-5 h-5 text-orange-500 shrink-0" />
+          <span className="flex-1 text-sm">
+            <strong>Para revisar:</strong> {d.pendientes.escritas} {d.pendientes.escritas === 1 ? "respuesta escrita" : "respuestas escritas"} y {d.pendientes.apelaciones}{" "}
+            {d.pendientes.apelaciones === 1 ? "pedido de revisión" : "pedidos de revisión"}.
+          </span>
+          <span className="text-sm font-medium">Revisar</span>
+        </button>
+      )}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5" data-testid="direccion-indicadores">
         <Indicador etiqueta="Inscritos" valor={t.inscritos} nota={`${numero(t.nuevosMes)} en los últimos 30 días`} testId="indicador-inscritos" />
         <Indicador etiqueta="Nuevos esta semana" valor={t.nuevosSemana} />
@@ -200,6 +273,78 @@ function Alumnos({ resumen }: { resumen: DireccionResumen }) {
   );
 }
 
+function Revisar() {
+  const { user } = useAuth();
+  const q = useRevision();
+  /** Nadie revisa lo suyo: sus tarjetas se ven sin botones. */
+  const ajeno = (userId: number) => !user || user.id !== userId;
+  if (q.isLoading) return <p className="text-muted-foreground">Cargando lo que hay para revisar…</p>;
+  if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
+  const { pendientes, apelaciones, recientes } = q.data;
+  const abiertas = apelaciones.filter((a) => a.estado === "pendiente");
+  const cerradas = apelaciones.filter((a) => a.estado !== "pendiente");
+  return (
+    <div className="space-y-10" data-testid="direccion-revisar">
+      <section className="space-y-3">
+        <h3 className="font-display text-xl font-bold">Pedidos de revisión ({abiertas.length})</h3>
+        <p className="text-sm text-muted-foreground">
+          Cada alumno puede pedir que se revise un examen una vez, dentro de los 7 días. Revisa sus respuestas, cambia la nota si corresponde y respóndele: le
+          llega un aviso.
+        </p>
+        {abiertas.length ? abiertas.map((a) => <TarjetaApelacion key={a.id} a={a} puedeRevisar={ajeno(a.alumno.userId)} />) : <p className="text-sm text-muted-foreground">No hay pedidos pendientes.</p>}
+      </section>
+      <section className="space-y-3">
+        <h3 className="font-display text-xl font-bold">Respuestas escritas para revisar ({pendientes.length})</h3>
+        <p className="text-sm text-muted-foreground">
+          El corrector las marcó por una nota dudosa, texto pegado, una copia de la pregunta, una lista de palabras o por llegar fuera de tiempo. Su nota
+          automática vale mientras nadie la cambie. Si cambias una nota, se recalculan el examen y la materia, y el alumno recibe un aviso con el motivo.
+        </p>
+        {pendientes.length ? pendientes.map((it) => <TarjetaRevision key={it.id} item={it} puedeRevisar={ajeno(it.alumno.userId)} />) : <p className="text-sm text-muted-foreground">Nada pendiente.</p>}
+      </section>
+      {cerradas.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="font-display text-xl font-bold">Pedidos respondidos en los últimos 30 días</h3>
+          {cerradas.map((a) => <TarjetaApelacion key={a.id} a={a} puedeRevisar={false} />)}
+        </section>
+      )}
+      {recientes.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="font-display text-xl font-bold">Revisadas hace poco</h3>
+          {recientes.map((it) => <TarjetaRevision key={it.id} item={it} puedeRevisar={ajeno(it.alumno.userId)} />)}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function Historial() {
+  const q = useHistorial();
+  if (q.isLoading) return <p className="text-muted-foreground">Cargando el historial…</p>;
+  if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
+  const items = q.data.historial;
+  return (
+    <section className="glass-card p-5" data-testid="direccion-historial">
+      <p className="text-sm text-muted-foreground mb-4">Cada cambio de nota, cada pedido de revisión respondido, cada documento revocado o restaurado, cada nombre corregido y cada apertura de la academia, con quién lo hizo y por qué.</p>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Todavía no hay cambios.</p>
+      ) : (
+        <ol className="space-y-4">
+          {items.map((h) => (
+            <li key={h.id} className="text-sm border-b border-border/60 pb-3 last:border-0">
+              <p>
+                <span className="font-semibold">{h.por}</span> {h.texto.charAt(0).toLowerCase() + h.texto.slice(1)}
+                {h.alumno && <> · <Link href={enlaceAlumno(h.alumno.userId)} className="underline">{h.alumno.nombre}</Link></>}
+              </p>
+              {h.motivo && <p className="text-muted-foreground mt-0.5">Motivo: «{h.motivo}»</p>}
+              <p className="text-xs text-muted-foreground mt-0.5">{new Date(h.fecha).toLocaleString("es")}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 const FILTRO_REGISTRO: { id: "" | ActividadItem["tipo"]; texto: string }[] = [
   { id: "", texto: "Todo" },
   { id: "inscripcion", texto: "Inscripciones en la academia" },
@@ -290,7 +435,7 @@ export default function AcademiaDireccion() {
   const q = useDireccionResumen();
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    return t && ["resumen", "alumnos", "materias", "registro", "permisos"].includes(t) ? t : "resumen";
+    return t && ["resumen", "revisar", "alumnos", "materias", "registro", "historial", "permisos"].includes(t) ? t : "resumen";
   });
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -338,12 +483,22 @@ export default function AcademiaDireccion() {
         <Tabs value={tab} onValueChange={setTab} className="mt-6">
           <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg mb-6">
             <TabsTrigger value="resumen" className="flex-1 min-w-[110px] gap-1.5"><LayoutDashboard className="w-4 h-4" /> Resumen</TabsTrigger>
+            {d.puede.revisar && (
+              <TabsTrigger value="revisar" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-revisar">
+                <ClipboardCheck className="w-4 h-4" /> Para revisar
+                {d.pendientes.escritas + d.pendientes.apelaciones > 0 && (
+                  <span className="ml-1 rounded-full bg-orange-600 text-white text-[11px] px-1.5 leading-5">{d.pendientes.escritas + d.pendientes.apelaciones}</span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="alumnos" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-alumnos"><Users className="w-4 h-4" /> Alumnos</TabsTrigger>
             <TabsTrigger value="materias" className="flex-1 min-w-[110px] gap-1.5"><BookOpen className="w-4 h-4" /> Materias</TabsTrigger>
             <TabsTrigger value="registro" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-registro"><History className="w-4 h-4" /> Registro</TabsTrigger>
+            {d.puede.revisar && <TabsTrigger value="historial" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-historial"><FileClock className="w-4 h-4" /> Historial</TabsTrigger>}
             <TabsTrigger value="permisos" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-permisos"><ShieldCheck className="w-4 h-4" /> Roles y permisos</TabsTrigger>
           </TabsList>
           <TabsContent value="resumen"><Resumen d={d} irA={setTab} /></TabsContent>
+          <TabsContent value="revisar">{tab === "revisar" && d.puede.revisar && <Revisar />}</TabsContent>
           <TabsContent value="alumnos">{tab === "alumnos" && <Alumnos resumen={d} />}</TabsContent>
           <TabsContent value="materias">
             <section className="glass-card p-5">
@@ -352,6 +507,7 @@ export default function AcademiaDireccion() {
             </section>
           </TabsContent>
           <TabsContent value="registro">{tab === "registro" && <Registro />}</TabsContent>
+          <TabsContent value="historial">{tab === "historial" && d.puede.revisar && <Historial />}</TabsContent>
           <TabsContent value="permisos"><Permisos role={user?.role} /></TabsContent>
         </Tabs>
       </div>

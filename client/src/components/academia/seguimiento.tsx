@@ -207,9 +207,9 @@ export function TablaAvance({ materias, conCertificado = true, propio = false }:
 }
 
 /** Los niveles completos y los certificados de un alumno (para su expediente, `propio`, y para la Dirección académica). */
-export function NivelesYCertificados({ d, propio = false }: { d: AlumnoDetalle; propio?: boolean }) {
+export function NivelesYCertificados({ d, propio = false, sinCertificados = false }: { d: AlumnoDetalle; propio?: boolean; sinCertificados?: boolean }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className={`grid gap-5 ${sinCertificados ? "" : "md:grid-cols-2"}`}>
       <section className="glass-card p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2"><GraduationCap className="w-4 h-4 text-orange-600" /> Niveles</h3>
         {d.niveles.filter((n) => n.completado).length === 0 ? (
@@ -225,7 +225,7 @@ export function NivelesYCertificados({ d, propio = false }: { d: AlumnoDetalle; 
           </ul>
         )}
       </section>
-      <section className="glass-card p-5">
+      {!sinCertificados && <section className="glass-card p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2"><Award className="w-4 h-4 text-orange-600" /> Certificados</h3>
         {d.certificados.length === 0 ? (
           <p className="text-sm text-muted-foreground">{propio ? "Todavía no tienes certificados." : "Todavía no tiene certificados."}</p>
@@ -239,7 +239,7 @@ export function NivelesYCertificados({ d, propio = false }: { d: AlumnoDetalle; 
             ))}
           </ul>
         )}
-      </section>
+      </section>}
     </div>
   );
 }
