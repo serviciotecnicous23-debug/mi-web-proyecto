@@ -10,15 +10,16 @@
 import { MURO_DESDE_Z, MURO_TRAMOS, MURO_TRAMO_LARGO } from "@shared/muro";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD } from "@shared/personajes";
 import * as THREE from "three";
-import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
-import { sombraDeContacto } from "../three/luces";
+import { C, GeoBuilder, matteMat, matteMatLiso, shinyMat } from "../three/builder";
+import { sombraDeContacto, sombrasDeContacto } from "../three/luces";
 import { Telas } from "../three/telas";
-import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
+import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, pisoConTono, tiles, type Course } from "../three/structures";
 import type { SkyUniforms } from "../three/structures";
 import {
   AREA_RECT, ARBOLES, CALLES_DE_AREA, CAMARA, CASA_MEDIDA, ESCALINATA, ESCUELA, LIMITES, MONTE_ORACION, MURO_ORIENTE, ORACION_PUNTO, PALACIO,
   PALACIO_PORTICO, PARCELAS, PLAZA, POZO, PUERTA, PUESTOS, PULPITO, SABIDURIA, SABIDURIA_COLUMNAS, SUELO, rellenoDeCasas, type Parcela,
 } from "./plano";
+import { Lienzo, azarDe, manchasDeMuro, revoque, ruido2, sillares, suave, type Azar, type Cara, type Hueco } from "./muros-casa";
 
 // ---------------------------------------------------------------- utilidades
 function mulberry32(seed: number) {
@@ -686,29 +687,39 @@ function buildSabiduria(root: THREE.Group, fuegos: THREE.Vector3[]) {
 }
 
 // ---------------------------------------------------------------- las casas
+/**
+ * El revoque de barro del adobe. En el sombreador cae como tela (liso, de grano fino): como estuco, con el sol rasante se
+ * arrugaba. Lo de hecho a mano lo dan las manchas y las lomas del revoque (ciudad/muros-casa.ts).
+ */
 const ADOBES = ["#c9a06a", "#c29563", "#d1a874", "#bf9a68"];
 const PIEDRAS = ["#ddd0b0", "#d6c7a4", "#e3d7b8", "#cfc09c"];
 const TELAS_TIENDA = ["#3b2f2a", "#4a3a2e", "#43352b", "#2f2723"];
+/** El barro apisonado de los terrados (liso, como el revoque). */
+const TERRADOS = ["#c49e6c", "#bf9b68", "#c9a571", "#b9965f"];
 
-/** Una casa en coordenadas propias (la puerta mira a +z, el centro en 0). */
 /**
  * Lo que dice que en la casa vive gente (pedido de Luis: que se vean más los detalles, las cosas pequeñas). Cambia de
  * casa en casa (con su semilla): la alfombra puesta a airear sobre el pretil, la ropa tendida en el terrado, el lino
  * secándose (Josué 2:6), la leña apilada, la contraventana abierta, los desagües del techo, una maceta en la puerta y,
- * de noche, una lamparita encendida junto a la puerta.
+ * de noche, una lamparita encendida junto a la puerta. Devuelve dónde quedaron la alfombra y el desagüe de atrás (ahí no
+ * van las puntas de las vigas).
  */
-function vidaDeCasa(m: GeoBuilder, v: GeoBuilder, w: number, d: number, h: number, muro: string) {
+function vidaDeCasa(m: GeoBuilder, v: GeoBuilder, w: number, d: number, h: number, muro: string, piedra: boolean): { alfombra: number | null; desague: number } {
   const techo = h + 0.14;
   // desagües de madera en el borde del techo (atrás y a un costado)
-  m.box(0.08, 0.06, 0.32, C.cedroOsc, { x: rr(-w / 3, w / 3), y: h + 0.02, z: -d / 2 - 0.16 });
+  const desague = rr(-w / 3, w / 3);
+  m.box(0.08, 0.06, 0.32, C.cedroOsc, { x: desague, y: h + 0.02, z: -d / 2 - 0.16 });
   if (rnd() < 0.6) m.box(0.32, 0.06, 0.08, C.cedroOsc, { x: (rnd() < 0.5 ? -1 : 1) * (w / 2 + 0.16), y: h + 0.02, z: rr(-d / 4, d / 4) });
-  // una alfombra a airear sobre el pretil del frente
+  // una alfombra a airear sobre el pretil del frente (en la de piedra, delante de la cornisa)
+  let alfombra: number | null = null;
   if (rnd() < 0.55) {
     const x = rr(-w / 4, w / 4), col = pick([C.carmesi, "#8f5a3a", C.azul, "#c98a2b", "#5b2a6e"]);
-    m.box(0.95, 0.62, 0.03, col, { x, y: h + 0.16, z: d / 2 + 0.1 });
-    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h - 0.08, z: d / 2 + 0.1 });
-    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h + 0.36, z: d / 2 + 0.1 });
-    m.box(0.2, 0.2, 0.036, "#e2c27a", { x, y: h + 0.14, z: d / 2 + 0.1, rz: Math.PI / 4 });
+    const z = d / 2 + (piedra ? 0.1 : 0.035);
+    alfombra = x;
+    m.box(0.95, 0.62, 0.03, col, { x, y: h + 0.16, z });
+    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h - 0.08, z });
+    m.box(0.95, 0.06, 0.035, "#e2c27a", { x, y: h + 0.36, z });
+    m.box(0.2, 0.2, 0.036, "#e2c27a", { x, y: h + 0.14, z, rz: Math.PI / 4 });
   }
   // la ropa tendida en el terrado
   if (rnd() < 0.45) {
@@ -740,32 +751,89 @@ function vidaDeCasa(m: GeoBuilder, v: GeoBuilder, w: number, d: number, h: numbe
     m.lathe([[0, 0], [0.1, 0], [0.13, 0.2], [0.11, 0.22], [0, 0.21]], vary("#b0643a", 0.06), { x, z: d / 2 + 0.22 });
     for (let k = 0; k < 4; k++) m.cone(0.05, 0.28, pick([C.hoja, C.hojaClara]), { x: x + rr(-0.05, 0.05), y: 0.32, z: d / 2 + 0.22 + rr(-0.05, 0.05), rz: rr(-0.3, 0.3) }, 5);
   }
-  // de noche, una lamparita en un nicho junto a la puerta
+  // de noche, una lamparita en un nicho junto a la puerta (en la de piedra, más allá de la jamba)
   if (rnd() < 0.5) {
-    m.box(0.22, 0.2, 0.08, vary(muro, 0.05), { x: -w * 0.18 + 0.58, y: 1.25, z: d / 2 + 0.05 });
-    v.sphere(0.06, "#ffcf7a", { x: -w * 0.18 + 0.58, y: 1.27, z: d / 2 + 0.1 }, 6, 5);
+    const x = -w * 0.18 + (piedra ? 0.66 : 0.58);
+    m.box(0.22, 0.2, 0.08, vary(muro, 0.05), { x, y: 1.25, z: d / 2 + 0.05 });
+    v.sphere(0.06, "#ffcf7a", { x, y: 1.27, z: d / 2 + 0.1 }, 6, 5);
   }
+  return { alfombra, desague };
 }
 
-function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number, obras: ReadonlySet<string> = new Set()) {
+/**
+ * La puerta de tablas, un poco adentro del muro (`z` es la cara del núcleo del muro): dos ranuras entre las tablas, la
+ * aldaba de anillo y, si las lleva, dos hileras de clavos arriba y abajo (nada que se cruce).
+ */
+function puertaDeTablas(m: GeoBuilder, x: number, z: number, ancho: number, alto: number, y0: number, color: string, clavos: boolean) {
+  m.box(ancho, alto, 0.03, color, { x, y: y0 + alto / 2, z });
+  for (const dx of [-ancho / 6, ancho / 6]) m.box(0.012, alto - 0.06, 0.006, C.cedroOsc, { x: x + dx, y: y0 + alto / 2, z: z + 0.017 });
+  if (clavos) for (const y of [0.22, alto - 0.22]) for (const k of [-1.5, -0.5, 0.5, 1.5]) m.box(0.022, 0.022, 0.01, "#4a4038", { x: x + k * ancho * 0.23, y: y0 + y, z: z + 0.02 });
+  m.torus(0.045, 0.008, C.bronceOsc, { x: x + ancho * 0.32, y: y0 + Math.min(0.88, alto * 0.55), z: z + 0.026 }, 4, 8);
+}
+
+/** El terrado de barro apisonado, con sus manchas y más oscuro junto al pretil. `adentro`: lo grueso del pretil. */
+function terradoDeCasa(m: GeoBuilder, w: number, d: number, y: number, adentro: number, az: Azar) {
+  const base = new THREE.Color(TERRADOS[Math.floor(az() * TERRADOS.length)]);
+  const ox = az() * 40, oz = az() * 40;
+  const x0 = -w / 2 + adentro, x1 = w / 2 - adentro, z0 = -d / 2 + adentro, z1 = d / 2 - adentro;
+  const color = (x: number, z: number) => base.clone().multiplyScalar(0.93 + ruido2(x * 1.6 + ox, z * 1.6 + oz) * 0.14);
+  const tono = (x: number, z: number) => 1 - 0.16 * (1 - suave(0, 0.35, Math.min(x - x0, x1 - x, z - z0, z1 - z)));
+  m.raw(pisoConTono(x0, z0, x1, z1, color, y, 0.5, tono));
+  return base;
+}
+
+/** Las hiladas de un muro de piedra: el zócalo (si lo hay) y las demás de alto parecido, no igual. */
+function hiladasDe(desde: number, hasta: number, zocalo: number, alto: number, az: Azar): [number, number][] {
+  const out: [number, number][] = zocalo > 0 ? [[desde, desde + zocalo]] : [];
+  const y0 = desde + zocalo;
+  const n = Math.max(1, Math.round((hasta - y0) / alto));
+  const altos = Array.from({ length: n }, () => 0.9 + az() * 0.2);
+  const suma = altos.reduce((a, b) => a + b, 0);
+  let y = y0;
+  for (const a of altos) {
+    const y1 = y + ((hasta - y0) * a) / suma;
+    out.push([y, y1]);
+    y = y1;
+  }
+  out[out.length - 1][1] = hasta;
+  return out;
+}
+
+/** Las cuatro caras de una caja de muro, dando la vuelta desde el frente (que mira a +z). */
+function carasDeCaja(cx: number, y: number, cz: number, w: number, d: number): Cara[] {
+  return [
+    { o: [cx - w / 2, y, cz + d / 2], u: [1, 0], largo: w },
+    { o: [cx + w / 2, y, cz + d / 2], u: [0, -1], largo: d },
+    { o: [cx + w / 2, y, cz - d / 2], u: [-1, 0], largo: w },
+    { o: [cx - w / 2, y, cz - d / 2], u: [0, 1], largo: d },
+  ];
+}
+
+/**
+ * Una casa en coordenadas propias (la puerta mira a +z, el centro en 0; docs/guia-visual.md, sección 7):
+ * - La tienda (nivel 0): de pelo de cabra a franjas, de tela con viento (`telas`).
+ * - La casa de adobe: el revoque de barro con sus manchas y algún pedazo caído (ciudad/muros-casa.ts), el zócalo de
+ *   piedras, las puntas de las vigas del techo, los dinteles de madera y el pretil redondeado.
+ * - La de piedra: sillares con bisel y esquinas trabadas, zócalo, cornisa, pretil con su albardilla, la puerta con sus
+ *   jambas y su dintel de piedra, y la ventana con su marco.
+ * - Todas: el terrado de barro apisonado (en algunas, con el rodillo de piedra para apisonarlo) y la puerta de tablas.
+ * Lo nuevo va con su propio azar (`azarDe`): el azar de la ciudad se gasta igual que antes, así lo demás queda igual.
+ */
+function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number, obras: ReadonlySet<string>, telas: Telas) {
   rnd = mulberry32(seed);
+  const az = azarDe(seed * 7 + 13);
   const [w, d, h] = CASA_MEDIDA[nivel];
   if (nivel === 0) {
-    // tienda de pelo de cabra (Cantares 1:5), a franjas, con el frente levantado sobre dos varas
+    // tienda de pelo de cabra (Cantares 1:5), a franjas, de tela con viento: la falda de atrás baja casi hasta el suelo
+    // y el frente queda alzado como alero sobre dos varas; entre las varas la tela cuelga un poco
     const franjas = [pick(TELAS_TIENDA), pick(["#7a6450", "#86705a", "#6e5a47"])];
-    const alto = h + 0.1, alero = 0.45, fr = d / 2;
-    const L = Math.hypot(fr, alto - alero), a = Math.atan2(alto - alero, fr);
-    const n = 5;
-    for (let k = 0; k < n; k++) {
-      const x = -w / 2 + (w / n) * (k + 0.5);
-      // la falda de atrás baja casi hasta el suelo; el frente queda alzado como alero
-      m.box(w / n + 0.01, 0.05, L, franjas[k % 2], { x, y: (alto + alero) / 2, z: -d / 4, rx: -a });
-      m.box(w / n + 0.01, 0.05, fr + 0.45, franjas[k % 2], { x, y: alto - 0.32, z: (fr + 0.45) / 2 - 0.02, rx: 0.42 });
-    }
+    const alto = h + 0.1, alero = 0.45, fr = d / 2, frente = alto - 0.55;
+    telas.toldo([0, (alto + alero) / 2, -fr / 2], [1, 0], w + 0.06, fr, franjas, 0.3, { caida: alto - alero, bajo: [0, -1], cuelga: 0.12, franja: (w + 0.06) / 5 });
+    telas.toldo([0, (alto + frente) / 2, (fr + 0.45) / 2], [1, 0], w + 0.06, fr + 0.45, franjas, 0.5, { caida: alto - frente, bajo: [0, 1], cuelga: 0.1, franja: (w + 0.06) / 5 });
     m.box(w + 0.06, 0.07, 0.09, "#2f2723", { y: alto + 0.02 }); // la cumbrera
     for (const sg of [-1, 1]) {
-      // costados de atrás (del suelo al techo) y varas del frente
-      m.box(0.05, alero + 0.45, d / 2, franjas[0], { x: sg * w / 2, y: (alero + 0.45) / 2, z: -d / 4 });
+      // los costados de atrás (tela que cuelga) y las varas del frente
+      telas.pano([sg * (w / 2 + 0.01), 0.55, sg > 0 ? -fr : 0], [0, sg], fr, 0.55, franjas[0], "arriba", { viento: 0.15 });
       m.cyl(0.035, 0.035, alto - 0.5, C.cedroOsc, { x: sg * (w / 2 - 0.08), y: (alto - 0.5) / 2, z: fr + 0.32 }, 5);
       m.box(0.02, 0.02, 1.0, "#cdbb95", { x: sg * (w / 2 + 0.25), y: 0.45, z: fr + 0.62, rx: 0.75 }); // cuerdas
       m.box(0.08, 0.1, 0.08, C.cedroOsc, { x: sg * (w / 2 + 0.25), y: 0.05, z: fr + 0.95 });
@@ -791,46 +859,167 @@ function casaLocal(m: GeoBuilder, v: GeoBuilder, nivel: number, seed: number, ob
   }
   const piedra = nivel >= 2;
   const muro = piedra ? pick(PIEDRAS) : pick(ADOBES);
-  m.box(w, h, d, vary(muro, 0.03), { y: h / 2 });
-  if (piedra) for (let k = 1; k < 5; k++) m.box(w + 0.02, 0.03, d + 0.02, vary(C.junta, 0.04), { y: (h * k) / 5 });
-  else m.box(w + 0.03, 0.22, d + 0.03, vary("#a9875a", 0.05), { y: 0.11 });
-  // techo plano con pretil (Deuteronomio 22:8)
-  m.box(w + 0.16, 0.14, d + 0.16, piedra ? C.cedroOsc : "#8a6a4a", { y: h + 0.07 });
-  for (const sg of [-1, 1]) {
-    m.box(w + 0.16, 0.32, 0.12, vary(muro, 0.04), { y: h + 0.3, z: sg * (d / 2 + 0.02) });
-    m.box(0.12, 0.32, d + 0.16, vary(muro, 0.04), { x: sg * (w / 2 + 0.02), y: h + 0.3 });
+  // el azar de la ciudad, en el mismo orden de antes: el tono de la casa, las juntas y los cuatro tramos del pretil
+  const tono = vary(muro, 0.03);
+  const juntas = piedra ? [vary(C.junta, 0.04), vary(C.junta, 0.04), vary(C.junta, 0.04), vary(C.junta, 0.04)] : [vary("#a9875a", 0.05)];
+  const pretiles = [vary(muro, 0.04), vary(muro, 0.04), vary(muro, 0.04), vary(muro, 0.04)];
+  // lo labrado (jambas, dinteles, cornisa, albardilla): piedra más clara y dorada que la del muro
+  const claro = tono.clone().lerp(new THREE.Color(C.piedraClara), 0.5).multiplyScalar(1.03);
+  const hondo = piedra ? 0.025 : 0.02;
+  const l = new Lienzo();
+  // el núcleo del muro (lo que se ve en las juntas), un poco adentro de las caras
+  m.box(w - 2 * hondo, h, d - 2 * hondo, piedra ? juntas[0] : tono.clone().multiplyScalar(0.88), { y: h / 2 });
+  const caras = carasDeCaja(0, 0, 0, w, d);
+  // la puerta y la ventana del frente, en las medidas de la cara (u desde la esquina de la izquierda)
+  const du0 = w * 0.32 - 0.375, du1 = w * 0.32 + 0.375, dTop = 1.55, dc = w * 0.32;
+  const wu0 = w * 0.76 - 0.225, wu1 = w * 0.76 + 0.225, wv0 = h * 0.62 - 0.21, wv1 = h * 0.62 + 0.21, wc = w * 0.76;
+  const xF = (u: number) => -w / 2 + u, zF = (e: number) => d / 2 + e;
+  if (piedra) {
+    const hiladas = hiladasDe(0, h, 0.42, 0.46, az);
+    const bordes = hiladas.map(([, b]) => b);
+    // el dintel y el alféizar terminan en una junta de hilada (si hay una cerca)
+    const juntaArriba = (y: number, min: number) => bordes.find((b) => b >= y + min && b <= y + min + 0.42) ?? y + min + 0.06;
+    const juntaAbajo = (y: number, min: number) => bordes.filter((b) => b <= y - min && b >= y - min - 0.42).sort((a, b) => b - a)[0] ?? y - min - 0.04;
+    const dintel = juntaArriba(dTop, 0.16), wDintel = juntaArriba(wv1, 0.08), wAlfeizar = juntaAbajo(wv0, 0.06);
+    const huecosFrente: Hueco[] = [
+      { u0: du0 - 0.12, u1: du1 + 0.12, v0: 0, v1: dTop },
+      { u0: du0 - 0.22, u1: du1 + 0.22, v0: dTop, v1: dintel },
+      { u0: wu0 - 0.07, u1: wu1 + 0.07, v0: wAlfeizar, v1: wDintel },
+    ];
+    // las piedras de abajo, más oscuras (el zócalo y lo salpicado); las de arriba, gastadas por el sol; y las manchas
+    const tonoHilada = (k: number) => (k === 0 ? 0.88 : 0.96 + (0.05 * k) / hiladas.length);
+    const manchasCara = caras.map((c) => manchasDeMuro({ largo: c.largo, v0: 0, v1: h + 0.43, azar: az }));
+    caras.forEach((c, i) => sillares(l, c, { hiladas, color: tono, azar: az, huecos: i === 0 ? huecosFrente : [], esquinas: { cara: i, largo: 0.7, corto: 0.4 }, largos: [0.7, 1.15], junta: 0.018, tonoHilada, tonoPunto: manchasCara[i] }));
+    // la puerta: jambas y dintel de piedra clara, salidos; la puerta de tablas con clavos y el umbral
+    for (const uc of [du0 - 0.06, du1 + 0.06]) m.box(0.12, dTop, 0.1, claro, { x: xF(uc), y: dTop / 2, z: zF(-0.02) });
+    m.box(du1 - du0 + 0.44, dintel - dTop, 0.11, claro, { x: xF(dc), y: (dTop + dintel) / 2, z: zF(-0.015) });
+    puertaDeTablas(m, xF(dc), zF(-hondo), 0.75, dTop, 0, C.cedro, true);
+    m.box(0.98, 0.07, 0.3, claro.clone().multiplyScalar(0.95), { x: xF(dc), y: 0.035, z: zF(0.13) });
+    // la ventana: alféizar, dintel y jambas; adentro la celosía de varas derechas (de noche se ve la luz)
+    m.box(wu1 - wu0 + 0.22, wv0 - wAlfeizar, 0.12, claro, { x: xF(wc), y: (wAlfeizar + wv0) / 2, z: zF(-0.01) });
+    m.box(wu1 - wu0 + 0.14, wDintel - wv1, 0.1, claro, { x: xF(wc), y: (wv1 + wDintel) / 2, z: zF(-0.02) });
+    for (const uc of [wu0 - 0.035, wu1 + 0.035]) m.box(0.07, wv1 - wv0, 0.09, claro, { x: xF(uc), y: (wv0 + wv1) / 2, z: zF(-0.02) });
+    m.box(0.45, 0.42, 0.05, "#2e2418", { x: xF(wc), y: h * 0.62, z: zF(-0.035) });
+    v.box(0.36, 0.33, 0.02, "#ffcf7a", { x: xF(wc), y: h * 0.62, z: zF(-0.002) });
+    for (let k = 0; k < 3; k++) m.box(0.03, 0.42, 0.04, C.cedroOsc, { x: xF(wc) - 0.12 + k * 0.12, y: h * 0.62, z: zF(0.004) }); // celosía
+    // la cornisa a la altura del techo y el pretil (Deuteronomio 22:8): una hilada de sillares con su albardilla encima
+    m.box(w + 0.12, 0.13, d + 0.12, claro, { y: h + 0.065 });
+    caras.forEach((c, i) => sillares(l, c, { hiladas: [[h + 0.13, h + 0.43]], color: tono, azar: az, esquinas: { cara: i + 1, largo: 0.7, corto: 0.4 }, largos: [0.7, 1.15], junta: 0.018, tonoPunto: manchasCara[i] }));
+    const pz = d / 2 - hondo - 0.06, px = w / 2 - hondo - 0.06;
+    m.box(w - 2 * hondo, 0.3, 0.12, pretiles[0], { y: h + 0.28, z: -pz });
+    m.box(0.12, 0.3, d - 2 * hondo, pretiles[1], { x: -px, y: h + 0.28 });
+    m.box(w - 2 * hondo, 0.3, 0.12, pretiles[2], { y: h + 0.28, z: pz });
+    m.box(0.12, 0.3, d - 2 * hondo, pretiles[3], { x: px, y: h + 0.28 });
+    for (const sg of [-1, 1]) {
+      m.box(w + 0.08, 0.06, 0.2, claro, { y: h + 0.46, z: sg * (d / 2 - 0.06) });
+      m.box(0.2, 0.06, d - 0.32, claro, { x: sg * (w / 2 - 0.06), y: h + 0.46 });
+    }
+    terradoDeCasa(m, w, d, h + 0.14, hondo + 0.12, az);
+    // la trampilla para bajar del terrado (en la casa de piedra con patio)
+    if (nivel === 2) {
+      const hx = 0.15, hz = 0.3, ty = h + 0.14;
+      m.box(0.5, 0.012, 0.44, "#241c14", { x: hx, y: ty + 0.004, z: hz });
+      for (const sg of [-1, 1]) {
+        m.box(0.6, 0.05, 0.05, C.cedroOsc, { x: hx, y: ty + 0.025, z: hz + sg * 0.245 });
+        m.box(0.05, 0.05, 0.44, C.cedroOsc, { x: hx + sg * 0.275, y: ty + 0.025, z: hz });
+      }
+    }
+  } else {
+    // el zócalo de piedras de campo, salidas (cortado en la puerta)
+    const huecoPuerta: Hueco = { u0: du0, u1: du1, v0: 0, v1: dTop };
+    const zocalo = new THREE.Color("#b3a487");
+    caras.forEach((c, i) => sillares(l, c, { hiladas: [[0, 0.24]], color: zocalo, azar: az, huecos: i === 0 ? [huecoPuerta] : [], largos: [0.2, 0.38], sale: 0.02, hondo: 0.03, bisel: 0.02, junta: 0.014, esquinas: { cara: i, largo: 0.34, corto: 0.22 } }));
+    // el revoque de barro, del zócalo a lo alto del pretil; en un costado o atrás, a veces, un pedazo caído
+    const parches: Hueco[][] = [[], [], [], []];
+    if (az() < 0.6) {
+      const i = 1 + Math.floor(az() * 3);
+      const L = caras[i].largo, pw = 0.45 + az() * 0.35, ph = 0.26 + az() * 0.3;
+      const pu = 0.3 + az() * (L - 0.6 - pw), pv = 0.6 + az() * (h - 1.0 - ph);
+      parches[i].push({ u0: pu, u1: pu + pw, v0: pv, v1: pv + ph });
+    }
+    const huecosRevoque: Hueco[] = [huecoPuerta, { u0: wu0, u1: wu1, v0: wv0, v1: wv1 }];
+    caras.forEach((c, i) => revoque(l, c, { v0: 0.24, v1: h + 0.46, color: tono, azar: az, huecos: i === 0 ? huecosRevoque : [], parches: parches[i], grueso: hondo, paso: 0.34, ondula: 0.026 }));
+    // la puerta de tablas bajo un dintel de madera, y el umbral de piedra
+    puertaDeTablas(m, xF(dc), zF(-hondo), 0.75, dTop, 0, "#5e4630", false);
+    m.cyl(0.055, 0.06, du1 - du0 + 0.34, "#6e5236", { x: xF(dc), y: dTop + 0.07, z: zF(0.02), rz: Math.PI / 2 }, 7);
+    m.box(0.95, 0.07, 0.3, zocalo, { x: xF(dc), y: 0.035, z: zF(0.13) });
+    // la ventana: el hueco oscuro (de noche, la luz), el dintel de madera y el alféizar de tabla
+    m.box(0.45, 0.42, 0.05, "#2e2418", { x: xF(wc), y: h * 0.62, z: zF(-0.035) });
+    v.box(0.36, 0.33, 0.02, "#ffcf7a", { x: xF(wc), y: h * 0.62, z: zF(-0.004) });
+    m.cyl(0.04, 0.045, wu1 - wu0 + 0.24, "#6e5236", { x: xF(wc), y: wv1 + 0.05, z: zF(0.015), rz: Math.PI / 2 }, 6);
+    m.box(wu1 - wu0 + 0.16, 0.05, 0.1, C.cedro, { x: xF(wc), y: wv0 - 0.025, z: zF(0.03) });
+    // el pretil por dentro y su borde redondeado
+    const pz = d / 2 - hondo - 0.06, px = w / 2 - hondo - 0.06;
+    m.box(w - 2 * hondo, 0.32, 0.12, pretiles[0], { y: h + 0.3, z: -pz });
+    m.box(0.12, 0.32, d - 2 * hondo, pretiles[1], { x: -px, y: h + 0.3 });
+    m.box(w - 2 * hondo, 0.32, 0.12, pretiles[2], { y: h + 0.3, z: pz });
+    m.box(0.12, 0.32, d - 2 * hondo, pretiles[3], { x: px, y: h + 0.3 });
+    for (const sg of [-1, 1]) {
+      m.cyl(0.075, 0.075, w, tono, { y: h + 0.46, z: sg * pz, rz: Math.PI / 2 }, 8);
+      m.cyl(0.075, 0.075, d, tono, { x: sg * px, y: h + 0.46, rx: Math.PI / 2 }, 8);
+    }
+    terradoDeCasa(m, w, d, h + 0.14, hondo + 0.12, az);
   }
-  // puerta y ventana
-  m.box(0.75, 1.55, 0.06, piedra ? C.cedro : "#5e4630", { x: -w * 0.18, y: 0.78, z: d / 2 + 0.02 });
-  m.box(0.95, 0.12, 0.09, piedra ? C.piedraClara : "#8a6a4a", { x: -w * 0.18, y: 1.6, z: d / 2 + 0.03 });
-  m.box(0.45, 0.42, 0.05, "#2e2418", { x: w * 0.26, y: h * 0.62, z: d / 2 + 0.02 });
-  v.box(0.36, 0.33, 0.02, "#ffcf7a", { x: w * 0.26, y: h * 0.62, z: d / 2 + 0.05 });
-  if (piedra) for (let k = 0; k < 3; k++) m.box(0.03, 0.42, 0.06, C.cedroOsc, { x: w * 0.26 - 0.12 + k * 0.12, y: h * 0.62, z: d / 2 + 0.06 }); // celosía
+  // el rodillo de piedra para apisonar el terrado después de la lluvia (en algunas casas)
+  if (nivel < 3 && az() < 0.4) m.cyl(0.11, 0.11, 0.5, C.piedra, { x: -0.25, y: h + 0.25, z: d / 2 - 0.32, rz: Math.PI / 2 }, 10);
+  m.raw(l.geometria());
   if (!obras.has("cisterna")) jar(m, w * 0.42, 0, d / 2 + 0.3, 1.0);
-  vidaDeCasa(m, v, w, d, h, muro);
+  const vida = vidaDeCasa(m, v, w, d, h, muro, piedra);
   if (!piedra) {
+    // las puntas de las vigas del techo, adelante y atrás (no detrás de la alfombra ni junto al desagüe)
+    const nV = Math.max(4, Math.round((w - 0.4) / 0.42));
+    for (let k = 0; k < nV; k++) {
+      const x = -w / 2 + 0.25 + ((w - 0.5) * k) / (nV - 1);
+      const col = k % 2 ? "#6b4a2c" : "#5e4026";
+      if (vida.alfombra === null || Math.abs(x - vida.alfombra) > 0.56) m.cyl(0.05, 0.055, 0.22, col, { x, y: h + 0.07, z: d / 2 + 0.07, rx: Math.PI / 2 }, 6);
+      if (Math.abs(x - vida.desague) > 0.14) m.cyl(0.05, 0.055, 0.22, col, { x, y: h + 0.07, z: -d / 2 - 0.07, rx: Math.PI / 2 }, 6);
+    }
     // escalera de mano al terrado
     for (const dz of [-0.22, 0.22]) m.box(0.06, h + 0.5, 0.06, C.cedroOsc, { x: w / 2 + 0.18, y: (h + 0.5) / 2, z: dz, rz: -0.08 });
     for (let k = 0; k < 6; k++) m.box(0.05, 0.04, 0.46, C.cedro, { x: w / 2 + 0.18 - k * 0.015, y: 0.35 + k * 0.4, z: 0 });
     return;
   }
-  // patio con muro bajo, higuera y vid (Miqueas 4:4)
+  // patio con muro bajo (con su albardilla), higuera y vid (Miqueas 4:4)
   const pf = d / 2, pz1 = d / 2 + 1.15;
   for (const sg of [-1, 1]) m.box(0.22, 0.75, pz1 - pf, vary(muro, 0.04), { x: sg * (w / 2 - 0.05), y: 0.37, z: (pf + pz1) / 2 });
   m.box(w * 0.34, 0.75, 0.22, vary(muro, 0.04), { x: -w / 2 + w * 0.17 - 0.05, y: 0.37, z: pz1 });
   m.box(w * 0.34, 0.75, 0.22, vary(muro, 0.04), { x: w / 2 - w * 0.17 + 0.05, y: 0.37, z: pz1 });
+  for (const sg of [-1, 1]) m.box(0.28, 0.05, pz1 - pf + 0.04, claro, { x: sg * (w / 2 - 0.05), y: 0.77, z: (pf + pz1) / 2 + 0.02 });
+  m.box(w * 0.34 + 0.06, 0.05, 0.28, claro, { x: -w / 2 + w * 0.17 - 0.05, y: 0.775, z: pz1 });
+  m.box(w * 0.34 + 0.06, 0.05, 0.28, claro, { x: w / 2 - w * 0.17 + 0.05, y: 0.775, z: pz1 });
   m.cyl(0.08, 0.12, 1.3, "#6e5a43", { x: w / 2 - 0.55, y: 0.65, z: pf + 0.6 }, 6);
   for (let k = 0; k < 3; k++) m.add(new THREE.IcosahedronGeometry(0.48, 0), vary("#5f7f3a", 0.1), { x: w / 2 - 0.55 + rr(-0.25, 0.25), y: 1.45 + rr(0, 0.3), z: pf + 0.6 + rr(-0.25, 0.25), sy: 0.75 });
   for (let k = 0; k < 5; k++) m.box(0.14, 0.12, 0.14, pick([C.hoja, C.hojaClara, "#6b3a5a"]), { x: -w / 2 + 0.1, y: 0.82, z: pf + 0.25 + k * 0.2 });
   if (nivel < 3) return;
-  // el aposento alto sobre el terrado (2 Reyes 4:10)
+  // el aposento alto sobre el terrado (2 Reyes 4:10), de sillares como la casa
   const aw = 1.8, ad = 1.9, ah = 1.55;
-  const ax = -w / 2 + aw / 2 + 0.1, az = -d / 2 + ad / 2 + 0.1;
-  m.box(aw, ah, ad, vary(muro, 0.03), { x: ax, y: h + 0.14 + ah / 2, z: az });
-  m.box(aw + 0.14, 0.12, ad + 0.14, C.cedroOsc, { x: ax, y: h + 0.14 + ah + 0.06, z: az });
-  m.box(0.6, 1.1, 0.05, C.cedro, { x: ax + 0.3, y: h + 0.14 + 0.55, z: az + ad / 2 + 0.02 });
-  m.box(0.34, 0.3, 0.05, "#2e2418", { x: ax - 0.45, y: h + 0.14 + 1.05, z: az + ad / 2 + 0.02 });
-  v.box(0.26, 0.22, 0.02, "#ffd88a", { x: ax - 0.45, y: h + 0.14 + 1.05, z: az + ad / 2 + 0.05 });
+  const ax = -w / 2 + aw / 2 + 0.1, azp = -d / 2 + ad / 2 + 0.1, yb = h + 0.14;
+  const tonoA = vary(muro, 0.03);
+  m.box(aw - 2 * hondo, ah, ad - 2 * hondo, juntas[1], { x: ax, y: yb + ah / 2, z: azp });
+  const la = new Lienzo();
+  // su puerta (0,6 × 1,1) y su ventanita, en las medidas de su frente
+  const pu0 = aw / 2 + 0.3 - 0.3, pu1 = aw / 2 + 0.3 + 0.3, vu0 = aw / 2 - 0.45 - 0.17, vu1 = aw / 2 - 0.45 + 0.17;
+  const huecosA: Hueco[] = [
+    { u0: pu0 - 0.1, u1: pu1 + 0.1, v0: 0, v1: 1.1 },
+    { u0: pu0 - 0.16, u1: pu1 + 0.16, v0: 1.1, v1: 1.24 },
+    { u0: vu0 - 0.06, u1: vu1 + 0.06, v0: 0.84, v1: 1.28 },
+  ];
+  carasDeCaja(ax, yb, azp, aw, ad).forEach((c, i) =>
+    sillares(la, c, { hiladas: hiladasDe(0, ah, 0, 0.39, az), color: tonoA, azar: az, huecos: i === 0 ? huecosA : [], esquinas: { cara: i, largo: 0.6, corto: 0.34 }, largos: [0.6, 1.0], junta: 0.018, tonoPunto: manchasDeMuro({ largo: c.largo, v0: 0, v1: ah, azar: az, fuerza: 0.8 }) }),
+  );
+  m.raw(la.geometria());
+  const claroA = tonoA.clone().multiplyScalar(1.06);
+  const xA = (u: number) => ax - aw / 2 + u, zA = (e: number) => azp + ad / 2 + e;
+  for (const uc of [pu0 - 0.05, pu1 + 0.05]) m.box(0.1, 1.1, 0.09, claroA, { x: xA(uc), y: yb + 0.55, z: zA(-0.02) });
+  m.box(pu1 - pu0 + 0.32, 0.14, 0.1, claroA, { x: xA((pu0 + pu1) / 2), y: yb + 1.17, z: zA(-0.015) });
+  puertaDeTablas(m, xA((pu0 + pu1) / 2), zA(-hondo), 0.6, 1.1, yb, C.cedro, false);
+  m.box(vu1 - vu0 + 0.18, 0.06, 0.11, claroA, { x: xA((vu0 + vu1) / 2), y: yb + 0.87, z: zA(-0.01) });
+  m.box(vu1 - vu0 + 0.12, 0.08, 0.09, claroA, { x: xA((vu0 + vu1) / 2), y: yb + 1.24, z: zA(-0.02) });
+  m.box(0.34, 0.3, 0.05, "#2e2418", { x: xA((vu0 + vu1) / 2), y: yb + 1.05, z: zA(-0.035) });
+  v.box(0.26, 0.22, 0.02, "#ffd88a", { x: xA((vu0 + vu1) / 2), y: yb + 1.05, z: zA(-0.002) });
+  // su techo: el borde de piedra clara y encima el barro apisonado (ahí va un adorno)
+  m.box(aw + 0.14, 0.11, ad + 0.14, claroA, { x: ax, y: yb + ah + 0.055, z: azp });
+  m.box(aw + 0.02, 0.012, ad + 0.02, new THREE.Color(TERRADOS[Math.floor(az() * TERRADOS.length)]), { x: ax, y: yb + ah + 0.116, z: azp });
 }
 
 /**
@@ -1446,8 +1635,10 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
   const grupo = new THREE.Group();
   const m = new GeoBuilder();
   const v = new GeoBuilder();
-  // las telas con viento del área (three/telas.ts): los toldos de las casas y los estandartes del barrio
+  // las telas con viento del área (three/telas.ts): las tiendas, los toldos de las casas y los estandartes del barrio
   const telas = new Telas();
+  // la sombra de contacto de cada casa en el suelo, todas en una malla
+  const sombras: { x: number; z: number; w: number; d: number; giro: number; y: number }[] = [];
   suelosDeArea(m, area);
   const porParcela = new Map(casas.map((c) => [c.parcela, c]));
   for (const p of PARCELAS[area - 1]) {
@@ -1459,7 +1650,9 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     const lm = new GeoBuilder(), lv = new GeoBuilder(), lt = new Telas();
     const nivel = Math.max(0, Math.min(3, c.nivel));
     const obras = new Set(c.obras ?? []);
-    casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel, obras);
+    casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel, obras, lt);
+    const [cw, cd] = CASA_MEDIDA[nivel];
+    sombras.push({ x: p.x, z: p.z, w: cw, d: cd, giro: p.dir === 1 ? 0 : Math.PI, y: Y + 0.035 });
     // lo que compró en el mercado: los adornos y el letrero (los ven los vecinos)
     if (c.adornos?.length) adornosDeCasa(lm, lv, nivel, c.adornos, obras, lt);
     // la familia del pueblo tiene su cántaro junto a la puerta (en el primer lugar de adorno del suelo)
@@ -1492,7 +1685,8 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     const g = lm.build();
     g.applyMatrix4(mat);
     // cada casa en su malla: si tapa al jugador, se aclara solo esa (mundo.ts)
-    const casa = new THREE.Mesh(g, matteMat());
+    // la casa de adobe, con el material liso (su revoque no se arruga con el sol rasante)
+    const casa = new THREE.Mesh(g, nivel === 1 ? matteMatLiso() : matteMat());
     casa.castShadow = true;
     casa.receiveShadow = true;
     casa.userData.ocluye = true;
@@ -1508,6 +1702,8 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
   obrasDelBarrio3D(m, v, area, new Set(obrasBarrio));
   meshes(grupo, m, null, true);
   if (!telas.vacia) grupo.add(telas.malla());
+  const sc = sombrasDeContacto(sombras, 0.6);
+  if (sc) grupo.add(sc);
   let ventanas: THREE.Mesh | null = null;
   if (!v.empty) {
     ventanas = new THREE.Mesh(v.build(), ventanaMat());
@@ -1581,10 +1777,15 @@ function buildCalleSiervos(root: THREE.Group): THREE.Mesh | null {
   const { x0, x1, z, ancho } = CALLE_SIERVOS;
   m.raw(tiles(x0, z - ancho / 2, x1, z + ancho / 2, 0.9, ["#d8c7a2", "#cdb994", "#e0d0ae", "#c9b48c"], Y + 0.02, 0.03, 0.06));
   for (const sg of [-1, 1]) m.box(x1 - x0, 0.1, 0.18, C.piedraOsc, { x: (x0 + x1) / 2, y: Y + 0.05, z: z + sg * (ancho / 2) });
+  const telas = new Telas();
+  const sombras: { x: number; z: number; w: number; d: number; giro: number; y: number }[] = [];
   for (const p of PERSONAJES_CIUDAD) {
-    const lm = new GeoBuilder(), lv = new GeoBuilder();
-    casaLocal(lm, lv, p.casa.nivel, 9100 + Math.round(p.casa.x * 13));
+    const lm = new GeoBuilder(), lv = new GeoBuilder(), lt = new Telas();
+    casaLocal(lm, lv, p.casa.nivel, 9100 + Math.round(p.casa.x * 13), new Set(), lt);
     const mat = new THREE.Matrix4().makeRotationY(p.casa.dir === 1 ? 0 : Math.PI).setPosition(p.casa.x, Y, p.casa.z);
+    if (!lt.vacia) telas.juntar(lt, mat);
+    const [cw, cd] = CASA_MEDIDA[p.casa.nivel];
+    sombras.push({ x: p.casa.x, z: p.casa.z, w: cw, d: cd, giro: p.casa.dir === 1 ? 0 : Math.PI, y: Y + 0.05 });
     const g = lm.build();
     g.applyMatrix4(mat);
     m.raw(g);
@@ -1603,6 +1804,9 @@ function buildCalleSiervos(root: THREE.Group): THREE.Mesh | null {
   // olivos en los huecos del lado norte
   for (const ox of [47, 63]) oliveTree(m, ox, Y, z - ancho / 2 - 2.2, 0.9);
   meshes(root, m, null, true);
+  if (!telas.vacia) root.add(telas.malla());
+  const sc = sombrasDeContacto(sombras, 0.6);
+  if (sc) root.add(sc);
   return luz.empty ? null : new THREE.Mesh(luz.build(), ventanaMat());
 }
 

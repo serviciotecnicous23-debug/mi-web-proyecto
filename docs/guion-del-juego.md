@@ -932,6 +932,32 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - **El toldo de colores de las casas** (el adorno `toldo`): de tela con viento y con sombra. Cada casa arma sus telas en
   sus medidas y `Telas.juntar` las lleva a su lugar (cada casa ondea a su tiempo). La foto de la tienda también lo trae.
 
+## 7r. Las casas de los barrios, de piedra y de barro (14 de noviembre de 2026)
+
+- **Los muros** (`ciudad/muros-casa.ts`, nuevo): se arman a mano, cara por cara, en una sola geometría y con su propio
+  azar (`azarDe`), así el azar de la ciudad se gasta igual que antes y lo demás queda igual.
+  - `sillares`: hiladas con las juntas trabadas, cada piedra con su bisel arriba y abajo y su tono (unas más gastadas,
+    otras repuestas, unas más doradas), y las esquinas trabadas con la cara de al lado (una piedra larga y una corta,
+    alternadas). Los huecos (puertas, ventanas, marcos) parten las hiladas.
+  - `revoque`: el barro con sus manchas (`manchasDeMuro`: el pie salpicado, lo alto gastado y los chorros de la lluvia),
+    lomas suaves de barro hecho a mano y, donde se cayó, los ladrillos (más adentro, con el canto del revoque).
+- **Cada casa** (`casaLocal`, en `ciudad/escenario.ts`):
+  - la tienda: dos paños de pelo de cabra a franjas (`Telas.toldo` con `cuelga` y `franja`), la falda de atrás y el
+    alero de adelante, y los costados de tela;
+  - la casa de adobe: zócalo de piedras de campo, revoque, las puntas de las vigas adelante y atrás (no detrás de la
+    alfombra ni junto al desagüe), el dintel de madera de la puerta y de la ventana, el alféizar de tabla y el pretil
+    redondeado. Va con `matteMatLiso` (el revoque cae como tela en el sombreador, y su relieve fino lo arrugaba con el
+    sol rasante);
+  - la casa de piedra: sillares con zócalo, jambas y dintel de piedra clara en la puerta (el dintel termina en una junta
+    de hilada), la ventana con alféizar, dintel, jambas y celosía de varas derechas, la cornisa, el pretil de una hilada
+    con su albardilla y, en la de nivel 2, la trampilla del terrado. El aposento alto, de sillares como la casa;
+  - todas: el terrado de barro apisonado (`terradoDeCasa`, liso y más oscuro junto al pretil), el rodillo de piedra en
+    algunas, la puerta de tablas con su aldaba (`puertaDeTablas`; los clavos en hileras, nada que se cruce) y el umbral.
+- **La sombra de contacto** de todas las casas de un barrio (y de la calle de los siervos) va en una sola malla
+  (`sombrasDeContacto`, en `three/luces.ts`).
+- **Lo que pesa**: unos 5.700 vértices por casa (el doble que antes) y un barrio entero se arma en unos 70 ms. Por eso
+  las juntas derechas no llevan bisel (se distinguen por el tono) y las grillas del revoque y del terrado son gruesas.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-casas",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Las casas de los barrios, de piedra y de barro",
+    puntos: [
+      "🏠 Las casas de piedra tienen sillares de verdad: piedras labradas con su bisel, esquinas trabadas, zócalo, cornisa y pretil con albardilla. La puerta y la ventana llevan su marco de piedra.",
+      "🧱 Las casas de adobe están revocadas con barro hecho a mano, con manchas de lluvia. Tienen un zócalo de piedras, las puntas de las vigas del techo, dinteles de madera y, a veces, un pedazo de revoque caído que deja ver los ladrillos.",
+      "⛺ Las tiendas son de pelo de cabra a franjas: la tela cuelga un poco entre las varas y se mece con el viento.",
+      "☀️ Todas tienen el terrado de barro apisonado (algunas, con su rodillo de piedra), la puerta de tablas con su aldaba y su sombra en el suelo.",
+    ],
+  },
+  {
     id: "2026-11-14-mercado",
     fecha: "14 de noviembre de 2026",
     titulo: "El mercado con toldos de franjas",
