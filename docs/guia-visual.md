@@ -96,6 +96,8 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   la sombra junto a los muros y el desgaste de los caminos.
 - Lo que crece (un sembrado, una mata) se mueve con el viento: la hierba con `hierbaCon` (en `ciudad/suelo-vivo.ts`) y
   lo sembrado con `matteMatViento` (en `three/builder.ts`), con el pie quieto en la tierra.
+- Toda tela (bandera, estandarte, banderín, toldo) se arma con `Telas` (en `three/telas.ts`) y se mece con el viento;
+  nunca es una caja quieta.
 - Un fuego nuevo que alumbra de noche se agrega a la lista de fuegos de su mundo (`ponerFuegos`, en `three/luces.ts`)
   con el rectángulo donde alumbra (y, si hay pisos, las alturas `alto` y su `alcance`); los materiales de siempre ya lo
   reciben (`conFuegos`). Lo que se dibuja aparte con su propia luz (una foto, un muñeco) va dentro de `sinFuegos`.

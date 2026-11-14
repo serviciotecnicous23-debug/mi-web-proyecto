@@ -899,6 +899,19 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
 - **La luz de la puerta**: de noche la luz de la casa alumbra el campo cercano (un fuego que vale solo para el dibujo del
   huerto).
 
+## 7p. Banderas y toldos con viento (14 de noviembre de 2026)
+
+- **Las telas con viento** (`three/telas.ts`, con `matteMatTela` en `three/builder.ts`): cada paño se arma en cuadritos y
+  el viento lo mece en la tarjeta: más cuanto más lejos de donde está atado, con ondas y ráfagas, por las dos caras.
+  - `pano(amarre, eje, largo, alto, color, "asta" | "arriba", { orla, punta, viento })`: la bandera atada al asta, el
+    estandarte colgado de una vara o de un muro (con `viento` bajo, para que no se meta en la pared) y el banderín.
+  - `toldo(centro, eje, largo, ancho, color)`: el paño tendido sobre postes, que cuelga un poco y se mece en el medio.
+- **Dónde**: las banderas de las tribus y los banderines de la portada del patio (con su cuerda), los estandartes de las
+  doce tribus del templo, los del rey en el palacio, los del pórtico de la escuela de la sabiduría, los de los barrios,
+  el toldo de la mesa de juegos y el del púlpito en la plaza de fiesta (capítulos y Pascua).
+- **El patio**: el empedrado con la sombra junto a los muros (no en la puerta). **El campamento asirio**: las fogatas
+  titilan de noche.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

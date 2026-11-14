@@ -11,6 +11,7 @@ import { MURO_DESDE_Z, MURO_TRAMOS, MURO_TRAMO_LARGO } from "@shared/muro";
 import { CALLE_SIERVOS, PERSONAJES_CIUDAD } from "@shared/personajes";
 import * as THREE from "three";
 import { C, GeoBuilder, matteMat, shinyMat } from "../three/builder";
+import { Telas } from "../three/telas";
 import { blockWall, buildCielo, buildTemploParaCiudad, jar, oliveTree, palmTree, tiles, type Course } from "../three/structures";
 import type { SkyUniforms } from "../three/structures";
 import {
@@ -453,12 +454,14 @@ function buildPalacio(root: THREE.Group, fuegos: THREE.Vector3[]) {
   m.box(2.8, 3.8, 0.16, C.cedro, { x: 17, y: Y + 1.9, z: z0 - 0.05 });
   for (let r = 0; r < 5; r++) for (let q = 0; q < 4; q++) s.sphere(0.05, C.bronce, { x: 16 + q * 0.66, y: Y + 0.5 + r * 0.72, z: z0 - 0.14 }, 5, 4);
   s.box(3.2, 0.2, 0.2, C.oro, { x: 17, y: Y + 3.95, z: z0 - 0.1 });
-  // estandartes del rey
+  // estandartes del rey: de tela púrpura con su filo de oro, atados al asta, que se mecen con el viento (three/telas.ts)
+  const telasPalacio = new Telas();
   for (const x of [x0 + 0.6, x1 - 0.6]) {
     m.cyl(0.05, 0.06, 3.4, C.cedroOsc, { x, y: Y + H + 1.7, z: z0 + 0.4 }, 6);
-    m.box(0.05, 1.3, 0.9, C.purpura, { x, y: Y + H + 2.6, z: z0 - 0.08 });
+    telasPalacio.pano([x, Y + H + 3.25, z0 + 0.36], [0, -1], 0.9, 1.35, C.purpura, "asta", { orla: C.oro });
     s.sphere(0.09, C.oro, { x, y: Y + H + 3.45, z: z0 + 0.4 }, 6, 5);
   }
+  root.add(telasPalacio.malla());
   // palmeras en maceteros a los lados de la puerta
   const t = new GeoBuilder();
   for (const x of [14.2, 19.8]) {
@@ -603,10 +606,9 @@ function buildSabiduria(root: THREE.Group, fuegos: THREE.Vector3[]) {
   for (const dz of [-0.42, 0.42]) m.box(0.62, 2.4, 0.04, "#5a3d22", { x: x1 + 0.07, y: top + 1.3, z: cz + dz, ry: Math.PI / 2 });
   m.box(1.9, 0.18, 0.16, ORO, { x: x1 + 0.06, y: top + 2.8, z: cz, ry: Math.PI / 2 });
   // dos estandartes de púrpura con su orla de oro, a los extremos del pórtico
-  for (const zz of [z0 + 0.75, z1 - 0.75]) {
-    m.box(0.05, 1.7, 0.62, PURPURA, { x: x1 + 0.08, y: top + 2.0, z: zz });
-    m.box(0.06, 0.09, 0.64, ORO, { x: x1 + 0.09, y: top + 1.2, z: zz });
-  }
+  const telasPortico = new Telas();
+  for (const zz of [z0 + 0.75, z1 - 0.75]) telasPortico.pano([x1 + 0.12, top + 2.85, zz - 0.31], [0, 1], 0.62, 1.74, PURPURA, "arriba", { orla: ORO, viento: 0.45 });
+  root.add(telasPortico.malla());
   // dos candeleros altos junto a la puerta: de noche se ven encendidos
   for (const dz of [-1.3, 1.3]) {
     m.cyl(0.04, 0.07, 1.5, ORO, { x: x1 + 0.42, y: top + 0.75, z: cz + dz }, 8);
@@ -1247,7 +1249,7 @@ function suelosDeArea(m: GeoBuilder, area: number) {
  * encendidas (de noche brillan), 2 olivos en los extremos, 3 una fuente, 4 estandartes y 5 un arco de piedra a la
  * entrada (del lado de la plaza). Solo se ven; no estorban el paso.
  */
-function adornosDeBarrio(m: GeoBuilder, v: GeoBuilder, area: number, nivel: number) {
+function adornosDeBarrio(m: GeoBuilder, v: GeoBuilder, area: number, nivel: number, telas: Telas) {
   if (nivel <= 0) return;
   const [x0, z0, x1] = AREA_RECT[area - 1];
   // la entrada desde la plaza: las áreas del oriente (1 y 2) la tienen al poniente; las otras, al oriente
@@ -1277,9 +1279,8 @@ function adornosDeBarrio(m: GeoBuilder, v: GeoBuilder, area: number, nivel: numb
       for (const x of [x0 + 2.6, x1 - 2.6])
         for (const z of [za + 0.25, zb - 0.25]) {
           m.cyl(0.045, 0.055, 2.7, C.cedroOsc, { x, y: Y + 1.35, z }, 6);
-          m.box(0.6, 0.05, 0.05, C.cedroOsc, { x, y: Y + 2.62, z });
-          m.box(0.55, 1.05, 0.03, k === 0 ? C.purpura : C.azul, { x, y: Y + 2.05, z });
-          m.box(0.55, 0.12, 0.035, C.oro, { x, y: Y + 1.5, z });
+          m.box(0.6, 0.05, 0.05, C.cedroOsc, { x, y: Y + 2.62, z: z + 0.06 });
+          telas.pano([x - 0.275, Y + 2.6, z + 0.06], [1, 0], 0.55, 1.15, k === 0 ? C.purpura : C.azul, "arriba", { orla: C.oro });
           m.sphere(0.07, C.oro, { x, y: Y + 2.75, z }, 6, 5);
         }
     // 5: el arco de piedra sobre la primera calle, a la entrada del barrio
@@ -1430,9 +1431,12 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
       v.raw(gv);
     }
   }
-  adornosDeBarrio(m, v, area, nivelBarrio);
+  // los estandartes de los barrios, de tela con viento (three/telas.ts)
+  const telas = new Telas();
+  adornosDeBarrio(m, v, area, nivelBarrio, telas);
   obrasDelBarrio3D(m, v, area, new Set(obrasBarrio));
   meshes(grupo, m, null, true);
+  if (!telas.vacia) grupo.add(telas.malla());
   let ventanas: THREE.Mesh | null = null;
   if (!v.empty) {
     ventanas = new THREE.Mesh(v.build(), ventanaMat());

@@ -10,6 +10,7 @@
 import * as THREE from "three";
 import { C, GeoBuilder, matteMat } from "../three/builder";
 import { oliveTree, tiles } from "../three/structures";
+import { Telas } from "../three/telas";
 import { Ring, type Overlay } from "../three/overlay";
 import { meshes } from "./escenario";
 import { SUELO } from "./plano";
@@ -37,8 +38,20 @@ export function construirPatio(): THREE.Group {
   const s = new GeoBuilder();
   const r = azar(5207);
   const [x0, z0, x1, z1] = PATIO;
-  // el empedrado, con un dibujo de dos colores en el centro (la pista de la carrera sale de ahí)
-  m.raw(tiles(x0, z0, x1, z1, 1.3, ["#d9c39a", "#cfb68b", "#e2cfa8", "#c9ae83"], Y + 0.014, 0.05, 0.08));
+  // las banderas y los banderines, con viento (three/telas.ts)
+  const telas = new Telas();
+  // el empedrado, con un dibujo de dos colores en el centro (la pista de la carrera sale de ahí), y la sombra junto a los
+  // muros (no en la puerta)
+  const pa0 = PATIO_PUERTA[0] - PATIO_PUERTA_ANCHO / 2, pa1 = PATIO_PUERTA[0] + PATIO_PUERTA_ANCHO / 2;
+  const tonoPatio = (x: number, z: number) => {
+    const lados = [x - x0, x1 - x, z - z0];
+    if (x < pa0 || x > pa1) lados.push(z1 - z);
+    const d = Math.min(...lados);
+    if (d >= 0.9) return 1;
+    const k = 1 - Math.max(0, d) / 0.9;
+    return 1 - 0.26 * k * k;
+  };
+  m.raw(tiles(x0, z0, x1, z1, 1.3, ["#d9c39a", "#cfb68b", "#e2cfa8", "#c9ae83"], Y + 0.014, 0.05, 0.08, tonoPatio));
   m.box(x1 - x0, 0.05, z1 - z0, "#a78f68", { x: (x0 + x1) / 2, y: Y - 0.01, z: (z0 + z1) / 2 });
   for (let k = 0; k < 4; k++) m.cyl(3.6 - k * 0.8, 3.6 - k * 0.8, 0.02, k % 2 ? "#c79a5a" : "#e9d7b0", { x: (x0 + x1) / 2, y: Y + 0.03 + k * 0.004, z: -60 }, 28);
   // los muros bajos, con su remate, y la puerta al sur
@@ -65,11 +78,20 @@ export function construirPatio(): THREE.Group {
     s.sphere(0.16, C.oro, { x: px, y: Y + 3.36, z: z1 }, 10, 8);
   }
   m.box(p1 - p0 + 1.8, 0.32, 0.5, C.cedro, { x: PATIO_PUERTA[0], y: Y + 2.85, z: z1 });
+  // la guirnalda: una cuerda que cae en curva y sus banderines de tela, que se mecen
+  const topes: [number, number][] = [];
   for (let k = 0; k < 9; k++) {
     const t = TRIBUS_EQUIPOS[k % TRIBUS_EQUIPOS.length];
     const x = p0 + 0.2 + (k * (p1 - p0 - 0.4)) / 8;
     const caida = Math.sin((k / 8) * Math.PI) * 0.35;
-    m.cone(0.17, 0.42, t.color, { x, y: Y + 2.42 - caida, z: z1 - 0.28, rx: Math.PI }, 3);
+    const yTope = Y + 2.63 - caida;
+    topes.push([x, yTope]);
+    telas.pano([x - 0.17, yTope, z1 - 0.28], [1, 0], 0.34, 0.42, t.color, "arriba", { punta: true });
+  }
+  for (let k = 0; k < topes.length - 1; k++) {
+    const [xa, ya] = topes[k], [xb, yb] = topes[k + 1];
+    const largo = Math.hypot(xb - xa, yb - ya);
+    m.cyl(0.012, 0.012, largo, "#7a5a3a", { x: (xa + xb) / 2, y: (ya + yb) / 2 + 0.01, z: z1 - 0.28, rz: Math.atan2(yb - ya, xb - xa) - Math.PI / 2 }, 4);
   }
   // las banderas de las cuatro tribus, cada una en su palo (en las esquinas de adentro)
   const esquinas: [number, number][] = [
@@ -83,8 +105,8 @@ export function construirPatio(): THREE.Group {
     m.cyl(0.06, 0.07, 4.4, C.cedroOsc, { x, y: Y + 2.2, z }, 6);
     s.sphere(0.1, C.oro, { x, y: Y + 4.45, z }, 8, 6);
     const lado = x < (x0 + x1) / 2 ? 1 : -1;
-    m.box(1.15, 0.7, 0.04, t.color, { x: x + lado * 0.62, y: Y + 3.95, z });
-    m.box(1.15, 0.08, 0.05, C.oro, { x: x + lado * 0.62, y: Y + 3.56, z });
+    // la bandera de tela, atada al asta, con su filo de oro abajo
+    telas.pano([x + lado * 0.06, Y + 4.3, z], [lado, 0], 1.15, 0.8, t.color, "asta", { orla: C.oro });
   });
   // bancos de piedra junto al muro del poniente
   for (const bz of [-64.5, -60.5, -56.5]) {
@@ -104,7 +126,8 @@ export function construirPatio(): THREE.Group {
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) m.box(0.12, 0.012, 0.12, (i + j) % 2 ? "#f3ead2" : "#6b4a2b", { x: mx - 0.55 + i * 0.12, y: Y + 0.907, z: mz - 1.83 + j * 0.12 });
   for (const dx of [0.35, 0.62]) m.cyl(0.05, 0.05, 0.5, C.lino, { x: mx + dx, y: Y + 0.95, z: mz - 1.62, rx: Math.PI / 2 }, 8);
   for (const dx of [-1.25, 1.25]) for (const dz of [-0.75, -2.55]) m.cyl(0.05, 0.05, 2.5, C.cedroOsc, { x: mx + dx, y: Y + 1.25, z: mz + dz }, 6);
-  for (let k = 0; k < 6; k++) m.box(2.6 / 6, 0.05, 2.0, k % 2 ? "#c8452f" : "#efd9a5", { x: mx - 1.3 + (k + 0.5) * (2.6 / 6), y: Y + 2.52, z: mz - 1.65 });
+  // el toldo de franjas: cada franja cuelga un poco entre sus costuras y se mece con el viento
+  for (let k = 0; k < 6; k++) telas.toldo([mx - 1.3 + (k + 0.5) * (2.6 / 6), Y + 2.52, mz - 1.65], [0, 1], 2.0, 2.6 / 6, k % 2 ? "#c8452f" : "#efd9a5");
   // la cantera: el montón de piedras labradas, junto al muro del oriente
   const [cx, cz] = CANTERA;
   for (let k = 0; k < 16; k++) {
@@ -116,6 +139,7 @@ export function construirPatio(): THREE.Group {
   oliveTree(m, x0 + 1.4, Y, z0 + 1.5, 0.8);
   oliveTree(m, x1 - 1.4, Y, z0 + 1.5, 0.8);
   meshes(g, m, s, true);
+  g.add(telas.malla());
   return g;
 }
 
