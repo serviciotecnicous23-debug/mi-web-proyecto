@@ -110,7 +110,43 @@ export function CoronaSvg({ className = "", color = "#f59e0b" }: { className?: s
   );
 }
 
+/**
+ * Un estallido corto en una casilla (al comer): un aro que crece y seis chispas. Va dentro del tablero, en % de su lado;
+ * la animación corre una sola vez y queda invisible.
+ */
+export function Estallido({ izq, arriba, tam, color = "#fca5a5" }: { izq: string; arriba: string; tam: string; color?: string }) {
+  return (
+    <span className="pointer-events-none absolute z-[5]" style={{ left: izq, top: arriba, width: tam, height: tam }} aria-hidden="true">
+      <span className="absolute inset-[12%] rounded-full border-[3px]" style={{ borderColor: color, animation: "mesa-estalla 540ms ease-out both" }} />
+      {[0, 60, 120, 180, 240, 300].map((a) => (
+        <span key={a} className="absolute inset-0" style={{ transform: `rotate(${a}deg)` }}>
+          <span className="absolute left-1/2 h-[13%] w-[13%] -translate-x-1/2 rounded-full" style={{ background: color, animation: "mesa-chispa 560ms ease-out both" }} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** La veta de la madera, encima de las casillas (muy suave: no tapa nada). */
+export function VetaMadera({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`pointer-events-none absolute inset-0 ${className}`}
+      style={{ background: "repeating-linear-gradient(97deg, rgba(60,30,8,.10) 0 1px, transparent 1px 7px), repeating-linear-gradient(3deg, rgba(255,240,210,.05) 0 2px, transparent 2px 13px)", mixBlendMode: "multiply" }}
+      aria-hidden="true"
+    />
+  );
+}
+
 export const TECLAS_ANIMACION = `
 @keyframes mesa-aparece { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
 @keyframes mesa-latido { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.75) } 50% { box-shadow: 0 0 0 7px rgba(239,68,68,0) } }
+@keyframes mesa-estalla { 0% { transform: scale(.35); opacity: 1 } 100% { transform: scale(1.55); opacity: 0 } }
+@keyframes mesa-chispa { 0% { top: 44%; opacity: 1 } 100% { top: -10%; opacity: 0 } }
+@keyframes mesa-asienta { 0% { transform: scale(1) } 35% { transform: scale(1.13) translateY(-4%) } 70% { transform: scale(.95) } 100% { transform: scale(1) } }
+@keyframes mesa-destello { 0% { opacity: .95; transform: scale(.6) } 100% { opacity: 0; transform: scale(1.7) } }
+@media (prefers-reduced-motion: reduce) {
+  [style*="mesa-estalla"], [style*="mesa-chispa"], [style*="mesa-destello"] { animation: none !important; opacity: 0 }
+  [style*="mesa-asienta"] { animation: none !important }
+}
 `;

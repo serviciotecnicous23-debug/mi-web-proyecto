@@ -4,10 +4,12 @@
  * punta va si casa en las dos), robar y pasar, los puntos de cada pareja o de cada uno hasta la meta, y el final de cada
  * mano con todas las fichas destapadas.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { EnMesa, Ficha, JugadaColocar, JugadaDomino, VistaDomino } from "@shared/mesa/domino";
 import type { PantallaMesaProps } from "./index";
 import { TECLAS_ANIMACION } from "./tablero";
+import { mesaSonido } from "./mesa-sonido";
+import { Sello, useJugadaNueva } from "./vida";
 
 const PUNTOS: Record<number, [number, number][]> = {
   0: [],
@@ -124,7 +126,7 @@ function Fila({ mesa }: { mesa: EnMesa[] }) {
 
 const iguales = (x: Ficha, y: Ficha) => x[0] === y[0] && x[1] === y[1];
 
-export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juegan, miAsiento }: PantallaMesaProps<VistaDomino, JugadaDomino>) {
+export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juegan, miAsiento, ultima }: PantallaMesaProps<VistaDomino, JugadaDomino>) {
   const [elegida, setElegida] = useState<Ficha | null>(null);
   useEffect(() => setElegida(null), [vista.mesa.length, vista.mano, ocupado]);
   const validas = ocupado ? [] : jugadas;
@@ -144,12 +146,32 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
     } else setElegida(elegida && iguales(elegida, f) ? null : f);
   }
 
+  // cada ficha suena al asentarse en la mesa; robar suena a madera y pasar, a un golpecito
+  useJugadaNueva(ultima, () => {
+    const j = ultima?.jugada;
+    if (j === "robar") mesaSonido.pieza();
+    else if (j === "pasar") mesaSonido.tic();
+    else if (j && typeof j === "object") setTimeout(() => mesaSonido.ficha(), 120);
+  });
+  // el final de cada mano: el sello grande («¡Dominó!» o «¡Tranque!») y la campana, una vez
+  const manoVista = useRef<number | null>(vista.finMano ? vista.mano : null);
+  const [sello, setSello] = useState<{ n: number; texto: string; sub: string } | null>(null);
+  useEffect(() => {
+    const f = vista.finMano;
+    if (!f || manoVista.current === vista.mano) return;
+    manoVista.current = vista.mano;
+    const quien = f.ganador !== null ? (asientos[f.ganador]?.nombre ?? "") : "";
+    setSello({ n: vista.mano, texto: f.como === "domino" ? "¡Dominó!" : "¡Tranque!", sub: f.como === "empate" ? "Nadie anota" : `${quien} · +${f.puntos}` });
+    setTimeout(() => mesaSonido.campana(), 200);
+  }, [vista.finMano, vista.mano, asientos]);
+
   const otros = Array.from({ length: n }, (_, k) => (yo >= 0 ? (yo + 1 + k) % n : k)).filter((i) => i !== yo);
   const fm = vista.finMano;
   const nombre = (i: number) => asientos[i]?.nombre ?? `Asiento ${i + 1}`;
 
   return (
-    <div className="flex flex-col items-center gap-2" data-testid="mesa-domino">
+    <div className="relative flex flex-col items-center gap-2" data-testid="mesa-domino">
+      {sello && <Sello llave={sello.n} texto={sello.texto} sub={sello.sub} color="#9a3412" />}
       {/* los puntos */}
       <div className="flex w-full max-w-[30rem] flex-wrap justify-center gap-1.5 text-[12px] font-bold">
         {(vista.parejas ? [0, 1] : Array.from({ length: n }, (_, i) => i)).map((eq) => {

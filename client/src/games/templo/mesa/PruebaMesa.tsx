@@ -2,7 +2,8 @@
  * SOLO EN DESARROLLO (no existe en la web publicada): una página para ver y probar cada mesa del patio con los
  * módulos puros corriendo en el navegador (el asiento 0 es la persona y los demás, compañeros de la computadora), y
  * la galería de las figuras. En la web de verdad todo lo decide el servidor.
- * Se abre en /mesa-prueba/<juego> (loteria, generala, escaleras, damas-chinas, memoria, basta, parchis o galeria).
+ * Se abre en /mesa-prueba/<juego> (loteria, generala, escaleras, damas-chinas, memoria, basta, dibuja, ajedrez, damas,
+ * domino, cuatro-en-raya, tres-en-raya, parchis o galeria).
  * El parchís acepta escenas para ver cada animación: ?escena=comer|meta|barrera|tres|fin (y ?dados=3,5 fija los
  * primeros tiros).
  */
@@ -35,6 +36,14 @@ import { UI_MESAS, type JuegoMesaId } from "./mesas";
 import { azarConSemilla, type AsientoMesa, type NivelBot } from "@shared/mesa";
 import { CASA, META, PARCHIS, PARCHIS_MESA, type EstadoParchis, type JugadaParchis } from "@shared/mesa/parchis";
 import { ParchisPantalla } from "./Parchis";
+import { AjedrezPantalla } from "./Ajedrez";
+import { DamasPantalla } from "./Damas";
+import { DominoPantalla } from "./Domino";
+import { CuatroEnRayaPantalla } from "./CuatroEnRaya";
+import { TresEnRayaPantalla } from "./TresEnRaya";
+import type { PantallaMesaProps } from "./index";
+import { MESAS } from "@shared/mesa/index";
+import { quienesJuegan } from "@shared/mesa";
 
 type ModuloConVista = ModuloMesa<
   unknown,
@@ -201,6 +210,65 @@ function CorredorParchis({ n, nivel, escena, dados, opciones }: { n: number; niv
   );
 }
 
+// ---------------------------------------------------------------- los juegos de mesa con turnos (como en la sala)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PANTALLAS_TURNOS: Record<string, ComponentType<PantallaMesaProps<any, any>>> = {
+  ajedrez: AjedrezPantalla,
+  damas: DamasPantalla,
+  domino: DominoPantalla,
+  "cuatro-en-raya": CuatroEnRayaPantalla,
+  "tres-en-raya": TresEnRayaPantalla,
+};
+
+function CorredorTurnos({ id, n, nivel, opciones }: { id: string; n: number; nivel: NivelBot; opciones: Record<string, unknown> }) {
+  const juego = MESAS[id];
+  const Pantalla = PANTALLAS_TURNOS[id];
+  const cuantos = Math.max(juego.min, Math.min(juego.max, n));
+  const asientos = useMemo<AsientoMesa[]>(() => Array.from({ length: cuantos }, (_, i) => ({ n: i, nombre: i ? nombreDeBot(i + 3) : "Luis", bot: i ? nivel : null })), [cuantos, nivel]);
+  const azar = useMemo(() => azarConSemilla(Date.now() & 0xffff), []);
+  const [e, setE] = useState<unknown>(() => juego.estadoInicial(asientos, azar, opciones));
+  const [ultima, setUltima] = useState<{ asiento: number; jugada: unknown; n: number } | null>(null);
+  const eRef = useRef(e);
+  eRef.current = e;
+  const aplicar = (a: number, j: unknown) => {
+    const x = juego.aplicar(eRef.current, a, j, azar);
+    if (x === eRef.current) return;
+    eRef.current = x;
+    setE(x);
+    setUltima((u) => ({ asiento: a, jugada: j, n: (u?.n ?? 0) + 1 }));
+  };
+  const fin = juego.terminado(e);
+  const juegan = quienesJuegan(juego, e);
+  // los compañeros de la computadora: esperan lo que tarda en verse la jugada y piensan
+  useEffect(() => {
+    if (fin) return;
+    const a = juegan.find((x) => asientos[x]?.bot);
+    if (a === undefined) return;
+    const [x, y] = juego.pensarMs?.[nivel] ?? [700, 1500];
+    const id = setTimeout(() => aplicar(a, juego.jugadaDeBot(eRef.current, a, nivel, azar)), (juego.esperaMs?.(e) ?? 0) + x + (y - x) * Math.random());
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [e]);
+  const yoJuego = juegan.includes(0);
+  return (
+    <div className="space-y-3">
+      <p className="text-center text-[13px] font-bold" data-testid="prueba-turno">
+        {fin ? fin.titulo : yoJuego ? "¡Te toca!" : `Juega ${asientos[juegan[0]]?.nombre ?? "…"}`}
+      </p>
+      <Pantalla
+        vista={juego.vistaPara(e, 0)}
+        jugadas={yoJuego && !fin ? juego.jugadasValidas(e, 0) : []}
+        miAsiento={0}
+        juegan={fin ? [] : juegan}
+        asientos={asientos.map((x) => ({ ...x, yo: x.n === 0 }))}
+        ultima={ultima}
+        jugar={(j) => aplicar(0, j)}
+        ocupado={!yoJuego || !!fin}
+      />
+    </div>
+  );
+}
+
 function Galeria() {
   const q = new URLSearchParams(window.location.search);
   const desde = Number(q.get("desde") || 0);
@@ -273,10 +341,10 @@ export default function PruebaMesa() {
   const dados = (q.get("dados") ?? "").split(",").map(Number).filter((x) => x >= 1 && x <= 6);
   const [vuelta, setVuelta] = useState(0);
   return (
-    <div className="min-h-screen bg-[#fffaf0] text-stone-800">
+    <div className="min-h-screen bg-[#fffaf0] text-stone-800 dark:bg-[#1f1a12] dark:text-stone-100">
       <div className="mx-auto max-w-5xl space-y-3 p-3">
         <nav className="flex flex-wrap gap-2 text-sm">
-          {(["galeria", ...Object.keys(MODULOS), "parchis"] as string[]).map((j) => (
+          {(["galeria", ...Object.keys(MODULOS), ...Object.keys(PANTALLAS_TURNOS), "parchis"] as string[]).map((j) => (
             <Link
               key={j}
               href={`/mesa-prueba/${j}`}
@@ -299,6 +367,8 @@ export default function PruebaMesa() {
           <Galeria />
         ) : (juego as string) === "parchis" ? (
           <CorredorParchis key={vuelta} n={Math.max(2, Math.min(4, n))} nivel={nivel as NivelBot} escena={escena} dados={dados} opciones={opciones} />
+        ) : PANTALLAS_TURNOS[juego as string] ? (
+          <CorredorTurnos key={`${juego}-${vuelta}`} id={juego as string} n={n} nivel={nivel as NivelBot} opciones={opciones} />
         ) : MODULOS[juego] ? (
           <Corredor
             key={`${juego}-${vuelta}`}

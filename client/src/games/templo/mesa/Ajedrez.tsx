@@ -3,11 +3,13 @@
  * las comidas que se apagan, adónde puede ir la pieza que tocas, la última jugada marcada, el rey en jaque que late, la
  * coronación con su elección y lo que comió cada lado. Quien juega con las negras ve el tablero al revés.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { casillaDe, nombreCasilla, type VistaAjedrez } from "@shared/mesa/ajedrez";
 import type { PantallaMesaProps } from "./index";
 import { NOMBRE_PIEZA, PiezaAjedrez } from "./piezas-ajedrez";
-import { TECLAS_ANIMACION, usePiezasAnimadas } from "./tablero";
+import { Estallido, TECLAS_ANIMACION, VetaMadera, usePiezasAnimadas } from "./tablero";
+import { mesaSonido } from "./mesa-sonido";
+import { useJugadaNueva } from "./vida";
 
 const VALOR = [0, 1, 3, 3, 5, 9, 0];
 const CLARA = "#f0dcb4";
@@ -42,6 +44,17 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
   const destinos = new Set(sel === null ? [] : (porOrigen.get(sel) ?? []).map((j) => casillaDe(j.slice(2, 4))));
   const camino = vista.ultima ? [vista.ultima.de, vista.ultima.a] : null;
   const piezas = usePiezasAnimadas(vista.t, camino, ultima?.n ?? 0);
+  // cada jugada suena al posarse la pieza: la madera, comer o el jaque
+  const comidas = vista.comidas[0].length + vista.comidas[1].length;
+  const comidasAntes = useRef(comidas);
+  useJugadaNueva(ultima, () => {
+    const comio = comidas > comidasAntes.current;
+    setTimeout(() => (comio ? mesaSonido.comer() : mesaSonido.pieza()), 240);
+    if (vista.jaque !== null) setTimeout(() => mesaSonido.jaque(), 480);
+  });
+  useEffect(() => {
+    comidasAntes.current = comidas;
+  });
 
   function tocar(sq: number) {
     if (sel !== null && destinos.has(sq)) {
@@ -107,15 +120,18 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
                     ) : (
                       <span className="absolute left-1/2 top-1/2 h-[30%] w-[30%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-800/45" style={{ animation: "mesa-aparece 160ms ease-out" }} />
                     ))}
-                  {k % 8 === 0 && <span className={`absolute left-[4%] top-[2%] text-[9px] font-black ${oscura ? "text-[#f0dcb4]" : "text-[#8a5a31]"}`}>{nombre[1]}</span>}
-                  {k >= 56 && <span className={`absolute bottom-[1%] right-[5%] text-[9px] font-black ${oscura ? "text-[#f0dcb4]" : "text-[#8a5a31]"}`}>{nombre[0]}</span>}
+                  {k % 8 === 0 && <span className={`absolute left-[4%] top-[2%] text-[10px] font-black leading-none ${oscura ? "text-[#f0dcb4]" : "text-[#8a5a31]"}`}>{nombre[1]}</span>}
+                  {k >= 56 && <span className={`absolute bottom-[3%] right-[5%] text-[10px] font-black leading-none ${oscura ? "text-[#f0dcb4]" : "text-[#8a5a31]"}`}>{nombre[0]}</span>}
                 </button>
               );
             })}
           </div>
+          <VetaMadera />
           {piezas.map((p) => {
             const k = alReves ? 63 - p.sq : p.sq;
             const elegida = sel === p.sq && !p.sale;
+            // la que acaba de llegar se asienta con un saltito
+            const movida = !!vista.ultima && p.sq === vista.ultima.a && !p.sale;
             return (
               <div
                 key={p.id}
@@ -131,10 +147,19 @@ export function AjedrezPantalla({ vista, jugadas, jugar, ultima, ocupado, asient
                   zIndex: p.sale ? 1 : elegida ? 4 : 2,
                 }}
               >
-                <PiezaAjedrez v={p.v} className="h-full w-full p-[5%]" />
+                <div key={movida ? `m${ultima?.n ?? 0}` : "q"} className="h-full w-full" style={movida ? { animation: "mesa-asienta 340ms 240ms both" } : undefined}>
+                  <PiezaAjedrez v={p.v} className="h-full w-full p-[5%] drop-shadow-[0_2px_1.5px_rgba(0,0,0,0.35)]" />
+                </div>
               </div>
             );
           })}
+          {/* al comer, un estallido donde estaba la pieza */}
+          {piezas
+            .filter((p) => p.sale)
+            .map((p) => {
+              const k = alReves ? 63 - p.sq : p.sq;
+              return <Estallido key={`e${p.id}`} izq={`${(k & 7) * 12.5}%`} arriba={`${(k >> 3) * 12.5}%`} tam="12.5%" />;
+            })}
           {corona && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-stone-950/55 backdrop-blur-[1px]" data-testid="mesa-corona">
               <p className="rounded-full bg-amber-100 px-3 py-1 text-[13px] font-black text-amber-950">¿En qué se convierte tu peón?</p>

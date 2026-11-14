@@ -3,10 +3,12 @@
  * los saltos de una comida larga uno por uno, las comidas que se apagan, la dama con su corona y el aviso de «¡Hay que
  * comer!». Se elige la ficha y luego cada casilla del camino (si hay una sola manera, se completa sola).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { VistaDamas } from "@shared/mesa/damas";
 import type { PantallaMesaProps } from "./index";
-import { CoronaSvg, TECLAS_ANIMACION, usePiezasAnimadas } from "./tablero";
+import { CoronaSvg, Estallido, TECLAS_ANIMACION, VetaMadera, usePiezasAnimadas } from "./tablero";
+import { mesaSonido } from "./mesa-sonido";
+import { useJugadaNueva } from "./vida";
 import { Ico } from "../iconos";
 
 const CLARA = "#efe0bf";
@@ -55,6 +57,19 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
   const siguientes = new Set(camino.length ? conPrefijo.filter((j) => j.length > camino.length).map((j) => j[camino.length]) : []);
   const hayQueComer = validas.length > 0 && (validas[0].length > 2 || come(vista.t, validas[0][0], validas[0][1]));
   const piezas = usePiezasAnimadas(vista.t, vista.ultima?.camino ?? null, ultima?.n ?? 0);
+  // cada salto suena como madera; al comer, el golpe; al coronarse, el arpegio
+  const total = vista.fichas[0] + vista.fichas[1];
+  const totalAntes = useRef(total);
+  useJugadaNueva(ultima, () => {
+    const saltos = Math.max(1, (vista.ultima?.camino.length ?? 2) - 1);
+    const comio = total < totalAntes.current;
+    for (let k = 0; k < saltos; k++) setTimeout(() => (comio ? mesaSonido.comer() : mesaSonido.pieza()), 200 + k * 230);
+    if (vista.ultima?.corona) setTimeout(() => mesaSonido.sube(), 260 + saltos * 230);
+  });
+  useEffect(() => {
+    totalAntes.current = total;
+  });
+  const llegada = vista.ultima ? vista.ultima.camino[vista.ultima.camino.length - 1] : null;
 
   function tocar(sq: number) {
     if (camino.length && siguientes.has(sq)) {
@@ -115,6 +130,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
               );
             })}
           </div>
+          <VetaMadera />
           {piezas.map((p) => {
             // mientras se elige una comida larga, la ficha elegida se ve en la última casilla del camino
             const sq = camino.length > 1 && p.sq === camino[0] && !p.sale ? camino[camino.length - 1] : p.sq;
@@ -135,10 +151,37 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
                   zIndex: p.sale ? 1 : alzada ? 4 : 2,
                 }}
               >
-                <Ficha v={p.v} />
+                <div
+                  key={p.sq === llegada && !p.sale && !alzada ? `m${ultima?.n ?? 0}` : "q"}
+                  className="h-full w-full"
+                  style={p.sq === llegada && !p.sale && !alzada ? { animation: `mesa-asienta 340ms ${200 + Math.max(0, (vista.ultima?.camino.length ?? 2) - 2) * 230}ms both` } : undefined}
+                >
+                  <Ficha v={p.v} />
+                </div>
               </div>
             );
           })}
+          {piezas
+            .filter((p) => p.sale)
+            .map((p) => {
+              const k = alReves ? 63 - p.sq : p.sq;
+              return <Estallido key={`e${p.id}`} izq={`${(k & 7) * 12.5}%`} arriba={`${(k >> 3) * 12.5}%`} tam="12.5%" />;
+            })}
+          {vista.ultima?.corona && llegada !== null && (
+            <span
+              key={`c${ultima?.n ?? 0}`}
+              className="pointer-events-none absolute z-[6] rounded-full"
+              style={{
+                left: `${((alReves ? 63 - llegada : llegada) & 7) * 12.5}%`,
+                top: `${((alReves ? 63 - llegada : llegada) >> 3) * 12.5}%`,
+                width: "12.5%",
+                height: "12.5%",
+                background: "radial-gradient(circle, rgba(255,240,170,.95), rgba(245,180,40,.4) 45%, rgba(245,180,40,0) 70%)",
+                animation: `mesa-destello 900ms ${260 + Math.max(0, (vista.ultima.camino.length ?? 2) - 2) * 230}ms ease-out both`,
+              }}
+              aria-hidden="true"
+            />
+          )}
         </div>
       </div>
       {fila(alReves ? 1 : 0)}
