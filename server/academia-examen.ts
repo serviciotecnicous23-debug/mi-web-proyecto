@@ -102,8 +102,11 @@ export type Evaluacion = {
    * preguntas salen del banco del examen final, que se da después.
    */
   revisionCompleta?: boolean;
-  /** Si se puede pedir la revisión de un intento (por defecto sí). La diagnóstica no: no tiene nota. */
-  apelable?: boolean;
+  /**
+   * Si se puede pedir la revisión de un intento (por defecto sí). La diagnóstica y las mini pruebas no: un texto dice por
+   * qué (o `false`, con un motivo general).
+   */
+  apelable?: boolean | string;
 };
 
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
@@ -392,7 +395,9 @@ async function apelacionDe(userId: number, clave: string): Promise<ApelacionVist
 
 /** Si se puede pedir la revisión del último intento: una vez por examen, dentro de DIAS_APELACION días. */
 async function apelableDe(userId: number, clave: string, ev?: Evaluacion): Promise<Apelable & { intento: number | null }> {
-  if (ev?.apelable === false) return { puede: false, hasta: null, porque: "Esta prueba no tiene nota: no se pide su revisión.", intento: null };
+  if (ev && ev.apelable !== undefined && ev.apelable !== true) {
+    return { puede: false, hasta: null, porque: typeof ev.apelable === "string" ? ev.apelable : "Esta prueba no admite pedidos de revisión.", intento: null };
+  }
   const [{ rows: ap }, { rows: p }, { rows: it }] = await Promise.all([
     pool.query(`SELECT 1 FROM academia_apelaciones WHERE user_id = $1 AND clave = $2`, [userId, clave]),
     pool.query(`SELECT intentos, resultado IS NOT NULL AS hay, curso IS NOT NULL AS en_curso, updated_at FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, clave]),

@@ -63,7 +63,7 @@ export function evaluacionMini(m: MateriaDef, n: number): Evaluacion | null {
     },
     yaAprobado: "",
     revisionCompleta: true,
-    apelable: false,
+    apelable: "Las mini pruebas no tienen respuestas escritas: no se pide su revisión. Tienes 3 intentos y cuenta el mejor.",
   };
 }
 
