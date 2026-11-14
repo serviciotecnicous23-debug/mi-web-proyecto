@@ -10,7 +10,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DIAGNOSTICO, DIAS_APELACION, SUFICIENCIA, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
+import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
 import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
@@ -20,7 +20,7 @@ const LETRAS = ["A", "B", "C", "D", "E", "F"];
 export type DestinoExamen = {
   /** La ruta del examen en el servidor (baseExamen o baseIntegral). */
   base: string;
-  tipo: "materia" | "integral" | "suficiencia" | "diagnostico";
+  tipo: "materia" | "integral" | "suficiencia" | "diagnostico" | "mini";
   titulo: string;
   volver: { href: string; texto: string };
   /** Una línea más en «Antes de empezar» (por ejemplo, de dónde salen las preguntas). */
@@ -182,6 +182,14 @@ function Veredicto({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
       </div>
     );
   }
+  if (destino.tipo === "mini") {
+    return (
+      <div className="mt-5 rounded-xl p-4 bg-orange-500/10" data-testid="mini-veredicto">
+        <p className="font-semibold">De tus intentos cuenta el mejor, y entra en la nota de la materia.</p>
+        <p className="text-sm mt-1">Mira abajo la explicación de cada pregunta: el próximo intento trae preguntas nuevas.</p>
+      </div>
+    );
+  }
   if (destino.tipo === "diagnostico") {
     return (
       <div className="mt-5 rounded-xl p-4 bg-orange-500/10" data-testid="diagnostico-veredicto">
@@ -208,11 +216,39 @@ function Veredicto({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
   );
 }
 
+/** Una respuesta escrita ya corregida: la nota, idea por idea, la cita, los avisos, la revisión y la respuesta modelo. */
+export function EscritaCorregida({ w }: { w: ResultadoExamen["escritas"][number] }) {
+  return (
+    <div className="glass-card p-5 mb-4" data-testid="revision-escrita">
+      <p className="font-medium mb-2">{w.pregunta}</p>
+      <blockquote className="border-l-4 border-orange-500/50 pl-3 text-[15px] italic mb-3 whitespace-pre-wrap">{w.texto || "(sin respuesta)"}</blockquote>
+      <p className="font-semibold mb-2">Nota: {w.nota} <span className="text-muted-foreground font-normal">· {w.palabras} palabras</span></p>
+      <ul className="space-y-1 text-sm mb-2">
+        {w.ideas.map((idea) => (
+          <li key={idea.texto} className="flex items-start gap-2">{idea.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>{idea.texto}</span></li>
+        ))}
+        {w.cita.pedida && (
+          <li className="flex items-start gap-2">{w.cita.valida ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>Una cita bíblica que lo enseñe{w.cita.encontrada ? `: ${w.cita.encontrada}` : ""}</span></li>
+        )}
+      </ul>
+      {w.avisos.map((a) => <p key={a} className="text-sm text-orange-700 dark:text-orange-300">{a}</p>)}
+      {w.revision && (
+        <p className="text-sm mt-2 rounded-lg bg-sky-500/10 px-3 py-2 flex items-start gap-2" data-testid="escrita-revisada">
+          <ShieldCheck className="w-4 h-4 mt-0.5 text-sky-600 shrink-0" />
+          <span>La revisó la Administración de la academia: tu nota pasó de {w.revision.antes} a {w.revision.nota}. Motivo: «{w.revision.motivo}»</span>
+        </p>
+      )}
+      {w.revisar && !w.revision && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Quedó para que la revise la Administración de la academia; la nota puede cambiar.</p>}
+      {w.modelo && <p className="text-sm mt-3"><span className="font-semibold">Una respuesta modelo:</span> {w.modelo}</p>}
+    </div>
+  );
+}
+
 function Resultado({ r, destino, aprueba }: { r: ResultadoExamen; destino: DestinoExamen; aprueba: number }) {
   return (
     <div data-testid="examen-resultado">
       <div className="glass-card p-6 text-center">
-        <p className="data-label mb-3">{destino.tipo === "diagnostico" ? "Resultado de la prueba" : "Resultado del examen"}</p>
+        <p className="data-label mb-3">{destino.tipo === "diagnostico" ? "Resultado de la prueba" : destino.tipo === "mini" ? "Resultado de la mini prueba" : "Resultado del examen"}</p>
         {destino.tipo === "diagnostico" ? (
           <>
             <p className="font-display text-5xl font-bold" data-testid="diagnostico-aciertos">{r.aciertos} de {r.de}</p>
@@ -221,7 +257,9 @@ function Resultado({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
         ) : (
           <>
             <div className="flex justify-center"><NotaMedalla nota={r.nota} medalla={r.medalla} grande /></div>
-            <p className="text-sm text-muted-foreground mt-4">Parte A: {r.aciertos} de {r.de} ({r.objetiva}) · Parte B escrita: {r.escrita}</p>
+            <p className="text-sm text-muted-foreground mt-4">
+              {r.aciertos} de {r.de} bien ({r.objetiva}){destino.tipo === "mini" ? "" : ` · Parte B escrita: ${r.escrita}`}
+            </p>
           </>
         )}
         <Veredicto r={r} destino={destino} aprueba={aprueba} />
@@ -256,30 +294,7 @@ function Resultado({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
       {r.escritas.length > 0 && (
         <>
           <h3 className="font-display text-2xl font-bold mt-10 mb-4">Revisión de la parte B</h3>
-          {r.escritas.map((w, i) => (
-            <div key={i} className="glass-card p-5 mb-4" data-testid="revision-escrita">
-              <p className="font-medium mb-2">{w.pregunta}</p>
-              <blockquote className="border-l-4 border-orange-500/50 pl-3 text-[15px] italic mb-3 whitespace-pre-wrap">{w.texto || "(sin respuesta)"}</blockquote>
-              <p className="font-semibold mb-2">Nota: {w.nota} <span className="text-muted-foreground font-normal">· {w.palabras} palabras</span></p>
-              <ul className="space-y-1 text-sm mb-2">
-                {w.ideas.map((idea) => (
-                  <li key={idea.texto} className="flex items-start gap-2">{idea.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>{idea.texto}</span></li>
-                ))}
-                {w.cita.pedida && (
-                  <li className="flex items-start gap-2">{w.cita.valida ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>Una cita bíblica que lo enseñe{w.cita.encontrada ? `: ${w.cita.encontrada}` : ""}</span></li>
-                )}
-              </ul>
-              {w.avisos.map((a) => <p key={a} className="text-sm text-orange-700 dark:text-orange-300">{a}</p>)}
-              {w.revision && (
-                <p className="text-sm mt-2 rounded-lg bg-sky-500/10 px-3 py-2 flex items-start gap-2" data-testid="escrita-revisada">
-                  <ShieldCheck className="w-4 h-4 mt-0.5 text-sky-600 shrink-0" />
-                  <span>La revisó la Administración de la academia: tu nota pasó de {w.revision.antes} a {w.revision.nota}. Motivo: «{w.revision.motivo}»</span>
-                </p>
-              )}
-              {w.revisar && !w.revision && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Quedó para que la revise la Administración de la academia; la nota puede cambiar.</p>}
-              {w.modelo && <p className="text-sm mt-3"><span className="font-semibold">Una respuesta modelo:</span> {w.modelo}</p>}
-            </div>
-          ))}
+          {r.escritas.map((w, i) => <EscritaCorregida key={i} w={w} />)}
         </>
       )}
     </div>
@@ -415,7 +430,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
         {paso?.paso === "fin" && (
           <>
             <Resultado r={paso.resultado} destino={destino} aprueba={estado.aprueba} />
-            {destino.tipo !== "diagnostico" && <PedirRevision base={base} apelacion={q.data.apelacion} apelable={q.data.apelable} alPedir={() => void q.refetch()} />}
+            {destino.tipo !== "diagnostico" && destino.tipo !== "mini" && <PedirRevision base={base} apelacion={q.data.apelacion} apelable={q.data.apelable} alPedir={() => void q.refetch()} />}
           </>
         )}
 
@@ -432,7 +447,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                 <h2 className="font-semibold text-lg mb-3">Antes de empezar</h2>
                 <ul className="space-y-2 text-[15px]">
                   {destino.detalle && <li className="flex gap-2"><Layers className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{destino.detalle}</li>}
-                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte A: {medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
+                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{medida.escritas > 0 ? "Parte A: " : ""}{medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
                   {medida.escritas > 0 && (
                     <li className="flex gap-2"><PenLine className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte B: {medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} con tus palabras, {medida.minutosEscrita} minutos cada una.</li>
                   )}
@@ -443,11 +458,13 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                       ? `Se aprueba con ${SUFICIENCIA.apruebaObjetiva} en la parte A y ${SUFICIENCIA.apruebaEscrita} en la parte B, a la vez. Es una sola oportunidad: si no apruebas, cursas la materia.`
                       : destino.tipo === "diagnostico"
                         ? `No tiene nota para aprobar ni cambia nada: al terminar verás por dónde te conviene empezar. Se puede repetir cada ${DIAGNOSTICO.diasEntre} días.`
+                        : destino.tipo === "mini"
+                          ? `No se aprueba ni se reprueba: tienes ${MINI_PRUEBA.intentos} intentos, cada uno con preguntas nuevas, y cuenta el mejor. Al terminar ves la explicación de cada pregunta.`
                         : `Se aprueba con ${estado.aprueba}. Al terminar verás la revisión completa, con la explicación de cada pregunta.`}
                   </li>
                 </ul>
                 {estado.cerrado && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300" data-testid="examen-cerrado">{estado.cerrado}</p>}
-                {!estado.cerrado && estado.falta.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">Para darlo te falta {estado.falta.join(" y ")}.</p>}
+                {!estado.cerrado && estado.falta.length > 0 && <p className="mt-4 text-sm text-orange-700 dark:text-orange-300">{destino.tipo === "mini" || destino.tipo === "diagnostico" ? "Para darla" : "Para darlo"} te falta {estado.falta.join(" y ")}.</p>}
                 {estado.falta.includes("inscribirte en la academia") && (
                   <Link href={`/academia/inscripcion?volver=${encodeURIComponent(window.location.pathname)}`}>
                     <Button className="fire-btn-primary mt-3" data-testid="examen-inscribirme">Inscribirme en la academia</Button>
@@ -470,7 +487,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                       </span>
                     </label>
                     <Button size="lg" className="fire-btn-primary h-12 px-8 mt-4" disabled={!compromiso || ocupado} onClick={() => accion(() => empezarExamen(base))} data-testid="examen-empezar">
-                      {destino.tipo === "diagnostico" ? "Empezar la prueba" : "Empezar el examen"}
+                      {destino.tipo === "diagnostico" ? "Empezar la prueba" : destino.tipo === "mini" ? "Empezar la mini prueba" : "Empezar el examen"}
                     </Button>
                   </>
                 )}

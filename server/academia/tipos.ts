@@ -50,4 +50,11 @@ export type BancoMateria = {
   final: PreguntaObjetiva[];
   /** Las preguntas escritas del examen final, con su clave de corrección. */
   escritas: ClaveEscrita[];
+  /**
+   * Las mini pruebas (Nivel 2 en adelante): por número, 18 preguntas de su grupo de lecciones (6 por intento). Su
+   * grupo sale de `miniPruebasDe` (shared/academia.ts).
+   */
+  mini?: Record<number, PreguntaObjetiva[]>;
+  /** El escrito breve de la materia (Nivel 2 en adelante): de 80 a 300 palabras, con su clave de corrección. */
+  breve?: ClaveEscrita;
 };

@@ -91,6 +91,8 @@ const AcademiaDiagnostico = lazy(() => import("@/pages/academia-diagnostico"));
 const AcademiaDiagnosticoPrueba = lazy(() => import("@/pages/academia-diagnostico").then((m) => ({ default: m.AcademiaDiagnosticoPrueba })));
 const AcademiaRepaso = lazy(() => import("@/pages/academia-repaso"));
 const AcademiaDeclaracion = lazy(() => import("@/pages/academia-declaracion"));
+const AcademiaMini = lazy(() => import("@/pages/academia-mini"));
+const AcademiaEscrito = lazy(() => import("@/pages/academia-escrito"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
 const FichaMinisterialPage = lazy(() => import("@/pages/ficha-ministerial"));
 const MiIglesiaPage = lazy(() => import("@/pages/mi-iglesia"));
@@ -167,6 +169,8 @@ function Router() {
       <Route path="/academia/diagnostico" component={AcademiaDiagnostico} />
       <Route path="/academia/repaso" component={AcademiaRepaso} />
       <Route path="/academia/declaracion-de-fe" component={AcademiaDeclaracion} />
+      <Route path="/academia/mini/:materiaId/:n" component={AcademiaMini} />
+      <Route path="/academia/escrito/:materiaId" component={AcademiaEscrito} />
       {/* La administración de la academia: la Administración desde su panel; los maestros y las iglesias, solo para ver */}
       <Route path="/admin/academia" component={AcademiaDireccion} />
       <Route path="/admin/academia/alumno/:alumnoId" component={AcademiaDireccionAlumno} />

@@ -8,6 +8,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
+  miniPruebasDe,
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
   bloqueoDe, segundosDeLectura, videoQuePide, type BloqueoRepaso,
@@ -28,6 +29,8 @@ import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
 import { registerAcademiaMentoresRoutes } from "./academia-mentores";
 import { claveSuficiencia, registerAcademiaSuficienciaRoutes } from "./academia-suficiencia";
+import { estadoMini, registerAcademiaMiniRoutes } from "./academia-mini";
+import { registerAcademiaEscritoRoutes, vistaBreve } from "./academia-escrito";
 import { registerAcademiaDiagnosticoRoutes } from "./academia-diagnostico";
 import { registerAcademiaVersiculosRoutes } from "./academia-versiculos";
 import { estadoExamen, leerCurso, registerAcademiaExamenRoutes } from "./academia-examen";
@@ -200,6 +203,18 @@ export function registerAcademiaRoutes(app: Express) {
       // La suficiencia se ofrece a quien no aprobó la materia ni dio su examen final, y solo una vez (o si la está dando).
       const sufEnCurso = !!leerCurso(suf?.curso);
       const suficiencia = examen && estado !== "aprobada" && !examen.intentos && !examen.enCurso && (!suf?.intentos || sufEnCurso) ? { enCurso: sufEnCurso } : null;
+      // Nivel 2 en adelante: las mini pruebas y el escrito breve (de a una consulta por vez: la base acepta pocas conexiones)
+      const minis: MateriaDetalle["minis"] = [];
+      let breve: MateriaDetalle["breve"] = null;
+      if (userId && m.disponible) {
+        for (const g of miniPruebasDe(m)) {
+          if (!BANCOS.get(m.id)?.mini?.[g.n]) continue;
+          const e = await estadoMini(userId, m, g.n, g.lecciones);
+          minis.push({ n: g.n, lecciones: g.lecciones, intentos: e.intentos, mejor: e.mejor, enCurso: e.enCurso, falta: e.falta, cerrado: e.cerrado ?? null });
+        }
+        const b = await vistaBreve(userId, m);
+        if (b) breve = { entregas: b.entregas, maxEntregas: b.maxEntregas, mejor: b.mejor, falta: b.falta };
+      }
       const out: MateriaDetalle = {
         materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada })) },
         pesos: pesosDe(m),
@@ -218,6 +233,8 @@ export function registerAcademiaRoutes(app: Express) {
         conSesion: !!userId,
         via: estado === "aprobada" ? ((fila?.via as MateriaDetalle["via"]) ?? "cursada") : null,
         suficiencia,
+        minis,
+        breve,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -536,6 +553,8 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaAsignacionesRoutes(app);
   registerAcademiaMentoresRoutes(app);
   registerAcademiaSuficienciaRoutes(app);
+  registerAcademiaMiniRoutes(app);
+  registerAcademiaEscritoRoutes(app);
   registerAcademiaDiagnosticoRoutes(app);
   registerAcademiaVersiculosRoutes(app);
 }

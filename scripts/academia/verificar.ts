@@ -10,7 +10,7 @@
  * que lo citado entre comillas «…» coincida letra por letra con la RV1960 (en las lecciones, con algún versículo de la
  * misma lección; en las preguntas, con su cita).
  */
-import { examenDe, parsearCita, todasLasMaterias } from "../../shared/academia";
+import { ESCRITA, MINI_PRUEBA, examenDe, miniPruebasDe, parsearCita, tieneEscritoBreve, todasLasMaterias } from "../../shared/academia";
 import { BANCOS, CONTENIDO } from "../../server/academia/index";
 import { problemasDeClave } from "../../server/academia-correccion";
 import type { PreguntaObjetiva } from "../../server/academia/tipos";
@@ -113,7 +113,34 @@ async function main() {
       ids.add(e.id);
       for (const x of problemasDeClave(e)) mal(x);
     }
-    console.log(`✔ ${m.id}: ${m.lecciones.length} lecciones, ${Object.values(banco.repaso).flat().length} de repaso, ${banco.final.length} del final, ${banco.escritas.length} escritas`);
+    // Nivel 2 en adelante: cada mini prueba con su banco de 18, de las lecciones de su grupo, y el escrito breve
+    const minis = miniPruebasDe(m);
+    for (const g of minis) {
+      const lista = banco.mini?.[g.n] ?? [];
+      if (lista.length < MINI_PRUEBA.banco) mal(`${m.id}: la mini prueba ${g.n} tiene ${lista.length} preguntas (pide ${MINI_PRUEBA.banco})`);
+      for (const p of lista) {
+        revisarPregunta(`${m.id} mini ${g.n}`, p, m.lecciones.length, objetivos, ids);
+        if (!g.lecciones.includes(p.leccion)) mal(`${p.id}: es de la lección ${p.leccion}, fuera de la mini prueba ${g.n}`);
+        await revisarComillas(p.id, p.explica, [p.ref]);
+      }
+      for (const k of g.lecciones) {
+        if (lista.filter((p) => p.leccion === k).length < Math.ceil(MINI_PRUEBA.objetivas / g.lecciones.length)) mal(`${m.id}: la lección ${k} tiene pocas preguntas en la mini prueba ${g.n}`);
+      }
+    }
+    if (tieneEscritoBreve(m)) {
+      const b = banco.breve;
+      if (!b) mal(`${m.id}: sin escrito breve`);
+      else {
+        if (b.tipo !== "breve") mal(`${b.id}: el escrito breve debe ser de tipo «breve»`);
+        if (ids.has(b.id)) mal(`${m.id}: id repetido ${b.id}`);
+        ids.add(b.id);
+        for (const x of problemasDeClave(b)) mal(x);
+        const n = b.modelo.split(/\s+/).filter(Boolean).length;
+        if (n < ESCRITA.breve.min || n > ESCRITA.breve.max) mal(`${b.id}: la respuesta modelo tiene ${n} palabras (de ${ESCRITA.breve.min} a ${ESCRITA.breve.max})`);
+      }
+    }
+    const extra = minis.length ? `, ${minis.map((g) => (banco.mini?.[g.n] ?? []).length).join(" y ")} de las mini pruebas${banco.breve ? " y el escrito breve" : ""}` : "";
+    console.log(`✔ ${m.id}: ${m.lecciones.length} lecciones, ${Object.values(banco.repaso).flat().length} de repaso, ${banco.final.length} del final, ${banco.escritas.length} escritas${extra}`);
   }
   if (problemas.length) {
     console.error(`\n${problemas.length} problemas:`);

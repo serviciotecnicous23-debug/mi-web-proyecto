@@ -104,7 +104,7 @@ function evaluacionDiagnostico(): Evaluacion {
     },
     yaAprobado: "",
     revisionCompleta: false,
-    apelable: false,
+    apelable: "Esta prueba no tiene nota: no se pide su revisión.",
   };
 }
 
