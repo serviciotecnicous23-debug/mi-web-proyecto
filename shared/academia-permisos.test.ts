@@ -72,6 +72,12 @@ test("el contenido: lo revisan la Dirección y los profesores; lo aprueba y reti
   }
 });
 
+test("los mentores: los elige la Dirección para todos y la iglesia aliada para los suyos", () => {
+  for (const role of ["admin", "director", "staff_global"]) assert.equal(alcanceDe(role, "mentores"), "todos", role);
+  for (const role of ["admin_iglesia", "maestro_iglesia"]) assert.equal(alcanceDe(role, "mentores"), "iglesia", role);
+  for (const role of ["maestro_ministerio", "obrero", "miembro"]) assert.equal(alcanceDe(role, "mentores"), "no", role);
+});
+
 test("abrir la academia: solo la Administración y el Director del Ministerio", () => {
   assert.equal(alcanceDe("admin", "abrir"), "todos");
   assert.equal(alcanceDe("director", "abrir"), "todos");

@@ -44,6 +44,7 @@ export default function AcademiaExpediente() {
               <span className="text-muted-foreground">· Promoción {a.promocion} · desde el {fecha(a.desde)}</span>
               <ChipEstatus e={a.estatus} />
             </div>
+            {d.mentor && <p className="text-sm text-muted-foreground mt-1" data-testid="expediente-mentor">Tu mentor en la academia: <strong className="text-foreground">{d.mentor.nombre}</strong></p>}
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
             <Link href="/academia/carne"><Button variant="outline" size="sm"><IdCard className="w-4 h-4 mr-1.5" /> Mi carné</Button></Link>

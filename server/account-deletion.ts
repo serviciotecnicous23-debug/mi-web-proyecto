@@ -101,6 +101,11 @@ export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible:
       if (!fila?.t) continue;
       await tx.execute(sql`DELETE FROM ${sql.raw(`"${tabla}"`)} WHERE ${condicion(userId)}`);
     }
+    // si acompañaba a alguien en la academia como mentor, deja de hacerlo
+    const alumnos = await tx.execute(sql`SELECT to_regclass('public.academia_alumnos') AS t`);
+    if ((alumnos as unknown as { rows?: Array<{ t: string | null }> }).rows?.[0]?.t) {
+      await tx.execute(sql`UPDATE academia_alumnos SET mentor_user_id = NULL WHERE mentor_user_id = ${userId}`);
+    }
     await tx.execute(sql`
       UPDATE users SET
         username = ${alias},

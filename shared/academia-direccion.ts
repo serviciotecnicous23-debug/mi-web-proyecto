@@ -64,6 +64,8 @@ export type DireccionResumen = {
     exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean;
     /** La revisión del contenido: verla y dejar observaciones, aprobar materias y retirar preguntas del banco. */
     contenido: boolean; aprobar: boolean; banco: boolean;
+    /** Elegir el mentor de un alumno. */
+    mentores: boolean;
   };
 };
 
@@ -91,7 +93,9 @@ export type AlumnoDetalle = {
   niveles: { n: number; nombre: string; pacto: string | null; completado: string | null; promedio: number | null }[];
   certificados: DocumentoAcademia[];
   actividad: ActividadItem[];
-  puede: { contacto: boolean; revisar: boolean; documentos: boolean };
+  /** Quien lo acompaña en la academia (su mentor), si tiene. */
+  mentor: { userId: number; nombre: string } | null;
+  puede: { contacto: boolean; revisar: boolean; documentos: boolean; mentores: boolean };
 };
 
 export type MateriaSeguimiento = { materia: MateriaReporte; alumnos: (AlumnoFila & { avance: MateriaAvance })[]; puede: { exportar: boolean } };

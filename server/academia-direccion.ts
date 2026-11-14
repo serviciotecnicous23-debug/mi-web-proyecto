@@ -40,8 +40,8 @@ const siguienteDisponible = (ultimo: number) => !!NIVELES.find((n) => n.n === ul
 const tituloDe = (id: string) => materiaPorId(id)?.titulo ?? id;
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
 
-/** Las filas de los alumnos inscritos que el permiso deja ver (o solo una). */
-async function filasDe(p: Permiso, contacto: boolean, soloUser?: number): Promise<AlumnoFila[]> {
+/** Las filas de los alumnos inscritos que el permiso deja ver (o solo una, o los que acompaña un mentor). */
+export async function filasDe(p: Permiso, contacto: boolean, soloUser?: number, deMentor?: number): Promise<AlumnoFila[]> {
   const params: unknown[] = [];
   let donde = "a.matricula IS NOT NULL AND a.reglamento_at IS NOT NULL";
   if (p.alcance === "iglesia") {
@@ -52,6 +52,10 @@ async function filasDe(p: Permiso, contacto: boolean, soloUser?: number): Promis
   if (soloUser) {
     params.push(soloUser);
     donde += ` AND a.user_id = $${params.length}`;
+  }
+  if (deMentor) {
+    params.push(deMentor);
+    donde += ` AND a.mentor_user_id = $${params.length}`;
   }
   const { rows } = await pool.query(
     `SELECT a.user_id, a.matricula, a.promocion, a.nivel, a.estatus, a.ultima_at, i.created_at AS desde,
@@ -112,7 +116,7 @@ async function filasDe(p: Permiso, contacto: boolean, soloUser?: number): Promis
 }
 
 /** El avance de cada alumno en cada materia en la que está inscrito (cinco consultas para todos). */
-async function avancesPorAlumno(ids: number[]): Promise<Map<number, MateriaAvance[]>> {
+export async function avancesPorAlumno(ids: number[]): Promise<Map<number, MateriaAvance[]>> {
   const out = new Map<number, MateriaAvance[]>();
   if (!ids.length) return out;
   const [{ rows: ms }, { rows: ls }, { rows: vs }, { rows: ps }, { rows: cs }] = await Promise.all([
@@ -220,6 +224,11 @@ async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDet
     actividadDe([id], 30),
     contacto ? fichaDe(id) : Promise.resolve(null),
   ]);
+  // el mentor, después: así la ficha no abre más conexiones a la vez (avancesPorAlumno ya hace cinco consultas juntas)
+  const { rows: mt } = await pool.query(
+    `SELECT u.id, u.display_name, u.username FROM academia_alumnos a JOIN users u ON u.id = a.mentor_user_id AND u.is_active WHERE a.user_id = $1`,
+    [id],
+  );
   return {
     fila,
     ficha,
@@ -251,7 +260,8 @@ async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDet
       };
     }),
     actividad,
-    puede: { contacto, revisar: false, documentos: false },
+    mentor: mt[0] ? { userId: Number(mt[0].id), nombre: String(mt[0].display_name || mt[0].username) } : null,
+    puede: { contacto, revisar: false, documentos: false, mentores: false },
   };
 }
 
@@ -326,7 +336,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         pendientes: await pendientesDe(p),
         puede: {
           exportar: puede(p, "exportar"), contacto: puede(p, "contacto"), revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), abrir: puede(p, "abrir"),
-          contenido: puede(p, "contenido"), aprobar: puede(p, "aprobar"), banco: puede(p, "banco"),
+          contenido: puede(p, "contenido"), aprobar: puede(p, "aprobar"), banco: puede(p, "banco"), mentores: puede(p, "mentores"),
         },
       };
       res.setHeader("Cache-Control", "no-store");
@@ -376,7 +386,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       const [fila] = await filasDe(p, contacto, id);
       if (!fila) return res.status(404).json({ message: "No existe ese alumno, o no es de tu iglesia." });
       res.setHeader("Cache-Control", "no-store");
-      res.json({ ...(await detalleDe(fila, contacto)), puede: { contacto, revisar: puede(p, "revisar"), documentos: puede(p, "documentos") } });
+      res.json({ ...(await detalleDe(fila, contacto)), puede: { contacto, revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), mentores: puede(p, "mentores") } });
     } catch (err) {
       console.error("[academia] dirección, alumno:", err);
       res.sendStatus(500);

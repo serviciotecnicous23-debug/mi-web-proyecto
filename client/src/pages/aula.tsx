@@ -15,6 +15,8 @@ import {
   useCourseEnrollments,
 } from "@/hooks/use-users";
 import { Layout } from "@/components/layout";
+import { AulaAcademia } from "@/components/academia/asignaciones";
+import { useAsignacionesCurso } from "@/components/academia/api";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +68,8 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
   const { data: announcements } = useCourseAnnouncements(courseId);
   const { data: schedule } = useCourseSchedule(courseId);
   const { data: enrolledStudents } = useCourseEnrollments(courseId);
+  // las materias de la Academia asignadas al curso (la pestaña «Academia»)
+  const academia = useAsignacionesCurso(courseId, !!user);
 
   // Mutations
   const createSession = useCreateCourseSession();
@@ -318,6 +322,9 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
             <TabsTrigger value="sessions"><Calendar className="w-4 h-4 mr-1" /> Sesiones</TabsTrigger>
             <TabsTrigger value="schedule"><CalendarDays className="w-4 h-4 mr-1" /> Horario</TabsTrigger>
             <TabsTrigger value="materials"><FileText className="w-4 h-4 mr-1" /> Materiales</TabsTrigger>
+            {(academia.data?.puedeGestionar || (academia.data?.visible && academia.data.asignaciones.length > 0)) && (
+              <TabsTrigger value="academia" data-testid="aula-tab-academia"><GraduationCap className="w-4 h-4 mr-1" /> Academia</TabsTrigger>
+            )}
             <TabsTrigger value="announcements">
               <Megaphone className="w-4 h-4 mr-1" /> Anuncios
               {announcements && announcements.length > 0 && (
@@ -325,6 +332,12 @@ export default function AulaVirtual({ params }: { params: { id: string } }) {
               )}
             </TabsTrigger>
           </TabsList>
+
+          {academia.data && (
+            <TabsContent value="academia">
+              <AulaAcademia d={academia.data} />
+            </TabsContent>
+          )}
 
           {/* ===== SESSIONS TAB ===== */}
           <TabsContent value="sessions">

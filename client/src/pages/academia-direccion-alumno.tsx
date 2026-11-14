@@ -14,6 +14,7 @@ import { BAUTISMO, COMO_CONOCIO, TIEMPO_FE, etiquetaDe } from "@shared/academia-
 import type { AlumnoDetalle } from "@shared/academia-direccion";
 import { accionDocumento, corregirNombre, useDireccionAlumno, useEscritasAlumno } from "@/components/academia/api";
 import { TarjetaRevision } from "@/components/academia/revision";
+import { MentorAlumno } from "@/components/academia/mentores";
 import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, ListaActividad, NivelesYCertificados, TablaAvance, fecha, hace } from "@/components/academia/seguimiento";
 
@@ -220,6 +221,7 @@ export default function AcademiaDireccionAlumno() {
         </header>
 
         <Ficha d={d} propio={propio} />
+        <MentorAlumno d={d} propio={propio} />
 
         <section className="glass-card p-5">
           <h2 className="font-semibold flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4 text-orange-600" /> Materias: por dónde va</h2>

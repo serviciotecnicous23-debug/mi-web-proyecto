@@ -16,6 +16,7 @@ import {
   inscribirmeEnMateria, responderVersiculo, tiempoTexto, useMateria, versiculoEstudio, versiculoPractica, type VersiculoEstudio, type VersiculoPractica,
 } from "@/components/academia/api";
 import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
+import { AsignacionDeMateria } from "@/components/academia/asignaciones";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -287,6 +288,7 @@ export default function AcademiaMateria() {
           {m.disponible && inscrito && m.lecciones.length > 0 && (
             <div className="mt-5 max-w-md"><BarraAvance valor={hechas} de={m.lecciones.length} etiqueta={`${hechas} de ${m.lecciones.length} lecciones`} /></div>
           )}
+          <AsignacionDeMateria materiaId={m.id} activo={!!d.conSesion} />
           {recien && (
             <p className="mt-5 glass-card p-4 border border-emerald-500/30 text-sm flex items-start gap-2 max-w-2xl" role="status" data-testid="materia-inscrita-aviso">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />

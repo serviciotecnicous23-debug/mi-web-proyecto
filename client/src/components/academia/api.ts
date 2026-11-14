@@ -9,6 +9,7 @@ import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoRevision, RevisionPanel,
 } from "@shared/academia-direccion";
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
+import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -231,6 +232,45 @@ export const desaprobarContenido = (materiaId: string, motivo: string) => pedir<
 /** Retirar una pregunta del banco (ya no sale en los intentos nuevos) o volver a usarla. */
 export const accionPregunta = (preguntaId: string, accion: "retirar" | "restaurar", motivo: string) =>
   pedir<{ retirada: boolean }>("POST", `/api/academia/direccion/pregunta/${encodeURIComponent(preguntaId)}/${accion}`, { motivo });
+
+// ---------------------------------------------------------------- la Academia y la Escuela (fase A3)
+
+/** Las asignaciones de la Academia a un curso de la Escuela (el aula): quien lo dirige ve a cada alumno. */
+export function useAsignacionesCurso(cursoId: number | undefined, activo = true) {
+  return useQuery<AsignacionesCurso, ErrorAcademia>({
+    queryKey: ["academia", "asignaciones", "curso", cursoId],
+    queryFn: () => pedir("GET", `/api/academia/curso/${cursoId}/asignaciones`),
+    enabled: !!cursoId && activo,
+    retry: false,
+  });
+}
+
+/** Las asignaciones de todos mis cursos, con mi avance (la portada de la academia y la página de la materia). */
+export function useMisAsignaciones(activo = true) {
+  return useQuery<{ asignaciones: MiAsignacion[] }, ErrorAcademia>({
+    queryKey: ["academia", "asignaciones", "mias"],
+    queryFn: () => pedir("GET", "/api/academia/mis-asignaciones"),
+    enabled: activo,
+    retry: false,
+  });
+}
+
+export type CuerpoAsignacion = { obligatoria: boolean; venceAt: string | null; indicaciones: string };
+export const asignarMateria = (cursoId: number, cuerpo: CuerpoAsignacion & { materiaId: string }) =>
+  pedir<{ id: number }>("POST", `/api/academia/curso/${cursoId}/asignaciones`, cuerpo);
+export const cambiarAsignacion = (cursoId: number, id: number, cuerpo: CuerpoAsignacion) =>
+  pedir<{ id: number }>("POST", `/api/academia/curso/${cursoId}/asignaciones/${id}`, cuerpo);
+export const quitarAsignacion = (cursoId: number, id: number) => pedir<{ quitada: boolean }>("POST", `/api/academia/curso/${cursoId}/asignaciones/${id}/quitar`, {});
+
+/** Las personas que acompaño como mentor (sin notas ni contacto). */
+export function useAcompanados(activo = true) {
+  return useQuery<MisAcompanados, ErrorAcademia>({ queryKey: ["academia", "acompanados"], queryFn: () => pedir("GET", "/api/academia/acompanados"), enabled: activo, retry: false });
+}
+
+export type PersonaBuscada = { id: number; nombre: string; usuario: string; rol: string; iglesia: string | null };
+export const buscarPersonas = (q: string) => pedir<{ personas: PersonaBuscada[] }>("GET", `/api/academia/direccion/personas?q=${encodeURIComponent(q)}`);
+export const elegirMentor = (alumnoId: number, mentorId: number | null) =>
+  pedir<{ mentor: { userId: number; nombre: string } | null }>("POST", `/api/academia/direccion/alumno/${alumnoId}/mentor`, { mentorId });
 
 /** Pedir la revisión del último intento de un examen (una vez por examen). */
 export const pedirRevision = (base: string, mensaje: string) => pedir<{ apelacion: ApelacionVista }>("POST", `${base}/apelacion`, { mensaje });
