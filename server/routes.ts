@@ -47,6 +47,7 @@ import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { registerJuegosGrupoRoutes } from "./juegos-grupo";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
+import { cerrarSesionesDe, esCuentaEliminada } from "./sesiones";
 import { api } from "@shared/routes";
 import { resolveSiteUrl } from "@shared/site";
 import { z } from "zod";
@@ -788,6 +789,9 @@ ${urls}
     const MemStore = MemoryStore(session);
     sessionStore = new MemStore({ checkPeriod: 86400000 });
   }
+  // Cierra las sesiones guardadas de una cuenta (todas, o todas menos la del aparato que hace el cambio): al borrar la
+  // cuenta, al cambiar o restablecer la contraseña y cuando administración borra una cuenta (server/sesiones.ts).
+  const cerrarSesiones = (userId: number, salvo?: string | null) => cerrarSesionesDe(hasDatabase ? pool : null, userId, salvo);
 
   // Sin SESSION_SECRET en producción, un secreto conocido ("dev_secret") permitiría
   // falsificar sesiones. Se usa uno aleatorio por proceso: las sesiones se pierden al
@@ -891,6 +895,9 @@ ${urls}
       if (!user) {
         console.log(`deserializeUser: user with id ${id} not found in any storage`);
       }
+      // La fila anónima que deja «Eliminar mi cuenta» no tiene sesión: si quedara alguna (otro aparato, una sesión vieja),
+      // passport la cierra al devolver false.
+      if (user && esCuentaEliminada(user)) return done(null, false);
       done(null, user);
     } catch (err) {
       console.error("deserializeUser error:", err);
@@ -1082,6 +1089,8 @@ ${urls}
         return res.status(400).json({ message: "La contraseña no es correcta." });
       }
       await eliminarCuentaPropia(me.id, await hashPassword(randomBytes(32).toString("hex")));
+      // Las sesiones de sus otros aparatos se cierran ya; la de este, con el logout de abajo.
+      await cerrarSesiones(me.id, req.sessionID);
       req.logout(() => {
         req.session?.destroy(() => res.json({ ok: true }));
       });
@@ -1156,6 +1165,8 @@ ${urls}
       const hashedPassword = await hashPassword(newPassword);
       await storage.updateUser(resetToken.userId, { password: hashedPassword });
       await storage.markPasswordResetTokenUsed(token);
+      // Con la contraseña nueva, nadie que conociera la vieja sigue dentro (salvo este mismo aparato, si es su cuenta).
+      await cerrarSesiones(resetToken.userId, req.user?.id === resetToken.userId ? req.sessionID : null);
 
       res.json({ message: "Contraseña restablecida exitosamente" });
     } catch (err) {
@@ -1448,7 +1459,9 @@ ${urls}
       }
       const hashedNew = await hashPassword(newPassword);
       await storage.updateUser(userId, { password: hashedNew });
-      res.json({ message: "Contraseña actualizada exitosamente" });
+      // Se cierran las sesiones de sus otros aparatos; la de este sigue abierta.
+      const sesionesCerradas = await cerrarSesiones(userId, req.sessionID);
+      res.json({ message: "Contraseña actualizada exitosamente", sesionesCerradas });
     } catch (err) {
       console.error("Change password error:", err);
       res.status(500).json({ message: "Error al cambiar contraseña" });
@@ -2776,6 +2789,8 @@ ${urls}
     }
     try {
       await storage.deleteUser(id);
+      // Sin la cuenta, sus sesiones guardadas no sirven: se borran también.
+      await cerrarSesiones(id);
       res.sendStatus(200);
     } catch (err: any) {
       // Otra tabla aún apunta a la cuenta (notas, planes, cursos, diezmos…): borrarla

@@ -322,7 +322,12 @@ export default function Profile() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      toast({ title: "Contraseña actualizada", description: "Tu contraseña ha sido cambiada exitosamente." });
+      toast({
+        title: "Contraseña actualizada",
+        description: data.sesionesCerradas > 0
+          ? "Tu contraseña ha sido cambiada. Por seguridad, se cerró la sesión en tus otros dispositivos."
+          : "Tu contraseña ha sido cambiada exitosamente.",
+      });
       setShowPasswordDialog(false);
       setCurrentPassword("");
       setNewPassword("");
