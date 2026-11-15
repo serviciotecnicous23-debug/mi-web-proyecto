@@ -481,7 +481,7 @@ export function registerAcademiaRoutes(app: Express) {
       if (!(await inscritaEnMateria(a.userId, m.id)) && !puedeRevisar(a.acceso.role)) {
         return res.status(409).json({ message: MENSAJE_MATERIA, materia: false, materiaId: m.id });
       }
-      const v = await textoDeCita(m.memoria);
+      const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
       const { rows } = await pool.query(`SELECT intentos, fallos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [a.userId, m.id]);
       const fila = rows[0];
@@ -509,7 +509,7 @@ export function registerAcademiaRoutes(app: Express) {
       if (!a) return;
       if (frenar(`vs:${a.userId}`, 500)) return res.status(429).json({ message: "Espera un momento." });
       const orden = Array.isArray(req.body?.orden) ? req.body.orden.map(String).slice(0, 80) : [];
-      const v = await textoDeCita(m.memoria);
+      const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
       const ids = fichasDe(v.texto).map((_, i) => idFicha(a.userId, m.id, i));
       let hasta = 0;

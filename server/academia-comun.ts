@@ -515,12 +515,18 @@ export async function marcarEstudio(userId: number): Promise<void> {
 
 export type VersiculoResuelto = { ref: string; texto: string | null; enlace: string | null };
 
-/** El texto de una cita, tomado de la RV1960 de la web (si el proveedor falla, la cita va sin texto y con su enlace). */
-export async function textoDeCita(ref: string): Promise<VersiculoResuelto> {
+/**
+ * El texto de una cita, tomado de la RV1960 de la web (si el proveedor falla, la cita va sin texto y con su enlace).
+ * Con `soloRv1960`, lo que se califica (el versículo de memoria) nunca usa el respaldo de la RV1909: si la RV1960 no
+ * carga, va sin texto y la ruta pide reintentar. Así las fichas que se muestran y las que se corrigen salen siempre del
+ * mismo texto, aunque el proveedor falle entre una petición y la otra.
+ */
+export async function textoDeCita(ref: string, opciones: { soloRv1960?: boolean } = {}): Promise<VersiculoResuelto> {
   const c = parsearCita(ref);
   if (!c) return { ref, texto: null, enlace: null };
   try {
     const cap = await getBibleChapter("rv1960", c.libro, c.capitulo);
+    if (opciones.soloRv1960 && cap.version !== "rv1960") return { ref: citaVisible(c), texto: null, enlace: enlaceBiblia(c) };
     const vs = cap.verses.filter((v) => v.verse >= c.desde && v.verse <= c.hasta);
     const varios = c.hasta > c.desde;
     const texto = vs.map((v) => (varios ? `${v.verse} ` : "") + v.text.trim()).join(" ").trim();

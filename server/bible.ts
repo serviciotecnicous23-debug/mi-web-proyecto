@@ -35,11 +35,25 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+/** Cuánto esperar antes de reintentar un 429: lo que pida el proveedor (Retry-After), entre 0,3 y 2 segundos. */
+export function esperaTras429(retryAfter: string | null): number {
+  const segundos = Number(retryAfter);
+  return Math.min(2000, Math.max(300, Number.isFinite(segundos) && segundos > 0 ? segundos * 1000 : 800));
+}
+
 async function getJson(url: string): Promise<any> {
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { Accept: "application/json", "User-Agent": "AvivandoElFuego/1.0 (biblioteca)" },
-  });
+  const pedir = () =>
+    fetch(url, {
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { Accept: "application/json", "User-Agent": "AvivandoElFuego/1.0 (biblioteca)" },
+    });
+  let res = await pedir();
+  // Bolls limita las peticiones seguidas (429), sobre todo justo después de publicar, cuando la memoria está vacía:
+  // se espera un momento y se reintenta una vez antes de servir el respaldo de la RV1909.
+  if (res.status === 429) {
+    await new Promise((r) => setTimeout(r, esperaTras429(res.headers.get("retry-after"))));
+    res = await pedir();
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status} en ${new URL(url).host}`);
   return res.json();
 }

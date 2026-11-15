@@ -909,6 +909,58 @@ const PANORAMA_NT: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 4: los hábitos del discípulo que crece, siempre como medios de gracia. */
+const DISCIPLINAS: MateriaDef = {
+  id: "n2-disciplinas",
+  nivel: 2,
+  orden: 4,
+  titulo: "Disciplinas espirituales",
+  resumen: "La Palabra, la oración, el ayuno, la adoración, el día del Señor, el silencio, el diario espiritual, el servicio y una regla de vida.",
+  base: "1 Timoteo 4:7-8; Lucas 5:16",
+  memoria: "1 Timoteo 4:8",
+  lecciones: lecciones("n2-disciplinas", [
+    ["¿Qué son las disciplinas espirituales?", "1 Timoteo 4:7-8; Lucas 5:16"],
+    ["La Palabra: leer, estudiar, meditar y memorizar", "Salmos 1:1-3; Josué 1:8; 2 Timoteo 3:16-17"],
+    ["La oración y el ayuno", "Mateo 6:6, 16-18; Isaías 58:6-7"],
+    ["La adoración y el día del Señor", "Juan 4:23-24; Romanos 12:1; Hebreos 10:24-25"],
+    ["Silencio, soledad y el diario espiritual", "Marcos 1:35; Salmos 46:10; 77:11-12; 139:23-24"],
+    ["Servicio, generosidad y una regla de vida", "Marcos 10:45; 2 Corintios 9:7; Gálatas 6:9"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo cultive una vida con Dios constante y gozosa. Las disciplinas espirituales son los hábitos que enseña la Biblia y que practicó Jesús: la Palabra, la oración, el ayuno, la adoración, el silencio, el servicio y la generosidad. No compran el amor de Dios, que ya es nuestro en Cristo; son medios de gracia por los que el Espíritu nos transforma a la imagen del Señor. Pablo lo dice así: «Ejercítate para la piedad» (1 Timoteo 4:7).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué son las disciplinas espirituales y por qué son medios de gracia y no méritos.", bloom: "comprender" },
+      { id: "o2", texto: "Practicar la lectura, la meditación y la memorización de la Palabra, y la oración y el ayuno como los enseñó Jesús (Mateo 6).", bloom: "aplicar" },
+      { id: "o3", texto: "Describir la adoración en espíritu y en verdad, el día del Señor, el silencio, la soledad y el diario espiritual.", bloom: "comprender" },
+      { id: "o4", texto: "Diseñar una regla de vida personal que incluya el servicio y la generosidad.", bloom: "crear" },
+      { id: "o5", texto: "Recitar 1 Timoteo 4:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña de cada disciplina y el ejemplo de Jesús.",
+      ser: "Una vida con Dios constante, humilde y gozosa, libre del legalismo.",
+      hacer: "Practicar cada semana las disciplinas con un plan sencillo y servir a otros.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Donald S. Whitney", titulo: "Disciplinas espirituales para la vida cristiana", editorial: "NavPress / Tyndale" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Richard J. Foster", titulo: "Celebración de la disciplina", editorial: "Peniel", nota: "Para leer con discernimiento: algunas prácticas contemplativas que describe no forman parte de esta materia." },
+        { autor: "E. M. Bounds", titulo: "El poder a través de la oración" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Mateo 6:9-13: La oración de Jesús", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/mateo-6-9-13-la-oracion-de-jesus/", minutos: 7 },
+      { tipo: "video", titulo: "El Sabbat", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/sabbat-video/", minutos: 6 },
+      { tipo: "lectura", titulo: "Mateo 6: dar, orar y ayunar en lo secreto", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=6" },
+      { tipo: "lectura", titulo: "Salmo 1: el árbol junto a las aguas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -945,7 +997,7 @@ export const NIVELES: NivelDef[] = [
       PANORAMA_AT,
       PANORAMA_NT,
       enPreparacion(2, 3, "n2-doctrinas", "Doctrinas fundamentales", "Las grandes verdades de la fe según la declaración de fe del ministerio."),
-      enPreparacion(2, 4, "n2-disciplinas", "Disciplinas espirituales", "Oración, ayuno, adoración, meditación, diario espiritual y el día del Señor."),
+      DISCIPLINAS,
       enPreparacion(2, 5, "n2-sermon-monte", "El Sermón del monte", "El carácter del discípulo según Mateo 5 a 7."),
       enPreparacion(2, 6, "n2-mayordomia", "Mayordomía cristiana", "Tiempo, talentos y bienes; diezmo, generosidad y finanzas sanas."),
       enPreparacion(2, 7, "n2-familia", "Familia y relaciones", "Matrimonio, hijos, soltería, amistad y pureza."),

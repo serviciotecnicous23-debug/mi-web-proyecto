@@ -59,7 +59,7 @@ export function registerAcademiaVersiculosRoutes(app: Express) {
       );
       const f = rows[0];
       if (!f?.aprendido_at) return res.status(409).json({ message: "Primero aprende este versículo en su materia." });
-      const v = await textoDeCita(m.memoria);
+      const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
       const fichas = fichasDe(v.texto).map((t, i) => ({ id: idFicha(a.userId, m.id, i), t }));
       const vuelta = 1000 + Number(f.repasos || 0);
@@ -82,7 +82,7 @@ export function registerAcademiaVersiculosRoutes(app: Express) {
       if (!m || !m.memoria) return res.status(404).json({ message: "Esa materia no tiene versículo de memoria." });
       if (frenar(`vr:${a.userId}`, 500)) return res.status(429).json({ message: "Espera un momento." });
       const orden = Array.isArray(req.body?.orden) ? req.body.orden.map(String).slice(0, 80) : [];
-      const v = await textoDeCita(m.memoria);
+      const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
       const ids = fichasDe(v.texto).map((_, i) => idFicha(a.userId, m.id, i));
       let hasta = 0;
