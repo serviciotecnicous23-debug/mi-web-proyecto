@@ -29,6 +29,7 @@ async function buildApp() {
       "utf-8-validate",
       "lightningcss",
       "sharp",
+      "@napi-rs/canvas",
       "@babel/core",
       "@babel/preset-typescript",
       "vite",

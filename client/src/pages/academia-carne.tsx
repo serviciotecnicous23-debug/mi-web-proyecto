@@ -1,10 +1,11 @@
 // El carné digital de la academia: acredita la matrícula y se verifica con su QR (server/academia-matricula.ts).
-// Se dibuja en alta resolución con el diseño de Avivando el Fuego (components/academia/carne-lienzo.ts): lo que se ve
-// es lo mismo que se descarga en PDF (hoja carta con el frente y el reverso a tamaño real) o en imagen.
+// Las imágenes y el PDF se hacen en el servidor (server/academia-carne.ts): la página solo los muestra y los enlaza, así
+// que se descargan con su nombre en cualquier teléfono (también en la web instalada como app y en los navegadores de
+// Facebook, Instagram o WhatsApp) y la página no dibuja nada al abrirse.
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, FileText, IdCard, ImageDown, Printer, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, FileText, IdCard, ImageDown, Info, Printer, RotateCw, Share2, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +14,6 @@ import type { CarneVista } from "@shared/academia";
 import { useCarne } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { FotoCarne } from "@/components/academia/foto-carne";
-import { descargarCarneImagen, descargarCarnePdf, dibujarFrente, dibujarReverso, imprimirCarne } from "@/components/academia/carne-lienzo";
 
 const iniciales = (nombre: string) =>
   nombre
@@ -23,32 +23,98 @@ const iniciales = (nombre: string) =>
     .map((p) => p[0]!.toUpperCase())
     .join("");
 
-/** El frente y el reverso, tal como se descargan. */
-function CarneDibujado({ c }: { c: CarneVista }) {
-  const [caras, setCaras] = useState<{ frente: string; reverso: string } | null>(null);
-  const [error, setError] = useState(false);
+/**
+ * Dónde se abrió la página. En el navegador de una app (Facebook, Instagram, WhatsApp…) las descargas a veces no
+ * funcionan; en el iPhone con la web instalada, una descarga en la misma ventana se queda sin salida (se abre aparte).
+ */
+function entorno() {
+  if (typeof navigator === "undefined" || typeof window === "undefined") return { enApp: false, iosInstalada: false, tactil: false };
+  const ua = navigator.userAgent || "";
+  const enApp = /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(ua);
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const instalada = (navigator as Navigator & { standalone?: boolean }).standalone === true || !!window.matchMedia?.("(display-mode: standalone)").matches;
+  const tactil = !!window.matchMedia?.("(pointer: coarse)").matches;
+  return { enApp, iosInstalada: ios && instalada, tactil };
+}
+
+/**
+ * Las dos caras como archivos, para «Guardar en el teléfono» (compartir → Guardar imagen). Se preparan apenas se ven
+ * las imágenes (salen de la caché del navegador), así el botón responde al toque: el iPhone no deja compartir después
+ * de esperar una descarga.
+ */
+function useCarasParaCompartir(c: CarneVista, activo: boolean) {
+  const [archivos, setArchivos] = useState<File[] | null>(null);
   useEffect(() => {
+    setArchivos(null);
+    if (!activo || typeof navigator.canShare !== "function") return;
     let vivo = true;
-    setCaras(null);
-    Promise.all([dibujarFrente(c), dibujarReverso(c)])
-      .then(([f, r]) => vivo && setCaras({ frente: f.toDataURL("image/png"), reverso: r.toDataURL("image/png") }))
-      .catch(() => vivo && setError(true));
+    Promise.all(
+      [c.archivos.frente, c.archivos.reverso].map((u) =>
+        fetch(u, { credentials: "same-origin" }).then((r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          return r.blob();
+        }),
+      ),
+    )
+      .then(([f, r]) => {
+        const lista = [
+          new File([f], `${c.archivos.nombre}-frente.png`, { type: "image/png" }),
+          new File([r], `${c.archivos.nombre}-reverso.png`, { type: "image/png" }),
+        ];
+        if (vivo && navigator.canShare({ files: lista })) setArchivos(lista);
+      })
+      .catch(() => {
+        // (sin compartir: quedan las descargas)
+      });
     return () => {
       vivo = false;
     };
-  }, [c.foto, c.numero, c.estatus.texto, c.nombre]);
-  if (error) return <p className="text-sm text-red-600 dark:text-red-400" role="alert">No se pudo dibujar el carné. Vuelve a cargar la página.</p>;
-  if (!caras) return <div className="aspect-[1012/638] w-full rounded-2xl bg-muted animate-pulse" aria-label="Dibujando el carné" />;
+  }, [c.archivos.frente, c.archivos.reverso, c.archivos.nombre, activo]);
+  return archivos;
+}
+
+/** Una cara del carné tal como se descarga (la imagen del servidor), con su espacio reservado mientras llega. */
+function Cara({ src, alt, testid, tarde }: { src: string; alt: string; testid: string; tarde?: boolean }) {
+  const [intento, setIntento] = useState(0);
+  const [estado, setEstado] = useState<"cargando" | "lista" | "error">("cargando");
+  useEffect(() => {
+    setIntento(0);
+    setEstado("cargando");
+  }, [src]);
+  const url = intento ? `${src}&r=${intento}` : src;
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <figure>
-        <img src={caras.frente} alt={`Frente del carné de ${c.nombre}`} className="w-full rounded-2xl shadow-lg" data-testid="carne-frente" />
-        <figcaption className="text-xs text-muted-foreground mt-1.5 text-center">Frente</figcaption>
-      </figure>
-      <figure>
-        <img src={caras.reverso} alt="Reverso del carné" className="w-full rounded-2xl shadow-lg" data-testid="carne-reverso" />
-        <figcaption className="text-xs text-muted-foreground mt-1.5 text-center">Reverso</figcaption>
-      </figure>
+    <div className="relative aspect-[1012/638] w-full rounded-2xl overflow-hidden bg-[#2a1207] shadow-lg">
+      {estado !== "error" && (
+        <img
+          src={url}
+          width={1012}
+          height={638}
+          alt={alt}
+          loading={tarde ? "lazy" : "eager"}
+          decoding="async"
+          onLoad={() => setEstado("lista")}
+          onError={() => setEstado("error")}
+          className="absolute inset-0 w-full h-full"
+          data-testid={testid}
+        />
+      )}
+      {estado === "cargando" && <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#160b05] to-[#3b1606]" aria-hidden="true" />}
+      {estado === "error" && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center text-orange-100" role="alert">
+          <p className="text-sm">No se pudo cargar esta cara del carné.</p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-transparent text-orange-100 border-orange-300/60 hover:bg-orange-900/40"
+            onClick={() => {
+              setIntento((i) => i + 1);
+              setEstado("cargando");
+            }}
+          >
+            <RotateCw className="w-4 h-4 mr-1.5" /> Volver a intentar
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -57,10 +123,15 @@ export default function AcademiaCarne() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useCarne();
-  const [haciendo, setHaciendo] = useState<"" | "pdf" | "imagen" | "imprimir">("");
+  const [donde] = useState(entorno);
+  const c = q.data;
+  const caras = useCarasParaCompartir(
+    c ?? ({ archivos: { frente: "", reverso: "", pdf: "", nombre: "" } } as unknown as CarneVista),
+    !!c && donde.tactil,
+  );
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
-  if (!q.data) {
+  if (!c) {
     const sinMatricula = q.error?.status === 409;
     const sinSesion = q.error?.status === 401;
     return (
@@ -74,18 +145,15 @@ export default function AcademiaCarne() {
       </Layout>
     );
   }
-  const c = q.data;
-  const hacer = async (que: "pdf" | "imagen" | "imprimir") => {
-    setHaciendo(que);
+  const { archivos } = c;
+  // en el iPhone con la web instalada, la descarga se abre aparte (con su botón «Listo» para volver)
+  const aparte = donde.iosInstalada ? { target: "_blank", rel: "noopener" } : {};
+  const compartir = async () => {
+    if (!caras) return;
     try {
-      if (que === "pdf") await descargarCarnePdf(c);
-      else if (que === "imagen") await descargarCarneImagen(c);
-      else await imprimirCarne(c);
-      if (que !== "imprimir") toast({ title: que === "pdf" ? "Carné descargado en PDF" : "Carné descargado como imagen", description: que === "pdf" ? "Una hoja carta con el frente y el reverso a tamaño real, lista para imprimir." : "Guárdalo en tu teléfono para mostrarlo." });
+      await navigator.share({ files: caras, title: "Mi carné de estudiante" });
     } catch (e: any) {
-      toast({ title: "No se pudo", description: e?.message ?? "Inténtalo otra vez.", variant: "destructive" });
-    } finally {
-      setHaciendo("");
+      if (e?.name !== "AbortError") toast({ title: "No se pudo compartir", description: "Usa los botones de descarga o mantén el dedo sobre la imagen.", variant: "destructive" });
     }
   };
   return (
@@ -94,21 +162,59 @@ export default function AcademiaCarne() {
         <Link href="/academia" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
         <h1 className="heading-display font-display text-3xl md:text-4xl mt-4 mb-2 flex items-center gap-3"><IdCard className="w-8 h-8 text-orange-500" /> Mi carné</h1>
         <p className="text-sm text-muted-foreground mb-5">Tu carné de estudiante de la academia, con su código QR para verificarlo.</p>
+        {donde.enApp && (
+          <div className="rounded-xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm mb-4 flex gap-2.5" role="note" data-testid="carne-aviso-app">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+            <p>
+              Estás en el navegador de una app (Facebook, Instagram, WhatsApp…), donde a veces las descargas no funcionan. Si no se descarga, abre
+              esta página en Chrome o Safari: toca el menú (⋮ o ···) y elige «Abrir en el navegador». También puedes mantener el dedo sobre la
+              imagen y guardarla.
+            </p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2 mb-6">
-          <Button onClick={() => hacer("pdf")} disabled={!!haciendo} className="fire-btn-primary" data-testid="carne-pdf">
-            <Download className="w-4 h-4 mr-1.5" /> {haciendo === "pdf" ? "Preparando…" : "Descargar PDF para imprimir"}
+          <Button asChild className="fire-btn-primary">
+            <a href={archivos.pdf} download={`${archivos.nombre}.pdf`} {...aparte} data-testid="carne-pdf">
+              <Download className="w-4 h-4 mr-1.5" /> Descargar PDF para imprimir
+            </a>
           </Button>
-          <Button variant="outline" onClick={() => hacer("imagen")} disabled={!!haciendo} data-testid="carne-imagen">
-            <ImageDown className="w-4 h-4 mr-1.5" /> {haciendo === "imagen" ? "Preparando…" : "Descargar imagen"}
+          <Button asChild variant="outline">
+            <a href={`${archivos.frente}&descargar=1`} download={`${archivos.nombre}-frente.png`} {...aparte} data-testid="carne-imagen">
+              <ImageDown className="w-4 h-4 mr-1.5" /> Imagen del frente
+            </a>
           </Button>
-          <Button variant="outline" onClick={() => hacer("imprimir")} disabled={!!haciendo} data-testid="carne-imprimir">
-            <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+          <Button asChild variant="outline">
+            <a href={`${archivos.reverso}&descargar=1`} download={`${archivos.nombre}-reverso.png`} {...aparte} data-testid="carne-imagen-reverso">
+              <ImageDown className="w-4 h-4 mr-1.5" /> Imagen del reverso
+            </a>
           </Button>
+          <Button asChild variant="outline">
+            <a href={`${archivos.pdf}&ver=1`} target="_blank" rel="noopener" data-testid="carne-imprimir">
+              <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+            </a>
+          </Button>
+          {caras && (
+            <Button variant="outline" onClick={compartir} data-testid="carne-compartir">
+              <Share2 className="w-4 h-4 mr-1.5" /> Guardar en el teléfono
+            </Button>
+          )}
         </div>
-        <CarneDibujado c={c} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <figure>
+            <Cara src={archivos.frente} alt={`Frente del carné de ${c.nombre}`} testid="carne-frente" />
+            <figcaption className="text-xs text-muted-foreground mt-1.5 text-center">Frente</figcaption>
+          </figure>
+          <figure>
+            <Cara src={archivos.reverso} alt="Reverso del carné" testid="carne-reverso" tarde />
+            <figcaption className="text-xs text-muted-foreground mt-1.5 text-center">Reverso</figcaption>
+          </figure>
+        </div>
         <p className="text-xs text-muted-foreground mt-3 flex items-start gap-1.5">
           <FileText className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          El PDF es una hoja carta con el frente y el reverso a tamaño real (85,6 × 54 mm, como una tarjeta), con marcas para recortar. Imprímelo al 100 %.
+          <span>
+            El PDF es una hoja carta con el frente y el reverso a tamaño real (85,6 × 54 mm, como una tarjeta), con marcas para recortar. Imprímelo al
+            100 %. En el teléfono también puedes mantener el dedo sobre la imagen y elegir «Guardar imagen».
+          </span>
         </p>
         <div className="max-w-[540px] mt-8">
           <FotoCarne foto={c.foto} propia={c.fotoPropia} iniciales={iniciales(c.nombre)} alGuardar={() => void qc.invalidateQueries({ queryKey: ["academia"] })} />

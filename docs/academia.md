@@ -188,13 +188,26 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
 - **El carné digital** lleva la foto (o las iniciales), el nombre, el número, la promoción, el estatus y un QR. El QR usa
   un código al azar (`carne_codigo`), no el número de matrícula, que es correlativo y dejaría recorrer los nombres. Se
   verifica en la misma página de los certificados, con el estatus de hoy.
-- **El diseño del carné** (`client/src/components/academia/carne-lienzo.ts`) se dibuja en un lienzo de 1012 × 638 (la
-  proporción de una tarjeta, 85,6 × 54 mm): fondo oscuro con el degradado del fuego, chispas, borde dorado, el logo del
-  Ministerio, la foto o las iniciales y el QR sobre blanco; el reverso, con el lema, el reglamento y cómo verificarlo.
-- **Las descargas no dependen de capturar la pantalla** (por eso no salen en blanco ni se congelan):
-  - «Descargar en PDF»: una hoja carta con el frente y el reverso a tamaño real de tarjeta y marcas de corte (jsPDF).
-  - «Descargar imagen»: el frente en PNG, para el teléfono.
-  - «Imprimir»: la misma hoja; el botón no se puede apretar dos veces seguidas.
+- **El carné se hace en el servidor** (`server/academia-carne.ts`): la imagen del frente y del reverso en PNG
+  (1012 × 638, la proporción de una tarjeta de 85,6 × 54 mm, a 300 puntos por pulgada) y el PDF para imprimir. Antes se
+  dibujaba en el teléfono y se descargaba con un enlace hecho en la página (blob), que en el iPhone, en la web instalada
+  como app y en los navegadores de Facebook, Instagram o WhatsApp abría una vista sin descarga y sin salida.
+  - **El diseño:** fondo oscuro con el degradado del fuego, chispas, borde dorado, el logo del Ministerio, la foto o las
+    iniciales, el nombre (la letra se achica para que quepa entero, hasta 3 líneas), la matrícula, el estatus y el QR
+    sobre blanco, dibujado módulo por módulo; el reverso, con quién acredita, el lema y cómo verificarlo.
+  - **Con qué:** @napi-rs/canvas (Skia, sin librerías del sistema; queda fuera del paquete de esbuild en
+    `script/build.mjs`) y la letra Liberation Sans que trae pdfjs-dist (no depende de las fuentes de la máquina). La foto
+    se lee solo de los archivos de la web (`/files/…`, el S3/R2 de la web o un data URL antiguo), girada según la cámara.
+  - **Las direcciones** (`GET /api/academia/carne/frente.png`, `reverso.png` y `carne.pdf`) llevan `?v=<huella>`: la
+    huella cambia si cambia algo de lo que se dibuja (nombre, matrícula, estatus, foto, código o el diseño, `DISENO`). Con
+    la huella de hoy el navegador guarda el archivo sin volver a pedirlo; el servidor recuerda los últimos 16 carnés.
+  - **La página** (`client/src/pages/academia-carne.tsx`) solo muestra las dos imágenes y enlaza los archivos, sin
+    dibujar nada: «Descargar PDF para imprimir» (una hoja carta con las dos caras a tamaño real y marcas de corte),
+    «Imagen del frente» e «Imagen del reverso» (`&descargar=1`) e «Imprimir» (el PDF abierto en otra pestaña, `&ver=1`).
+    En el teléfono, «Guardar en el teléfono» comparte las dos imágenes (en el iPhone, «Guardar imagen» las pone en
+    Fotos) y también se puede mantener el dedo sobre la imagen. En el iPhone con la web instalada las descargas se abren
+    aparte (con su botón para volver), y en el navegador de una app se avisa cómo abrir la página en Chrome o Safari.
+- **Los demás documentos** tampoco dependen de capturar la pantalla:
   - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`), y
     cada certificado, dibujado con su diseño (`certificado-pdf.ts`).
   - Imprimir abre el documento solo y espera a que carguen sus imágenes antes de abrir el diálogo, una sola vez.
@@ -579,8 +592,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   la prueba diagnóstica y el repaso espaciado (fase A4). `server/academia-orden.ts`: el reparto de la respuesta
   correcta en el repaso y los exámenes, con su prueba. `shared/academia-declaracion.ts`: la declaración de fe.
 - `client/src/components/academia/area.ts` y `entrada-panel.tsx`: el área de quien mira el panel y la tarjeta
-  «Academia» de los paneles. `video-youtube.tsx`: el reproductor que cuenta lo visto. `carne-lienzo.ts` y
-  `expediente-pdf.ts`: el carné dibujado y los PDF.
+  «Academia» de los paneles. `video-youtube.tsx`: el reproductor que cuenta lo visto. `expediente-pdf.ts` y
+  `certificado-pdf.ts`: los PDF del expediente y de los certificados (el carné se hace en el servidor:
+  `server/academia-carne.ts`).
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
 - `client/src/lib/academia-visible.ts` y `client/src/components/academia/pestanas-clases.tsx`: si la academia se ve y
@@ -678,7 +692,8 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET mini/:materiaId/:n` y `POST mini/:materiaId/:n/empezar`, `/paso` y `/respuesta` | Una mini prueba: las mismas rutas que el final |
 | `GET escrito/:materiaId` y `POST escrito/:materiaId` | El escrito breve: la consigna, las entregas y la última corrección; entregarlo `{texto, pegado}` |
 | `GET matricula` | Mi matrícula |
-| `GET carne` | Mi carné, con su QR (pide la inscripción) |
+| `GET carne` | Mi carné: los datos y las direcciones de sus archivos (pide la inscripción) |
+| `GET carne/frente.png`, `carne/reverso.png` y `carne/carne.pdf` | Los archivos del carné, hechos en el servidor; `?v=<huella>`, `&descargar=1` (imágenes) y `&ver=1` (el PDF abierto) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
 
 **Vista previa:** mientras `site_content.academia_abierta` no sea `1`, solo la ven los roles de `ROLES_VISTA_PREVIA`

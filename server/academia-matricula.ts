@@ -7,16 +7,16 @@
  * - El estatus sale del avance real (estatusDe): aspirante, activo, en pausa, egresado, graduado; sin notas.
  * - El carné digital acredita la matrícula. Su QR lleva un código al azar (no el número de matrícula, que es
  *   correlativo y permitiría recorrer los nombres de todos) y se verifica en la misma página de los certificados.
+ *   Sus archivos (imagen y PDF) se hacen en server/academia-carne.ts.
  */
 import type { Express } from "express";
 import { randomBytes } from "node:crypto";
-import { toDataURL } from "qrcode";
 import { pool } from "./db";
 import {
   ACLARACION_DOCUMENTOS, CODIGO_HONOR, HONORES, NIVELES, NOMBRE_ACADEMIA, REGLAMENTO, codigoDe, estatusDe, numeroMatricula,
-  type CarneVista, type EstatusVista, type MatriculaInfo, type VerificacionAcademia,
+  type EstatusVista, type MatriculaInfo, type VerificacionAcademia,
 } from "@shared/academia";
-import { alumnoDe, asegurarAlumno, diaTexas, enlaceVerificar, inscritoDe, nombreAcademico } from "./academia-comun";
+import { alumnoDe, asegurarAlumno, diaTexas, nombreAcademico } from "./academia-comun";
 
 /** El estatus del alumno hoy, a partir de su avance. */
 export async function estatusVista(userId: number): Promise<EstatusVista> {
@@ -122,35 +122,5 @@ export function registerAcademiaMatriculaRoutes(app: Express) {
       res.sendStatus(500);
     }
   });
-
-  // Mi carné digital, con su QR de verificación.
-  app.get("/api/academia/carne", async (req, res) => {
-    try {
-      const a = await inscritoDe(req, res);
-      if (!a) return;
-      const m = (await matriculaDe(a.userId))!;
-      const { rows } = await pool.query(
-        `SELECT a.carne_codigo, COALESCE(i.foto_url, u.avatar_url) AS foto, (i.foto_url IS NOT NULL) AS foto_propia
-           FROM academia_alumnos a JOIN users u ON u.id = a.user_id LEFT JOIN academia_inscripciones i ON i.user_id = a.user_id
-          WHERE a.user_id = $1`,
-        [a.userId],
-      );
-      const r = rows[0];
-      const verificar = enlaceVerificar(r.carne_codigo);
-      const out: CarneVista = {
-        ...m,
-        nombre: await nombreAcademico(a.userId),
-        foto: r.foto || null,
-        fotoPropia: !!r.foto_propia,
-        codigo: r.carne_codigo,
-        verificar,
-        qr: await toDataURL(verificar, { margin: 1, width: 240, errorCorrectionLevel: "M", color: { dark: "#1c1917", light: "#ffffff" } }),
-      };
-      res.setHeader("Cache-Control", "no-store");
-      res.json(out);
-    } catch (err) {
-      console.error("[academia] carne:", err);
-      res.sendStatus(500);
-    }
-  });
 }
+
