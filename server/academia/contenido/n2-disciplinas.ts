@@ -108,7 +108,7 @@ export const N2_DISCIPLINAS: LeccionContenido[] = [
       "Reconocer el ayuno que agrada a Dios según Isaías 58.",
     ],
     paraEmpezar:
-      "En el Sermón del monte, Jesús habla de dar, de orar y de ayunar. No dice «si oras» o «si ayunas», sino «cuando ores» y «cuando ayunes». Daba por hecho que sus discípulos lo harían.",
+      "En el Sermón del monte, Jesús habla de dar, de orar y de ayunar. No dice si oras o si ayunas, sino «cuando ores» y «cuando ayunes». Daba por hecho que sus discípulos lo harían.",
     bloques: [
       { t: "subtitulo", texto: "Orar en lo secreto" },
       { t: "versiculo", ref: "Mateo 6:6" },

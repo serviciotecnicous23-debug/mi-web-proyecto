@@ -943,7 +943,7 @@ const DISCIPLINAS: MateriaDef = {
     },
     bibliografia: {
       basica: [
-        { autor: "Donald S. Whitney", titulo: "Disciplinas espirituales para la vida cristiana", editorial: "NavPress (Tyndale)" },
+        { autor: "Donald S. Whitney", titulo: "Disciplinas espirituales para la vida cristiana", editorial: "NavPress / Tyndale" },
         { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
       ],
       complementaria: [
