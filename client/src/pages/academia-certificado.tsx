@@ -2,18 +2,20 @@
 // enlace de verificación (server/academia-documentos.ts).
 import { useState } from "react";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Award, Check, Copy, Download, FileText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Award, Check, Copy, Download, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { useCertificado } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
-import { DocumentoAjustado, DocumentoVista, imprimirDocumento } from "@/components/academia/documento";
+import { DocumentoAjustado, DocumentoVista } from "@/components/academia/documento";
 import { descargarCertificadoPdf } from "@/components/academia/certificado-pdf";
 
 export default function AcademiaCertificado() {
   const { codigo } = useParams<{ codigo: string }>();
   const q = useCertificado(codigo);
   const [generando, setGenerando] = useState(false);
+  const { toast } = useToast();
   const [copiado, setCopiado] = useState(false);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
@@ -34,8 +36,8 @@ export default function AcademiaCertificado() {
     setGenerando(true);
     try {
       await descargarCertificadoPdf(d, archivo);
-    } catch {
-      imprimirDocumento();
+    } catch (e: any) {
+      toast({ title: "No se pudo descargar", description: e?.message ?? "Inténtalo otra vez.", variant: "destructive" });
     } finally {
       setGenerando(false);
     }
@@ -60,7 +62,6 @@ export default function AcademiaCertificado() {
         )}
         <div className="flex flex-wrap gap-2 mb-6">
           <Button onClick={pdf} disabled={generando} className="fire-btn-primary" data-testid="certificado-pdf"><Download className="w-4 h-4 mr-1.5" /> {generando ? "Generando…" : "Descargar PDF"}</Button>
-          <Button variant="outline" onClick={() => imprimirDocumento()}><FileText className="w-4 h-4 mr-1.5" /> Imprimir</Button>
           <Button variant="outline" onClick={copiar}>{copiado ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />} {copiado ? "Enlace copiado" : "Copiar el enlace de verificación"}</Button>
         </div>
         <DocumentoAjustado>

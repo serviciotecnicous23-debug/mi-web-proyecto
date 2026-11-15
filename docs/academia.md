@@ -125,7 +125,7 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
 - **El documento:** el mismo diseño del certificado de la Escuela, con el nombre del día en que se emitió, la nota o el
   promedio, «con honores» en el del nivel, las líneas de la Dirección académica y del Ministerio, el QR que lleva a la
   verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Administración; se
-  descarga en PDF o se imprime. Si la materia se aprobó por suficiencia, lo dice. El PDF se dibuja directo, con texto
+  descarga en PDF. Si la materia se aprobó por suficiencia, lo dice. El PDF se dibuja directo, con texto
   de verdad (`client/src/components/academia/certificado-pdf.ts`, A4 apaisado): no es una captura de la pantalla, así
   que sale nítido y nunca en blanco.
 - **La verificación pública** (sin cuenta, la abre el QR): válido o revocado, el nombre, el documento, el nivel y la
@@ -202,15 +202,17 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
     huella cambia si cambia algo de lo que se dibuja (nombre, matrícula, estatus, foto, código o el diseño, `DISENO`). Con
     la huella de hoy el navegador guarda el archivo sin volver a pedirlo; el servidor recuerda los últimos 16 carnés.
   - **La página** (`client/src/pages/academia-carne.tsx`) solo muestra las dos imágenes y enlaza los archivos, sin
-    dibujar nada: «Descargar PDF para imprimir» (una hoja carta con las dos caras a tamaño real y marcas de corte),
-    «Imagen del frente» e «Imagen del reverso» (`&descargar=1`) e «Imprimir» (el PDF abierto en otra pestaña, `&ver=1`).
+    dibujar nada: «Descargar PDF para imprimir» (una hoja carta con las dos caras a tamaño real y marcas de corte) e
+    «Imagen del frente» e «Imagen del reverso» (`&descargar=1`). No hay botón «Imprimir»: abría el PDF en otra pestaña y,
+    en el teléfono o en la web instalada, quedaba una pantalla sin salida y sin opción de imprimir (lo vio Luis); para
+    imprimir se descarga el PDF.
     En el teléfono, «Guardar en el teléfono» comparte las dos imágenes (en el iPhone, «Guardar imagen» las pone en
     Fotos) y también se puede mantener el dedo sobre la imagen. En el iPhone con la web instalada las descargas se abren
     aparte (con su botón para volver), y en el navegador de una app se avisa cómo abrir la página en Chrome o Safari.
 - **Los demás documentos** tampoco dependen de capturar la pantalla:
   - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`), y
     cada certificado, dibujado con su diseño (`certificado-pdf.ts`).
-  - Imprimir abre el documento solo y espera a que carguen sus imágenes antes de abrir el diálogo, una sola vez.
+  - Ningún documento tiene botón «Imprimir» (abrir otra ventana deja al teléfono sin salida): se imprime el PDF.
 - **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
 
 **El panel de seguimiento** (`server/academia-direccion.ts`). Lo pidió Luis: quién está inscrito en cada materia, por
@@ -263,7 +265,7 @@ propio curso (y puede asignarle materias de la academia, ver «Las asignaciones�
 - «Los de su iglesia»: los alumnos cuya ficha eligió la iglesia aliada de la cuenta (`users.church_id`). Sin iglesia
   asignada no ve a nadie.
 - **El expediente** (`/academia/expediente`, `GET /api/academia/expediente`): el alumno ve sus materias con su avance, su
-  nota y su certificado, sus niveles y sus certificados, y lo imprime. El perfil muestra su estatus, sin notas, con los
+  nota y su certificado, sus niveles y sus certificados, y lo descarga en PDF. El perfil muestra su estatus, sin notas, con los
   enlaces al carné y al expediente.
 
 **Los avisos** (`avisarInscripcion`, en `server/academia-inscripcion.ts`):

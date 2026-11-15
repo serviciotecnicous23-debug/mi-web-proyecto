@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, FileText, IdCard, ImageDown, Info, Printer, RotateCw, Share2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, FileText, IdCard, ImageDown, Info, RotateCw, Share2, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -188,11 +188,6 @@ export default function AcademiaCarne() {
               <ImageDown className="w-4 h-4 mr-1.5" /> Imagen del reverso
             </a>
           </Button>
-          <Button asChild variant="outline">
-            <a href={`${archivos.pdf}&ver=1`} target="_blank" rel="noopener" data-testid="carne-imprimir">
-              <Printer className="w-4 h-4 mr-1.5" /> Imprimir
-            </a>
-          </Button>
           {caras && (
             <Button variant="outline" onClick={compartir} data-testid="carne-compartir">
               <Share2 className="w-4 h-4 mr-1.5" /> Guardar en el teléfono
@@ -212,8 +207,8 @@ export default function AcademiaCarne() {
         <p className="text-xs text-muted-foreground mt-3 flex items-start gap-1.5">
           <FileText className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
-            El PDF es una hoja carta con el frente y el reverso a tamaño real (85,6 × 54 mm, como una tarjeta), con marcas para recortar. Imprímelo al
-            100 %. En el teléfono también puedes mantener el dedo sobre la imagen y elegir «Guardar imagen».
+            Para imprimirlo, descarga el PDF y ábrelo: es una hoja carta con el frente y el reverso a tamaño real (85,6 × 54 mm, como una tarjeta), con
+            marcas para recortar. Imprímelo al 100 %. En el teléfono también puedes mantener el dedo sobre la imagen y elegir «Guardar imagen».
           </span>
         </p>
         <div className="max-w-[540px] mt-8">
