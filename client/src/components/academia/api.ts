@@ -1,6 +1,6 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
-import type { EscritoBreveVista,
+import type { EscritoBreveVista, EspecialidadDetalle,
   AcademiaEstado, Apelable, ApelacionVista, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen,
   RespuestaRepaso, ResultadoExamen, VerificacionAcademia,
 } from "@shared/academia";
@@ -290,6 +290,18 @@ export function useEscrito(materiaId: string | undefined) {
 }
 export const entregarEscrito = (materiaId: string, texto: string, pegado: boolean) =>
   pedir<EscritoBreveVista>("POST", `/api/academia/escrito/${encodeURIComponent(materiaId)}`, { texto, pegado });
+
+/** La página de una especialidad (sus materias, el trabajo final y el certificado) y entregar su trabajo final. */
+export function useEspecialidad(id: string | undefined) {
+  return useQuery<EspecialidadDetalle, ErrorAcademia>({
+    queryKey: ["academia", "especialidad", id],
+    queryFn: () => pedir("GET", `/api/academia/especialidad/${encodeURIComponent(id!)}`),
+    enabled: !!id,
+    retry: false,
+  });
+}
+export const entregarTrabajo = (especialidadId: string, texto: string, pegado: boolean) =>
+  pedir<EspecialidadDetalle>("POST", `/api/academia/especialidad/${encodeURIComponent(especialidadId)}/trabajo`, { texto, pegado });
 export const baseDiagnostico = "/api/academia/diagnostico/prueba";
 
 /** Mi última prueba diagnóstica (con la sugerencia de hoy) y cuántas preguntas tiene. */

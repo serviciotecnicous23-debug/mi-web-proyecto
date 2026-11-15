@@ -27,8 +27,13 @@ export default function AcademiaCertificado() {
     );
   }
   const d = q.data;
-  const volver = d.tipo === "nivel" ? { href: `/academia/nivel/${d.ref}`, texto: d.nivel ? `Nivel ${d.nivel.n} · ${d.nivel.nombre}` : "El nivel" } : { href: `/academia/materia/${d.ref}`, texto: d.titulo };
-  const archivo = `academia-${d.tipo === "nivel" ? `nivel-${d.ref}` : d.ref}-${d.codigo}.pdf`.toLowerCase();
+  const volver =
+    d.tipo === "nivel"
+      ? { href: `/academia/nivel/${d.ref}`, texto: d.nivel ? `Nivel ${d.nivel.n} · ${d.nivel.nombre}` : "El nivel" }
+      : d.tipo === "especialidad"
+        ? { href: `/academia/especialidad/${d.ref}`, texto: d.especialidad ? `Especialidad en ${d.especialidad.nombre}` : "La especialidad" }
+        : { href: `/academia/materia/${d.ref}`, texto: d.titulo };
+  const archivo = `academia-${d.tipo === "materia" ? d.ref : `${d.tipo}-${d.ref}`}-${d.codigo}.pdf`.toLowerCase();
   const copiar = async () => {
     try {
       await navigator.clipboard.writeText(d.verificar);
@@ -42,7 +47,7 @@ export default function AcademiaCertificado() {
     <Layout>
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-16">
         <Link href={volver.href} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> {volver.texto}</Link>
-        <h1 className="heading-display font-display text-3xl md:text-4xl mt-4 mb-2 flex items-center gap-3"><Award className="w-8 h-8 text-orange-500" /> {d.tipo === "nivel" ? d.titulo : "Certificado de la materia"}</h1>
+        <h1 className="heading-display font-display text-3xl md:text-4xl mt-4 mb-2 flex items-center gap-3"><Award className="w-8 h-8 text-orange-500" /> {d.tipo === "materia" ? "Certificado de la materia" : d.titulo}</h1>
         <p className="text-muted-foreground mb-5">Código de verificación: <strong className="text-foreground tracking-wider" data-testid="certificado-codigo">{d.codigo}</strong></p>
         {d.revocado && (
           <div className="glass-card p-4 mb-5 border border-red-500/40 text-sm" role="alert">Este documento fue revocado{d.motivo ? `: ${d.motivo}` : "."}</div>

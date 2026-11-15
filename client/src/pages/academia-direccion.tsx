@@ -382,6 +382,7 @@ const FILTRO_REGISTRO: { id: "" | ActividadItem["tipo"]; texto: string }[] = [
   { id: "materia", texto: "Inscripciones en materias" },
   { id: "aprobada", texto: "Materias aprobadas" },
   { id: "nivel", texto: "Niveles completos" },
+  { id: "especialidad", texto: "Especialidades completas" },
 ];
 
 const CHIP = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs whitespace-nowrap";

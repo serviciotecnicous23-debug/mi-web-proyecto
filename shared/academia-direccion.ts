@@ -6,7 +6,7 @@ import type { DocumentoAcademia, EstadoMateria, EstatusAlumno, EstatusVista } fr
 import type { FichaVista } from "./academia-inscripcion";
 import type { Alcance, RolAcademia } from "./academia-permisos";
 
-export type ActividadTipo = "inscripcion" | "materia" | "aprobada" | "nivel";
+export type ActividadTipo = "inscripcion" | "materia" | "aprobada" | "nivel" | "especialidad";
 export type ActividadItem = { tipo: ActividadTipo; userId: number; nombre: string; matricula: string | null; texto: string; fecha: string };
 
 export type AlumnoFila = {
@@ -152,6 +152,8 @@ export type ResultadoRevision = {
   examen: { antes: number | null; despues: number | null };
   materia: { nota: number; aprobada: boolean; cambio: "aprobada" | "desaprobada" | null } | null;
   nivel: "completo" | "reabierto" | null;
+  /** La especialidad del trabajo final o de la materia revisada: completa (con su certificado) o ya no. */
+  especialidad?: "completa" | "reabierta" | null;
   mensaje: string;
 };
 

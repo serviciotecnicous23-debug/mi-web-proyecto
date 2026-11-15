@@ -184,8 +184,9 @@ export function examenDe(m: MateriaDef): MedidaExamen {
   return EXAMEN_FINAL[m.nivel ?? 3];
 }
 /** Los minutos de una respuesta escrita del examen según su tipo (corta o escrito breve). */
-export function minutosDe(medida: MedidaExamen, tipo: "corta" | "breve"): number {
-  return tipo === "breve" ? (medida.minutosBreve ?? medida.minutosEscrita) : medida.minutosEscrita;
+export function minutosDe(medida: MedidaExamen, tipo: TipoEscrita): number {
+  // (el trabajo final de una especialidad no entra en los exámenes)
+  return tipo === "corta" ? medida.minutosEscrita : (medida.minutosBreve ?? medida.minutosEscrita);
 }
 /** La parte escrita de un examen dicha para el alumno, por ejemplo «una respuesta corta (6 minutos) y un escrito breve…». */
 export function parteEscrita(medida: MedidaExamen): string {
@@ -225,6 +226,19 @@ export function miniPruebasDe(m: MateriaDef): { n: number; lecciones: number[] }
  * «escritos» de la materia.
  */
 export const ESCRITO_BREVE = { entregas: 2 } as const;
+/**
+ * El trabajo final de una especialidad (docs/academia.md, «El certificado de especialidad»): un escrito de 300 a 1.200
+ * palabras que integra sus cinco materias. Se entrega con las cinco aprobadas; hay 3 entregas y cuenta la mejor (sin
+ * él aprobado no hay certificado, por eso tiene una entrega más que el escrito breve).
+ */
+export const TRABAJO_ESPECIALIDAD = { entregas: 3 } as const;
+/** La nota del certificado de especialidad: el promedio de sus materias y del trabajo final, todos con el mismo peso. */
+export function notaEspecialidad(materias: number[], trabajo: number): number {
+  const todas = [...materias, trabajo];
+  return Math.round(todas.reduce((s, n) => s + n, 0) / todas.length);
+}
+/** El título del certificado de una especialidad completa. */
+export const tituloEspecialidad = (nombre: string) => `Certificado de Especialidad en ${nombre}`;
 export function tieneEscritoBreve(m: MateriaDef): boolean {
   return pesosDe(m).escritos > 0;
 }
@@ -253,7 +267,7 @@ export function esperaFinalMin(fallos: number): number {
 }
 
 /** Los límites de palabras de las respuestas escritas (se escriben desde el teléfono). */
-export const ESCRITA = { corta: { min: 15, max: 60 }, breve: { min: 80, max: 300 } } as const;
+export const ESCRITA = { corta: { min: 15, max: 60 }, breve: { min: 80, max: 300 }, trabajo: { min: 300, max: 1200 } } as const;
 export type TipoEscrita = keyof typeof ESCRITA;
 
 // ---------------------------------------------------------------- el cierre de cada nivel
@@ -2873,20 +2887,22 @@ export type NivelEstado = {
 
 // ---------------------------------------------------------------- los documentos
 
-export type TipoDocumento = "materia" | "nivel";
+export type TipoDocumento = "materia" | "nivel" | "especialidad";
 
-/** Un documento de la academia (certificado de materia o de nivel), como lo ven su dueño y la Dirección académica. */
+/** Un documento de la academia (certificado de materia, de nivel o de especialidad), como lo ven su dueño y la Dirección académica. */
 export type DocumentoAcademia = {
   codigo: string;
   tipo: TipoDocumento;
-  /** El id de la materia o el número del nivel. */
+  /** El id de la materia o de la especialidad, o el número del nivel. */
   ref: string;
-  /** El título de la materia, o lo que recibe el nivel («Certificado en Fundamentos de la Fe»). */
+  /** El título de la materia, o lo que recibe el nivel o la especialidad («Certificado en Fundamentos de la Fe»). */
   titulo: string;
   nivel: { n: number; nombre: string } | null;
+  /** La especialidad del certificado de especialidad o de la materia de una especialidad. */
+  especialidad: { id: EspecialidadId; nombre: string } | null;
   /** El nombre del alumno al emitirse. */
   nombre: string;
-  /** La nota de la materia o el promedio del nivel. */
+  /** La nota de la materia, el promedio del nivel o la nota de la especialidad. */
   nota: number | null;
   honores: boolean;
   via: string;
@@ -2903,10 +2919,12 @@ export type DocumentoAcademia = {
 export type VerificacionAcademia = {
   valido: boolean;
   codigo: string;
-  /** Un certificado (de materia o de nivel) o el carné de estudiante. */
+  /** Un certificado (de materia, de nivel o de especialidad) o el carné de estudiante. */
   tipo: TipoDocumento | "carne";
   documento: string;
   nivel: string | null;
+  /** En el certificado de una materia de especialidad: el nombre de la especialidad. */
+  especialidad?: string | null;
   nombre: string;
   emitido: string;
   honores: boolean;
@@ -3014,6 +3032,49 @@ export type EscritoBreveVista = {
   cerrado: string | null;
   /** La última entrega corregida (con la respuesta modelo solo después de la última). */
   ultimo: ResultadoExamen | null;
+};
+
+/** El trabajo final de una especialidad para el alumno (como el escrito breve, pero de toda la especialidad). */
+export type TrabajoEspecialidadVista = {
+  pregunta: string;
+  min: number;
+  max: number;
+  entregas: number;
+  maxEntregas: number;
+  mejor: number | null;
+  falta: string[];
+  cerrado: string | null;
+  /** La última entrega corregida (con la respuesta modelo solo después de la última). */
+  ultimo: ResultadoExamen | null;
+};
+
+/** La página de una especialidad: sus materias, el trabajo final y el certificado. */
+export type EspecialidadDetalle = {
+  id: EspecialidadId;
+  nombre: string;
+  resumen: string;
+  materias: {
+    id: string;
+    titulo: string;
+    resumen: string;
+    avanzada: boolean;
+    lecciones: number;
+    hechas: number;
+    estado: EstadoMateria;
+    nota: number | null;
+    /** Lo que falta para poder inscribirse (el Nivel 2, o el Nivel 3 en las avanzadas). */
+    requisitos: string[];
+  }[];
+  /** Cuántas de sus materias aprobó el alumno. */
+  aprobadas: number;
+  /** El trabajo final, cuando la especialidad ya tiene sus cinco materias publicadas (sin sesión, solo la consigna). */
+  trabajo: TrabajoEspecialidadVista | null;
+  /** El código del certificado de especialidad, si ya se emitió, y su nota: el promedio de las materias y del trabajo. */
+  certificado: string | null;
+  nota: number | null;
+  honores: boolean;
+  conSesion: boolean;
+  vistaPrevia: boolean;
 };
 
 export type BloqueVista =

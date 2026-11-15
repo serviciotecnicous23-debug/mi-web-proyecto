@@ -9,7 +9,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
-import { HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno } from "@shared/academia";
+import { ESPECIALIDADES, HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno } from "@shared/academia";
 import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/academia-permisos";
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, MateriaAvance, MateriaReporte, MateriaSeguimiento,
@@ -186,7 +186,7 @@ function reporteMaterias(avances: Map<number, MateriaAvance[]>): MateriaReporte[
     });
 }
 
-/** La actividad reciente de los alumnos que el permiso deja ver: inscripciones, materias aprobadas y niveles. */
+/** La actividad reciente de los alumnos que el permiso deja ver: inscripciones, materias aprobadas, niveles y especialidades. */
 async function actividadDe(ids: number[], limite = 60): Promise<ActividadItem[]> {
   if (!ids.length) return [];
   const { rows } = await pool.query(
@@ -195,6 +195,7 @@ async function actividadDe(ids: number[], limite = 60): Promise<ActividadItem[]>
         UNION ALL SELECT 'materia', user_id, materia_id, inicio_at FROM academia_materias WHERE user_id = ANY($1::int[])
         UNION ALL SELECT 'aprobada', user_id, materia_id, aprobada_at FROM academia_materias WHERE user_id = ANY($1::int[]) AND aprobada_at IS NOT NULL
         UNION ALL SELECT 'nivel', user_id, nivel::text, completado_at FROM academia_niveles WHERE user_id = ANY($1::int[]) AND completado_at IS NOT NULL
+        UNION ALL SELECT 'especialidad', user_id, ref, emitido_at FROM academia_certificados WHERE user_id = ANY($1::int[]) AND tipo = 'especialidad' AND revocado_at IS NULL
       ) e
       JOIN academia_inscripciones i ON i.user_id = e.user_id
       JOIN academia_alumnos a ON a.user_id = e.user_id
@@ -210,7 +211,9 @@ async function actividadDe(ids: number[], limite = 60): Promise<ActividadItem[]>
           ? `se inscribió en «${tituloDe(r.ref)}»`
           : r.tipo === "aprobada"
             ? `aprobó «${tituloDe(r.ref)}»`
-            : `completó el Nivel ${r.ref}${nv ? ` · ${nv.nombre}` : ""}`;
+            : r.tipo === "especialidad"
+              ? `completó la especialidad en ${ESPECIALIDADES.find((e) => e.id === r.ref)?.nombre ?? r.ref}`
+              : `completó el Nivel ${r.ref}${nv ? ` · ${nv.nombre}` : ""}`;
     return { tipo: r.tipo, userId: Number(r.user_id), nombre: `${r.nombres} ${r.apellidos}`.trim(), matricula: r.matricula ?? null, texto, fecha: new Date(r.fecha).toISOString() };
   });
 }
@@ -243,12 +246,14 @@ async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDet
     })),
     certificados: (cs as any[]).map((r) => {
       const nivel = r.tipo === "nivel" ? NIVELES.find((x) => String(x.n) === String(r.ref)) : materiaPorId(r.ref)?.nivel ? NIVELES[materiaPorId(r.ref)!.nivel! - 1] : null;
+      const esp = ESPECIALIDADES.find((e) => e.id === (r.tipo === "especialidad" ? r.ref : materiaPorId(r.ref)?.especialidad));
       return {
         codigo: r.codigo,
         tipo: r.tipo,
         ref: r.ref,
         titulo: r.titulo,
         nivel: nivel ? { n: nivel.n, nombre: nivel.nombre } : null,
+        especialidad: esp ? { id: esp.id, nombre: esp.nombre } : null,
         nombre: r.nombre,
         nota: r.nota == null ? null : Number(r.nota),
         honores: !!r.honores,

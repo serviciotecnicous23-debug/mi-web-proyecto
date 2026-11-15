@@ -10,8 +10,9 @@
  * que lo citado entre comillas «…» coincida letra por letra con la RV1960 (en las lecciones, con algún versículo de la
  * misma lección; en las preguntas, con su cita).
  */
-import { ESCRITA, MINI_PRUEBA, SUFICIENCIA, examenDe, miniPruebasDe, parsearCita, tieneEscritoBreve, todasLasMaterias } from "../../shared/academia";
+import { ESCRITA, ESPECIALIDADES, MINI_PRUEBA, SUFICIENCIA, examenDe, miniPruebasDe, parsearCita, tieneEscritoBreve, todasLasMaterias } from "../../shared/academia";
 import { BANCOS, CONTENIDO } from "../../server/academia/index";
+import { TRABAJOS } from "../../server/academia/trabajos";
 import { problemasDeClave } from "../../server/academia-correccion";
 import type { PreguntaObjetiva } from "../../server/academia/tipos";
 
@@ -174,6 +175,24 @@ async function main() {
     }
     const extra = minis.length ? `, ${minis.map((g) => (banco.mini?.[g.n] ?? []).length).join(" y ")} de las mini pruebas${banco.breve ? " y el escrito breve" : ""}` : "";
     console.log(`✔ ${m.id}: ${m.lecciones.length} lecciones, ${Object.values(banco.repaso).flat().length} de repaso, ${banco.final.length} del final, ${banco.escritas.length} escritas${extra}`);
+  }
+  // el trabajo final de cada especialidad: de tipo «trabajo», con su clave y su respuesta modelo, y solo cuando la
+  // especialidad tiene sus cinco materias listas
+  for (const [espId, t] of TRABAJOS) {
+    const e = ESPECIALIDADES.find((x) => x.id === espId);
+    if (!e) {
+      mal(`${t.id}: la especialidad ${espId} no existe`);
+      continue;
+    }
+    if (!e.materias.every((m) => m.disponible)) mal(`${t.id}: la especialidad ${e.nombre} todavía no tiene sus materias listas`);
+    if (t.tipo !== "trabajo") mal(`${t.id}: el trabajo final debe ser de tipo «trabajo»`);
+    if (ids.has(t.id)) mal(`${t.id}: id repetido`);
+    ids.add(t.id);
+    for (const x of problemasDeClave(t)) mal(x);
+    const n = t.modelo.split(/\s+/).filter(Boolean).length;
+    if (n < ESCRITA.trabajo.min || n > ESCRITA.trabajo.max) mal(`${t.id}: la respuesta modelo tiene ${n} palabras (de ${ESCRITA.trabajo.min} a ${ESCRITA.trabajo.max})`);
+    await revisarComillas(t.id, t.modelo, t.citas ?? []);
+    console.log(`✔ ${t.id}: el trabajo final de ${e.nombre}, con su clave y una respuesta modelo de ${n} palabras`);
   }
   if (problemas.length) {
     console.error(`\n${problemas.length} problemas:`);

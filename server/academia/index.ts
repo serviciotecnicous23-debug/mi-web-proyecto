@@ -4,6 +4,7 @@
  * `disponible: true` en shared/academia.ts (docs/academia.md, «Cómo agregar una materia»).
  */
 import type { BancoMateria, LeccionContenido, PreguntaObjetiva } from "./tipos";
+import { TRABAJOS } from "./trabajos";
 import { N1_SALVACION } from "./contenido/n1-salvacion";
 import { N1_ORACION } from "./contenido/n1-oracion";
 import { N1_BIBLIA } from "./contenido/n1-biblia";
@@ -133,10 +134,12 @@ export function materiaDe(id: string): string | undefined {
 export function preguntaPorId(id: string): PreguntaObjetiva | undefined {
   return PREGUNTAS.get(id);
 }
+/** Una clave escrita por su id: de los exámenes, del escrito breve de una materia o del trabajo final de una especialidad. */
 export function escritaPorId(id: string) {
   for (const b of BANCOS_LISTA) {
     const e = b.escritas.find((x) => x.id === id) ?? (b.breve?.id === id ? b.breve : undefined);
     if (e) return e;
   }
+  for (const t of TRABAJOS.values()) if (t.id === id) return t;
   return undefined;
 }

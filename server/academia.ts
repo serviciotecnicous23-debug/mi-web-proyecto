@@ -18,7 +18,7 @@ import type { PreguntaObjetiva } from "./academia/tipos";
 import { numeroDe } from "./orden-examen";
 import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estadoDe, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
   marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
@@ -34,6 +34,7 @@ import { registerAcademiaMentoresRoutes } from "./academia-mentores";
 import { claveSuficiencia, registerAcademiaSuficienciaRoutes } from "./academia-suficiencia";
 import { estadoMini, registerAcademiaMiniRoutes } from "./academia-mini";
 import { registerAcademiaEscritoRoutes, vistaBreve } from "./academia-escrito";
+import { registerAcademiaEspecialidadRoutes } from "./academia-especialidad";
 import { registerAcademiaDiagnosticoRoutes } from "./academia-diagnostico";
 import { registerAcademiaVersiculosRoutes } from "./academia-versiculos";
 import { estadoExamen, leerCurso, registerAcademiaExamenRoutes } from "./academia-examen";
@@ -54,12 +55,6 @@ function opcionesRepaso(p: PreguntaObjetiva, userId: number | null, lugar: numbe
   return opcionesConBuenaEn(p.id, p.correcta, p.falsas, semilla, lugaresDeLaBuena(total, semilla)[lugar] ?? 0);
 }
 
-function estadoDe(m: MateriaDef, fila: { estado: string } | undefined, hechas: number): EstadoMateria {
-  if (!m.disponible) return "en-preparacion";
-  if (fila?.estado === "aprobada") return "aprobada";
-  if (fila || hechas > 0) return "en-curso";
-  return "disponible";
-}
 
 
 export { fichasDe };
@@ -561,6 +556,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaSuficienciaRoutes(app);
   registerAcademiaMiniRoutes(app);
   registerAcademiaEscritoRoutes(app);
+  registerAcademiaEspecialidadRoutes(app);
   registerAcademiaDiagnosticoRoutes(app);
   registerAcademiaVersiculosRoutes(app);
 }

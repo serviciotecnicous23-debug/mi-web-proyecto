@@ -7,7 +7,7 @@ import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight, Award, BookOpen, BookOpenCheck, CalendarCheck2, CheckCircle2, ClipboardList, Compass, FileText, Flame, GraduationCap, Highlighter, IdCard,
-  Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users, Video,
+  Layers, Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -346,7 +346,7 @@ export default function AcademiaSalon() {
               {docs.data.slice(0, 6).map((d) => (
                 <li key={d.codigo}>
                   <Link href={`/academia/certificado/${d.codigo}`} className="glass-card p-3 flex items-center gap-2 hover:-translate-y-0.5 transition">
-                    {d.tipo === "nivel" ? <GraduationCap className="w-5 h-5 text-orange-500" /> : <Award className="w-5 h-5 text-orange-500" />}
+                    {d.tipo === "nivel" ? <GraduationCap className="w-5 h-5 text-orange-500" /> : d.tipo === "especialidad" ? <Layers className="w-5 h-5 text-orange-500" /> : <Award className="w-5 h-5 text-orange-500" />}
                     <span className="text-sm font-medium flex-1 min-w-0 truncate">{d.titulo}</span>
                     <ArrowRight className="w-4 h-4 text-muted-foreground" />
                   </Link>

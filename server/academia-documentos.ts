@@ -1,6 +1,7 @@
 /**
- * Los documentos de la academia (docs/academia.md, «Los documentos»): el certificado de cada materia aprobada y el del
- * nivel completo. Salen solos, con un código verificable (AAF-XXXX-XXXX) y un QR que lleva a la verificación pública.
+ * Los documentos de la academia (docs/academia.md, «Los documentos»): el certificado de cada materia aprobada, el del
+ * nivel completo y el de cada especialidad completa (sus cinco materias y su trabajo final). Salen solos, con un código
+ * verificable (AAF-XXXX-XXXX) y un QR que lleva a la verificación pública.
  *
  * - El alumno ve sus documentos completos, con la nota o el promedio; la Dirección académica también.
  * - La verificación pública dice si el documento es válido, de quién es, qué es y cuándo se emitió, sin notas.
@@ -12,8 +13,8 @@ import { randomBytes } from "node:crypto";
 import { toDataURL } from "qrcode";
 import { pool } from "./db";
 import {
-  ACLARACION_DOCUMENTOS, HONORES, NIVELES, NOMBRE_ACADEMIA, PATRON_CODIGO, codigoDe, materiaPorId, normalizarCodigo, puedeRevisar,
-  type DocumentoAcademia, type MateriaDef, type NivelDef, type TipoDocumento, type VerificacionAcademia,
+  ACLARACION_DOCUMENTOS, ESPECIALIDADES, HONORES, NIVELES, NOMBRE_ACADEMIA, PATRON_CODIGO, codigoDe, materiaPorId, normalizarCodigo, puedeRevisar,
+  tituloEspecialidad, type DocumentoAcademia, type EspecialidadDef, type MateriaDef, type NivelDef, type TipoDocumento, type VerificacionAcademia,
 } from "@shared/academia";
 import { alumnoDe, enlaceVerificar, frenar, nombreAcademico } from "./academia-comun";
 import { verificacionDeCarne } from "./academia-matricula";
@@ -71,7 +72,17 @@ export function emitirNivel(userId: number, nv: NivelDef, promedio: number | nul
   return emitir(userId, "nivel", String(nv.n), nv.recibe, promedio, promedio != null && promedio >= HONORES);
 }
 
-/** El código del documento de una materia o de un nivel, si ya existe. */
+/**
+ * El certificado de una especialidad completa, con su nota (el promedio de sus materias y del trabajo final). Si ya
+ * existe y vale, se le pone la nota de hoy: una entrega mejor del trabajo final la sube.
+ */
+export async function emitirEspecialidad(userId: number, e: EspecialidadDef, nota: number): Promise<string> {
+  const codigo = await emitir(userId, "especialidad", e.id, tituloEspecialidad(e.nombre), nota, nota >= HONORES);
+  await pool.query(`UPDATE academia_certificados SET nota = $2, honores = $3 WHERE codigo = $1 AND revocado_at IS NULL`, [codigo, nota, nota >= HONORES]);
+  return codigo;
+}
+
+/** El código del documento de una materia, de un nivel o de una especialidad, si ya existe. */
 export async function codigoDocumento(userId: number, tipo: TipoDocumento, ref: string): Promise<string | null> {
   const { rows } = await pool.query(`SELECT codigo FROM academia_certificados WHERE user_id = $1 AND tipo = $2 AND ref = $3`, [userId, tipo, ref]);
   return (rows[0]?.codigo as string) ?? null;
@@ -97,12 +108,26 @@ export async function asegurarDocumentos(userId: number): Promise<void> {
 
 function nivelDelDocumento(f: FilaDocumento): NivelDef | undefined {
   if (f.tipo === "nivel") return NIVELES.find((x) => String(x.n) === f.ref);
+  if (f.tipo === "especialidad") return undefined;
   const m = materiaPorId(f.ref);
   return m?.nivel ? NIVELES.find((x) => x.n === m.nivel) : undefined;
 }
 
+/** La especialidad del documento: la del certificado de especialidad o la de la materia de una especialidad. */
+function especialidadDelDocumento(f: FilaDocumento): EspecialidadDef | undefined {
+  const id = f.tipo === "especialidad" ? f.ref : f.tipo === "materia" ? materiaPorId(f.ref)?.especialidad : undefined;
+  return id ? ESPECIALIDADES.find((x) => x.id === id) : undefined;
+}
+
+/** Lo que dice la verificación pública que es el documento. */
+function nombreDelDocumento(f: FilaDocumento): string {
+  if (f.tipo === "nivel" || f.tipo === "especialidad") return f.titulo;
+  return `Certificado de la materia «${f.titulo}»`;
+}
+
 async function vistaDe(f: FilaDocumento, conQr: boolean): Promise<DocumentoAcademia> {
   const nv = nivelDelDocumento(f);
+  const es = especialidadDelDocumento(f);
   const verificar = enlaceVerificar(f.codigo);
   return {
     codigo: f.codigo,
@@ -110,6 +135,7 @@ async function vistaDe(f: FilaDocumento, conQr: boolean): Promise<DocumentoAcade
     ref: f.ref,
     titulo: f.titulo,
     nivel: nv ? { n: nv.n, nombre: nv.nombre } : null,
+    especialidad: es ? { id: es.id, nombre: es.nombre } : null,
     nombre: f.nombre,
     nota: f.nota == null ? null : Number(f.nota),
     honores: !!f.honores,
@@ -197,12 +223,14 @@ export function registerAcademiaDocumentosRoutes(app: Express) {
         return res.status(404).json({ message: "No encontramos un documento con ese código." });
       }
       const nv = nivelDelDocumento(f);
+      const es = especialidadDelDocumento(f);
       const out: VerificacionAcademia = {
         valido: !f.revocado_at,
         codigo: f.codigo,
         tipo: f.tipo,
-        documento: f.tipo === "nivel" ? f.titulo : `Certificado de la materia «${f.titulo}»`,
+        documento: nombreDelDocumento(f),
         nivel: nv ? `Nivel ${nv.n} · ${nv.nombre}` : null,
+        especialidad: es && f.tipo === "materia" ? es.nombre : null,
         nombre: f.nombre,
         emitido: new Date(f.emitido_at).toISOString(),
         honores: !!f.honores,
