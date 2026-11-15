@@ -2987,6 +2987,159 @@ const SONIDO_TECNICA: MateriaDef = {
   disponible: true,
 };
 
+const TEOLOGIA_ORACION: MateriaDef = {
+  id: "intercesion-1",
+  nivel: null,
+  especialidad: "intercesion",
+  orden: 1,
+  titulo: "Teología de la oración",
+  resumen: "El Dios que oye, orar al Padre por el Hijo en el Espíritu, la oración y la voluntad de Dios, por qué orar si Dios ya sabe, cuando Dios dice no o espera, y lo que estorba la oración.",
+  base: "Jeremías 33:3; Efesios 2:18",
+  memoria: "Jeremías 33:3",
+  lecciones: lecciones("intercesion-1", [
+    ["El Dios que oye la oración", "Salmos 65:2; Jeremías 33:3; Salmos 145:18; Hebreos 4:16"],
+    ["Al Padre, por el Hijo, en el Espíritu", "Efesios 2:18; Juan 16:23-24; Romanos 8:26-27"],
+    ["La oración y la voluntad de Dios", "Mateo 6:9-10; Mateo 26:39; 1 Juan 5:14-15"],
+    ["¿Para qué orar si Dios ya sabe?", "Mateo 6:7-8; Santiago 4:2-3; Lucas 11:9-10"],
+    ["Cuando Dios dice no o espera", "2 Corintios 12:8-9; Habacuc 2:3; Lucas 18:1"],
+    ["Lo que estorba la oración", "Isaías 59:1-2; Salmos 66:18; Marcos 11:24-25; Santiago 1:6-7; 1 Pedro 3:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente que quiere servir en la intercesión tenga una base firme sobre la oración: a quién ora y cómo se acerca, qué significa orar en el nombre de Jesús y con la ayuda del Espíritu, el lugar de la voluntad de Dios, por qué orar si Dios ya sabe, cómo entender las respuestas que tardan o no llegan, y qué estorba la oración. Lo que el ministerio enseña sobre la oración en lenguas y sobre la sanidad divina, como la sanidad en la expiación, son puntos de la declaración de fe por confirmar. Su base es la invitación de Dios: «Clama a mí, y yo te responderé, y te enseñaré cosas grandes y ocultas que tú no conoces» (Jeremías 33:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar que la oración es una relación con un Dios personal que oye.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la oración al Padre, por medio del Hijo, con la ayuda del Espíritu.", bloom: "comprender" },
+      { id: "o3", texto: "Aplicar la búsqueda de la voluntad de Dios a la propia oración.", bloom: "aplicar" },
+      { id: "o4", texto: "Analizar por qué oramos si Dios ya sabe, y qué es pedir bien.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar las respuestas de Dios cuando dice no o espera, y perseverar.", bloom: "evaluar" },
+      { id: "o6", texto: "Reconocer lo que estorba la oración y cómo orar con un corazón limpio.", bloom: "comprender" },
+      { id: "o7", texto: "Recitar Jeremías 33:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la oración: a quién se ora, la voluntad de Dios, las respuestas y los estorbos.",
+      ser: "Un creyente que ora con confianza, con sinceridad y rendido a la voluntad de Dios.",
+      hacer: "Orar con perseverancia, pedir bien y cuidar el corazón para que la oración no tenga estorbo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Richard J. Foster", titulo: "La oración", editorial: "Wipf & Stock" },
+        { autor: "E. M. Bounds", titulo: "Las obras esenciales de E. M. Bounds sobre la oración", editorial: "Origen" },
+      ],
+      complementaria: [{ autor: "Richard J. Foster", titulo: "Celebración de la disciplina", editorial: "Peniel", nota: "Capítulo de la oración." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=3jUPGTb80ms", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Mateo 6: el Padre nuestro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=6" },
+      { tipo: "lectura", titulo: "Lucas 11: enséñanos a orar", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=11" },
+    ],
+  },
+  disponible: true,
+};
+
+const INTERCESION_BIBLICA: MateriaDef = {
+  id: "intercesion-2",
+  nivel: null,
+  especialidad: "intercesion",
+  orden: 2,
+  titulo: "Intercesión bíblica",
+  resumen: "Ponerse en la brecha, Abraham por Sodoma, Moisés por el pueblo, Samuel, Daniel y Nehemías, Cristo nuestro intercesor, y por quiénes y cómo interceder hoy.",
+  base: "1 Timoteo 2:1; Ezequiel 22:30",
+  memoria: "1 Timoteo 2:1",
+  lecciones: lecciones("intercesion-2", [
+    ["Ponerse en la brecha", "Ezequiel 22:30; 1 Timoteo 2:1-5; Santiago 5:16"],
+    ["Abraham ruega por Sodoma", "Génesis 18:23-33; Génesis 19:29"],
+    ["Moisés se interpone por el pueblo", "Éxodo 32:9-14; Números 23:19; Éxodo 32:30-32; Salmos 106:23; Números 14:19-20"],
+    ["Samuel, Daniel y Nehemías: orar por el pueblo", "1 Samuel 12:23; Daniel 9:2-5; Daniel 9:18-19; Nehemías 1:4-6; Nehemías 2:4-5"],
+    ["Cristo, nuestro intercesor", "Isaías 53:12; Lucas 23:34; Lucas 22:31-32; Juan 17:20-21; Hebreos 7:25; Romanos 8:34; 1 Juan 2:1"],
+    ["Interceder hoy: por quiénes y cómo", "Mateo 5:44; Mateo 9:37-38; Romanos 10:1; Efesios 6:18-19; Hechos 12:5; Colosenses 4:12; Proverbios 11:13"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente que quiere servir en la intercesión aprenda de los intercesores de la Biblia: qué es ponerse en la brecha, cómo rogaron Abraham por Sodoma y Moisés por el pueblo, cómo Samuel, Daniel y Nehemías oraron por los suyos, y cómo Cristo, el único mediador, intercedió y sigue intercediendo por los suyos; y que sepa interceder hoy, por quiénes y cómo. Lo que el ministerio enseña sobre la oración en lenguas y sobre la sanidad divina son puntos de la declaración de fe por confirmar. Su base es la exhortación de Pablo: «Exhorto ante todo, a que se hagan rogativas, oraciones, peticiones y acciones de gracias, por todos los hombres» (1 Timoteo 2:1).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es interceder y por qué el intercesor no es mediador.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar la intercesión de Abraham por Sodoma.", bloom: "analizar" },
+      { id: "o3", texto: "Analizar la intercesión de Moisés por el pueblo y sus argumentos.", bloom: "analizar" },
+      { id: "o4", texto: "Describir cómo Samuel, Daniel y Nehemías oraron por su pueblo.", bloom: "comprender" },
+      { id: "o5", texto: "Explicar la intercesión de Cristo en la tierra y en el cielo.", bloom: "comprender" },
+      { id: "o6", texto: "Aplicar la intercesión hoy: por quiénes orar y cómo hacerlo con fidelidad.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar 1 Timoteo 2:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la intercesión: los intercesores del Antiguo Testamento y la intercesión de Cristo.",
+      ser: "Un creyente que ama a los demás lo bastante para ponerse en la brecha por ellos.",
+      hacer: "Interceder con perseverancia y fidelidad por las autoridades, la iglesia, los que sufren y los que no conocen a Cristo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Dutch Sheets", titulo: "La oración intercesora", editorial: "Unilit" },
+        { autor: "Timothy Keller", titulo: "La oración: experimentando asombro e intimidad con Dios", editorial: "B&H Español" },
+      ],
+      complementaria: [{ autor: "Richard J. Foster", titulo: "La oración", editorial: "Wipf & Stock", nota: "Su capítulo sobre la oración intercesora." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=U2lUpubEMDI", minutos: 7 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "lectura", titulo: "Éxodo 32: Moisés intercede por el pueblo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=32" },
+      { tipo: "lectura", titulo: "Daniel 9: la oración de Daniel", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Daniel&cap=9" },
+    ],
+  },
+  disponible: true,
+};
+
+const AYUNO_BIBLICO: MateriaDef = {
+  id: "intercesion-3",
+  nivel: null,
+  especialidad: "intercesion",
+  orden: 3,
+  titulo: "El ayuno bíblico",
+  resumen: "Qué es el ayuno bíblico, los ayunos del Antiguo Testamento, el ayuno de Jesús y de la iglesia, el ayuno que Dios escogió, cómo ayunar con sabiduría cuidando la salud, y los peligros y los frutos del ayuno.",
+  base: "Isaías 58:6; Mateo 6:16-18",
+  memoria: "Isaías 58:6",
+  lecciones: lecciones("intercesion-3", [
+    ["¿Qué es el ayuno bíblico?", "Mateo 6:16-18; Mateo 9:14-15; Joel 2:12-13"],
+    ["El ayuno en el Antiguo Testamento", "Éxodo 34:28; 2 Samuel 12:16; Esdras 8:21-23; Ester 4:16; Jonás 3:5-10; Daniel 10:2-3"],
+    ["Jesús y la iglesia ayunan", "Mateo 4:1-4; Deuteronomio 8:3; Lucas 2:37; Hechos 13:2-3; Hechos 14:23; 2 Corintios 11:27"],
+    ["El ayuno que Dios escogió", "Isaías 58:3-7; Isaías 58:8-9; Zacarías 7:5; Lucas 18:11-12"],
+    ["Cómo ayunar con sabiduría", "Joel 2:15; Mateo 6:17-18; 1 Corintios 6:19-20"],
+    ["Los peligros y los frutos del ayuno", "Mateo 6:16; Colosenses 2:23; Salmos 35:13; 1 Reyes 21:27-29"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente que quiere servir en la intercesión conozca y practique el ayuno bíblico con sabiduría: qué es, cómo ayunaron los hombres y las mujeres de Dios en el Antiguo Testamento, cómo ayunaron Jesús y la iglesia, cuál es el ayuno que Dios escogió, cómo ayunar cuidando la salud y qué peligros evitar. El ayuno no es una dieta ni una forma de presionar a Dios: es humillarse delante de él para buscarlo. Los consejos de salud son generales: quien tenga una enfermedad, tome medicinas, esté embarazada o amamantando, o sea menor de edad, consulta a su médico antes de ayunar. Su base es la palabra de Dios por Isaías: «¿No es más bien el ayuno que yo escogí, desatar las ligaduras de impiedad, soltar las cargas de opresión, y dejar ir libres a los quebrantados, y que rompáis todo yugo?» (Isaías 58:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es el ayuno bíblico y cómo enseñó Jesús a practicarlo.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los ayunos del Antiguo Testamento y sus motivos.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar el ayuno de Jesús y de la iglesia primitiva.", bloom: "comprender" },
+      { id: "o4", texto: "Evaluar el ayuno que Dios escogió frente al ayuno vacío.", bloom: "evaluar" },
+      { id: "o5", texto: "Aplicar formas prudentes de ayunar, cuidando la salud.", bloom: "aplicar" },
+      { id: "o6", texto: "Analizar los peligros y los frutos del ayuno.", bloom: "analizar" },
+      { id: "o7", texto: "Recitar Isaías 58:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre el ayuno: sus motivos, sus ejemplos y el ayuno que Dios escogió.",
+      ser: "Un creyente humilde que busca a Dios y no la aprobación de los hombres.",
+      hacer: "Ayunar con propósito, en secreto y con prudencia, cuidando la salud y uniendo el ayuno a la oración y a la misericordia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Piper", titulo: "Hambre de Dios", editorial: "Andamio" },
+        { autor: "Donald S. Whitney", titulo: "Disciplinas espirituales para la vida cristiana", editorial: "NavPress / Tyndale", nota: "Su capítulo sobre el ayuno." },
+      ],
+      complementaria: [{ autor: "Richard J. Foster", titulo: "Celebración de la disciplina", editorial: "Peniel", nota: "Capítulo del ayuno." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 1), con el Sermón del monte", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=3jUPGTb80ms", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Isaías 58: el ayuno que Dios escogió", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Isaias&cap=58" },
+      { tipo: "lectura", titulo: "Jonás 3: Nínive ayuna y se vuelve a Dios", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Jonas&cap=3" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
 type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
 
@@ -3022,7 +3175,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Consejería matrimonial", true], ["Consejería familiar", true], ["Duelo y crisis"], ["Adicciones y restauración", true], ["Ética y límites del consejero"],
   ]),
   especialidad("intercesion", "Intercesión y oración", "Una vida de oración, ayuno e intercesión con base bíblica.", [
-    ["Teología de la oración"], ["Intercesión bíblica"], ["El ayuno bíblico"], ["Guerra espiritual bíblica y equilibrada", true], ["La oración en los avivamientos"],
+    TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, ["Guerra espiritual bíblica y equilibrada", true], ["La oración en los avivamientos"],
   ]),
   especialidad("comunicaciones", "Comunicaciones y medios", "Llevar el evangelio por la radio, las redes y las transmisiones.", [
     ["Evangelismo en redes"], ["Radio cristiana"], ["Video y transmisiones"], ["Redacción y comunicación"], ["Ética y seguridad digital"],
