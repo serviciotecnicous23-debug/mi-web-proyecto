@@ -536,8 +536,12 @@ export default function AcademiaMateria() {
                 <AccordionContent>
                   <p className="data-label mb-2">Básica</p>
                   <ul className="space-y-1 mb-4 text-[15px]">{m.silabo.bibliografia.basica.map((b) => <li key={b.titulo} className="flex gap-2"><Library className="w-4 h-4 mt-1 text-orange-500 shrink-0" /><span>{b.autor}, <em>{b.titulo}</em>{b.editorial ? ` (${b.editorial})` : ""}{b.nota ? `. ${b.nota}` : ""}</span></li>)}</ul>
-                  <p className="data-label mb-2">Complementaria</p>
-                  <ul className="space-y-1 text-[15px]">{m.silabo.bibliografia.complementaria.map((b) => <li key={b.titulo} className="flex gap-2"><Library className="w-4 h-4 mt-1 text-muted-foreground shrink-0" /><span>{b.autor}, <em>{b.titulo}</em>{b.editorial ? ` (${b.editorial})` : ""}{b.nota ? `. ${b.nota}` : ""}</span></li>)}</ul>
+                  {m.silabo.bibliografia.complementaria.length > 0 && (
+                    <>
+                      <p className="data-label mb-2">Complementaria</p>
+                      <ul className="space-y-1 text-[15px]">{m.silabo.bibliografia.complementaria.map((b) => <li key={b.titulo} className="flex gap-2"><Library className="w-4 h-4 mt-1 text-muted-foreground shrink-0" /><span>{b.autor}, <em>{b.titulo}</em>{b.editorial ? ` (${b.editorial})` : ""}{b.nota ? `. ${b.nota}` : ""}</span></li>)}</ul>
+                    </>
+                  )}
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="recursos">

@@ -1573,6 +1573,158 @@ const LIDERAZGO_1: MateriaDef = {
   disponible: true,
 };
 
+const HOMILETICA_1: MateriaDef = {
+  id: "n3-homiletica-1",
+  nivel: 3,
+  orden: 8,
+  titulo: "Homilética I",
+  resumen: "Preparar y dar una enseñanza bíblica breve: partir del texto, formular la idea central y el propósito, organizar el mensaje, ilustrarlo y aplicarlo con Cristo en el centro, y hablar en público con el poder de Dios.",
+  base: "2 Timoteo 4:1-2; Nehemías 8:8",
+  memoria: "2 Timoteo 4:2",
+  lecciones: lecciones("n3-homiletica-1", [
+    ["El encargo de predicar y enseñar", "2 Timoteo 4:1-2; Mateo 4:23; Nehemías 8:8; 1 Corintios 2:3-5; Santiago 3:1"],
+    ["Del texto al mensaje", "2 Timoteo 2:15; Esdras 7:10; Lucas 15:1-7"],
+    ["La idea central y el propósito", "Hechos 2:36-38; Isaías 55:10-11"],
+    ["La estructura del mensaje", "Hechos 17:22-31"],
+    ["Ilustrar, aplicar y mostrar a Cristo", "Mateo 13:34; Santiago 1:22; Lucas 24:27; 2 Timoteo 3:16-17"],
+    ["Hablar en público con el poder de Dios", "Éxodo 4:10-12; Jeremías 1:6-9; 1 Corintios 2:4-5; Proverbios 27:17"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero sepa preparar y dar una enseñanza bíblica breve: un devocional, un estudio en grupo, una clase o una predicación corta. La materia enseña a partir del texto y no de una idea propia, a formular la idea central y el propósito, a organizar el mensaje con introducción, desarrollo y conclusión, a ilustrarlo y aplicarlo con Cristo en el centro, y a hablar en público dependiendo del Espíritu Santo. Prepara la enseñanza grabada que pide el Nivel 3; la predicación expositiva con rúbrica es la materia Homilética II, del Nivel 4. El encargo es el de Pablo a Timoteo: «que prediques la palabra; que instes a tiempo y fuera de tiempo» (2 Timoteo 4:2).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el encargo bíblico de predicar y enseñar la Palabra, la responsabilidad del que enseña y la fuente de su poder.", bloom: "comprender" },
+      { id: "o2", texto: "Estudiar un pasaje completo en su contexto y escribir en una frase lo que el autor quiso decir.", bloom: "aplicar" },
+      { id: "o3", texto: "Formular la idea central de un mensaje, con su tema y su complemento, y su propósito.", bloom: "crear" },
+      { id: "o4", texto: "Organizar un mensaje con introducción, desarrollo y conclusión, con puntos que salen del texto.", bloom: "aplicar" },
+      { id: "o5", texto: "Usar ilustraciones verdaderas y aplicaciones concretas, y mostrar a Cristo sin forzar el texto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una enseñanza y preparar la enseñanza grabada del Nivel 3, hablando con claridad y dependiendo del Espíritu.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Timoteo 4:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los pasos para preparar un mensaje bíblico: el estudio del pasaje, la idea central, el propósito, la estructura, la ilustración y la aplicación.",
+      ser: "Un maestro fiel al texto, honesto y humilde, que vive primero lo que enseña y depende del poder de Dios.",
+      hacer: "Preparar y dar un devocional, un estudio o una predicación corta, y grabar la enseñanza del Nivel 3.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Haddon W. Robinson", titulo: "La predicación bíblica: desarrollo y presentación de mensajes expositivos", editorial: "Unilit" },
+        { autor: "James D. Crane", titulo: "El sermón eficaz", editorial: "Casa Bautista de Publicaciones" },
+      ],
+      complementaria: [
+        { autor: "Orlando E. Costas", titulo: "Comunicación por medio de la predicación", editorial: "Caribe" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 2 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lvNqjbjTytE", minutos: 9 },
+      { tipo: "video", titulo: "Cómo leer las parábolas de Jesús", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=jZinwS_2jsQ", minutos: 6 },
+      { tipo: "lectura", titulo: "Nehemías 8: la lectura de la ley", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+      { tipo: "lectura", titulo: "Hechos 17: Pablo en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+    ],
+  },
+  disponible: true,
+};
+
+const HISTORIA_1: MateriaDef = {
+  id: "n3-historia-1",
+  nivel: 3,
+  orden: 9,
+  titulo: "Historia de la iglesia I",
+  resumen: "De Pentecostés a la víspera de la Reforma: la iglesia de los apóstoles, los mártires, la defensa de la fe, el canon y los credos, Constantino y los concilios, Agustín y la Edad Media, y los que pidieron volver a la Biblia.",
+  base: "Mateo 16:18; Hebreos 13:7-8",
+  memoria: "Hebreos 13:8",
+  lecciones: lecciones("n3-historia-1", [
+    ["La iglesia de los apóstoles y su expansión", "Mateo 16:18; Hechos 1:8; 2:41-42; 8:4; 11:26"],
+    ["Los mártires: fieles hasta la muerte", "Apocalipsis 2:8-10; Hechos 7:59-60; 1 Pedro 4:12-16"],
+    ["Defender la fe: apologistas, canon y credos", "Judas 1:3; 1 Pedro 3:15; 1 Juan 4:2-3; 2 Pedro 3:15-16; 2 Timoteo 1:13-14"],
+    ["Constantino y los grandes concilios", "Juan 18:36; 1:1-3; 1:14; Colosenses 2:8-9"],
+    ["Agustín, los monjes y la Edad Media", "Romanos 13:13-14; Efesios 2:8-9; Mateo 28:19-20"],
+    ["Antes de la Reforma: volver a la Palabra", "Salmos 119:105; Hechos 5:29; Isaías 40:8; Hebreos 13:7-8"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca la historia de la iglesia desde Pentecostés hasta la víspera de la Reforma, para ver cómo Cristo ha edificado su iglesia a través de los siglos, aprender de la fidelidad de los mártires y de los que defendieron la fe, reconocer los errores que se deben evitar y valorar la Biblia que hoy tiene en su idioma. La materia recorre la iglesia de los apóstoles, las persecuciones, la defensa de la fe, el canon y los credos, Constantino y los concilios, Agustín y la Edad Media, y a los que pidieron volver a la Biblia antes de la Reforma. La Reforma, los avivamientos, el pentecostalismo y la iglesia en América Latina son la materia Historia de la iglesia II, del Nivel 4. El hilo de toda esta historia: «Jesucristo es el mismo ayer, y hoy, y por los siglos» (Hebreos 13:8).",
+    objetivos: [
+      { id: "o1", texto: "Describir el nacimiento y la expansión de la iglesia en el siglo I y la obra de los Padres apostólicos.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar las persecuciones del Imperio romano y el testimonio de los mártires.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar cómo la iglesia defendió la fe frente a las herejías, reconoció el canon del Nuevo Testamento y resumió su fe en los credos.", bloom: "analizar" },
+      { id: "o4", texto: "Resumir lo que confesaron los concilios de Nicea, Constantinopla y Calcedonia, y evaluar el cambio que trajo Constantino.", bloom: "evaluar" },
+      { id: "o5", texto: "Describir la enseñanza de Agustín sobre la gracia, el papel de los monasterios y de las misiones, y los cambios de la iglesia medieval.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar el aporte de Valdo, Wiclef y Hus, y cómo la imprenta y el estudio del griego prepararon la Reforma.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hebreos 13:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los hechos, las personas y las fechas principales de la iglesia desde Pentecostés hasta la víspera de la Reforma, y cómo se reconoció el canon y se formularon los credos.",
+      ser: "Un creyente agradecido y humilde, que se sabe parte de la gran nube de testigos y quiere ser fiel como los mártires.",
+      hacer: "Enseñar la historia de la iglesia con exactitud, defender la fe con mansedumbre y aprender de los errores del pasado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Justo L. González", titulo: "Historia del cristianismo, tomo 1: desde la era de los mártires hasta la era de los sueños frustrados", editorial: "Unilit" },
+        { autor: "Jesse Lyman Hurlbut", titulo: "Historia de la iglesia cristiana", editorial: "Vida" },
+      ],
+      complementaria: [],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1): Hechos 1-12", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Judas: contender por la fe", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=vhPyNSJiRZ8", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 11: la iglesia en Antioquía", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=11" },
+      { tipo: "lectura", titulo: "Apocalipsis 2: la carta a Esmirna", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Apocalipsis&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_BASICA: MateriaDef = {
+  id: "n3-consejeria-basica",
+  nivel: 3,
+  orden: 10,
+  titulo: "Cuidado y consejería básica",
+  resumen: "El primer nivel de ayuda entre hermanos: escuchar, orar con otros y aconsejar con la Palabra, acompañar en el duelo y en la crisis, saber cuándo derivar, proteger a los débiles y cuidar la propia vida.",
+  base: "Gálatas 6:1-2; 2 Corintios 1:3-4",
+  memoria: "Gálatas 6:2",
+  lecciones: lecciones("n3-consejeria-basica", [
+    ["El cuidado mutuo en el cuerpo de Cristo", "Gálatas 6:2; 2 Corintios 1:3-4; Romanos 15:14; Isaías 9:6"],
+    ["Escuchar como Jesús", "Santiago 1:19; Proverbios 18:13; Lucas 24:15-17; Proverbios 20:5; Job 2:13"],
+    ["Orar con otros y aconsejar con la Palabra", "Santiago 5:13-16; Filipenses 4:6-7; Proverbios 25:11; Colosenses 4:14"],
+    ["Acompañar en el duelo y en la crisis", "Juan 11:32-36; 1 Tesalonicenses 4:13-14; Salmos 34:18; 1 Reyes 19:4-8"],
+    ["Saber cuándo derivar y cómo proteger", "Éxodo 18:17-18; Proverbios 11:14; Proverbios 24:11; Romanos 13:3-4"],
+    ["La ética y el cuidado del que ayuda", "Proverbios 11:13; Gálatas 6:1; Marcos 6:31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero sepa cuidar a sus hermanos en el primer nivel de ayuda: escuchar con atención, orar con otros, aconsejar con la Palabra a su tiempo, acompañar en el duelo y en la crisis, y reconocer cuándo una situación pide al pastor o a un profesional. La materia no forma consejeros profesionales: enseña a ayudar con amor y con prudencia, a proteger a los débiles, a guardar la confidencialidad con sus límites y a cuidar la propia vida. La especialidad Familia y consejería profundiza estos temas. El mandato es el de Pablo: «Sobrellevad los unos las cargas de los otros, y cumplid así la ley de Cristo» (Gálatas 6:2).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el llamado bíblico al cuidado mutuo y distinguir los niveles de ayuda: entre hermanos, pastoral y profesional.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar las habilidades para escuchar: atención, preguntas abiertas, reflejar y aceptar las emociones.", bloom: "aplicar" },
+      { id: "o3", texto: "Orar con otros y usar la Escritura con sabiduría, sin oponer la fe a la ayuda médica.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar en el duelo y dar los primeros pasos en una crisis.", bloom: "aplicar" },
+      { id: "o5", texto: "Reconocer cuándo derivar y qué hacer ante el riesgo de suicidio y ante el abuso.", bloom: "evaluar" },
+      { id: "o6", texto: "Aplicar la confidencialidad con sus límites, las normas de prudencia y el cuidado de uno mismo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Gálatas 6:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La enseñanza bíblica sobre el cuidado mutuo, el consuelo y el consejo, y los principios básicos para escuchar, acompañar y derivar.",
+      ser: "Un hermano compasivo, discreto y humilde, que escucha antes de hablar y conoce sus límites.",
+      hacer: "Escuchar, orar con otros, acompañar en el duelo y en la crisis, derivar a tiempo y proteger a los débiles.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Gálatas: sobrellevar las cargas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=kMJLgLOWb3I", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Corintios: el Dios de toda consolación", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=jV7dTkYFym4", minutos: 10 },
+      { tipo: "lectura", titulo: "Juan 11: Jesús llora con Marta y María", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=11" },
+      { tipo: "lectura", titulo: "Job 2: los amigos que se sentaron en silencio", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Job&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1635,9 +1787,9 @@ export const NIVELES: NivelDef[] = [
       enPreparacion(3, 5, "n3-espiritu-santo", "La persona y obra del Espíritu Santo", "El bautismo en el Espíritu, los dones, el fruto y los avivamientos."),
       EVANGELISMO_CONSOLIDACION,
       LIDERAZGO_1,
-      enPreparacion(3, 8, "n3-homiletica-1", "Homilética I", "Preparar y dar una enseñanza bíblica y hablar en público."),
-      enPreparacion(3, 9, "n3-historia-1", "Historia de la iglesia I", "De Pentecostés a la Reforma."),
-      enPreparacion(3, 10, "n3-consejeria-basica", "Cuidado y consejería básica", "Escuchar, orar con otros, acompañar en crisis y saber cuándo derivar."),
+      HOMILETICA_1,
+      HISTORIA_1,
+      CONSEJERIA_BASICA,
     ],
   },
   {
