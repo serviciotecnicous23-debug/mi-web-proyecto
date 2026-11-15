@@ -22,6 +22,9 @@ import { N2_FAMILIA } from "./contenido/n2-familia";
 import { N3_HERMENEUTICA } from "./contenido/n3-hermeneutica";
 import { N3_METODOS_ESTUDIO } from "./contenido/n3-metodos-estudio";
 import { N3_PENTATEUCO_HISTORICOS } from "./contenido/n3-pentateuco-historicos";
+import { N3_EVANGELIOS_HECHOS } from "./contenido/n3-evangelios-hechos";
+import { N3_EVANGELISMO_CONSOLIDACION } from "./contenido/n3-evangelismo-consolidacion";
+import { N3_LIDERAZGO_1 } from "./contenido/n3-liderazgo-1";
 import { N2_DONES } from "./contenido/n2-dones";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
@@ -41,19 +44,22 @@ import { BANCO_N2_FAMILIA } from "./bancos/n2-familia";
 import { BANCO_N3_HERMENEUTICA } from "./bancos/n3-hermeneutica";
 import { BANCO_N3_METODOS_ESTUDIO } from "./bancos/n3-metodos-estudio";
 import { BANCO_N3_PENTATEUCO_HISTORICOS } from "./bancos/n3-pentateuco-historicos";
+import { BANCO_N3_EVANGELIOS_HECHOS } from "./bancos/n3-evangelios-hechos";
+import { BANCO_N3_EVANGELISMO_CONSOLIDACION } from "./bancos/n3-evangelismo-consolidacion";
+import { BANCO_N3_LIDERAZGO_1 } from "./bancos/n3-liderazgo-1";
 import { BANCO_N2_DONES } from "./bancos/n2-dones";
 
 /** El Nivel 1 completo (las 8 materias en su orden) y lo publicado de los Niveles 2 y 3. */
 const LECCIONES: LeccionContenido[] = [
   ...N1_SALVACION, ...N1_ORACION, ...N1_BIBLIA, ...N1_ESPIRITU, ...N1_BAUTISMO_CENA, ...N1_IGLESIA, ...N1_VIDA_NUEVA, ...N1_COMPARTIR_FE,
   ...N2_PANORAMA_AT, ...N2_PANORAMA_NT, ...N2_DISCIPLINAS, ...N2_SERMON_MONTE, ...N2_MAYORDOMIA, ...N2_FAMILIA, ...N2_EVANGELISMO_PERSONAL, ...N2_DONES,
-  ...N3_HERMENEUTICA, ...N3_METODOS_ESTUDIO, ...N3_PENTATEUCO_HISTORICOS,
+  ...N3_HERMENEUTICA, ...N3_METODOS_ESTUDIO, ...N3_PENTATEUCO_HISTORICOS, ...N3_EVANGELIOS_HECHOS, ...N3_EVANGELISMO_CONSOLIDACION, ...N3_LIDERAZGO_1,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
   BANCO_N1_BAUTISMO_CENA, BANCO_N1_IGLESIA, BANCO_N1_VIDA_NUEVA, BANCO_N1_COMPARTIR_FE,
   BANCO_N2_PANORAMA_AT, BANCO_N2_PANORAMA_NT, BANCO_N2_DISCIPLINAS, BANCO_N2_SERMON_MONTE, BANCO_N2_MAYORDOMIA, BANCO_N2_FAMILIA, BANCO_N2_EVANGELISMO_PERSONAL, BANCO_N2_DONES,
-  BANCO_N3_HERMENEUTICA, BANCO_N3_METODOS_ESTUDIO, BANCO_N3_PENTATEUCO_HISTORICOS,
+  BANCO_N3_HERMENEUTICA, BANCO_N3_METODOS_ESTUDIO, BANCO_N3_PENTATEUCO_HISTORICOS, BANCO_N3_EVANGELIOS_HECHOS, BANCO_N3_EVANGELISMO_CONSOLIDACION, BANCO_N3_LIDERAZGO_1,
 ];
 
 export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));

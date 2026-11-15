@@ -1410,6 +1410,169 @@ const PENTATEUCO_HISTORICOS: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 3 · materia 4: los cuatro evangelios y la iglesia en el poder del Espíritu. */
+const EVANGELIOS_HECHOS: MateriaDef = {
+  id: "n3-evangelios-hechos",
+  nivel: 3,
+  orden: 4,
+  titulo: "Los Evangelios y Hechos",
+  resumen: "Los cuatro evangelios y su propósito, la persona de Jesús, el reino en palabras y obras, la cruz y la resurrección, y el avance de la iglesia en Hechos, de Jerusalén a Roma, en el poder del Espíritu.",
+  base: "Juan 20:31; Hechos 1:8",
+  memoria: "Mateo 16:16",
+  lecciones: lecciones("n3-evangelios-hechos", [
+    ["Cuatro relatos de un evangelio", "Marcos 1:1; Lucas 1:1-4; Juan 20:30-31"],
+    ["La persona de Jesús", "Mateo 16:13-17; Juan 1:1-14; Lucas 1:35"],
+    ["El reino de Dios en palabras y obras", "Marcos 1:14-15; Lucas 11:20; Mateo 13:31-33"],
+    ["La cruz y la resurrección", "Marcos 10:45; Lucas 22:19-20; 1 Corintios 15:3-8"],
+    ["Hechos 1 al 12: de Jerusalén a Antioquía", "Hechos 1:8; 2:1-42; 10:34-35; 11:26"],
+    ["Hechos 13 al 28: hasta lo último de la tierra", "Hechos 13:2-4; 15:11; 16:9; 28:30-31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca a fondo los evangelios y el libro de Hechos para anunciar a Cristo y servir en la misión de la iglesia. Los evangelios son cuatro relatos, basados en testigos, de una sola buena noticia: quién es Jesús, qué hizo y por qué murió y resucitó. Hechos continúa la historia: la iglesia, llena del Espíritu, lleva el evangelio de Jerusalén hasta Roma. Juan lo resume así: estas cosas se escribieron «para que creyendo, tengáis vida en su nombre» (Juan 20:31).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es un evangelio, por qué hay cuatro y el énfasis de Mateo, Marcos, Lucas y Juan.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar lo que los evangelios enseñan sobre la persona de Jesús: verdadero Dios y verdadero hombre, el Cristo, el Hijo de Dios y el Hijo del Hombre.", bloom: "analizar" },
+      { id: "o3", texto: "Describir el reino de Dios en las palabras y las obras de Jesús, y el llamado a seguirlo.", bloom: "comprender" },
+      { id: "o4", texto: "Explicar el sentido de la muerte y la resurrección de Jesús según los evangelios.", bloom: "analizar" },
+      { id: "o5", texto: "Describir el avance de la iglesia en Hechos 1 al 12, de Jerusalén a Antioquía, en el poder del Espíritu.", bloom: "comprender" },
+      { id: "o6", texto: "Describir los viajes de Pablo, el concilio de Jerusalén y la llegada del evangelio a Roma (Hechos 13 al 28).", bloom: "analizar" },
+      { id: "o7", texto: "Recitar Mateo 16:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El propósito de cada evangelio, la vida, la muerte y la resurrección de Jesús, y la historia de la iglesia en Hechos.",
+      ser: "Un discípulo que confiesa a Jesús como el Cristo y lo sigue con su cruz cada día.",
+      hacer: "Enseñar los evangelios y Hechos con su contexto, y testificar de Cristo en el poder del Espíritu.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Merrill C. Tenney", titulo: "Nuestro Nuevo Testamento", editorial: "Portavoz" },
+        { autor: "Stanley M. Horton", titulo: "El libro de los Hechos", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "A. T. Robertson", titulo: "Una armonía de los cuatro evangelios", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Lucas (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=bPzhlL9zKmg", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Evangelio de Lucas 24: la resurrección", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=WHlHoQy3bVk", minutos: 6 },
+      { tipo: "video", titulo: "El apóstol Pablo: Hechos 8 a 12", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=sEhT1mA-HU0", minutos: 7 },
+      { tipo: "lectura", titulo: "Hechos 2: Pentecostés y la primera iglesia", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 3 · materia 6: el evangelismo como ministerio de la iglesia y la consolidación del nuevo creyente. */
+const EVANGELISMO_CONSOLIDACION: MateriaDef = {
+  id: "n3-evangelismo-consolidacion",
+  nivel: 3,
+  orden: 6,
+  titulo: "Evangelismo y consolidación",
+  resumen: "El evangelismo como ministerio de la iglesia (en equipo, en las casas, en campañas, en la calle, en la radio y en las redes) y la consolidación del nuevo creyente hasta que echa raíces, se integra a la iglesia y empieza a servir.",
+  base: "2 Corintios 5:20; Colosenses 1:28",
+  memoria: "Colosenses 1:28",
+  antes: "Evangelismo 2",
+  lecciones: lecciones("n3-evangelismo-consolidacion", [
+    ["La iglesia que evangeliza", "2 Corintios 5:14-20; Efesios 4:11-12; Romanos 10:14-15"],
+    ["En equipo, en las casas y en la comunidad", "Lucas 10:1-9; Hechos 20:20; Colosenses 4:5-6"],
+    ["Campañas, calle, radio y redes", "Hechos 8:5-8; 17:17; 2 Timoteo 2:24-25"],
+    ["La consolidación: cuidar al nuevo creyente", "Hechos 14:21-22; Mateo 13:20-21; 1 Tesalonicenses 2:7-8"],
+    ["El plan de consolidación", "1 Juan 5:11-13; Hechos 2:41-42; 18:26; 2 Timoteo 2:2"],
+    ["Obstáculos, restauración y fruto que permanece", "Gálatas 6:1-2; Filipenses 1:6; Juan 15:16"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero evangelice como parte de un ministerio organizado y sepa cuidar a los que creen hasta que echan raíces. El evangelismo tiene un mensaje, el de Cristo muerto y resucitado; un poder, el del Espíritu Santo; y un motivo, el amor de Cristo. Se hace en equipo y por distintos medios, y no termina en el sí de una persona: continúa en la consolidación, que afirma al nuevo creyente, lo integra a la iglesia y lo lleva a servir. Pablo lo resume así: anunciamos a Cristo «a fin de presentar perfecto en Cristo Jesús a todo hombre» (Colosenses 1:28).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el fundamento bíblico del evangelismo y el papel de toda la iglesia y del evangelista.", bloom: "comprender" },
+      { id: "o2", texto: "Organizar el evangelismo en equipo y en la comunidad, con respeto, seguridad y cuidado de la privacidad.", bloom: "aplicar" },
+      { id: "o3", texto: "Evaluar el evangelismo en campañas, en la calle, en la radio y en las redes por su fidelidad y su fruto.", bloom: "evaluar" },
+      { id: "o4", texto: "Explicar qué es la consolidación y por qué la meta es hacer discípulos.", bloom: "comprender" },
+      { id: "o5", texto: "Aplicar un plan de consolidación con prudencia, desde el primer contacto hasta el servicio.", bloom: "aplicar" },
+      { id: "o6", texto: "Acompañar al nuevo creyente en sus obstáculos y restaurarlo con mansedumbre, buscando fruto que permanezca.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Colosenses 1:28 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El fundamento del evangelismo, sus medios y los pasos de la consolidación.",
+      ser: "Un testigo movido por el amor de Cristo, paciente y prudente con los que empiezan.",
+      hacer: "Evangelizar en equipo y acompañar a un nuevo creyente hasta que se integre a la iglesia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Rick Warren", titulo: "Una iglesia con propósito", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Billy Graham", titulo: "Paz con Dios", nota: "Un clásico para leer con los nuevos creyentes." },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "lectura", titulo: "Lucas 10: los setenta enviados de dos en dos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=10" },
+      { tipo: "lectura", titulo: "Hechos 14: volver a confirmar a los discípulos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=14" },
+      { tipo: "lectura", titulo: "1 Tesalonicenses 2: como la nodriza que cuida a sus hijos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Tesalonicenses&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 3 · materia 7: el liderazgo como servicio, el carácter del líder y el trabajo en equipo. */
+const LIDERAZGO_1: MateriaDef = {
+  id: "n3-liderazgo-1",
+  nivel: 3,
+  orden: 7,
+  titulo: "Liderazgo cristiano I",
+  resumen: "El liderazgo como servicio según Jesús, el carácter del líder, la vida con Dios, el descanso y la familia, el trabajo en equipo, los conflictos, las decisiones y la formación de nuevos líderes.",
+  base: "Marcos 10:42-45; 1 Pedro 5:2-3",
+  memoria: "Marcos 10:45",
+  lecciones: lecciones("n3-liderazgo-1", [
+    ["¿Qué es el liderazgo cristiano?", "Marcos 10:35-45; 1 Timoteo 3:1; Zacarías 4:6"],
+    ["El carácter del líder", "1 Timoteo 3:1-7; Proverbios 11:3; 1 Pedro 5:5; Hechos 20:28"],
+    ["Servir como Jesús", "Juan 13:1-17; Filipenses 2:3-8; 1 Pedro 5:2-3; 3 Juan 1:9-10"],
+    ["La vida del líder con Dios", "Éxodo 33:15; Marcos 1:35; 6:31; 1 Timoteo 4:12-16"],
+    ["El trabajo en equipo", "Éxodo 18:13-23; Hechos 6:1-7; Romanos 12:4-5; Eclesiastés 4:9-10"],
+    ["Conflictos, decisiones y nuevos líderes", "Efesios 4:2-3; Proverbios 15:22; Hechos 15:28; 2 Timoteo 2:2; 4:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero lidere como Jesús: sirviendo. El liderazgo cristiano es influir en las personas para que sigan a Cristo, y no se apoya en el cargo ni en el carisma, sino en el carácter, en la vida con Dios y en el servicio. La materia trata el carácter que pide la Escritura, el ejemplo de Jesús y del buen pastor, los peligros del abuso de poder, el cuidado del descanso y de la familia, el trabajo en equipo y la formación de nuevos líderes. Jesús lo resumió así: «el Hijo del Hombre no vino para ser servido, sino para servir, y para dar su vida en rescate por muchos» (Marcos 10:45).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el liderazgo cristiano como influencia al servicio de Dios y de los demás, según Marcos 10:42-45.", bloom: "comprender" },
+      { id: "o2", texto: "Describir el carácter que la Biblia pide al líder: integridad, humildad, dominio propio y buen testimonio.", bloom: "analizar" },
+      { id: "o3", texto: "Aplicar el modelo de servicio de Jesús y del buen pastor, y reconocer los abusos del poder.", bloom: "aplicar" },
+      { id: "o4", texto: "Cuidar la vida con Dios, el descanso y la familia como base del liderazgo.", bloom: "aplicar" },
+      { id: "o5", texto: "Organizar el trabajo en equipo: delegar con confianza y cuidar la unidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Resolver conflictos y tomar decisiones con oración, Escritura y consejo, y formar nuevos líderes.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Marcos 10:45 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La enseñanza bíblica sobre el liderazgo de servicio, el carácter del líder y el trabajo en equipo.",
+      ser: "Un líder humilde e íntegro, que cuida su vida con Dios, su descanso y su familia, y rinde cuentas.",
+      hacer: "Servir y guiar a un grupo o a un equipo, delegar, resolver conflictos y formar a otros.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías: un líder que ora y trabaja", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "lectura", titulo: "Juan 13: Jesús lava los pies de sus discípulos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=13" },
+      { tipo: "lectura", titulo: "Éxodo 18: el consejo de Jetro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=18" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1468,10 +1631,10 @@ export const NIVELES: NivelDef[] = [
       HERMENEUTICA,
       METODOS_ESTUDIO,
       PENTATEUCO_HISTORICOS,
-      enPreparacion(3, 4, "n3-evangelios-hechos", "Los Evangelios y Hechos", "La vida y el ministerio de Jesús y la iglesia en el poder del Espíritu."),
+      EVANGELIOS_HECHOS,
       enPreparacion(3, 5, "n3-espiritu-santo", "La persona y obra del Espíritu Santo", "El bautismo en el Espíritu, los dones, el fruto y los avivamientos."),
-      enPreparacion(3, 6, "n3-evangelismo-consolidacion", "Evangelismo y consolidación", "Evangelismo en equipo, campañas, calle, radio y redes, y la consolidación del nuevo creyente.", { antes: "Evangelismo 2" }),
-      enPreparacion(3, 7, "n3-liderazgo-1", "Liderazgo cristiano I", "El carácter del líder, servir como Jesús y el trabajo en equipo."),
+      EVANGELISMO_CONSOLIDACION,
+      LIDERAZGO_1,
       enPreparacion(3, 8, "n3-homiletica-1", "Homilética I", "Preparar y dar una enseñanza bíblica y hablar en público."),
       enPreparacion(3, 9, "n3-historia-1", "Historia de la iglesia I", "De Pentecostés a la Reforma."),
       enPreparacion(3, 10, "n3-consejeria-basica", "Cuidado y consejería básica", "Escuchar, orar con otros, acompañar en crisis y saber cuándo derivar."),

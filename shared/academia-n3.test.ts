@@ -41,6 +41,27 @@ test("«Pentateuco y libros históricos» va de Génesis a Ester, con el Shema d
   assert.ok(m.silabo!.bibliografia.basica.every((b) => b.autor === "Pablo Hoff"));
 });
 
+test("«Los Evangelios y Hechos», «Evangelismo y consolidación» y «Liderazgo cristiano I» siguen con la misma medida", () => {
+  const casos: [string, number, string][] = [
+    ["n3-evangelios-hechos", 4, "Mateo 16:16"],
+    ["n3-evangelismo-consolidacion", 6, "Colosenses 1:28"],
+    ["n3-liderazgo-1", 7, "Marcos 10:45"],
+  ];
+  for (const [id, orden, memoria] of casos) {
+    const m = materiaPorId(id)!;
+    assert.equal(m.disponible, true, id);
+    assert.equal(m.orden, orden, id);
+    assert.equal(m.memoria, memoria, id);
+    assert.equal(m.lecciones.length, 6, id);
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), id);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], id);
+  }
+  // Evangelismo y consolidación viene de «Evangelismo 2»
+  assert.equal(materiaPorId("n3-evangelismo-consolidacion")!.antes, "Evangelismo 2");
+  // La persona y obra del Espíritu Santo espera la declaración de fe
+  assert.equal(materiaPorId("n3-espiritu-santo")!.disponible, false);
+});
+
 test("las materias del Nivel 3 se evalúan como pide el reglamento", () => {
   const m = materiaPorId("n3-hermeneutica")!;
   // 2 mini pruebas (lecciones 1-3 y 4-6) y el escrito breve
