@@ -2,11 +2,15 @@
  * Las damas chinas en la pantalla (shared/mesa/damas-chinas.ts): la estrella de madera con sus 121 hoyos, las canicas
  * de vidrio de cada color, los destinos que se encienden al tocar una canica propia y los saltos encadenados que se
  * ven uno por uno. La punta de cada jugador tiene su color, y la meta de enfrente se marca con el mismo color.
+ *
+ * Como las de verdad: la estrella de una pieza de madera con su veta, su canto y su sombra en la mesa; cada hoyo
+ * taladrado (oscuro arriba y con la pared de abajo con luz), y las canicas de vidrio con su ojo de color adentro, el
+ * brillo arriba y la luz que pasa abajo.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CELDAS, DAMAS_CHINAS, PUNTAS, enfrente, hoyosDePunta, movimientosDe, type DamasChinasVista, type EvDamasChinas, type JugadaDamasChinas, type MovDC } from "@shared/mesa/damas-chinas";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, tono, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 const ESC = 4;
 type P = { x: number; y: number };
@@ -48,6 +52,57 @@ const TRIANGULOS = [0, 1, 2, 3, 4, 5].map((p) => {
     return { x: q.x + (dx / l) * 5, y: q.y + (dy / l) * 5 };
   });
 });
+
+/** El contorno de la estrella (las 6 puntas y los 6 rincones de adentro), para la madera, su canto y su sombra. */
+const ESTRELLA: P[] = (() => {
+  const ext = VERTICES.map((q) => ({ ang: Math.atan2(q.y, q.x), r: Math.hypot(q.x, q.y) })).sort((x, y) => x.ang - y.ang);
+  const pts: P[] = [];
+  ext.forEach((e, k) => {
+    pts.push({ x: Math.cos(e.ang) * e.r, y: Math.sin(e.ang) * e.r });
+    const sig = ext[(k + 1) % ext.length];
+    // el rincón de adentro, a mitad de camino entre dos puntas (en una estrella de seis puntas, a R/√3 del centro)
+    const medio = (e.ang + sig.ang) / 2 + (sig.ang < e.ang ? Math.PI : 0);
+    const ri = (e.r + sig.r) / 2 / Math.sqrt(3);
+    pts.push({ x: Math.cos(medio) * ri, y: Math.sin(medio) * ri });
+  });
+  return pts;
+})();
+const caminoEstrella = (esc = 1, dx = 0, dy = 0) => `M${ESTRELLA.map((q) => `${(q.x * esc + dx).toFixed(2)} ${(q.y * esc + dy).toFixed(2)}`).join(" L")} Z`;
+/** La veta de la madera: líneas largas que ondulan un poco, siempre las mismas. */
+const VETAS = Array.from({ length: 24 }, (_, k) => {
+  const y0 = -60 + k * 5 + Math.sin(k * 12.99) * 1.3;
+  const a1 = Math.sin(k * 3.7) * 2.2;
+  const a2 = Math.cos(k * 5.1) * 2;
+  const a3 = Math.sin(k * 7.3) * 1.6;
+  return {
+    d: `M-62 ${y0.toFixed(2)} C-36 ${(y0 + a1).toFixed(2)} -18 ${(y0 - a2).toFixed(2)} 0 ${(y0 + a3 * 0.5).toFixed(2)} S38 ${(y0 + a2).toFixed(2)} 62 ${(y0 - a1 * 0.6).toFixed(2)}`,
+    w: 0.3 + ((k * 7) % 5) * 0.12,
+    o: 0.08 + ((k * 3) % 4) * 0.035,
+  };
+});
+
+/** Una canica de vidrio: el color con su hondura, el ojo de color adentro, la luz que pasa abajo y el brillo arriba. */
+function Canica({ x, y, a, r = 2.65, sombra = 0.3 }: { x: number; y: number; a: number; r?: number; sombra?: number }) {
+  const c = colorDe(a);
+  return (
+    <g pointerEvents="none">
+      {sombra > 0 && <ellipse cx={x + r * 0.17} cy={y + r * 0.36} rx={r * 0.96} ry={r * 0.82} fill="#000" opacity={sombra} />}
+      <circle cx={x} cy={y} r={r} fill={`url(#dc-canica-${a})`} />
+      <path
+        d={`M${(x - r * 0.58).toFixed(2)} ${(y + r * 0.22).toFixed(2)} Q${(x - r * 0.08).toFixed(2)} ${(y - r * 0.6).toFixed(2)} ${(x + r * 0.62).toFixed(2)} ${(y + r * 0.02).toFixed(2)}`}
+        fill="none"
+        stroke={tono(c, 1.5)}
+        strokeWidth={r * 0.17}
+        strokeLinecap="round"
+        opacity=".5"
+      />
+      <ellipse cx={x + r * 0.2} cy={y + r * 0.52} rx={r * 0.46} ry={r * 0.2} fill="#fff" opacity=".22" />
+      <ellipse cx={x - r * 0.36} cy={y - r * 0.4} rx={r * 0.34} ry={r * 0.21} transform={`rotate(-35 ${(x - r * 0.36).toFixed(2)} ${(y - r * 0.4).toFixed(2)})`} fill="#fff" opacity=".88" />
+      <circle cx={x + r * 0.42} cy={y - r * 0.5} r={r * 0.07} fill="#fff" opacity=".7" />
+      <circle cx={x} cy={y} r={r} fill="none" stroke={tono(c, 0.4)} strokeWidth=".22" opacity=".8" />
+    </g>
+  );
+}
 
 type Anim = { a: number; desde: number; hasta: number; inicio: number; claves: P[] };
 const HOP = 330;
@@ -177,30 +232,51 @@ export function DamasChinasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Pr
               : `Juega ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}…`}
       </p>
       <section className="mx-auto w-full max-w-[29rem]" aria-label="La estrella">
-        <svg viewBox="-54 -58 108 116" className="h-auto w-full touch-manipulation" role="img" aria-label="El tablero de las damas chinas">
+        <svg viewBox="-56 -60 112 122" className="h-auto w-full touch-manipulation" role="img" aria-label="El tablero de las damas chinas">
           <defs>
-            <radialGradient id="dc-madera" cx=".5" cy=".45" r=".6">
-              <stop offset="0" stopColor="#e2ad6c" />
-              <stop offset="1" stopColor="#9a6430" />
+            <radialGradient id="dc-madera" cx=".5" cy=".42" r=".62">
+              <stop offset="0" stopColor="#edbf80" />
+              <stop offset=".62" stopColor="#d09456" />
+              <stop offset="1" stopColor="#9a622c" />
             </radialGradient>
+            <radialGradient id="dc-hoyo" cx=".5" cy=".3" r=".75">
+              <stop offset="0" stopColor="#120803" />
+              <stop offset=".6" stopColor="#2c170a" />
+              <stop offset="1" stopColor="#6e4522" />
+            </radialGradient>
+            <clipPath id="dc-recorte">
+              <path d={caminoEstrella()} />
+            </clipPath>
             {nombres.map((_, a) => (
-              <radialGradient key={a} id={`dc-canica-${a}`} cx=".35" cy=".3" r=".75">
-                <stop offset="0" stopColor="#ffffff" />
-                <stop offset=".25" stopColor={colorDe(a)} stopOpacity=".85" />
-                <stop offset="1" stopColor={colorDe(a)} />
+              <radialGradient key={a} id={`dc-canica-${a}`} cx=".4" cy=".36" r=".72">
+                <stop offset="0" stopColor={tono(colorDe(a), 1.55)} />
+                <stop offset=".5" stopColor={colorDe(a)} />
+                <stop offset=".88" stopColor={tono(colorDe(a), 0.55)} />
+                <stop offset="1" stopColor={tono(colorDe(a), 0.42)} />
               </radialGradient>
             ))}
           </defs>
-          <polygon points={[0, 2, 4].map((k) => `${VERTICES[k].x},${VERTICES[k].y}`).join(" ")} fill="url(#dc-madera)" stroke="#6a3a1c" strokeWidth="1.2" strokeLinejoin="round" />
-          <polygon points={[1, 3, 5].map((k) => `${VERTICES[k].x},${VERTICES[k].y}`).join(" ")} fill="url(#dc-madera)" stroke="#6a3a1c" strokeWidth="1.2" strokeLinejoin="round" />
-          {/* el color de cada punta: la casa de cada uno, y su meta enfrente (con borde punteado) */}
+          {/* la sombra de la estrella en la mesa, la madera con su veta y el canto (oscuro afuera, con luz adentro) */}
+          <path d={caminoEstrella(1, 0, 2.4)} fill="#000" opacity=".26" />
+          <path d={caminoEstrella(1.012, 0, 1.2)} fill="#000" opacity=".2" />
+          <path d={caminoEstrella()} fill="url(#dc-madera)" />
+          <g clipPath="url(#dc-recorte)">
+            {VETAS.map((veta, k) => (
+              <path key={k} d={veta.d} fill="none" stroke="#6a3c18" strokeWidth={veta.w} opacity={veta.o} />
+            ))}
+          </g>
+          <path d={caminoEstrella()} fill="none" stroke="#5a3214" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d={caminoEstrella(0.976)} fill="none" stroke="#f8d6a0" strokeWidth=".45" strokeLinejoin="round" opacity=".6" />
+          <path d={caminoEstrella(0.958)} fill="none" stroke="#7a4a20" strokeWidth=".28" strokeLinejoin="round" opacity=".35" />
+          {/* el color de cada punta: la casa de cada uno (pintada, con su filete claro), y su meta enfrente (punteada) */}
           {PUNTAS.map((_, p) => {
             const due = colorPunta.get(p);
             const meta2 = colorMeta.get(p);
             const pts = TRIANGULOS[p].map((q) => `${q.x},${q.y}`).join(" ");
             return (
               <g key={p}>
-                {due != null && <polygon points={pts} fill={colorDe(due)} opacity=".3" stroke={colorDe(due)} strokeWidth=".8" strokeLinejoin="round" />}
+                {due != null && <polygon points={pts} fill={tono(colorDe(due), 1.18)} opacity=".5" strokeLinejoin="round" />}
+                {due != null && <polygon points={pts} fill="none" stroke={tono(colorDe(due), 1.4)} strokeWidth=".55" strokeLinejoin="round" opacity=".9" />}
                 {meta2 != null && due !== meta2 && (
                   <polygon points={pts} fill={due == null ? colorDe(meta2) : "none"} fillOpacity=".12" stroke={colorDe(meta2)} strokeWidth=".9" strokeDasharray="2 1.6" strokeLinejoin="round" />
                 )}
@@ -218,13 +294,13 @@ export function DamasChinasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Pr
             const dest = destinos.has(c.i);
             return (
               <g key={c.i} onClick={() => tocar(c.i)} style={{ cursor: miTurno && (dest || due === yo) ? "pointer" : "default" }}>
-                <circle cx={q.x} cy={q.y} r="2.1" fill="#4a2a12" />
-                <circle cx={q.x} cy={q.y + 0.35} r="1.7" fill="#2a1408" />
+                <circle cx={q.x} cy={q.y} r="2.2" fill="#7a4a20" opacity=".42" />
+                <circle cx={q.x} cy={q.y} r="1.78" fill="url(#dc-hoyo)" />
                 {dest && <circle cx={q.x} cy={q.y} r="2.4" fill="#fff6c8" stroke="#f1c232" strokeWidth=".6" className="mesa-late" style={{ transformOrigin: `${q.x}px ${q.y}px` }} />}
                 {due >= 0 && !(enMov && animP) && (
                   <g>
-                    <circle cx={q.x + 0.3} cy={q.y + 0.6} r="2.65" fill="#000" opacity=".3" />
-                    <circle cx={q.x} cy={q.y} r="2.65" fill={`url(#dc-canica-${due})`} stroke={elegida === c.i ? "#fff" : "rgba(0,0,0,.35)"} strokeWidth={elegida === c.i ? 0.9 : 0.3} />
+                    <Canica x={q.x} y={q.y} a={due} />
+                    {elegida === c.i && <circle cx={q.x} cy={q.y} r="2.75" fill="none" stroke="#fff" strokeWidth=".7" />}
                     {elegida === c.i && <circle cx={q.x} cy={q.y} r="3.6" fill="none" stroke="#f1c232" strokeWidth=".7" className="mesa-late" style={{ transformOrigin: `${q.x}px ${q.y}px` }} />}
                   </g>
                 )}
@@ -235,8 +311,8 @@ export function DamasChinasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Pr
           })}
           {anim && animP && (
             <g pointerEvents="none">
-              <circle cx={animP.x + 0.6} cy={animP.y + 2.2} r="2.4" fill="#000" opacity=".22" />
-              <circle cx={animP.x} cy={animP.y} r="2.85" fill={`url(#dc-canica-${anim.a})`} stroke="rgba(0,0,0,.35)" strokeWidth=".3" />
+              <ellipse cx={animP.x + 0.6} cy={animP.y + 2.2} rx="2.4" ry="2" fill="#000" opacity=".22" />
+              <Canica x={animP.x} y={animP.y} a={anim.a} r={2.85} sombra={0} />
             </g>
           )}
         </svg>

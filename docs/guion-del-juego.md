@@ -1029,6 +1029,21 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
 - **Los barrios de lejos** (`construirAreaSilueta`): cada casa tiene su puerta y su ventana oscuras en el frente, donde
   las tiene la casa de cerca.
 
+## 7w. Las escaleras y las damas chinas, como las de verdad (14 de noviembre de 2026)
+
+- **Las escaleras de Jacob** (`mesa/EscalerasUI.tsx`): el marco de madera con su canto y la franja de la salida abajo
+  (cada jugador espera en su hoyo, con `salida(a)`; antes las fichas quedaban medio afuera del tablero). Las losas son
+  de mosaico (crema y cuatro colores claros en diagonal) con su canto de luz y sombra, y los números con un halo claro.
+  Las escaleras: largueros de madera dorada con su canto oscuro y su luz, los peldaños y la sombra en las losas. Las
+  serpientes (`cuerpoSerpiente`): el cuerpo con su grosor (ancho detrás de la cabeza y fino hasta la punta de la cola),
+  los anillos oscuros medidos por lo largo, el lomo con luz, la sombra y la cabeza con ojos de pupila alargada, narices
+  y lengua. La ficha del que tira tiene un anillo dorado que late.
+- **Las damas chinas** (`mesa/DamasChinasUI.tsx`): la estrella es un solo contorno de 12 vértices (`ESTRELLA`, las 6
+  puntas y los 6 rincones a R/√3), con la veta de la madera recortada adentro, el canto (oscuro afuera y con luz adentro)
+  y su sombra en la mesa. Cada hoyo está taladrado (oscuro arriba, con luz en la pared de abajo) y las canicas
+  (`Canica`) son de vidrio: el color con su hondura, el ojo de color adentro, la luz que pasa abajo y el brillo arriba.
+- `tono(color, f)` en `mesa/vida.tsx` aclara u oscurece un color de los tableros (para luces, sombras y anillos).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

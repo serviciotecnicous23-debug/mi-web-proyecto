@@ -11,6 +11,12 @@ import "./mesa.css";
 /** Un color por asiento (se ven bien sobre papel y sobre el paño). */
 export const COLORES_ASIENTO = ["#d9483a", "#2f7fd0", "#2e9e5b", "#e0a21a", "#8a54b8", "#e06aa0", "#1fa3a3", "#7a5230", "#5b6bd6", "#c4632a", "#4d8f2a", "#9a3a5a"];
 export const colorDe = (a: number) => COLORES_ASIENTO[((a % COLORES_ASIENTO.length) + COLORES_ASIENTO.length) % COLORES_ASIENTO.length];
+/** Un color (#rrggbb) más oscuro (f < 1) o más claro (f > 1, hacia el blanco), para las luces y sombras de los tableros. */
+export function tono(hex: string, f: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(f <= 1 ? v * f : v + (255 - v) * Math.min(1, f - 1)));
+  return `rgb(${c.join(",")})`;
+}
 
 export type PropsMesa<V, J> = {
   vista: V;
