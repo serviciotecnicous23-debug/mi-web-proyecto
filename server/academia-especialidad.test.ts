@@ -26,8 +26,8 @@ test("el trabajo final de cada especialidad: de tipo «trabajo», bien formado y
   }
 });
 
-test("solo Evangelismo y misiones tiene su trabajo final: las demás todavía no tienen sus materias", () => {
-  for (const e of ESPECIALIDADES) assert.equal(tieneTrabajo(e), e.id === "evangelismo-misiones", e.id);
+test("Evangelismo y misiones y Alabanza y adoración tienen su trabajo final: las demás todavía no tienen sus materias", () => {
+  for (const e of ESPECIALIDADES) assert.equal(tieneTrabajo(e), e.id === "evangelismo-misiones" || e.id === "alabanza", e.id);
 });
 
 test("el trabajo final tiene su contexto para la revisión: una sola escrita que vale toda la nota", () => {
