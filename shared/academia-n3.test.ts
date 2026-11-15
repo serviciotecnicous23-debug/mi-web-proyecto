@@ -1,0 +1,75 @@
+// Pruebas del Nivel 3 · Formación de obreros: npx tsx --test shared/academia-n3.test.ts
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { EXAMEN_FINAL, NIVELES, PESOS_NIVEL, entraEnDiagnostico, examenDe, materiaPorId, miniPruebasDe, notaMateria, sugerenciaDiagnostico, tieneEscritoBreve } from "./academia";
+
+const nivel3 = NIVELES.find((n) => n.n === 3)!;
+
+test("«Hermenéutica» abre el Nivel 3: 6 lecciones de 10 minutos, su versículo y su sílabo", () => {
+  const m = materiaPorId("n3-hermeneutica")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.nivel, 3);
+  assert.equal(m.orden, 1);
+  assert.equal(m.memoria, "2 Timoteo 2:15");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(m.lecciones.map((l) => l.id), [1, 2, 3, 4, 5, 6].map((k) => `n3-hermeneutica-${k}`));
+  assert.equal(m.silabo!.objetivos.length, 6);
+  assert.ok(m.silabo!.bibliografia.basica.some((b) => b.titulo === "La lectura eficaz de la Biblia"));
+  assert.equal(nivel3.materias[0].id, "n3-hermeneutica");
+});
+
+test("«Métodos de estudio bíblico» sigue a Hermenéutica con la misma medida", () => {
+  const m = materiaPorId("n3-metodos-estudio")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 2);
+  assert.equal(m.memoria, "Salmos 119:18");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.ok(m.silabo!.bibliografia.basica.some((b) => b.titulo === "Nueva concordancia Strong exhaustiva"));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[3]);
+  assert.equal(miniPruebasDe(m).length, 2);
+});
+
+test("«Pentateuco y libros históricos» va de Génesis a Ester, con el Shema de memoria", () => {
+  const m = materiaPorId("n3-pentateuco-historicos")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 3);
+  assert.equal(m.memoria, "Deuteronomio 6:4-5");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.every((b) => b.autor === "Pablo Hoff"));
+});
+
+test("las materias del Nivel 3 se evalúan como pide el reglamento", () => {
+  const m = materiaPorId("n3-hermeneutica")!;
+  // 2 mini pruebas (lecciones 1-3 y 4-6) y el escrito breve
+  assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.equal(tieneEscritoBreve(m), true);
+  // el final: 20 preguntas de un banco de 60, una corta y un escrito breve, 60/40
+  const f = examenDe(m);
+  assert.deepEqual(f, EXAMEN_FINAL[3]);
+  assert.equal(f.objetivas, 20);
+  assert.equal(f.banco, 60);
+  assert.equal(f.escritas, 2);
+  assert.equal(f.breves, 1);
+  assert.equal(f.pesoObjetiva, 60);
+  // la nota: mini pruebas 20 %, final 40 %, escritos 30 %, versículo 10 %
+  assert.deepEqual(PESOS_NIVEL[3], { final: 40, repasos: 0, versiculo: 10, mini: 20, escritos: 30 });
+  assert.equal(notaMateria(PESOS_NIVEL[3], { final: 80, mini: 90, escritos: 70, versiculo: 100 }), 81);
+});
+
+test("el Nivel 3 conserva su orden y lo que falta sigue en preparación", () => {
+  assert.equal(nivel3.materias.length, 10);
+  assert.deepEqual(nivel3.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  for (const m of nivel3.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, `${m.id} sin lecciones todavía`);
+});
+
+test("la diagnóstica mide los Niveles 1 y 2; a quien ya los completó le sugiere seguir con el Nivel 3", () => {
+  assert.equal(entraEnDiagnostico(materiaPorId("n1-salvacion")!), true);
+  assert.equal(entraEnDiagnostico(materiaPorId("n2-panorama-at")!), true);
+  assert.equal(entraEnDiagnostico(materiaPorId("n3-hermeneutica")!), false);
+  const s = sugerenciaDiagnostico([], [1, 2], []);
+  assert.equal(s.nivel, 3);
+  assert.equal(s.empezar?.materiaId, "n3-hermeneutica");
+});

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
 import {
-  APRUEBA, ESCRITO_BREVE, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, tieneEscritoBreve,
+  APRUEBA, ESCRITO_BREVE, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, tieneEscritoBreve,
   type MateriaDetalle, type Pesos,
 } from "@shared/academia";
 import {
@@ -211,7 +211,7 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
             <ClipboardCheck className="w-6 h-6 text-orange-500" />
             <p className="font-semibold mt-2">Examen final</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {medida.objetivas} preguntas con reloj y {medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} desde tu celular,
+              {medida.objetivas} preguntas con reloj y {medida.breves ? "una respuesta corta y un escrito breve" : medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} desde tu celular,
               con corrección automática. Se aprueba con {APRUEBA}.
             </p>
           </div>
@@ -454,7 +454,7 @@ export default function AcademiaMateria() {
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-orange-500" /> Examen final</h2>
             <ul className="text-sm text-muted-foreground space-y-1 mb-4">
               <li>Parte A: {medida.objetivas} preguntas objetivas, {medida.segundos} segundos cada una, repartidas por todas las lecciones.</li>
-              <li>Parte B: {medida.escritas === 1 ? `una respuesta escrita desde tu celular (${medida.minutosEscrita} minutos)` : `${medida.escritas} respuestas escritas desde tu celular (${medida.minutosEscrita} minutos cada una)`}, con corrección automática.</li>
+              <li>Parte B: {parteEscrita(medida)}, desde tu celular y con corrección automática.</li>
               <li>Pesa {medida.pesoObjetiva} % la parte objetiva y {100 - medida.pesoObjetiva} % la escrita. Se aprueba con {APRUEBA}.</li>
             </ul>
             {ex ? (

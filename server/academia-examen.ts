@@ -17,7 +17,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, esperaFinalMin, examenDe, materiaPorId, medallaDe,
+  APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, esperaFinalMin, examenDe, materiaPorId, medallaDe, minutosDe,
   notaExamen, type Apelable, type ApelacionVista, type CorreccionVista, type ExamenEstado, type MateriaDef, type MedidaExamen, type PasoExamen,
   type ResultadoExamen,
 } from "@shared/academia";
@@ -27,7 +27,7 @@ import type { PreguntaObjetiva } from "./academia/tipos";
 import { corregirEscrita, type ClaveEscrita } from "./academia-correccion";
 import { numeroDe, opcionesDeExamen } from "./orden-examen";
 import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
-import { elegirEscritas, elegirFinal } from "./academia-eleccion";
+import { elegirEscritas, elegirEscritasConBreves, elegirFinal } from "./academia-eleccion";
 import {
   alumnoDe, asegurarAlumno, asegurarMateria, avisarA, claveFinal, contextoExamen, cuentasConRoles, enFila, estaInscrito, frenar, inscritoDe, marcarEstudio,
   nombreAcademico, preguntasRetiradas, recalcularMateria,
@@ -237,8 +237,9 @@ function vistaObjetiva(c: Curso, medida: MedidaExamen, pasados: number) {
 function vistaEscrita(c: Curso, medida: MedidaExamen, pasados: number) {
   const e = escritaPorId(c.escritas[c.e])!;
   const { min, max } = ESCRITA[e.tipo];
-  const segundos = medida.minutosEscrita * 60;
-  return { id: e.id, texto: e.pregunta, tipo: e.tipo, min, max, minutos: medida.minutosEscrita, quedan: Math.max(0, Math.round(segundos - pasados)), n: c.e + 1, de: c.escritas.length };
+  const minutos = minutosDe(medida, e.tipo);
+  const segundos = minutos * 60;
+  return { id: e.id, texto: e.pregunta, tipo: e.tipo, min, max, minutos, quedan: Math.max(0, Math.round(segundos - pasados)), n: c.e + 1, de: c.escritas.length };
 }
 
 /** El paso que toca en el examen en curso: la pregunta objetiva, la escrita o el resultado. Vence lo que se dejó pasar. */
@@ -273,7 +274,7 @@ async function pasoActual(userId: number, ev: Evaluacion, c: Curso, pasadosInici
       continue;
     }
     if (c.escritaEnviada) {
-      if ((pasados ?? 0) > medida.minutosEscrita * 60 + MARGEN_ESCRITA_SEGUNDOS) {
+      if ((pasados ?? 0) > minutosDe(medida, e.tipo) * 60 + MARGEN_ESCRITA_SEGUNDOS) {
         // se dejó vencer: cuenta como una respuesta vacía fuera de tiempo
         await guardarEscrita(userId, clave, c, e, "", false, true);
         pasados = null;
@@ -482,7 +483,10 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
           i: 0,
           enviada: false,
           respuestas: [],
-          escritas: elegirEscritas(ev.escritas.filter((e) => !retiradas.has(e.id)), vistas, ev.medida.escritas, semilla, ev.grupoEscrita),
+          // el final de los Niveles 3 a 5 trae una corta y un escrito breve; los demás exámenes, solo respuestas cortas
+          escritas: ev.medida.breves
+            ? elegirEscritasConBreves(ev.escritas.filter((e) => !retiradas.has(e.id)), vistas, ev.medida.escritas, ev.medida.breves, semilla)
+            : elegirEscritas(ev.escritas.filter((e) => !retiradas.has(e.id) && e.tipo === "corta"), vistas, ev.medida.escritas, semilla, ev.grupoEscrita),
           e: 0,
           escritaEnviada: false,
           notasEscritas: [],
@@ -576,7 +580,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
         if (!c || c.i < c.ids.length || c.e >= c.escritas.length || !c.escritaEnviada) return { error: 409, message: "Primero pide la pregunta escrita." };
         const e = escritaPorId(c.escritas[c.e]);
         if (!e) return pasoActual(a.userId, ev, c, f.pasados_curso);
-        const tarde = Number(f.pasados_curso ?? 0) > ev.medida.minutosEscrita * 60 + MARGEN_ESCRITA_SEGUNDOS;
+        const tarde = Number(f.pasados_curso ?? 0) > minutosDe(ev.medida, e.tipo) * 60 + MARGEN_ESCRITA_SEGUNDOS;
         await guardarEscrita(a.userId, ev.clave, c, e, texto, pegado, tarde);
         return pasoActual(a.userId, ev, c, null);
       });

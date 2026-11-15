@@ -3,7 +3,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EXAMEN_FINAL, EXAMEN_INTEGRAL, NIVELES } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
-import { elegirEscritas, elegirFinal } from "./academia-eleccion";
+import { elegirEscritas, elegirEscritasConBreves, elegirFinal } from "./academia-eleccion";
+import type { ClaveEscrita } from "./academia-correccion";
 
 const n1 = NIVELES[0].materias.map((m) => BANCOS.get(m.id)!);
 const finalN1 = n1.flatMap((b) => b.final);
@@ -54,4 +55,16 @@ test("las 2 escritas del integral salen de materias distintas", () => {
   }
   // y sin grupo (el final de una materia), la de siempre
   assert.equal(elegirEscritas(n1[0].escritas, new Set(), 1, 5).length, 1);
+});
+
+test("el final de los Niveles 3 a 5 trae primero una corta y después un escrito breve, y rota entre intentos", () => {
+  const clave = (id: string, tipo: "corta" | "breve") => ({ id, tipo, pregunta: id, ideas: [], citas: [], pesoCita: 0, errores: [], modelo: "" }) as unknown as ClaveEscrita;
+  const escritas = [clave("c1", "corta"), clave("b1", "breve"), clave("c2", "corta"), clave("b2", "breve"), clave("c3", "corta")];
+  const tipo = (id: string) => escritas.find((e) => e.id === id)!.tipo;
+  for (const semilla of [1, 2, 3, 40, -9]) {
+    const ids = elegirEscritasConBreves(escritas, new Set(), 2, 1, semilla);
+    assert.deepEqual(ids.map(tipo), ["corta", "breve"]);
+    const otro = elegirEscritasConBreves(escritas, new Set(ids), 2, 1, semilla + 1);
+    assert.equal(otro.filter((id) => ids.includes(id)).length, 0, "el siguiente intento trae otras");
+  }
 });

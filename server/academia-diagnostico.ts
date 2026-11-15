@@ -1,13 +1,13 @@
 /**
- * La prueba diagnóstica (docs/academia.md, «Equivalencias»): 2 preguntas de cada materia con contenido (del banco de su
- * examen final), 45 segundos cada una. Al terminar sugiere por dónde empezar y qué materias se podrían aprobar por
+ * La prueba diagnóstica (docs/academia.md, «Equivalencias»): 2 preguntas de cada materia con contenido de los Niveles 1
+ * y 2 (del banco de su examen final), 45 segundos cada una. Al terminar sugiere por dónde empezar y qué materias se podrían aprobar por
  * suficiencia (`sugerenciaDiagnostico`, en shared/academia.ts). No da nada por aprobado ni pide la inscripción, y se
  * repite cada 30 días. El resultado no muestra las preguntas con su respuesta: salen de los bancos de los finales.
  */
 import type { Express } from "express";
 import { pool } from "./db";
 import {
-  DIAGNOSTICO, NIVELES, sugerenciaDiagnostico, type DiagnosticoMateria, type DiagnosticoVista, type ExamenEstado, type MateriaDef,
+  DIAGNOSTICO, NIVELES, entraEnDiagnostico, sugerenciaDiagnostico, type DiagnosticoMateria, type DiagnosticoVista, type ExamenEstado, type MateriaDef,
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, frenar } from "./academia-comun";
@@ -16,9 +16,9 @@ import { nivelesCompletos } from "./academia-inscripcion";
 
 export const CLAVE_DIAGNOSTICO = "diagnostico";
 
-/** Las materias con contenido, en el orden del catálogo. */
+/** Las materias con contenido de los Niveles 1 y 2, en el orden del catálogo. */
 function materiasDiagnostico(): MateriaDef[] {
-  return NIVELES.flatMap((n) => n.materias).filter((m) => m.disponible && BANCOS.has(m.id));
+  return NIVELES.flatMap((n) => n.materias).filter((m) => m.disponible && BANCOS.has(m.id) && entraEnDiagnostico(m));
 }
 
 const iso = (v: unknown) => new Date(v as string).toISOString();

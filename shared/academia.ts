@@ -166,18 +166,38 @@ export type MedidaExamen = {
   pesoObjetiva: number;
   /** Segundos de cada pregunta objetiva (el reloj lo lleva el servidor). */
   segundos: number;
-  /** Minutos para cada respuesta escrita. */
+  /** Minutos para cada respuesta escrita corta. */
   minutosEscrita: number;
+  /** Cuántas de las escritas son escritos breves (80 a 300 palabras): en el final de los Niveles 3 a 5, una. */
+  breves?: number;
+  /** Minutos para cada escrito breve del examen. */
+  minutosBreve?: number;
 };
 export const EXAMEN_FINAL: Record<NivelN, MedidaExamen> = {
   1: { objetivas: 10, banco: 30, escritas: 1, pesoObjetiva: 80, segundos: 60, minutosEscrita: 6 },
   2: { objetivas: 15, banco: 45, escritas: 2, pesoObjetiva: 70, segundos: 60, minutosEscrita: 6 },
-  3: { objetivas: 20, banco: 60, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
-  4: { objetivas: 20, banco: 60, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
-  5: { objetivas: 20, banco: 60, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
+  3: { objetivas: 20, banco: 60, escritas: 2, breves: 1, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6, minutosBreve: 15 },
+  4: { objetivas: 20, banco: 60, escritas: 2, breves: 1, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6, minutosBreve: 15 },
+  5: { objetivas: 20, banco: 60, escritas: 2, breves: 1, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6, minutosBreve: 15 },
 };
 export function examenDe(m: MateriaDef): MedidaExamen {
   return EXAMEN_FINAL[m.nivel ?? 3];
+}
+/** Los minutos de una respuesta escrita del examen según su tipo (corta o escrito breve). */
+export function minutosDe(medida: MedidaExamen, tipo: "corta" | "breve"): number {
+  return tipo === "breve" ? (medida.minutosBreve ?? medida.minutosEscrita) : medida.minutosEscrita;
+}
+/** La parte escrita de un examen dicha para el alumno, por ejemplo «una respuesta corta (6 minutos) y un escrito breve…». */
+export function parteEscrita(medida: MedidaExamen): string {
+  const breves = Math.min(medida.breves ?? 0, medida.escritas);
+  const cortas = medida.escritas - breves;
+  const partes: string[] = [];
+  if (cortas === 1) partes.push(breves ? `una respuesta corta (${medida.minutosEscrita} minutos)` : `una respuesta escrita (${medida.minutosEscrita} minutos)`);
+  else if (cortas > 1) partes.push(`${cortas} respuestas ${breves ? "cortas" : "escritas"} (${medida.minutosEscrita} minutos cada una)`);
+  const mb = minutosDe(medida, "breve");
+  if (breves === 1) partes.push(`un escrito breve de ${ESCRITA.breve.min} a ${ESCRITA.breve.max} palabras (${mb} minutos)`);
+  else if (breves > 1) partes.push(`${breves} escritos breves de ${ESCRITA.breve.min} a ${ESCRITA.breve.max} palabras (${mb} minutos cada uno)`);
+  return partes.join(" y ");
 }
 
 /**
@@ -245,9 +265,9 @@ export type TipoEscrita = keyof typeof ESCRITA;
 export const EXAMEN_INTEGRAL: Record<NivelN, MedidaExamen> = {
   1: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 80, segundos: 60, minutosEscrita: 6 },
   2: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 70, segundos: 60, minutosEscrita: 6 },
-  3: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
-  4: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
-  5: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 15 },
+  3: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6 },
+  4: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6 },
+  5: { objetivas: 40, banco: 120, escritas: 2, pesoObjetiva: 60, segundos: 60, minutosEscrita: 6 },
 };
 /** El examen integral se aprueba con 75 (más que una materia: abarca todo el nivel). */
 export const APRUEBA_INTEGRAL = 75;
@@ -296,7 +316,14 @@ export function apruebaSuficiencia(objetiva: number, escrita: number): boolean {
  * La prueba diagnóstica: 2 preguntas de cada materia con contenido, 45 segundos cada una. Solo sugiere por dónde
  * empezar y qué materias se podrían aprobar por suficiencia: no da nada por aprobado. Se repite cada 30 días.
  */
-export const DIAGNOSTICO = { porMateria: 2, segundos: 45, diasEntre: 30 } as const;
+/**
+ * La prueba diagnóstica mide la etapa Raíces (Niveles 1 y 2), la de quien llega a la academia: así no crece con cada
+ * materia nueva de los niveles altos. Quien ya completó el Nivel 2 recibe la sugerencia de seguir con el Nivel 3.
+ */
+export const DIAGNOSTICO = { porMateria: 2, segundos: 45, diasEntre: 30, niveles: [1, 2] } as const;
+export function entraEnDiagnostico(m: MateriaDef): boolean {
+  return m.nivel != null && (DIAGNOSTICO.niveles as readonly number[]).includes(m.nivel);
+}
 
 export type DiagnosticoMateria = { id: string; titulo: string; nivel: number | null; aciertos: number; de: number };
 export type SugerenciaDiagnostico = {
@@ -415,8 +442,8 @@ export { citaVisible, enlaceBiblia, parsearCita, type Cita } from "./citas";
 
 // ---------------------------------------------------------------- el catálogo
 
-const lecciones = (materia: string, defs: [titulo: string, base: string][]): LeccionDef[] =>
-  defs.map(([titulo, base], i) => ({ id: `${materia}-${i + 1}`, titulo, minutos: 7, base }));
+const lecciones = (materia: string, defs: [titulo: string, base: string][], minutos = 7): LeccionDef[] =>
+  defs.map(([titulo, base], i) => ({ id: `${materia}-${i + 1}`, titulo, minutos, base }));
 
 const enPreparacion = (nivel: NivelN, orden: number, id: string, titulo: string, resumen: string, extra: Partial<MateriaDef> = {}): MateriaDef => ({
   id, nivel, orden, titulo, resumen, lecciones: [], disponible: false, ...extra,
@@ -1214,6 +1241,175 @@ const DONES: MateriaDef = {
   disponible: true,
 };
 
+// ---------------------------------------------------------------- Nivel 3 · Formación de obreros
+
+/** Nivel 3 · materia 1: interpretar bien la Biblia. Las lecciones del Nivel 3 son de 10 minutos. */
+const HERMENEUTICA: MateriaDef = {
+  id: "n3-hermeneutica",
+  nivel: 3,
+  orden: 1,
+  titulo: "Hermenéutica",
+  resumen: "Interpretar bien la Biblia: el contexto, las palabras y las figuras, los géneros literarios, las reglas sanas, los errores comunes y el paso del texto a la vida.",
+  base: "2 Timoteo 2:15; Nehemías 8:8",
+  memoria: "2 Timoteo 2:15",
+  lecciones: lecciones("n3-hermeneutica", [
+    ["¿Qué es la hermenéutica?", "Nehemías 8:8; Hechos 8:30-35; Lucas 24:27, 44-45"],
+    ["El contexto: cada texto en su lugar", "Filipenses 4:10-13; Jeremías 29:4-11; Mateo 18:15-20"],
+    ["Las palabras, las figuras y la cultura", "Juan 3:16; 1 Juan 2:15-17; Juan 4:7-9; 10:9"],
+    ["Los géneros literarios", "Salmos 19:1-2; Proverbios 26:4-5; Lucas 15:1-7; Apocalipsis 1:20"],
+    ["Reglas sanas y errores comunes", "Mateo 4:5-7; Hechos 17:11; 2 Pedro 1:20-21; Lucas 10:25-37"],
+    ["Del texto a la vida", "Esdras 7:10; 1 Corintios 8:9-13; Santiago 1:22-25"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero aprenda a interpretar la Biblia con fidelidad, para vivirla y enseñarla. La hermenéutica es el estudio de los principios para entender lo que Dios dijo por medio de los autores de la Escritura: leer cada texto en su contexto, atender a sus palabras, sus figuras y su género, interpretar la Escritura con la Escritura, con Cristo en el centro, y llevar su mensaje a la vida. Pablo se lo pidió a Timoteo: «Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad» (2 Timoteo 2:15).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la hermenéutica, la diferencia entre exégesis y eiségesis, y el papel del Espíritu Santo y del estudio en la interpretación.", bloom: "comprender" },
+      { id: "o2", texto: "Interpretar un pasaje en su contexto literario e histórico, atendiendo al sentido de sus palabras, sus figuras y su cultura.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir los géneros literarios de la Biblia y leer cada uno según sus rasgos.", bloom: "analizar" },
+      { id: "o4", texto: "Evaluar interpretaciones con las reglas sanas y reconocer los errores comunes.", bloom: "evaluar" },
+      { id: "o5", texto: "Llevar un texto a la vida: su sentido original, su principio permanente y su aplicación de hoy.", bloom: "aplicar" },
+      { id: "o6", texto: "Recitar 2 Timoteo 2:15 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los principios para interpretar la Biblia: el contexto, las palabras, las figuras, los géneros y las reglas sanas.",
+      ser: "Un obrero humilde y diligente ante la Palabra, que no la tuerce y se deja corregir por ella.",
+      hacer: "Estudiar un pasaje con método, explicarlo con fidelidad y aplicarlo a la vida y al ministerio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gordon D. Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+        { autor: "Henry A. Virkler", titulo: "Hermenéutica: principios y procedimientos de interpretación bíblica", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "José M. Martínez", titulo: "Hermenéutica bíblica", editorial: "CLIE" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Cómo leer las parábolas de Jesús", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=jZinwS_2jsQ", minutos: 6 },
+      { tipo: "video", titulo: "El arte de la poesía bíblica", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MnoXHW4Hqjs", minutos: 6 },
+      { tipo: "video", titulo: "Los libros de Salomón: cómo leer la sabiduría", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=azmsdnZs0RE", minutos: 6 },
+      { tipo: "video", titulo: "Cartas del Nuevo Testamento: contexto literario", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=Ck4eA4DKBHQ", minutos: 6 },
+      { tipo: "video", titulo: "Cómo leer la literatura apocalíptica", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6XQd-Z4h6zM", minutos: 7 },
+      { tipo: "lectura", titulo: "Hechos 8: Felipe y el etíope", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=8" },
+      { tipo: "lectura", titulo: "Filipenses 4: contentarse en Cristo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Filipenses&cap=4" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 3 · materia 2: el estudio inductivo y sus herramientas. */
+const METODOS_ESTUDIO: MateriaDef = {
+  id: "n3-metodos-estudio",
+  nivel: 3,
+  orden: 2,
+  titulo: "Métodos de estudio bíblico",
+  resumen: "El estudio inductivo (observar, interpretar y aplicar), las herramientas (versiones, concordancia, diccionario, Biblia de estudio, atlas y comentarios) y el estudio por libro, por tema, por palabra y biográfico.",
+  base: "Hechos 17:11; Salmos 119:18",
+  memoria: "Salmos 119:18",
+  lecciones: lecciones("n3-metodos-estudio", [
+    ["El estudio inductivo de la Biblia", "Hechos 17:11; Esdras 7:10; Salmos 119:18"],
+    ["Observar: ver lo que dice el texto", "Efesios 2:1-10; Romanos 12:1"],
+    ["Interpretar y aplicar con método", "2 Timoteo 3:16-17; Efesios 2:10; Santiago 1:22"],
+    ["Las herramientas: versiones, concordancia y diccionario", "Proverbios 25:2; Juan 5:39; Lucas 1:1-4"],
+    ["Mapas, historia y comentarios", "Lucas 10:30; Hechos 13:1-4; Amós 1:1"],
+    ["Cuatro maneras de estudiar", "Hechos 4:36-37; 11:22-26; Salmos 1:1-3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero sepa estudiar la Biblia por sí mismo, con método y con fruto. El estudio inductivo deja que el texto hable: primero se observa lo que dice, después se interpreta lo que significa y al final se aplica lo que pide. Las herramientas (las versiones, la concordancia, el diccionario bíblico, la Biblia de estudio, el atlas y los comentarios) ayudan a escudriñar sin reemplazar al texto. Así estudiaban los creyentes de Berea, que iban «escudriñando cada día las Escrituras para ver si estas cosas eran así» (Hechos 17:11).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el estudio inductivo y sus tres pasos: observar, interpretar y aplicar.", bloom: "comprender" },
+      { id: "o2", texto: "Observar un pasaje con las preguntas del observador y reconocer sus palabras clave, sus contrastes y sus conectores.", bloom: "aplicar" },
+      { id: "o3", texto: "Interpretar con referencias cruzadas, resumir la idea central y formular aplicaciones concretas.", bloom: "aplicar" },
+      { id: "o4", texto: "Usar las herramientas de estudio: versiones, concordancia, diccionario, Biblia de estudio, atlas, línea de tiempo y comentarios.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer estudios por libro, por tema, por palabra y biográficos, y preparar un plan personal de estudio.", bloom: "crear" },
+      { id: "o6", texto: "Recitar Salmos 119:18 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El método inductivo, las herramientas de estudio y las maneras de estudiar la Biblia.",
+      ser: "Un discípulo que escudriña cada día las Escrituras con oración, humildad y constancia.",
+      hacer: "Estudiar un pasaje por su cuenta, anotar lo que descubre y prepararse para enseñarlo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rick Warren", titulo: "Métodos de estudio bíblico personal", editorial: "Vida" },
+        { autor: "James Strong", titulo: "Nueva concordancia Strong exhaustiva", editorial: "Caribe" },
+      ],
+      complementaria: [
+        { autor: "Wilton M. Nelson (ed.)", titulo: "Nuevo diccionario ilustrado de la Biblia", editorial: "Caribe" },
+        { autor: "Tim Dowley", titulo: "Atlas bíblico Portavoz", editorial: "Portavoz" },
+        { autor: "Gordon D. Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Agape: un estudio de la palabra amor", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=l75uPoo9Rs8", minutos: 5 },
+      { tipo: "lectura", titulo: "Efesios 2: un pasaje para practicar la observación", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=2" },
+      { tipo: "lectura", titulo: "Hechos 13 y 14: el primer viaje de Pablo, con un mapa a mano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=13" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 3 · materia 3: de Génesis a Ester, libro por libro, con su estructura, su teología y cómo apunta a Cristo. */
+const PENTATEUCO_HISTORICOS: MateriaDef = {
+  id: "n3-pentateuco-historicos",
+  nivel: 3,
+  orden: 3,
+  titulo: "Pentateuco y libros históricos",
+  resumen: "De Génesis a Ester, más a fondo que en el Panorama: la estructura, el propósito y la teología de cada libro (la promesa a Abraham, la redención, el pacto, la santidad, el reino y el regreso) y cómo cada uno apunta a Cristo.",
+  base: "Romanos 15:4; Lucas 24:27",
+  memoria: "Deuteronomio 6:4-5",
+  lecciones: lecciones("n3-pentateuco-historicos", [
+    ["Génesis: los comienzos y la promesa", "Génesis 1:1, 27; 3:15; 12:1-3; 50:20"],
+    ["Éxodo y Levítico: redención, pacto y santidad", "Éxodo 12:13; 19:5-6; 25:8; Levítico 17:11; 19:2"],
+    ["Números y Deuteronomio: el desierto y el pacto renovado", "Números 14:8-9; 21:8-9; Deuteronomio 6:4-9; 18:15"],
+    ["Josué, Jueces y Rut: la tierra, el olvido y la fidelidad", "Josué 21:45; 24:15; Jueces 21:25; Rut 1:16; 4:17"],
+    ["Samuel, Reyes y Crónicas: el reino y el pacto con David", "1 Samuel 16:7; 2 Samuel 7:12-16; 2 Reyes 17:7; 2 Crónicas 7:14"],
+    ["Esdras, Nehemías y Ester: el regreso y la providencia", "Esdras 1:1; 7:10; Nehemías 4:9; 8:10; Ester 4:14"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca a fondo la primera gran parte del Antiguo Testamento, de Génesis a Ester, para enseñarla con fidelidad. Cada libro tiene su estructura, su propósito y su mensaje, y todos juntos cuentan cómo Dios cumple su promesa a Abraham: la redención de Egipto, el pacto del Sinaí, la santidad, la tierra, el reino de David, el exilio y el regreso. Jesús enseñó a leerlos así, cuando «les declaraba en todas las Escrituras lo que de él decían» (Lucas 24:27).",
+    objetivos: [
+      { id: "o1", texto: "Describir la estructura y el mensaje de Génesis, y la promesa a Abraham como hilo de toda la Biblia.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la redención, el pacto, el tabernáculo, los sacrificios y la santidad en Éxodo y Levítico, y su cumplimiento en Cristo.", bloom: "analizar" },
+      { id: "o3", texto: "Aplicar las lecciones del desierto (Números) y del pacto renovado (Deuteronomio) a la vida del creyente.", bloom: "aplicar" },
+      { id: "o4", texto: "Analizar la conquista, el ciclo de los jueces y la fidelidad de Rut en la historia de la salvación.", bloom: "analizar" },
+      { id: "o5", texto: "Explicar el reino en Samuel, Reyes y Crónicas: el pacto con David, la división, el exilio y la esperanza.", bloom: "comprender" },
+      { id: "o6", texto: "Describir el regreso del exilio en Esdras y Nehemías y la providencia de Dios en Ester.", bloom: "comprender" },
+      { id: "o7", texto: "Recitar Deuteronomio 6:4-5 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La estructura, el propósito y la teología de los libros de Génesis a Ester.",
+      ser: "Un creyente que recuerda las obras de Dios, confía en su fidelidad y lo ama con todo el corazón.",
+      hacer: "Enseñar estos libros con su contexto y mostrando cómo apuntan a Cristo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Pablo Hoff", titulo: "El Pentateuco", editorial: "Vida" },
+        { autor: "Pablo Hoff", titulo: "Los libros históricos: Dios y su pueblo en el Antiguo Testamento", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Samuel J. Schultz", titulo: "Habla el Antiguo Testamento", editorial: "Portavoz" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=U2lUpubEMDI", minutos: 7 },
+      { tipo: "video", titulo: "Resumen del libro de Números", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=dtfbSxNecMk", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Josué", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=49ggVrdBN_Y", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Jueces", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=bCwaJz4L2nU", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=34biq4ivs5I", minutos: 8 },
+      { tipo: "video", titulo: "Resumen de los libros de 1 y 2 Reyes", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8V-TefJJc0g", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Crónicas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lMj--4fDpvc", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Ester", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0NzTOuBKAcI", minutos: 10 },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1269,9 +1465,9 @@ export const NIVELES: NivelDef[] = [
     descripcion: "Interpretar y enseñar bien la Biblia, servir en el poder del Espíritu y cuidar de otros.",
     requisitos: ["Las 10 materias aprobadas", "El examen integral del nivel", "20 horas de práctica confirmada", "Una enseñanza grabada aprobada", "Consolidar a 1 nuevo creyente"],
     materias: [
-      enPreparacion(3, 1, "n3-hermeneutica", "Hermenéutica", "Interpretar bien la Biblia: contexto, géneros, reglas y errores comunes."),
-      enPreparacion(3, 2, "n3-metodos-estudio", "Métodos de estudio bíblico", "El estudio inductivo y sus herramientas: concordancia, diccionario y mapas."),
-      enPreparacion(3, 3, "n3-pentateuco-historicos", "Pentateuco y libros históricos", "De Génesis a Ester."),
+      HERMENEUTICA,
+      METODOS_ESTUDIO,
+      PENTATEUCO_HISTORICOS,
       enPreparacion(3, 4, "n3-evangelios-hechos", "Los Evangelios y Hechos", "La vida y el ministerio de Jesús y la iglesia en el poder del Espíritu."),
       enPreparacion(3, 5, "n3-espiritu-santo", "La persona y obra del Espíritu Santo", "El bautismo en el Espíritu, los dones, el fruto y los avivamientos."),
       enPreparacion(3, 6, "n3-evangelismo-consolidacion", "Evangelismo y consolidación", "Evangelismo en equipo, campañas, calle, radio y redes, y la consolidación del nuevo creyente.", { antes: "Evangelismo 2" }),

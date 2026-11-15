@@ -204,7 +204,7 @@ export const BANCO_N2_EVANGELISMO_PERSONAL: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Le explicaría que debe arrepentirse y creer en Jesús como Salvador y Señor (Romanos 10:9-10). La invitaría a orar con sus propias palabras, sin presión, porque Dios mira el corazón, y le mostraría la seguridad de la salvación en la promesa de Dios (1 Juan 5:12). Después la acompañaría: leeríamos la Biblia, la llevaría a la iglesia y hacia el bautismo, y empezaríamos juntos el Nivel 1.",
+        "Le explicaría que debe arrepentirse y creer en Jesús como Salvador y Señor (Romanos 10:9-10). La invitaría a orar con sus propias palabras, sin presión, y le mostraría la seguridad de la salvación en la promesa de Dios (1 Juan 5:12). Después la acompañaría: leeríamos la Biblia, la llevaría a la iglesia y empezaríamos juntos el Nivel 1.",
     },
   ],
   // el escrito breve de la materia (80 a 300 palabras): cuenta el 15 % de la nota del Nivel 2

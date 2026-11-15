@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ESCRITA, ESCRITO_BREVE, MEDIDA_MINI, MINI_PRUEBA, NIVELES, PESOS_NIVEL, materiaAprobada, materiaPorId, miniPruebasDe, notaMateria, pesosDe,
-  tieneEscritoBreve,
+  tieneEscritoBreve, EXAMEN_FINAL, EXAMEN_INTEGRAL, parteEscrita, minutosDe,
 } from "./academia";
 
 const panorama = materiaPorId("n2-panorama-at")!;
@@ -142,4 +142,15 @@ test("la nota del Nivel 2: final 50 %, mini pruebas 25 %, escrito breve 15 % y v
   assert.ok(!materiaAprobada(60, 100));
   // y el final sigue siendo necesario aunque lo demás sea perfecto
   assert.ok(!materiaAprobada(notaMateria(pesosDe(panorama), { final: 60, versiculo: 100, mini: 100, escritos: 100 }), 60));
+});
+
+test("la parte escrita del final: Niveles 1 y 2 con cortas; Niveles 3 a 5 con una corta y un escrito breve", () => {
+  assert.equal(parteEscrita(EXAMEN_FINAL[1]), "una respuesta escrita (6 minutos)");
+  assert.equal(parteEscrita(EXAMEN_FINAL[2]), "2 respuestas escritas (6 minutos cada una)");
+  for (const n of [3, 4, 5] as const) {
+    assert.equal(parteEscrita(EXAMEN_FINAL[n]), "una respuesta corta (6 minutos) y un escrito breve de 80 a 300 palabras (15 minutos)");
+    assert.equal(minutosDe(EXAMEN_FINAL[n], "breve"), 15);
+    assert.equal(minutosDe(EXAMEN_FINAL[n], "corta"), 6);
+    assert.equal(EXAMEN_INTEGRAL[n].breves ?? 0, 0, "el integral solo trae respuestas cortas");
+  }
 });
