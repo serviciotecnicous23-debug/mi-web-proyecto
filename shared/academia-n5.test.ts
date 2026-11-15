@@ -51,20 +51,65 @@ test("«Griego y hebreo bíblicos para el estudio» va de los idiomas a los erro
   assert.deepEqual(m.silabo!.bibliografia.complementaria.map((b) => b.autor), ["James Strong", "Francisco Lacueva", "Ricardo Cerni"]);
 });
 
+test("«Teología pastoral» parte del buen pastor, con Juan 10:11 de memoria, y deja los cargos a la declaración de fe", () => {
+  const m = materiaPorId("n5-teologia-pastoral")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 1);
+  assert.equal(m.memoria, "Juan 10:11");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[5]);
+  assert.match(m.lecciones[0].titulo, /buen pastor/);
+  assert.match(m.lecciones[2].titulo, /familia/);
+  assert.match(m.lecciones[5].titulo, /terminar bien/);
+  assert.match(m.silabo!.proposito, /declaración de fe por confirmar/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.editorial), ["Grupo Nelson", "Vida"]);
+});
+
+test("«Administración y gobierno de la iglesia» va del orden a lo legal básico, con 1 Corintios 14:40 de memoria", () => {
+  const m = materiaPorId("n5-administracion")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 2);
+  assert.equal(m.memoria, "1 Corintios 14:40");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[5]);
+  assert.match(m.lecciones[1].titulo, /gobierno/);
+  assert.match(m.lecciones[3].titulo, /dinero/);
+  assert.match(m.lecciones[5].titulo, /legal/);
+  assert.match(m.silabo!.proposito, /declaración de fe por confirmar/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Wilfredo Calderón"]);
+});
+
+test("el «Seminario de liderazgo ministerial» cierra el Nivel 5 con cuatro casos y el plan de ministerio propio", () => {
+  const m = materiaPorId("n5-seminario")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 8);
+  assert.equal(m.memoria, "Proverbios 16:3");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[5]);
+  assert.equal(m.lecciones.filter((l) => l.titulo.startsWith("Caso:")).length, 4);
+  assert.match(m.lecciones[5].titulo, /plan de ministerio/);
+  assert.match(m.silabo!.proposito, /ejemplos compuestos/);
+  assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.equal(tieneEscritoBreve(m), true);
+});
+
 test("las materias del Nivel 5 piden el Nivel 4 completo", () => {
-  for (const id of ["n5-didactica", "n5-liderazgo-2", "n5-idiomas"]) {
+  for (const id of ["n5-teologia-pastoral", "n5-administracion", "n5-didactica", "n5-liderazgo-2", "n5-idiomas", "n5-seminario"]) {
     const m = materiaPorId(id)!;
     assert.deepEqual(requisitosMateria(m, [1, 2, 3]), ["completar el Nivel 4 · Teología ministerial"], id);
     assert.deepEqual(requisitosMateria(m, [1, 2, 3, 4]), [], id);
   }
 });
 
-test("el Nivel 5 conserva su orden; las otras cinco materias siguen en preparación", () => {
+test("el Nivel 5 conserva su orden; solo Exégesis y Teología del avivamiento esperan la declaración de fe", () => {
   assert.equal(nivel5.materias.length, 8);
   assert.deepEqual(nivel5.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.deepEqual(
     nivel5.materias.filter((m) => !m.disponible).map((m) => m.id),
-    ["n5-teologia-pastoral", "n5-administracion", "n5-exegesis", "n5-avivamiento", "n5-seminario"],
+    ["n5-exegesis", "n5-avivamiento"],
   );
   for (const m of nivel5.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, `${m.id} sin lecciones todavía`);
 });
