@@ -114,18 +114,28 @@ export function MemoriaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsM
             ) : null,
           )
         ) : (
-          <p className="max-w-xs text-center text-[13px] font-semibold text-emerald-50/90">
-            {v.fase === "preparar"
-              ? "Revolviendo las cartas…"
-              : v.fase === "fin"
-                ? "¡Se encontraron todas las parejas!"
-                : miTurno
-                  ? "Da vuelta dos cartas: un personaje y su versículo."
-                  : `Juega ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}…`}{" "}
-            <span className="block text-[12px] opacity-80">
-              {tomadas} de {total} parejas
-            </span>
-          </p>
+          <div className="flex flex-col items-center gap-2.5">
+            {/* los dos lugares donde se abren las cartas, marcados en el paño (así el visor no queda vacío) */}
+            <div className="flex gap-3" aria-hidden="true">
+              {[0, 1].map((k) => (
+                <span key={k} className="flex h-[6.2rem] w-[4.6rem] items-center justify-center rounded-xl border-2 border-dashed border-emerald-100/30 bg-emerald-950/25 shadow-inner sm:h-[7.2rem] sm:w-[5.4rem]">
+                  <span className="text-[1.6rem] font-black text-emerald-100/25">?</span>
+                </span>
+              ))}
+            </div>
+            <p className="max-w-xs text-center text-[13px] font-semibold text-emerald-50/90">
+              {v.fase === "preparar"
+                ? "Revolviendo las cartas…"
+                : v.fase === "fin"
+                  ? "¡Se encontraron todas las parejas!"
+                  : miTurno
+                    ? "Da vuelta dos cartas: un personaje y su versículo."
+                    : `Juega ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}…`}{" "}
+              <span className="block text-[12px] opacity-80">
+                {tomadas} de {total} parejas
+              </span>
+            </p>
+          </div>
         )}
       </section>
 

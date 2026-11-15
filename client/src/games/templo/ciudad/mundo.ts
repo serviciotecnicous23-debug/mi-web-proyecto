@@ -25,6 +25,7 @@ import { relojEnLinea, type Fecha, type FiestaHoy } from "@shared/calendario";
 import { diaEnJerusalen } from "@shared/anio";
 import { Lamparas, Lluvia, Petalos, Polvo } from "./clima";
 import { construirSueloVivo, type SueloVivo } from "./suelo-vivo";
+import { Campos } from "./campos";
 import {
   BIEN, CONSEJOS_ANCIANOS, FRASE_CADA_MS, NIVELES_CASA, RED_TICK_MS, areaDeBarrio, fraseRapida, nombreDeBarrio, type Bien, type CasaPrivada, type CasaVista,
   type CiudadEstado, type VecinoInfo,
@@ -51,7 +52,7 @@ import { Antorchas, lugaresAntorchas } from "./antorchas";
 import { Palomas } from "./palomas";
 import { PERSONAJES_CIUDAD, personajeCiudad, type PersonajeCiudad } from "@shared/personajes";
 import { fraseDeGente, type ContextoFrases, type GenteQueHabla } from "./frases";
-import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, type CasaDibujo, type CiudadVisual } from "./escenario";
+import { buildCiudad, construirAreaDetalle, construirAreaSilueta, construirEnramadas, construirMuroCaido, liberar, verFrutos, type CasaDibujo, type CiudadVisual } from "./escenario";
 import type { MuroEstado } from "@shared/muro";
 import { EscenaHistoria, type EscenaDeHistoria } from "./capitulos3d";
 import { EscenaPascua } from "./pascua3d";
@@ -194,6 +195,9 @@ export class CiudadWorld {
   /** El polvo en la luz del sol y el suelo vivo (la hierba con viento, las piedritas y el campo). */
   private polvo!: Polvo;
   private sueloVivo: SueloVivo | null = null;
+  /** Los campos de afuera de los muros, que cambian con la estación, y si se ven los frutos de las parras. */
+  private campos!: Campos;
+  private frutas: boolean | null = null;
   private fechaRevisada = 0;
   /** En el invierno los braseros arden también de día (Jeremías 36:22). */
   private invierno = false;
@@ -395,6 +399,8 @@ export class CiudadWorld {
     this.scene.add(this.polvo.group);
     this.sueloVivo = construirSueloVivo(coarse);
     this.scene.add(this.sueloVivo.grupo);
+    this.campos = new Campos(coarse);
+    this.scene.add(this.campos.grupo);
     this.lamparas = new Lamparas([...P.ARBOLES, ...P.PASEO], P.SUELO);
     this.scene.add(this.lamparas.group);
     if (coarse) this.fx.density = 0.7;
@@ -2507,9 +2513,21 @@ export class CiudadWorld {
     return undefined;
   }
 
-  /** La ciudad según el año (shared/anio.ts): pétalos de almendro y lámparas de fiesta. */
+  /**
+   * La ciudad según el año (shared/anio.ts): pétalos de almendro, lámparas de fiesta, los campos de afuera con su
+   * estación y los frutos de las parras y de las higueras (en el verano y en la cosecha).
+   */
   private conElAnio(d: ReturnType<typeof diaEnJerusalen>) {
     this.petalos.setActivo(d.estacion.id === "cebada");
+    this.campos.setEstacion(d.estacion.id);
+    const frutas = d.estacion.id === "verano" || d.estacion.id === "cosecha";
+    if (frutas !== this.frutas) {
+      this.frutas = frutas;
+      verFrutos(frutas);
+      for (const g of this.vis.areas) g.traverse((o) => {
+        if (o.name === "frutos") o.visible = frutas;
+      });
+    }
     this.lamparas.setActivo(d.eventos.some((e) => e.evento.id === "navidad" || e.evento.id === "anioNuevo"));
   }
 
@@ -3169,6 +3187,7 @@ export class CiudadWorld {
     this.petalos.dispose();
     this.polvo.dispose();
     this.sueloVivo?.dispose();
+    this.campos?.dispose();
     this.lamparas.dispose();
     liberar(this.vis.root);
     this.overlay.dispose();

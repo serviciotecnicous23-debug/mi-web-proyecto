@@ -14,6 +14,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-15-campos",
+    fecha: "15 de noviembre de 2026",
+    titulo: "Los campos de afuera cambian con el año",
+    puntos: [
+      "🌾 Afuera de los muros, al norte, al sur y al poniente, hay campos de trigo y de cebada en terrazas, con sus muretes de piedra y una torre de guarda.",
+      "🌱 Cambian con la estación: la tierra arada en la siembra, el brote verde en el invierno, la cebada madura y el trigo verde en la siega de la cebada, y el trigo dorado con el viento en olas en la siega del trigo.",
+      "🧺 Después de la siega quedan el rastrojo y las gavillas en el campo.",
+      "🍇 Las uvas de las parras y los higos de las higueras se ven en el verano y en la cosecha.",
+      "🎴 En la memoria, el paño marca los dos lugares donde se abren las cartas.",
+    ],
+  },
+  {
     id: "2026-11-14-tableros",
     fecha: "14 de noviembre de 2026",
     titulo: "Las escaleras y las damas chinas, como las de verdad",

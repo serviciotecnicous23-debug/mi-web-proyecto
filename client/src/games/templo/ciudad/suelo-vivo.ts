@@ -13,6 +13,7 @@ import { AREA_RECT } from "@shared/ciudad";
 import { PATIO_ZONA } from "@shared/juegos-grupo";
 import { CALLES_DE_AREA, PARCELAS } from "@shared/parcelas";
 import { C, GeoBuilder, matteMat, tiempoMateriales } from "../three/builder";
+import { enCampo } from "./campos";
 import { alturaSuelo } from "./escenario";
 import { ARBOLES, ESCUELA, ESCUELA_PUERTA, PALACIO, PUERTA, SUELO, TORRES_NUEVAS, TORRE_MEDIO } from "./plano";
 
@@ -190,7 +191,9 @@ function matasDelCampo(r: () => number, manchones: number): Mata[] {
       for (let j = 0; j < m; j++) {
         const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.7;
         const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
-        out.push({ x, y: alturaSuelo(x, z) - 0.03, z, s: 0.6 + r() * 0.45, tinte: new THREE.Color(r() < verde ? VERDE[Math.floor(r() * 3)] : SECA[Math.floor(r() * 3)]) });
+        const mata = { x, y: alturaSuelo(x, z) - 0.03, z, s: 0.6 + r() * 0.45, tinte: new THREE.Color(r() < verde ? VERDE[Math.floor(r() * 3)] : SECA[Math.floor(r() * 3)]) };
+        // dentro de los campos no crece la hierba del campo (campos.ts)
+        if (!enCampo(x, z)) out.push(mata);
       }
     }
   });
@@ -200,6 +203,8 @@ function matasDelCampo(r: () => number, manchones: number): Mata[] {
 /** Piedritas sueltas (aplastadas, de color de piedra) y, en el campo, matas bajas. */
 function piedrasYMatas(r: () => number, coarse: boolean): { ciudad: GeoBuilder; campo: GeoBuilder } {
   const ciudad = new GeoBuilder(), campo = new GeoBuilder();
+  // lo que cae dentro de los campos (campos.ts) se arma aparte y no se usa: así el azar de lo demás no cambia
+  const nada = new GeoBuilder();
   const tonos = [C.piedra, C.piedraOsc, "#bfae8a", "#d8caa8", "#a99a7a"];
   const piedra = (b: GeoBuilder, x: number, y: number, z: number, s: number) =>
     b.add(new THREE.IcosahedronGeometry(1, 0), tonos[Math.floor(r() * tonos.length)], { x, y: y + s * 0.25, z, sx: s * (0.8 + r() * 0.6), sy: s * (0.45 + r() * 0.3), sz: s * (0.8 + r() * 0.5), ry: r() * 6, rx: (r() - 0.5) * 0.4 });
@@ -220,7 +225,7 @@ function piedrasYMatas(r: () => number, coarse: boolean): { ciudad: GeoBuilder; 
     const x = -50 + r() * 168, z = -104 + r() * 208;
     if (x > -23 && x < 78 && Math.abs(z) < 74.5) continue;
     const grande = r() < 0.12;
-    piedra(campo, x, alturaSuelo(x, z) - (grande ? 0.15 : 0.05), z, grande ? 0.35 + r() * 0.5 : 0.08 + r() * 0.16);
+    piedra(enCampo(x, z) ? nada : campo, x, alturaSuelo(x, z) - (grande ? 0.15 : 0.05), z, grande ? 0.35 + r() * 0.5 : 0.08 + r() * 0.16);
   }
   const oliva = ["#7d8455", "#86875a", "#6f7a45", "#8e8f62"];
   for (let k = 0; k < 170 / div; k++) {
@@ -228,7 +233,8 @@ function piedrasYMatas(r: () => number, coarse: boolean): { ciudad: GeoBuilder; 
     if (x > -23 && x < 78 && Math.abs(z) < 74.5) continue;
     const y = alturaSuelo(x, z);
     const n = 2 + Math.floor(r() * 3), s = 0.28 + r() * 0.3;
-    for (let j = 0; j < n; j++) campo.add(new THREE.IcosahedronGeometry(1, 0), oliva[Math.floor(r() * oliva.length)], { x: x + (r() - 0.5) * s * 1.6, y: y + s * 0.45, z: z + (r() - 0.5) * s * 1.6, sx: s, sy: s * 0.7, sz: s, ry: r() * 6 });
+    const donde = enCampo(x, z) ? nada : campo;
+    for (let j = 0; j < n; j++) donde.add(new THREE.IcosahedronGeometry(1, 0), oliva[Math.floor(r() * oliva.length)], { x: x + (r() - 0.5) * s * 1.6, y: y + s * 0.45, z: z + (r() - 0.5) * s * 1.6, sx: s, sy: s * 0.7, sz: s, ry: r() * 6 });
   }
   return { ciudad, campo };
 }
