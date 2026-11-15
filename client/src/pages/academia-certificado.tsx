@@ -5,17 +5,14 @@ import { Link, useParams } from "wouter";
 import { ArrowLeft, Award, Check, Copy, Download, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useCertificado } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { DocumentoAjustado, DocumentoVista } from "@/components/academia/documento";
-import { descargarCertificadoPdf } from "@/components/academia/certificado-pdf";
+import { atributosDeDescarga } from "@/components/academia/descargas";
 
 export default function AcademiaCertificado() {
   const { codigo } = useParams<{ codigo: string }>();
   const q = useCertificado(codigo);
-  const [generando, setGenerando] = useState(false);
-  const { toast } = useToast();
   const [copiado, setCopiado] = useState(false);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
@@ -32,16 +29,6 @@ export default function AcademiaCertificado() {
   const d = q.data;
   const volver = d.tipo === "nivel" ? { href: `/academia/nivel/${d.ref}`, texto: d.nivel ? `Nivel ${d.nivel.n} · ${d.nivel.nombre}` : "El nivel" } : { href: `/academia/materia/${d.ref}`, texto: d.titulo };
   const archivo = `academia-${d.tipo === "nivel" ? `nivel-${d.ref}` : d.ref}-${d.codigo}.pdf`.toLowerCase();
-  const pdf = async () => {
-    setGenerando(true);
-    try {
-      await descargarCertificadoPdf(d, archivo);
-    } catch (e: any) {
-      toast({ title: "No se pudo descargar", description: e?.message ?? "Inténtalo otra vez.", variant: "destructive" });
-    } finally {
-      setGenerando(false);
-    }
-  };
   const copiar = async () => {
     try {
       await navigator.clipboard.writeText(d.verificar);
@@ -61,7 +48,11 @@ export default function AcademiaCertificado() {
           <div className="glass-card p-4 mb-5 border border-red-500/40 text-sm" role="alert">Este documento fue revocado{d.motivo ? `: ${d.motivo}` : "."}</div>
         )}
         <div className="flex flex-wrap gap-2 mb-6">
-          <Button onClick={pdf} disabled={generando} className="fire-btn-primary" data-testid="certificado-pdf"><Download className="w-4 h-4 mr-1.5" /> {generando ? "Generando…" : "Descargar PDF"}</Button>
+          <Button asChild className="fire-btn-primary">
+            <a href={`/api/academia/certificado/${encodeURIComponent(d.codigo)}/pdf`} download={archivo} {...atributosDeDescarga()} data-testid="certificado-pdf">
+              <Download className="w-4 h-4 mr-1.5" /> Descargar PDF
+            </a>
+          </Button>
           <Button variant="outline" onClick={copiar}>{copiado ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />} {copiado ? "Enlace copiado" : "Copiar el enlace de verificación"}</Button>
         </div>
         <DocumentoAjustado>

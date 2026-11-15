@@ -17,6 +17,7 @@ import {
 } from "@shared/academia";
 import { alumnoDe, enlaceVerificar, frenar, nombreAcademico } from "./academia-comun";
 import { verificacionDeCarne } from "./academia-matricula";
+import { archivoDelCertificado, certificadoPdf, enviarPdf } from "./academia-pdf";
 
 export { enlaceVerificar } from "./academia-comun";
 
@@ -160,6 +161,22 @@ export function registerAcademiaDocumentosRoutes(app: Express) {
     } catch (err) {
       console.error("[academia] certificado:", err);
       res.sendStatus(500);
+    }
+  });
+
+  // El mismo documento en PDF, hecho en el servidor y con su nombre de archivo (se descarga en cualquier teléfono).
+  app.get("/api/academia/certificado/:codigo/pdf", async (req, res) => {
+    try {
+      const a = await alumnoDe(req, res);
+      if (!a) return;
+      const f = await porCodigo(normalizarCodigo(String(req.params.codigo || "")));
+      if (!f || (f.user_id !== a.userId && !puedeRevisar(a.acceso.role))) return res.status(404).json({ message: "No encontramos ese documento." });
+      if (frenar(`acp:${a.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const d = await vistaDe(f, true);
+      enviarPdf(res, await certificadoPdf(d), archivoDelCertificado(d));
+    } catch (err) {
+      console.error("[academia] certificado (pdf):", err);
+      if (!res.headersSent) res.status(500).json({ message: "No se pudo preparar el PDF. Inténtalo en unos minutos." });
     }
   });
 

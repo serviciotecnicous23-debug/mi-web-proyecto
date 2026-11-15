@@ -126,7 +126,7 @@ Además, cada materia tiene su **versículo de memoria**: primero se estudia y d
   promedio, «con honores» en el del nivel, las líneas de la Dirección académica y del Ministerio, el QR que lleva a la
   verificación y la aclaración «No es un título universitario oficial». Lo ven su dueño y la Administración; se
   descarga en PDF. Si la materia se aprobó por suficiencia, lo dice. El PDF se dibuja directo, con texto
-  de verdad (`client/src/components/academia/certificado-pdf.ts`, A4 apaisado): no es una captura de la pantalla, así
+  de verdad (`server/academia-pdf.ts`, A4 apaisado, hecho en el servidor y bajado con su nombre de archivo, como el carné): no es una captura de la pantalla, así
   que sale nítido y nunca en blanco.
 - **La verificación pública** (sin cuenta, la abre el QR): válido o revocado, el nombre, el documento, el nivel y la
   fecha, **sin notas**. La casilla «Verificar» de Certificados también acepta estos códigos.
@@ -210,8 +210,10 @@ admisión con campos propios y, después, la matriculación en cada curso desde 
     Fotos) y también se puede mantener el dedo sobre la imagen. En el iPhone con la web instalada las descargas se abren
     aparte (con su botón para volver), y en el navegador de una app se avisa cómo abrir la página en Chrome o Safari.
 - **Los demás documentos** tampoco dependen de capturar la pantalla:
-  - El expediente se descarga en PDF con sus tablas en texto (`client/src/components/academia/expediente-pdf.ts`), y
-    cada certificado, dibujado con su diseño (`certificado-pdf.ts`).
+  - El expediente se descarga en PDF con sus tablas en texto, y cada certificado, dibujado con su diseño. Los dos se
+    hacen en el servidor (`server/academia-pdf.ts`) y se bajan con un enlace de verdad, con su nombre: antes se armaban en
+    el navegador y se bajaban con un enlace «blob», que en el iPhone y en la web instalada fallaba como el carné. La
+    página usa `client/src/components/academia/descargas.ts` (en el iPhone con la web instalada se abre aparte).
   - Ningún documento tiene botón «Imprimir» (abrir otra ventana deja al teléfono sin salida): se imprime el PDF.
 - **El reglamento** es una página pública. Sus números salen de las constantes del sistema (una prueba lo comprueba).
 
@@ -594,9 +596,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   la prueba diagnóstica y el repaso espaciado (fase A4). `server/academia-orden.ts`: el reparto de la respuesta
   correcta en el repaso y los exámenes, con su prueba. `shared/academia-declaracion.ts`: la declaración de fe.
 - `client/src/components/academia/area.ts` y `entrada-panel.tsx`: el área de quien mira el panel y la tarjeta
-  «Academia» de los paneles. `video-youtube.tsx`: el reproductor que cuenta lo visto. `expediente-pdf.ts` y
-  `certificado-pdf.ts`: los PDF del expediente y de los certificados (el carné se hace en el servidor:
-  `server/academia-carne.ts`).
+  «Academia» de los paneles. `video-youtube.tsx`: el reproductor que cuenta lo visto. `descargas.ts`: los enlaces
+  de descarga (los PDF del carné, del certificado y del expediente se hacen en el servidor: `server/academia-carne.ts` y
+  `server/academia-pdf.ts`).
 - `client/src/components/academia/seguimiento.tsx`: las piezas del panel y del expediente (indicadores, barras y
   medidores en un solo tono de naranja, validado en claro y en oscuro). `foto-carne.tsx`: la foto del carné.
 - `client/src/lib/academia-visible.ts` y `client/src/components/academia/pestanas-clases.tsx`: si la academia se ve y
@@ -658,6 +660,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET integral/:nivel` y `POST integral/:nivel/empezar`, `/paso`, `/respuesta` y `/escrita` | El examen integral: las mismas rutas que el final |
 | `GET certificados` | Mis documentos (emite los que falten) |
 | `GET certificado/:codigo` | Un documento completo, con su QR: para su dueño y la Administración |
+| `GET certificado/:codigo/pdf` | El mismo documento en PDF, hecho en el servidor y con su nombre de archivo (los mismos permisos) |
 | `GET verificar/:codigo` | La verificación pública (certificado o carné), sin cuenta y sin notas |
 | `GET abierta` | Si la academia ya está abierta para todos (el menú y la barra de la app) |
 | `GET inscripcion` | Mi ficha, mi matrícula, las iglesias aliadas, lo que se sabe de mi cuenta y si mi nombre ya es fijo |
@@ -665,6 +668,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `POST materia/:materiaId/inscripcion` | Inscribirme en una materia (pide la academia y el nivel anterior) |
 | `POST foto` | La foto del carné: `{url}` de un archivo subido a la web, o `{url: null}` para quitarla |
 | `GET expediente` | Mi expediente: mis materias con su avance y su nota, mis niveles y mis certificados |
+| `GET expediente/pdf` | Mi expediente en PDF, hecho en el servidor y con su nombre de archivo |
 | `GET direccion/resumen`, `GET direccion/alumnos`, `GET direccion/alumno/:alumnoId`, `GET direccion/materia/:materiaId` y `GET direccion/actividad` | El panel de seguimiento (cada rol, con su alcance) |
 | `GET direccion/exportar/:archivo` | Los reportes: `alumnos.csv`, `avance.csv` y `materias.csv` |
 | `GET direccion/revision` y `GET direccion/alumno/:alumnoId/escritas` | Lo que hay que revisar (las escritas marcadas, los pedidos de revisión y lo revisado hace poco) y todas las escritas de un alumno |
