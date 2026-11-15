@@ -365,3 +365,16 @@ export function tiempoTexto(seg: number): string {
   const h = Math.round(min / 60);
   return h === 1 ? "1 hora" : `${h} horas`;
 }
+
+// ---------------------------------------------------------------- el salón: el tiempo de estudio (server/academia-salon.ts)
+
+export function useEstudio(activo = true) {
+  return useQuery<import("@shared/academia-salon").EstudioVista, ErrorAcademia>({
+    queryKey: ["academia", "estudio"],
+    queryFn: () => pedir("GET", "/api/academia/estudio"),
+    enabled: activo,
+    retry: false,
+  });
+}
+export const sumarEstudio = (minutos: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio", { minutos });
+export const cambiarMetaEstudio = (meta: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio/meta", { meta });
