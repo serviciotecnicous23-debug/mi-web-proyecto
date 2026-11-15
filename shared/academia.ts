@@ -884,6 +884,57 @@ const PANORAMA_AT: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 2: la vida de Jesús, la iglesia, las cartas y la esperanza de su regreso. */
+const PANORAMA_NT: MateriaDef = {
+  id: "n2-panorama-nt",
+  nivel: 2,
+  orden: 2,
+  titulo: "Panorama del Nuevo Testamento",
+  resumen: "El mundo de Jesús, los cuatro evangelios, la iglesia en Hechos, las cartas de los apóstoles y la esperanza de Apocalipsis.",
+  base: "Gálatas 4:4; Juan 20:31; Hechos 1:8",
+  memoria: "Juan 20:31",
+  lecciones: lecciones("n2-panorama-nt", [
+    ["El mundo del Nuevo Testamento y sus libros", "Gálatas 4:4; Marcos 1:15"],
+    ["Los cuatro evangelios", "Juan 20:31; Lucas 1:1-4; Marcos 10:45"],
+    ["La vida y la obra de Jesús", "Mateo 4:23; 1 Corintios 15:3-4; Hechos 1:8-11"],
+    ["Hechos: la iglesia en marcha", "Hechos 1:8; 2:1-4, 42; 15:11; 28:30-31"],
+    ["Las cartas del Nuevo Testamento", "Romanos 5:1; Efesios 2:8-10; Santiago 2:17-18"],
+    ["Apocalipsis: Cristo vence", "Apocalipsis 1:1-3; 5:12; 21:3-5; 22:20"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo conozca el Nuevo Testamento de principio a fin: cómo Dios preparó la llegada de Cristo, los cuatro testimonios de su vida, la expansión de la iglesia, las cartas de los apóstoles y la esperanza de su regreso. Juan escribió para que creamos que Jesús es el Cristo, el Hijo de Dios, y para que creyendo tengamos vida en su nombre (Juan 20:31).",
+    objetivos: [
+      { id: "o1", texto: "Describir el mundo del Nuevo Testamento y nombrar sus secciones y sus libros.", bloom: "recordar" },
+      { id: "o2", texto: "Comparar los cuatro evangelios y resumir la vida, la muerte y la resurrección de Jesús.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar cómo avanzó el evangelio en Hechos y el mensaje central de las cartas.", bloom: "comprender" },
+      { id: "o4", texto: "Explicar el propósito de Apocalipsis y la esperanza del regreso de Cristo.", bloom: "analizar" },
+      { id: "o5", texto: "Recitar Juan 20:31 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El trasfondo, la estructura y el mensaje de los 27 libros del Nuevo Testamento.",
+      ser: "Una fe firme en Jesucristo, el Hijo de Dios, y una esperanza viva en su regreso.",
+      hacer: "Leer el Nuevo Testamento con orden y ser testigo de Cristo donde vive.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Merrill C. Tenney", titulo: "Nuestro Nuevo Testamento", editorial: "Portavoz" },
+        { autor: "Henrietta C. Mears", titulo: "Lo que nos dice la Biblia", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Henry H. Halley", titulo: "Compendio manual de la Biblia" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o" },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs" },
+      { tipo: "lectura", titulo: "Hechos 2: el día de Pentecostés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -918,7 +969,7 @@ export const NIVELES: NivelDef[] = [
     requisitos: ["Las 9 materias aprobadas", "El examen integral del nivel", "8 versículos de memoria", "3 conversaciones de evangelismo registradas", "Servir 1 mes en un ministerio"],
     materias: [
       PANORAMA_AT,
-      enPreparacion(2, 2, "n2-panorama-nt", "Panorama del Nuevo Testamento", "La vida de Jesús, la iglesia en Hechos, las cartas, Apocalipsis y el tiempo entre los testamentos."),
+      PANORAMA_NT,
       enPreparacion(2, 3, "n2-doctrinas", "Doctrinas fundamentales", "Las grandes verdades de la fe según la declaración de fe del ministerio."),
       enPreparacion(2, 4, "n2-disciplinas", "Disciplinas espirituales", "Oración, ayuno, adoración, meditación, diario espiritual y el día del Señor."),
       enPreparacion(2, 5, "n2-sermon-monte", "El Sermón del monte", "El carácter del discípulo según Mateo 5 a 7."),
