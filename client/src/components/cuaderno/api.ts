@@ -93,7 +93,9 @@ export const cambiarNota = (id: number, cuerpo: { fijada?: boolean; color?: stri
 export const borrarNota = (id: number, definitiva = false) => pedir<{ papelera?: boolean; borrada?: boolean }>("DELETE", `/api/cuaderno/notas/${id}${definitiva ? "?definitiva=1" : ""}`);
 export const restaurarNota = (id: number) => pedir<NotaCompleta>("POST", `/api/cuaderno/notas/${id}/restaurar`);
 export const agregarALeccion = (leccionId: string, bloques: BloqueCuaderno[]) => pedir<NotaCompleta>("POST", `/api/cuaderno/leccion/${encodeURIComponent(leccionId)}/agregar`, { bloques });
-export const resaltar = (cuerpo: { leccionId: string; bloque: number; texto: string; color: string }) => pedir<ResaltadoLeccion>("POST", "/api/cuaderno/resaltados", cuerpo);
+/** El resaltado queda también en la nota de la lección: la respuesta trae la nota al día. */
+export const resaltar = (cuerpo: { leccionId: string; bloque: number; texto: string; color: string }) =>
+  pedir<ResaltadoLeccion & { notaLeccion: NotaCompleta | null }>("POST", "/api/cuaderno/resaltados", cuerpo);
 export const cambiarResaltado = (id: number, cuerpo: { color?: string; nota?: string | null }) => pedir<ResaltadoLeccion>("PATCH", `/api/cuaderno/resaltados/${id}`, cuerpo);
 export const borrarResaltado = (id: number) => pedir<{ borrado: boolean }>("DELETE", `/api/cuaderno/resaltados/${id}`);
 

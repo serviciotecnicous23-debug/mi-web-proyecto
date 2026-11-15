@@ -112,9 +112,13 @@ la sincronización de la biblioteca»). Es el mismo cuaderno en la academia (`/a
 - **En la lección:**
   - Al seleccionar un texto con el dedo o el mouse aparece una barra para **resaltarlo** en cinco colores, **pasarlo al
     cuaderno** (como cita, con el enlace a la lección) o copiarlo.
-  - Lo resaltado queda pintado en la lección.
+  - Lo resaltado queda pintado en la lección y, como lo pasado al cuaderno, **se guarda también al final de la nota de
+    la lección**, con su color y el enlace a la lección: todo lo que se toma de una lección está en un solo lugar. El
+    aviso trae «Ver mi nota», que abre la nota justo en lo nuevo.
   - El botón «Cuaderno» abre la nota de esa lección (se escribe mientras se lee, en blanco o con las notas de clase) y
-    sus resaltados.
+    sus resaltados, con «Volver a la lección» arriba y «Listo» al final.
+  - En Mi cuaderno, cada nota abierta tiene «Listo» (la cierra; se guarda sola) y, si es de una lección, «Volver a la
+    lección».
   - **No se abre dentro de los exámenes,** por el código de honor: se usa para estudiar y repasar antes.
 - **En la Biblioteca:**
   - El cuaderno muestra también lo que se resaltó y anotó en la Biblia, versículo por versículo.
