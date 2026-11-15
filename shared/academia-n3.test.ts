@@ -62,6 +62,46 @@ test("«Los Evangelios y Hechos», «Evangelismo y consolidación» y «Liderazg
   assert.equal(materiaPorId("n3-espiritu-santo")!.disponible, false);
 });
 
+test("«Homilética I» prepara la enseñanza grabada del Nivel 3, con 2 Timoteo 4:2 de memoria", () => {
+  const m = materiaPorId("n3-homiletica-1")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 8);
+  assert.equal(m.memoria, "2 Timoteo 4:2");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[3]);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.proposito.includes("enseñanza grabada"));
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Haddon W. Robinson", "James D. Crane"]);
+});
+
+test("«Historia de la iglesia I» va de Pentecostés a la víspera de la Reforma, con Hebreos 13:8 de memoria", () => {
+  const m = materiaPorId("n3-historia-1")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 9);
+  assert.equal(m.memoria, "Hebreos 13:8");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[3]);
+  assert.match(m.lecciones[0].titulo, /apóstoles/);
+  assert.match(m.lecciones[5].titulo, /Reforma/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.editorial), ["Unilit", "Vida"]);
+});
+
+test("«Cuidado y consejería básica» cierra el Nivel 3 con Gálatas 6:2; solo el Espíritu Santo sigue en preparación", () => {
+  const m = materiaPorId("n3-consejeria-basica")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 10);
+  assert.equal(m.memoria, "Gálatas 6:2");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[3]);
+  assert.match(m.lecciones[4].titulo, /derivar/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Gary R. Collins", "Pablo Hoff"]);
+  // del Nivel 3, solo «La persona y obra del Espíritu Santo» espera (la declaración de fe)
+  assert.deepEqual(nivel3.materias.filter((x) => !x.disponible).map((x) => x.id), ["n3-espiritu-santo"]);
+});
+
 test("las materias del Nivel 3 se evalúan como pide el reglamento", () => {
   const m = materiaPorId("n3-hermeneutica")!;
   // 2 mini pruebas (lecciones 1-3 y 4-6) y el escrito breve
