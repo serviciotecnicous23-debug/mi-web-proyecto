@@ -14,6 +14,16 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-15-domino-telefono",
+    fecha: "15 de noviembre de 2026",
+    titulo: "El dominó cabe en el teléfono",
+    puntos: [
+      "📱 En el teléfono, la mesa del dominó se acomoda al alto de la ventana: la mesa y tu mano se ven juntas, sin bajar.",
+      "🎴 Las siete fichas de tu mano caben en una fila del atril, y si la ventana no alcanza, la mano se queda pegada abajo.",
+      "👥 Los rivales van en una sola fila, con cuántas fichas le quedan a cada uno; tu compañero tiene un anillo verde.",
+    ],
+  },
+  {
     id: "2026-11-15-campos",
     fecha: "15 de noviembre de 2026",
     titulo: "Los campos de afuera cambian con el año",

@@ -17,7 +17,7 @@ import {
   GraduationCap, Grape, Hammer, HandHeart, Handshake, Hourglass, House, Key, Landmark, Leaf, Library, Mail, Map as Mapa, Medal, Megaphone,
   MessageCircle, Moon, Mountain, Music, Package, PenLine, Pickaxe, ScrollText, Search, Shield, Shirt, ShoppingBasket, Shovel, Soup, Sprout,
   Store, Sun, Tent, TreePine, Trophy, Users, Waves, Wheat, Wrench,
-  Bird, Brain, ChartNoAxesColumnIncreasing, DoorOpen, Droplets, Flower, Gem, Hand, Layers, PartyPopper, Ribbon, Sofa, Star, Sunrise, UserRound, Worm,
+  Bird, Brain, ChartNoAxesColumnIncreasing, DoorOpen, Droplets, Flower, Gem, Hand, Layers, PartyPopper, Ribbon, Smartphone, Sofa, Star, Sunrise, UserRound, Worm,
 } from "lucide-react";
 
 type IconoProps = { className?: string; "aria-hidden"?: boolean };
@@ -231,6 +231,7 @@ const ICONOS: Record<string, { c: Icono; color?: string }> = {
   "🃏": { c: Brain, color: "#5b4a8a" },
   "🪜": { c: ChartNoAxesColumnIncreasing, color: "#8a5a32" },
   "🐍": { c: Worm, color: "#4d7f2a" },
+  "📱": { c: Smartphone, color: "#5a3a1e" },
 };
 
 /** Los emojis que tienen ícono (para separarlos del texto). */

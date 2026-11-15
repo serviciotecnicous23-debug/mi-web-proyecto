@@ -1061,6 +1061,18 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
   de cada barrio, que solo se ve en el verano y en la cosecha (`verFrutos`).
 - **La memoria**: el paño marca con líneas punteadas los dos lugares donde se abren las cartas.
 
+## 7y. El dominó cabe en el teléfono (15 de noviembre de 2026)
+
+- **La mesa se acomoda a la ventana** (`useAltoMesa`, en `mesa/Domino.tsx`): el alto del paño es lo que queda de la
+  ventana que se desplaza (la del patio; si no hay, la página) desde donde empieza la mesa, menos la mano (entre 12 y
+  27 rem). En el teléfono, la ventana del patio es más baja que la pantalla: así la mesa y la mano se ven juntas.
+- **La mano**: en el teléfono, las fichas se achican para que las siete quepan en una fila del atril; y si la ventana
+  no alcanza, el atril se queda pegado abajo (`sticky`), encima de la mesa, siempre a la vista.
+- **Los rivales**, en el teléfono, en una sola fila: la inicial de color, el nombre, una ficha y cuántas le quedan; el
+  compañero, con un anillo verde (en la pantalla ancha sigue la tira de fichas y la etiqueta «compañero»).
+- **El marco de la mesa** (`mesa/index.tsx`) no repite la lista de asientos en los juegos que ya muestran a cada
+  jugador con lo suyo (`MUESTRAN_ASIENTOS`: el dominó); la lista queda para los lectores de pantalla.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

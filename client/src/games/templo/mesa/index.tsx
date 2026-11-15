@@ -44,6 +44,12 @@ export const PANTALLAS_MESA: Record<string, ComponentType<PantallaMesaProps<any,
   ...PANTALLAS_TRADICIONALES,
 };
 
+/**
+ * Los juegos cuya pantalla ya muestra a cada jugador con lo suyo (el dominó: los puntos de cada pareja y las fichas de
+ * cada rival): el marco no repite la lista de asientos, y así en el teléfono la mesa y la mano caben en la ventana.
+ */
+const MUESTRAN_ASIENTOS = new Set(["domino"]);
+
 /** Avisa a la banda sonora qué juego está abierto (y que se cerró al salir). */
 export function useMusicaDeJuego(juego: string | null) {
   useEffect(() => {
@@ -121,7 +127,7 @@ export function MesaJuego({ p }: { p: MesaPartidaVista }) {
           </span>
         )}
       </div>
-      <ul className="flex flex-wrap gap-1.5" data-testid="mesa-asientos">
+      <ul className={`flex flex-wrap gap-1.5 ${MUESTRAN_ASIENTOS.has(m.id) ? "sr-only" : ""}`} data-testid="mesa-asientos">
         {m.asientos.map((a) => {
           const juega = m.juegan.includes(a.n);
           return (

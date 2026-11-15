@@ -217,6 +217,45 @@ function useProporcion(ref: React.RefObject<HTMLDivElement | null>): number {
   return p;
 }
 
+/**
+ * El alto de la mesa para que la mesa y la mano quepan juntas en la ventana: en el teléfono, la ventana del patio es
+ * más baja que la pantalla, y la mano no debe quedar abajo, fuera de la vista. Es lo que queda de la ventana que se
+ * desplaza (o de la página) desde donde empieza la mesa, menos la mano; entre 12 y 27 rem. Mientras no se mide, null
+ * (la mesa usa un alto según la pantalla).
+ */
+function useAltoMesa(paño: React.RefObject<HTMLDivElement | null>, atril: React.RefObject<HTMLDivElement | null>, hayAtril: boolean): number | null {
+  const [alto, setAlto] = useState<number | null>(null);
+  useEffect(() => {
+    const el = paño.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    // la ventana que se desplaza (la del patio); si no hay, la página
+    let cont: HTMLElement | null = el.parentElement;
+    while (cont && !/(auto|scroll)/.test(getComputedStyle(cont).overflowY)) cont = cont.parentElement;
+    const medir = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const ventana = cont ? cont.clientHeight : window.innerHeight;
+      const r = el.getBoundingClientRect();
+      // dónde empieza la mesa dentro de lo que se desplaza (sin contar cuánto se bajó)
+      const arriba = cont ? r.top - cont.getBoundingClientRect().top + cont.scrollTop : r.top + window.scrollY;
+      const mano = hayAtril ? (atril.current?.offsetHeight ?? 0) : 0;
+      // el borde de madera de la mesa (9 px arriba y abajo) y un respiro abajo
+      const quiere = ventana - arriba - mano - 18 - 0.75 * rem;
+      const nuevo = Math.round(Math.max(12 * rem, Math.min(27 * rem, quiere)));
+      setAlto((a) => (a !== null && Math.abs(a - nuevo) < 2 ? a : nuevo));
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    if (cont) ro.observe(cont);
+    if (hayAtril && atril.current) ro.observe(atril.current);
+    window.addEventListener("resize", medir);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", medir);
+    };
+  }, [paño, atril, hayAtril]);
+  return alto;
+}
+
 const iguales = (x: Ficha, y: Ficha) => x[0] === y[0] && x[1] === y[1];
 
 export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juegan, miAsiento, ultima }: PantallaMesaProps<VistaDomino, JugadaDomino>) {
@@ -232,6 +271,8 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
 
   // la mesa: hasta dónde llega cada renglón (según la forma de la mesa), las fichas en su lugar y las sombras
   const paño = useRef<HTMLDivElement | null>(null);
+  const atril = useRef<HTMLDivElement | null>(null);
+  const altoMesa = useAltoMesa(paño, atril, yo >= 0 && vista.fase === "jugando");
   const proporcion = useProporcion(paño);
   const limite = Math.max(3, Math.min(9, Math.round(proporcion * 4)));
   const cadena = useMemo(() => cadenaDomino(vista.mesa, limite), [vista.mesa, limite]);
@@ -319,30 +360,35 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
           );
         })}
       </div>
-      {/* los demás: su ficha de color, su nombre, sus fichas boca abajo y lo último que hicieron */}
-      <div className="flex w-full flex-wrap justify-center gap-1.5">
+      {/* los demás: su ficha de color, su nombre, sus fichas boca abajo y lo último que hicieron (en el teléfono, en una
+          sola fila: así la mesa y la mano caben en la pantalla) */}
+      <div className="flex w-full justify-center gap-1 sm:flex-wrap sm:gap-1.5">
         {otros.map((i) => {
           const activo = juegan.includes(i);
           const globo = dijo(i);
           return (
             <div
               key={i}
-              className={`relative flex min-w-0 items-center gap-1.5 rounded-2xl py-1 pl-1 pr-2.5 text-[12px] font-bold shadow-sm transition ${activo ? "bg-amber-300 text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.75)] ring-2 ring-amber-500" : "bg-white/80 dark:bg-stone-800"}`}
+              className={`relative flex min-w-0 max-w-[11rem] flex-1 items-center gap-1 rounded-2xl py-1 pl-1 pr-2 text-[12px] font-bold shadow-sm transition sm:flex-none sm:gap-1.5 sm:pr-2.5 ${activo ? "bg-amber-300 text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.75)] ring-2 ring-amber-500" : "bg-white/80 dark:bg-stone-800"}`}
               data-testid={`mesa-domino-rival-${i}`}
             >
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-black text-white shadow-inner ${activo ? "mesa-late" : ""}`} style={{ background: `radial-gradient(circle at 35% 30%, ${colorDe(i)}cc, ${colorDe(i)})` }}>
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-black text-white shadow-inner sm:h-7 sm:w-7 sm:text-[13px] ${activo ? "mesa-late" : ""} ${vista.parejas && yo >= 0 && equipo(i) === equipo(yo) ? "ring-2 ring-emerald-500 sm:ring-0" : ""}`}
+                style={{ background: `radial-gradient(circle at 35% 30%, ${colorDe(i)}cc, ${colorDe(i)})` }}
+              >
                 {nombre(i).trim().charAt(0).toUpperCase() || "?"}
               </span>
               <span className="min-w-0">
-                <span className="block max-w-[7rem] truncate leading-tight">{nombre(i)}</span>
+                <span className="block max-w-[4.8rem] truncate leading-tight sm:max-w-[7rem]">{nombre(i)}</span>
                 <span className="flex items-center gap-1">
-                  <span className="flex">
+                  <FichaDomino a={0} b={0} parada oculta className="h-[0.95rem] w-[0.5rem] sm:hidden" />
+                  <span className="hidden sm:flex">
                     {Array.from({ length: Math.min(vista.cuantas[i] ?? 0, 7) }, (_, k) => (
                       <FichaDomino key={k} a={0} b={0} parada oculta className="-ml-1 h-[1.15rem] w-[0.6rem] first:ml-0" />
                     ))}
                   </span>
                   <span className="tabular-nums text-[11px]">{vista.cuantas[i]}</span>
-                  {vista.parejas && yo >= 0 && equipo(i) === equipo(yo) && <span className="rounded-full bg-emerald-600 px-1.5 text-[9px] text-white">compañero</span>}
+                  {vista.parejas && yo >= 0 && equipo(i) === equipo(yo) && <span className="hidden rounded-full bg-emerald-600 px-1.5 text-[9px] text-white sm:inline">compañero</span>}
                 </span>
               </span>
               {globo && (
@@ -360,7 +406,7 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
           ref={paño}
           className="relative w-full overflow-hidden rounded-[1.15rem]"
           style={{
-            height: "clamp(15rem, 46vh, 27rem)",
+            height: altoMesa !== null ? `${altoMesa}px` : "clamp(12rem, calc(100dvh - 24rem), 27rem)",
             background:
               "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.045) 1px, transparent 1.2px) 0 0 / 5px 5px, radial-gradient(ellipse at 50% 40%, #23855a 0%, #15653e 55%, #0b4127 100%)",
             boxShadow: "inset 0 2px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(0,0,0,0.25)",
@@ -439,14 +485,14 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
           )}
         </div>
       )}
-      {/* mi mano, en su atril */}
+      {/* mi mano, en su atril: si la ventana no alcanza, se queda pegada abajo (siempre a la vista, encima de la mesa) */}
       {yo >= 0 && vista.fase === "jugando" && (
-        <div className="w-full">
+        <div ref={atril} className="sticky bottom-0 z-20 w-full pb-1" data-testid="mesa-domino-atril">
           <div
-            className="mx-auto w-fit max-w-full rounded-2xl px-2.5 pb-2 pt-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.35),0_6px_14px_rgba(0,0,0,0.25)]"
+            className="mx-auto w-full max-w-full rounded-2xl px-2 pb-2 pt-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.35),0_6px_14px_rgba(0,0,0,0.25)] sm:w-fit sm:px-2.5"
             style={{ background: "linear-gradient(180deg, #8a5a30, #5e3818)" }}
           >
-            <div className="flex flex-wrap items-end justify-center gap-1.5" data-testid="mesa-domino-mano">
+            <div className="flex flex-wrap items-end justify-center gap-1 sm:gap-1.5" data-testid="mesa-domino-mano">
               {vista.miMano.map((f) => {
                 const puede = opcionesDe(f).length > 0;
                 const esta = !!elegida && iguales(elegida, f);
@@ -457,7 +503,7 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
                     disabled={!puede}
                     onClick={() => tocar(f)}
                     aria-label={`Ficha ${f[0]} y ${f[1]}${puede ? " (casa)" : ""}`}
-                    className={`h-[4.9rem] w-[2.45rem] rounded-lg transition-all duration-200 ${puede ? "-translate-y-1.5 cursor-pointer drop-shadow-[0_0_9px_rgba(251,191,36,0.9)] hover:-translate-y-3" : "opacity-75 saturate-[.6] brightness-90"} ${esta ? "-translate-y-4 ring-4 ring-amber-300" : ""}`}
+                    className={`aspect-[1/2] w-[calc((100%-1.5rem)/7)] max-w-[2.45rem] rounded-lg transition-all duration-200 sm:w-[2.45rem] ${puede ? "-translate-y-1.5 cursor-pointer drop-shadow-[0_0_9px_rgba(251,191,36,0.9)] hover:-translate-y-3" : "opacity-75 saturate-[.6] brightness-90"} ${esta ? "-translate-y-4 ring-4 ring-amber-300" : ""}`}
                     style={{ animation: "mesa-aparece 260ms ease-out" }}
                     data-testid={`mesa-ficha-${f[0]}-${f[1]}`}
                   >
