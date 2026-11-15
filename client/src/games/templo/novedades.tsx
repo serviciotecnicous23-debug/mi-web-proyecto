@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-ajedrez-cartas",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Piezas de ajedrez de torneo y cartas impresas",
+    puntos: [
+      "👑 Las piezas del ajedrez tienen la silueta de las piezas de torneo, de marfil y de ébano torneados, y llenan su casilla. El rey sigue con su corona y su perla.",
+      "🎲 El ajedrez, las damas y el cuatro en raya se ven más grandes en la computadora.",
+      "📜 Las cartas de la lotería parecen impresas: el número en su sello, un filo fino por dentro del marco y el brillo del cartón.",
+      "✨ El dorso de las cartas de la memoria y del cantor tiene su tejido de rombos, el marco de oro con sus esquinas y el brillo del barniz.",
+    ],
+  },
+  {
     id: "2026-11-14-domino",
     fecha: "14 de noviembre de 2026",
     titulo: "El dominó, como en la mesa de verdad",
@@ -130,7 +141,7 @@ export const NOVEDADES: Novedad[] = [
     puntos: [
       "🎵 Cuando te toca jugar, suena un aviso y el teléfono vibra un poquito: ya no hace falta estar mirando mientras juega la computadora.",
       "🏆 Al ganar una partida del patio, cae confeti sobre el resultado.",
-      "♟️ Las piezas del ajedrez se ven talladas, con su luz y su sombra, y debajo del tablero se lee la última jugada («caballo de g8 a f6»); al terminar con jaque mate, se dice.",
+      "👑 Las piezas del ajedrez se ven talladas, con su luz y su sombra, y debajo del tablero se lee la última jugada («caballo de g8 a f6»); al terminar con jaque mate, se dice.",
       "🎲 En el dominó, la ficha nueva llega deslizándose desde quien la jugó. Los tableros del ajedrez, las damas y el cuatro en raya caben en la pantalla de la computadora sin tener que bajar, y los números de tus fichas del parchís se leen mejor.",
     ],
   },

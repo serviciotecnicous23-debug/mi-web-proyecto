@@ -1004,6 +1004,17 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
     se toca para ponerla (quedan también los botones de cada punta);
   - los demás arriba, con su color, sus fichas boca abajo y su globito («¡Paso!», «Robó»); mi mano en un atril de madera.
 
+## 7u. Piezas de ajedrez de torneo y cartas impresas (14 de noviembre de 2026)
+
+- **Las piezas del ajedrez** (`mesa/piezas-ajedrez.tsx`): la silueta clásica de las piezas de torneo (la base de dos
+  escalones, el cuello con su anillo y la cabeza de cada una), el contorno más fino, el degradado de marfil o de ébano y un
+  brillo fino en el lado iluminado. La caja del dibujo se recortó (`viewBox="9 3 82 93"`) para que llenen la casilla. El
+  rey sigue con su corona de arcos y su perla (nada con forma de cruz); el caballo tiene su crin, su ojo y su nariz.
+- **Los tableros**: el ajedrez y las damas llegan a 32rem y el cuatro en raya a 30rem en la computadora.
+- **Las cartas** (`mesa/Carta.tsx`): la de la lotería, con el número en su sello de color, un filo fino por dentro del
+  marco y el brillo del cartón; el dorso, con un tejido de rombos, el marco de oro con un arquito en cada esquina y el
+  brillo del barniz.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

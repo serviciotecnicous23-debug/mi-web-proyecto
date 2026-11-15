@@ -89,7 +89,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
     <span className={`inline-block h-3 w-3 rounded-full border ${lado === 0 ? "border-stone-500 bg-[#f6ecd8]" : "border-stone-300 bg-[#2b1f17]"}`} />
   );
   const fila = (lado: 0 | 1) => (
-    <div className={`flex w-full max-w-[25rem] items-center justify-between gap-2 rounded-full px-3 py-1 text-[12px] font-bold ${juegan.includes(lado) ? "bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-white/70 dark:bg-stone-800"}`}>
+    <div className={`flex w-full max-w-[32rem] items-center justify-between gap-2 rounded-full px-3 py-1 text-[12px] font-bold ${juegan.includes(lado) ? "bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-white/70 dark:bg-stone-800"}`}>
       <span className="flex items-center gap-1.5">
         {color(lado)} {asientos[lado]?.nombre ?? (lado === 0 ? "Blancas" : "Negras")}
       </span>
@@ -100,7 +100,7 @@ export function DamasPantalla({ vista, jugadas, jugar, ultima, ocupado, asientos
   return (
     <div className="flex flex-col items-center gap-2" data-testid="mesa-damas">
       {fila(alReves ? 0 : 1)}
-      <div className="relative aspect-square max-w-[25rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ width: "min(100%, max(16rem, calc(100dvh - 24rem)))", background: "linear-gradient(145deg, #5a3a1e, #2e1d0e)" }}>
+      <div className="relative aspect-square max-w-[32rem] select-none rounded-xl p-[3%] shadow-[0_10px_28px_rgba(0,0,0,0.35)]" style={{ width: "min(100%, max(17rem, calc(100dvh - 19rem)))", background: "linear-gradient(145deg, #5a3a1e, #2e1d0e)" }}>
         <div className="relative h-full w-full overflow-hidden rounded-md">
           <div className="grid h-full w-full grid-cols-8 grid-rows-8">
             {Array.from({ length: 64 }, (_, k) => {
