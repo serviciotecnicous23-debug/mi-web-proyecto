@@ -131,6 +131,33 @@ la sincronización de la biblioteca»). Es el mismo cuaderno en la academia (`/a
 - Las citas bíblicas viven en `shared/citas.ts`, que es liviano: el cuaderno y la Biblioteca no cargan el catálogo de la
   academia.
 
+**El salón** (`/academia/salon`, lo pidió Luis el 15 de noviembre: «su salón… su espacio con diferentes recursos»). Es
+el espacio del alumno inscrito y perfecciona «Mi escritorio» de la portada, que ahora lleva a él.
+- **Arriba:** su foto del carné, el saludo, la matrícula, el estatus, la racha, las lecciones hechas y los minutos de
+  estudio de la semana.
+- **Lo que sigue** (como en la portada) y **para hoy:** los versículos para repasar y lo que cada materia en curso tiene
+  listo (una mini prueba, el escrito breve, el examen final o el versículo), más la prueba diagnóstica si no la hizo.
+- **La sesión de estudio** (`components/academia/salon/temporizador.tsx`): un temporizador de enfoque de 15, 25 o 45
+  minutos con su descanso de 5.
+  - Sigue contando aunque se cambie de página o se cierre el teléfono, porque guarda cuándo termina.
+  - Al terminar suena una campanita suave, vibra el teléfono y se suman los minutos. «Terminé» suma lo estudiado.
+  - Debajo va la semana (`semana.tsx`): barras de un solo tono por día, con su valor al pasar o tocar, el avance hacia
+    la **meta de la semana** (la elige el alumno, de 1 a 10 horas) y los días seguidos estudiando.
+- **Mi cuaderno:** las últimas notas, «Notas de clase» (una nota nueva con la plantilla Cornell) y los resaltados.
+- **Las asignaciones** de los cursos de la Escuela, si tiene.
+- **Mis materias en curso:** el avance, la lección que sigue y los recursos del sílabo (videos y lecturas).
+- **Mis herramientas** (el cuaderno, la Biblia, los versículos, la diagnóstica, el carné, el expediente, las clases en
+  vivo y el reglamento) y **mis certificados**.
+- Casi todo sale de lo que la academia ya sabe. Lo nuevo es el **tiempo de estudio** (`server/academia-salon.ts`,
+  `shared/academia-salon.ts`):
+  - Tablas `academia_estudio` (los minutos de cada día de Texas) y `academia_estudio_meta`, que se borran con la cuenta.
+  - `GET /api/academia/estudio` da hoy, los 7 días, el total, la meta y la racha.
+  - `POST /api/academia/estudio {minutos}` suma de 1 a 60 por vez, un aviso cada 20 segundos como mucho y hasta 12 horas
+    por día.
+  - `POST /api/academia/estudio/meta {meta}` cambia la meta.
+  - Los días se cuentan sobre la fecha de Texas, así que los cambios de horario no los descuadran
+    (`server/academia-salon.test.ts`).
+
 ## 3. El sistema de evaluación
 
 **Modelos tomados de plataformas reales:**

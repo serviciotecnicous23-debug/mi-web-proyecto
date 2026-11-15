@@ -84,6 +84,18 @@ function Escritorio({ e }: { e: AcademiaEstado }) {
   const pendientes = versos.data?.pendientes ?? 0;
   return (
     <Seccion antetitulo="Para ti" titulo="Mi escritorio">
+      {e.matricula && e.ficha && (
+        <Link href="/academia/salon">
+          <span className="mb-4 rounded-2xl p-4 md:p-5 flex items-center gap-4 bg-gradient-to-r from-orange-500/15 to-amber-400/10 border border-orange-500/30 hover:-translate-y-0.5 transition cursor-pointer" data-testid="academia-entrar-salon">
+            <span className="w-11 h-11 rounded-xl bg-orange-500/20 flex items-center justify-center shrink-0"><GraduationCap className="w-6 h-6 text-orange-600 dark:text-orange-300" /></span>
+            <span className="flex-1 min-w-0">
+              <span className="font-display text-lg font-bold block">Entrar a mi salón</span>
+              <span className="text-sm text-muted-foreground">Tu agenda de hoy, tu cuaderno, tu tiempo de estudio con su meta y tus herramientas, en un solo lugar.</span>
+            </span>
+            <ArrowRight className="w-5 h-5 text-orange-600 shrink-0" />
+          </span>
+        </Link>
+      )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="academia-escritorio">
         {/* lo que sigue */}
         <div className="glass-card p-5 border border-orange-500/40 lg:col-span-2 flex flex-col">

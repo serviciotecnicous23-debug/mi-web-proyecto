@@ -87,6 +87,7 @@ const RedirigirPanelAcademia = lazy(() => import("@/components/academia/entrada-
 const AcademiaExpediente = lazy(() => import("@/pages/academia-expediente"));
 const AcademiaCarne = lazy(() => import("@/pages/academia-carne"));
 const AcademiaCuaderno = lazy(() => import("@/pages/academia-cuaderno"));
+const AcademiaSalon = lazy(() => import("@/pages/academia-salon"));
 const AcademiaSuficiencia = lazy(() => import("@/pages/academia-suficiencia"));
 const AcademiaDiagnostico = lazy(() => import("@/pages/academia-diagnostico"));
 const AcademiaDiagnosticoPrueba = lazy(() => import("@/pages/academia-diagnostico").then((m) => ({ default: m.AcademiaDiagnosticoPrueba })));
@@ -164,6 +165,7 @@ function Router() {
       <Route path="/academia/matricula" component={AcademiaInscripcion} />
       <Route path="/academia/carne" component={AcademiaCarne} />
       <Route path="/academia/cuaderno" component={AcademiaCuaderno} />
+      <Route path="/academia/salon" component={AcademiaSalon} />
       <Route path="/academia/expediente" component={AcademiaExpediente} />
       <Route path="/academia/acompanados" component={AcademiaAcompanados} />
       <Route path="/academia/suficiencia/:materiaId" component={AcademiaSuficiencia} />

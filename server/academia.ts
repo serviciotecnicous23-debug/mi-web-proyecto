@@ -23,6 +23,7 @@ import {
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
 import { registerAcademiaCarneRoutes } from "./academia-carne";
+import { registerAcademiaSalonRoutes } from "./academia-salon";
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
@@ -548,6 +549,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaDocumentosRoutes(app);
   registerAcademiaMatriculaRoutes(app);
   registerAcademiaCarneRoutes(app);
+  registerAcademiaSalonRoutes(app);
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
