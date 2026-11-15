@@ -17,6 +17,7 @@ import type {
 import { academiaAbierta, accesoDe, claveFinal, frenar, inscritoDe } from "./academia-comun";
 import { fichaDe } from "./academia-inscripcion";
 import { aCsv } from "./academia-csv";
+import { archivoDelExpediente, enviarPdf, expedientePdf } from "./academia-pdf";
 
 type Permiso = { userId: number; role: string; alcance: Alcance; iglesiaId: number | null };
 
@@ -469,6 +470,22 @@ export function registerAcademiaDireccionRoutes(app: Express) {
     } catch (err) {
       console.error("[academia] dirección, exportar:", err);
       res.sendStatus(500);
+    }
+  });
+
+  // Mi expediente en PDF, hecho en el servidor y con su nombre de archivo (se descarga en cualquier teléfono).
+  app.get("/api/academia/expediente/pdf", async (req, res) => {
+    try {
+      const a = await inscritoDe(req, res);
+      if (!a) return;
+      if (frenar(`aep:${a.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const [fila] = await filasDe({ userId: a.userId, role: "", alcance: "todos", iglesiaId: null }, true, a.userId);
+      if (!fila) return res.status(404).json({ message: "Todavía no tienes expediente." });
+      const d = await detalleDe(fila, true);
+      enviarPdf(res, await expedientePdf(d), archivoDelExpediente(d.fila.matricula));
+    } catch (err) {
+      console.error("[academia] expediente (pdf):", err);
+      if (!res.headersSent) res.status(500).json({ message: "No se pudo preparar el PDF. Inténtalo en unos minutos." });
     }
   });
 

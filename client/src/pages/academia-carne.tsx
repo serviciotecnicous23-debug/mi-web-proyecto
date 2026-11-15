@@ -14,6 +14,7 @@ import type { CarneVista } from "@shared/academia";
 import { useCarne } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { FotoCarne } from "@/components/academia/foto-carne";
+import { entornoDeDescarga } from "@/components/academia/descargas";
 
 const iniciales = (nombre: string) =>
   nombre
@@ -22,20 +23,6 @@ const iniciales = (nombre: string) =>
     .slice(0, 2)
     .map((p) => p[0]!.toUpperCase())
     .join("");
-
-/**
- * Dónde se abrió la página. En el navegador de una app (Facebook, Instagram, WhatsApp…) las descargas a veces no
- * funcionan; en el iPhone con la web instalada, una descarga en la misma ventana se queda sin salida (se abre aparte).
- */
-function entorno() {
-  if (typeof navigator === "undefined" || typeof window === "undefined") return { enApp: false, iosInstalada: false, tactil: false };
-  const ua = navigator.userAgent || "";
-  const enApp = /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(ua);
-  const ios = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const instalada = (navigator as Navigator & { standalone?: boolean }).standalone === true || !!window.matchMedia?.("(display-mode: standalone)").matches;
-  const tactil = !!window.matchMedia?.("(pointer: coarse)").matches;
-  return { enApp, iosInstalada: ios && instalada, tactil };
-}
 
 /**
  * Las dos caras como archivos, para «Guardar en el teléfono» (compartir → Guardar imagen). Se preparan apenas se ven
@@ -123,7 +110,7 @@ export default function AcademiaCarne() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useCarne();
-  const [donde] = useState(entorno);
+  const [donde] = useState(entornoDeDescarga);
   const c = q.data;
   const caras = useCarasParaCompartir(
     c ?? ({ archivos: { frente: "", reverso: "", pdf: "", nombre: "" } } as unknown as CarneVista),
