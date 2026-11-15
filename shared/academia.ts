@@ -1725,6 +1725,161 @@ const CONSEJERIA_BASICA: MateriaDef = {
   disponible: true,
 };
 
+// ---------------------------------------------------------------- Nivel 4 · Teología ministerial
+const SISTEMATICA_1: MateriaDef = {
+  id: "n4-sistematica-1",
+  nivel: 4,
+  orden: 1,
+  titulo: "Teología sistemática I: la Biblia y Dios",
+  resumen: "La doctrina de las Escrituras y la doctrina de Dios: la revelación, la inspiración, la autoridad y la confiabilidad de la Biblia; la existencia, los nombres y los atributos de Dios; la Trinidad, la creación y la providencia.",
+  base: "2 Timoteo 3:16-17; Deuteronomio 6:4",
+  memoria: "2 Timoteo 3:16",
+  lecciones: lecciones("n4-sistematica-1", [
+    ["La revelación de Dios", "Salmos 19:1-4; Romanos 1:19-20; Hebreos 1:1-2; Juan 1:18"],
+    ["La inspiración y la autoridad de la Biblia", "2 Timoteo 3:16-17; 2 Pedro 1:20-21; Mateo 5:17-18; Juan 10:35"],
+    ["Una Biblia sin error, clara y suficiente", "Proverbios 30:5-6; Isaías 40:8; Salmos 19:7-8; 1 Corintios 2:12-14"],
+    ["El Dios que existe y tiene nombre", "Hebreos 11:6; Romanos 11:33-36; Éxodo 3:13-15; Juan 8:58"],
+    ["Los atributos de Dios", "Salmos 90:2; Salmos 139:7-10; Malaquías 3:6; Isaías 6:3; 1 Juan 4:8-10; Romanos 3:25-26"],
+    ["La Trinidad, la creación y la providencia", "Deuteronomio 6:4; Mateo 3:16-17; Mateo 28:19; Hebreos 11:3; Colosenses 1:16-17; Romanos 8:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca con orden lo que toda la Biblia enseña sobre la Escritura y sobre Dios: la revelación, la inspiración, la autoridad, la confiabilidad y la suficiencia de la Biblia; la existencia, los nombres y los atributos de Dios; la Trinidad, la creación y la providencia. Es la primera de las cuatro materias de teología sistemática del Nivel 4 y sigue los dos primeros artículos de la declaración de fe del ministerio. El fundamento es la Palabra: «Toda la Escritura es inspirada por Dios, y útil para enseñar, para redargüir, para corregir, para instruir en justicia» (2 Timoteo 3:16).",
+    objetivos: [
+      { id: "o1", texto: "Distinguir la revelación general de la especial y reconocer a Cristo como la revelación suprema de Dios.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la inspiración verbal y plenaria de la Escritura y su autoridad, según 2 Timoteo 3:16, 2 Pedro 1:20-21 y la enseñanza de Jesús.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar que la Biblia es sin error en lo que enseña, cómo nos llegó su texto, y su suficiencia y claridad.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar la existencia de Dios, cómo se le conoce y el significado de sus nombres.", bloom: "comprender" },
+      { id: "o5", texto: "Explicar los atributos de Dios con sus pasajes y aplicarlos a la vida cristiana.", bloom: "aplicar" },
+      { id: "o6", texto: "Explicar la Trinidad, reconocer los errores sobre ella y explicar la creación y la providencia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Timoteo 3:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La doctrina de las Escrituras y la doctrina de Dios: la revelación, la inspiración, la autoridad, los atributos y la Trinidad.",
+      ser: "Un creyente que se somete a la Palabra y que adora a Dios porque lo conoce.",
+      hacer: "Enseñar con claridad lo que la Biblia dice de sí misma y de Dios, y responder con mansedumbre a los errores sobre la Trinidad.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media" },
+      ],
+      complementaria: [
+        { autor: "Pablo Hoff", titulo: "Teología evangélica", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Cómo es que Dios es uno y tres al mismo tiempo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=g05ydbCIDHM", minutos: 9 },
+      { tipo: "video", titulo: "Carácter de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=oHMicgEfIrY", minutos: 6 },
+      { tipo: "lectura", titulo: "Salmos 19: los cielos y la ley de Jehová", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=19" },
+      { tipo: "lectura", titulo: "Éxodo 3: YO SOY EL QUE SOY", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=3" },
+    ],
+  },
+  disponible: true,
+};
+
+const POETICOS_PROFETICOS: MateriaDef = {
+  id: "n4-poeticos-profeticos",
+  nivel: 4,
+  orden: 5,
+  titulo: "Libros poéticos y proféticos",
+  resumen: "De Job a Cantares y de Isaías a Malaquías: la poesía y la sabiduría de Israel, Job y Eclesiastés, los Salmos, Proverbios y Cantares, los profetas y su mensaje, y las profecías del Mesías cumplidas en Cristo.",
+  base: "Proverbios 1:7; Miqueas 6:8; Lucas 24:44",
+  memoria: "Miqueas 6:8",
+  lecciones: lecciones("n4-poeticos-profeticos", [
+    ["La poesía y la sabiduría de Israel", "Proverbios 1:7; Salmos 19:1; Proverbios 15:1; Salmos 23:1"],
+    ["Job y Eclesiastés: cuando la vida no se entiende", "Job 1:20-22; Job 38:1-4; Job 42:5-6; Eclesiastés 1:2-3; Eclesiastés 12:13-14"],
+    ["Los Salmos: el libro de oración de Israel", "Salmos 1:1-3; Salmos 13:1-6; Salmos 22:1; Hechos 2:34-35"],
+    ["Proverbios y Cantares: sabiduría para la vida diaria", "Proverbios 3:5-6; Proverbios 22:6; Cantares 8:6-7; Cantares 2:7"],
+    ["Los profetas: la voz de Dios a su pueblo", "Amós 3:7; Amós 5:24; Miqueas 6:8; Jeremías 31:31-33"],
+    ["El Mesías anunciado por los profetas", "Lucas 24:44; Miqueas 5:2; Isaías 53:3-6; Hechos 8:34-35"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca y sepa enseñar los libros poéticos y proféticos del Antiguo Testamento, más a fondo que en el Panorama del Nivel 2: cómo leer la poesía y la sabiduría de Israel; el mensaje de Job, Eclesiastés, Salmos, Proverbios y Cantares; quiénes fueron los profetas, qué anunciaban y cómo leerlos; y las profecías del Mesías cumplidas en Jesús. Las maneras de ordenar los sucesos del fin no se deciden aquí: se estudian en Teología sistemática IV. El corazón del mensaje profético está en Miqueas: «solamente hacer justicia, y amar misericordia, y humillarte ante tu Dios» (Miqueas 6:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar las características de la poesía y la sabiduría hebreas y el temor de Jehová.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el mensaje de Job y de Eclesiastés y aplicarlo a las preguntas difíciles de la vida.", bloom: "analizar" },
+      { id: "o3", texto: "Describir los tipos de salmos, orar con los lamentos y reconocer los salmos mesiánicos.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar la sabiduría de Proverbios como principios generales y explicar el mensaje de Cantares.", bloom: "aplicar" },
+      { id: "o5", texto: "Explicar quiénes eran los profetas, su mensaje y cómo leer un texto profético.", bloom: "comprender" },
+      { id: "o6", texto: "Identificar las profecías mesiánicas y evaluar cómo se cumplen en Cristo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Miqueas 6:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los libros poéticos y proféticos: su género, su contexto histórico, su mensaje y las profecías del Mesías.",
+      ser: "Un creyente que ora con los Salmos, vive con sabiduría y practica la justicia y la misericordia que piden los profetas.",
+      hacer: "Leer y enseñar bien la poesía y la profecía, y mostrar a Cristo en ellas sin forzar el texto.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Samuel J. Schultz", titulo: "Habla el Antiguo Testamento", editorial: "Portavoz" },
+        { autor: "Gordon D. Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+      ],
+      complementaria: [],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Job", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=A3ifTHYTmMQ", minutos: 13 },
+      { tipo: "video", titulo: "Resumen del libro de Cantar de los Cantares", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=JeTxGCZH99o", minutos: 8 },
+      { tipo: "lectura", titulo: "Salmos 22: el salmo de la cruz", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=22" },
+      { tipo: "lectura", titulo: "Isaías 53: el siervo sufriente", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Isaias&cap=53" },
+    ],
+  },
+  disponible: true,
+};
+
+const APOLOGETICA: MateriaDef = {
+  id: "n4-apologetica",
+  nivel: 4,
+  orden: 9,
+  titulo: "Apologética",
+  resumen: "Dar razones de la fe con mansedumbre y reverencia: por qué creer en Dios es razonable, por qué la Biblia es confiable, la evidencia de la resurrección, el problema del mal y cómo reconocer y responder a las sectas y las falsas doctrinas.",
+  base: "1 Pedro 3:15; Judas 1:3",
+  memoria: "1 Pedro 3:15",
+  lecciones: lecciones("n4-apologetica", [
+    ["¿Qué es la apologética?", "1 Pedro 3:15; 2 Timoteo 2:24-25; Hechos 17:2-3; 2 Corintios 10:5"],
+    ["¿Existe Dios?", "Romanos 1:20; Génesis 1:1; Salmos 19:1; Romanos 2:14-15; Hebreos 11:6"],
+    ["¿Es confiable la Biblia?", "Lucas 1:1-4; Isaías 46:9-10"],
+    ["¿Resucitó Jesús?", "1 Corintios 15:3-8; 1 Corintios 15:14; Hechos 2:24"],
+    ["El problema del mal y del sufrimiento", "Génesis 1:31; Romanos 5:12; Romanos 8:18; Romanos 8:28; Apocalipsis 21:4"],
+    ["Las sectas y las falsas doctrinas", "1 Juan 4:1-3; Gálatas 1:8; 2 Timoteo 2:24-26"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero sepa dar razones de su fe con mansedumbre y reverencia: por qué creer en Dios es razonable, por qué la Biblia es confiable, por qué creemos que Jesús resucitó, cómo responder al problema del mal y cómo reconocer y responder a las sectas y las falsas doctrinas. La apologética no reemplaza al Espíritu Santo, pero quita obstáculos para que otros escuchen el evangelio y fortalece a los creyentes que dudan. El encargo es de Pedro: «estad siempre preparados para presentar defensa con mansedumbre y reverencia ante todo el que os demande razón de la esperanza que hay en vosotros» (1 Pedro 3:15).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la apologética, su base bíblica y la actitud con que se defiende la fe.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar los argumentos del comienzo del universo, del diseño y de la ley moral, y su alcance.", bloom: "analizar" },
+      { id: "o3", texto: "Explicar por qué la Biblia es confiable: su texto, la arqueología, las profecías y su unidad.", bloom: "comprender" },
+      { id: "o4", texto: "Evaluar la evidencia de la resurrección de Jesús y las explicaciones alternativas.", bloom: "evaluar" },
+      { id: "o5", texto: "Responder con la Biblia y con compasión al problema del mal y del sufrimiento.", bloom: "aplicar" },
+      { id: "o6", texto: "Reconocer las sectas y las falsas doctrinas y responder a quienes las siguen con la Biblia y con amor.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Pedro 3:15 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las razones de la fe: la existencia de Dios, la confiabilidad de la Biblia, la resurrección, el problema del mal y las señales de las sectas.",
+      ser: "Un creyente seguro de su fe, humilde y amable, que escucha antes de responder.",
+      hacer: "Responder las preguntas y las objeciones más comunes, ayudar a los que dudan y orientar a quienes siguen falsas doctrinas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Lee Strobel", titulo: "El caso de Cristo", editorial: "Vida" },
+        { autor: "Pablo Hoff", titulo: "Otros evangelios", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Lee Strobel", titulo: "El caso de la fe", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Judas: contender por la fe", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=vhPyNSJiRZ8", minutos: 9 },
+      { tipo: "video", titulo: "El Evangelio", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=StGMC-KdehE", minutos: 6 },
+      { tipo: "lectura", titulo: "1 Corintios 15: la resurrección", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=15" },
+      { tipo: "lectura", titulo: "Hechos 17: Pablo en Tesalónica y en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1803,15 +1958,15 @@ export const NIVELES: NivelDef[] = [
     descripcion: "La teología sistemática completa, los libros que faltan, la predicación expositiva, la historia, la apologética y la ética del ministro.",
     requisitos: ["Las 10 materias aprobadas", "El examen integral del nivel", "30 horas de práctica confirmada", "Un sermón evaluado con rúbrica"],
     materias: [
-      enPreparacion(4, 1, "n4-sistematica-1", "Teología sistemática I: la Biblia y Dios", "La doctrina de las Escrituras, los atributos de Dios y la Trinidad."),
+      SISTEMATICA_1,
       enPreparacion(4, 2, "n4-sistematica-2", "Teología sistemática II: Cristo y el Espíritu Santo", "La persona y la obra de Cristo y del Espíritu Santo."),
       enPreparacion(4, 3, "n4-sistematica-3", "Teología sistemática III: el hombre, el pecado y la salvación", "Antropología, hamartiología y soteriología."),
       enPreparacion(4, 4, "n4-sistematica-4", "Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos", "Eclesiología, angelología y escatología."),
-      enPreparacion(4, 5, "n4-poeticos-profeticos", "Libros poéticos y proféticos", "De Job a Cantares y de Isaías a Malaquías."),
+      POETICOS_PROFETICOS,
       enPreparacion(4, 6, "n4-epistolas-apocalipsis", "Epístolas y Apocalipsis", "De Romanos a Judas, y el libro de Apocalipsis."),
       enPreparacion(4, 7, "n4-homiletica-2", "Homilética II: predicación expositiva", "Predicar un pasaje con fidelidad; un sermón evaluado con rúbrica."),
       enPreparacion(4, 8, "n4-historia-2", "Historia de la iglesia II", "La Reforma, los avivamientos, el movimiento pentecostal y la iglesia en América Latina."),
-      enPreparacion(4, 9, "n4-apologetica", "Apologética", "Defender la fe: Dios, la Biblia, la resurrección, las sectas y las falsas doctrinas."),
+      APOLOGETICA,
       enPreparacion(4, 10, "n4-etica", "Ética cristiana y ministerial", "Decisiones morales, integridad, dinero, autoridad y protección de menores."),
     ],
   },
