@@ -1089,6 +1089,10 @@ Probadas en la ventana de verdad del patio en el teléfono (375 × 812), con com
   implícita de una cuadrícula crece con lo más ancho de adentro) y el cantor se salía por la orilla. Las cuadrículas de
   la lotería, la generala, las escaleras y «Dibuja y adivina» tienen ahora su columna `minmax(0,1fr)`.
 - `useAngosto()` en `mesa/vida.tsx`: si la pantalla es angosta (menos de 768 px).
+- **La fila de los jugadores** en todos los juegos de grupo (generala, escaleras, damas chinas, memoria, «Basta» y
+  «Dibuja y adivina»; la lotería ya la tenía): en el teléfono, una sola fila que se desliza de lado (`*:shrink-0`,
+  `max-md:flex-nowrap`), con el reloj y el sonido fijos a la derecha. Con seis jugadores, la estrella de las damas
+  chinas entra entera en la ventana del patio.
 
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 

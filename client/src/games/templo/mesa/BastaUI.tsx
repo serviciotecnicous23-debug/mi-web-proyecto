@@ -115,7 +115,9 @@ export function BastaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMes
     <div className="mesa-raiz space-y-3" data-testid="mesa-basta">
       <Confeti disparo={confeti} />
       {sello && <Sello llave={sello.n} texto={sello.texto} sub={sello.sub} color={sello.color} />}
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* los jugadores: en el teléfono, en una sola fila que se desliza de lado (así la mesa queda a la vista) */}
+      <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5 *:shrink-0 max-md:flex-nowrap md:flex-wrap" style={{ scrollbarWidth: "none" }}>
         {nombres.map((n, a) => (
           <Asiento
             key={a}
@@ -128,7 +130,8 @@ export function BastaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMes
             tam={28}
           />
         ))}
-        <span className="ml-auto">
+        </div>
+        <span className="ml-auto shrink-0">
           <BotonSonido />
         </span>
       </div>
