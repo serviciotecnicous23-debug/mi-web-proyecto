@@ -1073,6 +1073,23 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
 - **El marco de la mesa** (`mesa/index.tsx`) no repite la lista de asientos en los juegos que ya muestran a cada
   jugador con lo suyo (`MUESTRAN_ASIENTOS`: el dominó); la lista queda para los lectores de pantalla.
 
+## 7z. La lotería, la generala y las escaleras en el teléfono (15 de noviembre de 2026)
+
+Probadas en la ventana de verdad del patio en el teléfono (375 × 812), con compañeros de la computadora:
+- **La lotería** (`mesa/LoteriaUI.tsx`): los jugadores van en una sola fila que se desliza de lado. El cantor es más
+  compacto (la carta más chica y el versículo en tres renglones). Al bajar a la tabla, cuando se ve menos de la mitad
+  del cantor, aparece arriba una barrita con la carta que se cantó (`loteria-barrita`, de alto cero: no mueve nada). El
+  botón «¡Lotería!» es hijo de la cuadrícula: en el teléfono queda al final y pegado abajo; en la pantalla ancha, debajo
+  del cantor.
+- **La generala** (`mesa/GeneralaUI.tsx`): el tamaño de los dados sale del ancho del paño (entre 34 y 50): los cinco
+  caben sin salirse por las orillas.
+- **Las escaleras** (`mesa/EscalerasUI.tsx`): el dado, el aviso y el botón van en una barra pegada abajo en el teléfono
+  (`escaleras-dado`); en la pantalla ancha, a la derecha del tablero, con la lección justo debajo (`grid-rows-[auto_1fr]`).
+- **Un error que ya estaba**: en el teléfono, la tira de las cartas que ya salieron ensanchaba la columna (la columna
+  implícita de una cuadrícula crece con lo más ancho de adentro) y el cantor se salía por la orilla. Las cuadrículas de
+  la lotería, la generala, las escaleras y «Dibuja y adivina» tienen ahora su columna `minmax(0,1fr)`.
+- `useAngosto()` en `mesa/vida.tsx`: si la pantalla es angosta (menos de 768 px).
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

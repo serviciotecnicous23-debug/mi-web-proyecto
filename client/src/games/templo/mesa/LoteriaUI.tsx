@@ -187,6 +187,17 @@ export function LoteriaUI({
   useGolpeFinal(v.fase === "fin", yo != null && v.ganadores.includes(yo), yo != null);
   const fin = v.fase === "fin" || v.fase === "revelar";
   const ganadora = v.jugadores.find((j) => j.gano);
+  // en el teléfono, cuando el cantor queda arriba fuera de la vista (al bajar a la tabla), una barrita con la carta
+  const cantorRef = useRef<HTMLElement | null>(null);
+  const [cantorVisible, setCantorVisible] = useState(true);
+  useEffect(() => {
+    const el = cantorRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    // se cuenta como visible mientras se vea al menos la mitad del cantor (con la carta y su nombre)
+    const io = new IntersectionObserver(([e]) => setCantorVisible(e.intersectionRatio >= 0.5), { threshold: [0, 0.25, 0.5, 0.75, 1] });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div className="mesa-raiz space-y-3" data-testid="mesa-loteria">
@@ -201,11 +212,30 @@ export function LoteriaUI({
         />
       )}
 
-      {/* quién juega */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* en el teléfono, al bajar a la tabla: la carta que se cantó queda a la vista arriba (alto cero: no mueve nada) */}
+      <div className="sticky top-0 z-30 h-0 md:hidden" aria-hidden={cantorVisible}>
+        {!cantorVisible && actual && v.actual != null && (
+          <div className="mesa-pop absolute inset-x-0 top-0 flex items-center gap-2 rounded-xl border border-amber-300/70 bg-[#f6ead2]/95 px-2 py-1.5 shadow-lg backdrop-blur-sm" data-testid="loteria-barrita">
+            <div className="h-[3.1rem] w-[2.3rem] shrink-0">
+              <CartaLoteria i={v.actual} tam="sm" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black uppercase tracking-wide text-amber-800">
+                El cantor · carta {v.cantadas} de {v.total}
+              </p>
+              <p className="truncate font-serif text-[16px] font-black leading-tight text-[#3a2616]">¡{actual.nombre}!</p>
+            </div>
+            {v.fase === "cantando" && <RelojAnillo ms={restante} total={v.ritmoMs} tam={26} />}
+          </div>
+        )}
+      </div>
+
+      {/* quién juega (en el teléfono, en una sola fila que se desliza de lado) */}
+      <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5 max-md:flex-nowrap md:flex-wrap" style={{ scrollbarWidth: "none" }}>
         {v.jugadores.map((j) => (
+          <div key={j.a} className="shrink-0">
           <Asiento
-            key={j.a}
             a={j.a}
             nombre={nombres[j.a] ?? `Asiento ${j.a + 1}`}
             bot={bots[j.a]}
@@ -220,8 +250,10 @@ export function LoteriaUI({
             }
             tam={28}
           />
+          </div>
         ))}
-        <span className="ml-auto flex items-center gap-1">
+        </div>
+        <span className="ml-auto flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => setVoz(!voz)}
@@ -238,16 +270,17 @@ export function LoteriaUI({
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:items-start">
-        <div className="space-y-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:grid-rows-[auto_1fr] md:items-start">
+        <div className="space-y-3 md:col-start-1 md:row-start-1">
           {/* el cantor */}
           <section
+            ref={cantorRef}
             className="mesa-papel relative overflow-hidden rounded-2xl border border-amber-300/70 p-3 shadow-inner"
             aria-live="polite"
             data-testid="loteria-cantor"
           >
             <div className="flex gap-3">
-              <div className="relative h-[8.6rem] w-[6.4rem] shrink-0 sm:h-[10.4rem] sm:w-[7.8rem]">
+              <div className="relative h-[7.2rem] w-[5.4rem] shrink-0 sm:h-[10.4rem] sm:w-[7.8rem]">
                 <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 opacity-70">
                   <DorsoCarta />
                 </div>
@@ -286,7 +319,7 @@ export function LoteriaUI({
                     <p className="relative mt-1.5 rounded-xl bg-white/85 px-2.5 py-1.5 text-[13px] font-semibold italic leading-snug text-stone-800 shadow-sm">
                       «{actual.copla}»
                     </p>
-                    <p className="mt-1.5 text-[11.5px] leading-snug text-stone-700">
+                    <p className="mt-1.5 text-[11.5px] leading-snug text-stone-700 max-sm:line-clamp-3">
                       {actual.verso.text}{" "}
                       <span className="font-bold not-italic text-amber-900">
                         ({actual.verso.ref})
@@ -333,33 +366,8 @@ export function LoteriaUI({
 
           <AvisoMesa texto={aviso} />
 
-          {yo != null && !fin && (
-            <button
-              type="button"
-              onClick={() => void cantarLoteria()}
-              disabled={v.castigo > 0 || yaGane || v.fase === "preparar"}
-              className={`relative w-full overflow-hidden rounded-2xl border-b-4 border-[#7a2e1c] bg-gradient-to-b from-[#e8563e] to-[#b8432f] py-3 font-serif text-2xl font-black tracking-wide text-white shadow-lg transition active:translate-y-0.5 active:border-b-2 disabled:opacity-50 ${completa ? "mesa-late" : ""}`}
-              data-testid="loteria-cantar"
-            >
-              {completa && (
-                <span
-                  className="mesa-brilla absolute inset-0"
-                  aria-hidden="true"
-                />
-              )}
-              <span className="relative flex items-center justify-center gap-2">
-                <Sparkles className="h-5 w-5" /> ¡Lotería!
-              </span>
-              {v.castigo > 0 && (
-                <span className="relative block text-xs font-bold">
-                  Lotería falsa: espera {v.castigo}{" "}
-                  {v.castigo === 1 ? "carta" : "cartas"}
-                </span>
-              )}
-            </button>
-          )}
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 md:col-start-2 md:row-span-2 md:row-start-1">
           {/* mi tabla */}
           {v.tabla && v.marcas && (
             <section
@@ -440,6 +448,33 @@ export function LoteriaUI({
               ))}
           </section>
         </div>
+          {yo != null && !fin && (
+            <div className="sticky bottom-0 z-20 pb-1 md:static md:col-start-1 md:row-start-2 md:pb-0">
+            <button
+              type="button"
+              onClick={() => void cantarLoteria()}
+              disabled={v.castigo > 0 || yaGane || v.fase === "preparar"}
+              className={`relative w-full overflow-hidden rounded-2xl border-b-4 border-[#7a2e1c] bg-gradient-to-b from-[#e8563e] to-[#b8432f] py-3 font-serif text-2xl font-black tracking-wide text-white shadow-lg transition active:translate-y-0.5 active:border-b-2 disabled:opacity-50 ${completa ? "mesa-late" : ""}`}
+              data-testid="loteria-cantar"
+            >
+              {completa && (
+                <span
+                  className="mesa-brilla absolute inset-0"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="relative flex items-center justify-center gap-2">
+                <Sparkles className="h-5 w-5" /> ¡Lotería!
+              </span>
+              {v.castigo > 0 && (
+                <span className="relative block text-xs font-bold">
+                  Lotería falsa: espera {v.castigo}{" "}
+                  {v.castigo === 1 ? "carta" : "cartas"}
+                </span>
+              )}
+            </button>
+            </div>
+          )}
       </div>
 
       {fin && v.ganadores.length > 0 && (

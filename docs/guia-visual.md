@@ -132,6 +132,8 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - **En el teléfono**, el tablero y lo que se juega con la mano se ven juntos sin bajar: el tablero se acomoda al alto
   de la ventana (como `useAltoMesa` en `mesa/Domino.tsx`) y la mano, si no alcanza, se queda pegada abajo. Se prueba en
   la ventana de verdad del patio (375 × 812), no solo en `/mesa-prueba`.
+- Toda cuadrícula de una pantalla de mesa lleva su columna `minmax(0,1fr)` en el teléfono: la columna implícita crece con
+  lo más ancho de adentro (una tira que se desliza, una tabla ancha) y empuja todo fuera de la ventana.
 - **Los tableros** son de materiales de verdad: madera con su veta y su canto (luz adentro, oscuro afuera) y su sombra
   en la mesa; los hoyos, taladrados; las fichas y canicas, con su brillo arriba y su sombra. Nada de figuras planas de
   un solo color: las serpientes y las cuerdas tienen grosor (se afinan), y cada pieza que espera tiene su lugar en el

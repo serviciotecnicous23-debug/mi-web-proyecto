@@ -345,10 +345,10 @@ export function DominoPantalla({ vista, jugadas, jugar, ocupado, asientos, juega
           const quienes = Array.from({ length: n }, (_, i) => i).filter((i) => equipo(i) === eq);
           const p = vista.puntos[eq] ?? 0;
           return (
-            <div key={eq} className={`min-w-[8rem] flex-1 rounded-xl px-2.5 py-1.5 shadow-sm ${mio ? "bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-white/80 dark:bg-stone-800"}`}>
+            <div key={eq} className={`min-w-[8rem] flex-1 rounded-xl px-2 py-1.5 text-[11px] shadow-sm sm:px-2.5 sm:text-[12px] ${mio ? "bg-amber-100 ring-2 ring-amber-400 dark:bg-amber-900/40" : "bg-white/80 dark:bg-stone-800"}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate">{vista.parejas ? (mio ? "Tu pareja" : "La otra pareja") : nombre(eq)}</span>
-                <span className="tabular-nums">
+                <span className="shrink-0 whitespace-nowrap tabular-nums">
                   {p} / {vista.meta}
                 </span>
               </div>

@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ESCALERAS, ESCALERAS_JACOB, SERPIENTES, VERSO_LEVANTA, atajoEn, celdaDe, type EscalerasVista, type EvEscaleras, type JugadaEscaleras } from "@shared/mesa/escaleras";
 import { Dado } from "./Dado";
 import { mesaSonido } from "./mesa-sonido";
-import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, tono, useAhora, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
+import { Asiento, AvisoMesa, BotonSonido, Confeti, RelojAnillo, Sello, colorDe, quedaMs, tono, useAhora, useAngosto, useAvisoCorto, useEventosNuevos, useMusicaDeJuego, useGolpeFinal, type PropsMesa } from "./vida";
 
 type P = { x: number; y: number };
 const centro = (c: number): P => {
@@ -324,6 +324,7 @@ function enAnim(an: Anim, ahora: number): P | null {
 export function EscalerasUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMesa<EscalerasVista, JugadaEscaleras>) {
   useMusicaDeJuego("escaleras");
   const ahora = useAhora(250);
+  const angosto = useAngosto();
   const [aviso, setAviso] = useAvisoCorto();
   const [dado, setDado] = useState({ valor: 1, vueltas: 0 });
   const [anims, setAnims] = useState<Anim[]>([]);
@@ -422,52 +423,52 @@ export function EscalerasUI({ vista: v, nombres, bots, jugar, recibidaEn }: Prop
           <BotonSonido />
         </span>
       </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] md:items-start">
-        <section className="mx-auto w-full max-w-[34rem] overflow-hidden rounded-2xl shadow-xl" aria-label="El tablero">
+      {/* en la pantalla ancha, el tablero a la izquierda y el dado y la lección a la derecha; en el teléfono, el dado va en
+          una barra pegada abajo de la ventana (siempre a la vista, como la mano del dominó) */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:items-start">
+        <section className="mx-auto w-full max-w-[34rem] overflow-hidden rounded-2xl shadow-xl md:row-span-2" aria-label="El tablero">
           <div style={{ aspectRatio: "106 / 115" }}>
             <Tablero fichas={dibujar} ganador={v.ganador} resaltar={leccion?.id ?? null} turno={v.fase === "jugando" ? v.turno : null} />
           </div>
         </section>
-        <div className="space-y-3">
-          <section className="mesa-pano flex flex-col items-center rounded-3xl px-3 py-4 text-white" aria-label="El dado">
-            <div className="flex w-full items-center justify-between">
-              <p className="text-[12px] font-black uppercase tracking-wider text-amber-100/90">
-                {v.fase === "preparar" ? "¡Ya empieza!" : v.fase === "fin" ? "Terminó" : miTurno ? "¡Te toca!" : `Tira ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}`}
+        <section className="mesa-pano sticky bottom-0 z-20 flex items-center gap-2.5 rounded-3xl px-3 py-2 text-white md:static md:flex-col md:px-3 md:py-4" aria-label="El dado" data-testid="escaleras-dado">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-2 md:w-full md:flex-none">
+            <p className="truncate text-[11px] font-black uppercase tracking-normal text-amber-100/90 md:text-[12px] md:tracking-wider">
+              {v.fase === "preparar" ? "¡Ya empieza!" : v.fase === "fin" ? "Terminó" : miTurno ? "¡Te toca!" : `Tira ${(nombres[v.turno] ?? "").replace(/\s*🤖\s*$/u, "")}`}
+            </p>
+            {v.fase !== "fin" && <RelojAnillo ms={restante} total={v.fase === "preparar" ? ESCALERAS.prepararMs : v.turnoMs} tam={angosto ? 26 : 30} />}
+          </div>
+          <div className="shrink-0 md:my-4">
+            <Dado i={2} valor={dado.valor} vueltas={dado.vueltas} guardado={false} tam={angosto ? 42 : 64} deshabilitado={!miTurno || ocupado} onClick={() => void tirar()} />
+          </div>
+          {miTurno && (
+            <button
+              type="button"
+              onClick={() => void tirar()}
+              disabled={ocupado}
+              className="shrink-0 rounded-full border-b-4 border-[#6a3a1c] bg-gradient-to-b from-[#c98b4e] to-[#8a5428] px-4 py-2 font-serif text-[15px] font-black text-white shadow-lg transition active:translate-y-0.5 active:border-b-2 disabled:opacity-60 md:px-6 md:py-2.5 md:text-lg"
+              data-testid="escaleras-tirar"
+            >
+              Tirar el dado
+            </button>
+          )}
+        </section>
+        {at && leccion && (
+          <section key={leccion.n} className={`mesa-pop rounded-2xl border-2 p-3 shadow md:col-start-2 ${leccion.sube ? "border-amber-400 bg-amber-50" : "border-rose-300 bg-rose-50"} text-stone-800`} aria-live="polite" data-testid="escaleras-leccion">
+            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: leccion.sube ? "#a36f0f" : "#9a3a3a" }}>
+              {leccion.sube ? `🪜 ${leccion.quien} sube` : `🐍 ${leccion.quien} baja`} · {at.titulo}
+            </p>
+            <p className="mt-1 font-serif text-[15px] font-bold leading-snug">{at.leccion}</p>
+            <p className="mt-1 text-[12px] italic leading-snug text-stone-600">
+              «{at.verso.text}» <span className="font-bold not-italic">({at.verso.ref})</span>
+            </p>
+            {!leccion.sube && (
+              <p className="mt-1 text-[12px] font-semibold text-emerald-800">
+                Ánimo: «{VERSO_LEVANTA.text}» ({VERSO_LEVANTA.ref})
               </p>
-              {v.fase !== "fin" && <RelojAnillo ms={restante} total={v.fase === "preparar" ? ESCALERAS.prepararMs : v.turnoMs} tam={30} />}
-            </div>
-            <div className="my-4">
-              <Dado i={2} valor={dado.valor} vueltas={dado.vueltas} guardado={false} tam={64} deshabilitado={!miTurno || ocupado} onClick={() => void tirar()} />
-            </div>
-            {miTurno && (
-              <button
-                type="button"
-                onClick={() => void tirar()}
-                disabled={ocupado}
-                className="rounded-full border-b-4 border-[#6a3a1c] bg-gradient-to-b from-[#c98b4e] to-[#8a5428] px-6 py-2.5 font-serif text-lg font-black text-white shadow-lg transition active:translate-y-0.5 active:border-b-2 disabled:opacity-60"
-                data-testid="escaleras-tirar"
-              >
-                Tirar el dado
-              </button>
             )}
           </section>
-          {at && leccion && (
-            <section key={leccion.n} className={`mesa-pop rounded-2xl border-2 p-3 shadow ${leccion.sube ? "border-amber-400 bg-amber-50" : "border-rose-300 bg-rose-50"} text-stone-800`} aria-live="polite" data-testid="escaleras-leccion">
-              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: leccion.sube ? "#a36f0f" : "#9a3a3a" }}>
-                {leccion.sube ? `🪜 ${leccion.quien} sube` : `🐍 ${leccion.quien} baja`} · {at.titulo}
-              </p>
-              <p className="mt-1 font-serif text-[15px] font-bold leading-snug">{at.leccion}</p>
-              <p className="mt-1 text-[12px] italic leading-snug text-stone-600">
-                «{at.verso.text}» <span className="font-bold not-italic">({at.verso.ref})</span>
-              </p>
-              {!leccion.sube && (
-                <p className="mt-1 text-[12px] font-semibold text-emerald-800">
-                  Ánimo: «{VERSO_LEVANTA.text}» ({VERSO_LEVANTA.ref})
-                </p>
-              )}
-            </section>
-          )}
-        </div>
+        )}
       </div>
       <AvisoMesa texto={aviso} />
     </div>
