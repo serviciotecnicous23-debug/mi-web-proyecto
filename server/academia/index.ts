@@ -49,6 +49,8 @@ import { EVANGELISMO_MISIONES_5 } from "./contenido/evangelismo-misiones-5";
 import { ALABANZA_1 } from "./contenido/alabanza-1";
 import { ALABANZA_2 } from "./contenido/alabanza-2";
 import { ALABANZA_3 } from "./contenido/alabanza-3";
+import { ALABANZA_4 } from "./contenido/alabanza-4";
+import { ALABANZA_5 } from "./contenido/alabanza-5";
 import { N2_DONES } from "./contenido/n2-dones";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
@@ -94,6 +96,8 @@ import { BANCO_EVANGELISMO_MISIONES_5 } from "./bancos/evangelismo-misiones-5";
 import { BANCO_ALABANZA_1 } from "./bancos/alabanza-1";
 import { BANCO_ALABANZA_2 } from "./bancos/alabanza-2";
 import { BANCO_ALABANZA_3 } from "./bancos/alabanza-3";
+import { BANCO_ALABANZA_4 } from "./bancos/alabanza-4";
+import { BANCO_ALABANZA_5 } from "./bancos/alabanza-5";
 import { BANCO_N2_DONES } from "./bancos/n2-dones";
 
 /** El Nivel 1 completo (las 8 materias en su orden), lo publicado de los Niveles 2 a 5 y de las especialidades. */
@@ -105,7 +109,7 @@ const LECCIONES: LeccionContenido[] = [
   ...N5_DIDACTICA, ...N5_LIDERAZGO_2, ...N5_IDIOMAS, ...N5_TEOLOGIA_PASTORAL, ...N5_ADMINISTRACION, ...N5_SEMINARIO,
   // especialidades
   ...EVANGELISMO_MISIONES_1, ...EVANGELISMO_MISIONES_2, ...EVANGELISMO_MISIONES_3, ...EVANGELISMO_MISIONES_4, ...EVANGELISMO_MISIONES_5,
-  ...ALABANZA_1, ...ALABANZA_2, ...ALABANZA_3,
+  ...ALABANZA_1, ...ALABANZA_2, ...ALABANZA_3, ...ALABANZA_4, ...ALABANZA_5,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
@@ -116,7 +120,7 @@ const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N5_DIDACTICA, BANCO_N5_LIDERAZGO_2, BANCO_N5_IDIOMAS, BANCO_N5_TEOLOGIA_PASTORAL, BANCO_N5_ADMINISTRACION, BANCO_N5_SEMINARIO,
   // especialidades
   BANCO_EVANGELISMO_MISIONES_1, BANCO_EVANGELISMO_MISIONES_2, BANCO_EVANGELISMO_MISIONES_3, BANCO_EVANGELISMO_MISIONES_4, BANCO_EVANGELISMO_MISIONES_5,
-  BANCO_ALABANZA_1, BANCO_ALABANZA_2, BANCO_ALABANZA_3,
+  BANCO_ALABANZA_1, BANCO_ALABANZA_2, BANCO_ALABANZA_3, BANCO_ALABANZA_4, BANCO_ALABANZA_5,
 ];
 
 export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));

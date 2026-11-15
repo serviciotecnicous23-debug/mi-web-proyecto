@@ -55,7 +55,7 @@ test("las materias de especialidad piden el Nivel 2, y las avanzadas, el Nivel 3
   }
 });
 
-test("Alabanza y adoración tiene sus tres primeras materias, con la medida del Nivel 3 y el Nivel 2 como requisito", () => {
+test("Alabanza y adoración tiene sus cinco materias, con la medida del Nivel 3 y el Nivel 2 como requisito", () => {
   const listas = alabanza.materias.filter((m) => m.disponible);
   assert.deepEqual(
     listas.map((m) => [m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
@@ -63,6 +63,8 @@ test("Alabanza y adoración tiene sus tres primeras materias, con la medida del 
       ["Teología de la adoración", "Juan 4:23-24", 6, false],
       ["El adorador: carácter y vida", "Salmos 24:3-4", 6, false],
       ["Dirigir el ministerio de alabanza", "Salmos 33:3", 6, false],
+      ["La música en la historia de la iglesia", "Salmos 145:4", 6, false],
+      ["Sonido y técnica al servicio del culto", "1 Corintios 14:8", 6, false],
     ],
   );
   for (const m of listas) {
@@ -77,8 +79,7 @@ test("Alabanza y adoración tiene sus tres primeras materias, con la medida del 
   }
   // quién dirige la alabanza queda para la declaración de fe
   assert.match(listas[2].silabo!.proposito, /declaración de fe por confirmar/);
-  // las dos últimas siguen en preparación
-  assert.deepEqual(alabanza.materias.filter((m) => !m.disponible).map((m) => m.titulo), ["La música en la historia de la iglesia", "Sonido y técnica al servicio del culto"]);
+  assert.equal(alabanza.materias.length, 5);
 });
 
 test("las otras diez especialidades siguen en preparación", () => {

@@ -2887,6 +2887,106 @@ const DIRIGIR_ALABANZA: MateriaDef = {
   disponible: true,
 };
 
+const HISTORIA_MUSICA: MateriaDef = {
+  id: "alabanza-4",
+  nivel: null,
+  especialidad: "alabanza",
+  orden: 4,
+  titulo: "La música en la historia de la iglesia",
+  resumen: "La música en Israel, en Jesús y la primera iglesia, en la iglesia antigua y medieval, en la Reforma, en los himnos de los avivamientos y en la alabanza de hoy.",
+  base: "Salmos 145:4; Apocalipsis 15:3",
+  memoria: "Salmos 145:4",
+  lecciones: lecciones("alabanza-4", [
+    ["La música en el pueblo de Israel", "Éxodo 15:1-2; Éxodo 15:20-21; Salmos 150:3-6; 2 Crónicas 29:27-28"],
+    ["Jesús y la iglesia de los primeros siglos", "Mateo 26:30; Efesios 5:19; Filipenses 2:10-11"],
+    ["La iglesia antigua y la Edad Media", "1 Corintios 14:16"],
+    ["La Reforma: el pueblo vuelve a cantar", "Salmos 46:1; 1 Corintios 14:15; Colosenses 3:16"],
+    ["Los himnos de los avivamientos", "Salmos 40:3"],
+    ["Del avivamiento pentecostal a la alabanza de hoy", "Salmos 145:4; Salmos 78:4; Apocalipsis 15:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la alabanza conozca cómo ha cantado el pueblo de Dios a lo largo de la historia, desde Israel hasta hoy, para aprender de sus aciertos y de sus errores: cantar las obras de Dios, con todo el pueblo, en su lengua y con entendimiento, sin despreciar lo antiguo ni lo nuevo. Los datos de historia se comprobaron en obras de referencia, y las cifras de himnos, que varían según las fuentes, se dicen sin números exactos. Su base es la promesa del salmista: «Generación a generación celebrará tus obras, Y anunciará tus poderosos hechos» (Salmos 145:4).",
+    objetivos: [
+      { id: "o1", texto: "Describir el lugar de la música en la adoración de Israel.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo cantaban Jesús, los apóstoles y la iglesia de los primeros siglos.", bloom: "comprender" },
+      { id: "o3", texto: "Analizar los cambios del canto de la iglesia en la antigüedad y en la Edad Media.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar el aporte de la Reforma al canto de la congregación.", bloom: "comprender" },
+      { id: "o5", texto: "Reconocer el aporte de los himnos de los avivamientos, también en español.", bloom: "recordar" },
+      { id: "o6", texto: "Evaluar la alabanza de hoy a la luz de la historia y de la Palabra.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 145:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La historia de la música del pueblo de Dios, de Israel a la Reforma, los avivamientos y la alabanza de hoy.",
+      ser: "Un servidor agradecido por la herencia que recibió y abierto a los cantos nuevos.",
+      hacer: "Escoger y enseñar cantos antiguos y nuevos probados por la Palabra, para que cante todo el pueblo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Los dos tomos: la iglesia antigua y medieval, y la Reforma y los avivamientos." },
+        { autor: "J. Peter Burkholder, Donald J. Grout y Claude V. Palisca", titulo: "Historia de la música occidental", editorial: "Alianza Editorial" },
+      ],
+      complementaria: [{ autor: "Marcos Witt", titulo: "Adoremos", editorial: "Editorial Caribe" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=y9pED55wMM4", minutos: 7 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Éxodo 15: el cántico de Moisés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=15" },
+      { tipo: "lectura", titulo: "Salmo 46: castillo fuerte", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=46" },
+    ],
+  },
+  disponible: true,
+};
+
+const SONIDO_TECNICA: MateriaDef = {
+  id: "alabanza-5",
+  nivel: null,
+  especialidad: "alabanza",
+  orden: 5,
+  titulo: "Sonido y técnica al servicio del culto",
+  resumen: "El técnico como servidor, el sonido y la sala, los micrófonos y la consola, el acople, los monitores y el volumen, la proyección, la transmisión y los derechos de autor, y la seguridad y el cuidado del equipo.",
+  base: "1 Corintios 14:8-9; Éxodo 31:2-5",
+  memoria: "1 Corintios 14:8",
+  lecciones: lecciones("alabanza-5", [
+    ["El técnico es un servidor", "Éxodo 31:2-5; Éxodo 35:35; 1 Pedro 4:10; 1 Corintios 12:21-22"],
+    ["El sonido y la sala", "1 Corintios 14:8-9; Nehemías 8:3-4; Nehemías 8:8"],
+    ["Los micrófonos y la consola", "Proverbios 22:29; 2 Timoteo 2:15"],
+    ["Los monitores, el acople y el volumen", "Filipenses 2:4; 1 Corintios 13:1"],
+    ["Proyección, transmisión y derechos de autor", "Habacuc 2:2; Romanos 13:7"],
+    ["Seguridad, cuidado del equipo y trabajo en equipo", "Proverbios 27:23; Lucas 16:10; 1 Corintios 14:40"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en el sonido, la proyección o la transmisión entienda su servicio como un ministerio y lo haga con excelencia: para que la Palabra se entienda y el pueblo pueda cantar unido, con lo básico de los micrófonos, la consola, los monitores y el volumen, con proyecciones claras, transmisiones que cuidan a las personas, respeto a los derechos de autor, seguridad y cuidado del equipo. Lo técnico se explica con lo básico y general: cada sistema tiene su manual. Su base es la imagen de Pablo: «Y si la trompeta diere sonido incierto, ¿quién se preparará para la batalla?» (1 Corintios 14:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué el servicio técnico es un ministerio, con el ejemplo de Bezaleel.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar que la claridad es el primer propósito del sonido y cómo viaja el sonido en una sala.", bloom: "comprender" },
+      { id: "o3", texto: "Distinguir los tipos de micrófonos y las funciones básicas de la consola.", bloom: "analizar" },
+      { id: "o4", texto: "Aplicar lo básico para evitar el acople, usar los monitores y decidir el volumen pensando en todos.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar criterios de claridad, privacidad y derechos de autor a la proyección y la transmisión.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar las normas de seguridad, el cuidado del equipo y el trabajo con los músicos.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 14:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo básico del sonido, los micrófonos, la consola, los monitores, la proyección y la transmisión.",
+      ser: "Un servidor fiel en lo poco, que sirve de corazón aunque nadie lo vea.",
+      hacer: "Preparar y operar el sonido y la proyección con claridad, seguridad y respeto a los autores, y formar a otros técnicos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Yamaha Corporation", titulo: "Guía Yamaha para la elección de un sistema de sonido", editorial: "Yamaha", nota: "Guía gratuita en español para iglesias y salas." },
+        { autor: "Bob Kauflin", titulo: "Nuestra adoración importa: guiando a otros a encontrarse con Dios", editorial: "B&H Español", nota: "Para el sentido del servicio técnico en el culto." },
+      ],
+      complementaria: [{ autor: "Marcos Witt", titulo: "¿Qué hacemos con estos músicos?", editorial: "Editorial Caribe" }],
+    },
+    recursos: [
+      { tipo: "lectura", titulo: "Éxodo 31: Bezaleel, lleno del Espíritu de Dios", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=31" },
+      { tipo: "lectura", titulo: "Nehemías 8: leían claramente", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
 type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
 
@@ -2910,7 +3010,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
   ]),
   especialidad("alabanza", "Alabanza y adoración", "Adorar en espíritu y en verdad y dirigir el ministerio de alabanza.", [
-    TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, ["La música en la historia de la iglesia"], ["Sonido y técnica al servicio del culto"],
+    TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, HISTORIA_MUSICA, SONIDO_TECNICA,
   ]),
   especialidad("ninez", "Niñez", "Enseñar y cuidar a los niños con la Palabra.", [
     ["Educación cristiana de la niñez"], ["El niño y su fe"], ["Métodos para enseñar a niños"], ["Protección de menores"], ["Organizar el ministerio infantil"],
