@@ -11,6 +11,8 @@ import { STORED_FILES_SQL } from "./file-store";
 import { ACADEMIA_SQL } from "./academia-comun";
 import { CUADERNO_SQL } from "./cuaderno";
 import { SALON_SQL } from "./academia-salon";
+import { ACTIVIDADES_SQL } from "./academia-actividades-datos";
+import { BIBLIA_SQL } from "./bible";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
 import { ESTUDIOS_SQL } from "./estudios";
@@ -1101,6 +1103,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
     try {
       // El salón del alumno: su tiempo de estudio por día y su meta de la semana
       await pool.query(SALON_SQL);
+      await pool.query(ACTIVIDADES_SQL);
+      await pool.query(BIBLIA_SQL);
     } catch (err: any) {
       console.log(`  Migration note (salón): ${err?.message}`);
     }

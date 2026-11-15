@@ -16,6 +16,8 @@ import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, estaInscrito, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
 import { codigoDocumento, emitirNivel } from "./academia-documentos";
+import { ACTIVIDADES_NIVEL, detalleEvangelismo, detalleServicio } from "@shared/academia-actividades";
+import { resumenDe } from "./academia-actividades-datos";
 
 export function nivelDe(n: unknown): NivelDef | undefined {
   const k = Number(n);
@@ -103,6 +105,13 @@ export async function estadoNivel(userId: number | null, nv: NivelDef, vistaPrev
     },
   ];
   if (pide) requisitos.push({ id: "versiculos", texto: `${pide} versículos de memoria`, hecho: aprendidos >= pide, detalle: `${Math.min(aprendidos, pide)} de ${pide}` });
+  // las actividades del nivel (en el Nivel 2: evangelismo y servicio), confirmadas por la Administración
+  const act = ACTIVIDADES_NIVEL[nv.n];
+  if (act) {
+    const r = userId ? await resumenDe(userId, nv.n) : null;
+    requisitos.push({ id: "evangelismo", texto: `${act.evangelismo} conversaciones de evangelismo registradas`, hecho: !!r?.evangelismo.hecho, detalle: r ? detalleEvangelismo(r) : "Pendiente" });
+    requisitos.push({ id: "servicio", texto: "Servir 1 mes en un ministerio", hecho: !!r?.servicio.hecho, detalle: r ? detalleServicio(r) : "Pendiente" });
+  }
   if (pactoDef) requisitos.push({ id: "pacto", texto: pactoDef.titulo, hecho: !!pactoAt, detalle: pactoAt ? "Aceptado" : "Pendiente" });
   const p = guardado ?? prom;
   return {
@@ -176,7 +185,12 @@ export function registerAcademiaNivelRoutes(app: Express) {
       const nv = nivelDe(req.params.n);
       if (!nv) return res.status(404).json({ message: "No existe ese nivel." });
       res.setHeader("Cache-Control", "no-store");
-      res.json(await estadoNivel(acceso.userId, nv, acceso.vistaPrevia));
+      let e = await estadoNivel(acceso.userId, nv, acceso.vistaPrevia);
+      // el servicio cuenta sus días: el nivel puede quedar listo solo con el paso del tiempo, y se cierra al mirarlo
+      if (acceso.userId && ACTIVIDADES_NIVEL[nv.n] && !e.completado && e.requisitos.every((r) => r.hecho) && (await revisarNivel(acceso.userId, nv))) {
+        e = await estadoNivel(acceso.userId, nv, acceso.vistaPrevia);
+      }
+      res.json(e);
     } catch (err) {
       console.error("[academia] nivel:", err);
       res.sendStatus(500);

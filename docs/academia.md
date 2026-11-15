@@ -158,6 +158,26 @@ el espacio del alumno inscrito y perfecciona «Mi escritorio» de la portada, qu
   - Los días se cuentan sobre la fecha de Texas, así que los cambios de horario no los descuadran
     (`server/academia-salon.test.ts`).
 
+### Las actividades del nivel
+
+El Nivel 2 pide, además de sus materias, **3 conversaciones de evangelismo** y **servir 1 mes en un ministerio**
+(`shared/academia-actividades.ts`, `server/academia-actividades.ts`).
+
+- **El alumno las registra** en la página del nivel (`/academia/nivel/2`, la tarjeta «Mi nivel» de la portada), después
+  de completar el Nivel 1:
+  - la conversación: con quién (la relación o sus iniciales, nunca el nombre completo), cuándo, cómo terminó y de qué
+    hablaron;
+  - el servicio: el ministerio, su líder, desde cuándo y, si terminó, hasta cuándo, y qué hace.
+  - Puede borrar lo que todavía no se confirmó. Lo confirmado ya no cambia.
+- **La Administración las confirma** en «Para revisar» (`components/academia/actividades-panel.tsx`), o las devuelve con
+  un motivo. Le llega un aviso en la campana por cada una, y al alumno otro con la decisión. Nadie confirma lo suyo.
+- **Qué cuenta:** las conversaciones confirmadas y el servicio confirmado con sus 28 días cumplidos (hasta la fecha en
+  que terminó o, si sigue, hasta hoy). Al confirmar, y al mirar la página del nivel (el servicio cumple sus días con el
+  tiempo), si el alumno ya cumple todo, el nivel se cierra y sale su certificado.
+- Tabla `academia_actividades` (fechas como texto AAAA-MM-DD, día de Texas), que se borra con la cuenta. Las rutas:
+  `GET` y `POST /api/academia/actividades/:nivel`, `POST /api/academia/actividades/item/:id/borrar`,
+  `GET /api/academia/direccion/actividades` y `POST /api/academia/direccion/actividad/:id {accion, motivo}`.
+
 ## 3. El sistema de evaluación
 
 **Modelos tomados de plataformas reales:**

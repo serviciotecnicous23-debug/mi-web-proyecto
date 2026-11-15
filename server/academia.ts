@@ -27,6 +27,7 @@ import { registerAcademiaSalonRoutes } from "./academia-salon";
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
+import { registerAcademiaActividadesRoutes } from "./academia-actividades";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
 import { registerAcademiaMentoresRoutes } from "./academia-mentores";
@@ -553,6 +554,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
+  registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);
   registerAcademiaMentoresRoutes(app);

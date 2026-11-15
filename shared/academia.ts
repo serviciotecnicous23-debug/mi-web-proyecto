@@ -1461,7 +1461,7 @@ export type AcademiaEstado = {
 /** El cierre de un nivel en la portada: null mientras el nivel no tiene todas sus materias disponibles. */
 export type CierreResumen = { integralAprobado: boolean; pacto: boolean; completado: string | null };
 
-export type RequisitoNivel = { id: "materias" | "integral" | "versiculos" | "pacto"; texto: string; hecho: boolean; detalle: string };
+export type RequisitoNivel = { id: "materias" | "integral" | "versiculos" | "evangelismo" | "servicio" | "pacto"; texto: string; hecho: boolean; detalle: string };
 
 /** El nivel y lo que falta para cerrarlo: materias, examen integral, versículos y pacto. */
 export type NivelEstado = {

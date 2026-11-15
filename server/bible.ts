@@ -6,7 +6,7 @@ import {
 // Texto bíblico servido por la propia web. Antes cada navegador lo pedía a
 // bible-api.deno.dev, que dejó de existir (NXDOMAIN, nov. 2026) y dejó la Biblia
 // en blanco para todos. Ahora el servidor lo pide a Bolls (RV1960, NTV, LBLA) o a
-// getBible (RV1909, dominio público), lo guarda en memoria y, si la versión pedida
+// getBible (RV1909, dominio público), lo guarda en memoria y en la base (biblia_capitulos) y, si la versión pedida
 // no responde, sirve la RV1909 avisando con `fallbackFrom`.
 
 type Verse = { verse: number; text: string };
@@ -82,6 +82,44 @@ async function fetchVersion(version: BibleVersion, bookNumber: number, chapter: 
 const cache = new Map<string, BibleChapterPayload>();
 const inFlight = new Map<string, Promise<BibleChapterPayload>>();
 
+// Cada capítulo que llegó bien se guarda también en la base: al publicar, el servidor arranca con la memoria vacía y
+// pedirle de golpe todo a Bolls lo hace responder 429 (y entonces saldría la RV1909, o el versículo de memoria no
+// cargaría). Con la base, cada capítulo se pide a Bolls una sola vez. La base se carga solo cuando hace falta.
+export const BIBLIA_SQL = `
+CREATE TABLE IF NOT EXISTS biblia_capitulos (
+  version text NOT NULL,
+  libro integer NOT NULL,
+  capitulo integer NOT NULL,
+  versos jsonb NOT NULL,
+  guardado_at timestamp NOT NULL DEFAULT now(),
+  PRIMARY KEY (version, libro, capitulo)
+);
+`;
+const base = () => import("./db").then((m) => m.pool);
+
+async function leerGuardado(version: string, libro: number, capitulo: number): Promise<Verse[] | null> {
+  try {
+    const pool = await base();
+    const { rows } = await pool.query(`SELECT versos FROM biblia_capitulos WHERE version = $1 AND libro = $2 AND capitulo = $3`, [version, libro, capitulo]);
+    const v = rows[0]?.versos;
+    return Array.isArray(v) && v.length > 0 ? (v as Verse[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function guardar(version: string, libro: number, capitulo: number, versos: Verse[]): void {
+  void base()
+    .then((pool) =>
+      pool.query(
+        `INSERT INTO biblia_capitulos (version, libro, capitulo, versos) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (version, libro, capitulo) DO UPDATE SET versos = EXCLUDED.versos, guardado_at = now()`,
+        [version, libro, capitulo, JSON.stringify(versos)],
+      ),
+    )
+    .catch(() => undefined);
+}
+
 function remember(key: string, value: BibleChapterPayload) {
   cache.delete(key);
   cache.set(key, value);
@@ -113,11 +151,18 @@ export async function getBibleChapter(version: string, book: string, chapter: nu
   if (pending) return pending;
 
   const load = (async (): Promise<BibleChapterPayload> => {
+    const guardado = await leerGuardado(version, bookNumber, chapter);
+    if (guardado) {
+      const payload: BibleChapterPayload = { version, book, chapter, verses: guardado };
+      remember(key, payload);
+      return payload;
+    }
     try {
       const verses = await fetchVersion(version, bookNumber, chapter);
       if (verses.length > 0) {
         const payload: BibleChapterPayload = { version, book, chapter, verses };
         remember(key, payload);
+        guardar(version, bookNumber, chapter, verses);
         return payload;
       }
       throw new Error("sin versículos");

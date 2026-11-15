@@ -58,8 +58,8 @@ export type DireccionResumen = {
   actividad: ActividadItem[];
   /** La academia ya está abierta para todos (o en vista previa). */
   abierta: boolean;
-  /** Respuestas escritas por revisar y pedidos de revisión pendientes (para quien revisa). */
-  pendientes: { escritas: number; apelaciones: number };
+  /** Respuestas escritas por revisar, pedidos de revisión y actividades por confirmar (para quien revisa). */
+  pendientes: { escritas: number; apelaciones: number; actividades: number };
   puede: {
     exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean;
     /** La revisión del contenido: verla y dejar observaciones, aprobar materias y retirar preguntas del banco. */

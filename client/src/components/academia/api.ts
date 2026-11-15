@@ -378,3 +378,26 @@ export function useEstudio(activo = true) {
 }
 export const sumarEstudio = (minutos: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio", { minutos });
 export const cambiarMetaEstudio = (meta: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio/meta", { meta });
+
+// ---------------------------------------------------------------- las actividades del nivel (evangelismo y servicio)
+type Actividades = import("@shared/academia-actividades").ActividadesNivel;
+export function useActividades(nivel: number, activo = true) {
+  return useQuery<Actividades, ErrorAcademia>({
+    queryKey: ["academia", "actividades", nivel],
+    queryFn: () => pedir("GET", `/api/academia/actividades/${nivel}`),
+    enabled: activo,
+    retry: false,
+  });
+}
+export const registrarActividad = (nivel: number, datos: Record<string, unknown>) => pedir<Actividades>("POST", `/api/academia/actividades/${nivel}`, datos);
+export const borrarActividad = (id: number) => pedir<Actividades>("POST", `/api/academia/actividades/item/${id}/borrar`, {});
+export function useActividadesPanel(activo = true) {
+  return useQuery<import("@shared/academia-actividades").ActividadesPanel, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "actividades"],
+    queryFn: () => pedir("GET", "/api/academia/direccion/actividades"),
+    enabled: activo,
+    retry: false,
+  });
+}
+export const revisarActividad = (id: number, accion: "confirmar" | "rechazar", motivo: string) =>
+  pedir<{ ok: boolean; estado: string; nivelCompleto: boolean }>("POST", `/api/academia/direccion/actividad/${id}`, { accion, motivo });

@@ -1,5 +1,5 @@
-// El cierre de un nivel de la academia (server/academia-nivel.ts): los requisitos con su avance, el examen integral, el
-// pacto y, al completarlo, el promedio del nivel.
+// El cierre de un nivel de la academia (server/academia-nivel.ts): los requisitos con su avance, las actividades del nivel
+// (en el Nivel 2, evangelismo y servicio), el examen integral, el pacto y, al completarlo, el promedio del nivel.
 import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,8 @@ import { loginUrl } from "@/lib/login-redirect";
 import { HONORES, type NivelEstado } from "@shared/academia";
 import { aceptarPacto, tiempoTexto, useNivel } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, PantallaCerrada } from "@/components/academia/ui";
+import { ActividadesDelNivel } from "@/components/academia/actividades";
+import { ACTIVIDADES_NIVEL } from "@shared/academia-actividades";
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
 
@@ -168,6 +170,8 @@ export default function AcademiaNivel() {
             <a href={loginUrl(`/academia/nivel/${nv.n}`)}><Button className="fire-btn-primary mt-5">Entrar para estudiar</Button></a>
           )}
         </section>
+
+        {e.conSesion && ACTIVIDADES_NIVEL[nv.n as 1 | 2 | 3 | 4 | 5] && <ActividadesDelNivel n={nv.n} />}
 
         <Integral e={e} />
         {e.pacto && <Pacto e={e} alAceptar={alAceptar} />}
