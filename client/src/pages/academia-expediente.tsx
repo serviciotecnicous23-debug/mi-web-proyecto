@@ -71,7 +71,6 @@ export default function AcademiaExpediente() {
             >
               <Download className="w-4 h-4 mr-1.5" /> {bajando ? "Preparando…" : "Descargar PDF"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.print()}><FileText className="w-4 h-4 mr-1.5" /> Imprimir</Button>
           </div>
         </header>
 

@@ -139,36 +139,3 @@ export function DocumentoAjustado({ children, ancho = ANCHO }: { children: React
     </div>
   );
 }
-
-/**
- * Abre el documento solo, para imprimirlo en una hoja apaisada. Imprime una sola vez y cuando ya cargaron sus imágenes
- * (el logo y el QR), para que la hoja no salga en blanco. (El PDF se dibuja aparte: certificado-pdf.ts.)
- */
-export function imprimirDocumento(id = "documento-academia"): void {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const w = window.open("", "_blank");
-  if (!w) return;
-  w.document.write(`<!DOCTYPE html><html><head><title>${NOMBRE_ACADEMIA}</title><style>
-    body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
-    @media print { body { margin: 0; min-height: 0; } @page { size: A4 landscape; margin: 8mm; } }
-  </style></head><body>`);
-  w.document.write(el.outerHTML);
-  w.document.write(`</body></html>`);
-  w.document.close();
-  let impreso = false;
-  let vueltas = 0;
-  const listas = () => Array.from(w.document.images).every((i) => i.complete);
-  const imprimir = () => {
-    if (impreso || w.closed) return;
-    if (!listas() && vueltas++ < 40) {
-      setTimeout(imprimir, 150);
-      return;
-    }
-    impreso = true;
-    w.focus();
-    w.print();
-  };
-  w.onload = imprimir;
-  setTimeout(imprimir, 300);
-}
