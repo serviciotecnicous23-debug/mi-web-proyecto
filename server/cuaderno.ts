@@ -12,7 +12,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  COLORES, LIMITES, PLANTILLAS, bloquesValidos, citaGuardada, citasDeNota, etiquetasValidas, paraBuscar, textoPlano,
+  COLORES, LIMITES, PLANTILLAS, bloque, bloquesValidos, citaGuardada, citasDeNota, etiquetasValidas, paraBuscar, textoPlano,
   type BloqueCuaderno, type ColorCuaderno, type CuadernoLista, type NotaCompleta, type NotaResumen, type ResaltadoLeccion,
 } from "@shared/cuaderno";
 import { leccionPorId, materiaPorId } from "@shared/academia";
@@ -115,6 +115,29 @@ async function notaDe(userId: number, id: number): Promise<any | null> {
   if (!Number.isInteger(id) || id <= 0) return null;
   const { rows } = await pool.query(`SELECT * FROM cuaderno_notas WHERE id = $1 AND user_id = $2`, [id, userId]);
   return rows[0] ?? null;
+}
+
+type LeccionHallada = NonNullable<ReturnType<typeof leccionPorId>>;
+
+/**
+ * Agrega bloques al final de la nota de una lección (la más reciente) o la crea con el título de la lección. Lo usan
+ * «Al cuaderno» y los resaltados: así todo lo que se toma de una lección queda en su nota.
+ */
+async function agregarALaNotaDeLeccion(userId: number, l: LeccionHallada, nuevos: BloqueCuaderno[]): Promise<{ nota: NotaCompleta; creada: boolean } | { error: string }> {
+  const { rows } = await pool.query(`SELECT * FROM cuaderno_notas WHERE user_id = $1 AND leccion_id = $2 AND borrada_at IS NULL ORDER BY updated_at DESC LIMIT 1`, [userId, l.leccion.id]);
+  if (!rows[0]) {
+    const r = await crearNota(userId, l.leccion.titulo, nuevos, l.materia.id, l.leccion.id);
+    return { nota: completaDe(r), creada: true };
+  }
+  const todo = bloquesValidos([...(rows[0].bloques as BloqueCuaderno[]), ...nuevos]);
+  if ("error" in todo) return { error: todo.error };
+  const d = derivados(rows[0].titulo, todo.bloques);
+  const { rows: out } = await pool.query(
+    `UPDATE cuaderno_notas SET bloques = $3::jsonb, buscar = $4, extracto = $5, citas = $6::text[], version = version + 1, updated_at = now()
+      WHERE id = $1 AND user_id = $2 RETURNING *`,
+    [rows[0].id, userId, JSON.stringify(todo.bloques), d.buscar, d.extracto, d.citas],
+  );
+  return { nota: completaDe(out[0]), creada: false };
 }
 
 async function crearNota(userId: number, titulo: string, bloques: BloqueCuaderno[], materia: string | null, leccion: string | null): Promise<any> {
@@ -347,21 +370,9 @@ export function registerCuadernoRoutes(app: Express) {
       if (!l) return res.status(404).json({ message: "No encontramos esa lección." });
       const v = bloquesValidos(req.body?.bloques);
       if ("error" in v || !v.bloques.length) return res.status(400).json({ message: "error" in v ? v.error : "No hay nada para agregar." });
-      const { rows } = await pool.query(`SELECT * FROM cuaderno_notas WHERE user_id = $1 AND leccion_id = $2 AND borrada_at IS NULL ORDER BY updated_at DESC LIMIT 1`, [userId, l.leccion.id]);
-      if (!rows[0]) {
-        const r = await crearNota(userId, l.leccion.titulo, v.bloques, l.materia.id, l.leccion.id);
-        return res.status(201).json(completaDe(r));
-      }
-      const bloques = [...(rows[0].bloques as BloqueCuaderno[]), ...v.bloques];
-      const todo = bloquesValidos(bloques);
-      if ("error" in todo) return res.status(400).json({ message: todo.error });
-      const d = derivados(rows[0].titulo, todo.bloques);
-      const { rows: out } = await pool.query(
-        `UPDATE cuaderno_notas SET bloques = $3::jsonb, buscar = $4, extracto = $5, citas = $6::text[], version = version + 1, updated_at = now()
-          WHERE id = $1 AND user_id = $2 RETURNING *`,
-        [rows[0].id, userId, JSON.stringify(todo.bloques), d.buscar, d.extracto, d.citas],
-      );
-      res.json(completaDe(out[0]));
+      const r = await agregarALaNotaDeLeccion(userId, l, v.bloques);
+      if ("error" in r) return res.status(400).json({ message: r.error });
+      res.status(r.creada ? 201 : 200).json(r.nota);
     } catch (err) {
       error500(res, "agregar", err);
     }
@@ -401,7 +412,9 @@ export function registerCuadernoRoutes(app: Express) {
         `INSERT INTO cuaderno_resaltados (user_id, leccion_id, bloque, texto, color) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
         [userId, l.leccion.id, bloqueN, texto, color],
       );
-      res.status(201).json(resaltadoDe(rows[0]));
+      // lo resaltado queda también en la nota de la lección, con su color: todo lo que se toma de una lección está ahí
+      const enNota = await agregarALaNotaDeLeccion(userId, l, [bloque("resaltado", texto, { color, fuente: { tipo: "leccion", id: l.leccion.id, titulo: l.leccion.titulo } })]);
+      res.status(201).json({ ...resaltadoDe(rows[0]), notaLeccion: "nota" in enNota ? enNota.nota : null });
     } catch (err) {
       error500(res, "resaltar", err);
     }

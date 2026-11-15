@@ -269,7 +269,13 @@ function NotaAbierta({ id, papelera, alCerrar, alAbrirCita }: { id: number; pape
   return (
     <div className="glass-card p-3 sm:p-5" data-testid="cuaderno-nota">
       <div className="flex items-center gap-1.5 flex-wrap mb-1">
-        <Button variant="ghost" size="sm" onClick={alCerrar} className="md:hidden -ml-2"><ArrowLeft className="w-4 h-4 mr-1" /> Mis notas</Button>
+        {/* salir de la nota: se guarda sola, así que «Listo» solo la cierra (en el teléfono vuelve a la lista) */}
+        <Button variant="outline" size="sm" onClick={alCerrar} data-testid="cuaderno-cerrar-nota"><ArrowLeft className="w-4 h-4 mr-1" /> Listo</Button>
+        {n.leccionId && (
+          <Link href={`/academia/leccion/${n.leccionId}`} data-testid="cuaderno-ir-leccion">
+            <Button variant="ghost" size="sm"><BookOpen className="w-4 h-4 mr-1" /> Volver a la lección</Button>
+          </Link>
+        )}
         <span className="flex-1" />
         {n.borrada ? (
           <>

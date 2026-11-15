@@ -1,12 +1,14 @@
 // El cuaderno dentro de una lección: al seleccionar un texto (con el dedo o el mouse) aparece una barra para
 // resaltarlo en cinco colores, pasarlo al cuaderno o copiarlo; el botón «Cuaderno» abre la nota de esa lección (se
-// escribe mientras se lee) y sus resaltados. Lo resaltado se ve pintado en la lección (marcas.tsx).
+// escribe mientras se lee) y sus resaltados. Lo resaltado se ve pintado en la lección (marcas.tsx) y, como lo pasado al
+// cuaderno, queda también en la nota de la lección: el aviso trae «Ver mi nota», que la abre justo en lo nuevo.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy, ExternalLink, FilePlus2, Highlighter, LayoutTemplate, NotebookPen, Trash2, X } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, FilePlus2, Highlighter, LayoutTemplate, NotebookPen, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/hooks/use-toast";
 import { COLORES, bloque, type BloqueCuaderno, type ColorCuaderno, type NotaCompleta, type ResaltadoLeccion } from "@shared/cuaderno";
 import { agregarALeccion, borrarResaltado, cambiarResaltado, crearNota, resaltar, useCuadernoLeccion } from "./api";
@@ -41,6 +43,8 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
   const [abierto, setAbierto] = useState(false);
   const [pestana, setPestana] = useState<"nota" | "resaltados">("nota");
   const [sel, setSel] = useState<Seleccion | null>(null);
+  const [alFinal, setAlFinal] = useState(false);
+  const fin = useRef<HTMLDivElement | null>(null);
   const agregar = useRef<((b: BloqueCuaderno[]) => void) | null>(null);
   const ocultar = useRef<number | null>(null);
   const tactil = useMemo(() => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches, []);
@@ -92,6 +96,28 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     setSel(null);
     document.getSelection()?.removeAllRanges();
   };
+  /** Abre la nota de la lección y baja hasta lo último que se guardó. */
+  const verNota = () => {
+    setPestana("nota");
+    setAlFinal(true);
+    setAbierto(true);
+  };
+  useEffect(() => {
+    if (!abierto || !alFinal || !nota) return;
+    const t = window.setTimeout(() => {
+      fin.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      setAlFinal(false);
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [abierto, alFinal, nota]);
+  const avisoGuardado = (titulo: string) =>
+    toast({
+      title: titulo,
+      description: `Quedó en tu nota de «${leccionTitulo}», en Mi cuaderno.`,
+      // con un botón, el aviso dura más (los demás se cierran a los 5 segundos)
+      duration: 10_000,
+      action: <ToastAction altText="Ver mi nota" onClick={verNota} data-testid="cuaderno-ver-nota">Ver mi nota</ToastAction>,
+    });
   const conservar = () => {
     if (ocultar.current != null) {
       window.clearTimeout(ocultar.current);
@@ -104,9 +130,11 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     if (!s) return;
     terminar();
     try {
-      const r = await resaltar({ leccionId, bloque: s.bloque, texto: s.texto, color });
-      qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r] } : v));
+      const { notaLeccion: notaNueva, ...r } = await resaltar({ leccionId, bloque: s.bloque, texto: s.texto, color });
+      qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r], nota: notaNueva ?? v.nota } : { nota: notaNueva, resaltados: [r] }));
       qc.invalidateQueries({ queryKey: ["cuaderno", "resaltados"] });
+      qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
+      if (notaNueva) avisoGuardado("Resaltado y guardado en tu nota");
     } catch (e: any) {
       toast({ title: "No se pudo resaltar", description: e?.message, variant: "destructive" });
     }
@@ -125,7 +153,7 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
       const n = await agregarALeccion(leccionId, [b]);
       qc.setQueryData(clave, (v: any) => (v ? { ...v, nota: n } : { nota: n, resaltados: [] }));
       qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
-      toast({ title: "Agregado a tu cuaderno", description: `En tu nota de «${leccionTitulo}».` });
+      avisoGuardado("Guardado en tu cuaderno");
     } catch (e: any) {
       toast({ title: "No se pudo agregar", description: e?.message, variant: "destructive" });
     }
@@ -201,6 +229,9 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
       <Sheet open={abierto} onOpenChange={setAbierto}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-4 sm:p-6" data-testid="cuaderno-panel">
           <SheetHeader className="text-left">
+            <Button variant="outline" size="sm" onClick={() => setAbierto(false)} className="self-start mb-2" data-testid="cuaderno-volver-leccion">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Volver a la lección
+            </Button>
             <SheetTitle className="flex items-center gap-2"><NotebookPen className="w-5 h-5 text-orange-500" /> Mi cuaderno</SheetTitle>
             <p className="text-sm text-muted-foreground">{leccionTitulo}</p>
           </SheetHeader>
@@ -237,9 +268,16 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
                   <Button size="sm" className="fire-btn-primary" onClick={() => empezar("clase")} data-testid="cuaderno-empezar-clase"><LayoutTemplate className="w-4 h-4 mr-1" /> Notas de clase</Button>
                   <Button size="sm" variant="outline" onClick={() => empezar()} data-testid="cuaderno-empezar"><FilePlus2 className="w-4 h-4 mr-1" /> En blanco</Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">Consejo: selecciona un texto de la lección para resaltarlo o pasarlo aquí.</p>
+                <p className="text-xs text-muted-foreground mt-3">Consejo: selecciona un texto de la lección. Lo que resaltes o pases «Al cuaderno» se guarda aquí, en tu nota de esta lección.</p>
               </div>
             ))}
+
+          {pestana === "nota" && nota && (
+            <div ref={fin} className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+              <Button size="sm" className="fire-btn-primary" onClick={() => setAbierto(false)} data-testid="cuaderno-listo">Listo, volver a la lección</Button>
+              <span className="text-xs text-muted-foreground">Se guarda solo mientras escribes.</span>
+            </div>
+          )}
 
           {pestana === "resaltados" &&
             (resaltados.length ? (

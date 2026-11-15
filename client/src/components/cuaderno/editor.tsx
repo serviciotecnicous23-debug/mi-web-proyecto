@@ -26,9 +26,15 @@ const TIPOS: { t: TipoBloque; nombre: string; icono: React.ComponentType<{ class
   { t: "cita", nombre: "Cita", icono: Quote, ayuda: "Una frase para recordar" },
   { t: "versiculo", nombre: "Versículo", icono: BookOpen, ayuda: "Lo que te enseña este versículo (opcional)" },
   { t: "aviso", nombre: "Idea importante", icono: Lightbulb, ayuda: "Una idea importante" },
+  { t: "resaltado", nombre: "Resaltado", icono: Highlighter, ayuda: "Un texto resaltado" },
   { t: "separador", nombre: "Separador", icono: Minus, ayuda: "" },
 ];
-const DE_TIPO = Object.fromEntries(TIPOS.map((x) => [x.t, x])) as Record<TipoBloque, (typeof TIPOS)[number]>;
+const POR_TIPO = Object.fromEntries(TIPOS.map((x) => [x.t, x])) as Partial<Record<TipoBloque, (typeof TIPOS)[number]>>;
+/**
+ * El nombre, el ícono y la ayuda de un tipo de bloque. Un tipo que el editor no conozca se muestra como texto: una nota
+ * nunca debe dejar de abrirse (antes, un bloque «resaltado» rompía el editor y dejaba la página sin salida).
+ */
+const tipoDe = (t: TipoBloque) => POR_TIPO[t] ?? TIPOS[0];
 const SIGUE_IGUAL = new Set<TipoBloque>(["lista", "numerada", "tarea"]);
 
 function EstadoChip({ estado }: { estado: EstadoGuardado }) {
@@ -311,8 +317,8 @@ export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, re
         <DropdownMenu open={menuBarra === "tipo"} onOpenChange={(o) => setMenuBarra(o ? "tipo" : null)}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="shrink-0" disabled={!actual} title="Tipo de bloque" data-testid="cuaderno-tipo">
-              {actual ? (() => { const I = DE_TIPO[actual.t].icono; return <I className="w-4 h-4" />; })() : <Type className="w-4 h-4" />}
-              <span className="ml-1 hidden sm:inline">{actual ? DE_TIPO[actual.t].nombre : "Bloque"}</span>
+              {actual ? (() => { const I = tipoDe(actual.t).icono; return <I className="w-4 h-4" />; })() : <Type className="w-4 h-4" />}
+              <span className="ml-1 hidden sm:inline">{actual ? tipoDe(actual.t).nombre : "Bloque"}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -454,9 +460,9 @@ function BloqueEditable({ b, numero, enfocado, alEnfocar, alCambiar, alTeclear, 
       onChange={(e) => alCambiar((x) => ({ ...x, texto: e.target.value }))}
       onKeyDown={alTeclear}
       onInput={ajustar}
-      placeholder={DE_TIPO[b.t].ayuda}
+      placeholder={tipoDe(b.t).ayuda}
       className={`w-full resize-none bg-transparent outline-none leading-7 text-[16px] placeholder:text-muted-foreground/60 ${ESTILO[b.t] ?? ""}`}
-      aria-label={DE_TIPO[b.t].nombre}
+      aria-label={tipoDe(b.t).nombre}
       data-testid="cuaderno-bloque-texto"
     />
   );
@@ -470,7 +476,7 @@ function BloqueEditable({ b, numero, enfocado, alEnfocar, alCambiar, alTeclear, 
       }}
       className={`w-full cursor-text whitespace-pre-wrap break-words leading-7 text-[16px] min-h-7 ${ESTILO[b.t] ?? ""}`}
     >
-      <TextoCuaderno texto={b.texto} ayuda={DE_TIPO[b.t].ayuda} alAbrirCita={alAbrirCita} />
+      <TextoCuaderno texto={b.texto} ayuda={tipoDe(b.t).ayuda} alAbrirCita={alAbrirCita} />
     </div>
   );
   const contenido = enfocado ? cajaTexto : vista;
