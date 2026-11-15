@@ -5,6 +5,7 @@ import { LinkEmbed } from "@/components/media/LinkEmbed";
 import { Layout } from "@/components/layout";
 import { VideoYouTube } from "./video-youtube";
 import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla, idYouTube } from "@shared/academia";
+import { conMarcas, type Marca } from "@/components/cuaderno/marcas";
 
 // El número va con el color del texto del tema (se lee en claro y en oscuro); la medalla la dan el aro y el fondo.
 const COLOR_MEDALLA: Record<Medalla, { aro: string; fondo: string }> = {
@@ -114,29 +115,30 @@ export function Cargando() {
 }
 
 /** Un bloque de una lección: texto, versículo (de la RV1960 de la web), lista, nota, video, audio o imagen. */
-export function BloqueLeccion({ b, alVerVideo }: { b: BloqueVista; alVerVideo?: (segundos: number) => void }) {
+/** `marcas`: lo que el alumno resaltó en este bloque (su cuaderno: components/cuaderno). */
+export function BloqueLeccion({ b, alVerVideo, marcas }: { b: BloqueVista; alVerVideo?: (segundos: number) => void; marcas?: Marca[] }) {
   switch (b.t) {
     case "subtitulo":
       return <h2 className="font-display font-semibold text-xl md:text-2xl mt-8 mb-3">{b.texto}</h2>;
     case "parrafo":
-      return <p className="text-[17px] leading-8 mb-4">{b.texto}</p>;
+      return <p className="text-[17px] leading-8 mb-4">{conMarcas(b.texto, marcas)}</p>;
     case "lista":
       return (
         <ul className="list-disc pl-6 space-y-2 mb-4 text-[17px] leading-8">
-          {b.items.map((x) => <li key={x}>{x}</li>)}
+          {b.items.map((x) => <li key={x}>{conMarcas(x, marcas)}</li>)}
         </ul>
       );
     case "nota":
       return (
         <aside className="glass-card p-5 my-6 border-l-4" style={{ borderLeftColor: "#ff7a1a" }}>
           {b.titulo && <p className="data-label text-orange-600 dark:text-orange-300 mb-2 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" />{b.titulo}</p>}
-          <p className="text-[16px] leading-7">{b.texto}</p>
+          <p className="text-[16px] leading-7">{conMarcas(b.texto, marcas)}</p>
         </aside>
       );
     case "versiculo":
       return (
         <figure className="my-6 rounded-2xl p-5 md:p-6 bg-orange-500/[0.07] border border-orange-500/20" data-testid="versiculo">
-          <blockquote className="accent-serif text-lg md:text-xl leading-8">{b.texto ?? "No se pudo cargar el texto ahora; ábrelo en la Biblia."}</blockquote>
+          <blockquote className="accent-serif text-lg md:text-xl leading-8">{b.texto ? conMarcas(b.texto, marcas) : "No se pudo cargar el texto ahora; ábrelo en la Biblia."}</blockquote>
           <figcaption className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-semibold">{b.ref} <span className="text-muted-foreground font-normal">· RV1960</span></span>
             {b.enlace && (

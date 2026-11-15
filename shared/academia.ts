@@ -12,7 +12,6 @@
  * La estructura y la evaluación vienen de los institutos bíblicos y de las plataformas académicas (Moodle, la Open
  * University); del juego solo se toma la seguridad técnica de los exámenes (preguntas en el servidor y reloj).
  */
-import { BIBLE_BOOK_CHAPTERS, bibleBookLabel } from "./bible";
 
 export const NOMBRE_ACADEMIA = "Academia Avivando el Fuego";
 /** El lema: 2 Timoteo 2:15 (RV1960, frase literal comprobada con la Biblia de la web). */
@@ -411,33 +410,8 @@ export function puedeRevisar(role: string | null | undefined): boolean {
 
 // ---------------------------------------------------------------- citas bíblicas
 
-const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
-const LIBROS = new Map(Object.keys(BIBLE_BOOK_CHAPTERS).map((k) => [sinTildes(k).toLowerCase(), k]));
-
-export type Cita = { libro: string; capitulo: number; desde: number; hasta: number };
-
-/** «Juan 3:16», «1 Juan 5:11-13», «Gálatas 5:16-25» → libro guardado (sin tilde), capítulo y versículos. */
-export function parsearCita(ref: string): Cita | null {
-  const m = /^\s*((?:[123]\s+)?[A-Za-zÁÉÍÓÚÑáéíóúñü]+)\s+(\d{1,3}):(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?\s*$/.exec(ref);
-  if (!m) return null;
-  const libro = LIBROS.get(sinTildes(m[1].replace(/\s+/g, " ")).toLowerCase());
-  if (!libro) return null;
-  const capitulo = Number(m[2]);
-  const desde = Number(m[3]);
-  const hasta = m[4] ? Number(m[4]) : desde;
-  if (capitulo < 1 || capitulo > BIBLE_BOOK_CHAPTERS[libro] || desde < 1 || hasta < desde) return null;
-  return { libro, capitulo, desde, hasta };
-}
-
-/** La cita escrita para mostrar, con las tildes de la RV1960 («Galatas» → «Gálatas»). */
-export function citaVisible(c: Cita): string {
-  return `${bibleBookLabel(c.libro)} ${c.capitulo}:${c.desde}${c.hasta > c.desde ? `-${c.hasta}` : ""}`;
-}
-
-/** El capítulo en la Biblioteca de la web. */
-export function enlaceBiblia(c: Cita): string {
-  return `/biblioteca?libro=${encodeURIComponent(c.libro)}&cap=${c.capitulo}`;
-}
+// Viven en shared/citas.ts (liviano: lo usan también el cuaderno y la Biblioteca sin cargar el catálogo).
+export { citaVisible, enlaceBiblia, parsearCita, type Cita } from "./citas";
 
 // ---------------------------------------------------------------- el catálogo
 
