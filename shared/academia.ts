@@ -2192,6 +2192,161 @@ const IDIOMAS: MateriaDef = {
   disponible: true,
 };
 
+const TEOLOGIA_PASTORAL: MateriaDef = {
+  id: "n5-teologia-pastoral",
+  nivel: 5,
+  orden: 1,
+  titulo: "Teología pastoral",
+  resumen: "El buen pastor y el llamado, la vida del pastor con Dios y con su familia, apacentar con la Palabra, cuidar y visitar al rebaño, y acompañar en las crisis sin descuidarse, para terminar bien el ministerio.",
+  base: "Juan 10:11; 1 Pedro 5:2-4",
+  memoria: "Juan 10:11",
+  lecciones: lecciones("n5-teologia-pastoral", [
+    ["El buen pastor y el llamado", "Juan 10:11-14; 1 Pedro 5:1-4"],
+    ["La vida del pastor con Dios", "Hechos 6:4; Marcos 1:35; 1 Timoteo 4:16; Marcos 6:31"],
+    ["El pastor y su familia", "1 Timoteo 3:4-5; Josué 24:15; 1 Pedro 4:9"],
+    ["Apacentar con la Palabra", "Juan 21:15-17; 2 Timoteo 4:1-2; Hechos 20:28-31"],
+    ["Cuidar y visitar al rebaño", "Ezequiel 34:2-4; Juan 10:3; Santiago 5:14"],
+    ["Acompañar en las crisis y terminar bien", "2 Corintios 1:3-4; 1 Corintios 10:12; 2 Timoteo 4:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que pastorea, o se prepara para hacerlo, conozca el corazón y la tarea del pastor según la Biblia: el llamado que nace de Cristo, el buen pastor; la vida con Dios y con la familia; apacentar con la Palabra; cuidar, visitar y acompañar en las crisis; y cuidarse para terminar bien. El modelo es Cristo: «Yo soy el buen pastor; el buen pastor su vida da por las ovejas» (Juan 10:11). Quién puede ejercer el pastorado no se decide aquí: es un punto de la declaración de fe por confirmar.",
+    objetivos: [
+      { id: "o1", texto: "Explicar el ministerio pastoral a partir de Cristo, el buen pastor, y cómo se reconoce el llamado.", bloom: "comprender" },
+      { id: "o2", texto: "Describir la vida espiritual que necesita el pastor y cómo cuidarla.", bloom: "comprender" },
+      { id: "o3", texto: "Aplicar prácticas que cuiden el hogar y la familia del que sirve.", bloom: "aplicar" },
+      { id: "o4", texto: "Planificar la enseñanza de la Palabra para alimentar y proteger al rebaño.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar el cuidado pastoral: conocer, visitar, orar por los enfermos y referir a tiempo.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo acompañar en las crisis y cómo prevenir el agotamiento y la caída.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 10:11 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ministerio pastoral según la Biblia: el llamado, la vida del pastor, la enseñanza, el cuidado y las crisis.",
+      ser: "Un pastor con corazón de siervo, que cuida su vida con Dios y su familia.",
+      hacer: "Apacentar con la Palabra, visitar, acompañar en el dolor y planificar el cuidado de la iglesia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John MacArthur (ed.)", titulo: "El ministerio pastoral: cómo pastorear bíblicamente", editorial: "Grupo Nelson" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Juan 10: el buen pastor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=10" },
+      { tipo: "lectura", titulo: "Ezequiel 34: los pastores de Israel", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Ezequiel&cap=34" },
+    ],
+  },
+  disponible: true,
+};
+
+const ADMINISTRACION: MateriaDef = {
+  id: "n5-administracion",
+  nivel: 5,
+  orden: 2,
+  titulo: "Administración y gobierno de la iglesia",
+  resumen: "La administración como don y mayordomía, las formas de gobierno de la iglesia, ancianos, diáconos y equipos, el dinero con transparencia, planificar y comunicar, y lo legal básico en los Estados Unidos.",
+  base: "1 Corintios 14:40; 1 Pedro 4:10",
+  memoria: "1 Corintios 14:40",
+  lecciones: lecciones("n5-administracion", [
+    ["Una iglesia en orden", "1 Corintios 14:33; 1 Corintios 14:40; 1 Corintios 12:28; 1 Pedro 4:10"],
+    ["Formas de gobierno de la iglesia", "Hechos 14:23; Hechos 15:22"],
+    ["Ancianos, diáconos y equipos", "Filipenses 1:1; 1 Timoteo 3:8-10; Hechos 6:3"],
+    ["El dinero de la iglesia", "1 Corintios 16:1-2; 2 Corintios 8:20-21; Lucas 14:28"],
+    ["Planificar, organizar y comunicar", "Nehemías 2:4-5; Proverbios 15:22; Proverbios 16:9"],
+    ["Lo legal básico", "Mateo 22:21; Tito 3:1"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder sepa ordenar la vida de la iglesia para que sirva a su misión: la administración como don y mayordomía, las formas de gobierno, las funciones de ancianos, diáconos y equipos, el manejo transparente del dinero, la planificación y la comunicación, y lo legal básico en los Estados Unidos, con ejemplos de Texas. La regla es la de Pablo: «pero hágase todo decentemente y con orden» (1 Corintios 14:40). La lección legal es una guía general, no un consejo legal. Quién puede ejercer cada cargo no se decide aquí: es un punto de la declaración de fe por confirmar.",
+    objetivos: [
+      { id: "o1", texto: "Explicar la administración como un don y una mayordomía al servicio de la misión.", bloom: "comprender" },
+      { id: "o2", texto: "Describir las formas de gobierno de la iglesia y el lugar de los estatutos.", bloom: "comprender" },
+      { id: "o3", texto: "Organizar las funciones de ancianos, diáconos y equipos de servicio.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar controles básicos para manejar el dinero con transparencia.", bloom: "aplicar" },
+      { id: "o5", texto: "Planificar, organizar y comunicar la vida de la iglesia.", bloom: "crear" },
+      { id: "o6", texto: "Evaluar el cumplimiento de los pasos legales básicos y cuándo consultar a un profesional.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 14:40 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La administración de la iglesia: el orden bíblico, el gobierno, los equipos, el dinero, la planificación y lo legal básico.",
+      ser: "Un administrador fiel y transparente, que sirve a las personas y no las controla.",
+      hacer: "Organizar equipos, preparar un presupuesto con controles, planificar el año y cumplir los pasos legales básicos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras-Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Hechos 6: los siete", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "lectura", titulo: "1 Timoteo 3: obispos y diáconos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Timoteo&cap=3" },
+    ],
+  },
+  disponible: true,
+};
+
+const SEMINARIO: MateriaDef = {
+  id: "n5-seminario",
+  nivel: 5,
+  orden: 8,
+  titulo: "Seminario de liderazgo ministerial",
+  resumen: "Un método para estudiar casos con la Biblia, cuatro casos tomados de situaciones comunes del ministerio y el plan de ministerio propio de cada alumno.",
+  base: "Proverbios 15:22; Proverbios 16:3",
+  memoria: "Proverbios 16:3",
+  lecciones: lecciones("n5-seminario", [
+    ["Cómo estudiar un caso", "Proverbios 18:13; Proverbios 18:17; Santiago 1:5"],
+    ["Caso: un desacuerdo que amenaza con dividir", "Hechos 15:6-7; Hechos 15:28; Romanos 14:19"],
+    ["Caso: el dinero y la confianza", "Deuteronomio 19:15; 2 Corintios 8:20-21"],
+    ["Caso: un líder que cae", "2 Samuel 12:7; 2 Samuel 12:13; Gálatas 6:1"],
+    ["Caso: crecer sin perder el rumbo", "Hechos 2:47; Éxodo 18:17-18; Hechos 6:7"],
+    ["Mi plan de ministerio", "Proverbios 16:3; Lucas 14:28; Habacuc 2:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder aprenda a pensar con la Biblia ante las situaciones reales del ministerio y prepare su propio plan: un método para estudiar casos, cuatro casos tomados de situaciones comunes (un desacuerdo, el dinero, un líder que cae y una iglesia que crece) y el plan de ministerio, que puede servir de base para el proyecto final del Nivel 5. Integra lo aprendido en ética, liderazgo, administración y teología pastoral. Todo se encomienda a Dios: «Encomienda a Jehová tus obras, Y tus pensamientos serán afirmados» (Proverbios 16:3). Los casos son ejemplos compuestos, no de personas reales.",
+    objetivos: [
+      { id: "o1", texto: "Aplicar un método para estudiar casos del ministerio a la luz de la Biblia.", bloom: "aplicar" },
+      { id: "o2", texto: "Analizar un desacuerdo en la iglesia con el modelo de Hechos 15.", bloom: "analizar" },
+      { id: "o3", texto: "Analizar un caso de dinero faltante con justicia y proponer controles.", bloom: "analizar" },
+      { id: "o4", texto: "Analizar el caso de un líder que cae: confrontación, disciplina, cuidado y restauración.", bloom: "analizar" },
+      { id: "o5", texto: "Analizar una iglesia en crecimiento y proponer cómo formar líderes e integrar a los nuevos.", bloom: "analizar" },
+      { id: "o6", texto: "Crear un plan de ministerio propio con visión, diagnóstico, metas, equipo, recursos, calendario y evaluación.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Proverbios 16:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Un método para estudiar casos y las partes de un plan de ministerio.",
+      ser: "Un líder que escucha antes de decidir, busca consejo y encomienda sus planes a Dios.",
+      hacer: "Analizar casos del ministerio con la Biblia y preparar su propio plan de ministerio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=BEvicPpjQBE", minutos: 6 },
+      { tipo: "lectura", titulo: "Hechos 15: el concilio de Jerusalén", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=15" },
+      { tipo: "lectura", titulo: "2 Samuel 12: Natán y David", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Samuel&cap=12" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -2293,14 +2448,14 @@ export const NIVELES: NivelDef[] = [
     descripcion: "Pastorear, administrar, enseñar y formar a otros: el nivel de quienes multiplican.",
     requisitos: ["Las 8 materias aprobadas", "El proyecto final con defensa en vivo", "Acompañar a 2 personas hasta terminar el Nivel 1"],
     materias: [
-      enPreparacion(5, 1, "n5-teologia-pastoral", "Teología pastoral", "La vida, la familia y la labor del ministro."),
-      enPreparacion(5, 2, "n5-administracion", "Administración y gobierno de la iglesia", "Organización, transparencia, diáconos y ancianos, y lo legal básico."),
+      TEOLOGIA_PASTORAL,
+      ADMINISTRACION,
       DIDACTICA,
       LIDERAZGO_2,
       IDIOMAS,
       enPreparacion(5, 6, "n5-exegesis", "Exégesis de un libro", "Estudio profundo de Romanos o de Hechos."),
       enPreparacion(5, 7, "n5-avivamiento", "Teología del avivamiento", "Los principios bíblicos, la historia y el discernimiento del avivamiento."),
-      enPreparacion(5, 8, "n5-seminario", "Seminario de liderazgo ministerial", "Casos reales y un plan de ministerio propio."),
+      SEMINARIO,
     ],
   },
 ];
