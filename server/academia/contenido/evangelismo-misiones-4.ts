@@ -204,7 +204,7 @@ export const EVANGELISMO_MISIONES_4: LeccionContenido[] = [
     ideaClave:
       "La fe es por el oír, y para oír hay que entender: como los que ponían el sentido para que el pueblo entendiera, el misionero comunica en la lengua del corazón. La Biblia en español nació del trabajo de Casiodoro de Reina, que la publicó en 1569, y de la revisión de Cipriano de Valera en 1602. Todavía hay pueblos que esperan la Biblia en su lengua.",
     paraLaVida: {
-      texto: "Leer la Biblia en tu lengua es un regalo que costó la vida de muchos.",
+      texto: "Leer la Biblia en tu lengua es un regalo que costó años de trabajo y sacrificio.",
       pregunta: "¿Cómo podrías explicar el evangelio con palabras que entienda alguien que nunca fue a una iglesia?",
     },
   },
