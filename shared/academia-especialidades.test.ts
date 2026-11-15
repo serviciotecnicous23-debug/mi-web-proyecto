@@ -16,17 +16,19 @@ test("cada materia de especialidad se llama <especialidad>-<orden>, aunque ya te
   }
 });
 
-test("Evangelismo y misiones abre con sus tres primeras materias, con la medida del Nivel 3", () => {
-  const [personal, campanas, misiones, transcultural, plantacion] = evangelismo.materias;
+test("Evangelismo y misiones tiene sus cinco materias, con la medida del Nivel 3", () => {
+  const materias = evangelismo.materias;
   assert.deepEqual(
-    [personal, campanas, misiones].map((m) => [m.titulo, m.memoria, m.lecciones.length, m.disponible]),
+    materias.map((m) => [m.titulo, m.memoria, m.lecciones.length, m.disponible, !!m.avanzada]),
     [
-      ["Evangelismo personal avanzado", "Proverbios 11:30", 6, true],
-      ["Campañas y cruzadas", "2 Timoteo 4:5", 6, true],
-      ["Teología bíblica de las misiones", "Juan 20:21", 6, true],
+      ["Evangelismo personal avanzado", "Proverbios 11:30", 6, true, false],
+      ["Campañas y cruzadas", "2 Timoteo 4:5", 6, true, false],
+      ["Teología bíblica de las misiones", "Juan 20:21", 6, true, true],
+      ["Misión transcultural", "Hechos 10:34-35", 6, true, true],
+      ["Plantación de iglesias", "Mateo 16:18", 6, true, true],
     ],
   );
-  for (const m of [personal, campanas, misiones]) {
+  for (const m of materias) {
     assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
     assert.equal(m.silabo!.objetivos.length, 7, m.id);
     assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
@@ -34,15 +36,10 @@ test("Evangelismo y misiones abre con sus tres primeras materias, con la medida 
     assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
     assert.equal(tieneEscritoBreve(m), true, m.id);
   }
-  assert.equal(personal.antes, "Evangelismo 3");
-  assert.equal(misiones.avanzada, true);
-  assert.match(misiones.silabo!.proposito, /declaración de fe por confirmar/);
-  // las dos que faltan siguen en preparación, sin lecciones
-  for (const m of [transcultural, plantacion]) {
-    assert.equal(m.disponible, false, m.id);
-    assert.equal(m.lecciones.length, 0, m.id);
-    assert.equal(m.avanzada, true, m.id);
-  }
+  assert.equal(materias[0].antes, "Evangelismo 3");
+  // la escatología y los cargos quedan para la declaración de fe
+  assert.match(materias[2].silabo!.proposito, /declaración de fe por confirmar/);
+  assert.match(materias[4].silabo!.proposito, /declaración de fe por confirmar/);
 });
 
 test("las materias de especialidad piden el Nivel 2, y las avanzadas, el Nivel 3", () => {
@@ -52,6 +49,9 @@ test("las materias de especialidad piden el Nivel 2, y las avanzadas, el Nivel 3
   assert.deepEqual(requisitosMateria(personal, [1, 2]), []);
   assert.deepEqual(requisitosMateria(misiones, [1, 2]), ["completar el Nivel 3 · Formación de obreros"]);
   assert.deepEqual(requisitosMateria(misiones, [1, 2, 3]), []);
+  for (const id of ["evangelismo-misiones-4", "evangelismo-misiones-5"]) {
+    assert.deepEqual(requisitosMateria(materiaPorId(id)!, [1, 2]), ["completar el Nivel 3 · Formación de obreros"], id);
+  }
 });
 
 test("las otras once especialidades siguen en preparación", () => {

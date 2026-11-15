@@ -2616,6 +2616,110 @@ const TEOLOGIA_MISIONES: MateriaDef = {
   disponible: true,
 };
 
+const MISION_TRANSCULTURAL: MateriaDef = {
+  id: "evangelismo-misiones-4",
+  nivel: null,
+  especialidad: "evangelismo-misiones",
+  avanzada: true,
+  orden: 4,
+  titulo: "Misión transcultural",
+  resumen: "Cruzar fronteras culturales, el modelo de la encarnación, el evangelio y la cultura, la Biblia en la lengua del corazón, el misionero y su familia, y las naciones que viven en nuestra ciudad.",
+  base: "Hechos 10:34-35; Juan 1:14",
+  memoria: "Hechos 10:34-35",
+  lecciones: lecciones("evangelismo-misiones-4", [
+    ["Cruzar fronteras culturales", "Hechos 10:34-35; Hechos 10:15; Hechos 10:28; Hechos 17:26-27"],
+    ["El modelo de la encarnación", "Juan 1:14; Filipenses 2:5-7; 1 Corintios 9:20; Rut 1:16"],
+    ["El evangelio y la cultura", "Hechos 15:19-20; Gálatas 3:28"],
+    ["La Biblia en la lengua del corazón", "Romanos 10:17; Nehemías 8:8"],
+    ["El misionero y su familia", "Hechos 16:9-10; 2 Corintios 11:26-27"],
+    ["Las naciones a la puerta de casa", "Deuteronomio 10:18-19; Mateo 25:35; Jeremías 29:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente ya formado sepa llevar el evangelio a personas de otra cultura, en otro país o en su propia ciudad: reconociendo sus prejuicios, siguiendo el modelo de Cristo, que se hizo carne y habitó entre nosotros, distinguiendo el evangelio de las costumbres, comunicando en la lengua del corazón, preparándose para el costo de la misión y cuidando a los que van. Es una materia avanzada: pide el Nivel 3. Su base es la palabra de Pedro en casa de Cornelio: «En verdad comprendo que Dios no hace acepción de personas, sino que en toda nación se agrada del que le teme y hace justicia» (Hechos 10:34-35).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la cultura y qué significa cruzar una frontera cultural con el evangelio.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar el modelo de la encarnación a la manera de servir en otra cultura.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir el evangelio de las costumbres del misionero y de la cultura local.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar el valor de comunicar el evangelio y la Biblia en la lengua de cada pueblo.", bloom: "comprender" },
+      { id: "o5", texto: "Evaluar los desafíos del misionero y de su familia, y cómo cuidarlos.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar cómo alcanzar a personas de otra cultura en la propia ciudad.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Hechos 10:34-35 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La cultura, el modelo de la encarnación, el concilio de Jerusalén y la historia de la Biblia en español.",
+      ser: "Un siervo humilde, sin prejuicios, que ama a las personas de toda cultura.",
+      hacer: "Servir y comunicar el evangelio a personas de otra cultura, también a los inmigrantes de su ciudad.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Jonatán P. Lewis (ed.)", titulo: "Misión mundial: un análisis del movimiento cristiano mundial", editorial: "Unilit", nota: "Sobre todo el tomo 3: las consideraciones transculturales." },
+        { autor: "Charles Van Engen", titulo: "El pueblo misionero de Dios", editorial: "Libros Desafío" },
+      ],
+      complementaria: [{ autor: "Samuel Escobar", titulo: "Tiempo de misión: América Latina y la misión cristiana hoy", editorial: "Clara-Semilla" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 10: Pedro en casa de Cornelio", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=10" },
+      { tipo: "lectura", titulo: "Hechos 15: el concilio de Jerusalén", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=15" },
+    ],
+  },
+  disponible: true,
+};
+
+const PLANTACION: MateriaDef = {
+  id: "evangelismo-misiones-5",
+  nivel: null,
+  especialidad: "evangelismo-misiones",
+  avanzada: true,
+  orden: 5,
+  titulo: "Plantación de iglesias",
+  resumen: "Por qué plantar iglesias, el plantador y su equipo, conocer el lugar y la gente, empezar en las casas, formar líderes y organizar la iglesia, y una iglesia que se multiplica.",
+  base: "Mateo 16:18; 1 Corintios 3:6",
+  memoria: "Mateo 16:18",
+  lecciones: lecciones("evangelismo-misiones-5", [
+    ["Por qué plantar iglesias", "Mateo 16:18; 1 Corintios 3:6-7; 1 Corintios 3:10-11"],
+    ["El plantador y su equipo", "Hechos 13:2-3; Romanos 16:3-5; Hechos 18:3-4; Hechos 18:11"],
+    ["Conocer el lugar y la gente", "Nehemías 2:12-13; Nehemías 2:17-18; Hechos 17:16-17"],
+    ["Empezar: casas, grupos y discípulos", "Hechos 16:13-15; Hechos 2:46-47; Hechos 20:20"],
+    ["Formar líderes y organizar la iglesia", "Tito 1:5; Efesios 4:11-12"],
+    ["Una iglesia que se multiplica", "1 Tesalonicenses 1:8; Filipenses 1:5-6; Hechos 19:9-10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente ya formado sepa participar en la plantación de una iglesia nueva, en su ciudad o en otro lugar: entendiendo que Cristo edifica su iglesia y que Dios da el crecimiento, con el carácter y el equipo que pide la obra, conociendo el lugar, empezando en las casas, formando líderes del lugar y sembrando desde el principio una iglesia que se multiplique. Es una materia avanzada: pide el Nivel 3. Quién puede ejercer cada cargo es un punto de la declaración de fe por confirmar. Su base es la promesa de Jesús: «edificaré mi iglesia; y las puertas del Hades no prevalecerán contra ella» (Mateo 16:18).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué plantar iglesias es parte de la misión y quién da el crecimiento.", bloom: "comprender" },
+      { id: "o2", texto: "Describir el llamado, el carácter y el equipo del plantador.", bloom: "comprender" },
+      { id: "o3", texto: "Aplicar el estudio de la comunidad antes de plantar.", bloom: "aplicar" },
+      { id: "o4", texto: "Planificar los primeros pasos de una iglesia que empieza en las casas.", bloom: "aplicar" },
+      { id: "o5", texto: "Analizar cómo formar líderes y organizar una iglesia que no dependa del plantador.", bloom: "analizar" },
+      { id: "o6", texto: "Diseñar los pasos para que una iglesia nueva llegue a plantar otra.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Mateo 16:18 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Cómo nacieron y se multiplicaron las iglesias del Nuevo Testamento.",
+      ser: "Un siervo paciente, que trabaja en equipo y confía en que Dios da el crecimiento.",
+      hacer: "Estudiar un lugar, empezar grupos en las casas, formar líderes y sembrar una iglesia que se multiplique.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Clint Clifton", titulo: "Umbrales para la plantación de iglesias: una guía centrada en el evangelio", editorial: "Send Network (NAMB)" },
+        { autor: "Jonatán P. Lewis (ed.)", titulo: "Misión mundial: un análisis del movimiento cristiano mundial", editorial: "Unilit", nota: "Sobre todo el tomo 2: la dimensión estratégica." },
+      ],
+      complementaria: [{ autor: "Charles Van Engen", titulo: "El pueblo misionero de Dios", editorial: "Libros Desafío" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras-Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 16: la iglesia de Filipos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=16" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
 type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
 
@@ -2633,7 +2737,7 @@ const especialidad = (id: EspecialidadId, nombre: string, resumen: string, mater
 /** Las especialidades: se abren al terminar el Nivel 2 (las materias «avanzadas» piden el Nivel 3) y no tienen límite. */
 export const ESPECIALIDADES: EspecialidadDef[] = [
   especialidad("evangelismo-misiones", "Evangelismo y misiones", "Ganar almas, campañas, misión transcultural y plantar iglesias.", [
-    EV_PERSONAL_AVANZADO, CAMPANAS, TEOLOGIA_MISIONES, ["Misión transcultural", true], ["Plantación de iglesias", true],
+    EV_PERSONAL_AVANZADO, CAMPANAS, TEOLOGIA_MISIONES, MISION_TRANSCULTURAL, PLANTACION,
   ]),
   especialidad("pastoral", "Ministerio pastoral", "Pastorear, aconsejar, celebrar las ordenanzas y cuidar del rebaño.", [
     ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
