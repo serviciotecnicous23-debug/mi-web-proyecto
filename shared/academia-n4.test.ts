@@ -46,6 +46,43 @@ test("«Apologética» da razones de la fe con 1 Pedro 3:15 de memoria", () => {
   assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Lee Strobel", "Pablo Hoff"]);
 });
 
+test("«Homilética II: predicación expositiva» prepara el sermón con rúbrica, con 1 Corintios 2:2 de memoria", () => {
+  const m = materiaPorId("n4-homiletica-2")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 7);
+  assert.equal(m.memoria, "1 Corintios 2:2");
+  assert.equal(m.lecciones.length, 6);
+  assert.ok(m.lecciones.every((l) => l.minutos === 10));
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[4]);
+  assert.match(m.lecciones[5].titulo, /rúbrica/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Haddon W. Robinson", "Gordon D. Fee y Douglas Stuart"]);
+  assert.match(m.silabo!.dimensiones.hacer, /20 a 30 minutos/);
+});
+
+test("«Historia de la iglesia II» va de la Reforma a América Latina, con Romanos 1:17 de memoria", () => {
+  const m = materiaPorId("n4-historia-2")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 8);
+  assert.equal(m.memoria, "Romanos 1:17");
+  assert.equal(m.lecciones.length, 6);
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[4]);
+  assert.match(m.lecciones[0].titulo, /Lutero/);
+  assert.match(m.lecciones[4].titulo, /pentecostal/);
+  assert.match(m.lecciones[5].titulo, /América Latina/);
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.editorial), ["Unilit", "Mundo Hispano"]);
+});
+
+test("«Ética cristiana y ministerial» cierra el Nivel 4 con Romanos 12:2 de memoria y deja los cargos a la declaración de fe", () => {
+  const m = materiaPorId("n4-etica")!;
+  assert.equal(m.disponible, true);
+  assert.equal(m.orden, 10);
+  assert.equal(m.memoria, "Romanos 12:2");
+  assert.equal(m.lecciones.length, 6);
+  assert.deepEqual(examenDe(m), EXAMEN_FINAL[4]);
+  assert.match(m.lecciones[5].titulo, /ministro/);
+  assert.match(m.silabo!.proposito, /declaración de fe por confirmar/);
+});
+
 test("las materias del Nivel 4 piden el Nivel 3 completo", () => {
   const m = materiaPorId("n4-sistematica-1")!;
   assert.deepEqual(requisitosMateria(m, [1, 2]), ["completar el Nivel 3 · Formación de obreros"]);
@@ -55,6 +92,10 @@ test("las materias del Nivel 4 piden el Nivel 3 completo", () => {
 test("el Nivel 4 conserva su orden; las sistemáticas II a IV y Epístolas y Apocalipsis esperan la declaración de fe", () => {
   assert.equal(nivel4.materias.length, 10);
   assert.deepEqual(nivel4.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(
+    nivel4.materias.filter((m) => !m.disponible).map((m) => m.id),
+    ["n4-sistematica-2", "n4-sistematica-3", "n4-sistematica-4", "n4-epistolas-apocalipsis"],
+  );
   for (const id of ["n4-sistematica-2", "n4-sistematica-3", "n4-sistematica-4", "n4-epistolas-apocalipsis"]) {
     assert.equal(materiaPorId(id)!.disponible, false, `${id} espera la declaración de fe`);
   }
