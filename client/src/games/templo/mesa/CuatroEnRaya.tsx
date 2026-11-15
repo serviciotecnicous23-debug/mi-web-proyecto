@@ -62,7 +62,7 @@ export function CuatroEnRayaPantalla({ vista, jugadas, jugar, ultima, ocupado, a
           </span>
         ))}
       </div>
-      <div className="relative max-w-[24rem] select-none" style={{ width: "min(100%, max(16rem, calc(100dvh - 22rem)))", aspectRatio: `${COLUMNAS} / ${FILAS + alto}` }} onMouseLeave={() => setEncima(null)}>
+      <div className="relative max-w-[30rem] select-none" style={{ width: "min(100%, max(17rem, calc(100dvh - 18rem)))", aspectRatio: `${COLUMNAS} / ${FILAS + alto}` }} onMouseLeave={() => setEncima(null)}>
         <div className="absolute inset-x-[3%] top-0 grid grid-cols-7" style={{ height: `${(alto / (FILAS + alto)) * 100}%` }}>
           {Array.from({ length: COLUMNAS }, (_, c) => (
             <div key={c} className="relative">
