@@ -85,7 +85,7 @@ export function Temporizador({ alSumar }: { alSumar: (minutos: number) => Promis
       const minutos = Math.min(ESTUDIO.porAviso, Math.round(e.duracion / 60));
       campana();
       alSumar(minutos)
-        .then(() => toast({ title: "¡Sesión completada!", description: `+${minutos} minutos de estudio. Descansa 5 minutos.` }))
+        .then(() => toast({ title: "¡Sesión completada!", description: `+${minutos} ${minutos === 1 ? "minuto" : "minutos"} de estudio. Descansa 5 minutos.` }))
         .catch(() => toast({ title: "Sesión completada", description: "No se pudieron guardar los minutos ahora.", variant: "destructive" }))
         .finally(() => {
           sumando.current = false;
