@@ -205,7 +205,7 @@ export function DibujaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsMe
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-start">
         <div className="space-y-2">
           <p className="text-center font-serif text-lg font-black text-[#3a2616] dark:text-amber-100">
             {v.fase === "preparar"

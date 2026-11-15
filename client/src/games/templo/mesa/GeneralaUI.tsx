@@ -19,6 +19,22 @@ export function GeneralaUI({ vista: v, nombres, bots, jugar, recibidaEn }: Props
   const [guardar, setGuardar] = useState<boolean[]>([false, false, false, false, false]);
   const [vueltas, setVueltas] = useState([0, 0, 0, 0, 0]);
   const [sacude, setSacude] = useState(0);
+  // el tamaño de los dados según el ancho del paño: en el teléfono, los cinco caben sin salirse por las orillas
+  const fila = useRef<HTMLDivElement | null>(null);
+  const [tamDado, setTamDado] = useState(50);
+  useEffect(() => {
+    const el = fila.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const medir = () => {
+      const ancho = el.clientWidth;
+      // cinco dados con sus cuatro espacios; el giro en 3D los hace ver un poco más anchos
+      if (ancho > 0) setTamDado(Math.max(34, Math.min(50, Math.floor(((ancho - 4 * 10) / 5) * 0.84))));
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [sello, setSello] = useState<{ n: number; texto: string; sub?: string; color?: string } | null>(null);
   const [confeti, setConfeti] = useState(0);
   const [flota, setFlota] = useState<{ n: number; a: number; cat: CatGenerala; puntos: number } | null>(null);
@@ -104,7 +120,7 @@ export function GeneralaUI({ vista: v, nombres, bots, jugar, recibidaEn }: Props
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
         {/* la mesa con los dados */}
         <section className="mesa-pano relative overflow-hidden rounded-3xl px-3 pb-4 pt-3 text-white" aria-label="La mesa de los dados">
           <div className="flex items-center justify-between gap-2">
@@ -113,11 +129,12 @@ export function GeneralaUI({ vista: v, nombres, bots, jugar, recibidaEn }: Props
             </p>
             {v.fase !== "fin" && <RelojAnillo ms={restante} total={v.fase === "preparar" ? GENERALA.prepararMs : v.turnoMs} tam={30} />}
           </div>
-          <div className="mt-5 flex min-h-[5.5rem] items-end justify-center gap-2.5 sm:gap-3.5">
+          <div ref={fila} className="mt-5 flex min-h-[5.5rem] items-end justify-center gap-2.5 sm:gap-3.5">
             {v.dados.map((d, i) => (
               <Dado
                 key={i}
                 i={i}
+                tam={tamDado}
                 valor={d}
                 vueltas={vueltas[i]}
                 guardado={(puedeGuardar && guardar[i]) || (!miTurno && v.tiros > 0 && v.tiros < GENERALA.tiros && v.guardados[i])}

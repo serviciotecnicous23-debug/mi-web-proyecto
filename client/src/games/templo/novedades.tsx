@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-15-mesas-telefono",
+    fecha: "15 de noviembre de 2026",
+    titulo: "La lotería, la generala y las escaleras en el teléfono",
+    puntos: [
+      "🎴 Lotería: al bajar a tu tabla, arriba queda la carta que se cantó; el botón «¡Lotería!» se queda pegado abajo, y los jugadores van en una fila que se desliza de lado.",
+      "🎲 Generala: los cinco dados caben en el paño, aunque el teléfono sea angosto.",
+      "🪜 Escaleras de Jacob: el dado y el botón para tirarlo van en una barra pegada abajo, siempre a la vista.",
+      "📱 En el teléfono, el cantor ya no se sale por la orilla cuando han salido muchas cartas.",
+    ],
+  },
+  {
     id: "2026-11-15-domino-telefono",
     fecha: "15 de noviembre de 2026",
     titulo: "El dominó cabe en el teléfono",
