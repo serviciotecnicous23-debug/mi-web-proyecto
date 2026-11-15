@@ -1880,6 +1880,161 @@ const APOLOGETICA: MateriaDef = {
   disponible: true,
 };
 
+const HOMILETICA_2: MateriaDef = {
+  id: "n4-homiletica-2",
+  nivel: 4,
+  orden: 7,
+  titulo: "Homilética II: predicación expositiva",
+  resumen: "Predicar un pasaje de modo que su idea central sea la del sermón: del estudio del texto a la idea homilética, predicar según el género, la estructura, la aplicación con Cristo en el centro, el llamado y la entrega, con la rúbrica del sermón del Nivel 4.",
+  base: "2 Timoteo 4:1-2; Hechos 20:26-27",
+  memoria: "1 Corintios 2:2",
+  lecciones: lecciones("n4-homiletica-2", [
+    ["La predicación expositiva", "Hechos 20:26-27; Nehemías 8:8; Hebreos 4:12"],
+    ["Del texto a la idea del sermón", "2 Timoteo 2:15; Filipenses 4:11-13"],
+    ["Predicar según el género", "2 Timoteo 3:16-17; 1 Samuel 17:45-47; Lucas 18:1-8"],
+    ["La estructura del sermón expositivo", "Hechos 2:36-38; Efesios 2:1-10"],
+    ["Aplicación, Cristo y el llamado", "Santiago 1:22-25; 1 Corintios 2:1-2; 2 Corintios 5:20-21; Hechos 2:37-41"],
+    ["La entrega y el sermón con rúbrica", "1 Timoteo 4:13-16; 2 Timoteo 2:15"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero sepa predicar un pasaje con fidelidad: que el mensaje del sermón sea el mensaje del texto. La materia sigue a Homilética I y enseña a estudiar el pasaje hasta su idea exegética y a convertirla en la idea del sermón, a predicar según el género, a ordenar el sermón con el movimiento del texto, a aplicarlo con Cristo en el centro y a hacer un llamado claro. Prepara el sermón evaluado con rúbrica que pide el Nivel 4. El centro de toda predicación lo dijo Pablo: «Pues me propuse no saber entre vosotros cosa alguna sino a Jesucristo, y a éste crucificado» (1 Corintios 2:2).",
+    objetivos: [
+      { id: "o1", texto: "Definir la predicación expositiva, distinguirla de la temática y la textual, y explicar su base bíblica.", bloom: "comprender" },
+      { id: "o2", texto: "Estudiar un pasaje hasta su idea exegética y convertirla en la idea homilética del sermón.", bloom: "aplicar" },
+      { id: "o3", texto: "Predicar según el género: narración, epístola, poesía, parábola y profecía.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un sermón expositivo que siga el movimiento del pasaje.", bloom: "crear" },
+      { id: "o5", texto: "Aplicar el pasaje con precisión, con Cristo y la gracia en el centro, y hacer un llamado claro.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un sermón con la rúbrica de la academia y preparar el sermón del Nivel 4.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 2:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La predicación expositiva: el estudio del pasaje, la idea exegética y la homilética, los géneros, la estructura, la aplicación y la rúbrica.",
+      ser: "Un predicador fiel al texto, humilde ante la Palabra y dependiente del Espíritu, que predica a Cristo.",
+      hacer: "Preparar y predicar un sermón expositivo de 20 a 30 minutos y evaluarlo con la rúbrica.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Haddon W. Robinson", titulo: "La predicación bíblica: desarrollo y presentación de mensajes expositivos", editorial: "Unilit" },
+        { autor: "Gordon D. Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "James D. Crane", titulo: "El sermón eficaz", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=34biq4ivs5I", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Filipenses", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gks8CQX5mwQ", minutos: 10 },
+      { tipo: "lectura", titulo: "Hechos 2: el sermón de Pentecostés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+      { tipo: "lectura", titulo: "Nehemías 8: leer y poner el sentido", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
+const HISTORIA_2: MateriaDef = {
+  id: "n4-historia-2",
+  nivel: 4,
+  orden: 8,
+  titulo: "Historia de la iglesia II",
+  resumen: "La Reforma, los avivamientos y las misiones modernas, el movimiento pentecostal y la iglesia evangélica en América Latina y entre los hispanos de los Estados Unidos.",
+  base: "Romanos 1:16-17; Hechos 1:8",
+  memoria: "Romanos 1:17",
+  lecciones: lecciones("n4-historia-2", [
+    ["Lutero y la Reforma", "Romanos 1:16-17; Efesios 2:8-9"],
+    ["La Reforma se extiende", "Hechos 17:11; Isaías 40:8"],
+    ["Puritanos, pietistas y el gran despertar", "Habacuc 3:2; Romanos 8:16"],
+    ["Las misiones modernas y los avivamientos del siglo XIX", "Isaías 54:2-3; Mateo 28:19-20"],
+    ["El movimiento pentecostal", "Joel 2:28-29; Hechos 2:1-4"],
+    ["La iglesia evangélica en América Latina", "Romanos 10:14-15; Hechos 1:8"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca la historia de la iglesia desde la Reforma hasta hoy: el redescubrimiento del evangelio de la gracia, los avivamientos que unieron la sana doctrina con una fe viva, las misiones modernas, el nacimiento y la expansión del movimiento pentecostal y la historia de la iglesia evangélica en América Latina y entre los hispanos de los Estados Unidos, de la que forma parte nuestro ministerio. Sigue a Historia de la iglesia I. El hilo es el que encendió la Reforma: «Mas el justo por la fe vivirá» (Romanos 1:17).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la Reforma de Lutero y sus principios: solo la Escritura, solo la gracia, solo la fe y solo Cristo.", bloom: "comprender" },
+      { id: "o2", texto: "Describir la extensión de la Reforma, su llegada al mundo hispano y la respuesta católica.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar los movimientos de renovación y avivamiento de los siglos XVII y XVIII.", bloom: "analizar" },
+      { id: "o4", texto: "Describir las misiones modernas, el segundo gran despertar y el movimiento de santidad.", bloom: "comprender" },
+      { id: "o5", texto: "Describir los comienzos y la expansión del movimiento pentecostal y la renovación carismática.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar la historia de la iglesia evangélica en América Latina y entre los hispanos de los Estados Unidos.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Romanos 1:17 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los hechos, las personas y las fechas principales de la Reforma, los avivamientos, las misiones, el pentecostalismo y la iglesia en América Latina.",
+      ser: "Un creyente agradecido por la Biblia en su idioma, que une la sana doctrina con un corazón encendido.",
+      hacer: "Enseñar con exactitud la historia de la iglesia evangélica y pentecostal y animar a la iglesia a ser fiel en su generación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Justo L. González", titulo: "Historia del cristianismo, tomo 2: desde la era de la Reforma hasta la era inconclusa", editorial: "Unilit" },
+        { autor: "Pablo A. Deiros", titulo: "Historia del cristianismo en América Latina", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "Jesse Lyman Hurlbut", titulo: "Historia de la iglesia cristiana", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "lectura", titulo: "Romanos 1: el justo por la fe vivirá", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=1" },
+      { tipo: "lectura", titulo: "Hechos 2: el día de Pentecostés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const ETICA: MateriaDef = {
+  id: "n4-etica",
+  nivel: 4,
+  orden: 10,
+  titulo: "Ética cristiana y ministerial",
+  resumen: "Los fundamentos de la ética cristiana, cómo tomar decisiones morales, la vida y la dignidad humana, la sexualidad y el matrimonio, el dinero, el trabajo y la verdad, y la ética del ministro con la protección de menores.",
+  base: "Romanos 12:1-2; 1 Timoteo 3:2-3",
+  memoria: "Romanos 12:2",
+  lecciones: lecciones("n4-etica", [
+    ["El fundamento de la ética cristiana", "Romanos 12:1-2; Mateo 22:37-40; Jueces 21:25"],
+    ["Cómo tomar decisiones morales", "Salmos 119:105; 1 Corintios 10:23-24; 1 Corintios 10:31; Santiago 1:5"],
+    ["La vida y la dignidad humana", "Génesis 1:27; Éxodo 20:13; Salmos 139:13-16; Jeremías 1:5; Proverbios 31:8-9; Hechos 17:26"],
+    ["La sexualidad, el matrimonio y la pureza", "Génesis 2:24; Hebreos 13:4; Mateo 5:27-28; 1 Corintios 6:18-20; 1 Juan 1:9"],
+    ["El dinero, el trabajo y la verdad", "Proverbios 11:1; Romanos 13:7; Colosenses 3:23-24; Efesios 4:25; 1 Timoteo 6:9-10"],
+    ["La ética del ministro", "1 Timoteo 3:2-3; 2 Corintios 8:20-21; Mateo 18:6; Gálatas 6:1"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero piense y viva con una ética cristiana: que conozca sus fundamentos, aprenda a tomar decisiones morales, defienda la vida y la dignidad humana, viva la sexualidad según el diseño de Dios, sea íntegro con el dinero, el trabajo y su palabra, y sirva con la ética que pide el ministerio, incluida la protección de los menores. No es una lista de reglas, sino una mente renovada por la Palabra: «No os conforméis a este siglo, sino transformaos por medio de la renovación de vuestro entendimiento» (Romanos 12:2). Quién puede ejercer cada cargo no se decide aquí: es un punto de la declaración de fe por confirmar.",
+    objetivos: [
+      { id: "o1", texto: "Explicar los fundamentos de la ética cristiana y distinguirla del relativismo.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar pasos bíblicos para tomar decisiones morales, también en lo que la Biblia no menciona.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar la dignidad humana y aplicarla a la vida, la violencia y la discriminación.", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar el diseño de Dios para la sexualidad y el matrimonio, y ofrecer restauración.", bloom: "comprender" },
+      { id: "o5", texto: "Aplicar la integridad bíblica al dinero, al trabajo y a la verdad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar situaciones del ministerio a la luz de la ética ministerial y de la protección de menores.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Romanos 12:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los fundamentos de la ética cristiana y lo que enseña la Biblia sobre la vida, la sexualidad, el dinero, la verdad y el ministerio.",
+      ser: "Un creyente íntegro, con una mente renovada, que vive la verdad con compasión.",
+      hacer: "Tomar decisiones morales con la Biblia, servir con transparencia y proteger a los débiles en el ministerio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Imagen de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VsGlbwF4HtI", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Romanos 12: una vida transformada", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=12" },
+      { tipo: "lectura", titulo: "1 Timoteo 3: el carácter del que dirige", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Timoteo&cap=3" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1964,10 +2119,10 @@ export const NIVELES: NivelDef[] = [
       enPreparacion(4, 4, "n4-sistematica-4", "Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos", "Eclesiología, angelología y escatología."),
       POETICOS_PROFETICOS,
       enPreparacion(4, 6, "n4-epistolas-apocalipsis", "Epístolas y Apocalipsis", "De Romanos a Judas, y el libro de Apocalipsis."),
-      enPreparacion(4, 7, "n4-homiletica-2", "Homilética II: predicación expositiva", "Predicar un pasaje con fidelidad; un sermón evaluado con rúbrica."),
-      enPreparacion(4, 8, "n4-historia-2", "Historia de la iglesia II", "La Reforma, los avivamientos, el movimiento pentecostal y la iglesia en América Latina."),
+      HOMILETICA_2,
+      HISTORIA_2,
       APOLOGETICA,
-      enPreparacion(4, 10, "n4-etica", "Ética cristiana y ministerial", "Decisiones morales, integridad, dinero, autoridad y protección de menores."),
+      ETICA,
     ],
   },
   {
