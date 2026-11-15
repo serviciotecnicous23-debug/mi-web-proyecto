@@ -273,21 +273,34 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
       </Button>
       {abierto && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mt-5">
-          {e.especialidades.map((esp) => (
-            <div key={esp.id} className="glass-card p-4" data-testid={`especialidad-${esp.id}`}>
-              <div className="flex items-center gap-2 mb-1"><Layers className="w-4 h-4 text-orange-500" /><h3 className="font-semibold">{esp.nombre}</h3></div>
-              <p className="text-sm text-muted-foreground mb-3">{esp.resumen}</p>
-              <ul className="space-y-1">
-                {esp.materias.map((m) => (
-                  <li key={m.id} className="text-sm flex items-start gap-1.5">
-                    <span className="text-orange-500 mt-1">•</span>
-                    <span>{m.titulo}{m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3"><ChipEstado estado="en-preparacion" /></p>
-            </div>
-          ))}
+          {e.especialidades.map((esp) => {
+            const listas = esp.materias.filter((m) => m.estado !== "en-preparacion").length;
+            return (
+              <div key={esp.id} className="glass-card p-4" data-testid={`especialidad-${esp.id}`}>
+                <div className="flex items-center gap-2 mb-1"><Layers className="w-4 h-4 text-orange-500" /><h3 className="font-semibold">{esp.nombre}</h3></div>
+                <p className="text-sm text-muted-foreground mb-3">{esp.resumen}</p>
+                <ul className="space-y-1.5">
+                  {esp.materias.map((m) => (
+                    <li key={m.id} className="text-sm flex items-start gap-1.5">
+                      <span className="text-orange-500 mt-1">•</span>
+                      {m.estado === "en-preparacion" ? (
+                        <span>{m.titulo}{m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}</span>
+                      ) : (
+                        <Link href={`/academia/materia/${m.id}`} className="min-w-0 hover:underline underline-offset-2" data-testid={`materia-${m.id}`}>
+                          <span className="font-medium">{m.titulo}</span>
+                          {m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}{" "}
+                          <ChipEstado estado={m.estado} />
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3">
+                  {listas ? <span className="text-xs text-muted-foreground">{listas} de {esp.materias.length} materias listas</span> : <ChipEstado estado="en-preparacion" />}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
     </Seccion>

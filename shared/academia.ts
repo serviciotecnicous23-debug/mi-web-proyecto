@@ -2460,27 +2460,180 @@ export const NIVELES: NivelDef[] = [
   },
 ];
 
-const especialidad = (id: EspecialidadId, nombre: string, resumen: string, materias: [titulo: string, avanzada?: boolean][]): EspecialidadDef => ({
+// ---------------------------------------------------------------- especialidad Evangelismo y misiones
+
+const EV_PERSONAL_AVANZADO: MateriaDef = {
+  id: "evangelismo-misiones-1",
+  nivel: null,
+  especialidad: "evangelismo-misiones",
+  orden: 1,
+  titulo: "Evangelismo personal avanzado",
+  resumen: "El corazón del evangelista, el evangelio y sus distorsiones, hablar según la persona, la familia y los amigos, la valentía que nace de la oración y formar a otros para evangelizar.",
+  base: "2 Corintios 5:20; Proverbios 11:30",
+  memoria: "Proverbios 11:30",
+  antes: "Evangelismo 3",
+  lecciones: lecciones("evangelismo-misiones-1", [
+    ["El corazón del evangelista", "Proverbios 11:30; 2 Corintios 5:14; 2 Corintios 5:20; Romanos 10:1; 1 Timoteo 2:1-4"],
+    ["El evangelio y sus distorsiones", "1 Corintios 15:3-4; Marcos 1:15; Gálatas 1:6-7; Lucas 14:27"],
+    ["Hablar según la persona", "Hechos 17:2-3; Hechos 17:22-23; 1 Corintios 9:22"],
+    ["La familia y los amigos", "Marcos 5:19; Hechos 10:24; Hechos 16:31-34; Juan 1:45-46"],
+    ["Valentía y oración", "Hechos 4:29-31; Efesios 6:19-20; Hechos 20:24"],
+    ["Formar a otros para evangelizar", "Lucas 10:1-2; Hechos 8:4; 2 Timoteo 2:2; Lucas 15:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente que ya comparte su fe lo haga con más profundidad y fruto: con un corazón movido por el amor de Cristo, con el evangelio claro y sin distorsiones, hablando según la historia de cada persona, empezando por los suyos, con la valentía que nace de la oración y formando a otros para que también evangelicen. Continúa lo aprendido en Compartir mi fe, Evangelismo personal y Evangelismo y consolidación. Su lema: «El fruto del justo es árbol de vida; Y el que gana almas es sabio» (Proverbios 11:30).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué mueve al evangelista y practicar la oración por personas concretas.", bloom: "comprender" },
+      { id: "o2", texto: "Resumir el evangelio con fidelidad y reconocer sus distorsiones comunes.", bloom: "analizar" },
+      { id: "o3", texto: "Adaptar la conversación a la historia de cada persona sin cambiar el mensaje.", bloom: "aplicar" },
+      { id: "o4", texto: "Planificar cómo compartir la fe con la familia y los amigos.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar los temores que frenan el evangelismo y responder con oración y valentía.", bloom: "evaluar" },
+      { id: "o6", texto: "Diseñar un plan para formar a otro creyente en el evangelismo.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Proverbios 11:30 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El evangelio, sus distorsiones y los ejemplos bíblicos de evangelismo personal.",
+      ser: "Un testigo movido por el amor de Cristo, que ora, escucha y habla con valentía.",
+      hacer: "Compartir el evangelio según cada persona y formar a otros para que también lo hagan.",
+    },
+    bibliografia: {
+      basica: [{ autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" }],
+      complementaria: [
+        { autor: "Rebecca Manley Pippert", titulo: "Fuera del salero" },
+        { autor: "Billy Graham", titulo: "Paz con Dios", nota: "Un clásico para leer con los nuevos creyentes." },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 17: Pablo en Tesalónica y en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+      { tipo: "lectura", titulo: "Marcos 5: el hombre de Gadara vuelve a los suyos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Marcos&cap=5" },
+    ],
+  },
+  disponible: true,
+};
+
+const CAMPANAS: MateriaDef = {
+  id: "evangelismo-misiones-2",
+  nivel: null,
+  especialidad: "evangelismo-misiones",
+  orden: 2,
+  titulo: "Campañas y cruzadas",
+  resumen: "La proclamación pública en la Biblia, lecciones de la historia, preparar una campaña, el mensaje y el llamado, consejeros y seguimiento, e integridad y evaluación.",
+  base: "Mateo 9:35-38; 2 Timoteo 4:5",
+  memoria: "2 Timoteo 4:5",
+  lecciones: lecciones("evangelismo-misiones-2", [
+    ["La proclamación pública en la Biblia", "2 Timoteo 4:5; Mateo 9:35-38; Jonás 3:4-5; Hechos 2:14; Hechos 2:41-42; Hechos 8:5-8"],
+    ["Lecciones de la historia", "Hechos 19:9-10; Romanos 10:14-15"],
+    ["Preparar una campaña", "Hechos 1:14; Juan 17:21; Lucas 14:28"],
+    ["El mensaje y el llamado", "1 Corintios 2:1-5; 2 Corintios 4:2; 2 Corintios 4:5; Hechos 2:38"],
+    ["Consejeros y seguimiento", "Colosenses 1:28; Juan 15:16"],
+    ["Integridad y evaluación", "1 Tesalonicenses 2:3-5; 2 Corintios 8:21"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente sepa servir en una campaña evangelística o prepararla con otros: con la compasión de Jesús por las multitudes, aprendiendo de la Biblia y de la historia, con oración y unidad entre las iglesias, un mensaje claro y un llamado honesto, consejeros preparados, un seguimiento que haga discípulos y una integridad que proteja el testimonio del evangelio. Lo pide Pablo: «haz obra de evangelista, cumple tu ministerio» (2 Timoteo 4:5).",
+    objetivos: [
+      { id: "o1", texto: "Describir ejemplos bíblicos de proclamación pública y su fruto.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar lo que enseña la historia de las campañas, de Whitefield y Wesley a Billy Graham.", bloom: "comprender" },
+      { id: "o3", texto: "Planificar los pasos para preparar una campaña con oración, unidad y presupuesto.", bloom: "aplicar" },
+      { id: "o4", texto: "Distinguir un mensaje y un llamado fieles de la manipulación.", bloom: "analizar" },
+      { id: "o5", texto: "Organizar el trabajo de los consejeros y el seguimiento de los que responden.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una campaña por su integridad y por su fruto.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Timoteo 4:5 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La proclamación pública en la Biblia y en la historia, y los pasos de una campaña.",
+      ser: "Un servidor compasivo e íntegro, que busca discípulos y no números.",
+      hacer: "Preparar una campaña con otros, servir como consejero y cuidar a los que responden.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Justo L. González", titulo: "Historia del cristianismo, tomo 2: desde la era de la Reforma hasta la era inconclusa", editorial: "Unilit" },
+      ],
+      complementaria: [{ autor: "Billy Graham", titulo: "Paz con Dios", nota: "Un clásico del evangelista para leer con los nuevos creyentes." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 2: Pentecostés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+      { tipo: "lectura", titulo: "Hechos 8: Felipe en Samaria", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
+const TEOLOGIA_MISIONES: MateriaDef = {
+  id: "evangelismo-misiones-3",
+  nivel: null,
+  especialidad: "evangelismo-misiones",
+  avanzada: true,
+  orden: 3,
+  titulo: "Teología bíblica de las misiones",
+  resumen: "El Dios que envía, la promesa a Abraham y la misión de Israel, Jesús y las naciones, el Espíritu y la iglesia que envía en Hechos, la estrategia de Pablo y la meta: gente de toda nación, tribu y lengua.",
+  base: "Génesis 12:3; Juan 20:21; Apocalipsis 7:9",
+  memoria: "Juan 20:21",
+  lecciones: lecciones("evangelismo-misiones-3", [
+    ["El Dios que envía", "Juan 20:21; Juan 3:16; Isaías 6:8"],
+    ["La promesa a Abraham y la misión de Israel", "Génesis 12:1-3; Gálatas 3:8; Éxodo 19:5-6; Isaías 49:6; Salmos 67:1-2"],
+    ["Jesús y las naciones", "Mateo 28:18-20; Lucas 24:46-48; Mateo 24:14"],
+    ["El Espíritu y la iglesia que envía", "Hechos 1:8; Hechos 11:19-21; Hechos 13:1-3"],
+    ["Pablo, el misionero", "Romanos 15:20-21; Hechos 14:21-23; 1 Corintios 9:19"],
+    ["Toda nación, tribu y lengua", "Apocalipsis 7:9-10; Apocalipsis 5:9; 3 Juan 1:5-8; Filipenses 4:15-16"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente ya formado entienda la misión como la obra de Dios de Génesis a Apocalipsis: el Dios que envía, la promesa a Abraham y el llamado de Israel, la gran comisión a todas las naciones, el Espíritu que impulsa a la iglesia en Hechos, la estrategia de Pablo y la meta de una multitud de todos los pueblos que adora al Cordero. Es una materia avanzada: pide el Nivel 3. No enseña el orden de los acontecimientos del fin, que es un punto de la declaración de fe por confirmar. Su base es la palabra de Jesús: «Como me envió el Padre, así también yo os envío» (Juan 20:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la misión como obra de Dios que nace de su amor.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar la misión de Dios en el Antiguo Testamento: Abraham, Israel, los Salmos y Jonás.", bloom: "analizar" },
+      { id: "o3", texto: "Interpretar la gran comisión según Mateo y Lucas.", bloom: "comprender" },
+      { id: "o4", texto: "Describir cómo el Espíritu impulsa en Hechos a una iglesia que envía.", bloom: "comprender" },
+      { id: "o5", texto: "Analizar la estrategia misionera de Pablo.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar las formas de participar hoy en la misión, también desde América Latina.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 20:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La misión de Dios en toda la Biblia, de Génesis a Apocalipsis.",
+      ser: "Un creyente con el corazón de Dios por todos los pueblos.",
+      hacer: "Orar, ir, enviar, dar y recibir para que todos los pueblos conozcan a Cristo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Jonatán P. Lewis (ed.)", titulo: "Misión mundial: un análisis del movimiento cristiano mundial", editorial: "Unilit", nota: "Tres tomos: las bases bíblicas e históricas, la dimensión estratégica y las consideraciones transculturales." },
+        { autor: "Samuel Escobar", titulo: "Tiempo de misión: América Latina y la misión cristiana hoy", editorial: "Clara-Semilla" },
+      ],
+      complementaria: [{ autor: "Orlando E. Costas", titulo: "La iglesia y su misión evangelizadora", editorial: "La Aurora" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Génesis 12: la promesa a Abram", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Genesis&cap=12" },
+      { tipo: "lectura", titulo: "Hechos 13: Antioquía envía a Bernabé y a Saulo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=13" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
+type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
+
+const especialidad = (id: EspecialidadId, nombre: string, resumen: string, materias: MateriaDeEspecialidad[]): EspecialidadDef => ({
   id,
   nombre,
   resumen,
-  materias: materias.map(([titulo, avanzada], i) => ({
-    id: `${id}-${i + 1}`,
-    nivel: null,
-    especialidad: id,
-    avanzada: avanzada || undefined,
-    orden: i + 1,
-    titulo,
-    resumen: "",
-    lecciones: [],
-    disponible: false,
-  })),
+  materias: materias.map((m, i) =>
+    Array.isArray(m)
+      ? { id: `${id}-${i + 1}`, nivel: null, especialidad: id, avanzada: m[1] || undefined, orden: i + 1, titulo: m[0], resumen: "", lecciones: [], disponible: false }
+      : m,
+  ),
 });
 
 /** Las especialidades: se abren al terminar el Nivel 2 (las materias «avanzadas» piden el Nivel 3) y no tienen límite. */
 export const ESPECIALIDADES: EspecialidadDef[] = [
   especialidad("evangelismo-misiones", "Evangelismo y misiones", "Ganar almas, campañas, misión transcultural y plantar iglesias.", [
-    ["Evangelismo personal avanzado"], ["Campañas y cruzadas"], ["Teología bíblica de las misiones", true], ["Misión transcultural", true], ["Plantación de iglesias", true],
+    EV_PERSONAL_AVANZADO, CAMPANAS, TEOLOGIA_MISIONES, ["Misión transcultural", true], ["Plantación de iglesias", true],
   ]),
   especialidad("pastoral", "Ministerio pastoral", "Pastorear, aconsejar, celebrar las ordenanzas y cuidar del rebaño.", [
     ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
