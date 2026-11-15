@@ -17,7 +17,7 @@ test("la primera materia del Nivel 2 está publicada, con 6 lecciones, su versí
   assert.equal(panorama.silabo?.objetivos.length, 5);
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias[0].id, "n2-panorama-at");
-  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas", "n2-sermon-monte", "n2-mayordomia", "n2-evangelismo-personal"], "las demás siguen en preparación");
+  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas", "n2-sermon-monte", "n2-mayordomia", "n2-familia", "n2-evangelismo-personal", "n2-dones"], "solo Doctrinas fundamentales sigue en preparación");
 });
 
 test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está publicada con su sílabo", () => {
@@ -93,6 +93,28 @@ test("la octava materia del Nivel 2, «Evangelismo personal», está publicada y
   assert.ok(tieneEscritoBreve(e));
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias.findIndex((x) => x.id === "n2-evangelismo-personal"), 7, "va en el octavo lugar");
+});
+
+test("«Familia y relaciones» y «Dones espirituales y servicio» están publicadas con su sílabo", () => {
+  const f = materiaPorId("n2-familia")!;
+  assert.ok(f.disponible);
+  assert.equal(f.orden, 7);
+  assert.equal(f.memoria, "Salmos 127:1");
+  assert.equal(f.lecciones.length, 6);
+  assert.ok(f.silabo?.bibliografia.basica.some((b) => b.autor === "Emerson Eggerichs"));
+  const d = materiaPorId("n2-dones")!;
+  assert.ok(d.disponible);
+  assert.equal(d.orden, 9);
+  assert.equal(d.memoria, "1 Corintios 12:7");
+  assert.equal(d.lecciones.length, 6);
+  assert.ok(d.silabo?.bibliografia.basica.some((b) => b.autor === "Stanley M. Horton"));
+  for (const m of [f, d]) {
+    assert.equal(m.silabo?.objetivos.length, 5);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+    assert.ok(tieneEscritoBreve(m));
+  }
+  const n2 = NIVELES.find((n) => n.n === 2)!;
+  assert.deepEqual(n2.materias.filter((m) => !m.disponible).map((m) => m.id), ["n2-doctrinas"], "solo falta Doctrinas, que espera la declaración de fe");
 });
 
 test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 1", () => {
