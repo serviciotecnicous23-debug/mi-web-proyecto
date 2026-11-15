@@ -74,11 +74,14 @@ const CREMA: Color = [255, 251, 235]; // #fffbeb
 type Estilo = "normal" | "bold" | "italic" | "bolditalic";
 type Trozo = { t: string; estilo?: Estilo; color?: Color; tam?: number };
 
-/** El nombre del archivo del certificado: academia-n1-salvacion-<código>.pdf o academia-nivel-1-<código>.pdf. */
+/**
+ * El nombre del archivo del certificado: academia-n1-salvacion-<código>.pdf, academia-nivel-1-<código>.pdf o
+ * academia-especialidad-evangelismo-misiones-<código>.pdf.
+ */
 export const archivoDelCertificado = (d: Pick<DocumentoAcademia, "tipo" | "ref" | "codigo">) =>
-  `academia-${d.tipo === "nivel" ? `nivel-${d.ref}` : d.ref}-${d.codigo}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-") + ".pdf";
+  `academia-${d.tipo === "materia" ? d.ref : `${d.tipo}-${d.ref}`}-${d.codigo}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-") + ".pdf";
 
-/** El certificado de una materia o el diploma de un nivel, en PDF (A4 apaisado). */
+/** El certificado de una materia, el diploma de un nivel o el certificado de una especialidad, en PDF (A4 apaisado). */
 export async function certificadoPdf(d: DocumentoAcademia): Promise<Buffer> {
   const [JsPDF, logo, sello] = await Promise.all([jsPDF(), icono("logo-transparent.png", 260), icono("icon-192.png", 160)]);
   const pdf = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
@@ -148,8 +151,10 @@ export async function certificadoPdf(d: DocumentoAcademia): Promise<Buffer> {
   pdf.line(cx - 35, 52, cx + 35, 52);
 
   const esNivel = d.tipo === "nivel";
-  const [cabeza, ...resto] = esNivel ? d.titulo.split(" ") : ["Certificado"];
-  const subtitulo = esNivel ? resto.join(" ") : "de materia aprobada";
+  const esEspecialidad = d.tipo === "especialidad";
+  // «Certificado en Fundamentos de la Fe», «Diploma de Obrero Cristiano», «Certificado de Especialidad en …»
+  const [cabeza, ...resto] = esNivel || esEspecialidad ? d.titulo.split(" ") : ["Certificado"];
+  const subtitulo = esNivel || esEspecialidad ? resto.join(" ") : "de materia aprobada";
   centrado(cabeza.toUpperCase(), 64, "normal", 26, MARRON, 2);
   centrado(subtitulo, 71, "italic", 13, AMBAR);
   centrado("Se certifica que", 82, "normal", 12, MARRON);
@@ -169,7 +174,11 @@ export async function certificadoPdf(d: DocumentoAcademia): Promise<Buffer> {
   const nivelTexto = d.nivel ? `Nivel ${d.nivel.n} · ${d.nivel.nombre}` : "";
   const nota = d.nota == null ? "-" : String(d.nota);
   let y = 110;
-  if (esNivel) {
+  if (esEspecialidad) {
+    mixta([{ t: "completó la " }, { t: `Especialidad en ${d.especialidad?.nombre ?? ""}`.trim(), estilo: "bold" }, { t: ": sus cinco materias y el trabajo final," }], y, 12, MARRON);
+    y += 7;
+    mixta([{ t: "con una nota de " }, { t: nota, estilo: "bold", color: COBRE, tam: 13 }, d.honores ? { t: ", con honores", estilo: "bold", color: COBRE } : { t: "" }, { t: "." }], y, 12, MARRON);
+  } else if (esNivel) {
     mixta([{ t: "completó el " }, { t: nivelTexto, estilo: "bold" }, { t: ": sus materias, el examen integral y el pacto," }], y, 12, MARRON);
     y += 7;
     mixta([{ t: "con un promedio de " }, { t: nota, estilo: "bold", color: COBRE, tam: 13 }, d.honores ? { t: ", con honores", estilo: "bold", color: COBRE } : { t: "" }, { t: "." }], y, 12, MARRON);
@@ -185,6 +194,9 @@ export async function certificadoPdf(d: DocumentoAcademia): Promise<Buffer> {
     y += 0.5;
     if (nivelTexto) {
       centrado(`del ${nivelTexto},`, y, "normal", 11, MARRON);
+      y += 6;
+    } else if (d.especialidad) {
+      centrado(`de la Especialidad en ${d.especialidad.nombre},`, y, "normal", 11, MARRON);
       y += 6;
     }
     mixta(

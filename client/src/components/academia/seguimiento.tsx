@@ -125,9 +125,9 @@ export function TablaMaterias({ materias, enlace }: { materias: MateriaReporte[]
   );
 }
 
-const ICONO_ACTIVIDAD: Record<ActividadItem["tipo"], typeof UserCheck> = { inscripcion: UserPlus, materia: BookOpen, aprobada: CheckCircle2, nivel: GraduationCap };
+const ICONO_ACTIVIDAD: Record<ActividadItem["tipo"], typeof UserCheck> = { inscripcion: UserPlus, materia: BookOpen, aprobada: CheckCircle2, nivel: GraduationCap, especialidad: Award };
 
-/** El registro: quién se inscribió, en qué materia, qué aprobó y qué nivel completó. */
+/** El registro: quién se inscribió, en qué materia, qué aprobó y qué nivel o especialidad completó. */
 export function ListaActividad({ items, enlaceAlumno, vacio = "Todavía no hay actividad." }: { items: ActividadItem[]; enlaceAlumno?: (id: number) => string; vacio?: string }) {
   if (!items.length) return <p className="text-sm text-muted-foreground">{vacio}</p>;
   return (

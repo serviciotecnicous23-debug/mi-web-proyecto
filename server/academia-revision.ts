@@ -2,7 +2,8 @@
  * La revisión de la Dirección académica (docs/academia.md, «La revisión»):
  * - las respuestas escritas que el corrector dejó para revisar y los pedidos de revisión de los alumnos;
  * - el cambio de una nota con su motivo, que recalcula en cadena el intento, la mejor nota del examen, la materia (que
- *   puede quedar aprobada o volver a estar en curso, con su certificado emitido o revocado) y el nivel;
+ *   puede quedar aprobada o volver a estar en curso, con su certificado emitido o revocado), el nivel y la especialidad
+ *   (el trabajo final y las materias de una especialidad, con su certificado de especialidad);
  * - los documentos: revocar, restaurar y corregir el nombre;
  * - abrir o cerrar la academia para todos;
  * - el historial de todos esos cambios (audit_log, entity_type «academia»), con quién, cuándo y por qué.
@@ -13,16 +14,17 @@
 import type { Express, Request } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA_INTEGRAL, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
-  type MateriaDef, type NivelDef, type ResultadoExamen,
+  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, HONORES, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
+  type EspecialidadDef, type MateriaDef, type NivelDef, type ResultadoExamen, type TipoDocumento,
 } from "@shared/academia";
 import { limpiarNombre, nombreCompleto } from "@shared/academia-inscripcion";
 import type { ApelacionItem, HistorialItem, ItemRevision, ResultadoRevision, RevisionPanel } from "@shared/academia-direccion";
 import { escritaPorId } from "./academia/index";
 import {
-  avisarA, claveFinal, claveIntegral, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, type ContextoExamen,
+  avisarA, claveFinal, claveIntegral, claveTrabajo, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, type ContextoExamen,
 } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
+import { avanceEspecialidad, revisarEspecialidad } from "./academia-especialidad";
 import { aprobarPorSuficiencia } from "./academia-suficiencia";
 import { estadoNivel, revisarNivel } from "./academia-nivel";
 import { permisoDe } from "./academia-direccion";
@@ -131,22 +133,51 @@ async function intentoDe(userId: number, clave: string, intento: number): Promis
   return { objetiva: res.objetiva, escrita: res.escrita, nota: res.nota };
 }
 
-/** El certificado de una materia o de un nivel: revocado por una corrección de nota, o vuelto a valer si lo revocó otra. */
-async function revocarPorNota(userId: number, tipo: "materia" | "nivel", ref: string, motivo: string): Promise<void> {
+/** El certificado de una materia, de un nivel o de una especialidad: revocado por una corrección de nota, o vuelto a valer si lo revocó otra. */
+async function revocarPorNota(userId: number, tipo: TipoDocumento, ref: string, motivo: string): Promise<void> {
   await pool.query(
     `UPDATE academia_certificados SET revocado_at = now(), motivo = $4 WHERE user_id = $1 AND tipo = $2 AND ref = $3 AND revocado_at IS NULL`,
     [userId, tipo, ref, `${PREFIJO_AUTO} ${motivo}`.slice(0, 600)],
   );
 }
-async function restaurarSiFueNota(userId: number, tipo: "materia" | "nivel", ref: string, nota: number | null): Promise<void> {
+/** (Los honores se ponen solo si se pasan: el certificado de una especialidad los lleva por su propia nota.) */
+async function restaurarSiFueNota(userId: number, tipo: TipoDocumento, ref: string, nota: number | null, honores?: boolean): Promise<void> {
   await pool.query(
     `UPDATE academia_certificados
         SET nota = COALESCE($4, nota),
+            honores = COALESCE($7, honores),
             revocado_at = CASE WHEN motivo LIKE $5 OR motivo LIKE $6 THEN NULL ELSE revocado_at END,
             motivo = CASE WHEN motivo LIKE $5 OR motivo LIKE $6 THEN NULL ELSE motivo END
       WHERE user_id = $1 AND tipo = $2 AND ref = $3`,
-    [userId, tipo, ref, nota, `${PREFIJO_AUTO}%`, `${PREFIJO_AUTO_ANTES}%`],
+    [userId, tipo, ref, nota, `${PREFIJO_AUTO}%`, `${PREFIJO_AUTO_ANTES}%`, honores ?? null],
   );
+}
+
+/**
+ * La especialidad, revisada otra vez después de cambiar la nota de su trabajo final o de una de sus materias: con las
+ * cinco materias y el trabajo aprobados, su certificado se emite (o vuelve a valer, con la nota nueva); si dejó de
+ * cumplir, su certificado se revoca con el motivo.
+ */
+async function reconsiderarEspecialidad(userId: number, e: EspecialidadDef, motivo: string): Promise<"completa" | "reabierta" | null> {
+  const av = await avanceEspecialidad(userId, e);
+  const { rows } = await pool.query(`SELECT revocado_at, motivo FROM academia_certificados WHERE user_id = $1 AND tipo = 'especialidad' AND ref = $2`, [userId, e.id]);
+  const doc = rows[0] as { revocado_at: string | null; motivo: string | null } | undefined;
+  const vale = !!doc && !doc.revocado_at;
+  if (av.completa && av.nota != null) {
+    if (!doc) {
+      await revisarEspecialidad(userId, e);
+      return "completa";
+    }
+    // (si lo revocó la Administración por otro motivo, sigue revocado: solo vuelve a valer el que revocó una nota)
+    const porNota = !vale && [PREFIJO_AUTO, PREFIJO_AUTO_ANTES].some((p) => (doc.motivo ?? "").startsWith(p));
+    await restaurarSiFueNota(userId, "especialidad", e.id, av.nota, av.nota >= HONORES);
+    return porNota ? "completa" : null;
+  }
+  if (vale) {
+    await revocarPorNota(userId, "especialidad", e.id, motivo);
+    return "reabierta";
+  }
+  return null;
 }
 
 /** El nivel, revisado otra vez: se completa si ya cumple todo, o se reabre si dejó de cumplir. */
@@ -285,14 +316,25 @@ export async function recalcularTrasRevision(userId: number, ctx: ContextoExamen
   );
   let materia: ResultadoRevision["materia"] = null;
   let nivel: ResultadoRevision["nivel"] = null;
+  let especialidad: ResultadoRevision["especialidad"] = null;
+  // la especialidad de la materia revisada (si es de una especialidad)
+  const deLaMateria = ESPECIALIDADES.find((x) => x.id === ctx.materia?.especialidad);
   if (ctx.materia && ctx.tipo === "suficiencia") {
     materia = await reconsiderarSuficiencia(userId, ctx.materia, it.objetiva, escrita, nota, motivo);
     const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
     if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);
+    if (deLaMateria) especialidad = await reconsiderarEspecialidad(userId, deLaMateria, motivo);
   } else if (ctx.materia) {
     materia = await reconsiderarMateria(userId, ctx.materia, motivo);
     const nv = ctx.materia.nivel ? NIVELES[ctx.materia.nivel - 1] : null;
     if (nv) nivel = await reconsiderarNivel(userId, nv, motivo);
+    if (deLaMateria) especialidad = await reconsiderarEspecialidad(userId, deLaMateria, motivo);
+  } else if (ctx.especialidad) {
+    await pool.query(
+      `UPDATE academia_pruebas SET aprobada_at = CASE WHEN $3 THEN COALESCE(aprobada_at, now()) ELSE NULL END WHERE user_id = $1 AND clave = $2`,
+      [userId, claveTrabajo(ctx.especialidad.id), mejor >= APRUEBA],
+    );
+    especialidad = await reconsiderarEspecialidad(userId, ctx.especialidad, motivo);
   } else if (ctx.nivel) {
     const nv = NIVELES[ctx.nivel - 1];
     await pool.query(
@@ -302,7 +344,7 @@ export async function recalcularTrasRevision(userId: number, ctx: ContextoExamen
     nivel = await reconsiderarNivel(userId, nv, motivo);
   }
   await sincronizarResultado(userId, ctx, intento, { escrita, nota, materia });
-  return { recalculado: true, examen: { antes: it.nota, despues: nota }, materia, nivel };
+  return { recalculado: true, examen: { antes: it.nota, despues: nota }, materia, nivel, especialidad };
 }
 
 function mensajeDe(r: Omit<ResultadoRevision, "item" | "mensaje">, cambio: boolean): string {
@@ -320,6 +362,8 @@ function mensajeDe(r: Omit<ResultadoRevision, "item" | "mensaje">, cambio: boole
   }
   if (r.nivel === "completo") partes.push("El nivel quedó completo.");
   if (r.nivel === "reabierto") partes.push("El nivel ya no está completo y su certificado quedó revocado.");
+  if (r.especialidad === "completa") partes.push("La especialidad quedó completa y su certificado vale.");
+  if (r.especialidad === "reabierta") partes.push("La especialidad ya no está completa y su certificado quedó revocado.");
   return partes.join(" ");
 }
 

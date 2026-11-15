@@ -184,7 +184,7 @@ function Escritorio({ e }: { e: AcademiaEstado }) {
               {docs.data.slice(0, 5).map((d) => (
                 <li key={d.codigo}>
                   <Link href={`/academia/certificado/${d.codigo}`} className="text-sm inline-flex items-center gap-1.5 hover:underline" data-testid="certificado-enlace">
-                    {d.tipo === "nivel" ? <GraduationCap className="w-4 h-4 text-orange-500" /> : <Award className="w-4 h-4 text-orange-500" />} {d.titulo}
+                    {d.tipo === "nivel" ? <GraduationCap className="w-4 h-4 text-orange-500" /> : d.tipo === "especialidad" ? <Layers className="w-4 h-4 text-orange-500" /> : <Award className="w-4 h-4 text-orange-500" />} {d.titulo}
                   </Link>
                 </li>
               ))}
@@ -295,8 +295,13 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-3">
+                <p className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   {listas ? <span className="text-xs text-muted-foreground">{listas} de {esp.materias.length} materias listas</span> : <ChipEstado estado="en-preparacion" />}
+                  {listas > 0 && (
+                    <Link href={`/academia/especialidad/${esp.id}`} className="text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline underline-offset-2 inline-flex items-center gap-1" data-testid={`especialidad-ver-${esp.id}`}>
+                      Ver la especialidad <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
                 </p>
               </div>
             );

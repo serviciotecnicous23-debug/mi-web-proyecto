@@ -8,7 +8,7 @@ import { numeroDe } from "./orden-examen";
 import { getBibleChapter } from "./bible";
 import { resolveSiteUrl } from "@shared/site";
 import {
-  tieneEscritoBreve, miniPruebasDe, MEDIDA_MINI, APRUEBA, APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, NIVELES, SUFICIENCIA, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita, pesosDe, veVistaPrevia, type Componentes, type MateriaDef, type MedidaExamen, type NivelN,
+  tieneEscritoBreve, miniPruebasDe, MEDIDA_MINI, APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, EXAMEN_INTEGRAL, NIVELES, SUFICIENCIA, citaVisible, enlaceBiblia, examenDe, materiaAprobada, materiaPorId, notaMateria, parsearCita, pesosDe, veVistaPrevia, type Componentes, type EspecialidadDef, type EstadoMateria, type MateriaDef, type MedidaExamen, type NivelN,
 } from "@shared/academia";
 import { BANCOS } from "./academia/index";
 
@@ -362,7 +362,7 @@ export async function nombreAcademico(userId: number): Promise<string> {
 /** El examen de una clave de academia_pruebas: su título, su página, su medida y la nota para aprobar. */
 export type ContextoExamen = {
   clave: string;
-  tipo: "final" | "integral" | "suficiencia" | "diagnostico" | "mini" | "breve";
+  tipo: "final" | "integral" | "suficiencia" | "diagnostico" | "mini" | "breve" | "trabajo";
   /** «Examen final de «La salvación»», «Examen integral del Nivel 1 · Fundamentos de la fe». */
   titulo: string;
   /** «el examen final de «La salvación»», para las frases de los avisos. */
@@ -372,7 +372,12 @@ export type ContextoExamen = {
   aprueba: number;
   materia: MateriaDef | null;
   nivel: number | null;
+  /** La especialidad del trabajo final. */
+  especialidad?: EspecialidadDef;
 };
+
+/** Una sola escrita que vale toda la nota (la parte objetiva pesa 0): el escrito breve y el trabajo final. */
+const MEDIDA_SOLO_ESCRITA: MedidaExamen = { objetivas: 0, banco: 0, escritas: 1, pesoObjetiva: 0, segundos: 0, minutosEscrita: 0 };
 
 export function contextoExamen(clave: string): ContextoExamen | null {
   const fin = /^(.+):final$/.exec(clave);
@@ -413,10 +418,18 @@ export function contextoExamen(clave: string): ContextoExamen | null {
   if (breve) {
     const m = materiaPorId(breve[1]);
     if (!m) return null;
-    // una sola escrita que vale toda la nota (la parte objetiva pesa 0)
     return {
       clave, tipo: "breve", titulo: `Escrito breve de «${m.titulo}»`, enFrase: `el escrito breve de «${m.titulo}»`, ruta: `/academia/escrito/${m.id}`,
-      medida: { objetivas: 0, banco: 0, escritas: 1, pesoObjetiva: 0, segundos: 0, minutosEscrita: 0 }, aprueba: APRUEBA, materia: m, nivel: null,
+      medida: MEDIDA_SOLO_ESCRITA, aprueba: APRUEBA, materia: m, nivel: null,
+    };
+  }
+  const trabajo = /^especialidad-(.+):trabajo$/.exec(clave);
+  if (trabajo) {
+    const e = ESPECIALIDADES.find((x) => x.id === trabajo[1]);
+    if (!e) return null;
+    return {
+      clave, tipo: "trabajo", titulo: `Trabajo final de la especialidad en ${e.nombre}`, enFrase: `el trabajo final de la especialidad en ${e.nombre}`,
+      ruta: `/academia/especialidad/${e.id}`, medida: MEDIDA_SOLO_ESCRITA, aprueba: APRUEBA, materia: null, nivel: null, especialidad: e,
     };
   }
   if (clave === "diagnostico") {
@@ -539,10 +552,20 @@ export async function textoDeCita(ref: string, opciones: { soloRv1960?: boolean 
 
 // ---------------------------------------------------------------- la nota de la materia
 
+/** El estado de una materia para el alumno: en preparación, disponible, en curso o aprobada. */
+export function estadoDe(m: MateriaDef, fila: { estado: string } | undefined, hechas: number): EstadoMateria {
+  if (!m.disponible) return "en-preparacion";
+  if (fila?.estado === "aprobada") return "aprobada";
+  if (fila || hechas > 0) return "en-curso";
+  return "disponible";
+}
+
 const claveFinal = (materiaId: string) => `${materiaId}:final`;
 /** La mini prueba `n` de una materia y su escrito breve (Nivel 2 en adelante). */
 export const claveMini = (materiaId: string, n: number) => `${materiaId}:mini-${n}`;
 export const claveBreve = (materiaId: string) => `${materiaId}:breve`;
+/** El trabajo final de una especialidad. */
+export const claveTrabajo = (especialidadId: string) => `especialidad-${especialidadId}:trabajo`;
 /** La clave del examen integral de un nivel en academia_pruebas. */
 export const claveIntegral = (nivel: number) => `nivel-${nivel}:integral`;
 

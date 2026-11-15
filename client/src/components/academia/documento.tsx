@@ -1,4 +1,4 @@
-// El documento de la academia (certificado de materia o de nivel), con el mismo diseño del certificado de la Escuela
+// El documento de la academia (certificado de materia, de nivel o de especialidad), con el mismo diseño del certificado de la Escuela
 // (pages/certificados.tsx): estilos en línea para que el PDF salga igual que en pantalla. Lleva el QR de la verificación
 // pública y la aclaración de que no es un título universitario oficial (shared/academia.ts).
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -8,7 +8,7 @@ import { ACLARACION_DOCUMENTOS, NOMBRE_ACADEMIA, calificacion, type DocumentoAca
 
 const ANCHO = 800;
 
-/** «Certificado en Fundamentos de la Fe» → «Certificado» y «en Fundamentos de la Fe». */
+/** «Certificado en Fundamentos de la Fe» → «Certificado» y «en Fundamentos de la Fe» (y «Certificado de Especialidad en …»). */
 function partirTitulo(titulo: string): [string, string] {
   const [cabeza, ...resto] = titulo.split(" ");
   return [cabeza, resto.join(" ")];
@@ -17,7 +17,8 @@ function partirTitulo(titulo: string): [string, string] {
 export function DocumentoVista({ d }: { d: DocumentoAcademia }) {
   const fecha = format(new Date(d.emitido), "dd 'de' MMMM 'de' yyyy", { locale: es });
   const esNivel = d.tipo === "nivel";
-  const [cabeza, subtitulo] = esNivel ? partirTitulo(d.titulo) : ["Certificado", "de materia aprobada"];
+  const esEspecialidad = d.tipo === "especialidad";
+  const [cabeza, subtitulo] = esNivel || esEspecialidad ? partirTitulo(d.titulo) : ["Certificado", "de materia aprobada"];
   const sitio = d.verificar.replace(/^https?:\/\//, "").split("/academia/")[0];
   const nivelTexto = d.nivel ? `Nivel ${d.nivel.n} · ${d.nivel.nombre}` : "";
   const esquina = (pos: Record<string, string>) => (
@@ -66,7 +67,13 @@ export function DocumentoVista({ d }: { d: DocumentoAcademia }) {
           <p style={{ fontSize: "1.9em", color: "#1e3a5f", fontStyle: "italic", margin: "0", fontWeight: "bold" }} data-testid="documento-nombre">{d.nombre}</p>
         </div>
 
-        {esNivel ? (
+        {esEspecialidad ? (
+          <p style={{ fontSize: "0.95em", margin: "10px 30px 0", lineHeight: "1.5" }}>
+            completó la <strong>Especialidad en {d.especialidad?.nombre ?? ""}</strong>: sus cinco materias y el trabajo final, con una nota de{" "}
+            <strong style={{ color: "#b45309", fontSize: "1.1em" }}>{d.nota ?? "—"}</strong>
+            {d.honores && <strong style={{ color: "#b45309" }}>, con honores</strong>}.
+          </p>
+        ) : esNivel ? (
           <p style={{ fontSize: "0.95em", margin: "10px 30px 0", lineHeight: "1.5" }}>
             completó el <strong>{nivelTexto}</strong>: sus materias, el examen integral y el pacto, con un promedio de{" "}
             <strong style={{ color: "#b45309", fontSize: "1.1em" }}>{d.nota ?? "—"}</strong>
@@ -77,7 +84,7 @@ export function DocumentoVista({ d }: { d: DocumentoAcademia }) {
             <p style={{ fontSize: "0.95em", margin: "10px 0 2px" }}>aprobó la materia</p>
             <p style={{ fontSize: "1.4em", color: "#b45309", fontWeight: "bold", margin: "2px 20px 4px" }}>«{d.titulo}»</p>
             <p style={{ fontSize: "0.9em", margin: "0" }}>
-              {nivelTexto ? `del ${nivelTexto}, ` : ""}con una calificación de{" "}
+              {nivelTexto ? `del ${nivelTexto}, ` : d.especialidad ? `de la Especialidad en ${d.especialidad.nombre}, ` : ""}con una calificación de{" "}
               <strong style={{ color: "#b45309", fontSize: "1.1em" }}>{d.nota ?? "—"}</strong>
               {d.nota != null ? ` (${calificacion(d.nota)})` : ""}
               {d.via === "suficiencia" ? ", aprobada por suficiencia" : ""}.

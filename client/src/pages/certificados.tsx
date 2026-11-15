@@ -199,7 +199,7 @@ export default function CertificadosPage() {
         const d = await res.json().catch(() => null);
         if (!res.ok || !d) setVerifyResult({ error: d?.message || "Documento no encontrado" });
         else if (!d.valido) setVerifyResult({ error: "Ese documento de la academia fue revocado." });
-        else setVerifyResult({ studentName: d.nombre, courseName: `${d.documento}${d.honores ? ", con honores" : ""}${d.nivel ? ` (${d.nivel})` : ""}`, issuedAt: d.emitido, academia: d.academia });
+        else setVerifyResult({ studentName: d.nombre, courseName: `${d.documento}${d.honores ? ", con honores" : ""}${d.nivel ? ` (${d.nivel})` : d.especialidad ? ` (Especialidad en ${d.especialidad})` : ""}`, issuedAt: d.emitido, academia: d.academia });
       } else {
         const res = await fetch(`/api/certificates/verify/${verifyCode.trim()}`);
         if (res.ok) {
@@ -386,6 +386,7 @@ export default function CertificadosPage() {
                     <CardContent className="pt-6">
                       <h3 className="font-semibold">{d.titulo}</h3>
                       {d.nivel && <p className="text-sm text-muted-foreground">Nivel {d.nivel.n} · {d.nivel.nombre}</p>}
+                      {!d.nivel && d.especialidad && d.tipo === "materia" && <p className="text-sm text-muted-foreground">Especialidad en {d.especialidad.nombre}</p>}
                       <div className="flex justify-between items-center mt-3">
                         <span className="text-xs text-muted-foreground">{format(new Date(d.emitido), "dd MMM yyyy", { locale: es })}</span>
                         {d.nota != null && <Badge variant="secondary">{d.tipo === "nivel" ? "Promedio" : "Nota"}: {d.nota}</Badge>}

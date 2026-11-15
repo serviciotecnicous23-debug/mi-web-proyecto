@@ -225,8 +225,8 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
             <div>
               <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4 text-orange-500" /> Para quién es</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Es una materia de la especialidad {especialidad.nombre}{def?.avanzada ? ", de las avanzadas" : ""}. Se puede tomar sola, como electiva, o con las
-                otras materias de la especialidad
+                Es una materia de la especialidad {especialidad.nombre}{def?.avanzada ? ", de las avanzadas" : ""}. Se puede tomar sola, como electiva, o con las{" "}
+                <Link href={`/academia/especialidad/${especialidad.id}`} className="underline underline-offset-2">otras materias de la especialidad</Link>
                 {d.requisitos.length ? `; para inscribirte hace falta ${d.requisitos.join(" y ")}.` : "."}
               </p>
             </div>

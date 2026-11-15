@@ -28,6 +28,7 @@ async function documento(extra: Partial<DocumentoAcademia> = {}): Promise<Docume
     ref: "n2-panorama-nt",
     titulo: "Panorama del Nuevo Testamento",
     nivel: { n: 2, nombre: "Discipulado" },
+    especialidad: null,
     nombre: "María José Pérez Ñáñez",
     nota: 94,
     honores: false,
@@ -64,9 +65,24 @@ test("el diploma del nivel, el revocado y un nombre muy largo también salen", a
   assert.equal(imagenes(conQr) - imagenes(sinQr), 1, "el QR es una imagen más");
 });
 
+test("el certificado de especialidad y el de una materia de especialidad también salen", async () => {
+  const especialidad = { id: "evangelismo-misiones" as const, nombre: "Evangelismo y misiones" };
+  const cert = await certificadoPdf(
+    await documento({ tipo: "especialidad", ref: "evangelismo-misiones", titulo: "Certificado de Especialidad en Evangelismo y misiones", nivel: null, especialidad, nota: 91, honores: true }),
+  );
+  guardar("certificado-especialidad.pdf", cert);
+  assert.equal(cert.subarray(0, 5).toString(), "%PDF-");
+  assert.equal(paginas(cert), 1);
+  assert.ok(imagenes(cert) >= 3, `${imagenes(cert)} imágenes`);
+  const materia = await certificadoPdf(await documento({ ref: "evangelismo-misiones-1", titulo: "Evangelismo personal avanzado", nivel: null, especialidad }));
+  guardar("certificado-materia-especialidad.pdf", materia);
+  assert.equal(paginas(materia), 1);
+});
+
 test("los nombres de archivo", () => {
   assert.equal(archivoDelCertificado({ tipo: "materia", ref: "n1-salvacion", codigo: "A-7K2M-9QX4" }), "academia-n1-salvacion-a-7k2m-9qx4.pdf");
   assert.equal(archivoDelCertificado({ tipo: "nivel", ref: "1", codigo: "N-ABCD-EFGH" }), "academia-nivel-1-n-abcd-efgh.pdf");
+  assert.equal(archivoDelCertificado({ tipo: "especialidad", ref: "evangelismo-misiones", codigo: "AAF-ABCD-EFGH" }), "academia-especialidad-evangelismo-misiones-aaf-abcd-efgh.pdf");
   assert.equal(archivoDelExpediente("AAF-2026-00042"), "expediente-aaf-2026-00042.pdf");
   assert.equal(archivoDelExpediente(null), "expediente-academia.pdf");
 });
