@@ -25,13 +25,22 @@ const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // de golpe, y entonces el servidor sirve la RV1909 de respaldo, que dice distinto y daría falsos errores de cita.
 let fila: Promise<unknown> = Promise.resolve();
 async function pedirCapitulo(libro: string, cap: number): Promise<{ verse: number; text: string }[]> {
-  for (let intento = 1; ; intento++) {
+  let respaldos = 0;
+  let esperas = 0;
+  for (;;) {
     const r = await fetch(`${BIBLIA}/api/bible/chapter/rv1960/${encodeURIComponent(libro)}/${cap}`);
+    // la propia web limita las peticiones por minuto: se espera lo que pide (Retry-After) y se reintenta
+    if (r.status === 429 && esperas < 8) {
+      esperas++;
+      const segundos = Number(r.headers.get("retry-after"));
+      await dormir((Number.isFinite(segundos) && segundos > 0 ? Math.min(segundos, 65) : 15) * 1000);
+      continue;
+    }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d: any = await r.json();
     if (!d.fallbackFrom) return d.verses as { verse: number; text: string }[];
-    if (intento >= 4) throw new Error(`la RV1960 no respondió (el servidor dio el respaldo ${d.version}); vuelve a correr el verificador en unos minutos`);
-    await dormir(2500 * intento);
+    if (++respaldos >= 4) throw new Error(`la RV1960 no respondió (el servidor dio el respaldo ${d.version}); vuelve a correr el verificador en unos minutos`);
+    await dormir(2500 * respaldos);
   }
 }
 function capitulo(libro: string, cap: number) {

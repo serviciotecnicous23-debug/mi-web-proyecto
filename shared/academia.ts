@@ -1115,6 +1115,105 @@ const EVANGELISMO_PERSONAL: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 7: el hogar y las relaciones edificados sobre Dios. */
+const FAMILIA: MateriaDef = {
+  id: "n2-familia",
+  nivel: 2,
+  orden: 7,
+  titulo: "Familia y relaciones",
+  resumen: "El diseño de Dios para la familia, el matrimonio con amor y respeto, padres e hijos, la soltería y la amistad, la pureza y el perdón en el hogar.",
+  base: "Génesis 2:24; Salmos 127:1",
+  memoria: "Salmos 127:1",
+  lecciones: lecciones("n2-familia", [
+    ["El diseño de Dios para la familia", "Génesis 2:18, 24; Mateo 19:4-6"],
+    ["El matrimonio: amor y respeto", "Efesios 5:21, 25-28, 33"],
+    ["Padres e hijos", "Deuteronomio 6:6-7; Efesios 6:1-4; Proverbios 22:6"],
+    ["La soltería y la amistad", "1 Corintios 7:32-35; Proverbios 17:17; 27:17"],
+    ["La pureza sexual", "1 Tesalonicenses 4:3-5; 1 Corintios 6:18-20; Hebreos 13:4"],
+    ["Perdón, conflictos y restauración en el hogar", "Colosenses 3:12-14; Efesios 4:26; Mateo 19:8-9"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo edifique su hogar y sus relaciones sobre el fundamento de Dios. La materia presenta el diseño de Dios para el matrimonio y la familia, el amor que se entrega y el respeto mutuo, la crianza en el Señor, el valor de la soltería y de la amistad, la pureza y el perdón. La autoridad nunca justifica el control ni la violencia, y los casos difíciles se tratan con el pastor. Como dice el salmo, «Si Jehová no edificare la casa, en vano trabajan los que la edifican» (Salmos 127:1).",
+    objetivos: [
+      { id: "o1", texto: "Describir el diseño de Dios para el matrimonio y la familia.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el amor, el respeto y la crianza que enseña la Biblia, y distinguir la autoridad que sirve del control que domina.", bloom: "analizar" },
+      { id: "o3", texto: "Valorar la soltería, la amistad y la pureza según la Biblia.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar el perdón, la reconciliación y la búsqueda de ayuda en los conflictos familiares.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Salmos 127:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El diseño bíblico del matrimonio, la familia, la soltería, la amistad y la sexualidad.",
+      ser: "Un corazón fiel, puro, paciente y perdonador en sus relaciones.",
+      hacer: "Amar y respetar en el hogar, enseñar la fe a los hijos, cuidar la pureza y buscar la reconciliación y la ayuda cuando hace falta.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Emerson Eggerichs", titulo: "Amor y respeto", editorial: "Grupo Nelson" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Gary Chapman", titulo: "Los cinco lenguajes del amor", editorial: "Unilit" },
+      ],
+    },
+    recursos: [
+      { tipo: "lectura", titulo: "Efesios 5 y 6: el hogar cristiano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=5" },
+      { tipo: "lectura", titulo: "Génesis 2: el principio de la familia", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Genesis&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 2 · materia 9: los dones del Espíritu y el servicio de cada creyente. */
+const DONES: MateriaDef = {
+  id: "n2-dones",
+  nivel: 2,
+  orden: 9,
+  titulo: "Dones espirituales y servicio",
+  resumen: "Los dones del Espíritu en 1 Corintios 12, Romanos 12 y 1 Pedro 4, los ministerios de Efesios 4, el amor y el orden, y cómo descubrir tu don y servir.",
+  base: "1 Corintios 12:4-7; 1 Pedro 4:10",
+  memoria: "1 Corintios 12:7",
+  lecciones: lecciones("n2-dones", [
+    ["Los dones: regalos del Espíritu para servir", "1 Corintios 12:4-7; 1 Pedro 4:10"],
+    ["Los dones del Espíritu en 1 Corintios 12", "1 Corintios 12:8-11; 1:7"],
+    ["Dones para hablar y para servir", "Romanos 12:4-8; 1 Pedro 4:11"],
+    ["Los ministerios que edifican", "Efesios 4:11-16"],
+    ["El camino más excelente: el amor y el orden", "1 Corintios 13:1-7; 14:26; 1 Tesalonicenses 5:19-21"],
+    ["Descubrir tu don y servir", "1 Corintios 12:18-22; Romanos 12:1"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo descubra los dones que el Espíritu Santo le ha dado y sirva con ellos en la iglesia. La materia estudia los dones de 1 Corintios 12, Romanos 12 y 1 Pedro 4, los ministerios de Efesios 4 y el uso de los dones con amor, orden y discernimiento, como las iglesias pentecostales, que creen que todos los dones siguen vigentes. El bautismo en el Espíritu Santo se estudia a fondo en el Nivel 3. Pablo lo resume así: «a cada uno le es dada la manifestación del Espíritu para provecho» (1 Corintios 12:7).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué son los dones espirituales, para qué los da Dios y en qué se distinguen de los talentos y del fruto del Espíritu.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los dones de 1 Corintios 12, Romanos 12 y 1 Pedro 4, y explicar su vigencia.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar los ministerios de Efesios 4 y el uso de los dones con amor, orden y discernimiento.", bloom: "analizar" },
+      { id: "o4", texto: "Aplicar pasos para descubrir el propio don y servir en la iglesia.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar 1 Corintios 12:7 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los dones del Espíritu, los ministerios de Efesios 4 y los principios para usarlos.",
+      ser: "Un siervo humilde, que ama y depende del Espíritu Santo.",
+      hacer: "Descubrir el propio don y servir en un ministerio de la iglesia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Stanley M. Horton", titulo: "El Espíritu Santo revelado en la Biblia", editorial: "Vida" },
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida", nota: "Capítulo del Espíritu Santo: los dones" },
+      ],
+      complementaria: [
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "lectura", titulo: "1 Corintios 12 a 14: los dones, el amor y el orden", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=12" },
+      { tipo: "lectura", titulo: "Romanos 12: un cuerpo, muchos dones", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=12" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -1154,9 +1253,9 @@ export const NIVELES: NivelDef[] = [
       DISCIPLINAS,
       SERMON_MONTE,
       MAYORDOMIA,
-      enPreparacion(2, 7, "n2-familia", "Familia y relaciones", "Matrimonio, hijos, soltería, amistad y pureza."),
+      FAMILIA,
       EVANGELISMO_PERSONAL,
-      enPreparacion(2, 9, "n2-dones", "Dones espirituales y servicio", "Los dones del Espíritu y cómo descubrir dónde servir."),
+      DONES,
     ],
   },
   {
