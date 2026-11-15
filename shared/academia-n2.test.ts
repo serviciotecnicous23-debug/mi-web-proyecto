@@ -17,7 +17,7 @@ test("la primera materia del Nivel 2 está publicada, con 6 lecciones, su versí
   assert.equal(panorama.silabo?.objetivos.length, 5);
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias[0].id, "n2-panorama-at");
-  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt"], "las demás siguen en preparación");
+  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas"], "las demás siguen en preparación");
 });
 
 test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está publicada con su sílabo", () => {
@@ -31,6 +31,22 @@ test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está p
   assert.ok(nt.silabo?.bibliografia.basica.some((b) => b.autor === "Merrill C. Tenney"));
   assert.deepEqual(miniPruebasDe(nt), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
   assert.ok(tieneEscritoBreve(nt));
+});
+
+test("la cuarta materia del Nivel 2, «Disciplinas espirituales», está publicada con su sílabo", () => {
+  const d = materiaPorId("n2-disciplinas")!;
+  assert.ok(d.disponible);
+  assert.equal(d.nivel, 2);
+  assert.equal(d.orden, 4);
+  assert.equal(d.lecciones.length, 6);
+  assert.equal(d.memoria, "1 Timoteo 4:8");
+  assert.equal(d.silabo?.objetivos.length, 5);
+  assert.ok(d.silabo?.bibliografia.basica.some((b) => b.autor === "Donald S. Whitney"));
+  assert.ok(d.silabo?.bibliografia.complementaria.find((b) => b.autor === "Richard J. Foster")?.nota, "Foster lleva su nota de discernimiento");
+  assert.deepEqual(miniPruebasDe(d), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(d));
+  const n2 = NIVELES.find((n) => n.n === 2)!;
+  assert.equal(n2.materias.findIndex((m) => m.id === "n2-disciplinas"), 3, "va en el cuarto lugar, después de Doctrinas fundamentales");
 });
 
 test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 1", () => {
