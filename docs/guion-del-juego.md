@@ -980,6 +980,30 @@ variables (`--tpl-oro`, `--tpl-oro-viejo`, `--tpl-tinta`, `--tpl-cedro`, `--tpl-
   pretil y terrado (`remateDeSillares`), y las puertas entre jambas. **La escuela de los profetas**: su zócalo de piedras.
 - **Lo que pesa**: la muralla entera, unos 87 mil vértices (el zócalo es de una sola hilada de piedras grandes).
 
+## 7t. El dominó, como en la mesa de verdad (14 de noviembre de 2026)
+
+Pedido de Luis: los juegos de mesa más profesionales, empezando por el dominó, que quiere jugar con sus amigos («unas
+fichas que ni se entienden cómo caen en la mesa»). Se siguió lo que hacen los juegos de dominó más jugados: la fila
+crece desde la primera ficha hacia las dos puntas, los dobles van atravesados, las dos puntas siempre a la vista, una
+señal clara de qué ficha casa y dónde, y la mano en fila abajo.
+
+- **Dónde va cada ficha** (`shared/mesa/domino-cadena.ts`, nuevo, con `shared/mesa-domino-cadena.test.ts`):
+  - la primera ficha (la de número más chico) va en el medio y la fila crece hacia los dos lados;
+  - al llegar a la orilla (`limite`, en medias fichas) la fila dobla: una ficha parada en la esquina y otra que vuelve,
+    y sigue en el renglón de abajo (la punta derecha) o de arriba (la izquierda). Los dobles van atravesados (en la
+    esquina, acostados), aunque se pasen un poco de la orilla: así los renglones quedan siempre a la misma distancia;
+  - `dondeIria` da el lugar exacto de una ficha antes de ponerla (su sombra) y `mitadLibre`, la mitad libre de cada punta;
+  - la prueba arma 400 manos al azar en mesas de todo ancho: ninguna ficha pisa a otra, las vecinas casan donde se
+    tocan, una ficha nueva no mueve a las demás y la sombra queda justo donde va la ficha.
+- **La pantalla** (`mesa/Domino.tsx`):
+  - la mesa es un solo dibujo (SVG) en medias fichas, con el paño y el borde de madera. Se aleja suave para que entre
+    toda la fila (`useCajaSuave`) y el ancho de cada renglón sale de la forma de la mesa (en el teléfono, más angosto);
+  - las fichas de marfil, con los puntos hundidos y el perno de bronce; la sombra y el canto, siempre abajo a la
+    derecha (como da la luz) aunque la ficha vaya parada; la recién puesta llega desde quien la jugó, con su brillo;
+  - cuando te toca, laten las puntas donde puedes jugar. Si la ficha casa en las dos, su sombra aparece en cada punta y
+    se toca para ponerla (quedan también los botones de cada punta);
+  - los demás arriba, con su color, sus fichas boca abajo y su globito («¡Paso!», «Robó»); mi mano en un atril de madera.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

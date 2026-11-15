@@ -122,6 +122,11 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - **Todo lugar donde se camina entra en `shared/pasos-libres.test.ts`**: ninguna pieza delante de una abertura,
   aberturas de dos celdas o más y círculos que no tapan un paso.
 
+- **Los juegos de mesa** se dibujan como los juegos de siempre que más se juegan: la mesa entera a la vista (lo que
+  importa, como las puntas del dominó, nunca queda fuera), una señal clara de qué se puede jugar y dónde (que late),
+  la sombra de la pieza antes de soltarla, y piezas con volumen (canto y sombra hacia abajo a la derecha). Lo que
+  decide dónde va cada pieza es un módulo puro con su prueba (como `shared/mesa/domino-cadena.ts`).
+
 ## 8. La cámara
 - Sigue al personaje con un resorte críticamente amortiguado (sin tirones), un poco adelantada hacia donde camina.
 - Transiciones al entrar o salir de un lugar: fundido corto (unos 300 ms), nunca un corte seco.

@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-domino",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El dominó, como en la mesa de verdad",
+    puntos: [
+      "🎲 La fila empieza en el medio de la mesa y crece hacia las dos puntas. Al llegar a la orilla dobla y vuelve, como una serpiente, y los dobles van atravesados. La mesa se aleja sola: siempre se ven las dos puntas.",
+      "👀 Cuando te toca, laten las puntas donde puedes jugar. Si tu ficha casa en las dos, aparece su sombra en cada punta: toca la que quieras.",
+      "✨ Fichas de marfil con los puntos hundidos y el perno de bronce, en un paño verde con borde de madera. La ficha que se pone llega desde quien la jugó.",
+      "🤝 Arriba ves a los demás con sus fichas boca abajo y lo que hicieron («¡Paso!», «Robó»). Abajo, tu mano en su atril, con las fichas que casan levantadas.",
+    ],
+  },
+  {
     id: "2026-11-14-edificios",
     fecha: "14 de noviembre de 2026",
     titulo: "La muralla, el palacio y la plaza, de piedra labrada",
