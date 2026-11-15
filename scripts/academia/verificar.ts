@@ -20,15 +20,26 @@ const problemas: string[] = [];
 const mal = (s: string) => problemas.push(s);
 
 const capitulos = new Map<string, Promise<{ verse: number; text: string }[]>>();
+const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
+// Los capítulos se piden de a uno y con una pausa: el proveedor de la RV1960 (Bolls) responde 429 si recibe cientos
+// de golpe, y entonces el servidor sirve la RV1909 de respaldo, que dice distinto y daría falsos errores de cita.
+let fila: Promise<unknown> = Promise.resolve();
+async function pedirCapitulo(libro: string, cap: number): Promise<{ verse: number; text: string }[]> {
+  for (let intento = 1; ; intento++) {
+    const r = await fetch(`${BIBLIA}/api/bible/chapter/rv1960/${encodeURIComponent(libro)}/${cap}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d: any = await r.json();
+    if (!d.fallbackFrom) return d.verses as { verse: number; text: string }[];
+    if (intento >= 4) throw new Error(`la RV1960 no respondió (el servidor dio el respaldo ${d.version}); vuelve a correr el verificador en unos minutos`);
+    await dormir(2500 * intento);
+  }
+}
 function capitulo(libro: string, cap: number) {
   const clave = `${libro}|${cap}`;
   if (!capitulos.has(clave)) {
-    capitulos.set(
-      clave,
-      fetch(`${BIBLIA}/api/bible/chapter/rv1960/${encodeURIComponent(libro)}/${cap}`)
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-        .then((d: any) => d.verses as { verse: number; text: string }[]),
-    );
+    const turno = fila.then(() => dormir(120)).then(() => pedirCapitulo(libro, cap));
+    fila = turno.catch(() => undefined);
+    capitulos.set(clave, turno);
   }
   return capitulos.get(clave)!;
 }
@@ -43,8 +54,12 @@ const comillas = (s: string) => [...s.matchAll(/«([^»]+)»/g)].map((m) => m[1]
 
 async function revisarComillas(donde: string, texto: string, refs: string[]) {
   for (const q of comillas(texto)) {
-    const textos = await Promise.all(refs.map((r) => textoDe(r).catch(() => null)));
-    if (!textos.some((t) => t && plano(t).includes(plano(q)))) mal(`${donde}: «${q}» no coincide con la RV1960 de ${refs.join(", ") || "(sin citas)"}`);
+    const errores: string[] = [];
+    const textos = await Promise.all(refs.map((r) => textoDe(r).catch((e: Error) => (errores.push(`${r}: ${e.message}`), null))));
+    if (textos.some((t) => t && plano(t).includes(plano(q)))) continue;
+    // si un capítulo no cargó, no es un error de la cita: se dice que no se pudo comprobar
+    if (errores.length) mal(`${donde}: no se pudo comprobar «${q}» (${errores.join("; ")})`);
+    else mal(`${donde}: «${q}» no coincide con la RV1960 de ${refs.join(", ") || "(sin citas)"}`);
   }
 }
 
