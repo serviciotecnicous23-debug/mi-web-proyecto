@@ -21,7 +21,7 @@ export function AcademiaDiagnosticoPrueba() {
         tipo: "diagnostico",
         titulo: "Prueba diagnóstica",
         volver: { href: "/academia/diagnostico", texto: "La prueba diagnóstica" },
-        detalle: `${DIAGNOSTICO.porMateria} preguntas de cada materia, para saber por dónde te conviene empezar.`,
+        detalle: `${DIAGNOSTICO.porMateria} preguntas de cada materia de los Niveles 1 y 2, para saber por dónde te conviene empezar.`,
       }}
     />
   );
@@ -107,7 +107,7 @@ export default function AcademiaDiagnostico() {
           <section className="glass-card p-5">
             <h2 className="font-semibold text-lg">{u ? "Repetir la prueba" : "Cómo es"}</h2>
             <ul className="text-sm text-muted-foreground mt-2 space-y-1.5 list-disc pl-5">
-              <li>{d?.preguntas ?? 0} preguntas ({DIAGNOSTICO.porMateria} de cada materia), {DIAGNOSTICO.segundos} segundos cada una: unos {minutos} minutos.</li>
+              <li>{d?.preguntas ?? 0} preguntas ({DIAGNOSTICO.porMateria} de cada materia de los Niveles 1 y 2), {DIAGNOSTICO.segundos} segundos cada una: unos {minutos} minutos.</li>
               <li>No tiene nota para aprobar: al terminar verás por dónde empezar y qué materias ya conoces.</li>
               <li>Se puede repetir cada {DIAGNOSTICO.diasEntre} días.</li>
             </ul>

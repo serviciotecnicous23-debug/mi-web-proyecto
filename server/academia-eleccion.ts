@@ -65,3 +65,15 @@ export function elegirEscritas(escritas: ClaveEscrita[], vistas: Set<string>, n:
   }
   return out.map((e) => e.id);
 }
+
+/**
+ * Las escritas del final de los Niveles 3 a 5: primero las respuestas cortas y después los escritos breves (`breves`
+ * de las `n`). Cada tipo trae primero lo que todavía no salió.
+ */
+export function elegirEscritasConBreves(escritas: ClaveEscrita[], vistas: Set<string>, n: number, breves: number, semilla: number): string[] {
+  const b = Math.min(breves, n);
+  return [
+    ...elegirEscritas(escritas.filter((e) => e.tipo === "corta"), vistas, n - b, semilla),
+    ...elegirEscritas(escritas.filter((e) => e.tipo === "breve"), vistas, b, semilla),
+  ];
+}

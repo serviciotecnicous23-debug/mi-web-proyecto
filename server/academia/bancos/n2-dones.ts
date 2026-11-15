@@ -156,7 +156,7 @@ export const BANCO_N2_DONES: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Los dones espirituales son capacidades que el Espíritu Santo da a cada creyente, y se dan para provecho de todos: para servir y edificar a la iglesia (1 Corintios 12:7). Se distinguen del fruto del Espíritu, que es el carácter de Cristo formado en nosotros: amor, gozo, paz (Gálatas 5:22-23). Los dones son lo que Dios hace por medio de nosotros; el fruto, lo que hace en nosotros.",
+        "Los dones espirituales son capacidades que el Espíritu Santo da a cada creyente para provecho de todos: para servir y edificar a la iglesia (1 Corintios 12:7). Se distinguen del fruto del Espíritu, que es el carácter de Cristo en nosotros: amor, gozo, paz (Gálatas 5:22-23). Los dones obran por medio de nosotros; el fruto, en nosotros.",
     },
     {
       id: "n2-dones-e2",
@@ -174,7 +174,7 @@ export const BANCO_N2_DONES: BancoMateria = {
         { id: "cesaron", anula: "vigentes", texto: "La Biblia enseña que la iglesia tiene los dones esperando la venida de Cristo (1 Corintios 1:7); no dice que cesaran con los apóstoles.", formas: ["ya no existen", "ya cesaron", "terminaron con los apostoles", "solo fueron para los apostoles"] },
       ],
       modelo:
-        "En 1 Corintios 12 el Espíritu reparte dones como la palabra de sabiduría, la fe, las sanidades, la profecía y las lenguas, y en Romanos 12 aparecen la enseñanza, la exhortación y la misericordia. El Espíritu los reparte como Él quiere. Creemos que siguen vigentes porque la iglesia los tiene esperando la manifestación de nuestro Señor Jesucristo (1 Corintios 1:7), y se usan con amor y con orden.",
+        "En 1 Corintios 12 el Espíritu reparte dones como la palabra de sabiduría, la fe, las sanidades, la profecía y las lenguas; en Romanos 12 están la enseñanza, la exhortación y la misericordia. Creemos que siguen vigentes, porque la iglesia los tiene esperando la manifestación de nuestro Señor Jesucristo (1 Corintios 1:7). Se usan con amor y orden.",
     },
     {
       id: "n2-dones-e3",
@@ -190,7 +190,7 @@ export const BANCO_N2_DONES: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Sin amor, los dones no valen nada: aunque alguien hable lenguas o profetice, si no tiene amor, nada es (1 Corintios 13:2). Por eso el amor es el camino más excelente. Además, todo debe hacerse para edificación y con orden, con interpretación de las lenguas y juzgando las profecías, porque Dios no es Dios de confusión, sino de paz (1 Corintios 14:33). No apagamos al Espíritu, pero lo examinamos todo.",
+        "Sin amor, los dones no valen nada: aunque alguien profetice, si no tiene amor, nada es (1 Corintios 13:2). Todo debe hacerse para edificación y con orden, interpretando las lenguas y juzgando las profecías, porque Dios no es Dios de confusión, sino de paz (1 Corintios 14:33). No apagamos al Espíritu, pero lo examinamos todo.",
     },
     {
       id: "n2-dones-e4",
@@ -206,7 +206,7 @@ export const BANCO_N2_DONES: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Primero puede pedirlo en oración, porque el Espíritu reparte los dones. Después debe servir en distintas áreas de la iglesia, porque el don se descubre sirviendo (1 Pedro 4:10). También conviene mirar el fruto y escuchar a los líderes y a los hermanos maduros. Y todo empieza con una vida entregada a Dios como sacrificio vivo (Romanos 12:1), dispuesta a servir donde haga falta.",
+        "Primero puede pedirlo en oración, porque el Espíritu reparte los dones. Después debe servir en distintas áreas de la iglesia, porque el don se descubre sirviendo (1 Pedro 4:10). Conviene mirar el fruto y escuchar a los líderes y a los hermanos maduros. Todo empieza con una vida entregada a Dios como sacrificio vivo (Romanos 12:1).",
     },
   ],
   // el escrito breve de la materia (80 a 300 palabras): cuenta el 15 % de la nota del Nivel 2

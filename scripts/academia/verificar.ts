@@ -10,7 +10,7 @@
  * que lo citado entre comillas «…» coincida letra por letra con la RV1960 (en las lecciones, con algún versículo de la
  * misma lección; en las preguntas, con su cita).
  */
-import { ESCRITA, MINI_PRUEBA, examenDe, miniPruebasDe, parsearCita, tieneEscritoBreve, todasLasMaterias } from "../../shared/academia";
+import { ESCRITA, MINI_PRUEBA, SUFICIENCIA, examenDe, miniPruebasDe, parsearCita, tieneEscritoBreve, todasLasMaterias } from "../../shared/academia";
 import { BANCOS, CONTENIDO } from "../../server/academia/index";
 import { problemasDeClave } from "../../server/academia-correccion";
 import type { PreguntaObjetiva } from "../../server/academia/tipos";
@@ -131,11 +131,20 @@ async function main() {
       const deMemoria = /de memoria/i.test(o.texto);
       if (!deMemoria && n < 2) mal(`${m.id}: el objetivo ${o.id} se mide con ${n} preguntas (pide 2)`);
     }
-    if (banco.escritas.length < medida.escritas) mal(`${m.id}: faltan preguntas escritas`);
+    // las cortas sirven al final, a la suficiencia y al integral; en los Niveles 3 a 5 el final trae además un escrito breve
+    const breves = medida.breves ?? 0;
+    const cortas = banco.escritas.filter((e) => e.tipo === "corta").length;
+    const largas = banco.escritas.filter((e) => e.tipo === "breve").length;
+    if (cortas < Math.max(medida.escritas - breves, SUFICIENCIA.escritas)) mal(`${m.id}: faltan respuestas cortas en el final (tiene ${cortas})`);
+    if (largas < breves) mal(`${m.id}: el final pide ${breves} escrito breve y el banco tiene ${largas}`);
+    if (largas && !breves) mal(`${m.id}: el final de este nivel no lleva escritos breves`);
     for (const e of banco.escritas) {
       if (ids.has(e.id)) mal(`${m.id}: id repetido ${e.id}`);
       ids.add(e.id);
       for (const x of problemasDeClave(e)) mal(x);
+      const n = e.modelo.split(/\s+/).filter(Boolean).length;
+      const { min, max } = ESCRITA[e.tipo];
+      if (n < min || n > max) mal(`${e.id}: la respuesta modelo tiene ${n} palabras (de ${min} a ${max})`);
     }
     // Nivel 2 en adelante: cada mini prueba con su banco de 18, de las lecciones de su grupo, y el escrito breve
     const minis = miniPruebasDe(m);

@@ -156,7 +156,7 @@ export const BANCO_N2_FAMILIA: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Dios creó al hombre y a la mujer a su imagen y dijo que no es bueno que el hombre esté solo. En el matrimonio, el hombre deja a su padre y a su madre, se une a su mujer y son una sola carne (Génesis 2:24): un pacto para toda la vida. Jesús confirmó ese diseño y dijo: lo que Dios juntó, no lo separe el hombre (Mateo 19:6).",
+        "El matrimonio es entre un hombre y una mujer: el hombre deja a su padre y a su madre, se une a su mujer y son una sola carne (Génesis 2:24), un pacto para toda la vida. Jesús confirmó ese diseño de la creación: lo que Dios juntó, no lo separe el hombre (Mateo 19:6).",
     },
     {
       id: "n2-familia-e2",
@@ -174,7 +174,7 @@ export const BANCO_N2_FAMILIA: BancoMateria = {
         { id: "golpe", anula: "violencia", texto: "La autoridad del esposo es para servir, como Cristo; nunca justifica el control ni la violencia (Efesios 5:25).", formas: ["puede pegarle", "puede golpearla", "derecho a pegar", "corregirla con golpes", "para corregirla", "con golpes", "a golpes"] },
       ],
       modelo:
-        "Efesios 5 empieza con someterse unos a otros en el temor de Dios. El esposo debe amar a su esposa así como Cristo amó a la iglesia y se entregó por ella (Efesios 5:25), y la esposa debe respetar a su marido. La autoridad del esposo es para servir y cuidar, por eso nunca justifica la violencia: quien la sufre debe buscar protección y ayuda.",
+        "Efesios 5 empieza con someterse unos a otros en el temor de Dios. El esposo ama a su esposa así como Cristo amó a la iglesia y se entregó por ella (Efesios 5:25), y la esposa respeta a su marido. La autoridad es para servir y cuidar: nunca justifica la violencia, y quien la sufre busca protección y ayuda.",
     },
     {
       id: "n2-familia-e3",
@@ -189,7 +189,7 @@ export const BANCO_N2_FAMILIA: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "La soltería no es una vida incompleta: el soltero tiene cuidado de las cosas del Señor y puede servirle con libertad (1 Corintios 7:32). El buen amigo ama en todo tiempo y nos afila, como el hierro con el hierro (Proverbios 27:17). Y Dios nos llama a la pureza: huir de la fornicación, porque el cuerpo es templo del Espíritu Santo y la sexualidad es para el matrimonio.",
+        "La soltería no es una vida incompleta: el soltero tiene cuidado de las cosas del Señor (1 Corintios 7:32). El buen amigo ama en todo tiempo y nos afila, como el hierro al hierro. Dios nos llama a la pureza: huir de la fornicación, porque el cuerpo es templo del Espíritu Santo y la sexualidad es para el matrimonio.",
     },
     {
       id: "n2-familia-e4",
@@ -205,7 +205,7 @@ export const BANCO_N2_FAMILIA: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Los conflictos se enfrentan con misericordia y perdón: de la manera que Cristo nos perdonó, así perdonamos (Colosenses 3:13). Hay que hablar con respeto, escuchar y no dejar que el enojo dure hasta el otro día. Y cuando hay violencia o un dolor que no se puede manejar, se busca ayuda y protección: el pastor, un consejero cristiano y, si hay peligro, las autoridades.",
+        "Los conflictos se enfrentan con misericordia y perdón: de la manera que Cristo nos perdonó, así perdonamos (Colosenses 3:13). Hay que hablar con respeto, escuchar y no dejar que el enojo dure. Cuando hay violencia o un dolor que no se puede manejar, se busca ayuda y protección: el pastor, un consejero y, si hay peligro, las autoridades.",
     },
   ],
   // el escrito breve de la materia (80 a 300 palabras): cuenta el 15 % de la nota del Nivel 2

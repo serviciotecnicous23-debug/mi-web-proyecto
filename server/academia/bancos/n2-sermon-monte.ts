@@ -158,7 +158,7 @@ export const BANCO_N2_SERMON_MONTE: BancoMateria = {
         { id: "obras", anula: "gracia", texto: "La salvación no es por obras sino por gracia (Efesios 2:8-9); el Sermón describe la vida de quien ya sigue a Jesús.", formas: ["salvos por las obras", "salvos por obras", "las obras nos salvan", "nos salvan las obras"] },
       ],
       modelo:
-        "El Sermón del monte, en Mateo 5 a 7, es la enseñanza de Jesús sobre la vida en el reino de los cielos. Jesús lo enseñó a sus discípulos, a los que ya lo seguían, con autoridad propia (Mateo 7:28-29). No es un camino para ganar la salvación, que es por gracia (Efesios 2:8-9): describe la vida nueva que el Espíritu Santo produce en el creyente.",
+        "El Sermón del monte, en Mateo 5 a 7, es la enseñanza de Jesús sobre la vida en el reino de los cielos. Lo enseñó a sus discípulos con autoridad (Mateo 7:28-29). No es un camino para ganar la salvación, que es por gracia (Efesios 2:8-9): describe la vida nueva que el Espíritu Santo produce.",
     },
     {
       id: "n2-sermon-monte-e2",

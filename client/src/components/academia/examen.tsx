@@ -10,7 +10,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
+import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
 import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
@@ -120,7 +120,7 @@ function Escrita({ e, alEntregar, ocupado }: { e: EscritaExamen; alEntregar: (te
   return (
     <div data-testid="examen-escrita">
       <div className="flex items-center justify-between gap-3 mb-4">
-        <p className="data-label">Parte B · Respuesta escrita {e.n} de {e.de}</p>
+        <p className="data-label">Parte B · {e.tipo === "breve" ? "Escrito breve" : "Respuesta escrita"} {e.n} de {e.de}</p>
         <Reloj quedan={quedan} total={e.minutos * 60} />
       </div>
       <h2 className="text-xl md:text-2xl font-semibold leading-snug mb-4" data-testid="examen-pregunta-escrita">{e.texto}</h2>
@@ -449,7 +449,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                   {destino.detalle && <li className="flex gap-2"><Layers className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{destino.detalle}</li>}
                   <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{medida.escritas > 0 ? "Parte A: " : ""}{medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
                   {medida.escritas > 0 && (
-                    <li className="flex gap-2"><PenLine className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte B: {medida.escritas === 1 ? "una respuesta escrita" : `${medida.escritas} respuestas escritas`} con tus palabras, {medida.minutosEscrita} minutos cada una.</li>
+                    <li className="flex gap-2"><PenLine className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte B: {parteEscrita(medida)}, con tus palabras.</li>
                   )}
                   <li className="flex gap-2"><Clock className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Hazlo con tiempo y sin interrupciones: el reloj sigue aunque cierres la página.</li>
                   <li className="flex gap-2">

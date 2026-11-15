@@ -172,7 +172,7 @@ export const BANCO_N2_MAYORDOMIA: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Un señor repartió talentos a sus siervos, a cada uno conforme a su capacidad. Los dos primeros negociaron y duplicaron lo recibido, y el señor les dijo: Bien, buen siervo y fiel (Mateo 25:21). El tercero enterró su talento por miedo y fue llamado siervo malo y negligente. Dios premia la fidelidad, no la cantidad: espera que usemos lo que recibimos.",
+        "Un señor repartió talentos a sus siervos, a cada uno conforme a su capacidad. Los dos primeros negociaron y duplicaron lo recibido, y el señor les dijo: Bien, buen siervo y fiel (Mateo 25:21). El tercero enterró su talento por miedo: siervo malo y negligente. Dios premia la fidelidad, no la cantidad: espera que usemos lo recibido.",
     },
     {
       id: "n2-mayordomia-e3",
@@ -196,7 +196,7 @@ export const BANCO_N2_MAYORDOMIA: BancoMateria = {
         { id: "compra", anula: "prosperidad", texto: "Dios bendice al generoso, pero no se le compra: damos por gratitud y por fe, no para hacernos ricos (1 Timoteo 6:5-10).", formas: ["dios nos hace ricos", "dios nos hara ricos", "para hacernos ricos", "para que dios nos de mas", "dar para recibir mas"] },
       ],
       modelo:
-        "El diezmo, la décima parte, aparece antes de la ley con Abram (Génesis 14:20), en la ley y en las palabras de Jesús (Mateo 23:23), y las ofrendas se dan con orden y con alegría para sostener la obra de Dios y ayudar a los necesitados. El evangelio de la prosperidad es un error porque a Dios no se le compra: damos por gratitud y no para hacernos ricos, y la Biblia reprende a los que toman la piedad como fuente de ganancia (1 Timoteo 6:5).",
+        "El diezmo, la décima parte, aparece con Abram (Génesis 14:20) y en las palabras de Jesús (Mateo 23:23). Las ofrendas se dan con alegría para sostener la obra de Dios y ayudar a los necesitados. El evangelio de la prosperidad es un error: a Dios no se le compra; damos por gratitud, no para hacernos ricos (1 Timoteo 6:5).",
     },
     {
       id: "n2-mayordomia-e4",
@@ -212,7 +212,7 @@ export const BANCO_N2_MAYORDOMIA: BancoMateria = {
       pesoCita: 10,
       errores: [],
       modelo:
-        "Primero daría a Dios el diezmo y las ofrendas, porque hay que honrar a Jehová con las primicias (Proverbios 3:9). Después ahorraría una parte para las emergencias, como la hormiga que prepara su comida en el verano. Luego pagaría las necesidades y las deudas a tiempo, sin gastar más de lo que entra, porque el que toma prestado es siervo del que presta (Proverbios 22:7).",
+        "Primero daría a Dios el diezmo y las ofrendas, para honrar a Jehová con las primicias (Proverbios 3:9). Después ahorraría para las emergencias, como la hormiga que prepara su comida en el verano. Luego pagaría las necesidades y las deudas a tiempo, sin gastar más de lo que entra, porque el que toma prestado es siervo del que presta.",
     },
   ],
   // el escrito breve de la materia (80 a 300 palabras): cuenta el 15 % de la nota del Nivel 2
