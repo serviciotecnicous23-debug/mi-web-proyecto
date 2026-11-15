@@ -1475,7 +1475,12 @@ export type CarneVista = MatriculaInfo & {
   fotoPropia: boolean;
   codigo: string;
   verificar: string;
-  qr: string;
+  /**
+   * Los archivos del carné, hechos en el servidor (server/academia-carne.ts). Cada dirección lleva la huella de esta
+   * versión: las imágenes se muestran (con &descargar=1 se descargan) y el PDF se descarga (con &ver=1 se abre).
+   * `nombre` es el nombre de los archivos (carne-aaf-2026-00042).
+   */
+  archivos: { frente: string; reverso: string; pdf: string; nombre: string };
 };
 
 /** El código de honor que se acepta al inscribirse (y antes de cada examen). */

@@ -22,6 +22,7 @@ import {
   marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
+import { registerAcademiaCarneRoutes } from "./academia-carne";
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
@@ -546,6 +547,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaNivelRoutes(app);
   registerAcademiaDocumentosRoutes(app);
   registerAcademiaMatriculaRoutes(app);
+  registerAcademiaCarneRoutes(app);
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
