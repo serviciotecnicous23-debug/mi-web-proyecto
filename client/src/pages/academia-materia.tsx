@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
 import {
-  APRUEBA, ESCRITO_BREVE, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, tieneEscritoBreve,
+  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, tieneEscritoBreve,
   type MateriaDetalle, type Pesos,
 } from "@shared/academia";
 import {
@@ -167,6 +167,7 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
   const medida = def ? examenDe(def) : null;
   const minutos = m.lecciones.reduce((a, l) => a + l.minutos, 0);
   const nivel = m.nivel ? NIVELES[m.nivel - 1] : null;
+  const especialidad = !m.nivel && def?.especialidad ? ESPECIALIDADES.find((e) => e.id === def.especialidad) : undefined;
   return (
     <section className="space-y-5" data-testid="materia-presentacion">
       <div>
@@ -220,6 +221,16 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
       <div className="grid gap-4 md:grid-cols-2">
         <Nota d={d} />
         <div className="glass-card p-5 space-y-4">
+          {especialidad && (
+            <div>
+              <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4 text-orange-500" /> Para quién es</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Es una materia de la especialidad {especialidad.nombre}{def?.avanzada ? ", de las avanzadas" : ""}. Se puede tomar sola, como electiva, o con las
+                otras materias de la especialidad
+                {d.requisitos.length ? `; para inscribirte hace falta ${d.requisitos.join(" y ")}.` : "."}
+              </p>
+            </div>
+          )}
           {nivel && (
             <div>
               <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4 text-orange-500" /> Para quién es</h3>
@@ -294,7 +305,9 @@ export default function AcademiaMateria() {
       <section className="relative overflow-hidden section-aurora pt-10 pb-12">
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           <Link href="/academia" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
-          <p className="data-label mt-5">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · Materia {m.orden}</p>
+          <p className="data-label mt-5">
+            {m.nivel ? `Nivel ${m.nivel}` : ["Especialidad", ESPECIALIDADES.find((e) => e.id === def?.especialidad)?.nombre].filter(Boolean).join(" · ")} · Materia {m.orden}
+          </p>
           <h1 className="heading-display font-display text-3xl md:text-5xl mt-2 mb-3" data-testid="materia-titulo">{m.titulo}</h1>
           <p className="text-lg text-muted-foreground max-w-3xl">{m.resumen}</p>
           <div className="flex flex-wrap items-center gap-3 mt-4">

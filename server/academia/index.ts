@@ -40,6 +40,9 @@ import { N5_IDIOMAS } from "./contenido/n5-idiomas";
 import { N5_TEOLOGIA_PASTORAL } from "./contenido/n5-teologia-pastoral";
 import { N5_ADMINISTRACION } from "./contenido/n5-administracion";
 import { N5_SEMINARIO } from "./contenido/n5-seminario";
+import { EVANGELISMO_MISIONES_1 } from "./contenido/evangelismo-misiones-1";
+import { EVANGELISMO_MISIONES_2 } from "./contenido/evangelismo-misiones-2";
+import { EVANGELISMO_MISIONES_3 } from "./contenido/evangelismo-misiones-3";
 import { N2_DONES } from "./contenido/n2-dones";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
@@ -77,15 +80,20 @@ import { BANCO_N5_IDIOMAS } from "./bancos/n5-idiomas";
 import { BANCO_N5_TEOLOGIA_PASTORAL } from "./bancos/n5-teologia-pastoral";
 import { BANCO_N5_ADMINISTRACION } from "./bancos/n5-administracion";
 import { BANCO_N5_SEMINARIO } from "./bancos/n5-seminario";
+import { BANCO_EVANGELISMO_MISIONES_1 } from "./bancos/evangelismo-misiones-1";
+import { BANCO_EVANGELISMO_MISIONES_2 } from "./bancos/evangelismo-misiones-2";
+import { BANCO_EVANGELISMO_MISIONES_3 } from "./bancos/evangelismo-misiones-3";
 import { BANCO_N2_DONES } from "./bancos/n2-dones";
 
-/** El Nivel 1 completo (las 8 materias en su orden) y lo publicado de los Niveles 2 a 5. */
+/** El Nivel 1 completo (las 8 materias en su orden), lo publicado de los Niveles 2 a 5 y de las especialidades. */
 const LECCIONES: LeccionContenido[] = [
   ...N1_SALVACION, ...N1_ORACION, ...N1_BIBLIA, ...N1_ESPIRITU, ...N1_BAUTISMO_CENA, ...N1_IGLESIA, ...N1_VIDA_NUEVA, ...N1_COMPARTIR_FE,
   ...N2_PANORAMA_AT, ...N2_PANORAMA_NT, ...N2_DISCIPLINAS, ...N2_SERMON_MONTE, ...N2_MAYORDOMIA, ...N2_FAMILIA, ...N2_EVANGELISMO_PERSONAL, ...N2_DONES,
   ...N3_HERMENEUTICA, ...N3_METODOS_ESTUDIO, ...N3_PENTATEUCO_HISTORICOS, ...N3_EVANGELIOS_HECHOS, ...N3_EVANGELISMO_CONSOLIDACION, ...N3_LIDERAZGO_1, ...N3_HOMILETICA_1, ...N3_HISTORIA_1, ...N3_CONSEJERIA_BASICA,
   ...N4_SISTEMATICA_1, ...N4_POETICOS_PROFETICOS, ...N4_APOLOGETICA, ...N4_HOMILETICA_2, ...N4_HISTORIA_2, ...N4_ETICA,
   ...N5_DIDACTICA, ...N5_LIDERAZGO_2, ...N5_IDIOMAS, ...N5_TEOLOGIA_PASTORAL, ...N5_ADMINISTRACION, ...N5_SEMINARIO,
+  // especialidades
+  ...EVANGELISMO_MISIONES_1, ...EVANGELISMO_MISIONES_2, ...EVANGELISMO_MISIONES_3,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
@@ -94,6 +102,8 @@ const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N3_HERMENEUTICA, BANCO_N3_METODOS_ESTUDIO, BANCO_N3_PENTATEUCO_HISTORICOS, BANCO_N3_EVANGELIOS_HECHOS, BANCO_N3_EVANGELISMO_CONSOLIDACION, BANCO_N3_LIDERAZGO_1, BANCO_N3_HOMILETICA_1, BANCO_N3_HISTORIA_1, BANCO_N3_CONSEJERIA_BASICA,
   BANCO_N4_SISTEMATICA_1, BANCO_N4_POETICOS_PROFETICOS, BANCO_N4_APOLOGETICA, BANCO_N4_HOMILETICA_2, BANCO_N4_HISTORIA_2, BANCO_N4_ETICA,
   BANCO_N5_DIDACTICA, BANCO_N5_LIDERAZGO_2, BANCO_N5_IDIOMAS, BANCO_N5_TEOLOGIA_PASTORAL, BANCO_N5_ADMINISTRACION, BANCO_N5_SEMINARIO,
+  // especialidades
+  BANCO_EVANGELISMO_MISIONES_1, BANCO_EVANGELISMO_MISIONES_2, BANCO_EVANGELISMO_MISIONES_3,
 ];
 
 export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
