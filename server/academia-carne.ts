@@ -555,6 +555,36 @@ function carneHecho(huella: string, d: DatosCarne): Promise<Hecho> {
 
 const disposicion = (tipo: "inline" | "attachment", archivo: string) => `${tipo}; filename="${archivo}"`;
 
+/** Un carné de muestra (nadie de verdad) para la comprobación de salud. */
+const MUESTRA: DatosCarne = {
+  numero: "AAF-2026-00000",
+  promocion: 2026,
+  desde: "2026-01-01T12:00:00.000Z",
+  estatus: { clave: "activo", texto: "Estudiante · Nivel 1 · Fundamentos de la fe", nivel: 1, honores: false },
+  nombre: "Carné de muestra",
+  foto: null,
+  fotoPropia: false,
+  codigo: "C-MUES-TRA0",
+  verificar: enlaceVerificar("C-MUES-TRA0"),
+};
+type Salud = { ok: boolean; letra: boolean; logo: boolean; frente: number; reverso: number; pdf: number; ms: number; error?: string };
+let salud: { cuando: number; p: Promise<Salud> } | null = null;
+
+async function comprobarSalud(): Promise<Salud> {
+  const t = Date.now();
+  try {
+    const m = await lienzo();
+    const logoImg = await logoDelMinisterio(m);
+    const caras = await dibujarCarne(MUESTRA);
+    const pdf = await pdfDelCarne(MUESTRA, caras);
+    const bien = caras.frente.subarray(1, 4).toString() === "PNG" && pdf.subarray(0, 5).toString() === "%PDF-";
+    return { ok: bien, letra: m.GlobalFonts.has(LETRA), logo: !!logoImg, frente: caras.frente.length, reverso: caras.reverso.length, pdf: pdf.length, ms: Date.now() - t };
+  } catch (err) {
+    console.error("[academia] carné (salud):", err);
+    return { ok: false, letra: false, logo: false, frente: 0, reverso: 0, pdf: 0, ms: Date.now() - t, error: String((err as Error)?.message ?? err).slice(0, 200) };
+  }
+}
+
 async function enviarArchivo(req: Request, res: Response, que: "frente" | "reverso" | "pdf") {
   try {
     const a = await inscritoDe(req, res);
@@ -600,6 +630,16 @@ export function registerAcademiaCarneRoutes(app: Express) {
       console.error("[academia] carne:", err);
       res.sendStatus(500);
     }
+  });
+
+  // La salud del carné en este servidor, sin datos de nadie: dibuja un carné de muestra (lienzo nativo, letra, logo,
+  // sharp y jsPDF) y dice si salió. Sirve para comprobar cada despliegue sin entrar con una cuenta. Se guarda 10 minutos.
+  app.get("/api/academia/carne/salud", async (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    if (!salud || Date.now() - salud.cuando > 10 * 60_000) salud = { cuando: Date.now(), p: comprobarSalud() };
+    const r = await salud.p;
+    if (!r.ok) salud = null; // (si falló, la próxima vez se vuelve a probar)
+    res.status(r.ok ? 200 : 503).json(r);
   });
 
   // Los archivos del carné. Las imágenes se muestran (y con ?descargar=1 se descargan); el PDF se descarga (con ?ver=1
