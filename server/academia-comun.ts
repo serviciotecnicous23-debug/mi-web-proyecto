@@ -251,6 +251,25 @@ export function fichasDe(texto: string): string[] {
 }
 export const idFicha = (userId: number, materiaId: string, i: number) => numeroDe(`${userId}|${materiaId}|${i}`).toString(36);
 
+/**
+ * El orden de las fichas que mandó el alumno: cuántas están bien desde el principio y si está todo bien. Se compara el
+ * texto de cada ficha, no su número: si un versículo tiene dos fichas iguales (en Juan 4:23-24, «en espíritu y» sale dos
+ * veces), el alumno no puede distinguirlas, y cualquiera de las dos vale en cualquiera de sus dos lugares. Cada ficha
+ * se usa una sola vez.
+ */
+export function revisarOrdenFichas(fichas: string[], ids: string[], orden: string[]): { hasta: number; bien: boolean } {
+  const texto = new Map(ids.map((id, i) => [id, fichas[i]] as const));
+  const usadas = new Set<string>();
+  let hasta = 0;
+  while (hasta < fichas.length && hasta < orden.length) {
+    const id = orden[hasta];
+    if (usadas.has(id) || texto.get(id) !== fichas[hasta]) break;
+    usadas.add(id);
+    hasta++;
+  }
+  return { hasta, bien: hasta === fichas.length && orden.length === fichas.length };
+}
+
 /** Olvida lo guardado de la apertura (al abrir o cerrar la academia desde el panel). */
 export function olvidarApertura(): void {
   abiertaCache = { hasta: 0, valor: false };

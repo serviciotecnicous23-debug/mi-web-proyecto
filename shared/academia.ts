@@ -2734,6 +2734,159 @@ const PLANTACION: MateriaDef = {
   disponible: true,
 };
 
+const TEOLOGIA_ADORACION: MateriaDef = {
+  id: "alabanza-1",
+  nivel: null,
+  especialidad: "alabanza",
+  orden: 1,
+  titulo: "Teología de la adoración",
+  resumen: "Qué es adorar, Dios en el centro, la adoración del Antiguo Testamento, lo que cambió con Cristo, adorar en espíritu y en verdad, y la adoración de toda la vida y la del cielo.",
+  base: "Juan 4:23-24; Romanos 12:1",
+  memoria: "Juan 4:23-24",
+  lecciones: lecciones("alabanza-1", [
+    ["Qué es adorar", "Juan 4:23-24; Salmos 95:6; Génesis 22:5; Mateo 4:10"],
+    ["Dios, el centro de la adoración", "Apocalipsis 4:11; Isaías 6:1-3; Éxodo 20:3-5"],
+    ["La adoración en el Antiguo Testamento", "Éxodo 25:8; 1 Crónicas 16:29; 2 Crónicas 5:13-14; Salmos 100:1-5"],
+    ["Cristo y la adoración del Nuevo Testamento", "Juan 2:19-21; Hebreos 10:19-22; Hebreos 13:15; 1 Pedro 2:5"],
+    ["En espíritu y en verdad", "Juan 4:24; Juan 17:17; Colosenses 3:16; Efesios 5:18-19"],
+    ["La adoración de toda la vida", "Romanos 12:1-2; Amós 5:21-24; Miqueas 6:8; Apocalipsis 5:9-13"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente entienda qué es la adoración según toda la Biblia, para adorar y servir en el ministerio de alabanza con fundamento: con Dios en el centro, con la adoración del Antiguo Testamento cumplida en Cristo, en espíritu y en verdad, y con toda la vida. Es la base de la especialidad Alabanza y adoración. Su base es la palabra de Jesús a la mujer samaritana: «los verdaderos adoradores adorarán al Padre en espíritu y en verdad» (Juan 4:23).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es adorar según la Biblia y cómo se relacionan la alabanza y la adoración.", bloom: "comprender" },
+      { id: "o2", texto: "Reconocer a Dios como el centro y el único digno de la adoración, y las formas de idolatría en la alabanza.", bloom: "analizar" },
+      { id: "o3", texto: "Describir la adoración del Antiguo Testamento: el tabernáculo, el templo y los salmos.", bloom: "comprender" },
+      { id: "o4", texto: "Explicar cómo Cristo cumplió el templo y los sacrificios y abrió el camino al Padre.", bloom: "comprender" },
+      { id: "o5", texto: "Evaluar si un canto o un culto adora en espíritu y en verdad.", bloom: "evaluar" },
+      { id: "o6", texto: "Aplicar la adoración a toda la vida, con justicia y misericordia.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Juan 4:23-24 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La enseñanza bíblica de la adoración en los dos testamentos, desde el tabernáculo hasta el trono del Cordero.",
+      ser: "Un adorador que se inclina delante de Dios y vive para su gloria.",
+      hacer: "Adorar, y ayudar a otros a adorar, en espíritu y en verdad, en el culto y en toda la vida.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Bob Kauflin", titulo: "Nuestra adoración importa: guiando a otros a encontrarse con Dios", editorial: "B&H Español" },
+        { autor: "Marcos Witt", titulo: "Adoremos", editorial: "Editorial Caribe" },
+      ],
+      complementaria: [{ autor: "A. W. Tozer", titulo: "La búsqueda de Dios", editorial: "Moody Publishers" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "lectura", titulo: "Juan 4: la mujer samaritana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=4" },
+      { tipo: "lectura", titulo: "Apocalipsis 5: el cántico nuevo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Apocalipsis&cap=5" },
+    ],
+  },
+  disponible: true,
+};
+
+const ADORADOR: MateriaDef = {
+  id: "alabanza-2",
+  nivel: null,
+  especialidad: "alabanza",
+  orden: 2,
+  titulo: "El adorador: carácter y vida",
+  resumen: "Un corazón conforme al de Dios, manos limpias y corazón puro, humildad, la vida devocional, el servicio en equipo y bajo autoridad, y la adoración en la prueba.",
+  base: "Salmos 24:3-4; 1 Samuel 16:7",
+  memoria: "Salmos 24:3-4",
+  lecciones: lecciones("alabanza-2", [
+    ["Un corazón conforme al de Dios", "1 Samuel 16:7; Hechos 13:22; Salmos 51:10-12"],
+    ["Manos limpias y corazón puro", "Salmos 24:3-4; Isaías 6:5-7; 1 Juan 1:9"],
+    ["Humildad: la gloria es de Dios", "Juan 3:30; 1 Corintios 4:7; 1 Pedro 5:5-6; 2 Samuel 6:14"],
+    ["La vida devocional del adorador", "Marcos 1:35; Salmos 63:1; Lucas 10:39-42"],
+    ["Servir en equipo y bajo autoridad", "1 Corintios 12:12; Filipenses 2:3-4; Hebreos 13:17"],
+    ["El adorador en la prueba", "Job 1:20-21; Hechos 16:25; Habacuc 3:18; Gálatas 5:22-23"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la alabanza cuide su vida antes que su música: un corazón conforme al de Dios, santidad y arrepentimiento, humildad, una vida devocional constante, el servicio en equipo bajo la autoridad de los pastores y la adoración en medio de la prueba. Lo que se ve en la plataforma nace de lo que se vive en lo secreto. Su base es la pregunta del salmista: «¿Quién subirá al monte de Jehová? ¿Y quién estará en su lugar santo? El limpio de manos y puro de corazón» (Salmos 24:3-4).",
+    objetivos: [
+      { id: "o1", texto: "Describir el corazón conforme al de Dios con el ejemplo de David.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar por qué la santidad y el arrepentimiento son parte de la vida del adorador.", bloom: "comprender" },
+      { id: "o3", texto: "Distinguir la humildad del orgullo en el ministerio de alabanza.", bloom: "analizar" },
+      { id: "o4", texto: "Planificar una vida devocional constante.", bloom: "crear" },
+      { id: "o5", texto: "Aplicar la enseñanza del cuerpo de Cristo al servicio en equipo y bajo autoridad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo adorar a Dios en la prueba y cómo se ve el fruto del Espíritu en la vida diaria.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 24:3-4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña del corazón, la santidad, la humildad y la vida devocional del adorador.",
+      ser: "Un adorador íntegro, humilde y constante, en lo secreto y en lo público.",
+      hacer: "Cuidar su vida con Dios, servir en equipo bajo autoridad y adorar también en la prueba.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "A. W. Tozer", titulo: "La búsqueda de Dios", editorial: "Moody Publishers" },
+        { autor: "Richard J. Foster", titulo: "Celebración de la disciplina", editorial: "Peniel", nota: "Para leer con discernimiento: algunas prácticas contemplativas que describe no forman parte de esta materia." },
+      ],
+      complementaria: [{ autor: "Marcos Witt", titulo: "¿Qué hacemos con estos músicos?", editorial: "Editorial Caribe" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=34biq4ivs5I", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=BEvicPpjQBE", minutos: 6 },
+      { tipo: "lectura", titulo: "Salmo 51: un corazón limpio", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=51" },
+      { tipo: "lectura", titulo: "Salmo 24: ¿quién subirá al monte de Jehová?", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=24" },
+    ],
+  },
+  disponible: true,
+};
+
+const DIRIGIR_ALABANZA: MateriaDef = {
+  id: "alabanza-3",
+  nivel: null,
+  especialidad: "alabanza",
+  orden: 3,
+  titulo: "Dirigir el ministerio de alabanza",
+  resumen: "El director como siervo que guía al pueblo, cómo escoger los cantos, preparar el culto y el ensayo, dirigir con orden y sin manipular, formar el equipo y resolver los problemas comunes.",
+  base: "Salmos 33:3; 1 Crónicas 15:22",
+  memoria: "Salmos 33:3",
+  lecciones: lecciones("alabanza-3", [
+    ["El director: un siervo que guía", "1 Crónicas 15:22; Nehemías 12:46; Marcos 10:45; 2 Crónicas 20:21-22"],
+    ["Escoger las canciones", "Colosenses 3:16; Salmos 47:7; Salmos 96:1; 1 Corintios 14:26"],
+    ["Preparar el culto y el ensayo", "Salmos 33:3; 1 Crónicas 25:7-8; Proverbios 21:5; Colosenses 3:23"],
+    ["Dirigir con sencillez y orden", "1 Corintios 14:40; 1 Corintios 14:33; Esdras 3:11"],
+    ["Formar el equipo", "1 Crónicas 25:1; 1 Crónicas 25:7-8; 2 Timoteo 2:2"],
+    ["Problemas comunes y cómo resolverlos", "Santiago 3:16; Mateo 18:15; Proverbios 15:1; Romanos 15:5-6; Marcos 6:31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige, o dirigirá, el ministerio de alabanza sepa guiar al pueblo de Dios a adorar: como un siervo, escogiendo los cantos con criterios bíblicos, preparando el culto y el ensayo, dirigiendo con orden y sin manipular, formando un equipo que siga la obra y resolviendo los problemas con la Palabra. Quién puede ejercer cada cargo en la iglesia es un punto de la declaración de fe por confirmar: cada iglesia nombra a sus directores bajo la autoridad de sus pastores. Su base es la invitación del salmista: «Cantadle cántico nuevo; Hacedlo bien, tañendo con júbilo» (Salmos 33:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el papel del director de alabanza como un siervo que guía al pueblo a Dios.", bloom: "comprender" },
+      { id: "o2", texto: "Seleccionar los cantos de un culto con criterios bíblicos y pastorales.", bloom: "aplicar" },
+      { id: "o3", texto: "Planificar un culto y un ensayo.", bloom: "crear" },
+      { id: "o4", texto: "Distinguir entre guiar al pueblo y manipularlo, y dirigir con orden y sencillez.", bloom: "analizar" },
+      { id: "o5", texto: "Describir cómo se elige, se forma y se acompaña al equipo de alabanza.", bloom: "comprender" },
+      { id: "o6", texto: "Evaluar los problemas comunes del ministerio y proponer soluciones bíblicas.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 33:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los directores de cantores de Israel, los criterios para escoger los cantos y los principios de orden del culto.",
+      ser: "Un líder siervo, preparado y humilde, que no busca su gloria.",
+      hacer: "Escoger los cantos, preparar el culto y el ensayo, dirigir, formar al equipo y resolver los conflictos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Bob Kauflin", titulo: "Nuestra adoración importa: guiando a otros a encontrarse con Dios", editorial: "B&H Español" },
+        { autor: "Marcos Witt", titulo: "¿Qué hacemos con estos músicos?", editorial: "Editorial Caribe" },
+      ],
+      complementaria: [{ autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Crónicas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lMj--4fDpvc", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "lectura", titulo: "1 Crónicas 25: los músicos del templo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Cronicas&cap=25" },
+      { tipo: "lectura", titulo: "1 Corintios 14: el orden en el culto", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=14" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
 type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
 
@@ -2757,7 +2910,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
   ]),
   especialidad("alabanza", "Alabanza y adoración", "Adorar en espíritu y en verdad y dirigir el ministerio de alabanza.", [
-    ["Teología de la adoración"], ["El adorador: carácter y vida"], ["Dirigir el ministerio de alabanza"], ["La música en la historia de la iglesia"], ["Sonido y técnica al servicio del culto"],
+    TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, ["La música en la historia de la iglesia"], ["Sonido y técnica al servicio del culto"],
   ]),
   especialidad("ninez", "Niñez", "Enseñar y cuidar a los niños con la Palabra.", [
     ["Educación cristiana de la niñez"], ["El niño y su fe"], ["Métodos para enseñar a niños"], ["Protección de menores"], ["Organizar el ministerio infantil"],
