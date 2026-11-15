@@ -19,7 +19,7 @@ import { numeroDe } from "./orden-examen";
 import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
 import {
   accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estadoDe, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
-  marcarEstudio, recalcularMateria, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
+  marcarEstudio, recalcularMateria, revisarOrdenFichas, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
 import { registerAcademiaCarneRoutes } from "./academia-carne";
@@ -507,10 +507,9 @@ export function registerAcademiaRoutes(app: Express) {
       const orden = Array.isArray(req.body?.orden) ? req.body.orden.map(String).slice(0, 80) : [];
       const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
-      const ids = fichasDe(v.texto).map((_, i) => idFicha(a.userId, m.id, i));
-      let hasta = 0;
-      while (hasta < ids.length && orden[hasta] === ids[hasta]) hasta++;
-      const bien = hasta === ids.length && orden.length === ids.length;
+      const fichas = fichasDe(v.texto);
+      const ids = fichas.map((_, i) => idFicha(a.userId, m.id, i));
+      const { hasta, bien } = revisarOrdenFichas(fichas, ids, orden);
       const out = await enFila(a.userId, async () => {
         await asegurarAlumno(a.userId);
         await asegurarMateria(a.userId, m.id);

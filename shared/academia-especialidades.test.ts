@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { ESPECIALIDADES, EXAMEN_FINAL, PESOS_NIVEL, examenDe, materiaPorId, miniPruebasDe, pesosDe, requisitosMateria, tieneEscritoBreve } from "./academia";
 
 const evangelismo = ESPECIALIDADES.find((e) => e.id === "evangelismo-misiones")!;
+const alabanza = ESPECIALIDADES.find((e) => e.id === "alabanza")!;
 
 test("cada materia de especialidad se llama <especialidad>-<orden>, aunque ya tenga su definición completa", () => {
   for (const e of ESPECIALIDADES) {
@@ -54,8 +55,34 @@ test("las materias de especialidad piden el Nivel 2, y las avanzadas, el Nivel 3
   }
 });
 
-test("las otras once especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => x.id !== "evangelismo-misiones")) {
+test("Alabanza y adoración tiene sus tres primeras materias, con la medida del Nivel 3 y el Nivel 2 como requisito", () => {
+  const listas = alabanza.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["Teología de la adoración", "Juan 4:23-24", 6, false],
+      ["El adorador: carácter y vida", "Salmos 24:3-4", 6, false],
+      ["Dirigir el ministerio de alabanza", "Salmos 33:3", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+    assert.deepEqual(requisitosMateria(m, [1, 2]), [], m.id);
+  }
+  // quién dirige la alabanza queda para la declaración de fe
+  assert.match(listas[2].silabo!.proposito, /declaración de fe por confirmar/);
+  // las dos últimas siguen en preparación
+  assert.deepEqual(alabanza.materias.filter((m) => !m.disponible).map((m) => m.titulo), ["La música en la historia de la iglesia", "Sonido y técnica al servicio del culto"]);
+});
+
+test("las otras diez especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => x.id !== "evangelismo-misiones" && x.id !== "alabanza")) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);

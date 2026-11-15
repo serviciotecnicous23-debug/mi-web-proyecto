@@ -7,7 +7,7 @@
 import type { Express } from "express";
 import { pool } from "./db";
 import { CAJA_DOMINADO, materiaPorId, siguienteRepaso, type RepasoVersiculos, type VersiculoRepaso } from "@shared/academia";
-import { alumnoDe, enFila, fichasDe, frenar, idFicha, marcarEstudio, textoDeCita } from "./academia-comun";
+import { alumnoDe, enFila, fichasDe, frenar, idFicha, marcarEstudio, revisarOrdenFichas, textoDeCita } from "./academia-comun";
 import { numeroDe } from "./orden-examen";
 
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
@@ -84,10 +84,9 @@ export function registerAcademiaVersiculosRoutes(app: Express) {
       const orden = Array.isArray(req.body?.orden) ? req.body.orden.map(String).slice(0, 80) : [];
       const v = await textoDeCita(m.memoria, { soloRv1960: true });
       if (!v.texto) return res.status(503).json({ message: "No se pudo cargar el versículo. Inténtalo en un momento." });
-      const ids = fichasDe(v.texto).map((_, i) => idFicha(a.userId, m.id, i));
-      let hasta = 0;
-      while (hasta < ids.length && orden[hasta] === ids[hasta]) hasta++;
-      const bien = hasta === ids.length && orden.length === ids.length;
+      const fichas = fichasDe(v.texto);
+      const ids = fichas.map((_, i) => idFicha(a.userId, m.id, i));
+      const { hasta, bien } = revisarOrdenFichas(fichas, ids, orden);
       const out = await enFila(a.userId, async () => {
         const { rows } = await pool.query(
           `SELECT caja, aprendido_at, (proximo_at IS NOT NULL AND proximo_at <= now()) AS toca FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`,
