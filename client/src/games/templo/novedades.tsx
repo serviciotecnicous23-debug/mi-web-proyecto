@@ -14,6 +14,14 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-15-filas",
+    fecha: "15 de noviembre de 2026",
+    titulo: "Más lugar para la mesa en el teléfono",
+    puntos: [
+      "👥 En todos los juegos de grupo, los jugadores van en una sola fila que se desliza de lado: la estrella de las damas chinas entra entera en la pantalla, y lo mismo pasa con los dados, las cartas y el tablero.",
+    ],
+  },
+  {
     id: "2026-11-15-mesas-telefono",
     fecha: "15 de noviembre de 2026",
     titulo: "La lotería, la generala y las escaleras en el teléfono",

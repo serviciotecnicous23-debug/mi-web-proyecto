@@ -87,11 +87,14 @@ export function MemoriaUI({ vista: v, nombres, bots, jugar, recibidaEn }: PropsM
       <DefsFiguras />
       <Confeti disparo={confeti} />
       {sello && <Sello llave={sello.n} texto={sello.texto} sub={sello.sub} color={sello.color} />}
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* los jugadores: en el teléfono, en una sola fila que se desliza de lado (así la mesa queda a la vista) */}
+      <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5 *:shrink-0 max-md:flex-nowrap md:flex-wrap" style={{ scrollbarWidth: "none" }}>
         {nombres.map((n, a) => (
           <Asiento key={a} a={a} nombre={n} bot={bots[a]} yo={a === yo} activo={!solo && a === v.turno && v.fase === "jugando"} extra={`${v.puntos[a] ?? 0} ${v.puntos[a] === 1 ? "pareja" : "parejas"}`} tam={28} />
         ))}
-        <span className="ml-auto flex items-center gap-2">
+        </div>
+        <span className="ml-auto shrink-0 flex items-center gap-2">
           {solo ? (
             <span className="rounded-full bg-white/85 px-3 py-1 text-[13px] font-black tabular-nums text-stone-800 shadow" data-testid="memoria-reloj">
               ⏱ {reloj(jugado)} · {v.intentos[0] ?? 0} intentos
