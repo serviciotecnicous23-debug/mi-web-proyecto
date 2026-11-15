@@ -961,6 +961,160 @@ const DISCIPLINAS: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 5: el carácter del discípulo según Mateo 5 a 7. */
+const SERMON_MONTE: MateriaDef = {
+  id: "n2-sermon-monte",
+  nivel: 2,
+  orden: 5,
+  titulo: "El Sermón del monte",
+  resumen: "El carácter del discípulo según Mateo 5 a 7: las bienaventuranzas, la sal y la luz, la justicia del corazón, la piedad en lo secreto, la confianza en el Padre y la casa sobre la roca.",
+  base: "Mateo 5:1-2; 7:24-29",
+  memoria: "Mateo 6:33",
+  lecciones: lecciones("n2-sermon-monte", [
+    ["El Rey enseña en el monte", "Mateo 4:17; 5:1-2; 7:28-29"],
+    ["Las bienaventuranzas", "Mateo 5:3-12"],
+    ["La sal, la luz y una justicia mayor", "Mateo 5:13-20"],
+    ["El corazón de la ley", "Mateo 5:21-48"],
+    ["La piedad en lo secreto y el tesoro en el cielo", "Mateo 6:1-34"],
+    ["Los dos caminos y la casa sobre la roca", "Mateo 7:1-29"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo conozca y viva la enseñanza más extensa de Jesús, el Sermón del monte (Mateo 5 a 7). En él, el Rey describe el carácter, la justicia, la piedad, la confianza y la obediencia de quienes pertenecen a su reino. No es un camino para ganar la salvación, sino el retrato de la vida nueva que su gracia produce. Jesús lo termina con una invitación a edificar sobre la roca: oír sus palabras y hacerlas (Mateo 7:24).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el contexto, las partes y el propósito del Sermón del monte.", bloom: "comprender" },
+      { id: "o2", texto: "Describir el carácter del discípulo según las bienaventuranzas y su influencia como sal y luz.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar cómo Jesús cumple la ley y lleva sus mandamientos al corazón.", bloom: "analizar" },
+      { id: "o4", texto: "Aplicar la enseñanza de Jesús sobre la piedad, el dinero, la ansiedad, el juicio y la obediencia.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Mateo 6:33 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La estructura y la enseñanza del Sermón del monte en su contexto.",
+      ser: "Un corazón humilde, misericordioso, sincero y confiado en el Padre.",
+      hacer: "Reconciliarse, amar a los enemigos, dar en secreto, buscar primero el reino y obedecer las palabras de Jesús.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John R. W. Stott", titulo: "El Sermón del Monte" },
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "D. Martyn Lloyd-Jones", titulo: "El Sermón del Monte", editorial: "Banner of Truth" },
+        { autor: "Henrietta C. Mears", titulo: "Lo que nos dice la Biblia", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "El asesinato, el adulterio y el divorcio", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/el-asesinato-el-adulterio-y-el-divorcio/", minutos: 9 },
+      { tipo: "video", titulo: "Advertencias sobre las prácticas religiosas", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/advertencias-sobre-las-practicas-religiosas/", minutos: 7 },
+      { tipo: "video", titulo: "La oración de Jesús", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/la-oracion-de-jesus/", minutos: 10 },
+      { tipo: "video", titulo: "Sabiduría para relacionarnos", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/sabiduria-para-relacionarnos/", minutos: 6 },
+      { tipo: "lectura", titulo: "Mateo 5 a 7: el Sermón del monte completo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=5" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 2 · materia 6: Dios es el dueño y nosotros administradores del tiempo, los dones y los bienes. */
+const MAYORDOMIA: MateriaDef = {
+  id: "n2-mayordomia",
+  nivel: 2,
+  orden: 6,
+  titulo: "Mayordomía cristiana",
+  resumen: "Dios es el dueño y nosotros administradores: el tiempo y el trabajo, los talentos, el diezmo y las ofrendas, la generosidad y unas finanzas sanas.",
+  base: "Salmos 24:1; 1 Corintios 4:1-2",
+  memoria: "1 Corintios 4:2",
+  lecciones: lecciones("n2-mayordomia", [
+    ["Dios es el dueño; nosotros, administradores", "Salmos 24:1; Génesis 2:15; 1 Corintios 4:1-2; Lucas 16:10"],
+    ["El tiempo y el trabajo", "Salmos 90:12; Efesios 5:15-17; Colosenses 3:23-24"],
+    ["Los talentos: lo que Dios puso en tus manos", "Mateo 25:14-30; 1 Pedro 4:10"],
+    ["El diezmo y las ofrendas", "Malaquías 3:10; Mateo 23:23; 1 Corintios 16:2"],
+    ["Generosidad y contentamiento", "2 Corintios 8:1-9; 1 Timoteo 6:6-10; Hechos 20:35"],
+    ["Finanzas sanas: trabajo, deudas, ahorro y presupuesto", "2 Tesalonicenses 3:10-12; Proverbios 22:7; 6:6-8; Lucas 14:28"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo reconozca que Dios es el dueño de todo y aprenda a administrar con fidelidad lo que Él le confió: la vida, el tiempo, el trabajo, los dones y el dinero. La materia enseña el diezmo y las ofrendas como los enseñan las iglesias evangélicas pentecostales, la generosidad y el contentamiento, y principios bíblicos para unas finanzas sanas, lejos del evangelio de la prosperidad. Como dice Pablo, «se requiere de los administradores, que cada uno sea hallado fiel» (1 Corintios 4:2).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la mayordomía cristiana y el señorío de Dios sobre todo lo que tenemos.", bloom: "comprender" },
+      { id: "o2", texto: "Administrar el tiempo, el trabajo y los talentos con fidelidad.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar lo que enseña la Biblia sobre el diezmo, las ofrendas y la generosidad, y distinguirlo del evangelio de la prosperidad.", bloom: "analizar" },
+      { id: "o4", texto: "Elaborar un presupuesto sencillo con principios bíblicos sobre el trabajo, las deudas y el ahorro.", bloom: "crear" },
+      { id: "o5", texto: "Recitar 1 Corintios 4:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que enseña la Biblia sobre la mayordomía, el trabajo, el diezmo, la generosidad y el dinero.",
+      ser: "Un corazón agradecido, generoso y contento en Cristo, libre del amor al dinero.",
+      hacer: "Ordenar la semana, servir con los dones, dar con alegría y llevar un presupuesto sencillo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Andrés Panasiuk", titulo: "¿Cómo llego a fin de mes?", editorial: "Grupo Nelson" },
+        { autor: "Randy Alcorn", titulo: "El principio del tesoro", editorial: "Unilit" },
+      ],
+      complementaria: [
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Generosidad", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/generosidad/", minutos: 5 },
+      { tipo: "lectura", titulo: "Mateo 25: la parábola de los talentos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=25" },
+      { tipo: "lectura", titulo: "Proverbios 6: la hormiga y el trabajo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Proverbios&cap=6" },
+    ],
+  },
+  disponible: true,
+};
+
+/** Nivel 2 · materia 8: compartir a Cristo en la vida diaria (antes, «Evangelismo 1 y 2»). */
+const EVANGELISMO_PERSONAL: MateriaDef = {
+  id: "n2-evangelismo-personal",
+  nivel: 2,
+  orden: 8,
+  titulo: "Evangelismo personal",
+  resumen: "El mensaje, el modelo de Jesús con la samaritana, las preguntas que abren conversaciones, las objeciones comunes, invitar a una decisión y acompañar al que cree.",
+  base: "Romanos 1:16; 2 Corintios 5:20",
+  memoria: "Romanos 1:16",
+  antes: "Evangelismo 1 y 2",
+  lecciones: lecciones("n2-evangelismo-personal", [
+    ["El evangelio y el evangelista", "1 Corintios 15:1-4; Juan 16:8; 2 Corintios 5:18-20"],
+    ["Jesús y la samaritana: tender puentes", "Juan 4:7-26"],
+    ["Preguntas que abren conversaciones", "Hechos 17:22-23; Colosenses 4:5-6; 1 Pedro 3:15-16"],
+    ["Responder las objeciones comunes", "Juan 14:6; Romanos 3:23-24; Juan 16:33"],
+    ["Invitar a una decisión", "Hechos 2:37-38; Romanos 10:9-10; 1 Juan 5:11-13"],
+    ["Acompañar al que cree", "Mateo 28:19-20; 1 Tesalonicenses 2:7-8; Hechos 2:41-42"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo comparta a Cristo con naturalidad, claridad y amor en su vida diaria. La materia sigue a Compartir mi fe y va un paso más allá: el mensaje del evangelio con precisión, la obra del Espíritu Santo, el modelo de Jesús con la samaritana, las preguntas que abren conversaciones, las respuestas a las objeciones comunes, la invitación sin presión y el acompañamiento del nuevo creyente. Como Pablo, decimos: «no me avergüenzo del evangelio» (Romanos 1:16).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el mensaje del evangelio, la obra del Espíritu Santo y el llamado a ser embajadores de Cristo.", bloom: "comprender" },
+      { id: "o2", texto: "Iniciar conversaciones espirituales siguiendo el modelo de Jesús y de Pablo, con preguntas y escucha.", bloom: "aplicar" },
+      { id: "o3", texto: "Responder con la Biblia, con mansedumbre y con humildad a las objeciones comunes.", bloom: "analizar" },
+      { id: "o4", texto: "Guiar a una persona a recibir a Cristo y acompañarla en sus primeros pasos.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar Romanos 1:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El mensaje del evangelio, el modelo de Jesús y de los apóstoles, y las respuestas bíblicas a las objeciones comunes.",
+      ser: "Un testigo valiente y compasivo, que depende del Espíritu Santo y ama a las personas.",
+      hacer: "Iniciar conversaciones espirituales, compartir el evangelio, invitar a una decisión y acompañar a un nuevo creyente.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Lee Strobel", titulo: "El caso de Cristo", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Donald C. Stamps (ed.)", titulo: "Biblia de estudio Vida Plena (RVR1960)", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Evangelio del Reino", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/evangelio-del-reino/", minutos: 5 },
+      { tipo: "lectura", titulo: "Juan 4: Jesús y la mujer samaritana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=4" },
+      { tipo: "lectura", titulo: "Hechos 17: Pablo en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -998,10 +1152,10 @@ export const NIVELES: NivelDef[] = [
       PANORAMA_NT,
       enPreparacion(2, 3, "n2-doctrinas", "Doctrinas fundamentales", "Las grandes verdades de la fe según la declaración de fe del ministerio."),
       DISCIPLINAS,
-      enPreparacion(2, 5, "n2-sermon-monte", "El Sermón del monte", "El carácter del discípulo según Mateo 5 a 7."),
-      enPreparacion(2, 6, "n2-mayordomia", "Mayordomía cristiana", "Tiempo, talentos y bienes; diezmo, generosidad y finanzas sanas."),
+      SERMON_MONTE,
+      MAYORDOMIA,
       enPreparacion(2, 7, "n2-familia", "Familia y relaciones", "Matrimonio, hijos, soltería, amistad y pureza."),
-      enPreparacion(2, 8, "n2-evangelismo-personal", "Evangelismo personal", "Puentes, preguntas, objeciones comunes y seguimiento de quien cree.", { antes: "Evangelismo 1 y 2" }),
+      EVANGELISMO_PERSONAL,
       enPreparacion(2, 9, "n2-dones", "Dones espirituales y servicio", "Los dones del Espíritu y cómo descubrir dónde servir."),
     ],
   },

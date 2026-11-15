@@ -17,7 +17,7 @@ test("la primera materia del Nivel 2 está publicada, con 6 lecciones, su versí
   assert.equal(panorama.silabo?.objetivos.length, 5);
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias[0].id, "n2-panorama-at");
-  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas"], "las demás siguen en preparación");
+  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas", "n2-sermon-monte", "n2-mayordomia", "n2-evangelismo-personal"], "las demás siguen en preparación");
 });
 
 test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está publicada con su sílabo", () => {
@@ -47,6 +47,52 @@ test("la cuarta materia del Nivel 2, «Disciplinas espirituales», está publica
   assert.ok(tieneEscritoBreve(d));
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias.findIndex((m) => m.id === "n2-disciplinas"), 3, "va en el cuarto lugar, después de Doctrinas fundamentales");
+});
+
+test("la quinta materia del Nivel 2, «El Sermón del monte», está publicada con su sílabo", () => {
+  const s = materiaPorId("n2-sermon-monte")!;
+  assert.ok(s.disponible);
+  assert.equal(s.nivel, 2);
+  assert.equal(s.orden, 5);
+  assert.equal(s.lecciones.length, 6);
+  assert.equal(s.memoria, "Mateo 6:33");
+  assert.equal(s.silabo?.objetivos.length, 5);
+  assert.ok(s.silabo?.bibliografia.basica.some((b) => b.autor === "John R. W. Stott"));
+  assert.deepEqual(miniPruebasDe(s), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(s));
+  const n2 = NIVELES.find((n) => n.n === 2)!;
+  assert.equal(n2.materias.findIndex((m) => m.id === "n2-sermon-monte"), 4, "va en el quinto lugar");
+});
+
+test("la sexta materia del Nivel 2, «Mayordomía cristiana», está publicada con su sílabo", () => {
+  const m = materiaPorId("n2-mayordomia")!;
+  assert.ok(m.disponible);
+  assert.equal(m.nivel, 2);
+  assert.equal(m.orden, 6);
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.memoria, "1 Corintios 4:2");
+  assert.equal(m.silabo?.objetivos.length, 5);
+  assert.ok(m.silabo?.bibliografia.basica.some((b) => b.autor === "Andrés Panasiuk"));
+  assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(m));
+  const n2 = NIVELES.find((n) => n.n === 2)!;
+  assert.equal(n2.materias.findIndex((x) => x.id === "n2-mayordomia"), 5, "va en el sexto lugar");
+});
+
+test("la octava materia del Nivel 2, «Evangelismo personal», está publicada y dice de qué cursos viene", () => {
+  const e = materiaPorId("n2-evangelismo-personal")!;
+  assert.ok(e.disponible);
+  assert.equal(e.nivel, 2);
+  assert.equal(e.orden, 8);
+  assert.equal(e.antes, "Evangelismo 1 y 2");
+  assert.equal(e.lecciones.length, 6);
+  assert.equal(e.memoria, "Romanos 1:16");
+  assert.equal(e.silabo?.objetivos.length, 5);
+  assert.ok(e.silabo?.bibliografia.basica.some((b) => b.autor === "Robert E. Coleman"));
+  assert.deepEqual(miniPruebasDe(e), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(e));
+  const n2 = NIVELES.find((n) => n.n === 2)!;
+  assert.equal(n2.materias.findIndex((x) => x.id === "n2-evangelismo-personal"), 7, "va en el octavo lugar");
 });
 
 test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 1", () => {
