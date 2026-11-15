@@ -27,6 +27,7 @@ import {
 } from "@/components/academia/api";
 import type { ContenidoLista, ContenidoResumen } from "@shared/academia-calidad";
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
+import { ActividadesPorConfirmar } from "@/components/academia/actividades-panel";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
 
@@ -329,6 +330,7 @@ function Revisar() {
         </p>
         {pendientes.length ? pendientes.map((it) => <TarjetaRevision key={it.id} item={it} puedeRevisar={ajeno(it.alumno.userId)} />) : <p className="text-sm text-muted-foreground">Nada pendiente.</p>}
       </section>
+      <ActividadesPorConfirmar ajeno={ajeno} />
       {cerradas.length > 0 && (
         <section className="space-y-3">
           <h3 className="font-display text-xl font-bold">Pedidos respondidos en los últimos 30 días</h3>
@@ -699,8 +701,8 @@ export default function AcademiaDireccion() {
             {d.puede.revisar && (
               <TabsTrigger value="revisar" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-revisar">
                 <ClipboardCheck className="w-4 h-4" /> Para revisar
-                {d.pendientes.escritas + d.pendientes.apelaciones > 0 && (
-                  <span className="ml-1 rounded-full bg-orange-600 text-white text-[11px] px-1.5 leading-5">{d.pendientes.escritas + d.pendientes.apelaciones}</span>
+                {d.pendientes.escritas + d.pendientes.apelaciones + (d.pendientes.actividades ?? 0) > 0 && (
+                  <span className="ml-1 rounded-full bg-orange-600 text-white text-[11px] px-1.5 leading-5">{d.pendientes.escritas + d.pendientes.apelaciones + (d.pendientes.actividades ?? 0)}</span>
                 )}
               </TabsTrigger>
             )}

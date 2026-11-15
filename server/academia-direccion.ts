@@ -282,14 +282,15 @@ function contar(valores: string[]): { nombre: string; n: number }[] {
   return [...m].map(([nombre, n]) => ({ nombre, n })).sort((a, b) => b.n - a.n || a.nombre.localeCompare(b.nombre, "es"));
 }
 
-/** Lo que espera revisión (solo para quien revisa): las escritas marcadas y los pedidos de revisión pendientes. */
+/** Lo que espera revisión (solo para quien revisa): las escritas marcadas, los pedidos de revisión y las actividades por confirmar. */
 async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
-  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0 };
+  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0 };
   const { rows } = await pool.query(
     `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
-            (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones`,
+            (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones,
+            (SELECT count(*)::int FROM academia_actividades WHERE estado = 'pendiente') AS actividades`,
   );
-  return { escritas: Number(rows[0]?.escritas ?? 0), apelaciones: Number(rows[0]?.apelaciones ?? 0) };
+  return { escritas: Number(rows[0]?.escritas ?? 0), apelaciones: Number(rows[0]?.apelaciones ?? 0), actividades: Number(rows[0]?.actividades ?? 0) };
 }
 
 async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: string } | null> {
