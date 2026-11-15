@@ -206,21 +206,51 @@ function buildMonte(root: THREE.Group) {
   const minX = -17.3, maxX = 34.3, maxZ = 14.3;
   const alto = -Y;
   const hileras = (n: number): Course[] => Array.from({ length: n }, (_, i) => ({ h: alto / n, color: i % 2 ? C.piedraOsc : C.piedra, len: 2.2 }));
-  // muros de contención (1 Reyes 7:12) y el relleno de la explanada
-  blockWall(b, "x", minX, maxX, -maxZ, 0.8, hileras(4), Y);
-  blockWall(b, "x", minX, maxX, maxZ, 0.8, hileras(4), Y);
-  blockWall(b, "z", -maxZ, maxZ, minX, 0.8, hileras(4), Y);
-  blockWall(b, "z", -maxZ, -ESCALINATA.half, maxX, 0.8, hileras(4), Y);
-  blockWall(b, "z", ESCALINATA.half, maxZ, maxX, 0.8, hileras(4), Y);
-  b.box(maxX - minX, alto - 0.12, 2 * maxZ, C.piedraOsc, { x: (minX + maxX) / 2, y: Y + (alto - 0.12) / 2, z: 0 });
-  b.box(maxX - minX + 0.2, 0.2, 2 * maxZ + 0.2, C.piedraOsc, { x: (minX + maxX) / 2, y: -0.12, z: 0 });
-  // la escalinata que sube del pueblo al gran atrio, con sus barandas
+  // los bloques de antes se arman aparte, sin usarlos, solo para gastar el azar del templo igual que antes
+  const nada = new GeoBuilder();
+  blockWall(nada, "x", minX, maxX, -maxZ, 0.8, hileras(4), Y);
+  blockWall(nada, "x", minX, maxX, maxZ, 0.8, hileras(4), Y);
+  blockWall(nada, "z", -maxZ, maxZ, minX, 0.8, hileras(4), Y);
+  blockWall(nada, "z", -maxZ, -ESCALINATA.half, maxX, 0.8, hileras(4), Y);
+  blockWall(nada, "z", ESCALINATA.half, maxZ, maxX, 0.8, hileras(4), Y);
+  // los muros de contención (1 Reyes 7:12): piedras grandes almohadilladas, como los muros del monte en Jerusalén, con
+  // el zócalo más oscuro, las manchas de la lluvia y su cornisa arriba (con su propio azar)
+  const l = new Lienzo(), az = azarDe(1712), hondo = 0.035;
+  const fx0 = minX - 0.4, fx1 = maxX + 0.4, fz = maxZ + 0.4;
+  const tono = new THREE.Color(C.piedra);
+  const hil: [number, number][] = [0, 1, 2, 3].map((k): [number, number] => [(alto * k) / 4, (alto * (k + 1)) / 4]);
+  // el núcleo (lo que se ve en las juntas) y el relleno de la explanada
+  b.box(fx1 - fx0 - 2 * hondo, alto - 0.12, 2 * fz - 2 * hondo, C.junta, { x: (fx0 + fx1) / 2, y: Y + (alto - 0.12) / 2, z: 0 });
+  const caras: Cara[] = [
+    { o: [fx0, Y, fz], u: [1, 0], largo: fx1 - fx0 },
+    { o: [fx1, Y, -fz], u: [-1, 0], largo: fx1 - fx0 },
+    { o: [fx0, Y, -fz], u: [0, 1], largo: 2 * fz },
+    // el lado de la plaza, cortado por la escalinata
+    { o: [fx1, Y, fz], u: [0, -1], largo: fz - ESCALINATA.half },
+    { o: [fx1, Y, -ESCALINATA.half], u: [0, -1], largo: fz - ESCALINATA.half },
+  ];
+  caras.forEach((c, i) => {
+    const manchas = manchasDeMuro({ largo: c.largo, v0: 0, v1: alto, azar: az, fuerza: 0.7 });
+    const comun = { azar: az, hondo, bisel: 0.035, junta: 0.026, tonoPunto: manchas, almohadilla: { alto: 0.05, margen: 0.13 }, esquinas: i < 3 ? { cara: i, largo: 2.6, corto: 1.4 } : undefined };
+    sillares(l, c, { ...comun, hiladas: hil.slice(0, 1), color: tono.clone().multiplyScalar(0.86), largos: [2.2, 3.4] });
+    sillares(l, c, { ...comun, hiladas: hil.slice(1), color: tono, largos: [1.8, 3.2] });
+  });
+  // la cornisa de piedra clara sobre los muros, que también es el borde de la explanada
+  b.box(fx1 - fx0 + 0.24, 0.2, 2 * fz + 0.24, C.piedraClara, { x: (fx0 + fx1) / 2, y: -0.12, z: 0 });
+  // la escalinata que sube del pueblo al gran atrio: cada escalón con su canto un poco salido, y sus barandas con
+  // albardilla (el azar de la ciudad, como antes)
   for (let i = 0; i < 10; i++) {
     const top = -i * 0.36;
     const h = top - Y;
-    b.box(1.0, h, 5.4 - i * 0.05, vary(C.piedra, 0.05), { x: maxX + 0.5 + i * 0.95, y: Y + h / 2, z: 0 });
-    for (const sg of [-1, 1]) b.box(1.0, h + 0.62, 0.32, vary(C.piedraClara, 0.04), { x: maxX + 0.5 + i * 0.95, y: Y + (h + 0.62) / 2, z: sg * (ESCALINATA.half + 0.16) });
+    const x = maxX + 0.5 + i * 0.95;
+    b.box(1.0, h, 5.4 - i * 0.05, vary(C.piedra, 0.05), { x, y: Y + h / 2, z: 0 });
+    b.box(0.22, 0.07, 5.4 - i * 0.05, C.piedraClara, { x: x - 0.45, y: Y + h - 0.02, z: 0 });
+    for (const sg of [-1, 1]) {
+      b.box(1.0, h + 0.62, 0.32, vary(C.piedraClara, 0.04), { x, y: Y + (h + 0.62) / 2, z: sg * (ESCALINATA.half + 0.16) });
+      b.box(1.02, 0.08, 0.4, C.piedra, { x, y: Y + h + 0.66, z: sg * (ESCALINATA.half + 0.16) });
+    }
   }
+  b.raw(l.geometria());
   meshes(root, b, null, true);
   // el templo restaurado, con sus atrios y sus lugares de servicio
   root.add(buildTemploParaCiudad());
@@ -425,20 +455,46 @@ function buildPlaza(root: THREE.Group, fuegos: THREE.Vector3[]) {
   };
   m.raw(tiles(x0, z0, x1, z1, 1.5, ["#d8c69e", "#cfbb92", "#e0d0ac", "#d4c094"], Y + 0.012, 0.05, 0.08, tonoPlaza));
   m.box(x1 - x0, 0.05, z1 - z0, "#a99472", { x: (x0 + x1) / 2, y: Y - 0.02, z: (z0 + z1) / 2 });
-  // el pozo de la plaza
-  m.cyl(1.0, 1.08, 0.85, C.piedra, { x: px, y: Y + 0.42, z: pz }, 16, true);
+  // el pozo de la plaza: el brocal de piedras en dos hiladas trabadas (con su propio azar), la piedra del borde, el agua
+  // adentro, y el torno con su manivela, la soga y el cubo colgando
+  const azP = azarDe(4411);
+  m.cyl(0.9, 0.9, 0.84, C.piedraOsc, { x: px, y: Y + 0.42, z: pz }, 16, true);
+  for (let fila = 0; fila < 2; fila++)
+    for (let k = 0; k < 10; k++) {
+      const ang = ((k + fila * 0.5) / 10) * Math.PI * 2;
+      const tonoP = new THREE.Color(C.piedra).multiplyScalar(0.9 + azP() * 0.16);
+      m.box(0.6, 0.4, 0.24, tonoP, { x: px + Math.cos(ang) * 1.0, y: Y + 0.21 + fila * 0.42, z: pz + Math.sin(ang) * 1.0, ry: -ang + Math.PI / 2 });
+    }
   m.cyl(0.92, 0.92, 0.05, "#4e8fae", { x: px, y: Y + 0.55, z: pz }, 16);
-  m.torus(1.02, 0.09, C.piedraClara, { x: px, y: Y + 0.86, z: pz, rx: Math.PI / 2 }, 6, 20);
+  m.torus(1.02, 0.1, C.piedraClara, { x: px, y: Y + 0.88, z: pz, rx: Math.PI / 2 }, 6, 20);
   for (const sg of [-1, 1]) m.box(0.14, 1.7, 0.14, C.cedroOsc, { x: px + sg * 0.85, y: Y + 1.5, z: pz });
   m.box(1.9, 0.12, 0.12, C.cedroOsc, { x: px, y: Y + 2.32, z: pz });
-  m.cyl(0.12, 0.12, 0.16, C.cedro, { x: px, y: Y + 2.15, z: pz, rz: Math.PI / 2 }, 10);
+  m.cyl(0.06, 0.06, 1.7, C.cedro, { x: px, y: Y + 2.15, z: pz, rz: Math.PI / 2 }, 8);
+  m.cyl(0.13, 0.13, 0.36, "#c9b48a", { x: px, y: Y + 2.15, z: pz, rz: Math.PI / 2 }, 10);
+  m.box(0.05, 0.3, 0.05, C.cedroOsc, { x: px + 0.96, y: Y + 2.02, z: pz });
+  m.cyl(0.025, 0.025, 0.18, C.cedro, { x: px + 1.04, y: Y + 1.88, z: pz, rz: Math.PI / 2 }, 6);
+  m.cyl(0.016, 0.016, 0.86, "#c9b48a", { x: px, y: Y + 1.66, z: pz + 0.13 }, 5);
+  m.cyl(0.15, 0.12, 0.24, C.cedro, { x: px, y: Y + 1.12, z: pz + 0.13 }, 10);
+  m.torus(0.13, 0.012, C.bronceOsc, { x: px, y: Y + 1.26, z: pz + 0.13 }, 4, 12);
   jar(m, px + 1.3, Y, pz + 0.4, 1.4);
   jar(m, px + 1.5, Y, pz - 0.3, 1.1, "#a85f35");
-  // el púlpito de madera de Esdras (Nehemías 8:4), con gradas al sur
+  // el púlpito de madera de Esdras (Nehemías 8:4), con gradas al sur: las tablas marcadas y una baranda de postes
   const [ux, uz] = PULPITO;
   m.box(3.2, 1.2, 2.2, C.cedro, { x: ux, y: Y + 0.6, z: uz });
   for (let k = 0; k < 4; k++) m.box(3.3, 0.06, 0.12, C.cedroOsc, { x: ux, y: Y + 0.2 + k * 0.3, z: uz + 1.11 });
   for (let k = 0; k < 3; k++) m.box(1.0, 0.3 * (k + 1), 0.4, vary(C.cedro, 0.05), { x: ux + 1.0, y: Y + 0.15 * (k + 1), z: uz + 1.9 - k * 0.4 });
+  for (let k = 0; k < 7; k++) m.box(0.03, 1.1, 0.02, C.cedroOsc, { x: ux - 1.5 + k * 0.5, y: Y + 0.6, z: uz - 1.11 });
+  for (let k = 0; k < 4; k++) for (const sg of [-1, 1]) m.box(0.02, 1.1, 0.03, C.cedroOsc, { x: ux + sg * 1.61, y: Y + 0.6, z: uz - 0.75 + k * 0.5 });
+  {
+    const yb = Y + 1.2, alto = 0.62;
+    // los postes de la baranda (no en las gradas: el rincón del sur y del oriente queda abierto)
+    const postes: [number, number][] = [[-1.52, -1.02], [-0.5, -1.02], [0.5, -1.02], [1.52, -1.02], [-1.52, 0], [1.52, 0], [-1.52, 1.02], [0.4, 1.02]];
+    for (const [dx, dz] of postes) m.cyl(0.04, 0.045, alto, C.cedroOsc, { x: ux + dx, y: yb + alto / 2, z: uz + dz }, 6);
+    m.box(3.1, 0.07, 0.08, C.cedro, { x: ux, y: yb + alto, z: uz - 1.02 });
+    m.box(0.08, 0.07, 2.1, C.cedro, { x: ux - 1.52, y: yb + alto, z: uz });
+    m.box(0.08, 0.07, 1.1, C.cedro, { x: ux + 1.52, y: yb + alto, z: uz - 0.5 });
+    m.box(1.96, 0.07, 0.08, C.cedro, { x: ux - 0.56, y: yb + alto, z: uz + 1.02 });
+  }
   m.box(0.5, 1.0, 0.4, C.cedroOsc, { x: ux, y: Y + 1.7, z: uz - 0.3 });
   m.box(0.7, 0.06, 0.5, C.cedro, { x: ux, y: Y + 2.22, z: uz - 0.28, rx: 0.3 });
   m.cyl(0.05, 0.05, 0.62, "#efe4c9", { x: ux, y: Y + 2.3, z: uz - 0.3, rz: Math.PI / 2 }, 8); // rollo de la ley
@@ -1895,6 +1951,10 @@ export function construirAreaSilueta(area: number, casas: { parcela: number; niv
     }
     m.box(w, h, d, vary(nivel >= 2 ? "#cdbf9e" : "#bf9e70", 0.05), { x: p.x, y: Y + h / 2, z: p.z });
     m.box(w + 0.14, 0.4, d + 0.14, vary("#a7916c", 0.04), { x: p.x, y: Y + h + 0.1, z: p.z });
+    // la puerta y la ventana oscuras en su frente (donde las tiene la casa de cerca): de lejos se lee que es una casa
+    const fx = p.dir === 1 ? 1 : -1;
+    m.box(0.72, 1.5, 0.05, "#3a2a1c", { x: p.x - w * 0.18 * fx, y: Y + 0.75, z: p.z + fx * (d / 2 + 0.02) });
+    m.box(0.45, 0.42, 0.05, "#2e2418", { x: p.x + w * 0.26 * fx, y: Y + h * 0.62, z: p.z + fx * (d / 2 + 0.02) });
     if (nivel >= 3) m.box(1.8, 1.5, 1.9, vary("#cdbf9e", 0.05), { x: p.x - 0.6, y: Y + h + 0.9, z: p.z - p.dir * 0.7 });
   }
   meshes(grupo, m, null, false);

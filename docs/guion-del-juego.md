@@ -1015,6 +1015,20 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
   marco y el brillo del cartón; el dorso, con un tejido de rombos, el marco de oro con un arquito en cada esquina y el
   brillo del barniz.
 
+## 7v. El monte del templo y la plaza (14 de noviembre de 2026)
+
+- **El monte del templo** (`buildMonte`, en `ciudad/escenario.ts`): los muros de contención, por fuera, son de sillares
+  grandes almohadillados (de hasta 3,4 m, en cuatro hiladas, con el zócalo más oscuro y las manchas de la lluvia), con
+  el núcleo del color del mortero y la cornisa de piedra clara arriba. `blockWall` se sigue llamando sin usar lo que arma,
+  para gastar el azar del templo como antes. La escalinata: el canto de cada escalón un poco salido y la albardilla de
+  cada tramo de baranda.
+- **El pozo**: el brocal de dos hiladas de piedras trabadas alrededor (con su propio azar), la piedra del borde, el torno
+  de poste a poste con la soga enrollada, la manivela, la soga y el cubo colgando.
+- **El púlpito de Esdras** (Nehemías 8:4): las tablas marcadas en sus costados y una baranda de postes, abierta donde
+  llegan las gradas.
+- **Los barrios de lejos** (`construirAreaSilueta`): cada casa tiene su puerta y su ventana oscuras en el frente, donde
+  las tiene la casa de cerca.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el

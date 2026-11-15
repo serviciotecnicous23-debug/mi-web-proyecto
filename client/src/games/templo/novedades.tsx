@@ -14,6 +14,18 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-monte",
+    fecha: "14 de noviembre de 2026",
+    titulo: "El monte del templo y la plaza",
+    puntos: [
+      "🏛️ Los muros del monte del templo, vistos desde la ciudad, son de piedras grandes almohadilladas, con el zócalo más oscuro y su cornisa arriba.",
+      "🪨 La escalinata tiene el canto de cada escalón y la albardilla de sus barandas.",
+      "🧱 El pozo de la plaza tiene su brocal de piedras, el torno de poste a poste con su manivela, la soga y el cubo colgando.",
+      "📜 El púlpito de madera de Esdras tiene su baranda de postes y las tablas marcadas.",
+      "🏠 De lejos, las casas de los otros barrios tienen su puerta y su ventana.",
+    ],
+  },
+  {
     id: "2026-11-14-ajedrez-cartas",
     fecha: "14 de noviembre de 2026",
     titulo: "Piezas de ajedrez de torneo y cartas impresas",
