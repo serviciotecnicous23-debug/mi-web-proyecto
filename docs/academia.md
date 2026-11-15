@@ -694,6 +694,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET matricula` | Mi matrícula |
 | `GET carne` | Mi carné: los datos y las direcciones de sus archivos (pide la inscripción) |
 | `GET carne/frente.png`, `carne/reverso.png` y `carne/carne.pdf` | Los archivos del carné, hechos en el servidor; `?v=<huella>`, `&descargar=1` (imágenes) y `&ver=1` (el PDF abierto) |
+| `GET carne/salud` | Pública y sin datos de nadie: dibuja un carné de muestra y dice si el lienzo, la letra, el logo y el PDF funcionan en este servidor (para comprobar cada despliegue) |
 | `GET dev/correcta/:materiaId`, `GET examen/:materiaId/dev-correcta`, `GET integral/:nivel/dev-correcta` y `POST dev/adelantar` | **Solo en desarrollo**, para las pruebas; no existen en la web publicada |
 
 **Vista previa:** mientras `site_content.academia_abierta` no sea `1`, solo la ven los roles de `ROLES_VISTA_PREVIA`
