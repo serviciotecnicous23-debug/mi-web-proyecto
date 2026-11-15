@@ -2035,6 +2035,163 @@ const ETICA: MateriaDef = {
   disponible: true,
 };
 
+// ---- Nivel 5 · Liderazgo y docencia
+const DIDACTICA: MateriaDef = {
+  id: "n5-didactica",
+  nivel: 5,
+  orden: 3,
+  titulo: "Didáctica: cómo enseñar",
+  resumen: "El llamado y el carácter del maestro, cómo aprende la gente, cómo preparar una clase con objetivos, los métodos de Jesús, cómo evaluar con justicia y cómo acompañar a los alumnos: de aquí salen los profesores y los mentores de la academia.",
+  base: "Esdras 7:10; 2 Timoteo 2:2",
+  memoria: "Esdras 7:10",
+  lecciones: lecciones("n5-didactica", [
+    ["El maestro cristiano", "Esdras 7:10; Santiago 3:1; Juan 13:13-15"],
+    ["Cómo aprende la gente", "Deuteronomio 6:6-7; Hebreos 5:12-14"],
+    ["Preparar una clase", "Nehemías 8:8; Lucas 24:27"],
+    ["Enseñar como Jesús", "Mateo 16:15; Mateo 13:34; Juan 16:12"],
+    ["Evaluar el aprendizaje", "Proverbios 27:23; 2 Timoteo 4:2; Proverbios 11:1"],
+    ["Acompañar a los alumnos", "1 Tesalonicenses 2:7-8; Filipenses 4:9; 2 Timoteo 2:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero aprenda a enseñar: que viva lo que enseña, entienda cómo aprende la gente, prepare sus clases con objetivos claros, use los métodos de Jesús, evalúe con justicia y acompañe a sus alumnos. De esta materia salen los profesores y los mentores de la academia. Su modelo es Esdras: «Porque Esdras había preparado su corazón para inquirir la ley de Jehová y para cumplirla, y para enseñar en Israel sus estatutos y decretos» (Esdras 7:10).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el llamado y el carácter del maestro cristiano según la Escritura.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo aprende la gente y aplicar las leyes de la enseñanza a una clase.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir objetivos medibles y preparar el plan escrito de una clase.", bloom: "crear" },
+      { id: "o4", texto: "Escoger y usar métodos de enseñanza según el ejemplo de Jesús.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar el aprendizaje con preguntas, rúbricas y una corrección justa.", bloom: "evaluar" },
+      { id: "o6", texto: "Acompañar a los alumnos y explicar el trabajo del profesor y del mentor en la academia.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Esdras 7:10 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Cómo aprende la gente, cómo se prepara una clase, los métodos de enseñanza y la evaluación.",
+      ser: "Un maestro que vive lo que enseña, ama a sus alumnos y depende del Espíritu Santo.",
+      hacer: "Preparar, dar y evaluar una clase bíblica, y acompañar a sus alumnos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Howard G. Hendricks", titulo: "Enseñando para cambiar vidas", editorial: "Unilit" },
+        { autor: "John Milton Gregory", titulo: "Las siete leyes de la enseñanza", editorial: "Casa Bautista de Publicaciones" },
+      ],
+      complementaria: [],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de Esdras-Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "video", titulo: "Parábolas de Jesús", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=jZinwS_2jsQ", minutos: 6 },
+      { tipo: "lectura", titulo: "Nehemías 8: leer y poner el sentido", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+      { tipo: "lectura", titulo: "1 Tesalonicenses 2: como la nodriza que cuida a sus hijos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Tesalonicenses&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const LIDERAZGO_2: MateriaDef = {
+  id: "n5-liderazgo-2",
+  nivel: 5,
+  orden: 4,
+  titulo: "Liderazgo II: formar líderes y equipos",
+  resumen: "Multiplicar líderes como Jesús, reconocerlos y formarlos paso a paso, delegar como enseñó Jetro, trabajar en equipo, resolver conflictos según Mateo 18 y dirigir con visión, con corazón de siervo y con un plan de sucesión.",
+  base: "2 Timoteo 2:2; Marcos 10:43-45",
+  memoria: "2 Timoteo 2:2",
+  lecciones: lecciones("n5-liderazgo-2", [
+    ["Multiplicar líderes", "Marcos 3:14; 2 Timoteo 2:2; Lucas 6:40"],
+    ["Reconocer y formar líderes", "Hechos 11:25-26; 1 Timoteo 3:10; 2 Timoteo 4:11"],
+    ["Delegar", "Éxodo 18:17-23; Hechos 6:1-7"],
+    ["Trabajar en equipo", "Nehemías 4:6; Eclesiastés 4:9-10; 1 Corintios 12:12"],
+    ["Resolver conflictos", "Mateo 18:15-17; Mateo 5:23-24; Filipenses 4:2-3"],
+    ["Visión, servicio y sucesión", "Habacuc 2:2; Marcos 10:43-45; Deuteronomio 31:7-8"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder pase de hacer la obra a formar a quienes la harán: que multiplique líderes como Jesús, los reconozca y los forme paso a paso, delegue con sabiduría, trabaje en equipo, resuelva los conflictos según la Biblia y dirija con visión y con corazón de siervo. Sigue a Liderazgo cristiano I. Su centro es 2 Timoteo 2:2: «Lo que has oído de mí ante muchos testigos, esto encarga a hombres fieles que sean idóneos para enseñar también a otros». Quién puede ejercer cada cargo no se decide aquí: es un punto de la declaración de fe por confirmar.",
+    objetivos: [
+      { id: "o1", texto: "Explicar el modelo de Jesús para multiplicar líderes y las cuatro generaciones de 2 Timoteo 2:2.", bloom: "comprender" },
+      { id: "o2", texto: "Reconocer a los líderes en formación y describir los pasos para formarlos.", bloom: "aplicar" },
+      { id: "o3", texto: "Delegar con claridad, autoridad y seguimiento, según Éxodo 18 y Hechos 6.", bloom: "aplicar" },
+      { id: "o4", texto: "Formar y dirigir equipos sanos, con propósito, roles claros y unidad.", bloom: "aplicar" },
+      { id: "o5", texto: "Resolver conflictos con los pasos de Mateo 18 y Mateo 5.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un ministerio por su visión, su liderazgo de servicio y su plan de sucesión.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Timoteo 2:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El modelo bíblico para multiplicar líderes, delegar, trabajar en equipo, resolver conflictos y planificar.",
+      ser: "Un líder humilde y siervo, que se alegra de que otros crezcan.",
+      hacer: "Formar a un líder, delegar una tarea, dirigir un equipo y resolver un conflicto según la Biblia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Greg Ogden", titulo: "Discipulado que transforma: el modelo de Jesús", editorial: "CLIE" },
+        { autor: "John C. Maxwell", titulo: "Desarrolle los líderes que están alrededor de usted", editorial: "Grupo Nelson" },
+      ],
+      complementaria: [
+        { autor: "Ken Sande", titulo: "Pacificadores: una guía bíblica para la solución de los conflictos personales", editorial: "Ediciones Las Américas" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=y9pED55wMM4", minutos: 7 },
+      { tipo: "lectura", titulo: "Éxodo 18: el consejo de Jetro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=18" },
+      { tipo: "lectura", titulo: "Hechos 6: los siete", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+    ],
+  },
+  disponible: true,
+};
+
+const IDIOMAS: MateriaDef = {
+  id: "n5-idiomas",
+  nivel: 5,
+  orden: 5,
+  titulo: "Griego y hebreo bíblicos para el estudio",
+  resumen: "Los idiomas en que se escribió la Biblia y cómo llegó hasta nosotros, los alfabetos hebreo y griego, palabras clave de los dos Testamentos, la concordancia de Strong, los interlineales y los diccionarios, cómo hacer un estudio de palabras y los errores que hay que evitar.",
+  base: "Mateo 5:18; Nehemías 8:8",
+  memoria: "Mateo 5:18",
+  lecciones: lecciones("n5-idiomas", [
+    ["Los idiomas de la Biblia", "Juan 19:19-20; Daniel 2:4; Mateo 5:18"],
+    ["El hebreo y sus palabras clave", "Números 6:24-26; Deuteronomio 6:4"],
+    ["El griego y sus palabras clave", "Apocalipsis 1:8; Juan 1:1"],
+    ["Las herramientas del estudio", "Hechos 17:11; 2 Timoteo 2:15"],
+    ["Cómo hacer un estudio de palabras", "Salmos 136:1-3; Éxodo 34:6"],
+    ["Errores comunes y buen uso", "Romanos 1:16; Juan 21:15-17; 2 Corintios 4:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca lo básico de los idiomas en que se escribió la Biblia y sepa usar las herramientas que lo acercan a ellos, sin necesidad de ser experto: cómo llegó el texto hasta nosotros, los alfabetos hebreo y griego, palabras clave de los dos Testamentos, la concordancia de Strong, los interlineales y los diccionarios, el estudio de palabras y los errores que hay que evitar. Dios cuidó su Palabra hasta el detalle: «ni una jota ni una tilde pasará de la ley, hasta que todo se haya cumplido» (Mateo 5:18).",
+    objetivos: [
+      { id: "o1", texto: "Identificar los idiomas de la Biblia y explicar cómo llegó el texto hasta nuestras traducciones.", bloom: "comprender" },
+      { id: "o2", texto: "Describir el alfabeto hebreo y explicar palabras clave del Antiguo Testamento.", bloom: "comprender" },
+      { id: "o3", texto: "Describir el alfabeto griego y explicar palabras clave del Nuevo Testamento.", bloom: "comprender" },
+      { id: "o4", texto: "Usar la concordancia de Strong, un interlineal y un diccionario expositivo.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer un estudio de palabras siguiendo sus pasos.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar el uso de los idiomas originales en la enseñanza y evitar sus errores comunes.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 5:18 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los idiomas de la Biblia, sus alfabetos, palabras clave y las herramientas del estudio.",
+      ser: "Un estudiante humilde, que ama la Palabra hasta el detalle y no busca lucirse.",
+      hacer: "Hacer un estudio de palabras con Strong, un interlineal y un diccionario, y enseñarlo con sencillez.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Anita Henriques, Nelson Morales y Daniel S. Steffen", titulo: "Introducción al griego bíblico", editorial: "Vida" },
+        { autor: "W. E. Vine", titulo: "Diccionario expositivo de palabras del Antiguo y del Nuevo Testamento exhaustivo", editorial: "Caribe" },
+      ],
+      complementaria: [
+        { autor: "James Strong", titulo: "Nueva concordancia Strong exhaustiva", editorial: "Caribe" },
+        { autor: "Francisco Lacueva", titulo: "Nuevo Testamento interlineal griego-español", editorial: "CLIE" },
+        { autor: "Ricardo Cerni", titulo: "Antiguo Testamento interlineal hebreo-español", editorial: "CLIE" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Yahweh - SEÑOR", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=7Ajug_ZAfW4", minutos: 4 },
+      { tipo: "video", titulo: "Agape - Amor", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=l75uPoo9Rs8", minutos: 5 },
+      { tipo: "video", titulo: "¿Qué significa la palabra evangelio?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=AxGypH5Dy3I", minutos: 5 },
+      { tipo: "lectura", titulo: "Salmos 119: las 22 letras del alfabeto hebreo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=119" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -2138,9 +2295,9 @@ export const NIVELES: NivelDef[] = [
     materias: [
       enPreparacion(5, 1, "n5-teologia-pastoral", "Teología pastoral", "La vida, la familia y la labor del ministro."),
       enPreparacion(5, 2, "n5-administracion", "Administración y gobierno de la iglesia", "Organización, transparencia, diáconos y ancianos, y lo legal básico."),
-      enPreparacion(5, 3, "n5-didactica", "Didáctica: cómo enseñar", "Preparar clases, evaluar y acompañar alumnos; de aquí salen los profesores de la academia."),
-      enPreparacion(5, 4, "n5-liderazgo-2", "Liderazgo II: formar líderes y equipos", "Multiplicar líderes, delegar, resolver conflictos y servir con visión."),
-      enPreparacion(5, 5, "n5-idiomas", "Griego y hebreo bíblicos para el estudio", "Los alfabetos, palabras clave y herramientas como Strong e interlineales."),
+      DIDACTICA,
+      LIDERAZGO_2,
+      IDIOMAS,
       enPreparacion(5, 6, "n5-exegesis", "Exégesis de un libro", "Estudio profundo de Romanos o de Hechos."),
       enPreparacion(5, 7, "n5-avivamiento", "Teología del avivamiento", "Los principios bíblicos, la historia y el discernimiento del avivamiento."),
       enPreparacion(5, 8, "n5-seminario", "Seminario de liderazgo ministerial", "Casos reales y un plan de ministerio propio."),
