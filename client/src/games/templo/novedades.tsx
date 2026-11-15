@@ -14,6 +14,17 @@ export type Novedad = { id: string; fecha: string; titulo: string; puntos: strin
 /** La más nueva primero. */
 export const NOVEDADES: Novedad[] = [
   {
+    id: "2026-11-14-tableros",
+    fecha: "14 de noviembre de 2026",
+    titulo: "Las escaleras y las damas chinas, como las de verdad",
+    puntos: [
+      "🪜 El tablero de las escaleras de Jacob tiene su marco de madera, las losas de mosaico con su canto y la franja de la salida, donde cada jugador espera en su hoyo.",
+      "🐍 Las serpientes tienen cuerpo: anchas detrás de la cabeza y finas hasta la cola, con sus anillos, sus ojos y su sombra. Las escaleras tienen largueros de madera dorada.",
+      "⭐ La estrella de las damas chinas es de una pieza de madera con su veta y su canto; los hoyos están taladrados y las canicas son de vidrio, con su ojo de color adentro.",
+      "👑 La ficha del que tira tiene un anillo dorado que late.",
+    ],
+  },
+  {
     id: "2026-11-14-monte",
     fecha: "14 de noviembre de 2026",
     titulo: "El monte del templo y la plaza",

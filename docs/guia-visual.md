@@ -126,6 +126,10 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
   importa, como las puntas del dominó, nunca queda fuera), una señal clara de qué se puede jugar y dónde (que late),
   la sombra de la pieza antes de soltarla, y piezas con volumen (canto y sombra hacia abajo a la derecha). Lo que
   decide dónde va cada pieza es un módulo puro con su prueba (como `shared/mesa/domino-cadena.ts`).
+- **Los tableros** son de materiales de verdad: madera con su veta y su canto (luz adentro, oscuro afuera) y su sombra
+  en la mesa; los hoyos, taladrados; las fichas y canicas, con su brillo arriba y su sombra. Nada de figuras planas de
+  un solo color: las serpientes y las cuerdas tienen grosor (se afinan), y cada pieza que espera tiene su lugar en el
+  tablero (nunca medio afuera).
 
 ## 8. La cámara
 - Sigue al personaje con un resorte críticamente amortiguado (sin tirones), un poco adelantada hacia donde camina.
