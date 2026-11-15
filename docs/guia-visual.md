@@ -86,6 +86,9 @@ Regla de proporción: 60 % neutros cálidos, 30 % un color de apoyo por escena, 
 - Vegetación que se mueve con el viento (olivos, palmeras, parras, hierba), con el mismo viento para todo.
 - Agua con brillo y movimiento (fuentes, pozos, el mar de bronce).
 - Partículas con sentido: polvo en los rayos de luz, humo del horno, chispas del altar, pétalos en su estación.
+- Lo que cambia con el año (los campos, los frutos, los pétalos) se arma una sola vez y la estación solo cambia
+  uniformes o lo que se ve (como `Campos.setEstacion` en `ciudad/campos.ts` y la malla «frutos» de cada barrio): nunca
+  se vuelve a armar la ciudad porque cambió el mes.
 - Lo que ya está hecho, para copiarlo en un lugar nuevo: la hierba con viento por bloques (`ciudad/suelo-vivo.ts`), el
   polvo en la luz (`Polvo`, en `ciudad/clima.ts`), las hortalizas con hojas (`hortaliza`, en `ciudad/escenario.ts`) y la
   animación con resortes (`inercia`, en `three/characters.ts`). Ninguna planta ni mata es un cubo.

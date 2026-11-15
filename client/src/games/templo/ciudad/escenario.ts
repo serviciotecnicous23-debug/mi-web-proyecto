@@ -1447,7 +1447,7 @@ function obrasDeCasa(m: GeoBuilder, v: GeoBuilder, nivel: number, obras: Readonl
     for (let k = 0; k <= 5; k++) m.box(2 * xs + 0.1, 0.04, 0.05, C.cedro, { y: top + 0.04, z: z0 + (k * (z1 - z0)) / 5 });
     for (let k = 0; k < 10; k++) m.add(new THREE.IcosahedronGeometry(0.28, 0), vary("#5f7f3a", 0.12), { x: rr(-xs + 0.12, xs - 0.12), y: top + 0.13 + rr(-0.03, 0.06), z: rr(z0, z1), sy: 0.42 });
     // los racimos: un cono de uvas colgando (de lejos se ve igual y pesa poco)
-    for (let k = 0; k < 5; k++) m.cone(0.07, 0.2, "#5b2a5e", { x: rr(-xs + 0.25, xs - 0.25), y: top - 0.12, z: rr(z0 + 0.12, z1 - 0.12), rx: Math.PI }, 5);
+    for (let k = 0; k < 5; k++) (frutosDeCasa ?? m).cone(0.07, 0.2, "#5b2a5e", { x: rr(-xs + 0.25, xs - 0.25), y: top - 0.12, z: rr(z0 + 0.12, z1 - 0.12), rx: Math.PI }, 5);
     m.cyl(0.03, 0.045, top - y0, "#5d4532", { x: -xs + 0.08, y: (y0 + top) / 2, z: z1 - 0.06, rz: 0.04 }, 5);
   }
 
@@ -1630,14 +1630,14 @@ function adorno(m: GeoBuilder, v: GeoBuilder, id: string, x: number, y: number, 
       for (let k = 0; k < 7; k++) m.add(new THREE.IcosahedronGeometry(0.22, 0), vary("#5f7f3a", 0.12), P(-0.5 + k * 0.17, 1.86 + rr(-0.04, 0.06), rr(-0.25, 0.25), { sy: 0.45 }));
       for (let k = 0; k < 4; k++) {
         const gx = -0.36 + k * 0.24;
-        for (let q = 0; q < 4; q++) m.sphere(0.035, "#5b2a5e", P(gx + rr(-0.03, 0.03), 1.66 - q * 0.05, 0.12 + rr(-0.03, 0.03)), 5, 4);
+        for (let q = 0; q < 4; q++) (frutosDeCasa ?? m).sphere(0.035, "#5b2a5e", P(gx + rr(-0.03, 0.03), 1.66 - q * 0.05, 0.12 + rr(-0.03, 0.03)), 5, 4);
       }
       break;
     }
     case "higuera": {
       m.cyl(0.07, 0.11, 1.1, "#6e5a43", P(0, 0.55, 0, { rz: 0.06 }), 6);
       for (let k = 0; k < 4; k++) m.add(new THREE.IcosahedronGeometry(0.42, 0), vary("#4f6f32", 0.1), P(rr(-0.3, 0.3), 1.35 + rr(0, 0.35), rr(-0.3, 0.3), { sy: 0.78 }));
-      for (let k = 0; k < 6; k++) m.sphere(0.04, "#6b3a5a", P(rr(-0.4, 0.4), 1.2 + rr(0, 0.4), rr(-0.4, 0.4)), 5, 4);
+      for (let k = 0; k < 6; k++) (frutosDeCasa ?? m).sphere(0.04, "#6b3a5a", P(rr(-0.4, 0.4), 1.2 + rr(0, 0.4), rr(-0.4, 0.4)), 5, 4);
       if (s < 1) maceta(2.2);
       break;
     }
@@ -1853,10 +1853,23 @@ function obrasDelBarrio3D(m: GeoBuilder, v: GeoBuilder, area: number, obras: Rea
 }
 
 /** Las casas de un área, completas: cada parcela con su casa (o libre), las ventanas de noche y los adornos del barrio. */
+/**
+ * Los frutos de las parras y de las higueras de las casas (uvas e higos): mientras se arma una casa de un barrio van a
+ * este constructor, y el barrio los junta en su malla «frutos», que solo se ve en el verano y en la cosecha (mundo.ts,
+ * con la estación; Números 13:20). Fuera de los barrios (null) van con lo demás, como siempre.
+ */
+let frutosDeCasa: GeoBuilder | null = null;
+let frutosVisibles = true;
+/** Si se ven los frutos de las parras y de las higueras (los barrios que se armen después salen así). */
+export function verFrutos(si: boolean) {
+  frutosVisibles = si;
+}
+
 export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBarrio = 0, obrasBarrio: readonly string[] = []): { grupo: THREE.Group; ventanas: THREE.Mesh | null } {
   const grupo = new THREE.Group();
   const m = new GeoBuilder();
   const v = new GeoBuilder();
+  const frutos = new GeoBuilder();
   // las telas con viento del área (three/telas.ts): las tiendas, los toldos de las casas y los estandartes del barrio
   const telas = new Telas();
   // la sombra de contacto de cada casa en el suelo, todas en una malla
@@ -1869,7 +1882,8 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
       parcelaLibre(m, p);
       continue;
     }
-    const lm = new GeoBuilder(), lv = new GeoBuilder(), lt = new Telas();
+    const lm = new GeoBuilder(), lv = new GeoBuilder(), lt = new Telas(), lf = new GeoBuilder();
+    frutosDeCasa = lf;
     const nivel = Math.max(0, Math.min(3, c.nivel));
     const obras = new Set(c.obras ?? []);
     casaLocal(lm, lv, nivel, c.personajeId * 7919 + c.nivel, obras, lt);
@@ -1885,7 +1899,13 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
     if (c.letrero) letreroDeCasa(lm, nivel);
     // lo que edificó con su gozo (shared/obras.ts): va al final, para no cambiar el azar de lo de antes
     if (obras.size) obrasDeCasa(lm, lv, nivel, obras);
+    frutosDeCasa = null;
     const mat = new THREE.Matrix4().makeRotationY(p.dir === 1 ? 0 : Math.PI).setPosition(p.x, Y, p.z);
+    if (!lf.empty) {
+      const gf = lf.build();
+      gf.applyMatrix4(mat);
+      frutos.raw(gf);
+    }
     if (!lt.vacia) telas.juntar(lt, mat);
     // las ovejas de su redil (shared/taller.ts) pastan en la calle: van con el suelo del barrio, no con la casa
     // (la casa se aclara cuando tapa al jugador; las ovejas no)
@@ -1926,6 +1946,13 @@ export function construirAreaDetalle(area: number, casas: CasaDibujo[], nivelBar
   if (!telas.vacia) grupo.add(telas.malla());
   const sc = sombrasDeContacto(sombras, 0.6);
   if (sc) grupo.add(sc);
+  if (!frutos.empty) {
+    const mf = new THREE.Mesh(frutos.build(), matteMat());
+    mf.name = "frutos";
+    mf.visible = frutosVisibles;
+    mf.receiveShadow = true;
+    grupo.add(mf);
+  }
   let ventanas: THREE.Mesh | null = null;
   if (!v.empty) {
     ventanas = new THREE.Mesh(v.build(), ventanaMat());
@@ -1961,6 +1988,9 @@ export function construirAreaSilueta(area: number, casas: { parcela: number; niv
   return grupo;
 }
 
+/** Las casas de afuera de los muros, en las laderas (las arma buildRelleno): los campos no caen encima (campos.ts). */
+export const CASAS_DE_AFUERA: { x: number; z: number; w: number; d: number }[] = [];
+
 /** Casas sin dueño del resto de la ciudad (siluetas sencillas). */
 function buildRelleno(root: THREE.Group) {
   const m = new GeoBuilder();
@@ -1979,6 +2009,7 @@ function buildRelleno(root: THREE.Group) {
     const w = rr(2.4, 4), d = rr(2.4, 4), h = rr(2.2, 3.6);
     m.box(w, h, d, vary(pick(pal), 0.05), { x, y: Y + h / 2, z });
   }
+  CASAS_DE_AFUERA.length = 0;
   for (let i = 0; i < 70; i++) {
     const a = rr(0, Math.PI * 2), r = rr(80, 110);
     const x = 30 + Math.cos(a) * r, z = Math.sin(a) * r;
@@ -1987,6 +2018,7 @@ function buildRelleno(root: THREE.Group) {
     const w = rr(2.4, 4.2), d = rr(2.4, 4), h = rr(2.2, 3.8);
     const gy = alturaTerreno(x, z);
     m.box(w, h, d, vary(pick(pal), 0.05), { x, y: gy + h / 2 - 0.3, z });
+    CASAS_DE_AFUERA.push({ x, z, w, d });
   }
   meshes(root, m, null, false);
 }

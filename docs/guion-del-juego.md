@@ -1044,6 +1044,23 @@ señal clara de qué ficha casa y dónde, y la mano en fila abajo.
   (`Canica`) son de vidrio: el color con su hondura, el ojo de color adentro, la luz que pasa abajo y el brillo arriba.
 - `tono(color, f)` en `mesa/vida.tsx` aclara u oscurece un color de los tableros (para luces, sombras y anillos).
 
+## 7x. Los campos de afuera cambian con el año (15 de noviembre de 2026)
+
+- **Los campos** (`ciudad/campos.ts`): parcelas de trigo y de cebada en terrazas al norte, al sur y al poniente de la
+  ciudad (como el valle de Refaim, Isaías 17:5), donde antes solo había matas del campo. Cada terraza tiene su murete
+  de piedra seca al borde de afuera, y la del medio de cada lado, su torre de guarda con la enramada arriba (Isaías 5:2;
+  1:8). Las parcelas no caen sobre las casas de las laderas (`CASAS_DE_AFUERA`, que arma `buildRelleno`), y el suelo
+  vivo no pone matas ni piedras dentro de ellas (`enCampo`).
+- **Con la estación** (`Campos.setEstacion`, desde `conElAnio` en `mundo.ts`): la tierra arada en la siembra; el brote
+  verde en hileras en el invierno; en la siega de la cebada, la cebada madura (dorada pálida) y el trigo verde y alto; en
+  la siega del trigo, el trigo dorado y la cebada segada, con su rastrojo y sus gavillas; en el verano, el rastrojo con
+  las gavillas del trigo; y en la cosecha, el rastrojo seco. La mies es una malla por cultivo que se alza en la tarjeta
+  de video (alto y colores uniformes): cambiar de estación no arma nada. Arriba, las olas del viento, el grano y las
+  espigas que brillan; los costados son los tallos, y el borde de arriba, un serrucho de espigas.
+- **Los frutos de las casas** (las uvas de la parra y del emparrado, los higos de la higuera) van en la malla «frutos»
+  de cada barrio, que solo se ve en el verano y en la cosecha (`verFrutos`).
+- **La memoria**: el paño marca con líneas punteadas los dos lugares donde se abren las cartas.
+
 ## 8. Lo que sigue (la fase final de Jerusalén en línea)
 
 Ya hecho (noviembre de 2026): el calendario real, el encargo de la fiesta, la ropa de cada tiempo, el
@@ -1051,11 +1068,13 @@ pronóstico, «Mientras no estabas» con lo que hizo tu barrio, tu casa y la ciu
 mejor vestido), los pétalos de almendro, las lámparas de fiesta, los mentores para los que llegan y los dichos de los
 ancianos (las colecciones visibles quedan completas con el álbum).
 
+Ya hecho también (15 de noviembre de 2026): **más vida por estación**, con los campos de afuera que cambian con el
+año y las uvas de las parras en el verano y la cosecha (sección 7x).
+
 Lo que queda:
-1. **Más vida por estación**: campos dorados en la siega del trigo y uvas en las parras en la cosecha.
-2. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas (también dichos nuevos al final de
+1. **Contenido que se renueva**: preguntas, estudios y cátedras por entregas (también dichos nuevos al final de
    `DICHOS`).
-3. **Una historia para la temporada 3 y las que siguen** (`PROGRAMA` en `shared/capitulos.ts`; la temporada 2,
+2. **Una historia para la temporada 3 y las que siguen** (`PROGRAMA` en `shared/capitulos.ts`; la temporada 2,
    la gran Pascua de Ezequías, ya está). Mientras no haya otra, se turnan las dos.
 
 Con eso Jerusalén en línea queda completa y lista para que los próximos juegos del ministerio usen la misma base
