@@ -1,5 +1,5 @@
 // Una lección de la academia: objetivos, lectura con versículos y medios, idea clave, aplicación, repaso y terminar.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, PlayCircle, Save, Target, XCircle } from "lucide-react";
@@ -11,6 +11,8 @@ import { loginUrl } from "@/lib/login-redirect";
 import { idYouTube, type BloqueoRepaso, type LeccionVista, type RespuestaRepaso } from "@shared/academia";
 import { avanceVideo, completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
 import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
+import { CuadernoEnLeccion, useMarcasDeLeccion } from "@/components/cuaderno/en-leccion";
+import { conMarcas } from "@/components/cuaderno/marcas";
 
 type Intento = { elegida: number; r: RespuestaRepaso };
 
@@ -113,6 +115,9 @@ export default function AcademiaLeccion() {
   const [terminando, setTerminando] = useState(false);
   // lo que falta para abrir el repaso: la lectura baja sola cada segundo; el video, con lo que cuenta el servidor
   const [bloqueo, setBloqueo] = useState<BloqueoRepaso | null>(null);
+  // el cuaderno: lo que el alumno resaltó (pintado en el texto) y el texto donde puede seleccionar
+  const texto = useRef<HTMLElement | null>(null);
+  const marcas = useMarcasDeLeccion(leccionId, !!q.data?.conSesion);
 
   useEffect(() => {
     if (q.data) {
@@ -243,7 +248,7 @@ export default function AcademiaLeccion() {
 
   return (
     <Layout>
-      <article className="max-w-3xl mx-auto px-4 pt-6 pb-16" data-testid="leccion">
+      <article ref={texto} className="max-w-3xl mx-auto px-4 pt-6 pb-16" data-testid="leccion">
         <Link href={`/academia/materia/${l.materia.id}`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" /> {l.materia.titulo}
         </Link>
@@ -272,14 +277,20 @@ export default function AcademiaLeccion() {
 
         <section className="mb-6">
           <p className="data-label mb-2">Para empezar</p>
-          <p className="text-lg leading-8 italic">{l.paraEmpezar}</p>
+          <p className="text-lg leading-8 italic" data-bloque={-1}>{marcas.get(-1) ? conMarcas(l.paraEmpezar, marcas.get(-1)) : l.paraEmpezar}</p>
         </section>
 
-        <section>{l.bloques.map((b, i) => <BloqueLeccion key={i} b={b} alVerVideo={i === videoQueCuenta ? alVerVideo : undefined} />)}</section>
+        <section>
+          {l.bloques.map((b, i) => (
+            <div key={i} data-bloque={i}>
+              <BloqueLeccion b={b} alVerVideo={i === videoQueCuenta ? alVerVideo : undefined} marcas={marcas.get(i)} />
+            </div>
+          ))}
+        </section>
 
         <section className="my-10 rounded-2xl p-6 text-center bg-gradient-to-br from-orange-500/15 to-amber-400/10 border border-orange-500/20" data-testid="idea-clave">
           <p className="data-label mb-2 flex justify-center items-center gap-1.5"><Lightbulb className="w-4 h-4" /> La idea clave</p>
-          <p className="font-display text-xl md:text-2xl font-semibold leading-snug">{l.ideaClave}</p>
+          <p className="font-display text-xl md:text-2xl font-semibold leading-snug" data-bloque={-2}>{marcas.get(-2) ? conMarcas(l.ideaClave, marcas.get(-2)) : l.ideaClave}</p>
         </section>
 
         <section className="mb-10">
@@ -352,6 +363,7 @@ export default function AcademiaLeccion() {
         )}
         {conSesion && l.inscrita && l.matriculado && !todas && <p className="text-xs text-muted-foreground mt-2 text-right">Termina el repaso para continuar.</p>}
       </article>
+      {conSesion && <CuadernoEnLeccion leccionId={l.leccion.id} leccionTitulo={l.leccion.titulo} contenedor={texto} />}
     </Layout>
   );
 }

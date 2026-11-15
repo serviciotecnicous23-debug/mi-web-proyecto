@@ -86,6 +86,51 @@ exámenes usan el mismo reparto.
 
 Además, cada materia tiene su **versículo de memoria**: primero se estudia y después se arma con fichas, sin mirarlo.
 
+**El cuaderno** (lo pidió Luis el 15 de noviembre: «un cuaderno de apuntes… que esté bien desarrollado… y que tenga
+la sincronización de la biblioteca»). Es el mismo cuaderno en la academia (`/academia/cuaderno`) y en la Biblioteca
+(pestaña «Cuaderno»), y se guarda en la cuenta: se ve igual en todos los equipos.
+- **Las notas** están hechas de bloques, como un cuaderno digital moderno, pensado para el teléfono (`shared/cuaderno.ts`,
+  `client/src/components/cuaderno/`). Los tipos de bloque son texto, título, subtítulo, lista, lista numerada, tarea,
+  cita, versículo, resaltado, idea importante y separador.
+  - El texto lleva marcas ligeras: `**negrita**`, `_cursiva_` y `==resaltado==`.
+  - Una cita escrita a mano («Juan 3:16», «1 Corintios 13:4-7», también en minúscula) se vuelve un enlace: al tocarla se
+    ve el versículo de la RV1960 sin salir de la nota.
+  - El bloque de versículo trae el texto del pasaje.
+- **El editor:**
+  - Se toca un bloque para escribir. Enter crea el siguiente, y las listas siguen siendo listas. Borrar en un bloque
+    vacío lo quita, y «/» abre el menú de bloques. Tab da sangría a las listas.
+  - La barra tiene el tipo de bloque, negrita, cursiva, resaltar, insertar un versículo, **dictar con la voz** (el
+    reconocimiento de voz del navegador, en español), las plantillas, deshacer, subir, bajar y eliminar.
+  - **Plantillas de estudio:** notas de clase (método Cornell), estudio inductivo, devocional, notas de una prédica y
+    lista de oración.
+- **Se guarda solo,** un momento después del último cambio (`useNotaEditable`).
+  - Sin conexión, lo escrito queda en el teléfono y se manda al volver la conexión.
+  - Cada guardado lleva la versión de la nota. Si otro equipo guardó antes, el servidor responde 409 con lo guardado y la
+    página no pisa nada: guarda lo de este equipo como una copia.
+- **La organización:** búsqueda sin tildes («oracion» encuentra «oración»), fijadas arriba, etiquetas, un filtro por
+  materia (las notas de una lección quedan unidas a su materia) y una papelera que se vacía sola a los 30 días.
+- **En la lección:**
+  - Al seleccionar un texto con el dedo o el mouse aparece una barra para **resaltarlo** en cinco colores, **pasarlo al
+    cuaderno** (como cita, con el enlace a la lección) o copiarlo.
+  - Lo resaltado queda pintado en la lección.
+  - El botón «Cuaderno» abre la nota de esa lección (se escribe mientras se lee, en blanco o con las notas de clase) y
+    sus resaltados.
+  - **No se abre dentro de los exámenes,** por el código de honor: se usa para estudiar y repasar antes.
+- **En la Biblioteca:**
+  - El cuaderno muestra también lo que se resaltó y anotó en la Biblia, versículo por versículo.
+  - Cada capítulo muestra «Tus apuntes del cuaderno sobre este capítulo» y una marca en los versículos citados en las
+    notas (las citas de cada nota se guardan como `Juan|3|16|16`).
+  - En un versículo, «Al cuaderno» empieza una nota de estudio con ese versículo.
+- **Es privado:** solo su dueño lo ve; ni los profesores ni la Administración leen el cuaderno de nadie.
+  - Lo puede usar también una cuenta por aprobar, porque estudia en la academia.
+  - Las tablas son `cuaderno_notas` y `cuaderno_resaltados`, y se borran con la cuenta.
+  - Rutas: `GET /api/cuaderno` (la lista), `POST/GET/PUT/PATCH/DELETE /api/cuaderno/notas/:id`,
+    `POST /api/cuaderno/notas/:id/restaurar`, `GET /api/cuaderno/leccion/:leccionId` y
+    `POST /api/cuaderno/leccion/:leccionId/agregar`, `GET/POST/PATCH/DELETE /api/cuaderno/resaltados` y
+    `GET /api/cuaderno/biblia/:libro/:capitulo`.
+- Las citas bíblicas viven en `shared/citas.ts`, que es liviano: el cuaderno y la Biblioteca no cargan el catálogo de la
+  academia.
+
 ## 3. El sistema de evaluación
 
 **Modelos tomados de plataformas reales:**

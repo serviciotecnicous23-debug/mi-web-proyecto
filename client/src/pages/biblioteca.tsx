@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Attachment } from "@/components/media/Attachment";
 import { checkFile } from "@/components/media/upload";
 import { Layout } from "@/components/layout";
@@ -22,8 +22,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   BookOpen, Highlighter, StickyNote, BookMarked, Users, FileText,
   Plus, Trash2, Heart, Search, ChevronLeft, ChevronRight, MessageCircle,
-  Upload, Download, Check, Send, Library, Loader2,
+  Upload, Download, Check, Send, Library, Loader2, NotebookPen,
 } from "lucide-react";
+import { crearNota, useApuntesBiblia } from "@/components/cuaderno/api";
+import { bloque } from "@shared/cuaderno";
+
+// El cuaderno (el mismo de la academia) se carga al abrir su pestaña: no pesa en la lectura de la Biblia.
+const Cuaderno = lazy(() => import("@/components/cuaderno/cuaderno").then((m) => ({ default: m.Cuaderno })));
 import {
   useBibleHighlights, useCreateBibleHighlight, useDeleteBibleHighlight,
   useBibleNotes, useCreateBibleNote, useDeleteBibleNote,
@@ -158,7 +163,7 @@ function ReadingStatus({ tracker, member }: { tracker: ReturnType<typeof useRead
   );
 }
 
-function BibleTab({ target }: { target?: ChapterTarget | null }) {
+function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpenNote?: (id: number) => void }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedBook, setSelectedBook] = useState(target?.book ?? "Genesis");
@@ -195,6 +200,20 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
 
   const maxChapters = BIBLE_BOOK_CHAPTERS[selectedBook] || 1;
   const member = !!user?.isActive;
+  // mis apuntes del cuaderno que citan este capítulo (y en qué versículos)
+  const apuntes = useApuntesBiblia(selectedBook, chapter, !!user);
+  const versosCuaderno = new Set<number>();
+  for (const a of apuntes.data ?? []) for (const r of a.versiculos) for (let x = r.desde; x <= r.hasta && x - r.desde < 200; x++) versosCuaderno.add(x);
+  const alCuaderno = async (verse: number) => {
+    const ref = `${bibleBookLabel(selectedBook)} ${chapter}:${verse}`;
+    try {
+      const n = await crearNota({ titulo: ref, bloques: [bloque("versiculo", "", { ref }), bloque("texto")] });
+      toast({ title: "Nota nueva en tu cuaderno", description: ref });
+      onOpenNote?.(n.id);
+    } catch (e: any) {
+      toast({ title: "No se pudo crear la nota", description: e?.message ?? "Inténtalo otra vez.", variant: "destructive" });
+    }
+  };
   const { data: highlights = [] } = useBibleHighlights(selectedBook, chapter, member);
   const { data: notes = [] } = useBibleNotes(selectedBook, chapter, member);
   const createHighlight = useCreateBibleHighlight();
@@ -430,11 +449,32 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
                       {vNotes.length > 0 && (
                         <StickyNote className="inline w-3 h-3 text-primary" />
                       )}
+                      {versosCuaderno.has(v.verse) && (
+                        <NotebookPen className="inline w-3 h-3 ml-0.5 text-orange-600" aria-label="Tienes apuntes en tu cuaderno sobre este versículo" />
+                      )}
                     </span>
                   </React.Fragment>
                 );
               })}
               <div ref={tracker.endRef} aria-hidden="true" />
+            </div>
+          )}
+
+          {!loading && !error && verses.length > 0 && !!apuntes.data?.length && (
+            <div className="mt-5 rounded-xl border border-orange-500/30 bg-orange-500/5 p-3" data-testid="bible-apuntes-cuaderno">
+              <p className="text-sm font-semibold flex items-center gap-1.5"><NotebookPen className="w-4 h-4 text-orange-600" /> Tus apuntes del cuaderno sobre este capítulo</p>
+              <ul className="mt-1.5 space-y-1">
+                {apuntes.data.map((a) => (
+                  <li key={a.id} className="text-sm flex items-center gap-2">
+                    <button type="button" className="text-left hover:underline flex-1 min-w-0 truncate" onClick={() => onOpenNote?.(a.id)}>
+                      {a.titulo || "Sin título"}
+                    </button>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {a.versiculos.map((r) => (r.hasta > r.desde ? `${r.desde}-${r.hasta}` : `${r.desde}`)).join(", ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -459,6 +499,11 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
                 ? "Cuando aprueben tu cuenta podrás resaltar este versículo y guardar tus notas."
                 : "Crea tu cuenta gratis para resaltar este versículo y guardar tus notas."}
             </p>
+            {user && (
+              <Button variant="outline" className="min-h-10 shrink-0" onClick={() => alCuaderno(selectedVerse)} data-testid="button-al-cuaderno">
+                <NotebookPen className="w-4 h-4 mr-1" /> Al cuaderno
+              </Button>
+            )}
             {!user && (
               <div className="flex gap-2 shrink-0">
                 <Link href={loginUrl("/biblioteca")}><Button variant="outline" className="min-h-10">Iniciar sesión</Button></Link>
@@ -494,6 +539,9 @@ function BibleTab({ target }: { target?: ChapterTarget | null }) {
                 >
                   <StickyNote className="w-4 h-4 mr-1" />
                   Nota
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => alCuaderno(selectedVerse)} data-testid="button-al-cuaderno">
+                  <NotebookPen className="w-4 h-4 mr-1" /> Al cuaderno
                 </Button>
               </div>
             </div>
@@ -1630,7 +1678,7 @@ function ResourcesTab() {
   );
 }
 
-const BIBLIOTECA_TABS = ["biblia", "planes", "club", "recursos"];
+const BIBLIOTECA_TABS = ["biblia", "planes", "club", "recursos", "cuaderno"];
 
 const MEMBER_FEATURES = {
   planes: { icon: BookMarked, title: "Planes de lectura", text: "Elige un plan (los Evangelios, Proverbios, el Nuevo Testamento…) y la web marca sola tu avance cada vez que lees." },
@@ -1690,6 +1738,14 @@ export default function BibliotecaPage() {
     window.history.replaceState(window.history.state, "", url);
   };
 
+  // ?tab=cuaderno&nota=12 abre esa nota del cuaderno (lo usan la academia y los apuntes de cada capítulo)
+  const [notaCuaderno, setNotaCuaderno] = useState<number | null>(() => Number(new URLSearchParams(window.location.search).get("nota")) || null);
+  const abrirNota = (id: number) => {
+    setNotaCuaderno(id);
+    setActiveTab("cuaderno");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const openChapter = (book: string, chapter: number) => {
     setBibleTarget({ book, chapter, key: Date.now() });
     setActiveTab("biblia");
@@ -1731,7 +1787,7 @@ export default function BibliotecaPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="biblia" data-testid="tab-biblia">
               <BookOpen className="w-4 h-4 mr-1 hidden sm:inline" /> Biblia
             </TabsTrigger>
@@ -1744,10 +1800,13 @@ export default function BibliotecaPage() {
             <TabsTrigger value="recursos" data-testid="tab-recursos">
               <FileText className="w-4 h-4 mr-1 hidden sm:inline" /> Recursos
             </TabsTrigger>
+            <TabsTrigger value="cuaderno" data-testid="tab-cuaderno">
+              <NotebookPen className="w-4 h-4 mr-1 hidden sm:inline" /> Cuaderno
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="biblia" className="mt-4">
-            <BibleTab target={bibleTarget} />
+            <BibleTab target={bibleTarget} onOpenNote={abrirNota} />
           </TabsContent>
           <TabsContent value="planes" className="mt-4">
             {member
@@ -1759,6 +1818,13 @@ export default function BibliotecaPage() {
           </TabsContent>
           <TabsContent value="recursos" className="mt-4">
             {member ? <ResourcesTab /> : <MembersOnly feature="recursos" signedIn={!!user} />}
+          </TabsContent>
+          <TabsContent value="cuaderno" className="mt-4">
+            {activeTab === "cuaderno" && (
+              <Suspense fallback={<p className="text-sm text-muted-foreground p-4">Abriendo tu cuaderno…</p>}>
+                <Cuaderno modo="biblioteca" notaInicial={notaCuaderno} alAbrirCita={(c) => openChapter(c.libro, c.capitulo)} />
+              </Suspense>
+            )}
           </TabsContent>
         </Tabs>
       </div>
