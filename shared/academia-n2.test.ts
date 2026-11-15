@@ -17,7 +17,20 @@ test("la primera materia del Nivel 2 está publicada, con 6 lecciones, su versí
   assert.equal(panorama.silabo?.objetivos.length, 5);
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias[0].id, "n2-panorama-at");
-  assert.equal(n2.materias.filter((m) => m.disponible).length, 1, "las demás siguen en preparación");
+  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt"], "las demás siguen en preparación");
+});
+
+test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está publicada con su sílabo", () => {
+  const nt = materiaPorId("n2-panorama-nt")!;
+  assert.ok(nt.disponible);
+  assert.equal(nt.nivel, 2);
+  assert.equal(nt.orden, 2);
+  assert.equal(nt.lecciones.length, 6);
+  assert.equal(nt.memoria, "Juan 20:31");
+  assert.equal(nt.silabo?.objetivos.length, 5);
+  assert.ok(nt.silabo?.bibliografia.basica.some((b) => b.autor === "Merrill C. Tenney"));
+  assert.deepEqual(miniPruebasDe(nt), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(nt));
 });
 
 test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 1", () => {

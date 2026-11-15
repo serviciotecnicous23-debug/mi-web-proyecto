@@ -13,6 +13,7 @@ import { N1_IGLESIA } from "./contenido/n1-iglesia";
 import { N1_VIDA_NUEVA } from "./contenido/n1-vida-nueva";
 import { N1_COMPARTIR_FE } from "./contenido/n1-compartir-fe";
 import { N2_PANORAMA_AT } from "./contenido/n2-panorama-at";
+import { N2_PANORAMA_NT } from "./contenido/n2-panorama-nt";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
 import { BANCO_N1_BIBLIA } from "./bancos/n1-biblia";
@@ -22,16 +23,17 @@ import { BANCO_N1_IGLESIA } from "./bancos/n1-iglesia";
 import { BANCO_N1_VIDA_NUEVA } from "./bancos/n1-vida-nueva";
 import { BANCO_N1_COMPARTIR_FE } from "./bancos/n1-compartir-fe";
 import { BANCO_N2_PANORAMA_AT } from "./bancos/n2-panorama-at";
+import { BANCO_N2_PANORAMA_NT } from "./bancos/n2-panorama-nt";
 
 /** El Nivel 1 completo (las 8 materias en su orden) y lo publicado del Nivel 2. */
 const LECCIONES: LeccionContenido[] = [
   ...N1_SALVACION, ...N1_ORACION, ...N1_BIBLIA, ...N1_ESPIRITU, ...N1_BAUTISMO_CENA, ...N1_IGLESIA, ...N1_VIDA_NUEVA, ...N1_COMPARTIR_FE,
-  ...N2_PANORAMA_AT,
+  ...N2_PANORAMA_AT, ...N2_PANORAMA_NT,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
   BANCO_N1_BAUTISMO_CENA, BANCO_N1_IGLESIA, BANCO_N1_VIDA_NUEVA, BANCO_N1_COMPARTIR_FE,
-  BANCO_N2_PANORAMA_AT,
+  BANCO_N2_PANORAMA_AT, BANCO_N2_PANORAMA_NT,
 ];
 
 export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
