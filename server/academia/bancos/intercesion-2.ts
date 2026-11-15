@@ -1,0 +1,263 @@
+/**
+ * El banco de «Intercesión bíblica» (especialidad Intercesión y oración). SOLO SERVIDOR: respuestas y claves.
+ * Los ids nunca se reusan. Cada pregunta del final y de las mini pruebas dice su lección, su objetivo y su nivel de Bloom.
+ * Objetivos: o1 ponerse en la brecha · o2 Abraham por Sodoma · o3 Moisés por el pueblo · o4 Samuel, Daniel y Nehemías ·
+ * o5 Cristo, nuestro intercesor · o6 interceder hoy: por quiénes y cómo · o7 el versículo de memoria (1 Timoteo 2:1).
+ */
+import type { BancoMateria } from "../tipos";
+
+type P = [id: string, leccion: number, objetivo: string, bloom: "recordar" | "comprender" | "aplicar" | "analizar" | "evaluar" | "crear", texto: string, correcta: string, falsas: [string, string, string], explica: string, ref: string];
+const p = ([id, leccion, objetivo, bloom, texto, correcta, falsas, explica, ref]: P) => ({ id: `intercesion-2-${id}`, leccion, objetivo, bloom, texto, correcta, falsas, explica, ref });
+
+export const BANCO_INTERCESION_2: BancoMateria = {
+  materia: "intercesion-2",
+  repaso: {
+    "intercesion-2-1": ([
+      ["1-r1", 1, "o1", "recordar", "¿Qué buscó Dios entre su pueblo, según Ezequiel 22:30?", "Un hombre que se pusiera en la brecha a favor de la tierra", ["Un rey que gobernara la tierra", "Un ejército para defender la ciudad", "Un sacerdote para el templo"], "«Y busqué entre ellos hombre que hiciese vallado y que se pusiese en la brecha delante de mí».", "Ezequiel 22:30"],
+      ["1-r2", 1, "o1", "comprender", "¿Por quiénes pide Pablo que se hagan oraciones en 1 Timoteo 2:1?", "Por todos los hombres", ["Solo por los creyentes", "Solo por los pastores", "Solo por la propia familia"], "«a que se hagan rogativas, oraciones, peticiones y acciones de gracias, por todos los hombres».", "1 Timoteo 2:1-5"],
+      ["1-r3", 1, "o1", "aplicar", "Un hermano piensa que interceder lo convierte en mediador entre Dios y la gente. ¿Qué le enseña 1 Timoteo 2:5?", "Que hay un solo mediador, Jesucristo, y que oramos por otros por medio de él", ["Que cada intercesor es un mediador", "Que los santos del cielo son mediadores", "Que no hace falta ningún mediador"], "«y un solo mediador entre Dios y los hombres, Jesucristo hombre».", "1 Timoteo 2:1-5"],
+    ] as P[]).map(p),
+    "intercesion-2-2": ([
+      ["2-r1", 2, "o2", "recordar", "¿Qué le preguntó Abraham a Dios al acercarse?", "Si destruiría también al justo con el impío", ["Si podía irse de Canaán", "Cuándo nacería su hijo", "Por qué no le había hablado antes"], "«Y se acercó Abraham y dijo: ¿Destruirás también al justo con el impío?».", "Génesis 18:23-33"],
+      ["2-r2", 2, "o2", "comprender", "¿En qué apoyó Abraham su ruego por Sodoma?", "En el carácter de Dios, el Juez de toda la tierra que hace lo que es justo", ["En sus propios méritos", "En las riquezas de la ciudad", "En la fuerza de Lot"], "«El Juez de toda la tierra, ¿no ha de hacer lo que es justo?».", "Génesis 18:23-33"],
+      ["2-r3", 2, "o2", "aplicar", "¿Qué enseña Génesis 19:29 al que siente que su oración no tuvo la respuesta que pidió?", "Que Dios se acordó de Abraham y salvó a Lot, aunque no como él lo había pedido", ["Que Dios no oyó a Abraham", "Que Abraham oró mal", "Que la oración no sirve"], "«Dios se acordó de Abraham, y envió fuera a Lot de en medio de la destrucción».", "Génesis 19:29"],
+    ] as P[]).map(p),
+    "intercesion-2-3": ([
+      ["3-r1", 3, "o3", "recordar", "¿Qué le ofreció Dios a Moisés cuando anunció su juicio sobre el pueblo?", "Hacer de él una nación grande", ["Llevarlo al cielo sin morir", "Darle la tierra de Egipto", "Hacerlo rey de Israel"], "«y de ti yo haré una nación grande».", "Éxodo 32:9-14"],
+      ["3-r2", 3, "o3", "comprender", "¿Qué pidió Moisés si Dios no perdonaba al pueblo?", "Que lo raera de su libro", ["Que lo dejara volver a Egipto", "Que castigara solo a Aarón", "Que le diera otro pueblo"], "«que perdones ahora su pecado, y si no, ráeme ahora de tu libro que has escrito».", "Éxodo 32:30-32"],
+      ["3-r3", 3, "o3", "aplicar", "¿Qué aprende de Moisés el que ora por alguien que cayó?", "A no apartarse del que cayó, sino a ponerse a su lado delante de Dios", ["A alejarse de él", "A esperar que Dios lo castigue", "A orar solo por sí mismo"], "«De no haberse interpuesto Moisés su escogido delante de él».", "Salmos 106:23"],
+    ] as P[]).map(p),
+    "intercesion-2-4": ([
+      ["4-r1", 4, "o4", "recordar", "¿Qué consideraba Samuel un pecado contra Jehová?", "Dejar de rogar por el pueblo", ["Ofrecer sacrificios", "Juzgar a Israel", "Ungir a un rey"], "«lejos sea de mí que peque yo contra Jehová cesando de rogar por vosotros».", "1 Samuel 12:23"],
+      ["4-r2", 4, "o4", "comprender", "¿En qué se apoyaba Daniel al orar por su pueblo?", "En las muchas misericordias de Dios, no en sus justicias", ["En sus buenas obras", "En que él nunca había pecado", "En el poder del rey"], "«no elevamos nuestros ruegos ante ti confiados en nuestras justicias, sino en tus muchas misericordias».", "Daniel 9:18-19"],
+      ["4-r3", 4, "o4", "aplicar", "¿Qué hizo Nehemías después de llorar, ayunar y orar por Jerusalén?", "Actuó: pidió al rey que lo enviara a reedificar la ciudad", ["Se quedó esperando sin hacer nada", "Se olvidó del asunto", "Culpó al pueblo"], "«envíame a Judá, a la ciudad de los sepulcros de mis padres, y la reedificaré».", "Nehemías 2:4-5"],
+    ] as P[]).map(p),
+    "intercesion-2-5": ([
+      ["5-r1", 5, "o5", "recordar", "¿Qué dice Isaías 53:12 que hizo el Siervo además de llevar el pecado de muchos?", "Oró por los transgresores", ["Juzgó a los transgresores", "Se apartó de los transgresores", "Castigó a los transgresores"], "«habiendo él llevado el pecado de muchos, y orado por los transgresores».", "Isaías 53:12"],
+      ["5-r2", 5, "o5", "comprender", "¿Qué hace Cristo hoy por los que por él se acercan a Dios, según Hebreos 7:25?", "Vive siempre para interceder por ellos", ["Los deja solos", "Espera que se salven por sus obras", "Solo intercedió una vez en la tierra"], "«viviendo siempre para interceder por ellos».", "Hebreos 7:25"],
+      ["5-r3", 5, "o5", "aplicar", "Pedro iba a negar a Jesús. ¿Qué había hecho Jesús por él antes?", "Había rogado que su fe no faltara", ["Lo había despedido", "Lo había reprendido delante de todos", "No sabía lo que iba a pasar"], "«pero yo he rogado por ti, que tu fe no falte».", "Lucas 22:31-32"],
+    ] as P[]).map(p),
+    "intercesion-2-6": ([
+      ["6-r1", 6, "o6", "recordar", "¿Por quiénes manda Jesús orar en Mateo 5:44?", "Por los que nos ultrajan y nos persiguen", ["Solo por los amigos", "Solo por la familia", "Solo por los hermanos de la iglesia"], "«y orad por los que os ultrajan y os persiguen».", "Mateo 5:44"],
+      ["6-r2", 6, "o6", "comprender", "¿Qué manda Jesús pedir al Señor de la mies?", "Que envíe obreros a su mies", ["Que haga crecer más trigo", "Que traiga lluvia", "Que acorte la cosecha"], "«Rogad, pues, al Señor de la mies, que envíe obreros a su mies».", "Mateo 9:37-38"],
+      ["6-r3", 6, "o6", "aplicar", "Una hermana te pide oración por un problema privado. ¿Qué te enseña Proverbios 11:13?", "A guardar lo que te confió, sin contarlo a otros", ["A contarlo para que más personas oren", "A publicarlo en el grupo de la iglesia", "A comentarlo con tus amigos más cercanos"], "«Mas el de espíritu fiel lo guarda todo».", "Proverbios 11:13"],
+    ] as P[]).map(p),
+  },
+  final: ([
+    // Lección 1 · Ponerse en la brecha
+    ["f01", 1, "o1", "recordar", "¿Qué hacía el hombre que Dios buscó en Ezequiel 22:30?", "Hacía vallado y se ponía en la brecha delante de Dios a favor de la tierra", ["Construía un templo nuevo", "Destruía la ciudad", "Huía de la tierra"], "«que hiciese vallado y que se pusiese en la brecha delante de mí, a favor de la tierra».", "Ezequiel 22:30"],
+    ["f02", 1, "o1", "comprender", "¿Qué significa ponerse en la brecha, según la lección?", "Orar delante de Dios a favor de otros, como quien cubre el hueco de una muralla", ["Pelear con armas por la ciudad", "Apartarse de los pecadores", "Juzgar a los demás"], "«y que se pusiese en la brecha delante de mí».", "Ezequiel 22:30"],
+    ["f03", 1, "o1", "recordar", "¿Qué encontró Dios cuando buscó a alguien que se pusiera en la brecha, según Ezequiel 22:30?", "No lo halló", ["Halló a muchos", "Halló a un rey", "Halló a los sacerdotes"], "«para que yo no la destruyese; y no lo hallé».", "Ezequiel 22:30"],
+    ["f04", 1, "o1", "recordar", "¿Qué cuatro palabras usa Pablo en 1 Timoteo 2:1 para la oración por otros?", "Rogativas, oraciones, peticiones y acciones de gracias", ["Cantos, ofrendas, ayunos y vigilias", "Profecías, visiones, sueños y señales", "Sacrificios, votos, diezmos y primicias"], "«a que se hagan rogativas, oraciones, peticiones y acciones de gracias».", "1 Timoteo 2:1-5"],
+    ["f05", 1, "o1", "comprender", "¿Para qué pide Pablo orar por los reyes y las autoridades?", "Para que vivamos quieta y reposadamente en toda piedad y honestidad", ["Para que nos den privilegios", "Para que obliguen a todos a creer", "Para no tener que obedecerlas"], "«para que vivamos quieta y reposadamente en toda piedad y honestidad».", "1 Timoteo 2:1-5"],
+    ["f06", 1, "o1", "analizar", "¿Qué relación hay entre la intercesión y el deseo de Dios en 1 Timoteo 2:4?", "Al interceder nos unimos al deseo de Dios de que todos sean salvos", ["No tienen relación", "Dios solo quiere salvar a unos pocos", "La intercesión cambia el deseo de Dios"], "«el cual quiere que todos los hombres sean salvos y vengan al conocimiento de la verdad».", "1 Timoteo 2:1-5"],
+    ["f07", 1, "o1", "evaluar", "¿Cuál de estas afirmaciones sobre la intercesión es correcta según 1 Timoteo 2:5?", "El creyente ora por otros por medio de Cristo, el único mediador", ["El intercesor es otro mediador entre Dios y los hombres", "Hay muchos mediadores", "Cristo necesita de nuestros méritos para mediar"], "«Porque hay un solo Dios, y un solo mediador entre Dios y los hombres, Jesucristo hombre».", "1 Timoteo 2:1-5"],
+    ["f08", 1, "o1", "recordar", "¿Qué pide Santiago 5:16 a los creyentes?", "Que oren unos por otros", ["Que oren solo por sí mismos", "Que dejen la oración a los ancianos", "Que no se confiesen nada"], "«y orad unos por otros».", "Santiago 5:16"],
+    ["f09", 1, "o1", "aplicar", "Un hermano dice que interceder es solo para los que tienen un don especial. ¿Qué le muestra Santiago 5:16?", "Que todos los creyentes deben orar unos por otros, y que la oración eficaz del justo puede mucho", ["Que tiene razón", "Que solo los pastores deben interceder", "Que la oración por otros no sirve"], "«La oración eficaz del justo puede mucho».", "Santiago 5:16"],
+    ["f10", 1, "o7", "recordar", "Completa 1 Timoteo 2:1: Exhorto ante todo, a que se hagan rogativas, oraciones, peticiones…", "y acciones de gracias, por todos los hombres", ["y ayunos, por los que están en la iglesia", "y cantos, por los que nos aman", "y ofrendas, por los pobres"], "«Exhorto ante todo, a que se hagan rogativas, oraciones, peticiones y acciones de gracias, por todos los hombres».", "1 Timoteo 2:1"],
+    // Lección 2 · Abraham ruega por Sodoma
+    ["f11", 2, "o2", "recordar", "¿Con cuántos justos empezó Abraham su ruego por Sodoma?", "Cincuenta", ["Cien", "Diez", "Siete"], "«Quizá haya cincuenta justos dentro de la ciudad».", "Génesis 18:23-33"],
+    ["f12", 2, "o2", "recordar", "¿Con cuántos justos terminó Abraham su ruego?", "Diez", ["Cincuenta", "Uno", "Veinte"], "«No la destruiré, respondió, por amor a los diez».", "Génesis 18:23-33"],
+    ["f13", 2, "o2", "comprender", "¿Qué muestra que Abraham dijera aunque soy polvo y ceniza?", "Su humildad delante de Dios", ["Su enojo con Dios", "Que estaba enfermo", "Que no creía en Dios"], "«aunque soy polvo y ceniza».", "Génesis 18:23-33"],
+    ["f14", 2, "o2", "analizar", "¿Qué enseña que Abraham volviera a pedir varias veces?", "Que el intercesor persevera con humildad, y que Dios lo escucha cada vez", ["Que Dios se cansó de Abraham", "Que Abraham no creía", "Que no se debe pedir más de una vez"], "«Y volvió a decir: No se enoje ahora mi Señor, si hablare solamente una vez».", "Génesis 18:23-33"],
+    ["f15", 2, "o2", "comprender", "Según la lección, ¿qué hace el intercesor que se apoya en el carácter de Dios?", "Le pide que actúe conforme a lo que él es", ["Trata de cambiar el carácter de Dios", "Trata de convencer a Dios de ser bueno", "Trata de ganarle una discusión"], "«El Juez de toda la tierra, ¿no ha de hacer lo que es justo?».", "Génesis 18:23-33"],
+    ["f16", 2, "o2", "recordar", "¿Qué pasó cuando Jehová acabó de hablar con Abraham?", "Jehová se fue, y Abraham volvió a su lugar", ["Sodoma fue destruida en ese momento", "Abraham recibió un hijo", "Abraham se mudó a Sodoma"], "«Y Jehová se fue, luego que acabó de hablar a Abraham; y Abraham volvió a su lugar».", "Génesis 18:23-33"],
+    ["f17", 2, "o2", "recordar", "¿A quién sacó Dios de la destrucción, según Génesis 19:29?", "A Lot", ["A Abraham", "Al rey de Sodoma", "A Isaac"], "«y envió fuera a Lot de en medio de la destrucción».", "Génesis 19:29"],
+    ["f18", 2, "o2", "analizar", "¿Por qué la oración de Abraham no fue en vano, aunque Sodoma fue destruida?", "Porque Dios se acordó de Abraham y salvó a Lot", ["Porque Sodoma no fue destruida", "Porque Abraham dejó de orar", "Porque Lot se salvó solo"], "«Dios se acordó de Abraham».", "Génesis 19:29"],
+    ["f19", 2, "o2", "aplicar", "Oras por un familiar y la respuesta no es la que pediste. ¿Qué te enseña la historia de Abraham?", "Que Dios oye y responde a su manera, conforme a su justicia y a su misericordia", ["Que Dios no oye", "Que debes dejar de orar", "Que oraste mal"], "«Así, cuando destruyó Dios las ciudades de la llanura, Dios se acordó de Abraham».", "Génesis 19:29"],
+    ["f20", 2, "o2", "evaluar", "¿Cuál de estas actitudes de Abraham debe imitar el intercesor?", "Acercarse a Dios con humildad y perseverancia, apoyado en su carácter", ["Exigirle a Dios", "Quedarse callado ante el juicio", "Orar solo por sí mismo"], "«Y se acercó Abraham y dijo».", "Génesis 18:23-33"],
+    // Lección 3 · Moisés se interpone por el pueblo
+    ["f21", 3, "o3", "recordar", "¿Qué pecado cometió el pueblo mientras Moisés estaba en el monte?", "Se hicieron dioses de oro", ["Se volvieron a Egipto", "Mataron a Aarón", "Dejaron de comer el maná"], "«porque se hicieron dioses de oro».", "Éxodo 32:30-32"],
+    ["f22", 3, "o3", "recordar", "¿Cómo llama Dios al pueblo en Éxodo 32:9?", "Pueblo de dura cerviz", ["Pueblo santo", "Pueblo pequeño", "Pueblo sabio"], "«Yo he visto a este pueblo, que por cierto es pueblo de dura cerviz».", "Éxodo 32:9-14"],
+    ["f23", 3, "o3", "comprender", "¿Qué hizo Moisés con la oferta de Dios de hacer de él una nación grande?", "No la aceptó y oró por el pueblo", ["La aceptó enseguida", "Pidió tiempo para pensarlo", "Se la cedió a Aarón"], "«Entonces Moisés oró en presencia de Jehová su Dios».", "Éxodo 32:9-14"],
+    ["f24", 3, "o3", "analizar", "¿Qué argumento usó Moisés al decir qué dirían los egipcios?", "El nombre y la honra de Dios entre las naciones", ["La bondad del pueblo", "Sus propios méritos", "El poder de Egipto"], "«¿Por qué han de hablar los egipcios, diciendo: Para mal los sacó».", "Éxodo 32:9-14"],
+    ["f25", 3, "o3", "recordar", "¿De quiénes le pidió Moisés a Dios que se acordara?", "De Abraham, de Isaac y de Israel", ["De Aarón y de María", "De Noé y de Enoc", "De José y de sus hermanos"], "«Acuérdate de Abraham, de Isaac y de Israel tus siervos».", "Éxodo 32:9-14"],
+    ["f26", 3, "o3", "comprender", "Según la lección, ¿cómo se entiende que Jehová se arrepintió del mal que dijo?", "Como un lenguaje humano para decir que Dios cambió su trato con el pueblo en respuesta a la oración, sin cambiar su carácter", ["Que Dios se equivocó", "Que Dios cambió de carácter", "Que Moisés era más justo que Dios"], "«Dios no es hombre, para que mienta, Ni hijo de hombre para que se arrepienta».", "Números 23:19"],
+    ["f27", 3, "o3", "analizar", "¿Qué muestra que Moisés dijera ráeme ahora de tu libro?", "Que se identificaba con el pueblo y lo amaba hasta ponerse él mismo en juego", ["Que quería morir", "Que estaba enojado con Dios", "Que no creía en el perdón"], "«y si no, ráeme ahora de tu libro que has escrito».", "Éxodo 32:30-32"],
+    ["f28", 3, "o3", "recordar", "¿Cómo describe Salmos 106:23 lo que hizo Moisés?", "Que se interpuso delante de Dios para apartar su indignación", ["Que huyó del pueblo", "Que castigó al pueblo", "Que pidió más juicio"], "«De no haberse interpuesto Moisés su escogido delante de él, A fin de apartar su indignación».", "Salmos 106:23"],
+    ["f29", 3, "o3", "recordar", "¿Qué respondió Dios cuando Moisés pidió perdón para el pueblo en Números 14?", "Yo lo he perdonado conforme a tu dicho", ["No los perdonaré nunca", "Pide otra cosa", "Espera cuarenta años"], "«Yo lo he perdonado conforme a tu dicho».", "Números 14:19-20"],
+    ["f30", 3, "o3", "evaluar", "¿Qué tienen en común los argumentos de Moisés?", "Que se apoyan en Dios: en su obra, en su nombre y en sus promesas", ["Que se apoyan en la bondad del pueblo", "Que le exigen a Dios", "Que se apoyan en Moisés"], "«según la grandeza de tu misericordia».", "Números 14:19-20"],
+    // Lección 4 · Samuel, Daniel y Nehemías
+    ["f31", 4, "o4", "recordar", "¿Qué prometió Samuel además de seguir rogando por el pueblo?", "Instruirlos en el camino bueno y recto", ["Darles un rey mejor", "Pelear por ellos", "Dejarlos solos"], "«antes os instruiré en el camino bueno y recto».", "1 Samuel 12:23"],
+    ["f32", 4, "o4", "analizar", "¿Qué enseña 1 Samuel 12:23 a los líderes de la iglesia?", "Que orar por los suyos es parte de su servicio, y que dejar de hacerlo es pecar", ["Que la oración es opcional", "Que solo deben enseñar", "Que orar es tarea de otros"], "«lejos sea de mí que peque yo contra Jehová cesando de rogar por vosotros».", "1 Samuel 12:23"],
+    ["f33", 4, "o4", "recordar", "¿Qué leyó Daniel antes de su gran oración?", "Lo que Jehová habló al profeta Jeremías sobre los setenta años", ["Una carta del rey", "El libro de los Salmos", "Un sueño de Nabucodonosor"], "«yo Daniel miré atentamente en los libros el número de los años de que habló Jehová al profeta Jeremías».", "Daniel 9:2-5"],
+    ["f34", 4, "o4", "recordar", "¿Cómo buscó Daniel a Dios, según Daniel 9:3?", "En oración y ruego, en ayuno, cilicio y ceniza", ["Con cantos y danzas", "Con sacrificios en el templo", "Con una gran fiesta"], "«buscándole en oración y ruego, en ayuno, cilicio y ceniza».", "Daniel 9:2-5"],
+    ["f35", 4, "o4", "comprender", "¿Por qué Daniel dice hemos pecado y no han pecado?", "Porque el intercesor se incluye en la confesión del pueblo", ["Porque Daniel era el más pecador", "Porque no sabía quién había pecado", "Porque así lo pedía el rey"], "«hemos pecado, hemos cometido iniquidad».", "Daniel 9:2-5"],
+    ["f36", 4, "o4", "recordar", "¿Qué le pidió Daniel a Dios en Daniel 9:19?", "Que oyera, perdonara y no tardara, por amor de sí mismo", ["Que castigara a Babilonia", "Que lo hiciera rey", "Que lo llevara al cielo"], "«Oye, Señor; oh Señor, perdona; presta oído, Señor, y hazlo; no tardes, por amor de ti mismo».", "Daniel 9:18-19"],
+    ["f37", 4, "o4", "recordar", "¿Qué hizo Nehemías cuando supo de la ruina de Jerusalén?", "Lloró, hizo duelo, ayunó y oró", ["Organizó un ejército", "Se fue de viaje", "Le escribió al rey de inmediato"], "«me senté y lloré, e hice duelo por algunos días, y ayuné y oré».", "Nehemías 1:4-6"],
+    ["f38", 4, "o4", "comprender", "¿Qué confesó Nehemías en su oración?", "Que él y la casa de su padre habían pecado", ["Que solo el pueblo había pecado", "Que el rey había pecado", "Que él no tenía pecado"], "«sí, yo y la casa de mi padre hemos pecado».", "Nehemías 1:4-6"],
+    ["f39", 4, "o4", "aplicar", "El rey le preguntó a Nehemías qué pedía. ¿Qué hizo Nehemías antes de responder?", "Oró al Dios de los cielos", ["Consultó a sus amigos", "Se quedó callado", "Pidió unos días para pensarlo"], "«Entonces oré al Dios de los cielos».", "Nehemías 2:4-5"],
+    ["f40", 4, "o4", "evaluar", "¿Qué une a Samuel, Daniel y Nehemías como intercesores?", "Tomaron como parte de su servicio orar por su pueblo", ["Que eran reyes", "Que nunca ayunaron", "Que oraban solo por sí mismos"], "«Y oré a Jehová mi Dios e hice confesión».", "Daniel 9:2-5"],
+    // Lección 5 · Cristo, nuestro intercesor
+    ["f41", 5, "o5", "recordar", "¿Qué dijo Jesús en la cruz por los que lo crucificaban?", "Padre, perdónalos, porque no saben lo que hacen", ["Padre, castígalos", "Padre, olvídalos", "Padre, apártame de ellos"], "«Padre, perdónalos, porque no saben lo que hacen».", "Lucas 23:34"],
+    ["f42", 5, "o5", "comprender", "¿Cómo se cumplió en la cruz la profecía de Isaías 53:12?", "Jesús oró por los transgresores", ["Jesús juzgó a los transgresores", "Jesús calló ante todos", "Jesús pidió venganza"], "«y orado por los transgresores».", "Isaías 53:12"],
+    ["f43", 5, "o5", "recordar", "¿Qué había pedido Satanás, según Lucas 22:31?", "Zarandear a los discípulos como a trigo", ["Destruir el templo", "Gobernar Jerusalén", "Que Pedro fuera apóstol"], "«Satanás os ha pedido para zarandearos como a trigo».", "Lucas 22:31-32"],
+    ["f44", 5, "o5", "comprender", "¿Qué tarea le dio Jesús a Pedro después de orar por él?", "Que, una vez vuelto, confirmara a sus hermanos", ["Que se fuera a pescar", "Que no hablara más", "Que se escondiera"], "«y tú, una vez vuelto, confirma a tus hermanos».", "Lucas 22:31-32"],
+    ["f45", 5, "o5", "recordar", "¿Por quiénes oró también Jesús en Juan 17:20?", "Por los que habían de creer en él por la palabra de los discípulos", ["Solo por los doce", "Solo por los fariseos", "Solo por su familia"], "«sino también por los que han de creer en mí por la palabra de ellos».", "Juan 17:20-21"],
+    ["f46", 5, "o5", "recordar", "¿Qué pidió Jesús para los que habían de creer, según Juan 17:21?", "Que todos fueran uno, para que el mundo creyera", ["Que fueran ricos", "Que nunca sufrieran", "Que fueran famosos"], "«para que todos sean uno».", "Juan 17:20-21"],
+    ["f47", 5, "o5", "comprender", "¿Por qué puede Cristo salvar perpetuamente, según Hebreos 7:25?", "Porque vive siempre para interceder por los que por él se acercan a Dios", ["Porque nosotros lo merecemos", "Porque ya no intercede", "Porque cada uno se salva solo"], "«por lo cual puede también salvar perpetuamente a los que por él se acercan a Dios».", "Hebreos 7:25"],
+    ["f48", 5, "o5", "analizar", "¿Cómo responde Romanos 8:34 a la pregunta quién es el que condenará?", "Con Cristo, que murió, resucitó, está a la diestra de Dios e intercede por nosotros", ["Diciendo que Dios condena a todos", "Diciendo que nadie lo sabe", "Diciendo que los ángeles condenan"], "«el que además está a la diestra de Dios, el que también intercede por nosotros».", "Romanos 8:34"],
+    ["f49", 5, "o5", "recordar", "¿Qué tenemos para con el Padre si alguno peca, según 1 Juan 2:1?", "Un abogado, Jesucristo el justo", ["Un juez sin misericordia", "Un ángel", "Un sacerdote humano"], "«abogado tenemos para con el Padre, a Jesucristo el justo».", "1 Juan 2:1"],
+    ["f50", 5, "o5", "evaluar", "¿Cuál es la relación correcta entre nuestra intercesión y la de Cristo?", "Nos unimos a la intercesión de Cristo, que ya ora por los suyos", ["La reemplazamos", "La completamos con nuestros méritos", "No tienen relación"], "«viviendo siempre para interceder por ellos».", "Hebreos 7:25"],
+    // Lección 6 · Interceder hoy: por quiénes y cómo
+    ["f51", 6, "o6", "recordar", "¿Qué cuatro cosas manda Jesús hacer con los enemigos en Mateo 5:44?", "Amarlos, bendecirlos, hacerles bien y orar por ellos", ["Evitarlos, olvidarlos, juzgarlos y denunciarlos", "Perdonarlos, ignorarlos, temerlos y vencerlos", "Corregirlos, castigarlos, apartarlos y vigilarlos"], "«Amad a vuestros enemigos, bendecid a los que os maldicen, haced bien a los que os aborrecen, y orad por los que os ultrajan».", "Mateo 5:44"],
+    ["f52", 6, "o6", "comprender", "¿Por qué manda Jesús rogar al Señor de la mies?", "Porque la mies es mucha y los obreros pocos", ["Porque la mies es poca", "Porque hay demasiados obreros", "Porque ya terminó la cosecha"], "«A la verdad la mies es mucha, mas los obreros pocos».", "Mateo 9:37-38"],
+    ["f53", 6, "o6", "recordar", "¿Qué pedía Pablo por Israel, según Romanos 10:1?", "Su salvación", ["Su castigo", "Un templo nuevo", "Riquezas para el pueblo"], "«y mi oración a Dios por Israel, es para salvación».", "Romanos 10:1"],
+    ["f54", 6, "o6", "recordar", "¿Qué pidió Pablo que oraran por él en Efesios 6:19?", "Que le fuera dada palabra para dar a conocer con denuedo el evangelio", ["Que lo sacaran de la cárcel", "Que le enviaran dinero", "Que lo hicieran famoso"], "«a fin de que al abrir mi boca me sea dada palabra para dar a conocer con denuedo el misterio del evangelio».", "Efesios 6:18-19"],
+    ["f55", 6, "o6", "comprender", "¿Qué hacía la iglesia mientras Pedro estaba preso, según Hechos 12:5?", "Hacía sin cesar oración a Dios por él", ["Se escondía con miedo", "Planeaba su fuga", "Se olvidaba de él"], "«pero la iglesia hacía sin cesar oración a Dios por él».", "Hechos 12:5"],
+    ["f56", 6, "o6", "recordar", "¿Cómo oraba Epafras por los colosenses?", "Siempre, rogando encarecidamente en sus oraciones", ["Una vez al año", "Solo cuando se acordaba", "Solo en público"], "«siempre rogando encarecidamente por vosotros en sus oraciones».", "Colosenses 4:12"],
+    ["f57", 6, "o6", "analizar", "¿Qué pedía Epafras de forma concreta para los colosenses?", "Que estuvieran firmes, perfectos y completos en todo lo que Dios quiere", ["Que fueran ricos", "Que no sufrieran nunca", "Que se mudaran de ciudad"], "«para que estéis firmes, perfectos y completos en todo lo que Dios quiere».", "Colosenses 4:12"],
+    ["f58", 6, "o6", "aplicar", "Quieres interceder con fidelidad por muchas personas. ¿Qué te sugiere la lección?", "Llevar una lista o un cuaderno y orar con perseverancia y con peticiones concretas", ["Orar solo cuando te acuerdes", "Orar una sola vez por cada uno", "Dejar la intercesión a otros"], "«siempre rogando encarecidamente por vosotros en sus oraciones».", "Colosenses 4:12"],
+    ["f59", 6, "o6", "aplicar", "En un grupo de oración, alguien cuenta los detalles privados de otro con la excusa de pedir oración. ¿Qué enseña Proverbios 11:13?", "Que eso es andar en chismes, y que el de espíritu fiel guarda lo que se le confía", ["Que así más personas oran", "Que está bien si es para orar", "Que no importa"], "«El que anda en chismes descubre el secreto».", "Proverbios 11:13"],
+    ["f60", 6, "o6", "evaluar", "¿Cuál de estas listas resume por quiénes manda orar la Biblia, según la lección?", "Por las autoridades, los enemigos, los obreros, los santos, los que predican, los que sufren y los perdidos", ["Solo por la familia", "Solo por los que nos caen bien", "Solo por los creyentes"], "«y velando en ello con toda perseverancia y súplica por todos los santos».", "Efesios 6:18-19"],
+  ] as P[]).map(p),
+  mini: {
+    1: ([
+      ["m1-01", 1, "o1", "recordar", "¿Delante de quién se ponía en la brecha el hombre que Dios buscaba?", "Delante de Dios", ["Delante del rey", "Delante del pueblo", "Delante de los enemigos"], "«y que se pusiese en la brecha delante de mí».", "Ezequiel 22:30"],
+      ["m1-02", 1, "o1", "comprender", "¿Qué incluye la intercesión, según 1 Timoteo 2:1?", "Pedir por otros y también dar gracias por ellos", ["Solo pedir castigo", "Solo cantar", "Solo pedir para uno mismo"], "«peticiones y acciones de gracias, por todos los hombres».", "1 Timoteo 2:1-5"],
+      ["m1-03", 1, "o1", "recordar", "¿Qué quiere Dios para todos los hombres, según 1 Timoteo 2:4?", "Que sean salvos y vengan al conocimiento de la verdad", ["Que sean ricos", "Que sean famosos", "Que nunca sufran"], "«el cual quiere que todos los hombres sean salvos».", "1 Timoteo 2:1-5"],
+      ["m1-04", 1, "o1", "aplicar", "¿Por quiénes debe orar la iglesia aunque no sean creyentes, según 1 Timoteo 2:2?", "Por los reyes y por todos los que están en eminencia", ["Solo por los pastores", "Por nadie de afuera", "Solo por los misioneros"], "«por los reyes y por todos los que están en eminencia».", "1 Timoteo 2:1-5"],
+      ["m1-05", 1, "o1", "comprender", "¿Qué dice Santiago 5:16 de la oración eficaz del justo?", "Que puede mucho", ["Que no sirve de nada", "Que solo sirve a veces", "Que es solo para los apóstoles"], "«La oración eficaz del justo puede mucho».", "Santiago 5:16"],
+      ["m1-06", 1, "o1", "analizar", "¿Por qué el intercesor no es un mediador?", "Porque hay un solo mediador, Jesucristo, y oramos por medio de él", ["Porque el intercesor no ora", "Porque Dios no oye a los intercesores", "Porque interceder es pecado"], "«y un solo mediador entre Dios y los hombres, Jesucristo hombre».", "1 Timoteo 2:1-5"],
+      ["m1-07", 2, "o2", "recordar", "¿Dónde estaba Lot cuando Dios destruyó las ciudades de la llanura?", "En una de esas ciudades, de donde Dios lo sacó", ["En Egipto", "En Ur de los caldeos", "En la tienda de Abraham"], "«al asolar las ciudades donde Lot estaba».", "Génesis 19:29"],
+      ["m1-08", 2, "o2", "comprender", "¿Qué no quería Abraham que le pasara al justo?", "Que muriera con el impío y fuera tratado como el impío", ["Que se hiciera rico", "Que se fuera de la ciudad", "Que fuera rey"], "«que hagas morir al justo con el impío, y que sea el justo tratado como el impío».", "Génesis 18:23-33"],
+      ["m1-09", 2, "o2", "recordar", "¿Qué número de justos propuso Abraham después de cincuenta?", "Cuarenta y cinco", ["Cuarenta", "Treinta", "Veinte"], "«Quizá faltarán de cincuenta justos cinco».", "Génesis 18:23-33"],
+      ["m1-10", 2, "o2", "aplicar", "¿Cómo se acerca a Dios el intercesor, según el ejemplo de Abraham?", "Con humildad, sabiéndose polvo y ceniza", ["Con orgullo", "Con exigencias", "Con miedo de hablar"], "«aunque soy polvo y ceniza».", "Génesis 18:23-33"],
+      ["m1-11", 2, "o2", "analizar", "¿Qué muestra que Dios respondiera cada vez a Abraham?", "Que Dios escucha al que intercede con perseverancia", ["Que Dios estaba cansado", "Que Abraham lo obligaba", "Que Dios no quería hablar"], "«No lo haré por amor a los cuarenta».", "Génesis 18:23-33"],
+      ["m1-12", 2, "o2", "evaluar", "¿Fue en vano la oración de Abraham por Sodoma?", "No: Dios se acordó de Abraham y sacó a Lot", ["Sí, porque la ciudad fue destruida", "Sí, porque Dios no lo oyó", "No, porque Sodoma se salvó"], "«Dios se acordó de Abraham, y envió fuera a Lot».", "Génesis 19:29"],
+      ["m1-13", 3, "o3", "recordar", "¿Qué le dijo Dios a Moisés al anunciar su juicio sobre el pueblo?", "Déjame que se encienda mi ira en ellos", ["Vete a Egipto", "Construye un altar", "Llama a Aarón"], "«Ahora, pues, déjame que se encienda mi ira en ellos».", "Éxodo 32:9-14"],
+      ["m1-14", 3, "o3", "comprender", "¿Qué le recordó Moisés a Dios sobre el pueblo en Éxodo 32:11?", "Que era su pueblo, el que él sacó de Egipto con gran poder", ["Que el pueblo era bueno", "Que Moisés lo había sacado", "Que no lo conocía"], "«contra tu pueblo, que tú sacaste de la tierra de Egipto con gran poder y con mano fuerte».", "Éxodo 32:9-14"],
+      ["m1-15", 3, "o3", "recordar", "¿Qué dijo Moisés al pueblo al día siguiente?", "Que habían cometido un gran pecado y que él subiría a Jehová", ["Que no habían hecho nada malo", "Que volverían a Egipto", "Que Aarón tenía toda la culpa"], "«Vosotros habéis cometido un gran pecado, pero yo subiré ahora a Jehová».", "Éxodo 32:30-32"],
+      ["m1-16", 3, "o3", "aplicar", "¿Qué aprende de Moisés el intercesor sobre el pecado de los demás?", "A no esconderlo, sino reconocerlo delante de Dios y pedir perdón", ["A esconderlo", "A justificarlo", "A ignorarlo"], "«Te ruego, pues este pueblo ha cometido un gran pecado».", "Éxodo 32:30-32"],
+      ["m1-17", 3, "o3", "analizar", "¿Qué palabra usa Salmos 106:23 para lo que hizo Moisés?", "Se interpuso", ["Se escondió", "Se alejó", "Se enojó"], "«De no haberse interpuesto Moisés su escogido delante de él».", "Salmos 106:23"],
+      ["m1-18", 3, "o3", "evaluar", "¿En qué se apoyó Moisés al pedir perdón en Números 14:19?", "En la grandeza de la misericordia de Dios", ["En la bondad del pueblo", "En sus años de servicio", "En el poder de Egipto"], "«Perdona ahora la iniquidad de este pueblo según la grandeza de tu misericordia».", "Números 14:19-20"],
+    ] as P[]).map(p),
+    2: ([
+      ["m2-01", 4, "o4", "recordar", "¿Qué dijo Samuel que no dejaría de hacer?", "Rogar por el pueblo", ["Ofrecer sacrificios", "Juzgar al pueblo", "Pelear contra los filisteos"], "«cesando de rogar por vosotros».", "1 Samuel 12:23"],
+      ["m2-02", 4, "o4", "comprender", "¿Qué une Samuel a la intercesión en 1 Samuel 12:23?", "La enseñanza del camino bueno y recto", ["La guerra", "La riqueza", "El silencio"], "«antes os instruiré en el camino bueno y recto».", "1 Samuel 12:23"],
+      ["m2-03", 4, "o4", "recordar", "¿En cuántos años habían de cumplirse las desolaciones de Jerusalén, según lo que leyó Daniel?", "En setenta años", ["En cuarenta años", "En siete años", "En cien años"], "«que habían de cumplirse las desolaciones de Jerusalén en setenta años».", "Daniel 9:2-5"],
+      ["m2-04", 4, "o4", "comprender", "¿Cómo describe Daniel a Dios al empezar su confesión?", "Grande, digno de ser temido, que guarda el pacto y la misericordia", ["Lejano y sin misericordia", "Cansado de su pueblo", "Igual a los dioses de Babilonia"], "«Ahora, Señor, Dios grande, digno de ser temido, que guardas el pacto y la misericordia».", "Daniel 9:2-5"],
+      ["m2-05", 4, "o4", "aplicar", "¿Cómo ora por su iglesia el intercesor que aprende de Daniel?", "Se incluye en la confesión y confía en la misericordia de Dios", ["Acusa a los demás", "Habla de sus propias justicias", "Le exige a Dios"], "«sino en tus muchas misericordias».", "Daniel 9:18-19"],
+      ["m2-06", 4, "o4", "analizar", "¿Qué enseña el ejemplo de Nehemías sobre la oración y la acción?", "Que el intercesor ora y después se pone a trabajar", ["Que orar reemplaza el trabajo", "Que no hace falta orar", "Que basta con actuar"], "«Entonces oré al Dios de los cielos, y dije al rey».", "Nehemías 2:4-5"],
+      ["m2-07", 5, "o5", "recordar", "¿Por quién rogó Jesús para que su fe no faltara?", "Por Simón Pedro", ["Por Judas", "Por Pilato", "Por Juan el Bautista"], "«pero yo he rogado por ti, que tu fe no falte».", "Lucas 22:31-32"],
+      ["m2-08", 5, "o5", "comprender", "¿Qué anunció Isaías 53:12 sobre el Siervo?", "Que llevaría el pecado de muchos y oraría por los transgresores", ["Que juzgaría a los transgresores", "Que no moriría", "Que sería un rey terrenal"], "«habiendo él llevado el pecado de muchos, y orado por los transgresores».", "Isaías 53:12"],
+      ["m2-09", 5, "o5", "recordar", "¿Dónde está Cristo hoy, según Romanos 8:34?", "A la diestra de Dios", ["En la tumba", "En Jerusalén", "Lejos de los suyos"], "«el que además está a la diestra de Dios».", "Romanos 8:34"],
+      ["m2-10", 5, "o5", "aplicar", "Un creyente cayó en pecado y siente que no puede acercarse a Dios. ¿Qué le enseña 1 Juan 2:1?", "Que tiene un abogado para con el Padre, Jesucristo el justo", ["Que debe esconderse de Dios", "Que ya no tiene esperanza", "Que debe pagar él mismo por su pecado"], "«y si alguno hubiere pecado, abogado tenemos para con el Padre, a Jesucristo el justo».", "1 Juan 2:1"],
+      ["m2-11", 5, "o5", "analizar", "¿Qué seguridad da Hebreos 7:25 al creyente?", "Que Cristo puede salvarlo perpetuamente, porque vive para interceder por él", ["Que debe salvarse solo", "Que Cristo ya no intercede", "Que su salvación depende de sus obras"], "«por lo cual puede también salvar perpetuamente a los que por él se acercan a Dios».", "Hebreos 7:25"],
+      ["m2-12", 5, "o5", "evaluar", "¿Cuál de estas frases es correcta sobre la intercesión de Jesús?", "Intercedió en la tierra y sigue intercediendo en el cielo", ["Solo intercedió en la tierra", "Nunca intercedió", "Intercede solo por los que no pecan"], "«viviendo siempre para interceder por ellos».", "Hebreos 7:25"],
+      ["m2-13", 6, "o6", "recordar", "¿Qué dice Mateo 9:37 de la mies?", "Que es mucha, y los obreros pocos", ["Que es poca", "Que ya se perdió", "Que no hace falta cosecharla"], "«A la verdad la mies es mucha, mas los obreros pocos».", "Mateo 9:37-38"],
+      ["m2-14", 6, "o6", "comprender", "¿Cómo pide Pablo orar en Efesios 6:18?", "En todo tiempo, con toda oración y súplica, velando con perseverancia", ["Solo los domingos", "Una vez al año", "Solo cuando hay problemas"], "«orando en todo tiempo con toda oración y súplica en el Espíritu».", "Efesios 6:18-19"],
+      ["m2-15", 6, "o6", "recordar", "¿Por quién oraba sin cesar la iglesia en Hechos 12:5?", "Por Pedro, que estaba en la cárcel", ["Por Herodes", "Por Pablo en Roma", "Por los soldados"], "«Así que Pedro estaba custodiado en la cárcel».", "Hechos 12:5"],
+      ["m2-16", 6, "o6", "aplicar", "Alguien te hizo daño. ¿Qué te manda Jesús en Mateo 5:44?", "Orar por esa persona", ["Vengarte", "Ignorarla para siempre", "Hablar mal de ella"], "«y orad por los que os ultrajan y os persiguen».", "Mateo 5:44"],
+      ["m2-17", 6, "o6", "analizar", "¿Por qué Epafras es un buen modelo de intercesor?", "Porque oraba siempre y encarecidamente, con peticiones concretas", ["Porque oraba solo por sí mismo", "Porque oraba una vez al año", "Porque no pedía nada"], "«siempre rogando encarecidamente por vosotros en sus oraciones».", "Colosenses 4:12"],
+      ["m2-18", 6, "o6", "evaluar", "¿Qué debe hacer el intercesor con lo que se le confía en oración?", "Guardarlo con fidelidad", ["Contarlo para que otros oren", "Publicarlo", "Comentarlo con su familia"], "«Mas el de espíritu fiel lo guarda todo».", "Proverbios 11:13"],
+    ] as P[]).map(p),
+  },
+  escritas: [
+    {
+      id: "intercesion-2-e1",
+      tipo: "corta",
+      pregunta: "Explica qué es la intercesión según la Biblia, por quiénes se ora y por qué el que intercede no es un mediador.",
+      ideas: [
+        { id: "brecha", peso: 25, texto: "Es ponerse en la brecha: orar delante de Dios a favor de otros.", formas: ["en la brecha", "a favor de otros", "a favor de", "por los demas", "por otros"] },
+        { id: "todos", peso: 20, texto: "Por todos los hombres, también por las autoridades.", formas: ["todos los hombres", "por todos", "autoridades", "los reyes", "eminencia"] },
+        { id: "salvos", peso: 20, texto: "Porque Dios quiere que todos sean salvos.", formas: ["sean salvos", "salvacion", "se salven", "quiere que todos"] },
+        { id: "mediador", peso: 25, texto: "Hay un solo mediador, Jesucristo; se ora por medio de él.", formas: ["un solo mediador", "unico mediador", "solo cristo", "por medio de cristo", "por medio de jesus", "jesucristo hombre"], negativa: true },
+      ],
+      citas: ["1 Timoteo 2:1-5", "1 Timoteo 2:1", "1 Timoteo 2:4", "1 Timoteo 2:5", "Ezequiel 22:30", "Santiago 5:16"],
+      pesoCita: 10,
+      errores: [],
+      modelo:
+        "Interceder es ponerse en la brecha: orar delante de Dios a favor de otros (Ezequiel 22:30). Se ora por todos los hombres, también por los reyes y las autoridades, porque Dios quiere que todos sean salvos. Pero el intercesor no es mediador: hay un solo mediador, Jesucristo hombre, y oramos por medio de él (1 Timoteo 2:5).",
+    },
+    {
+      id: "intercesion-2-e2",
+      tipo: "corta",
+      pregunta: "Explica qué aprendemos de la intercesión de Abraham por Sodoma.",
+      ideas: [
+        { id: "caracter", peso: 30, texto: "Se apoyó en el carácter de Dios: el Juez de toda la tierra hace lo que es justo.", formas: ["juez de toda la tierra", "lo que es justo", "su justicia", "caracter de dios", "su caracter"] },
+        { id: "humildad", peso: 20, texto: "Oró con humildad: se sabía polvo y ceniza.", formas: ["humildad", "humilde", "polvo y ceniza"] },
+        { id: "perseverancia", peso: 20, texto: "Perseveró: pidió una y otra vez, de cincuenta justos a diez.", formas: ["persever*", "una y otra vez", "insist*", "de cincuenta", "hasta diez", "volvio a pedir"] },
+        { id: "respuesta", peso: 20, texto: "Dios se acordó de Abraham y sacó a Lot.", formas: ["se acordo de abraham", "salvo a lot", "saco a lot", "libro a lot"] },
+      ],
+      citas: ["Génesis 18:23-33", "Génesis 18:25", "Génesis 18:27", "Génesis 19:29"],
+      pesoCita: 10,
+      errores: [],
+      modelo:
+        "Abraham se acercó a Dios a favor de Sodoma y se apoyó en su carácter: el Juez de toda la tierra hace lo que es justo (Génesis 18:25). Oró con humildad, sabiéndose polvo y ceniza, y con perseverancia, de cincuenta justos hasta diez. Y aunque la ciudad fue destruida, Dios se acordó de Abraham y sacó a Lot.",
+    },
+    {
+      id: "intercesion-2-e3",
+      tipo: "corta",
+      pregunta: "Explica cómo intercede Cristo por los suyos y qué cambia eso en nuestra manera de orar por otros.",
+      ideas: [
+        { id: "tierra", peso: 20, texto: "En la tierra oró por los suyos: por Pedro, por los que habían de creer, por los que lo crucificaban.", formas: ["por pedro", "que tu fe no falte", "perdonalos", "han de creer", "habian de creer", "en la tierra", "en la cruz"] },
+        { id: "cielo", peso: 30, texto: "Hoy vive siempre para interceder, a la diestra de Dios.", formas: ["vive siempre", "a la diestra", "sigue intercediendo", "intercede por nosotros", "en el cielo", "intercede hoy"] },
+        { id: "seguridad", peso: 20, texto: "Puede salvar perpetuamente; es nuestro abogado.", formas: ["perpetuamente", "abogado", "nadie nos condena", "quien condenara", "seguridad"] },
+        { id: "unirse", peso: 20, texto: "Nuestra intercesión se une a la suya y no la reemplaza.", formas: ["nos unimos", "se une", "unirnos", "no lo reemplaza", "no la reemplaza", "no reemplaza", "no somos mediadores"], negativa: true },
+      ],
+      citas: ["Hebreos 7:25", "Romanos 8:34", "Lucas 22:31-32", "Lucas 22:32", "Juan 17:20-21", "Juan 17:20", "Isaías 53:12", "1 Juan 2:1", "Lucas 23:34"],
+      pesoCita: 10,
+      errores: [],
+      modelo:
+        "En la tierra, Jesús oró por Pedro para que su fe no faltara, por los que habían de creer y por los que lo crucificaban. Hoy, a la diestra de Dios, vive siempre para interceder por los suyos y puede salvar perpetuamente (Hebreos 7:25). Nuestra intercesión no lo reemplaza: nos unimos a la suya.",
+    },
+    {
+      id: "intercesion-2-e4",
+      tipo: "breve",
+      pregunta:
+        "Un grupo nuevo de intercesores te pide una enseñanza sobre Moisés como intercesor. Explica qué hizo, en qué apoyó su oración y qué aprendemos de él, con citas bíblicas.",
+      ideas: [
+        { id: "interpuso", peso: 20, texto: "Se interpuso entre Dios y el pueblo después del becerro de oro.", formas: ["se interpuso", "interpuso", "en la brecha", "becerro", "dioses de oro"] },
+        { id: "oferta", peso: 15, texto: "No aceptó la oferta de ser una nación grande.", formas: ["nacion grande", "no acepto", "rechazo la oferta", "la oferta"], negativa: true },
+        { id: "argumentos", peso: 25, texto: "Se apoyó en la obra, el nombre y las promesas de Dios.", formas: ["promesas", "acuerdate de abraham", "los egipcios", "su nombre", "su obra", "saco de egipto"] },
+        { id: "identifica", peso: 20, texto: "Reconoció el pecado y se identificó con el pueblo: ráeme de tu libro.", formas: ["raeme", "de tu libro", "se identifico", "identificarse", "gran pecado"] },
+        { id: "perdon", peso: 20, texto: "Dios escuchó y perdonó conforme a su dicho.", formas: ["lo he perdonado", "perdono", "conforme a tu dicho", "su misericordia"] },
+      ],
+      basta: 85,
+      citas: ["Éxodo 32:9-14", "Éxodo 32:11", "Éxodo 32:13", "Éxodo 32:30-32", "Éxodo 32:32", "Salmos 106:23", "Números 14:19-20", "Números 14:20"],
+      pesoCita: 10,
+      errores: [],
+      modelo:
+        "Hermanos, cuando el pueblo se hizo un becerro de oro, Dios anunció su juicio y le ofreció a Moisés hacer de él una nación grande. Moisés no aceptó esa oferta: se interpuso entre Dios y el pueblo, como dice Salmos 106:23. Su oración se apoyó en Dios mismo. Primero, en su obra: es el pueblo que él sacó de Egipto con mano fuerte. Segundo, en su nombre: qué dirían los egipcios. Tercero, en sus promesas: acuérdate de Abraham, de Isaac y de Israel (Éxodo 32:13). Al día siguiente, Moisés no escondió el gran pecado del pueblo, pero se identificó con él hasta decir: perdona su pecado, y si no, ráeme ahora de tu libro. Y no lo hizo una sola vez: cuando el pueblo volvió a rebelarse, pidió perdón según la grandeza de la misericordia de Dios, y Dios respondió: yo lo he perdonado conforme a tu dicho (Números 14:20). De Moisés aprendemos a ponernos al lado de los que cayeron, a orar apoyados en lo que Dios es y ha prometido, y a perseverar.",
+    },
+    {
+      id: "intercesion-2-e5",
+      tipo: "breve",
+      pregunta: "Explica a tu iglesia por quiénes manda orar la Biblia y cómo puede un creyente interceder con fidelidad, con citas bíblicas.",
+      ideas: [
+        { id: "quienes", peso: 30, texto: "Por todos: autoridades, enemigos, obreros, santos, los que predican, los que sufren y los perdidos.", formas: ["autoridades", "los reyes", "enemigos", "obreros", "los santos", "los perdidos", "los presos", "los que predican", "por israel"] },
+        { id: "perseverancia", peso: 20, texto: "Con perseverancia, siempre y encarecidamente.", formas: ["persever*", "encarecidamente", "sin cesar", "siempre"] },
+        { id: "concreto", peso: 15, texto: "Con peticiones concretas, conforme a lo que Dios quiere.", formas: ["concret*", "especific*", "lo que dios quiere", "firmes"] },
+        { id: "gracias", peso: 10, texto: "Con acción de gracias.", formas: ["acciones de gracias", "accion de gracias", "dar gracias", "gracias por"] },
+        { id: "lista", peso: 10, texto: "Con una lista de oración o un cuaderno, solo o en grupo.", formas: ["lista de oracion", "una lista", "cuaderno", "en grupo"] },
+        { id: "fidelidad", peso: 15, texto: "Guarda lo que se le confía.", formas: ["guarda*", "chisme*", "confidenc*", "discre*", "secreto"] },
+      ],
+      basta: 85,
+      citas: ["1 Timoteo 2:1-2", "1 Timoteo 2:1-5", "1 Timoteo 2:2", "Mateo 5:44", "Mateo 9:37-38", "Mateo 9:38", "Romanos 10:1", "Efesios 6:18-19", "Efesios 6:18", "Efesios 6:19", "Hechos 12:5", "Colosenses 4:12", "Proverbios 11:13", "Filipenses 1:3-4"],
+      pesoCita: 10,
+      errores: [],
+      modelo:
+        "Hermanos, la Biblia nos manda interceder por todos. Pablo pide orar por los reyes y por todas las autoridades (1 Timoteo 2:2). Jesús nos manda orar aun por los enemigos, por los que nos persiguen (Mateo 5:44), y rogar al Señor de la mies que envíe obreros. Oramos por todos los santos y por los que predican, para que les sea dada palabra (Efesios 6:19); por los que sufren, como la iglesia que oraba sin cesar por Pedro en la cárcel; y por los perdidos, como Pablo oraba por Israel para salvación. ¿Cómo interceder con fidelidad? Con perseverancia, como Epafras, que oraba siempre y encarecidamente, y con peticiones concretas: que estén firmes y completos en lo que Dios quiere (Colosenses 4:12). Con acción de gracias por cada persona. Ayuda llevar una lista de oración o un cuaderno, y orar solo o en grupo. Y algo muy importante: el intercesor guarda lo que se le confía; el que anda en chismes descubre el secreto, pero el de espíritu fiel lo guarda todo.",
+    },
+  ],
+  breve: {
+    id: "intercesion-2-b1",
+    tipo: "breve",
+    pregunta:
+      "Escribe tu plan personal de intercesión: por quiénes vas a orar, cómo lo harás y qué aprendiste de los intercesores de la Biblia, con citas bíblicas.",
+    ideas: [
+      { id: "quienes", peso: 20, texto: "Dice por quiénes orará.", formas: ["autoridades", "mi familia", "mi iglesia", "enemigos", "obreros", "los perdidos", "mi pastor", "por todos", "no conocen a cristo"] },
+      { id: "como", peso: 20, texto: "Dice cómo: con perseverancia, con una lista, en un tiempo fijo, solo o en grupo.", formas: ["una lista", "mi lista", "cuaderno", "cada dia", "cada mañana", "cada semana", "en grupo", "persever*", "encarecidamente"] },
+      { id: "ejemplos", peso: 25, texto: "Aprende de los intercesores de la Biblia.", formas: ["abraham", "moises", "samuel", "daniel", "nehemias", "epafras"] },
+      { id: "cristo", peso: 20, texto: "Se apoya en la intercesión de Cristo, el único mediador.", formas: ["cristo intercede", "jesus intercede", "vive siempre", "unico mediador", "un solo mediador", "a la diestra", "por medio de cristo"], negativa: true },
+      { id: "cambio", peso: 15, texto: "Dice qué cambiará en su vida de oración.", formas: ["voy a (orar|interceder|guardar|empezar|apartar|llevar)", "me comprometo", "antes oraba", "ahora entiendo", "aprendi"] },
+    ],
+    basta: 85,
+    citas: ["1 Timoteo 2:1", "1 Timoteo 2:1-2", "1 Timoteo 2:1-5", "Ezequiel 22:30", "Génesis 18:23-33", "Éxodo 32:30-32", "1 Samuel 12:23", "Daniel 9:18-19", "Hebreos 7:25", "Mateo 5:44", "Colosenses 4:12", "Proverbios 11:13", "Santiago 5:16"],
+    pesoCita: 10,
+    errores: [],
+    modelo:
+      "Antes oraba casi solo por mí y por mis cosas. Ahora entiendo que Dios busca a alguien que se ponga en la brecha (Ezequiel 22:30), y quiero ser esa persona. Mi plan es este: voy a orar cada mañana por mi familia, por mi iglesia y por mi pastor, por las autoridades de mi país, como pide 1 Timoteo 2:1-2, y por tres amigos que no conocen a Cristo. También oraré por alguien que me hizo daño, porque Jesús manda orar por los enemigos. Llevaré una lista en un cuaderno para perseverar y anotar las respuestas. De Abraham aprendí a apoyarme en el carácter de Dios; de Moisés, a ponerme al lado de los que cayeron; de Daniel y Nehemías, a confesar con mi pueblo y después actuar. Y no oraré como mediador, sino por medio de Cristo, que vive siempre para interceder por los suyos (Hebreos 7:25). Lo que me confíen en oración, lo guardaré con fidelidad.",
+  },
+};

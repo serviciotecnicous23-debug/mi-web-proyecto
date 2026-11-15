@@ -5,6 +5,7 @@ import { ESPECIALIDADES, EXAMEN_FINAL, PESOS_NIVEL, examenDe, materiaPorId, mini
 
 const evangelismo = ESPECIALIDADES.find((e) => e.id === "evangelismo-misiones")!;
 const alabanza = ESPECIALIDADES.find((e) => e.id === "alabanza")!;
+const intercesion = ESPECIALIDADES.find((e) => e.id === "intercesion")!;
 
 test("cada materia de especialidad se llama <especialidad>-<orden>, aunque ya tenga su definición completa", () => {
   for (const e of ESPECIALIDADES) {
@@ -82,8 +83,38 @@ test("Alabanza y adoración tiene sus cinco materias, con la medida del Nivel 3 
   assert.equal(alabanza.materias.length, 5);
 });
 
-test("las otras diez especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => x.id !== "evangelismo-misiones" && x.id !== "alabanza")) {
+test("Intercesión y oración sale materia por materia, con la medida del Nivel 3", () => {
+  const listas = intercesion.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["Teología de la oración", "Jeremías 33:3", 6, false],
+      ["Intercesión bíblica", "1 Timoteo 2:1", 6, false],
+      ["El ayuno bíblico", "Isaías 58:6", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // la oración en lenguas y la sanidad en la expiación quedan para la declaración de fe
+  assert.match(listas[0].silabo!.proposito, /declaración de fe por confirmar/);
+  assert.match(listas[1].silabo!.proposito, /declaración de fe por confirmar/);
+  // el ayuno lleva su cautela de salud
+  assert.match(listas[2].silabo!.proposito, /consulta a su médico/);
+  // la guerra espiritual es avanzada: pide el Nivel 3
+  assert.equal(intercesion.materias[3].avanzada, true);
+  assert.equal(intercesion.materias.length, 5);
+  for (const m of intercesion.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, m.id);
+});
+
+test("las otras nueve especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
