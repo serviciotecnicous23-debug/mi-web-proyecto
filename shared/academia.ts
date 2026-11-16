@@ -1531,6 +1531,58 @@ const EVANGELIOS_HECHOS: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 3 · materia 5: la persona y la obra del Espíritu Santo, con los artículos 4, 9, 10 y 15 de la declaración de fe. */
+const ESPIRITU_SANTO: MateriaDef = {
+  id: "n3-espiritu-santo",
+  nivel: 3,
+  orden: 5,
+  titulo: "La persona y obra del Espíritu Santo",
+  resumen: "Una persona divina, su obra en el Antiguo Testamento y en Jesús, en la salvación, el bautismo en el Espíritu Santo, los dones y el fruto, y andar en el Espíritu.",
+  base: "Zacarías 4:6; Hechos 1:8",
+  memoria: "Zacarías 4:6",
+  lecciones: lecciones("n3-espiritu-santo", [
+    ["El Espíritu Santo, una persona divina", "Zacarías 4:6; Juan 14:16-17; Juan 16:13-14; 1 Corintios 12:11; Efesios 4:30; Hechos 5:3-4; Hebreos 9:14"],
+    ["El Espíritu en el Antiguo Testamento y en Jesús", "Génesis 1:2; 1 Samuel 16:13; Ezequiel 36:26-27; Joel 2:28-29; Lucas 1:35; Lucas 3:21-22; Lucas 4:1; Lucas 4:18; Hechos 10:38"],
+    ["El Espíritu en la salvación", "Juan 16:8; Juan 3:5-6; Tito 3:5; Romanos 8:9; Romanos 8:14-16; Efesios 1:13-14; 1 Corintios 12:13"],
+    ["El bautismo en el Espíritu Santo", "Hechos 1:4-5; Hechos 2:1-4; Hechos 8:14-17; Hechos 19:1-6; Lucas 11:13; 1 Corintios 12:30"],
+    ["Los dones y el fruto del Espíritu", "1 Corintios 12:11; 1 Corintios 13:1-2; 1 Corintios 14:1; Gálatas 5:22-25"],
+    ["Andar en el Espíritu", "Gálatas 5:16-17; Romanos 8:13; Efesios 5:18; Hechos 16:6-7; Efesios 4:30; Juan 7:37-39"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el obrero conozca al Espíritu Santo y sirva en su poder, siguiendo los artículos 4, 9, 10 y 15 de la declaración de fe: que es una persona divina, cómo obró en el Antiguo Testamento y en la vida de Jesús, qué hace en la salvación, qué es el bautismo en el Espíritu Santo y cómo se recibe, cómo se relacionan los dones con el fruto, y cómo se anda en el Espíritu cada día. Los dones se estudiaron en el Nivel 2; aquí se miran junto al fruto. Si hablar en lenguas es la señal inicial y necesaria del bautismo en el Espíritu es un punto de la declaración de fe por confirmar: la materia presenta las dos posiciones pentecostales con respeto. Su base es la palabra de Dios a Zorobabel: «No con ejército, ni con fuerza, sino con mi Espíritu, ha dicho Jehová de los ejércitos» (Zacarías 4:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar con la Biblia que el Espíritu Santo es una persona y que es Dios.", bloom: "comprender" },
+      { id: "o2", texto: "Describir la obra del Espíritu en el Antiguo Testamento, la promesa de los profetas y su obra en Jesús.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar la obra del Espíritu en la salvación: convencer, regenerar, morar y sellar.", bloom: "comprender" },
+      { id: "o4", texto: "Analizar el bautismo en el Espíritu Santo en el libro de los Hechos y cómo se recibe.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar el ministerio por el fruto del Espíritu y no solo por los dones.", bloom: "evaluar" },
+      { id: "o6", texto: "Aplicar a la vida del obrero el andar en el Espíritu: ser lleno, dejarse guiar y no contristarlo.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Zacarías 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la persona y la obra del Espíritu Santo, y el bautismo en el Espíritu según los Hechos.",
+      ser: "Un obrero que depende del Espíritu y en quien crece el fruto del Espíritu.",
+      hacer: "Buscar ser lleno del Espíritu, servir con sus dones y con amor, y dejarse guiar por él en el ministerio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Stanley M. Horton", titulo: "El Espíritu Santo revelado en la Biblia", editorial: "Vida" },
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media" },
+      ],
+      complementaria: [{ autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida", nota: "Su sección sobre el Espíritu Santo." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Hechos 2: el día de Pentecostés", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+      { tipo: "lectura", titulo: "Gálatas 5: andar en el Espíritu", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Galatas&cap=5" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Nivel 3 · materia 6: el evangelismo como ministerio de la iglesia y la consolidación del nuevo creyente. */
 const EVANGELISMO_CONSOLIDACION: MateriaDef = {
   id: "n3-evangelismo-consolidacion",
@@ -2471,7 +2523,7 @@ export const NIVELES: NivelDef[] = [
       METODOS_ESTUDIO,
       PENTATEUCO_HISTORICOS,
       EVANGELIOS_HECHOS,
-      enPreparacion(3, 5, "n3-espiritu-santo", "La persona y obra del Espíritu Santo", "El bautismo en el Espíritu, los dones, el fruto y los avivamientos."),
+      ESPIRITU_SANTO,
       EVANGELISMO_CONSOLIDACION,
       LIDERAZGO_1,
       HOMILETICA_1,
@@ -3425,7 +3477,34 @@ export type AcademiaEstado = {
 /** El cierre de un nivel en la portada: null mientras el nivel no tiene todas sus materias disponibles. */
 export type CierreResumen = { integralAprobado: boolean; pacto: boolean; completado: string | null };
 
-export type RequisitoNivel = { id: "materias" | "integral" | "versiculos" | "evangelismo" | "servicio" | "pacto"; texto: string; hecho: boolean; detalle: string };
+export type RequisitoNivel = {
+  id: "materias" | "integral" | "versiculos" | "evangelismo" | "servicio" | "pacto" | RequisitoPorHacer["id"];
+  texto: string;
+  hecho: boolean;
+  detalle: string;
+};
+
+/**
+ * Los requisitos del reglamento de los Niveles 3 a 5 que todavía no se registran en la academia (la práctica, la
+ * enseñanza grabada, la consolidación, el sermón, el proyecto final y el acompañamiento). Mientras falten, el nivel los
+ * muestra pendientes y no se cierra: así nadie recibe el diploma sin ellos. Sus textos son los de `NIVELES`.
+ */
+export type RequisitoPorHacer = { id: "practica" | "ensenanza" | "consolidacion" | "sermon" | "proyecto" | "acompanar"; texto: string };
+export const REQUISITOS_POR_HACER: Partial<Record<NivelN, RequisitoPorHacer[]>> = {
+  3: [
+    { id: "practica", texto: "20 horas de práctica confirmada" },
+    { id: "ensenanza", texto: "Una enseñanza grabada aprobada" },
+    { id: "consolidacion", texto: "Consolidar a 1 nuevo creyente" },
+  ],
+  4: [
+    { id: "practica", texto: "30 horas de práctica confirmada" },
+    { id: "sermon", texto: "Un sermón evaluado con rúbrica" },
+  ],
+  5: [
+    { id: "proyecto", texto: "El proyecto final con defensa en vivo" },
+    { id: "acompanar", texto: "Acompañar a 2 personas hasta terminar el Nivel 1" },
+  ],
+};
 
 /** El nivel y lo que falta para cerrarlo: materias, examen integral, versículos y pacto. */
 export type NivelEstado = {
