@@ -89,15 +89,24 @@ test("las materias del Nivel 4 piden el Nivel 3 completo", () => {
   assert.deepEqual(requisitosMateria(m, [1, 2, 3]), []);
 });
 
-test("el Nivel 4 conserva su orden; las sistemáticas II a IV y Epístolas y Apocalipsis esperan la declaración de fe", () => {
+test("el Nivel 4 conserva su orden, y sus materias salen con los puntos de la declaración de fe por confirmar", () => {
   assert.equal(nivel4.materias.length, 10);
   assert.deepEqual(nivel4.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   assert.deepEqual(
     nivel4.materias.filter((m) => !m.disponible).map((m) => m.id),
-    ["n4-sistematica-2", "n4-sistematica-3", "n4-sistematica-4", "n4-epistolas-apocalipsis"],
+    ["n4-sistematica-4", "n4-epistolas-apocalipsis"],
   );
-  for (const id of ["n4-sistematica-2", "n4-sistematica-3", "n4-sistematica-4", "n4-epistolas-apocalipsis"]) {
-    assert.equal(materiaPorId(id)!.disponible, false, `${id} espera la declaración de fe`);
-  }
+  const s3 = materiaPorId("n4-sistematica-3")!;
+  assert.ok(s3.disponible);
+  assert.equal(s3.memoria, "Romanos 5:1");
+  assert.equal(s3.lecciones.length, 6);
+  assert.equal(s3.silabo!.objetivos.length, 7);
+  assert.match(s3.silabo!.proposito, /declaración de fe por confirmar/);
+  const s2 = materiaPorId("n4-sistematica-2")!;
+  assert.ok(s2.disponible);
+  assert.equal(s2.memoria, "Colosenses 2:9");
+  assert.equal(s2.lecciones.length, 6);
+  assert.equal(s2.silabo!.objetivos.length, 7);
+  assert.match(s2.silabo!.proposito, /declaración de fe por confirmar/);
   for (const m of nivel4.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, `${m.id} sin lecciones todavía`);
 });
