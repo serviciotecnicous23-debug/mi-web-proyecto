@@ -12,6 +12,7 @@ import type {
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
 import type { DiagnosticoVista, RepasoVersiculos } from "@shared/academia";
+import type { RepasoDelDia, RespuestaDelDia } from "@shared/repaso-del-dia";
 
 export class ErrorAcademia extends Error {
   status: number;
@@ -365,6 +366,12 @@ export function useDiagnostico(activo = true) {
 export function useRepasoVersiculos(activo = true) {
   return useQuery<RepasoVersiculos, ErrorAcademia>({ queryKey: ["academia", "repaso-versiculos"], queryFn: () => pedir("GET", "/api/academia/versiculos/repaso"), enabled: activo, retry: false });
 }
+/** «Repaso del día»: las preguntas de las lecciones terminadas que tocan hoy (server/academia-repaso-dia.ts). */
+export function useRepasoDelDia(activo = true) {
+  return useQuery<RepasoDelDia, ErrorAcademia>({ queryKey: ["academia", "repaso-del-dia"], queryFn: () => pedir("GET", "/api/academia/repaso-del-dia"), enabled: activo, retry: false, staleTime: 0 });
+}
+export const responderRepasoDelDia = (preguntaId: string, opcion: number) =>
+  pedir<RespuestaDelDia>("POST", `/api/academia/repaso-del-dia/${encodeURIComponent(preguntaId)}`, { opcion });
 export type VersiculoParaRepasar = { materiaId: string; materia: string; ref: string; fichas: { id: string; t: string }[]; caja: number; toca: boolean };
 export const versiculoParaRepasar = (materiaId: string) => pedir<VersiculoParaRepasar>("GET", `/api/academia/versiculos/repaso/${encodeURIComponent(materiaId)}`);
 export const responderRepasoVersiculo = (materiaId: string, orden: string[]) =>

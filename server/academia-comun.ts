@@ -237,7 +237,23 @@ CREATE TABLE IF NOT EXISTS "academia_ajustes" (
   PRIMARY KEY ("user_id", "materia_id", "componente")
 );
 ALTER TABLE "academia_pruebas" ADD COLUMN IF NOT EXISTS "extra" integer NOT NULL DEFAULT 0;
-ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "tiempo_extra" boolean NOT NULL DEFAULT false;`;
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "tiempo_extra" boolean NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS "academia_repaso_preguntas" (
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "pregunta_id" text NOT NULL,
+  "materia_id" text NOT NULL,
+  "leccion_id" text NOT NULL,
+  "caja" integer NOT NULL DEFAULT 1,
+  "vueltas" integer NOT NULL DEFAULT 0,
+  "aciertos" integer NOT NULL DEFAULT 0,
+  "fallos" integer NOT NULL DEFAULT 0,
+  "proximo_at" timestamp NOT NULL,
+  "ultima_at" timestamp,
+  "dominada_at" timestamp,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  PRIMARY KEY ("user_id", "pregunta_id")
+);
+CREATE INDEX IF NOT EXISTS "academia_repaso_preguntas_toca_idx" ON "academia_repaso_preguntas" ("user_id", "proximo_at");`;
 
 // ---------------------------------------------------------------- quién la ve
 

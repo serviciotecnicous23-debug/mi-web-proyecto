@@ -6,7 +6,7 @@
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowRight, Award, BookOpen, BookOpenCheck, CalendarCheck2, CheckCircle2, ClipboardList, Compass, FileText, Flame, GraduationCap, Highlighter, IdCard,
+  ArrowRight, Award, BookOpen, BookOpenCheck, Brain, CalendarCheck2, CheckCircle2, ClipboardList, Compass, FileText, Flame, GraduationCap, Highlighter, IdCard,
   Layers, Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
 import type { AcademiaEstado } from "@shared/academia";
 import {
-  cambiarMetaEstudio, sumarEstudio, useAcademiaEstado, useCarne, useCertificados, useDiagnostico, useEstudio, useMateria, useRepasoVersiculos,
+  cambiarMetaEstudio, sumarEstudio, useAcademiaEstado, useCarne, useCertificados, useDiagnostico, useEstudio, useMateria, useRepasoDelDia, useRepasoVersiculos,
 } from "@/components/academia/api";
 import { BarraAvance, Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
@@ -178,6 +178,7 @@ export default function AcademiaSalon() {
   const carne = useCarne();
   const estudio = useEstudio(inscrito);
   const versos = useRepasoVersiculos(inscrito);
+  const repasoDia = useRepasoDelDia(inscrito);
   const diag = useDiagnostico(inscrito);
   const docs = useCertificados(inscrito);
   if (q.isLoading) return <Cargando />;
@@ -283,6 +284,13 @@ export default function AcademiaSalon() {
                   </Link>
                 </li>
               )}
+              {(repasoDia.data?.pendientes ?? 0) > 0 && (
+                <li>
+                  <Link href="/academia/repaso-del-dia" className="flex items-start gap-2 font-medium hover:underline" data-testid="salon-repaso-del-dia">
+                    <Brain className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" /> Repaso del día: {Math.min(repasoDia.data?.pendientes ?? 0, 10)} {repasoDia.data?.pendientes === 1 ? "pregunta" : "preguntas"} de tus lecciones
+                  </Link>
+                </li>
+              )}
               {materiasEnCurso.map((id) => <PendientesMateria key={id} id={id} />)}
               {!diag.data?.ultimo && (
                 <li>
@@ -330,6 +338,7 @@ export default function AcademiaSalon() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Herramienta href="/academia/cuaderno" icono={NotebookPen} titulo="Mi cuaderno" texto="Apuntes, resaltados y lo de la Biblia" />
             <Herramienta href="/biblioteca" icono={Library} titulo="La Biblia" texto="Lee, resalta y lleva tus notas al cuaderno" />
+            <Herramienta href="/academia/repaso-del-dia" icono={Brain} titulo="Repaso del día" texto={repasoDia.data ? `${repasoDia.data.dominadas} dominadas · ${repasoDia.data.pendientes} para hoy` : "Las preguntas de tus lecciones vuelven para no olvidarlas"} />
             <Herramienta href="/academia/repaso" icono={BookOpen} titulo="Mis versículos" texto={versos.data ? `${versos.data.dominados} dominados · ${pendientesVersos} para hoy` : "El repaso de los versículos de memoria"} />
             <Herramienta href="/academia/diagnostico" icono={Compass} titulo="Prueba diagnóstica" texto="Te sugiere por dónde seguir" />
             <Herramienta href="/academia/carne" icono={IdCard} titulo="Mi carné" texto="Para mostrarlo o descargarlo en PDF" />

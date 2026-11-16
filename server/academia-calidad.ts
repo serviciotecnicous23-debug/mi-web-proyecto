@@ -24,6 +24,7 @@ import { ID_DECLARACION, PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion
 import { ANALISIS, cifrasDeEscritas, cifrasDePreguntas, gravedad, type CifrasPregunta, type IntentoRegistrado } from "./academia-analisis";
 import { accesoDe, avisarA, claveFinal, claveIntegral, cuentasConRoles, frenar, olvidarRetiradas } from "./academia-comun";
 import { permisoDe } from "./academia-direccion";
+import { minutosReales } from "./academia-carga";
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
 const limpio = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, max) : "");
@@ -201,7 +202,7 @@ async function detalleDe(m: MateriaDef, role: string, userId: number): Promise<C
   });
   return {
     materia: { id: m.id, titulo: m.titulo, nivel: m.nivel, resumen: m.resumen, memoria: m.memoria ?? null, disponible: m.disponible },
-    lecciones: m.lecciones.map((l) => ({ id: l.id, titulo: l.titulo, minutos: l.minutos, base: l.base })),
+    lecciones: m.lecciones.map((l) => ({ id: l.id, titulo: l.titulo, minutos: minutosReales(l.id, l.minutos), base: l.base })),
     observaciones,
     aprobacion: aprobaciones.get(m.id) ?? null,
     intentos: { final: analisis.porClave.get(claveFinal(m.id)) ?? 0, integral: m.nivel ? analisis.porClave.get(claveIntegral(m.nivel)) ?? 0 : 0 },

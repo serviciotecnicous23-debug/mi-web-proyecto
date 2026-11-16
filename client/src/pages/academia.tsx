@@ -8,14 +8,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "motion/react";
 import {
-  ArrowRight, Award, BellRing, BookOpen, CheckCircle2, ChevronDown, Compass, FileText, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle,
+  ArrowRight, Award, BellRing, BookOpen, Brain, CheckCircle2, ChevronDown, Compass, FileText, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle,
   ScrollText, Search, Sparkles, Timer, X,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type AcademiaEstado, type MateriaResumen } from "@shared/academia";
-import { useAcademiaEstado, useCertificados, useDiagnostico, useRepasoVersiculos } from "@/components/academia/api";
+import { useAcademiaEstado, useCertificados, useDiagnostico, useRepasoDelDia, useRepasoVersiculos } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
@@ -77,6 +77,7 @@ const textoContinuar = (c: NonNullable<AcademiaEstado["continuar"]>, aprobadas: 
 function Escritorio({ e }: { e: AcademiaEstado }) {
   const docs = useCertificados(!!e.alumno);
   const versos = useRepasoVersiculos(true);
+  const repasoDia = useRepasoDelDia(!!e.matricula);
   const diag = useDiagnostico(true);
   const actual = nivelActual(e);
   const aprobadasNivel = actual ? actual.materias.filter((m) => m.estado === "aprobada").length : 0;
@@ -149,6 +150,20 @@ function Escritorio({ e }: { e: AcademiaEstado }) {
                 </span>
               )}
             </li>
+            {repasoDia.data && repasoDia.data.total > 0 && (
+              <li>
+                {repasoDia.data.pendientes > 0 ? (
+                  <Link href="/academia/repaso-del-dia" className="flex items-start gap-2 font-medium hover:underline" data-testid="academia-repaso-del-dia">
+                    <Brain className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" /> Repaso del día: {repasoDia.data.pendientes === 1 ? "1 pregunta" : `${Math.min(repasoDia.data.pendientes, 10)} preguntas`} de tus lecciones
+                  </Link>
+                ) : (
+                  <span className="flex items-start gap-2 text-muted-foreground">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Repaso del día al día · {repasoDia.data.dominadas} {repasoDia.data.dominadas === 1 ? "pregunta dominada" : "preguntas dominadas"}</span>
+                  </span>
+                )}
+              </li>
+            )}
             <li>
               {diag.data?.ultimo ? (
                 <Link href="/academia/diagnostico" className="flex items-start gap-2 hover:underline">
@@ -374,8 +389,8 @@ function RecienAbiertas({ lista }: { lista: { id: string; titulo: string }[] }) 
 }
 
 const PASOS = [
-  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De 5 a 10 minutos, con versículos de la Biblia, videos y una aplicación para la vida." },
-  { icon: ListChecks, titulo: "Repaso", texto: "Al terminar de leer cada lección: preguntas con la respuesta y la cita al instante." },
+  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De 7 a 15 minutos según el nivel (cada lección dice cuánto pide), con versículos de la Biblia, videos y una aplicación para la vida." },
+  { icon: ListChecks, titulo: "Repaso", texto: "Al terminar cada lección, preguntas con la respuesta y la cita al instante; después vuelven en días espaciados en el «Repaso del día»." },
   { icon: Sparkles, titulo: "Versículo de memoria", texto: "Uno por materia; vuelve a los 1, 3, 7 y 21 días para quedar en el corazón." },
   { icon: PenLine, titulo: "Examen final", texto: "Parte objetiva con reloj y parte escrita desde el celular, con corrección automática." },
   { icon: Award, titulo: "Certificado", texto: "Cada materia aprobada da su certificado; cada nivel, su diploma." },
