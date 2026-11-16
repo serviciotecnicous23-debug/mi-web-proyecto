@@ -413,6 +413,29 @@ se recalculan con su último resultado guardado, si es ese intento; si no, la no
   pedido respondido, cada documento revocado o restaurado, cada nombre corregido, cada observación y aprobación del
   contenido, cada pregunta retirada o vuelta a usar y cada apertura, con quién, a quién, cuándo y por qué.
 
+**La gestión del expediente** (`server/academia-gestion.ts`, capacidad «gestionar», solo la Administración; pedido de
+Luis del 16-nov: «si tengo un problema de notas, ¿cómo lo modifico?»). En la página de cada alumno, la tarjeta
+«Herramientas de la Administración» y el botón «Gestionar» de cada materia abren el panel de esa materia. Cada acción
+pide un motivo (8 letras o más), queda en el historial (también en el del alumno, en su página) y le llega al alumno en
+la campana. Nadie gestiona lo suyo.
+- **La nota por partes:** cada parte que pesa (examen final, repasos, versículo, mini pruebas, escritos) muestra lo que
+  calcula el sistema y lo que vale. Un **ajuste** (`academia_ajustes`) reemplaza lo calculado: `componentesDe` lo aplica
+  siempre (`componentesCalculados` es lo del sistema) y la materia se recalcula en cadena como en una revisión
+  (`reconsiderarMateria`, nivel y especialidad, con el certificado emitido o revocado). El ajuste se puede quitar. El
+  alumno ve en su materia qué parte se ajustó y el motivo (`MateriaDetalle.ajustes`). La materia aprobada por suficiencia
+  o convalidación tiene la nota fija (`viaFija`).
+- **La convalidación:** aprueba la materia con su nota (70 a 100), `via = 'convalidada'`, con su certificado; se puede
+  cambiar la nota o quitarla (el certificado se revoca y vuelve a contar lo cursado). Avisa si pasa el tope de los
+  Niveles 3 a 5, sin impedirlo.
+- **Los exámenes:** quitar la espera del final (y el repaso obligatorio), reiniciar sus fallos, dar un intento más en
+  las pruebas con tope (mini pruebas, escrito breve, suficiencia y trabajo final: `academia_pruebas.extra`, hasta 5) y
+  anular el intento en curso (no cuenta: se borran sus escritas de ese intento).
+- **Las lecciones:** marcar una como completada o volver a abrirla. **La inscripción:** inscribirlo en una materia (sin
+  pedirle requisitos) o darlo de baja (su avance queda guardado).
+- **El alumno:** registrarlo como retirado o reactivarlo; darle **tiempo extra** (`academia_alumnos.tiempo_extra`: en
+  todos sus exámenes cada reloj dura 1,5 veces más, `conTiempoExtra`, aplicado en `rutasDeEvaluacion`); escribirle un
+  mensaje (campana); ver el historial de su expediente.
+
 **La revisión del contenido** (`server/academia-calidad.ts`, pestaña «Contenido» del panel y página
 `/admin/academia/contenido/:materiaId`). Es el filtro doctrinal: el administrador lee cada materia antes de abrirla y
 la aprueba **como administrador**, no como alumno (la pantalla lo dice).

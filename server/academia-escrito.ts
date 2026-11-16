@@ -38,6 +38,8 @@ export async function vistaBreve(userId: number, m: MateriaDef): Promise<Escrito
   const pendientes = ids.length - Number(lec[0]?.n ?? 0);
   if (pendientes > 0) falta.push(pendientes === ids.length ? `completar las ${ids.length} lecciones` : `completar ${pendientes === 1 ? "1 lección" : `${pendientes} lecciones`}`);
   const entregas = Number(f.intentos || 0);
+  // (la Administración puede dar entregas de más: server/academia-gestion.ts)
+  const maxEntregas = ESCRITO_BREVE.entregas + Number(f.extra || 0);
   const { min, max } = ESCRITA[clave.tipo];
   return {
     materia: { id: m.id, titulo: m.titulo },
@@ -45,10 +47,10 @@ export async function vistaBreve(userId: number, m: MateriaDef): Promise<Escrito
     min,
     max,
     entregas,
-    maxEntregas: ESCRITO_BREVE.entregas,
+    maxEntregas,
     mejor: f.mejor == null ? null : Number(f.mejor),
     falta,
-    cerrado: entregas >= ESCRITO_BREVE.entregas ? `Ya hiciste las ${ESCRITO_BREVE.entregas} entregas: cuenta tu mejor nota.` : null,
+    cerrado: entregas >= maxEntregas ? `Ya hiciste las ${maxEntregas} entregas: cuenta tu mejor nota.` : null,
     ultimo: (f.resultado as ResultadoExamen | null) ?? null,
   };
 }

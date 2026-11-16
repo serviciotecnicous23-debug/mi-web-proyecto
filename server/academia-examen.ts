@@ -17,7 +17,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, esperaFinalMin, examenDe, materiaPorId, medallaDe, minutosDe,
+  APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, conTiempoExtra, esperaFinalMin, examenDe, materiaPorId, medallaDe, minutosDe,
   notaExamen, type Apelable, type ApelacionVista, type CorreccionVista, type ExamenEstado, type MateriaDef, type MedidaExamen, type PasoExamen,
   type ResultadoExamen,
 } from "@shared/academia";
@@ -61,6 +61,8 @@ export type FilaPrueba = {
   aprobada_at: string | null;
   pasados_curso: number | null;
   pasados_fallo: number | null;
+  /** Intentos de más que dio la Administración (mini pruebas, escrito breve, suficiencia, trabajo final). */
+  extra: number;
 };
 
 /** Las partes de un intento cerrado, para que cada evaluación decida con sus reglas (la suficiencia pide las dos). */
@@ -126,7 +128,7 @@ export function leerCurso(v: unknown): Curso | null {
 export async function filaDe(userId: number, clave: string): Promise<FilaPrueba> {
   await pool.query(`INSERT INTO academia_pruebas (user_id, clave) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [userId, clave]);
   const { rows } = await pool.query(
-    `SELECT intentos, fallos, mejor, vistas, curso, resultado, aprobada_at,
+    `SELECT intentos, fallos, mejor, vistas, curso, resultado, aprobada_at, extra,
             EXTRACT(EPOCH FROM now() - curso_at)::float AS pasados_curso,
             EXTRACT(EPOCH FROM now() - fallo_at)::float AS pasados_fallo
        FROM academia_pruebas WHERE user_id = $1 AND clave = $2`,
@@ -190,7 +192,8 @@ export async function estadoExamen(userId: number, m: MateriaDef): Promise<Exame
     ...base,
     falta,
     aprobado: mat[0]?.estado === "aprobada",
-    repasar: base.fallos >= FALLOS_PARA_REPASAR ? ids.filter((id) => !repasadas.has(id)) : [],
+    // (sin fecha del último fallo no hay nada que volver a leer: la Administración quitó la espera y el repaso)
+    repasar: base.fallos >= FALLOS_PARA_REPASAR && f.pasados_fallo != null ? ids.filter((id) => !repasadas.has(id)) : [],
   };
 }
 
@@ -430,15 +433,32 @@ export type Resolver = (req: Request, res: Response) => Evaluacion | null;
  * Las rutas de un examen: GET `base` (estado y último resultado) y POST `base/empezar`, `base/paso`, `base/respuesta`
  * y `base/escrita`. Sirven igual para el final de una materia y para el integral de un nivel.
  */
-export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver) {
+/** ¿Tiene tiempo extra en los exámenes? (Lo activa la Administración: server/academia-gestion.ts.) */
+export async function tieneTiempoExtra(userId: number): Promise<boolean> {
+  const { rows } = await pool.query(`SELECT tiempo_extra FROM academia_alumnos WHERE user_id = $1`, [userId]);
+  return !!rows[0]?.tiempo_extra;
+}
+
+/** La evaluación para este alumno: con tiempo extra, sus relojes son 1,5 veces más largos (las preguntas, las mismas). */
+async function paraAlumno(ev: Evaluacion, userId: number): Promise<Evaluacion> {
+  return (await tieneTiempoExtra(userId)) ? { ...ev, medida: conTiempoExtra(ev.medida) } : ev;
+}
+
+export function rutasDeEvaluacion(app: Express, base: string, resolverBase: Resolver) {
+  // cada ruta usa la evaluación del alumno que la pide (con su tiempo extra, si lo tiene)
+  const resolver = async (req: Request, res: Response, userId: number): Promise<Evaluacion | null> => {
+    const ev = resolverBase(req, res);
+    return ev ? paraAlumno(ev, userId) : null;
+  };
   // Cómo va el examen (y el resultado del último intento, con su revisión completa).
   app.get(base, async (req, res) => {
     try {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
-      const estado = await ev.estado(a.userId);
+      // (con tiempo extra, el estado muestra los relojes que va a tener)
+      const estado = { ...(await ev.estado(a.userId)), medida: ev.medida };
       const [{ rows }, apelacion, ap] = await Promise.all([
         pool.query(`SELECT resultado FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [a.userId, ev.clave]),
         apelacionDe(a.userId, ev.clave),
@@ -458,7 +478,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     try {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       if (req.body?.compromiso !== true) return res.status(400).json({ message: "Para empezar, acepta el compromiso de honradez." });
       if (frenar(`ae:${a.userId}`, 800)) return res.status(429).json({ message: "Espera un momento." });
@@ -513,7 +533,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     try {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       const out = await enFila(a.userId, async () => {
         const f = await filaDe(a.userId, ev.clave);
@@ -537,7 +557,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     try {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       if (frenar(`ar:${a.userId}`, 350)) return res.status(429).json({ message: "Espera un momento." });
       const out = await enFila(a.userId, async (): Promise<PasoExamen | { error: number; message: string }> => {
@@ -571,7 +591,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     try {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       if (frenar(`aw:${a.userId}`, 800)) return res.status(429).json({ message: "Espera un momento." });
       const out = await enFila(a.userId, async (): Promise<PasoExamen | { error: number; message: string }> => {
@@ -599,7 +619,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     try {
       const a = await inscritoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       const mensaje = typeof req.body?.mensaje === "string" ? req.body.mensaje.replace(/\s+/g, " ").trim().slice(0, 1000) : "";
       if (mensaje.length < 15) return res.status(400).json({ message: "Cuéntanos en unas palabras qué quieres que se revise (al menos 15 letras)." });
@@ -638,7 +658,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolver: Resolver
     app.get(`${base}/dev-correcta`, async (req, res) => {
       const a = await alumnoDe(req, res);
       if (!a) return;
-      const ev = resolver(req, res);
+      const ev = await resolver(req, res, a.userId);
       if (!ev) return;
       const f = await filaDe(a.userId, ev.clave);
       const c = leerCurso(f.curso);

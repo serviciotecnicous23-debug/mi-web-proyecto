@@ -100,11 +100,12 @@ async function vistaTrabajo(userId: number | null, e: EspecialidadDef, av: Avanc
   const clave = TRABAJOS.get(e.id);
   if (!clave || !tieneTrabajo(e)) return null;
   const { min, max } = ESCRITA[clave.tipo];
-  const maxEntregas = TRABAJO_ESPECIALIDAD.entregas;
-  if (!userId || !av) return { pregunta: clave.pregunta, min, max, entregas: 0, maxEntregas, mejor: null, falta: ["entrar con tu cuenta"], cerrado: null, ultimo: null };
+  if (!userId || !av) return { pregunta: clave.pregunta, min, max, entregas: 0, maxEntregas: TRABAJO_ESPECIALIDAD.entregas, mejor: null, falta: ["entrar con tu cuenta"], cerrado: null, ultimo: null };
   // (solo se lee: la fila de la prueba se crea con la primera entrega)
-  const { rows } = await pool.query(`SELECT intentos, mejor, resultado FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveTrabajo(e.id)]);
+  const { rows } = await pool.query(`SELECT intentos, mejor, resultado, extra FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveTrabajo(e.id)]);
   const entregas = Number(rows[0]?.intentos ?? 0);
+  // (la Administración puede dar entregas de más)
+  const maxEntregas = TRABAJO_ESPECIALIDAD.entregas + Number(rows[0]?.extra ?? 0);
   return {
     pregunta: clave.pregunta,
     min,

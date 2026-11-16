@@ -140,15 +140,24 @@ function Nota({ d }: { d: MateriaDetalle }) {
       <h3 className="font-semibold flex items-center gap-2 mb-3"><ClipboardCheck className="w-4 h-4 text-orange-500" /> Cómo sale tu nota</h3>
       <table className="w-full text-sm">
         <tbody>
-          {filas.map((k) => (
-            <tr key={k} className="border-b border-border/60 last:border-0">
-              <td className="py-2">{NOMBRE_COMPONENTE[k]}</td>
-              <td className="py-2 text-muted-foreground text-right">{d.pesos[k]} %</td>
-              <td className="py-2 text-right font-semibold w-16">{d.componentes[k] != null && d.inscrita ? d.componentes[k] : "—"}</td>
-            </tr>
-          ))}
+          {filas.map((k) => {
+            const ajuste = d.ajustes?.find((a) => a.componente === k);
+            return (
+              <tr key={k} className="border-b border-border/60 last:border-0 align-top">
+                <td className="py-2">
+                  {NOMBRE_COMPONENTE[k]}
+                  {ajuste && <span className="block text-xs text-orange-700 dark:text-orange-300">Ajustada por la Administración: «{ajuste.motivo}»</span>}
+                </td>
+                <td className="py-2 text-muted-foreground text-right">{d.pesos[k]} %</td>
+                <td className="py-2 text-right font-semibold w-16">{d.componentes[k] != null && d.inscrita ? d.componentes[k] : "—"}{ajuste ? "*" : ""}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {!!d.ajustes?.length && (
+        <p className="text-xs text-muted-foreground mt-2" data-testid="nota-ajustes">* La Administración de la academia ajustó esa parte de tu nota; el motivo queda en tu historial.</p>
+      )}
       <p className="text-xs text-muted-foreground mt-3">
         Se aprueba con {APRUEBA} de nota y el examen final aprobado.
         {d.pesos.repasos ? " Repasos: 60 por hacerlos todos y hasta 40 más por los aciertos a la primera." : ""}

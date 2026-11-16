@@ -6,7 +6,8 @@ import type { EscritoBreveVista, EspecialidadDetalle,
 } from "@shared/academia";
 import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
 import type {
-  ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoRevision, RevisionPanel,
+  ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, GestionMateria, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoGestion,
+  ResultadoRevision, RevisionPanel,
 } from "@shared/academia-direccion";
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
@@ -209,6 +210,48 @@ export const accionDocumento = (codigo: string, accion: "revocar" | "restaurar",
 export const corregirNombre = (alumnoId: number, cuerpo: { nombres: string; apellidos: string; motivo: string }) =>
   pedir<{ nombre: string; documentos: number }>("POST", `/api/academia/direccion/alumno/${alumnoId}/nombre`, cuerpo);
 export const cambiarApertura = (abierta: boolean) => pedir<{ abierta: boolean }>("POST", "/api/academia/direccion/apertura", { abierta });
+
+// ---------------------------------------------------------------- la gestión del expediente (server/academia-gestion.ts)
+
+const rutaAlumno = (alumnoId: number) => `/api/academia/direccion/alumno/${alumnoId}`;
+const rutaMateria = (alumnoId: number, materiaId: string) => `${rutaAlumno(alumnoId)}/materia/${encodeURIComponent(materiaId)}`;
+
+/** Una materia del alumno para gestionarla: su nota por partes, sus lecciones, sus exámenes y su certificado. */
+export function useGestionMateria(alumnoId: number, materiaId: string | null) {
+  return useQuery<GestionMateria, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "gestion", alumnoId, materiaId],
+    queryFn: () => pedir("GET", rutaMateria(alumnoId, materiaId!)),
+    enabled: !!materiaId,
+    retry: false,
+  });
+}
+/** El historial del expediente del alumno. */
+export function useHistorialAlumno(alumnoId: number, activo: boolean) {
+  return useQuery<{ historial: HistorialItem[] }, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "historial-alumno", alumnoId],
+    queryFn: () => pedir("GET", `${rutaAlumno(alumnoId)}/historial`),
+    enabled: activo,
+    retry: false,
+  });
+}
+/** Ajustar la nota de una parte de la materia (nota null: quitar el ajuste). */
+export const ajustarComponente = (alumnoId: number, materiaId: string, cuerpo: { componente: string; nota: number | null; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/ajuste`, cuerpo);
+/** Aprobar por convalidación (nota null: quitar la convalidación). */
+export const convalidarMateria = (alumnoId: number, materiaId: string, cuerpo: { nota: number | null; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/convalidacion`, cuerpo);
+export type AccionPrueba = "quitar-espera" | "reiniciar-fallos" | "intento-extra" | "anular-en-curso";
+export const accionPrueba = (alumnoId: number, materiaId: string, cuerpo: { clave: string; accion: AccionPrueba; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/prueba`, cuerpo);
+export const accionLeccion = (alumnoId: number, materiaId: string, cuerpo: { leccionId: string; accion: "completar" | "abrir"; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/leccion`, cuerpo);
+export const inscripcionEnMateria = (alumnoId: number, materiaId: string, cuerpo: { accion: "inscribir" | "baja"; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/inscripcion`, cuerpo);
+export const cambiarEstatusAlumno = (alumnoId: number, cuerpo: { estatus: "retirado" | "activo"; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaAlumno(alumnoId)}/estatus`, cuerpo);
+export const cambiarTiempoExtra = (alumnoId: number, cuerpo: { activo: boolean; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaAlumno(alumnoId)}/tiempo-extra`, cuerpo);
+export const escribirAlumno = (alumnoId: number, texto: string) => pedir<ResultadoGestion>("POST", `${rutaAlumno(alumnoId)}/mensaje`, { texto });
 
 // ---------------------------------------------------------------- la calidad del contenido (fase A3)
 

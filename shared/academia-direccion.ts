@@ -95,8 +95,66 @@ export type AlumnoDetalle = {
   actividad: ActividadItem[];
   /** Quien lo acompaña en la academia (su mentor), si tiene. */
   mentor: { userId: number; nombre: string } | null;
-  puede: { contacto: boolean; revisar: boolean; documentos: boolean; mentores: boolean };
+  puede: { contacto: boolean; revisar: boolean; documentos: boolean; mentores: boolean; gestionar?: boolean };
+  /** Para la Administración (capacidad «gestionar»): lo que se puede cambiar del alumno. */
+  gestion?: GestionAlumno | null;
 };
+
+// ---------------------------------------------------------------- la gestión del expediente (server/academia-gestion.ts)
+
+export type GestionAlumno = {
+  retirado: boolean;
+  /** Tiempo extra en los exámenes (×1,5). */
+  tiempoExtra: boolean;
+  /** Las materias abiertas en las que todavía no está inscrito (para inscribirlo). */
+  inscribibles: { id: string; titulo: string; grupo: string }[];
+};
+
+/** Una parte de la nota de una materia: su peso, lo que calcula el sistema y el ajuste de la Administración, si hay. */
+export type ComponenteGestion = {
+  id: "final" | "repasos" | "versiculo" | "mini" | "escritos";
+  texto: string;
+  peso: number;
+  calculado: number;
+  ajuste: { nota: number; motivo: string; por: string; fecha: string } | null;
+};
+
+/** Un examen o una entrega de la materia, con sus intentos, su tope, su espera y si hay un intento en curso. */
+export type PruebaGestion = {
+  clave: string;
+  titulo: string;
+  tipo: "final" | "mini" | "breve" | "suficiencia";
+  intentos: number;
+  /** El tope de intentos (null: sin tope, como el examen final, que pide esperas). */
+  tope: number | null;
+  /** Intentos de más que dio la Administración. */
+  extra: number;
+  fallos: number;
+  mejor: number | null;
+  /** Segundos que faltan para poder intentarlo otra vez (examen final). */
+  espera: number;
+  /** Desde el tercer fallo hay que volver a abrir las lecciones (examen final). */
+  pideRepaso: boolean;
+  enCurso: boolean;
+};
+
+export type GestionMateria = {
+  materia: { id: string; titulo: string; nivel: number | null; grupo: string };
+  inscrita: string | null;
+  estado: EstadoMateria;
+  via: "cursada" | "suficiencia" | "convalidada" | null;
+  nota: number | null;
+  componentes: ComponenteGestion[];
+  lecciones: { id: string; n: number; titulo: string; completada: boolean }[];
+  pruebas: PruebaGestion[];
+  versiculo: { ref: string; aprendido: boolean; puntaje: number | null } | null;
+  certificado: { codigo: string; revocado: boolean } | null;
+  /** En los Niveles 3 a 5: cuántas materias del nivel lleva aprobadas por suficiencia o convalidación, y el tope. */
+  topeConvalidacion: { usadas: number; tope: number } | null;
+};
+
+/** Lo que responde una acción de la gestión: qué pasó (dicho para la Administración) y la materia como quedó. */
+export type ResultadoGestion = { mensaje: string; materia?: GestionMateria };
 
 export type MateriaSeguimiento = { materia: MateriaReporte; alumnos: (AlumnoFila & { avance: MateriaAvance })[]; puede: { exportar: boolean } };
 

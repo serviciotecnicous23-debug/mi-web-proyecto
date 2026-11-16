@@ -15,6 +15,7 @@ import type { AlumnoDetalle } from "@shared/academia-direccion";
 import { accionDocumento, corregirNombre, useDireccionAlumno, useEscritasAlumno } from "@/components/academia/api";
 import { TarjetaRevision } from "@/components/academia/revision";
 import { MentorAlumno } from "@/components/academia/mentores";
+import { GestionMateriaPanel, HerramientasAlumno } from "@/components/academia/gestion";
 import { useArea } from "@/components/academia/area";
 import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, ListaActividad, NivelesYCertificados, TablaAvance, fecha, hace } from "@/components/academia/seguimiento";
@@ -187,6 +188,8 @@ export default function AcademiaDireccionAlumno() {
   const { user } = useAuth();
   const area = useArea();
   const q = useDireccionAlumno(alumnoId);
+  // la materia que la Administración está gestionando (el panel lateral)
+  const [materiaGestion, setMateriaGestion] = useState<string | null>(null);
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     return (
@@ -205,6 +208,7 @@ export default function AcademiaDireccionAlumno() {
   const d = q.data;
   const a = d.fila;
   const propio = !!user && user.id === a.userId;
+  const gestiona = !!d.puede.gestionar && !propio && !!d.gestion;
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-4 pt-6 pb-16 space-y-6">
@@ -222,13 +226,15 @@ export default function AcademiaDireccionAlumno() {
           </div>
         </header>
 
+        {gestiona && <HerramientasAlumno d={d} alGestionar={setMateriaGestion} />}
         <Ficha d={d} propio={propio} />
         <MentorAlumno d={d} propio={propio} />
 
         <section className="glass-card p-5">
           <h2 className="font-semibold flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4 text-orange-600" /> Materias: por dónde va</h2>
-          <TablaAvance materias={d.materias} />
+          <TablaAvance materias={d.materias} alGestionar={gestiona ? setMateriaGestion : undefined} />
         </section>
+        {gestiona && <GestionMateriaPanel alumnoId={a.userId} nombre={a.nombre} materiaId={materiaGestion} alCerrar={() => setMateriaGestion(null)} />}
 
         <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
         {d.puede.documentos && !propio && <Documentos d={d} />}

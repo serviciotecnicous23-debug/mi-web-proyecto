@@ -45,6 +45,7 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["academia_estudio_meta", (id) => sql`user_id = ${id}`],
   ["academia_actividades", (id) => sql`user_id = ${id}`],
   ["academia_avisos_materia", (id) => sql`user_id = ${id}`],
+  ["academia_ajustes", (id) => sql`user_id = ${id}`],
   // el cuaderno de apuntes (server/cuaderno.ts)
   ["cuaderno_resaltados", (id) => sql`user_id = ${id}`],
   ["cuaderno_notas", (id) => sql`user_id = ${id}`],

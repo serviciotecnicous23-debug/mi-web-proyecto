@@ -8,7 +8,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  miniPruebasDe,
+  miniPruebasDe, NOMBRE_COMPONENTE, SUFICIENCIA,
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
   bloqueoDe, segundosDeLectura, videoQuePide, type BloqueoRepaso,
@@ -27,6 +27,7 @@ import { registerAcademiaSalonRoutes } from "./academia-salon";
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
+import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaActividadesRoutes } from "./academia-actividades";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
@@ -222,7 +223,7 @@ export function registerAcademiaRoutes(app: Express) {
       const userId = acceso.userId;
       let lec = new Map<string, { vista: boolean; completada: boolean }>();
       let fila: { estado: string; nota: number | null; inicio: string; via: string } | undefined;
-      let suf: { intentos: number; curso: unknown } | undefined;
+      let suf: { intentos: number; curso: unknown; extra: number } | undefined;
       let completos: number[] = [];
       let versiculo: MateriaDetalle["versiculo"] = m.memoria ? { ref: m.memoria, aprendido: false, puntaje: null, intentos: 0 } : null;
       if (userId) {
@@ -230,13 +231,13 @@ export function registerAcademiaRoutes(app: Express) {
           pool.query(`SELECT leccion_id, completada_at IS NOT NULL AS completada FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`, [userId, m.lecciones.map((x) => x.id)]),
           pool.query(`SELECT estado, nota, inicio_at, via FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
-          pool.query(`SELECT intentos, curso FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveSuficiencia(m.id)]),
+          pool.query(`SELECT intentos, curso, extra FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveSuficiencia(m.id)]),
         ]);
         lec = new Map(l.map((r: any) => [r.leccion_id, { vista: true, completada: !!r.completada }]));
         fila = mt[0]
           ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota), inicio: new Date(mt[0].inicio_at).toISOString(), via: String(mt[0].via || "cursada") }
           : undefined;
-        suf = sf[0] ? { intentos: Number(sf[0].intentos || 0), curso: sf[0].curso } : undefined;
+        suf = sf[0] ? { intentos: Number(sf[0].intentos || 0), curso: sf[0].curso, extra: Number(sf[0].extra || 0) } : undefined;
         completos = await nivelesCompletos(userId);
         if (versiculo && v[0]) versiculo = { ref: m.memoria!, aprendido: !!v[0].aprendido_at, puntaje: v[0].puntaje == null ? null : Number(v[0].puntaje), intentos: Number(v[0].intentos || 0) };
       }
@@ -247,10 +248,17 @@ export function registerAcademiaRoutes(app: Express) {
         ? (await pool.query(`SELECT 1 FROM academia_avisos_materia WHERE user_id = $1 AND materia_id = $2 AND avisado_at IS NULL`, [userId, m.id])).rowCount! > 0
         : false;
       const componentes = userId && m.disponible ? await componentesDe(userId, m) : {};
+      // las partes de su nota que ajustó la Administración, con el motivo (se ven en la materia)
+      const ajustes: MateriaDetalle["ajustes"] = userId && m.disponible
+        ? ((await pool.query(`SELECT componente, nota, motivo, created_at FROM academia_ajustes WHERE user_id = $1 AND materia_id = $2 ORDER BY created_at`, [userId, m.id])).rows as any[])
+            .filter((r) => r.componente in NOMBRE_COMPONENTE)
+            .map((r) => ({ componente: r.componente, texto: NOMBRE_COMPONENTE[r.componente as keyof typeof NOMBRE_COMPONENTE], nota: Number(r.nota), motivo: String(r.motivo), fecha: new Date(r.created_at).toISOString() }))
+        : [];
       const examen = userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null;
       // La suficiencia se ofrece a quien no aprobó la materia ni dio su examen final, y solo una vez (o si la está dando).
       const sufEnCurso = !!leerCurso(suf?.curso);
-      const suficiencia = examen && estado !== "aprobada" && !examen.intentos && !examen.enCurso && (!suf?.intentos || sufEnCurso) ? { enCurso: sufEnCurso } : null;
+      const sufQuedan = !suf?.intentos || suf.intentos < SUFICIENCIA.intentos + suf.extra;
+      const suficiencia = examen && estado !== "aprobada" && !examen.intentos && !examen.enCurso && (sufQuedan || sufEnCurso) ? { enCurso: sufEnCurso } : null;
       // Nivel 2 en adelante: las mini pruebas y el escrito breve (de a una consulta por vez: la base acepta pocas conexiones)
       const minis: MateriaDetalle["minis"] = [];
       let breve: MateriaDetalle["breve"] = null;
@@ -284,6 +292,7 @@ export function registerAcademiaRoutes(app: Express) {
         minis,
         breve,
         avisame,
+        ajustes,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -599,6 +608,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
+  registerAcademiaGestionRoutes(app);
   registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);
