@@ -9,7 +9,7 @@
 import type { Express } from "express";
 import { pool } from "./db";
 import {
-  APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, HONORES, NIVELES, PACTOS, VERSICULOS_NIVEL, promedio,
+  APRUEBA_INTEGRAL, EXAMEN_INTEGRAL, HONORES, NIVELES, PACTOS, REQUISITOS_POR_HACER, VERSICULOS_NIVEL, promedio,
   type CierreResumen, type ExamenEstado, type NivelDef, type NivelEstado, type RequisitoNivel,
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
@@ -113,6 +113,8 @@ export async function estadoNivel(userId: number | null, nv: NivelDef, vistaPrev
     requisitos.push({ id: "servicio", texto: "Servir 1 mes en un ministerio", hecho: !!r?.servicio.hecho, detalle: r ? detalleServicio(r) : "Pendiente" });
   }
   if (pactoDef) requisitos.push({ id: "pacto", texto: pactoDef.titulo, hecho: !!pactoAt, detalle: pactoAt ? "Aceptado" : "Pendiente" });
+  // lo que el reglamento pide y todavía no se registra en la academia: pendiente, para que el nivel no se cierre sin ello
+  for (const r of REQUISITOS_POR_HACER[nv.n] ?? []) requisitos.push({ id: r.id, texto: r.texto, hecho: false, detalle: "Pronto se podrá registrar en la academia" });
   const p = guardado ?? prom;
   return {
     nivel,

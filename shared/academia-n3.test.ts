@@ -1,7 +1,7 @@
 // Pruebas del Nivel 3 · Formación de obreros: npx tsx --test shared/academia-n3.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { EXAMEN_FINAL, NIVELES, PESOS_NIVEL, entraEnDiagnostico, examenDe, materiaPorId, miniPruebasDe, notaMateria, sugerenciaDiagnostico, tieneEscritoBreve } from "./academia";
+import { EXAMEN_FINAL, NIVELES, PESOS_NIVEL, REQUISITOS_POR_HACER, entraEnDiagnostico, examenDe, materiaPorId, miniPruebasDe, notaMateria, sugerenciaDiagnostico, tieneEscritoBreve } from "./academia";
 
 const nivel3 = NIVELES.find((n) => n.n === 3)!;
 
@@ -58,8 +58,12 @@ test("«Los Evangelios y Hechos», «Evangelismo y consolidación» y «Liderazg
   }
   // Evangelismo y consolidación viene de «Evangelismo 2»
   assert.equal(materiaPorId("n3-evangelismo-consolidacion")!.antes, "Evangelismo 2");
-  // La persona y obra del Espíritu Santo espera la declaración de fe
-  assert.equal(materiaPorId("n3-espiritu-santo")!.disponible, false);
+  // La persona y obra del Espíritu Santo sigue la declaración de fe y deja por confirmar las lenguas como señal
+  const es = materiaPorId("n3-espiritu-santo")!;
+  assert.ok(es.disponible);
+  assert.equal(es.memoria, "Zacarías 4:6");
+  assert.equal(es.silabo!.objetivos.length, 7);
+  assert.match(es.silabo!.proposito, /declaración de fe por confirmar/);
 });
 
 test("«Homilética I» prepara la enseñanza grabada del Nivel 3, con 2 Timoteo 4:2 de memoria", () => {
@@ -98,8 +102,8 @@ test("«Cuidado y consejería básica» cierra el Nivel 3 con Gálatas 6:2; solo
   assert.deepEqual(examenDe(m), EXAMEN_FINAL[3]);
   assert.match(m.lecciones[4].titulo, /derivar/);
   assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Gary R. Collins", "Pablo Hoff"]);
-  // del Nivel 3, solo «La persona y obra del Espíritu Santo» espera (la declaración de fe)
-  assert.deepEqual(nivel3.materias.filter((x) => !x.disponible).map((x) => x.id), ["n3-espiritu-santo"]);
+  // el Nivel 3 tiene sus diez materias publicadas
+  assert.deepEqual(nivel3.materias.filter((x) => !x.disponible).map((x) => x.id), []);
 });
 
 test("las materias del Nivel 3 se evalúan como pide el reglamento", () => {
@@ -133,4 +137,16 @@ test("la diagnóstica mide los Niveles 1 y 2; a quien ya los completó le sugier
   const s = sugerenciaDiagnostico([], [1, 2], []);
   assert.equal(s.nivel, 3);
   assert.equal(s.empezar?.materiaId, "n3-hermeneutica");
+});
+
+test("los requisitos del reglamento que todavía no se registran (Niveles 3 a 5) son los de cada nivel y quedan pendientes", () => {
+  for (const n of [3, 4, 5] as const) {
+    const nv = NIVELES.find((x) => x.n === n)!;
+    const faltan = REQUISITOS_POR_HACER[n]!;
+    assert.ok(faltan.length > 0, `Nivel ${n}`);
+    for (const r of faltan) assert.ok(nv.requisitos.includes(r.texto), `Nivel ${n}: «${r.texto}» está en su reglamento`);
+  }
+  // los Niveles 1 y 2 ya registran todos sus requisitos
+  assert.equal(REQUISITOS_POR_HACER[1], undefined);
+  assert.equal(REQUISITOS_POR_HACER[2], undefined);
 });
