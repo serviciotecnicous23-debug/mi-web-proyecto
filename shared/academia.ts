@@ -3140,6 +3140,109 @@ const AYUNO_BIBLICO: MateriaDef = {
   disponible: true,
 };
 
+const GUERRA_ESPIRITUAL: MateriaDef = {
+  id: "intercesion-4",
+  nivel: null,
+  especialidad: "intercesion",
+  avanzada: true,
+  orden: 4,
+  titulo: "Guerra espiritual bíblica y equilibrada",
+  resumen: "Una batalla real sin miedo ni descuido, la victoria de Cristo, la armadura de Dios, someterse a Dios y resistir al diablo, Jesús y los apóstoles ante los espíritus malos, y los errores que hay que evitar.",
+  base: "Efesios 6:10-18; Santiago 4:7",
+  memoria: "Santiago 4:7",
+  lecciones: lecciones("intercesion-4", [
+    ["Una batalla real, sin miedo ni descuido", "Efesios 6:10-12; 1 Pedro 5:8-9; Juan 10:10; 2 Corintios 2:10-11"],
+    ["La victoria de Cristo", "Colosenses 1:16; Colosenses 2:15; Hebreos 2:14-15; 1 Juan 3:8; Colosenses 1:13; 1 Juan 4:4"],
+    ["La armadura de Dios", "Efesios 6:13-18"],
+    ["Someteos a Dios y resistid al diablo", "Santiago 4:7; Mateo 4:10-11; Efesios 4:26-27; 2 Corintios 10:3-5; Santiago 1:14"],
+    ["Jesús, los apóstoles y los espíritus malos", "Marcos 1:23-27; Lucas 10:17-20; Hechos 16:16-18; Hechos 19:13-20; Deuteronomio 18:10-12"],
+    ["Los errores que hay que evitar", "2 Timoteo 1:7; Judas 1:9; 1 Juan 4:1; Daniel 10:12-13; Romanos 16:20"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente ya formado que sirve en la intercesión entienda la guerra espiritual como la enseña la Biblia, con equilibrio: una batalla real contra las fuerzas espirituales y no contra las personas, que se pelea desde la victoria de Cristo en la cruz, con la armadura de Dios y la oración, sometiéndose a Dios y resistiendo al diablo, aprendiendo de cómo actuaron Jesús y los apóstoles, y evitando los errores del miedo, la arrogancia y los métodos que la Biblia no enseña. Es una materia avanzada: pide el Nivel 3. No enseña técnicas de liberación: quien sirva en esa área lo hace bajo la dirección de sus pastores, y no todo problema es espiritual, porque hay enfermedades que trata el médico. Su base es la exhortación de Santiago: «Someteos, pues, a Dios; resistid al diablo, y huirá de vosotros» (Santiago 4:7).",
+    objetivos: [
+      { id: "o1", texto: "Explicar que la batalla espiritual es real y que el enemigo no son las personas.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la victoria de Cristo sobre los principados y las potestades.", bloom: "comprender" },
+      { id: "o3", texto: "Describir la armadura de Dios como una vida en Cristo y no como una fórmula.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar Santiago 4:7: someterse a Dios y resistir al diablo.", bloom: "aplicar" },
+      { id: "o5", texto: "Analizar cómo actuaron Jesús y los apóstoles ante los espíritus malos.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar las prácticas de guerra espiritual a la luz de la Biblia y evitar sus errores.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Santiago 4:7 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia enseña sobre la batalla espiritual, la victoria de Cristo y la armadura de Dios.",
+      ser: "Un intercesor firme, humilde y sin miedo, sometido a Dios.",
+      hacer: "Resistir al enemigo con la Palabra y la oración, con discernimiento y bajo la dirección de los pastores.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Stott", titulo: "El mensaje de Efesios", editorial: "Certeza Unida" },
+        { autor: "Neil T. Anderson", titulo: "Rompiendo las cadenas", editorial: "Unilit" },
+      ],
+      complementaria: [{ autor: "C. S. Lewis", titulo: "Cartas del diablo a su sobrino", editorial: "Rialp", nota: "Su prólogo advierte contra los dos errores opuestos sobre los demonios." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Efesios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yJgym5MGzM4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Efesios 6: la armadura de Dios", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=6" },
+      { tipo: "lectura", titulo: "Hechos 19: el evangelio en Éfeso", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=19" },
+    ],
+  },
+  disponible: true,
+};
+
+const ORACION_AVIVAMIENTOS: MateriaDef = {
+  id: "intercesion-5",
+  nivel: null,
+  especialidad: "intercesion",
+  orden: 5,
+  titulo: "La oración en los avivamientos",
+  resumen: "Qué es un avivamiento, los avivamientos de la Biblia, los moravos de Herrnhut, los despertares con Edwards, Carey, el pajar y la calle Fulton, Gales, Azusa, Corea y Chile, y cómo orar hoy por avivamiento.",
+  base: "2 Crónicas 7:14; Habacuc 3:2",
+  memoria: "2 Crónicas 7:14",
+  lecciones: lecciones("intercesion-5", [
+    ["¿Qué es un avivamiento?", "Habacuc 3:2; Salmos 85:6; Isaías 57:15; Juan 16:8"],
+    ["Avivamientos en la Biblia", "2 Crónicas 7:13-14; 2 Crónicas 30:27; Nehemías 8:5-6; Nehemías 9:1-3; Hechos 1:14; Hechos 2:1-4; Hechos 2:41-42"],
+    ["Los moravos: una oración que no se apagó", "Isaías 62:6-7; Mateo 9:37-38; Mateo 18:19-20"],
+    ["Los despertares: oración unida y misiones", "Zacarías 8:20-22; Salmos 51:10-13"],
+    ["Gales, Azusa, Corea y Chile", "Santiago 5:16-18; Hechos 2:16-18; Hechos 19:18"],
+    ["Orar por avivamiento hoy", "Isaías 64:1; Hechos 4:29-31; Mateo 7:16-20; Gálatas 5:22-23; 1 Tesalonicenses 5:19-21; 1 Corintios 14:40"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el creyente que quiere servir en la intercesión conozca el lugar de la oración en los avivamientos: qué es un avivamiento según la Biblia, cómo Dios renovó a su pueblo en la Escritura, y cómo la oración perseverante y unida precedió a los avivamientos de la historia, desde los moravos de Herrnhut y los despertares de los siglos XVIII y XIX hasta Gales, la calle Azusa, Corea y Chile; y que sepa orar hoy por avivamiento y reconocer uno verdadero por sus frutos. Las cifras que varían según las fuentes se dicen con cautela. Lo que el ministerio enseña sobre las lenguas como señal del bautismo en el Espíritu y su doctrina del avivamiento son puntos de la declaración de fe por confirmar. Su base es la promesa de Dios: «Si se humillare mi pueblo, sobre el cual mi nombre es invocado, y oraren, y buscaren mi rostro, y se convirtieren de sus malos caminos; entonces yo oiré desde los cielos, y perdonaré sus pecados, y sanaré su tierra» (2 Crónicas 7:14).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es un avivamiento según la Biblia y cuáles son sus señales.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los avivamientos de la Biblia y el lugar de la Palabra, la confesión y la oración.", bloom: "comprender" },
+      { id: "o3", texto: "Narrar la vigilia de oración de los moravos y su relación con las misiones.", bloom: "comprender" },
+      { id: "o4", texto: "Analizar cómo la oración unida precedió a los despertares y a las misiones.", bloom: "analizar" },
+      { id: "o5", texto: "Describir los avivamientos de Gales, Azusa, Corea y Chile y el lugar de la oración y la confesión.", bloom: "comprender" },
+      { id: "o6", texto: "Evaluar un avivamiento por sus frutos y planear la oración por avivamiento hoy.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Crónicas 7:14 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lo que la Biblia y la historia de la iglesia enseñan sobre la oración y los avivamientos.",
+      ser: "Un intercesor humilde que anhela la presencia de Dios y empieza por su propio corazón.",
+      hacer: "Orar con otros, con constancia, por la renovación de la iglesia y por la misión, examinándolo todo por sus frutos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Arthur Wallis", titulo: "En el día de su poder", editorial: "Unilit" },
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Los moravos, los despertares y los avivamientos." },
+      ],
+      complementaria: [{ autor: "Pablo A. Deiros", titulo: "Historia del cristianismo en América Latina", editorial: "Mundo Hispano", nota: "Para el protestantismo y el pentecostalismo en América Latina." }],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Crónicas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lMj--4fDpvc", minutos: 8 },
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "lectura", titulo: "2 Crónicas 7: la promesa a Salomón", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Cronicas&cap=7" },
+      { tipo: "lectura", titulo: "Hechos 4: la oración de la iglesia", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=4" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Una materia de especialidad: su definición completa, o solo el título (y si es avanzada) mientras se prepara. */
 type MateriaDeEspecialidad = MateriaDef | [titulo: string, avanzada?: boolean];
 
@@ -3175,7 +3278,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Consejería matrimonial", true], ["Consejería familiar", true], ["Duelo y crisis"], ["Adicciones y restauración", true], ["Ética y límites del consejero"],
   ]),
   especialidad("intercesion", "Intercesión y oración", "Una vida de oración, ayuno e intercesión con base bíblica.", [
-    TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, ["Guerra espiritual bíblica y equilibrada", true], ["La oración en los avivamientos"],
+    TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, GUERRA_ESPIRITUAL, ORACION_AVIVAMIENTOS,
   ]),
   especialidad("comunicaciones", "Comunicaciones y medios", "Llevar el evangelio por la radio, las redes y las transmisiones.", [
     ["Evangelismo en redes"], ["Radio cristiana"], ["Video y transmisiones"], ["Redacción y comunicación"], ["Ética y seguridad digital"],
