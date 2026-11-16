@@ -67,6 +67,15 @@ Cada lección trata una sola idea y dura de 5 a 10 minutos. Tiene estas partes:
 5. **Para la vida:** una aplicación y una nota privada.
 6. **Repaso:** preguntas con la respuesta al instante. Sin el repaso respondido bien no se puede terminar la lección.
 
+**Las herramientas de lectura** (`client/src/components/academia/lectura.tsx`, debajo del título de cada lección):
+- **Escuchar la lección:** la lee en voz alta con la voz en español del aparato (la API de voz del navegador: sin costo
+  ni servidor), bloque por bloque (los mismos `data-bloque` del cuaderno: «Para empezar», la lectura y la idea clave),
+  resaltando el que lee. Pausar sigue desde el mismo párrafo; hay detener y cuatro velocidades (0,85× a 1,3×). Cada
+  párrafo se lee en trozos de pocas oraciones (`trozosDeLectura`, `shared/lectura-voz.ts`, con su prueba) porque los
+  navegadores cortan las frases muy largas. Si el aparato no tiene voz, el botón no aparece.
+- **El tamaño de la letra** (A− y A+: 100 %, 110 %, 120 % y 135 %) agranda la lectura con `zoom`, que no desborda en el
+  teléfono. La velocidad y el tamaño se recuerdan en el aparato (`localStorage`).
+
 **Primero se lee (que no se responda sin leer):** el repaso se abre recién cuando pasó el tiempo de lectura de la lección
 (`segundosDeLectura`: el 40 % de sus minutos, entre 1 y 3 minutos) y, si la lección tiene un video de YouTube, cuando se
 vieron de corrido sus primeros 2 minutos (o el video entero, si dura menos: `videoQuePide`).

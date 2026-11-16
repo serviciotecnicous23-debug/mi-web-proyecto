@@ -11,6 +11,7 @@ import { loginUrl } from "@/lib/login-redirect";
 import { idYouTube, type BloqueoRepaso, type LeccionVista, type RespuestaRepaso } from "@shared/academia";
 import { avanceVideo, completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
 import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
+import { HerramientasLectura, useTamanoLetra } from "@/components/academia/lectura";
 import { CuadernoEnLeccion, useMarcasDeLeccion } from "@/components/cuaderno/en-leccion";
 import { conMarcas } from "@/components/cuaderno/marcas";
 
@@ -118,6 +119,8 @@ export default function AcademiaLeccion() {
   // el cuaderno: lo que el alumno resaltó (pintado en el texto) y el texto donde puede seleccionar
   const texto = useRef<HTMLElement | null>(null);
   const marcas = useMarcasDeLeccion(leccionId, !!q.data?.conSesion);
+  // el tamaño de la letra de la lectura (A− y A+), recordado en este aparato
+  const [tamano, setTamano] = useTamanoLetra();
 
   useEffect(() => {
     if (q.data) {
@@ -258,7 +261,8 @@ export default function AcademiaLeccion() {
         </div>
         <BarraAvance valor={l.leccion.n} de={l.leccion.de} />
         <h1 className="heading-display font-display text-3xl md:text-5xl mt-6 mb-2" data-testid="leccion-titulo">{l.leccion.titulo}</h1>
-        <p className="text-sm text-muted-foreground mb-6">{l.leccion.base}</p>
+        <p className="text-sm text-muted-foreground mb-4">{l.leccion.base}</p>
+        <HerramientasLectura contenedor={texto} tamano={tamano} alCambiarTamano={setTamano} />
 
         {!conSesion && l.publica && (
           <div className="glass-card p-4 mb-6 text-sm">Estás leyendo una lección abierta. <a href={loginUrl()} className="text-orange-600 dark:text-orange-300 font-medium hover:underline">Entra o crea tu cuenta</a> para guardar tu avance y recibir tu certificado.</div>
@@ -275,6 +279,8 @@ export default function AcademiaLeccion() {
           <ul className="space-y-1.5">{l.objetivos.map((o) => <li key={o} className="flex gap-2 text-[15px]"><span className="text-orange-500">•</span>{o}</li>)}</ul>
         </section>
 
+        {/* la lectura, con el tamaño de letra que eligió el alumno */}
+        <div style={tamano !== 1 ? { zoom: tamano } : undefined} data-testid="leccion-lectura">
         <section className="mb-6">
           <p className="data-label mb-2">Para empezar</p>
           <p className="text-lg leading-8 italic" data-bloque={-1}>{marcas.get(-1) ? conMarcas(l.paraEmpezar, marcas.get(-1)) : l.paraEmpezar}</p>
@@ -309,6 +315,7 @@ export default function AcademiaLeccion() {
             <p className="text-sm text-muted-foreground">Con tu cuenta puedes guardar tu respuesta en tu diario privado.</p>
           )}
         </section>
+        </div>
 
         <section className="mb-10" data-testid="repaso">
           <h2 className="font-display text-2xl font-bold mb-1 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Repaso</h2>
