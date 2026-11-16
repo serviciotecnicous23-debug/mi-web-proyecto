@@ -21,7 +21,7 @@ import { limpiarNombre, nombreCompleto } from "@shared/academia-inscripcion";
 import type { ApelacionItem, HistorialItem, ItemRevision, ResultadoRevision, RevisionPanel } from "@shared/academia-direccion";
 import { escritaPorId } from "./academia/index";
 import {
-  avisarA, claveFinal, claveIntegral, claveTrabajo, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, type ContextoExamen,
+  avisarA, claveFinal, claveIntegral, claveTrabajo, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, viaFija, type ContextoExamen,
 } from "./academia-comun";
 import { emitirMateria } from "./academia-documentos";
 import { avanceEspecialidad, revisarEspecialidad } from "./academia-especialidad";
@@ -30,7 +30,7 @@ import { estadoNivel, revisarNivel } from "./academia-nivel";
 import { permisoDe } from "./academia-direccion";
 
 /** Nadie revisa lo suyo: sus respuestas, su pedido de revisión, sus documentos o su nombre (lo hace otra persona). */
-const MENSAJE_PROPIO = "No puedes revisar ni cambiar lo tuyo: como alumno, lo tuyo lo revisa otro administrador (o vale la nota automática).";
+export const MENSAJE_PROPIO = "No puedes revisar ni cambiar lo tuyo: como alumno, lo tuyo lo revisa otro administrador (o vale la nota automática).";
 
 /** El motivo de un certificado que revocó (o volvió a emitir) una corrección de nota, no una decisión de la Administración. */
 export const PREFIJO_AUTO = "Nota corregida por la Administración de la academia:";
@@ -134,14 +134,14 @@ async function intentoDe(userId: number, clave: string, intento: number): Promis
 }
 
 /** El certificado de una materia, de un nivel o de una especialidad: revocado por una corrección de nota, o vuelto a valer si lo revocó otra. */
-async function revocarPorNota(userId: number, tipo: TipoDocumento, ref: string, motivo: string): Promise<void> {
+export async function revocarPorNota(userId: number, tipo: TipoDocumento, ref: string, motivo: string): Promise<void> {
   await pool.query(
     `UPDATE academia_certificados SET revocado_at = now(), motivo = $4 WHERE user_id = $1 AND tipo = $2 AND ref = $3 AND revocado_at IS NULL`,
     [userId, tipo, ref, `${PREFIJO_AUTO} ${motivo}`.slice(0, 600)],
   );
 }
 /** (Los honores se ponen solo si se pasan: el certificado de una especialidad los lleva por su propia nota.) */
-async function restaurarSiFueNota(userId: number, tipo: TipoDocumento, ref: string, nota: number | null, honores?: boolean): Promise<void> {
+export async function restaurarSiFueNota(userId: number, tipo: TipoDocumento, ref: string, nota: number | null, honores?: boolean): Promise<void> {
   await pool.query(
     `UPDATE academia_certificados
         SET nota = COALESCE($4, nota),
@@ -158,7 +158,7 @@ async function restaurarSiFueNota(userId: number, tipo: TipoDocumento, ref: stri
  * cinco materias y el trabajo aprobados, su certificado se emite (o vuelve a valer, con la nota nueva); si dejó de
  * cumplir, su certificado se revoca con el motivo.
  */
-async function reconsiderarEspecialidad(userId: number, e: EspecialidadDef, motivo: string): Promise<"completa" | "reabierta" | null> {
+export async function reconsiderarEspecialidad(userId: number, e: EspecialidadDef, motivo: string): Promise<"completa" | "reabierta" | null> {
   const av = await avanceEspecialidad(userId, e);
   const { rows } = await pool.query(`SELECT revocado_at, motivo FROM academia_certificados WHERE user_id = $1 AND tipo = 'especialidad' AND ref = $2`, [userId, e.id]);
   const doc = rows[0] as { revocado_at: string | null; motivo: string | null } | undefined;
@@ -181,7 +181,7 @@ async function reconsiderarEspecialidad(userId: number, e: EspecialidadDef, moti
 }
 
 /** El nivel, revisado otra vez: se completa si ya cumple todo, o se reabre si dejó de cumplir. */
-async function reconsiderarNivel(userId: number, nv: NivelDef, motivo: string): Promise<"completo" | "reabierto" | null> {
+export async function reconsiderarNivel(userId: number, nv: NivelDef, motivo: string): Promise<"completo" | "reabierto" | null> {
   const e = await estadoNivel(userId, nv, false);
   const cumple = e.requisitos.every((r) => r.hecho);
   if (e.completado && !cumple) {
@@ -225,9 +225,10 @@ async function reconsiderarSuficiencia(userId: number, m: MateriaDef, objetiva: 
   return { nota, aprobada: estaba, cambio: null };
 }
 
-async function reconsiderarMateria(userId: number, m: MateriaDef, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
+export async function reconsiderarMateria(userId: number, m: MateriaDef, motivo: string): Promise<NonNullable<ResultadoRevision["materia"]>> {
   const { rows: ya } = await pool.query(`SELECT estado, via, nota FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
-  if (ya[0]?.estado === "aprobada" && ya[0].via === "suficiencia") return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
+  // aprobada por suficiencia o convalidada: su nota es fija (la del examen de suficiencia o la de la convalidación)
+  if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
   const nota = notaMateria(pesosDe(m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
@@ -369,7 +370,7 @@ function mensajeDe(r: Omit<ResultadoRevision, "item" | "mensaje">, cambio: boole
 
 // ---------------------------------------------------------------- el historial
 
-async function registrar(req: Request, accion: string, alumnoId: number | null, texto: string, motivo: string | null): Promise<void> {
+export async function registrar(req: Request, accion: string, alumnoId: number | null, texto: string, motivo: string | null): Promise<void> {
   await pool.query(
     `INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES ($1, $2, 'academia', $3, $4, $5)`,
     [req.user!.id, accion, alumnoId, JSON.stringify({ texto, motivo }), req.ip ?? null],

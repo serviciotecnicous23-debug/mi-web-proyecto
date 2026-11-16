@@ -224,7 +224,20 @@ CREATE TABLE IF NOT EXISTS "academia_avisos_materia" (
   "created_at" timestamp NOT NULL DEFAULT now(),
   "avisado_at" timestamp,
   PRIMARY KEY ("user_id", "materia_id")
-);`;
+);
+CREATE TABLE IF NOT EXISTS "academia_ajustes" (
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "materia_id" text NOT NULL,
+  "componente" text NOT NULL,
+  "nota" integer NOT NULL,
+  "antes" integer,
+  "motivo" text NOT NULL,
+  "por" integer,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  PRIMARY KEY ("user_id", "materia_id", "componente")
+);
+ALTER TABLE "academia_pruebas" ADD COLUMN IF NOT EXISTS "extra" integer NOT NULL DEFAULT 0;
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "tiempo_extra" boolean NOT NULL DEFAULT false;`;
 
 // ---------------------------------------------------------------- quién la ve
 
@@ -595,13 +608,31 @@ export const claveTrabajo = (especialidadId: string) => `especialidad-${especial
 /** La clave del examen integral de un nivel en academia_pruebas. */
 export const claveIntegral = (nivel: number) => `nivel-${nivel}:integral`;
 
+/** Las partes de la nota que se pueden ajustar (las que pesan en la materia). */
+export const COMPONENTES_AJUSTABLES = ["final", "repasos", "versiculo", "mini", "escritos"] as const;
+/** La materia aprobada así tiene su nota fija: no se recalcula con los componentes del curso. */
+export const viaFija = (via: unknown) => via === "suficiencia" || via === "convalidada";
+
 /**
- * Los componentes de la nota de una materia:
+ * Los componentes de la nota de una materia, con los ajustes de la Administración (server/academia-gestion.ts): cada
+ * ajuste, con su motivo, reemplaza al componente que calcula el sistema.
+ */
+export async function componentesDe(userId: number, m: MateriaDef): Promise<Componentes> {
+  const comps = await componentesCalculados(userId, m);
+  const { rows } = await pool.query(`SELECT componente, nota FROM academia_ajustes WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  for (const r of rows as { componente: string; nota: number }[]) {
+    if ((COMPONENTES_AJUSTABLES as readonly string[]).includes(r.componente)) comps[r.componente as keyof Componentes] = Number(r.nota);
+  }
+  return comps;
+}
+
+/**
+ * Los componentes de la nota de una materia como los calcula el sistema:
  * - repasos: 60 por haberlos hecho todos y hasta 40 más según los aciertos a la primera;
  * - versículo: su puntaje (100, 80 o 60 según los intentos);
  * - examen final: la mejor nota de sus intentos.
  */
-export async function componentesDe(userId: number, m: MateriaDef): Promise<Componentes> {
+export async function componentesCalculados(userId: number, m: MateriaDef): Promise<Componentes> {
   const banco = BANCOS.get(m.id);
   const ids = m.lecciones.map((l) => l.id);
   const comps: Componentes = {};
@@ -641,8 +672,9 @@ export async function componentesDe(userId: number, m: MateriaDef): Promise<Comp
 /** Vuelve a calcular la nota de la materia y la guarda. Devuelve la nota y si quedó aprobada. */
 export async function recalcularMateria(userId: number, m: MateriaDef): Promise<{ nota: number; aprobada: boolean; componentes: Componentes }> {
   const { rows: ya } = await pool.query(`SELECT estado, via, nota, componentes FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
-  if (ya[0]?.estado === "aprobada" && ya[0].via === "suficiencia") {
-    // aprobada por suficiencia: su nota es la del examen de suficiencia, no la de los componentes del curso
+  if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) {
+    // aprobada por suficiencia (o convalidada): su nota es la del examen de suficiencia (o la de la convalidación), no la de
+    // los componentes del curso
     return { nota: Number(ya[0].nota ?? 0), aprobada: true, componentes: (ya[0].componentes ?? {}) as Componentes };
   }
   const componentes = await componentesDe(userId, m);

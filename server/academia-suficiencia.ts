@@ -48,7 +48,7 @@ async function estadoSuficiencia(userId: number, m: MateriaDef): Promise<ExamenE
   }
   let cerrado: string | null = null;
   if (!aprobada && !base.enCurso) {
-    if (Number(f.intentos || 0) >= SUFICIENCIA.intentos) cerrado = "La suficiencia se da una sola vez por materia: ahora se cursa, lección por lección.";
+    if (Number(f.intentos || 0) >= SUFICIENCIA.intentos + Number(f.extra || 0)) cerrado = "La suficiencia se da una sola vez por materia: ahora se cursa, lección por lección.";
     else if (Number(fin[0]?.intentos || 0) > 0) cerrado = "Ya diste el examen final de esta materia: la suficiencia es para quien todavía no la cursó.";
     else {
       const tope = topeSuficiencia(m);

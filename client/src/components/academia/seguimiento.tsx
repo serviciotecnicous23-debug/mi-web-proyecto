@@ -150,10 +150,11 @@ export function ListaActividad({ items, enlaceAlumno, vacio = "Todavía no hay a
 }
 
 /** El avance de un alumno en cada materia: lecciones, versículo, examen, nota y certificado. */
-export function TablaAvance({ materias, conCertificado = true, propio = false }: { materias: MateriaAvance[]; conCertificado?: boolean; propio?: boolean }) {
+/** `alGestionar`: para la Administración, el botón «Gestionar» de cada materia (components/academia/gestion.tsx). */
+export function TablaAvance({ materias, conCertificado = true, propio = false, alGestionar }: { materias: MateriaAvance[]; conCertificado?: boolean; propio?: boolean; alGestionar?: (materiaId: string) => void }) {
   if (!materias.length) return propio ? null : <p className="text-sm text-muted-foreground">Todavía no se inscribió en ninguna materia.</p>;
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
       <table className="w-full text-sm" data-testid="tabla-avance">
         <thead>
           <tr className="text-left text-xs text-muted-foreground border-b border-border">
@@ -163,6 +164,7 @@ export function TablaAvance({ materias, conCertificado = true, propio = false }:
             <th className="py-2 px-2 font-medium">Examen</th>
             <th className="py-2 px-2 font-medium text-right">Nota</th>
             <th className="py-2 pl-2 font-medium">Estado</th>
+            {alGestionar && <th className="py-2 pl-2"><span className="sr-only">Gestionar</span></th>}
           </tr>
         </thead>
         <tbody>
@@ -198,6 +200,18 @@ export function TablaAvance({ materias, conCertificado = true, propio = false }:
                   <span>En curso</span>
                 )}
               </td>
+              {alGestionar && (
+                <td className="py-2.5 pl-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => alGestionar(m.id)}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:border-orange-500/60 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap"
+                    data-testid={`gestionar-${m.id}`}
+                  >
+                    Gestionar
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

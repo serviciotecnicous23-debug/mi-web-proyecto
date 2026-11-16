@@ -12,7 +12,7 @@ import { pool } from "./db";
 import { ESPECIALIDADES, HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno } from "@shared/academia";
 import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/academia-permisos";
 import type {
-  ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, MateriaAvance, MateriaReporte, MateriaSeguimiento,
+  ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, GestionAlumno, MateriaAvance, MateriaReporte, MateriaSeguimiento,
 } from "@shared/academia-direccion";
 import { academiaAbierta, accesoDe, claveFinal, frenar, inscritoDe } from "./academia-comun";
 import { fichaDe } from "./academia-inscripcion";
@@ -271,6 +271,17 @@ async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDet
   };
 }
 
+/** Lo que la Administración puede cambiar del alumno: retirado, tiempo extra y las materias abiertas donde inscribirlo. */
+async function gestionAlumnoDe(id: number, inscritas: string[]): Promise<GestionAlumno> {
+  const { rows } = await pool.query(`SELECT estatus, tiempo_extra FROM academia_alumnos WHERE user_id = $1`, [id]);
+  const ya = new Set(inscritas);
+  const inscribibles = [
+    ...NIVELES.flatMap((n) => n.materias.filter((m) => m.disponible && !ya.has(m.id)).map((m) => ({ id: m.id, titulo: m.titulo, grupo: `Nivel ${n.n}` }))),
+    ...ESPECIALIDADES.flatMap((e) => e.materias.filter((m) => m.disponible && !ya.has(m.id)).map((m) => ({ id: m.id, titulo: m.titulo, grupo: e.nombre }))),
+  ];
+  return { retirado: rows[0]?.estatus === "retirado", tiempoExtra: !!rows[0]?.tiempo_extra, inscribibles };
+}
+
 // ---------------------------------------------------------------- los reportes en CSV
 
 const fechaCorta = (v: string | null | undefined) => (v ? v.slice(0, 10) : "");
@@ -392,8 +403,14 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       const contacto = puede(p, "contacto");
       const [fila] = await filasDe(p, contacto, id);
       if (!fila) return res.status(404).json({ message: "No existe ese alumno, o no es de tu iglesia." });
+      const gestionar = puede(p, "gestionar");
+      const detalle = await detalleDe(fila, contacto);
       res.setHeader("Cache-Control", "no-store");
-      res.json({ ...(await detalleDe(fila, contacto)), puede: { contacto, revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), mentores: puede(p, "mentores") } });
+      res.json({
+        ...detalle,
+        puede: { contacto, revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), mentores: puede(p, "mentores"), gestionar },
+        gestion: gestionar ? await gestionAlumnoDe(id, detalle.materias.map((m) => m.id)) : null,
+      });
     } catch (err) {
       console.error("[academia] dirección, alumno:", err);
       res.sendStatus(500);

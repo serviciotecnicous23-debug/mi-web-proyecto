@@ -32,9 +32,11 @@ export async function estadoMini(userId: number, m: MateriaDef, n: number, lecci
     falta.push(`completar ${pendientes === 1 ? "1 lección" : `${pendientes} lecciones`} (de la ${desde} a la ${hasta})`);
   }
   const usados = Number(f.intentos || 0);
+  // (la Administración puede dar intentos de más: server/academia-gestion.ts)
+  const tope = MINI_PRUEBA.intentos + Number(f.extra || 0);
   const cerrado =
-    !base.enCurso && usados >= MINI_PRUEBA.intentos
-      ? `Ya usaste los ${MINI_PRUEBA.intentos} intentos: cuenta tu mejor nota${base.mejor != null ? `, ${base.mejor}` : ""}.`
+    !base.enCurso && usados >= tope
+      ? `Ya usaste los ${tope} intentos: cuenta tu mejor nota${base.mejor != null ? `, ${base.mejor}` : ""}.`
       : null;
   return { ...base, espera: 0, falta, aprobado: false, repasar: [], cerrado };
 }

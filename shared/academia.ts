@@ -247,6 +247,19 @@ export function tieneEscritoBreve(m: MateriaDef): boolean {
 export type MiniEstado = { n: number; lecciones: number[]; intentos: number; mejor: number | null; enCurso: boolean; falta: string[]; cerrado: string | null };
 /** El escrito breve en la página de la materia. */
 export type BreveEstado = { entregas: number; maxEntregas: number; mejor: number | null; falta: string[] };
+/**
+ * El tiempo extra (lo activa la Administración para quien lo necesita: docs/academia.md, «Tiempo y honradez»): el mismo
+ * examen, con cada reloj 1,5 veces más largo.
+ */
+export const FACTOR_TIEMPO_EXTRA = 1.5;
+export function conTiempoExtra(medida: MedidaExamen): MedidaExamen {
+  return {
+    ...medida,
+    segundos: Math.round(medida.segundos * FACTOR_TIEMPO_EXTRA),
+    minutosEscrita: Math.ceil(medida.minutosEscrita * FACTOR_TIEMPO_EXTRA),
+    ...(medida.minutosBreve ? { minutosBreve: Math.ceil(medida.minutosBreve * FACTOR_TIEMPO_EXTRA) } : {}),
+  };
+}
 /** Margen por la conexión: una respuesta que llega hasta 6 s después del tiempo todavía vale. */
 export const MARGEN_SEGUNDOS = 6;
 /** Margen de la parte escrita (escribir en el teléfono). */
@@ -3768,6 +3781,8 @@ export type MateriaDetalle = {
   breve: BreveEstado | null;
   /** Pidió que le avisen cuando la materia abra (solo tiene sentido mientras está en preparación). */
   avisame?: boolean;
+  /** Las partes de su nota que ajustó la Administración, con el motivo (el alumno los ve). */
+  ajustes?: { componente: keyof Pesos; texto: string; nota: number; motivo: string; fecha: string }[];
 };
 
 /** El escrito breve de una materia, para el alumno. */

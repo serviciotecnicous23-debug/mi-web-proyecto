@@ -12,7 +12,9 @@
 export type RolAcademia = "direccion" | "equipo" | "iglesia" | "alumno";
 /** Sobre quién: todos los alumnos, los de su iglesia aliada, solo lo suyo, o nada. */
 export type Alcance = "todos" | "iglesia" | "propio" | "no";
-export type Capacidad = "panel" | "avance" | "notas" | "contacto" | "exportar" | "avisos" | "revisar" | "documentos" | "contenido" | "aprobar" | "banco" | "mentores" | "abrir";
+export type Capacidad =
+  | "panel" | "avance" | "notas" | "contacto" | "exportar" | "avisos" | "revisar" | "gestionar" | "documentos" | "contenido" | "aprobar" | "banco" | "mentores"
+  | "abrir";
 
 export type RolDef = { id: RolAcademia; nombre: string; quienes: string; roles: readonly string[] };
 
@@ -94,6 +96,13 @@ export const CAPACIDADES: readonly CapacidadDef[] = [
     id: "revisar",
     texto: "Revisar respuestas escritas y cambiar notas",
     detalle: "Confirmar la nota del corrector o cambiarla, siempre con un motivo que queda registrado y que ve el alumno; responder los pedidos de revisión.",
+    alcance: SOLO_ADMIN,
+  },
+  {
+    id: "gestionar",
+    texto: "Gestionar el expediente de cada alumno",
+    detalle:
+      "Ajustar la nota de una parte de una materia (o quitar el ajuste), aprobar por convalidación, quitar una espera o dar un intento más, marcar lecciones, inscribir o dar de baja de una materia, retirar o reactivar, dar tiempo extra en los exámenes y escribirle; siempre con un motivo que queda en el historial y que ve el alumno.",
     alcance: SOLO_ADMIN,
   },
   {
