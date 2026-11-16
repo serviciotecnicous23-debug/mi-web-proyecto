@@ -24,7 +24,6 @@ async function buildApp() {
     outfile: path.resolve(root, "dist/index.cjs"),
     external: [
       "pg-native",
-      "better-sqlite3",
       "bufferutil",
       "utf-8-validate",
       "lightningcss",
