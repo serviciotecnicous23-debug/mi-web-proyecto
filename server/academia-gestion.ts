@@ -336,6 +336,8 @@ export function registerAcademiaGestionRoutes(app: Express) {
             [c.alumno, m.id],
           );
           await revocarPorNota(c.alumno, "materia", m.id, c.motivo);
+          // si vuelve a valer (abajo, porque ya cumplía cursándola), su certificado dice «cursada», no «convalidada»
+          await pool.query(`UPDATE academia_certificados SET via = 'cursada' WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`, [c.alumno, m.id]);
           // vuelve a contar lo que hizo cursándola (si ya cumplía, queda aprobada así)
           const recalculo = await enCadena(c.alumno, m, c.motivo);
           return {

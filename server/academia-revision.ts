@@ -220,6 +220,8 @@ async function reconsiderarSuficiencia(userId: number, m: MateriaDef, objetiva: 
       [userId, m.id],
     );
     await revocarPorNota(userId, "materia", m.id, motivo);
+    // si después vuelve a valer cursándola, su certificado dice «cursada», no «suficiencia»
+    await pool.query(`UPDATE academia_certificados SET via = 'cursada' WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`, [userId, m.id]);
     return { nota, aprobada: false, cambio: "desaprobada" };
   }
   return { nota, aprobada: estaba, cambio: null };
