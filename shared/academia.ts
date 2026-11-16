@@ -3681,6 +3681,8 @@ export type MateriaResumen = {
   antes?: string;
   lecciones: number;
   hechas: number;
+  /** Los minutos reales de toda la materia (server/academia-carga.ts). */
+  minutos?: number;
   estado: EstadoMateria;
   nota: number | null;
   medalla: Medalla | null;

@@ -56,7 +56,7 @@ lo dicen con `antes`.
 
 ## 2. Cómo es una lección
 
-Cada lección trata una sola idea y dura de 5 a 10 minutos. Tiene estas partes:
+Cada lección trata una sola idea y dura de 7 a 15 minutos según el nivel: cada una calcula sus minutos reales con su contenido (`server/academia-carga.ts`; ver la revisión del 16-nov en [academia-auditoria.md](academia-auditoria.md)). Tiene estas partes:
 
 1. **Objetivos.**
 2. **Para empezar.**
@@ -66,6 +66,12 @@ Cada lección trata una sola idea y dura de 5 a 10 minutos. Tiene estas partes:
 4. **La idea clave.**
 5. **Para la vida:** una aplicación y una nota privada.
 6. **Repaso:** preguntas con la respuesta al instante. Sin el repaso respondido bien no se puede terminar la lección.
+
+**El «Repaso del día»** (`server/academia-repaso-dia.ts`, `shared/repaso-del-dia.ts`, página `/academia/repaso-del-dia`):
+las preguntas del repaso de cada lección terminada vuelven a los 1, 3, 7, 21 y 60 días (de a lo más 10 por día,
+intercaladas entre materias); acertada pasa a la caja siguiente, fallada vuelve mañana; después de la última queda
+dominada. No pone nota y nunca usa preguntas del examen final. Lo atrasado se reparte de a 10 por día. Aparece en «Lo
+de hoy» de la portada y en «Para hoy» del salón.
 
 **Las herramientas de lectura** (`client/src/components/academia/lectura.tsx`, debajo del título de cada lección):
 - **Escuchar la lección:** la lee en voz alta con la voz en español del aparato (la API de voz del navegador: sin costo

@@ -168,7 +168,8 @@ export default function AcademiaCatalogo() {
       const c = buscarEn(def, r, grupo, ts);
       orden++;
       if (!c) return null;
-      return { r, def, minutos: (def?.lecciones ?? []).reduce((a, l) => a + (l.minutos || 0), 0), coincide: c === "todo" ? null : c, lugar, orden };
+      // (los minutos reales de la materia los calcula el servidor; los fijos, solo si no los manda)
+      return { r, def, minutos: r.minutos ?? (def?.lecciones ?? []).reduce((a, l) => a + (l.minutos || 0), 0), coincide: c === "todo" ? null : c, lugar, orden };
     };
     const niveles = e.niveles.map((n) => ({
       id: String(n.n), antetitulo: `Nivel ${n.n} · ${n.para}`, titulo: n.nombre, enlace: `/academia/nivel/${n.n}`,

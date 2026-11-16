@@ -28,6 +28,8 @@ import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
+import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
+import { minutosDeMateria, minutosReales } from "./academia-carga";
 import { registerAcademiaActividadesRoutes } from "./academia-actividades";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
@@ -152,7 +154,7 @@ export function registerAcademiaRoutes(app: Express) {
         const estado = estadoDe(m, fila, hechas);
         return {
           id: m.id, titulo: m.titulo, resumen: m.resumen, nivel: m.nivel, especialidad: m.especialidad, avanzada: m.avanzada, antes: m.antes,
-          lecciones: m.lecciones.length, hechas, estado,
+          lecciones: m.lecciones.length, hechas, minutos: minutosDeMateria(m), estado,
           nota: estado === "aprobada" ? fila?.nota ?? null : null,
           medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         };
@@ -272,7 +274,8 @@ export function registerAcademiaRoutes(app: Express) {
         if (b) breve = { entregas: b.entregas, maxEntregas: b.maxEntregas, mejor: b.mejor, falta: b.falta };
       }
       const out: MateriaDetalle = {
-        materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada })) },
+        // (los minutos de cada lección, los reales: server/academia-carga.ts)
+        materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, minutos: minutosReales(x.id, x.minutos), vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada })) },
         pesos: pesosDe(m),
         estado,
         nota: fila?.nota ?? null,
@@ -338,10 +341,11 @@ export function registerAcademiaRoutes(app: Express) {
         fila = rows[0];
       }
       // el repaso se abre después de leer (y de ver el video, si tiene): el servidor cuenta el tiempo
-      const pide = { lectura: segundosDeLectura(l.leccion.minutos), video: videoQuePide(contenido.bloques) };
+      const minutos = minutosReales(l.leccion.id, l.leccion.minutos);
+      const pide = { lectura: segundosDeLectura(minutos), video: videoQuePide(contenido.bloques) };
       const bloqueo: BloqueoRepaso | null = docente || fila?.completada
         ? null
-        : bloqueoDe(l.leccion.minutos, pide.video, Number((fila as any)?.leidos ?? 0), Number((fila as any)?.video_seg ?? 0));
+        : bloqueoDe(minutos, pide.video, Number((fila as any)?.leidos ?? 0), Number((fila as any)?.video_seg ?? 0));
       const bloques: BloqueVista[] = await Promise.all(
         contenido.bloques.map(async (b): Promise<BloqueVista> => {
           if (b.t !== "versiculo") return b;
@@ -355,7 +359,7 @@ export function registerAcademiaRoutes(app: Express) {
       const ms = l.materia.lecciones;
       const out: LeccionVista = {
         materia: { id: l.materia.id, titulo: l.materia.titulo },
-        leccion: { id, titulo: l.leccion.titulo, n: l.indice + 1, de: ms.length, minutos: l.leccion.minutos, base: l.leccion.base },
+        leccion: { id, titulo: l.leccion.titulo, n: l.indice + 1, de: ms.length, minutos, base: l.leccion.base },
         objetivos: contenido.objetivos,
         paraEmpezar: contenido.paraEmpezar,
         bloques,
@@ -439,7 +443,7 @@ export function registerAcademiaRoutes(app: Express) {
       if (opcion >= opciones.length) return res.status(400).json({ message: "Respuesta no válida." });
       // antes de responder hay que leer la lección (y ver el video, si tiene): lo cuenta el servidor
       if (userId && (publica || inscrita)) {
-        const falta = await faltaParaRepaso(userId, l.leccion.minutos, leccionId);
+        const falta = await faltaParaRepaso(userId, minutosReales(leccionId, l.leccion.minutos), leccionId);
         if (falta && (falta.lectura > 0 || (falta.video ?? 0) > 0)) {
           return res.status(409).json({
             message: falta.lectura > 0 ? "Primero lee la lección: el repaso se abre en un momento." : "Primero mira los primeros minutos del video de la lección.",
@@ -609,6 +613,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaDireccionRoutes(app);
   registerAcademiaRevisionRoutes(app);
   registerAcademiaGestionRoutes(app);
+  registerAcademiaRepasoDiaRoutes(app);
   registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);
