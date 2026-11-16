@@ -83,7 +83,7 @@ test("Alabanza y adoración tiene sus cinco materias, con la medida del Nivel 3 
   assert.equal(alabanza.materias.length, 5);
 });
 
-test("Intercesión y oración sale materia por materia, con la medida del Nivel 3", () => {
+test("Intercesión y oración tiene sus cinco materias, con la medida del Nivel 3 y la guerra espiritual como avanzada", () => {
   const listas = intercesion.materias.filter((m) => m.disponible);
   assert.deepEqual(
     listas.map((m) => [m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
@@ -91,6 +91,8 @@ test("Intercesión y oración sale materia por materia, con la medida del Nivel 
       ["Teología de la oración", "Jeremías 33:3", 6, false],
       ["Intercesión bíblica", "1 Timoteo 2:1", 6, false],
       ["El ayuno bíblico", "Isaías 58:6", 6, false],
+      ["Guerra espiritual bíblica y equilibrada", "Santiago 4:7", 6, true],
+      ["La oración en los avivamientos", "2 Crónicas 7:14", 6, false],
     ],
   );
   for (const m of listas) {
@@ -109,8 +111,10 @@ test("Intercesión y oración sale materia por materia, con la medida del Nivel 
   assert.match(listas[2].silabo!.proposito, /consulta a su médico/);
   // la guerra espiritual es avanzada: pide el Nivel 3
   assert.equal(intercesion.materias[3].avanzada, true);
+  assert.deepEqual(requisitosMateria(intercesion.materias[3], [1, 2, 3]), []);
+  // las lenguas y la doctrina del avivamiento quedan para la declaración de fe
+  assert.match(listas[4].silabo!.proposito, /declaración de fe por confirmar/);
   assert.equal(intercesion.materias.length, 5);
-  for (const m of intercesion.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, m.id);
 });
 
 test("las otras nueve especialidades siguen en preparación", () => {
