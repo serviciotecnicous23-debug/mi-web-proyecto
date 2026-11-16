@@ -3,6 +3,7 @@
 // escribe mientras se lee) y sus resaltados. Lo resaltado se ve pintado en la lección (marcas.tsx) y, como lo pasado al
 // cuaderno, queda también en la nota de la lección: el aviso trae «Ver mi nota», que la abre justo en lo nuevo.
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, ExternalLink, FilePlus2, Highlighter, LayoutTemplate, NotebookPen, Trash2, X } from "lucide-react";
@@ -15,6 +16,7 @@ import { agregarALeccion, borrarResaltado, cambiarResaltado, crearNota, resaltar
 import { EditorNota } from "./editor";
 import { fondoDeColor } from "./texto";
 import type { Marca } from "./marcas";
+import { seleccionExacta, vistaPrevia, type SeleccionExacta } from "./seleccion";
 
 const PUNTO: Record<ColorCuaderno, string> = {
   amarillo: "bg-yellow-300",
@@ -34,7 +36,9 @@ export function useMarcasDeLeccion(leccionId: string, activo: boolean): Map<numb
   }, [q.data]);
 }
 
-type Seleccion = { texto: string; bloque: number; rect: DOMRect };
+type Seleccion = SeleccionExacta;
+
+const esperar = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
 
 export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { leccionId: string; leccionTitulo: string; contenedor: React.RefObject<HTMLElement | null> }) {
   const qc = useQueryClient();
@@ -52,7 +56,7 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
   const nota = q.data?.nota ?? null;
   const resaltados = q.data?.resaltados ?? [];
 
-  // lo seleccionado dentro del texto de la lección (en un solo bloque)
+  // lo seleccionado dentro del texto de la lección: el texto exacto de cada párrafo que toca (seleccion.ts)
   useEffect(() => {
     let t: number | null = null;
     const revisar = () => {
@@ -66,19 +70,13 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
         }, 1500);
         return;
       }
-      const r = s.getRangeAt(0);
-      const desde = r.startContainer instanceof Element ? r.startContainer : r.startContainer.parentElement;
-      const bloqueEl = desde?.closest("[data-bloque]");
-      if (!bloqueEl || !caja.contains(bloqueEl)) return;
-      const rango = r.cloneRange();
-      if (!bloqueEl.contains(r.endContainer)) rango.setEnd(bloqueEl, bloqueEl.childNodes.length);
-      const texto = rango.toString().replace(/\s+/g, " ").trim();
-      if (texto.length < 2) return;
+      const nueva = seleccionExacta(s, caja);
       if (ocultar.current != null) {
         window.clearTimeout(ocultar.current);
         ocultar.current = null;
       }
-      setSel({ texto: texto.slice(0, 1200), bloque: Number(bloqueEl.getAttribute("data-bloque")), rect: rango.getBoundingClientRect() });
+      // una selección fuera del texto de la lección no deja viva la anterior
+      setSel(nueva);
     };
     const alCambiar = () => {
       if (t) window.clearTimeout(t);
@@ -110,10 +108,10 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     }, 350);
     return () => window.clearTimeout(t);
   }, [abierto, alFinal, nota]);
-  const avisoGuardado = (titulo: string) =>
+  const avisoGuardado = (titulo: string, lo?: string) =>
     toast({
       title: titulo,
-      description: `Quedó en tu nota de «${leccionTitulo}», en Mi cuaderno.`,
+      description: lo ? `${lo} Quedó en tu nota de «${leccionTitulo}», en Mi cuaderno.` : `Quedó en tu nota de «${leccionTitulo}», en Mi cuaderno.`,
       // con un botón, el aviso dura más (los demás se cierran a los 5 segundos)
       duration: 10_000,
       action: <ToastAction altText="Ver mi nota" onClick={verNota} data-testid="cuaderno-ver-nota">Ver mi nota</ToastAction>,
@@ -129,31 +127,45 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     const s = sel;
     if (!s) return;
     terminar();
+    // un resaltado por párrafo (el servidor guarda cada uno con su párrafo, para pintarlo en su lugar)
+    const partes = s.partes.slice(0, 8);
+    let hechos = 0;
+    let ultimaNota: NotaCompleta | null = null;
     try {
-      const { notaLeccion: notaNueva, ...r } = await resaltar({ leccionId, bloque: s.bloque, texto: s.texto, color });
-      qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r], nota: notaNueva ?? v.nota } : { nota: notaNueva, resaltados: [r] }));
+      for (const p of partes) {
+        if (hechos) await esperar(320);
+        const { notaLeccion: notaNueva, ...r } = await resaltar({ leccionId, bloque: p.bloque, texto: p.texto.slice(0, 1200), color });
+        qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r], nota: notaNueva ?? v.nota } : { nota: notaNueva, resaltados: [r] }));
+        if (notaNueva) ultimaNota = notaNueva;
+        hechos++;
+      }
       qc.invalidateQueries({ queryKey: ["cuaderno", "resaltados"] });
       qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
-      if (notaNueva) avisoGuardado("Resaltado y guardado en tu nota");
+      if (ultimaNota) avisoGuardado(hechos > 1 ? `${hechos} párrafos resaltados y guardados en tu nota` : "Resaltado y guardado en tu nota");
+      if (s.partes.length > partes.length) toast({ title: "Se resaltaron los primeros 8 párrafos", description: "Para más, resalta por partes." });
     } catch (e: any) {
-      toast({ title: "No se pudo resaltar", description: e?.message, variant: "destructive" });
+      toast({ title: hechos ? `Se resaltaron ${hechos} párrafos, pero no todos` : "No se pudo resaltar", description: e?.message, variant: "destructive" });
     }
   };
   const alCuaderno = async () => {
     const s = sel;
     if (!s) return;
     terminar();
-    const b = bloque("cita", s.texto, { fuente: { tipo: "leccion", id: leccionId, titulo: leccionTitulo } });
+    // el texto exacto, un bloque de cita por párrafo; la fuente (la lección) va en el último
+    const bloques = s.partes.map((p, i) =>
+      bloque("cita", p.texto.slice(0, 6000), i === s.partes.length - 1 ? { fuente: { tipo: "leccion", id: leccionId, titulo: leccionTitulo } } : {}),
+    );
+    const resumen = `«${vistaPrevia(s.texto, 90)}»`;
     if (agregar.current) {
-      agregar.current([b]);
-      toast({ title: "Agregado a tu nota", description: "Está al final de la nota de esta lección." });
+      agregar.current(bloques);
+      toast({ title: "Agregado a tu nota", description: `${resumen} quedó al final de la nota de esta lección.` });
       return;
     }
     try {
-      const n = await agregarALeccion(leccionId, [b]);
+      const n = await agregarALeccion(leccionId, bloques);
       qc.setQueryData(clave, (v: any) => (v ? { ...v, nota: n } : { nota: n, resaltados: [] }));
       qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
-      avisoGuardado("Guardado en tu cuaderno");
+      avisoGuardado(s.partes.length > 1 ? `Guardaste ${s.partes.length} párrafos en tu cuaderno` : "Guardado en tu cuaderno", resumen);
     } catch (e: any) {
       toast({ title: "No se pudo agregar", description: e?.message, variant: "destructive" });
     }
@@ -192,14 +204,15 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
   // la barra de lo seleccionado: junto al texto en la computadora; abajo, fija, en el teléfono (no tapa el menú del sistema)
   const estiloBarra: React.CSSProperties | undefined =
     sel && !tactil
-      ? { left: Math.max(8, Math.min(window.innerWidth - 330, sel.rect.left + sel.rect.width / 2 - 160)), top: Math.max(8, sel.rect.top - 52) }
+      ? { left: Math.max(8, Math.min(window.innerWidth - 350, sel.rect.left + sel.rect.width / 2 - 170)), top: Math.max(8, sel.rect.top - 84) }
       : undefined;
 
   return (
     <>
-      {sel && (
+      {/* en el body: la animación de entrada de la página (transform) no la mueve de su lugar */}
+      {sel && createPortal(
         <div
-          className={`fixed z-50 rounded-2xl border bg-popover/95 backdrop-blur shadow-xl px-2 py-1.5 flex items-center gap-1 ${tactil ? "left-3 right-3 bottom-24 justify-center" : ""}`}
+          className={`fixed z-50 rounded-2xl border bg-popover shadow-xl px-2 pt-1.5 pb-1 ${tactil ? "left-3 right-3 bottom-24" : "w-[340px]"}`}
           style={estiloBarra}
           onPointerDown={conservar}
           onMouseDown={(e) => e.preventDefault()}
@@ -207,15 +220,23 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
           aria-label="Lo que seleccionaste"
           data-testid="cuaderno-barra-seleccion"
         >
-          <Highlighter className="w-4 h-4 text-muted-foreground mx-1" aria-hidden="true" />
-          {COLORES.map((c) => (
-            <button key={c} type="button" onClick={() => resaltarSel(c)} className={`w-6 h-6 rounded-full border border-black/10 ${PUNTO[c]}`} aria-label={`Resaltar en ${c}`} data-testid={`cuaderno-resaltar-${c}`} />
-          ))}
-          <span className="mx-1 h-5 w-px bg-border" />
-          <Button size="sm" variant="ghost" onClick={alCuaderno} data-testid="cuaderno-al-cuaderno"><NotebookPen className="w-4 h-4 mr-1" /> Al cuaderno</Button>
-          <Button size="sm" variant="ghost" onClick={copiar} aria-label="Copiar"><Copy className="w-4 h-4" /></Button>
-          <Button size="sm" variant="ghost" onClick={terminar} aria-label="Cerrar"><X className="w-4 h-4" /></Button>
-        </div>
+          {/* lo que se va a guardar, antes de tocar un botón */}
+          <p className={`px-1.5 text-muted-foreground leading-snug ${tactil ? "text-[13px]" : "text-xs"}`} data-testid="cuaderno-seleccion-vista">
+            <span className="italic">«{vistaPrevia(sel.texto)}»</span>
+            <span className="whitespace-nowrap"> · {sel.palabras} {sel.palabras === 1 ? "palabra" : "palabras"}{sel.partes.length > 1 ? ` en ${sel.partes.length} párrafos` : ""}</span>
+          </p>
+          <div className={`flex items-center gap-1 mt-0.5 ${tactil ? "justify-center" : ""}`}>
+            <Highlighter className="w-4 h-4 text-muted-foreground mx-1" aria-hidden="true" />
+            {COLORES.map((c) => (
+              <button key={c} type="button" onClick={() => resaltarSel(c)} className={`w-6 h-6 rounded-full border border-black/10 ${PUNTO[c]}`} aria-label={`Resaltar en ${c}`} data-testid={`cuaderno-resaltar-${c}`} />
+            ))}
+            <span className="mx-1 h-5 w-px bg-border" />
+            <Button size="sm" variant="ghost" onClick={alCuaderno} data-testid="cuaderno-al-cuaderno"><NotebookPen className="w-4 h-4 mr-1" /> Al cuaderno</Button>
+            <Button size="sm" variant="ghost" onClick={copiar} aria-label="Copiar"><Copy className="w-4 h-4" /></Button>
+            <Button size="sm" variant="ghost" onClick={terminar} aria-label="Cerrar"><X className="w-4 h-4" /></Button>
+          </div>
+        </div>,
+        document.body,
       )}
 
       {/* fijo en una caja aparte: el botón con fuego lleva position: relative */}

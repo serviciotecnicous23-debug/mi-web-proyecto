@@ -4,12 +4,12 @@
 // - «Especialidades», plegadas;
 // - «Cómo se estudia y se evalúa».
 // Es solo para estudiar: la administración de la academia se abre desde el panel de administración de la web.
-import { useState, type ReactNode } from "react";
-import { Link } from "wouter";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation } from "wouter";
 import { motion } from "motion/react";
 import {
-  ArrowRight, Award, BookOpen, CheckCircle2, ChevronDown, Compass, FileText, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle, ScrollText,
-  Sparkles, Timer,
+  ArrowRight, Award, BellRing, BookOpen, CheckCircle2, ChevronDown, Compass, FileText, Flame, GraduationCap, IdCard, Layers, ListChecks, PenLine, PlayCircle,
+  ScrollText, Search, Sparkles, Timer, X,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ type Nivel = AcademiaEstado["niveles"][number];
 
 function TarjetaMateria({ m }: { m: MateriaResumen }) {
   const contenido = (
-    <div className={`glass-card h-full p-4 flex flex-col gap-3 transition ${m.estado === "en-preparacion" ? "opacity-70" : "hover:-translate-y-0.5"}`} data-testid={`materia-${m.id}`}>
+    <div className={`glass-card h-full p-4 flex flex-col gap-3 transition hover:-translate-y-0.5 ${m.estado === "en-preparacion" ? "opacity-75 hover:opacity-100" : ""}`} data-testid={`materia-${m.id}`}>
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-semibold leading-snug">{m.titulo}</h4>
         {m.estado === "aprobada" && m.nota != null ? <NotaMedalla nota={m.nota} medalla={m.medalla} /> : null}
@@ -41,7 +41,6 @@ function TarjetaMateria({ m }: { m: MateriaResumen }) {
       </div>
     </div>
   );
-  if (m.estado === "en-preparacion") return contenido;
   return <Link href={`/academia/materia/${m.id}`} className="block h-full">{contenido}</Link>;
 }
 
@@ -283,15 +282,11 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
                   {esp.materias.map((m) => (
                     <li key={m.id} className="text-sm flex items-start gap-1.5">
                       <span className="text-orange-500 mt-1">•</span>
-                      {m.estado === "en-preparacion" ? (
-                        <span>{m.titulo}{m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}</span>
-                      ) : (
-                        <Link href={`/academia/materia/${m.id}`} className="min-w-0 hover:underline underline-offset-2" data-testid={`materia-${m.id}`}>
-                          <span className="font-medium">{m.titulo}</span>
-                          {m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}{" "}
-                          <ChipEstado estado={m.estado} />
-                        </Link>
-                      )}
+                      <Link href={`/academia/materia/${m.id}`} className="min-w-0 hover:underline underline-offset-2" data-testid={`materia-${m.id}`}>
+                        <span className={m.estado === "en-preparacion" ? "" : "font-medium"}>{m.titulo}</span>
+                        {m.avanzada ? <span className="text-xs text-muted-foreground"> · avanzada</span> : null}{" "}
+                        {m.estado !== "en-preparacion" && <ChipEstado estado={m.estado} />}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -309,6 +304,72 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
         </div>
       )}
     </Seccion>
+  );
+}
+
+/** «¿Qué quieres estudiar?»: busca en el catálogo (/academia/catalogo?q=…). */
+function BuscarEnPortada() {
+  const [, navegar] = useLocation();
+  const [t, setT] = useState("");
+  return (
+    <form
+      role="search"
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        navegar(t.trim() ? `/academia/catalogo?q=${encodeURIComponent(t.trim())}` : "/academia/catalogo");
+      }}
+      className="mt-7 max-w-xl mx-auto relative"
+      data-testid="portada-buscar"
+    >
+      <label htmlFor="portada-buscar-texto" className="sr-only">¿Qué quieres estudiar?</label>
+      <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden="true" />
+      <input
+        id="portada-buscar-texto"
+        type="search"
+        value={t}
+        onChange={(ev) => setT(ev.target.value)}
+        placeholder="¿Qué quieres estudiar? Oración, profetas…"
+        enterKeyHint="search"
+        autoComplete="off"
+        maxLength={80}
+        className="block w-full h-12 rounded-full border border-border bg-background/85 pl-12 pr-24 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+      />
+      {/* el botón va dentro de un contenedor fijo: .fire-btn-primary pone position: relative */}
+      <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+        <Button type="submit" size="sm" className="fire-btn-primary rounded-full h-9 px-4">Buscar</Button>
+      </span>
+    </form>
+  );
+}
+
+/** Las materias que el alumno esperaba y que ya abrieron. El servidor las manda una sola vez (y deja el aviso en la campana). */
+function RecienAbiertas({ lista }: { lista: { id: string; titulo: string }[] }) {
+  const [items, setItems] = useState(lista);
+  useEffect(() => {
+    if (lista.length) setItems((ya) => [...ya, ...lista.filter((x) => !ya.some((y) => y.id === x.id))]);
+  }, [lista]);
+  if (!items.length) return null;
+  return (
+    <section className="max-w-6xl mx-auto px-4 pt-6" data-testid="recien-abiertas">
+      <div className="glass-card p-4 md:p-5 border border-emerald-500/40 flex items-start gap-3" role="status">
+        <BellRing className="w-6 h-6 text-emerald-600 dark:text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold">{items.length === 1 ? "Ya abrió la materia que esperabas" : "Ya abrieron las materias que esperabas"}</p>
+          <ul className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+            {items.map((m) => (
+              <li key={m.id}>
+                <Link href={`/academia/materia/${m.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline underline-offset-2">
+                  {m.titulo} <ArrowRight className="w-4 h-4" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button type="button" onClick={() => setItems([])} aria-label="Cerrar el aviso" className="rounded-full p-1.5 hover:bg-muted shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -347,20 +408,33 @@ export default function AcademiaPage() {
             Formación bíblica por niveles, desde los primeros pasos de la fe hasta el ministerio: lecciones cortas, exámenes con corrección automática y
             certificados que se pueden verificar.
           </p>
-          <dl className="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-2xl mx-auto">
+          <BuscarEnPortada />
+          <nav aria-label="La academia en números" className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-2xl mx-auto">
             {[
-              { v: String(e.niveles.length), t: "Niveles" },
-              { v: String(totalMaterias), t: "Materias" },
-              { v: String(e.especialidades.length), t: "Especialidades" },
-              { v: "$0", t: "Gratis" },
-            ].map((c) => (
-              <div key={c.t} className="glass-card px-2 py-3">
-                <dt className="sr-only">{c.t}</dt>
-                <dd className="font-display font-bold text-2xl fire-text leading-none">{c.v}</dd>
-                <dd className="data-label mt-1.5 text-[10px] opacity-75">{c.t}</dd>
-              </div>
-            ))}
-          </dl>
+              { v: String(e.niveles.length), t: "Niveles", ayuda: "Ver el plan", href: "#plan", id: "niveles" },
+              { v: String(totalMaterias), t: "Materias", ayuda: "Ver el catálogo", href: "/academia/catalogo", id: "materias" },
+              { v: String(e.especialidades.length), t: "Especialidades", ayuda: "Ver cuáles son", href: "/academia/catalogo?ver=especialidades", id: "especialidades" },
+              {
+                v: "$0", t: "Gratis", id: "gratis",
+                ayuda: inscrito ? "Cómo se estudia" : "Inscribirme",
+                href: inscrito ? "#metodo" : e.conSesion ? "/academia/inscripcion" : loginUrl("/academia/inscripcion"),
+              },
+            ].map((c) => {
+              const cuerpo = (
+                <>
+                  <span className="block font-display font-bold text-2xl fire-text leading-none">{c.v}</span>
+                  <span className="block data-label mt-1.5 text-[10px] opacity-75">{c.t}</span>
+                  <span className="mt-1.5 inline-flex items-center gap-0.5 text-[11px] text-orange-700 dark:text-orange-300 opacity-80 group-hover:opacity-100">
+                    {c.ayuda} <ArrowRight className="w-3 h-3 transition group-hover:translate-x-0.5" />
+                  </span>
+                </>
+              );
+              const clase = "group glass-card px-2 py-3 block border border-transparent hover:border-orange-500/40 hover:-translate-y-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500";
+              return c.href.startsWith("/academia")
+                ? <Link key={c.id} href={c.href} className={clase} data-testid={`portada-cifra-${c.id}`}>{cuerpo}</Link>
+                : <a key={c.id} href={c.href} className={clase} data-testid={`portada-cifra-${c.id}`}>{cuerpo}</a>;
+            })}
+          </nav>
           <div className="mt-7 flex flex-col sm:flex-row justify-center gap-3">
             {e.conSesion && !inscrito ? (
               <Link href="/academia/inscripcion">
@@ -381,6 +455,7 @@ export default function AcademiaPage() {
       </section>
 
       {e.vistaPrevia && <AvisoVistaPrevia />}
+      <RecienAbiertas lista={e.recienAbiertas ?? []} />
 
       {/* ═══ MI ESCRITORIO (el alumno inscrito) ═══ */}
       {inscrito && <Escritorio e={e} />}
@@ -418,6 +493,9 @@ export default function AcademiaPage() {
         titulo="Tu camino de formación"
         texto="Cinco niveles en tres etapas. Toca un nivel para ver sus materias; el tuyo ya viene abierto."
       >
+        <Link href="/academia/catalogo" className="inline-flex items-center gap-1.5 text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline underline-offset-2 mb-5" data-testid="plan-catalogo">
+          <Search className="w-4 h-4" /> Buscar una materia o una lección en el catálogo
+        </Link>
         <div className="space-y-8">
           {e.etapas.map((etapa) => (
             <div key={etapa.id}>
@@ -439,7 +517,7 @@ export default function AcademiaPage() {
       <Especialidades e={e} />
 
       {/* ═══ CÓMO SE ESTUDIA ═══ */}
-      <Seccion antetitulo="Método" titulo="Cómo se estudia y se evalúa">
+      <Seccion id="metodo" antetitulo="Método" titulo="Cómo se estudia y se evalúa">
         <ol className="grid gap-3 md:grid-cols-5">
           {PASOS.map((p, i) => (
             <li key={p.titulo} className="glass-card p-4">

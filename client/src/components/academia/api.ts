@@ -126,6 +126,10 @@ export const guardarFotoCarne = (url: string | null) => pedir<{ foto: string | n
 export const inscribirmeEnMateria = (materiaId: string) =>
   pedir<{ inscrita: string }>("POST", `/api/academia/materia/${encodeURIComponent(materiaId)}/inscripcion`, {});
 
+/** «Avísame cuando abra»: una materia en preparación (activo=false lo quita). */
+export const avisarmeMateria = (materiaId: string, activo: boolean) =>
+  pedir<{ avisame: boolean }>("POST", `/api/academia/materia/${encodeURIComponent(materiaId)}/avisame`, { activo });
+
 export function useCarne() {
   return useQuery<CarneVista, ErrorAcademia>({ queryKey: ["academia", "carne"], queryFn: () => pedir("GET", "/api/academia/carne"), retry: false });
 }

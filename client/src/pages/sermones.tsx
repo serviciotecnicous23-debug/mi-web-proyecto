@@ -23,6 +23,7 @@ import { RichText } from "@/components/media/RichText";
 import { AttachButton, AttachedFile } from "@/components/media/Composer";
 import { ACCEPT_AUDIO, ACCEPT_DOCUMENTS, type UploadedFile } from "@/components/media/upload";
 import { ProviderBadge } from "@/components/media/brand";
+import { isTeacherOrAdminRole } from "@/lib/utils";
 
 const SERMON_CATEGORIES: Record<string, string> = {
   general: "General", evangelismo: "Evangelismo", adoracion: "Adoración", doctrina: "Doctrina",
@@ -290,7 +291,7 @@ export default function SermonesPage() {
   const [editing, setEditing] = useState<Sermon | null | undefined>(undefined);
   const [noteText, setNoteText] = useState("");
 
-  const canManage = user?.role === "admin" || user?.role === "obrero";
+  const canManage = isTeacherOrAdminRole(user?.role);
 
   const { data: sermonsList = [], isLoading } = useQuery<Sermon[]>({
     queryKey: ["/api/sermons", query, category],

@@ -25,6 +25,7 @@ import {
   Upload, Download, Check, Send, Library, Loader2, NotebookPen,
 } from "lucide-react";
 import { crearNota, useApuntesBiblia } from "@/components/cuaderno/api";
+import { BarraSeleccionBiblia } from "@/components/cuaderno/seleccion-biblia";
 import { bloque } from "@shared/cuaderno";
 
 // El cuaderno (el mismo de la academia) se carga al abrir su pestaña: no pesa en la lectura de la Biblia.
@@ -41,6 +42,7 @@ import { SiWhatsapp } from "react-icons/si";
 import { useReadingTracker } from "@/hooks/use-reading-tracker";
 import { ClubTab } from "@/components/biblioteca/club-tab";
 import { HIGHLIGHT_COLORS, RESOURCE_CATEGORIES, BIBLE_BOOKS } from "@shared/schema";
+import { isAdminRole } from "@/lib/utils";
 import {
   BIBLE_BOOK_CHAPTERS, BIBLE_VERSIONS, DEFAULT_BIBLE_VERSION, bibleBookLabel, isBibleVersion,
   type BibleChapterPayload, type BibleVersion,
@@ -204,6 +206,8 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
   const apuntes = useApuntesBiblia(selectedBook, chapter, !!user);
   const versosCuaderno = new Set<number>();
   for (const a of apuntes.data ?? []) for (const r of a.versiculos) for (let x = r.desde; x <= r.hasta && x - r.desde < 200; x++) versosCuaderno.add(x);
+  // el texto del capítulo: allí se selecciona un pedazo para pasarlo al cuaderno (seleccion-biblia.tsx)
+  const textoCapitulo = useRef<HTMLDivElement | null>(null);
   const alCuaderno = async (verse: number) => {
     const ref = `${bibleBookLabel(selectedBook)} ${chapter}:${verse}`;
     try {
@@ -428,7 +432,7 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
               No se encontró texto para este capítulo. Prueba con otro libro o capítulo.
             </p>
           ) : (
-            <div className="space-y-1 leading-relaxed text-base">
+            <div className="space-y-1 leading-relaxed text-base" ref={textoCapitulo}>
               {verses.map((v) => {
                 const hl = getVerseHighlight(v.verse);
                 const vNotes = getVerseNotes(v.verse);
@@ -439,13 +443,16 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
                       className={`inline cursor-pointer transition-colors rounded-sm px-0.5 ${isSelected ? "ring-2 ring-primary" : ""}`}
                       style={hl ? { backgroundColor: hl.color + "40" } : undefined}
                       onClick={() => {
+                        // si está seleccionando un pedazo del texto, no se marca el versículo
+                        if (window.getSelection() && !window.getSelection()!.isCollapsed) return;
                         setSelectedVerse(isSelected ? null : v.verse);
                         setShowNoteForm(false);
                       }}
                       data-testid={`verse-${v.verse}`}
+                      data-verso={v.verse}
                     >
-                      <sup className="text-xs font-bold text-muted-foreground mr-0.5">{v.verse}</sup>
-                      {v.text}{" "}
+                      <sup className="text-xs font-bold text-muted-foreground mr-0.5 select-none">{v.verse}</sup>
+                      <span data-texto>{v.text}</span>{" "}
                       {vNotes.length > 0 && (
                         <StickyNote className="inline w-3 h-3 text-primary" />
                       )}
@@ -458,6 +465,9 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
               })}
               <div ref={tracker.endRef} aria-hidden="true" />
             </div>
+          )}
+          {user && !loading && !error && verses.length > 0 && (
+            <BarraSeleccionBiblia contenedor={textoCapitulo} libro={bibleBookLabel(selectedBook)} capitulo={chapter} alAbrirNota={onOpenNote} />
           )}
 
           {!loading && !error && verses.length > 0 && !!apuntes.data?.length && (
@@ -1657,7 +1667,7 @@ function ResourcesTab() {
                       <Heart className={`w-4 h-4 mr-1 ${r.isLiked ? "fill-red-500 text-red-500" : ""}`} />
                       {r.likeCount}
                     </Button>
-                    {(user?.role === "admin" || r.userId === user?.id) && (
+                    {(isAdminRole(user?.role) || r.userId === user?.id) && (
                       <Button
                         variant="ghost"
                         size="icon"

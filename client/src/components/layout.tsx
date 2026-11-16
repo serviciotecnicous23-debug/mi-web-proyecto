@@ -889,7 +889,7 @@ export function Navbar() {
                     </Link>
                   </>
                 )}
-                {user.role === "admin" && (
+                {isAdminRole(user.role) && (
                   <div className="space-y-1">
                     <Link href="/admin" onClick={closeMenu}>
                       <Button variant="outline" className="w-full justify-start gap-3" size="sm" data-testid="link-mobile-admin">

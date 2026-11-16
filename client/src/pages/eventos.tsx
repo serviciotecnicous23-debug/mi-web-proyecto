@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LiveStreamEmbed, isEmbeddableUrl } from "@/components/LiveStreamEmbed";
 import LiveRoom from "@/components/LiveRoom";
 import type { Event } from "@shared/schema";
+import { isAdminRole } from "@/lib/utils";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -112,7 +113,7 @@ export default function Eventos() {
   const featured = upcoming[0];
   const restUpcoming = upcoming.slice(1);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminRole(user?.role);
 
   function canManage(event: Event) {
     if (!user) return false;
@@ -302,7 +303,7 @@ export default function Eventos() {
                     context="event"
                     contextId="main"
                     roomTitle="Sala de Evento en Vivo"
-                    canManage={user.role === "admin" || user.role === "maestro"}
+                    canManage={isAdminRole(user.role)}
                     userName={user.displayName || user.username}
                     userEmail={user.email}
                     startLabel="Iniciar transmisión de evento"

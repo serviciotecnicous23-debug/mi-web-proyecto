@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
 import { withAccents } from "@shared/labels";
+import { isAdminRole } from "@/lib/utils";
 
 type RegionPost = {
   id: number;
@@ -581,7 +582,7 @@ export default function RegionesPage() {
             <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="text-regiones-title">
               <Globe className="w-8 h-8 text-primary" /> Regiones
             </h1>
-            {user?.role === "admin" && (
+            {isAdminRole(user?.role) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -597,7 +598,7 @@ export default function RegionesPage() {
           <p className="text-muted-foreground mt-1">Muro de actividades por región del ministerio</p>
         </div>
 
-        {showManageRegions && user?.role === "admin" && <RegionManagementPanel />}
+        {showManageRegions && isAdminRole(user?.role) && <RegionManagementPanel />}
 
         {regionsLoading ? (
           <div className="flex justify-center py-16">
@@ -609,7 +610,7 @@ export default function RegionesPage() {
               <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-lg font-medium">No hay regiones activas</p>
               <p className="text-muted-foreground text-sm mt-1">
-                {user?.role === "admin"
+                {isAdminRole(user?.role)
                   ? "Agrega regiones usando el boton 'Gestionar Regiones'."
                   : "No hay regiones disponibles en este momento."}
               </p>
@@ -801,7 +802,7 @@ export default function RegionesPage() {
                                 <ReactionBar postId={post.id} user={user} />
                                 <PollDisplay postId={post.id} user={user} />
                               </div>
-                              {user && (user.role === "admin" || user.id === post.userId) && (
+                              {user && (isAdminRole(user.role) || user.id === post.userId) && (
                                 <Button
                                   variant="ghost"
                                   size="icon"

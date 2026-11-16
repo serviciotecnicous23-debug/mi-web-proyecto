@@ -31,13 +31,13 @@ export default function DiezmosPage() {
 
   const { data: tithes = [] } = useQuery<any[]>({
     queryKey: ["/api/tithes", selectedMonth],
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const { data: report } = useQuery<any>({
     queryKey: ["/api/tithes/report", reportYear],
     queryFn: () => fetch(`/api/tithes/report?year=${reportYear}`, { credentials: "include" }).then(r => r.json()),
-    enabled: user?.role === "admin",
+    enabled: isAdminRole(user?.role),
   });
 
   const createMutation = useMutation({

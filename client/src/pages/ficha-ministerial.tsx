@@ -12,6 +12,7 @@ import { useState } from "react";
 import { BookOpen, Award, Shield, CheckCircle, Clock, User, GraduationCap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BADGE_TYPES } from "@shared/schema";
+import { isAdminRole } from "@/lib/utils";
 
 export default function FichaMinisterialPage() {
   const { user } = useAuth();
@@ -51,7 +52,7 @@ export default function FichaMinisterialPage() {
   });
 
   const isOwn = targetUserId === user?.id;
-  const isAdminUser = user?.role === "admin" || user?.role === "director" || user?.role === "staff_global";
+  const isAdminUser = isAdminRole(user?.role);
 
   const createMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {

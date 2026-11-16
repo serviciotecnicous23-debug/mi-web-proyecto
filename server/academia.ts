@@ -18,7 +18,7 @@ import type { PreguntaObjetiva } from "./academia/tipos";
 import { numeroDe } from "./orden-examen";
 import { lugaresDeLaBuena, opcionesConBuenaEn } from "./academia-orden";
 import {
-  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, componentesDe, enFila, estadoDe, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
+  accesoDe, alumnoDe, asegurarAlumno, asegurarMateria, avisarA, componentesDe, enFila, estadoDe, estaInscrito, fichasDe, frenar, idFicha, inscripcionDe, inscritaEnMateria, inscritoEnMateriaDe,
   marcarEstudio, recalcularMateria, revisarOrdenFichas, textoDeCita, MENSAJE_CERRADA, MENSAJE_INSCRIPCION, MENSAJE_MATERIA,
 } from "./academia-comun";
 import { matriculaDe, registerAcademiaMatriculaRoutes } from "./academia-matricula";
@@ -73,7 +73,52 @@ async function faltaParaRepaso(userId: number, minutos: number, leccionId: strin
   return bloqueoDe(minutos, pideVideo, Number(f?.leidos ?? 0), Number(f?.video_seg ?? 0));
 }
 
+/**
+ * «Avísame cuando abra»: las materias que el alumno esperaba y que ya están disponibles. Le deja el aviso en la campana
+ * una sola vez (se revisa cuando entra a la academia: nada corre de fondo en el servidor) y las devuelve para la portada.
+ */
+async function avisarLasQueAbrieron(userId: number): Promise<{ id: string; titulo: string }[]> {
+  const { rows } = await pool.query(`SELECT materia_id FROM academia_avisos_materia WHERE user_id = $1 AND avisado_at IS NULL`, [userId]);
+  const abiertas = (rows as any[]).map((r) => materiaPorId(String(r.materia_id))).filter((m): m is MateriaDef => !!m && m.disponible);
+  if (!abiertas.length) return [];
+  const ids = abiertas.map((m) => m.id);
+  const { rowCount } = await pool.query(
+    `UPDATE academia_avisos_materia SET avisado_at = now() WHERE user_id = $1 AND materia_id = ANY($2::text[]) AND avisado_at IS NULL`,
+    [userId, ids],
+  );
+  // dos pestañas a la vez: solo la que marcó el aviso lo deja en la campana
+  if (!rowCount) return [];
+  for (const m of abiertas) await avisarA([userId], `Ya abrió «${m.titulo}»`, "La materia que esperabas ya tiene sus lecciones. Empieza cuando quieras.", `/academia/materia/${m.id}`);
+  return abiertas.map((m) => ({ id: m.id, titulo: m.titulo }));
+}
+
 export function registerAcademiaRoutes(app: Express) {
+  // ---------------------------------------------------------------- «Avísame cuando abra»
+  app.post("/api/academia/materia/:materiaId/avisame", async (req, res) => {
+    try {
+      const a = await alumnoDe(req, res);
+      if (!a) return;
+      if (frenar(`avisame:${a.userId}`, 500)) return res.status(429).json({ message: "Espera un momento." });
+      const m = materiaPorId(String(req.params.materiaId || ""));
+      if (!m) return res.status(404).json({ message: "No existe esa materia." });
+      if (m.disponible) return res.status(409).json({ message: "Esta materia ya está abierta: inscríbete desde su página.", avisame: false });
+      const activo = req.body?.activo !== false;
+      if (activo) {
+        await pool.query(
+          `INSERT INTO academia_avisos_materia (user_id, materia_id) VALUES ($1, $2)
+           ON CONFLICT (user_id, materia_id) DO UPDATE SET avisado_at = NULL, created_at = now()`,
+          [a.userId, m.id],
+        );
+      } else {
+        await pool.query(`DELETE FROM academia_avisos_materia WHERE user_id = $1 AND materia_id = $2`, [a.userId, m.id]);
+      }
+      res.json({ avisame: activo });
+    } catch (err) {
+      console.error("[academia] avísame:", err);
+      res.sendStatus(500);
+    }
+  });
+
   // ---------------------------------------------------------------- el catálogo y el avance del alumno
   app.get("/api/academia/estado", async (req: Request, res: Response) => {
     try {
@@ -154,9 +199,10 @@ export function registerAcademiaRoutes(app: Express) {
         }
       }
       const [matricula, inscripcion] = userId ? await Promise.all([matriculaDe(userId), inscripcionDe(userId)]) : [null, null];
+      const recienAbiertas = userId ? await avisarLasQueAbrieron(userId) : [];
       const out: AcademiaEstado = {
         abierta: acceso.abierta, vistaPrevia: acceso.vistaPrevia, conSesion: !!userId, alumno, matricula, ficha: !!inscripcion?.ficha, continuar,
-        etapas: ETAPAS, niveles, especialidades,
+        etapas: ETAPAS, niveles, especialidades, recienAbiertas,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -196,6 +242,10 @@ export function registerAcademiaRoutes(app: Express) {
       }
       const hechas = m.lecciones.filter((x) => lec.get(x.id)?.completada).length;
       const estado = estadoDe(m, fila, hechas);
+      // «Avísame cuando abra» (solo mientras la materia está en preparación)
+      const avisame = userId && !m.disponible
+        ? (await pool.query(`SELECT 1 FROM academia_avisos_materia WHERE user_id = $1 AND materia_id = $2 AND avisado_at IS NULL`, [userId, m.id])).rowCount! > 0
+        : false;
       const componentes = userId && m.disponible ? await componentesDe(userId, m) : {};
       const examen = userId && m.disponible && BANCOS.has(m.id) ? await estadoExamen(userId, m) : null;
       // La suficiencia se ofrece a quien no aprobó la materia ni dio su examen final, y solo una vez (o si la está dando).
@@ -233,6 +283,7 @@ export function registerAcademiaRoutes(app: Express) {
         suficiencia,
         minis,
         breve,
+        avisame,
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);

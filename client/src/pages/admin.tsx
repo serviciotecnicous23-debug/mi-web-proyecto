@@ -18,6 +18,7 @@ import { Link, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { TarjetaAcademiaPanel } from "@/components/academia/entrada-panel";
 import { RadioLibraryAdmin } from "@/components/admin/RadioLibraryAdmin";
+import { SelectorDeRol } from "@/components/admin/SelectorDeRol";
 import { isAdminRole } from "@/lib/utils";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -1299,16 +1300,7 @@ export default function AdminDashboard() {
                             {u.id === user?.id ? (
                               <Badge variant="default">{ROLES[u.role as keyof typeof ROLES]}</Badge>
                             ) : (
-                              <Select value={u.role} onValueChange={(role) => updateUserRole.mutate({ id: u.id, role })}>
-                                <SelectTrigger className="w-[140px]" data-testid={`select-role-${u.id}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(ROLES).map(([key, label]) => (
-                                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <SelectorDeRol usuario={u} alCambiar={(role) => updateUserRole.mutate({ id: u.id, role })} />
                             )}
                           </TableCell>
                           <TableCell>

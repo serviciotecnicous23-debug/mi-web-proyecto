@@ -21,7 +21,7 @@ type Materia = EspecialidadDetalle["materias"][number];
 
 function TarjetaMateria({ m }: { m: Materia }) {
   const contenido = (
-    <div className={`glass-card h-full p-4 flex flex-col gap-3 transition ${m.estado === "en-preparacion" ? "opacity-70" : "hover:-translate-y-0.5"}`} data-testid={`materia-${m.id}`}>
+    <div className={`glass-card h-full p-4 flex flex-col gap-3 transition hover:-translate-y-0.5 ${m.estado === "en-preparacion" ? "opacity-75 hover:opacity-100" : ""}`} data-testid={`materia-${m.id}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold leading-snug">{m.titulo}</h3>
         {m.estado === "aprobada" && m.nota != null ? <NotaMedalla nota={m.nota} medalla={medallaDe(m.nota)} /> : null}
@@ -40,7 +40,7 @@ function TarjetaMateria({ m }: { m: Materia }) {
       </div>
     </div>
   );
-  if (m.estado === "en-preparacion") return contenido;
+  // también la que está en preparación: su página dice lo que viene y tiene «Avísame cuando abra»
   return <Link href={`/academia/materia/${m.id}`} className="block h-full">{contenido}</Link>;
 }
 
