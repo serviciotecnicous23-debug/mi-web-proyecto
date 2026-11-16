@@ -1895,6 +1895,114 @@ const SISTEMATICA_1: MateriaDef = {
   disponible: true,
 };
 
+const SISTEMATICA_2: MateriaDef = {
+  id: "n4-sistematica-2",
+  nivel: 4,
+  orden: 2,
+  titulo: "Teología sistemática II: Cristo y el Espíritu Santo",
+  resumen: "La cristología y la pneumatología: la deidad y la humanidad de Cristo, Nicea y Calcedonia, la obra de la cruz, sus oficios y su exaltación; la deidad y la personalidad del Espíritu, Constantinopla, los dones y el bautismo en el Espíritu.",
+  base: "Colosenses 2:9; Juan 15:26",
+  memoria: "Colosenses 2:9",
+  lecciones: lecciones("n4-sistematica-2", [
+    ["La deidad de Cristo", "Colosenses 2:9; Juan 1:1-3; Juan 8:58; Hebreos 1:3; Hebreos 1:8; Juan 20:28"],
+    ["La humanidad de Cristo y sus dos naturalezas", "Hebreos 2:14-17; Lucas 2:52; Filipenses 2:5-11; 1 Timoteo 2:5"],
+    ["La obra de Cristo en la cruz", "Isaías 53:5-6; 2 Corintios 5:21; Marcos 10:45; Romanos 3:24-26; Hebreos 9:12; 1 Pedro 2:24"],
+    ["Profeta, sacerdote y rey: la resurrección y la intercesión", "Deuteronomio 18:15; Hebreos 4:14; Apocalipsis 19:16; 1 Corintios 15:3-8; 1 Corintios 15:17-20; Hechos 1:9-11; Hebreos 7:25; Romanos 8:34"],
+    ["La deidad y la personalidad del Espíritu Santo", "1 Corintios 2:10-11; Salmos 139:7-8; Hechos 13:2; Juan 15:26"],
+    ["Los dones, el bautismo en el Espíritu y el discernimiento", "1 Corintios 12:7-11; 1 Corintios 13:8-10; 1 Corintios 14:39-40; Hechos 2:38-39; 1 Juan 4:1-3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder conozca con orden lo que toda la Escritura enseña sobre Cristo y sobre el Espíritu Santo, siguiendo los artículos 3, 4, 9, 10 y 11 de la declaración de fe: la deidad de Cristo y el concilio de Nicea, su humanidad y la unión de sus dos naturalezas según Calcedonia, su obra en la cruz con sus palabras (sustitución, rescate, redención, propiciación y justificación), sus oficios de profeta, sacerdote y rey, su resurrección, su ascensión y su intercesión; la deidad y la personalidad del Espíritu y el concilio de Constantinopla, los dones, el bautismo en el Espíritu y el discernimiento. Dos puntos de la declaración de fe por confirmar se presentan con respeto, con sus posiciones: las lenguas como señal inicial del bautismo en el Espíritu y la sanidad en la expiación. Su base es la confesión de Pablo: «Porque en él habita corporalmente toda la plenitud de la Deidad» (Colosenses 2:9).",
+    objetivos: [
+      { id: "o1", texto: "Demostrar con la Escritura la deidad de Cristo y explicar el error de Arrio y la respuesta de Nicea.", bloom: "analizar" },
+      { id: "o2", texto: "Explicar la humanidad de Cristo y la unión de sus dos naturalezas según Calcedonia, y reconocer los errores sobre su persona.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar la obra de la cruz con las palabras sustitución, rescate, redención, propiciación y justificación.", bloom: "comprender" },
+      { id: "o4", texto: "Describir los oficios de Cristo y la importancia de su resurrección, su ascensión y su intercesión.", bloom: "comprender" },
+      { id: "o5", texto: "Demostrar la deidad y la personalidad del Espíritu Santo y explicar lo que afirmó Constantinopla.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar el continuismo y el cesacionismo, y discernir las manifestaciones espirituales por la Escritura.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Colosenses 2:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La cristología y la pneumatología bíblicas, con los concilios que las confesaron y los errores que corrigieron.",
+      ser: "Un líder que adora a Cristo como Dios y depende del Espíritu Santo.",
+      hacer: "Enseñar con claridad la persona y la obra de Cristo y del Espíritu, y responder con la Escritura a los errores.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media", nota: "Para los dones y los puntos por confirmar." },
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Para los concilios de Nicea, Constantinopla y Calcedonia." },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Cómo es que Dios es uno y tres al mismo tiempo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=g05ydbCIDHM", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "lectura", titulo: "Filipenses 2: el Cristo que se humilló", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Filipenses&cap=2" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const SISTEMATICA_3: MateriaDef = {
+  id: "n4-sistematica-3",
+  nivel: 4,
+  orden: 3,
+  titulo: "Teología sistemática III: el hombre, el pecado y la salvación",
+  resumen: "La antropología, la hamartiología y la soteriología: la imagen de Dios, el pecado y el error de Pelagio, la gracia y la elección, la conversión, la regeneración y la justificación, la adopción, la santificación, la seguridad y la glorificación.",
+  base: "Romanos 5:1; Génesis 1:27",
+  memoria: "Romanos 5:1",
+  lecciones: lecciones("n4-sistematica-3", [
+    ["El ser humano, creado a imagen de Dios", "Génesis 1:26-28; Génesis 2:7; Salmos 8:4-6; 1 Tesalonicenses 5:23; Mateo 10:28; Santiago 3:9"],
+    ["El pecado: origen, naturaleza y alcance", "Génesis 3:6-8; 1 Juan 3:4; Santiago 4:17; Romanos 5:18-19; Romanos 3:10-12; Efesios 2:1-3; Jeremías 17:9"],
+    ["La gracia y la elección", "Tito 2:11; Juan 6:44; Efesios 1:4-6; Romanos 8:29-30; 1 Timoteo 2:3-4; 2 Pedro 3:9"],
+    ["La conversión, la regeneración y la justificación", "Hechos 20:21; 2 Corintios 5:17; Romanos 3:28; Romanos 4:3-5; Gálatas 2:16; Romanos 5:1"],
+    ["La adopción y la santificación", "Gálatas 4:4-7; 1 Juan 3:1-2; Hebreos 10:10; Hebreos 10:14; Filipenses 3:12-14"],
+    ["La seguridad, la perseverancia y la glorificación", "Romanos 8:38-39; Juan 10:28-29; Hebreos 6:4-6; 2 Pedro 1:10; Romanos 8:29-30"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder conozca con orden lo que toda la Escritura enseña sobre el ser humano, el pecado y la salvación, siguiendo los artículos 5, 6 y 7 de la declaración de fe: la imagen de Dios y la dignidad de toda persona, el origen y el alcance del pecado y la respuesta de Agustín a Pelagio, la gracia y la elección (el calvinismo y el arminianismo, presentados con respeto), la conversión, la regeneración y la justificación por la fe, la adopción y la santificación, la seguridad y la glorificación. Un punto de la declaración de fe por confirmar se presenta con respeto, con sus dos posiciones: la perseverancia del creyente. Su base es la confesión de Pablo: «Justificados, pues, por la fe, tenemos paz para con Dios por medio de nuestro Señor Jesucristo» (Romanos 5:1).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué significa que el ser humano fue creado a imagen de Dios y las dos maneras de entender su constitución.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el origen, la naturaleza y el alcance del pecado, y el error de Pelagio.", bloom: "comprender" },
+      { id: "o3", texto: "Comparar con respeto el calvinismo y el arminianismo sobre la gracia y la elección.", bloom: "analizar" },
+      { id: "o4", texto: "Distinguir la conversión, la regeneración y la justificación por la fe.", bloom: "analizar" },
+      { id: "o5", texto: "Explicar la adopción y los tres aspectos de la santificación.", bloom: "comprender" },
+      { id: "o6", texto: "Evaluar las posiciones sobre la perseverancia y fundar la seguridad en las promesas de Dios.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Romanos 5:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La antropología, la hamartiología y la soteriología bíblicas, con los debates que la iglesia ha tenido sobre ellas.",
+      ser: "Un líder que descansa en la gracia, vive como hijo de Dios y crece en santidad.",
+      hacer: "Enseñar con claridad el camino de la salvación y acompañar con la Escritura a quien duda de ella.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Wayne Grudem", titulo: "Teología sistemática", editorial: "Vida", nota: "Una exposición reformada, útil para conocer la posición calvinista." },
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media" },
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Para Pelagio y Agustín, la Reforma y el Sínodo de Dort." },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Imagen de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VsGlbwF4HtI", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "lectura", titulo: "Romanos 5: justificados por la fe", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=5" },
+      { tipo: "lectura", titulo: "Romanos 8: nada nos podrá separar", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=8" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
 const POETICOS_PROFETICOS: MateriaDef = {
   id: "n4-poeticos-profeticos",
   nivel: 4,
@@ -2543,8 +2651,8 @@ export const NIVELES: NivelDef[] = [
     requisitos: ["Las 10 materias aprobadas", "El examen integral del nivel", "30 horas de práctica confirmada", "Un sermón evaluado con rúbrica"],
     materias: [
       SISTEMATICA_1,
-      enPreparacion(4, 2, "n4-sistematica-2", "Teología sistemática II: Cristo y el Espíritu Santo", "La persona y la obra de Cristo y del Espíritu Santo."),
-      enPreparacion(4, 3, "n4-sistematica-3", "Teología sistemática III: el hombre, el pecado y la salvación", "Antropología, hamartiología y soteriología."),
+      SISTEMATICA_2,
+      SISTEMATICA_3,
       enPreparacion(4, 4, "n4-sistematica-4", "Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos", "Eclesiología, angelología y escatología."),
       POETICOS_PROFETICOS,
       enPreparacion(4, 6, "n4-epistolas-apocalipsis", "Epístolas y Apocalipsis", "De Romanos a Judas, y el libro de Apocalipsis."),
