@@ -17,7 +17,7 @@ test("la primera materia del Nivel 2 está publicada, con 6 lecciones, su versí
   assert.equal(panorama.silabo?.objetivos.length, 5);
   const n2 = NIVELES.find((n) => n.n === 2)!;
   assert.equal(n2.materias[0].id, "n2-panorama-at");
-  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-disciplinas", "n2-sermon-monte", "n2-mayordomia", "n2-familia", "n2-evangelismo-personal", "n2-dones"], "solo Doctrinas fundamentales sigue en preparación");
+  assert.deepEqual(n2.materias.filter((m) => m.disponible).map((m) => m.id), ["n2-panorama-at", "n2-panorama-nt", "n2-doctrinas", "n2-disciplinas", "n2-sermon-monte", "n2-mayordomia", "n2-familia", "n2-evangelismo-personal", "n2-dones"], "las nueve materias del Nivel 2 están publicadas");
 });
 
 test("la segunda materia del Nivel 2, «Panorama del Nuevo Testamento», está publicada con su sílabo", () => {
@@ -114,7 +114,20 @@ test("«Familia y relaciones» y «Dones espirituales y servicio» están public
     assert.ok(tieneEscritoBreve(m));
   }
   const n2 = NIVELES.find((n) => n.n === 2)!;
-  assert.deepEqual(n2.materias.filter((m) => !m.disponible).map((m) => m.id), ["n2-doctrinas"], "solo falta Doctrinas, que espera la declaración de fe");
+  assert.deepEqual(n2.materias.filter((m) => !m.disponible).map((m) => m.id), [], "el Nivel 2 está completo");
+});
+
+test("la tercera materia del Nivel 2, «Doctrinas fundamentales», sigue la declaración de fe y deja por confirmar sus cinco puntos", () => {
+  const d = materiaPorId("n2-doctrinas")!;
+  assert.ok(d.disponible);
+  assert.equal(d.orden, 3);
+  assert.equal(d.memoria, "2 Timoteo 1:13");
+  assert.equal(d.lecciones.length, 6);
+  assert.equal(d.silabo?.objetivos.length, 5);
+  assert.deepEqual(miniPruebasDe(d), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }]);
+  assert.ok(tieneEscritoBreve(d));
+  assert.match(d.silabo!.proposito, /declaración de fe por confirmar/);
+  assert.ok(d.silabo?.recursos?.some((r) => r.url === "/academia/declaracion-de-fe"), "enlaza la declaración de fe");
 });
 
 test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 1", () => {
