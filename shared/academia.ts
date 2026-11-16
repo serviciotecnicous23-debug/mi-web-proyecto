@@ -950,6 +950,57 @@ const PANORAMA_NT: MateriaDef = {
   disponible: true,
 };
 
+/** Nivel 2 · materia 3: las doctrinas fundamentales, artículo por artículo de la declaración de fe. */
+const DOCTRINAS: MateriaDef = {
+  id: "n2-doctrinas",
+  nivel: 2,
+  orden: 3,
+  titulo: "Doctrinas fundamentales",
+  resumen: "Las grandes verdades de la fe según la declaración de fe del ministerio: la Biblia, el Dios trino, Jesucristo, la salvación, el Espíritu Santo, la iglesia y la esperanza.",
+  base: "2 Timoteo 1:13; 2 Timoteo 3:16-17",
+  memoria: "2 Timoteo 1:13",
+  lecciones: lecciones("n2-doctrinas", [
+    ["La Biblia y el Dios trino", "2 Timoteo 1:13; 2 Timoteo 3:16-17; 2 Pedro 1:20-21; Deuteronomio 6:4; Mateo 28:19; 2 Corintios 13:14"],
+    ["Jesucristo, verdadero Dios y verdadero hombre", "Juan 1:1; Juan 1:14; Mateo 1:20-23; Hebreos 4:15; 1 Corintios 15:3-4"],
+    ["El pecado y la salvación", "Génesis 1:27; Romanos 5:12; Romanos 3:23; Efesios 2:8-9; Juan 3:3; 1 Juan 5:11-13"],
+    ["El Espíritu Santo, sus dones y la sanidad", "Juan 16:7-8; Hechos 1:8; Hechos 2:4; Hechos 2:38-39; 1 Corintios 12:7; Santiago 5:14-15"],
+    ["La santidad, las ordenanzas y la iglesia", "1 Tesalonicenses 4:3; Romanos 6:4; 1 Corintios 11:23-26; Mateo 16:18; Efesios 4:11-12"],
+    ["La familia, el avivamiento y la esperanza", "Génesis 2:24; Hechos 1:11; 1 Tesalonicenses 4:16-17; Juan 5:28-29; Apocalipsis 21:4"],
+  ]),
+  silabo: {
+    proposito:
+      "Que el discípulo conozca y retenga las grandes verdades de la fe, siguiendo artículo por artículo la declaración de fe del ministerio: la Biblia, el Dios trino, Jesucristo, el pecado y la salvación, el Espíritu Santo con su bautismo, sus dones y la sanidad divina, la santidad y las ordenanzas, la iglesia y el ministerio, la familia, el avivamiento y la esperanza de la venida de Cristo. Mientras la Dirección académica no la apruebe, la declaración es un borrador. En los cinco puntos en que las iglesias pentecostales difieren (la perseverancia, las lenguas como señal del bautismo en el Espíritu, la sanidad en la expiación, el ministerio de la mujer y el orden de los últimos tiempos), la materia presenta las posiciones con respeto, y la del ministerio es un punto de la declaración de fe por confirmar. Su base es el encargo de Pablo: «Retén la forma de las sanas palabras que de mí oíste, en la fe y amor que es en Cristo Jesús» (2 Timoteo 1:13).",
+    objetivos: [
+      { id: "o1", texto: "Explicar lo que creemos sobre la Biblia, el Dios trino y Jesucristo.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la doctrina del pecado y de la salvación por gracia, por medio de la fe.", bloom: "comprender" },
+      { id: "o3", texto: "Describir la obra del Espíritu Santo: su persona, su bautismo, sus dones y la sanidad divina.", bloom: "comprender" },
+      { id: "o4", texto: "Relacionar la santidad, las ordenanzas, la iglesia, el ministerio, la familia y la esperanza de la venida de Cristo con la vida del discípulo.", bloom: "aplicar" },
+      { id: "o5", texto: "Recitar 2 Timoteo 1:13 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las doctrinas fundamentales de la fe según la declaración de fe del ministerio, con su base bíblica.",
+      ser: "Un discípulo firme en la sana doctrina, que la sostiene con fe y con amor.",
+      hacer: "Explicar con la Biblia lo que cree y vivirlo en santidad, dentro de la iglesia y con esperanza.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+        { autor: "Pablo Hoff", titulo: "Teología evangélica", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media", nota: "Expone las posiciones del pentecostalismo clásico en los puntos por confirmar." },
+      ],
+    },
+    recursos: [
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+      { tipo: "video", titulo: "Carácter de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=oHMicgEfIrY", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "lectura", titulo: "Efesios 2: salvos por gracia", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
 /** Nivel 2 · materia 4: los hábitos del discípulo que crece, siempre como medios de gracia. */
 const DISCIPLINAS: MateriaDef = {
   id: "n2-disciplinas",
@@ -2396,7 +2447,7 @@ export const NIVELES: NivelDef[] = [
     materias: [
       PANORAMA_AT,
       PANORAMA_NT,
-      enPreparacion(2, 3, "n2-doctrinas", "Doctrinas fundamentales", "Las grandes verdades de la fe según la declaración de fe del ministerio."),
+      DOCTRINAS,
       DISCIPLINAS,
       SERMON_MONTE,
       MAYORDOMIA,
