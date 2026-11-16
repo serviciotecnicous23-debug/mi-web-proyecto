@@ -18,6 +18,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Users, Plus, MapPin, Clock, MessageCircle, Calendar, UserPlus, LogOut, Send } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { isTeacherOrAdminRole } from "@/lib/utils";
 
 const DAYS: Record<number, string> = { 0: "Domingo", 1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves", 5: "Viernes", 6: "Sábado" };
 
@@ -28,7 +29,7 @@ export default function GruposPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
 
-  const isTeacherOrAdmin = user?.role === "admin" || user?.role === "obrero";
+  const isTeacherOrAdmin = isTeacherOrAdminRole(user?.role);
 
   const { data: groups = [] } = useQuery<any[]>({ queryKey: ["/api/small-groups"] });
   const { data: myGroupIds = [] } = useQuery<number[]>({

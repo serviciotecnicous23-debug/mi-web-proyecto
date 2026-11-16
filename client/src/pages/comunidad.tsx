@@ -21,6 +21,7 @@ import { FileAttachment } from "@/components/media/FileAttachment";
 import { AttachButton, AttachedFile, LinkDraftPreview } from "@/components/media/Composer";
 import type { UploadedFile } from "@/components/media/upload";
 import { ReportButton } from "@/components/moderacion/ReportButton";
+import { isAdminRole } from "@/lib/utils";
 
 /** El usuario se muestra con @ solo si no es un correo (hay cuentas cuyo usuario es su correo). */
 function publicHandle(username?: string | null) {
@@ -76,7 +77,7 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
                 <span className="text-[10px] text-muted-foreground" title={comment.createdAt ? new Date(comment.createdAt).toLocaleString("es") : undefined}>
                   {timeAgo(comment.createdAt)}
                 </span>
-                {(comment.userId === user.id || user.role === "admin") && (
+                {(comment.userId === user.id || isAdminRole(user.role)) && (
                   <button
                     className="text-[10px] text-destructive hover:underline"
                     onClick={() => deleteComment.mutate({ id: comment.id, postId })}
@@ -361,7 +362,7 @@ export default function Comunidad() {
                         </div>
                       )}
                     </div>
-                    {user && (post.userId === user.id || user.role === "admin") && (
+                    {user && (post.userId === user.id || isAdminRole(user.role)) && (
                       <Button
                         variant="ghost"
                         size="icon"

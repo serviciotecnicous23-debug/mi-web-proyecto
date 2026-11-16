@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePrayerAttendees, useMyPrayerAttendance, useAttendPrayer, useCancelPrayerAttendance } from "@/hooks/use-users";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PrayerWall } from "@/components/oracion/prayer-wall";
-import { isTeacherOrAdminRole } from "@/lib/utils";
+import { isTeacherOrAdminRole, isAdminRole } from "@/lib/utils";
 
 const createPrayerSchema = z.object({
   title: z.string().min(3, "Mínimo 3 caracteres"),
@@ -417,7 +417,7 @@ function PrayerActivityCard({ activity, user, deleteMutation, getPlatformLabel, 
               )}
             </CardDescription>
           </div>
-          {user && (user.role === "admin" || user.id === activity.userId) && (
+          {user && (isAdminRole(user.role) || user.id === activity.userId) && (
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"

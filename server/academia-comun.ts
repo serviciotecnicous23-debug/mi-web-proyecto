@@ -217,6 +217,13 @@ CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
   "aprobada_at" timestamp NOT NULL DEFAULT now(),
   "notas" text,
   "huella" text
+);
+CREATE TABLE IF NOT EXISTS "academia_avisos_materia" (
+  "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "materia_id" text NOT NULL,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "avisado_at" timestamp,
+  PRIMARY KEY ("user_id", "materia_id")
 );`;
 
 // ---------------------------------------------------------------- quién la ve

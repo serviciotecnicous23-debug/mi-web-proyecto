@@ -15,6 +15,7 @@ import {
 import { COURSE_CATEGORIES, ENROLLMENT_STATUSES, MATERIAL_TYPES, TEACHER_REQUEST_STATUSES } from "@shared/schema";
 import type { CourseMaterial, CourseSession } from "@shared/schema";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { isAdminRole, isTeacherOrAdminRole } from "@/lib/utils";
 
 const materialIcons: Record<string, any> = {
   documento: FileText,
@@ -38,10 +39,10 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
 
   const myEnrollment = myEnrollments?.find((e: any) => e.courseId === courseId);
   const myTeachRequest = myTeacherRequests?.find((r: any) => r.courseId === courseId);
-  const isObrero = user?.role === "obrero" || user?.role === "admin";
+  const isObrero = isTeacherOrAdminRole(user?.role);
   const isTeacher = course?.teacherId === user?.id;
   const isEnrolled = myEnrollment && (myEnrollment.status === "aprobado" || myEnrollment.status === "completado");
-  const isAdminUser = user?.role === "admin" || user?.role === "director" || user?.role === "staff_global";
+  const isAdminUser = isAdminRole(user?.role);
   const { data: materials } = useCourseMaterials(courseId, !!(isEnrolled || isTeacher || isAdminUser));
 
   if (isLoading) {
@@ -259,9 +260,9 @@ export default function CursoDetalle({ params }: { params: { id: string } }) {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-primary" /> Ensenar este Curso
+                    <Shield className="w-5 h-5 text-primary" /> Enseñar este curso
                   </CardTitle>
-                  <CardDescription>Como obrero, puedes solicitar ser maestro de este curso.</CardDescription>
+                  <CardDescription>Como maestro del ministerio, puedes pedir enseñar este curso.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {myTeachRequest ? (

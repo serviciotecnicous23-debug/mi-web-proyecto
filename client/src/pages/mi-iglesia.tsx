@@ -14,6 +14,7 @@ import { CHURCH_PERMISSION_ROLES, ROLES } from "@shared/schema";
 import { useLocation } from "wouter";
 
 import { withAccents } from "@shared/labels";
+import { isAdminRole } from "@/lib/utils";
 export default function MiIglesiaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export default function MiIglesiaPage() {
   const [, navigate] = useLocation();
 
   const churchId = user?.churchId;
-  const isAdminUser = user?.role === "admin" || user?.role === "director" || user?.role === "staff_global";
+  const isAdminUser = isAdminRole(user?.role);
   const isChurchAdminUser = user?.role === "admin_iglesia" || isAdminUser;
 
   const { data: churches } = useQuery({

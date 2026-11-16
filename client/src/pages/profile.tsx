@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { withAccents } from "@shared/labels";
 import { InsigniaAcademia } from "@/components/academia/insignia-perfil";
+import { isAdminRole } from "@/lib/utils";
 /**
  * "Eliminar mi cuenta": lo exigen las tiendas de apps y es un derecho de cada persona.
  * Pide la contraseña y escribir ELIMINAR; el servidor borra lo personal y deja la cuenta
@@ -431,7 +432,7 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground mt-1" data-testid="text-profile-country">{withAccents(user.country)}</p>
                   )}
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                    <Badge variant={isAdminRole(user.role) ? "default" : "secondary"}>
                       {ROLES[user.role as keyof typeof ROLES] || user.role}
                     </Badge>
                     <Badge variant={user.isActive ? "outline" : "destructive"}>

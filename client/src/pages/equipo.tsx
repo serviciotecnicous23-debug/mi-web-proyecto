@@ -19,13 +19,14 @@ import {
 import { Link } from "wouter";
 import { Settings, Pencil, Trash2, Plus, Loader2, Save, Users, Search, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isAdminRole } from "@/lib/utils";
 
 const emptyForm = { name: "", role: "", description: "", verse: "", initials: "", userId: null as number | null };
 
 export default function Equipo() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminRole(user?.role);
 
   const [managementMode, setManagementMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);

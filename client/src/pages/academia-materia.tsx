@@ -20,6 +20,7 @@ import {
 } from "@/components/academia/api";
 import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 import { AsignacionDeMateria } from "@/components/academia/asignaciones";
+import { EnPreparacion } from "@/components/academia/en-preparacion";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -370,9 +371,7 @@ export default function AcademiaMateria() {
       {d.vistaPrevia && <AvisoVistaPrevia />}
 
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
-        {!m.disponible && (
-          <div className="glass-card p-5 flex items-start gap-3"><Info className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" /><p className="text-sm">Esta materia está en preparación: su contenido se está escribiendo y revisando. Estas son sus lecciones.</p></div>
-        )}
+        {!m.disponible && <EnPreparacion d={d} />}
         {m.disponible && !inscrito && d.docente && (
           <div className="glass-card p-4 flex items-start gap-3 border border-sky-500/30" role="note" data-testid="materia-vista-docente">
             <Eye className="w-5 h-5 text-sky-600 mt-0.5 shrink-0" />
@@ -385,8 +384,8 @@ export default function AcademiaMateria() {
 
         {m.disponible && !inscrito && <Presentacion d={d} />}
 
-        {/* Lecciones */}
-        <section>
+        {/* Lecciones (una materia en preparación sin lecciones todavía no muestra la lista vacía) */}
+        {m.lecciones.length > 0 && <section>
           <h2 className="font-display text-2xl font-bold mb-4 flex items-center gap-2"><BookOpen className="w-5 h-5 text-orange-500" /> Lecciones</h2>
           <ol className="space-y-2">
             {m.lecciones.map((l, i) => {
@@ -412,7 +411,7 @@ export default function AcademiaMateria() {
             })}
           </ol>
           {m.disponible && !inscrito && !d.docente && <p className="text-xs text-muted-foreground mt-2">Las lecciones se abren al inscribirte en la materia.</p>}
-        </section>
+        </section>}
 
         {m.disponible && inscrito && d.versiculo && d.matriculado && <Versiculo materiaId={m.id} estado={d.versiculo} />}
         {m.disponible && inscrito && d.versiculo && !d.matriculado && (

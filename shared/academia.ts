@@ -3472,6 +3472,8 @@ export type AcademiaEstado = {
   etapas: EtapaDef[];
   niveles: (Omit<NivelDef, "materias"> & { materias: MateriaResumen[]; cierre: CierreResumen | null })[];
   especialidades: (Omit<EspecialidadDef, "materias"> & { materias: MateriaResumen[] })[];
+  /** Las materias que esperaba («Avísame cuando abra») y que ya abrieron: el aviso queda también en la campana. */
+  recienAbiertas?: { id: string; titulo: string }[];
 };
 
 /** El cierre de un nivel en la portada: null mientras el nivel no tiene todas sus materias disponibles. */
@@ -3656,6 +3658,8 @@ export type MateriaDetalle = {
   minis: MiniEstado[];
   /** El escrito breve (Nivel 2 en adelante; null si la materia no lo tiene o no hay sesión). */
   breve: BreveEstado | null;
+  /** Pidió que le avisen cuando la materia abra (solo tiene sentido mientras está en preparación). */
+  avisame?: boolean;
 };
 
 /** El escrito breve de una materia, para el alumno. */

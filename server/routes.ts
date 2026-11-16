@@ -1243,7 +1243,7 @@ ${urls}
 
   // ========== EMAIL STATUS (admin) ==========
   app.get("/api/email-status", (req, res) => {
-    if (!req.isAuthenticated() || req.user?.role !== "admin") {
+    if (!isAdmin(req)) {
       return res.status(403).json({ message: "Solo administradores" });
     }
     const { getEmailStatus } = require("./email");
@@ -2389,9 +2389,9 @@ ${urls}
   app.post(api.teacherRequests.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.user!.isActive) return res.sendStatus(403);
-    const userRole = req.user!.role;
-    if (userRole !== "obrero" && userRole !== "admin") {
-      return res.status(403).json({ message: "Solo obreros pueden solicitar ensenar un curso" });
+    // los roles de enseñanza (también el Maestro del Ministerio y el de una iglesia aliada) y la administración
+    if (!isTeacherOrAdmin(req)) {
+      return res.status(403).json({ message: "Solo los maestros pueden pedir enseñar un curso" });
     }
     try {
       const input = api.teacherRequests.create.input.parse(req.body);
