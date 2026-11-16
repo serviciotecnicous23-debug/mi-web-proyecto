@@ -94,8 +94,20 @@ test("el Nivel 4 conserva su orden, y sus materias salen con los puntos de la de
   assert.deepEqual(nivel4.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   assert.deepEqual(
     nivel4.materias.filter((m) => !m.disponible).map((m) => m.id),
-    ["n4-sistematica-4", "n4-epistolas-apocalipsis"],
+    [],
+    "el Nivel 4 está completo",
   );
+  const ea = materiaPorId("n4-epistolas-apocalipsis")!;
+  assert.equal(ea.memoria, "Hebreos 1:1-2");
+  assert.equal(ea.lecciones.length, 6);
+  assert.equal(ea.silabo!.objetivos.length, 7);
+  assert.match(ea.silabo!.proposito, /declaración de fe por confirmar/);
+  const s4 = materiaPorId("n4-sistematica-4")!;
+  assert.ok(s4.disponible);
+  assert.equal(s4.memoria, "Tito 2:13");
+  assert.equal(s4.lecciones.length, 6);
+  assert.equal(s4.silabo!.objetivos.length, 7);
+  assert.match(s4.silabo!.proposito, /declaración de fe por confirmar/);
   const s3 = materiaPorId("n4-sistematica-3")!;
   assert.ok(s3.disponible);
   assert.equal(s3.memoria, "Romanos 5:1");

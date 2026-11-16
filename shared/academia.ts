@@ -2016,6 +2016,117 @@ const SISTEMATICA_3: MateriaDef = {
   disponible: true,
 };
 
+const SISTEMATICA_4: MateriaDef = {
+  id: "n4-sistematica-4",
+  nivel: 4,
+  orden: 4,
+  titulo: "Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos",
+  resumen: "La eclesiología, la angelología y la escatología: la naturaleza de la iglesia, su gobierno y sus ministerios, su misión y sus ordenanzas, los ángeles, Satanás y los demonios, la muerte y la resurrección, y la venida de Cristo, el juicio y la eternidad.",
+  base: "Tito 2:13; Mateo 16:18",
+  memoria: "Tito 2:13",
+  lecciones: lecciones("n4-sistematica-4", [
+    ["La naturaleza de la iglesia", "Mateo 16:18; Efesios 1:22-23; 1 Corintios 12:12-13; Efesios 2:19-22; 1 Pedro 2:9; Hechos 2:42-47"],
+    ["El gobierno y los ministerios de la iglesia", "Hechos 14:23; Efesios 4:11-13; 1 Timoteo 3:1-7; Hechos 2:17-18; Romanos 16:1-2; 1 Timoteo 2:11-12"],
+    ["La misión de la iglesia y sus ordenanzas", "Mateo 28:18-20; Marcos 16:15-16; Hechos 1:8; Efesios 4:15-16; Gálatas 6:10; 1 Corintios 11:23-26"],
+    ["Los ángeles, Satanás y los demonios", "Hebreos 1:14; Salmos 103:20; Lucas 1:19; Judas 1:9; Apocalipsis 12:9; Judas 1:6; 1 Pedro 5:8-9; Colosenses 2:15"],
+    ["La muerte, el estado intermedio y la resurrección", "Hebreos 9:27; Filipenses 1:21-23; 2 Corintios 5:8; Lucas 23:43; Juan 5:28-29; 1 Corintios 15:42-44"],
+    ["La venida de Cristo, el juicio y la eternidad", "Hechos 1:11; Tito 2:13; Mateo 24:36; 1 Tesalonicenses 4:16-17; Apocalipsis 20:4-6; 2 Corintios 5:10; Apocalipsis 20:11-15; Mateo 25:46; Apocalipsis 21:1-4"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder conozca con orden lo que toda la Escritura enseña sobre la iglesia, los ángeles y los últimos tiempos, siguiendo los artículos 8, 12, 13, 16 y 17 de la declaración de fe: la naturaleza de la iglesia, universal y local, y sus imágenes bíblicas; su gobierno, sus ministerios y los requisitos de sus líderes; su misión y sus dos ordenanzas; los ángeles, Satanás y los demonios, sin especular; la muerte, el estado intermedio y la resurrección; y la venida de Cristo, el juicio y la eternidad. Dos puntos de la declaración de fe por confirmar se presentan con respeto, con sus posiciones: el ministerio de la mujer y el orden de los últimos tiempos, con el arrebatamiento y el milenio. Su base es la esperanza de la iglesia: «aguardando la esperanza bienaventurada y la manifestación gloriosa de nuestro gran Dios y Salvador Jesucristo» (Tito 2:13).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la iglesia, universal y local, y las imágenes con que la presenta la Biblia.", bloom: "comprender" },
+      { id: "o2", texto: "Describir las formas de gobierno, los ministerios y los requisitos de los líderes, y presentar con respeto las posiciones sobre el ministerio de la mujer.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar la misión de la iglesia y el sentido de sus dos ordenanzas, y aplicarlos a la iglesia local.", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar lo que la Biblia enseña sobre los ángeles, Satanás y los demonios, sin especular.", bloom: "comprender" },
+      { id: "o5", texto: "Explicar la muerte, el estado intermedio y la resurrección, y reconocer los errores sobre ellos.", bloom: "analizar" },
+      { id: "o6", texto: "Comparar con respeto las posiciones sobre el arrebatamiento y el milenio, y afirmar lo que todos confiesan sobre la venida, el juicio y la eternidad.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Tito 2:13 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La eclesiología, la angelología y la escatología bíblicas, con las posiciones evangélicas donde hay diferencias.",
+      ser: "Un líder que ama a la iglesia, vive sin miedo al enemigo y espera preparado la venida de Cristo.",
+      hacer: "Enseñar con claridad la doctrina de la iglesia y de los últimos tiempos, y acompañar con la Escritura a quien enfrenta la muerte.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Guy P. Duffield y Nathaniel M. Van Cleave", titulo: "Fundamentos de teología pentecostal", editorial: "Foursquare Media", nota: "Para los ángeles y los últimos tiempos desde una perspectiva pentecostal." },
+        { autor: "Wayne Grudem", titulo: "Teología sistemática", editorial: "Vida", nota: "Presenta con claridad las formas de gobierno de la iglesia y las posiciones sobre el milenio." },
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Para Agustín, la Reforma y los puritanos." },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Efesios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yJgym5MGzM4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1): Hechos 1-12", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "lectura", titulo: "Efesios 4: los ministerios y la edificación del cuerpo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=4" },
+      { tipo: "lectura", titulo: "1 Tesalonicenses 4: la esperanza de la venida del Señor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Tesalonicenses&cap=4" },
+      { tipo: "lectura", titulo: "Apocalipsis 21: el cielo nuevo y la tierra nueva", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Apocalipsis&cap=21" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const EPISTOLAS_APOCALIPSIS: MateriaDef = {
+  id: "n4-epistolas-apocalipsis",
+  nivel: 4,
+  orden: 6,
+  titulo: "Epístolas y Apocalipsis",
+  resumen: "De Romanos a Judas y el libro de Apocalipsis: el autor, la fecha, la ocasión, la estructura y el mensaje de cada grupo de cartas, la armonía entre Pablo y Santiago, y las maneras de leer el Apocalipsis con su mensaje central.",
+  base: "Hebreos 1:1-2; 2 Timoteo 3:16",
+  memoria: "Hebreos 1:1-2",
+  lecciones: lecciones("n4-epistolas-apocalipsis", [
+    ["Romanos y Gálatas: el evangelio de la gracia", "Romanos 1:16-17; Romanos 3:23-24; Romanos 8:1; Romanos 12:1-2; Gálatas 1:6-7; Gálatas 5:1; Gálatas 5:22-23"],
+    ["1 y 2 Corintios: una iglesia con dones y con problemas", "1 Corintios 1:10; 1 Corintios 13:4-7; 1 Corintios 15:3-4; 2 Corintios 5:18-20; 2 Corintios 9:7; 2 Corintios 12:9"],
+    ["Las cartas de la prisión", "Efesios 4:1-3; Efesios 2:8-10; Filipenses 2:5-8; Filipenses 4:4; Colosenses 1:15-18; Filemón 1:15-16"],
+    ["Tesalonicenses y las cartas pastorales", "1 Tesalonicenses 1:9-10; 2 Tesalonicenses 3:10; 1 Timoteo 4:12; 2 Timoteo 2:2; 2 Timoteo 3:16-17; 2 Timoteo 4:7-8"],
+    ["Hebreos y las cartas generales", "Hebreos 1:1-2; Hebreos 11:1; Hebreos 11:6; Santiago 2:17-18; 1 Pedro 1:3; 1 Juan 5:13; Judas 1:3"],
+    ["El Apocalipsis", "Apocalipsis 1:1-3; Apocalipsis 1:9; Apocalipsis 1:17-18; Apocalipsis 5:9-10; Apocalipsis 11:15; Apocalipsis 22:20"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder conozca de primera mano las cartas del Nuevo Testamento y el Apocalipsis para enseñarlas con fidelidad: el autor, la fecha aproximada, la ocasión, la estructura y el mensaje de Romanos y Gálatas, de 1 y 2 Corintios, de las cartas de la prisión, de Tesalonicenses y las cartas pastorales, de Hebreos y las cartas generales, y del Apocalipsis. Las fechas que se discuten se dicen con cautela, y se presentan con respeto las cuatro maneras de leer el Apocalipsis; el orden de los últimos tiempos es un punto de la declaración de fe por confirmar, que se estudia en Teología sistemática IV. Su base es la confesión de Hebreos: «Dios, habiendo hablado muchas veces y de muchas maneras en otro tiempo a los padres por los profetas, en estos postreros días nos ha hablado por el Hijo» (Hebreos 1:1-2).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el mensaje de Romanos y de Gálatas sobre el evangelio y la justificación por la fe.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los problemas de la iglesia de Corinto y las respuestas de Pablo en 1 y 2 Corintios.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar el mensaje de las cartas de la prisión sobre Cristo, la iglesia y la vida cristiana.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar la enseñanza de Tesalonicenses y de las cartas pastorales al ministerio de hoy.", bloom: "aplicar" },
+      { id: "o5", texto: "Analizar el mensaje de Hebreos y de las cartas generales, y armonizar a Pablo y a Santiago.", bloom: "analizar" },
+      { id: "o6", texto: "Comparar con respeto las maneras de interpretar el Apocalipsis y reconocer su mensaje central.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hebreos 1:1-2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El trasfondo, la estructura y el mensaje de las epístolas y del Apocalipsis.",
+      ser: "Un líder que vive por la gracia, sirve en la debilidad y espera con esperanza la venida de Cristo.",
+      hacer: "Enseñar las cartas del Nuevo Testamento en su contexto y presentar el Apocalipsis con equilibrio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Merrill C. Tenney", titulo: "Nuestro Nuevo Testamento", editorial: "Portavoz" },
+        { autor: "Gordon Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida", nota: "Los capítulos sobre las epístolas y sobre el Apocalipsis." },
+      ],
+      complementaria: [
+        { autor: "Henrietta C. Mears", titulo: "Lo que nos dice la Biblia", editorial: "Vida" },
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 1): Apocalipsis 1-11", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/apocalipsis-1-11/" },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 2): Apocalipsis 12-22", fuente: "Proyecto Biblia", url: "https://bibleproject.com/es/videos/apocalipsis-12-22/" },
+      { tipo: "lectura", titulo: "Romanos 8: ninguna condenación", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=8" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
 const POETICOS_PROFETICOS: MateriaDef = {
   id: "n4-poeticos-profeticos",
   nivel: 4,
@@ -2666,9 +2777,9 @@ export const NIVELES: NivelDef[] = [
       SISTEMATICA_1,
       SISTEMATICA_2,
       SISTEMATICA_3,
-      enPreparacion(4, 4, "n4-sistematica-4", "Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos", "Eclesiología, angelología y escatología."),
+      SISTEMATICA_4,
       POETICOS_PROFETICOS,
-      enPreparacion(4, 6, "n4-epistolas-apocalipsis", "Epístolas y Apocalipsis", "De Romanos a Judas, y el libro de Apocalipsis."),
+      EPISTOLAS_APOCALIPSIS,
       HOMILETICA_2,
       HISTORIA_2,
       APOLOGETICA,
