@@ -2696,6 +2696,114 @@ const SEMINARIO: MateriaDef = {
   disponible: true,
 };
 
+const EXEGESIS: MateriaDef = {
+  id: "n5-exegesis",
+  nivel: 5,
+  orden: 6,
+  titulo: "Exégesis de un libro: Romanos",
+  resumen: "El método exegético aplicado a una carta entera: el contexto, el argumento de Romanos sección por sección, sus palabras clave y las lecturas evangélicas donde hay diferencias, hasta la vida práctica y la misión.",
+  base: "Romanos 1:16-17; 2 Timoteo 2:15",
+  memoria: "Romanos 8:1",
+  lecciones: lecciones("n5-exegesis", [
+    ["El método exegético: leer Romanos en su contexto", "2 Timoteo 2:15; Romanos 15:22-24; Romanos 1:1-4; Romanos 1:5; Romanos 1:16-17; Habacuc 2:4"],
+    ["Romanos 1:18 a 3:20: todos bajo pecado", "Romanos 1:18-20; Romanos 1:24-25; Romanos 2:1; Romanos 2:28-29; Romanos 3:19-20"],
+    ["Romanos 3:21 a 5:21: la justicia de Dios por la fe", "Romanos 3:21-26; Romanos 4:11; Romanos 5:1-5; Romanos 5:8; Romanos 5:12"],
+    ["Romanos 6 a 8: la vida nueva en el Espíritu", "Romanos 6:1-4; Romanos 6:11; Romanos 6:23; Romanos 7:18-19; Romanos 7:24-25; Romanos 8:1-2; Romanos 8:14-16; Romanos 8:26-28"],
+    ["Romanos 9 a 11: Dios fiel a sus promesas", "Romanos 9:6; Romanos 9:14-16; Romanos 10:9-10; Romanos 10:13-15; Romanos 11:25-26; Romanos 11:33"],
+    ["Romanos 12 a 16: la vida transformada y la misión", "Romanos 12:3-5; Romanos 13:1; Hechos 5:29; Romanos 14:1; Romanos 15:7; Romanos 15:20; Romanos 16:7; Romanos 16:25-26"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder aprenda a estudiar un libro bíblico entero con el método exegético, aplicándolo a la carta a los Romanos: el contexto histórico y literario, el argumento de Pablo sección por sección, las palabras clave como justificación, redención y propiciación, y la vida práctica y la misión que nacen de la doctrina. Donde los evangélicos leen distinto (Romanos 7, la elección en Romanos 9, el futuro de Israel y Junias en Romanos 16) se presentan las lecturas con respeto, y el ministerio de la mujer es un punto de la declaración de fe por confirmar. Su base es el llamado de Pablo a Timoteo: «Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad» (2 Timoteo 2:15).",
+    objetivos: [
+      { id: "o1", texto: "Aplicar los pasos del método exegético a un texto de Romanos.", bloom: "aplicar" },
+      { id: "o2", texto: "Explicar el argumento de Romanos 1:18 a 3:20 sobre el pecado de todos.", bloom: "comprender" },
+      { id: "o3", texto: "Analizar la justificación por la fe en Romanos 3:21 a 5:21, con sus palabras clave.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar la vida nueva en el Espíritu en Romanos 6 a 8 y comparar con respeto las lecturas de Romanos 7.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar las lecturas de Romanos 9 a 11 sobre la elección y el futuro de Israel.", bloom: "evaluar" },
+      { id: "o6", texto: "Aplicar la enseñanza de Romanos 12 a 16 a la vida de la iglesia y a su misión.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Romanos 8:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El método exegético y el argumento completo de la carta a los Romanos.",
+      ser: "Un líder humilde ante el texto, que escucha a Dios antes de hablar.",
+      hacer: "Preparar enseñanzas fieles a partir del estudio de un libro entero, paso a paso.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gordon D. Fee", titulo: "Exégesis del Nuevo Testamento: manual para estudiantes y pastores", editorial: "Vida" },
+        { autor: "John Stott", titulo: "El mensaje de Romanos", editorial: "Certeza Unida" },
+      ],
+      complementaria: [
+        { autor: "Douglas J. Moo", titulo: "Comentario bíblico con aplicación NVI: Romanos", editorial: "Vida" },
+        { autor: "Gordon Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+        { autor: "Henry A. Virkler", titulo: "Hermenéutica: principios y procedimientos de interpretación bíblica", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: la carta a los Romanos completa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=1" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const AVIVAMIENTO: MateriaDef = {
+  id: "n5-avivamiento",
+  nivel: 5,
+  orden: 7,
+  titulo: "Teología del avivamiento",
+  resumen: "Los principios bíblicos, la historia y el discernimiento del avivamiento: qué es, los avivamientos del Antiguo Testamento y de Hechos, los de la historia de la iglesia, cómo discernirlos y cómo buscarlos y sostener sus frutos.",
+  base: "Habacuc 3:2; Hechos 3:19",
+  memoria: "Habacuc 3:2",
+  lecciones: lecciones("n5-avivamiento", [
+    ["¿Qué es el avivamiento?", "Salmos 85:6; Habacuc 3:2; Isaías 57:15; Apocalipsis 2:4-5; Hechos 3:19"],
+    ["Los avivamientos en el Antiguo Testamento", "2 Crónicas 29:3; 2 Crónicas 30:26; 2 Reyes 22:11; 2 Reyes 23:3; Nehemías 8:8; Nehemías 8:10; 2 Crónicas 7:14"],
+    ["Pentecostés y los avivamientos de Hechos", "Joel 2:28-29; Hechos 2:1-4; Hechos 2:37-41; Hechos 4:31; Hechos 8:5-8; Hechos 19:18-20"],
+    ["La historia de los avivamientos", "Salmos 78:4; Hebreos 13:8"],
+    ["El discernimiento: examinadlo todo", "1 Tesalonicenses 5:19-21; 1 Juan 4:1-3; Mateo 7:15-17; 1 Corintios 14:33; 1 Corintios 14:40; Levítico 10:1-2"],
+    ["Buscar el avivamiento y sostener sus frutos", "Hechos 1:14; Santiago 4:8; Oseas 10:12; Hechos 2:42; Mateo 9:37-38; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder entienda el avivamiento con la Escritura, la historia y el discernimiento, siguiendo el artículo 15 de la declaración de fe: qué es y en qué se distingue de la evangelización, los avivamientos de Ezequías, Josías y Esdras y Nehemías, Pentecostés y los avivamientos de Hechos, los grandes avivamientos de la historia desde Herrnhut hasta Valparaíso, las señales de una obra verdadera del Espíritu según Jonathan Edwards, y cómo buscarlo y sostener sus frutos. Un punto de la declaración de fe por confirmar se presenta con respeto: las lenguas como señal inicial del bautismo en el Espíritu. Su base es la oración del profeta: «Oh Jehová, aviva tu obra en medio de los tiempos» (Habacuc 3:2).",
+    objetivos: [
+      { id: "o1", texto: "Definir el avivamiento con la Escritura y la declaración de fe, y distinguirlo de la evangelización y de un despertar.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar el patrón de los avivamientos del Antiguo Testamento y leer 2 Crónicas 7:14 en su contexto.", bloom: "analizar" },
+      { id: "o3", texto: "Explicar Pentecostés y los frutos de los avivamientos del libro de los Hechos.", bloom: "comprender" },
+      { id: "o4", texto: "Analizar los principales avivamientos de la historia, lo que tienen en común y sus frutos.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar las manifestaciones espirituales con los criterios bíblicos de discernimiento.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar cómo buscar el avivamiento y sostener sus frutos en la iglesia local.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Habacuc 3:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La teología bíblica del avivamiento, su historia y los criterios para discernirlo.",
+      ser: "Un líder humilde y con hambre de Dios, abierto al Espíritu y firme en la Palabra.",
+      hacer: "Guiar a la iglesia a buscar el avivamiento, a discernir sus manifestaciones y a cuidar sus frutos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Arthur Wallis", titulo: "En el día de su poder", editorial: "Unilit" },
+        { autor: "Jonathan Edwards", titulo: "Los afectos religiosos: la válida experiencia cristiana", editorial: "Publicaciones Faro de Gracia" },
+      ],
+      complementaria: [
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Para los moravos, los despertares y el metodismo." },
+        { autor: "Pablo A. Deiros", titulo: "Historia del cristianismo en América Latina", editorial: "Mundo Hispano", nota: "Para el pentecostalismo en América Latina." },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras-Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: los primeros capítulos de Hechos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -2802,8 +2910,8 @@ export const NIVELES: NivelDef[] = [
       DIDACTICA,
       LIDERAZGO_2,
       IDIOMAS,
-      enPreparacion(5, 6, "n5-exegesis", "Exégesis de un libro", "Estudio profundo de Romanos o de Hechos."),
-      enPreparacion(5, 7, "n5-avivamiento", "Teología del avivamiento", "Los principios bíblicos, la historia y el discernimiento del avivamiento."),
+      EXEGESIS,
+      AVIVAMIENTO,
       SEMINARIO,
     ],
   },
