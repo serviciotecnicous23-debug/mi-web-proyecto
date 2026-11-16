@@ -15,7 +15,8 @@
  *   VAPID_SUBJECT        - Contact email (e.g., "mailto:admin@avivandoelfuego.org")
  */
 
-import webPush from "web-push";
+// web-push 4 es un módulo ES solo con exportaciones con nombre (sin "default"): se importa todo junto.
+import * as webPush from "web-push";
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
