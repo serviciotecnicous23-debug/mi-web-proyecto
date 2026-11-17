@@ -260,9 +260,17 @@ export default function AcademiaLeccion() {
           <Minutos min={l.leccion.minutos} />
         </div>
         <BarraAvance valor={l.leccion.n} de={l.leccion.de} />
-        <h1 className="heading-display font-display text-3xl md:text-5xl mt-6 mb-2" data-testid="leccion-titulo">{l.leccion.titulo}</h1>
+        <h1 className="heading-display font-display text-3xl md:text-5xl mt-6 mb-2" data-testid="leccion-titulo" data-narra="titulo">{l.leccion.titulo}</h1>
         <p className="text-sm text-muted-foreground mb-4">{l.leccion.base}</p>
-        <HerramientasLectura contenedor={texto} tamano={tamano} alCambiarTamano={setTamano} />
+        {/* con key: al pasar a otra lección, la lectura en voz alta empieza de cero (y la anterior se detiene) */}
+        <HerramientasLectura
+          key={l.leccion.id}
+          contenedor={texto}
+          tamano={tamano}
+          alCambiarTamano={setTamano}
+          narracion={l.narracion}
+          leccion={{ id: l.leccion.id, titulo: l.leccion.titulo, materia: l.materia.titulo }}
+        />
 
         {!conSesion && l.publica && (
           <div className="glass-card p-4 mb-6 text-sm">Estás leyendo una lección abierta. <a href={loginUrl()} className="text-orange-600 dark:text-orange-300 font-medium hover:underline">Entra o crea tu cuenta</a> para guardar tu avance y recibir tu certificado.</div>
@@ -274,7 +282,7 @@ export default function AcademiaLeccion() {
           </div>
         )}
 
-        <section className="glass-card p-5 mb-8">
+        <section className="glass-card p-5 mb-8" data-narra="objetivos">
           <p className="data-label mb-2 flex items-center gap-1.5"><Target className="w-3.5 h-3.5" /> Al terminar esta lección podrás</p>
           <ul className="space-y-1.5">{l.objetivos.map((o) => <li key={o} className="flex gap-2 text-[15px]"><span className="text-orange-500">•</span>{o}</li>)}</ul>
         </section>
@@ -299,7 +307,7 @@ export default function AcademiaLeccion() {
           <p className="font-display text-xl md:text-2xl font-semibold leading-snug" data-bloque={-2}>{marcas.get(-2) ? conMarcas(l.ideaClave, marcas.get(-2)) : l.ideaClave}</p>
         </section>
 
-        <section className="mb-10">
+        <section className="mb-10" data-narra="vida">
           <h2 className="font-display text-2xl font-bold mb-2 flex items-center gap-2"><PenLine className="w-5 h-5 text-orange-500" /> Para la vida</h2>
           <p className="text-[16px] leading-7 mb-3">{l.paraLaVida.texto}</p>
           <label className="block text-sm font-medium mb-2" htmlFor="reflexion">{l.paraLaVida.pregunta}</label>
@@ -317,7 +325,7 @@ export default function AcademiaLeccion() {
         </section>
         </div>
 
-        <section className="mb-10" data-testid="repaso">
+        <section className="mb-10 scroll-mt-[calc(var(--app-nav-h)+1rem)]" data-testid="repaso">
           <h2 className="font-display text-2xl font-bold mb-1 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Repaso</h2>
           <p className="text-sm text-muted-foreground mb-4">Responde bien cada pregunta para terminar la lección. Cuenta lo que aciertes a la primera.</p>
           {!repasoAbierto && bloqueo ? (

@@ -1,0 +1,2 @@
+# Los guiones de bash se usan en WSL o Linux: siempre con saltos de línea LF (con CRLF, bash no los corre).
+*.sh text eol=lf

@@ -13,6 +13,8 @@
  * University); del juego solo se toma la seguridad técnica de los exámenes (preguntas en el servidor y reloj).
  */
 
+import type { NarracionVista } from "./narracion";
+
 export const NOMBRE_ACADEMIA = "Academia Avivando el Fuego";
 /** El lema: 2 Timoteo 2:15 (RV1960, frase literal comprobada con la Biblia de la web). */
 export const LEMA = { frase: "Procura con diligencia presentarte a Dios aprobado", ref: "2 Timoteo 2:15" };
@@ -3982,7 +3984,16 @@ export function normalizarCodigo(s: string): string {
   return `AAF-${fijo(m[1])}-${fijo(m[2])}`;
 }
 
-export type LeccionEstado = { id: string; titulo: string; minutos: number; base: string; vista: boolean; completada: boolean };
+export type LeccionEstado = {
+  id: string;
+  titulo: string;
+  minutos: number;
+  base: string;
+  vista: boolean;
+  completada: boolean;
+  /** Los minutos de su narración grabada con la voz de la academia (null o ausente: no tiene). */
+  escuchar?: number | null;
+};
 
 export type ExamenEstado = {
   medida: MedidaExamen;
@@ -4169,6 +4180,8 @@ export type LeccionVista = {
   docente: boolean;
   /** Lo que falta para abrir el repaso (null: ya está abierto, o es la vista docente). */
   bloqueo: BloqueoRepaso | null;
+  /** La narración grabada con la voz de la academia (null: se escucha con la voz del aparato). */
+  narracion: NarracionVista | null;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };

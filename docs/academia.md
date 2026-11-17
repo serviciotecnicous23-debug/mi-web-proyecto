@@ -91,13 +91,50 @@ las preguntas (`client/src/components/academia/lectura-ampliada.tsx`). No pone n
 universitario de la materia.
 
 **Las herramientas de lectura** (`client/src/components/academia/lectura.tsx`, debajo del título de cada lección):
-- **Escuchar la lección:** la lee en voz alta con la voz en español del aparato (la API de voz del navegador: sin costo
+- **Escuchar la lección:** si la lección tiene su narración grabada, suena la voz de la academia (ver «La voz de las
+  lecciones», abajo). Si no, la lee en voz alta con la voz en español del aparato (la API de voz del navegador: sin costo
   ni servidor), bloque por bloque (los mismos `data-bloque` del cuaderno: «Para empezar», la lectura y la idea clave),
   resaltando el que lee. Pausar sigue desde el mismo párrafo; hay detener y cuatro velocidades (0,85× a 1,3×). Cada
   párrafo se lee en trozos de pocas oraciones (`trozosDeLectura`, `shared/lectura-voz.ts`, con su prueba) porque los
   navegadores cortan las frases muy largas. Si el aparato no tiene voz, el botón no aparece.
 - **El tamaño de la letra** (A− y A+: 100 %, 110 %, 120 % y 135 %) agranda la lectura con `zoom`, que no desborda en el
   teléfono. La velocidad y el tamaño se recuerdan en el aparato (`localStorage`).
+
+**La voz de las lecciones** (la narración grabada; pedido de Luis del 16-nov-2026: una voz que inspire confianza, en
+español fluido, «tipo documental»):
+- **La voz:** «documental», un hombre de voz grave y pausada, elegida por Luis el 17-nov-2026 entre tres muestras
+  (documental, maestro cálido y narradora). Es una voz hecha con IA, no la de una persona: Qwen3-TTS VoiceDesign creó la
+  referencia (`scripts/academia/voz/voz-academia.wav`, con su texto y su descripción en `voz-academia.json`) y OmniVoice
+  la clona en cada lección, así toda la academia suena con la misma voz. Se graba gratis en la PC de Luis (Wan2GP en WSL).
+- **Qué dice:** `guionDeLeccion` (`shared/narracion.ts`, con su prueba): la entrada narrada (la materia, «Lección uno» y
+  el título, y los objetivos en una frase), «Para empezar», cada bloque (los versículos con «Mateo, capítulo dieciséis,
+  versículos quince al diecisiete» y su texto de la RV1960; los esquemas: línea de tiempo, cuadro y pasos; los videos
+  como «En la página tienes el video…»), «La idea clave» y «Para la vida», y termina invitando al repaso. `hablado`
+  convierte lo escrito en lo que se dice: las citas («Juan 1:41» → «Juan uno, cuarenta y uno»; «1 Juan» → «Primera de
+  Juan»), los números, los años, los siglos, las abreviaturas y los teléfonos de ayuda.
+- **La huella:** `huellaDeLeccion` (con las citas, no con el texto de la Biblia). La grabación guarda la huella con que se
+  hizo; si la lección cambia (texto, orden, título, un esquema nuevo), la grabación deja de valer y la página vuelve a la
+  voz del aparato hasta grabarla otra vez (`server/academia-narracion.ts`; `LeccionVista.narracion` llega en null).
+- **El reproductor** (`client/src/components/academia/escuchar.tsx`): barra fija arriba de la lectura mientras suena
+  (abajo están el cuaderno, la mini radio y las pestañas del teléfono), resaltado del lugar que se oye (las marcas de
+  `data-bloque` y de `data-narra`: «titulo», «objetivos», «vida»), 10 s atrás y adelante, avance, velocidad, controles en
+  la pantalla de bloqueo y los audífonos (Media Session), «Seguir escuchando (2:31)» donde se quedó (en el aparato) e
+  «Ir al repaso» al terminar. Si el audio no carga, avisa y vuelve la voz del aparato.
+- **Dónde está el audio:** `client/public/voz/academia/<lección>-<huella del audio>.m4a` (AAC 40 kbps, mono, 24 kHz, −16 LUFS;
+  unos 300 KB por minuto), servido en `/voz` con caché de un año (el nombre cambia si se graba otra vez) y sin pasar por el
+  service worker (se pide por partes, como la música del juego). El registro es `server/academia/narraciones.ts`.
+  Medido el 17-nov: el Nivel 1 son unos 176 minutos (≈52 MB) y toda la academia, unas 28 horas (≈500 MB): para grabar
+  las demás conviene un almacenamiento aparte (por ejemplo Cloudflare R2, 10 GB gratis) con `NARRACION_URL_BASE` en
+  Render, para no llenar el repositorio.
+- **Cómo grabar** (en la PC de Luis, unos 2 minutos de trabajo por cada 5 de audio):
+  1. `npx tsx scripts/academia/narracion.ts estimar` (cuánto audio tiene cada nivel).
+  2. `npx tsx scripts/academia/narracion.ts guion <carpeta> 2` (un nivel, una materia o una lección; los versículos se
+     traen de la RV1960 de la web publicada).
+  3. En WSL: `bash scripts/academia/voz/narrar.sh <carpeta>` (en segundo plano; se puede cortar y seguir). Cada trozo se
+     escucha con whisper y se graba otra vez si no dice lo que debía (`<lección>.qa.json`).
+  4. `npx tsx scripts/academia/narracion.ts registrar <carpeta>` copia los audios y escribe el registro.
+  5. Si se graba otro nivel, actualizar el paso «Lecciones cortas» de la portada (`PASOS` en
+     `client/src/pages/academia.tsx`), que dice qué lecciones se escuchan.
 
 **Primero se lee (que no se responda sin leer):** el repaso se abre recién cuando pasó el tiempo de lectura de la lección
 (`segundosDeLectura`: el 40 % de sus minutos, entre 1 y 3 minutos) y, si la lección tiene un video de YouTube, cuando se

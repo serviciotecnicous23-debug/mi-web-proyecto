@@ -1,12 +1,17 @@
 // Las herramientas de lectura de una lección (entrega 3 del «cableado» de la academia):
-// - «Escuchar la lección»: la lee en voz alta con la voz en español del teléfono o la computadora (la API de voz del
-//   navegador, sin costo ni servidor), párrafo por párrafo, resaltando el que va leyendo; con pausa, detener y velocidad.
+// - «Escuchar la lección»: si la lección tiene su narración grabada con la voz de la academia (escuchar.tsx), suena
+//   esa; si no, la lee la voz en español del teléfono o la computadora (la API de voz del navegador, sin costo ni
+//   servidor), párrafo por párrafo, resaltando el que va leyendo; con pausa, detener y velocidad.
 // - El tamaño de la letra (A− y A+), que se recuerda en este aparato.
 // Lee los bloques marcados con data-bloque (los mismos que usa el cuaderno), en el orden de la página.
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { Minus, Pause, Play, Plus, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { trozosDeLectura } from "@shared/lectura-voz";
+import type { NarracionVista } from "@shared/narracion";
+import { EscucharGrabada } from "./escuchar";
+import { resaltar } from "./resaltar";
 
 const TAMANOS = [1, 1.1, 1.2, 1.35] as const;
 const VELOCIDADES = [0.85, 1, 1.15, 1.3] as const;
@@ -48,20 +53,29 @@ function vozEspanol(): SpeechSynthesisVoice | null {
 
 type Estado = "parado" | "leyendo" | "pausa";
 
-/** Resalta el bloque que se está leyendo (sin tocar sus clases: el cuaderno pinta las suyas). */
-function resaltar(el: HTMLElement | null, si: boolean) {
-  if (!el) return;
-  el.style.backgroundColor = si ? "rgba(249, 115, 22, 0.10)" : "";
-  el.style.boxShadow = si ? "0 0 0 8px rgba(249, 115, 22, 0.10)" : "";
-  el.style.borderRadius = si ? "10px" : "";
-  el.style.transition = "background-color .3s, box-shadow .3s";
-}
-
 /**
  * La barra de lectura de la lección: escuchar (con pausa, detener y velocidad) y el tamaño de la letra.
- * `contenedor`: donde están los bloques con data-bloque.
+ * `contenedor`: donde están los bloques con data-bloque. `narracion`: la grabación con la voz de la academia (si la
+ * lección la tiene); mientras suena, la barra queda fija arriba de la lectura.
  */
-export function HerramientasLectura({ contenedor, tamano, alCambiarTamano }: { contenedor: RefObject<HTMLElement | null>; tamano: number; alCambiarTamano: (n: number) => void }) {
+export function HerramientasLectura({
+  contenedor,
+  tamano,
+  alCambiarTamano,
+  narracion = null,
+  leccion,
+}: {
+  contenedor: RefObject<HTMLElement | null>;
+  tamano: number;
+  alCambiarTamano: (n: number) => void;
+  narracion?: NarracionVista | null;
+  leccion?: { id: string; titulo: string; materia: string };
+}) {
+  const { toast } = useToast();
+  // la voz grabada, mientras cargue bien; si falla, la del aparato
+  const [grabada, setGrabada] = useState(!!narracion && !!leccion);
+  const [activo, setActivo] = useState(false);
+  useEffect(() => setGrabada(!!narracion && !!leccion), [narracion?.url, leccion?.id]);
   const [soportado, setSoportado] = useState(false);
   const [estado, setEstado] = useState<Estado>("parado");
   const [velocidad, setVelocidad] = useState(() => leer(CLAVE_VELOCIDAD, VELOCIDADES, 1));
@@ -164,6 +178,42 @@ export function HerramientasLectura({ contenedor, tamano, alCambiarTamano }: { c
     if (estado === "leyendo") leerDesde(indice.current);
   };
   const iTamano = TAMANOS.indexOf(tamano as (typeof TAMANOS)[number]);
+  const alFallar = useCallback(() => {
+    setGrabada(false);
+    setActivo(false);
+    toast({ title: "No se pudo cargar la voz grabada", description: "Puedes escucharla con la voz de tu aparato." });
+  }, [toast]);
+
+  if (grabada && narracion && leccion) {
+    return (
+      <div
+        className={
+          activo
+            ? "sticky z-30 top-[calc(var(--app-nav-h)+0.5rem)] mb-6 rounded-2xl border border-orange-500/30 bg-background/90 backdrop-blur-md shadow-lg px-2 py-1.5 flex flex-wrap items-center gap-2"
+            : "flex flex-wrap items-center gap-2 mb-6"
+        }
+        role="toolbar"
+        aria-label="Herramientas de lectura"
+        data-testid="herramientas-lectura"
+      >
+        <EscucharGrabada
+          narracion={narracion}
+          leccion={leccion}
+          contenedor={contenedor}
+          velocidad={velocidad}
+          alCambiarVelocidad={cambiarVelocidad}
+          alCambiarActivo={setActivo}
+          alFallar={alFallar}
+        />
+        {!activo && (
+          <>
+            <span className="w-px h-6 bg-border mx-1" aria-hidden="true" />
+            <TamanoLetra tamano={tamano} iTamano={iTamano} alCambiarTamano={alCambiarTamano} />
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-6" role="toolbar" aria-label="Herramientas de lectura" data-testid="herramientas-lectura">
@@ -186,14 +236,20 @@ export function HerramientasLectura({ contenedor, tamano, alCambiarTamano }: { c
           <span className="w-px h-6 bg-border mx-1" aria-hidden="true" />
         </>
       )}
-      <span className="inline-flex items-center gap-1" role="group" aria-label="Tamaño de la letra">
-        <Button size="sm" variant="ghost" className="px-2" onClick={() => alCambiarTamano(TAMANOS[Math.max(0, iTamano - 1)])} disabled={iTamano <= 0} aria-label="Letra más pequeña" data-testid="letra-menos">
-          <Minus className="w-3.5 h-3.5" /><span className="text-xs font-semibold">A</span>
-        </Button>
-        <Button size="sm" variant="ghost" className="px-2" onClick={() => alCambiarTamano(TAMANOS[Math.min(TAMANOS.length - 1, iTamano + 1)])} disabled={iTamano >= TAMANOS.length - 1} aria-label="Letra más grande" data-testid="letra-mas">
-          <Plus className="w-3.5 h-3.5" /><span className="text-base font-semibold">A</span>
-        </Button>
-      </span>
+      <TamanoLetra tamano={tamano} iTamano={iTamano} alCambiarTamano={alCambiarTamano} />
     </div>
+  );
+}
+
+function TamanoLetra({ iTamano, alCambiarTamano }: { tamano: number; iTamano: number; alCambiarTamano: (n: number) => void }) {
+  return (
+    <span className="inline-flex items-center gap-1" role="group" aria-label="Tamaño de la letra">
+      <Button size="sm" variant="ghost" className="px-2" onClick={() => alCambiarTamano(TAMANOS[Math.max(0, iTamano - 1)])} disabled={iTamano <= 0} aria-label="Letra más pequeña" data-testid="letra-menos">
+        <Minus className="w-3.5 h-3.5" /><span className="text-xs font-semibold">A</span>
+      </Button>
+      <Button size="sm" variant="ghost" className="px-2" onClick={() => alCambiarTamano(TAMANOS[Math.min(TAMANOS.length - 1, iTamano + 1)])} disabled={iTamano >= TAMANOS.length - 1} aria-label="Letra más grande" data-testid="letra-mas">
+        <Plus className="w-3.5 h-3.5" /><span className="text-base font-semibold">A</span>
+      </Button>
+    </span>
   );
 }
