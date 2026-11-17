@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Info, Library, Lock, RotateCcw,
+  ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Headphones, Info, Library, Lock, RotateCcw,
   ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
@@ -413,8 +413,16 @@ export default function AcademiaMateria() {
                     <p className="font-medium">{i + 1}. {l.titulo}</p>
                     <p className="text-xs text-muted-foreground">{l.base}</p>
                   </div>
-                  {!inscrito && primera?.id === l.id && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 shrink-0">Abierta</span>}
-                  <Minutos min={l.minutos} />
+                  {/* en el teléfono, una debajo de la otra: así el título tiene lugar */}
+                  <span className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-3 shrink-0">
+                    {!inscrito && primera?.id === l.id && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Abierta</span>}
+                    {l.escuchar ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-orange-700 dark:text-orange-300" title="Se puede escuchar con la voz de la academia" data-testid={`leccion-voz-${l.id}`}>
+                        <Headphones className="w-3.5 h-3.5" aria-hidden="true" /> <span className="sr-only">Para escuchar: </span>{l.escuchar} min
+                      </span>
+                    ) : null}
+                    <Minutos min={l.minutos} />
+                  </span>
                 </div>
               );
               return <li key={l.id}>{abre ? <Link href={`/academia/leccion/${l.id}`} className="block">{fila}</Link> : fila}</li>;

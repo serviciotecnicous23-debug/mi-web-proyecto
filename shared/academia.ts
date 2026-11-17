@@ -3984,7 +3984,16 @@ export function normalizarCodigo(s: string): string {
   return `AAF-${fijo(m[1])}-${fijo(m[2])}`;
 }
 
-export type LeccionEstado = { id: string; titulo: string; minutos: number; base: string; vista: boolean; completada: boolean };
+export type LeccionEstado = {
+  id: string;
+  titulo: string;
+  minutos: number;
+  base: string;
+  vista: boolean;
+  completada: boolean;
+  /** Los minutos de su narración grabada con la voz de la academia (null o ausente: no tiene). */
+  escuchar?: number | null;
+};
 
 export type ExamenEstado = {
   medida: MedidaExamen;
