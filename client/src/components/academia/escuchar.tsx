@@ -150,6 +150,7 @@ export function EscucharGrabada({
     if (!a) return;
     setEstado("cargando");
     a.preload = "auto";
+    a.defaultPlaybackRate = velocidad;
     a.playbackRate = velocidad;
     if (desde > 0) {
       if (a.readyState >= 1) a.currentTime = desde;
@@ -263,6 +264,8 @@ export function EscucharGrabada({
           }
         }}
         onPlaying={(e) => {
+          // (Safari en el iPhone vuelve a 1× al cargar el audio)
+          if (e.currentTarget.playbackRate !== velocidad) e.currentTarget.playbackRate = velocidad;
           setEstado("sonando");
           if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
           posicion(e.currentTarget);

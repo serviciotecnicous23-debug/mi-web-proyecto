@@ -262,7 +262,9 @@ export default function AcademiaLeccion() {
         <BarraAvance valor={l.leccion.n} de={l.leccion.de} />
         <h1 className="heading-display font-display text-3xl md:text-5xl mt-6 mb-2" data-testid="leccion-titulo" data-narra="titulo">{l.leccion.titulo}</h1>
         <p className="text-sm text-muted-foreground mb-4">{l.leccion.base}</p>
+        {/* con key: al pasar a otra lección, la lectura en voz alta empieza de cero (y la anterior se detiene) */}
         <HerramientasLectura
+          key={l.leccion.id}
           contenedor={texto}
           tamano={tamano}
           alCambiarTamano={setTamano}
