@@ -3114,6 +3114,275 @@ const PREDICACION_PASTORAL: MateriaDef = {
   disponible: true,
 };
 
+const EDUCACION_NINEZ: MateriaDef = {
+  id: "ninez-1",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 1,
+  titulo: "Educación cristiana de la niñez",
+  resumen: "Por qué y para qué la iglesia enseña a los niños: el mandato de contar a la generación venidera las obras de Dios, la familia y la iglesia juntas, Jesús y los niños, los niños que sirvieron a Dios en la Biblia, la enseñanza a los niños en la historia y la meta del ministerio: discípulos que aman a Dios.",
+  base: "Salmos 78:4-7; Deuteronomio 6:6-7",
+  memoria: "Salmos 78:4",
+  lecciones: lecciones("ninez-1", [
+    ["¿Por qué enseñar a los niños?", "Salmos 78:4-7; Deuteronomio 6:6-7; Mateo 19:14; Lucas 2:52"],
+    ["La familia y la iglesia, juntas", "2 Timoteo 1:5; 2 Timoteo 3:14-15; Efesios 6:4"],
+    ["Jesús y los niños", "Mateo 18:2-5; Marcos 10:13-16; Mateo 21:15-16"],
+    ["Niños que sirvieron a Dios", "1 Samuel 3:8-10; 2 Reyes 5:2-3; 2 Crónicas 34:1-3; Juan 6:9"],
+    ["La enseñanza a los niños en la historia", "Éxodo 12:26-27; Nehemías 8:2-3; Hechos 2:39"],
+    ["La meta: discípulos que aman a Dios", "Mateo 22:37-39; Proverbios 22:6; 3 Juan 1:4"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los niños, o se prepara para hacerlo, entienda por qué y para qué la iglesia los enseña: que conozca el mandato bíblico de contar a la generación venidera las obras de Dios, que vea cómo la familia y la iglesia enseñan juntas, que aprenda de la manera en que Jesús recibió a los niños y de los niños que sirvieron a Dios en la Biblia, que conozca cómo se enseñó a los niños en la historia de Israel y de la iglesia, y que escriba los objetivos de un ministerio que forma discípulos que aman a Dios y al prójimo. Es la base de la especialidad Niñez. Su base es la promesa de Israel: «No las encubriremos a sus hijos, Contando a la generación venidera las alabanzas de Jehová, Y su potencia, y las maravillas que hizo» (Salmos 78:4).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la Biblia manda enseñar a los niños.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo la familia y la iglesia enseñan juntas a los niños.", bloom: "comprender" },
+      { id: "o3", texto: "Describir cómo recibió Jesús a los niños, y aplicarlo al ministerio.", bloom: "aplicar" },
+      { id: "o4", texto: "Analizar los ejemplos de niños que sirvieron a Dios en la Biblia.", bloom: "analizar" },
+      { id: "o5", texto: "Describir cómo se enseñó a los niños en la historia de Israel y de la iglesia.", bloom: "comprender" },
+      { id: "o6", texto: "Escribir los objetivos de un ministerio que forma discípulos que aman a Dios.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Salmos 78:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El mandato bíblico de enseñar a los niños, la tarea de la familia y de la iglesia, y la historia de la enseñanza a los niños.",
+      ser: "Un maestro que recibe a los niños como Jesús y los ve como parte del pueblo de Dios.",
+      hacer: "Enseñar junto con las familias y escribir objetivos para formar discípulos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "John Milton Gregory", titulo: "Las siete leyes de la enseñanza", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Deuteronomio", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=qfMplfJoYA0", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmos 78, contar a la generación venidera", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=78" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const NINO_Y_SU_FE: MateriaDef = {
+  id: "ninez-2",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 2,
+  titulo: "El niño y su fe",
+  resumen: "Cómo crece la fe de un niño y cómo acompañarla: las etapas de la fe, hablar de Dios a cada edad, guiar a un niño a Cristo sin presión, las preguntas difíciles, el niño que ora, adora y sirve, y los niños en situaciones difíciles.",
+  base: "Lucas 2:40; Juan 1:12",
+  memoria: "Juan 1:12",
+  lecciones: lecciones("ninez-2", [
+    ["Cómo crece la fe", "Lucas 2:40; 1 Corintios 13:11; 1 Pedro 2:2"],
+    ["Hablar de Dios a cada edad", "Deuteronomio 6:20-21; Marcos 4:33; 1 Corintios 3:1-2"],
+    ["Guiar a un niño a Cristo", "Juan 3:16; Romanos 3:23; Romanos 6:23; Juan 1:12; Romanos 10:9"],
+    ["Las preguntas difíciles", "Deuteronomio 1:39; 2 Samuel 12:23; Hechos 8:12; Joel 2:28"],
+    ["El niño que ora, adora y sirve", "Mateo 6:9-13; Salmos 8:2; Salmos 119:11; 1 Timoteo 4:12"],
+    ["Niños en situaciones difíciles", "Salmos 68:5; Salmos 34:18; Mateo 18:10; 2 Samuel 9:7; Lucas 14:13"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los niños acompañe el crecimiento de su fe según su edad: que conozca cómo crece la fe de un niño, que hable de Dios con palabras que cada edad entiende, que sepa guiar a un niño a Cristo con claridad y sin presión, que responda con la Biblia y con prudencia las preguntas difíciles, como la edad de la responsabilidad y el bautismo de los niños, según el artículo 8 de la declaración de fe del ministerio, que forme niños que oran, adoran y sirven, y que cuide con amor a los niños que viven situaciones difíciles. Si las lenguas son la señal inicial del bautismo en el Espíritu Santo es un punto de la declaración de fe por confirmar. Su base es la promesa del evangelio de Juan: «Mas a todos los que le recibieron, a los que creen en su nombre, les dio potestad de ser hechos hijos de Dios» (Juan 1:12).",
+    objetivos: [
+      { id: "o1", texto: "Describir cómo crece la fe de un niño en cada etapa.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar las verdades de la fe con palabras que cada edad entiende.", bloom: "aplicar" },
+      { id: "o3", texto: "Guiar a un niño a Cristo con claridad y sin presión.", bloom: "aplicar" },
+      { id: "o4", texto: "Responder con la Biblia y con prudencia las preguntas difíciles de los niños y de sus padres.", bloom: "analizar" },
+      { id: "o5", texto: "Formar niños que oran, adoran y sirven.", bloom: "aplicar" },
+      { id: "o6", texto: "Acompañar a los niños que viven situaciones difíciles.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 1:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Cómo crece la fe de un niño, el evangelio explicado a su edad y las respuestas bíblicas a sus preguntas difíciles.",
+      ser: "Un maestro paciente, que no presiona y que ama a cada niño en su situación.",
+      hacer: "Guiar a un niño a Cristo, enseñarle a orar y a servir, y acompañar a los que sufren.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Marty Machowski", titulo: "Cómo guiar a tu hijo a Cristo: pasos bíblicos para compartir el evangelio", editorial: "Editorial Bautista Independiente" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Grupo de Trabajo de Infancia de la Alianza Evangélica Española", titulo: "Protocolo de protección infantil", editorial: "Alianza Evangélica Española" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "El nacimiento de Jesús: Lucas 1 y 2", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=DTL5QW6Ez7s", minutos: 4 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 1, los que le recibieron", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=1" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const METODOS_NINEZ: MateriaDef = {
+  id: "ninez-3",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 3,
+  titulo: "Métodos para enseñar a niños",
+  resumen: "Cómo enseñar a los niños: las siete leyes de la enseñanza, contar historias bíblicas, preguntas, actividades y juegos, una clase paso a paso, la disciplina con amor y firmeza, y la vida y la semana del maestro.",
+  base: "Nehemías 8:8; Esdras 7:10",
+  memoria: "Nehemías 8:8",
+  lecciones: lecciones("ninez-3", [
+    ["Las siete leyes de la enseñanza", "Esdras 7:10; Nehemías 8:8; 2 Timoteo 2:2"],
+    ["Contar historias bíblicas", "Marcos 4:33-34; Salmos 78:2-3; Lucas 19:1-10"],
+    ["Preguntas, actividades y juegos", "Mateo 16:15-16; Lucas 10:36-37; Santiago 1:22"],
+    ["Una clase paso a paso", "Proverbios 16:3; Colosenses 3:23"],
+    ["La disciplina y el manejo de la clase", "Proverbios 15:1; Colosenses 3:21; Gálatas 5:22-23; 1 Corintios 13:4-5"],
+    ["El maestro y su vida", "1 Corintios 11:1; Tito 2:7; Hebreos 13:17"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el maestro de niños enseñe de manera que los niños entiendan y vivan la Palabra: que aplique las siete leyes de la enseñanza de John Milton Gregory, que cuente las historias de la Biblia con fidelidad y las lleve a Jesús, que use preguntas, actividades y juegos según la edad, que planifique una clase completa con su objetivo, que maneje la disciplina con amor y firmeza, sin humillar, y que cuide su propia vida y su semana de preparación. Cada lección trae un ejemplo resuelto paso a paso. Su base es la manera en que se enseñaba la ley en tiempos de Esdras: «Y leían en el libro de la ley de Dios claramente, y ponían el sentido, de modo que entendiesen la lectura» (Nehemías 8:8).",
+    objetivos: [
+      { id: "o1", texto: "Aplicar las siete leyes de la enseñanza a una clase de niños.", bloom: "aplicar" },
+      { id: "o2", texto: "Preparar y contar una historia bíblica con fidelidad, llevándola a Jesús.", bloom: "aplicar" },
+      { id: "o3", texto: "Usar preguntas, actividades y juegos adecuados a cada edad.", bloom: "aplicar" },
+      { id: "o4", texto: "Planificar una clase completa con un objetivo de saber, sentir y hacer.", bloom: "crear" },
+      { id: "o5", texto: "Manejar la disciplina de la clase con amor y firmeza, sin humillar.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la vida y la semana de preparación del maestro.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Nehemías 8:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las siete leyes de la enseñanza, el arte de contar historias, las preguntas y actividades por edad, y la planificación de una clase.",
+      ser: "Un maestro que vive lo que enseña, corrige con mansedumbre y se prepara con oración.",
+      hacer: "Contar historias, dirigir actividades y juegos, planificar clases y manejar la disciplina.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Milton Gregory", titulo: "Las siete leyes de la enseñanza", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Howard G. Hendricks", titulo: "Enseñando para cambiar vidas", editorial: "Unilit" },
+      ],
+      complementaria: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "video", titulo: "Evangelio de Lucas 19 a 23", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=KBE2nLYyCdc", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 8, leer y poner el sentido", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
+const PROTECCION_MENORES: MateriaDef = {
+  id: "ninez-4",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 4,
+  titulo: "Protección de menores",
+  resumen: "Cómo la iglesia protege a los niños: por qué proteger, las formas y las señales del abuso, la política de protección y la selección de los voluntarios, las reglas de cada domingo, qué hacer cuando un niño cuenta algo, con lo que pide la ley en Texas, y el cuidado de las víctimas y de sus familias.",
+  base: "Mateo 18:6; Salmos 82:3-4",
+  memoria: "Salmos 82:3",
+  lecciones: lecciones("ninez-4", [
+    ["Por qué la iglesia protege a los niños", "Génesis 1:27; Mateo 18:6; Mateo 18:14; Salmos 82:3-4"],
+    ["Conocer el abuso y sus señales", "Proverbios 22:3; Juan 3:20-21; Efesios 5:11"],
+    ["La política de protección y la selección de voluntarios", "1 Timoteo 5:22; 1 Timoteo 3:7; Proverbios 14:15"],
+    ["Las reglas de cada domingo", "Nehemías 4:9; 2 Corintios 8:21; 1 Tesalonicenses 5:22"],
+    ["Cuando un niño cuenta algo: escuchar y reportar", "Proverbios 31:8-9; Romanos 13:3-4; Lucas 8:17"],
+    ["Cuidar a las víctimas, a las familias y a la iglesia", "2 Samuel 13:20-21; Salmos 147:3; 2 Corintios 1:3-4; Isaías 1:17"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que todo el que sirve con niños, y quienes dirigen ese ministerio, protejan a los niños como pide la Palabra: que entiendan por qué la iglesia protege a los pequeños, que conozcan las formas y las señales del abuso y el proceso con que un abusador se gana la confianza, que armen una política de protección escrita y seleccionen con cuidado a los voluntarios, que apliquen cada domingo la regla de los dos adultos y el registro de entrada y salida, que sepan escuchar a un niño que cuenta un abuso y reportarlo, con lo que pide la ley en Texas (Código de Familia, sección 261.101), y que acompañen a las víctimas y a sus familias. La lección legal es una guía general, no un consejo legal: en otros estados y países la ley cambia. Su base es el mandato de Dios a su pueblo: «Defended al débil y al huérfano; Haced justicia al afligido y al menesteroso» (Salmos 82:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia protege a los niños, y distinguir los mitos de la realidad del abuso.", bloom: "comprender" },
+      { id: "o2", texto: "Reconocer las formas y las señales del abuso, y el proceso de manipulación de un abusador.", bloom: "analizar" },
+      { id: "o3", texto: "Armar una política de protección escrita y seleccionar a los voluntarios paso a paso.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar las reglas de cada domingo: los dos adultos, el registro de entrada y salida, el contacto y la comunicación.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a un niño que cuenta un abuso y reportarlo como pide la ley en Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo acompañar a las víctimas y a sus familias, y qué hace el liderazgo después de un reporte.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 82:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las formas y las señales del abuso, el proceso de manipulación, las partes de una política de protección y lo que pide la ley en Texas.",
+      ser: "Un servidor que ama a los niños, no calla el mal y defiende al débil.",
+      hacer: "Seleccionar voluntarios, aplicar las reglas de cada domingo, escuchar y reportar, y acompañar a las víctimas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Grupo de Trabajo de Infancia de la Alianza Evangélica Española", titulo: "Protocolo de protección infantil", editorial: "Alianza Evangélica Española" },
+        { autor: "Brad Hambrick (ed.)", titulo: "Cómo convertirse en una iglesia que cuida bien de los abusados", editorial: "ERLC y Lifeway" },
+      ],
+      complementaria: [
+        { autor: "Keeping Children Safe", titulo: "Los Estándares Internacionales de Protección Infantil Organizacional", editorial: "Keeping Children Safe" },
+        { autor: "Federación de Entidades Religiosas Evangélicas de España (FEREDE)", titulo: "Iglesias evangélicas: espacios seguros libres de violencia para la mujer y la infancia", editorial: "FEREDE" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Imagen de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VsGlbwF4HtI", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=BEvicPpjQBE", minutos: 6 },
+      { tipo: "guia", titulo: "Línea directa de Texas para reportar abuso: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 18, estos pequeños", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=18" },
+    ],
+  },
+  disponible: true,
+};
+
+const ORGANIZAR_NINEZ: MateriaDef = {
+  id: "ninez-5",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 5,
+  titulo: "Organizar el ministerio infantil",
+  resumen: "Cómo organizar el ministerio de niños de una iglesia: la misión, la visión y los valores, el equipo de voluntarios, los grupos por edad, las salas y el horario, el currículo y el calendario del año, el alcance a las familias del barrio, y el presupuesto y la evaluación.",
+  base: "Habacuc 2:2; 1 Corintios 14:40",
+  memoria: "Habacuc 2:2",
+  lecciones: lecciones("ninez-5", [
+    ["La visión y el propósito del ministerio", "Habacuc 2:2; Proverbios 29:18; Deuteronomio 31:12-13"],
+    ["Formar y cuidar el equipo", "Éxodo 18:17-18; Éxodo 18:21; Efesios 4:11-12; 1 Pedro 4:10; Mateo 9:37-38"],
+    ["Grupos por edad, salas y horario", "1 Corintios 14:33; 1 Corintios 14:40; Proverbios 24:3-4"],
+    ["El currículo y el calendario del año", "2 Timoteo 3:16-17; Josué 4:6-7; Lucas 2:41-42"],
+    ["Alcanzar a las familias y a la comunidad", "Mateo 9:36; Lucas 14:23; Hechos 16:31-32"],
+    ["Evaluar, presupuestar y crecer", "Lucas 14:28-30; 1 Corintios 4:2; Lamentaciones 3:40; Proverbios 15:22"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige el ministerio de niños, o se prepara para hacerlo, lo organice con orden y con propósito: que escriba con el pastor la misión, la visión y los valores del ministerio, que forme y cuide un equipo de voluntarios, que organice los grupos por edad, las salas y el horario según el tamaño de la iglesia, que elija un currículo y arme el calendario del año, que abra puertas a las familias del barrio con la Escuela Bíblica de Vacaciones y les dé seguimiento, y que arme el presupuesto y evalúe el ministerio con números y con fruto. Lleva a la práctica las otras cuatro materias de la especialidad. Su base es la palabra de Dios al profeta: «Escribe la visión, y declárala en tablas, para que corra el que leyere en ella» (Habacuc 2:2).",
+    objetivos: [
+      { id: "o1", texto: "Escribir la misión, la visión y los valores del ministerio de niños.", bloom: "crear" },
+      { id: "o2", texto: "Formar, sumar y cuidar un equipo de voluntarios.", bloom: "aplicar" },
+      { id: "o3", texto: "Organizar los grupos por edad, las salas y el horario según el tamaño de la iglesia.", bloom: "aplicar" },
+      { id: "o4", texto: "Elegir un currículo y armar el calendario del año.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear una Escuela Bíblica de Vacaciones y el seguimiento de las familias nuevas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el ministerio con números y con fruto, y poner metas concretas.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Habacuc 2:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La misión y la visión de un ministerio, sus servicios, la organización por edades, el currículo, el calendario y el presupuesto.",
+      ser: "Un líder que no hace todo solo, cuida a su equipo y rinde cuentas con fidelidad.",
+      hacer: "Escribir la misión, sumar voluntarios, organizar grupos y salas, planear el año y evaluar con metas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+        { autor: "Keeping Children Safe", titulo: "Los Estándares Internacionales de Protección Infantil Organizacional", editorial: "Keeping Children Safe" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=y9pED55wMM4", minutos: 7 },
+      { tipo: "video", titulo: "La historia de la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=7Z_Bz34ohMA", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Éxodo 18, el consejo de Jetro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=18" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -4022,7 +4291,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, HISTORIA_MUSICA, SONIDO_TECNICA,
   ]),
   especialidad("ninez", "Niñez", "Enseñar y cuidar a los niños con la Palabra.", [
-    ["Educación cristiana de la niñez"], ["El niño y su fe"], ["Métodos para enseñar a niños"], ["Protección de menores"], ["Organizar el ministerio infantil"],
+    EDUCACION_NINEZ, NINO_Y_SU_FE, METODOS_NINEZ, PROTECCION_MENORES, ORGANIZAR_NINEZ,
   ]),
   especialidad("juventud", "Juventud", "Discipular y liderar a la nueva generación.", [
     ["Discipulado de jóvenes"], ["Cosmovisión cristiana y cultura"], ["Consejería juvenil", true], ["Liderazgo juvenil"], ["Evangelismo entre jóvenes"],
