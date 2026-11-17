@@ -24,6 +24,9 @@ export type BloqueNarrable =
   | { t: "video"; url: string; titulo: string; fuente: string; minutos?: number }
   | { t: "audio"; url: string; titulo: string }
   | { t: "imagen"; src: string; alt: string; pie?: string }
+  | { t: "linea"; titulo: string; eventos: { fecha: string; texto: string; ref?: string }[] }
+  | { t: "cuadro"; titulo: string; columnas: string[]; filas: string[][] }
+  | { t: "pasos"; titulo: string; pasos: { titulo: string; texto: string }[] }
   | { t: string; [k: string]: unknown };
 
 export type LeccionNarrable = {
@@ -226,7 +229,7 @@ export function hablado(texto: string): string {
   // los paréntesis se dicen como una pausa corta
   t = t.replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ");
   // siglos y nombres con número romano
-  t = t.replace(/\b(siglos?)\s+([IVXLC]+)\b/g, (m, s, r) => {
+  t = t.replace(/\b([Ss]iglos?)\s+([IVXLC]+)\b/g, (m, s, r) => {
     const n = deRomano(r);
     return n ? `${s} ${enPalabras(n)}` : m;
   });
@@ -252,6 +255,8 @@ export function hablado(texto: string): string {
   t = t.replace(/\b(\d+),(\d+)\b/g, (_m, a, b: string) => `${enPalabras(Number(a))} coma ${b.startsWith("0") ? b.split("").map((d) => enPalabras(Number(d))).join(" ") : enPalabras(Number(b))}`);
   // miles con punto («5.674»)
   t = t.replace(/\b(\d{1,3}(?:\.\d{3})+)\b/g, (m) => m.replace(/\./g, ""));
+  // un tramo que empieza en una fecha con palabras («27 antes de Cristo-14 después de Cristo»)
+  t = t.replace(/([a-záéíóúñ])\s?[-–]\s?(\d)/gi, "$1 a $2");
   // un tramo de números («1569–1602», «1-3»)
   t = t.replace(/\b(\d+)\s?[-–]\s?(\d+)\b/g, (_m, a, b) => `${enPalabras(Number(a))} a ${enPalabras(Number(b))}`);
   // un número delante de un sustantivo: «1 libro» → «un libro», «21 semanas» → «veintiuna semanas»
@@ -303,9 +308,31 @@ function parteDeBloque(b: BloqueNarrable): { texto: string; pausa: number } {
       return { texto: conPunto(hablado(`En la página tienes el audio ${sinPuntoFinal(String(b.titulo ?? ""))}`)), pausa: 0.6 };
     case "imagen":
       return { texto: typeof b.pie === "string" && b.pie.trim() ? conPunto(hablado(b.pie)) : "", pausa: 0.6 };
+    case "linea": {
+      const eventos = Array.isArray(b.eventos) ? (b.eventos as { fecha?: string; texto?: string; ref?: string }[]) : [];
+      const dichos = eventos.map((e) => conPunto(hablado(`${e.fecha ?? ""}: ${e.texto ?? ""}${e.ref ? ` (${e.ref})` : ""}`)));
+      return { texto: `Línea de tiempo: ${conPunto(hablado(String(b.titulo ?? "")))} ${dichos.join(" ")}`, pausa: 0.9 };
+    }
+    case "cuadro": {
+      const columnas = Array.isArray(b.columnas) ? (b.columnas as string[]) : [];
+      const filas = Array.isArray(b.filas) ? (b.filas as string[][]) : [];
+      // cada fila se dice por su primera celda, y después cada dato con el nombre de su columna
+      const dichas = filas.map((f) => {
+        const [primera, ...resto] = f;
+        const datos = resto.map((x, i) => (x?.trim() ? `${columnas[i + 1] ? `${sinPuntoFinal(columnas[i + 1])}: ` : ""}${conPunto(x)}` : "")).filter(Boolean);
+        return conPunto(hablado(`${conPunto(primera ?? "")} ${datos.join(" ")}`));
+      });
+      return { texto: `Cuadro comparativo: ${conPunto(hablado(String(b.titulo ?? "")))} ${dichas.join(" ")}`, pausa: 0.9 };
+    }
+    case "pasos": {
+      const pasos = Array.isArray(b.pasos) ? (b.pasos as { titulo?: string; texto?: string }[]) : [];
+      const dichos = pasos.map((x, i) => `Paso ${enPalabras(i + 1)}: ${conPunto(hablado(x.titulo ?? ""))} ${conPunto(hablado(x.texto ?? ""))}`);
+      return { texto: `${conPunto(hablado(String(b.titulo ?? "")))} ${dichos.join(" ")}`, pausa: 0.9 };
+    }
     default: {
       // un bloque de otro tipo: se dice lo que tenga escrito
-      const partes = [b.titulo, b.texto, ...(Array.isArray(b.items) ? b.items : [])].filter((x): x is string => typeof x === "string" && !!x.trim());
+      const x = b as Record<string, unknown>;
+      const partes = [x.titulo, x.texto, ...(Array.isArray(x.items) ? x.items : [])].filter((v): v is string => typeof v === "string" && !!v.trim());
       return { texto: partes.map((x) => conPunto(hablado(x))).join(" "), pausa: 0.7 };
     }
   }

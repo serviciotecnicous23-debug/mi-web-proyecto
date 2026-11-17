@@ -38,6 +38,8 @@ self.addEventListener("fetch", (event) => {
   // La banda sonora del juego (/musica/*.m4a): el reproductor la pide por partes (Range) y la caché no guarda
   // respuestas parciales; el navegador la maneja solo, con su caché de siempre.
   if (url.pathname.startsWith("/musica/")) return;
+  // La voz grabada de las lecciones (/voz/academia/*.m4a): igual, por partes y sin pasar por la caché.
+  if (url.pathname.startsWith("/voz/")) return;
 
   // API, archivos subidos e íconos: siempre de la red (la caché solo si no hay conexión).
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/icons/")) {

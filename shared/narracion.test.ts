@@ -120,3 +120,22 @@ test("el lugar que suena en cada segundo", () => {
   assert.equal(lugarEn(marcas, 99), 3);
   assert.equal(lugarEn([], 3), -1);
 });
+
+test("los esquemas se dicen: línea de tiempo, cuadro comparativo y pasos", () => {
+  const g = guionDeLeccion({
+    ...LECCION,
+    bloques: [
+      { t: "linea", titulo: "La Biblia en español", eventos: [{ fecha: "1569", texto: "La Biblia del Oso", ref: "Salmos 119:105" }, { fecha: "27 a. C.-14 d. C.", texto: "Augusto" }] },
+      { t: "cuadro", titulo: "Fe y obras", columnas: ["Palabra", "Lo que es", "Base bíblica"], filas: [["Fe", "Confiar en Cristo", "Efesios 2:8-9"]] },
+      { t: "pasos", titulo: "Cómo orar", pasos: [{ titulo: "Adorar", texto: "Reconoce quién es Dios." }, { titulo: "Pedir", texto: "Pide con fe." }] },
+    ],
+  });
+  const texto = (lugar: string) => g.find((p) => p.lugar === lugar)?.texto;
+  assert.equal(
+    texto("0"),
+    "Línea de tiempo: La Biblia en español. mil quinientos sesenta y nueve: La Biblia del Oso, Salmo ciento diecinueve, ciento cinco. veintisiete antes de Cristo a catorce después de Cristo: Augusto.",
+  );
+  assert.equal(texto("1"), "Cuadro comparativo: Fe y obras. Fe. Lo que es: Confiar en Cristo. Base bíblica: Efesios dos, ocho y nueve.");
+  assert.equal(texto("2"), "Cómo orar. Paso uno: Adorar. Reconoce quién es Dios. Paso dos: Pedir. Pide con fe.");
+  for (const p of g) assert.doesNotMatch(p.texto, /\d/, `sin cifras: «${p.texto}»`);
+});

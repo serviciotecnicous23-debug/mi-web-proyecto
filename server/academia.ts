@@ -377,7 +377,8 @@ export function registerAcademiaRoutes(app: Express) {
         inscrita,
         docente,
         bloqueo,
-        narracion: narracionDe(id, {
+        // (si algún día se agregan bloques al servir la lección, las marcas ya no calzarían: sin grabación)
+        narracion: bloques.length !== contenido.bloques.length ? null : narracionDe(id, {
           materia: l.materia.titulo,
           titulo: l.leccion.titulo,
           n: l.indice + 1,
