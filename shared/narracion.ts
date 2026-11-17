@@ -211,6 +211,12 @@ const ABREVIATURAS: [RegExp, string][] = [
   [/\bn\.º\s?/gi, "número "],
 ];
 
+/**
+ * Frases que la voz dice mejor con una pausa (lo comprobó whisper al grabar): los imperativos antiguos cortos de la
+ * RV1960, como «Id y haced discípulos», se le mezclan si van seguidos.
+ */
+const PRONUNCIACION: [RegExp, string][] = [[/\bId y haced\b/g, "Id, y haced"]];
+
 /** Palabras femeninas comunes que siguen a un número (para decir «una vez», «veintiuna semanas»). */
 const FEMENINAS = new Set(["vez", "veces", "semana", "semanas", "hora", "horas", "noche", "noches", "persona", "personas", "cosa", "cosas", "carta", "cartas", "iglesia", "iglesias", "lección", "lecciones", "parte", "partes", "pregunta", "preguntas", "palabra", "palabras", "materia", "materias", "mujer", "mujeres", "familia", "familias"]);
 const esFemenina = (palabra: string) => FEMENINAS.has(palabra.toLowerCase()) || /^[a-záéíóúñ]+(as?|ión|iones|dad|dades)$/i.test(palabra) && !/^(día|días|mapa|mapas|programa|programas|problema|problemas|sistema|sistemas|tema|temas|idioma|idiomas|planeta|profeta|profetas|poema|poemas)$/i.test(palabra);
@@ -224,6 +230,7 @@ export function hablado(texto: string): string {
   // los signos que no se leen
   t = t.replace(/[«»“”"]/g, "").replace(/[‘’]/g, "'").replace(/\s*[—–]\s*(?=\D)/g, ", ").replace(/\s*\/\s*/g, " o ").replace(/&/g, " y ");
   for (const [p, r] of ABREVIATURAS) t = t.replace(p, r);
+  for (const [p, r] of PRONUNCIACION) t = t.replace(p, r);
   // las citas, antes que los demás números; después, las que siguen sin el libro («Éxodo 12:14; 13:3»)
   t = citaDicha(t);
   t = t.replace(/\b(\d{1,3}):(\d{1,3}(?:\s*[-–]\s*\d{1,3})?)\b/g, (_m, cap, versos) => `${enPalabras(Number(cap))}, ${versosDichos(versos)}`);

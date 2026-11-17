@@ -27,6 +27,7 @@ SR = 24000
 MAX_TROZO = 230          # letras por trozo (una a tres oraciones)
 PAUSA_ORACIONES = 0.32   # entre trozos de un mismo lugar
 INTENTOS = 4
+INTENTOS_CORTOS = 7      # un trozo de 6 palabras o menos (un subtítulo): sale rápido y le cuesta más
 PARECIDO_MINIMO = 0.86   # lo que whisper entiende contra lo que debía decir (0 a 1)
 
 # la cadena de locución (la de la Fábrica Viral, medida con OmniVoice) y el volumen final para el teléfono
@@ -132,7 +133,7 @@ def main():
             ts = trozos(parte["texto"])
             for k, texto in enumerate(ts):
                 mejor = None
-                for intento in range(INTENTOS):
+                for intento in range(INTENTOS_CORTOS if len(texto.split()) <= 6 else INTENTOS):
                     y = decir(texto, 7 + intento * 101)
                     oido_txt = escuchar(y)
                     parecido = SequenceMatcher(None, palabras(texto), palabras(oido_txt), autojunk=False).ratio()
