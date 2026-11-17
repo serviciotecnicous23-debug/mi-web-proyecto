@@ -62,7 +62,10 @@ Cada lección trata una sola idea y dura de 7 a 15 minutos según el nivel: cada
 2. **Para empezar.**
 3. **La lectura:** texto, versículos, video, audio o imagen. Los versículos se escriben solo con su referencia, y el
    servidor los toma de la RV1960 de la web (`getBibleChapter`) al pedir la lección; al tocarlos se abre el capítulo en
-   la Biblioteca.
+   la Biblioteca. Y los **esquemas visuales**, que resumen la lección: la línea de tiempo (`linea`, de 4 a 10 eventos con
+   su fecha y su cita opcional), el cuadro comparativo (`cuadro`, de 2 a 4 columnas y de 3 a 8 filas; en el teléfono,
+   una tarjeta por fila) y los pasos (`pasos`, de 3 a 7, para métodos y procesos). Sus límites y la regla de no poner
+   texto bíblico entre « » están en `server/academia/validar-bloques.ts`, que usan las pruebas y `verificar.ts`.
 4. **La idea clave.**
 5. **Para la vida:** una aplicación y una nota privada.
 6. **Repaso:** preguntas con la respuesta al instante. Sin el repaso respondido bien no se puede terminar la lección.
@@ -72,6 +75,20 @@ las preguntas del repaso de cada lección terminada vuelven a los 1, 3, 7, 21 y 
 intercaladas entre materias); acertada pasa a la caja siguiente, fallada vuelve mañana; después de la última queda
 dominada. No pone nota y nunca usa preguntas del examen final. Lo atrasado se reparte de a 10 por día. Aparece en «Lo
 de hoy» de la portada y en «Para hoy» del salón.
+
+**Los recursos de estudio** (`server/academia-recursos.ts`, `shared/academia-recursos.ts`, página `/academia/recursos`):
+los videos y audios de todas las lecciones, los recursos de cada sílabo y las lecturas ampliadas en una sola lista, con
+un buscador que no distingue tildes y filtros por tipo y por nivel que quedan en la dirección (`?q=`, `?tipo=` y
+`?ver=`). Cada recurso dice de qué materia y de qué lección es. Se ve como el catálogo (con la academia abierta, también
+sin cuenta). Tiene enlace en el catálogo, en las herramientas del salón, en la portada y en el apartado «Recursos» de
+cada materia.
+
+**La lectura ampliada** (Niveles 4 y 5, `Silabo.ampliada`): un libro de la Biblia o una sección larga, con su enlace a
+la Biblioteca (`enlaceBiblia`: el libro como lo guarda la Biblioteca, sin tildes), o un capítulo de un libro de su
+bibliografía; con los minutos que pide (de 30 a 90) y 3 preguntas guía para un reporte de 150 a 300 palabras. La página
+de la materia la muestra con el botón «Escribir mi reporte en el cuaderno», que abre una nota ligada a la materia con
+las preguntas (`client/src/components/academia/lectura-ampliada.tsx`). No pone nota: es la profundidad de nivel
+universitario de la materia.
 
 **Las herramientas de lectura** (`client/src/components/academia/lectura.tsx`, debajo del título de cada lección):
 - **Escuchar la lección:** la lee en voz alta con la voz en español del aparato (la API de voz del navegador: sin costo
@@ -214,12 +231,27 @@ El Nivel 2 pide, además de sus materias, **3 conversaciones de evangelismo** y 
 | Examen final | Parte A objetiva y Parte B escrita; la revisión completa se ve al terminar | El sistema (revisable) |
 | Examen integral del nivel | Con todas las materias del nivel aprobadas: 40 preguntas, 5 de cada materia del Nivel 1, y 2 escritas de materias distintas; se aprueba con 75 | El sistema (revisable) |
 | Examen de suficiencia | Para aprobar una materia sin cursarla: 25 preguntas de todas sus lecciones y 2 escritas, una sola vez, antes del examen final; pide 85 y 75 a la vez | El sistema (revisable) |
-| Prueba diagnóstica | 2 preguntas de cada materia con contenido de los Niveles 1 y 2, 45 segundos cada una, cada 30 días: solo sugiere por dónde empezar | El sistema |
+| Prueba diagnóstica | 2 preguntas de cada materia con contenido de los Niveles 1 y 2, de 45 a 90 segundos cada una según su largo, cada 30 días: solo sugiere por dónde empezar | El sistema |
 | Repaso del versículo | Vuelve a los 1, 3, 7 y 21 días de aprenderlo; al pasar el último queda dominado | El sistema |
-| Mini prueba (Nivel 2 en adelante) | Cada 3 lecciones: 6 preguntas de un banco de 18, 45 s cada una, sin escritas; 3 intentos con preguntas nuevas y cuenta el mejor; revisión completa al terminar | El sistema |
+| Mini prueba (Nivel 2 en adelante) | Cada 3 lecciones: 6 preguntas de un banco de 18, de 60 a 120 s cada una según su largo, sin escritas; 3 intentos con preguntas nuevas y cuenta el mejor; revisión completa al terminar | El sistema |
 | Escrito breve (Nivel 2 en adelante) | De 80 a 300 palabras, con ideas y citas, después de las lecciones; 2 entregas y cuenta la mejor | El sistema (revisable) |
 | Trabajo final de una especialidad | De 300 a 1.200 palabras que unen sus cinco materias, con las cinco aprobadas; 3 entregas y cuenta la mejor; se aprueba con 70 | El sistema (revisable) |
 | Práctica ministerial y proyecto | Desde las fases siguientes | El líder o 2 profesores |
+
+**El tiempo de cada pregunta** (`segundosDePregunta`, en `shared/academia.ts`, con su prueba en
+`shared/academia-tiempos.test.ts`; revisión del 16-nov): cada pregunta objetiva trae su tiempo según lo que pide leer y
+pensar. Sus palabras (la pregunta y las cuatro opciones) a 130 por minuto, más 25 segundos para decidir, más 5 si pide
+comprender, 20 si pide aplicar y 30 si pide analizar o evaluar. Nunca menos que el tiempo base de la prueba (60 segundos
+en el final, la suficiencia, el integral y las mini pruebas; 45 en la diagnóstica) ni más del doble, en pasos de 5
+segundos; con tiempo extra, por 1,5 (`MedidaExamen.factor`). Así una pregunta corta de memoria sigue con el tiempo base
+y un caso largo para analizar tiene hasta el doble. El servidor usa el mismo cálculo para el reloj y para saber si una
+respuesta llegó tarde, y las páginas lo dicen con `textoSegundos`.
+
+**Las preguntas de casos:** el banco del final de cada materia publicada lleva preguntas con un caso de la vida real (en
+la iglesia, la familia, el trabajo o la comunidad) para aplicar, analizar o evaluar lo aprendido: 2 por materia en el
+Nivel 1, 4 en el 2 y 6 en los demás (`server/academia/casos.ts`, ids `<materia>-caso-N`, que nunca se reusan). Se
+agregan por partes, a medida que cada materia pasa sus dos revisiones: ver la sección 5 de
+[academia-auditoria.md](academia-auditoria.md).
 
 **El cierre del nivel** (`server/academia-nivel.ts`, página `/academia/nivel/:n`):
 - **Requisitos:** las materias del nivel aprobadas, el examen integral, los versículos de memoria que pide el nivel
@@ -524,9 +556,9 @@ Las del repaso no se retiran: se corrigen en el contenido.
 
 | Nivel | Parte A | Parte B | Peso A/B | Tiempo |
 |---|---|---|---|---|
-| 1 | 10 de un banco de 30 | 1 respuesta corta de 15 a 60 palabras | 80/20 | 60 s por pregunta; 6 min la escrita |
-| 2 | 15 de 45 | 2 cortas | 70/30 | 60 s; 6 min |
-| 3–5 | 20 de 60 | 1 corta y después 1 escrito breve | 60/40 | 60 s; 6 min la corta y 15 el escrito breve |
+| 1 | 10 de un banco de 30 | 1 respuesta corta de 15 a 60 palabras | 80/20 | de 60 a 120 s por pregunta según su largo (`segundosDePregunta`); 6 min la escrita |
+| 2 | 15 de 45 | 2 cortas | 70/30 | de 60 a 120 s; 6 min |
+| 3–5 | 20 de 60 | 1 corta y después 1 escrito breve | 60/40 | de 60 a 120 s; 6 min la corta y 15 el escrito breve |
 
 - **La parte escrita de los Niveles 3 a 5** (`breves` y `minutosBreve` de `EXAMEN_FINAL`): cada intento trae primero una
   respuesta corta y después un escrito breve de 80 a 300 palabras, cada tipo con lo que todavía no salió
@@ -587,7 +619,8 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 **Las mini pruebas** (`server/academia-mini.ts`, página `/academia/mini/:materiaId/:n`):
 - Una cada 3 lecciones (`miniPruebasDe`: en una materia de 6 lecciones, la 1 mide las lecciones 1 a 3 y la 2, las 4 a
   6). Se abren al completar las lecciones de su grupo.
-- 6 preguntas de su banco de 18 (`MEDIDA_MINI`), repartidas por lección, 45 segundos cada una, sin escritas.
+- 6 preguntas de su banco de 18 (`MEDIDA_MINI`), repartidas por lección, de 60 a 120 segundos cada una según su largo
+  (60 de base, como el final, desde la revisión del 16-nov), sin escritas.
 - 3 intentos, cada uno con preguntas nuevas, sin espera; cuenta el mejor y después se cierra (`ExamenEstado.cerrado`).
 - Usan el motor de los exámenes (`evaluacionMini`, clave `<materia>:mini-<n>`), con la revisión completa al terminar
   y sin pedidos de revisión (no tienen escritas).
@@ -639,8 +672,9 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   - La revisión de sus escritas recalcula como en el final (`reconsiderarSuficiencia`).
 - **La prueba diagnóstica** (`server/academia-diagnostico.ts`, páginas `/academia/diagnostico` y
   `/academia/diagnostico/prueba`): 2 preguntas de cada materia con contenido de los Niveles 1 y 2 (la etapa Raíces, la
-  de quien llega; así no crece con cada materia de los niveles altos: `entraEnDiagnostico`), 45 segundos cada una, sin
-  escritas. **No
+  de quien llega; así no crece con cada materia de los niveles altos: `entraEnDiagnostico`), de 45 a 90 segundos cada
+  una según su largo, sin escritas; la página dice los minutos que pide con el tiempo promedio de las preguntas de su
+  banco (`minutosDiagnostico`). **No
   aprueba nada ni cambia el avance:** guarda el resultado por materia (`academia_diagnosticos`) y sugiere el nivel que
   le toca, por qué materia empezar y cuáles podría aprobar por suficiencia (las que respondió todas bien:
   `sugerenciaDiagnostico`, con su prueba). Se repite cada 30 días; la sugerencia se recalcula al leerla.
@@ -707,10 +741,12 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
    - Déjala en `disponible: false` mientras se escribe.
 2. Escribe el contenido en `server/academia/contenido/<id>.ts` (tipo `LeccionContenido`: objetivos, para empezar,
    bloques, idea clave, para la vida). Cada versículo va como `{ t: "versiculo", ref: "Libro c:v-v" }`, con un solo
-   capítulo por bloque.
+   capítulo por bloque. Pon al menos un esquema visual (`linea`, `cuadro` o `pasos`) donde ayude a resumir, y un video
+   en las materias que lo permitan. En los Niveles 4 y 5, el sílabo lleva su `ampliada`.
 3. Escribe el banco en `server/academia/bancos/<id>.ts`:
    - El repaso de cada lección: 3 preguntas.
-   - El final: 3 veces el examen, con `leccion`, `objetivo` y `bloom` en cada pregunta.
+   - El final: 3 veces el examen, con `leccion`, `objetivo` y `bloom` en cada pregunta, y sus preguntas de casos
+     (aplicar, analizar o evaluar en una situación real).
    - Las escritas, con su clave.
    - Desde el Nivel 2, además: `mini`, las preguntas de cada mini prueba (18 por mini prueba, de las lecciones de su
      grupo, al menos 6 por lección) y `breve`, el escrito breve con su clave (la respuesta modelo, de 80 a 300 palabras,
@@ -740,6 +776,16 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
   reparto, requisitos y qué pasa al cerrar) sirve para el final de una materia y para el integral de un nivel, con las
   mismas rutas (`rutasDeEvaluacion`).
 - `server/academia-eleccion.ts`: qué preguntas trae cada intento, con su prueba en `server/academia-eleccion.test.ts`.
+- Lo que agregó la revisión del sistema de estudio a las materias ya publicadas, en registros aparte para no tocar sus
+  archivos: `server/academia/esquemas.ts` (`BLOQUES_EXTRA`, los esquemas y los videos, por lección: van al final de su
+  lectura, antes de «La idea clave», así no cambian los números de bloque que guarda el cuaderno),
+  `server/academia/casos.ts` (`CASOS`, las preguntas de casos, por materia) y `shared/academia-complementos.ts`
+  (`COMPLEMENTOS`, la bibliografía de más y la lectura ampliada; `aplicarComplementos` los suma al sílabo al cargar).
+  `server/academia/index.ts` suma los dos primeros al contenido y al banco. Su prueba, `server/academia-esquemas.test.ts`.
+- `server/academia-carga.ts` y `shared/academia-carga.ts`: los minutos reales de cada lección.
+- `server/academia-repaso-dia.ts` y `shared/repaso-del-dia.ts`: el «Repaso del día».
+- `server/academia-recursos.ts` y `shared/academia-recursos.ts`: los recursos de estudio de toda la academia (la página
+  `client/src/pages/academia-recursos.tsx`).
 - `server/academia-nivel.ts`: el cierre del nivel (integral, versículos, pacto y nivel completo).
 - `server/academia-documentos.ts`: los certificados (emisión, vista con QR y verificación pública). Usa la librería
   `qrcode` en el servidor.
@@ -820,6 +866,7 @@ El mentor de cada alumno va en `academia_alumnos.mentor_user_id`.
 | `GET estado` | Catálogo con el avance del alumno y «Continuar» |
 | `GET materia/:materiaId` | La materia con su sílabo |
 | `GET leccion/:leccionId` | La lección, con los versículos ya resueltos |
+| `GET recursos` | Los recursos de estudio de toda la academia (videos, audios, lecturas y lecturas ampliadas), con su materia y su lección |
 | `POST repaso` | Una respuesta del repaso: `{leccionId, preguntaId, opcion}` (409 con lo que falta si todavía no se leyó la lección) |
 | `POST leccion/:leccionId/video` | Lo visto de corrido del video: `{segundos}` |
 | `POST leccion/:leccionId/completar` y `POST leccion/:leccionId/reflexion` | Terminar la lección y guardar la nota privada |

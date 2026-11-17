@@ -1,13 +1,15 @@
 /**
  * La prueba diagnóstica (docs/academia.md, «Equivalencias»): 2 preguntas de cada materia con contenido de los Niveles 1
- * y 2 (del banco de su examen final), 45 segundos cada una. Al terminar sugiere por dónde empezar y qué materias se podrían aprobar por
+ * y 2 (del banco de su examen final), de 45 a 90 segundos cada una según su largo y su dificultad (segundosDePregunta).
+ * Al terminar sugiere por dónde empezar y qué materias se podrían aprobar por
  * suficiencia (`sugerenciaDiagnostico`, en shared/academia.ts). No da nada por aprobado ni pide la inscripción, y se
  * repite cada 30 días. El resultado no muestra las preguntas con su respuesta: salen de los bancos de los finales.
  */
 import type { Express } from "express";
 import { pool } from "./db";
 import {
-  DIAGNOSTICO, NIVELES, entraEnDiagnostico, sugerenciaDiagnostico, type DiagnosticoMateria, type DiagnosticoVista, type ExamenEstado, type MateriaDef,
+  DIAGNOSTICO, NIVELES, entraEnDiagnostico, segundosDePregunta, sugerenciaDiagnostico, type DiagnosticoMateria, type DiagnosticoVista, type ExamenEstado,
+  type MateriaDef,
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, frenar } from "./academia-comun";
@@ -22,6 +24,22 @@ function materiasDiagnostico(): MateriaDef[] {
 }
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
+
+let minutosCache: number | null = null;
+/** Lo que pide la prueba: sus preguntas por el tiempo promedio de cada una en su banco (cada pregunta trae el suyo). */
+function minutosDiagnostico(): number {
+  if (minutosCache != null) return minutosCache;
+  const materias = materiasDiagnostico();
+  const medida = { segundos: DIAGNOSTICO.segundos };
+  let total = 0;
+  for (const m of materias) {
+    const final = BANCOS.get(m.id)!.final;
+    const promedio = final.reduce((a, p) => a + segundosDePregunta(p, medida), 0) / Math.max(1, final.length);
+    total += promedio * DIAGNOSTICO.porMateria;
+  }
+  minutosCache = Math.ceil(total / 60);
+  return minutosCache;
+}
 
 /** Las materias en que ya no puede dar la suficiencia (la dio, o ya dio su examen final): se cursan. */
 async function sinSuficienciaDe(userId: number): Promise<string[]> {
@@ -119,7 +137,7 @@ export function registerAcademiaDiagnosticoRoutes(app: Express) {
       if (!acceso.ver) return res.status(403).json({ message: "La Academia Avivando el Fuego abre muy pronto." });
       if (frenar(`diag:${acceso.userId}`, 300)) return res.status(429).json({ message: "Espera un momento." });
       const { fila, dias } = await ultimoDe(acceso.userId);
-      if (!fila) return res.json({ ultimo: null, preguntas: materiasDiagnostico().length * DIAGNOSTICO.porMateria });
+      if (!fila) return res.json({ ultimo: null, preguntas: materiasDiagnostico().length * DIAGNOSTICO.porMateria, minutos: minutosDiagnostico() });
       const r = fila.resultado as Omit<DiagnosticoVista, "fecha" | "repetirDesde">;
       // la sugerencia se vuelve a calcular con lo que ya aprobó desde entonces
       const [completos, { rows: ap }, sinSuf] = await Promise.all([
@@ -136,7 +154,7 @@ export function registerAcademiaDiagnosticoRoutes(app: Express) {
         repetirDesde: repetirDesde(fila, dias),
       };
       res.setHeader("Cache-Control", "no-store");
-      res.json({ ultimo, preguntas: materiasDiagnostico().length * DIAGNOSTICO.porMateria });
+      res.json({ ultimo, preguntas: materiasDiagnostico().length * DIAGNOSTICO.porMateria, minutos: minutosDiagnostico() });
     } catch (err) {
       console.error("[academia] diagnóstico:", err);
       res.sendStatus(500);

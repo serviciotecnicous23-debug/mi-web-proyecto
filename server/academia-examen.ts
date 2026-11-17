@@ -18,6 +18,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
   APRUEBA, DIAS_APELACION, ESCRITA, FALLOS_PARA_REPASAR, MARGEN_ESCRITA_SEGUNDOS, MARGEN_SEGUNDOS, conTiempoExtra, esperaFinalMin, examenDe, materiaPorId, medallaDe, minutosDe,
+  segundosDePregunta,
   notaExamen, type Apelable, type ApelacionVista, type CorreccionVista, type ExamenEstado, type MateriaDef, type MedidaExamen, type PasoExamen,
   type ResultadoExamen,
 } from "@shared/academia";
@@ -226,14 +227,16 @@ export function evaluacionDeMateria(m: MateriaDef): Evaluacion {
 
 function vistaObjetiva(c: Curso, medida: MedidaExamen, pasados: number) {
   const p = preguntaPorId(c.ids[c.i])!;
+  // cada pregunta trae su tiempo: más si es larga o pide analizar (shared/academia.ts, segundosDePregunta)
+  const segundos = segundosDePregunta(p, medida);
   return {
     id: p.id,
     texto: p.texto,
     opciones: opcionesDe(p, c, c.i),
     n: c.i + 1,
     de: c.ids.length,
-    segundos: medida.segundos,
-    quedan: Math.max(0, Math.round(medida.segundos - pasados)),
+    segundos,
+    quedan: Math.max(0, Math.round(segundos - pasados)),
   };
 }
 
@@ -256,7 +259,7 @@ async function pasoActual(userId: number, ev: Evaluacion, c: Curso, pasadosInici
       continue;
     }
     if (c.enviada) {
-      if ((pasados ?? 0) > medida.segundos + MARGEN_SEGUNDOS) {
+      if ((pasados ?? 0) > segundosDePregunta(preguntaPorId(c.ids[c.i])!, medida) + MARGEN_SEGUNDOS) {
         c.respuestas.push({ id: c.ids[c.i], opcion: -1, bien: false, tarde: true });
         c.i += 1;
         c.enviada = false;
@@ -568,7 +571,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolverBase: Reso
         if (!p) return pasoActual(a.userId, ev, c, f.pasados_curso);
         const opciones = opcionesDe(p, c, c.i);
         if (opcion >= opciones.length) return { error: 400, message: "Respuesta no válida." };
-        const tarde = Number(f.pasados_curso ?? 0) > ev.medida.segundos + MARGEN_SEGUNDOS;
+        const tarde = Number(f.pasados_curso ?? 0) > segundosDePregunta(p, ev.medida) + MARGEN_SEGUNDOS;
         c.respuestas.push({ id: p.id, opcion, bien: !tarde && opcion >= 0 && opciones[opcion] === p.correcta, tarde });
         c.i += 1;
         c.enviada = false;

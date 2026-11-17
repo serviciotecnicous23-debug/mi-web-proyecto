@@ -41,7 +41,12 @@ export type Silabo = {
   dimensiones: Record<Dimension, string>;
   bibliografia: { basica: Libro[]; complementaria: Libro[] };
   recursos: RecursoDef[];
+  /** Niveles 4 y 5: una lectura ampliada con su reporte (shared/academia-complementos.ts). */
+  ampliada?: LecturaAmpliada;
 };
+
+/** Una lectura ampliada: qué leer, de dónde, cuánto pide y las preguntas guía de su reporte (en el cuaderno). */
+export type LecturaAmpliada = { lectura: string; fuente: string; url?: string; minutos: number; reporte: string[] };
 
 export type EspecialidadId =
   | "evangelismo-misiones" | "pastoral" | "alabanza" | "ninez" | "juventud" | "familia-consejeria"
@@ -172,6 +177,8 @@ export type MedidaExamen = {
   breves?: number;
   /** Minutos para cada escrito breve del examen. */
   minutosBreve?: number;
+  /** El tiempo extra (×1,5) que dio la Administración: lo usa también el tiempo de cada pregunta. */
+  factor?: number;
 };
 export const EXAMEN_FINAL: Record<NivelN, MedidaExamen> = {
   1: { objetivas: 10, banco: 30, escritas: 1, pesoObjetiva: 80, segundos: 60, minutosEscrita: 6 },
@@ -202,11 +209,12 @@ export function parteEscrita(medida: MedidaExamen): string {
 }
 
 /**
- * Las mini pruebas (Nivel 2 en adelante): cada 3 lecciones, 6 preguntas de un banco de 18, 45 segundos cada una, sin
+ * Las mini pruebas (Nivel 2 en adelante): cada 3 lecciones, 6 preguntas de un banco de 18, de 60 a 120 segundos cada una, sin
  * escritas. Hay 3 intentos (cada uno con preguntas nuevas) y cuenta el mejor. Muestran la revisión al terminar: sirven
  * para aprender. Su nota, en promedio, es el componente «mini» de la materia (las que no se dieron cuentan 0).
  */
-export const MINI_PRUEBA = { objetivas: 6, banco: 18, segundos: 45, intentos: 3, cada: 3 } as const;
+// (desde la revisión del 16-nov dan 60 segundos de base, como el examen final: son de práctica, no de velocidad)
+export const MINI_PRUEBA = { objetivas: 6, banco: 18, segundos: 60, intentos: 3, cada: 3 } as const;
 export const MEDIDA_MINI: MedidaExamen = {
   objetivas: MINI_PRUEBA.objetivas, banco: MINI_PRUEBA.banco, escritas: 0, pesoObjetiva: 100, segundos: MINI_PRUEBA.segundos, minutosEscrita: 0,
 };
@@ -258,8 +266,28 @@ export function conTiempoExtra(medida: MedidaExamen): MedidaExamen {
     segundos: Math.round(medida.segundos * FACTOR_TIEMPO_EXTRA),
     minutosEscrita: Math.ceil(medida.minutosEscrita * FACTOR_TIEMPO_EXTRA),
     ...(medida.minutosBreve ? { minutosBreve: Math.ceil(medida.minutosBreve * FACTOR_TIEMPO_EXTRA) } : {}),
+    factor: FACTOR_TIEMPO_EXTRA,
   };
 }
+
+/**
+ * El tiempo de cada pregunta objetiva (docs/academia.md, «El tiempo de cada pregunta»; revisión del 16-nov en
+ * docs/academia-auditoria.md): lo que pide leerla con calma
+ * (130 palabras por minuto, el ritmo de un lector promedio en el teléfono), decidir (25 s) y pensar según su nivel de
+ * Bloom. Nunca menos que el tiempo base del examen ni más del doble; con tiempo extra, por 1,5. Así una pregunta corta de
+ * memoria sigue con el tiempo base y un caso largo para analizar tiene más.
+ */
+export const PALABRAS_POR_MINUTO_EXAMEN = 130;
+export const SEGUNDOS_PARA_DECIDIR = 25;
+export const SEGUNDOS_POR_BLOOM: Record<Bloom, number> = { recordar: 0, comprender: 5, aplicar: 20, analizar: 30, evaluar: 30, crear: 30 };
+export function segundosDePregunta(p: { texto: string; correcta: string; falsas: readonly string[]; bloom?: Bloom }, medida: Pick<MedidaExamen, "segundos" | "factor">): number {
+  const palabras = [p.texto, p.correcta, ...p.falsas].reduce((a, t) => a + t.split(/\s+/).filter(Boolean).length, 0);
+  const pide = (palabras / PALABRAS_POR_MINUTO_EXAMEN) * 60 + SEGUNDOS_PARA_DECIDIR + (p.bloom ? SEGUNDOS_POR_BLOOM[p.bloom] ?? 0 : 0);
+  const conFactor = Math.ceil((pide * (medida.factor ?? 1)) / 5) * 5;
+  return Math.min(2 * medida.segundos, Math.max(medida.segundos, conFactor));
+}
+/** El tiempo de las preguntas dicho para el alumno: «de 60 a 120 segundos cada una, según su largo y su dificultad». */
+export const textoSegundos = (medida: Pick<MedidaExamen, "segundos">) => `de ${medida.segundos} a ${2 * medida.segundos} segundos cada una, según su largo y su dificultad`;
 /** Margen por la conexión: una respuesta que llega hasta 6 s después del tiempo todavía vale. */
 export const MARGEN_SEGUNDOS = 6;
 /** Margen de la parte escrita (escribir en el teléfono). */
@@ -340,7 +368,8 @@ export function apruebaSuficiencia(objetiva: number, escrita: number): boolean {
 // ---------------------------------------------------------------- la prueba diagnóstica
 
 /**
- * La prueba diagnóstica: 2 preguntas de cada materia con contenido, 45 segundos cada una. Solo sugiere por dónde
+ * La prueba diagnóstica: 2 preguntas de cada materia con contenido, de 45 a 90 segundos cada una según su largo y su
+ * dificultad. Solo sugiere por dónde
  * empezar y qué materias se podrían aprobar por suficiencia: no da nada por aprobado. Se repite cada 30 días.
  */
 /**
@@ -466,6 +495,7 @@ export function puedeRevisar(role: string | null | undefined): boolean {
 
 // Viven en shared/citas.ts (liviano: lo usan también el cuaderno y la Biblioteca sin cargar el catálogo).
 export { citaVisible, enlaceBiblia, parsearCita, type Cita } from "./citas";
+import { aplicarComplementos } from "./academia-complementos";
 
 // ---------------------------------------------------------------- el catálogo
 
@@ -3744,6 +3774,8 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
 
 const TODAS: MateriaDef[] = [...NIVELES.flatMap((n) => n.materias), ...ESPECIALIDADES.flatMap((e) => e.materias)];
 const POR_ID = new Map(TODAS.map((m) => [m.id, m]));
+// lo que agregó la revisión del sistema de estudio: más bibliografía y la lectura ampliada (shared/academia-complementos.ts)
+aplicarComplementos(POR_ID);
 const LECCION_POR_ID = new Map(TODAS.flatMap((m) => m.lecciones.map((l, i) => [l.id, { materia: m, leccion: l, indice: i }] as const)));
 
 export function todasLasMaterias(): MateriaDef[] {
@@ -4072,7 +4104,11 @@ export type BloqueVista =
   | { t: "versiculo"; ref: string; texto: string | null; enlace: string | null }
   | { t: "video"; url: string; titulo: string; fuente: string; minutos?: number }
   | { t: "audio"; url: string; titulo: string }
-  | { t: "imagen"; src: string; alt: string; pie?: string };
+  | { t: "imagen"; src: string; alt: string; pie?: string }
+  // los esquemas visuales (revisión del 16-nov): línea de tiempo, cuadro comparativo y pasos (o ejemplo resuelto)
+  | { t: "linea"; titulo: string; eventos: { fecha: string; texto: string; ref?: string }[] }
+  | { t: "cuadro"; titulo: string; columnas: string[]; filas: string[][] }
+  | { t: "pasos"; titulo: string; pasos: { titulo: string; texto: string }[] };
 
 export type PreguntaVista = { id: string; texto: string; opciones: string[] };
 

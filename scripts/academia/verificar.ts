@@ -14,6 +14,7 @@ import { ESCRITA, ESPECIALIDADES, MINI_PRUEBA, SUFICIENCIA, examenDe, miniPrueba
 import { BANCOS, CONTENIDO } from "../../server/academia/index";
 import { TRABAJOS } from "../../server/academia/trabajos";
 import { problemasDeClave } from "../../server/academia-correccion";
+import { problemasDeBloque } from "../../server/academia/validar-bloques";
 import type { PreguntaObjetiva } from "../../server/academia/tipos";
 
 const BIBLIA = process.env.BIBLIA_URL || "https://ministerioavivandoelfuego.com";
@@ -102,6 +103,11 @@ async function main() {
       for (const r of refs) if (!parsearCita(r)) mal(`${l.id}: versículo no válido «${r}»`);
       if (!refs.length) mal(`${l.id}: sin versículos`);
       for (const b of c.bloques) if (b.t === "parrafo" || b.t === "nota") await revisarComillas(l.id, b.texto, refs);
+      // los esquemas visuales (línea de tiempo, cuadro y pasos): su forma y sus referencias
+      for (const b of c.bloques) {
+        for (const x of problemasDeBloque(b)) mal(`${l.id}, esquema «${(b as { titulo?: string }).titulo ?? b.t}»: ${x}`);
+        if (b.t === "linea") for (const e of b.eventos) if (e.ref && !parsearCita(e.ref)) mal(`${l.id}: referencia no válida en la línea de tiempo «${e.ref}»`);
+      }
     }
     // el banco
     const banco = BANCOS.get(m.id);

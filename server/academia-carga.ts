@@ -28,6 +28,9 @@ export function minutosReales(leccionId: string, fijos: number): number {
     else if (b.t === "nota") palabras += contarPalabras(b.titulo) + contarPalabras(b.texto);
     else if (b.t === "versiculo") versiculos++;
     else if (b.t === "video") videos.push(b.minutos ?? null);
+    else if (b.t === "linea") palabras += contarPalabras(b.titulo) + b.eventos.reduce((a, e) => a + contarPalabras(e.fecha) + contarPalabras(e.texto), 0);
+    else if (b.t === "cuadro") palabras += contarPalabras(b.titulo) + [...b.columnas, ...b.filas.flat()].reduce((a, x) => a + contarPalabras(x), 0);
+    else if (b.t === "pasos") palabras += contarPalabras(b.titulo) + b.pasos.reduce((a, p) => a + contarPalabras(p.titulo) + contarPalabras(p.texto), 0);
   }
   const min = minutosDeLeccion({ palabras, versiculos, videos, preguntasRepaso: BANCOS.get(l.materia.id)?.repaso[leccionId]?.length ?? 0, nivel: l.materia.nivel });
   calculados.set(leccionId, min);

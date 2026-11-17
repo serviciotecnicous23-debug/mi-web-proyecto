@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Award, CheckCircle2, Compass, RotateCcw } from "
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { DIAGNOSTICO, NOMBRE_ACADEMIA } from "@shared/academia";
+import { DIAGNOSTICO, NOMBRE_ACADEMIA, textoSegundos } from "@shared/academia";
 import { baseDiagnostico, useDiagnostico } from "@/components/academia/api";
 import { PantallaExamen } from "@/components/academia/examen";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
@@ -44,7 +44,8 @@ export default function AcademiaDiagnostico() {
   }
   const d = q.data;
   const u = d?.ultimo ?? null;
-  const minutos = d ? Math.ceil((d.preguntas * DIAGNOSTICO.segundos) / 60) : 0;
+  // el servidor los calcula con el tiempo de cada pregunta (más si es larga); si no llegan, el tiempo base
+  const minutos = d ? d.minutos ?? Math.ceil((d.preguntas * DIAGNOSTICO.segundos) / 60) : 0;
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-16 space-y-6">
@@ -107,7 +108,7 @@ export default function AcademiaDiagnostico() {
           <section className="glass-card p-5">
             <h2 className="font-semibold text-lg">{u ? "Repetir la prueba" : "Cómo es"}</h2>
             <ul className="text-sm text-muted-foreground mt-2 space-y-1.5 list-disc pl-5">
-              <li>{d?.preguntas ?? 0} preguntas ({DIAGNOSTICO.porMateria} de cada materia de los Niveles 1 y 2), {DIAGNOSTICO.segundos} segundos cada una: unos {minutos} minutos.</li>
+              <li>{d?.preguntas ?? 0} preguntas ({DIAGNOSTICO.porMateria} de cada materia de los Niveles 1 y 2), {textoSegundos(DIAGNOSTICO)}: unos {minutos} minutos.</li>
               <li>No tiene nota para aprobar: al terminar verás por dónde empezar y qué materias ya conoces.</li>
               <li>Se puede repetir cada {DIAGNOSTICO.diasEntre} días.</li>
             </ul>

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
 import {
-  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, tieneEscritoBreve,
+  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, textoSegundos, tieneEscritoBreve,
   type MateriaDetalle, type Pesos,
 } from "@shared/academia";
 import {
@@ -21,6 +21,7 @@ import {
 import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 import { AsignacionDeMateria } from "@/components/academia/asignaciones";
 import { EnPreparacion } from "@/components/academia/en-preparacion";
+import { LecturaAmpliadaCard } from "@/components/academia/lectura-ampliada";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -436,7 +437,7 @@ export default function AcademiaMateria() {
           <section className="glass-card p-5" data-testid="materia-minis">
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Mini pruebas</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Cada {MINI_PRUEBA.cada} lecciones, {MINI_PRUEBA.objetivas} preguntas de {MINI_PRUEBA.segundos} segundos. Tienes {MINI_PRUEBA.intentos} intentos, cada uno con
+              Cada {MINI_PRUEBA.cada} lecciones, {MINI_PRUEBA.objetivas} preguntas, {textoSegundos(MINI_PRUEBA)}. Tienes {MINI_PRUEBA.intentos} intentos, cada uno con
               preguntas nuevas, y cuenta el mejor. Juntas pesan el {d.pesos.mini} % de la nota.
             </p>
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -474,7 +475,7 @@ export default function AcademiaMateria() {
           <section className="glass-card p-5" data-testid="materia-examen">
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-orange-500" /> Examen final</h2>
             <ul className="text-sm text-muted-foreground space-y-1 mb-4">
-              <li>Parte A: {medida.objetivas} preguntas objetivas, {medida.segundos} segundos cada una, repartidas por todas las lecciones.</li>
+              <li>Parte A: {medida.objetivas} preguntas objetivas, {textoSegundos(medida)}, repartidas por todas las lecciones.</li>
               <li>Parte B: {parteEscrita(medida)}, desde tu celular y con corrección automática.</li>
               <li>Pesa {medida.pesoObjetiva} % la parte objetiva y {100 - medida.pesoObjetiva} % la escrita. Se aprueba con {APRUEBA}.</li>
             </ul>
@@ -581,11 +582,15 @@ export default function AcademiaMateria() {
                       </li>
                     ))}
                   </ul>
+                  <Link href={`/academia/recursos?materia=${encodeURIComponent(m.id)}`} className="mt-3 inline-flex items-center gap-1 text-sm text-orange-700 dark:text-orange-300 hover:underline">
+                    <Library className="w-4 h-4" /> Ver todos los recursos de esta materia, con los videos de sus lecciones
+                  </Link>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </section>
         )}
+        {m.silabo?.ampliada && <LecturaAmpliadaCard a={m.silabo.ampliada} materiaId={m.id} conSesion={d.conSesion} />}
       </div>
     </Layout>
   );

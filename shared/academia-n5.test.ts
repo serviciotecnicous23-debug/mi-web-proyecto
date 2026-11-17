@@ -78,7 +78,8 @@ test("«Administración y gobierno de la iglesia» va del orden a lo legal bási
   assert.match(m.lecciones[3].titulo, /dinero/);
   assert.match(m.lecciones[5].titulo, /legal/);
   assert.match(m.silabo!.proposito, /declaración de fe por confirmar/);
-  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Wilfredo Calderón"]);
+  // el suyo va primero; la revisión del 16-nov le puede sumar libros comprobados (shared/academia-complementos.ts)
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor).slice(0, 1), ["Wilfredo Calderón"]);
 });
 
 test("el «Seminario de liderazgo ministerial» cierra el Nivel 5 con cuatro casos y el plan de ministerio propio", () => {
