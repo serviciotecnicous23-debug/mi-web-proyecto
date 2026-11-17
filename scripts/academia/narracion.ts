@@ -9,6 +9,7 @@
  *       Toma los audios grabados (<lección>.m4a y <lección>.marcas.json, que deja scripts/academia/voz/narrar.py), los
  *       copia a client/public/voz/academia/ con su huella en el nombre y escribe server/academia/narraciones.ts.
  */
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -168,7 +169,9 @@ function registrar(carpeta: string) {
       console.log(`${d.leccionId}: la lección cambió desde que se grabó (huella ${d.huella} → ${hoy}); no se registra`);
       continue;
     }
-    const archivo = `${d.leccionId}-${d.huella}.m4a`;
+    // el nombre lleva la huella del propio audio: si se graba otra vez, cambia, y nadie se queda con el viejo en la caché
+    const huellaAudio = crypto.createHash("sha1").update(fs.readFileSync(audio)).digest("hex").slice(0, 8);
+    const archivo = `${d.leccionId}-${huellaAudio}.m4a`;
     const anterior = previas[d.leccionId];
     if (anterior && anterior.archivo !== archivo) fs.rmSync(path.join(AUDIOS, anterior.archivo), { force: true });
     fs.copyFileSync(audio, path.join(AUDIOS, archivo));

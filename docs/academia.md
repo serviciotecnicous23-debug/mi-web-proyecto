@@ -120,8 +120,8 @@ español fluido, «tipo documental»):
   `data-bloque` y de `data-narra`: «titulo», «objetivos», «vida»), 10 s atrás y adelante, avance, velocidad, controles en
   la pantalla de bloqueo y los audífonos (Media Session), «Seguir escuchando (2:31)» donde se quedó (en el aparato) e
   «Ir al repaso» al terminar. Si el audio no carga, avisa y vuelve la voz del aparato.
-- **Dónde está el audio:** `client/public/voz/academia/<lección>-<huella>.m4a` (AAC 40 kbps, mono, 24 kHz, −16 LUFS;
-  unos 300 KB por minuto), servido en `/voz` con caché de un año (el nombre cambia con la huella) y sin pasar por el
+- **Dónde está el audio:** `client/public/voz/academia/<lección>-<huella del audio>.m4a` (AAC 40 kbps, mono, 24 kHz, −16 LUFS;
+  unos 300 KB por minuto), servido en `/voz` con caché de un año (el nombre cambia si se graba otra vez) y sin pasar por el
   service worker (se pide por partes, como la música del juego). El registro es `server/academia/narraciones.ts`.
   Medido el 17-nov: el Nivel 1 son unos 176 minutos (≈52 MB) y toda la academia, unas 28 horas (≈500 MB): para grabar
   las demás conviene un almacenamiento aparte (por ejemplo Cloudflare R2, 10 GB gratis) con `NARRACION_URL_BASE` en
