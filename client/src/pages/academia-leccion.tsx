@@ -323,7 +323,7 @@ export default function AcademiaLeccion() {
         </section>
         </div>
 
-        <section className="mb-10" data-testid="repaso">
+        <section className="mb-10 scroll-mt-[calc(var(--app-nav-h)+1rem)]" data-testid="repaso">
           <h2 className="font-display text-2xl font-bold mb-1 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Repaso</h2>
           <p className="text-sm text-muted-foreground mb-4">Responde bien cada pregunta para terminar la lección. Cuenta lo que aciertes a la primera.</p>
           {!repasoAbierto && bloqueo ? (
