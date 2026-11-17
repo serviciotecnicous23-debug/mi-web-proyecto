@@ -133,6 +133,8 @@ español fluido, «tipo documental»):
   3. En WSL: `bash scripts/academia/voz/narrar.sh <carpeta>` (en segundo plano; se puede cortar y seguir). Cada trozo se
      escucha con whisper y se graba otra vez si no dice lo que debía (`<lección>.qa.json`).
   4. `npx tsx scripts/academia/narracion.ts registrar <carpeta>` copia los audios y escribe el registro.
+  5. Si se graba otro nivel, actualizar el paso «Lecciones cortas» de la portada (`PASOS` en
+     `client/src/pages/academia.tsx`), que dice qué lecciones se escuchan.
 
 **Primero se lee (que no se responda sin leer):** el repaso se abre recién cuando pasó el tiempo de lectura de la lección
 (`segundosDeLectura`: el 40 % de sus minutos, entre 1 y 3 minutos) y, si la lección tiene un video de YouTube, cuando se
