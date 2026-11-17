@@ -1,6 +1,7 @@
 // Piezas comunes de las pantallas de la academia: medallas, avance, estados, bloques de lección y avisos.
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { BookOpen, CheckCircle2, Clock, ExternalLink, GraduationCap, Headphones, Lock, ShieldCheck, Sparkles, Video } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock, ExternalLink, GraduationCap, Headphones, History, ListOrdered, Lock, ShieldCheck, Sparkles, Table2, Video } from "lucide-react";
 import { LinkEmbed } from "@/components/media/LinkEmbed";
 import { Layout } from "@/components/layout";
 import { VideoYouTube } from "./video-youtube";
@@ -46,6 +47,9 @@ export function BarraAvance({ valor, de, etiqueta }: { valor: number; de: number
     </div>
   );
 }
+
+/** El encabezado de cada fila de un cuadro, con la letra del texto (no la de los th de styles.css). */
+const FILA_NORMAL = { fontFamily: "inherit", fontSize: "inherit", letterSpacing: "normal", textTransform: "none" } as const;
 
 const ESTADO: Record<EstadoMateria, { texto: string; clase: string }> = {
   "en-preparacion": { texto: "En preparación", clase: "bg-muted text-muted-foreground" },
@@ -176,7 +180,112 @@ export function BloqueLeccion({ b, alVerVideo, marcas }: { b: BloqueVista; alVer
           {b.pie && <figcaption className="text-sm text-muted-foreground mt-2">{b.pie}</figcaption>}
         </figure>
       );
+    // los esquemas visuales (revisión del 16-nov): línea de tiempo, cuadro comparativo y pasos. Pintan lo que el alumno
+    // resaltó (conMarcas en cada texto) y cada texto termina en un espacio: así lo que se copia o se lleva al cuaderno
+    // no sale pegado (la selección del cuaderno une los textos tal cual: components/cuaderno/seleccion.ts).
+    case "linea":
+      return (
+        <figure className="my-6 glass-card p-5" data-testid="esquema-linea">
+          <figcaption className="data-label text-orange-600 dark:text-orange-300 mb-4 flex items-center gap-1.5"><History className="w-3.5 h-3.5" /> {b.titulo}</figcaption>
+          {/* role="list": Safari les quita la semántica de lista a las que no tienen viñetas */}
+          <ol role="list" className="relative ml-2 border-l-2 border-orange-500/40 space-y-4">
+            {b.eventos.map((e, i) => (
+              <li key={i} className="relative pl-5">
+                <span className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-orange-500 ring-4 ring-background" aria-hidden="true" />
+                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">{conMarcas(e.fecha, marcas)}{" "}</p>
+                <p className="text-[15px] leading-6">{conMarcas(e.texto, marcas)}{e.ref ? <span className="text-muted-foreground"> ({e.ref})</span> : null}{" "}</p>
+              </li>
+            ))}
+          </ol>
+        </figure>
+      );
+    case "cuadro":
+      return <Cuadro b={b} marcas={marcas} />;
+    case "pasos":
+      return (
+        <figure className="my-6 glass-card p-5" data-testid="esquema-pasos">
+          <figcaption className="data-label text-orange-600 dark:text-orange-300 mb-4 flex items-center gap-1.5"><ListOrdered className="w-3.5 h-3.5" /> {b.titulo}</figcaption>
+          <ol role="list" className="space-y-3">
+            {b.pasos.map((x, i) => (
+              <li key={i} className="flex gap-3">
+                {/* el número se dibuja con CSS (no es texto: no se copia), y el lector de pantalla oye «Paso N» */}
+                <span data-n={i + 1} className="w-7 h-7 rounded-full bg-orange-500/15 text-orange-700 dark:text-orange-300 text-sm font-semibold flex items-center justify-center shrink-0 before:content-[attr(data-n)]" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold leading-7"><span className="sr-only">Paso {i + 1}: </span>{conMarcas(x.titulo, marcas)}{" "}</p>
+                  <p className="text-[15px] leading-6 text-muted-foreground">{conMarcas(x.texto, marcas)}{" "}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </figure>
+      );
   }
+}
+
+/**
+ * El cuadro comparativo: en la computadora, la tabla; en el teléfono, una tarjeta por fila con cada dato y su columna.
+ * Se dibuja una sola de las dos (no las dos con una escondida), para que lo que se selecciona no traiga el texto doble.
+ */
+const ANGOSTA = "(max-width: 639.98px)";
+/** ¿La pantalla es angosta (menos de 640 px, el «sm» de Tailwind)? Se sabe desde el primer dibujo, sin saltos. */
+function useAngosta(): boolean {
+  const [angosta, setAngosta] = useState(() => typeof window !== "undefined" && window.matchMedia(ANGOSTA).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(ANGOSTA);
+    const cambio = () => setAngosta(mq.matches);
+    cambio();
+    mq.addEventListener("change", cambio);
+    return () => mq.removeEventListener("change", cambio);
+  }, []);
+  return angosta;
+}
+
+function Cuadro({ b, marcas }: { b: Extract<BloqueVista, { t: "cuadro" }>; marcas?: Marca[] }) {
+  const telefono = useAngosta();
+  return (
+    <figure className="my-6 glass-card p-4 md:p-5" data-testid="esquema-cuadro">
+      <figcaption className="data-label text-orange-600 dark:text-orange-300 mb-3 flex items-center gap-1.5"><Table2 className="w-3.5 h-3.5" /> {b.titulo}</figcaption>
+      {!telefono ? (
+        <div className="overflow-x-auto relative">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr>{b.columnas.map((c, i) => <th key={i} scope="col" className="text-left align-bottom p-2 border-b-2 border-orange-500/40 font-semibold">{c}{" "}</th>)}</tr>
+            </thead>
+            <tbody>
+              {b.filas.map((f, i) => (
+                <tr key={i} className="border-b border-border/60 last:border-0 align-top">
+                  {/* la regla global de th (styles.css, sin capa) pone mayúsculas y letra de máquina: aquí, letra normal */}
+                  {f.map((c, k) =>
+                    k === 0 ? (
+                      <th key={k} scope="row" className="text-left p-2 font-semibold leading-6" style={FILA_NORMAL}>{conMarcas(c, marcas)}{" "}</th>
+                    ) : (
+                      <td key={k} className="p-2 leading-6">{conMarcas(c, marcas)}{" "}</td>
+                    ),
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {b.filas.map((f, i) => (
+            <div key={i} className="rounded-xl border border-border/70 p-3">
+              <p className="font-semibold">{conMarcas(f[0], marcas)}{" "}</p>
+              <dl className="mt-1 space-y-1 text-sm">
+                {f.slice(1).map((c, k) => (
+                  <div key={k}>
+                    <dt className="text-xs text-muted-foreground">{b.columnas[k + 1]}{" "}</dt>
+                    <dd className="leading-6">{conMarcas(c, marcas)}{" "}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      )}
+    </figure>
+  );
 }
 
 export function Minutos({ min }: { min: number }) {

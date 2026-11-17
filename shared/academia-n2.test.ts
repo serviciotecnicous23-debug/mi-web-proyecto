@@ -136,7 +136,7 @@ test("las mini pruebas: una cada 3 lecciones en el Nivel 2, ninguna en el Nivel 
   assert.equal(MINI_PRUEBA.intentos, 3);
   assert.deepEqual(
     { objetivas: MEDIDA_MINI.objetivas, banco: MEDIDA_MINI.banco, escritas: MEDIDA_MINI.escritas, segundos: MEDIDA_MINI.segundos, peso: MEDIDA_MINI.pesoObjetiva },
-    { objetivas: 6, banco: 18, escritas: 0, segundos: 45, peso: 100 },
+    { objetivas: 6, banco: 18, escritas: 0, segundos: 60, peso: 100 },
   );
 });
 

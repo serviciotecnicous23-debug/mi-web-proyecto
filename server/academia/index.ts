@@ -5,6 +5,8 @@
  */
 import type { BancoMateria, LeccionContenido, PreguntaObjetiva } from "./tipos";
 import { TRABAJOS } from "./trabajos";
+import { BLOQUES_EXTRA } from "./esquemas";
+import { CASOS } from "./casos";
 import { N1_SALVACION } from "./contenido/n1-salvacion";
 import { N1_ORACION } from "./contenido/n1-oracion";
 import { N1_BIBLIA } from "./contenido/n1-biblia";
@@ -151,13 +153,18 @@ const BANCOS_LISTA: BancoMateria[] = [
   BANCO_INTERCESION_1, BANCO_INTERCESION_2, BANCO_INTERCESION_3, BANCO_INTERCESION_4, BANCO_INTERCESION_5,
 ];
 
-export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
-export const BANCOS = new Map(BANCOS_LISTA.map((b) => [b.materia, b]));
+// Lo que agregó la revisión del sistema de estudio (docs/academia-auditoria.md): los esquemas y los videos van al final
+// de la lectura de su lección (esquemas.ts) y las preguntas de casos, al banco del examen final (casos.ts).
+const LECCIONES_COMPLETAS: LeccionContenido[] = LECCIONES.map((l) => (BLOQUES_EXTRA[l.id]?.length ? { ...l, bloques: [...l.bloques, ...BLOQUES_EXTRA[l.id]] } : l));
+const BANCOS_COMPLETOS: BancoMateria[] = BANCOS_LISTA.map((b) => (CASOS[b.materia]?.length ? { ...b, final: [...b.final, ...CASOS[b.materia]] } : b));
+
+export const CONTENIDO = new Map(LECCIONES_COMPLETAS.map((l) => [l.id, l]));
+export const BANCOS = new Map(BANCOS_COMPLETOS.map((b) => [b.materia, b]));
 
 const PREGUNTAS = new Map<string, PreguntaObjetiva>();
 /** De qué materia es cada pregunta y cada escrita (el examen integral se reparte por materia). */
 const MATERIA_DE = new Map<string, string>();
-for (const b of BANCOS_LISTA) {
+for (const b of BANCOS_COMPLETOS) {
   for (const lista of Object.values(b.repaso)) for (const p of lista) PREGUNTAS.set(p.id, p);
   for (const p of b.final) {
     PREGUNTAS.set(p.id, p);

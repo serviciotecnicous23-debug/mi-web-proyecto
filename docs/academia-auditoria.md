@@ -11,7 +11,8 @@ algo innovador, si se han puesto recursos o solamente en algunos». Se revisaron
 - **La evaluación ya está a nivel de un buen curso universitario en línea.** Los objetivos son medibles y tienen su nivel
   de Bloom. Cada pregunta mide un objetivo (tabla de especificaciones). Hay pruebas variadas y en secuencia, con la
   respuesta y la cita al instante. Hay honradez con reloj del servidor, revisión con apelación, análisis de preguntas y
-  tiempo extra. Los tiempos de los exámenes son justos: no hace falta cambiarlos.
+  tiempo extra. Los tiempos de los exámenes son justos: no hace falta cambiarlos. *(Actualizado el 17-nov: con las
+  preguntas de casos, ahora cada pregunta trae su tiempo según su largo y su dificultad; ver la sección 5.)*
 - **Lo que faltaba en el sistema, y se corrigió aquí:**
   - **El tiempo de cada lección:** decía 7 o 10 minutos fijos, y en los Niveles 3 a 5 pide unos 14. Ahora cada lección
     calcula su tiempo real.
@@ -241,6 +242,79 @@ caso de la vida real. «Tiempo» ya quedó corregido con los minutos reales. Ade
 - Un esquema, mapa, cuadro o línea de tiempo en las materias de historia, panorama y libros bíblicos.
 - En los Niveles 3 a 5, no más del 30 % de preguntas de memoria y al menos un 20 % de casos de la vida real.
 - Ejemplos resueltos paso a paso en las materias de método (hermenéutica, homilética, métodos de estudio).
+
+## 5. La segunda parte: el contenido de las materias y el tiempo de las pruebas (17-nov)
+
+Pedido de Luis (16-nov): agregar lo que falta «a lo que corresponde… en todas las materias», que «se puedan buscar los
+recursos de estudio necesarios» y revisar el tiempo de las pruebas, que se veía corto.
+
+**Lo nuevo en el sistema:**
+- **Los esquemas visuales** en la lectura de las lecciones: la línea de tiempo, el cuadro comparativo (una tarjeta por
+  fila en el teléfono) y los pasos. Muestran los resaltados del cuaderno y se leen bien con el lector de pantalla.
+- **La página de recursos de estudio** (`/academia/recursos`): todos los videos, audios, lecturas y lecturas ampliadas
+  de la academia, con un buscador y filtros por tipo, por nivel y por materia.
+- **La lectura ampliada** de los Niveles 4 y 5, con su reporte en el cuaderno (una sola nota por materia).
+- **El tiempo de cada pregunta**, según su largo y su dificultad.
+
+**Cómo se hizo el contenido.** Para cada materia publicada, un agente redactó lo que le faltaba leyendo sus lecciones y
+su banco:
+- de 1 a 3 esquemas;
+- los libros que faltaban para llegar a 2 básicos y 2 complementarios;
+- videos donde no había;
+- las preguntas de casos (2, 4 o 6 según el nivel);
+- en los Niveles 4 y 5, la lectura ampliada.
+
+Otros dos agentes lo revisaron por separado:
+- uno, el contenido y la Biblia: cada fecha, dato y cita en la RV1960, la doctrina del ministerio y que cada caso tenga
+  una sola respuesta defendible;
+- otro, las fuentes, los videos y la forma: cada libro en un catálogo serio, cada video con YouTube, que la respuesta
+  correcta no se delate por su largo, los largos y la ortografía.
+
+Lo que un revisor quitaba no entraba, y sus correcciones se juntaban campo por campo sin perder ninguna. Después, el
+programa que arma los registros vuelve a validar todo con las reglas de las pruebas: los límites de los esquemas, las
+citas, los objetivos del sílabo, las cuatro opciones distintas y que no haya texto bíblico entre comillas.
+
+**En el primer PR, 23 materias:** todo el Nivel 1, todo el Nivel 2 y seis del Nivel 3 (Hermenéutica, Métodos de estudio
+bíblico, Pentateuco y libros históricos, La persona y obra del Espíritu Santo, Evangelismo y consolidación y Liderazgo
+cristiano I).
+
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 69: 10 líneas de tiempo, 36 cuadros comparativos y 23 pasos |
+| Videos (las materias que no tenían) | 9, en Disciplinas espirituales, Familia y relaciones y Dones espirituales |
+| Preguntas de casos en el examen final | 88 |
+| Libros comprobados en la bibliografía | 7 |
+
+Los revisores corrigieron 53 esquemas, 74 preguntas (casi siempre porque la respuesta correcta se delataba por ser la más
+larga), 2 libros y 1 video. No hubo nada que quitar.
+
+**Las otras 37 materias:** cuatro del Nivel 3, los Niveles 4 y 5 (con Exégesis y Teología del avivamiento, publicadas
+el 16-nov) y las tres especialidades. Tienen su borrador y siguen en revisión. Van en el PR siguiente, con sus lecturas
+ampliadas.
+
+**El tiempo de las pruebas.** Se midió lo que pide cada pregunta:
+- leerla, a 130 palabras por minuto (el ritmo de un lector promedio en el teléfono);
+- decidir, 25 segundos;
+- pensar según su nivel de Bloom: 5 segundos más si pide comprender, 20 si pide aplicar y 30 si pide analizar o
+  evaluar.
+
+Esta medida reemplaza la de la sección 1 (200 palabras por minuto más 12 s). Con las 3.313 preguntas de los finales:
+
+| | Preguntas | Tiempo |
+|---|---|---|
+| Recordar y comprender | 2.192 (66 %) | 60 s, el tiempo base: son cortas y alcanza |
+| Aplicar | 483 | mediana de 65 s, hasta 110 |
+| Analizar y evaluar | 634 | mediana de 75 s, hasta 120 |
+| Todas | 3.313 | el 71 % en 60 s; 84 pasan de 90 s |
+
+Ahora cada pregunta trae su tiempo (`segundosDePregunta`): nunca menos que el tiempo base ni más del doble. Las mini
+pruebas daban 45 segundos por pregunta; ahora dan 60 de base, como el final (de 60 a 85 según la pregunta). La prueba
+diagnóstica dice los minutos que de verdad pide (unos 31). Con tiempo extra, todo por 1,5.
+
+**Lo que hay que saber después de publicar:** la aprobación doctrinal de cada materia guarda la huella de su contenido.
+Con los esquemas, los casos y los libros nuevos, la huella cambia, y la pestaña «Contenido» del panel mostrará estas
+materias como cambiadas desde su aprobación. Así debe ser: la Dirección académica revisa lo agregado y vuelve a
+aprobarlas. Eso no cierra nada a los alumnos.
 
 ## Fuentes
 

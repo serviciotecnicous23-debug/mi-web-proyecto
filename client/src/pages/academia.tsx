@@ -564,6 +564,7 @@ export default function AcademiaPage() {
           <Link href="/academia/reglamento" className="inline-flex items-center gap-1.5 underline" data-testid="academia-reglamento"><ScrollText className="w-4 h-4" /> Reglamento académico</Link>
           <Link href="/academia/declaracion-de-fe" className="inline-flex items-center gap-1.5 underline" data-testid="academia-declaracion"><BookOpen className="w-4 h-4" /> Declaración de fe</Link>
           <Link href="/academia/verificar" className="inline-flex items-center gap-1.5 underline"><Award className="w-4 h-4" /> Verificar un documento</Link>
+          <Link href="/academia/recursos" className="inline-flex items-center gap-1.5 underline" data-testid="academia-recursos"><Search className="w-4 h-4" /> Recursos de estudio</Link>
         </p>
       </Seccion>
     </Layout>

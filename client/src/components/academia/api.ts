@@ -354,7 +354,7 @@ export const baseDiagnostico = "/api/academia/diagnostico/prueba";
 
 /** Mi última prueba diagnóstica (con la sugerencia de hoy) y cuántas preguntas tiene. */
 export function useDiagnostico(activo = true) {
-  return useQuery<{ ultimo: DiagnosticoVista | null; preguntas: number }, ErrorAcademia>({
+  return useQuery<{ ultimo: DiagnosticoVista | null; preguntas: number; minutos?: number }, ErrorAcademia>({
     queryKey: ["academia", "diagnostico"],
     queryFn: () => pedir("GET", "/api/academia/diagnostico"),
     enabled: activo,

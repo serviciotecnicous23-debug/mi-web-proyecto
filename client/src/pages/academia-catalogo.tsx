@@ -218,6 +218,9 @@ export default function AcademiaCatalogo() {
             <ArrowLeft className="w-4 h-4" /> Academia
           </Link>
           <h1 className="heading-display font-display text-4xl md:text-5xl mt-2" data-testid="catalogo-titulo">Catálogo de materias</h1>
+          <Link href="/academia/recursos" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline" data-testid="catalogo-recursos">
+            <Library className="w-4 h-4" /> Ver todos los recursos de estudio: videos, lecturas y lecturas ampliadas
+          </Link>
           <p className="text-muted-foreground mt-2">
             {todas.length} materias en {e.niveles.length} niveles y {e.especialidades.length} especialidades · {abiertas} abiertas · {lecciones} lecciones
           </p>
