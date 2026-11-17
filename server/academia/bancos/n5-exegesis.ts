@@ -15,9 +15,9 @@ export const BANCO_N5_EXEGESIS: BancoMateria = {
   materia: "n5-exegesis",
   repaso: {
     "n5-exegesis-1": ([
-      ["1-r1", 1, "o1", "recordar", "¿Qué es la eiségesis, según la lección?", "Meter en el texto lo que uno ya piensa", ["Sacar del texto lo que el autor quiso decir", "Traducir del griego", "Leer en voz alta"], "La exégesis saca del texto lo que el autor quiso decir; la eiségesis le mete lo que uno ya piensa.", "2 Timoteo 2:15"],
-      ["1-r2", 1, "o1", "comprender", "¿Cuál es el primer paso del método exegético, según la lección?", "El contexto histórico: quién escribe, a quién, cuándo y por qué", ["La aplicación", "La predicación", "El llamado al altar"], "«Procura con diligencia presentarte a Dios aprobado».", "2 Timoteo 2:15"],
-      ["1-r3", 1, "o1", "aplicar", "¿Qué hace un buen exegeta con la cita de Romanos 1:17, según la lección?", "Va al texto que Pablo cita, Habacuc 2:4, y lo lee en su contexto", ["Lo lee solo, sin buscar la cita", "Lo cambia por otra traducción", "Lo explica sin mirar el Antiguo Testamento"], "«He aquí que aquel cuya alma no es recta, se enorgullece; mas el justo por su fe vivirá».", "Habacuc 2:4"],
+      ["1-r1", 1, "o1", "recordar", "¿Qué es la eiségesis al estudiar la Biblia?", "Meter en el texto lo que uno ya piensa", ["Sacar del texto lo que el autor quiso decir", "Traducir del griego", "Leer en voz alta"], "La exégesis saca del texto lo que el autor quiso decir; la eiségesis le mete lo que uno ya piensa.", "2 Timoteo 2:15"],
+      ["1-r2", 1, "o1", "comprender", "¿Cuál es el primer paso del método exegético?", "El contexto histórico: quién escribe, a quién, cuándo y por qué", ["La aplicación", "La predicación", "El llamado al altar"], "El método empieza por el contexto histórico; siguen el contexto literario, las palabras y la gramática, la teología y la aplicación.", "2 Timoteo 2:15"],
+      ["1-r3", 1, "o1", "aplicar", "¿Qué hace un buen exegeta con la cita de Habacuc que aparece en Romanos 1:17?", "Va al texto que Pablo cita, Habacuc 2:4, y lo lee en su contexto", ["Lo lee solo, sin buscar la cita", "Lo cambia por otra traducción", "Lo explica sin mirar el Antiguo Testamento"], "«He aquí que aquel cuya alma no es recta, se enorgullece; mas el justo por su fe vivirá».", "Habacuc 2:4"],
     ] as P[]).map(p),
     "n5-exegesis-2": ([
       ["2-r1", 2, "o2", "recordar", "¿Qué se revela desde el cielo, según Romanos 1:18?", "La ira de Dios contra toda impiedad e injusticia de los hombres", ["Un nuevo templo", "La ley de Moisés", "Un ángel"], "«Porque la ira de Dios se revela desde el cielo contra toda impiedad e injusticia de los hombres».", "Romanos 1:18-20"],
@@ -26,7 +26,7 @@ export const BANCO_N5_EXEGESIS: BancoMateria = {
     ] as P[]).map(p),
     "n5-exegesis-3": ([
       ["3-r1", 3, "o3", "recordar", "¿Con qué palabras empieza el giro de Romanos 3:21?", "Pero ahora, aparte de la ley, se ha manifestado la justicia de Dios", ["Por tanto, sed santos", "En el principio era el Verbo", "Así que, hermanos, os ruego"], "«Pero ahora, aparte de la ley, se ha manifestado la justicia de Dios».", "Romanos 3:21-26"],
-      ["3-r2", 3, "o3", "comprender", "¿Qué significa propiciación, según la lección?", "El sacrificio que satisface la justicia de Dios y quita su ira", ["Un premio por buenas obras", "Una promesa futura", "Una ley nueva"], "«a quien Dios puso como propiciación por medio de la fe en su sangre».", "Romanos 3:21-26"],
+      ["3-r2", 3, "o3", "comprender", "¿Qué significa la palabra propiciación en Romanos 3:25?", "El sacrificio que satisface la justicia de Dios y quita su ira", ["Un premio por buenas obras", "Una promesa futura", "Una ley nueva"], "La propiciación es el sacrificio que satisface la justicia de Dios: Dios puso a Cristo «como propiciación por medio de la fe en su sangre».", "Romanos 3:21-26"],
       ["3-r3", 3, "o3", "aplicar", "¿Qué prueba Pablo con el ejemplo de Abraham en Romanos 4?", "Que fue declarado justo por la fe antes de ser circuncidado, y es padre de todos los creyentes", ["Que la circuncisión salva", "Que solo los judíos son hijos de Abraham", "Que Abraham fue justificado por la ley"], "«para que fuese padre de todos los creyentes no circuncidados».", "Romanos 4:11"],
     ] as P[]).map(p),
     "n5-exegesis-4": ([
@@ -41,7 +41,7 @@ export const BANCO_N5_EXEGESIS: BancoMateria = {
     ] as P[]).map(p),
     "n5-exegesis-6": ([
       ["6-r1", 6, "o6", "recordar", "¿Qué pide Romanos 13:1?", "Que toda persona se someta a las autoridades superiores", ["Que nadie obedezca a las autoridades", "Que la iglesia gobierne la ciudad", "Que se obedezca a las autoridades aunque manden pecar"], "«Sométase toda persona a las autoridades superiores».", "Romanos 13:1"],
-      ["6-r2", 6, "o6", "comprender", "¿Qué límite tiene la obediencia a las autoridades, según la lección?", "Que es necesario obedecer a Dios antes que a los hombres", ["Ninguno", "Que solo se obedece a las autoridades cristianas", "Que se obedece solo cuando conviene"], "«Es necesario obedecer a Dios antes que a los hombres».", "Hechos 5:29"],
+      ["6-r2", 6, "o6", "comprender", "¿Qué límite tiene la obediencia a las autoridades de Romanos 13, según Hechos 5:29?", "Que es necesario obedecer a Dios antes que a los hombres", ["Ninguno", "Que solo se obedece a las autoridades cristianas", "Que se obedece solo cuando conviene"], "«Es necesario obedecer a Dios antes que a los hombres».", "Hechos 5:29"],
       ["6-r3", 6, "o6", "aplicar", "En una iglesia discuten sobre comidas y días especiales. ¿Qué les pide Romanos 14:1?", "Recibir al débil en la fe sin contender sobre opiniones", ["Expulsar a los débiles", "Votar quién tiene razón", "Prohibir todas las comidas"], "«Recibid al débil en la fe, pero no para contender sobre opiniones».", "Romanos 14:1"],
     ] as P[]).map(p),
   },
