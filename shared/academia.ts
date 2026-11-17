@@ -2836,6 +2836,284 @@ const AVIVAMIENTO: MateriaDef = {
   disponible: true,
 };
 
+const MINISTERIO_PASTORAL: MateriaDef = {
+  id: "pastoral-1",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 1,
+  titulo: "El ministerio pastoral",
+  resumen: "La práctica del oficio pastoral: anciano, obispo y pastor, la autoridad que sirve, el equipo pastoral, la disciplina que restaura, la protección del rebaño y la salud del pastor.",
+  base: "Hechos 20:28; 1 Pedro 5:2-3",
+  memoria: "Hechos 20:28",
+  lecciones: lecciones("pastoral-1", [
+    ["Anciano, obispo y pastor", "Hechos 20:17; Hechos 20:28; Tito 1:7-9"],
+    ["Supervisar sin señorear", "Mateo 20:25-28; 1 Pedro 5:2-3; 3 Juan 1:9-10"],
+    ["Formar el equipo pastoral", "Éxodo 18:17-18; Tito 1:5; Filipenses 2:19-22; Colosenses 4:7-9"],
+    ["La disciplina que restaura", "Mateo 18:15-17; Gálatas 6:1; 2 Corintios 2:6-8"],
+    ["Proteger al rebaño", "Hechos 20:29-31; 2 Pedro 2:1-3; Ezequiel 34:4; Mateo 18:6"],
+    ["La salud del pastor", "1 Reyes 19:4-5; 2 Corintios 4:7-10; Gálatas 6:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que sirve como pastor, o se prepara para hacerlo, viva su oficio con la práctica que pide el Nuevo Testamento: los nombres y las tareas de anciano, obispo y pastor, una autoridad que sirve y no señorea, un equipo pastoral formado con paciencia, una disciplina que busca restaurar, la protección del rebaño frente al error y al abuso, con lo que pide la ley, y el cuidado de su propia salud. No repite Teología pastoral (Nivel 5) ni Cuidado y consejería básica (Nivel 3): las lleva a la práctica. Quién ejerce el pastorado es parte del ministerio de la mujer, un punto de la declaración de fe por confirmar. Su base es el encargo de Pablo a los ancianos de Éfeso: «mirad por vosotros, y por todo el rebaño en que el Espíritu Santo os ha puesto por obispos, para apacentar la iglesia del Señor» (Hechos 20:28).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los nombres y las tareas del oficio pastoral en el Nuevo Testamento.", bloom: "comprender" },
+      { id: "o2", texto: "Contrastar la autoridad que sirve con el liderazgo que domina, y reconocer sus señales de alerta.", bloom: "analizar" },
+      { id: "o3", texto: "Planificar la formación de un equipo pastoral según el ejemplo de Pablo.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar los pasos de la disciplina bíblica con el propósito de restaurar.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar las medidas para proteger al rebaño del error y del abuso.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar el cuidado de la propia salud y la rendición de cuentas del pastor.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 20:28 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El oficio pastoral del Nuevo Testamento y sus tareas prácticas.",
+      ser: "Un pastor siervo, que es ejemplo, rinde cuentas y cuida de sí mismo.",
+      hacer: "Guiar, formar un equipo, corregir para restaurar y proteger al rebaño.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John MacArthur (ed.)", titulo: "El ministerio pastoral: cómo pastorear bíblicamente", editorial: "Grupo Nelson" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 20, la despedida de Pablo a los ancianos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=20" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_PASTORAL: MateriaDef = {
+  id: "pastoral-2",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 2,
+  titulo: "Consejería pastoral",
+  resumen: "Aconsejar con la Palabra: qué es la consejería pastoral, el método de Jesús con la samaritana, la culpa y el perdón, la ansiedad y la tristeza profunda, los conflictos y la reconciliación, y los límites de la confidencialidad y de la derivación.",
+  base: "Colosenses 1:28; Isaías 50:4",
+  memoria: "Isaías 50:4",
+  lecciones: lecciones("pastoral-2", [
+    ["¿Qué es la consejería pastoral?", "Colosenses 1:28; Isaías 50:4; Romanos 15:14; Proverbios 11:14"],
+    ["El método de Jesús: la samaritana", "Juan 4:7-10; Juan 4:16-18; Juan 4:28-29"],
+    ["La culpa y el perdón", "Salmos 32:3-5; 1 Juan 1:9; 2 Corintios 7:10"],
+    ["La ansiedad y la tristeza profunda", "Salmos 42:5; Filipenses 4:6-7; 1 Pedro 5:7; Mateo 11:28"],
+    ["Conflictos y reconciliación", "Mateo 5:23-24; Romanos 12:18; Efesios 4:31-32"],
+    ["La confidencialidad, la derivación y los límites", "Proverbios 11:13; Proverbios 24:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que acompaña a otros como pastor aprenda a aconsejar con la Palabra: qué es la consejería pastoral y en qué se distinguen los enfoques evangélicos, el método de Jesús con la samaritana, cómo acompañar la culpa y el perdón, la ansiedad y la tristeza profunda, cómo ayudar a reconciliar a los que están en conflicto, y los límites de la confidencialidad, con lo que pide la ley en Texas, y cuándo derivar a un profesional. Lleva a la práctica Cuidado y consejería básica (Nivel 3) sin repetirla, y no reemplaza la atención médica ni la psicológica. Su base es la lengua del siervo de Jehová: «Jehová el Señor me dio lengua de sabios, para saber hablar palabras al cansado» (Isaías 50:4).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la consejería pastoral y en qué se distinguen los enfoques evangélicos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar a una conversación pastoral los pasos del método de Jesús con la samaritana.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir la culpa verdadera de la falsa culpa y acompañar a quien confiesa hacia el perdón.", bloom: "analizar" },
+      { id: "o4", texto: "Acompañar la ansiedad y la tristeza profunda con la Palabra, y reconocer cuándo hace falta ayuda médica.", bloom: "aplicar" },
+      { id: "o5", texto: "Planificar la reconciliación de un conflicto entre hermanos, distinguiendo perdonar de reconciliarse.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los límites de la confidencialidad y las razones para derivar a un profesional.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Isaías 50:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La consejería pastoral, sus enfoques evangélicos y sus límites.",
+      ser: "Un consejero que escucha, guarda la confidencia y acompaña con la Palabra y con amor.",
+      hacer: "Conducir una conversación pastoral, acompañar la culpa, la ansiedad y los conflictos, y derivar cuando hace falta.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Jay E. Adams", titulo: "Capacitado para orientar", editorial: "Portavoz" },
+        { autor: "Lawrence J. Crabb", titulo: "El arte de aconsejar bíblicamente", editorial: "Unilit" },
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "Carácter de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=oHMicgEfIrY", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 4, Jesús y la mujer samaritana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=4" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const ORDENANZAS_CEREMONIAS: MateriaDef = {
+  id: "pastoral-3",
+  nivel: null,
+  especialidad: "pastoral",
+  orden: 3,
+  titulo: "Ordenanzas y ceremonias",
+  resumen: "La práctica del pastor que preside: las ordenanzas y las ceremonias, el bautismo en agua, la Santa Cena, la presentación de niños, la boda cristiana, con lo que pide la ley en Texas, y el funeral, cada una con su ejemplo resuelto paso a paso.",
+  base: "Mateo 28:19; 1 Corintios 11:23-26",
+  memoria: "1 Corintios 11:26",
+  lecciones: lecciones("pastoral-3", [
+    ["Ordenanzas y ceremonias", "Mateo 28:19-20; 1 Corintios 11:23-24; Hechos 2:41-42; 1 Corintios 14:40"],
+    ["El bautismo en agua", "Hechos 2:38; Hechos 8:36-38; Romanos 6:3-4; Mateo 28:19"],
+    ["La Santa Cena", "1 Corintios 11:23-26; 1 Corintios 10:16-17; 1 Corintios 11:27-29; Hechos 20:7"],
+    ["La presentación de niños", "1 Samuel 1:27-28; Lucas 2:22; Marcos 10:13-16; Deuteronomio 6:6-7; Efesios 6:4"],
+    ["La boda cristiana", "Génesis 2:24; Mateo 19:4-6; Hebreos 13:4; Efesios 5:25; 2 Corintios 6:14"],
+    ["El funeral y el consuelo", "Juan 11:35; Juan 11:25-26; 1 Tesalonicenses 4:13-14; Romanos 12:15; 2 Corintios 1:3-4"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que preside en su iglesia, o se prepara para hacerlo, celebre con orden y con sentido bíblico las ordenanzas y las ceremonias: que distinga lo que el Señor mandó de lo que la iglesia celebra, que prepare y dirija el bautismo en agua y la Santa Cena según la declaración de fe del ministerio (artículo 8), y que acompañe a las familias en la presentación de sus hijos, en la boda, con lo que pide la ley en Texas, y en el funeral. Lleva a la práctica pastoral la doctrina del Nivel 1 sobre el bautismo y la Cena, sin repetirla, y presenta con respeto las prácticas de otras iglesias. Su base es la palabra de Pablo sobre la Cena: «Así, pues, todas las veces que comiereis este pan, y bebiereis esta copa, la muerte del Señor anunciáis hasta que él venga» (1 Corintios 11:26).",
+    objetivos: [
+      { id: "o1", texto: "Distinguir las ordenanzas de las ceremonias y comparar con respeto cómo las entienden las iglesias.", bloom: "analizar" },
+      { id: "o2", texto: "Preparar y dirigir un bautismo en agua, con su clase, su entrevista y la seguridad en el agua.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar el sentido de la Santa Cena y dirigir su celebración con orden y reverencia.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar y dirigir una presentación de niños, con el compromiso de los padres y de la iglesia.", bloom: "aplicar" },
+      { id: "o5", texto: "Planificar una boda cristiana, con la consejería prematrimonial y lo que pide la ley en Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Acompañar a una familia en el duelo y dirigir un funeral con esperanza, también en los casos difíciles.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 11:26 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las ordenanzas y las ceremonias de la iglesia, su sentido bíblico y lo que pide la ley.",
+      ser: "Un pastor que preside con reverencia, orden y compasión, sin lucirse.",
+      hacer: "Preparar y dirigir el bautismo, la Santa Cena, la presentación de niños, la boda y el funeral.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Kittim Silva", titulo: "Manual para ceremonias religiosas", editorial: "CLIE" },
+        { autor: "Editorial Vida (ed.)", titulo: "Manual del ministro", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Guillermo I. Catalán", titulo: "Nuevo manual para ministros", editorial: "Mundo Hispano" },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1): Hechos 1-12", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 1 Corintios 11, la Cena del Señor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=11" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const VISITACION_CUIDADO: MateriaDef = {
+  id: "pastoral-4",
+  nivel: null,
+  especialidad: "pastoral",
+  orden: 4,
+  titulo: "Visitación y cuidado del rebaño",
+  resumen: "El cuidado pastoral en la práctica: conocer a las ovejas con un mapa del rebaño, la visita en el hogar, la visita a los enfermos y a los que se mueren, los ancianos, los presos y los que están solos, la búsqueda de la oveja perdida y un plan de cuidado con toda la iglesia.",
+  base: "Proverbios 27:23; Juan 10:11-14",
+  memoria: "Proverbios 27:23",
+  lecciones: lecciones("pastoral-4", [
+    ["El pastor que conoce a sus ovejas", "Juan 10:11-14; Proverbios 27:23; Ezequiel 34:11-12; Jeremías 3:15"],
+    ["La visita en el hogar", "Hechos 20:20; Lucas 19:5-6; 1 Tesalonicenses 2:7-8; Romanos 12:13"],
+    ["Visitar a los enfermos", "Mateo 25:35-36; Santiago 5:14-15; 2 Corintios 12:9; Juan 14:1-3"],
+    ["Ancianos, presos y los que están solos", "Santiago 1:27; Levítico 19:32; Salmos 71:9; Hebreos 13:3; 2 Timoteo 1:16"],
+    ["Buscar a la oveja perdida", "Lucas 15:4-7; Ezequiel 34:16; Hebreos 10:24-25; Santiago 5:19-20"],
+    ["Un plan de cuidado: no solo el pastor", "Hechos 6:1-4; 1 Corintios 12:25-26; 1 Pedro 4:10; Gálatas 6:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que pastorea, o se prepara para hacerlo, cuide al rebaño persona por persona: que conozca a sus ovejas con un mapa del rebaño, que visite los hogares con un propósito y con prudencia, que acompañe a los enfermos y a los que se mueren según la declaración de fe del ministerio (artículo 11), que no olvide a los ancianos, a los presos y a los que están solos, que busque a los que se alejan sin acusarlos y que organice con toda la iglesia un plan de cuidado para que nadie quede sin visita. Lleva a la práctica Teología pastoral (Nivel 5) y El ministerio pastoral, sin repetirlas. Su base es el consejo del sabio a quien cuida un rebaño: «Sé diligente en conocer el estado de tus ovejas, Y mira con cuidado por tus rebaños» (Proverbios 27:23).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué el pastor conoce a sus ovejas, y armar un mapa del rebaño.", bloom: "aplicar" },
+      { id: "o2", texto: "Planear y hacer una visita pastoral en un hogar, con un propósito y con prudencia.", bloom: "aplicar" },
+      { id: "o3", texto: "Visitar a los enfermos en el hospital y acompañar a los que se mueren y a sus familias.", bloom: "aplicar" },
+      { id: "o4", texto: "Planear el cuidado de los ancianos, de los que no salen de casa y de los presos.", bloom: "aplicar" },
+      { id: "o5", texto: "Buscar a los que se alejan de la iglesia y ayudarlos a volver, sin acusarlos.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar un plan de cuidado en el que participe toda la iglesia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 27:23 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El cuidado pastoral en la Biblia y sus formas prácticas: la visita, el hospital, la cárcel y el plan de cuidado.",
+      ser: "Un pastor que conoce a sus ovejas, se queda en el peligro y busca a la que falta.",
+      hacer: "Visitar con prudencia, acompañar a los enfermos y a los que están solos, buscar a los que se alejan y organizar el cuidado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Z. Witmer", titulo: "El líder pastor: cómo lograr un pastoreo efectivo en tu iglesia", editorial: "P&R Publishing" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "John MacArthur (ed.)", titulo: "El ministerio pastoral: cómo pastorear bíblicamente", editorial: "Grupo Nelson" },
+        { autor: "Guillermo I. Catalán", titulo: "Nuevo manual para ministros", editorial: "Mundo Hispano" },
+        { autor: "Jorge A. León", titulo: "Psicología pastoral para la familia", editorial: "Caribe" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "video", titulo: "Lucas 9 a 19: cómo seguir a Jesús", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=sm8-GQl9P6w", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 15, la oveja perdida", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=15" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const PREDICACION_PASTORAL: MateriaDef = {
+  id: "pastoral-5",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 5,
+  titulo: "Predicación pastoral",
+  resumen: "La predicación del pastor que conoce a su rebaño: sus tareas, el plan de predicación del año, la predicación en las crisis, las ocasiones especiales, la corrección y el consuelo desde el púlpito y el crecimiento del predicador.",
+  base: "Hechos 20:27; 2 Timoteo 4:2",
+  memoria: "Hechos 20:27",
+  lecciones: lecciones("pastoral-5", [
+    ["El pastor que predica a su rebaño", "Juan 21:15-17; Ezequiel 3:17; 1 Corintios 14:3; 2 Timoteo 4:2"],
+    ["Planificar la predicación del año", "Hechos 20:27; 2 Timoteo 3:16-17; Lucas 24:27; Lucas 1:3"],
+    ["Predicar en tiempos de crisis", "Job 2:13; Salmos 46:1-2; Lamentaciones 3:21-23; Juan 16:33; Habacuc 3:17-18"],
+    ["Predicar en las ocasiones especiales", "Colosenses 4:5-6; Lucas 2:10-11; 1 Corintios 15:3-4; Efesios 5:31-32; 2 Corintios 5:1"],
+    ["Corregir y consolar desde el púlpito", "Isaías 40:1-2; 1 Tesalonicenses 5:14; Efesios 4:15; 2 Corintios 2:4; Gálatas 4:16"],
+    ["El pastor que crece como predicador", "1 Timoteo 4:15-16; Hechos 18:24-26; Proverbios 15:22; 2 Corintios 4:2; Hebreos 13:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el pastor, o quien se prepara para serlo, predique a su congregación como quien la apacienta: que conozca las tareas de la predicación pastoral, que planifique un año de predicación que anuncie todo el consejo de Dios, que sepa predicar en una crisis con lamento y con esperanza, que hable con claridad a los que vienen pocas veces en las ocasiones especiales, que corrija y consuele con la verdad en amor y que siga creciendo como predicador, con retroalimentación y con honestidad. No repite Homilética I (Nivel 3) ni Homilética II (Nivel 4), que enseñan a preparar y a presentar el sermón: las lleva a la vida de una congregación a lo largo del año. Su base es el testimonio de Pablo a los ancianos de Éfeso: «porque no he rehuido anunciaros todo el consejo de Dios» (Hechos 20:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la predicación del pastor que conoce a su rebaño y sus tareas: alimentar, advertir, exhortar y consolar.", bloom: "comprender" },
+      { id: "o2", texto: "Diseñar un plan de predicación de un año que anuncie todo el consejo de Dios.", bloom: "crear" },
+      { id: "o3", texto: "Preparar un mensaje para un tiempo de crisis, con lamento y con esperanza.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar mensajes para las ocasiones especiales, claros para los que vienen pocas veces.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar cómo corregir y consolar desde el púlpito con la verdad en amor.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar su crecimiento como predicador, con retroalimentación y con honestidad.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 20:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La predicación pastoral, el plan de predicación del año y los mensajes para las crisis y las ocasiones especiales.",
+      ser: "Un predicador que apacienta con paciencia, dice la verdad en amor y sigue aprendiendo con humildad.",
+      hacer: "Planificar un año de predicación, predicar en las crisis y en las ocasiones especiales, y pedir retroalimentación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Stott", titulo: "La predicación: puente entre dos mundos", editorial: "Libros Desafío" },
+        { autor: "D. Martyn Lloyd-Jones", titulo: "La predicación y los predicadores", editorial: "Peregrino" },
+      ],
+      complementaria: [
+        { autor: "Haddon W. Robinson", titulo: "La predicación bíblica: desarrollo y presentación de mensajes expositivos", editorial: "Unilit" },
+        { autor: "Orlando E. Costas", titulo: "Comunicación por medio de la predicación", editorial: "Caribe" },
+        { autor: "James D. Crane", titulo: "El sermón eficaz", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 2 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lvNqjbjTytE", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 20, todo el consejo de Dios", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=20" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -3738,7 +4016,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     EV_PERSONAL_AVANZADO, CAMPANAS, TEOLOGIA_MISIONES, MISION_TRANSCULTURAL, PLANTACION,
   ]),
   especialidad("pastoral", "Ministerio pastoral", "Pastorear, aconsejar, celebrar las ordenanzas y cuidar del rebaño.", [
-    ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
+    MINISTERIO_PASTORAL, CONSEJERIA_PASTORAL, ORDENANZAS_CEREMONIAS, VISITACION_CUIDADO, PREDICACION_PASTORAL,
   ]),
   especialidad("alabanza", "Alabanza y adoración", "Adorar en espíritu y en verdad y dirigir el ministerio de alabanza.", [
     TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, HISTORIA_MUSICA, SONIDO_TECNICA,

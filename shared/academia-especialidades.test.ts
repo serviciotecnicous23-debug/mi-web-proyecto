@@ -117,8 +117,70 @@ test("Intercesión y oración tiene sus cinco materias, con la medida del Nivel 
   assert.equal(intercesion.materias.length, 5);
 });
 
-test("las otras nueve especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion"].includes(x.id))) {
+test("Ministerio pastoral empieza con «El ministerio pastoral», avanzada, y Hechos 20:28 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[0];
+  assert.equal(m.id, "pastoral-1");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Hechos 20:28");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Consejería pastoral», avanzada, e Isaías 50:4 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[1];
+  assert.equal(m.id, "pastoral-2");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Isaías 50:4");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Ordenanzas y ceremonias» y 1 Corintios 11:26 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[2];
+  assert.equal(m.id, "pastoral-3");
+  assert.ok(m.disponible);
+  assert.ok(!m.avanzada);
+  assert.equal(m.memoria, "1 Corintios 11:26");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Visitación y cuidado del rebaño» y Proverbios 27:23 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[3];
+  assert.equal(m.id, "pastoral-4");
+  assert.ok(m.disponible);
+  assert.ok(!m.avanzada);
+  assert.equal(m.memoria, "Proverbios 27:23");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral termina con «Predicación pastoral», avanzada, y tiene sus cinco materias listas", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[4];
+  assert.equal(m.id, "pastoral-5");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Hechos 20:27");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+  assert.equal(e.materias.length, 5);
+  for (const x of e.materias) assert.ok(x.disponible, x.id);
+});
+
+test("las otras ocho especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
