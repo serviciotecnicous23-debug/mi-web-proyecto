@@ -2358,6 +2358,135 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
       ],
     },
   ],
+  // Los Evangelios y Hechos
+  "n3-evangelios-hechos-1": [
+    // La lección describe los cuatro evangelios en una lista; el cuadro los pone lado a lado para comparar sus retratos de Jesús y distinguir los sinópticos de Juan.
+    {
+      t: "cuadro",
+      titulo: "Cuatro retratos de un mismo Jesús",
+      columnas: ["Evangelio", "Retrato de Jesús", "Cómo lo cuenta", "Texto clave"],
+      filas: [
+        [
+          "Mateo (sinóptico)",
+          "El Mesías, el Rey prometido que cumple las Escrituras",
+          "Para lectores judíos: repite que se cumplió lo dicho por los profetas y reúne cinco grandes discursos",
+          "Mateo 1:22-23",
+        ],
+        [
+          "Marcos (sinóptico)",
+          "El Hijo de Dios que vino a servir y a dar su vida en rescate",
+          "Breve y lleno de acción; muchos lo creen el primero escrito, y una tradición antigua lo une a la predicación de Pedro",
+          "Marcos 10:45",
+        ],
+        [
+          "Lucas (sinóptico)",
+          "El Salvador de todos, que busca a los perdidos, los pobres, las mujeres y los despreciados",
+          "Para Teófilo y los no judíos, con lo que investigó entre testigos; destaca la oración y el Espíritu, y sigue en Hechos",
+          "Lucas 19:10",
+        ],
+        [
+          "Juan",
+          "El Verbo eterno hecho carne, el Hijo que revela al Padre",
+          "Distinto de los sinópticos: siete señales, largos discursos y los Yo soy, para que creamos y tengamos vida",
+          "Juan 20:30-31",
+        ],
+      ],
+    },
+  ],
+  "n3-evangelios-hechos-4": [
+    // El sentido de la cruz y de la resurrección está repartido en varios párrafos; el cuadro reúne las claves (rescate, nuevo pacto, obra consumada, velo rasgado, testigos) que pide el escrito del examen final.
+    {
+      t: "cuadro",
+      titulo: "La cruz y la tumba vacía: lo que significan",
+      columnas: ["Clave", "Qué enseña", "Dónde leerlo"],
+      filas: [
+        [
+          "Una muerte anunciada",
+          "Casi un tercio de los evangelios cuenta su última semana: su muerte no fue un accidente, sino el propósito de su venida",
+          "Marcos 8:31",
+        ],
+        [
+          "Rescate",
+          "Dio su vida como precio de nuestra libertad; como el siervo de Isaías 53, llevó el pecado de muchos",
+          "Marcos 10:45; Isaías 53:12",
+        ],
+        [
+          "Nuevo pacto",
+          "En la última cena de la Pascua, la copa es el nuevo pacto en su sangre, el que anunciaron los profetas",
+          "Lucas 22:19-20; Jeremías 31:31-34",
+        ],
+        [
+          "Obra consumada",
+          "Antes de entregar el espíritu declaró consumada su obra: la salvación quedó completa",
+          "Juan 19:30",
+        ],
+        [
+          "Velo rasgado",
+          "El velo del templo se rasgó de arriba abajo: quedó abierto el camino a la presencia de Dios",
+          "Marcos 15:38",
+        ],
+        [
+          "Resurrección con testigos",
+          "La tumba vacía y las apariciones a las mujeres, a Cefas, a los doce y a más de quinientos hermanos",
+          "Mateo 28:1-10; 1 Corintios 15:3-6",
+        ],
+        [
+          "Gran comisión",
+          "Con toda potestad, el Resucitado envía a hacer discípulos de todas las naciones y promete estar con ellos",
+          "Mateo 28:18-20",
+        ],
+      ],
+    },
+  ],
+  "n3-evangelios-hechos-6": [
+    // La lección enumera los viajes sin fechas; la línea de tiempo los ordena con fechas aproximadas, del envío desde Antioquía a los dos años en Roma, y muestra el avance hasta lo último de la tierra.
+    {
+      t: "linea",
+      titulo: "Pablo, de Antioquía a Roma (Hechos 13 al 28)",
+      eventos: [
+        {
+          fecha: "c. 47-48 d. C.",
+          texto: "Primer viaje: el Espíritu aparta a Bernabé y a Saulo, que van de Antioquía a Chipre y a las ciudades de Galacia.",
+          ref: "Hechos 13:2-4",
+        },
+        {
+          fecha: "c. 49 d. C.",
+          texto: "Concilio de Jerusalén: judíos y gentiles son salvos de igual modo, por la gracia del Señor Jesús.",
+          ref: "Hechos 15:11",
+        },
+        {
+          fecha: "c. 49-52 d. C.",
+          texto: "Segundo viaje, con Silas: tras la visión del varón macedonio, el evangelio llega a Europa (Filipos, Tesalónica, Berea, Atenas y Corinto).",
+          ref: "Hechos 16:9",
+        },
+        {
+          fecha: "c. 53-57 d. C.",
+          texto: "Tercer viaje: casi tres años en Éfeso; en Mileto se despide de los ancianos de esa iglesia.",
+          ref: "Hechos 20:31",
+        },
+        {
+          fecha: "c. 57 d. C.",
+          texto: "En Jerusalén lo sacan del templo y el tribuno romano lo arresta; por un plan para matarlo, lo envían preso a Cesarea.",
+          ref: "Hechos 21:30-33",
+        },
+        {
+          fecha: "c. 57-59 d. C.",
+          texto: "Dos años preso en Cesarea: comparece ante Félix y Festo, apela al César como ciudadano romano y habla ante Agripa.",
+          ref: "Hechos 25:11-12",
+        },
+        {
+          fecha: "c. 59-60 d. C.",
+          texto: "Viaje a Roma: tormenta y naufragio; pasan tres meses en la isla de Malta antes de seguir.",
+          ref: "Hechos 28:1-11",
+        },
+        {
+          fecha: "c. 60-62 d. C.",
+          texto: "Dos años en Roma, en una casa alquilada, predicando el reino abiertamente y sin impedimento. Así termina Hechos.",
+          ref: "Hechos 28:30-31",
+        },
+      ],
+    },
+  ],
   // La persona y obra del Espíritu Santo
   "n3-espiritu-santo-2": [
     // La lección recorre la obra del Espíritu desde Génesis hasta Jesús; la línea ordena esos momentos y muestra la promesa de Joel cumplida en Pentecostés.
@@ -2682,6 +2811,1124 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
         {
           titulo: "Comunicar con claridad y cuidar a los hermanos",
           texto: "Enviaron una carta con Judas y Silas, que explicaron lo mismo de palabra; al leerla, los hermanos se alegraron por la consolación (Hechos 15:22-31).",
+        },
+      ],
+    },
+  ],
+  // Homilética I
+  "n3-homiletica-1-3": [
+    // La lección no tiene video y formular la idea central es lo más difícil de la materia: el cuadro separa tema, complemento y propósito en los dos ejemplos de la lección.
+    {
+      t: "cuadro",
+      titulo: "La idea central y el propósito en dos mensajes",
+      columnas: ["Elemento", "Responde a", "Lucas 15:1-7", "Pedro en Pentecostés (Hechos 2)"],
+      filas: [
+        ["Tema", "¿De qué hablo?", "Cómo trata Dios al pecador perdido", "Jesús, a quien ellos crucificaron"],
+        [
+          "Complemento",
+          "¿Qué digo de eso?",
+          "Lo busca y se goza cuando se arrepiente",
+          "Dios lo resucitó y le ha hecho Señor y Cristo",
+        ],
+        [
+          "Idea central",
+          "El tema y el complemento en una sola frase",
+          "Dios busca al pecador perdido y se goza cuando vuelve",
+          "Al Jesús que ellos crucificaron, Dios lo resucitó y le ha hecho Señor y Cristo",
+        ],
+        [
+          "Propósito",
+          "¿Qué deben saber, creer y hacer los oyentes?",
+          "Que los que están lejos vuelvan a Dios y que la iglesia reciba con gozo al que vuelve",
+          "Que reconozcan a Jesús como Señor y Cristo, se arrepientan y se bauticen (2:36-38)",
+        ],
+      ],
+    },
+  ],
+  "n3-homiletica-1-4": [
+    // Pone lado a lado lo que hace cada parte del mensaje y cómo se ve en Atenas y en Lucas 15, como modelo para armar el propio bosquejo.
+    {
+      t: "cuadro",
+      titulo: "Las tres partes del mensaje, en Atenas y en Lucas 15",
+      columnas: ["Parte", "Qué hace", "Pablo en Atenas (Hechos 17)", "Lucas 15:1-7"],
+      filas: [
+        [
+          "Introducción",
+          "Es breve: capta la atención, presenta una necesidad o una pregunta y lleva al texto",
+          "Empieza por el altar al Dios no conocido que Pablo vio en la ciudad (17:22-23)",
+          "Una pregunta breve: ¿alguna vez perdiste algo muy valioso?",
+        ],
+        [
+          "Desarrollo",
+          "De dos a cuatro puntos que salen del texto; cada uno se explica, se ilustra y se aplica, con transiciones",
+          "Dios es el creador, no habita en templos hechos por manos y está cerca de cada uno (17:24-29)",
+          "Dios ve el valor de uno solo, busca hasta encontrar y se goza con el que vuelve (15:4-7)",
+        ],
+        [
+          "Conclusión",
+          "Repite la idea central con otras palabras, llama a responder y termina a tiempo, sin temas nuevos",
+          "Dios manda a todos que se arrepientan, porque juzgará al mundo por el varón que resucitó (17:30-31)",
+          "Repite que Dios busca al perdido y llama a volver a él y a recibir con gozo al que vuelve",
+        ],
+      ],
+    },
+  ],
+  "n3-homiletica-1-6": [
+    // La lección no tiene video y pide la enseñanza grabada: los pasos reúnen toda la materia en una guía para prepararla y revisarla.
+    {
+      t: "pasos",
+      titulo: "De un pasaje a tu enseñanza grabada, paso a paso",
+      pasos: [
+        {
+          titulo: "Escoge y estudia el pasaje",
+          texto: "Un pasaje completo, con oración: obsérvalo, estudia su contexto y escribe en una frase lo que el autor quiso decir a sus primeros lectores (2 Timoteo 2:15).",
+        },
+        {
+          titulo: "Escribe la idea central y el propósito",
+          texto: "Una sola frase con su tema y su complemento, y lo que los oyentes deben saber, creer y hacer, que coincide con el propósito del pasaje (Isaías 55:11).",
+        },
+        {
+          titulo: "Arma el bosquejo en una página",
+          texto: "Una introducción breve que lleve al texto, de dos a cuatro puntos que salen del pasaje, cada uno con su versículo, y una conclusión que repite la idea y llama a responder.",
+        },
+        {
+          titulo: "Ilustra, aplica y muestra a Cristo",
+          texto: "Una ilustración verdadera y breve, una aplicación concreta (qué hacer, con quién y cuándo) y cómo el pasaje se relaciona con Cristo, sin forzarlo (Lucas 24:27).",
+        },
+        {
+          titulo: "Ensaya en voz alta y mide el tiempo",
+          texto: "Al menos dos veces: voz clara, pausas, sin muletillas, la mirada en las personas y no solo en tus notas, y de diez a quince minutos.",
+        },
+        {
+          titulo: "Prepara el lugar, ora y graba",
+          texto: "Un lugar tranquilo y con buena luz; prueba el sonido. Ora antes de hablar y confía en el poder del Espíritu, no en tu talento (1 Corintios 2:4-5).",
+        },
+        {
+          titulo: "Pide una opinión y mejora",
+          texto: "Pide a alguien de confianza que te escuche y te diga qué mejorar, y recíbelo con humildad: hierro con hierro se aguza (Proverbios 27:17).",
+        },
+      ],
+    },
+  ],
+  // Historia de la iglesia I
+  "n3-historia-1-4": [
+    // La lección cuenta los tres concilios en prosa; el cuadro pone lado a lado el error, la confesión y la base bíblica de cada uno.
+    {
+      t: "cuadro",
+      titulo: "Los tres grandes concilios y lo que confesaron",
+      columnas: ["Concilio", "El error que enfrentó", "Lo que confesó", "Base bíblica"],
+      filas: [
+        [
+          "Nicea (325)",
+          "Arrio: el Hijo es una criatura y hubo un tiempo en que no existía",
+          "El Hijo es de la misma sustancia que el Padre: verdadero Dios de verdadero Dios",
+          "Juan 1:1-3",
+        ],
+        [
+          "Constantinopla (381)",
+          "Los que negaban que el Espíritu Santo fuera Dios como el Padre y el Hijo",
+          "Completó el credo de Nicea: el Espíritu, con el Padre y el Hijo, es adorado y glorificado",
+          "Mateo 28:19; Hechos 5:3-4",
+        ],
+        [
+          "Calcedonia (451)",
+          "Los que mezclaban la divinidad y la humanidad de Cristo, o lo dividían en dos personas",
+          "Cristo es una sola persona, verdadero Dios y verdadero hombre, en dos naturalezas, sin mezcla y sin división",
+          "Juan 1:14; Colosenses 2:9",
+        ],
+      ],
+    },
+  ],
+  "n3-historia-1-5": [
+    // La lección recorre ocho siglos solo en prosa; la línea ordena a Agustín, los monjes, las misiones y los cambios de la Edad Media.
+    {
+      t: "linea",
+      titulo: "Agustín, los monjes y la Edad Media: siglos III al XI",
+      eventos: [
+        {
+          fecha: "Fines del siglo III",
+          texto: "Antonio de Egipto se va al desierto para llevar una vida apartada y entregada a Dios.",
+        },
+        {
+          fecha: "386",
+          texto: "Agustín, nacido en Tagaste en 354, oye en Milán una voz que dice: toma y lee. Entonces abre las cartas de Pablo y se convierte.",
+          ref: "Romanos 13:13-14",
+        },
+        {
+          fecha: "410",
+          texto: "Roma es saqueada; en respuesta, Agustín escribirá La ciudad de Dios: los imperios caen, pero el reino de Dios permanece.",
+        },
+        {
+          fecha: "430",
+          texto: "Muere Agustín, obispo de Hipona. Frente a Pelagio había enseñado que la salvación es por gracia, no por las propias fuerzas.",
+          ref: "Efesios 2:8-9",
+        },
+        { fecha: "Siglo V", texto: "Patricio lleva el evangelio a Irlanda.", ref: "Mateo 28:19-20" },
+        {
+          fecha: "476",
+          texto: "Cae el Imperio romano de Occidente, y la iglesia queda como la institución más fuerte de Europa.",
+        },
+        {
+          fecha: "c. 530",
+          texto: "Benito de Nursia escribe una regla para los monasterios: oración, lectura y trabajo.",
+        },
+        { fecha: "Siglo VIII", texto: "Bonifacio predica el evangelio en Germania." },
+        {
+          fecha: "1054",
+          texto: "El gran cisma separa las iglesias de Oriente y de Occidente: de ahí vienen la ortodoxa y la católica romana.",
+        },
+        { fecha: "1095", texto: "Comienzan las cruzadas para tomar Jerusalén por las armas, con mucha violencia." },
+      ],
+    },
+  ],
+  "n3-historia-1-6": [
+    // La lección no tiene video y da sus fechas solo en prosa; la línea muestra en orden cómo la Biblia volvió al pueblo, hasta la Reina-Valera.
+    {
+      t: "linea",
+      titulo: "Volver a la Palabra: de Valdo a la Reina-Valera",
+      eventos: [
+        {
+          fecha: "c. 1173",
+          texto: "Pedro Valdo, comerciante rico de Lyon, deja sus riquezas, hace traducir partes de la Biblia a la lengua del pueblo y predica.",
+          ref: "Hechos 5:29",
+        },
+        {
+          fecha: "c. 1330-1384",
+          texto: "Juan Wiclef, profesor en Oxford, enseña que la Biblia está por encima del papa, y sus seguidores la traducen toda al inglés.",
+        },
+        {
+          fecha: "1415",
+          texto: "El 6 de julio, Juan Hus, que predicaba en Praga en la lengua del pueblo, muere en la hoguera, condenado por el Concilio de Constanza.",
+          ref: "Hebreos 13:7",
+        },
+        {
+          fecha: "c. 1455",
+          texto: "Juan Gutenberg imprime en Alemania la primera Biblia con tipos móviles, y los libros se vuelven más baratos.",
+        },
+        {
+          fecha: "1516",
+          texto: "Erasmo publica el Nuevo Testamento en griego: los estudiosos pueden leerlo en su idioma original.",
+        },
+        {
+          fecha: "1517",
+          texto: "El 31 de octubre, Martín Lutero publica sus 95 tesis en Wittenberg, y comienza la Reforma.",
+        },
+        { fecha: "1569", texto: "Casiodoro de Reina publica su traducción de la Biblia completa al español." },
+        {
+          fecha: "1602",
+          texto: "Cipriano de Valera publica su revisión de la obra de Reina; de ella viene la Reina-Valera de 1960.",
+          ref: "Isaías 40:8",
+        },
+      ],
+    },
+  ],
+  // Teología sistemática I: la Biblia y Dios
+  "n4-sistematica-1-1": [
+    // La lección presenta las dos revelaciones en párrafos seguidos; el cuadro las pone lado a lado y fija por qué solo la especial anuncia el evangelio.
+    {
+      t: "cuadro",
+      titulo: "Revelación general y revelación especial",
+      columnas: ["Aspecto", "Revelación general", "Revelación especial"],
+      filas: [
+        [
+          "¿Por qué medio?",
+          "La creación y la conciencia",
+          "Los hechos de Dios en la historia, su palabra a profetas y apóstoles y, sobre todo, su Hijo",
+        ],
+        [
+          "¿A quién llega?",
+          "A todas las personas, en todo lugar (Salmos 19:4)",
+          "A quienes oyen su Palabra, que quedó escrita en la Biblia",
+        ],
+        [
+          "¿Qué da a conocer?",
+          "Su eterno poder y deidad, y la obra de su ley escrita en el corazón",
+          "A Dios como Padre, por medio de su Hijo, y su salvación",
+        ],
+        [
+          "¿Basta para salvar?",
+          "No: deja a todos sin excusa y muestra nuestra culpa, pero no anuncia el evangelio",
+          "Anuncia el evangelio de Cristo, que se recibe por la fe al oír la Palabra (Romanos 10:17)",
+        ],
+        ["Textos clave", "Salmos 19:1-4; Romanos 1:19-20; Romanos 2:14-15", "Hebreos 1:1-2; Juan 1:18; Juan 14:9"],
+      ],
+    },
+  ],
+  "n4-sistematica-1-3": [
+    // La lección no tiene video y resume en un párrafo cómo nos llegó el texto; la línea ordena en el tiempo las copias y los hallazgos que lo respaldan, hasta la RV1960 que lee el alumno.
+    {
+      t: "linea",
+      titulo: "Cómo nos llegó la Biblia: de las copias antiguas a la RV1960",
+      eventos: [
+        {
+          fecha: "c. siglo II a. C.",
+          texto: "Se copia en hebreo el Gran Rollo de Isaías, con todo el libro; es uno de los rollos que en 1947 se hallarán en Qumrán.",
+        },
+        {
+          fecha: "Siglo I d. C.",
+          texto: "Los apóstoles y sus colaboradores escriben en griego los libros del Nuevo Testamento. Los escritos originales no se conservan.",
+        },
+        {
+          fecha: "c. siglo II d. C.",
+          texto: "Se copia el Papiro 52, con versículos de Juan 18: uno de los manuscritos más antiguos del Nuevo Testamento; su fecha exacta se discute.",
+          ref: "Juan 18:31-33",
+        },
+        {
+          fecha: "Siglo IV",
+          texto: "Se copian los códices Vaticano y Sinaítico, Biblias en griego escritas en pergamino; el Sinaítico conserva todo el Nuevo Testamento.",
+        },
+        {
+          fecha: "c. 1008 d. C.",
+          texto: "Se copia el Códice de Leningrado, el manuscrito completo más antiguo que se conserva de la Biblia hebrea.",
+        },
+        {
+          fecha: "1569",
+          texto: "Casiodoro de Reina publica en Basilea la Biblia del Oso, la primera Biblia completa en castellano traducida del hebreo y del griego.",
+        },
+        {
+          fecha: "1602",
+          texto: "Cipriano de Valera publica en Ámsterdam su revisión de la Biblia de Reina: de ahí el nombre Reina-Valera.",
+        },
+        {
+          fecha: "1947",
+          texto: "Se descubren en Qumrán, junto al mar Muerto, rollos del Antiguo Testamento unos mil años más antiguos que las copias conocidas.",
+          ref: "Isaías 40:8",
+        },
+        {
+          fecha: "1960",
+          texto: "Las Sociedades Bíblicas publican la revisión de 1960 de la Reina-Valera, la versión que usa esta academia.",
+        },
+      ],
+    },
+  ],
+  "n4-sistematica-1-5": [
+    // La lección reparte los atributos entre una lista y un párrafo; el cuadro los reúne con su pasaje y su aplicación, que es lo que pide el objetivo o5.
+    {
+      t: "cuadro",
+      titulo: "Los atributos de Dios: qué significan y qué cambian en tu vida",
+      columnas: ["Atributo", "Qué significa", "Pasaje", "Para la vida"],
+      filas: [
+        [
+          "Eterno (solo de Dios)",
+          "No tiene principio ni fin",
+          "Salmos 90:2",
+          "Ha sido refugio de su pueblo de generación en generación (Salmos 90:1)",
+        ],
+        [
+          "Inmutable (solo de Dios)",
+          "No cambia en su ser, en su carácter ni en sus promesas",
+          "Malaquías 3:6",
+          "Sus promesas de hoy son tan firmes como las que hizo a Abraham",
+        ],
+        [
+          "Omnipresente (solo de Dios)",
+          "Está en todo lugar con todo su ser",
+          "Salmos 139:7-10",
+          "Nunca estás solo: no hay lugar donde él no esté",
+        ],
+        [
+          "Omnisciente (solo de Dios)",
+          "Lo sabe todo, también lo que pensamos",
+          "Salmos 139:1-4",
+          "Puedes orarle con sinceridad: conoce tus palabras aun antes de que las digas",
+        ],
+        [
+          "Omnipotente (solo de Dios)",
+          "Puede hacer todo lo que quiere, de acuerdo con su naturaleza",
+          "Jeremías 32:17",
+          "Nada es difícil para él: llévale en oración lo que parece imposible",
+        ],
+        [
+          "Santo (lo comparte en parte)",
+          "Su perfección moral y su separación de todo lo malo",
+          "Isaías 6:3",
+          "Llama a sus hijos a ser santos en toda su manera de vivir (1 Pedro 1:15-16)",
+        ],
+        [
+          "Amor (lo comparte en parte)",
+          "Da sin que lo merezcamos: envió a su Hijo en propiciación por nuestros pecados",
+          "1 Juan 4:8-10",
+          "Si Dios nos amó así, debemos amarnos unos a otros (1 Juan 4:11)",
+        ],
+        [
+          "Justo y fiel (lo comparte en parte)",
+          "Todos sus caminos son rectitud, y sus misericordias son nuevas cada mañana",
+          "Deuteronomio 32:4; Lamentaciones 3:22-23",
+          "Sus promesas se cumplen, y en la cruz es el justo y el que justifica al que cree (Romanos 3:26)",
+        ],
+      ],
+    },
+  ],
+  // Teología sistemática II: Cristo y el Espíritu Santo
+  "n4-sistematica-2-1": [
+    // comprobado: oEmbed de YouTube respondió: título Por qué Jesús se llamó a sí mismo el Hijo del Hombre; canal Proyecto Biblia (6:02). Según el guion original de BibleProject (Son of Man), el Hijo del Hombre de Daniel 7 se sienta en el trono divino y es adorado junto a Dios, y Jesús reclama ese título ante el sanedrín (Mateo 26:63-64).
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=e2ILANmZ4Kk",
+      titulo: "Por qué Jesús se llamó a sí mismo el Hijo del Hombre",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  "n4-sistematica-2-2": [
+    // Pone lado a lado los cuatro errores que nombra la lección, la verdad que cada uno niega y su respuesta bíblica, para que el alumno no los confunda.
+    {
+      t: "cuadro",
+      titulo: "Los errores sobre la persona de Cristo y la fe de Calcedonia",
+      columnas: ["Postura", "Qué enseña", "Qué niega o deforma", "Respuesta de la Escritura"],
+      filas: [
+        [
+          "Docetismo",
+          "Jesús solo parecía hombre: su cuerpo era una apariencia.",
+          "Su verdadera humanidad.",
+          "Participó de carne y sangre (Hebreos 2:14) y crecía en sabiduría y en estatura (Lucas 2:52).",
+        ],
+        [
+          "Arrianismo",
+          "El Hijo era la primera y más alta criatura, pero no Dios eterno.",
+          "Su verdadera deidad.",
+          "El Verbo era Dios y todo fue hecho por él (Juan 1:1-3); Nicea (325) lo confesó de la misma sustancia que el Padre.",
+        ],
+        [
+          "Nestorianismo",
+          "Dividía a Cristo en dos personas, una divina y otra humana.",
+          "La unidad de su persona.",
+          "Hay un solo mediador, Jesucristo hombre (1 Timoteo 2:5), y el Verbo mismo fue hecho carne (Juan 1:14).",
+        ],
+        [
+          "Eutiquianismo",
+          "Mezclaba las dos naturalezas en una sola.",
+          "La distinción de sus dos naturalezas.",
+          "Siendo en forma de Dios, tomó forma de siervo (Filipenses 2:6-7): es Dios y es hombre, sin mezcla.",
+        ],
+        [
+          "Fe de Calcedonia (451)",
+          "Una sola persona en dos naturalezas, la divina y la humana: la unión hipostática.",
+          "Nada: las une sin mezcla ni cambio, sin división ni separación.",
+          "Verdadero Dios y verdadero hombre: por eso es el único mediador (1 Timoteo 2:5).",
+        ],
+      ],
+    },
+  ],
+  "n4-sistematica-2-3": [
+    // comprobado: oEmbed de YouTube respondió: título Sacrificio y Propiciación; canal Proyecto Biblia (6:11). Según el guion original de BibleProject (Sacrifice and Atonement), el sacrificio muere en lugar del pecador, y la muerte de Jesús es rescate (Marcos 10:45) y sacrificio de expiación (Romanos 3:25), seguida de su resurrección.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=54xtkWfl840",
+      titulo: "Sacrificio y propiciación",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  "n4-sistematica-2-4": [
+    // comprobado: oEmbed de YouTube respondió: título Evangelio de Lucas 24; canal Proyecto Biblia (5:36). Su descripción en el canal: los discípulos hallan la tumba vacía y se encuentran con Jesús resucitado, y Lucas prepara la continuación en Hechos.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=WHlHoQy3bVk",
+      titulo: "Evangelio de Lucas 24: la resurrección",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  "n4-sistematica-2-5": [
+    // Ubica en el tiempo lo que enseña la lección: la promesa de Juan 15:26, la confesión de Constantinopla y el debate posterior entre Oriente y Occidente.
+    {
+      t: "linea",
+      titulo: "La iglesia confiesa al Espíritu Santo: de Juan 15:26 al Filioque",
+      eventos: [
+        {
+          fecha: "c. 30-33 d. C.",
+          texto: "Jesús promete el Consolador, el Espíritu de verdad, que procede del Padre y que él enviará.",
+          ref: "Juan 15:26",
+        },
+        {
+          fecha: "325",
+          texto: "Nicea confiesa al Hijo de la misma sustancia que el Padre; del Espíritu, su credo solo dice que creemos en él.",
+        },
+        {
+          fecha: "c. 360",
+          texto: "Los pneumatómacos (los que combaten al Espíritu) niegan que sea Dios; Atanasio les responde en sus cartas a Serapión.",
+        },
+        {
+          fecha: "c. 375",
+          texto: "Basilio de Cesarea escribe el tratado Sobre el Espíritu Santo, en defensa de su deidad y de su gloria junto al Padre y al Hijo.",
+        },
+        {
+          fecha: "381",
+          texto: "Constantinopla lo confiesa Señor y dador de vida, que procede del Padre y con el Padre y el Hijo es adorado y glorificado.",
+        },
+        {
+          fecha: "451",
+          texto: "El concilio de Calcedonia lee y aprueba el credo de 381, que hoy se llama niceno-constantinopolitano.",
+        },
+        {
+          fecha: "589",
+          texto: "Se considera que el tercer concilio de Toledo añadió al texto latino del credo que el Espíritu procede del Padre y del Hijo (Filioque).",
+        },
+        {
+          fecha: "1054",
+          texto: "Oriente y Occidente se separan, y la disputa sobre el Filioque es una de las causas de la ruptura.",
+        },
+      ],
+    },
+  ],
+  "n4-sistematica-2-6": [
+    // Convierte en un método que el líder puede seguir en el culto las pruebas que da la lección para discernir, junto con las de 1 Corintios 13 y 14.
+    {
+      t: "pasos",
+      titulo: "Cómo examinar una manifestación espiritual en la iglesia",
+      pasos: [
+        {
+          titulo: "¿Confiesa a Jesucristo venido en carne?",
+          texto: "Es la primera prueba: el espíritu que confiesa que Jesucristo ha venido en carne es de Dios, y el que no lo confiesa no es de Dios (1 Juan 4:1-3).",
+        },
+        {
+          titulo: "¿Concuerda con la Escritura?",
+          texto: "La Biblia es la autoridad final: nadie, ni un ángel del cielo, puede anunciar otro evangelio (Gálatas 1:8). Como en Berea, se escudriñan las Escrituras (Hechos 17:11).",
+        },
+        {
+          titulo: "¿Edifica a la iglesia?",
+          texto: "La manifestación del Espíritu se da para provecho (1 Corintios 12:7) y todo debe hacerse para edificación (1 Corintios 14:26), no para exaltar a quien la trae.",
+        },
+        {
+          titulo: "¿Se ejerce con amor?",
+          texto: "Sin amor, las lenguas, la profecía y aun la fe que traslada los montes no aprovechan (1 Corintios 13:1-3). El amor nunca deja de ser (1 Corintios 13:8).",
+        },
+        {
+          titulo: "¿Se hace con orden?",
+          texto: "En lenguas hablan dos o tres, por turno, y uno interpreta; los profetas hablan dos o tres, y los demás juzgan. Dios no es Dios de confusión, sino de paz (1 Corintios 14:27-33).",
+        },
+        {
+          titulo: "¿Qué fruto deja?",
+          texto: "Jesús enseñó que a los falsos profetas se los reconoce por sus frutos (Mateo 7:15-20): se mira la vida de quien ministra y lo que produce en la iglesia.",
+        },
+        {
+          titulo: "Retener lo bueno sin apagar al Espíritu",
+          texto: "No se apaga al Espíritu ni se menosprecian las profecías: se examina todo y se retiene lo bueno (1 Tesalonicenses 5:19-21), sin impedir el hablar lenguas (1 Corintios 14:39).",
+        },
+      ],
+    },
+  ],
+  // Teología sistemática III: el hombre, el pecado y la salvación
+  "n4-sistematica-3-2": [
+    // comprobado: oEmbed respondió título: El pecado implica más de lo que te imaginas (te lo explicaremos); canal: Proyecto Biblia. Es Khata / Pecado, serie Malas palabras (bibleproject.com/es/videos/khata-pecado/). Su guion: el pecado como fallar en amar a Dios y al prójimo, su poder (Romanos 5–7) y Cristo que cargó nuestros pecados (1 Pedro 2:22-24).
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=Nt5vWY81H30",
+      titulo: "El pecado implica más de lo que te imaginas",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  "n4-sistematica-3-3": [
+    // La lección compara dos posiciones llenas de matices; verlas lado a lado, junto a lo que comparten, ayuda a compararlas con respeto (objetivo o3).
+    {
+      t: "cuadro",
+      titulo: "Calvinismo y arminianismo: en qué difieren y en qué coinciden",
+      columnas: ["Tema", "Calvinismo", "Arminianismo", "En lo que coinciden"],
+      filas: [
+        [
+          "En la línea de",
+          "Juan Calvino y el Sínodo de Dort (1618 y 1619)",
+          "Jacobo Arminio y luego Juan Wesley; la ha seguido la mayoría de las iglesias pentecostales",
+          "Las dos son posiciones evangélicas; la declaración de fe del ministerio no entra en esta pregunta",
+        ],
+        [
+          "La elección",
+          "Dios elige a quienes salvará sin depender de nada en ellos",
+          "Dios elige a los que sabe de antemano que creerán",
+          "La Biblia enseña una elección en Cristo desde antes de la fundación del mundo (Efesios 1:4-6)",
+        ],
+        [
+          "La gracia",
+          "La gracia de Dios lleva a los elegidos con seguridad a la fe",
+          "Dios da a todos una gracia que les permite responder",
+          "La gracia toma la iniciativa: nadie viene a Cristo si el Padre no lo trae (Juan 6:44)",
+        ],
+        [
+          "Lo que subraya",
+          "Que la salvación es toda de Dios, de la elección a la gloria (Romanos 8:29-30)",
+          "Que Dios quiere que todos sean salvos y no quiere que ninguno perezca (1 Timoteo 2:4; 2 Pedro 3:9)",
+          "Solo por gracia; el ser humano es responsable de arrepentirse y creer, y el evangelio se anuncia a todos",
+        ],
+      ],
+    },
+    // comprobado: oEmbed respondió título: La respuesta constante de Dios a pesar de tus errores; canal: Proyecto Biblia. Es Khen / Gracia, serie Carácter de Dios (bibleproject.com/es/videos/khen-gracia/). Su guion presenta la gracia como favor inmerecido, de Éxodo 34:6 a Juan 1:14 y Efesios 2:8. No toca la elección.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=CZtgCMtuoJo",
+      titulo: "Gracia: la respuesta constante de Dios a pesar de tus errores",
+      fuente: "Proyecto Biblia",
+      minutos: 5,
+    },
+  ],
+  "n4-sistematica-3-4": [
+    // El objetivo o4 pide distinguir tres verdades que suelen confundirse; el cuadro muestra qué es cada una, quién obra, qué cambia y su fruto.
+    {
+      t: "cuadro",
+      titulo: "Conversión, regeneración y justificación: qué es cada una",
+      columnas: ["Pregunta", "Conversión", "Regeneración", "Justificación"],
+      filas: [
+        [
+          "Qué es",
+          "Arrepentirse, que es dar la espalda al pecado, y creer, que es volverse a Cristo y confiar en él",
+          "El nuevo nacimiento: el Espíritu hace del creyente una nueva criatura",
+          "Una declaración de Dios, como la sentencia de un juez: el pecador que cree es declarado justo",
+        ],
+        [
+          "Quién obra",
+          "El ser humano, que responde a la gracia de Dios",
+          "El Espíritu Santo, no el esfuerzo humano",
+          "Dios, que justifica al impío que cree, sin las obras de la ley",
+        ],
+        [
+          "Qué cambia",
+          "La dirección de la vida: del pecado hacia Dios",
+          "La naturaleza: le da una vida nueva desde adentro",
+          "La posición ante Dios: de culpable a justo",
+        ],
+        [
+          "Su fruto",
+          "Los pecados son borrados (Hechos 3:19)",
+          "Las cosas viejas pasaron y todo es hecho nuevo",
+          "Paz para con Dios por medio de Jesucristo (Romanos 5:1)",
+        ],
+        ["Texto clave", "Hechos 20:21", "2 Corintios 5:17", "Romanos 3:28; Romanos 4:3-5; Gálatas 2:16"],
+      ],
+    },
+  ],
+  "n4-sistematica-3-6": [
+    // El sílabo pide acompañar con la Escritura a quien duda de su salvación; los pasos llevan la lección a la práctica sin tomar partido en la perseverancia.
+    {
+      t: "pasos",
+      titulo: "Cómo acompañar a un hermano que duda de su salvación",
+      pasos: [
+        {
+          titulo: "Escucha de dónde viene la duda",
+          texto: "Pregunta con calma qué lo hace dudar: un pecado, una prueba, una emoción o una enseñanza que oyó. Escucha antes de responder y no lo avergüences.",
+        },
+        {
+          titulo: "Vuelve con él al evangelio",
+          texto: "La salvación es por gracia, por medio de la fe en Cristo, y no por obras (Efesios 2:8-9); tampoco depende de lo que uno siente. Pregúntale si se ha arrepentido y si confía en Cristo.",
+        },
+        {
+          titulo: "Afírmalo en las promesas",
+          texto: "Lean juntos Romanos 8:38-39, Juan 10:28-29 y 1 Juan 5:13: su seguridad descansa en el amor de Dios y en la fidelidad de Cristo, no en lo fuerte que se siente.",
+        },
+        {
+          titulo: "Si teme perderla, presenta las dos posiciones",
+          texto: "Para los calvinistas, quien nació de nuevo nunca la pierde; para los arminianos, puede perderla quien se aparta de manera definitiva. El ministerio aún debe confirmar su posición.",
+        },
+        {
+          titulo: "Anímalo a hacer firme su vocación",
+          texto: "Las dos posiciones llaman a lo mismo: hacer firme la vocación (2 Pedro 1:10) y permanecer en Cristo con la Palabra, la oración y la iglesia. Si un pecado lo acusa, guíalo a confesarlo (1 Juan 1:9).",
+        },
+        {
+          titulo: "Sigue a su lado",
+          texto: "Ora con él, déjale un pasaje para la semana y vuelve a buscarlo. La duda se acompaña con paciencia: no se resuelve en una sola conversación.",
+        },
+      ],
+    },
+    // comprobado: oEmbed respondió título: Resumen del libro de Romanos: un panorama completo animado (parte 2); canal: Proyecto Biblia. Cubre Romanos 5–16, con Romanos 8, y ya se usa en otras materias de la academia.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=ZqScL0dHLsM",
+      titulo: "Resumen del libro de Romanos (parte 2)",
+      fuente: "Proyecto Biblia",
+      minutos: 10,
+    },
+  ],
+  // Teología sistemática IV: la iglesia, los ángeles y los últimos tiempos
+  "n4-sistematica-4-3": [
+    // La lección explica las dos ordenanzas en un solo párrafo; el cuadro las pone lado a lado para comparar quién las ordenó, quiénes las reciben, cómo se celebran y qué significan.
+    {
+      t: "cuadro",
+      titulo: "Las dos ordenanzas: el bautismo en agua y la Santa Cena",
+      columnas: ["Aspecto", "El bautismo en agua", "La Santa Cena"],
+      filas: [
+        [
+          "Quién la ordenó",
+          "Cristo, al dar la gran comisión (Mateo 28:19)",
+          "Cristo, la noche en que fue entregado (1 Corintios 11:23-25)",
+        ],
+        [
+          "Quiénes la reciben",
+          "Los que se arrepintieron y creyeron (Hechos 2:38-41)",
+          "Los creyentes, que se examinan a sí mismos (1 Corintios 11:28)",
+        ],
+        [
+          "Cómo se celebra",
+          "En agua, por inmersión, en el nombre del Padre, del Hijo y del Espíritu Santo",
+          "Con el pan y la copa, que se toman en memoria de Cristo (1 Corintios 11:24-25)",
+        ],
+        [
+          "Qué significa",
+          "Testimonio de que murieron al pecado y resucitaron a una vida nueva (Romanos 6:4)",
+          "Memorial de su muerte, comunión con Cristo y con su pueblo, y anuncio de su venida (1 Corintios 10:16-17; 11:26)",
+        ],
+      ],
+    },
+    // comprobado: oEmbed de YouTube respondió el título ¿Qué significa dar testimonio? y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 4:52.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=C5JAZuSpYfQ",
+      titulo: "¿Qué significa dar testimonio?",
+      fuente: "Proyecto Biblia",
+      minutos: 5,
+    },
+  ],
+  "n4-sistematica-4-4": [
+    // comprobado: oEmbed de YouTube respondió el título Ángeles, querubines y su rol en el reino espiritual y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 5:31. Es el episodio Ángeles y querubines de la serie Dios y los seres espirituales (bibleproject.com/es/videos/angeles-y-querubines/).
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=35Tzm7hmoOc",
+      titulo: "Ángeles, querubines y su rol en el reino espiritual",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  "n4-sistematica-4-5": [
+    // Junto a una tumba el líder tiene que distinguir enseguida la esperanza bíblica de los tres errores de la nota; el cuadro pone cada error frente a la Escritura.
+    {
+      t: "cuadro",
+      titulo: "Después de la muerte: tres errores y lo que enseña la Biblia",
+      columnas: ["Idea", "Qué enseña", "Base o respuesta bíblica"],
+      filas: [
+        [
+          "La reencarnación",
+          "Que el ser humano vuelve a nacer en otra vida",
+          "Se muere una sola vez, y después viene el juicio (Hebreos 9:27)",
+        ],
+        [
+          "El sueño del alma",
+          "Que el muerto queda sin conciencia hasta la resurrección (adventistas y testigos de Jehová)",
+          "Pablo esperaba estar presente al Señor al dejar el cuerpo (2 Corintios 5:8)",
+        ],
+        [
+          "El purgatorio",
+          "Que hay una purificación después de la muerte (iglesia católica)",
+          "No aparece en la Escritura: la obra de Cristo basta para limpiar al creyente (Hebreos 10:14; Lucas 23:43)",
+        ],
+        [
+          "Lo que enseña la Biblia",
+          "El creyente está con Cristo, consciente y en paz; el que murió sin Cristo espera el juicio",
+          "Filipenses 1:21-23; 2 Corintios 5:8; Lucas 23:43; Hebreos 9:27",
+        ],
+        [
+          "La esperanza final",
+          "Todos resucitarán: unos para vida y otros para condenación",
+          "El cuerpo del creyente resucitará incorruptible y glorioso (Juan 5:28-29; 1 Corintios 15:42-44)",
+        ],
+      ],
+    },
+  ],
+  "n4-sistematica-4-6": [
+    // La lección presenta cinco posiciones en párrafos y en una lista; el cuadro empieza por lo que todos confiesan y ordena las posiciones lado a lado, sin tomar partido.
+    {
+      t: "cuadro",
+      titulo: "El arrebatamiento y el milenio: las posiciones evangélicas",
+      columnas: ["Posición", "Qué enseña", "Quiénes la sostienen"],
+      filas: [
+        [
+          "Lo que todos confiesan",
+          "Cristo volverá en persona y de manera visible; los muertos resucitarán, habrá juicio y Dios hará nuevas todas las cosas",
+          "Todos los cristianos; el ministerio aún debe confirmar el orden de los últimos tiempos (artículo 16)",
+        ],
+        [
+          "Pretribulacionismo",
+          "El arrebatamiento ocurrirá antes de la gran tribulación",
+          "Las Asambleas de Dios y muchas iglesias pentecostales",
+        ],
+        [
+          "Postribulacionismo",
+          "El arrebatamiento ocurrirá al final de la tribulación, en la venida visible de Cristo",
+          "Otros evangélicos; hay también posiciones intermedias",
+        ],
+        [
+          "Premilenarismo",
+          "Cristo vendrá antes del milenio y reinará mil años en la tierra",
+          "Las Asambleas de Dios y muchos evangélicos",
+        ],
+        [
+          "Amilenarismo",
+          "Los mil años son una figura del reinado presente de Cristo, desde su resurrección hasta su venida",
+          "La sistematizó Agustín; es la más común en la iglesia católica y en muchas iglesias reformadas y luteranas",
+        ],
+        [
+          "Postmilenarismo",
+          "El evangelio se extenderá y traerá un largo tiempo de paz; después vendrá Cristo",
+          "Muchos puritanos y Jonathan Edwards",
+        ],
+      ],
+    },
+    // comprobado: oEmbed de YouTube respondió el título Estudiamos el “Día del Señor” en la Biblia (esto es lo que encontramos) y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 6:13. Es el video Día del Señor de la colección Temas bíblicos (bibleproject.com/es/videos/dia-del-senor/).
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=ioMYiUOC2mk",
+      titulo: "Día del Señor",
+      fuente: "Proyecto Biblia",
+      minutos: 6,
+    },
+  ],
+  // Libros poéticos y proféticos
+  "n4-poeticos-profeticos-2": [
+    // La lección es toda prosa; el cuadro pone lado a lado la pregunta, el error, lo que se descubre y la conclusión de cada libro (objetivo o2).
+    {
+      t: "cuadro",
+      titulo: "Job y Eclesiastés: dos libros para cuando la vida no se entiende",
+      columnas: ["Aspecto", "Job", "Eclesiastés"],
+      filas: [
+        ["La pregunta", "¿Por qué sufre una persona justa?", "¿Qué sentido tiene la vida si todo pasa pronto?"],
+        [
+          "La respuesta equivocada",
+          "La de sus amigos: todo sufrimiento es castigo por algún pecado; Dios los reprendió (Job 42:7).",
+          "Buscar el sentido solo bajo el sol: en el placer, el trabajo, la riqueza y aun la sabiduría.",
+        ],
+        [
+          "Lo que se descubre",
+          "Dios no le explica todo a Job, sino que se le revela desde el torbellino (Job 38:1-4).",
+          "Todo eso es vapor: pasa pronto, no se puede atrapar y no llena el corazón (Eclesiastés 1:2-3).",
+        ],
+        [
+          "La conclusión",
+          "Job, que había oído de Dios, ahora lo ve; se humilla y confía en él (Job 42:5-6).",
+          "Temer a Dios y guardar sus mandamientos, porque él juzgará toda obra (Eclesiastés 12:13-14).",
+        ],
+        [
+          "Para la vida hoy",
+          "Acompañar al que sufre con humildad, sin acusarlo, y dejar en manos de Dios lo que no entendemos.",
+          "No esperar que el placer, el trabajo o la riqueza llenen el corazón, y vivir cada día delante de Dios.",
+        ],
+      ],
+    },
+  ],
+  "n4-poeticos-profeticos-3": [
+    // El objetivo o3 pide orar con los lamentos; los pasos convierten el Salmo 13 de la lección en un camino que el alumno puede seguir en su propio dolor.
+    {
+      t: "pasos",
+      titulo: "Cómo orar con un salmo de lamento: el ejemplo del Salmo 13",
+      pasos: [
+        {
+          titulo: "Lee el salmo despacio",
+          texto: "Lee el Salmo 13 en voz alta, si puedes. Fíjate en lo que siente David, en sus preguntas y en cómo cambia su tono del principio al final.",
+        },
+        {
+          titulo: "Lleva tu queja con honestidad",
+          texto: "David pregunta cuatro veces hasta cuándo (Salmos 13:1-2). Dile a Dios con sinceridad lo que sientes, también tus preguntas: no tienes que esconderle nada.",
+        },
+        {
+          titulo: "Convierte la queja en petición",
+          texto: "David le pide a Dios que lo mire, que le responda y que alumbre sus ojos (Salmos 13:3-4). Pide con palabras concretas lo que necesitas.",
+        },
+        {
+          titulo: "Declara tu confianza",
+          texto: "David termina confiando en la misericordia de Dios y cantándole por el bien que le ha hecho (Salmos 13:5-6). Recuerda también lo que Dios ya hizo por ti.",
+        },
+        {
+          titulo: "Haz tuya la oración",
+          texto: "Ora con tus propias palabras siguiendo el mismo camino: queja, petición y confianza. Vuelve a él cada vez que el dolor no te deje saber qué decirle a Dios.",
+        },
+      ],
+    },
+  ],
+  "n4-poeticos-profeticos-5": [
+    // La lección agrupa a los profetas por épocas, sin fechas; la línea los ubica en la historia de Israel, frente a Asiria, frente a Babilonia y después del regreso (objetivo o5).
+    {
+      t: "linea",
+      titulo: "Los profetas en su tiempo: de Amós a Malaquías",
+      eventos: [
+        {
+          fecha: "c. 760 a. C.",
+          texto: "Bajo Jeroboam II, Amós y luego Oseas llaman al reino del norte a dejar la idolatría y la injusticia. Jonás es de ese mismo siglo.",
+          ref: "Amós 1:1",
+        },
+        {
+          fecha: "c. 740 a. C.",
+          texto: "El año en que murió el rey Uzías, Isaías ve al Señor sentado en un trono alto. Poco después, en Judá, profetiza también Miqueas.",
+          ref: "Isaías 6:1",
+        },
+        {
+          fecha: "c. 722 a. C.",
+          texto: "Asiria toma Samaria y lleva cautivo al reino del norte, como le habían advertido sus profetas.",
+          ref: "2 Reyes 17:6",
+        },
+        {
+          fecha: "c. 626 a. C.",
+          texto: "Dios llama a Jeremías en el año trece del rey Josías; profetizará hasta que Jerusalén sea llevada cautiva.",
+          ref: "Jeremías 1:2-3",
+        },
+        {
+          fecha: "c. 605 a. C.",
+          texto: "Nabucodonosor lleva a Babilonia a Daniel y a otros jóvenes de Judá. En esos años, Dios le muestra a Habacuc que levanta a los caldeos.",
+          ref: "Daniel 1:1-6",
+        },
+        {
+          fecha: "c. 593 a. C.",
+          texto: "Entre los cautivos, junto al río Quebar, Ezequiel ve visiones de Dios en el quinto año de la deportación del rey Joaquín.",
+          ref: "Ezequiel 1:1-3",
+        },
+        {
+          fecha: "c. 586 a. C.",
+          texto: "Babilonia quema el templo y destruye Jerusalén. Lamentaciones llora sobre la ciudad que quedó sola.",
+          ref: "2 Reyes 25:8-10",
+        },
+        {
+          fecha: "c. 538 a. C.",
+          texto: "Ciro, rey de Persia, deja volver a los judíos para reedificar el templo, como Dios lo había anunciado por Jeremías.",
+          ref: "Esdras 1:1-3",
+        },
+        {
+          fecha: "520 a. C.",
+          texto: "En el año segundo del rey Darío, Hageo y Zacarías animan al pueblo a reconstruir la casa de Dios.",
+          ref: "Hageo 1:1",
+        },
+        {
+          fecha: "c. 430 a. C.",
+          texto: "Malaquías, el último profeta del Antiguo Testamento, llama a volver a Dios y anuncia al mensajero que preparará el camino.",
+          ref: "Malaquías 3:1",
+        },
+      ],
+    },
+  ],
+  // Exégesis de un libro: Romanos
+  "n5-exegesis-1": [
+    // La lección da el contexto en pocas líneas (Corinto, hacia el año 57); la línea ordena los hechos que lo explican, desde la iglesia que Pablo no fundó hasta su llegada a Roma, para practicar el primer paso del método (objetivo o1).
+    {
+      t: "linea",
+      titulo: "El contexto histórico de Romanos: de Pentecostés a Roma",
+      eventos: [
+        {
+          fecha: "c. 30-33 d. C.",
+          texto: "En Pentecostés oyen el evangelio visitantes de Roma, judíos y prosélitos. No se sabe con certeza quién fundó la iglesia allí.",
+          ref: "Hechos 2:10",
+        },
+        {
+          fecha: "c. 49 d. C.",
+          texto: "Claudio manda que todos los judíos salgan de Roma (la fecha se discute). Aquila y Priscila llegan a Corinto, donde Pablo los conoce.",
+          ref: "Hechos 18:2",
+        },
+        {
+          fecha: "c. 50-52 d. C.",
+          texto: "Pablo pasa un año y seis meses en Corinto. Una inscripción hallada en Delfos sitúa al procónsul Galión hacia el 51-52.",
+          ref: "Hechos 18:11",
+        },
+        {
+          fecha: "54 d. C.",
+          texto: "Muere el emperador Claudio y reina Nerón. Cuando Pablo escribe Romanos, Priscila y Aquila ya están otra vez en Roma.",
+          ref: "Romanos 16:3",
+        },
+        {
+          fecha: "c. 57 d. C.",
+          texto: "Probablemente en sus tres meses en Grecia (Hechos 20:3), Pablo escribe desde Corinto y recomienda a Febe, diaconisa en Cencrea, su puerto.",
+          ref: "Romanos 16:1",
+        },
+        {
+          fecha: "c. 57 d. C.",
+          texto: "Pablo lleva a Jerusalén la ofrenda de Macedonia y Acaya para los santos pobres; tras un alboroto en el templo, lo arrestan (Hechos 21).",
+          ref: "Romanos 15:25-26",
+        },
+        {
+          fecha: "c. 57-59 d. C.",
+          texto: "Pasa dos años preso en Cesarea bajo el gobernador Félix. Ante Festo, su sucesor, apela a César (Hechos 25:11).",
+          ref: "Hechos 24:27",
+        },
+        {
+          fecha: "c. 60-62 d. C.",
+          texto: "Llega a Roma, pero preso. Dos años en una casa alquilada predica el reino de Dios. La Biblia no dice si llegó a España.",
+          ref: "Hechos 28:30-31",
+        },
+      ],
+    },
+  ],
+  "n5-exegesis-3": [
+    // La lección resume en una frase la comparación de Romanos 5:12-21; el cuadro pone a Adán y a Cristo lado a lado, versículo por versículo, para analizar el contraste y el mucho más de la gracia (objetivo o3).
+    {
+      t: "cuadro",
+      titulo: "Adán y Cristo en Romanos 5:12-21: dos hombres, dos resultados",
+      columnas: ["En el texto", "Adán: el pecado y la muerte", "Cristo: la gracia y la vida"],
+      filas: [
+        [
+          "La figura (5:14-15)",
+          "Adán es figura del que había de venir.",
+          "Cristo es el que había de venir, y su don no fue como la transgresión de Adán.",
+        ],
+        [
+          "Lo que entró (5:12, 15)",
+          "Por un hombre entró el pecado en el mundo, y por el pecado la muerte, que pasó a todos los hombres.",
+          "Por la gracia de un hombre, Jesucristo, abundaron mucho más para los muchos la gracia y el don de Dios.",
+        ],
+        [
+          "El veredicto (5:16)",
+          "El juicio vino a causa de un solo pecado, para condenación.",
+          "El don vino a causa de muchas transgresiones, para justificación.",
+        ],
+        [
+          "Lo que reina (5:17)",
+          "Por la transgresión de uno solo reinó la muerte.",
+          "Los que reciben la abundancia de la gracia y del don de la justicia reinarán en vida por Jesucristo.",
+        ],
+        [
+          "El resultado (5:18-19)",
+          "Por su transgresión vino la condenación; por su desobediencia, los muchos fueron constituidos pecadores.",
+          "Por su justicia vino la justificación de vida; por su obediencia, los muchos serán constituidos justos.",
+        ],
+        [
+          "El final (5:20-21)",
+          "Con la ley, el pecado abundó y reinó para muerte.",
+          "Cuando el pecado abundó, sobreabundó la gracia, que reina por la justicia para vida eterna.",
+        ],
+      ],
+    },
+  ],
+  "n5-exegesis-5": [
+    // La lección presenta dos lecturas sobre la elección y dos sobre el futuro de Israel; el cuadro separa lo que dice el texto de dónde se lee distinto y de lo que todos afirman, para evaluarlas con respeto (objetivo o5).
+    {
+      t: "cuadro",
+      titulo: "Romanos 9 a 11: lo que enseña y cómo lo leen los evangélicos",
+      columnas: ["Pasaje", "Lo que enseña", "Las lecturas evangélicas"],
+      filas: [
+        [
+          "Romanos 9:6",
+          "La palabra de Dios no ha fallado: no todos los que descienden de Israel son israelitas.",
+          "Aquí todos coinciden: Dios cumple su palabra en el Israel de la promesa.",
+        ],
+        [
+          "Romanos 9:14-16",
+          "No depende del que quiere ni del que corre, sino de Dios que tiene misericordia; y en Dios no hay injusticia.",
+          "Calvinistas: elección de personas para salvación. Muchos arminianos: de pueblos y personas para un papel en la historia.",
+        ],
+        [
+          "Romanos 10:9-15",
+          "Confesar que Jesús es el Señor y creer que Dios le levantó: todo el que invoque será salvo, y hacen falta mensajeros.",
+          "Aquí todos coinciden: la salvación es por gracia, por medio de la fe, y la iglesia tiene que predicar.",
+        ],
+        [
+          "Romanos 11:25-26",
+          "Israel tiene un endurecimiento en parte, hasta que entre la plenitud de los gentiles; luego todo Israel será salvo.",
+          "Unos: una conversión futura del pueblo judío. Otros: todo Israel es el conjunto de los redimidos, judíos y gentiles.",
+        ],
+        [
+          "Romanos 11:33",
+          "Pablo termina con adoración por la profundidad de la sabiduría y de la ciencia de Dios.",
+          "Aquí todos coinciden: donde no lo entendemos todo, adoramos.",
+        ],
+      ],
+    },
+  ],
+  // Teología del avivamiento
+  "n5-avivamiento-1": [
+    // La lección distingue las tres cosas en una lista breve; el cuadro las pone lado a lado (qué es, a quién alcanza, cómo ocurre y su base) para fijar la definición que pide el objetivo o1.
+    {
+      t: "cuadro",
+      titulo: "Avivamiento, evangelización y despertar: tres cosas distintas",
+      columnas: ["Aspecto", "Avivamiento", "Evangelización", "Despertar"],
+      filas: [
+        [
+          "Qué es",
+          "Dios devuelve la vida a su iglesia y la despierta a la santidad, la oración y el primer amor.",
+          "La iglesia anuncia el evangelio a los que no creen.",
+          "Un avivamiento que se desborda y transforma a una sociedad entera.",
+        ],
+        [
+          "A quién alcanza",
+          "Primero al pueblo de Dios; desde él, alcanza con poder a los perdidos.",
+          "A los que todavía no creen en Cristo.",
+          "A toda una sociedad, más allá de la iglesia.",
+        ],
+        [
+          "Cómo ocurre",
+          "Lo envía Dios por su Espíritu: nadie lo fabrica, pero se busca con oración, arrepentimiento y obediencia a la Palabra.",
+          "La hace la iglesia: una campaña se planea y se anuncia, y puede ser fruto de un avivamiento.",
+          "Es el mismo avivamiento, obra del Espíritu, cuando se desborda fuera de la iglesia.",
+        ],
+        [
+          "Base o ejemplo",
+          "Salmos 85:6; Habacuc 3:2; Hechos 3:19; artículo 15 de la declaración de fe.",
+          "Marcos 16:15; por ejemplo, una campaña de evangelización.",
+          "El Gran Despertar del siglo XVIII en las colonias británicas de América (lección 4).",
+        ],
+      ],
+    },
+  ],
+  "n5-avivamiento-4": [
+    // La lección no tiene video y su historia abarca casi dos siglos; la línea de tiempo ordena de un vistazo los avivamientos y sus frutos, con la carta de Wesley de 1791 en su lugar (objetivo o4).
+    {
+      t: "linea",
+      titulo: "De Herrnhut a Valparaíso: los avivamientos y sus frutos",
+      eventos: [
+        {
+          fecha: "1727",
+          texto: "La comunidad morava de Herrnhut, Alemania, vive un avivamiento en la Santa Cena; nace una cadena de oración y salen cientos de misioneros.",
+        },
+        {
+          fecha: "Desde 1734",
+          texto: "Gran Despertar en las colonias británicas de América, con Jonathan Edwards en Northampton y la predicación de George Whitefield.",
+        },
+        {
+          fecha: "Desde 1738",
+          texto: "Avivamiento metodista en Inglaterra: Juan y Carlos Wesley y Whitefield predican al aire libre a los mineros y a los pobres.",
+        },
+        {
+          fecha: "1791",
+          texto: "Juan Wesley escribe su última carta a William Wilberforce para animarlo en su lucha contra el comercio de esclavos.",
+        },
+        {
+          fecha: "1801",
+          texto: "Cane Ridge, Kentucky: uno de los comienzos del Segundo Gran Despertar en Estados Unidos, que sigue con la predicación de Charles Finney.",
+        },
+        {
+          fecha: "1857-1858",
+          texto: "Avivamiento de oración de Nueva York, que empieza con una reunión de oración de mediodía en la calle Fulton.",
+        },
+        { fecha: "1904-1905", texto: "Avivamiento de Gales, con el joven Evan Roberts." },
+        {
+          fecha: "1906",
+          texto: "Calle Azusa, Los Ángeles, con William J. Seymour: cuna del pentecostalismo moderno, que se extiende por todo el mundo.",
+        },
+        {
+          fecha: "1907",
+          texto: "Avivamiento de Pyongyang, en Corea, que estalla en enero durante unas reuniones de estudio de la Biblia.",
+        },
+        {
+          fecha: "1909",
+          texto: "Valparaíso, Chile, con el misionero Willis C. Hoover: origen de la Iglesia Metodista Pentecostal de Chile.",
+        },
+      ],
+    },
+  ],
+  "n5-avivamiento-5": [
+    // La lección no tiene video y da varios criterios uno tras otro; los pasos los vuelven un método para examinar lo que sucede en un culto sin apagar al Espíritu (objetivo o5).
+    {
+      t: "pasos",
+      titulo: "Cómo examinar lo que sucede en un culto",
+      pasos: [
+        {
+          titulo: "Ni lo apagues ni lo aceptes todo",
+          texto: "Empieza por el equilibrio de Pablo: no apagar lo que Dios hace, por miedo o por frialdad, pero examinarlo todo y retener solo lo bueno (1 Tesalonicenses 5:19-21).",
+        },
+        {
+          titulo: "Mira qué lugar le da a Cristo",
+          texto: "Es la prueba principal: una obra del Espíritu confiesa a Jesucristo venido en carne y lo exalta como Hijo de Dios y Salvador (1 Juan 4:1-3).",
+        },
+        {
+          titulo: "Mira el fruto en las vidas",
+          texto: "Al árbol se le conoce por su fruto: ¿la gente deja el pecado y crece en amor a Dios y al prójimo? (Mateo 7:16-17).",
+        },
+        {
+          titulo: "Pésalo con la Escritura",
+          texto: "Una obra verdadera aumenta el amor y el respeto por la Biblia y lleva a la verdad, no a la confusión; lo que contradice la Palabra no se retiene (1 Juan 4:6).",
+        },
+        {
+          titulo: "No decidas por las manifestaciones",
+          texto: "Las lágrimas, los temblores o los gritos no prueban por sí solos que una obra sea de Dios, ni que no lo sea, como enseñó Jonathan Edwards en 1741: deciden Cristo y el fruto.",
+        },
+        {
+          titulo: "Cuida el orden",
+          texto: "Las manifestaciones del Espíritu no se oponen al orden: Dios es Dios de paz y no de confusión, y todo se hace con decencia y con orden (1 Corintios 14:33, 40).",
+        },
+        {
+          titulo: "Rechaza el fuego extraño",
+          texto: "La presencia de Dios no se fabrica con manipulación de las emociones, presión para dar dinero ni espectáculo: lo que Dios no manda no aviva a su iglesia (Levítico 10:1-2).",
         },
       ],
     },

@@ -288,9 +288,26 @@ cristiano I).
 Los revisores corrigieron 53 esquemas, 74 preguntas (casi siempre porque la respuesta correcta se delataba por ser la más
 larga), 2 libros y 1 video. No hubo nada que quitar.
 
-**Las otras 37 materias:** cuatro del Nivel 3, los Niveles 4 y 5 (con Exégesis y Teología del avivamiento, publicadas
-el 16-nov) y las tres especialidades. Tienen su borrador y siguen en revisión. Van en el PR siguiente, con sus lecturas
-ampliadas.
+**En el segundo PR, 10 materias más:**
+- del Nivel 3: Los Evangelios y Hechos, Homilética I e Historia de la iglesia I;
+- del Nivel 4: Teología sistemática I a IV y Libros poéticos y proféticos;
+- del Nivel 5: Exégesis de un libro: Romanos y Teología del avivamiento, publicadas el 16-nov.
+
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 30: 8 líneas de tiempo, 17 cuadros comparativos y 5 pasos |
+| Videos (las materias que no tenían) | 9, en Teología sistemática II, III y IV |
+| Preguntas de casos en el examen final | 60 |
+| Libros comprobados en la bibliografía | 6 |
+| Lecturas ampliadas con su reporte | las primeras 7 |
+
+**Las otras 27 materias:**
+- Cuidado y consejería básica, del Nivel 3;
+- Epístolas y Apocalipsis, Homilética II, Historia de la iglesia II, Apologética y Ética, del Nivel 4;
+- seis del Nivel 5;
+- las tres especialidades.
+
+Tienen su borrador y siguen en revisión. Van en el PR siguiente.
 
 **El tiempo de las pruebas.** Se midió lo que pide cada pregunta:
 - leerla, a 130 palabras por minuto (el ritmo de un lector promedio en el teléfono);
