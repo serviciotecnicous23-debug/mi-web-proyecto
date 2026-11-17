@@ -55,6 +55,7 @@ test("el texto dicho: paréntesis, números, años, siglos y abreviaturas", () =
   assert.equal(hablado("el 35 % de las iglesias"), "el treinta y cinco por ciento de las iglesias");
   assert.equal(hablado("llama al 911 o al 988"), "llama al nueve uno uno o al nueve ocho ocho");
   assert.equal(hablado("Id y haced discípulos"), "Id, y haced discípulos");
+  assert.equal(hablado("cierra el Antiguo Testamento. (Malaquías 1:1)"), "cierra el Antiguo Testamento. Malaquías uno, uno");
   assert.equal(hablado("«Dios es amor» —dice Juan— y basta"), "Dios es amor, dice Juan, y basta");
   assert.equal(hablado("en el año 30 d. C. y el 586 a. C."), "en el año treinta después de Cristo y el quinientos ochenta y seis antes de Cristo");
 });

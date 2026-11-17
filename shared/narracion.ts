@@ -276,6 +276,8 @@ export function hablado(texto: string): string {
   t = t.replace(/\b\d+\b/g, (n) => enPalabras(Number(n)));
   // espacios y puntuación
   t = t.replace(/\s+([.,;:!?])/g, "$1").replace(/([,;:])(?=[^\s\d])/g, "$1 ").replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+  // una coma justo después del fin de una oración («…Testamento., Malaquías…»): sobra
+  t = t.replace(/([.!?…])\s*,\s*/g, "$1 ");
   t = t.replace(/^[,;:]\s*/, "").replace(/\s*[,;:]$/, "");
   return t;
 }
@@ -318,7 +320,7 @@ function parteDeBloque(b: BloqueNarrable): { texto: string; pausa: number } {
       return { texto: typeof b.pie === "string" && b.pie.trim() ? conPunto(hablado(b.pie)) : "", pausa: 0.6 };
     case "linea": {
       const eventos = Array.isArray(b.eventos) ? (b.eventos as { fecha?: string; texto?: string; ref?: string }[]) : [];
-      const dichos = eventos.map((e) => conPunto(hablado(`${e.fecha ?? ""}: ${e.texto ?? ""}${e.ref ? ` (${e.ref})` : ""}`)));
+      const dichos = eventos.map((e) => conPunto(hablado(`${e.fecha ?? ""}: ${sinPuntoFinal(e.texto ?? "")}${e.ref ? ` (${e.ref})` : ""}`)));
       return { texto: `Línea de tiempo: ${conPunto(hablado(String(b.titulo ?? "")))} ${dichos.join(" ")}`, pausa: 0.9 };
     }
     case "cuadro": {
