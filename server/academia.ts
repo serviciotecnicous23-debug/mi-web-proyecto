@@ -31,6 +31,7 @@ import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
 import { minutosDeMateria, minutosReales } from "./academia-carga";
+import { narracionDe } from "./academia-narracion";
 import { registerAcademiaActividadesRoutes } from "./academia-actividades";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
@@ -376,6 +377,16 @@ export function registerAcademiaRoutes(app: Express) {
         inscrita,
         docente,
         bloqueo,
+        narracion: narracionDe(id, {
+          materia: l.materia.titulo,
+          titulo: l.leccion.titulo,
+          n: l.indice + 1,
+          objetivos: contenido.objetivos,
+          paraEmpezar: contenido.paraEmpezar,
+          bloques: contenido.bloques,
+          ideaClave: contenido.ideaClave,
+          paraLaVida: contenido.paraLaVida,
+        }),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
