@@ -179,8 +179,39 @@ test("Ministerio pastoral termina con «Predicación pastoral», avanzada, y tie
   for (const x of e.materias) assert.ok(x.disponible, x.id);
 });
 
-test("las otras ocho especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral"].includes(x.id))) {
+test("Niñez tiene sus cinco materias, con la medida del Nivel 3 y el Nivel 2 como requisito", () => {
+  const ninez = ESPECIALIDADES.find((x) => x.id === "ninez")!;
+  const listas = ninez.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["ninez-1", "Educación cristiana de la niñez", "Salmos 78:4", 6, false],
+      ["ninez-2", "El niño y su fe", "Juan 1:12", 6, false],
+      ["ninez-3", "Métodos para enseñar a niños", "Nehemías 8:8", 6, false],
+      ["ninez-4", "Protección de menores", "Salmos 82:3", 6, false],
+      ["ninez-5", "Organizar el ministerio infantil", "Habacuc 2:2", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+  }
+  // las lenguas como señal inicial quedan para la declaración de fe
+  assert.match(listas[1].silabo!.proposito, /declaración de fe por confirmar/);
+  // la protección de menores trae la ley de Texas y aclara que no es un consejo legal
+  assert.match(listas[3].silabo!.proposito, /Texas/);
+  assert.match(listas[3].silabo!.proposito, /no un consejo legal/);
+  assert.equal(ninez.materias.length, 5);
+});
+
+test("las otras siete especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
