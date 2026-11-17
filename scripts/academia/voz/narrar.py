@@ -6,11 +6,12 @@ persona) cada guion que dejó `npx tsx scripts/academia/narracion.ts guion <carp
   <lección>.marcas.json  la huella, cuánto dura y el segundo en que empieza cada lugar de la página
 Después: `npx tsx scripts/academia/narracion.ts registrar <carpeta>`.
 
-Corre en WSL con Wan2GP (en la PC de Luis):  bash scripts/academia/voz/narrar.sh <carpeta> [lección...]
+Corre en WSL con Wan2GP (en la PC de Luis):  bash scripts/academia/voz/narrar.sh <carpeta> [--rehacer] [lección...]
 Cada trozo se escucha con whisper: si no dice lo que tiene que decir, se graba otra vez (hasta 4 veces) y queda el mejor.
-Se puede cortar y seguir: las lecciones que ya tienen su audio con la misma huella se saltan.
+Se puede cortar y seguir: las lecciones que ya tienen su audio con la misma huella y el mismo guion se saltan
+(--rehacer graba otra vez las lecciones nombradas aunque ya estén).
 """
-import json, os, re, subprocess, sys, time
+import hashlib, json, os, re, subprocess, sys, time
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -81,7 +82,8 @@ def main():
         print(__doc__)
         sys.exit(1)
     carpeta = Path(sys.argv[1]).resolve()
-    solo = set(sys.argv[2:])
+    rehacer = "--rehacer" in sys.argv[2:]
+    solo = {x for x in sys.argv[2:] if x != "--rehacer"}
     guiones = sorted(p for p in carpeta.glob("*.json") if not p.name.endswith((".marcas.json", ".qa.json")))
     if solo:
         guiones = [g for g in guiones if g.stem in solo]
@@ -90,9 +92,12 @@ def main():
         d = json.loads(g.read_text(encoding="utf-8"))
         if not isinstance(d, dict) or "leccionId" not in d or "partes" not in d:
             continue  # (otro archivo: la voz de prueba, por ejemplo)
+        # la huella del texto que se dice: si cambia la manera de decir algo, la lección se graba otra vez
+        d["guion"] = hashlib.sha1(json.dumps(d["partes"], ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:12]
         marcas = carpeta / f"{d['leccionId']}.marcas.json"
-        if marcas.exists() and (carpeta / f"{d['leccionId']}.m4a").exists():
-            if json.loads(marcas.read_text(encoding="utf-8")).get("huella") == d["huella"]:
+        if not rehacer and marcas.exists() and (carpeta / f"{d['leccionId']}.m4a").exists():
+            hecho = json.loads(marcas.read_text(encoding="utf-8"))
+            if hecho.get("huella") == d["huella"] and hecho.get("guion", d["guion"]) == d["guion"]:
                 continue
         pendientes.append(d)
     print(f"[narrar] {len(pendientes)} lecciones por grabar (de {len(guiones)})", flush=True)
@@ -166,7 +171,7 @@ def main():
         final = carpeta / f"{lid}.m4a"
         correr_ffmpeg("-i", str(cadena), "-af", filtro, "-ar", str(SR), "-ac", "1", "-c:a", "aac", "-b:a", "40k", "-movflags", "+faststart", str(final))
         segundos = round(sf.info(str(cadena)).duration, 2)
-        (carpeta / f"{lid}.marcas.json").write_text(json.dumps({"leccionId": lid, "huella": d["huella"], "segundos": segundos, "voz": VOZ["nombre"], "marcas": marcas}, ensure_ascii=False), encoding="utf-8")
+        (carpeta / f"{lid}.marcas.json").write_text(json.dumps({"leccionId": lid, "huella": d["huella"], "guion": d["guion"], "segundos": segundos, "voz": VOZ["nombre"], "marcas": marcas}, ensure_ascii=False), encoding="utf-8")
         (carpeta / f"{lid}.qa.json").write_text(json.dumps(qa, ensure_ascii=False, indent=1), encoding="utf-8")
         crudo.unlink()
         cadena.unlink()
