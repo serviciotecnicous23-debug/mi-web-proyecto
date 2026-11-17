@@ -46,6 +46,7 @@ test("el texto dicho: paréntesis, números, años, siglos y abreviaturas", () =
     "el Salvador prometido en el Antiguo Testamento, Juan uno, cuarenta y uno. Jesús añadió algo",
   );
   assert.equal(hablado("por gracia y no por obras (Efesios 2:8-9; Tito 3:5)."), "por gracia y no por obras, Efesios dos, ocho y nueve; Tito tres, cinco.");
+  assert.equal(hablado("de Egipto (Éxodo 12:14, 17; 13:3)"), "de Egipto, Éxodo doce, catorce y diecisiete; trece, tres");
   assert.equal(hablado("El Antiguo Testamento, con 39 libros"), "El Antiguo Testamento, con treinta y nueve libros");
   assert.equal(hablado("la traducción completa en 1569"), "la traducción completa en mil quinientos sesenta y nueve");
   assert.equal(hablado("en el siglo XVI"), "en el siglo dieciséis");
@@ -126,7 +127,7 @@ test("los esquemas se dicen: línea de tiempo, cuadro comparativo y pasos", () =
     ...LECCION,
     bloques: [
       { t: "linea", titulo: "La Biblia en español", eventos: [{ fecha: "1569", texto: "La Biblia del Oso", ref: "Salmos 119:105" }, { fecha: "27 a. C.-14 d. C.", texto: "Augusto" }] },
-      { t: "cuadro", titulo: "Fe y obras", columnas: ["Palabra", "Lo que es", "Base bíblica"], filas: [["Fe", "Confiar en Cristo", "Efesios 2:8-9"]] },
+      { t: "cuadro", titulo: "Fe y obras", columnas: ["Palabra", "Lo que es (Efesios 2)", "Base bíblica"], filas: [["Fe", "Confiar en Cristo", "Efesios 2:8-9"]] },
       { t: "pasos", titulo: "Cómo orar", pasos: [{ titulo: "Adorar", texto: "Reconoce quién es Dios." }, { titulo: "Pedir", texto: "Pide con fe." }] },
     ],
   });

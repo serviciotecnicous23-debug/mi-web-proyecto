@@ -224,8 +224,9 @@ export function hablado(texto: string): string {
   // los signos que no se leen
   t = t.replace(/[«»“”"]/g, "").replace(/[‘’]/g, "'").replace(/\s*[—–]\s*(?=\D)/g, ", ").replace(/\s*\/\s*/g, " o ").replace(/&/g, " y ");
   for (const [p, r] of ABREVIATURAS) t = t.replace(p, r);
-  // las citas, antes que los demás números
+  // las citas, antes que los demás números; después, las que siguen sin el libro («Éxodo 12:14; 13:3»)
   t = citaDicha(t);
+  t = t.replace(/\b(\d{1,3}):(\d{1,3}(?:\s*[-–]\s*\d{1,3})?)\b/g, (_m, cap, versos) => `${enPalabras(Number(cap))}, ${versosDichos(versos)}`);
   // los paréntesis se dicen como una pausa corta
   t = t.replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ");
   // siglos y nombres con número romano
@@ -319,7 +320,9 @@ function parteDeBloque(b: BloqueNarrable): { texto: string; pausa: number } {
       // cada fila se dice por su primera celda, y después cada dato con el nombre de su columna
       const dichas = filas.map((f) => {
         const [primera, ...resto] = f;
-        const datos = resto.map((x, i) => (x?.trim() ? `${columnas[i + 1] ? `${sinPuntoFinal(columnas[i + 1])}: ` : ""}${conPunto(x)}` : "")).filter(Boolean);
+        // el nombre de la columna sin lo que tenga entre paréntesis («La Pascua (Éxodo 12)» → «La Pascua»)
+        const nombre = (c: string | undefined) => (c ? sinPuntoFinal(c.replace(/\s*\([^)]*\)/g, "")) : "");
+        const datos = resto.map((x, i) => (x?.trim() ? `${nombre(columnas[i + 1]) ? `${nombre(columnas[i + 1])}: ` : ""}${conPunto(x)}` : "")).filter(Boolean);
         return conPunto(hablado(`${conPunto(primera ?? "")} ${datos.join(" ")}`));
       });
       return { texto: `Cuadro comparativo: ${conPunto(hablado(String(b.titulo ?? "")))} ${dichas.join(" ")}`, pausa: 0.9 };
