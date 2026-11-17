@@ -210,8 +210,41 @@ test("Niñez tiene sus cinco materias, con la medida del Nivel 3 y el Nivel 2 co
   assert.equal(ninez.materias.length, 5);
 });
 
-test("las otras siete especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez"].includes(x.id))) {
+test("Juventud tiene sus cinco materias, con la medida del Nivel 3 y la consejería juvenil como avanzada", () => {
+  const juventud = ESPECIALIDADES.find((x) => x.id === "juventud")!;
+  const listas = juventud.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["juventud-1", "Discipulado de jóvenes", "1 Timoteo 4:12", 6, false],
+      ["juventud-2", "Cosmovisión cristiana y cultura", "Colosenses 2:8", 6, false],
+      ["juventud-3", "Consejería juvenil", "Proverbios 20:5", 6, true],
+      ["juventud-4", "Liderazgo juvenil", "Josué 1:9", 6, false],
+      ["juventud-5", "Evangelismo entre jóvenes", "1 Corintios 9:22", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // la consejería juvenil es avanzada: pide el Nivel 3, trae la ley de Texas y no es un consejo legal
+  assert.deepEqual(requisitosMateria(juventud.materias[2], [1, 2, 3]), []);
+  assert.match(listas[2].silabo!.proposito, /Texas/);
+  assert.match(listas[2].silabo!.proposito, /no un consejo legal/);
+  // la sexualidad sigue el artículo 14, y quién ejerce cada cargo queda para la declaración de fe
+  assert.match(listas[1].silabo!.proposito, /artículo 14/);
+  assert.match(listas[3].silabo!.proposito, /declaración de fe por confirmar/);
+  assert.equal(juventud.materias.length, 5);
+});
+
+test("las otras seis especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);

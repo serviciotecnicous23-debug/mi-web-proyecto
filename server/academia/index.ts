@@ -76,6 +76,11 @@ import { NINEZ_2 } from "./contenido/ninez-2";
 import { NINEZ_3 } from "./contenido/ninez-3";
 import { NINEZ_4 } from "./contenido/ninez-4";
 import { NINEZ_5 } from "./contenido/ninez-5";
+import { JUVENTUD_1 } from "./contenido/juventud-1";
+import { JUVENTUD_2 } from "./contenido/juventud-2";
+import { JUVENTUD_3 } from "./contenido/juventud-3";
+import { JUVENTUD_4 } from "./contenido/juventud-4";
+import { JUVENTUD_5 } from "./contenido/juventud-5";
 import { N2_DONES } from "./contenido/n2-dones";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
@@ -146,6 +151,11 @@ import { BANCO_NINEZ_2 } from "./bancos/ninez-2";
 import { BANCO_NINEZ_3 } from "./bancos/ninez-3";
 import { BANCO_NINEZ_4 } from "./bancos/ninez-4";
 import { BANCO_NINEZ_5 } from "./bancos/ninez-5";
+import { BANCO_JUVENTUD_1 } from "./bancos/juventud-1";
+import { BANCO_JUVENTUD_2 } from "./bancos/juventud-2";
+import { BANCO_JUVENTUD_3 } from "./bancos/juventud-3";
+import { BANCO_JUVENTUD_4 } from "./bancos/juventud-4";
+import { BANCO_JUVENTUD_5 } from "./bancos/juventud-5";
 import { BANCO_N2_DONES } from "./bancos/n2-dones";
 
 /** El Nivel 1 completo (las 8 materias en su orden), lo publicado de los Niveles 2 a 5 y de las especialidades. */
@@ -158,7 +168,7 @@ const LECCIONES: LeccionContenido[] = [
   // especialidades
   ...EVANGELISMO_MISIONES_1, ...EVANGELISMO_MISIONES_2, ...EVANGELISMO_MISIONES_3, ...EVANGELISMO_MISIONES_4, ...EVANGELISMO_MISIONES_5,
   ...ALABANZA_1, ...ALABANZA_2, ...ALABANZA_3, ...ALABANZA_4, ...ALABANZA_5,
-  ...INTERCESION_1, ...INTERCESION_2, ...INTERCESION_3, ...INTERCESION_4, ...INTERCESION_5, ...PASTORAL_1, ...PASTORAL_2, ...PASTORAL_3, ...PASTORAL_4, ...PASTORAL_5, ...NINEZ_1, ...NINEZ_2, ...NINEZ_3, ...NINEZ_4, ...NINEZ_5,
+  ...INTERCESION_1, ...INTERCESION_2, ...INTERCESION_3, ...INTERCESION_4, ...INTERCESION_5, ...PASTORAL_1, ...PASTORAL_2, ...PASTORAL_3, ...PASTORAL_4, ...PASTORAL_5, ...NINEZ_1, ...NINEZ_2, ...NINEZ_3, ...NINEZ_4, ...NINEZ_5, ...JUVENTUD_1, ...JUVENTUD_2, ...JUVENTUD_3, ...JUVENTUD_4, ...JUVENTUD_5,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
@@ -170,7 +180,7 @@ const BANCOS_LISTA: BancoMateria[] = [
   // especialidades
   BANCO_EVANGELISMO_MISIONES_1, BANCO_EVANGELISMO_MISIONES_2, BANCO_EVANGELISMO_MISIONES_3, BANCO_EVANGELISMO_MISIONES_4, BANCO_EVANGELISMO_MISIONES_5,
   BANCO_ALABANZA_1, BANCO_ALABANZA_2, BANCO_ALABANZA_3, BANCO_ALABANZA_4, BANCO_ALABANZA_5,
-  BANCO_INTERCESION_1, BANCO_INTERCESION_2, BANCO_INTERCESION_3, BANCO_INTERCESION_4, BANCO_INTERCESION_5, BANCO_PASTORAL_1, BANCO_PASTORAL_2, BANCO_PASTORAL_3, BANCO_PASTORAL_4, BANCO_PASTORAL_5, BANCO_NINEZ_1, BANCO_NINEZ_2, BANCO_NINEZ_3, BANCO_NINEZ_4, BANCO_NINEZ_5,
+  BANCO_INTERCESION_1, BANCO_INTERCESION_2, BANCO_INTERCESION_3, BANCO_INTERCESION_4, BANCO_INTERCESION_5, BANCO_PASTORAL_1, BANCO_PASTORAL_2, BANCO_PASTORAL_3, BANCO_PASTORAL_4, BANCO_PASTORAL_5, BANCO_NINEZ_1, BANCO_NINEZ_2, BANCO_NINEZ_3, BANCO_NINEZ_4, BANCO_NINEZ_5, BANCO_JUVENTUD_1, BANCO_JUVENTUD_2, BANCO_JUVENTUD_3, BANCO_JUVENTUD_4, BANCO_JUVENTUD_5,
 ];
 
 // Lo que agregó la revisión del sistema de estudio (docs/academia-auditoria.md): los esquemas y los videos van al final

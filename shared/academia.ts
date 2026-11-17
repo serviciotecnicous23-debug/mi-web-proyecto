@@ -3383,6 +3383,275 @@ const ORGANIZAR_NINEZ: MateriaDef = {
   disponible: true,
 };
 
+const DISCIPULADO_JOVENES: MateriaDef = {
+  id: "juventud-1",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 1,
+  titulo: "Discipulado de jóvenes",
+  resumen: "Cómo formar discípulos entre los jóvenes: por qué discipularlos, cómo formó Jesús a los suyos con los ocho principios de Coleman, Pablo y Timoteo, los grupos pequeños y la mentoría, las disciplinas del joven discípulo y el camino que lleva a hacer otros discípulos.",
+  base: "1 Timoteo 4:12; Marcos 3:14",
+  memoria: "1 Timoteo 4:12",
+  lecciones: lecciones("juventud-1", [
+    ["Por qué discipular a los jóvenes", "Eclesiastés 12:1; Lamentaciones 3:27; 1 Timoteo 4:12; Jeremías 1:6-8"],
+    ["Jesús, el que formó discípulos", "Lucas 6:12-13; Marcos 3:13-14; Mateo 4:19; Juan 15:15"],
+    ["Pablo y Timoteo", "Hechos 16:1-3; 2 Timoteo 3:10; 1 Corintios 4:17; Filipenses 2:20-22"],
+    ["Grupos pequeños y mentores", "Proverbios 27:17; Eclesiastés 4:9-10; Hebreos 10:24-25"],
+    ["Las disciplinas del joven discípulo", "Salmos 119:9-11; 1 Timoteo 4:7-8; Marcos 1:35; Daniel 1:8"],
+    ["Del discípulo al que hace discípulos", "Mateo 28:19-20; 2 Timoteo 2:2; Colosenses 1:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los jóvenes, o se prepara para hacerlo, forme discípulos y no solo entretenga: que entienda por qué la juventud es un tiempo decisivo, que aprenda de cómo eligió y formó Jesús a sus discípulos, con los ocho principios que resumió Robert E. Coleman, que acompañe a los jóvenes como Pablo acompañó a Timoteo, que organice grupos pequeños y mentorías con los cuidados que pide la protección de los menores, que ayude a cada joven a crecer con las disciplinas de la fe y que arme un camino de discipulado en el que los jóvenes lleguen a hacer otros discípulos. Su base es la palabra de Pablo a un líder joven: «Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza» (1 Timoteo 4:12).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la juventud es un tiempo decisivo y en qué se distingue un ministerio que forma discípulos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar los ocho principios con que Jesús formó a sus discípulos.", bloom: "aplicar" },
+      { id: "o3", texto: "Planear una mentoría siguiendo el ejemplo de Pablo y Timoteo.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un grupo pequeño de discipulado para jóvenes.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar con un joven un plan sencillo de disciplinas espirituales.", bloom: "aplicar" },
+      { id: "o6", texto: "Diseñar un camino de discipulado que lleve a los jóvenes a hacer otros discípulos.", bloom: "crear" },
+      { id: "o7", texto: "Recitar 1 Timoteo 4:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El discipulado en la Biblia, el método de Jesús, la mentoría, los grupos pequeños y las disciplinas espirituales.",
+      ser: "Un líder que acompaña de cerca, vive lo que enseña y forma a otros.",
+      hacer: "Elegir y acompañar a pocos, dirigir un grupo pequeño, armar planes de vida espiritual y un camino de discipulado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Doug Fields", titulo: "Ministerio de jóvenes con propósito", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Lucas Leys", titulo: "El ministerio juvenil efectivo", editorial: "Vida" },
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Convicciones más que creencias", editorial: "Mundo Hispano" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lvNqjbjTytE", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 2 Timoteo 2, enseñar también a otros", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Timoteo&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const COSMOVISION_CULTURA: MateriaDef = {
+  id: "juventud-2",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 2,
+  titulo: "Cosmovisión cristiana y cultura",
+  resumen: "Cómo ayudar a los jóvenes a pensar con la Biblia en medio de su cultura: qué es una cosmovisión y la historia bíblica en cuatro actos, las cosmovisiones de hoy, la identidad en Cristo, las redes sociales y la tecnología, el discernimiento del arte y del entretenimiento, y cómo responder con verdad y amor.",
+  base: "Colosenses 2:8; Romanos 12:2",
+  memoria: "Colosenses 2:8",
+  lecciones: lecciones("juventud-2", [
+    ["Qué es una cosmovisión", "Romanos 12:2; Génesis 3:6; Romanos 8:21; 2 Corintios 10:5"],
+    ["Las cosmovisiones de hoy", "Colosenses 2:8; Jueces 21:25; 1 Juan 2:15-17; Hechos 17:22-23"],
+    ["La identidad en Cristo", "Salmos 139:13-14; 2 Corintios 5:17; Efesios 2:10; 1 Corintios 6:19-20"],
+    ["Las redes sociales y la tecnología", "Efesios 5:15-16; 1 Corintios 6:12; Salmos 101:3"],
+    ["El arte, la música y el entretenimiento", "1 Tesalonicenses 5:21; Filipenses 4:8; Colosenses 3:17"],
+    ["Responder con verdad y amor", "1 Pedro 3:15-16; Efesios 4:15; Colosenses 4:6; Hechos 17:26-28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que acompaña a los jóvenes los ayude a vivir su fe con inteligencia en medio de su cultura: que les enseñe qué es una cosmovisión y a mirar cada idea con la historia de la Biblia en cuatro actos, creación, caída, redención y consumación, que reconozca con ellos lo que tienen de verdad y lo que les falta a las cosmovisiones de hoy, que afirme su identidad en Cristo frente a la comparación y las redes, con el diseño de Dios para la sexualidad según el artículo 14 de la declaración de fe, enseñado con verdad y con amor, que los guíe en un uso sabio de la tecnología, que les enseñe a discernir el arte y el entretenimiento y que los prepare para responder con mansedumbre y con razones. Su base es la advertencia de Pablo: «Mirad que nadie os engañe por medio de filosofías y huecas sutilezas, según las tradiciones de los hombres, conforme a los rudimentos del mundo, y no según Cristo» (Colosenses 2:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es una cosmovisión y la historia de la Biblia en cuatro actos.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar las cosmovisiones de hoy: lo que tienen de verdad y lo que les falta.", bloom: "analizar" },
+      { id: "o3", texto: "Acompañar a los jóvenes a afirmar su identidad en Cristo.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar con una familia un acuerdo para el uso sabio de la tecnología.", bloom: "aplicar" },
+      { id: "o5", texto: "Discernir el arte y el entretenimiento con preguntas bíblicas.", bloom: "evaluar" },
+      { id: "o6", texto: "Responder a las objeciones a la fe con verdad y amor.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Colosenses 2:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La cosmovisión cristiana, las ideas de la cultura de hoy, la identidad en Cristo y los criterios para discernir.",
+      ser: "Un joven y un líder que piensan con la Biblia, sin miedo y sin burla, con verdad y con amor.",
+      hacer: "Mirar las ideas con los cuatro actos, armar acuerdos de tecnología, analizar canciones y series, y responder con mansedumbre.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Albert M. Wolters con Michael W. Goheen", titulo: "La creación recuperada: bases bíblicas para una cosmovisión reformacional", editorial: "Poiema Publicaciones" },
+        { autor: "Rebecca McLaughlin", titulo: "10 preguntas que todo joven debe plantearse", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Convicciones más que creencias", editorial: "Mundo Hispano" },
+        { autor: "C. S. Lewis", titulo: "Mero cristianismo", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "La historia de la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=7Z_Bz34ohMA", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 17, Pablo en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_JUVENIL: MateriaDef = {
+  id: "juventud-3",
+  nivel: null,
+  especialidad: "juventud",
+  avanzada: true,
+  orden: 3,
+  titulo: "Consejería juvenil",
+  resumen: "Cómo acompañar a los jóvenes en sus luchas: el consejero de jóvenes y la adolescencia, escuchar y acompañar paso a paso, la ansiedad, la tristeza y el riesgo de suicidio, los conflictos con la familia, la sexualidad, el noviazgo y las adicciones, y los límites, el deber de reportar en Texas y la derivación.",
+  base: "Proverbios 20:5; Santiago 1:19",
+  memoria: "Proverbios 20:5",
+  lecciones: lecciones("juventud-3", [
+    ["El consejero de jóvenes", "Proverbios 20:5; Gálatas 6:1-2; Romanos 15:14"],
+    ["Escuchar y acompañar paso a paso", "Santiago 1:19; Proverbios 18:13; Lucas 24:15-17"],
+    ["La ansiedad, la tristeza y el riesgo de suicidio", "Salmos 42:5; 1 Reyes 19:4-8; Filipenses 4:6-7; 1 Pedro 5:7"],
+    ["Los jóvenes y sus familias", "Efesios 6:1-4; Lucas 15:20; Malaquías 4:6"],
+    ["La sexualidad, el noviazgo y las adicciones", "1 Tesalonicenses 4:3-5; 2 Timoteo 2:22; 1 Corintios 10:13; Proverbios 23:29-32"],
+    ["Los límites, la ley y la derivación", "Proverbios 11:13; Proverbios 11:14; Proverbios 12:15"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que acompaña a los jóvenes sepa aconsejarlos con la Palabra y con prudencia: que entienda la adolescencia y el lugar del consejero junto a los profesionales, que escuche y dirija una conversación paso a paso, que reconozca las señales de la ansiedad, de la tristeza profunda y del riesgo de suicidio y actúe a tiempo con la línea 988, que acompañe los conflictos entre los jóvenes y sus padres sin tomar partido, que hable con claridad y con gracia de la sexualidad, del noviazgo y de las adicciones, y que conozca los límites de la confidencialidad, el deber de reportar el abuso de un menor en Texas (Código de Familia, sección 261.101) y cuándo derivar. No reemplaza la atención médica ni la psicológica, y lo legal es una guía general, no un consejo legal. Lleva a la práctica Cuidado y consejería básica (Nivel 3), sin repetirla. Su base es la palabra del sabio: «Como aguas profundas es el consejo en el corazón del hombre; Mas el hombre entendido lo alcanzará» (Proverbios 20:5).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el lugar del consejero de jóvenes, los cambios de la adolescencia y cuándo derivar.", bloom: "comprender" },
+      { id: "o2", texto: "Dirigir una conversación de consejería con un joven, escuchando y preguntando.", bloom: "aplicar" },
+      { id: "o3", texto: "Responder a un joven con ansiedad, tristeza profunda o riesgo de suicidio, buscando ayuda a tiempo.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar los conflictos entre un joven y sus padres, y actuar cuando la casa no es segura.", bloom: "aplicar" },
+      { id: "o5", texto: "Aconsejar sobre la sexualidad, el noviazgo y las adicciones con verdad y con gracia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los límites de la confidencialidad, el deber de reportar y la derivación.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 20:5 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La adolescencia, la consejería pastoral, las señales de riesgo, los recursos de ayuda y lo que pide la ley en Texas.",
+      ser: "Un consejero que escucha, guarda la confianza con sus límites y sabe pedir ayuda.",
+      hacer: "Conversar paso a paso, actuar ante el riesgo de suicidio, acompañar a las familias, reportar y derivar.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Manual para consejeros de jóvenes", editorial: "Mundo Hispano" },
+        { autor: "Tim Clinton y Chap Clark", titulo: "Consejería bíblica, tomo 3: manual de consulta sobre adolescentes", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+      { tipo: "guia", titulo: "Línea nacional de ayuda de SAMHSA: 1-800-662-4357", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/national-helpline" },
+    ],
+  },
+  disponible: true,
+};
+
+const LIDERAZGO_JUVENIL: MateriaDef = {
+  id: "juventud-4",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 4,
+  titulo: "Liderazgo juvenil",
+  resumen: "Cómo formar y ejercer el liderazgo en el ministerio juvenil: los jóvenes que Dios usó para guiar, liderar sirviendo, el carácter del líder joven, el equipo de liderazgo, la reunión de jóvenes y la charla, y la seguridad, la evaluación y la sucesión.",
+  base: "Josué 1:9; Marcos 10:43-45",
+  memoria: "Josué 1:9",
+  lecciones: lecciones("juventud-4", [
+    ["Jóvenes que Dios usó para guiar", "1 Samuel 17:33; 1 Samuel 17:45; Daniel 1:17; Ester 4:14"],
+    ["Liderar sirviendo", "Marcos 10:43-45; Juan 13:14-15; Filipenses 2:3-4"],
+    ["El carácter del líder joven", "1 Samuel 16:7; Proverbios 4:23; Tito 2:6-7; Proverbios 16:18; 1 Corintios 9:24-27"],
+    ["El equipo de liderazgo juvenil", "Nehemías 2:17-18; 1 Pedro 5:5; Hechos 15:37-39; 2 Timoteo 4:11"],
+    ["Planear y dirigir la reunión de jóvenes", "1 Corintios 14:26; Colosenses 3:16"],
+    ["Proteger, evaluar y pasar la posta", "Deuteronomio 31:7-8; Josué 1:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige el ministerio juvenil, y los jóvenes que empiezan a liderar, ejerzan el liderazgo como Jesús lo enseñó: que vean cómo Dios usó a jóvenes como David, Daniel y Ester, que lideren sirviendo, que cuiden el carácter antes que el talento, que formen un equipo de adultos y jóvenes con una visión compartida y segundas oportunidades, que planeen la reunión de jóvenes y preparen una charla, y que protejan a los menores en las salidas y los campamentos, evalúen el ministerio y preparen a los que vendrán después. Lleva al ministerio juvenil lo que enseñan Liderazgo cristiano I y Liderazgo II, sin repetirlas. Quién puede ejercer cada cargo en la iglesia es un punto de la declaración de fe por confirmar, y lo deciden sus pastores. Su base es la palabra de Dios a Josué: «Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo en dondequiera que vayas» (Josué 1:9).",
+    objetivos: [
+      { id: "o1", texto: "Describir cómo usó Dios a jóvenes para guiar, y reconocer a los jóvenes con potencial.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar el liderazgo de servicio que enseñó Jesús.", bloom: "aplicar" },
+      { id: "o3", texto: "Evaluar el carácter del líder joven por encima de su talento.", bloom: "evaluar" },
+      { id: "o4", texto: "Organizar un equipo de liderazgo juvenil y manejar sus desacuerdos.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear una reunión de jóvenes y preparar una charla corta.", bloom: "crear" },
+      { id: "o6", texto: "Organizar con seguridad las salidas y los campamentos, evaluar el ministerio y preparar la sucesión.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Josué 1:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El liderazgo bíblico, el carácter del líder, el trabajo en equipo, la reunión de jóvenes y la seguridad de las salidas.",
+      ser: "Un líder que sirve, cuida su corazón, da segundas oportunidades y prepara a otros.",
+      hacer: "Reconocer y formar líderes, planear reuniones y charlas, organizar campamentos seguros y pasar la posta.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Lucas Leys", titulo: "Lo que todo pastor debe saber de su líder de jóvenes", editorial: "Vida" },
+        { autor: "Doug Fields", titulo: "Ministerio de jóvenes con propósito", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "John C. Maxwell", titulo: "Las 21 leyes irrefutables del liderazgo", editorial: "Grupo Nelson" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=34biq4ivs5I", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Josué", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=49ggVrdBN_Y", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 13, el lavamiento de los pies", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=13" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const EVANGELISMO_JOVENES: MateriaDef = {
+  id: "juventud-5",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 5,
+  titulo: "Evangelismo entre jóvenes",
+  resumen: "Cómo alcanzar a los jóvenes con el evangelio: por qué los amigos llevan a los amigos a Jesús, el evangelio claro y el testimonio, la amistad y las conversaciones sobre la fe, la luz en la escuela y en las redes, los eventos y el seguimiento, y la perseverancia ante las dudas y el rechazo.",
+  base: "1 Corintios 9:22; Romanos 10:14",
+  memoria: "1 Corintios 9:22",
+  lecciones: lecciones("juventud-5", [
+    ["Por qué alcanzar a los jóvenes", "Romanos 10:14; Juan 1:40-42; 1 Corintios 9:22"],
+    ["El evangelio claro y el testimonio", "1 Corintios 15:3-4; Romanos 6:23; Efesios 2:8-9"],
+    ["Amistad y conversaciones sobre la fe", "Lucas 5:29-32; Proverbios 18:24; Colosenses 4:5"],
+    ["Luz en la escuela y en las redes", "Mateo 5:14-15; Filipenses 2:15; Daniel 6:10"],
+    ["Eventos, campamentos y seguimiento", "Hechos 2:41-42; Colosenses 2:6-7"],
+    ["Las dudas, el rechazo y la perseverancia", "Judas 1:22; Juan 20:27-28; Juan 16:8; 1 Corintios 3:6; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el ministerio juvenil alcance con el evangelio a los jóvenes que no conocen a Cristo: que los jóvenes creyentes vean a sus amigos como su campo misionero, que sepan explicar el evangelio con claridad y contar su testimonio, que compartan la fe en la amistad y en conversaciones sencillas, sin manipular, que sean luz en la escuela y en las redes, conociendo lo que permite la Ley de Igualdad de Acceso de 1984 en las escuelas públicas de los Estados Unidos, que preparen eventos evangelísticos que inviten sin presión y den seguimiento, y que perseveren ante las dudas y el rechazo. Lleva al mundo de los jóvenes lo que enseñan Compartir mi fe (Nivel 1) y Evangelismo personal (Nivel 2), sin repetirlas. Su base es la manera de Pablo: «a todos me he hecho de todo, para que de todos modos salve a algunos» (1 Corintios 9:22).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué los jóvenes creyentes son misioneros entre sus amigos.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el evangelio en cuatro partes y contar un testimonio de dos minutos.", bloom: "aplicar" },
+      { id: "o3", texto: "Llevar una conversación cotidiana hacia la fe, sin presionar ni manipular.", bloom: "aplicar" },
+      { id: "o4", texto: "Guiar a los jóvenes a ser luz en la escuela y en las redes, con lo que permite la ley.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear un evento evangelístico con una invitación clara y un seguimiento.", bloom: "crear" },
+      { id: "o6", texto: "Evaluar cómo perseverar ante las dudas y el rechazo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 9:22 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El evangelio, el testimonio, la amistad que evangeliza, los derechos de los estudiantes y el seguimiento de los nuevos creyentes.",
+      ser: "Un joven que ama a sus amigos, vive su fe sin esconderla y persevera sin presionar.",
+      hacer: "Orar por nombres, explicar el evangelio, iniciar conversaciones, formar clubes, planear eventos y dar seguimiento.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Rebecca Manley Pippert", titulo: "Sal: en un mundo cambiante, el evangelio sigue siendo relevante", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Rebecca McLaughlin", titulo: "10 preguntas que todo joven debe plantearse", editorial: "Andamio" },
+        { autor: "Lucas Leys", titulo: "El ministerio juvenil efectivo", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "¿Qué significa la palabra evangelio?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=AxGypH5Dy3I", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 1, los primeros que siguieron a Jesús", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -4294,7 +4563,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     EDUCACION_NINEZ, NINO_Y_SU_FE, METODOS_NINEZ, PROTECCION_MENORES, ORGANIZAR_NINEZ,
   ]),
   especialidad("juventud", "Juventud", "Discipular y liderar a la nueva generación.", [
-    ["Discipulado de jóvenes"], ["Cosmovisión cristiana y cultura"], ["Consejería juvenil", true], ["Liderazgo juvenil"], ["Evangelismo entre jóvenes"],
+    DISCIPULADO_JOVENES, COSMOVISION_CULTURA, CONSEJERIA_JUVENIL, LIDERAZGO_JUVENIL, EVANGELISMO_JOVENES,
   ]),
   especialidad("familia-consejeria", "Familia y consejería", "Acompañar matrimonios y familias con sabiduría bíblica y límites claros.", [
     ["Consejería matrimonial", true], ["Consejería familiar", true], ["Duelo y crisis"], ["Adicciones y restauración", true], ["Ética y límites del consejero"],
