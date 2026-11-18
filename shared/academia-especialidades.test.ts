@@ -277,8 +277,44 @@ test("Familia y consejería tiene sus cinco materias, con la medida del Nivel 3 
   assert.equal(familia.materias.length, 5);
 });
 
-test("las otras cinco especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria"].includes(x.id))) {
+test("Capellanía tiene sus cinco materias, con la medida del Nivel 3 y dos materias avanzadas", () => {
+  const capellania = ESPECIALIDADES.find((x) => x.id === "capellania")!;
+  const listas = capellania.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["capellania-1", "Fundamentos de la capellanía", "Mateo 25:36", 6, false],
+      ["capellania-2", "Capellanía hospitalaria", "Salmos 41:3", 6, true],
+      ["capellania-3", "Capellanía penitenciaria", "Hebreos 13:3", 6, true],
+      ["capellania-4", "Emergencias y desastres", "Salmos 46:1", 6, false],
+      ["capellania-5", "Marco legal y ético del capellán", "Hechos 24:16", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // las avanzadas piden el Nivel 3
+  for (const i of [1, 2]) assert.deepEqual(requisitosMateria(capellania.materias[i], [1, 2, 3]), [], capellania.materias[i].id);
+  // la sanidad sigue el artículo 11, y lo legal es una guía general, no un consejo legal
+  assert.match(listas[1].silabo!.proposito, /artículo 11/);
+  for (const i of [1, 2, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // la penitenciaria trae la ley RLUIPA, y el marco legal la regla 505 y lo que se reporta en Texas, comprobados
+  assert.match(listas[2].silabo!.proposito, /RLUIPA/);
+  assert.match(listas[4].silabo!.proposito, /regla 505/);
+  assert.match(listas[4].silabo!.proposito, /261\.101/);
+  assert.match(listas[4].silabo!.proposito, /48\.051/);
+  assert.equal(capellania.materias.length, 5);
+});
+
+test("las otras cuatro especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
