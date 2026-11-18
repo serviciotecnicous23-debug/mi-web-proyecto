@@ -3929,6 +3929,280 @@ const ETICA_LIMITES_CONSEJERO: MateriaDef = {
   disponible: true,
 };
 
+const FUNDAMENTOS_CAPELLANIA: MateriaDef = {
+  id: "capellania-1",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 1,
+  titulo: "Fundamentos de la capellanía",
+  resumen: "Qué es la capellanía y dónde sirve el capellán, el ministerio de la presencia, servir a personas de todas las creencias, el llamado y la formación del capellán, la visita paso a paso y el trabajo dentro de una institución.",
+  base: "Mateo 25:36; Jeremías 29:7",
+  memoria: "Mateo 25:36",
+  lecciones: lecciones("capellania-1", [
+    ["Qué es la capellanía", "Mateo 25:35-36; Mateo 25:40; Jeremías 29:7"],
+    ["El ministerio de la presencia", "Juan 1:14; Lucas 24:15; Mateo 28:20"],
+    ["Servir a personas de todas las creencias", "Hechos 17:22-23; 1 Pedro 3:15-16; Colosenses 4:5-6"],
+    ["El llamado y la formación del capellán", "Hechos 13:2-3; 2 Timoteo 2:15; 1 Timoteo 3:7"],
+    ["La visita del capellán paso a paso", "Santiago 1:19; Santiago 5:13-14; Hebreos 13:3"],
+    ["El capellán dentro de la institución", "Daniel 6:3-4; Tito 3:1-2; Colosenses 3:23"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que siente el llamado a la capellanía conozca su fundamento y su práctica: que entienda qué es un capellán, el ministro que la iglesia envía a los hospitales, las cárceles, las emergencias y otras instituciones para estar con las personas donde ellas están; que practique el ministerio de la presencia; que sirva con respeto a personas de todas las creencias, hablando de Cristo con mansedumbre cuando se lo piden y sin aprovecharse del dolor; que reciba el llamado, el aval de su iglesia y la formación que piden las instituciones (para la certificación profesional de la Asociación de Capellanes Profesionales: una maestría, cuatro unidades de educación pastoral clínica, el aval de su grupo de fe y 2,000 horas de experiencia); que sepa hacer una visita paso a paso; y que trabaje dentro de la institución con integridad, respetando sus normas y cuidando también al personal. Lleva a la capellanía lo que enseñan Cuidado y consejería básica (Nivel 3) y la especialidad Familia y consejería, sin repetirlas. Su base es la palabra de Jesús: «estuve desnudo, y me cubristeis; enfermo, y me visitasteis; en la cárcel, y vinisteis a mí» (Mateo 25:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la capellanía, dónde sirve el capellán y en qué se basa en la Biblia.", bloom: "comprender" },
+      { id: "o2", texto: "Practicar el ministerio de la presencia con la escucha que acompaña.", bloom: "aplicar" },
+      { id: "o3", texto: "Servir con respeto a personas de todas las creencias, sin aprovecharse de su dolor.", bloom: "aplicar" },
+      { id: "o4", texto: "Describir el llamado, el aval y la formación del capellán, y armar un plan para prepararse.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer una visita de capellanía paso a paso.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo trabaja el capellán dentro de una institución, con sus normas y su personal.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 25:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La base bíblica de la capellanía, los lugares donde sirve, el ministerio de la presencia, las muchas creencias de las instituciones, la formación del capellán y las normas institucionales.",
+      ser: "Un capellán presente, respetuoso e íntegro, que sirve a todos como a Cristo.",
+      hacer: "Visitar paso a paso, escuchar y acompañar, atender a personas de otra fe, prepararse con su iglesia y trabajar en equipo con la institución.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 25, el Rey que se identifica con los pequeños", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=25" },
+      { tipo: "guia", titulo: "Cómo se certifica un capellán profesional (en inglés)", fuente: "Board of Chaplaincy Certification Inc. (APC)", url: "https://www.apchaplains.org/bcci-site/becoming-certified/" },
+    ],
+  },
+  disponible: true,
+};
+
+const CAPELLANIA_HOSPITALARIA: MateriaDef = {
+  id: "capellania-2",
+  nivel: null,
+  especialidad: "capellania",
+  avanzada: true,
+  orden: 2,
+  titulo: "Capellanía hospitalaria",
+  resumen: "Cómo servir como capellán en un hospital: el enfermo y el equipo del hospital, orar por los enfermos según la declaración de fe, las normas de privacidad y de higiene, acompañar al que muere y a su familia, las pérdidas de los niños y de las madres, y las decisiones difíciles con el cuidado del personal.",
+  base: "Salmos 41:3; Mateo 25:36",
+  memoria: "Salmos 41:3",
+  lecciones: lecciones("capellania-2", [
+    ["El enfermo y el hospital", "Marcos 1:40-41; Salmos 41:3; 2 Corintios 4:16"],
+    ["Orar por los enfermos", "Santiago 5:14-15; 2 Reyes 20:5; 2 Corintios 12:8-9; 1 Timoteo 5:23"],
+    ["Las normas del hospital: privacidad, cuidados y orden", "1 Corintios 14:40; Proverbios 11:13; Filipenses 2:4"],
+    ["Acompañar al que muere y a su familia", "Salmos 23:4; Juan 14:1-3; Lucas 23:42-43; 2 Timoteo 4:6-8"],
+    ["Las pérdidas de los niños y de las madres", "Mateo 19:14; Salmos 139:13; Salmos 139:16; Isaías 49:15-16"],
+    ["Las decisiones difíciles y el cuidado del personal", "Eclesiastés 3:1-2; Filipenses 1:21-23; Proverbios 11:14; Gálatas 6:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán sepa servir en un hospital: que comprenda lo que vive el enfermo y trabaje con el equipo sin dar noticias médicas; que ore por los enfermos según la declaración de fe del ministerio, que enseña que Dios sana hoy en respuesta a la oración de fe y que buscar su sanidad no se opone a la atención médica (artículo 11), sin prometer ni culpar (si la sanidad está en la expiación es un punto de la declaración de fe por confirmar); que respete las normas de privacidad, pues la ley HIPAA permite al hospital dar al clero el nombre, el lugar, el estado general y la afiliación religiosa del paciente si este no se opuso, y las de higiene; que acompañe al que muere y a su familia, conociendo los cuidados paliativos, el hospicio y la Ley de Voluntades Anticipadas de Texas (Código de Salud y Seguridad, capítulo 166); que acompañe a los padres que pierden un hijo o un embarazo; y que acompañe las decisiones difíciles sin decidir por la familia, cuidando también al personal. No reemplaza al equipo médico, y lo legal es una guía general, no un consejo legal. Se apoya en Fundamentos de la capellanía y lleva al hospital lo que enseña Duelo y crisis, sin repetirlas. Su base es la promesa del salmo: «Jehová lo sustentará sobre el lecho del dolor; Mullirás toda su cama en su enfermedad» (Salmos 41:3).",
+    objetivos: [
+      { id: "o1", texto: "Describir lo que vive el enfermo y el lugar del capellán en el equipo del hospital.", bloom: "comprender" },
+      { id: "o2", texto: "Orar por los enfermos según la declaración de fe, con fe y con humildad.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar las normas de privacidad, de higiene y de orden del hospital.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar al que muere y a su familia, y explicar los cuidados paliativos y las voluntades anticipadas.", bloom: "aplicar" },
+      { id: "o5", texto: "Acompañar a los padres ante la enfermedad grave o la pérdida de un hijo o de un embarazo.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo acompañar una decisión difícil sin decidir por la familia, y cómo cuidar al personal.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 41:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La experiencia del enfermo, el equipo del hospital, la sanidad divina según la declaración de fe, la privacidad de la salud, los cuidados paliativos, el hospicio y las voluntades anticipadas de Texas.",
+      ser: "Un capellán compasivo y ordenado, que ora con fe y con humildad y respeta el trabajo del equipo médico.",
+      hacer: "Visitar en la sala y en cuidados intensivos, orar por los enfermos, acompañar a los que mueren y a sus familias, y acompañar las pérdidas de un bebé y las decisiones difíciles.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Henri J. M. Nouwen", titulo: "El sanador herido", editorial: "PPC" },
+        { autor: "C. S. Lewis", titulo: "El problema del dolor", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2): la última cena, la cruz y la resurrección", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmo 23, el Señor es mi pastor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=23" },
+      { tipo: "guia", titulo: "Los hospitales y el clero: lo que permite la ley de privacidad HIPAA (en inglés)", fuente: "Departamento de Salud y Servicios Humanos (HHS)", url: "https://www.hhs.gov/hipaa/for-professionals/faq/357/are-hospitals-able-to-inform-the-clergy-about-parishioners-in-the-hospital/index.html" },
+    ],
+  },
+  disponible: true,
+};
+
+const CAPELLANIA_PENITENCIARIA: MateriaDef = {
+  id: "capellania-3",
+  nivel: null,
+  especialidad: "capellania",
+  avanzada: true,
+  orden: 3,
+  titulo: "Capellanía penitenciaria",
+  resumen: "Cómo servir como capellán o voluntario en una cárcel o una prisión: lo que vive el preso, el evangelio tras las rejas con la libertad religiosa, la culpa, el perdón y la justicia sin olvidar a las víctimas, las familias de los presos, la prudencia y los límites que protegen a todos, y el regreso a la comunidad.",
+  base: "Hebreos 13:3; Mateo 25:36",
+  memoria: "Hebreos 13:3",
+  lecciones: lecciones("capellania-3", [
+    ["La cárcel y el preso", "Génesis 39:20-23; Salmos 102:19-20; Hebreos 13:3"],
+    ["El evangelio tras las rejas", "Hechos 16:25-26; Hechos 16:30-31; Filipenses 1:12-14; 2 Timoteo 2:9"],
+    ["La culpa, el perdón y la justicia", "Lucas 23:40-41; Lucas 23:42-43; Filemón 1:15-18; Miqueas 6:8"],
+    ["Las familias de los presos", "Salmos 68:5-6; Isaías 1:17; Salmos 146:7"],
+    ["Prudencia, límites y seguridad", "Mateo 10:16; Proverbios 14:15; 2 Corintios 8:21"],
+    ["El regreso a la comunidad", "Hechos 9:26-27; Filemón 1:10-11; Filemón 1:15-18"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán y el voluntario sepan servir en una cárcel o una prisión: que comprendan lo que vive el preso, la diferencia entre la cárcel del condado y la prisión del estado, y que Dios está con los presos, como estuvo con José; que lleven el evangelio tras las rejas dentro de las reglas, sabiendo que la ley federal RLUIPA protege la práctica religiosa de los presos (la Corte Suprema la confirmó en Cutter v. Wilkinson, en 2005) y que en Texas el sistema penitenciario (TDCJ) pide a sus voluntarios tener al menos 18 años, pasar una revisión de antecedentes, capacitarse y renovar cada dos años; que distingan el perdón de Dios de las consecuencias del delito, sin olvidar a las víctimas; que acompañen a las familias de los presos y a sus hijos, también con el programa Angel Tree de Prison Fellowship; que sirvan con prudencia y con límites claros, sin dejarse manipular y avisando lo que pone vidas en peligro; y que la iglesia reciba al que sale de la cárcel con un mentor, con ayuda práctica y con prudencia. Lo legal es una guía general, no un consejo legal. Se apoya en Fundamentos de la capellanía y lleva a la cárcel lo que enseña la especialidad Familia y consejería, sin repetirlas. Su base es la palabra de Hebreos: «Acordaos de los presos, como si estuvierais presos juntamente con ellos; y de los maltratados, como que también vosotros mismos estáis en el cuerpo» (Hebreos 13:3).",
+    objetivos: [
+      { id: "o1", texto: "Describir lo que vive una persona presa y explicar que Dios está con los presos.", bloom: "comprender" },
+      { id: "o2", texto: "Llevar el evangelio a la cárcel dentro de las reglas, respetando la libertad religiosa de cada preso.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir el perdón de Dios de las consecuencias del delito, sin olvidar a las víctimas.", bloom: "analizar" },
+      { id: "o4", texto: "Acompañar a las familias de los presos y a sus hijos.", bloom: "aplicar" },
+      { id: "o5", texto: "Servir en la cárcel con prudencia y con límites claros, sin dejarse manipular.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo recibe la iglesia a una persona que sale de la cárcel.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hebreos 13:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La vida en la cárcel y en la prisión, la presencia de Dios con los presos, la libertad religiosa, las reglas de los voluntarios en Texas, el perdón y las consecuencias del delito, las familias de los presos y el regreso a la comunidad.",
+      ser: "Un capellán compasivo y prudente, que se acuerda de los presos sin ingenuidad y une la justicia con la misericordia.",
+      hacer: "Visitar a un preso, dirigir un estudio bíblico en la cárcel, acompañar la culpa y el arrepentimiento, apoyar a las familias, poner límites y preparar el regreso de los que salen.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Corrie ten Boom, con John y Elizabeth Sherrill", titulo: "El refugio secreto", editorial: "Ediciones Palabra" },
+        { autor: "Lennie Spitale", titulo: "Prison Ministry: Understanding Jail and Prison Culture (en inglés)", editorial: "Wheaton College Billy Graham Center Institute" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "video", titulo: "Evangelio de Lucas 19 a 23", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=KBE2nLYyCdc", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Filemón, el esclavo que volvió como hermano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Filemon&cap=1" },
+      { tipo: "guia", titulo: "Cómo ser voluntario en las prisiones de Texas (en inglés)", fuente: "Departamento de Justicia Criminal de Texas (TDCJ)", url: "https://tdcj.texas.gov/divisions/cvsd/volunteer.html" },
+    ],
+  },
+  disponible: true,
+};
+
+const EMERGENCIAS_DESASTRES: MateriaDef = {
+  id: "capellania-4",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 4,
+  titulo: "Emergencias y desastres",
+  resumen: "Cómo servir como capellán en las emergencias y los desastres: dónde sirve y cómo trabaja dentro de un equipo, la primera ayuda psicológica, la fe en medio del desastre sin culpar a las víctimas, el aviso de una muerte, el cuidado de los niños y de los más vulnerables, y el cuidado del que ayuda con la preparación de la iglesia.",
+  base: "Salmos 46:1; Isaías 43:2",
+  memoria: "Salmos 46:1",
+  lecciones: lecciones("capellania-4", [
+    ["El capellán en las emergencias", "Salmos 46:1-3; Isaías 43:2; Lucas 10:33-34"],
+    ["La primera ayuda psicológica", "1 Reyes 19:5-7; Hechos 27:33-36; Santiago 2:15-16"],
+    ["La fe en medio del desastre", "Lucas 13:4-5; Job 2:11-13; Lamentaciones 3:22-23"],
+    ["Avisar una muerte y acompañar a la familia", "Juan 11:33-35; Romanos 12:15; Proverbios 25:20"],
+    ["Los niños y los más vulnerables", "Marcos 10:14-16; Isaías 40:11; Levítico 19:34"],
+    ["Cuidar al que cuida y preparar a la iglesia", "2 Corintios 1:3-4; Marcos 6:31; Éxodo 18:17-18; Proverbios 22:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán sepa servir en las emergencias y los desastres: que conozca dónde sirve el capellán de emergencias, con los bomberos, la policía y los paramédicos y en los albergues, y que nunca llegue por su cuenta, pues FEMA pide a los voluntarios unirse antes a una organización reconocida; que dé la primera ayuda psicológica que enseña la Organización Mundial de la Salud (observar, escuchar y conectar), atendiendo primero lo básico; que acompañe la fe en medio del desastre sin culpar a las víctimas, como enseñó Jesús con la torre de Siloé; que acompañe el aviso de una muerte en persona, a tiempo, en pareja, con palabras claras y con compasión; que cuide a los niños y a los más vulnerables; y que cuide su propia vida y prepare a la iglesia para servir antes, durante y después del desastre. No reemplaza la capacitación de cada departamento ni a los profesionales de la salud mental. Se apoya en Fundamentos de la capellanía y lleva a las emergencias lo que enseña Duelo y crisis, sin repetirlas. Su base es la confesión del salmo: «Dios es nuestro amparo y fortaleza, Nuestro pronto auxilio en las tribulaciones» (Salmos 46:1).",
+    objetivos: [
+      { id: "o1", texto: "Explicar dónde sirve el capellán en las emergencias, y servir dentro de un equipo sin llegar por su cuenta.", bloom: "comprender" },
+      { id: "o2", texto: "Dar la primera ayuda psicológica: observar, escuchar y conectar.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar la fe en medio del desastre sin culpar a las víctimas.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar el aviso de una muerte en persona, a tiempo, en pareja, con palabras claras y con compasión.", bloom: "aplicar" },
+      { id: "o5", texto: "Cuidar a los niños y a los más vulnerables después de un desastre.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el cuidado del que ayuda y el plan de la iglesia para los desastres.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 46:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los lugares donde sirve el capellán de emergencias, la guía de FEMA para los voluntarios, la primera ayuda psicológica de la OMS, el sufrimiento y la fe, los principios para avisar una muerte, las reacciones de los niños y la preparación para los desastres.",
+      ser: "Un capellán sereno y compasivo, que confía en Dios en medio de la tribulación y sirve dentro del equipo.",
+      hacer: "Servir en un incendio o en un albergue, dar la primera ayuda psicológica, acompañar el aviso de una muerte, cuidar a los niños y a los más débiles, cuidarse a sí mismo y preparar a la iglesia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "Organización Mundial de la Salud, War Trauma Foundation y Visión Mundial Internacional", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", editorial: "Organización Mundial de la Salud" },
+      ],
+      complementaria: [
+        { autor: "Philip Yancey", titulo: "Dónde está Dios cuando duele", editorial: "Peniel" },
+        { autor: "C. S. Lewis", titulo: "El problema del dolor", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de la historia de Job: ¿por qué la vida de Job se volvió tan difícil?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=_AIvRQj8kHs", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmo 46, Dios es nuestro amparo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=46" },
+      { tipo: "guia", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", fuente: "Organización Mundial de la Salud", url: "https://www.who.int/es/publications/i/item/9789241548205" },
+      { tipo: "guia", titulo: "Línea de Ayuda para los Afectados por Catástrofes, con atención en español", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/disaster-distress-helpline/espanol" },
+    ],
+  },
+  disponible: true,
+};
+
+const MARCO_LEGAL_CAPELLAN: MateriaDef = {
+  id: "capellania-5",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 5,
+  titulo: "Marco legal y ético del capellán",
+  resumen: "El marco legal y ético del capellán: la libertad religiosa y su lugar en las instituciones públicas, lo que se le cuenta en confianza y sus límites en Texas, la integridad con el dinero y con el trato, los registros y la privacidad en las redes, el aval, la supervisión y el código de ética, y qué hacer cuando la ley y la conciencia chocan.",
+  base: "Hechos 24:16; Romanos 13:1",
+  memoria: "Hechos 24:16",
+  lecciones: lecciones("capellania-5", [
+    ["La libertad religiosa y el lugar del capellán", "Mateo 22:21; Romanos 13:1; 1 Timoteo 2:1-2"],
+    ["Lo que se le cuenta al capellán", "Proverbios 11:13; Santiago 5:16; Proverbios 31:8-9"],
+    ["La integridad del capellán", "Hechos 20:33-35; 1 Pedro 5:2-3; 2 Corintios 8:20-21"],
+    ["Los registros, la privacidad y las redes", "Lucas 16:10; Proverbios 10:19; Efesios 4:29"],
+    ["El aval, la supervisión y el código de ética", "Hebreos 13:17; Gálatas 6:1; Proverbios 27:17"],
+    ["Cuando la ley y la conciencia chocan", "Hechos 4:19-20; Daniel 6:10; 1 Timoteo 1:5"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán conozca el marco legal y ético de su servicio: que entienda que la Primera Enmienda no permite una religión oficial y protege la libre práctica de la fe, y que por eso hay capellanes donde las personas no pueden ir a su iglesia (así lo reconoció el caso Katcoff v. Marsh en 1985), donde el capellán sirve a todos, realiza lo que su fe le permite y facilita lo demás; que guarde lo que le confían, sabiendo que en Texas la regla 505 de las Reglas de Evidencia protege lo que se le dice al clero como consejero espiritual, pero que el clero también debe reportar enseguida el abuso de un niño (Código de Familia, sección 261.101) y el de una persona mayor o con discapacidad (Código de Recursos Humanos, sección 48.051); que cuide su integridad con el dinero, los regalos y el trato; que escriba en los registros solo lo necesario y proteja la privacidad en las redes; que rinda cuentas con el aval de su iglesia, la supervisión y el código de ética de su asociación; y que, cuando la ley y la conciencia chocan, obedezca a Dios antes que a los hombres, con respeto. Lo legal es una guía general, no un consejo legal. Lleva al capellán lo que enseña Ética y límites del consejero, sin repetirla. Su base es la palabra de Pablo: «Y por esto procuro tener siempre una conciencia sin ofensa ante Dios y ante los hombres» (Hechos 24:16).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo protege la Primera Enmienda la libertad religiosa, y servir a todos en una institución pública.", bloom: "comprender" },
+      { id: "o2", texto: "Decidir qué guarda y qué reporta el capellán, según la ley de Texas.", bloom: "aplicar" },
+      { id: "o3", texto: "Cuidar la integridad con el dinero, los regalos, el trato y los papeles dobles.", bloom: "aplicar" },
+      { id: "o4", texto: "Escribir registros breves y proteger la privacidad de las personas en las conversaciones y en las redes.", bloom: "aplicar" },
+      { id: "o5", texto: "Explicar el aval, la supervisión y el código de ética, y responder cuando un compañero cruza un límite.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cuándo se obedece una norma y cuándo se obedece a Dios antes que a los hombres.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hechos 24:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La Primera Enmienda y el lugar del capellán, la regla 505 de Texas y los deberes de reportar, la integridad ministerial, la privacidad de los registros y de las redes, el aval y los códigos de ética, y la objeción de conciencia.",
+      ser: "Un capellán íntegro y transparente, que respeta la ley y la fe de los demás, y cuida una conciencia sin ofensa ante Dios y ante los hombres.",
+      hacer: "Servir a personas de todas las creencias, guardar y reportar lo que corresponde, rechazar el dinero y los favores, escribir registros breves, rendir cuentas y responder con respeto a una orden que va contra su conciencia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+      ],
+      complementaria: [
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Daniel 6, fiel aun ante el edicto del rey", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Daniel&cap=6" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Código de ética de la Asociación de Capellanes Profesionales (en inglés)", fuente: "Association of Professional Chaplains", url: "https://www.apchaplains.org/wp-content/uploads/2022/06/APC-Code-of-Ethics.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -4852,7 +5126,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Evangelismo en redes"], ["Radio cristiana"], ["Video y transmisiones"], ["Redacción y comunicación"], ["Ética y seguridad digital"],
   ]),
   especialidad("capellania", "Capellanía", "Servir en hospitales, cárceles y emergencias.", [
-    ["Fundamentos de la capellanía"], ["Capellanía hospitalaria", true], ["Capellanía penitenciaria", true], ["Emergencias y desastres"], ["Marco legal y ético del capellán"],
+    FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],

@@ -214,6 +214,42 @@ const TRABAJO_FAMILIA: ClaveEscrita = {
     "Cada trimestre evaluaremos el plan con el pastor: cuántas parejas hicieron la consejería prematrimonial, cuántas familias en duelo fueron acompañadas, cuántas personas siguen en el grupo de recuperación, si la política se cumple y cómo están los consejeros, y cambiaremos lo que haga falta.",
 };
 
+const TRABAJO_CAPELLANIA: ClaveEscrita = {
+  id: "trabajo-capellania",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para un ministerio de capellanía en tu iglesia que use lo aprendido en las cinco materias de la especialidad: cómo formarás y enviarás a los capellanes y cómo harán sus visitas; cómo servirán en los hospitales; cómo servirán en las cárceles y a las familias de los presos; cómo servirán en las emergencias y los desastres; y qué marco legal y ético seguirán, con sus límites y su rendición de cuentas. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "fundamentos", peso: 15, texto: "Formar y enviar a los capellanes: el llamado, el aval, la formación y la presencia en la visita.", formas: ["aval", "presencia", "llamado", "formacion", "capacitacion", "certificacion"] },
+    { id: "hospital", peso: 20, texto: "Servir en los hospitales: orar por los enfermos, la privacidad, el que muere y su familia.", formas: ["hospital*", "enfermo*", "cuidados paliativos", "hipaa", "hospicio"] },
+    { id: "carcel", peso: 20, texto: "Servir en las cárceles y a las familias de los presos, con prudencia, y recibir a los que salen.", formas: ["carcel*", "prision*", "presos", "angel tree", "salen libres", "salen de la carcel"] },
+    { id: "emergencias", peso: 20, texto: "Servir en las emergencias con una organización, con la primera ayuda psicológica y el aviso de una muerte.", formas: ["emergencia*", "desastre*", "primera ayuda", "huracan*", "inundacion*", "bomberos"] },
+    { id: "etica", peso: 15, texto: "El marco legal y ético: la libertad religiosa, la confidencialidad y sus límites, la integridad y la rendición de cuentas.", formas: ["confidencialidad", "report*", "libertad religiosa", "integridad", "codigo de etica", "rendir cuentas", "rendiran cuentas"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Mateo 25:36", "Mateo 25:35-36", "Jeremías 29:7", "Juan 1:14", "Lucas 24:15", "1 Pedro 3:15", "Hechos 13:2", "2 Timoteo 2:15",
+    "Santiago 1:19", "Santiago 5:14", "Daniel 6:4", "Salmos 41:3", "Marcos 1:41", "Santiago 5:15", "Salmos 23:4", "Juan 14:2",
+    "Salmos 139:16", "Isaías 49:15", "Gálatas 6:2", "Hebreos 13:3", "Génesis 39:21", "Hechos 16:25", "2 Timoteo 2:9", "Lucas 23:43",
+    "Miqueas 6:8", "Salmos 68:5", "Isaías 1:17", "Mateo 10:16", "Hechos 9:27", "Filemón 1:17", "Salmos 46:1", "Isaías 43:2",
+    "Lucas 10:34", "1 Reyes 19:7", "Lucas 13:5", "Job 2:13", "Juan 11:35", "Romanos 12:15", "Marcos 10:16", "2 Corintios 1:4",
+    "Marcos 6:31", "Éxodo 18:18", "Proverbios 22:3", "Hechos 24:16", "Mateo 22:21", "Romanos 13:1", "Proverbios 11:13",
+    "Proverbios 31:8", "Hechos 20:33", "Lucas 16:10", "Hebreos 13:17", "Hechos 5:29",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para el ministerio de capellanía de nuestra iglesia. Su base es la palabra de Jesús: enfermo, y me visitasteis; en la cárcel, y vinisteis a mí (Mateo 25:36). " +
+    "Primero, los capellanes. Buscaremos a hermanos con el llamado confirmado, como Bernabé y Saulo (Hechos 13:2), y la iglesia les dará su aval por escrito. Cada mes tendrán formación: el ministerio de la presencia, escuchar más que hablar, porque debemos ser prontos para oír (Santiago 1:19), servir con respeto a personas de todas las creencias y hacer una visita paso a paso. Los que quieran servir como profesionales seguirán el camino de la certificación, y todos harán la capacitación que pida cada institución. " +
+    "Segundo, los hospitales. Un equipo visitará cada semana el hospital del condado, de acuerdo con su capellanía. Orarán por los enfermos con fe, porque Dios sana hoy en respuesta a la oración de fe (Santiago 5:15), sin prometer ni culpar a nadie. Cuidarán la privacidad que protege la ley HIPAA, se lavarán las manos en cada visita y acompañarán a los que mueren y a sus familias con el Salmo 23, aunque andemos en valle de sombra de muerte (Salmos 23:4), conociendo los cuidados paliativos y el hospicio. A los padres que pierdan un bebé los acompañaremos con ternura (Isaías 49:15), y en las decisiones difíciles acompañaremos sin decidir por la familia. " +
+    "Tercero, las cárceles. Nos acordaremos de los presos como si estuviéramos presos con ellos (Hebreos 13:3). Los voluntarios harán la capacitación y la revisión de antecedentes del sistema penitenciario, y tendremos un estudio bíblico cada semana con el capellán de la unidad, porque la palabra de Dios no está presa (2 Timoteo 2:9). Acompañaremos la culpa con el perdón de Cristo, recordando que la sentencia sigue y que hay víctimas (Miqueas 6:8); ayudaremos a las familias de los presos y, en Navidad, a sus hijos con el programa Angel Tree; enseñaremos a ser prudentes como serpientes y sencillos como palomas (Mateo 10:16); y recibiremos a los que salen de la cárcel con un mentor, como Bernabé recibió a Saulo (Hechos 9:27). " +
+    "Cuarto, las emergencias. Nos uniremos a una organización de ayuda para no ir por nuestra cuenta, y los capellanes se reportarán con quien esté a cargo. En los albergues darán la primera ayuda psicológica: observar, escuchar y conectar, empezando por lo básico, como el ángel con Elías (1 Reyes 19:7). No culparemos a las víctimas, porque Jesús enseñó que los de la torre de Siloé no eran más culpables (Lucas 13:5). Si hay que avisar una muerte, el capellán acompañará a la autoridad en persona, con palabras claras y con compasión, llorando con los que lloran (Romanos 12:15). Buscaremos a los niños y a los más débiles, y cuidaremos a los voluntarios con turnos y descanso, porque nadie puede hacerlo solo (Éxodo 18:18). La iglesia tendrá su plan de emergencia, porque el avisado ve el mal y se esconde (Proverbios 22:3). " +
+    "Quinto, el marco legal y ético. Respetaremos la libertad religiosa: los capellanes servirán a todos, realizarán lo que su fe les permite y facilitarán lo demás, sin presionar a nadie (Mateo 22:21). Guardarán la confidencialidad con sus límites: lo que se les confía como consejeros espirituales se guarda, pero reportarán enseguida el abuso de un niño, de una persona mayor o con discapacidad, como pide la ley en Texas (Proverbios 31:8). Cuidarán su integridad sin recibir dinero ni regalos de valor (Hechos 20:33), escribirán registros breves y no publicarán fotos ni historias sin permiso. Rendirán cuentas con el aval de la iglesia, la supervisión de cada institución y el código de ética, y si alguna vez les ordenan pecar, obedecerán a Dios antes que a los hombres, con respeto (Hechos 5:29), procurando tener siempre una conciencia sin ofensa ante Dios y ante los hombres (Hechos 24:16). " +
+    "Cada trimestre evaluaremos el plan con el pastor: cuántos capellanes tienen su aval y su capacitación, cuántas visitas se hicieron en los hospitales y en las cárceles, cuántas familias de presos y cuántas personas que salieron de la cárcel acompañamos, si estamos listos para la próxima emergencia y cómo están los capellanes, y cambiaremos lo que haga falta.",
+};
+
 /** El trabajo final de cada especialidad que ya lo tiene. */
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
@@ -223,4 +259,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["ninez", TRABAJO_NINEZ],
   ["juventud", TRABAJO_JUVENTUD],
   ["familia-consejeria", TRABAJO_FAMILIA],
+  ["capellania", TRABAJO_CAPELLANIA],
 ]);
