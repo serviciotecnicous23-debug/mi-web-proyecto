@@ -3652,6 +3652,283 @@ const EVANGELISMO_JOVENES: MateriaDef = {
   disponible: true,
 };
 
+const CONSEJERIA_MATRIMONIAL: MateriaDef = {
+  id: "familia-consejeria-1",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 1,
+  titulo: "Consejería matrimonial",
+  resumen: "Cómo acompañar a los matrimonios con la Palabra: el diseño de Dios y el lugar del consejero, la consejería prematrimonial, la comunicación y los conflictos, la infidelidad, el perdón y la restauración, la violencia en el hogar y el cuidado de los matrimonios en cada etapa.",
+  base: "Mateo 19:4-6; Efesios 5:25",
+  memoria: "Mateo 19:6",
+  lecciones: lecciones("familia-consejeria-1", [
+    ["El matrimonio según Dios y el consejero", "Génesis 2:18; Mateo 19:4-6; Efesios 5:25; Efesios 5:33"],
+    ["La consejería prematrimonial", "Amós 3:3; 2 Corintios 6:14; Hebreos 13:4"],
+    ["La comunicación y los conflictos", "Efesios 4:26; Efesios 4:29; Efesios 4:31-32"],
+    ["La infidelidad, el perdón y la restauración", "Oseas 3:1; Colosenses 3:13; Mateo 19:9; 1 Corintios 7:15"],
+    ["La violencia en el hogar", "Colosenses 3:19; 1 Pedro 3:7; Salmos 11:5"],
+    ["Acompañar a los matrimonios en cada etapa", "Eclesiastés 4:12; Cantares 8:7; Tito 2:3-5"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a los matrimonios con la Palabra y con prudencia: que conozca el diseño de Dios para el matrimonio, un pacto de amor y fidelidad entre un hombre y una mujer para toda la vida, según la declaración de fe del ministerio (artículo 14), y el lugar del consejero, que escucha a los dos sin tomar partido y deriva cuando hace falta; que prepare a los novios con una consejería prematrimonial; que ayude a los esposos a comunicarse y a resolver sus conflictos sin herirse; que acompañe con verdad y esperanza a los matrimonios heridos por la infidelidad, y presente con respeto lo que enseña la Biblia sobre el divorcio, dejando cada caso a los pastores; que ante la violencia en el hogar ponga primero la seguridad de la víctima, con el 911, la Línea Nacional sobre la Violencia Doméstica (1-800-799-7233) y el deber de reportar el maltrato de un menor en Texas (Código de Familia, sección 261.101), sin proponer consejería de pareja mientras haya violencia; y que cuide a los matrimonios en cada etapa con matrimonios mentores. No reemplaza la terapia ni la atención profesional, y lo legal es una guía general, no un consejo legal. Lleva a la consejería lo que enseñan Familia y relaciones (Nivel 2) y Cuidado y consejería básica (Nivel 3), sin repetirlas. Su base es la palabra de Jesús: «Así que no son ya más dos, sino una sola carne; por tanto, lo que Dios juntó, no lo separe el hombre» (Mateo 19:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el diseño de Dios para el matrimonio, el lugar del consejero de la iglesia y cuándo derivar.", bloom: "comprender" },
+      { id: "o2", texto: "Preparar a una pareja para el matrimonio con una consejería prematrimonial.", bloom: "aplicar" },
+      { id: "o3", texto: "Ayudar a un matrimonio a comunicarse y a resolver sus conflictos sin herirse.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar a un matrimonio herido por la infidelidad en un camino de perdón y restauración.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a la violencia en el hogar poniendo primero la seguridad de la víctima.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar el cuidado de los matrimonios en cada etapa, con matrimonios mentores.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 19:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El diseño bíblico del matrimonio, los temas de la consejería prematrimonial, la comunicación y el conflicto, la restauración después de la infidelidad, las señales de la violencia en el hogar y los recursos de ayuda.",
+      ser: "Un consejero que escucha a los dos, no toma partido, guarda la confianza con sus límites y pone primero la seguridad.",
+      hacer: "Preparar a los novios, acompañar los conflictos y la restauración, responder a la violencia con un plan de seguridad y organizar matrimonios mentores.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller y Kathy Keller", titulo: "El significado del matrimonio: cómo enfrentar las dificultades del compromiso con la sabiduría de Dios", editorial: "B&H Español" },
+        { autor: "Tim Clinton y John Trent", titulo: "Consejería bíblica, tomo 2: manual de consulta sobre el matrimonio y la familia", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary Chapman", titulo: "Los cinco lenguajes del amor", editorial: "Unilit" },
+        { autor: "Emerson Eggerichs", titulo: "Amor y respeto", editorial: "Grupo Nelson" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Efesios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yJgym5MGzM4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Eclesiastés", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=X4Brf1Z8N4E", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Efesios 5, el amor de Cristo en el matrimonio", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=5" },
+      { tipo: "guia", titulo: "Línea Nacional sobre la Violencia Doméstica: 1-800-799-7233, o escribe START al 88788", fuente: "The National Domestic Violence Hotline", url: "https://espanol.thehotline.org/" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_FAMILIAR: MateriaDef = {
+  id: "familia-consejeria-2",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 2,
+  titulo: "Consejería familiar",
+  resumen: "Cómo acompañar a las familias con la Palabra: la familia según Dios y el consejero familiar, la crianza con amor y con límites, los adolescentes y los hijos adultos, las familias ensambladas y los que crían solos, las crisis de la familia y el perdón y la reconciliación.",
+  base: "Malaquías 4:6; Deuteronomio 6:6-7",
+  memoria: "Malaquías 4:6",
+  lecciones: lecciones("familia-consejeria-2", [
+    ["La familia según Dios y el consejero familiar", "Salmos 127:1; Deuteronomio 6:6-7; Josué 24:15; Proverbios 24:3-4"],
+    ["Padres e hijos: criar con amor y con límites", "Efesios 6:1-4; Colosenses 3:21; Proverbios 22:6; Hebreos 12:11"],
+    ["Los adolescentes y los hijos adultos", "Lucas 2:48-52; Éxodo 20:12; Lucas 15:20"],
+    ["Las familias ensambladas y los que crían solos", "Salmos 68:5-6; Rut 1:16; Santiago 1:27"],
+    ["Las crisis de la familia", "Salmos 46:1; 2 Corintios 1:3-4; Rut 1:1; Mateo 2:14"],
+    ["El perdón y la reconciliación en la familia", "Génesis 45:4-5; Génesis 50:20-21; Lucas 15:28-32; Romanos 12:18; Malaquías 4:6"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a las familias con la Palabra y con prudencia: que conozca el propósito de Dios para la familia, que pasa la fe a los hijos en la vida diaria, y que mire a la familia entera sin buscar un culpable; que ayude a los padres a criar con amor y con límites, sabiendo que la disciplina nunca es maltrato y que el maltrato de un niño se reporta como pide la ley en Texas (Código de Familia, sección 261.101); que acompañe a los padres de adolescentes y de hijos adultos; que sostenga a las familias ensambladas y a los que crían solos; que esté presente en las crisis de la familia, también en las de la migración, y oriente a buscar una ayuda legal segura (según USCIS, un abogado o un representante acreditado, nunca un notario); y que prepare el camino del perdón y de la reconciliación sin poner en peligro a nadie. No reemplaza la terapia familiar profesional, y lo legal es una guía general, no un consejo legal. Lleva a la consejería lo que enseñan Familia y relaciones (Nivel 2) y Cuidado y consejería básica (Nivel 3), sin repetirlas. Su base es la promesa de Dios: «El hará volver el corazón de los padres hacia los hijos, y el corazón de los hijos hacia los padres» (Malaquías 4:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el propósito de Dios para la familia y cómo mira el consejero a la familia entera.", bloom: "comprender" },
+      { id: "o2", texto: "Ayudar a unos padres a criar con amor y con límites, y reconocer cuándo hay maltrato.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar los conflictos con los hijos adolescentes y la relación con los hijos adultos.", bloom: "aplicar" },
+      { id: "o4", texto: "Aconsejar a una familia ensamblada y organizar el apoyo de la iglesia a los que crían solos.", bloom: "aplicar" },
+      { id: "o5", texto: "Acompañar paso a paso a una familia en crisis, con una ayuda segura.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y preparar un camino de perdón y de reconciliación en una familia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Malaquías 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El propósito de Dios para la familia, las maneras de criar, las etapas de los hijos, los desafíos de las familias ensambladas, las crisis de la familia y los recursos de ayuda segura.",
+      ser: "Un consejero que mira a la familia entera, no busca culpables, protege a los niños y espera con paciencia la obra de Dios.",
+      hacer: "Dirigir una reunión familiar, armar un plan de disciplina, mediar entre padres e hijos, organizar el apoyo de la iglesia y preparar una reunión de reconciliación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Tim Clinton y John Trent", titulo: "Consejería bíblica, tomo 2: manual de consulta sobre el matrimonio y la familia", editorial: "Portavoz" },
+        { autor: "Tedd Tripp", titulo: "Cómo pastorear el corazón de tu hijo", editorial: "Poiema Publicaciones" },
+      ],
+      complementaria: [
+        { autor: "Gary Chapman y Ross Campbell", titulo: "Los 5 lenguajes del amor de los niños", editorial: "Unilit" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Deuteronomio", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=qfMplfJoYA0", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Génesis 45, José se da a conocer a sus hermanos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Genesis&cap=45" },
+      { tipo: "guia", titulo: "Evite estafas: quién puede ayudarle en un caso de inmigración", fuente: "USCIS", url: "https://www.uscis.gov/es/evite-estafas/estafas-comunes" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const DUELO_CRISIS: MateriaDef = {
+  id: "familia-consejeria-3",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  orden: 3,
+  titulo: "Duelo y crisis",
+  resumen: "Cómo acompañar a los que sufren una pérdida o una crisis: el duelo y sus reacciones, el ministerio de la presencia, los duelos difíciles, los niños y el duelo, la primera ayuda psicológica en las crisis y la esperanza cristiana, con el cuidado del que consuela.",
+  base: "Salmos 34:18; 2 Corintios 1:3-4",
+  memoria: "Salmos 34:18",
+  lecciones: lecciones("familia-consejeria-3", [
+    ["El duelo: el dolor de perder", "Juan 11:33-35; Salmos 13:1-2; 1 Tesalonicenses 4:13-14; Salmos 34:18"],
+    ["Acompañar al que sufre", "Job 2:11-13; Job 16:2; Romanos 12:15; Gálatas 6:2"],
+    ["Los duelos difíciles", "2 Samuel 12:22-23; 2 Samuel 18:33; Lamentaciones 3:22-23"],
+    ["Los niños y el duelo", "Marcos 10:14; Salmos 27:10; Isaías 66:13"],
+    ["Las crisis: cuando la vida se sacude", "Isaías 43:2; Marcos 4:38-39; 1 Reyes 19:5-7"],
+    ["La esperanza cristiana y el cuidado del que consuela", "Juan 11:25-26; 1 Corintios 15:55-57; Apocalipsis 21:4; Éxodo 18:17-18; Marcos 6:31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la iglesia sepa acompañar a los que sufren una pérdida o una crisis: que entienda el duelo como el dolor natural que sigue a una pérdida, que no es falta de fe, y conozca sus reacciones; que consuele con su presencia y con ayuda práctica durante el primer año, sin las explicaciones que hieren; que acompañe los duelos más difíciles, como la muerte de un hijo o el suicidio, y reconozca cuándo un duelo se complica y hay que derivar, con la línea 988 ante el riesgo de suicidio; que ayude a los niños en duelo con la verdad dicha con sencillez; que sirva en las crisis y en los desastres con los principios de la primera ayuda psicológica de la Organización Mundial de la Salud: observar, escuchar y conectar; y que comparta la esperanza de la resurrección sin apurar el llanto, cuidando también al equipo que consuela. No reemplaza la atención médica ni la psicológica. Lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3), y se completa con Visitación y cuidado del rebaño y con Ordenanzas y ceremonias, de la especialidad Ministerio pastoral, sin repetirlas. Su base es la promesa del salmo: «Cercano está Jehová a los quebrantados de corazón; Y salva a los contritos de espíritu» (Salmos 34:18).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es el duelo, sus reacciones y por qué llorar no es falta de fe.", bloom: "comprender" },
+      { id: "o2", texto: "Acompañar a una persona en duelo con presencia y ayuda práctica durante el primer año.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar los duelos difíciles y reconocer cuándo un duelo se complica y hay que derivar.", bloom: "aplicar" },
+      { id: "o4", texto: "Ayudar a un niño en duelo con la verdad dicha con sencillez.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a una crisis con los principios de la primera ayuda psicológica: observar, escuchar y conectar.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo compartir la esperanza cristiana y cómo cuidar al equipo que consuela.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 34:18 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El duelo y sus reacciones, los duelos difíciles, el duelo de los niños, la primera ayuda psicológica y la esperanza de la resurrección.",
+      ser: "Un consolador presente y paciente, que escucha más que habla, no juzga y cuida también su propia alma.",
+      hacer: "Visitar a una familia en duelo, armar el plan del primer año, acompañar después de un suicidio, hablar con un niño, servir en un desastre y cuidar al equipo de consuelo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "C. S. Lewis", titulo: "Una pena en observación", editorial: "Anagrama" },
+      ],
+      complementaria: [
+        { autor: "Jorge E. Maldonado", titulo: "Introducción al asesoramiento pastoral de la familia", editorial: "Abingdon Press" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Job", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=A3ifTHYTmMQ", minutos: 13 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2): la última cena, la cruz y la resurrección", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 11, Jesús ante la tumba de Lázaro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=11" },
+      { tipo: "guia", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", fuente: "Organización Mundial de la Salud", url: "https://www.who.int/es/publications/i/item/9789241548205" },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+    ],
+  },
+  disponible: true,
+};
+
+const ADICCIONES_RESTAURACION: MateriaDef = {
+  id: "familia-consejeria-4",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 4,
+  titulo: "Adicciones y restauración",
+  resumen: "Cómo acompañar a los que luchan con una adicción y a sus familias: qué es una adicción, la familia y los límites con amor, el camino de la restauración, las recaídas y la gracia, las adicciones a conductas como la pornografía, el juego y las pantallas, y la iglesia que restaura.",
+  base: "Juan 8:36; Gálatas 6:1",
+  memoria: "Juan 8:36",
+  lecciones: lecciones("familia-consejeria-4", [
+    ["¿Qué es una adicción?", "Proverbios 23:31-35; Romanos 7:15; 1 Corintios 6:12; Juan 8:34-36"],
+    ["La familia del que lucha con una adicción", "Lucas 15:13-17; Gálatas 6:5; Efesios 4:15"],
+    ["El camino de la restauración", "1 Juan 1:9; Santiago 5:16; Eclesiastés 4:9-10; 2 Corintios 5:17"],
+    ["Las recaídas y la gracia", "Proverbios 24:16; Miqueas 7:8; Juan 21:15-17"],
+    ["Las adicciones de hoy: la pornografía, el juego y las pantallas", "Job 31:1; Mateo 5:28; 1 Timoteo 6:9-10; Efesios 5:15-16"],
+    ["La iglesia que restaura", "Gálatas 6:1; 1 Corintios 6:9-11; Isaías 61:1; Lucas 15:22-24"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a los que luchan con una adicción y a sus familias: que entienda la adicción como algo que domina, como enseña la Biblia, y como una enfermedad crónica del cerebro, como la describe el Instituto Nacional sobre el Abuso de Drogas (NIDA), y que derive siempre al médico, porque dejar algunas sustancias de golpe puede ser peligroso; que ayude a la familia a dejar de permitir la adicción y a poner límites con amor; que acompañe el camino de la restauración con la confesión, la rendición de cuentas y la comunidad; que reciba con gracia a los que recaen y los ayude a prevenir las recaídas; que reconozca las adicciones a conductas, como la pornografía, el juego y las pantallas; y que ayude a la iglesia a ser un lugar que restaura, con una red de recursos: la línea nacional de ayuda de SAMHSA (1-800-662-4357), los médicos, los programas de tratamiento y, ante una sobredosis, el 911 y la naloxona, que la FDA permite vender sin receta desde 2023. No reemplaza la atención médica ni el tratamiento profesional. Lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3), sin repetirla. Su base es la promesa de Jesús: «Así que, si el Hijo os libertare, seréis verdaderamente libres» (Juan 8:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es una adicción según la ciencia y según la Biblia, y reconocer sus señales.", bloom: "comprender" },
+      { id: "o2", texto: "Ayudar a la familia de alguien con una adicción a poner límites con amor.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar el camino de la restauración con la confesión, la rendición de cuentas y la comunidad.", bloom: "aplicar" },
+      { id: "o4", texto: "Recibir con gracia al que recae y armar un plan de prevención de recaídas.", bloom: "aplicar" },
+      { id: "o5", texto: "Aconsejar a quien lucha con la pornografía, el juego o las pantallas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar un ministerio de recuperación en la iglesia, con su red de recursos.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 8:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Qué es una adicción según la Biblia y según la ciencia, cómo afecta a la familia, el camino de la restauración, las recaídas, las adicciones a conductas y los recursos de ayuda.",
+      ser: "Un consejero que recibe con gracia, dice la verdad con amor, no rescata de las consecuencias y no camina solo.",
+      hacer: "Conversar con quien reconoce un problema, ayudar a una familia a poner límites, armar planes de rendición de cuentas y de prevención de recaídas, y organizar un ministerio de recuperación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Baker", titulo: "Celebremos la recuperación: guía del líder", editorial: "Vida" },
+        { autor: "Tim Clinton y Ron Hawkins", titulo: "Consejería bíblica: manual de consulta sobre 40 temas críticos", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Gálatas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=kMJLgLOWb3I", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 15, el hijo que volvió a casa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=15" },
+      { tipo: "guia", titulo: "Línea nacional de ayuda de SAMHSA: 1-800-662-4357", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/national-helpline" },
+    ],
+  },
+  disponible: true,
+};
+
+const ETICA_LIMITES_CONSEJERO: MateriaDef = {
+  id: "familia-consejeria-5",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  orden: 5,
+  titulo: "Ética y límites del consejero",
+  resumen: "La ética del que aconseja en la iglesia: el lugar y los límites del consejero, la confidencialidad y lo que la ley de Texas pide reportar, los límites con el otro sexo, el poder del consejero y la política de consejería, derivar y trabajar en red, y el cuidado del consejero.",
+  base: "2 Corintios 8:21; Proverbios 11:13",
+  memoria: "2 Corintios 8:21",
+  lecciones: lecciones("familia-consejeria-5", [
+    ["El lugar y los límites del consejero de la iglesia", "Romanos 15:14; 2 Corintios 3:5; Santiago 3:1"],
+    ["La confidencialidad y sus límites", "Proverbios 11:13; Proverbios 20:19; Proverbios 25:9"],
+    ["Los límites con el otro sexo y la integridad", "Proverbios 4:23; 2 Timoteo 2:22; Génesis 39:11-12; 1 Tesalonicenses 5:22"],
+    ["El poder del consejero y la protección del aconsejado", "Mateo 20:25-26; 1 Pedro 5:2-3; Ezequiel 34:4; 2 Corintios 4:2"],
+    ["Derivar bien y trabajar en red", "Éxodo 18:21-22; Proverbios 15:22; Lucas 10:33-35"],
+    ["El cuidado del consejero y la rendición de cuentas", "Hechos 20:28; 1 Timoteo 4:16; Proverbios 27:17; 2 Corintios 8:21"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia lo haga con integridad y dentro de sus límites: que sepa lo que le corresponde y lo que no, sin diagnosticar, recetar ni dar consejo legal, y sin presentarse como consejero profesional con licencia si no lo es (en Texas, Código de Ocupaciones, sección 503.054); que guarde la confianza y conozca sus límites: el peligro para una vida y el abuso de un niño (Código de Familia, sección 261.101) o de una persona mayor o con discapacidad (Código de Recursos Humanos, sección 48.051), que en Texas se reportan aunque se sepan en confianza; que ponga límites claros en su trato con el otro sexo, sabiendo que aprovecharse de quien aconseja es un abuso y, en Texas, un delito (Código Penal, sección 22.011); que use su lugar para servir y no para dominar, con una política de consejería escrita; que derive bien y trabaje en red; y que cuide su vida con Dios, su familia y su descanso, con supervisión y rendición de cuentas. Lo legal es una guía general, no un consejo legal. Completa las cuatro materias anteriores de la especialidad y lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3). Su base es la palabra de Pablo: «procurando hacer las cosas honradamente, no sólo delante del Señor sino también delante de los hombres» (2 Corintios 8:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar lo que le corresponde al consejero de la iglesia y lo que no, y lo que pide la ley de Texas sobre su título.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la confidencialidad y sus límites, y reportar lo que la ley de Texas pide reportar.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar límites claros en el trato con el otro sexo y responder a las señales de un apego.", bloom: "aplicar" },
+      { id: "o4", texto: "Distinguir la consejería que libera de la que controla, y proponer una política de consejería.", bloom: "analizar" },
+      { id: "o5", texto: "Derivar a un profesional sin abandonar a la persona, y armar la red de recursos de la iglesia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el cuidado del consejero y armar un plan de supervisión y de rendición de cuentas.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Corintios 8:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los límites de la consejería pastoral, la confidencialidad y lo que la ley de Texas pide reportar, los límites con el otro sexo, las relaciones dobles y el abuso de poder, la derivación y el cuidado del consejero.",
+      ser: "Un consejero íntegro, que guarda la confianza, sirve sin dominar, conoce sus límites y se deja aconsejar.",
+      hacer: "Explicar los límites de la confidencialidad, reportar el abuso, poner límites con el otro sexo, escribir una política de consejería, derivar bien y armar su plan de cuidado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Tim Clinton y Ron Hawkins", titulo: "Consejería bíblica: manual de consulta sobre 40 temas críticos", editorial: "Portavoz" },
+        { autor: "Jay E. Adams", titulo: "Capacitado para orientar", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 10, el buen samaritano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=10" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -4566,7 +4843,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     DISCIPULADO_JOVENES, COSMOVISION_CULTURA, CONSEJERIA_JUVENIL, LIDERAZGO_JUVENIL, EVANGELISMO_JOVENES,
   ]),
   especialidad("familia-consejeria", "Familia y consejería", "Acompañar matrimonios y familias con sabiduría bíblica y límites claros.", [
-    ["Consejería matrimonial", true], ["Consejería familiar", true], ["Duelo y crisis"], ["Adicciones y restauración", true], ["Ética y límites del consejero"],
+    CONSEJERIA_MATRIMONIAL, CONSEJERIA_FAMILIAR, DUELO_CRISIS, ADICCIONES_RESTAURACION, ETICA_LIMITES_CONSEJERO,
   ]),
   especialidad("intercesion", "Intercesión y oración", "Una vida de oración, ayuno e intercesión con base bíblica.", [
     TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, GUERRA_ESPIRITUAL, ORACION_AVIVAMIENTOS,

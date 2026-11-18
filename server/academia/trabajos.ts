@@ -179,6 +179,41 @@ const TRABAJO_JUVENTUD: ClaveEscrita = {
     "Plan de un año para el ministerio juvenil de nuestra iglesia. Primero, el discipulado: no queremos solo entretener a los jóvenes, sino formar discípulos, porque nadie debe tener en poco su juventud y pueden ser ejemplo de los creyentes (1 Timoteo 4:12). Como Jesús, que estableció a doce para que estuviesen con él (Marcos 3:14), cada líder acompañará de cerca a un grupo pequeño de cuatro a ocho jóvenes, con la Palabra, preguntas, rendición de cuentas y oración, y algunos jóvenes tendrán un mentor, como Timoteo tuvo a Pablo, siempre en lugares visibles y con el permiso de los padres. Armaremos un camino de discipulado, conocer, crecer, servir y multiplicar, para que los jóvenes enseñen también a otros (2 Timoteo 2:2). Segundo, la cosmovisión: en los meses de la escuela haremos una serie para enseñarles a pensar con la historia de la Biblia en cuatro actos, creación, caída, redención y consumación, para que nadie los engañe con filosofías que no son según Cristo (Colosenses 2:8). Hablaremos de su identidad en Cristo, de las redes sociales, con un acuerdo de tecnología para cada familia, y de cómo discernir la música y las series, examinándolo todo y reteniendo lo bueno (1 Tesalonicenses 5:21). Tercero, la consejería: los líderes aprenderán a escuchar, siendo prontos para oír y tardos para hablar (Santiago 1:19), y a reconocer las señales de la tristeza profunda y del riesgo de suicidio; ante un joven en peligro no lo dejaremos solo, llamaremos al 988 y avisaremos a sus padres. Explicaremos desde el principio los límites de la confidencialidad, reportaremos el abuso de un menor como pide la ley en Texas y derivaremos a profesionales con una lista de ayuda. Cuarto, el liderazgo: formaremos un equipo de adultos y jóvenes líderes que sirvan como Jesús, que no vino para ser servido sino para servir (Marcos 10:45), y cuidaremos el carácter antes que el talento. Nos reuniremos cada mes para orar, planear y capacitarnos; planearemos las reuniones de los viernes con bienvenida, alabanza, la Palabra y grupos pequeños, y en el verano haremos un campamento con permisos firmados, adultos seleccionados de los dos sexos y dormitorios separados. Prepararemos a los que vendrán después, esforzándonos y siendo valientes, porque Dios está con nosotros (Josué 1:9). Quinto, el evangelismo: cada joven hará su mapa de amigos y orará por tres que no conocen a Cristo, porque nadie puede creer si no hay quien le hable (Romanos 10:14). Aprenderán a explicar el evangelio en cuatro partes y a contar su testimonio, y haremos una noche de amigos cada trimestre, con una invitación clara y sin presión y un seguimiento en la semana, para que los nuevos perseveren en la doctrina y la comunión (Hechos 2:42). Por último, evaluaremos el plan cada trimestre con el pastor: cuántos jóvenes están en un grupo pequeño, cuántos sirven, cuántos amigos nuevos llegaron y siguen viniendo, y si están creciendo en su fe, y ajustaremos lo necesario.",
 };
 
+const TRABAJO_FAMILIA: ClaveEscrita = {
+  id: "trabajo-familia-consejeria",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para un ministerio de familia y consejería en tu iglesia que use lo aprendido en las cinco materias de la especialidad: cómo prepararás y acompañarás a los matrimonios; cómo ayudarás a las familias en la crianza, en sus etapas y en sus crisis; cómo consolarás en el duelo y en las emergencias; cómo acompañarás a los que luchan con una adicción y a sus familias; y qué reglas éticas seguirán los consejeros, con sus límites y su cuidado. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "matrimonios", peso: 20, texto: "Preparar y acompañar a los matrimonios: la consejería prematrimonial, los conflictos, la restauración y la seguridad ante la violencia.", formas: ["matrimonio*", "prematrimonial", "parejas", "mentores"] },
+    { id: "familias", peso: 15, texto: "Ayudar a las familias en la crianza, en sus etapas y en sus crisis.", formas: ["crianza", "criar", "ensamblada*", "adolescentes", "hijos adultos"] },
+    { id: "duelo", peso: 15, texto: "Consolar en el duelo y en las emergencias.", formas: ["duelo", "consuelo", "primera ayuda", "emergencia*"] },
+    { id: "adicciones", peso: 20, texto: "Acompañar a los que luchan con una adicción y a sus familias.", formas: ["adiccion*", "recuperacion", "rendicion de cuentas", "recaida*"] },
+    { id: "etica", peso: 20, texto: "Las reglas éticas: la confidencialidad y sus límites, reportar, derivar y los límites con el otro sexo.", formas: ["confidencialidad", "report*", "deriv*", "otro sexo", "politica de consejeria"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Salmos 127:1", "Mateo 19:6", "Mateo 19:4-6", "Amós 3:3", "Efesios 4:26", "Efesios 5:25", "Eclesiastés 4:12", "Colosenses 3:13",
+    "Colosenses 3:19", "Salmos 11:5", "Malaquías 4:6", "Deuteronomio 6:7", "Efesios 6:4", "Colosenses 3:21", "Lucas 15:20",
+    "Salmos 68:6", "Santiago 1:27", "Salmos 46:1", "Romanos 12:18", "Salmos 34:18", "Juan 11:35", "Romanos 12:15", "Gálatas 6:2",
+    "Job 2:13", "Isaías 43:2", "1 Tesalonicenses 4:13", "Juan 8:36", "Gálatas 6:1", "Gálatas 6:5", "Santiago 5:16",
+    "Proverbios 24:16", "Job 31:1", "2 Corintios 8:21", "Proverbios 11:13", "Proverbios 4:23", "Mateo 20:26", "Proverbios 15:22",
+    "Lucas 10:34", "Hechos 20:28", "1 Timoteo 4:16", "Proverbios 27:17",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para el ministerio de familia y consejería de nuestra iglesia. Su base es la promesa de Dios: si Jehová no edificare la casa, en vano trabajan los que la edifican (Salmos 127:1). " +
+    "Primero, los matrimonios. Toda pareja que quiera casarse hará seis conversaciones de consejería prematrimonial, porque dos no andan juntos si no están de acuerdo (Amós 3:3). Daremos dos talleres al año sobre la comunicación y los conflictos, para que los esposos aprendan a no dejar que el sol se ponga sobre su enojo (Efesios 4:26), y formaremos matrimonios mentores para acompañar a los más jóvenes, porque cordón de tres dobleces no se rompe pronto (Eclesiastés 4:12). Los consejeros acompañarán con verdad y esperanza a los matrimonios heridos por la infidelidad, y ante la violencia en el hogar la seguridad de la víctima irá primero, con el 911 y la Línea Nacional sobre la Violencia Doméstica. " +
+    "Segundo, las familias. Haremos un taller de crianza con amor y con límites, sin exasperar a los hijos (Colosenses 3:21); acompañaremos a los padres de adolescentes y de hijos adultos, y tendremos ayuda práctica y mentores para las familias ensambladas y para los que crían solos, porque Dios hace habitar en familia a los desamparados (Salmos 68:6). En las crisis, como una enfermedad o la migración, la iglesia estará presente y buscará una ayuda segura. " +
+    "Tercero, el duelo. Un equipo de consuelo acompañará a cada familia en duelo durante el primer año, con visitas, ayuda práctica y las fechas difíciles anotadas, para llorar con los que lloran (Romanos 12:15). Ante una emergencia o un desastre, el equipo aplicará la primera ayuda psicológica: observar, escuchar y conectar, porque Dios está cercano a los quebrantados de corazón (Salmos 34:18). " +
+    "Cuarto, las adicciones. Abriremos un grupo de recuperación, con un programa probado, para que los que luchan con el alcohol, las drogas, la pornografía o el juego encuentren la libertad que da Cristo (Juan 8:36). Habrá rendición de cuentas, gracia para el que tenga una recaída, apoyo para las familias y una red con los médicos y la línea de SAMHSA. " +
+    "Quinto, la ética. Los consejeros firmarán una política de consejería: guardarán la confianza, pero explicarán desde el principio sus límites y reportarán el abuso de un niño, de una persona mayor o de alguien con discapacidad, como pide la ley en Texas; nunca aconsejarán a solas a una persona del otro sexo en un lugar privado; no diagnosticarán ni darán consejo legal, y derivarán a un profesional cuando un caso los supere; y tendrán supervisión cada mes y rendirán cuentas, para hacer las cosas honradamente delante del Señor y delante de los hombres (2 Corintios 8:21). " +
+    "Cada trimestre evaluaremos el plan con el pastor: cuántas parejas hicieron la consejería prematrimonial, cuántas familias en duelo fueron acompañadas, cuántas personas siguen en el grupo de recuperación, si la política se cumple y cómo están los consejeros, y cambiaremos lo que haga falta.",
+};
+
 /** El trabajo final de cada especialidad que ya lo tiene. */
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
@@ -187,4 +222,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["pastoral", TRABAJO_PASTORAL],
   ["ninez", TRABAJO_NINEZ],
   ["juventud", TRABAJO_JUVENTUD],
+  ["familia-consejeria", TRABAJO_FAMILIA],
 ]);
