@@ -4473,6 +4473,60 @@ const ETICA_SEGURIDAD_DIGITAL: MateriaDef = {
   disponible: true,
 };
 
+const ADMINISTRACION_ECLESIASTICA: MateriaDef = {
+  id: "liderazgo-administracion-1",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 1,
+  titulo: "Administración eclesiástica",
+  resumen: "Cómo administrar la iglesia para que la obra siga en orden: la administración al servicio del reino, los registros y el archivo, las reuniones y las actas, el templo y los bienes, los riesgos y los seguros, y los procesos y los manuales.",
+  base: "Proverbios 24:3; Hechos 6:2-4",
+  memoria: "Proverbios 24:3",
+  lecciones: lecciones("liderazgo-administracion-1", [
+    ["La administración al servicio del reino", "Hechos 6:2-4; 1 Corintios 12:28; Tito 1:5"],
+    ["Los registros y el archivo", "Esdras 2:62; Jeremías 32:14; Esdras 8:33-34"],
+    ["Las reuniones y las actas", "Hechos 15:6; Hechos 15:22; Hechos 15:28"],
+    ["El templo y los bienes", "2 Reyes 12:5; 2 Crónicas 24:13; Proverbios 27:23"],
+    ["Los riesgos y los seguros", "Proverbios 22:3; Lucas 14:28; Eclesiastés 11:2"],
+    ["Los procesos y los manuales", "Éxodo 18:20-21; 1 Corintios 14:33; Proverbios 24:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la administración de la iglesia la ordene para que la obra siga y el pastor se dedique a la oración y a la Palabra: que haga el diagnóstico de sus áreas, las personas, los registros, el edificio, el dinero, el calendario y la comunicación, con prioridades y responsables; que guarde bien los registros, con un archivo con llave, una copia digital y el tiempo que pide la ley, como los 4 años que el IRS pide para la nómina; que prepare y dirija las reuniones con agenda y quórum, y que escriba sus actas; que cuide el templo y los bienes con un plan de mantenimiento, el inventario y la seguridad; que prevea los riesgos de cada actividad y revise los seguros, sabiendo que en Texas un empleador privado puede no tener seguro de compensación laboral si avisa como pide la ley; y que escriba los procesos y el manual de la iglesia. Baja a la práctica lo que enseña Administración y gobierno de la iglesia (Nivel 5), sin repetirla. Lo legal es una guía general, no un consejo legal. Su base es la palabra de los Proverbios: «Con sabiduría se edificará la casa, Y con prudencia se afirmará» (Proverbios 24:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar para qué sirve la administración en la iglesia y hacer su diagnóstico.", bloom: "comprender" },
+      { id: "o2", texto: "Ordenar los registros y el archivo de la iglesia.", bloom: "aplicar" },
+      { id: "o3", texto: "Preparar y dirigir una reunión, y escribir su acta.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar el cuidado del templo y de los bienes.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar los riesgos de una actividad y los seguros de la iglesia.", bloom: "evaluar" },
+      { id: "o6", texto: "Escribir un procedimiento y armar el manual de la iglesia.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Proverbios 24:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las áreas de la administración, los registros de una iglesia y cuánto se guardan, la agenda, el quórum y el acta, el mantenimiento, el inventario y la seguridad, el manejo de los riesgos y los seguros, y los procedimientos y el manual.",
+      ser: "Un administrador que sirve para que otros sirvan, fiel en lo poco, que prevé con sabiduría y deja todo en orden.",
+      hacer: "Hacer el diagnóstico de una iglesia, ordenar su archivo, escribir un acta, hacer el plan de mantenimiento del año, el inventario de riesgos de un campamento y el procedimiento para reservar el templo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bruce P. Powers (ed.)", titulo: "Church Administration Handbook (en inglés)", editorial: "B&H Publishing" },
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 6, los siete que sirvieron para que la Palabra creciera", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5402,7 +5456,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ["Administración eclesiástica"], ["Finanzas y transparencia"], ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, ["Finanzas y transparencia"], ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
