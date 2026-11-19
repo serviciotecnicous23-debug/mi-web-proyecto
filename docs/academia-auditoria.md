@@ -301,13 +301,36 @@ larga), 2 libros y 1 video. No hubo nada que quitar.
 | Libros comprobados en la bibliografía | 6 |
 | Lecturas ampliadas con su reporte | las primeras 7 |
 
-**Las otras 27 materias:**
+**En el tercer PR, las 27 materias que faltaban:**
 - Cuidado y consejería básica, del Nivel 3;
 - Epístolas y Apocalipsis, Homilética II, Historia de la iglesia II, Apologética y Ética, del Nivel 4;
-- seis del Nivel 5;
-- las tres especialidades.
+- las otras seis del Nivel 5;
+- las especialidades Evangelismo y misiones, Alabanza y adoración e Intercesión y oración.
 
-Tienen su borrador y siguen en revisión. Van en el PR siguiente.
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 80: 11 líneas de tiempo, 43 cuadros comparativos y 26 pasos |
+| Videos (las materias que no tenían) | 6, en Epístolas y Apocalipsis y en Sonido y técnica |
+| Preguntas de casos en el examen final | 162 |
+| Libros comprobados en la bibliografía | 27 |
+| Lecturas ampliadas con su reporte | 11, las del resto de los Niveles 4 y 5 |
+
+Los revisores quitaron un esquema de Liderazgo II que casi copiaba un cuadro ya publicado en Liderazgo cristiano I.
+
+**Con eso, las 60 materias que estaban publicadas el 16-nov tienen sus esquemas, sus casos, sus fuentes y, en los
+Niveles 4 y 5, su lectura ampliada:**
+
+| En total | Cuántos |
+|---|---|
+| Esquemas | 179: 29 líneas de tiempo, 96 cuadros y 54 pasos |
+| Videos nuevos | 24 |
+| Preguntas de casos | 310 |
+| Libros | 40 |
+| Lecturas ampliadas | 18 |
+
+**Las especialidades publicadas después** (Ministerio pastoral, Niñez, Juventud, Familia y consejería y Capellanía) ya
+venían con sus libros, sus videos y muchas preguntas de casos. Solo les faltaban los esquemas, que se redactan y revisan
+aparte y van en el PR siguiente.
 
 **El tiempo de las pruebas.** Se midió lo que pide cada pregunta:
 - leerla, a 130 palabras por minuto (el ritmo de un lector promedio en el teléfono);

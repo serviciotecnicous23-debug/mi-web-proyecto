@@ -3022,6 +3022,102 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
       ],
     },
   ],
+  // Cuidado y consejería básica
+  "n3-consejeria-basica-1": [
+    // Ordena en un vistazo los tres niveles que la lección da en lista, para que el alumno ubique cada caso en el nivel que le corresponde.
+    {
+      t: "cuadro",
+      titulo: "Los tres niveles de ayuda",
+      columnas: ["Nivel", "Quién ayuda", "Qué hace o atiende"],
+      filas: [
+        [
+          "El cuidado entre hermanos",
+          "Todo creyente; el maduro puede animar y aconsejar con la Palabra (Romanos 15:14)",
+          "Escucha, ora, anima con la Palabra y acompaña; es el centro de esta materia",
+        ],
+        [
+          "La consejería pastoral",
+          "El pastor y los líderes preparados",
+          "Acompaña problemas más hondos, como las crisis de familia o el pecado que se repite",
+        ],
+        [
+          "La ayuda profesional",
+          "Médicos, psicólogos y consejeros profesionales",
+          "Atiende lo que pide una formación especial, como la depresión grave, las adicciones o los traumas",
+        ],
+      ],
+    },
+  ],
+  "n3-consejeria-basica-4": [
+    // La lección explica en un párrafo el orden de la ayuda en una crisis; los pasos lo vuelven una guía fácil de recordar en el momento en que hace falta.
+    {
+      t: "pasos",
+      titulo: "Primeros pasos en una crisis, como Dios con Elías",
+      pasos: [
+        {
+          titulo: "A salvo, calmada y acompañada",
+          texto: "Ante un accidente, una enfermedad grave, la pérdida del trabajo o una ruptura, lo primero es la seguridad y la calma de la persona. No la dejes sola.",
+        },
+        {
+          titulo: "Lo básico antes que el discurso",
+          texto: "Dios no regañó a Elías: primero lo dejó dormir y le dio de comer (1 Reyes 19:5-8). Cuida el descanso, la comida y lo práctico.",
+        },
+        {
+          titulo: "Escucha y habla después",
+          texto: "Solo después Dios le habló. Deja que la persona cuente lo que vive, sin regañarla; la Palabra y el consejo llegan a su tiempo.",
+        },
+        {
+          titulo: "La red de apoyo",
+          texto: "Ayúdala a buscar a su familia y a la iglesia, para que no lleve sola su carga (Gálatas 6:2).",
+        },
+        {
+          titulo: "Si hace falta, los profesionales",
+          texto: "Cuando la crisis pide una formación especial, ayúdala a buscar a los profesionales y sigue a su lado: derivar no es abandonar.",
+        },
+        {
+          titulo: "Si habla de morir, busca ayuda ya",
+          texto: "Tómalo siempre en serio, no lo guardes en secreto y no dejes sola a la persona. En la lección 5 verás qué hacer.",
+        },
+      ],
+    },
+  ],
+  "n3-consejeria-basica-5": [
+    // Ante el riesgo de suicidio hay que actuar sin dudar: los pasos dejan claro qué hacer y en qué orden, con los números de ayuda a la mano.
+    {
+      t: "pasos",
+      titulo: "Si alguien habla de quitarse la vida",
+      pasos: [
+        {
+          titulo: "Tómalo siempre en serio",
+          texto: "No le digas que exagera ni esperes a ver si se le pasa. La Escritura manda salvar a los que están en peligro de muerte (Proverbios 24:11).",
+        },
+        {
+          titulo: "Pregunta con calma",
+          texto: "Pregúntale si está pensando en hacerse daño. Preguntar no le da la idea, y puede salvarle la vida.",
+        },
+        {
+          titulo: "No la dejes sola",
+          texto: "Quédate con la persona mientras buscas ayuda. Tu presencia la acompaña y la protege.",
+        },
+        {
+          titulo: "No prometas guardar el secreto",
+          texto: "Cuando hay peligro para la vida, el secreto no se guarda. Dile con amor que vas a buscar ayuda para cuidarla.",
+        },
+        {
+          titulo: "Avisa de inmediato",
+          texto: "Avisa a tu pastor y a su familia. Si hay peligro inmediato, llama al 911 en los Estados Unidos o al número de emergencias de tu país.",
+        },
+        {
+          titulo: "La línea 988, de día y de noche",
+          texto: "En los Estados Unidos, la línea 988 de prevención del suicidio y crisis atiende a toda hora. En español: marca 988 y presiona 2, o envía AYUDA por texto al 988.",
+        },
+        {
+          titulo: "Sigue cerca",
+          texto: "Derivar es seguir amando: ora por la persona, visítala y anímala a seguir el tratamiento o el acompañamiento que recibe.",
+        },
+      ],
+    },
+  ],
   // Teología sistemática I: la Biblia y Dios
   "n4-sistematica-1-1": [
     // La lección presenta las dos revelaciones en párrafos seguidos; el cuadro las pone lado a lado y fija por qué solo la especial anuncia el evangelio.
@@ -3690,6 +3786,1143 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
       ],
     },
   ],
+  // Epístolas y Apocalipsis
+  "n4-epistolas-apocalipsis-1": [
+    // comprobado: oEmbed de YouTube respondió el título Resumen del libro de Gálatas: un panorama completo animado y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 10:17 en YouTube. La academia ya lo usa con el título corto en otras materias.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=kMJLgLOWb3I",
+      titulo: "Resumen del libro de Gálatas",
+      fuente: "Proyecto Biblia",
+      minutos: 10,
+    },
+  ],
+  "n4-epistolas-apocalipsis-2": [
+    // comprobado: oEmbed de YouTube respondió el título Resumen del libro de 1 Corintios: un panorama completo animado y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 9:53 en YouTube. La academia ya lo usa con el título corto en otras materias.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=6f0kym4bUmE",
+      titulo: "Resumen del libro de 1 Corintios",
+      fuente: "Proyecto Biblia",
+      minutos: 10,
+    },
+  ],
+  "n4-epistolas-apocalipsis-3": [
+    // comprobado: oEmbed de YouTube respondió el título Resumen del libro de Efesios: un panorama completo animado y el canal Proyecto Biblia (https://www.youtube.com/@ProyectoBibliaOficial); dura 10:28 en YouTube. La academia ya lo usa con el título corto en otras materias.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=yJgym5MGzM4",
+      titulo: "Resumen del libro de Efesios",
+      fuente: "Proyecto Biblia",
+      minutos: 10,
+    },
+  ],
+  "n4-epistolas-apocalipsis-4": [
+    // La lección 4 cierra las cartas de Pablo: la línea ordena en el tiempo lo visto en las lecciones 1 a 4, desde las primeras cartas hasta 2 Timoteo, la última.
+    {
+      t: "linea",
+      titulo: "Las cartas de Pablo en el tiempo",
+      eventos: [
+        {
+          fecha: "c. 48 (se discute)",
+          texto: "Gálatas: si es anterior al concilio de Jerusalén (Hechos 15), sería su primera carta; otros la fechan unos años después.",
+          ref: "Gálatas 1:6-7",
+        },
+        {
+          fecha: "c. 50-51",
+          texto: "1 y 2 Tesalonicenses, desde Corinto, a una iglesia fundada en pocas semanas (Hechos 17:1-10): esperar al Señor trabajando.",
+          ref: "1 Tesalonicenses 1:9-10",
+        },
+        {
+          fecha: "c. 53-55",
+          texto: "1 Corintios, desde Éfeso: las divisiones, la inmoralidad, los pleitos, los dones, el amor y la resurrección.",
+          ref: "1 Corintios 16:8",
+        },
+        {
+          fecha: "c. 55-56",
+          texto: "2 Corintios, desde Macedonia: el ministerio de la reconciliación, la ofrenda para Jerusalén y el poder en la debilidad.",
+          ref: "2 Corintios 7:5",
+        },
+        {
+          fecha: "c. 57",
+          texto: "Romanos, desde Corinto, antes de llevar a Jerusalén la ofrenda de las iglesias; Pablo quería seguir hasta España.",
+          ref: "Romanos 15:24-26",
+        },
+        {
+          fecha: "c. 60-62",
+          texto: "Efesios, Filipenses, Colosenses y Filemón, desde la prisión: la tradición dice que en Roma; otros proponen Éfeso o Cesarea.",
+          ref: "Hechos 28:30",
+        },
+        {
+          fecha: "c. 62-64",
+          texto: "1 Timoteo y Tito, según la tradición, entre su primera y su última prisión, a sus colaboradores en Éfeso y en Creta.",
+          ref: "1 Timoteo 1:3",
+        },
+        {
+          fecha: "c. 64-67",
+          texto: "2 Timoteo, su última carta, desde su segunda prisión en Roma, poco antes de morir en tiempos de Nerón, según la tradición.",
+          ref: "2 Timoteo 4:6-8",
+        },
+      ],
+    },
+  ],
+  "n4-epistolas-apocalipsis-5": [
+    // Pone lado a lado a Pablo y a Santiago para que se vea que responden preguntas distintas y no se contradicen, el punto que más confunde de la lección.
+    {
+      t: "cuadro",
+      titulo: "Pablo y Santiago: la fe y las obras",
+      columnas: ["Aspecto", "Pablo", "Santiago"],
+      filas: [
+        [
+          "La pregunta que responde",
+          "¿Cómo es justificado el pecador delante de Dios?",
+          "¿Cómo se reconoce que una fe es verdadera?",
+        ],
+        [
+          "Las obras de que habla",
+          "Las obras de la ley, que no son la base de la justificación (Romanos 3:28)",
+          "Las obras que nacen de la fe y la muestran (Santiago 2:18)",
+        ],
+        [
+          "El error que combate",
+          "Confiar en la ley o en las propias obras para ser salvo (Gálatas 2:16)",
+          "Una fe de solo palabras, que no cambia la vida (Santiago 2:14-17)",
+        ],
+        [
+          "El ejemplo de Abraham",
+          "Creyó a Dios y le fue contado por justicia (Romanos 4:3)",
+          "Mostró su fe al ofrecer a Isaac sobre el altar (Santiago 2:21-23)",
+        ],
+        [
+          "Su texto clave",
+          "Salvos por gracia, por medio de la fe, para buenas obras (Efesios 2:8-10)",
+          "La fe sin obras está muerta (Santiago 2:17)",
+        ],
+        [
+          "En qué coinciden",
+          "La fe que vale es la que obra por el amor (Gálatas 5:6)",
+          "La fe actúa junto con las obras y por ellas se perfecciona (Santiago 2:22)",
+        ],
+      ],
+    },
+  ],
+  "n4-epistolas-apocalipsis-6": [
+    // Convierte la nota para el líder en un método paso a paso, para preparar un estudio del Apocalipsis con equilibrio y sin tomar partido en lo que se discute.
+    {
+      t: "pasos",
+      titulo: "Cómo estudiar un pasaje del Apocalipsis",
+      pasos: [
+        {
+          titulo: "Empieza por Cristo",
+          texto: "El libro es la revelación de Jesucristo (Apocalipsis 1:1). Pregunta primero qué enseña el pasaje sobre él: su gloria, su obra como el Cordero y su victoria.",
+        },
+        {
+          titulo: "Piensa en los primeros lectores",
+          texto: "Juan escribió a siete iglesias reales de Asia (Apocalipsis 1:11): unas sufrían persecución y otras estaban tibias o en peligro. Pregunta qué les decía a ellas antes de aplicarlo a hoy.",
+        },
+        {
+          titulo: "Lee los símbolos con la Biblia",
+          texto: "El libro habla con visiones y símbolos. A veces los explica: los candeleros son las iglesias (Apocalipsis 1:20). Otros vienen del Antiguo Testamento: la bestia de Apocalipsis 13 recuerda a Daniel 7.",
+        },
+        {
+          titulo: "Subraya lo que es claro",
+          texto: "La gloria de Cristo, el llamado a ser fieles, el juicio de Dios y la esperanza final. Ese mensaje está por encima de las diferencias de interpretación.",
+        },
+        {
+          titulo: "Compara las lecturas con respeto",
+          texto: "Si el pasaje se lee distinto en las lecturas preterista, historicista, futurista e idealista, presenta las posturas con respeto. El arrebatamiento y el milenio se estudian en Teología sistemática IV.",
+        },
+        {
+          titulo: "Aplica sin poner fechas",
+          texto: "Termina con lo que el libro pide: guardar lo escrito, ser fieles y orar por la venida del Señor (Apocalipsis 1:3; 22:20). No pongas fechas ni digas con seguridad quién es hoy cada símbolo.",
+        },
+      ],
+    },
+  ],
+  // Homilética II: predicación expositiva
+  "n4-homiletica-2-2": [
+    // Convierte la lista de pasos de la lección en un ejemplo resuelto con su mismo pasaje, para que el alumno vea cada paso hecho.
+    {
+      t: "pasos",
+      titulo: "Del pasaje a la idea del sermón: Filipenses 4:10-13 paso a paso",
+      pasos: [
+        {
+          titulo: "El contexto histórico",
+          texto: "Quién, a quién, cuándo y por qué: Pablo escribe a la iglesia de Filipos mientras está preso, y le agradece la ofrenda que le llevó Epafrodito (Filipenses 1:13; 4:10, 18).",
+        },
+        {
+          titulo: "El contexto literario",
+          texto: "Lee el párrafo entero y no solo el versículo 13: los versículos 11 y 12 lo preparan y el 14 vuelve a la ofrenda. Es una carta, y este párrafo es la nota de gratitud de su final.",
+        },
+        {
+          titulo: "Las palabras y la gramática",
+          texto: "Marca los verbos de aprender y de saber (4:11-12), la palabra clave contentarse y el contraste entre abundancia y necesidad: así se entiende la palabra todo de 4:13.",
+        },
+        {
+          titulo: "La idea exegética",
+          texto: "Tema: cómo pudo Pablo estar contento en cualquier situación. Complemento: lo aprendió porque Cristo lo fortalecía, en la abundancia y en la escasez.",
+        },
+        {
+          titulo: "La idea homilética",
+          texto: "La misma verdad, dicha con claridad y fácil de recordar para hoy: en Cristo puedes estar contento en cualquier situación.",
+        },
+        {
+          titulo: "El puente",
+          texto: "El principio vale para todos los tiempos: el contentamiento viene de Cristo, no de lo que tienes. Llévalo al que perdió el trabajo y al que prospera; 4:13 no es una promesa de lograr cualquier meta.",
+        },
+      ],
+    },
+  ],
+  "n4-homiletica-2-3": [
+    // Pone los cinco géneros lado a lado, con lo que se busca, cómo se predica y el error de cada uno, para compararlos de un vistazo.
+    {
+      t: "cuadro",
+      titulo: "Cómo predicar cada género",
+      columnas: ["Género", "Qué buscar", "Cómo predicarlo", "Error que evitar"],
+      filas: [
+        [
+          "Narración",
+          "La trama, el conflicto y lo que Dios hace: el héroe es Dios (1 Samuel 17:47).",
+          "Contar la historia y mostrar al Dios que salva a su pueblo; así apunta a Cristo.",
+          "Moralizar: convertir la historia en un consejo moral suelto.",
+        ],
+        [
+          "Epístola",
+          "El argumento y sus conectores: por tanto, porque, pero.",
+          "Razonar paso a paso y predicar párrafos completos.",
+          "Sacar frases aisladas de su argumento.",
+        ],
+        [
+          "Poesía y salmos",
+          "El paralelismo, las imágenes y el sentimiento.",
+          "Predicar de modo que la iglesia ore y adore.",
+          "Tratarlo como una lista de datos y perder su tono de oración y adoración.",
+        ],
+        [
+          "Parábola",
+          "El punto principal que Jesús quiso enseñar a sus oyentes (Lucas 18:1).",
+          "Enseñar ese punto; un personaje puede ser un contraste, como el juez injusto.",
+          "Alegorizar: convertir cada detalle en un símbolo.",
+        ],
+        [
+          "Profecía",
+          "Su mensaje en su tiempo y su cumplimiento en Cristo.",
+          "En orden: su tiempo, Cristo y, con humildad, lo que falta por cumplirse.",
+          "Empezar por las fechas del fin o quedarse en su tiempo sin llegar a Cristo.",
+        ],
+      ],
+    },
+  ],
+  "n4-homiletica-2-6": [
+    // Convierte la rúbrica en preguntas con sus puntos, para que el alumno revise su sermón antes de presentarlo.
+    {
+      t: "cuadro",
+      titulo: "La rúbrica del sermón del Nivel 4 como lista para revisarte",
+      columnas: ["Criterio", "Puntos", "Pregunta para revisarte"],
+      filas: [
+        ["Fidelidad al texto", "25", "¿El mensaje de mi sermón es el mensaje del pasaje, leído en su contexto?"],
+        ["Idea central y propósito", "15", "¿Puedo decir mi idea central en una frase y para qué la predico?"],
+        ["Estructura", "15", "¿Mis puntos salen del texto, en su orden, y los unen transiciones claras?"],
+        [
+          "Cristo y la gracia",
+          "15",
+          "¿Muestro lo que Cristo hizo, sin forzar el texto, para que la obediencia nazca de la gracia?",
+        ],
+        [
+          "Aplicación e ilustraciones",
+          "15",
+          "¿Digo qué hacer, cuándo y con quién? ¿Mis ilustraciones son verdaderas y breves?",
+        ],
+        ["Entrega", "15", "¿Hablo con claridad, miro a los oyentes y termino entre 20 y 30 minutos?"],
+        ["Total", "100", "Se aprueba con 70. Antes de presentarlo, pide a un hermano maduro que la use contigo."],
+      ],
+    },
+  ],
+  // Historia de la iglesia II
+  "n4-historia-2-2": [
+    // La lección junta muchos nombres y fechas, de Zúrich a Sevilla y de Tyndale a Trento; la línea los ordena y muestra que la Biblia en español nació en plena persecución.
+    {
+      t: "linea",
+      titulo: "La Reforma se extiende: de Zúrich a la Reina-Valera (1519-1602)",
+      eventos: [
+        {
+          fecha: "1519",
+          texto: "En Zúrich, Ulrico Zuinglio comienza a predicar la Biblia libro por libro.",
+          ref: "Hechos 17:11",
+        },
+        {
+          fecha: "1525",
+          texto: "Los anabautistas comienzan a bautizar solo a creyentes que confiesan su fe y piden que la iglesia no dependa del Estado.",
+        },
+        { fecha: "1526", texto: "William Tyndale publica el Nuevo Testamento en inglés." },
+        {
+          fecha: "1536",
+          texto: "Juan Calvino publica la Institución de la religión cristiana y después enseña en Ginebra.",
+        },
+        { fecha: "1536", texto: "Tyndale muere ejecutado: la Biblia en la lengua del pueblo costó sangre." },
+        {
+          fecha: "1545-1563",
+          texto: "El Concilio de Trento corrige algunos abusos, pero rechaza la justificación solo por la fe.",
+        },
+        {
+          fecha: "1557",
+          texto: "Por temor a la Inquisición, huyen monjes de San Isidoro del Campo, en Sevilla; entre ellos, Reina y Valera.",
+        },
+        {
+          fecha: "1569",
+          texto: "En Basilea, Casiodoro de Reina publica la Biblia del Oso, la primera Biblia completa en español traducida de los originales.",
+          ref: "Isaías 40:8",
+        },
+        {
+          fecha: "1602",
+          texto: "Cipriano de Valera publica su revisión de la Biblia de Reina. De esa obra viene la Reina-Valera.",
+        },
+      ],
+    },
+  ],
+  "n4-historia-2-3": [
+    // La lección presenta cinco movimientos seguidos; el cuadro los pone lado a lado para analizar qué aportó cada uno y qué los une (objetivo o3).
+    {
+      t: "cuadro",
+      titulo: "Los movimientos de renovación después de la Reforma",
+      columnas: ["Movimiento", "Dónde, cuándo y quiénes", "Qué aportó"],
+      filas: [
+        [
+          "Puritanos",
+          "Inglaterra, siglos XVI y XVII; muchos emigraron a América.",
+          "El llamado a purificar la iglesia y a vivir toda la vida bajo la Palabra.",
+        ],
+        [
+          "Pietismo",
+          "Alemania, fines del siglo XVII: Felipe Jacobo Spener (Pia desideria, 1675) y Augusto Francke, en Halle.",
+          "Piedad personal, estudio de la Biblia en grupos y obras de misericordia, como el orfanato de Francke.",
+        ],
+        [
+          "Moravos",
+          "Herrnhut (Sajonia), en tierras del conde Zinzendorf; avivamiento de 1727.",
+          "Una cadena de oración de unos cien años y, desde 1732, misioneros a muchos lugares del mundo.",
+        ],
+        [
+          "Metodismo",
+          "Inglaterra: Juan Wesley (1703-1791), ministro anglicano; Aldersgate, 24 de mayo de 1738.",
+          "Seguridad de la salvación, predicación al aire libre por décadas y grupos que cuidaron a miles de nuevos creyentes.",
+        ],
+        [
+          "Gran Despertar",
+          "Colonias inglesas de América, desde la década de 1730: Jonathan Edwards y George Whitefield.",
+          "Despertó a las colonias con la predicación profunda de Edwards y la de Whitefield, a multitudes al aire libre.",
+        ],
+        [
+          "Lo que tienen en común",
+          "Europa y América, entre los siglos XVI y XVIII.",
+          "Unieron la sana doctrina con una fe viva: conversión personal, santidad, oración y misión.",
+        ],
+      ],
+    },
+  ],
+  "n4-historia-2-5": [
+    // La lección va de Topeka (1901) a hoy; la línea fija el orden de los hechos y separa el nacimiento del movimiento (1901-1906) de la renovación carismática (desde 1960).
+    {
+      t: "linea",
+      titulo: "El movimiento pentecostal: de Topeka (1901) a hoy",
+      eventos: [
+        {
+          fecha: "1 de enero de 1901",
+          texto: "En la escuela bíblica de Charles Parham, en Topeka, Kansas, Agnes Ozman habla en lenguas mientras oran por ella.",
+          ref: "Joel 2:28-29",
+        },
+        {
+          fecha: "1906",
+          texto: "En la calle Azusa de Los Ángeles, William J. Seymour, hijo de antiguos esclavos, dirige un avivamiento de unos tres años.",
+          ref: "Hechos 2:1-4",
+        },
+        {
+          fecha: "Desde 1906",
+          texto: "Negros, blancos e hispanos oran juntos en una época de separación racial, y de Azusa salen misioneros a todo el mundo.",
+          ref: "Gálatas 3:28",
+        },
+        {
+          fecha: "1907-1908",
+          texto: "La Iglesia de Dios en Cristo y la Iglesia de Dios de Cleveland, Tennessee, que ya existían, se hacen pentecostales.",
+        },
+        { fecha: "1914", texto: "Se organizan las Asambleas de Dios en Hot Springs, Arkansas." },
+        {
+          fecha: "Década de 1920",
+          texto: "De la obra de Aimee Semple McPherson en Los Ángeles nace la Iglesia Internacional del Evangelio Cuadrangular.",
+        },
+        {
+          fecha: "Desde 1960",
+          texto: "La renovación carismática lleva la experiencia pentecostal a iglesias históricas: episcopal, luterana y católica.",
+        },
+        {
+          fecha: "Hoy",
+          texto: "Pentecostales y carismáticos son cientos de millones, sobre todo en América Latina, África y Asia.",
+          ref: "Hechos 1:8",
+        },
+      ],
+    },
+  ],
+  // Apologética
+  "n4-apologetica-2": [
+    // Pone lado a lado los tres argumentos, lo que observan y a qué apuntan, y recuerda su alcance antes de la idea clave.
+    {
+      t: "cuadro",
+      titulo: "Tres argumentos que muestran que creer en Dios es razonable",
+      columnas: ["Argumento", "Lo que observamos", "A qué apunta", "Texto bíblico"],
+      filas: [
+        [
+          "El comienzo del universo",
+          "Lo que comienza a existir tiene una causa, y la ciencia habla de un comienzo del universo",
+          "A una causa fuera del tiempo, del espacio y de la materia: eterna, poderosa y personal",
+          "Génesis 1:1; Romanos 1:20",
+        ],
+        [
+          "El orden y el diseño",
+          "Leyes estables, medidas exactas que permiten la vida y la información compleja del ADN",
+          "A una mente que lo diseñó, como el reloj hace pensar en un relojero",
+          "Salmos 19:1",
+        ],
+        [
+          "La ley moral",
+          "Todos reconocen que algunas cosas están mal siempre, aunque no cumplan esa ley",
+          "A un Legislador moral, que escribió la obra de su ley en el corazón",
+          "Romanos 2:14-15",
+        ],
+        [
+          "Los tres juntos",
+          "La creación, el orden del mundo y la conciencia hablan de Dios",
+          "A que creer es razonable y nadie tiene excusa, aunque conocer a Dios como Padre pide su Palabra, el Espíritu y la fe",
+          "Romanos 1:20; Hebreos 11:6",
+        ],
+      ],
+    },
+  ],
+  "n4-apologetica-4": [
+    // Compara cada explicación con los hechos de la lección y deja ver por qué solo la resurrección los explica todos.
+    {
+      t: "cuadro",
+      titulo: "Cuatro explicaciones de la tumba vacía y de las apariciones",
+      columnas: ["Explicación", "Qué propone", "Frente a los hechos"],
+      filas: [
+        [
+          "El robo del cuerpo",
+          "Los discípulos se llevaron el cuerpo y mintieron; ya se decía entonces (Mateo 28:13-15)",
+          "Nadie da la vida por lo que sabe que es mentira, y ellos lo anunciaron aun a costa de la suya",
+        ],
+        [
+          "El desmayo",
+          "Jesús no murió en la cruz: solo se desmayó y despertó en la tumba",
+          "Los soldados romanos sabían matar, y un hombre medio muerto no convence a nadie de que venció a la muerte",
+        ],
+        [
+          "Las alucinaciones",
+          "Los discípulos creyeron verlo, pero eran visiones de su mente",
+          "Quinientas personas no tienen la misma alucinación a la vez, y una alucinación no vacía una tumba",
+        ],
+        [
+          "La resurrección",
+          "Dios levantó a Jesús de los muertos, como dicen los testigos (Hechos 2:24, 32)",
+          "Da cuenta de todo: la muerte, la tumba vacía, las apariciones y el cambio de los discípulos, de Pablo y de Jacobo",
+        ],
+      ],
+    },
+  ],
+  "n4-apologetica-5": [
+    // Ordena las respuestas de la lección en el orden en que se dan a quien sufre: primero la compasión y después las razones.
+    {
+      t: "pasos",
+      titulo: "Cómo acompañar y responder a quien pregunta por su dolor",
+      pasos: [
+        {
+          titulo: "Primero, acompañar",
+          texto: "Escucha, quédate a su lado y llora con él. Los argumentos vienen después, si los pide: Jesús lloró ante la tumba de Lázaro antes de resucitarlo (Juan 11:35).",
+        },
+        {
+          titulo: "De dónde viene el mal",
+          texto: "Dios creó un mundo bueno en gran manera. El mal no viene de él: entró por la desobediencia humana, en un mundo creado con libertad para amar (Génesis 1:31; Romanos 5:12).",
+        },
+        {
+          titulo: "Dios obra aun en el dolor",
+          texto: "Dios no siempre explica cada sufrimiento, como se ve en Job, pero promete obrar para bien en la vida de los que le aman (Romanos 8:28).",
+        },
+        {
+          titulo: "La respuesta de la cruz",
+          texto: "Dios no es indiferente: el Hijo entró en nuestro sufrimiento, cargó el mal sobre sí y lo venció con su resurrección.",
+        },
+        {
+          titulo: "La esperanza final",
+          texto: "Las aflicciones de hoy no se comparan con la gloria venidera, y Dios promete un mundo nuevo sin muerte, llanto ni dolor (Romanos 8:18; Apocalipsis 21:4).",
+        },
+      ],
+    },
+  ],
+  // Ética cristiana y ministerial
+  "n4-etica-1": [
+    // Pone lado a lado las dos posturas que la lección compara y muestra por qué el relativismo no puede condenar el abuso.
+    {
+      t: "cuadro",
+      titulo: "Ética cristiana y relativismo moral, frente a frente",
+      columnas: ["Pregunta", "Ética cristiana", "Relativismo moral"],
+      filas: [
+        [
+          "¿En qué se funda lo bueno?",
+          "En el carácter de Dios, que es santo, justo y amor (1 Pedro 1:15-16)",
+          "En lo que cada persona o cada cultura prefiere",
+        ],
+        [
+          "¿Quién dice qué está bien?",
+          "Dios, en su Palabra, y Cristo con su ejemplo (2 Timoteo 3:16-17; 1 Pedro 2:21)",
+          "Cada uno decide por sí mismo lo que está bien o mal",
+        ],
+        [
+          "¿Hay verdades morales para todos?",
+          "Sí: hay un bien y un mal reales, porque Dios existe y ha hablado",
+          "No: dice que no hay verdades morales para todos",
+        ],
+        [
+          "¿Se puede condenar el abuso?",
+          "Sí: la injusticia y el abuso están mal de verdad, aunque alguien los apruebe",
+          "No con coherencia: si todo fuera relativo, nadie podría decir que están mal",
+        ],
+        [
+          "¿Con qué se mide una decisión?",
+          "Con el doble amor: a Dios y al prójimo (Mateo 22:37-40)",
+          "Con lo que a cada uno le parece bien en el momento",
+        ],
+        [
+          "¿A qué lleva?",
+          "A una mente renovada en la que el Espíritu produce su fruto (Romanos 12:2; Gálatas 5:22-23)",
+          "Al caos de los jueces, cuando cada uno hacía lo que quería (Jueces 21:25)",
+        ],
+      ],
+    },
+  ],
+  "n4-etica-2": [
+    // La lección enseña un método: verlo en orden, cada paso con su versículo, ayuda a usarlo en cualquier decisión, también en lo que la Biblia no menciona.
+    {
+      t: "pasos",
+      titulo: "Cómo tomar una decisión moral, paso a paso",
+      pasos: [
+        {
+          titulo: "Lo que manda o prohíbe la Biblia",
+          texto: "Si la Biblia lo dice claramente, se obedece. Si no lo menciona, se siguen los pasos que vienen, con la Palabra como lámpara (Salmos 119:105).",
+        },
+        {
+          titulo: "Los principios bíblicos que se aplican",
+          texto: "El amor al prójimo, la santidad y la verdad valen para todo, aunque el tema sea nuevo (Mateo 22:37-40).",
+        },
+        {
+          titulo: "La conciencia iluminada por la Palabra",
+          texto: "Si uno duda, se detiene y lo examina con la Escritura, porque lo que no se hace con fe es pecado (Romanos 14:23). La conciencia se educa con la Palabra.",
+        },
+        {
+          titulo: "El consejo de creyentes maduros",
+          texto: "Un pastor o un hermano maduro ayuda a ver lo que uno no ve: hay seguridad en contar con muchos consejeros (Proverbios 11:14).",
+        },
+        {
+          titulo: "Las tres preguntas de Pablo",
+          texto: "¿Glorifica a Dios? ¿Edifica a otros? ¿Me esclaviza? Lo lícito se usa con amor, sin hacer tropezar al débil ni dejarse dominar (1 Corintios 10:23-31; 8:9; 6:12).",
+        },
+        {
+          titulo: "Orar, pedir sabiduría y decidir",
+          texto: "Dios da sabiduría abundantemente y sin reproche al que se la pide (Santiago 1:5). Luego se decide, y todo se hace para su gloria (1 Corintios 10:31).",
+        },
+      ],
+    },
+  ],
+  "n4-etica-6": [
+    // Reúne las normas de la lección con su base bíblica en un solo cuadro, para revisar con él un ministerio o una iglesia.
+    {
+      t: "cuadro",
+      titulo: "Normas de ética ministerial: qué piden y en qué se apoyan",
+      columnas: ["Norma", "Qué se hace", "Base bíblica"],
+      filas: [
+        [
+          "Transparencia en el dinero",
+          "Las ofrendas las cuentan al menos dos personas, se registran y se rinden cuentas a la iglesia",
+          "2 Corintios 8:20-21",
+        ],
+        [
+          "Autoridad sin abuso",
+          "El que dirige sirve y es ejemplo; no se enseñorea de los demás y rinde cuentas",
+          "1 Pedro 5:2-3",
+        ],
+        [
+          "Relaciones apropiadas",
+          "No se aconseja a solas a alguien del otro sexo en un lugar cerrado; se evita toda apariencia de mal",
+          "1 Tesalonicenses 5:22",
+        ],
+        [
+          "Confidencialidad con límites",
+          "Se guarda lo que se confía, salvo cuando hay peligro para la vida o abuso",
+          "Proverbios 11:13; 31:8-9",
+        ],
+        [
+          "Honestidad en el púlpito",
+          "No se inventan testimonios ni se usan sermones ajenos sin decirlo",
+          "Efesios 4:25",
+        ],
+        [
+          "Protección de menores",
+          "Siempre dos adultos, se verifica a quien sirve, puertas abiertas o con ventana; toda sospecha se reporta a la autoridad",
+          "Mateo 18:6; Romanos 13:1",
+        ],
+        [
+          "Restauración del que cae",
+          "Con mansedumbre: deja el cargo por un tiempo, recibe disciplina y acompañamiento y repara el daño; nada se encubre",
+          "Gálatas 6:1",
+        ],
+      ],
+    },
+  ],
+  // Teología pastoral
+  "n5-teologia-pastoral-2": [
+    // La lección nombra los peligros en una lista y los remedios en otros párrafos; el cuadro une cada peligro con su señal y su remedio bíblico.
+    {
+      t: "cuadro",
+      titulo: "Los peligros del ministerio y su remedio bíblico",
+      columnas: ["Peligro", "Cómo se nota", "El remedio que enseña la Palabra"],
+      filas: [
+        [
+          "El profesionalismo",
+          "Predicar y orar por oficio, sin un corazón encendido.",
+          "Perseverar en la oración y en la Palabra, como los apóstoles (Hechos 6:4).",
+        ],
+        [
+          "El orgullo",
+          "Creer que la obra depende de uno.",
+          "Recordar que la grey es de Dios y servir revestido de humildad (1 Pedro 5:2-6).",
+        ],
+        [
+          "El aislamiento",
+          "No tener a nadie a quien rendir cuentas.",
+          "Rendir cuentas a alguien que pregunte por su vida con Dios, su matrimonio o soltería y su dinero (Proverbios 27:17).",
+        ],
+        [
+          "La doble vida",
+          "Enseñar la santidad sin vivirla.",
+          "Cuidar primero la propia vida y después la doctrina (1 Timoteo 4:16).",
+        ],
+        [
+          "La agenda sin descanso",
+          "Tanto trabajo que no queda tiempo ni para comer.",
+          "Apartarse a orar, como Jesús, y descansar un poco, como él invitó a sus discípulos (Marcos 1:35; Marcos 6:31).",
+        ],
+      ],
+    },
+  ],
+  "n5-teologia-pastoral-4": [
+    // El objetivo de la lección es planificar la enseñanza; los pasos convierten la nota del plan anual en un método que el alumno puede seguir.
+    {
+      t: "pasos",
+      titulo: "Cómo planificar la enseñanza de la iglesia para un año",
+      pasos: [
+        {
+          titulo: "Conocer al rebaño",
+          texto: "Ora y conoce a tu iglesia o a tu grupo antes de elegir temas: quiénes son nuevos, qué necesitan las familias y qué errores circulan. Pablo pide mirar por todo el rebaño (Hechos 20:28).",
+        },
+        {
+          titulo: "Elegir libros completos de la Biblia",
+          texto: "Escoge para el año un evangelio, una carta y un libro del Antiguo Testamento, y predícalos de principio a fin, para dar todo el consejo de Dios (Hechos 20:27).",
+        },
+        {
+          titulo: "Sumar los temas que la iglesia necesita",
+          texto: "Agrega los temas que tu iglesia necesita y no solo tus favoritos, porque toda la Escritura sirve para enseñar y para corregir (2 Timoteo 3:16).",
+        },
+        {
+          titulo: "Repartir en público y por las casas",
+          texto: "Ordena qué se enseña en el culto, en las clases y en los grupos pequeños, como Pablo en Éfeso (Hechos 20:20). Los niveles de esta academia pueden servir de apoyo.",
+        },
+        {
+          titulo: "Formar maestros fieles",
+          texto: "Escoge hermanos fieles y prepáralos para que enseñen también a otros, y así la Palabra llegue a todos (2 Timoteo 2:2).",
+        },
+        {
+          titulo: "Proteger del error",
+          texto: "Incluye la sana doctrina y corrige con mansedumbre a los que se oponen (Tito 1:9; 2 Timoteo 2:24-25). Una iglesia bien alimentada con la Palabra resiste mejor el error.",
+        },
+        {
+          titulo: "Predicar con constancia y revisar",
+          texto: "Predica a tiempo y fuera de tiempo (2 Timoteo 4:2). Al final del año, revisa con tus maestros qué aprendió la iglesia y qué falta para el plan siguiente.",
+        },
+      ],
+    },
+  ],
+  "n5-teologia-pastoral-5": [
+    // La lección lee los reproches de Ezequiel 34 y después las prácticas de visitación; el cuadro une cada reproche con lo que Dios espera y cómo se hace hoy.
+    {
+      t: "cuadro",
+      titulo: "Ezequiel 34: lo que Dios reprocha y el cuidado que espera hoy",
+      columnas: ["Lo que Dios reprocha (Ezequiel 34:2-4)", "Lo que espera del pastor", "Cómo se practica hoy"],
+      filas: [
+        [
+          "Se apacentaban a sí mismos.",
+          "Servir al rebaño, no servirse de él.",
+          "Conocer a cada oveja por nombre: su historia, sus luchas y su familia (Juan 10:3).",
+        ],
+        [
+          "No fortalecieron a las débiles.",
+          "Fortalecer a las débiles.",
+          "Visitar a los ancianos, a los que viven solos y a los nuevos, para que se sientan en familia.",
+        ],
+        [
+          "No curaron a la enferma.",
+          "Curar a la enferma.",
+          "Visitar al enfermo con una lectura breve y respeto por el lugar, y orar por él (Santiago 5:14).",
+        ],
+        [
+          "No vendaron a la perniquebrada (la de la pierna rota).",
+          "Vendar a la herida.",
+          "Acompañar al herido y referir a tiempo al médico, al psicólogo, al abogado o a las autoridades.",
+        ],
+        [
+          "No volvieron al redil a la descarriada ni buscaron a la perdida.",
+          "Traer de vuelta a la descarriada y buscar a la perdida.",
+          "Buscar sin reproches a los que dejaron de venir (Lucas 15:4), con un equipo que visite y avise.",
+        ],
+        [
+          "Las dominaron con dureza y con violencia.",
+          "Guiar con mansedumbre y con el ejemplo.",
+          "Cuidar sin señorío, siendo ejemplo de la grey (1 Pedro 5:3).",
+        ],
+      ],
+    },
+  ],
+  // Administración y gobierno de la iglesia
+  "n5-administracion-2": [
+    // Pone lado a lado las tres formas históricas, la forma mixta de muchas iglesias pentecostales y lo que todas necesitan, que la lección presenta por separado.
+    {
+      t: "cuadro",
+      titulo: "Las formas de gobierno de la iglesia",
+      columnas: ["Forma", "Quién gobierna", "Rasgo principal", "La siguen"],
+      filas: [
+        [
+          "Episcopal",
+          "Obispos",
+          "Supervisan a varias iglesias y a sus pastores.",
+          "Las iglesias católica, ortodoxa, anglicana y metodista, entre otras.",
+        ],
+        [
+          "Presbiteriana",
+          "Ancianos",
+          "Gobiernan juntos en cada iglesia y en concilios regionales.",
+          "Las iglesias presbiterianas y reformadas.",
+        ],
+        [
+          "Congregacional",
+          "La congregación",
+          "Toma las decisiones principales, y cada iglesia es autónoma.",
+          "Las iglesias bautistas y muchas iglesias independientes.",
+        ],
+        [
+          "Mixta",
+          "Pastor, consejo y asamblea",
+          "El pastor guía, el consejo lo acompaña y la asamblea aprueba ciertas decisiones, según los estatutos.",
+          "Muchas iglesias, también pentecostales.",
+        ],
+        [
+          "Lo que todas necesitan",
+          "Líderes de buen carácter",
+          "Decisiones claras, rendición de cuentas y la guía de la Palabra y del Espíritu Santo.",
+          "Toda iglesia sana, cualquiera que sea su forma de gobierno.",
+        ],
+      ],
+    },
+  ],
+  "n5-administracion-3": [
+    // Reúne en un cuadro lo que la lección reparte en tres apartados: qué hace cada servicio, qué se les pide y dónde lo enseña la Palabra.
+    {
+      t: "cuadro",
+      titulo: "Los que guían, los que sirven y los equipos",
+      columnas: ["Servicio", "Qué hace", "Qué se les pide", "Base bíblica"],
+      filas: [
+        [
+          "Ancianos, pastores u obispos",
+          "Enseñan la Palabra, cuidan a la iglesia, toman decisiones y protegen al rebaño.",
+          "Irreprensibles, sobrios, prudentes y aptos para enseñar.",
+          "Hechos 20:28; 1 Pedro 5:2; 1 Timoteo 3:2",
+        ],
+        [
+          "Diáconos",
+          "Sirven en lo práctico, como los siete de Hechos 6, que se encargaron de atender a las viudas.",
+          "Honestos, sin doblez, y sometidos a prueba primero.",
+          "Filipenses 1:1; 1 Timoteo 3:8-10; Hechos 6:1-6",
+        ],
+        [
+          "Equipos de servicio",
+          "Alabanza, niños, bienvenida, visitación, medios o limpieza, cada uno con su propósito escrito y su responsable.",
+          "De buen testimonio, llenos del Espíritu Santo y de sabiduría, y preparados antes de servir.",
+          "Hechos 6:3",
+        ],
+        [
+          "Todos los que sirven",
+          "Sirven al Señor en lo visible y en lo escondido, y saben a quién rinden cuentas.",
+          "Primero el carácter; con menores, siempre las normas de protección.",
+          "1 Pedro 4:10; Colosenses 3:23",
+        ],
+      ],
+    },
+  ],
+  "n5-administracion-5": [
+    // Aplica paso a paso el ciclo de la lección (orar, evaluar, fijar metas, organizar y revisar) a Nehemías, el ejemplo con que empieza la lección.
+    {
+      t: "pasos",
+      titulo: "El ciclo de planificación en la obra de Nehemías",
+      pasos: [
+        {
+          titulo: "Preguntar y orar",
+          texto: "Nehemías preguntó por Jerusalén; al saber que el muro estaba derribado, lloró, ayunó y oró por días delante del Dios de los cielos (Nehemías 1:2-4).",
+        },
+        {
+          titulo: "Presentar un pedido claro",
+          texto: "Ante el rey oró otra vez y habló con claridad: señaló un tiempo y pidió cartas para los gobernadores y madera para las puertas y el muro (Nehemías 2:4-8).",
+        },
+        {
+          titulo: "Evaluar cómo estamos",
+          texto: "Ya en Jerusalén, recorrió de noche los muros derribados y vio el daño con sus propios ojos antes de anunciar el plan (Nehemías 2:12-16).",
+        },
+        {
+          titulo: "Fijar una meta clara",
+          texto: "Mostró a los líderes y al pueblo el mal en que estaban y cómo Dios lo había ayudado, y propuso una meta: edificar el muro. Ellos se animaron a la obra (Nehemías 2:17-18).",
+        },
+        {
+          titulo: "Organizar responsables",
+          texto: "Cada grupo reparó un tramo, muchos frente a su propia casa: sacerdotes, gente de otras ciudades, plateros y comerciantes (Nehemías 3:1-2, 10, 28, 32).",
+        },
+        {
+          titulo: "Revisar y ajustar",
+          texto: "Ante las amenazas oraron y pusieron guardia de día y de noche; la mitad trabajaba y la otra mitad vigilaba, y Nehemías dio una señal de trompeta para reunirse (Nehemías 4:9, 16-20).",
+        },
+        {
+          titulo: "Terminar y dar la gloria a Dios",
+          texto: "El muro se terminó en cincuenta y dos días, y aun los enemigos reconocieron que Dios había hecho esa obra (Nehemías 6:15-16).",
+        },
+      ],
+    },
+  ],
+  // Didáctica: cómo enseñar
+  "n5-didactica-2": [
+    // La lección da las siete leyes sin su nombre; el cuadro las nombra, como lo hacen las preguntas del banco, y muestra cómo usar cada una en clase.
+    {
+      t: "cuadro",
+      titulo: "Las siete leyes de la enseñanza de Gregory",
+      columnas: ["Ley", "Lo que pide", "En tu clase"],
+      filas: [
+        [
+          "Del maestro",
+          "Conocer bien lo que se va a enseñar.",
+          "Estudia a fondo el pasaje antes de la clase y sigue aprendiendo (2 Timoteo 2:15).",
+        ],
+        [
+          "Del alumno",
+          "Que el alumno preste atención con interés.",
+          "Empieza con una pregunta, una historia breve o un problema que despierte el interés.",
+        ],
+        [
+          "Del lenguaje",
+          "Usar un lenguaje que maestro y alumno entiendan.",
+          "Explica las palabras difíciles y pon el sentido, como los levitas (Nehemías 8:8).",
+        ],
+        [
+          "De la lección",
+          "Avanzar de lo que el alumno ya sabe a lo que todavía no sabe.",
+          "Parte de lo que el grupo conoce y llévalo paso a paso hacia la madurez (Hebreos 5:12-14).",
+        ],
+        [
+          "Del proceso de enseñanza",
+          "Despertar y guiar la mente del alumno, en vez de solo darle respuestas.",
+          "Haz preguntas que obliguen a cada uno a pensar, como Jesús (Mateo 16:15).",
+        ],
+        [
+          "Del proceso de aprendizaje",
+          "Que el alumno reproduzca con sus palabras lo que aprendió.",
+          "Pide a algunos alumnos que expliquen la idea clave con sus palabras.",
+        ],
+        [
+          "Del repaso y la aplicación",
+          "Repasar y aplicar lo aprendido.",
+          "Cierra con preguntas de repaso y una aplicación, y vuelve al tema en las clases siguientes.",
+        ],
+      ],
+    },
+  ],
+  "n5-didactica-3": [
+    // Es una lección de método y sin video: los pasos ordenan la preparación de una clase, del objetivo a la mejora para la próxima vez.
+    {
+      t: "pasos",
+      titulo: "Cómo preparar una clase bíblica, paso a paso",
+      pasos: [
+        {
+          titulo: "Escribe el objetivo",
+          texto: "Pregúntate qué podrá hacer el alumno al terminar y escríbelo con un verbo que se pueda comprobar (explicar, citar, comparar, aplicar), según los niveles de Bloom.",
+        },
+        {
+          titulo: "Estudia el pasaje en su contexto",
+          texto: "Busca su sentido para leerlo con claridad y explicarlo de modo que se entienda (Nehemías 8:8), y mira cómo lleva a Cristo (Lucas 24:27).",
+        },
+        {
+          titulo: "Ordena las partes de la clase",
+          texto: "Para empezar, una pregunta o una historia; después, la Palabra explicada, la idea clave en una frase, la aplicación para la vida y el repaso: el mismo orden de las lecciones de la academia.",
+        },
+        {
+          titulo: "Escribe el plan",
+          texto: "Anota el tema, el pasaje, el objetivo, las partes con su tiempo, los materiales y las preguntas. Así enseñas con orden y respetas el tiempo.",
+        },
+        {
+          titulo: "Prepárala también de rodillas",
+          texto: "Ora por tus alumnos por su nombre y pide al Espíritu Santo que abra su entendimiento.",
+        },
+        {
+          titulo: "Mejórala para la próxima vez",
+          texto: "Después de la clase, vuelve a tu plan: anota qué ayudó a aprender y qué cambiarás. El plan escrito te permite mejorar cada clase.",
+        },
+      ],
+    },
+  ],
+  "n5-didactica-4": [
+    // La lección presenta en dos listas los métodos de Jesús y los de hoy; el cuadro une cada método con su pasaje y con su uso en clase.
+    {
+      t: "cuadro",
+      titulo: "Los métodos de Jesús y cómo usarlos hoy",
+      columnas: ["Método", "Cómo lo usó Jesús", "Cómo usarlo hoy"],
+      filas: [
+        [
+          "Las preguntas",
+          "Preguntó a sus discípulos quién decían ellos que era él (Mateo 16:15).",
+          "Pregunta y conversa en grupos pequeños para que cada uno piense y responda.",
+        ],
+        [
+          "Las historias",
+          "Hablaba a la gente por parábolas (Mateo 13:34).",
+          "Cuenta una historia o presenta un caso real que se resuelva con la Biblia.",
+        ],
+        [
+          "Los objetos de la vida diaria",
+          "Enseñó con las aves del cielo y los lirios del campo (Mateo 6:26-28).",
+          "Usa objetos de la vida diaria de tus alumnos y recursos visuales: mapas, líneas de tiempo, videos y esquemas.",
+        ],
+        [
+          "El ejemplo",
+          "Lavó los pies de sus discípulos para enseñarles a servir (Juan 13:14-15).",
+          "Vive lo que enseñas: tu ejemplo enseña más que tus palabras.",
+        ],
+        [
+          "La práctica",
+          "Envió a los setenta de dos en dos y después escuchó lo que vivieron (Lucas 10:1, 17).",
+          "Enseña a orar orando y a evangelizar evangelizando; después conversa con ellos sobre lo vivido.",
+        ],
+        [
+          "La conversación personal",
+          "Habló con Nicodemo de noche y con la samaritana junto al pozo (Juan 3 y 4).",
+          "Dedica tiempo personal y sin prisa, en un lugar visible, al alumno que tiene dudas o necesidades propias.",
+        ],
+        [
+          "La explicación",
+          "En el camino a Emaús les explicó lo que las Escrituras decían de él (Lucas 24:27).",
+          "Usa una exposición breve para presentar lo que el alumno no puede descubrir solo.",
+        ],
+      ],
+    },
+  ],
+  // Liderazgo II: formar líderes y equipos
+  "n5-liderazgo-2-2": [
+    // La lección no tiene video: la línea ordena en el tiempo cómo Bernabé abrió puertas a Saulo y a Marcos, y cómo Marcos volvió a ser útil.
+    {
+      t: "linea",
+      titulo: "Bernabé, Saulo y Juan Marcos: formar y dar otra oportunidad",
+      eventos: [
+        {
+          fecha: "c. 35-37 d. C.",
+          texto: "En Jerusalén todos temen a Saulo, pero Bernabé lo presenta a los apóstoles. Después los hermanos lo envían a Tarso.",
+          ref: "Hechos 9:26-30",
+        },
+        {
+          fecha: "c. 43-45 d. C.",
+          texto: "Bernabé va a Tarso a buscar a Saulo y lo lleva a Antioquía, donde enseñan todo un año a mucha gente.",
+          ref: "Hechos 11:25-26",
+        },
+        {
+          fecha: "c. 44-46 d. C.",
+          texto: "Llevan a Jerusalén la ayuda de Antioquía para el hambre (Hechos 11:29-30) y vuelven con Juan Marcos.",
+          ref: "Hechos 12:25",
+        },
+        {
+          fecha: "c. 46-49 d. C.",
+          texto: "El Espíritu Santo los aparta y salen de Antioquía con Juan de ayudante. En Perge, Juan los deja y vuelve a Jerusalén.",
+          ref: "Hechos 13:2-13",
+        },
+        {
+          fecha: "c. 49-50 d. C.",
+          texto: "Tras el concilio, Pablo no quiere llevar a Marcos y se separan: Bernabé va con Marcos a Chipre, y Pablo con Silas.",
+          ref: "Hechos 15:36-40",
+        },
+        {
+          fecha: "c. 60-62 d. C.",
+          texto: "Desde la prisión, Pablo pide a los colosenses que reciban a Marcos y lo cuenta entre sus colaboradores.",
+          ref: "Colosenses 4:10-11",
+        },
+        {
+          fecha: "c. 64-67 d. C.",
+          texto: "En su última carta, Pablo pide a Timoteo que traiga a Marcos, porque le es útil para el ministerio.",
+          ref: "2 Timoteo 4:11",
+        },
+      ],
+    },
+  ],
+  "n5-liderazgo-2-5": [
+    // La lección no tiene video: reúne en un solo orden Mateo 18, Mateo 5 y los pasos de Sande, con la excepción del abuso, para usarlos en un conflicto real.
+    {
+      t: "pasos",
+      titulo: "Del conflicto a la reconciliación, paso a paso",
+      pasos: [
+        {
+          titulo: "Distingue la ofensa del delito",
+          texto: "Este camino es para las ofensas entre hermanos. Si hay abuso o un delito, primero se protege a la víctima y se acude a las autoridades.",
+        },
+        {
+          titulo: "Busca la gloria de Dios",
+          texto: "Ora y pregúntate qué honra a Dios en este conflicto. La meta es ganar a tu hermano, no la discusión (1 Corintios 10:31; Mateo 18:15).",
+        },
+        {
+          titulo: "Saca primero la viga de tu ojo",
+          texto: "Reconoce tu parte antes de señalar la del otro. Si fuiste tú quien ofendió, no esperes: ve a reconciliarte antes de presentar tu ofrenda (Mateo 7:5; 5:23-24).",
+        },
+        {
+          titulo: "Habla a solas y de frente",
+          texto: "Si tu hermano pecó contra ti, habla con él en privado, no a sus espaldas. Escucha antes de responder y responde con calma (Mateo 18:15; Santiago 1:19; Proverbios 15:1).",
+        },
+        {
+          titulo: "Si no escucha, vuelve con uno o dos",
+          texto: "Pide a una o dos personas maduras que te acompañen. A veces hace falta alguien que medie: Pablo pidió a un compañero fiel que ayudara a Evodia y a Síntique (Mateo 18:16; Filipenses 4:2-3).",
+        },
+        {
+          titulo: "Solo al final, ante la iglesia",
+          texto: "Si aun así no escucha, el asunto se lleva a la iglesia. Es el último recurso, nunca el primero (Mateo 18:17).",
+        },
+        {
+          titulo: "Cuando escuche, restaura y perdona",
+          texto: "En el paso en que tu hermano te escuche, restáuralo con mansedumbre, cuidándote a ti mismo, y perdona como Cristo te perdonó. Ataca el problema, no a la persona (Gálatas 6:1; Colosenses 3:13).",
+        },
+      ],
+    },
+  ],
+  // Griego y hebreo bíblicos para el estudio
+  "n5-idiomas-1": [
+    // Ordena en el tiempo lo que la lección cuenta de los idiomas y de las copias, y deja ver de un vistazo el camino del texto hasta la Reina-Valera.
+    {
+      t: "linea",
+      titulo: "Cómo llegó la Biblia hasta tu idioma",
+      eventos: [
+        {
+          fecha: "334-323 a. C.",
+          texto: "Las conquistas de Alejandro Magno llevan el griego común, el koiné, por todo el Mediterráneo oriental.",
+        },
+        {
+          fecha: "Siglos III-II a. C.",
+          texto: "En Alejandría, los judíos traducen el Antiguo Testamento al griego: la Septuaginta, que el Nuevo Testamento cita muchas veces.",
+        },
+        {
+          fecha: "c. 30-33 d. C.",
+          texto: "Sobre la cruz de Jesús, el título se escribe en hebreo, en griego y en latín.",
+          ref: "Juan 19:19-20",
+        },
+        {
+          fecha: "Siglo I d. C.",
+          texto: "Se escribe el Nuevo Testamento en griego koiné, la lengua común de su tiempo.",
+        },
+        {
+          fecha: "c. siglos VII-X",
+          texto: "Los masoretas, escribas judíos, copian con gran cuidado el texto hebreo y le añaden los signos de las vocales.",
+        },
+        {
+          fecha: "1008",
+          texto: "Se copia el códice de Leningrado, el manuscrito completo más antiguo que se conserva de la Biblia hebrea.",
+        },
+        {
+          fecha: "1569",
+          texto: "Casiodoro de Reina publica en Basilea la Biblia del Oso, su traducción al español desde el hebreo y el griego.",
+        },
+        { fecha: "1602", texto: "Cipriano de Valera publica en Ámsterdam su revisión de la traducción de Reina." },
+        {
+          fecha: "1960",
+          texto: "Las Sociedades Bíblicas publican la revisión Reina-Valera 1960, la que usa esta academia.",
+        },
+        {
+          fecha: "Hoy",
+          texto: "Se conservan más de cinco mil manuscritos griegos del Nuevo Testamento: Dios cuida su Palabra hasta el detalle.",
+          ref: "Mateo 5:18",
+        },
+      ],
+    },
+  ],
+  "n5-idiomas-5": [
+    // Une en un solo ejemplo resuelto los seis pasos de la lección y el estudio de jésed, que la lección presenta por separado.
+    {
+      t: "pasos",
+      titulo: "Un estudio de palabras resuelto: jésed en el Salmo 136",
+      pasos: [
+        {
+          titulo: "Escoge la palabra",
+          texto: "El Salmo 136 repite en sus veintiséis versículos que la misericordia de Dios es para siempre: misericordia es la palabra que hay que estudiar.",
+        },
+        {
+          titulo: "Busca la palabra original",
+          texto: "Con la concordancia de Strong o un interlineal se ve que misericordia traduce jésed, el número 2617 del hebreo.",
+        },
+        {
+          titulo: "Mira dónde más aparece",
+          texto: "Jésed aparece cuando Dios se revela a Moisés como grande en misericordia (Éxodo 34:6), en sus pactos con su pueblo y en la lealtad de Rut (Rut 1:8; 3:10).",
+        },
+        {
+          titulo: "Lee cada uso en su contexto",
+          texto: "En esos pasajes jésed no es un sentimiento pasajero: es amor leal, el de Dios que cumple sus promesas y el de quien se mantiene fiel a otro.",
+        },
+        {
+          titulo: "Compara con un diccionario",
+          texto: "Un diccionario expositivo, como el de W. E. Vine, sirve para comparar lo que anotaste en los pasajes antes de concluir.",
+        },
+        {
+          titulo: "Vuelve al pasaje",
+          texto: "El Salmo 136 celebra el amor leal de Dios, que cumple sus promesas a su pueblo aunque el pueblo falle: un amor fiel que no se acaba.",
+        },
+      ],
+    },
+  ],
+  "n5-idiomas-6": [
+    // La lección da los errores y el buen uso en dos listas; el cuadro pone frente a cada error su remedio, para repasar y para preparar una enseñanza.
+    {
+      t: "cuadro",
+      titulo: "Errores comunes con el griego y el hebreo, y cómo evitarlos",
+      columnas: ["Error", "Qué es", "Cómo evitarlo"],
+      filas: [
+        [
+          "La falacia de la raíz",
+          "Creer que una palabra significa siempre lo que significaban sus partes.",
+          "Mirar cómo se usa la palabra en su tiempo y en su pasaje: el sentido lo da el uso, no el origen.",
+        ],
+        [
+          "El anacronismo",
+          "Leer en una palabra antigua un sentido que vino después, como decir que dýnamis es dinamita, un invento del siglo XIX.",
+          "Preguntar qué entendían el autor y sus lectores: dýnamis es poder, fuerza, capacidad (Romanos 1:16).",
+        ],
+        [
+          "Cargar todos los sentidos",
+          "Poner a la vez en un pasaje todos los sentidos que una palabra puede tener.",
+          "Escoger el sentido que pide el contexto: en cada pasaje el autor usa uno.",
+        ],
+        [
+          "Exagerar los sinónimos",
+          "Ver grandes diferencias entre palabras parecidas, como agapáo y filéo en Juan 21:15-17.",
+          "Ver cómo las usa el autor: Juan emplea las dos para el amor del Padre al Hijo (Juan 3:35; 5:20).",
+        ],
+        [
+          "Corregir la traducción para lucirse",
+          "Decir que la Biblia está mal traducida sin conocer bien la lengua.",
+          "Comparar traducciones fieles, decir de dónde salen los datos y reconocer lo que no se sabe (2 Corintios 4:2).",
+        ],
+      ],
+    },
+  ],
   // Exégesis de un libro: Romanos
   "n5-exegesis-1": [
     // La lección da el contexto en pocas líneas (Corinto, hacia el año 57); la línea ordena los hechos que lo explican, desde la iglesia que Pablo no fundó hasta su llegada a Roma, para practicar el primer paso del método (objetivo o1).
@@ -3929,6 +5162,1768 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
         {
           titulo: "Rechaza el fuego extraño",
           texto: "La presencia de Dios no se fabrica con manipulación de las emociones, presión para dar dinero ni espectáculo: lo que Dios no manda no aviva a su iglesia (Levítico 10:1-2).",
+        },
+      ],
+    },
+  ],
+  // Seminario de liderazgo ministerial
+  "n5-seminario-1": [
+    // Reúne en una sola vista los seis pasos que la materia usa en todos sus casos, con los versículos de la lección que los sostienen.
+    {
+      t: "pasos",
+      titulo: "El método del seminario: seis pasos con oración y consejo",
+      pasos: [
+        {
+          titulo: "Los hechos",
+          texto: "Qué pasó, quiénes están involucrados y qué se sabe con certeza. Se separa lo comprobado de lo supuesto y se escucha a todas las partes antes de responder (Proverbios 18:13, 17).",
+        },
+        {
+          titulo: "El problema de fondo",
+          texto: "Lo que se ve suele ser un síntoma. Se pregunta qué hay debajo, sin quedarse en la primera queja ni en el primer culpable.",
+        },
+        {
+          titulo: "Los principios bíblicos",
+          texto: "Qué enseña la Escritura sobre esta situación, leída en su contexto. Se pide sabiduría a Dios, que la da con generosidad y sin reprochar (Santiago 1:5).",
+        },
+        {
+          titulo: "Las opciones",
+          texto: "Dos o tres caminos posibles, cada uno con sus consecuencias, pensados con el consejo de hermanos maduros (Proverbios 15:22).",
+        },
+        { titulo: "La decisión", texto: "Qué se hará, quién lo hará y cómo se comunicará, con sus razones." },
+        {
+          titulo: "La evaluación",
+          texto: "Volver después y preguntar qué resultó y qué se aprendió. La oración y el consejo acompañan cada paso, no solo el primero.",
+        },
+      ],
+    },
+  ],
+  "n5-seminario-2": [
+    // Pone lado a lado cada paso de Hechos 15 y su aplicación al caso, para ver cómo se lleva un modelo bíblico a una situación de hoy.
+    {
+      t: "cuadro",
+      titulo: "Del modelo de Hechos 15 al caso del culto",
+      columnas: ["Paso", "En Hechos 15", "En el caso del culto"],
+      filas: [
+        [
+          "Escuchar a las partes",
+          "Se reunieron para conocer el asunto y, tras mucha discusión, oyeron a Pedro, a Bernabé y a Pablo (Hechos 15:6-12).",
+          "Los líderes escuchan a cada grupo por separado y después juntos.",
+        ],
+        [
+          "Examinar la Escritura",
+          "Jacobo mostró que las palabras de los profetas concordaban con lo que Dios estaba haciendo (Hechos 15:13-17).",
+          "Enseñan sobre la adoración y el amor, distinguiendo lo bíblico de lo que es gusto personal.",
+        ],
+        [
+          "Buscar la dirección de Dios",
+          "Decidieron lo que pareció bien al Espíritu Santo y a ellos, no solo lo que quería una mayoría (Hechos 15:28).",
+          "Oran y proponen un camino que honre a los dos grupos: variedad en el culto o espacios que no dividan.",
+        ],
+        [
+          "Comunicar la decisión",
+          "Escribieron una carta y enviaron a Judas y a Silas para explicarla también de palabra (Hechos 15:22-27).",
+          "Explican la decisión con sus razones y piden que las críticas se hablen de frente.",
+        ],
+        [
+          "Acompañar después",
+          "Judas y Silas consolaron a los hermanos, y después lo acordado se entregó a las iglesias (Hechos 15:32; 16:4-5).",
+          "Visitan a las familias molestas y vuelven a evaluar en unos meses.",
+        ],
+      ],
+    },
+  ],
+  "n5-seminario-6": [
+    // Muestra las ocho partes con un ejemplo completo, como modelo para escribir el plan propio que puede servir de base para el proyecto final.
+    {
+      t: "cuadro",
+      titulo: "Las ocho partes del plan, con un ejemplo",
+      columnas: ["Parte del plan", "Qué responde", "Ejemplo: un ministerio de bienvenida"],
+      filas: [
+        [
+          "El llamado y la visión",
+          "A qué me llamó Dios y hacia dónde lleva mi ministerio. Todo se encomienda a Él (Proverbios 16:3).",
+          "Recibir a los que llegan, para que ninguna visita se vaya sin ser conocida y acompañada.",
+        ],
+        [
+          "El diagnóstico",
+          "Las fortalezas, las debilidades, las oportunidades y los riesgos.",
+          "Hay hermanos amables, pero nadie anota a las visitas; llegan nuevos cada semana; el riesgo es el cansancio.",
+        ],
+        [
+          "Las metas",
+          "Pocas, claras, que se puedan medir y con fecha, escritas para compartirlas (Habacuc 2:2).",
+          "Llamar a cada visita en su primera semana e inscribir a diez nuevos en el Nivel 1 antes de diciembre.",
+        ],
+        [
+          "El equipo",
+          "Quiénes ayudarán y cómo se los formará.",
+          "Seis hermanos de bienvenida, formados en dos reuniones cada trimestre.",
+        ],
+        [
+          "Los recursos",
+          "Lo que hace falta y un presupuesto sencillo: calcular antes de edificar (Lucas 14:28).",
+          "Tarjetas de bienvenida, una lista de contactos y un presupuesto pequeño para un café al mes.",
+        ],
+        [
+          "El calendario",
+          "Qué se hará cada mes o cada trimestre.",
+          "Enero: formar al equipo; febrero: empezar las llamadas; cada mes: un café con los nuevos.",
+        ],
+        [
+          "La evaluación",
+          "Cómo y cuándo se revisa el avance, y a quién se rinden cuentas.",
+          "Cada trimestre, con el pastor: cuántos nuevos se quedaron y qué hay que mejorar.",
+        ],
+        [
+          "El cuidado personal",
+          "La vida con Dios, la familia y el descanso de quien sirve.",
+          "Oración diaria, una noche libre con la familia y turnos para no servir todos los domingos.",
+        ],
+      ],
+    },
+  ],
+  // Evangelismo personal avanzado
+  "evangelismo-misiones-1-2": [
+    // Pone cada distorsión frente a lo que enseña la Escritura, para reconocerla en una conversación o en un mensaje.
+    {
+      t: "cuadro",
+      titulo: "El evangelio de la Escritura frente a sus distorsiones",
+      columnas: ["Aspecto", "Un evangelio distorsionado", "El evangelio de la Escritura"],
+      filas: [
+        [
+          "El centro",
+          "Lo que yo puedo ganar: una vida mejor, dinero o éxito.",
+          "Cristo, que murió por nuestros pecados, fue sepultado y resucitó al tercer día (1 Corintios 15:3-4).",
+        ],
+        [
+          "La salvación",
+          "Un premio por portarse bien: las obras.",
+          "Un regalo de Dios: por gracia, por medio de la fe, y no por obras (Efesios 2:8-9).",
+        ],
+        [
+          "Lo que promete",
+          "Dinero, salud o éxito seguros a cambio de la fe o de una ofrenda: la prosperidad.",
+          "La reconciliación con Dios (2 Corintios 5:19-20); la piedad no es un medio de ganar dinero (1 Timoteo 6:5-10).",
+        ],
+        [
+          "El pecado y la cruz",
+          "Se callan para no incomodar: un Jesús sin cruz.",
+          "Se anuncian con amor: Cristo se dio por nuestros pecados (Gálatas 1:4), y no hay otro evangelio (Gálatas 1:6-7).",
+        ],
+        [
+          "La respuesta",
+          "Dar por salvo a alguien solo porque repitió unas palabras.",
+          "Arrepentirse y creer en el evangelio (Marcos 1:15); la oración expresa esa fe, pero salva Cristo.",
+        ],
+        [
+          "El resultado",
+          "Una decisión que no cambia la vida.",
+          "Un discípulo que sigue a Cristo cargando su cruz (Lucas 14:27).",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-1-3": [
+    // La lección pide comparar a Pablo en la sinagoga y en el Areópago: el cuadro pone lado a lado lo que cambió y lo que no.
+    {
+      t: "cuadro",
+      titulo: "Tesalónica y Atenas: otro punto de partida, el mismo evangelio",
+      columnas: ["Aspecto", "En la sinagoga de Tesalónica", "En el Areópago de Atenas"],
+      filas: [
+        [
+          "Quiénes oían",
+          "Judíos que conocían las Escrituras, y griegos piadosos (Hechos 17:1-4).",
+          "Filósofos epicúreos y estoicos, y atenienses que no conocían la Biblia (Hechos 17:18-21).",
+        ],
+        [
+          "El punto de partida",
+          "Las Escrituras, que ellos ya conocían (Hechos 17:2-3).",
+          "Un altar que ellos veían, con la inscripción al Dios no conocido (Hechos 17:23).",
+        ],
+        [
+          "Cómo habló",
+          "Discutió con ellos tres días de reposo, explicando y mostrando con las Escrituras (Hechos 17:2-3).",
+          "Anunció al Dios creador, que da a todos vida, y citó a poetas de ellos (Hechos 17:24-28).",
+        ],
+        [
+          "El centro del mensaje",
+          "Que el Cristo debía padecer y resucitar, y que Jesús es el Cristo (Hechos 17:3).",
+          "El llamado a arrepentirse y el juicio por el varón que Dios levantó de los muertos (Hechos 17:30-31).",
+        ],
+        [
+          "Lo que pasó",
+          "Algunos creyeron, con muchos griegos piadosos; otros, con celos, alborotaron la ciudad (Hechos 17:4-5).",
+          "Unos se burlaron, otros quisieron oír más, y algunos creyeron, como Dionisio y Dámaris (Hechos 17:32-34).",
+        ],
+        [
+          "Para hoy",
+          "Con quien conoce la Biblia, parte de ella y muéstrale a Cristo en las Escrituras.",
+          "Con quien no la conoce, parte de lo que ve y vive, y llévalo a Cristo resucitado.",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-1-4": [
+    // Reúne en una sola vista los cuatro ejemplos de la lección, con lo que hizo cada uno y lo que enseña para evangelizar a los suyos.
+    {
+      t: "cuadro",
+      titulo: "Cuatro ejemplos: el evangelio con la familia y los amigos",
+      columnas: ["Ejemplo", "Qué hizo", "Qué aprendemos"],
+      filas: [
+        [
+          "El hombre de Gadara (Marcos 5:18-20)",
+          "Quería irse con Jesús, pero Jesús lo envió a contar a los suyos lo que el Señor había hecho con él.",
+          "Tu casa es tu primer campo misionero: cuenta lo que Dios hizo contigo.",
+        ],
+        [
+          "Cornelio (Hechos 10:24-27)",
+          "Reunió en su casa a sus parientes y amigos cercanos para oír a Pedro.",
+          "Abre tu casa e invita a los tuyos a oír la palabra.",
+        ],
+        [
+          "El carcelero de Filipos (Hechos 16:31-34)",
+          "Él y todos los de su casa oyeron la palabra; se bautizó con los suyos y se regocijó con toda su casa.",
+          "Toda la casa necesita oír el evangelio, y cada persona debe creer.",
+        ],
+        [
+          "Felipe (Juan 1:45-46)",
+          "Cuando su amigo Natanael dudó, no discutió: lo invitó a ver a Jesús por sí mismo.",
+          "No hace falta ganar la discusión: invita a conocer a Jesús.",
+        ],
+      ],
+    },
+  ],
+  // Campañas y cruzadas
+  "evangelismo-misiones-2-2": [
+    // Ordena en el tiempo los ejemplos de la lección, de Pablo en Éfeso a Billy Graham, y muestra que salir a predicar adonde está la gente no es un invento moderno.
+    {
+      t: "linea",
+      titulo: "De Pablo a Billy Graham: la predicación pública en la historia",
+      eventos: [
+        {
+          fecha: "Siglo I d. C.",
+          texto: "Pablo enseña cada día, durante dos años, en la escuela de Tiranno, en Éfeso: judíos y griegos de toda Asia oyen la palabra del Señor.",
+          ref: "Hechos 19:9-10",
+        },
+        {
+          fecha: "Febrero de 1739",
+          texto: "George Whitefield empieza a predicar al aire libre a los mineros de Kingswood, cerca de Bristol, que casi nunca entraban en una iglesia.",
+        },
+        {
+          fecha: "Abril de 1739",
+          texto: "John Wesley sigue su ejemplo y predica al aire libre en Bristol: los dos llevan el evangelio adonde está la gente.",
+        },
+        {
+          fecha: "1918",
+          texto: "Nace Billy Graham, el evangelista estadounidense que en el siglo XX predicará en campañas en muchos países.",
+        },
+        {
+          fecha: "1957",
+          texto: "La campaña de Billy Graham en el Madison Square Garden de Nueva York se extiende por dieciséis semanas.",
+        },
+        {
+          fecha: "2018",
+          texto: "Muere Billy Graham. Sus campañas se preparaban con tiempo, con las iglesias de cada ciudad y con consejeros para los que respondían.",
+        },
+      ],
+    },
+  ],
+  "evangelismo-misiones-2-4": [
+    // Pone lado a lado el llamado honesto y el que manipula, que es justo lo que esta lección enseña a distinguir.
+    {
+      t: "cuadro",
+      titulo: "Llamado honesto o manipulación: cómo distinguirlos",
+      columnas: ["Aspecto", "Llamado honesto", "Llamado que manipula", "Base bíblica"],
+      filas: [
+        [
+          "El centro del mensaje",
+          "Jesucristo crucificado, anunciado como Señor.",
+          "El predicador, sus historias o promesas de éxito.",
+          "1 Corintios 2:2; 2 Corintios 4:5",
+        ],
+        [
+          "En qué confía",
+          "En el poder de Dios, para que la fe no se funde en la sabiduría humana.",
+          "En palabras persuasivas, trucos y emociones fabricadas.",
+          "1 Corintios 2:4-5",
+        ],
+        [
+          "Lo que explica",
+          "Qué es responder: arrepentirse de los pecados y confiar en Cristo.",
+          "Pide levantar la mano o pasar al frente sin explicar qué significa.",
+          "Hechos 2:38",
+        ],
+        [
+          "La libertad",
+          "Da tiempo y libertad, sin presión ni música que manipule.",
+          "Repite el llamado, sube la música y apura diciendo que el tiempo se acaba.",
+          "2 Corintios 4:2",
+        ],
+        [
+          "Las promesas",
+          "Solo ofrece lo que Dios prometió en su Palabra.",
+          "Promete lo que Dios no prometió para que la gente pase.",
+          "2 Corintios 4:2",
+        ],
+        [
+          "El paso visible",
+          "Invita a pasar al frente o a hablar con un consejero, sin decir que eso salva.",
+          "Da a entender que pasar al frente es lo que salva.",
+          "Hechos 2:38; Efesios 2:8-9",
+        ],
+        [
+          "Lo que sigue",
+          "Explica los pasos siguientes: la Biblia, la oración y una iglesia cercana.",
+          "Termina en la emoción del momento, sin decir qué sigue.",
+          "Hechos 2:41-42",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-2-5": [
+    // Une en un solo camino lo que hace el consejero y lo que hace el equipo de seguimiento, desde la noche de la campaña hasta las primeras semanas.
+    {
+      t: "pasos",
+      titulo: "Del llamado al discipulado: cómo se cuida a quien responde",
+      pasos: [
+        {
+          titulo: "Recibir y escuchar",
+          texto: "Un consejero maduro y preparado, de una de las iglesias que participan, recibe a la persona y la escucha: qué decidió y por qué.",
+        },
+        {
+          titulo: "Explicar el evangelio y orar",
+          texto: "Le explica con la Biblia qué es arrepentirse y confiar en Cristo, y ora con ella, sin presionarla ni prometerle lo que no puede cumplir.",
+        },
+        {
+          titulo: "Anotar los datos con permiso",
+          texto: "Solo si la persona lo permite, anota sus datos y los entrega a la iglesia más cercana a su casa, para que pueda congregarse cerca.",
+        },
+        { titulo: "Contactar pronto", texto: "En los días siguientes, alguien de esa iglesia la llama o la visita." },
+        {
+          titulo: "Integrarla en la iglesia",
+          texto: "La invita a un grupo de nuevos creyentes y a los cultos, y le da una Biblia con un plan de lectura sencillo.",
+        },
+        {
+          titulo: "Asignarle un acompañante",
+          texto: "Se le asigna un acompañante que la cuide en sus primeras semanas, como en la consolidación que se estudió en el Nivel 3.",
+        },
+        {
+          titulo: "Llevar un registro",
+          texto: "Se anota cada contacto para que nadie se pierda. La meta es un discípulo maduro en Cristo y un fruto que permanezca (Colosenses 1:28; Juan 15:16).",
+        },
+      ],
+    },
+  ],
+  // Teología bíblica de las misiones
+  "evangelismo-misiones-3-2": [
+    // La lección recorre cinco pasajes seguidos sin un resumen; el cuadro los reúne y muestra que desde Génesis Dios piensa en todas las naciones.
+    {
+      t: "cuadro",
+      titulo: "La misión de Dios en el Antiguo Testamento",
+      columnas: ["Pasaje", "Lo que enseña", "Para la iglesia hoy"],
+      filas: [
+        [
+          "Génesis 12:1-3 y Gálatas 3:8",
+          "En Abram serán benditas todas las familias de la tierra; Pablo lo llama el evangelio anunciado de antemano.",
+          "Dios nos bendice para que seamos bendición a todos los pueblos.",
+        ],
+        [
+          "Éxodo 19:5-6",
+          "Toda la tierra es de Dios; Israel debía ser un reino de sacerdotes que mostrara a Dios a las naciones.",
+          "Como real sacerdocio, la iglesia está entre Dios y los demás para mostrarlo (1 Pedro 2:9).",
+        ],
+        [
+          "Salmos 67:1-2",
+          "Se pide la bendición de Dios para que su camino y su salvación se conozcan en todas las naciones.",
+          "Pedimos bendición con un propósito: que otros conozcan a Dios.",
+        ],
+        [
+          "Isaías 49:6 y Hechos 13:47",
+          "El Siervo es luz de las naciones; Pablo y Bernabé aplicaron estas palabras a su misión entre los gentiles.",
+          "La salvación de Dios debe llegar hasta lo último de la tierra.",
+        ],
+        [
+          "Jonás 4:1-2 y 4:11",
+          "Jonás no quería que Nínive, ciudad enemiga, recibiera misericordia; Dios le muestra su piedad por esa gran ciudad.",
+          "El corazón de Dios es más grande que nuestros prejuicios.",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-3-3": [
+    // El objetivo pide interpretar la gran comisión según Mateo y Lucas; el cuadro compara su base, su mandato, su alcance y lo que sostiene a los enviados.
+    {
+      t: "cuadro",
+      titulo: "La gran comisión según Mateo y según Lucas",
+      columnas: ["Aspecto", "Mateo 28:18-20", "Lucas 24:46-48"],
+      filas: [
+        [
+          "En qué se apoya",
+          "En la autoridad de Cristo: toda potestad le es dada en el cielo y en la tierra.",
+          "En lo que estaba escrito: el Cristo debía padecer y resucitar al tercer día.",
+        ],
+        [
+          "Qué manda",
+          "Ir y hacer discípulos: bautizarlos y enseñarles a guardar todo lo que Jesús mandó.",
+          "Predicar en su nombre el arrepentimiento y el perdón de pecados.",
+        ],
+        [
+          "A quiénes llega",
+          "A todas las naciones: cada pueblo con su propia lengua y su propia cultura.",
+          "A todas las naciones, comenzando desde Jerusalén.",
+        ],
+        [
+          "El papel de los enviados",
+          "Hacer discípulos que aprendan a obedecer a Cristo.",
+          "Ser testigos de estas cosas: que el Cristo padeció y resucitó.",
+        ],
+        [
+          "Lo que los sostiene",
+          "La presencia de Jesús con ellos todos los días, hasta el fin del mundo.",
+          "La promesa del Padre: serían investidos de poder desde lo alto (Lucas 24:49).",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-3-5": [
+    // La lección enumera la estrategia de Pablo; los pasos la ordenan como un método, con la base bíblica de cada uno, para plantar obras que sigan sin el misionero.
+    {
+      t: "pasos",
+      titulo: "La estrategia misionera de Pablo, paso a paso",
+      pasos: [
+        {
+          titulo: "Ir adonde Cristo no es conocido",
+          texto: "Pablo se esforzó por predicar donde Cristo no había sido nombrado, para no edificar sobre fundamento ajeno, y buscaba a los que nunca habían oído de él (Romanos 15:20-21).",
+        },
+        {
+          titulo: "Empezar en ciudades clave",
+          texto: "Comenzaba en ciudades importantes, desde donde el evangelio se extendía a la región: tras dos años en Éfeso, todos los que vivían en la provincia de Asia oyeron la palabra (Hechos 19:10).",
+        },
+        {
+          titulo: "Trabajar en equipo",
+          texto: "No servía solo: trabajó con Bernabé, Silas, Timoteo, Priscila y Aquila, y con otros colaboradores.",
+        },
+        {
+          titulo: "Adaptarse sin cambiar el evangelio",
+          texto: "Siendo libre, se hizo siervo de todos para ganar a más: se acercaba a judíos y gentiles en su cultura, pero seguía bajo la ley de Cristo y no cambiaba el mensaje (1 Corintios 9:19-22).",
+        },
+        {
+          titulo: "Plantar, fortalecer y dejar líderes",
+          texto: "Volvía a las ciudades para confirmar a los discípulos, constituía ancianos en cada iglesia y, después de orar con ayunos, los encomendaba al Señor (Hechos 14:21-23).",
+        },
+        {
+          titulo: "Seguir cuidando y rendir cuentas",
+          texto: "Cuidaba a las iglesias con visitas y cartas, con preocupación por todas ellas (2 Corintios 11:28), y contaba a la iglesia que lo envió lo que Dios había hecho (Hechos 14:26-27).",
+        },
+      ],
+    },
+  ],
+  // Misión transcultural
+  "evangelismo-misiones-4-3": [
+    // Pone en una tabla las preguntas de la lección para distinguir el evangelio de las costumbres, con lo que se hace y un ejemplo de cada caso.
+    {
+      t: "cuadro",
+      titulo: "El evangelio y las costumbres: qué se hace con cada una",
+      columnas: ["El caso", "Qué se hace", "Ejemplo"],
+      filas: [
+        [
+          "Algo que la Biblia manda o prohíbe",
+          "Se obedece en toda cultura, porque la Escritura es la medida de todas.",
+          "Decir la verdad y honrar el matrimonio (Efesios 4:25; Hebreos 13:4).",
+        ],
+        [
+          "Una costumbre del misionero",
+          "No se impone: el evangelio no exige cambiar de cultura (Hechos 15:19).",
+          "Su estilo de música, de ropa o de culto.",
+        ],
+        [
+          "Una costumbre del pueblo que no contradice la Palabra",
+          "Se conserva, y aun puede usarse para adorar a Dios.",
+          "La hospitalidad, el respeto a los mayores, su comida y su música.",
+        ],
+        [
+          "Una costumbre del pueblo que contradice la Palabra",
+          "No se conserva: el evangelio la transforma.",
+          "Las ofrendas a los ídolos o a los espíritus (Hechos 15:20; 1 Tesalonicenses 1:9).",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-4-4": [
+    // Ordena en el tiempo la historia que cuenta la lección, de Nehemías 8 a la Reina-Valera de hoy, y recuerda que la tarea de traducir no ha terminado.
+    {
+      t: "linea",
+      titulo: "La Palabra en la lengua del pueblo: de Esdras a la Reina-Valera",
+      eventos: [
+        {
+          fecha: "c. 445 a. C.",
+          texto: "En tiempos de Esdras se lee la ley al pueblo, y los levitas ponen el sentido para que todos entiendan.",
+          ref: "Nehemías 8:7-8",
+        },
+        {
+          fecha: "1569",
+          texto: "En el exilio, Casiodoro de Reina publica en Basilea la Biblia del Oso: la primera Biblia completa en español traducida de los originales.",
+        },
+        {
+          fecha: "1602",
+          texto: "Cipriano de Valera publica su revisión de la Biblia de Reina, tras unos veinte años de trabajo. De ahí viene el nombre Reina-Valera.",
+        },
+        {
+          fecha: "1960",
+          texto: "Las Sociedades Bíblicas en América Latina publican la revisión de 1960, la más usada por los evangélicos de habla hispana.",
+        },
+        {
+          fecha: "Hoy",
+          texto: "Todavía hay pueblos sin la Biblia completa en su lengua: la misión apoya la traducción y forma maestros que la enseñen.",
+          ref: "Romanos 10:17",
+        },
+      ],
+    },
+  ],
+  "evangelismo-misiones-4-5": [
+    // Une en un solo recorrido el llamado, la preparación, las etapas del choque cultural y el regreso, que la lección explica por partes.
+    {
+      t: "pasos",
+      titulo: "El camino del misionero: del llamado al regreso",
+      pasos: [
+        {
+          titulo: "El llamado confirmado",
+          texto: "Dios llama, como en la visión de Macedonia (Hechos 16:9-10), y el equipo y la iglesia confirman el llamado antes de partir.",
+        },
+        {
+          titulo: "La preparación",
+          texto: "Antes de ir, se prepara en la Palabra, la lengua, la cultura y la salud, sabiendo que habrá pruebas (2 Corintios 11:26-27).",
+        },
+        {
+          titulo: "El envío",
+          texto: "No va solo: lo envía una iglesia que ora, lo sostiene y le pide cuentas, como Antioquía envió a Bernabé y a Saulo (Hechos 13:2-3).",
+        },
+        {
+          titulo: "La llegada",
+          texto: "Al principio todo parece nuevo y atractivo. Así empieza el choque cultural, un proceso normal que conviene conocer antes de ir.",
+        },
+        {
+          titulo: "Los días difíciles",
+          texto: "Después llegan el cansancio, la frustración y la nostalgia. No es falta de fe: se habla de ello, se ora y se sigue adelante.",
+        },
+        {
+          titulo: "La adaptación",
+          texto: "Con el tiempo viene la adaptación. Ayudan el descanso, el cuidado del cónyuge y de los hijos, y la comunicación con la iglesia.",
+        },
+        {
+          titulo: "El regreso",
+          texto: "Volver también es parte del camino: la iglesia lo recibe, lo escucha y lo acompaña, como Antioquía recibió a Pablo y a Bernabé (Hechos 14:26-28).",
+        },
+      ],
+    },
+  ],
+  // Plantación de iglesias
+  "evangelismo-misiones-5-2": [
+    // La lección no tiene video ni esquema: el cuadro reúne sus cinco ejemplos bíblicos y lo que cada uno enseña del llamado, el carácter y el equipo.
+    {
+      t: "cuadro",
+      titulo: "El plantador y su equipo en el Nuevo Testamento",
+      columnas: ["Ejemplo bíblico", "Qué dice el texto", "Qué enseña al plantador"],
+      filas: [
+        [
+          "Antioquía (Hechos 13:2-3)",
+          "El Espíritu Santo apartó a Bernabé y a Saulo, y la iglesia ayunó, oró, les impuso las manos y los despidió.",
+          "Se va con un llamado confirmado y con el respaldo de la iglesia que envía.",
+        ],
+        [
+          "Los que guían la iglesia (1 Timoteo 3:1-7; Tito 1:5-9)",
+          "Pablo pide una vida irreprensible, una casa bien gobernada y buen testimonio de los de afuera.",
+          "Antes que los dones importa el carácter: la vida con Dios, la familia, la integridad y la perseverancia.",
+        ],
+        [
+          "Priscila y Aquila (Romanos 16:3-5)",
+          "Pablo los llama sus colaboradores en Cristo Jesús y manda saludar a la iglesia que se reunía en su casa.",
+          "Nadie planta solo: la obra se hace en equipo y en las casas.",
+        ],
+        [
+          "Un oficio en Corinto (Hechos 18:3-4)",
+          "Pablo trabajó con Priscila y Aquila en el oficio de hacer tiendas, y cada día de reposo discutía en la sinagoga.",
+          "Un oficio puede sostener al plantador mientras la iglesia crece, sin dejar de anunciar el evangelio.",
+        ],
+        [
+          "Un año y seis meses (Hechos 18:11)",
+          "Pablo se quedó en Corinto enseñándoles la palabra de Dios.",
+          "Plantar una iglesia pide paciencia y enseñanza constante de la Palabra.",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-5-5": [
+    // Pone frente a frente la iglesia que depende del plantador y la que madura, para analizar cada punto de la lección: líderes, servicio, orden y autonomía.
+    {
+      t: "cuadro",
+      titulo: "De depender del plantador a una iglesia que madura",
+      columnas: ["Aspecto", "Si todo depende del plantador", "Si la iglesia madura"],
+      filas: [
+        [
+          "Liderazgo",
+          "El plantador guía y decide todo, y nadie más se prepara para guiar.",
+          "Se forman líderes del lugar desde el principio, como los ancianos que Tito debía establecer en cada ciudad (Tito 1:5).",
+        ],
+        [
+          "Servicio",
+          "Unos pocos lo hacen todo y los demás solo asisten.",
+          "Cada creyente es preparado para la obra del ministerio según sus dones (Efesios 4:11-12).",
+        ],
+        [
+          "Formación",
+          "El plantador enseña, pero nadie aprende a enseñar a otros.",
+          "Lo que se enseña se encarga a hermanos fieles que puedan enseñar también a otros (2 Timoteo 2:2).",
+        ],
+        [
+          "Orden",
+          "No hay orden, o se copian muchas reglas que ahogan a una iglesia pequeña.",
+          "Un orden sencillo: reuniones, cuidado de los nuevos y cuentas claras.",
+        ],
+        [
+          "Sostén y gobierno",
+          "Si el plantador o la ayuda de afuera faltan, la iglesia se detiene.",
+          "Camina hacia sostenerse y gobernarse por sí misma, con sus propios líderes.",
+        ],
+        [
+          "Extensión",
+          "Espera que otros evangelicen y planten por ella.",
+          "Camina hacia extenderse por sí misma y llevar el evangelio a otros lugares.",
+        ],
+        [
+          "Relación con la iglesia que envió",
+          "Control en todo, o ninguna relación.",
+          "Apoyo y rendición de cuentas, sin perder el vínculo.",
+        ],
+      ],
+    },
+  ],
+  "evangelismo-misiones-5-6": [
+    // Ordena en seis pasos, cada uno con su ejemplo bíblico, lo que la lección pide para que una iglesia nueva plante otra, y sirve al objetivo de diseñar esos pasos.
+    {
+      t: "pasos",
+      titulo: "De iglesia nueva a iglesia que planta otra",
+      pasos: [
+        {
+          titulo: "Enseñar la misión desde el primer día",
+          texto: "Desde el principio se enseña que la iglesia existe para la misión, como los filipenses, que tuvieron comunión en el evangelio desde el primer día (Filipenses 1:5).",
+        },
+        {
+          titulo: "Orar por nuevos lugares",
+          texto: "La iglesia ora por barrios, ciudades y pueblos sin iglesia. En Antioquía, el llamado llegó mientras sus profetas y maestros ministraban al Señor y ayunaban (Hechos 13:1-2).",
+        },
+        {
+          titulo: "Formar futuros plantadores",
+          texto: "Se forma con constancia a los que un día irán. En Éfeso, Pablo separó a los discípulos y discutía cada día en la escuela de Tiranno; en dos años, toda Asia oyó la palabra (Hechos 19:9-10).",
+        },
+        {
+          titulo: "Enviar un equipo con bendición",
+          texto: "Cuando el llamado se confirma, la iglesia envía al equipo con ayuno, oración e imposición de manos, como Antioquía envió a Bernabé y a Saulo (Hechos 13:3).",
+        },
+        {
+          titulo: "Acompañar sin controlar",
+          texto: "La iglesia madre sigue unida a la hija con apoyo y amistad, sin controlarla, confiando en que el que comenzó la buena obra la perfeccionará (Filipenses 1:6).",
+        },
+        {
+          titulo: "La hija también siembra",
+          texto: "La meta es que la iglesia hija extienda a su vez la palabra, como Tesalónica: desde allí se divulgó en Macedonia y Acaya, y su fe se extendió a todo lugar (1 Tesalonicenses 1:8).",
+        },
+      ],
+    },
+  ],
+  // Teología de la adoración
+  "alabanza-1-1": [
+    // La lección distingue alabar de adorar en un solo párrafo; el cuadro pone las dos lado a lado y muestra con el Salmo 95 que van juntas.
+    {
+      t: "cuadro",
+      titulo: "Alabar y adorar: distintas, pero juntas",
+      columnas: ["Aspecto", "Alabar", "Adorar"],
+      filas: [
+        ["Qué es", "Celebrar a Dios por lo que es y por lo que hace", "Inclinarse delante de Dios y rendirle la vida"],
+        [
+          "Con qué actitud",
+          "Con gratitud y con gozo, sin olvidar sus beneficios",
+          "Con humildad: reconocer que él es Dios y nosotros sus criaturas",
+        ],
+        [
+          "Cómo se expresa",
+          "Con cantos de júbilo y palabras de gratitud",
+          "Postrándose, arrodillándose y entregándole lo más amado",
+        ],
+        [
+          "Un ejemplo bíblico",
+          "Salmos 103:1-2: bendecir a Jehová sin olvidar ninguno de sus beneficios",
+          "Génesis 22:5: Abraham sube al monte a adorar, dispuesto a entregar a Isaac",
+        ],
+        [
+          "En el Salmo 95",
+          "Versículos 1-2: cantar con júbilo y llegar ante él con alabanza",
+          "Versículo 6: adorar, postrarse y arrodillarse delante del Hacedor",
+        ],
+        [
+          "Lo que no es",
+          "No es solo la parte rápida del culto: es celebrar a Dios con gratitud y gozo",
+          "No es solo la parte lenta del culto: es una respuesta del corazón",
+        ],
+      ],
+    },
+  ],
+  "alabanza-1-3": [
+    // La lección recorre siglos de historia de Israel; la línea ordena el tabernáculo, la música de David, el templo y los salmos, y muestra que el canto siguió hasta el regreso del destierro.
+    {
+      t: "linea",
+      titulo: "La adoración de Israel: del tabernáculo al regreso del destierro",
+      eventos: [
+        {
+          fecha: "c. 1445 a. C.",
+          texto: "Moisés levanta el tabernáculo en el desierto y la gloria de Jehová lo llena: Dios habita con su pueblo. La fecha del éxodo se discute.",
+          ref: "Éxodo 40:34-35",
+        },
+        {
+          fecha: "c. 1000 a. C.",
+          texto: "David lleva el arca a Jerusalén y pone levitas que alaben ante ella; su canto reúne partes de los Salmos 105, 96 y 106.",
+          ref: "1 Crónicas 16:4-36",
+        },
+        {
+          fecha: "c. 970 a. C.",
+          texto: "Ya anciano, David organiza a los músicos del culto: 288 instruidos en el canto, que sirven por turnos, el maestro con el discípulo.",
+          ref: "1 Crónicas 25:7-8",
+        },
+        {
+          fecha: "c. 966-959 a. C.",
+          texto: "Salomón edifica el templo en siete años. Después, en su dedicación, los músicos cantan a una y la gloria de Jehová llena la casa.",
+          ref: "2 Crónicas 5:13-14",
+        },
+        {
+          fecha: "587/586 a. C.",
+          texto: "Babilonia quema el templo y lleva cautivo al pueblo. En el Salmo 137, los desterrados cuelgan sus arpas: ¿cómo cantar en tierra extraña?",
+          ref: "Salmos 137:1-4",
+        },
+        {
+          fecha: "c. 536 a. C.",
+          texto: "De regreso del destierro, al echar los cimientos del nuevo templo, los levitas alaban como lo ordenó David: Dios es bueno.",
+          ref: "Esdras 3:10-11",
+        },
+      ],
+    },
+  ],
+  "alabanza-1-5": [
+    // La lección explica por separado el espíritu y la verdad; el cuadro los pone frente a frente, con su base bíblica y lo que pasa cuando falta cada uno, como pide el objetivo o5.
+    {
+      t: "cuadro",
+      titulo: "En espíritu y en verdad: las dos marcas de la adoración verdadera",
+      columnas: ["Aspecto", "En espíritu", "En verdad"],
+      filas: [
+        [
+          "Qué significa",
+          "Adorar desde el interior, con el corazón, movidos por el Espíritu Santo",
+          "Adorar conforme a quien Dios es, como se revela en su Palabra y en Cristo",
+        ],
+        ["Base bíblica", "Juan 4:24; Efesios 5:18-19; Isaías 29:13", "Juan 4:24; Juan 17:17; Colosenses 3:16"],
+        [
+          "Por qué importa",
+          "Dios es Espíritu: no busca solo voces, sino adoradores de corazón",
+          "Lo que cantamos enseña: muchos aprenden lo que creen de Dios por los cantos que repiten",
+        ],
+        [
+          "Qué pasa si falta",
+          "Honra de labios: se canta lo correcto, pero el corazón está lejos de Dios",
+          "Se canta de Dios lo que la Biblia no dice, y el canto enseña un error",
+        ],
+      ],
+    },
+  ],
+  // El adorador: carácter y vida
+  "alabanza-2-2": [
+    // La lección no tiene video y enseña un proceso, de la medida de Dios a la confesión, la limpieza, el servicio y la restauración: los pasos lo ordenan para repasarlo.
+    {
+      t: "pasos",
+      titulo: "El camino de la santidad del que sirve en la alabanza",
+      pasos: [
+        {
+          titulo: "Mirar la medida de Dios",
+          texto: "Para estar en su presencia hacen falta manos limpias, lo que hacemos, y corazón puro, lo que pensamos y deseamos (Salmos 24:3-4).",
+        },
+        {
+          titulo: "Reconocer el pecado sin excusas",
+          texto: "Al ver la gloria de Dios, Isaías se reconoció hombre inmundo de labios. Delante de Dios vemos lo que somos (Isaías 6:5).",
+        },
+        {
+          titulo: "Confesar y recibir la limpieza de Dios",
+          texto: "Un serafín tocó la boca de Isaías con un carbón del altar, y su culpa fue quitada. Si confesamos, Dios nos perdona y nos limpia de toda maldad (Isaías 6:6-7; 1 Juan 1:9).",
+        },
+        {
+          titulo: "Servir después de ser limpiado",
+          texto: "Solo después de ser limpiado, Isaías respondió al llamado de Dios (Isaías 6:8). Los que usamos la voz para adorar necesitamos labios limpiados por Dios.",
+        },
+        {
+          titulo: "Cuidar la santidad toda la semana",
+          texto: "Lo que miro y escucho, cómo hablo también en las redes, la pureza sexual, la honestidad y el trato a mi familia: lo que hago el sábado se oye el domingo.",
+        },
+        {
+          titulo: "Si caes, déjate restaurar",
+          texto: "Ante un pecado grave, lo sano es apartarse un tiempo de la plataforma, ser restaurado con el acompañamiento de los pastores y volver cuando ellos lo vean listo.",
+        },
+      ],
+    },
+  ],
+  "alabanza-2-4": [
+    // Es la lección que pide planificar la vida devocional (objetivo o4) y no tiene video: los pasos convierten su lista en un plan que el alumno puede seguir.
+    {
+      t: "pasos",
+      titulo: "Un plan sencillo para tu tiempo diario con Dios",
+      pasos: [
+        {
+          titulo: "Escoger la buena parte",
+          texto: "Antes de servir, estar con el Señor. Como María a los pies de Jesús, no dejes que los quehaceres del ministerio te quiten lo único necesario (Lucas 10:39-42).",
+        },
+        {
+          titulo: "Fijar una hora y un lugar",
+          texto: "Un tiempo fijo cada día, aunque sea corto. Jesús se levantó muy de mañana y se fue a un lugar desierto para orar (Marcos 1:35).",
+        },
+        {
+          titulo: "Leer la Biblia con un plan",
+          texto: "Lee en orden, con un plan, y medita en lo que lees. La Palabra alimenta lo que después cantamos (Salmos 1:2).",
+        },
+        {
+          titulo: "Orar con un salmo y con tus palabras",
+          texto: "Haz tuya la oración de un salmo, como la sed de Dios del Salmo 63, y sigue con tus propias palabras (Salmos 63:1).",
+        },
+        {
+          titulo: "Cantarle a Dios a solas",
+          texto: "Canta sin público, solo para él. Lo que se ve en la plataforma nace de lo que se vive en lo secreto.",
+        },
+        {
+          titulo: "Escribir lo que Dios enseña",
+          texto: "Anota en un cuaderno lo que Dios te enseña cada día: te ayudará a recordarlo y a vivirlo.",
+        },
+        {
+          titulo: "Ayunar a veces",
+          texto: "De vez en cuando, aparta un tiempo de ayuno para buscar a Dios, como se estudió en las disciplinas espirituales.",
+        },
+      ],
+    },
+  ],
+  "alabanza-2-6": [
+    // La lección presenta cuatro ejemplos seguidos de adoración en el dolor: el cuadro los pone lado a lado para comparar la prueba, la respuesta y lo que enseña cada uno.
+    {
+      t: "cuadro",
+      titulo: "Adorar en la prueba: cuatro ejemplos de la Biblia",
+      columnas: ["Ejemplo", "La prueba", "Cómo adoró", "Lo que enseña"],
+      filas: [
+        [
+          "Job (Job 1:20-21)",
+          "Perdió sus bienes y a sus hijos en un solo día.",
+          "Rasgó su manto, se postró en tierra, adoró y bendijo el nombre de Jehová.",
+          "Adorar en el dolor no es fingir que no duele: hizo duelo y adoró a la vez.",
+        ],
+        [
+          "Pablo y Silas (Hechos 16:25)",
+          "Fueron azotados y encerrados en la cárcel de Filipos.",
+          "A medianoche oraban y cantaban himnos a Dios.",
+          "La adoración en la noche también es testimonio: los presos los oían.",
+        ],
+        [
+          "Habacuc (Habacuc 3:17-18)",
+          "Imaginó la peor escasez: sin higos, sin uvas, sin ovejas y sin vacas.",
+          "Declaró que, con todo, se alegraría en Jehová, el Dios de su salvación.",
+          "Su gozo no dependía de las circunstancias, sino de Dios.",
+        ],
+        [
+          "Pablo a los filipenses (Filipenses 4:4)",
+          "Escribía desde la cárcel.",
+          "Pidió regocijarse en el Señor siempre.",
+          "El gozo cristiano no niega el dolor: confía en el Señor dentro de él.",
+        ],
+      ],
+    },
+  ],
+  // Dirigir el ministerio de alabanza
+  "alabanza-3-3": [
+    // Esta lección no tiene video y trae dos listas aparte; los pasos las unen en un solo camino, de la oración al ensayo.
+    {
+      t: "pasos",
+      titulo: "Preparar el culto y el ensayo, paso a paso",
+      pasos: [
+        {
+          titulo: "Orar por el culto y por la iglesia",
+          texto: "Todo empieza días antes, delante de Dios: se ora por el culto y por la iglesia que va a cantar.",
+        },
+        {
+          titulo: "Hablar con el pastor",
+          texto: "Se conversa sobre el tema y el mensaje del día, para que los cantos sirvan a lo que se va a predicar.",
+        },
+        {
+          titulo: "Escoger los cantos y su orden",
+          texto: "Se eligen los cantos y se ordenan para que el culto fluya con sentido. Se deciden los tonos y quién canta cada parte.",
+        },
+        {
+          titulo: "Preparar las transiciones y las lecturas",
+          texto: "Se piensa cómo pasar de un canto a otro y qué textos bíblicos se leerán. Improvisarlo todo cada domingo no es más espiritual: suele ser falta de preparación.",
+        },
+        {
+          titulo: "Enviar la lista al equipo con tiempo",
+          texto: "La lista y los recursos llegan al equipo con días de anticipación, porque el diligente planifica y no se apresura alocadamente (Proverbios 21:5).",
+        },
+        {
+          titulo: "Ensayar lo que cuesta",
+          texto: "Se empieza a tiempo, con oración y una palabra breve. Se repasa lo difícil, los principios, los finales y las transiciones, y se prueba el sonido con los técnicos.",
+        },
+        {
+          titulo: "Terminar a tiempo y servir con júbilo",
+          texto: "El ensayo termina a tiempo, cuidando a las familias del equipo. Se da lo mejor de corazón, como para el Señor (Colosenses 3:23): excelencia, no perfeccionismo.",
+        },
+      ],
+    },
+  ],
+  "alabanza-3-4": [
+    // El objetivo de la lección es distinguir guiar de manipular; el cuadro pone frente a frente lo que enseñan su lista y su nota.
+    {
+      t: "cuadro",
+      titulo: "Guiar al pueblo, sin estorbar ni manipular",
+      columnas: ["En qué se ve", "Así se guía", "Así se estorba o se manipula"],
+      filas: [
+        [
+          "La meta",
+          "Que todo el pueblo participe y alabe a Jehová (Esdras 3:11)",
+          "Provocar una emoción o una reacción a la fuerza",
+        ],
+        [
+          "Las palabras",
+          "Pocas y claras: una frase o un versículo que centra al pueblo en Dios",
+          "Un sermón entre canto y canto",
+        ],
+        ["La invitación", "Explica, anima y deja libre a cada uno", "Hacer sentir culpable al que no responde"],
+        ["Lo que se anuncia", "La verdad de Dios, con la lectura de la Escritura", "Promesas que Dios no hizo"],
+        [
+          "La música",
+          "Señales claras al equipo para repetir, terminar o seguir",
+          "Repetir sin fin o subir el volumen para forzar una reacción",
+        ],
+        [
+          "El orden",
+          "Todo decentemente y con orden, con espacio a lo espontáneo (1 Corintios 14:40)",
+          "Silencios largos, señales que nadie entiende y cambios sin aviso",
+        ],
+        ["Quién obra", "El Espíritu Santo, en cada corazón", "Los trucos del que dirige"],
+      ],
+    },
+  ],
+  "alabanza-3-6": [
+    // La lección da los problemas en una lista y sus versículos en los párrafos; el cuadro los une para consultarlo cuando surja un conflicto.
+    {
+      t: "cuadro",
+      titulo: "Problemas comunes del equipo y su respuesta bíblica",
+      columnas: ["Problema", "Cómo se responde", "Base bíblica"],
+      filas: [
+        ["Celos y competencia", "Servir por turnos, honrar a cada uno y cultivar la humildad", "Santiago 3:16"],
+        ["Conflictos personales", "Hablar primero a solas, sin chismes ni bandos", "Mateo 18:15"],
+        [
+          "Quejas por el volumen o el estilo",
+          "Escuchar con mansedumbre, ajustar lo razonable y enseñar",
+          "Proverbios 15:1",
+        ],
+        [
+          "Gustos musicales distintos",
+          "Buscar un mismo sentir: la unidad de la iglesia vale más que el gusto de cualquiera",
+          "Romanos 15:5-6",
+        ],
+        [
+          "Impuntualidad y falta de preparación",
+          "Acuerdos claros y amor firme, hablados con la persona",
+          "Proverbios 21:5; Mateo 18:15",
+        ],
+        ["El músico estrella", "Una conversación honesta sobre humildad y servicio", "Marcos 10:45; Santiago 3:16"],
+        ["Cansancio", "Turnos, descanso y cuidado de las familias", "Marcos 6:31"],
+      ],
+    },
+  ],
+  // La música en la historia de la iglesia
+  "alabanza-4-3": [
+    // La lección cruza varios siglos; la línea ordena a Ambrosio, Agustín, san Benito y Gregorio Magno, y muestra cómo el pueblo fue quedando callado.
+    {
+      t: "linea",
+      titulo: "De Ambrosio al pueblo callado: el canto antiguo y medieval",
+      eventos: [
+        { fecha: "Siglo IV", texto: "Ambrosio, obispo de Milán, escribe himnos para que el pueblo cante." },
+        {
+          fecha: "c. 387",
+          texto: "Agustín, recién convertido y bautizado en Milán, llora de emoción al oír los himnos y cantos de la iglesia (Confesiones IX).",
+        },
+        {
+          fecha: "Siglo VI",
+          texto: "La Regla de san Benito pide cantar los 150 salmos cada semana: los monasterios guardan el canto de los salmos.",
+        },
+        {
+          fecha: "590-604",
+          texto: "Papado de Gregorio Magno. La tradición le asocia el canto llano, que por eso se llama canto gregoriano.",
+        },
+        {
+          fecha: "Edad Media",
+          texto: "El culto de Occidente se celebra en latín, que el pueblo ya no entiende; el canto queda en manos de clérigos, monjes y coros.",
+          ref: "1 Corintios 14:16",
+        },
+      ],
+    },
+  ],
+  "alabanza-4-4": [
+    // Pone lado a lado el canto medieval y el de la Reforma, y muestra qué le devolvieron Lutero y Calvino al pueblo y con qué base bíblica.
+    {
+      t: "cuadro",
+      titulo: "Lo que cambió la Reforma en el canto del pueblo",
+      columnas: ["Aspecto", "En la Edad Media", "Con la Reforma (siglo XVI)"],
+      filas: [
+        ["Quién canta", "Sobre todo los clérigos, los monjes y los coros", "Toda la congregación, no solo el coro"],
+        [
+          "En qué lengua",
+          "En latín, que la mayoría del pueblo ya no entendía",
+          "En la lengua del pueblo: Lutero, en alemán; Calvino, en francés",
+        ],
+        [
+          "Qué se canta",
+          "El canto llano o gregoriano, en latín y sin acompañamiento",
+          "Himnos y salmos en verso, llenos de la Palabra y de doctrina",
+        ],
+        [
+          "Un ejemplo",
+          "Los 150 salmos que los monjes cantaban cada semana, según la Regla de san Benito",
+          "Castillo fuerte es nuestro Dios (Salmo 46) y el Salterio de Ginebra (1562)",
+        ],
+        [
+          "El pueblo",
+          "Queda como espectador y canta cada vez menos",
+          "Vuelve a cantar, con melodías que puede aprender",
+        ],
+        [
+          "Lo que dice la Biblia",
+          "Sin entender, nadie puede decir el amén (1 Corintios 14:16)",
+          "Cantar con el espíritu y también con el entendimiento (1 Corintios 14:15)",
+        ],
+      ],
+    },
+  ],
+  "alabanza-4-5": [
+    // La lección presenta seis personas de Inglaterra, los Estados Unidos y España; la línea las ordena por los años de su vida y resume el aporte de cada una.
+    {
+      t: "linea",
+      titulo: "Los himnos de los avivamientos: quiénes y cuándo",
+      eventos: [
+        {
+          fecha: "1674-1748",
+          texto: "Isaac Watts escribe en Inglaterra cientos de himnos y salmos en verso, y ayuda a que se canten himnos nuevos sobre Cristo.",
+        },
+        {
+          fecha: "1707-1788",
+          texto: "Charles Wesley, hermano de Juan Wesley, escribe miles de himnos en el avivamiento metodista: el pueblo aprende la fe cantando.",
+        },
+        {
+          fecha: "1783-1826",
+          texto: "El inglés Reginald Heber escribe Santo, santo, santo, himno a la Trinidad. Más tarde lo traduce al español Juan Bautista Cabrera.",
+        },
+        {
+          fecha: "1820-1915",
+          texto: "Fanny Crosby, ciega desde muy pequeña, escribe miles de himnos en los Estados Unidos.",
+        },
+        {
+          fecha: "1837-1916",
+          texto: "Juan Bautista Cabrera, primer obispo protestante de España, escribe y traduce himnos evangélicos en español.",
+        },
+        {
+          fecha: "1840-1908",
+          texto: "Ira D. Sankey canta en las campañas del evangelista D. L. Moody, y sus cantos se difunden por todo el mundo.",
+        },
+      ],
+    },
+  ],
+  // Sonido y técnica al servicio del culto
+  "alabanza-5-1": [
+    // comprobado: oEmbed: título "Espíritu de Dios", canal "Proyecto Biblia" (https://www.youtube.com/@ProyectoBibliaOficial). Dura 8:12; en su descripción, el capítulo 2:20 es "El Espíritu empodera a José y a Bezalel" (cómo el Espíritu capacita a las personas para tareas específicas).
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=kuLz0G4qhDU",
+      titulo: "Espíritu de Dios",
+      fuente: "Proyecto Biblia",
+      minutos: 8,
+    },
+  ],
+  "alabanza-5-3": [
+    // El objetivo de la lección es distinguir: el cuadro pone lado a lado los dos tipos de micrófono, cómo se usan y las funciones básicas de la consola, con su para qué en el culto.
+    {
+      t: "cuadro",
+      titulo: "Los micrófonos y la consola: qué es cada cosa y para qué sirve",
+      columnas: ["Lo que hay que conocer", "Qué es o qué hace", "Para qué sirve en el culto"],
+      filas: [
+        [
+          "Micrófono dinámico",
+          "Resistente y menos sensible.",
+          "Es el más usado para las voces en la plataforma y para muchos instrumentos.",
+        ],
+        [
+          "Micrófono de condensador",
+          "Más sensible y detallado; necesita la alimentación fantasma de la consola.",
+          "Se usa, por ejemplo, para coros o instrumentos acústicos.",
+        ],
+        [
+          "Cómo se usa el micrófono",
+          "Cerca de la boca y apuntado a la fuente, lejos de los parlantes y de los monitores.",
+          "Suena más claro y capta menos ruido de la sala.",
+        ],
+        [
+          "Ganancia",
+          "Ajusta cuánta señal entra de cada micrófono.",
+          "Que la señal quede bien medida: se ajusta primero, con la persona cantando o hablando como en el culto.",
+        ],
+        [
+          "Ecualización",
+          "Realza o recorta graves, medios y agudos.",
+          "Que cada voz e instrumento suene claro, sin estorbar a los demás.",
+        ],
+        [
+          "Mezcla",
+          "El volumen de cada canal en relación con los otros.",
+          "Que el conjunto suene equilibrado: la voz que guía y la letra se entienden, y la congregación puede oírse cantar.",
+        ],
+        [
+          "Envíos",
+          "Mandan una mezcla distinta a los monitores de la plataforma.",
+          "Que los músicos y los cantantes se oigan en la plataforma.",
+        ],
+      ],
+    },
+    // comprobado: oEmbed: título "#4 ¿El canto congregacional debería ser el instrumento principal de la iglesia?", canal "9Marcas" (https://www.youtube.com/@9Marcas). Dura 2:27; según la descripción, responde el pastor Sugel Michelén, de la Iglesia Bíblica del Señor Jesucristo (República Dominicana). Su tema es el de la nota de la lección: la mezcla sirve al canto de la congregación.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=kucQ4YQ8VhI",
+      titulo: "¿El canto congregacional debería ser el instrumento principal de la iglesia?",
+      fuente: "9Marcas (Sugel Michelén)",
+      minutos: 2,
+    },
+  ],
+  "alabanza-5-4": [
+    // La lección explica el acople, los monitores y el volumen en párrafos; los pasos los ordenan en un método que el técnico puede seguir en la prueba de sonido y en el culto.
+    {
+      t: "pasos",
+      titulo: "Cómo prevenir el acople y cuidar el volumen, paso a paso",
+      pasos: [
+        {
+          titulo: "Ubicar bien micrófonos y parlantes",
+          texto: "Los micrófonos no van frente a los parlantes ni demasiado cerca de los monitores, y los parlantes apuntan a la gente. Así no se forma el círculo que produce el pitido.",
+        },
+        {
+          titulo: "Cuidar la ganancia",
+          texto: "No se sube demasiado. Si alguien habla o canta muy bajo, se le pide que se acerque al micrófono en lugar de subir mucho el volumen.",
+        },
+        {
+          titulo: "Recortar lo que se dispara",
+          texto: "Con la ecualización se recorta la frecuencia que se dispara, para que no provoque el acople.",
+        },
+        {
+          titulo: "Silenciar lo que no se usa",
+          texto: "Los micrófonos que no se están usando se bajan o se silencian.",
+        },
+        {
+          titulo: "Preparar los monitores en su justa medida",
+          texto: "Cada músico pide lo que necesita (su voz, el teclado, el ritmo) y el técnico prepara esas mezclas. Si suenan demasiado fuerte, llegan a la sala y provocan acople.",
+        },
+        {
+          titulo: "Si aparece el acople, actuar enseguida",
+          texto: "Se baja enseguida el canal o el envío que lo provoca.",
+        },
+        {
+          titulo: "Decidir el volumen pensando en todos",
+          texto: "Hay ancianos, niños, visitas y personas con audífonos: que nadie sufra y que la congregación pueda oírse cantar, mirando también por lo de los otros (Filipenses 2:4).",
+        },
+      ],
+    },
+  ],
+  "alabanza-5-5": [
+    // comprobado: oEmbed: título "Culto VIRTUAL o PRESENCIAL ¿Es lo mismo? | Pensemos Bíblicamente con Sugel Michelén", canal "Eternidad+" (https://www.youtube.com/@eternidadplus). Dura 5:07; la descripción dice que es una producción de Radio Eternidad, y el canal (República Dominicana) se presenta como plataforma de recursos para la edificación de la Iglesia. Su tema es el de la lección: la transmisión no reemplaza a la iglesia reunida.
+    {
+      t: "video",
+      url: "https://www.youtube.com/watch?v=D4A_jsZrm7Y",
+      titulo: "Culto virtual o presencial: ¿es lo mismo?",
+      fuente: "Eternidad+ (Sugel Michelén)",
+      minutos: 5,
+    },
+  ],
+  "alabanza-5-6": [
+    // Ordena en el tiempo de un culto la seguridad, el cuidado del equipo y el trabajo con los músicos, que la lección presenta en listas separadas.
+    {
+      t: "pasos",
+      titulo: "Antes, durante y después del culto: un equipo seguro y en orden",
+      pasos: [
+        {
+          titulo: "Llegar temprano y orar juntos",
+          texto: "Técnicos y músicos llegan temprano para la prueba de sonido y oran juntos antes del culto, porque sirven al mismo Señor.",
+        },
+        {
+          titulo: "Revisar la seguridad",
+          texto: "Cables ordenados y asegurados para que nadie tropiece, enchufes sin sobrecargar, ninguna extensión dañada, y el agua y las bebidas lejos de la consola.",
+        },
+        {
+          titulo: "Encender en orden",
+          texto: "El equipo se enciende en orden y los parlantes al final. Todos saben dónde están los interruptores y la salida de emergencia.",
+        },
+        {
+          titulo: "Acordar las señales",
+          texto: "El técnico y el director se ponen de acuerdo en las señales: más volumen, menos, repetir o terminar.",
+        },
+        {
+          titulo: "Servir con amabilidad",
+          texto: "Durante el culto, las indicaciones se piden y se dan con amabilidad, nunca con gritos ni gestos de enojo: todo decentemente y con orden (1 Corintios 14:40).",
+        },
+        {
+          titulo: "Apagar al revés y guardar con cuidado",
+          texto: "Al terminar, los parlantes se apagan primero. Los cables se guardan enrollados sin torcerlos, y el equipo se limpia, se revisa y se anota en el inventario (Proverbios 27:23; Lucas 16:10).",
+        },
+        {
+          titulo: "Formar a otros",
+          texto: "Se forma a nuevos técnicos para que el servicio no dependa de una sola persona. Dios puso en el corazón de Bezaleel y de Aholiab que pudieran enseñar (Éxodo 35:34).",
+        },
+      ],
+    },
+  ],
+  // Teología de la oración
+  "intercesion-1-3": [
+    // La lección enseña a orar conforme a la voluntad de Dios; los pasos la vuelven un camino que el alumno puede seguir en su propia oración, como pide el objetivo o3.
+    {
+      t: "pasos",
+      titulo: "Cómo orar buscando la voluntad de Dios",
+      pasos: [
+        {
+          titulo: "Empieza por Dios",
+          texto: "Como enseña el Padre nuestro, antes de pedir lo tuyo, pide que su nombre sea santificado, que venga su reino y que se haga su voluntad (Mateo 6:9-10).",
+        },
+        {
+          titulo: "Busca su voluntad en la Palabra",
+          texto: "Mucho de lo que Dios quiere ya está en la Biblia: la salvación de los perdidos, la santidad de los suyos y la unidad de la iglesia.",
+        },
+        {
+          titulo: "Si la Biblia lo dice claro, ora con confianza",
+          texto: "Si pedimos conforme a su voluntad, él nos oye, y sabemos que tenemos lo que le hemos pedido (1 Juan 5:14-15).",
+        },
+        {
+          titulo: "Dile con sinceridad lo que sientes",
+          texto: "En Getsemaní, Jesús no calló su angustia: pidió al Padre que, si era posible, pasara de él la copa (Mateo 26:39).",
+        },
+        {
+          titulo: "Ríndete a lo que él quiera",
+          texto: "Cuando no sabes qué quiere Dios, termina como Jesús: que se haga la voluntad del Padre y no la tuya. Confía en él más que en tus deseos.",
+        },
+      ],
+    },
+  ],
+  "intercesion-1-5": [
+    // La lección presenta tres respuestas de Dios; el cuadro las pone lado a lado con un ejemplo bíblico de cada una, para que el alumno evalúe sus oraciones sin concluir que Dios no oyó (objetivo o5).
+    {
+      t: "cuadro",
+      titulo: "Sí, no o espera: las respuestas de Dios a la oración",
+      columnas: ["Respuesta", "Ejemplo bíblico", "Lo que aprendemos"],
+      filas: [
+        [
+          "Sí",
+          "Ana pidió un hijo, y Dios le dio lo que le pidió (1 Samuel 1:27).",
+          "Dios concede lo que pedimos conforme a su voluntad (1 Juan 5:14-15).",
+        ],
+        [
+          "No",
+          "Pablo rogó tres veces al Señor que le quitara el aguijón; él le dijo que le bastaba su gracia (2 Corintios 12:8-9).",
+          "Dios da algo mejor: su gracia, porque su poder se perfecciona en la debilidad.",
+        ],
+        [
+          "Espera",
+          "Dios le dijo a Habacuc que, aunque la visión tardara, la esperara, porque sin duda vendría (Habacuc 2:3).",
+          "Los tiempos de Dios no son los nuestros, pero él cumple.",
+        ],
+        [
+          "En todos los casos",
+          "Jesús enseñó a orar siempre y no desmayar (Lucas 18:1).",
+          "Dios oyó. Perseverar no es presionar a Dios, sino seguir confiando en él.",
+        ],
+      ],
+    },
+  ],
+  "intercesion-1-6": [
+    // La lección nombra cinco estorbos en textos distintos; el cuadro une cada uno con su base bíblica y con lo que el creyente hace para quitarlo, que es lo que pide el objetivo o6.
+    {
+      t: "cuadro",
+      titulo: "Lo que estorba la oración y cómo quitar el estorbo",
+      columnas: ["Estorbo", "Lo que dice la Biblia", "Qué hacer"],
+      filas: [
+        [
+          "El pecado que se guarda",
+          "Las iniquidades hacen división entre nosotros y Dios (Isaías 59:1-2; Salmos 66:18).",
+          "Confesarlo, porque Dios es fiel y justo para perdonar al que confiesa (1 Juan 1:9).",
+        ],
+        [
+          "El rencor",
+          "Jesús manda perdonar cuando oramos, si tenemos algo contra alguno (Marcos 11:25).",
+          "Perdonar y buscar la reconciliación.",
+        ],
+        [
+          "La duda",
+          "El que duda es como la onda del mar, arrastrada por el viento (Santiago 1:6-7).",
+          "Pedir con fe, confiando en el Dios que oye.",
+        ],
+        [
+          "El mal trato en el hogar",
+          "Pedro pide a los maridos honrar a su esposa para que sus oraciones no tengan estorbo (1 Pedro 3:7).",
+          "Vivir sabiamente con la esposa y honrarla, y cuidar el trato en toda la familia.",
+        ],
+        [
+          "Pedir solo para los propios deleites",
+          "Se pide y no se recibe cuando se pide mal (Santiago 4:3).",
+          "Pedir para la gloria de Dios y el bien de otros.",
+        ],
+      ],
+    },
+  ],
+  // Intercesión bíblica
+  "intercesion-2-2": [
+    // La lección cuenta los seis ruegos en una sola frase; el cuadro los pone uno debajo de otro con la respuesta de Dios a cada uno, para analizar la humildad y la perseverancia de Abraham (objetivo o2).
+    {
+      t: "cuadro",
+      titulo: "Abraham ruega por Sodoma: lo que pidió y lo que Dios respondió",
+      columnas: ["Abraham", "Dios", "Cita"],
+      filas: [
+        [
+          "Se acerca y apela al Juez de toda la tierra: ¿y si hay cincuenta justos?",
+          "Si los halla, perdonará a todo el lugar por amor a ellos.",
+          "Génesis 18:23-26",
+        ],
+        [
+          "Aunque se sabe polvo y ceniza, sigue: ¿y si faltan cinco de los cincuenta?",
+          "No la destruirá si halla cuarenta y cinco.",
+          "Génesis 18:27-28",
+        ],
+        ["Vuelve a hablarle: ¿y si hay cuarenta?", "No lo hará por amor a los cuarenta.", "Génesis 18:29"],
+        ["Le pide que no se enoje: ¿y si hay treinta?", "No lo hará si halla treinta.", "Génesis 18:30"],
+        [
+          "Ya se ha atrevido a hablar a su Señor: ¿y si hay veinte?",
+          "No la destruirá por amor a los veinte.",
+          "Génesis 18:31",
+        ],
+        [
+          "Pide hablar solamente una vez más: ¿y si hay diez?",
+          "No la destruirá por amor a los diez.",
+          "Génesis 18:32",
+        ],
+        [
+          "Cuando Jehová acaba de hablarle, vuelve a su lugar.",
+          "No había ni diez justos: destruyó las ciudades, pero se acordó de Abraham y sacó a Lot.",
+          "Génesis 18:33; 19:29",
+        ],
+      ],
+    },
+  ],
+  "intercesion-2-4": [
+    // La lección presenta a los tres intercesores uno tras otro; el cuadro los pone lado a lado para comparar qué los movió a orar, cómo oraron, qué reconocieron y en qué se apoyaron (objetivo o4).
+    {
+      t: "cuadro",
+      titulo: "Samuel, Daniel y Nehemías: cómo oraron por su pueblo",
+      columnas: ["Aspecto", "Samuel", "Daniel", "Nehemías"],
+      filas: [
+        [
+          "Qué lo movió a orar",
+          "Ya era anciano cuando el pueblo, que había pedido rey, le rogó que orara por ellos (1 Samuel 12:2, 19).",
+          "Leyó en Jeremías que las desolaciones de Jerusalén durarían setenta años (Daniel 9:2).",
+          "Supo que el muro de Jerusalén estaba derribado y sus puertas quemadas (Nehemías 1:3).",
+        ],
+        [
+          "Cómo oró",
+          "Se comprometió a no dejar de rogar por el pueblo (1 Samuel 12:23).",
+          "En oración y ruego, con ayuno, cilicio y ceniza (Daniel 9:3).",
+          "Lloró, hizo duelo por días, ayunó y oró día y noche (Nehemías 1:4-6).",
+        ],
+        [
+          "Lo que reconoció",
+          "Que dejar de orar por el pueblo sería pecar contra Jehová (1 Samuel 12:23).",
+          "Que todos habían pecado: se incluyó él mismo en el pecado del pueblo (Daniel 9:5).",
+          "Que él y la casa de su padre habían pecado: como Daniel, se incluyó (Nehemías 1:6).",
+        ],
+        [
+          "En qué se apoyó",
+          "En que Jehová no desamparará a su pueblo, por su gran nombre (1 Samuel 12:22).",
+          "En las muchas misericordias de Dios, no en sus propias justicias (Daniel 9:18).",
+          "En el Dios grande y temible que guarda el pacto y la misericordia (Nehemías 1:5).",
+        ],
+        [
+          "Qué nos enseña",
+          "Orar por los suyos es parte del servicio, y va junto con la enseñanza del buen camino.",
+          "El intercesor se incluye en la confesión y descansa en la misericordia de Dios.",
+          "La oración prepara el trabajo: oró y pidió al rey que lo enviara a reedificar (Nehemías 2:4-5).",
+        ],
+      ],
+    },
+  ],
+  "intercesion-2-6": [
+    // La lección enseña por quiénes y cómo interceder; los pasos lo vuelven un plan concreto para armar la lista de intercesión que pide al final (objetivo o6).
+    {
+      t: "pasos",
+      titulo: "Tu lista de intercesión, paso a paso",
+      pasos: [
+        {
+          titulo: "Escribe por quiénes vas a orar",
+          texto: "Pon nombres de cada grupo: autoridades, hermanos y los que predican, obreros de la mies, los que sufren, los que no conocen a Cristo y aun los que te ofendieron (1 Timoteo 2:1-2; Mateo 5:44).",
+        },
+        {
+          titulo: "Pide algo concreto para cada uno",
+          texto: "Por los perdidos, su salvación (Romanos 10:1); por los que predican, denuedo para anunciar el evangelio (Efesios 6:19); por los hermanos, firmeza en todo lo que Dios quiere (Colosenses 4:12).",
+        },
+        {
+          titulo: "Da gracias por cada persona",
+          texto: "Interceder no es solo pedir: Pablo exhorta a hacer también acciones de gracias por todos los hombres (1 Timoteo 2:1).",
+        },
+        {
+          titulo: "Ora con perseverancia",
+          texto: "Vuelve a orar, no una sola vez: Epafras rogaba siempre y encarecidamente, y la iglesia oraba sin cesar por Pedro en la cárcel (Colosenses 4:12; Hechos 12:5).",
+        },
+        {
+          titulo: "Anota las respuestas",
+          texto: "Un cuaderno te ayuda a no olvidar a nadie y a ver cómo responde Dios, para darle gracias por cada respuesta.",
+        },
+        {
+          titulo: "Ora a solas y también en grupo",
+          texto: "Intercede a solas y también con otros, como los muchos que oraban reunidos en casa de María, la madre de Juan Marcos, mientras Pedro estaba preso (Hechos 12:5, 12).",
+        },
+        {
+          titulo: "Guarda lo que te confían",
+          texto: "No cuentes a otros los problemas ajenos con la excusa de pedir oración: el que anda en chismes descubre el secreto, pero el fiel lo guarda (Proverbios 11:13).",
+        },
+      ],
+    },
+  ],
+  // El ayuno bíblico
+  "intercesion-3-2": [
+    // Pone lado a lado los seis ayunos de la lección con su motivo y su forma, y separa los extraordinarios de los que se pueden practicar.
+    {
+      t: "cuadro",
+      titulo: "Seis ayunos del Antiguo Testamento",
+      columnas: ["Quién", "Motivo", "Cómo ayunó", "Lo que enseña"],
+      filas: [
+        [
+          "Moisés (Éxodo 34:28)",
+          "Estar con Dios en el monte mientras recibía las palabras del pacto",
+          "Cuarenta días y cuarenta noches sin comer pan ni beber agua",
+          "Fue extraordinario y sostenido por Dios: no es un modelo para imitar",
+        ],
+        [
+          "David (2 Samuel 12:16)",
+          "El dolor por su hijo enfermo",
+          "Rogó a Dios por el niño y ayunó",
+          "El ayuno acompaña la intercesión en el dolor",
+        ],
+        [
+          "Esdras (Esdras 8:21-23)",
+          "Pedir camino derecho y protección antes de un viaje peligroso",
+          "Proclamó ayuno junto al río Ahava para todos los que viajaban con él",
+          "Dios les fue propicio: se ayuna al pedir dirección y protección",
+        ],
+        [
+          "Ester (Ester 4:16)",
+          "Una amenaza de muerte contra todo su pueblo",
+          "Tres días sin comer ni beber, junto con los judíos de Susa",
+          "Fue breve y excepcional: ayunar sin agua puede ser peligroso",
+        ],
+        [
+          "Nínive (Jonás 3:5-10)",
+          "Arrepentirse ante el anuncio del juicio",
+          "Toda la ciudad, del mayor al menor, ayunó y se volvió de su mal camino",
+          "Dios tuvo misericordia: el ayuno acompaña el arrepentimiento",
+        ],
+        [
+          "Daniel (Daniel 10:2-3)",
+          "Buscar a Dios en tres semanas de aflicción",
+          "Ayuno parcial: sin manjar delicado, carne ni vino",
+          "Se puede ayunar dejando lo agradable, no todo alimento",
+        ],
+      ],
+    },
+  ],
+  "intercesion-3-4": [
+    // Ayuda a evaluar el propio ayuno, como pide la lección, comparando punto por punto el ayuno vacío con el que Dios escogió.
+    {
+      t: "cuadro",
+      titulo: "El ayuno vacío y el ayuno que Dios escogió",
+      columnas: ["Qué se mira", "El ayuno vacío", "El ayuno que Dios escogió"],
+      filas: [
+        [
+          "Para quién se ayuna",
+          "Por costumbre religiosa, sin Dios en el centro (Zacarías 7:5)",
+          "Para Dios: él es el centro del ayuno",
+        ],
+        [
+          "El trato a los demás",
+          "Oprime a los trabajadores y vive en contiendas (Isaías 58:3-4)",
+          "Desata las ligaduras de impiedad y suelta las cargas de opresión (Isaías 58:6)",
+        ],
+        [
+          "El necesitado",
+          "Busca su propio gusto (Isaías 58:3)",
+          "Parte su pan con el hambriento, alberga al pobre y cubre al desnudo (Isaías 58:7)",
+        ],
+        [
+          "La actitud",
+          "Orgullo: presenta sus méritos y se compara con otros (Lucas 18:11-12)",
+          "Humildad: no se ayuna para sentirse mejor que otros",
+        ],
+        [
+          "La respuesta de Dios",
+          "No le hace caso, y el pueblo se queja (Isaías 58:3-4)",
+          "Promete oír y responder al que lo invoca (Isaías 58:8-9)",
+        ],
+      ],
+    },
+  ],
+  "intercesion-3-5": [
+    // Reúne en un solo orden el propósito, el cuidado de la salud, la forma y los pasos, que la lección presenta por separado.
+    {
+      t: "pasos",
+      titulo: "Cómo preparar un ayuno con propósito",
+      pasos: [
+        {
+          titulo: "Define el propósito",
+          texto: "Decide por qué vas a ayunar y por quién vas a orar. El ayuno es para buscar a Dios, no una dieta ni una forma de presionarlo.",
+        },
+        {
+          titulo: "Revisa tu salud",
+          texto: "Consulta antes a tu médico si tienes diabetes u otra enfermedad, tomas medicinas, estás embarazada o amamantando, tienes o tuviste un trastorno de la alimentación, eres menor de edad o adulto mayor.",
+        },
+        {
+          titulo: "Elige la forma",
+          texto: "Un ayuno normal, bebiendo agua, o uno parcial, como Daniel (Daniel 10:3). Personal y en secreto, o el que proclama la iglesia. El ayuno sin agua es excepcional y puede ser peligroso.",
+        },
+        { titulo: "Empieza con poco", texto: "Una comida o un día, antes de pensar en ayunos más largos." },
+        {
+          titulo: "Llena el tiempo con Dios",
+          texto: "Usa el tiempo de las comidas para orar y leer la Biblia, y bebe agua. Si es un ayuno personal, no lo anuncies (Mateo 6:17-18).",
+        },
+        {
+          titulo: "Cuida el cuerpo hasta el final",
+          texto: "Si hay mareo fuerte, dolor o confusión, suspende el ayuno y busca ayuda. Termina con una comida liviana: tu cuerpo es templo del Espíritu Santo (1 Corintios 6:19).",
+        },
+        {
+          titulo: "Anota lo que Dios te muestra",
+          texto: "Escribe lo que Dios te enseñó en la oración y en su Palabra durante el ayuno.",
+        },
+      ],
+    },
+  ],
+  // Guerra espiritual bíblica y equilibrada
+  "intercesion-4-4": [
+    // La lección enseña un orden, someterse y después resistir, y estos pasos lo vuelven un camino práctico para la lucha de cada día.
+    {
+      t: "pasos",
+      titulo: "Resistir al diablo en el orden de Santiago 4:7",
+      pasos: [
+        {
+          titulo: "Someterse primero a Dios",
+          texto: "Santiago 4:7 tiene un orden: primero someterse a Dios y después resistir al diablo. No se puede resistir al diablo mientras se resiste a Dios.",
+        },
+        {
+          titulo: "Ser honesto con el propio pecado",
+          texto: "No todo se le puede echar al diablo: cada uno es tentado por su propia concupiscencia (Santiago 1:14). Hay que arrepentirse y buscar ayuda.",
+        },
+        {
+          titulo: "Cerrar las puertas abiertas",
+          texto: "No dar lugar al diablo (Efesios 4:26-27): arreglar el enojo antes de que se ponga el sol, confesar el pecado y apartarse de lo que hace caer.",
+        },
+        {
+          titulo: "Resistir con la Escritura, como Jesús",
+          texto: "Jesús respondió cada tentación con la Escritura (Mateo 4:4, 7, 10). El creyente aprende versículos para usarlos cuando llega la tentación.",
+        },
+        {
+          titulo: "Llevar cautivo cada pensamiento",
+          texto: "Las fortalezas son argumentos que se levantan contra el conocimiento de Dios: se derriban con la verdad de Dios, llevando cautivo todo pensamiento a la obediencia a Cristo (2 Corintios 10:3-5).",
+        },
+        {
+          titulo: "Confiar en la promesa",
+          texto: "A quien se somete a Dios y resiste, la Biblia le promete que el diablo huirá (Santiago 4:7). Así pasó en el desierto: el diablo dejó a Jesús (Mateo 4:11).",
+        },
+      ],
+    },
+  ],
+  "intercesion-4-5": [
+    // La lección narra cinco escenas y una ley sin resumen final; el cuadro las pone lado a lado para analizar cómo actuaron Jesús y los apóstoles.
+    {
+      t: "cuadro",
+      titulo: "Ante los espíritus malos: qué muestra y qué enseña cada pasaje",
+      columnas: ["Pasaje", "Lo que muestra", "La enseñanza para hoy"],
+      filas: [
+        [
+          "Jesús en la sinagoga (Marcos 1:23-27)",
+          "Con su sola palabra, Jesús hizo salir al espíritu inmundo; la gente se asombró de su autoridad.",
+          "Jesús no necesitó rituales: tiene autoridad, y los espíritus le obedecen.",
+        ],
+        [
+          "Los setenta (Lucas 10:17-20)",
+          "Volvieron con gozo porque aun los demonios se les sujetaban en el nombre de Jesús.",
+          "El gozo mayor no es el poder sobre los espíritus, sino tener el nombre escrito en los cielos.",
+        ],
+        [
+          "Pablo en Filipos (Hechos 16:16-18)",
+          "Pablo mandó en el nombre de Jesucristo que el espíritu de adivinación saliera de la muchacha, y salió en esa hora.",
+          "Se actúa con la autoridad del nombre de Jesús, sin espectáculo.",
+        ],
+        [
+          "Los hijos de Esceva (Hechos 19:13-16)",
+          "Usaron el nombre de Jesús como un conjuro; el hombre del espíritu malo los dominó y huyeron desnudos y heridos.",
+          "El nombre de Jesús no es una fórmula mágica: la autoridad es de los que le pertenecen.",
+        ],
+        [
+          "Los que creyeron en Éfeso (Hechos 19:17-20)",
+          "Muchos creyentes confesaron sus hechos, y muchos que practicaban la magia quemaron sus libros ante todos.",
+          "El fruto verdadero es el arrepentimiento: se rompe con lo oculto y crece la palabra del Señor.",
+        ],
+        [
+          "La ley de Dios (Deuteronomio 18:10-12)",
+          "Dios prohíbe a su pueblo la adivinación, la hechicería, los encantamientos y consultar a los muertos.",
+          "El creyente rompe con lo oculto: brujería, adivinación, cartas, ouija y consultar a los muertos.",
+        ],
+      ],
+    },
+  ],
+  "intercesion-4-6": [
+    // Pone frente a frente cada error, cómo se ve en la práctica y su corrección bíblica, para evaluar con discernimiento lo que se llama guerra espiritual.
+    {
+      t: "cuadro",
+      titulo: "Los errores de la guerra espiritual y la corrección bíblica",
+      columnas: ["El error", "Cómo se ve", "Lo que enseña la Biblia"],
+      filas: [
+        [
+          "Vivir con miedo",
+          "Ver demonios en todo y vivir asustado del enemigo.",
+          "Dios no nos dio espíritu de cobardía, sino de poder, de amor y de dominio propio (2 Timoteo 1:7).",
+        ],
+        [
+          "La arrogancia",
+          "Hablarle al diablo con burla o con insultos.",
+          "Ni el arcángel Miguel lanzó juicio de maldición: dejó la reprensión al Señor (Judas 1:9).",
+        ],
+        [
+          "Creer en toda manifestación",
+          "Aceptar algo como de Dios solo porque impresiona.",
+          "Probar los espíritus: lo que no concuerda con la Escritura no viene de Dios (1 Juan 4:1).",
+        ],
+        [
+          "Inventar métodos",
+          "Dedicarse a identificar o a atar espíritus sobre las ciudades.",
+          "Daniel no le habló al príncipe de Persia: oró a Dios con humildad y fue oído (Daniel 10:12-13).",
+        ],
+        [
+          "Culpar al diablo",
+          "Decir que el propio pecado fue obra del enemigo.",
+          "Cada uno es tentado por su propia concupiscencia: se asume la responsabilidad (Santiago 1:14).",
+        ],
+      ],
+    },
+  ],
+  // La oración en los avivamientos
+  "intercesion-5-4": [
+    // La lección reúne varias historias a lo largo de más de un siglo; la línea de tiempo las ordena y muestra cómo la oración unida precedió a los despertares y a las misiones.
+    {
+      t: "linea",
+      titulo: "Los despertares: oración unida y misiones (1734-1858)",
+      eventos: [
+        {
+          fecha: "1734-1735",
+          texto: "Avivamiento en la iglesia de Jonathan Edwards, en Northampton, Nueva Inglaterra.",
+        },
+        { fecha: "Década de 1740", texto: "Llega el Gran Despertar, en el que también predica Jorge Whitefield." },
+        {
+          fecha: "1747",
+          texto: "Edwards publica un llamado a que los cristianos de distintos lugares oren juntos por un derramamiento del Espíritu.",
+          ref: "Zacarías 8:20-22",
+        },
+        {
+          fecha: "1784",
+          texto: "Pastores bautistas de Inglaterra leen el llamado de Edwards y empiezan reuniones mensuales de oración por el avivamiento y las naciones.",
+        },
+        { fecha: "1793", texto: "Guillermo Carey, que oraba con aquellos pastores, parte como misionero a la India." },
+        {
+          fecha: "Agosto de 1806",
+          texto: "Cinco estudiantes del Williams College, en Massachusetts, oran por las naciones junto a un pajar, refugiados de una tormenta.",
+        },
+        {
+          fecha: "1810",
+          texto: "De aquella reunión sale la primera gran sociedad de misiones al extranjero de los Estados Unidos.",
+        },
+        {
+          fecha: "Septiembre de 1857",
+          texto: "Jeremías Lanphier invita a orar al mediodía en la calle Fulton, en Nueva York; el primer día llegan solo seis personas.",
+          ref: "Mateo 18:19-20",
+        },
+        {
+          fecha: "1858",
+          texto: "Miles oran al mediodía en muchas ciudades; se habla de cientos de miles de convertidos, aunque las cifras varían.",
+          ref: "Salmos 51:10-13",
+        },
+      ],
+    },
+  ],
+  "intercesion-5-5": [
+    // La lección narra cuatro avivamientos en cuatro países; el cuadro los pone lado a lado para ver lo que se repite: oración antes del fuego y confesión sincera.
+    {
+      t: "cuadro",
+      titulo: "Cuatro avivamientos de comienzos del siglo XX",
+      columnas: ["Avivamiento", "Quién", "Cómo empezó", "Lo que se destacó"],
+      filas: [
+        [
+          "Gales, 1904",
+          "Evan Roberts, antiguo minero del carbón que se preparaba para el ministerio",
+          "Roberts oró durante años; las reuniones de oración y confesión se extendieron por todo el país",
+          "Confesar todo pecado conocido y obedecer pronto al Espíritu; se calculan unas cien mil conversiones en pocos meses",
+        ],
+        [
+          "Calle Azusa, Los Ángeles, 1906",
+          "William J. Seymour, predicador afroamericano",
+          "Reuniones de oración en una casa de la calle Bonnie Brae; en abril de 1906 empezó allí el avivamiento",
+          "Personas de muchas razas y naciones juntas; de allí el movimiento pentecostal se extendió por el mundo",
+        ],
+        [
+          "Pyongyang, Corea, 1907",
+          "Los creyentes de la iglesia de Jangdaehyun; entre los primeros en confesar, Gil Seon-ju",
+          "Reuniones de estudio bíblico en enero de 1907",
+          "Confesión pública de pecados, con lágrimas; la iglesia coreana conserva hasta hoy la oración de madrugada",
+        ],
+        [
+          "Valparaíso, Chile, 1909",
+          "La iglesia metodista del pastor Willis C. Hoover",
+          "Oró desde 1907 por un derramamiento del Espíritu, tras leer un folleto sobre un avivamiento en la India",
+          "Se extendió a Santiago y nació la Iglesia Metodista Pentecostal, una de las raíces del pentecostalismo latinoamericano",
+        ],
+      ],
+    },
+  ],
+  "intercesion-5-6": [
+    // Es la lección que lleva a la práctica: los pasos ordenan el plan de oración que pide el objetivo o6, cada uno con su base bíblica y varios con un ejemplo de la historia estudiada.
+    {
+      t: "pasos",
+      titulo: "Un plan para orar hoy por avivamiento",
+      pasos: [
+        {
+          titulo: "Anhelar la presencia de Dios",
+          texto: "Pedir, como Isaías, que Dios rompa los cielos y descienda (Isaías 64:1). Se busca a Dios mismo, no emociones fabricadas ni un espectáculo.",
+        },
+        {
+          titulo: "Empezar por el propio corazón",
+          texto: "Humillarse, buscar el rostro de Dios y apartarse del pecado (2 Crónicas 7:14), confesándolo como en Gales y en Corea. El avivamiento que se pide para la iglesia empieza en uno mismo.",
+        },
+        {
+          titulo: "Orar con otros, con constancia",
+          texto: "Formar un grupo o una cadena de oración, como los moravos y la calle Fulton: Jesús está en medio de los que se reúnen en su nombre (Mateo 18:19-20).",
+        },
+        {
+          titulo: "Pedir valor para anunciar a Cristo",
+          texto: "Como la iglesia amenazada de Hechos 4:29-31, no pedir comodidad sino denuedo para hablar la palabra de Dios.",
+        },
+        {
+          titulo: "Orar por la ciudad y por las naciones",
+          texto: "Rogar al Señor de la mies que envíe obreros a la propia ciudad y a las naciones (Mateo 9:37-38), y estar dispuestos a ir, como los moravos y Carey.",
+        },
+        {
+          titulo: "Examinarlo todo por la Palabra y el fruto",
+          texto: "No apagar al Espíritu, pero examinarlo todo y retener lo bueno, con orden (1 Tesalonicenses 5:19-21; 1 Corintios 14:40). Su fruto lo muestra (Mateo 7:16-20): amor, santidad, unidad y misión.",
         },
       ],
     },
