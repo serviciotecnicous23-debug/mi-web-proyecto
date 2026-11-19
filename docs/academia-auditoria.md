@@ -328,9 +328,20 @@ Niveles 4 y 5, su lectura ampliada:**
 | Libros | 40 |
 | Lecturas ampliadas | 18 |
 
-**Las especialidades publicadas después** (Ministerio pastoral, Niñez, Juventud, Familia y consejería y Capellanía) ya
-venían con sus libros, sus videos y muchas preguntas de casos. Solo les faltaban los esquemas, que se redactan y revisan
-aparte y van en el PR siguiente.
+**En el cuarto PR, las especialidades publicadas después:** Ministerio pastoral, Niñez, Juventud, Familia y consejería
+y Capellanía. Ya venían con sus libros, sus videos y muchas preguntas de casos; solo les faltaban los esquemas. Un
+redactor por especialidad escribió de 2 a 3 por materia, y un revisor independiente comprobó cada uno contra su lección,
+las citas en la RV1960, lo legal y la forma.
+- **Esquemas:** 53, entre 7 líneas de tiempo, 32 cuadros comparativos y 14 pasos.
+- **Revisión:** los revisores corrigieron 19 esquemas y no quitaron ninguno. Por ejemplo, en un cuadro de Juventud
+  sumaron el 988 y el 911 ante el riesgo de suicidio, como pide la lección, y en Capellanía corrigieron una cita:
+  Proverbios 22:3 dice «se esconde», no «se prepara».
+- **Total:** con esto, las 85 materias publicadas tienen esquemas (232 en total).
+
+**Una corrección legal que salió de la revisión:** la ley SB 571 de Texas (2025) bajó de 48 a 24 horas el plazo para
+que un profesional reporte la sospecha de abuso o negligencia de un menor (Código de Familia 261.101(b); carta de la
+Agencia de Educación de Texas del 26 de junio de 2025). Se corrigió en «Protección de menores» (Niñez 4, lección 5 y su
+idea clave, y la pregunta f43 de su banco) y en Juventud 3, lección 6.
 
 **El tiempo de las pruebas.** Se midió lo que pide cada pregunta:
 - leerla, a 130 palabras por minuto (el ritmo de un lector promedio en el teléfono);

@@ -404,7 +404,7 @@ export const JUVENTUD_3: LeccionContenido[] = [
         t: "lista",
         items: [
           "Toda persona que tiene causa razonable para creer que un menor sufre abuso o negligencia debe reportarlo de inmediato (Código de Familia, sección 261.101).",
-          "Los profesionales, como los maestros, deben reportarlo a más tardar en 48 horas y no pueden pedirle a otro que lo haga por ellos.",
+          "Los profesionales, como los maestros, deben reportarlo a más tardar en 24 horas y no pueden pedirle a otro que lo haga por ellos.",
           "La obligación no tiene excepción para los pastores ni para las conversaciones confidenciales.",
           "Se reporta a la línea 1-800-252-5400 o, si hay peligro ahora, al 911.",
         ],
