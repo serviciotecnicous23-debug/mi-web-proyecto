@@ -313,8 +313,43 @@ test("Capellanía tiene sus cinco materias, con la medida del Nivel 3 y dos mate
   assert.equal(capellania.materias.length, 5);
 });
 
-test("las otras cuatro especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania"].includes(x.id))) {
+test("Comunicaciones y medios tiene sus cinco materias, con la medida del Nivel 3", () => {
+  const comunicaciones = ESPECIALIDADES.find((x) => x.id === "comunicaciones")!;
+  const listas = comunicaciones.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["comunicaciones-1", "Evangelismo en redes", "Mateo 10:27", 6, false],
+      ["comunicaciones-2", "Radio cristiana", "Romanos 10:17", 6, false],
+      ["comunicaciones-3", "Video y transmisiones", "1 Juan 1:3", 6, false],
+      ["comunicaciones-4", "Redacción y comunicación", "Colosenses 4:6", 6, false],
+      ["comunicaciones-5", "Ética y seguridad digital", "Mateo 10:16", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+    // todas tocan alguna ley: lo legal es una guía general, no un consejo legal
+    assert.match(m.silabo!.proposito, /no un consejo legal/, m.id);
+  }
+  // lo legal de cada una, comprobado: la ley COPPA, las reglas de la FCC, la licencia de CCLI, la Ley de Redacción Clara y los pasos de la CISA
+  assert.match(listas[0].silabo!.proposito, /COPPA/);
+  assert.match(listas[1].silabo!.proposito, /FCC/);
+  assert.match(listas[2].silabo!.proposito, /CCLI/);
+  assert.match(listas[3].silabo!.proposito, /Ley de Redacción Clara de 2010/);
+  assert.match(listas[4].silabo!.proposito, /CISA/);
+  assert.match(listas[4].silabo!.proposito, /CyberTipline/);
+  assert.equal(comunicaciones.materias.length, 5);
+});
+
+test("las otras tres especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
