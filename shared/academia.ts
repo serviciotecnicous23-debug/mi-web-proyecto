@@ -4203,6 +4203,276 @@ const MARCO_LEGAL_CAPELLAN: MateriaDef = {
   disponible: true,
 };
 
+const EVANGELISMO_REDES: MateriaDef = {
+  id: "comunicaciones-1",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 1,
+  titulo: "Evangelismo en redes",
+  resumen: "Cómo anunciar el evangelio en las redes: la plaza digital, conocer a la gente que está allí, el contenido que edifica, pasar de la pantalla a la mesa con el seguimiento, la política de redes de la iglesia con el cuidado de los niños, y medir con sabiduría.",
+  base: "Mateo 10:27; 1 Corintios 9:22",
+  memoria: "Mateo 10:27",
+  lecciones: lecciones("comunicaciones-1", [
+    ["El evangelio en el mundo digital", "Mateo 10:27; Hechos 17:17; 1 Corintios 9:22"],
+    ["Conocer a la gente que está en las redes", "Hechos 17:22-23; Juan 4:7-10; 1 Pedro 3:15"],
+    ["Contenido que edifica", "Proverbios 25:11; Colosenses 4:6; Filipenses 4:8"],
+    ["De la pantalla a la mesa", "Juan 1:39; Hechos 8:30-31; Hechos 2:46-47"],
+    ["Las redes de la iglesia: equipo, permisos y cuidado", "1 Corintios 14:40; Proverbios 22:3; Mateo 18:10"],
+    ["Medir con sabiduría y perseverar", "1 Corintios 3:6-7; Gálatas 6:9; Isaías 55:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia sepa anunciar el evangelio en las redes: que entienda que hoy las redes son una plaza donde está la gente, como la plaza donde Pablo hablaba cada día, y que cada red tiene su manera de hablar (según el Centro de Investigaciones Pew, en su encuesta de 2023, el 54 % de los adultos hispanos de los Estados Unidos usaba WhatsApp y el 49 % TikTok); que conozca y escuche a las personas antes de publicar; que publique lo que es verdadero y edifica, en el formato que conviene; que acompañe a los que escriben, de la pantalla a la mesa de la iglesia; que escriba una política de redes que cuide las cuentas y proteja a los niños, con lo que pide la ley COPPA para los menores de 13 años; y que mida con sabiduría, sabiendo que Dios da el crecimiento. No repite Evangelismo personal avanzado ni Evangelismo entre jóvenes. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «Lo que os digo en tinieblas, decidlo en la luz; y lo que oís al oído, proclamadlo desde las azoteas» (Mateo 10:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué las redes son hoy una plaza para anunciar el evangelio.", bloom: "comprender" },
+      { id: "o2", texto: "Conocer y escuchar a las personas que la iglesia quiere alcanzar antes de publicar.", bloom: "aplicar" },
+      { id: "o3", texto: "Publicar lo que es verdadero y edifica, en el formato que conviene.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar a los que escriben, de la pantalla a la comunidad de la iglesia.", bloom: "aplicar" },
+      { id: "o5", texto: "Escribir una política de redes que cuide las cuentas y proteja a los niños.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los números de las redes con sabiduría y perseverar.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 10:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La plaza digital y las redes que usa la gente, el público y su retrato, los formatos y el contenido que edifica, el seguimiento de los que escriben, la política de redes con la ley COPPA, y los números que importan.",
+      ser: "Un comunicador que anuncia a Cristo con verdad y con gracia, que escucha antes de hablar y que cuida a las personas más que a los números.",
+      hacer: "Elegir las redes de la iglesia, hacer el retrato de una persona, planear una semana de publicaciones, responder y acompañar a los que escriben, escribir la política de redes y leer los números del mes.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Rebecca Manley Pippert", titulo: "Sal: en un mundo cambiante, el evangelio sigue siendo relevante", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Neil Postman", titulo: "Divertirse hasta morir: el discurso público en la era del show business", editorial: "Ediciones de la Tempestad" },
+        { autor: "Tony Reinke", titulo: "12 Ways Your Phone Is Changing You (en inglés)", editorial: "Crossway" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=3jUPGTb80ms", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 17, Pablo en la plaza y en el Areópago", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+      { tipo: "guia", titulo: "El uso de las redes sociales en los Estados Unidos, 2024 (en inglés)", fuente: "Pew Research Center", url: "https://www.pewresearch.org/internet/2024/01/31/americans-social-media-use/" },
+    ],
+  },
+  disponible: true,
+};
+
+const RADIO_CRISTIANA: MateriaDef = {
+  id: "comunicaciones-2",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 2,
+  titulo: "Radio cristiana",
+  resumen: "Cómo usar la radio para el evangelio: la radio y su historia, la voz y el micrófono, la programación, la música y los derechos de autor, las reglas de la FCC para las emisoras no comerciales, y la atención de los oyentes.",
+  base: "Romanos 10:17; Salmos 19:4",
+  memoria: "Romanos 10:17",
+  lecciones: lecciones("comunicaciones-2", [
+    ["La radio al servicio del evangelio", "Romanos 10:14-15; Romanos 10:17; Salmos 19:4"],
+    ["La voz y el micrófono", "Nehemías 8:8; Proverbios 15:23; Colosenses 4:3-4"],
+    ["La programación de una radio cristiana", "Eclesiastés 3:1; Salmos 96:1-3; Efesios 5:19"],
+    ["La música y los derechos de autor", "Éxodo 20:15; Romanos 13:7; Lucas 10:7"],
+    ["La radio al aire y sus reglas", "Tito 3:1; 1 Pedro 2:13-14; Lucas 16:10"],
+    ["Los oyentes: llamadas, pedidos y comunidad", "Juan 10:27; Hechos 16:14; Santiago 1:19"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la radio de la iglesia sepa usarla para el evangelio: que entienda que la fe viene por el oír, y conozca cómo empezó la radio cristiana, con una de las primeras transmisiones de un culto, en Pittsburgh en 1921, y con HCJB, que salió al aire en Quito en 1931; que elija la clase de radio que le conviene a su iglesia; que hable con claridad, calidez y buen ritmo, y escriba para oír; que arme una programación pensada para quien escucha a cada hora; que ponga en regla la música, con las licencias de las canciones, de las sociedades de autores, y de las grabaciones, de SoundExchange; que, si tiene una emisora de AM o FM, obedezca las reglas de la FCC: la licencia, la identificación cada hora y el apoyo de los patrocinadores sin llamar a comprar; y que atienda a los oyentes con cuidado. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pablo: «Así que la fe es por el oír, y el oír, por la palabra de Dios» (Romanos 10:17).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la radio sirve al evangelio, y elegir la clase de radio que le conviene a una iglesia.", bloom: "comprender" },
+      { id: "o2", texto: "Hablar con claridad, calidez y buen ritmo, y escribir para oír.", bloom: "aplicar" },
+      { id: "o3", texto: "Armar una programación pensada para quien escucha a cada hora.", bloom: "aplicar" },
+      { id: "o4", texto: "Poner en regla la música de una radio, con las licencias de las canciones y de las grabaciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar las reglas de la FCC para una emisora no comercial: la licencia, la identificación y los patrocinadores.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo atiende la radio a sus oyentes, también a un oyente en crisis.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Romanos 10:17 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La historia de la radio cristiana, las clases de radio, la voz y la escritura para oír, la programación, las licencias de la música y las reglas de la FCC para las emisoras no comerciales.",
+      ser: "Un comunicador fiel y cuidadoso, que habla para que lo entiendan, respeta el trabajo de otros y escucha a sus oyentes.",
+      hacer: "Preparar y grabar un mensaje corto, armar la parrilla de un día, poner en regla la música, escribir el agradecimiento a un patrocinador y atender las llamadas al aire.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Mario Kaplún", titulo: "Producción de programas de radio: el guion, la realización", editorial: "CIESPAL" },
+        { autor: "José Ignacio López Vigil", titulo: "Manual urgente para radialistas apasionados", editorial: "Edición libre del autor (2005)" },
+      ],
+      complementaria: [
+        { autor: "John Stott", titulo: "La predicación: puente entre dos mundos", editorial: "Libros Desafío" },
+        { autor: "Tona J. Hangen", titulo: "Redeeming the Dial: Radio, Religion, and Popular Culture in America (en inglés)", editorial: "University of North Carolina Press" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 10, la fe viene por el oír", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=10" },
+      { tipo: "guia", titulo: "La radio FM de baja potencia (LPFM) (en inglés)", fuente: "Comisión Federal de Comunicaciones (FCC)", url: "https://www.fcc.gov/lpfm" },
+    ],
+  },
+  disponible: true,
+};
+
+const VIDEO_TRANSMISIONES: MateriaDef = {
+  id: "comunicaciones-3",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 3,
+  titulo: "Video y transmisiones",
+  resumen: "Cómo usar el video para el evangelio: las clases de video de una iglesia, contar historias como los testimonios, la cámara y la luz, la transmisión del culto, los derechos y los permisos, y la edición honesta.",
+  base: "1 Juan 1:3; Habacuc 2:2",
+  memoria: "1 Juan 1:3",
+  lecciones: lecciones("comunicaciones-3", [
+    ["El video al servicio del evangelio", "1 Juan 1:1-3; Juan 20:30-31; Habacuc 2:2"],
+    ["Contar historias con imágenes", "Marcos 5:19; Mateo 13:34; Salmos 107:2"],
+    ["La cámara y la luz", "Colosenses 3:23; Proverbios 22:29; Eclesiastés 9:10"],
+    ["La transmisión del culto", "Hebreos 10:24-25; Hechos 2:42; Salmos 22:22"],
+    ["Los derechos y los permisos en video", "Romanos 12:17; 2 Corintios 8:21; Proverbios 3:27"],
+    ["Editar y publicar con propósito", "1 Corintios 14:9; Hechos 2:8; Eclesiastés 12:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en el video de la iglesia sepa usarlo para el evangelio: que anuncie lo que ha visto y oído de Cristo, con la clase de video que conviene a cada propósito; que cuente historias verdaderas, como los testimonios, con su antes, su encuentro con Cristo y su después, y con el permiso de cada persona; que cuide lo básico de la imagen: la cámara quieta, el encuadre y la luz; que prepare la transmisión del culto con una prueba, un plan por si falla y un anfitrión en el chat, cuidando la intimidad de los que oran y a los niños, y animando a congregarse; que tenga en regla la música, las imágenes y los permisos, con la licencia de transmisión de CCLI, sabiendo que en YouTube un reclamo de Content ID afecta al video y una falta por infracción de derechos de autor cuenta contra el canal (tres en 90 días pueden hacer que se cancele); y que edite con verdad, con subtítulos y títulos honestos. El sonido se estudia en Sonido y técnica al servicio del culto, de la especialidad Alabanza. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Juan: «lo que hemos visto y oído, eso os anunciamos, para que también vosotros tengáis comunión con nosotros» (1 Juan 1:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar para qué usa la iglesia el video, y planear un ministerio de video.", bloom: "comprender" },
+      { id: "o2", texto: "Armar y grabar un testimonio en video que honre a Dios.", bloom: "aplicar" },
+      { id: "o3", texto: "Grabar con la cámara quieta, un buen encuadre y la luz adecuada.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar la transmisión del culto y cuidar a las personas.", bloom: "aplicar" },
+      { id: "o5", texto: "Tener en regla la música, las imágenes y los permisos de un video.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la edición de un video: el corte, los subtítulos, el título y la portada.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Juan 1:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las clases de video, el testimonio y sus partes, el lenguaje de la imagen, la transmisión del culto, las licencias y los permisos, las reglas de YouTube sobre los derechos de autor y la edición honesta.",
+      ser: "Un comunicador que anuncia lo que ha visto de Cristo, cuida la dignidad de las personas y trabaja de corazón, como para el Señor.",
+      hacer: "Planear un ministerio de video, grabar un testimonio y un anuncio, preparar una transmisión, poner en regla la música y los permisos, y editar un video corto con subtítulos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Marcel Martin", titulo: "El lenguaje del cine", editorial: "Gedisa" },
+        { autor: "Robert McKee", titulo: "El guion: sustancia, estructura, estilo y principios de la escritura de guiones", editorial: "Alba Editorial" },
+      ],
+      complementaria: [
+        { autor: "Neil Postman", titulo: "Divertirse hasta morir: el discurso público en la era del show business", editorial: "Ediciones de la Tempestad" },
+        { autor: "Phil Cooke", titulo: "Unique: Telling Your Story in the Age of Brands and Social Media (en inglés)", editorial: "Baker Books" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de 1-3 Juan", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=wQtMnuBzb4c", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Marcos 5, cuéntales cuán grandes cosas ha hecho el Señor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Marcos&cap=5" },
+      { tipo: "guia", titulo: "Las faltas por infracción de derechos de autor en YouTube", fuente: "Ayuda de YouTube", url: "https://support.google.com/youtube/answer/2814000?hl=es" },
+    ],
+  },
+  disponible: true,
+};
+
+const REDACCION_COMUNICACION: MateriaDef = {
+  id: "comunicaciones-4",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 4,
+  titulo: "Redacción y comunicación",
+  resumen: "Cómo escribir y hablar con claridad en nombre de la iglesia: la palabra escrita al servicio del evangelio, el lenguaje claro, los anuncios, los boletines y los mensajes, las historias verdaderas, hablar en público y comunicar en una crisis.",
+  base: "Colosenses 4:6; Lucas 1:1-4",
+  memoria: "Colosenses 4:6",
+  lecciones: lecciones("comunicaciones-4", [
+    ["La palabra escrita al servicio del evangelio", "Lucas 1:1-4; Jeremías 30:2; Romanos 15:4"],
+    ["Escribir claro", "1 Corintios 14:19; Mateo 5:37; Proverbios 15:2"],
+    ["Los anuncios, los boletines y los mensajes", "Hechos 15:30-31; Lucas 14:21; Proverbios 25:25"],
+    ["Escribir una historia o un artículo", "Proverbios 18:13; Proverbios 18:17; Éxodo 23:1"],
+    ["Hablar en público", "Efesios 4:15; Proverbios 16:24; Hechos 2:14"],
+    ["Comunicar en una crisis", "Efesios 4:25; Proverbios 26:20; Proverbios 15:1"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia escriba y hable con claridad y con verdad: que escriba con cuidado, como Lucas, que investigó con diligencia y escribió por orden; que use el lenguaje claro, pensando en el lector, con lo más importante primero, frases cortas y palabras de todos los días, en la línea de la Ley de Redacción Clara de 2010, que les pide a las agencias federales de los Estados Unidos escribir de manera clara, breve y bien ordenada; que escriba anuncios que respondan qué, cuándo, dónde, para quién y por qué, adaptados al boletín, a WhatsApp y a las redes, sin cadenas ni datos privados; que escriba historias verdaderas, con los datos comprobados y con el permiso de las personas; que hable en público con preparación y brevedad; y que en una crisis comunique con una sola voz, con la verdad a tiempo y sin chismes, reportando el abuso de un menor como pide la ley de Texas. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pablo: «Sea vuestra palabra siempre con gracia, sazonada con sal, para que sepáis cómo debéis responder a cada uno» (Colosenses 4:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia escribe con cuidado, y reconocer sus escritos.", bloom: "comprender" },
+      { id: "o2", texto: "Escribir en lenguaje claro y reescribir un texto confuso.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir un anuncio y adaptarlo al boletín, a WhatsApp y a las redes.", bloom: "aplicar" },
+      { id: "o4", texto: "Escribir una historia verdadera, con los datos comprobados y con permiso.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar y dar los anuncios del culto, y presentar a un invitado.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo comunica la iglesia en una crisis o ante un rumor.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Colosenses 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los escritos de una iglesia, los principios del lenguaje claro, las cinco preguntas de un anuncio, las partes de una historia, cómo hablar en público y los pasos para comunicar en una crisis.",
+      ser: "Un comunicador que escribe y habla siguiendo la verdad en amor, que averigua antes de escribir y que frena el chisme.",
+      hacer: "Escribir la presentación de la iglesia, reescribir un anuncio confuso, adaptar un anuncio a tres lugares, escribir la historia de un evento, dar los anuncios del culto y responder a un rumor.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Daniel Cassany", titulo: "La cocina de la escritura", editorial: "Anagrama" },
+        { autor: "Real Academia Española", titulo: "Libro de estilo de la lengua española según la norma panhispánica", editorial: "Espasa" },
+      ],
+      complementaria: [
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+        { autor: "William Strunk Jr. y E. B. White", titulo: "The Elements of Style (en inglés)", editorial: "Longman" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Colosenses", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=AG4jqCUapng", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 1, investigar con diligencia y escribir por orden", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=1" },
+      { tipo: "guia", titulo: "Consultas sobre el buen uso del español", fuente: "FundéuRAE", url: "https://www.fundeu.es/" },
+    ],
+  },
+  disponible: true,
+};
+
+const ETICA_SEGURIDAD_DIGITAL: MateriaDef = {
+  id: "comunicaciones-5",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 5,
+  titulo: "Ética y seguridad digital",
+  resumen: "Cómo comunicar con ética y cuidar a las personas en internet: los compromisos del comunicador cristiano, la privacidad, las cuentas y las contraseñas seguras, las estafas en línea, la inteligencia artificial y la verdad, y cómo moderar y proteger en las redes de la iglesia.",
+  base: "Mateo 10:16; 2 Corintios 4:2",
+  memoria: "Mateo 10:16",
+  lecciones: lecciones("comunicaciones-5", [
+    ["La ética del comunicador cristiano", "2 Corintios 4:2; 1 Tesalonicenses 2:3-5; Proverbios 11:1"],
+    ["La privacidad y la dignidad de las personas", "Proverbios 11:13; Mateo 7:12; Proverbios 22:1"],
+    ["Cuentas y contraseñas seguras", "Nehemías 4:9; Lucas 16:10; Proverbios 27:12"],
+    ["Las estafas y el engaño en línea", "Mateo 10:16; Proverbios 14:15; 2 Corintios 11:14"],
+    ["La inteligencia artificial y la verdad", "Éxodo 20:16; Colosenses 3:9; 1 Tesalonicenses 5:21"],
+    ["Moderar y proteger en las redes de la iglesia", "Romanos 12:18; Proverbios 26:4; Mateo 18:6"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia lo haga con ética y cuide a las personas en internet: que diga la verdad, sin títulos engañosos ni números inflados, sin manipular, dando el crédito y diciendo cuándo algo es pagado, como pide la Comisión Federal de Comercio (FTC); que guarde la información de las personas, con las peticiones de oración compartidas solo con permiso y las fotos de los niños con el permiso escrito de sus padres, como pide la ley COPPA para los menores de 13 años; que proteja las cuentas de la iglesia con los cuatro pasos de la CISA: contraseñas fuertes, la verificación en dos pasos con un administrador de contraseñas, reconocer el phishing y actualizar los programas; que reconozca las estafas, como la del pastor falso que pide tarjetas de regalo, de la que alertó el Fiscal General de Texas; que use la inteligencia artificial con la verdad, sabiendo que la FCC aclaró en 2024 que las voces hechas con ella cuentan como voces artificiales en las llamadas automáticas; y que modere las redes con normas claras, sin que ningún adulto se escriba en privado con un menor, reportando el abuso como pide la ley de Texas y la explotación en internet a la CyberTipline. Lleva a las comunicaciones lo que enseña Protección de menores, de la especialidad Niñez, sin repetirla. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «He aquí, yo os envío como a ovejas en medio de lobos; sed, pues, prudentes como serpientes, y sencillos como palomas» (Mateo 10:16).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los compromisos del comunicador cristiano, y revisar una publicación con ellos.", bloom: "comprender" },
+      { id: "o2", texto: "Cuidar la información y la dignidad de las personas en las comunicaciones de la iglesia.", bloom: "aplicar" },
+      { id: "o3", texto: "Proteger las cuentas de la iglesia con contraseñas fuertes, la verificación en dos pasos y el control de los accesos.", bloom: "aplicar" },
+      { id: "o4", texto: "Reconocer y responder a las estafas en línea, como la del pastor falso.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar el uso de la inteligencia artificial y examinar un contenido antes de compartirlo.", bloom: "evaluar" },
+      { id: "o6", texto: "Moderar las redes de la iglesia y proteger a los menores.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Mateo 10:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los compromisos del comunicador cristiano, los datos que se cuidan y la ley COPPA, los cuatro pasos de la CISA, las señales de un engaño y la estafa del pastor falso, la inteligencia artificial y las voces falsas, y las normas de la comunidad.",
+      ser: "Un comunicador prudente como serpiente y sencillo como paloma, que no engaña, guarda lo que le confían y protege a los más vulnerables.",
+      hacer: "Revisar una publicación con preguntas de ética, armar un formulario de peticiones de oración, quitar los accesos de quien deja el equipo, responder a un mensaje del pastor falso, examinar un video antes de compartirlo y responder a un perfil falso que escribe a los jóvenes.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Javier Darío Restrepo", titulo: "El zumbido y el moscardón: taller y consultorio de ética periodística", editorial: "Fondo de Cultura Económica y Fundación para un Nuevo Periodismo Iberoamericano" },
+        { autor: "Carissa Véliz", titulo: "Privacidad es poder: datos, vigilancia y libertad en la era digital", editorial: "Debate" },
+      ],
+      complementaria: [
+        { autor: "Marta Peirano", titulo: "El enemigo conoce el sistema: manipulación de ideas, personas e influencias después de la economía de la atención", editorial: "Debate" },
+        { autor: "Jason Thacker", titulo: "The Age of AI: Artificial Intelligence and the Future of Humanity (en inglés)", editorial: "Zondervan" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 10, prudentes como serpientes y sencillos como palomas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=10" },
+      { tipo: "guia", titulo: "Secure Our World: los cuatro pasos para estar seguros en línea (en inglés)", fuente: "Agencia de Ciberseguridad y Seguridad de Infraestructura (CISA)", url: "https://www.cisa.gov/secure-our-world" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5123,7 +5393,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, GUERRA_ESPIRITUAL, ORACION_AVIVAMIENTOS,
   ]),
   especialidad("comunicaciones", "Comunicaciones y medios", "Llevar el evangelio por la radio, las redes y las transmisiones.", [
-    ["Evangelismo en redes"], ["Radio cristiana"], ["Video y transmisiones"], ["Redacción y comunicación"], ["Ética y seguridad digital"],
+    EVANGELISMO_REDES, RADIO_CRISTIANA, VIDEO_TRANSMISIONES, REDACCION_COMUNICACION, ETICA_SEGURIDAD_DIGITAL,
   ]),
   especialidad("capellania", "Capellanía", "Servir en hospitales, cárceles y emergencias.", [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,

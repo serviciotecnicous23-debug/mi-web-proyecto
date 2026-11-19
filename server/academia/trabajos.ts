@@ -250,6 +250,47 @@ const TRABAJO_CAPELLANIA: ClaveEscrita = {
     "Cada trimestre evaluaremos el plan con el pastor: cuántos capellanes tienen su aval y su capacitación, cuántas visitas se hicieron en los hospitales y en las cárceles, cuántas familias de presos y cuántas personas que salieron de la cárcel acompañamos, si estamos listos para la próxima emergencia y cómo están los capellanes, y cambiaremos lo que haga falta.",
 };
 
+const TRABAJO_COMUNICACIONES: ClaveEscrita = {
+  id: "trabajo-comunicaciones",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para el ministerio de comunicaciones de tu iglesia que use lo aprendido en las cinco materias de la especialidad: cómo anunciará el evangelio en las redes y llevará a las personas de la pantalla a la mesa; cómo usará la radio; cómo hará sus videos y la transmisión del culto; cómo escribirá y hablará en nombre de la iglesia, también en una crisis; y cómo cuidará la ética y la seguridad digital. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "redes", peso: 20, texto: "Anunciar el evangelio en las redes: conocer a la gente, publicar lo que edifica y llevarla de la pantalla a la mesa.", formas: ["redes", "pantalla a la mesa", "mensajes privados", "publicaciones", "instagram", "facebook", "tiktok"] },
+    { id: "radio", peso: 15, texto: "Usar la radio con un propósito, una programación, las licencias de la música y las reglas de la FCC.", formas: ["radio", "parrilla", "soundexchange", "fcc", "emisora", "oyentes"] },
+    { id: "video", peso: 20, texto: "Hacer videos y transmitir el culto, con los testimonios y los permisos en regla.", formas: ["video*", "transmision*", "transmitir*", "testimonio*", "ccli", "content id"] },
+    { id: "redaccion", peso: 15, texto: "Escribir y hablar con claridad: el lenguaje claro, los anuncios, las historias y la comunicación en una crisis.", formas: ["lenguaje claro", "anuncio*", "boletin", "crisis", "una sola voz", "hablar en publico"] },
+    { id: "etica", peso: 20, texto: "Cuidar la ética y la seguridad digital: la verdad, la privacidad, las cuentas, las estafas, la inteligencia artificial y la moderación.", formas: ["contrasena*", "dos pasos", "privacidad", "pastor falso", "estafador*", "inteligencia artificial", "moder*", "etica"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Mateo 10:27", "Hechos 17:17", "1 Corintios 9:22", "Hechos 17:23", "Juan 4:7", "1 Pedro 3:15", "Proverbios 25:11", "Colosenses 4:6",
+    "Filipenses 4:8", "Juan 1:39", "Hechos 8:31", "Hechos 2:46", "1 Corintios 14:40", "Proverbios 22:3", "Mateo 18:10", "1 Corintios 3:6",
+    "Gálatas 6:9", "Isaías 55:11", "Romanos 10:17", "Romanos 10:14", "Salmos 19:4", "Nehemías 8:8", "Proverbios 15:23", "Eclesiastés 3:1",
+    "Salmos 96:3", "Éxodo 20:15", "Romanos 13:7", "Lucas 10:7", "Tito 3:1", "1 Pedro 2:13", "Lucas 16:10", "Juan 10:27", "Hechos 16:14",
+    "Santiago 1:19", "1 Juan 1:3", "Juan 20:31", "Habacuc 2:2", "Marcos 5:19", "Mateo 13:34", "Salmos 107:2", "Colosenses 3:23",
+    "Proverbios 22:29", "Eclesiastés 9:10", "Hebreos 10:25", "Hechos 2:42", "Salmos 22:22", "Romanos 12:17", "2 Corintios 8:21",
+    "Proverbios 3:27", "1 Corintios 14:9", "Hechos 2:8", "Eclesiastés 12:10", "Lucas 1:3", "Jeremías 30:2", "Romanos 15:4",
+    "1 Corintios 14:19", "Mateo 5:37", "Proverbios 15:2", "Hechos 15:31", "Lucas 14:21", "Proverbios 25:25", "Proverbios 18:13",
+    "Proverbios 18:17", "Éxodo 23:1", "Efesios 4:15", "Proverbios 16:24", "Hechos 2:14", "Efesios 4:25", "Proverbios 26:20",
+    "Proverbios 15:1", "Mateo 10:16", "2 Corintios 4:2", "1 Tesalonicenses 2:4", "Proverbios 11:1", "Proverbios 11:13", "Mateo 7:12",
+    "Proverbios 22:1", "Nehemías 4:9", "Proverbios 27:12", "Proverbios 14:15", "2 Corintios 11:14", "Éxodo 20:16", "Colosenses 3:9",
+    "1 Tesalonicenses 5:21", "Romanos 12:18", "Proverbios 26:4", "Mateo 18:6",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para el ministerio de comunicaciones de nuestra iglesia. Su base es la palabra de Jesús: lo que oís al oído, proclamadlo desde las azoteas (Mateo 10:27). Un equipo de voluntarios, con el aval del pastor, se reunirá cada mes para orar, planear y aprender. " +
+    "Primero, las redes. Escucharemos antes de publicar, como Pablo conoció Atenas antes de hablar (Hechos 17:23), y haremos el retrato de las personas que queremos alcanzar, muchas de ellas hispanas que usan WhatsApp, Facebook y TikTok. Publicaremos tres veces por semana lo que es verdadero y edifica: testimonios cortos, versículos y la invitación al culto, con una palabra siempre con gracia (Colosenses 4:6). A cada comentario y a cada mensaje privado le responderemos pronto, y llevaremos a las personas de la pantalla a la mesa, con un café, una visita o un estudio bíblico, porque Jesús dijo: venid y ved (Juan 1:39). " +
+    "Segundo, la radio. Empezaremos con una radio por internet, con las licencias de las canciones y de SoundExchange, porque damos a cada uno lo que se le debe (Romanos 13:7), y con una parrilla que tenga la Palabra, música, oración y un programa para los niños, porque la fe viene por el oír (Romanos 10:17). Si un día pedimos una emisora FM de baja potencia, seguiremos las reglas de la FCC para los patrocinadores, sometidos a las autoridades (Tito 3:1). Atenderemos a los oyentes que llaman con paciencia, siendo prontos para oír (Santiago 1:19). " +
+    "Tercero, el video. Transmitiremos el culto cada domingo, con el sonido de la consola, una prueba antes y un anfitrión en el chat que salude y ore, animando a todos a congregarse (Hebreos 10:25). Grabaremos un testimonio cada mes, con su antes, su encuentro con Cristo y su después, y con el permiso escrito de la persona, para contar cuán grandes cosas ha hecho el Señor (Marcos 5:19). Tendremos en regla la licencia de transmisión de CCLI y los permisos de los padres de los niños, y no impugnaremos un reclamo de Content ID sin motivo, procurando lo bueno delante de todos (Romanos 12:17). " +
+    "Cuarto, la palabra escrita y hablada. Escribiremos en lenguaje claro, con lo más importante primero y frases cortas, como Pablo, que prefería cinco palabras con entendimiento (1 Corintios 14:19). Cada anuncio dirá qué, cuándo, dónde, para quién y por qué, completo en el boletín y corto en WhatsApp. Las historias de lo que Dios hace saldrán con los datos comprobados y con permiso, porque no admitimos falso rumor (Éxodo 23:1), y los que hablan en público ensayarán y serán breves. En una crisis hablará una sola voz, con la verdad a tiempo, porque donde no hay chismoso cesa la contienda (Proverbios 26:20). " +
+    "Quinto, la ética y la seguridad digital. No exageraremos los números ni manipularemos a nadie, porque renunciamos a lo oculto y vergonzoso (2 Corintios 4:2). Cuidaremos la privacidad de las peticiones de oración y de las fotos de los niños, como pide la ley COPPA, porque el de espíritu fiel lo guarda todo (Proverbios 11:13). Protegeremos las cuentas con contraseñas largas y únicas, la verificación en dos pasos y dos administradores, orando y poniendo guarda (Nehemías 4:9). Avisaremos a la iglesia sobre las estafas, como la del pastor falso que pide tarjetas de regalo, para ser prudentes como serpientes y sencillos como palomas (Mateo 10:16). Usaremos la inteligencia artificial solo como una ayuda, sin inventar ni imitar a nadie, examinándolo todo (1 Tesalonicenses 5:21), y moderaremos las redes con normas claras, sin que ningún adulto se escriba en privado con un menor, en paz con todos (Romanos 12:18). " +
+    "Cada trimestre evaluaremos el plan con el pastor: cuántas conversaciones empezaron en las redes y cuántas personas llegaron a la iglesia, cómo crecieron los oyentes de la radio, cuántas familias siguen la transmisión y cuántos testimonios grabamos, si los anuncios se entienden y si las cuentas y las personas están protegidas. Mediremos con humildad, porque Dios da el crecimiento (1 Corintios 3:6), y cambiaremos lo que haga falta.",
+};
+
 /** El trabajo final de cada especialidad que ya lo tiene. */
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
@@ -260,4 +301,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["juventud", TRABAJO_JUVENTUD],
   ["familia-consejeria", TRABAJO_FAMILIA],
   ["capellania", TRABAJO_CAPELLANIA],
+  ["comunicaciones", TRABAJO_COMUNICACIONES],
 ]);
