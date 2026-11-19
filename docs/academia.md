@@ -123,8 +123,9 @@ español fluido, «tipo documental»):
 - **Dónde está el audio:** `client/public/voz/academia/<lección>-<huella del audio>.m4a` (AAC 40 kbps, mono, 24 kHz, −16 LUFS;
   unos 300 KB por minuto), servido en `/voz` con caché de un año (el nombre cambia si se graba otra vez) y sin pasar por el
   service worker (se pide por partes, como la música del juego). El registro es `server/academia/narraciones.ts`.
-  Medido el 17-nov: el Nivel 1 son unos 176 minutos (≈52 MB) y toda la academia, unas 28 horas (≈500 MB): para grabar
-  las demás conviene un almacenamiento aparte (por ejemplo Cloudflare R2, 10 GB gratis) con `NARRACION_URL_BASE` en
+  Grabados: el Nivel 1 (17-nov-2026: 32 lecciones, unos 175 minutos, ≈52 MB) y el Nivel 2 (19-nov-2026: 54 lecciones,
+  unos 275 minutos, ≈82 MB). Toda la academia son unas 28 horas (≈500 MB): para grabar los Niveles 3 a 5 y las
+  especialidades conviene un almacenamiento aparte (por ejemplo Cloudflare R2, 10 GB gratis) con `NARRACION_URL_BASE` en
   Render, para no llenar el repositorio.
 - **Cómo grabar** (en la PC de Luis, unos 2 minutos de trabajo por cada 5 de audio):
   1. `npx tsx scripts/academia/narracion.ts estimar` (cuánto audio tiene cada nivel).
