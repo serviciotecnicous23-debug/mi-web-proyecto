@@ -5831,6 +5831,361 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
       ],
     },
   ],
+  // El ministerio pastoral
+  "pastoral-1-4": [
+    // La lección da el camino de Mateo 18 en un párrafo y sus principios en una lista; los pasos los ordenan de principio a fin, desde el caso de un delito hasta el perdón que restaura.
+    {
+      t: "pasos",
+      titulo: "Corregir para restaurar: el camino de Mateo 18",
+      pasos: [
+        {
+          titulo: "Antes de corregir, mira qué pasó",
+          texto: "Distingue el pecado de una diferencia de opinión. Si puede haber un delito, como el abuso de un menor, protege primero a la víctima y denúncialo a las autoridades, como manda la ley.",
+        },
+        {
+          titulo: "Habla con él a solas",
+          texto: "Empieza siempre por lo más privado. La meta es ganar a tu hermano, no castigarlo ni humillarlo (Mateo 18:15). Hazlo con mansedumbre, porque tú también puedes ser tentado (Gálatas 6:1).",
+        },
+        {
+          titulo: "Si no te oye, vuelve con uno o dos",
+          texto: "Toma contigo a uno o dos testigos y habla otra vez con él (Mateo 18:16). Avanza al paso siguiente solo si hace falta.",
+        },
+        {
+          titulo: "Solo al final, dilo a la iglesia",
+          texto: "Si tampoco los oye, se lleva el asunto a la iglesia (Mateo 18:17). El pastor actúa junto con otros líderes, no solo, y deja constancia con discreción.",
+        },
+        {
+          titulo: "Perdona, consuela y confirma el amor",
+          texto: "Cuando hay arrepentimiento, la disciplina termina: se perdona y se consuela al hermano, para que no lo consuma la tristeza, y se le confirma el amor (2 Corintios 2:6-8).",
+        },
+      ],
+    },
+  ],
+  "pastoral-1-5": [
+    // La lección anuncia los peligros con cuatro pasajes y da las medidas en otra lista; el cuadro une cada peligro con su texto y con la medida que lo enfrenta.
+    {
+      t: "cuadro",
+      titulo: "Los peligros para el rebaño y cómo protegerlo",
+      columnas: ["El peligro", "Lo que advierte la Biblia", "Cómo se protege al rebaño"],
+      filas: [
+        [
+          "Los lobos de afuera",
+          "Entrarán lobos rapaces que no perdonarán al rebaño (Hechos 20:29)",
+          "Velar, como pidió Pablo a los ancianos de Éfeso (Hechos 20:31)",
+        ],
+        [
+          "Los que se levantan adentro",
+          "Se levantarán hombres que hablen cosas perversas para arrastrar tras sí a los discípulos (Hechos 20:30)",
+          "Enseñar la sana doctrina y advertir con claridad sobre los errores",
+        ],
+        [
+          "La avaricia de los falsos maestros",
+          "Introducen herejías encubiertamente y por avaricia hacen mercadería del rebaño (2 Pedro 2:1-3)",
+          "Manejar el dinero entre dos personas y con cuentas claras",
+        ],
+        [
+          "El abuso de poder",
+          "Dios reprendió a los pastores que se enseñorearon de las ovejas con dureza y con violencia (Ezequiel 34:4)",
+          "Tener un camino para que cualquiera pueda denunciar un abuso sin miedo",
+        ],
+        [
+          "El daño a los pequeños",
+          "Jesús fue tajante con quien hace tropezar a uno de estos pequeños (Mateo 18:6)",
+          "Revisar y capacitar a quien sirve con niños, nunca dejarlo solo con un menor y denunciar toda sospecha: en Texas es ley",
+        ],
+      ],
+    },
+  ],
+  // Consejería pastoral
+  "pastoral-2-2": [
+    // Lleva el ejemplo resuelto de la samaritana a los pasos de una consulta pastoral que pide la nota de la lección, con el versículo de Juan 4 que muestra cada uno.
+    {
+      t: "pasos",
+      titulo: "Una conversación pastoral con el método de Jesús (Juan 4)",
+      pasos: [
+        {
+          titulo: "Acércate y escucha antes de hablar",
+          texto: "Jesús inició la conversación con un pedido sencillo y cruzó las barreras de su tiempo (Juan 4:7-9). Antes de dar respuestas, da tu tiempo.",
+        },
+        {
+          titulo: "Entiende la necesidad real",
+          texto: "Jesús partió de la necesidad del momento: el agua (Juan 4:7). Busca entender qué le pasa de verdad a la persona.",
+        },
+        {
+          titulo: "Ilumina con la Palabra",
+          texto: "Del agua del pozo, Jesús pasó al agua viva, el don de Dios (Juan 4:10). Lleva la conversación de lo cotidiano a lo profundo.",
+        },
+        {
+          titulo: "Nombra con amor lo que haya que nombrar",
+          texto: "Jesús nombró el pecado de la mujer sin humillarla, y reconoció lo que ella había dicho con verdad (Juan 4:16-18).",
+        },
+        {
+          titulo: "Señala a Dios y ora con la persona",
+          texto: "Jesús le habló del Padre y de la verdadera adoración (Juan 4:23-24). Lleva a la persona a Dios y ora con ella.",
+        },
+        {
+          titulo: "Acuerden un paso y acompaña",
+          texto: "La mujer dejó su cántaro y fue ella misma a contarlo a su ciudad (Juan 4:28-29). Deja que la persona actúe: acuerden un paso concreto y, después, acompáñala.",
+        },
+      ],
+    },
+  ],
+  "pastoral-2-5": [
+    // La lección distingue el perdón de la reconciliación solo en una nota; el cuadro los pone lado a lado, con su base bíblica y el cuidado de la víctima de abuso.
+    {
+      t: "cuadro",
+      titulo: "Perdonar y reconciliarse no son lo mismo",
+      columnas: ["Qué comparamos", "Perdonar", "Reconciliarse"],
+      filas: [
+        [
+          "De quién depende",
+          "De uno mismo",
+          "De los dos; por eso Pablo pide la paz en cuanto dependa de nosotros (Romanos 12:18)",
+        ],
+        [
+          "Por qué se hace",
+          "Porque Dios nos perdonó en Cristo (Efesios 4:32)",
+          "Porque Jesús la pone antes que la ofrenda en el altar (Mateo 5:23-24)",
+        ],
+        [
+          "Lo que pide",
+          "Dejar toda amargura, enojo e ira, y ser misericordiosos (Efesios 4:31-32)",
+          "Un cambio real: pedir perdón sin excusas, perdonar y acordar pasos para reparar el daño",
+        ],
+        [
+          "Ante el abuso",
+          "La víctima puede perdonar",
+          "Nunca se le pide volver a una situación de violencia ni ponerse en peligro",
+        ],
+      ],
+    },
+  ],
+  // Ordenanzas y ceremonias
+  "pastoral-3-1": [
+    // Pone lado a lado lo que distingue a las ordenanzas de las ceremonias, que la lección explica en una lista, para que el alumno las distinga de un vistazo.
+    {
+      t: "cuadro",
+      titulo: "Ordenanzas y ceremonias: en qué se distinguen",
+      columnas: ["Qué comparamos", "Las ordenanzas", "Las ceremonias"],
+      filas: [
+        [
+          "Cuáles son",
+          "Dos: el bautismo en agua y la Santa Cena",
+          "Por ejemplo, la presentación de niños, la boda y el funeral",
+        ],
+        [
+          "Su base",
+          "Un mandato del Señor: por eso se llaman ordenanzas (Mateo 28:19; 1 Corintios 11:24)",
+          "No tienen un mandato directo, pero sí un fundamento bíblico",
+        ],
+        [
+          "Sus elementos",
+          "No se cambian: el agua, el pan y la copa",
+          "Se adaptan a la cultura y a cada familia, siempre que honren a Dios",
+        ],
+        [
+          "Cuándo se celebran",
+          "En todo tiempo y lugar; la primera iglesia las practicó desde el principio (Hechos 2:41-42)",
+          "En los momentos importantes de una familia, para bendecirla y acompañarla",
+        ],
+      ],
+    },
+  ],
+  "pastoral-3-5": [
+    // Ordena en el tiempo lo que la lección reparte en varias listas y una nota: la consejería, la licencia y sus plazos en Texas, el ensayo, la boda y la devolución de la licencia.
+    {
+      t: "linea",
+      titulo: "Una boda en Texas, de la consejería a la licencia devuelta",
+      eventos: [
+        {
+          fecha: "Antes de la boda",
+          texto: "Consejería prematrimonial de cuatro a seis encuentros. El pastor conversa con los novios sobre su fe antes de comprometerse a casarlos.",
+          ref: "2 Corintios 6:14",
+        },
+        {
+          fecha: "La licencia",
+          texto: "Los novios la sacan en la oficina del secretario del condado (County Clerk). Vence a los 90 días: la boda tiene que ser antes.",
+        },
+        {
+          fecha: "72 horas después",
+          texto: "Ya pueden casarse. Hay excepciones a esa espera, como haber tomado el curso Twogether in Texas, que además rebaja el costo de la licencia.",
+        },
+        {
+          fecha: "Un día antes",
+          texto: "Ensayar con los novios y el cortejo el orden de la ceremonia, que el pastor tiene por escrito.",
+        },
+        {
+          fecha: "El día de la boda",
+          texto: "Revisar la licencia antes de empezar: los nombres, la fecha y que no esté vencida. Después de la ceremonia, firmarla.",
+        },
+        {
+          fecha: "Dentro de 30 días",
+          texto: "El oficiante completa la licencia y la devuelve al condado: sin ese paso, el matrimonio no queda registrado.",
+        },
+      ],
+    },
+  ],
+  "pastoral-3-6": [
+    // El duelo no termina con el funeral: la línea reúne en orden lo que la lección enseña antes, durante y después del funeral, hasta el aniversario.
+    {
+      t: "linea",
+      titulo: "Acompañar a una familia en duelo, antes y después del funeral",
+      eventos: [
+        {
+          fecha: "Lo antes posible",
+          texto: "Visitar a la familia, escuchar, orar y ofrecer ayuda práctica. La presencia del pastor dice más que muchas palabras.",
+          ref: "Romanos 12:15",
+        },
+        {
+          fecha: "Antes del funeral",
+          texto: "Planear con la familia las lecturas, los cantos, quién dará la semblanza y las costumbres que quieren honrar.",
+        },
+        {
+          fecha: "El funeral",
+          texto: "Un servicio sencillo y con esperanza: bienvenida, lectura, cantos, semblanza, un mensaje de diez a quince minutos y oración.",
+          ref: "Juan 11:25-26",
+        },
+        { fecha: "En el cementerio", texto: "Una lectura breve y una oración.", ref: "1 Corintios 15:55" },
+        {
+          fecha: "A la semana y al mes",
+          texto: "Llamar o visitar a la familia, y pedir a la iglesia que siga cerca.",
+        },
+        { fecha: "Con los meses", texto: "Si el dolor no deja vivir a alguien, ayudarlo a buscar ayuda profesional." },
+        {
+          fecha: "El primer año",
+          texto: "Llamar o visitar otra vez en el primer cumpleaños, en las fiestas y en el aniversario.",
+        },
+      ],
+    },
+  ],
+  // Visitación y cuidado del rebaño
+  "pastoral-4-3": [
+    // La lección da la visita al hospital en una lista y el acompañamiento del que se muere en un párrafo y una nota; el cuadro los compara aspecto por aspecto.
+    {
+      t: "cuadro",
+      titulo: "Visitar al enfermo y acompañar al que se está muriendo",
+      columnas: ["Qué cuidar", "En el hospital", "Junto a quien se está muriendo"],
+      filas: [
+        [
+          "Con quién coordinar",
+          "Pregunta en la recepción o a la enfermera si puedes pasar: el hospital protege la privacidad del paciente",
+          "En cuidados paliativos (hospice), coordina con el capellán o con el equipo médico",
+        ],
+        [
+          "Cuánto y cada cuánto",
+          "Sé breve: de diez a quince minutos, o menos si la persona está cansada",
+          "Visítala más seguido",
+        ],
+        ["La Palabra", "Un pasaje breve, como el Salmo 23", "Las promesas de Jesús, como Juan 14:1-3"],
+        [
+          "La oración",
+          "Ora con fe y, si lo piden, unge con aceite junto con otro anciano (Santiago 5:14)",
+          "Ora, canta en voz baja si la familia lo desea y recuérdale el evangelio",
+        ],
+        ["La familia", "Cuida también a la familia que espera en el pasillo", "Acompaña a los suyos"],
+        [
+          "Lo que no se hace",
+          "No te sientes en la cama ni toques los aparatos, y no des consejos médicos",
+          "No prometas una sanidad que Dios no prometió, ni quites la esperanza",
+        ],
+      ],
+    },
+  ],
+  "pastoral-4-5": [
+    // La lección da en un solo paso del ejemplo resuelto la respuesta a tres de las causas por las que alguien se aleja, y en una nota la de quien se fue a otra iglesia; el cuadro une cada caso con un ejemplo y con su respuesta.
+    {
+      t: "cuadro",
+      titulo: "Cuando alguien deja de venir: lo que pasó y cómo responder",
+      columnas: ["Lo que pasó", "Por ejemplo", "Cómo responder"],
+      filas: [
+        ["Una herida", "Alguien de la iglesia lo ofendió o se sintió ignorado", "Pedir perdón si la iglesia falló"],
+        [
+          "Una crisis",
+          "Una enfermedad, un duelo, el desempleo o un problema en la familia",
+          "Acompañarlo en la crisis",
+        ],
+        [
+          "Un pecado",
+          "Un pecado que le da vergüenza",
+          "Hablar con amor del pecado: quien lo hace volver de su error salva de muerte un alma (Santiago 5:19-20)",
+        ],
+        [
+          "Se fue a otra iglesia",
+          "Ahora se congrega en otra iglesia sana",
+          "Bendecirlo y despedirlo en paz, sin hablar mal de él ni de su nueva iglesia",
+        ],
+      ],
+    },
+  ],
+  // Predicación pastoral
+  "pastoral-5-3": [
+    // La lección enseña a lamentar y a esperar con cinco textos en párrafos separados; el cuadro muestra en cada uno el dolor que reconoce y lo que enseña al predicador.
+    {
+      t: "cuadro",
+      titulo: "Lamentar y esperar: cinco textos para predicar en la crisis",
+      columnas: ["El texto", "El dolor que no esconde", "Lo que enseña al predicador"],
+      filas: [
+        [
+          "Job 2:13",
+          "Su dolor era muy grande, y sus amigos se sentaron con él siete días y siete noches sin decirle palabra",
+          "Acompañar antes de explicar: los amigos se equivocaron después, al explicar lo que no sabían",
+        ],
+        [
+          "Salmos 46:1-2",
+          "No niega la tormenta, aunque la tierra sea removida",
+          "Afirmar que Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en las tribulaciones",
+        ],
+        [
+          "Lamentaciones 3:21-23",
+          "Jeremías lloró sobre una ciudad destruida",
+          "Lamentar y recordar que las misericordias de Dios son nuevas cada mañana",
+        ],
+        [
+          "Juan 16:33",
+          "Jesús no prometió una vida sin dolor: en el mundo tendremos aflicción",
+          "Anunciar la esperanza: Jesús venció al mundo",
+        ],
+        [
+          "Habacuc 3:17-18",
+          "Aunque la higuera no florezca ni haya frutos en las vides",
+          "Creer y gozarse en el Dios de la salvación cuando todo falta",
+        ],
+      ],
+    },
+  ],
+  "pastoral-5-5": [
+    // Convierte la regla de la verdad en amor y la diferencia entre exhortar y atacar en un método para preparar y predicar un mensaje que corrige.
+    {
+      t: "pasos",
+      titulo: "Corregir desde el púlpito con la verdad en amor",
+      pasos: [
+        {
+          titulo: "Examina tu corazón",
+          texto: "Antes de un mensaje fuerte, pregúntate si lo dices porque el texto lo dice o porque estás dolido. Si estás herido con alguien, háblale en privado primero (Mateo 18:15).",
+        },
+        {
+          titulo: "Mira qué necesita cada uno",
+          texto: "No todos necesitan lo mismo: amonesta a los ociosos, alienta a los de poco ánimo y sostén a los débiles (1 Tesalonicenses 5:14). Consolar también es predicar (Isaías 40:1).",
+        },
+        {
+          titulo: "Predica desde el texto, no desde el enojo",
+          texto: "La exhortación nace del texto bíblico. La regla es la verdad en amor: la verdad sin amor hiere, y el amor sin verdad engaña (Efesios 4:15).",
+        },
+        {
+          titulo: "Habla del pecado, no de una persona",
+          texto: "No señales a nadie delante de todos, e inclúyete a ti mismo: la exhortación no habla siempre de los otros.",
+        },
+        {
+          titulo: "Ofrece la gracia y un camino de vuelta",
+          texto: "No dejes solo culpa. Pablo corrigió con muchas lágrimas, para que supieran cuán grande era su amor por ellos (2 Corintios 2:4).",
+        },
+        {
+          titulo: "Sé fiel, aunque la verdad moleste",
+          texto: "A veces decir la verdad molesta (Gálatas 4:16). El pastor no busca agradar a todos, sino ser fiel.",
+        },
+      ],
+    },
+  ],
   // Teología de la adoración
   "alabanza-1-1": [
     // La lección distingue alabar de adorar en un solo párrafo; el cuadro pone las dos lado a lado y muestra con el Salmo 95 que van juntas.
@@ -6383,6 +6738,1061 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
       ],
     },
   ],
+  // Educación cristiana de la niñez
+  "ninez-1-1": [
+    // La lección apoya el ministerio en cuatro textos repartidos en párrafos; el cuadro los reúne con lo que dice cada uno y lo que significa para el ministerio, para explicar por qué se enseña a los niños (objetivo o1).
+    {
+      t: "cuadro",
+      titulo: "Por qué enseñar a los niños: cuatro textos y lo que enseñan",
+      columnas: ["Texto", "Lo que dice", "Lo que significa para el ministerio"],
+      filas: [
+        [
+          "Salmos 78:4-7",
+          "Israel contaba a la generación venidera las obras de Dios, para que pusiera en él su confianza.",
+          "Enseñar a los niños es contarles lo que Dios hizo, para que confíen en él y no olviden sus obras.",
+        ],
+        [
+          "Deuteronomio 6:6-7",
+          "Con la Palabra en el corazón, los padres la repiten a sus hijos en casa, en el camino, al acostarse y al levantarse.",
+          "La fe se enseña en la vida diaria, y se vive en la casa y en la iglesia, que trabajan juntas.",
+        ],
+        [
+          "Mateo 19:14",
+          "Jesús corrigió a los discípulos que estorbaban a los niños, porque de los que son como ellos es el reino de los cielos.",
+          "Los niños no son solo el futuro de la iglesia: ya son parte de ella.",
+        ],
+        [
+          "Lucas 2:52",
+          "Jesús crecía en sabiduría, en estatura y en gracia para con Dios y los hombres.",
+          "La educación cristiana forma a toda la persona: su mente, su cuerpo y su relación con Dios y con los demás.",
+        ],
+      ],
+    },
+  ],
+  "ninez-1-3": [
+    // La lección cuenta las escenas en párrafos y da sus enseñanzas en una lista aparte; el cuadro une cada escena con lo que hizo Jesús y lo que enseña al ministerio (objetivo o3).
+    {
+      t: "cuadro",
+      titulo: "Jesús y los niños: lo que hizo y lo que nos enseña",
+      columnas: ["Escena", "Lo que hizo Jesús", "Lo que enseña al ministerio"],
+      filas: [
+        [
+          "¿Quién es el mayor? (Mateo 18:2-5)",
+          "Puso a un niño en medio: hay que hacerse como niños para entrar al reino, y recibirlo en su nombre es recibir a Jesús.",
+          "Los niños van en el centro, no en el rincón, y los adultos aprenden de su confianza y su humildad.",
+        ],
+        [
+          "Le traen niños (Marcos 10:13-16)",
+          "Se indignó con los discípulos que los estorbaban; los tomó en brazos, puso las manos sobre ellos y los bendecía.",
+          "Jesús reprende que se estorbe a un niño que viene a él: tuvo tiempo, brazos y bendición para los niños.",
+        ],
+        [
+          "Hosanna en el templo (Mateo 21:15-16)",
+          "Cuando los líderes se molestaron por la alabanza de los muchachos, les respondió con un salmo.",
+          "Los niños pueden creer, orar y adorar de verdad.",
+        ],
+        [
+          "Su advertencia (Mateo 18:6)",
+          "Advirtió con mucha seriedad contra quien hace tropezar a uno de estos pequeños.",
+          "Recibir a un niño también es cuidarlo: el amor por los niños va siempre junto con su protección.",
+        ],
+      ],
+    },
+  ],
+  // El niño y su fe
+  "ninez-2-2": [
+    // Los consejos para responder están repartidos entre los versículos y dos notas; los pasos los ordenan en una manera de responder con honestidad y con palabras claras (objetivo o2).
+    {
+      t: "pasos",
+      titulo: "Cómo responder la pregunta de un niño",
+      pasos: [
+        {
+          titulo: "Recibe la pregunta como una puerta",
+          texto: "La Biblia espera que los hijos pregunten (Deuteronomio 6:20). Preguntas como dónde vive Dios o por qué murió el abuelo son una puerta para enseñar.",
+        },
+        {
+          titulo: "Si nace de un dolor, escucha primero",
+          texto: "Si la pregunta viene de una pérdida, como la muerte de alguien, escucha primero y responde con ternura.",
+        },
+        {
+          titulo: "Cuenta lo que Dios hizo",
+          texto: "En Israel, la respuesta empezaba con una historia: cómo Dios sacó a su pueblo de Egipto con mano poderosa (Deuteronomio 6:21).",
+        },
+        {
+          titulo: "Habla conforme a lo que puede oír",
+          texto: "Jesús enseñaba conforme a lo que podían oír (Marcos 4:33), y Pablo dio leche a los que empezaban (1 Corintios 3:1-2): primero lo sencillo y lo claro.",
+        },
+        {
+          titulo: "Cuida las imágenes que confunden",
+          texto: "Un niño pequeño piensa de forma literal: si le pide a Jesús que entre en su corazón, puede imaginarlo en su pecho. Explica la imagen o usa palabras claras: confiar en él, pedirle perdón y seguirlo.",
+        },
+        {
+          titulo: "Si no sabes, dilo",
+          texto: "Cuando no sepas una respuesta, dilo con honestidad: está bien decir no sé. Y busquen juntos en la Biblia.",
+        },
+      ],
+    },
+  ],
+  "ninez-2-4": [
+    // Las preguntas difíciles se responden en párrafos y notas; el cuadro pone cada una junto a su base bíblica y a la respuesta prudente, sin tomar partido en lo que la declaración de fe deja por confirmar (objetivo o4).
+    {
+      t: "cuadro",
+      titulo: "Las preguntas difíciles de los padres, con la Biblia y con prudencia",
+      columnas: ["La pregunta", "La base", "Cómo responder"],
+      filas: [
+        [
+          "¿Desde cuándo responde un niño por sí mismo?",
+          "La Biblia habla de hijos que todavía no saben lo bueno ni lo malo (Deuteronomio 1:39), pero no da una edad exacta.",
+          "Muchas iglesias evangélicas hablan de una edad de la responsabilidad: cuando cada niño entiende el pecado y la gracia.",
+        ],
+        [
+          "¿Qué pasa con un niño que muere pequeño?",
+          "David dijo que él iría a su hijo muerto, aunque el niño no volvería; muchos ven ahí una esperanza (2 Samuel 12:23).",
+          "Muchas iglesias evangélicas confían en que Dios lo recibe por su gracia; el pastor consuela a la familia sin especular.",
+        ],
+        [
+          "¿Cuándo puede bautizarse mi hijo?",
+          "En Samaria se bautizaban cuando creyeron (Hechos 8:12); el ministerio bautiza a quienes se arrepintieron y creyeron.",
+          "Cuando entiende y confiesa su fe, y no por su edad, con el acuerdo de sus padres y según la práctica de la iglesia.",
+        ],
+        [
+          "¿Puede un niño recibir el Espíritu Santo?",
+          "Dios prometió derramar su Espíritu sobre toda carne, y la promesa es también para los hijos (Joel 2:28; Hechos 2:39).",
+          "Sí: se lo acompaña con alegría y sin presión; las lenguas como señal inicial quedan por confirmar.",
+        ],
+      ],
+    },
+  ],
+  // Métodos para enseñar a niños
+  "ninez-3-1": [
+    // La lección da las siete leyes en una lista y su aplicación en otra; los pasos las juntan, ley por ley, en el orden de una clase sobre el buen samaritano (objetivo o1).
+    {
+      t: "pasos",
+      titulo: "Las siete leyes de Gregory en una clase, paso a paso",
+      pasos: [
+        {
+          titulo: "Conoce bien lo que vas a enseñar",
+          texto: "La ley del maestro. Para una clase sobre el buen samaritano, estudia Lucas 10:25-37 durante la semana y ora por la clase.",
+        },
+        {
+          titulo: "Gana su atención",
+          texto: "La ley del alumno: el niño aprende cuando presta atención con interés. Empieza con una pregunta: ¿alguna vez alguien te ayudó cuando estabas lastimado?",
+        },
+        {
+          titulo: "Usa palabras que entienda",
+          texto: "La ley del lenguaje: usa palabras que el niño entiende y explica las nuevas, como samaritano o levita.",
+        },
+        {
+          titulo: "Ve de lo conocido a lo nuevo",
+          texto: "La ley de la lección: parte de algo conocido, un vecino que ayuda, para llegar a lo nuevo: el prójimo es también el que es diferente.",
+        },
+        {
+          titulo: "Despierta su mente",
+          texto: "La ley del proceso de enseñar: para que piensen por sí mismos, pregunta qué habrían hecho ellos, en lugar de darles la respuesta.",
+        },
+        {
+          titulo: "Que lo diga con sus palabras",
+          texto: "La ley del proceso de aprender: cada niño cuenta la historia con sus propias palabras.",
+        },
+        {
+          titulo: "Repasa y aplica",
+          texto: "La ley del repaso y la aplicación: lo aprendido se repasa y se vive. Piensen juntos a quién pueden ayudar esta semana.",
+        },
+      ],
+    },
+  ],
+  "ninez-3-2": [
+    // Los consejos para contar una historia están en una lista, un párrafo y una nota de cuidado; el cuadro pone frente a frente lo que se hace y lo que se evita para contarla con fidelidad y llevarla a Jesús (objetivo o2).
+    {
+      t: "cuadro",
+      titulo: "Contar una historia bíblica: lo que sí y lo que no",
+      columnas: ["Al preparar y al contar", "Lo que sí", "Lo que no"],
+      filas: [
+        ["La fuente", "Leer el pasaje varias veces en la Biblia.", "Prepararla solo con un libro de historias."],
+        ["Los hechos", "Contarlos con fidelidad al texto.", "Cambiarlos para que la historia sea más emocionante."],
+        [
+          "La verdad central",
+          "Encontrar qué enseña la historia acerca de Dios, y dejar que ella muestre a Dios.",
+          "Convertir cada historia en una regla moral.",
+        ],
+        [
+          "El final",
+          "Llevarla a Jesús, como la de Zaqueo: el Hijo del Hombre vino a buscar y a salvar lo perdido (Lucas 19:10).",
+          "Terminar solo en una lección de buena conducta.",
+        ],
+        [
+          "La manera de contarla",
+          "Ensayarla en voz alta, con la mirada en los niños y un apoyo visual sencillo.",
+          "Contarla con la mirada puesta en el papel.",
+        ],
+      ],
+    },
+  ],
+  // Protección de menores
+  "ninez-4-5": [
+    // Lo que se hace al escuchar, lo que pide la ley en Texas y lo que no se hace están en tres listas y un párrafo; el cuadro los junta tema por tema, sin agregar nada a la ley (objetivo o5).
+    {
+      t: "cuadro",
+      titulo: "Si un niño cuenta un abuso: lo que se hace y lo que no",
+      columnas: ["Aspecto", "Lo que se hace", "Lo que no se hace"],
+      filas: [
+        [
+          "La reacción",
+          "Mantener la calma, aunque duela, y dejarlo hablar con sus palabras, sin interrumpirlo.",
+          "Mostrar espanto o enojo: el niño podría pensar que el enojo es con él.",
+        ],
+        [
+          "Lo que se le dice",
+          "Creerle, y decirle que hizo bien en contarlo y que no es su culpa.",
+          "Prometerle guardar el secreto.",
+        ],
+        [
+          "Las preguntas",
+          "Dejarlas a los investigadores.",
+          "Hacerle muchas preguntas, o preguntas que sugieran la respuesta, como ¿fue tal persona?",
+        ],
+        [
+          "Lo que contó",
+          "Anotarlo cuanto antes, con sus mismas palabras, la fecha y la hora, y contarlo solo a quienes pueden ayudarlo.",
+          "Contarlo a otros hermanos que no necesitan saberlo.",
+        ],
+        [
+          "El reporte",
+          "De inmediato, a la Línea directa de Texas, 1-800-252-5400; en una emergencia o si corre peligro ahora, al 911.",
+          "Esperar a tener pruebas o a que el pastor decida: basta con causa razonable, y la ley obliga también al pastor.",
+        ],
+        [
+          "La iglesia",
+          "Avisar al responsable del ministerio, para proteger a los demás niños; pero eso no reemplaza el reporte.",
+          "Creer que avisar al pastor cumple la ley, o resolverlo con una disculpa, una reunión o una disciplina de la iglesia.",
+        ],
+        [
+          "La investigación",
+          "Dejarla a las autoridades: es su tarea.",
+          "Investigar por cuenta propia, o buscar a otros niños para preguntarles.",
+        ],
+        [
+          "La persona acusada",
+          "Dejar que actúen primero las autoridades.",
+          "Hablar con ella o con su familia: podría poner al niño en peligro o borrar pruebas.",
+        ],
+      ],
+    },
+  ],
+  "ninez-4-6": [
+    // La lección cuenta el error de la casa de David en una lista y la respuesta de la iglesia en otras dos; el cuadro los pone frente a frente, punto por punto (objetivo o6).
+    {
+      t: "cuadro",
+      titulo: "Lo que salió mal con Tamar y lo que hace la iglesia",
+      columnas: ["Qué se mira", "En la casa de David (2 Samuel 13)", "Lo que hace la iglesia"],
+      filas: [
+        [
+          "La víctima",
+          "Absalón le pidió a Tamar que callara.",
+          "No la hace callar: le cree, no la culpa y cuida su privacidad.",
+        ],
+        [
+          "El agresor",
+          "Se lo cuidó porque era de la familia: era su hermano.",
+          "No lo protege por ser de la familia de la fe: el acusado deja todo servicio con menores mientras lo investigan.",
+        ],
+        [
+          "El daño",
+          "Se le quitó importancia, como si no hubiera por qué angustiarse.",
+          "No le quita importancia: los ayuda a recibir atención profesional de alguien con experiencia en el trauma de los niños.",
+        ],
+        [
+          "El que tenía autoridad",
+          "David se enojó mucho, pero la Biblia no cuenta que hiciera algo.",
+          "No se queda en el enojo: actúa, colabora con las autoridades y revisa qué regla falló.",
+        ],
+        [
+          "Lo que vino después",
+          "Tamar quedó sola y desconsolada, y dos años después Absalón hizo matar a Amnón.",
+          "Acompaña con paciencia: visita a la familia, ora con ella y cuida que el niño pueda volver a una clase segura.",
+        ],
+      ],
+    },
+  ],
+  // Organizar el ministerio infantil
+  "ninez-5-2": [
+    // La lección parte del consejo de Jetro y después describe el equipo; el cuadro pone lado a lado lo que vivió Moisés y lo que eso significa para el ministerio de niños (objetivo o2).
+    {
+      t: "cuadro",
+      titulo: "El consejo de Jetro y el equipo del ministerio de niños",
+      columnas: ["Aspecto", "Moisés y Jetro (Éxodo 18)", "En el ministerio de niños"],
+      filas: [
+        [
+          "El problema",
+          "Moisés atendía solo a todo el pueblo; Jetro le dijo que desfallecería, porque no podría hacerlo solo (Éxodo 18:17-18).",
+          "Muchos ministerios dependen de una sola persona que hace todo, hasta que se cansa.",
+        ],
+        [
+          "La salida",
+          "Buscar ayudantes y repartir el trabajo.",
+          "Formar un equipo: el líder no hace todo, sino que prepara a otros para servir (Efesios 4:11-12).",
+        ],
+        [
+          "A quiénes elegir",
+          "Hombres de virtud y de verdad, temerosos de Dios y que aborrezcan la avaricia (Éxodo 18:21).",
+          "Personas de carácter: cada voluntario pasa por los pasos de la selección que se estudian en Protección de menores.",
+        ],
+        [
+          "El orden",
+          "Jefes de millares, de centenas, de cincuenta y de diez.",
+          "Un coordinador que rinde cuentas al pastor, y un líder por cada grupo de edad que guía a sus maestros.",
+        ],
+      ],
+    },
+  ],
+  "ninez-5-3": [
+    // Los grupos por edad están en una lista y la guía de adultos por sala en un párrafo aparte; la línea recorre las edades del niño y junta en cada etapa lo que se hace y cuántos adultos se recomiendan, sin bajar nunca de dos por sala (objetivo o3).
+    {
+      t: "linea",
+      titulo: "Los grupos de la cuna a los doce años, con dos adultos o más por sala",
+      eventos: [
+        {
+          fecha: "0 a 2 años",
+          texto: "La cuna: cuidado amoroso, canciones y oraciones sencillas. Como guía, muchas iglesias ponen un adulto por cada tres o cuatro bebés.",
+        },
+        {
+          fecha: "3 a 5 años",
+          texto: "Los preescolares: historias cortas, canciones con gestos y actividades con las manos; como guía, un adulto por cada seis u ocho.",
+        },
+        {
+          fecha: "6 a 9 años",
+          texto: "Los escolares: historias, juegos de repaso, versículos de memoria y trabajos en grupo; como guía, un adulto por cada diez o doce.",
+        },
+        {
+          fecha: "10 a 12 años",
+          texto: "Los preadolescentes: preguntas abiertas, conversación y servicio. Como en toda sala, al menos dos adultos seleccionados.",
+        },
+      ],
+    },
+  ],
+  "ninez-5-5": [
+    // Lo que la lección dice del seguimiento está repartido entre la Escuela Bíblica de Vacaciones, las otras puertas, un párrafo y una nota; los pasos lo ordenan desde la inscripción hasta un mes después (objetivo o5).
+    {
+      t: "pasos",
+      titulo: "El seguimiento de una familia nueva, paso a paso",
+      pasos: [
+        {
+          titulo: "Hazlo parte del plan",
+          texto: "El seguimiento es parte del plan de cada actividad, no un agregado.",
+        },
+        {
+          titulo: "Anota sus datos con permiso",
+          texto: "En la inscripción de la Escuela Bíblica de Vacaciones se anotan los datos de cada niño, sus alergias, el teléfono de los padres y su permiso.",
+        },
+        {
+          titulo: "Recibe bien a la familia",
+          texto: "Alguien acompaña a la familia nueva y le explica cómo funciona el registro.",
+        },
+        {
+          titulo: "Actúa con respeto",
+          texto: "Con las familias que no son cristianas, se pide el permiso de los padres, se les cuenta lo que se enseña y nunca se presiona a un niño para que tome una decisión.",
+        },
+        {
+          titulo: "Llámala o visítala pronto",
+          texto: "A la visita se la llama en la semana; después de la Escuela Bíblica de Vacaciones, se llama o se visita a cada familia nueva en las dos semanas siguientes y se la invita a la iglesia.",
+        },
+        {
+          titulo: "Mira quién sigue viniendo",
+          texto: "El fruto de una actividad no se mide solo ese día: se mide en cuántas familias nuevas siguen viniendo un mes después.",
+        },
+      ],
+    },
+  ],
+  // Discipulado de jóvenes
+  "juventud-1-2": [
+    // La lección da los ocho principios y su ejemplo en dos listas separadas; el cuadro une cada principio con lo que hizo Jesús y con lo que hace hoy el líder, que es lo que pide el objetivo o2.
+    {
+      t: "cuadro",
+      titulo: "Los ocho principios de Coleman: de Jesús al líder de hoy",
+      columnas: ["Principio", "Lo que hizo Jesús", "Lo que hace el líder con tres jóvenes"],
+      filas: [
+        [
+          "Selección",
+          "Pasó la noche orando y, al hacerse de día, eligió a doce para acompañarlos de cerca (Lucas 6:12-13)",
+          "Ora durante un mes y elige a tres jóvenes con hambre de Dios, del mismo sexo que él",
+        ],
+        [
+          "Asociación",
+          "Pasó tiempo con ellos: los estableció para que estuvieran con él (Marcos 3:14)",
+          "Se reúne con ellos cada semana y comparte la vida: un partido, una comida, un servicio",
+        ],
+        [
+          "Consagración",
+          "Les pidió obediencia: no solo los llamó a creer, sino a seguirlo (Mateo 4:19)",
+          "Les pide un compromiso sencillo: leer la Biblia cada día y llegar a la reunión",
+        ],
+        [
+          "Impartición",
+          "Se dio a sí mismo y les dio su Espíritu; les dio a conocer todo lo que oyó del Padre (Juan 15:15)",
+          "Les cuenta su testimonio, también sus luchas, y ora por cada uno por su nombre",
+        ],
+        [
+          "Demostración",
+          "Les mostró cómo vivir, orar y servir",
+          "Los lleva con él cuando visita a un enfermo o habla de Jesús con un amigo",
+        ],
+        [
+          "Delegación",
+          "Les dio tareas y los envió a predicar (Marcos 3:14)",
+          "Les pide que dirijan la oración o un juego en la reunión de jóvenes",
+        ],
+        [
+          "Supervisión",
+          "Los escuchó al volver y los corrigió",
+          "Después conversan sobre cómo les fue y qué pueden mejorar",
+        ],
+        [
+          "Reproducción",
+          "Esperó que hicieran otros discípulos",
+          "Al año, cada uno empieza a acompañar a un joven menor que él",
+        ],
+      ],
+    },
+  ],
+  "juventud-1-3": [
+    // La lección cuenta en cuatro textos cómo creció la relación de Pablo y Timoteo; la línea muestra ese camino en orden, del joven elegido al hijo que sirve junto a su padre, el modelo de la mentoría que pide el objetivo o3.
+    {
+      t: "linea",
+      titulo: "Pablo y Timoteo: de joven de buen testimonio a hijo amado y fiel",
+      eventos: [
+        {
+          fecha: "Al principio",
+          texto: "Timoteo es un joven creyente del que dan buen testimonio los hermanos. Pablo quiere que vaya con él y lo lleva consigo.",
+          ref: "Hechos 16:1-3",
+        },
+        {
+          fecha: "En el camino",
+          texto: "Timoteo aprende viendo a Pablo: sigue su doctrina, su conducta, su propósito y su fe. Aprende lo que enseña y también cómo vive.",
+          ref: "2 Timoteo 3:10",
+        },
+        {
+          fecha: "Con el tiempo",
+          texto: "Llega a ser de confianza: Pablo lo envía en su lugar, como su hijo amado y fiel en el Señor.",
+          ref: "1 Corintios 4:17",
+        },
+        {
+          fecha: "Años después",
+          texto: "Pablo dice que Timoteo ha servido con él en el evangelio como hijo a padre: el discipulado se parece a una familia.",
+          ref: "Filipenses 2:20-22",
+        },
+      ],
+    },
+  ],
+  "juventud-1-5": [
+    // La lección muestra un plan semanal ya hecho y, en una nota, cómo armarlo; los pasos ordenan cómo prepararlo junto con un joven, que es lo que pide el objetivo o5.
+    {
+      t: "pasos",
+      titulo: "Cómo armar con un joven su plan de vida espiritual",
+      pasos: [
+        {
+          titulo: "Vivirlo tú primero",
+          texto: "No le des a un joven un plan que tú no vives: lo que le pides, primero lo practicas tú.",
+        },
+        {
+          titulo: "Armarlo con él",
+          texto: "No se lo impongas: ármalo con él, a partir de las disciplinas del discípulo, que son leer la Biblia, orar, memorizar, congregarse, servir y cuidar el teléfono y las redes.",
+        },
+        {
+          titulo: "Empezar con poco e ir sumando",
+          texto: "Elijan primero un hábito pequeño y concreto, como diez minutos antes de la escuela para leer un capítulo de un evangelio y orar por el día; después sumen otros.",
+        },
+        {
+          titulo: "Decidir antes de la tentación",
+          texto: "Como Daniel, que propuso en su corazón no contaminarse (Daniel 1:8), el joven decide antes de la tentación, no en medio de ella; por ejemplo, a qué hora deja el teléfono fuera del cuarto.",
+        },
+        {
+          titulo: "Contar cada semana cómo le fue",
+          texto: "Cada semana, por ejemplo el domingo, el joven te cuenta cómo le fue con el plan.",
+        },
+        {
+          titulo: "Si falla, empezar de nuevo",
+          texto: "Un día perdido no es el final: al día siguiente vuelve a empezar. Lo que sostiene la fe en el tiempo no son las emociones, sino los hábitos de cada día.",
+        },
+        {
+          titulo: "Celebrar cada paso",
+          texto: "Celebra cada avance. Como un deportista entrena su cuerpo, el joven entrena su vida espiritual, porque la piedad sirve para todo (1 Timoteo 4:7-8).",
+        },
+      ],
+    },
+  ],
+  // Cosmovisión cristiana y cultura
+  "juventud-2-1": [
+    // La lección enseña los cuatro actos en una lista y los aplica a una idea en otra; el cuadro los junta para que el alumno vea cómo sirven de lentes para mirar cualquier idea (objetivo o1).
+    {
+      t: "cuadro",
+      titulo: "Los cuatro actos de la Biblia, aplicados a una idea de la cultura",
+      columnas: ["Acto", "La pregunta que responde", "Lo que dice la Biblia", "Ante la idea: el ser humano es solo un animal"],
+      filas: [
+        [
+          "La creación",
+          "¿De dónde venimos?",
+          "Dios hizo todo bueno, y al ser humano a su imagen",
+          "Cada persona tiene un valor que no depende de lo que haga",
+        ],
+        [
+          "La caída",
+          "¿Qué salió mal?",
+          "El ser humano desobedeció (Génesis 3:6), y el pecado dañó su relación con Dios, con los demás y con la creación",
+          "Puede actuar como un animal porque el pecado dañó su corazón, pero ese no es su diseño",
+        ],
+        [
+          "La redención",
+          "¿Hay solución?",
+          "Dios envió a su Hijo para rescatarnos y hacer nuevas todas las cosas",
+          "Cristo vino a restaurar la imagen de Dios en nosotros",
+        ],
+        [
+          "La consumación",
+          "¿Hacia dónde vamos?",
+          "Cristo volverá, y la creación será libertada de la corrupción (Romanos 8:21)",
+          "Nuestro destino no es desaparecer, sino la vida con Dios para siempre",
+        ],
+      ],
+    },
+  ],
+  "juventud-2-5": [
+    // La lección da por separado las maneras de responder a la cultura, las cuatro preguntas, los textos y un ejemplo; los pasos los unen en un método para examinar lo que el joven escucha y mira, y para crear (objetivo o5).
+    {
+      t: "pasos",
+      titulo: "Ante una canción, una serie o un juego: discernir y crear",
+      pasos: [
+        {
+          titulo: "Ni rechazarlo todo ni aceptarlo todo",
+          texto: "Rechazarlo todo no enseña a pensar ni a hablar con los que no creen, y aceptarlo todo lleva a pensar como el mundo. El camino es examinarlo todo y retener lo bueno (1 Tesalonicenses 5:21).",
+        },
+        {
+          titulo: "Preguntar qué dice de Dios y del ser humano",
+          texto: "¿Qué dice de Dios, o qué calla sobre él? ¿Qué dice del ser humano y de lo que lo hace feliz? En la canción del ejemplo, Dios no aparece y la felicidad es el placer de hoy.",
+        },
+        {
+          titulo: "Mirar qué llama bueno y adónde empuja",
+          texto: "¿Qué presenta como bueno y qué como malo? ¿Qué provoca pensar, sentir o hacer? Esa canción llama bueno a sentirse bien y empuja a decidir sin pensar en el futuro ni en los demás.",
+        },
+        {
+          titulo: "Retener lo verdadero y ver lo que falta",
+          texto: "Todo se mide con lo verdadero, lo honesto, lo justo, lo puro y lo amable (Filipenses 4:8). La canción acierta en que el presente es un regalo, pero le falta que el mañana importa.",
+        },
+        {
+          titulo: "Decidir delante del Señor",
+          texto: "Todo se hace en el nombre del Señor Jesús (Colosenses 3:17). El joven decide si le conviene escucharla o verla, y sobre todo aprende a no creerle.",
+        },
+        {
+          titulo: "Crear algo que muestre a Dios",
+          texto: "Además de discernir, el joven puede hacer canciones, historias, videos y juegos buenos, que muestren la verdad y la belleza de Dios.",
+        },
+      ],
+    },
+  ],
+  // Consejería juvenil
+  "juventud-3-4": [
+    // La lección trata los conflictos de familia y, en una nota aparte, la casa que no es segura; el cuadro pone las dos situaciones lado a lado para que el consejero no confunda un conflicto con un abuso que se debe reportar (objetivo o4).
+    {
+      t: "cuadro",
+      titulo: "Un conflicto en casa o una casa que no es segura",
+      columnas: ["Aspecto", "Un conflicto familiar", "Una casa que no es segura"],
+      filas: [
+        [
+          "Ejemplos",
+          "Conflictos por las reglas, el teléfono o los amigos; padres que se separan; una familia nueva; padres que no creen",
+          "El joven cuenta que lo golpean, que abusan de él o que no lo cuidan",
+        ],
+        [
+          "Lo que hace el consejero",
+          "No toma partido: escucha al joven y, cuando conviene, a sus padres, y los ayuda a escucharse y a llegar a acuerdos",
+          "No lo trata como un conflicto familiar: lo reporta",
+        ],
+        [
+          "Cómo se atiende",
+          "Una reunión en la que cada uno habla sin ser interrumpido, sin gritos ni insultos, con un acuerdo pequeño y oración",
+          "Se reporta de inmediato a la línea 1-800-252-5400, o al 911 si hay peligro ahora",
+        ],
+        [
+          "Quién debe actuar",
+          "Si el joven es menor de edad, sus padres siguen siendo los responsables: el consejero los ayuda, no los reemplaza",
+          "En Texas, toda persona con causa razonable para creer que un menor sufre abuso o negligencia debe reportarlo",
+        ],
+      ],
+    },
+  ],
+  "juventud-3-6": [
+    // La lección explica en listas separadas los límites del secreto, lo que pide la ley de Texas y cuándo derivar; el cuadro ordena esas tres respuestas con su cuándo, su qué y su base, para evaluarlas como pide el objetivo o6.
+    {
+      t: "cuadro",
+      titulo: "Guardar la confianza, reportar y derivar",
+      columnas: ["Aspecto", "Guardar la confianza", "Reportar", "Derivar"],
+      filas: [
+        [
+          "Cuándo",
+          "Siempre, salvo que el joven u otra persona estén en peligro",
+          "Cuando hay causa razonable para creer que un menor sufre abuso o negligencia",
+          "En casos como el riesgo de suicidio, el abuso o una adicción con dependencia, y en todo lo que supera su preparación",
+        ],
+        [
+          "Qué hace el consejero",
+          "No lo comenta con otros, y explica estos límites desde la primera conversación",
+          "Lo reporta de inmediato a la línea 1-800-252-5400, o al 911 si hay peligro ahora",
+          "No deja solo al joven: en una crisis llama al 988, o al 911 si hay peligro ahora, y usa la lista de ayuda",
+        ],
+        [
+          "Su base",
+          "El de espíritu fiel guarda el secreto (Proverbios 11:13)",
+          "Código de Familia de Texas, sección 261.101, sin excepción para los pastores ni para las conversaciones confidenciales",
+          "Nadie aconseja solo, y pedir ayuda a otros es sabiduría (Proverbios 11:14; Proverbios 12:15)",
+        ],
+      ],
+    },
+  ],
+  // Liderazgo juvenil
+  "juventud-4-1": [
+    // La lección cuenta en párrafos sueltos cómo usó Dios a David, a Daniel y a Ester; el cuadro los compara y saca de cada uno lo que aprende el líder joven (objetivo o1).
+    {
+      t: "cuadro",
+      titulo: "David, Daniel y Ester: jóvenes que Dios usó para guiar",
+      columnas: ["Quién", "Lo que muestra el texto", "Lo que aprende el líder joven"],
+      filas: [
+        [
+          "David",
+          "Saúl lo vio muchacho, pero él enfrentó a Goliat en el nombre de Jehová de los ejércitos (1 Samuel 17:33, 45)",
+          "Muchos miran la edad; Dios mira la fe. El líder joven no confía en sí mismo, sino en Dios",
+        ],
+        [
+          "Daniel y sus amigos",
+          "Siendo muchachos, Dios les dio conocimiento e inteligencia en las letras y las ciencias (Daniel 1:17)",
+          "Dios prepara a sus líderes también en el estudio y en el trabajo",
+        ],
+        [
+          "Ester",
+          "Le dijeron que quizá había llegado al reino para esa hora (Ester 4:14)",
+          "Dios pone a los jóvenes en lugares donde pueden hacer una diferencia",
+        ],
+        [
+          "Todos ellos",
+          "Eran jóvenes cuando empezaron, y Dios no esperó a que fueran mayores: los formó en el camino",
+          "Dios sigue haciendo lo mismo hoy en el ministerio juvenil",
+        ],
+      ],
+    },
+  ],
+  "juventud-4-4": [
+    // La lección da la regla para los desacuerdos en una nota y la historia de Marcos en dos textos; los pasos los unen en una manera de manejar un desacuerdo y dar segundas oportunidades (objetivo o4).
+    {
+      t: "pasos",
+      titulo: "Cuando hay un desacuerdo en el equipo de liderazgo",
+      pasos: [
+        {
+          titulo: "Saber que hasta los grandes tuvieron desacuerdos",
+          texto: "Pablo y Bernabé discutieron por Marcos, que los había dejado en un viaje, y tuvieron tal desacuerdo que se separaron (Hechos 15:37-39).",
+        },
+        {
+          titulo: "Revestirse de humildad",
+          texto: "Pedro pide a los jóvenes estar sujetos a los mayores, y a todos, ser sumisos unos a otros y revestirse de humildad (1 Pedro 5:5). En el equipo, todos aprenden unos de otros.",
+        },
+        {
+          titulo: "Hablarlo en privado, con la verdad en amor",
+          texto: "El desacuerdo se conversa entre los que lo tienen, con honestidad y con amor, y nunca delante de los jóvenes.",
+        },
+        {
+          titulo: "Si no se resuelve, pedir ayuda al pastor",
+          texto: "El líder de jóvenes rinde cuentas a los pastores de la iglesia: si el desacuerdo sigue, se pide ayuda al pastor.",
+        },
+        {
+          titulo: "Dar segundas oportunidades",
+          texto: "Años después, Pablo pidió a Timoteo que le trajera a Marcos, porque le era útil para el ministerio (2 Timoteo 4:11). El joven que falló una vez llegó a ser útil.",
+        },
+      ],
+    },
+  ],
+  // Evangelismo entre jóvenes
+  "juventud-5-2": [
+    // La lección enseña en dos listas el evangelio en cuatro partes y el testimonio en tres; el cuadro los pone lado a lado para que el joven sepa qué cuenta cada uno, cómo termina y qué cuidar (objetivo o2).
+    {
+      t: "cuadro",
+      titulo: "El evangelio y el testimonio, lado a lado",
+      columnas: ["Aspecto", "El evangelio", "El testimonio"],
+      filas: [
+        [
+          "Su centro",
+          "Cristo murió por nuestros pecados, fue sepultado y resucitó al tercer día (1 Corintios 15:3-4)",
+          "Cómo conociste a Jesús y qué cambió en tu vida",
+        ],
+        ["Sus partes", "Dios, el problema, Cristo y la respuesta", "Antes, el encuentro y después, en dos minutos"],
+        [
+          "Cómo termina",
+          "Con la respuesta: arrepentirse, creer en Jesús y recibir por gracia la vida eterna (Romanos 6:23)",
+          "Con una pregunta, como ¿alguna vez pensaste en esto?, para que la conversación siga",
+        ],
+        [
+          "Lo que se cuida",
+          "Que no suene a una lista de reglas para ser bueno: es un regalo, por gracia y no por obras (Efesios 2:8-9)",
+          "Evitar palabras que solo entienden los de la iglesia, detalles que exageran el pasado y un tono de superioridad",
+        ],
+      ],
+    },
+  ],
+  "juventud-5-6": [
+    // La lección da cinco textos seguidos y un ejemplo para el amigo que dice que no; el cuadro ordena qué hacer en cada situación y qué texto lo sostiene, para evaluar cómo perseverar (objetivo o6).
+    {
+      t: "cuadro",
+      titulo: "Ante las dudas, el rechazo y el cansancio",
+      columnas: ["Situación", "Qué hacer", "Lo que enseña la Biblia"],
+      filas: [
+        [
+          "Un amigo que duda",
+          "No despreciar sus dudas: acompañarlas con paciencia y con razones",
+          "Judas pide convencer a los que dudan, y Jesús no rechazó a Tomás por dudar (Judas 1:22; Juan 20:27-28)",
+        ],
+        [
+          "Un amigo que dice que no",
+          "Respetar su respuesta, sin tomarla como algo personal, seguir siendo su amigo y orar por él cada día",
+          "Es el Espíritu Santo, no nosotros, quien convence de pecado, de justicia y de juicio (Juan 16:8)",
+        ],
+        [
+          "Cuando no se ve fruto",
+          "Celebrar cada conversación sobre la fe, no solo cada decisión: sembrar también es fruto",
+          "Uno planta y otro riega, pero el crecimiento lo da Dios (1 Corintios 3:6)",
+        ],
+        [
+          "Cuando dan ganas de rendirse",
+          "Seguir viviendo la fe y, más adelante, volver a invitar sin presión",
+          "No cansarse de hacer bien, porque a su tiempo se cosecha si no se desmaya (Gálatas 6:9)",
+        ],
+      ],
+    },
+  ],
+  // Consejería matrimonial
+  "familia-consejeria-1-5": [
+    // La lección enseña los pasos y, en una nota aparte, lo que nunca se le dice a una víctima; el cuadro los pone frente a frente para que la seguridad vaya siempre primero.
+    {
+      t: "cuadro",
+      titulo: "Ante la violencia en el hogar: lo que se hace y lo que nunca",
+      columnas: ["Aspecto", "Lo que se hace", "Lo que nunca se hace"],
+      filas: [
+        [
+          "Cuando la víctima lo cuenta",
+          "Creerle, agradecerle y decirle que no es su culpa y que hizo bien en contarlo.",
+          "Decirle que aguante por el bien del matrimonio.",
+        ],
+        [
+          "Su seguridad",
+          "Preguntar si ella y sus hijos corren peligro ahora; si el peligro es inmediato, llamar al 911.",
+          "Pedirle que ore para que el otro cambie mientras sigue en peligro.",
+        ],
+        [
+          "La ayuda",
+          "Darle la Línea Nacional sobre la Violencia Doméstica, 1-800-799-7233, y ayudarla con un plan de seguridad.",
+          "Confrontar solo al agresor: eso puede aumentar el peligro.",
+        ],
+        [
+          "Los hijos",
+          "Si sufren maltrato, reportarlo como pide la ley en Texas, a la línea 1-800-252-5400.",
+          "Callarlo: la ley pide reportarlo.",
+        ],
+        [
+          "La Biblia",
+          "Recordar que manda a los maridos amar a sus esposas y no ser ásperos con ellas (Colosenses 3:19).",
+          "Usar un texto sobre el respeto o la sujeción para justificar el maltrato, o decirle que se sujete más.",
+        ],
+        [
+          "La pareja",
+          "Una reconciliación solo se piensa cuando hay seguridad y un cambio de verdad, comprobado en el tiempo.",
+          "Proponer una consejería de pareja mientras haya violencia: también puede aumentar el peligro.",
+        ],
+      ],
+    },
+  ],
+  "familia-consejeria-1-6": [
+    // La lección enumera las etapas del matrimonio; la línea las ordena en el tiempo y les suma los mentores y los hábitos que la misma lección propone para cuidarlas.
+    {
+      t: "linea",
+      titulo: "El matrimonio, etapa por etapa",
+      eventos: [
+        {
+          fecha: "Recién casados",
+          texto: "Aprenden a vivir juntos, a decidir juntos y a dejar padre y madre. Un matrimonio mentor con años de camino puede acompañarlos.",
+          ref: "Tito 2:3-5",
+        },
+        {
+          fecha: "Llegan los hijos",
+          texto: "Traen el cansancio, menos tiempo para los dos y nuevas tareas. Ayuda guardar un tiempo a solas cada semana, sin teléfonos.",
+        },
+        {
+          fecha: "Los años intensos",
+          texto: "Pesan el trabajo, los hijos adolescentes y las deudas. Ayuda hablar del dinero y de los planes antes de que haya problemas.",
+        },
+        { fecha: "El nido vacío", texto: "Cuando los hijos se van, el desafío es volver a encontrarse como pareja." },
+        { fecha: "La vejez", texto: "Toca cuidar la salud, cuidarse el uno al otro y prepararse para la viudez." },
+        {
+          fecha: "En todas las etapas",
+          texto: "Orar y leer la Biblia juntos, y pedir ayuda a tiempo: con Dios en el centro, el matrimonio es más fuerte que dos personas solas.",
+          ref: "Eclesiastés 4:12",
+        },
+      ],
+    },
+  ],
+  // Consejería familiar
+  "familia-consejeria-2-4": [
+    // La lección trae en dos listas aparte los desafíos de la familia ensamblada y lo que ayuda o daña; el cuadro los une para que se vea qué responder a cada desafío.
+    {
+      t: "cuadro",
+      titulo: "La familia ensamblada: cada desafío y cómo responder",
+      columnas: ["Tema", "El desafío", "Lo que ayuda", "Lo que daña"],
+      filas: [
+        [
+          "Los hijos",
+          "Sienten que querer al padrastro o a la madrastra es traicionar a su papá o a su mamá.",
+          "Dar tiempo, porque unirse lleva años.",
+          "Esperar que todos se quieran enseguida.",
+        ],
+        [
+          "Las costumbres",
+          "Cada familia trae sus costumbres, sus reglas y sus heridas.",
+          "Crear tradiciones nuevas de la familia.",
+          "Borrar las costumbres de los hijos.",
+        ],
+        [
+          "La autoridad",
+          "El padrastro o la madrastra quiere corregir antes de haberse ganado la confianza.",
+          "Que se gane la confianza antes de corregir.",
+          "Imponer la autoridad desde el primer día.",
+        ],
+        [
+          "El otro padre o madre",
+          "Sigue presente, y a veces hay conflictos por los hijos, las visitas o el dinero.",
+          "Hablar con respeto del otro padre o de la otra madre.",
+          "Criticarlos delante de los hijos.",
+        ],
+        [
+          "La pareja",
+          "Tiene poco tiempo para sí misma, y los hijos a veces intentan dividirla.",
+          "Que la pareja se una y decida junta.",
+          "Que cada uno defienda solo a sus hijos.",
+        ],
+      ],
+    },
+  ],
+  "familia-consejeria-2-6": [
+    // La lección cuenta la historia de José en varios párrafos; la línea ordena su camino, de la herida al perdón que bendice, que es lo que pide explicar el primer objetivo.
+    {
+      t: "linea",
+      titulo: "José y sus hermanos: el camino de la reconciliación",
+      eventos: [
+        {
+          fecha: "Al principio",
+          texto: "Sus hermanos venden a José, y es llevado a Egipto.",
+          ref: "Génesis 37:27-28",
+        },
+        {
+          fecha: "Años después",
+          texto: "José se da a conocer a sus hermanos y no niega el mal: les recuerda que ellos lo vendieron.",
+          ref: "Génesis 45:4",
+        },
+        {
+          fecha: "En ese encuentro",
+          texto: "Ve también la mano de Dios: les dice que Dios lo envió delante de ellos para preservar la vida.",
+          ref: "Génesis 45:5",
+        },
+        {
+          fecha: "Al morir su padre",
+          texto: "Sus hermanos temen que José se vengue del mal que le hicieron.",
+          ref: "Génesis 50:15",
+        },
+        {
+          fecha: "Entonces",
+          texto: "José responde que ellos pensaron mal contra él, pero Dios lo encaminó a bien; promete sustentarlos y les habla al corazón.",
+          ref: "Génesis 50:20-21",
+        },
+      ],
+    },
+  ],
+  // Duelo y crisis
+  "familia-consejeria-3-3": [
+    // La lección reparte en un párrafo, una lista, el ejemplo del suicidio y una nota cuándo un duelo se complica; los pasos lo ordenan para saber qué notar, cuándo actuar enseguida y a quién derivar.
+    {
+      t: "pasos",
+      titulo: "Cuando el duelo se complica: qué notar y cuándo derivar",
+      pasos: [
+        {
+          titulo: "Conocer el trastorno de duelo prolongado",
+          texto: "La Asociación Estadounidense de Psiquiatría lo reconoce desde 2022: pasado al menos un año de la muerte (seis meses en un niño o adolescente), el anhelo y el dolor no dejan llevar la vida diaria.",
+        },
+        {
+          titulo: "Notar las señales",
+          texto: "No puede trabajar, comer ni cuidarse después de muchos meses; habla de que no quiere vivir o de irse con el que murió; se aísla, bebe o usa drogas para no sentir, o una culpa no lo deja en paz.",
+        },
+        {
+          titulo: "Después de un suicidio, preguntar con cariño",
+          texto: "El dolor puede traer pensamientos de muerte a los que quedan: se les pregunta con cariño cómo están, y se tiene a mano la línea 988.",
+        },
+        {
+          titulo: "Si habla de quitarse la vida, actuar ya",
+          texto: "No dejarlo solo y llamar al 988; si está en peligro inmediato, al 911. Lo que dijo en confianza no se guarda cuando hay una vida en peligro.",
+        },
+        {
+          titulo: "No diagnosticar, sino derivar",
+          texto: "Al consejero no le toca diagnosticar, pero sí notar las señales y derivar: a un consejero profesional o, después de un suicidio, a un grupo de apoyo para las familias que perdieron a alguien así.",
+        },
+      ],
+    },
+  ],
+  "familia-consejeria-3-5": [
+    // La lección trae en tres listas los principios de la OMS, la ayuda que sirve o hace daño y el ejemplo de la inundación; el cuadro los junta, principio por principio, en una sola vista.
+    {
+      t: "cuadro",
+      titulo: "Observar, escuchar y conectar: lo que sirve y lo que hace daño",
+      columnas: ["Principio", "Lo que hace el que ayuda", "Lo que hace daño", "En la inundación"],
+      filas: [
+        [
+          "Observar",
+          "Ver si el lugar es seguro, quién necesita ayuda urgente y quién está muy angustiado.",
+          "Llegar por su cuenta a un lugar peligroso, sin coordinarse con las autoridades.",
+          "Seguir las indicaciones de las autoridades, no entrar en las zonas de peligro y llamar a cada familia.",
+        ],
+        [
+          "Escuchar",
+          "Acercarse con respeto, preguntar qué necesita y escuchar sin presionar a nadie a contar lo que vivió.",
+          "Suponer y llevar lo que nadie pidió, obligarlo a contar lo que vivió o decir que el desastre es un castigo de Dios.",
+          "Un equipo acompaña a las familias, escucha sin presionar y ora con quien lo pida.",
+        ],
+        [
+          "Conectar",
+          "Ayudar a cubrir lo básico (1 Reyes 19:5-7), a encontrar a los seres queridos y a llegar a la ayuda que hace falta.",
+          "Prometer lo que no se puede cumplir, en vez de decir solo lo que se sabe.",
+          "Abrir el templo, si es seguro, con agua, comida y ropa seca, y ayudar a pedir la ayuda oficial de emergencia.",
+        ],
+      ],
+    },
+  ],
+  // Adicciones y restauración
+  "familia-consejeria-4-4": [
+    // La lección pregunta qué hacer después de una caída; los pasos reúnen su respuesta, que está repartida entre la comparación, el plan de Lucía y la nota para el líder.
+    {
+      t: "pasos",
+      titulo: "Después de una caída: volver a levantarse paso a paso",
+      pasos: [
+        {
+          titulo: "No esconderla",
+          texto: "Contarlo ese mismo día a la persona de confianza: el secreto hace crecer la recaída. Un tropiezo que se reconoce enseguida permite volver al plan.",
+        },
+        {
+          titulo: "Recibir con la verdad y con la gracia",
+          texto: "El consejero no recibe a la persona con un sermón, sino como Jesús recibió a Pedro, que lo había negado tres veces (Juan 21:15-17).",
+        },
+        {
+          titulo: "Recordar que no es el final",
+          texto: "El justo puede caer siete veces y volver a levantarse (Proverbios 24:16). Según NIDA, una recaída no significa que el tratamiento fracasó.",
+        },
+        {
+          titulo: "Volver a pedir ayuda",
+          texto: "Volver al grupo y al médico: la recaída es una señal de que hay que retomar o ajustar el tratamiento.",
+        },
+        {
+          titulo: "Cuidar el riesgo de una sobredosis",
+          texto: "Si la recaída fue con opioides, el riesgo de una sobredosis es mayor, porque el cuerpo ya no está acostumbrado.",
+        },
+        {
+          titulo: "Revisar el plan de prevención",
+          texto: "Mirar de nuevo las situaciones de riesgo y las señales tempranas, decidir qué hacer en cada caso y dar gracias por cada día.",
+        },
+      ],
+    },
+  ],
+  "familia-consejeria-4-5": [
+    // La lección presenta en párrafos lo que enseña la Biblia sobre los ojos, el dinero y el tiempo; el cuadro lo ordena por adicción, con su daño y lo que dicen los manuales de salud.
+    {
+      t: "cuadro",
+      titulo: "Los ojos, el dinero y el tiempo: tres adicciones de hoy",
+      columnas: ["La adicción", "Lo que enseña la Biblia", "Lo que hay que saber"],
+      filas: [
+        [
+          "La pornografía",
+          "Hacer pacto con los ojos (Job 31:1) y saber que mirar para codiciar ya es adulterar en el corazón (Mateo 5:28).",
+          "No es inofensiva: hiere el corazón, el matrimonio y a las personas que aparecen en ella.",
+        ],
+        [
+          "El juego de apuestas",
+          "Querer enriquecerse hace caer en tentación y lazo, y el amor al dinero es raíz de todos los males (1 Timoteo 6:9-10).",
+          "Deja deudas y familias rotas; la Asociación Estadounidense de Psiquiatría reconoce el trastorno por juego como adicción.",
+        ],
+        [
+          "Las pantallas",
+          "Andar como sabios y no como necios, aprovechando bien el tiempo (Efesios 5:15-16).",
+          "Pueden robar las horas de la familia, del descanso y de Dios. La OMS reconoce el trastorno por uso de videojuegos.",
+        ],
+      ],
+    },
+  ],
+  // Ética y límites del consejero
+  "familia-consejeria-5-3": [
+    // La lección dice que los límites se ponen antes de necesitarlos; el cuadro junta las reglas que protegen con lo que se hace cuando aparece la señal, según lo que cuida cada una.
+    {
+      t: "cuadro",
+      titulo: "Los límites con el otro sexo: antes y cuando aparece una señal",
+      columnas: ["Lo que se cuida", "Antes: los límites", "Cuando aparece una señal"],
+      filas: [
+        [
+          "El lugar",
+          "Nunca a solas con alguien del otro sexo en un lugar privado; las conversaciones largas, con el cónyuge u otro consejero.",
+          "Cambiar el marco: que la consejería siga con un consejero del mismo sexo, o con el cónyuge del consejero presente.",
+        ],
+        [
+          "Lo que se habla y se escribe",
+          "No hablar de la propia intimidad ni de los problemas del propio matrimonio, ni escribirse mensajes personales de noche.",
+          "Responder con respeto y con claridad, y proponer que reciba ayuda junto con su cónyuge.",
+        ],
+        [
+          "La rendición de cuentas",
+          "Contarle al cónyuge y a otro líder con quién se está aconsejando, sin los detalles.",
+          "Contárselo al pastor o a otro líder, y al propio cónyuge, sin los detalles de la consejería.",
+        ],
+        [
+          "El corazón",
+          "Guardar el corazón (Proverbios 4:23) y huir de la tentación, como José (Génesis 39:12).",
+          "Tomar la señal como una alerta, no como un cumplido, y revisar el propio corazón delante de Dios.",
+        ],
+      ],
+    },
+  ],
+  "familia-consejeria-5-5": [
+    // La lección trae en dos listas cuándo derivar y la red de recursos; el cuadro une cada caso con a quién acudir, y cierra con el permiso que se pide y con derivar sin abandonar.
+    {
+      t: "cuadro",
+      titulo: "Cuándo derivar y a quién acudir, sin dejar de acompañar",
+      columnas: ["Cuándo", "A quién y cómo"],
+      filas: [
+        ["Riesgo de suicidio o de hacerle daño a otro", "Los números de emergencia: el 911 y la línea 988."],
+        [
+          "Señales de una enfermedad mental, como una depresión grave",
+          "Un médico o un psicólogo de confianza que respete la fe, de preferencia que atienda en español.",
+        ],
+        ["Una adicción que necesita tratamiento médico", "Un médico y la línea de ayuda de SAMHSA, 1-800-662-4357."],
+        [
+          "Un trauma profundo, como un abuso sexual",
+          "Dos o tres nombres de la lista. Si quien abusó sigue cerca de niños, consultar enseguida con el pastor cómo reportarlo.",
+        ],
+        [
+          "Hace falta un abogado, un médico o un servicio social",
+          "Médicos, abogados con licencia, representantes acreditados para inmigración y los servicios sociales de la zona.",
+        ],
+        [
+          "No hay avance, o el caso supera al consejero",
+          "Un profesional que respete la fe, como un terapeuta matrimonial y familiar o un consejero con licencia.",
+        ],
+        [
+          "Antes de hablar con un profesional",
+          "Pedir permiso a la persona, salvo si una vida corre peligro o la ley obliga a reportar.",
+        ],
+        [
+          "Después de derivar",
+          "Seguir acompañando con su permiso: orar, verse y preguntarle cómo le va, sin hacer la parte del terapeuta.",
+        ],
+      ],
+    },
+  ],
   // Teología de la oración
   "intercesion-1-3": [
     // La lección enseña a orar conforme a la voluntad de Dios; los pasos la vuelven un camino que el alumno puede seguir en su propia oración, como pide el objetivo o3.
@@ -6924,6 +8334,359 @@ export const BLOQUES_EXTRA: Record<string, Bloque[]> = {
         {
           titulo: "Examinarlo todo por la Palabra y el fruto",
           texto: "No apagar al Espíritu, pero examinarlo todo y retener lo bueno, con orden (1 Tesalonicenses 5:19-21; 1 Corintios 14:40). Su fruto lo muestra (Mateo 7:16-20): amor, santidad, unidad y misión.",
+        },
+      ],
+    },
+  ],
+  // Fundamentos de la capellanía
+  "capellania-1-2": [
+    // La lección enseña la presencia con tres textos, una lista de escucha y un caso; los pasos los ordenan en el camino que siguió Jesús con los de Emaús: acercarse, preguntar, escuchar y solo después hablar.
+    {
+      t: "pasos",
+      titulo: "Estar presente, como Jesús en el camino a Emaús",
+      pasos: [
+        {
+          titulo: "Acercarse y quedarse",
+          texto: "Dios no nos ayudó desde lejos: el Verbo habitó entre nosotros, y Jesús se acercó y caminó con los de Emaús (Juan 1:14; Lucas 24:15). El capellán va, se presenta y pregunta si puede quedarse.",
+        },
+        {
+          titulo: "Preguntar antes de hablar",
+          texto: "Jesús les preguntó de qué hablaban y por qué estaban tristes (Lucas 24:17). El capellán mira a la persona, se sienta a su altura si puede y hace preguntas abiertas: ¿cómo está viviendo esto?",
+        },
+        {
+          titulo: "Escuchar sin apurar",
+          texto: "Deja silencios sin llenarlos de consejos, repite con otras palabras lo que oyó para que la persona se sienta comprendida y respeta sus lágrimas, su enojo y sus dudas.",
+        },
+        {
+          titulo: "Hablar después de escuchar",
+          texto: "Solo después de escucharlos, Jesús les explicó las Escrituras (Lucas 24:27). El capellán ofrece la oración sin imponerla, y si la persona dice que no, lo respeta.",
+        },
+        {
+          titulo: "Despedirse y volver",
+          texto: "Al despedirse, le dice cuándo puede volver, y lo cumple. Y no va solo: Cristo está con él y con la persona que visita (Mateo 28:20).",
+        },
+      ],
+    },
+  ],
+  "capellania-1-4": [
+    // La lección reparte entre una lista de formación, una comparación y una nota lo que pide cada camino; el cuadro junta la base, el servicio, la formación y los requisitos del voluntario y del profesional en una sola vista.
+    {
+      t: "cuadro",
+      titulo: "El capellán voluntario y el profesional: lo que pide cada camino",
+      columnas: ["Qué se compara", "Capellán voluntario", "Capellán profesional"],
+      filas: [
+        [
+          "La base",
+          "El llamado de Dios, el aval de su iglesia y un buen testimonio (Hechos 13:2-3; 1 Timoteo 3:7)",
+          "La misma: el llamado de Dios, el aval de su iglesia y un buen testimonio",
+        ],
+        [
+          "Su servicio",
+          "Sirve algunas horas y suele visitar a los que piden una visita",
+          "Es parte del equipo: atiende las crisis, asesora al personal y coordina a los voluntarios",
+        ],
+        [
+          "Su formación",
+          "La capacitación que pide cada hospital o cárcel",
+          "Larga y supervisada: estudios de posgrado y la educación pastoral clínica (CPE)",
+        ],
+        [
+          "Lo que se le pide",
+          "Pasar una revisión de antecedentes",
+          "Para certificarse con la APC: maestría, cuatro unidades de CPE, el aval de su grupo de fe y 2,000 horas de experiencia",
+        ],
+        [
+          "Seguir aprendiendo",
+          "Sobre el duelo, las crisis, las otras religiones y las normas de su institución",
+          "También: en todos los casos, el capellán sigue aprendiendo",
+        ],
+      ],
+    },
+  ],
+  // Capellanía hospitalaria
+  "capellania-2-2": [
+    // La lección equilibra la fe y la humildad con cuatro textos; el cuadro pone lado a lado lo que muestra cada uno y lo que aprende de él el capellán: Dios sana, su gracia basta y la medicina no se opone a la fe.
+    {
+      t: "cuadro",
+      titulo: "Orar por un enfermo: lo que enseñan cuatro textos",
+      columnas: ["Texto", "Lo que muestra", "Lo que aprende el capellán"],
+      filas: [
+        [
+          "Santiago 5:14-15",
+          "El enfermo llama a los ancianos de la iglesia, que oran por él y lo ungen con aceite en el nombre del Señor",
+          "Orar con fe: la declaración de fe enseña que Dios sana hoy en respuesta a la oración de fe (artículo 11)",
+        ],
+        [
+          "2 Reyes 20:5",
+          "Dios oyó la oración del rey Ezequías, vio sus lágrimas y lo sanó",
+          "Dios sana: el capellán pide la sanidad con fe",
+        ],
+        [
+          "2 Corintios 12:8-9",
+          "Pablo rogó tres veces que Dios le quitara su aguijón, y Dios le respondió que le bastaba su gracia",
+          "A veces Dios sana y a veces sostiene con su gracia: no prometer lo que solo Dios decide ni culpar al enfermo",
+        ],
+        [
+          "1 Timoteo 5:23",
+          "Pablo le aconsejó a Timoteo un remedio por su estómago y por sus frecuentes enfermedades",
+          "La fe y la medicina no se oponen: buscar la sanidad de Dios no se opone a recibir atención médica",
+        ],
+      ],
+    },
+  ],
+  "capellania-2-3": [
+    // La lección da las normas de privacidad y de higiene en un párrafo, una lista y un caso; los pasos las ordenan como se viven en cada visita, desde antes de ir hasta después de salir.
+    {
+      t: "pasos",
+      titulo: "Cada visita en el hospital, con orden y con cuidado",
+      pasos: [
+        {
+          titulo: "No visitar si está enfermo",
+          texto: "Si el capellán está enfermo o con fiebre, no visita, para no contagiar a nadie: piensa primero en el bien del paciente (Filipenses 2:4).",
+        },
+        {
+          titulo: "Recibir solo lo necesario",
+          texto: "En los Estados Unidos, la ley HIPAA permite que el hospital le dé al clero el nombre, el lugar, el estado general y la afiliación religiosa del paciente, si este fue informado y no se opuso.",
+        },
+        {
+          titulo: "Coordinar con la enfermera",
+          texto: "Preguntarle si es un buen momento y qué cuidados pide. En cuidados intensivos, la visita es corta y se coordina con ella.",
+        },
+        {
+          titulo: "Lavarse las manos y protegerse",
+          texto: "Lavarse las manos o usar el gel antes de entrar, y ponerse la bata, los guantes o la mascarilla cuando lo pide el aislamiento.",
+        },
+        {
+          titulo: "Cuidar al paciente en la visita",
+          texto: "No tocar los equipos médicos ni mover al paciente, ni darle comida o bebida sin preguntar al personal. En cuidados intensivos, muchas veces no puede hablar, pero puede oír: hablarle con calma.",
+        },
+        {
+          titulo: "Lavarse otra vez al salir",
+          texto: "Lavarse las manos o usar el gel después de la visita y, si la familia está en la sala de espera, acompañarla un momento.",
+        },
+        {
+          titulo: "Guardar lo que vio y oyó",
+          texto: "No buscar más información de la que necesita ni compartirla, no sacar fotos y no publicar nada en las redes, ni para pedir oración: el de espíritu fiel guarda lo que sabe (Proverbios 11:13).",
+        },
+      ],
+    },
+  ],
+  // Capellanía penitenciaria
+  "capellania-3-3": [
+    // La lección pide distinguir el perdón de Dios de las consecuencias del delito sin olvidar a las víctimas; el cuadro une cada verdad con su texto y con lo que hace el capellán en la visita.
+    {
+      t: "cuadro",
+      titulo: "La culpa, el perdón y las consecuencias: lo que hace el capellán",
+      columnas: ["Qué se mira", "Lo que enseña la Biblia", "Lo que hace el capellán"],
+      filas: [
+        [
+          "La culpa",
+          "Un ladrón reconoció en la cruz que padecía justamente por lo que había hecho (Lucas 23:40-41)",
+          "Escucha sin justificar el delito ni condenar a la persona",
+        ],
+        [
+          "El perdón",
+          "Jesús le prometió que ese mismo día estaría con él en el paraíso (Lucas 23:42-43)",
+          "Le muestra que en Cristo hay perdón para el que se arrepiente, y ora con él para que confiese su pecado a Dios",
+        ],
+        [
+          "Las consecuencias",
+          "El perdón de Cristo llegó al ladrón, aunque siguió en la cruz",
+          "Le explica que el perdón no quita la sentencia, y lo anima a cumplirla con un corazón nuevo",
+        ],
+        [
+          "Las víctimas",
+          "Pablo pensó también en el que había sido dañado y ofreció pagar lo que Onésimo debiera (Filemón 1:18)",
+          "No las desprecia ni les pide perdonar pronto; si el preso quiere reparar, solo por los caminos de la ley y sin buscarlas",
+        ],
+        [
+          "La justicia y la misericordia",
+          "Dios pide las dos cosas juntas: justicia y misericordia, con humildad ante él (Miqueas 6:8)",
+          "No le dice si es inocente o culpable en su caso, que lo deciden los tribunales: lo acompaña como persona ante Dios",
+        ],
+      ],
+    },
+  ],
+  "capellania-3-5": [
+    // La lección da las señales de la manipulación en una lista y la respuesta prudente en una comparación, una nota y un caso; el cuadro pone frente a cada señal su respuesta, para amar sin ser ingenuo.
+    {
+      t: "cuadro",
+      titulo: "Las señales de la manipulación y la respuesta prudente",
+      columnas: ["La señal", "Cómo se ve", "La respuesta prudente"],
+      filas: [
+        [
+          "Los halagos",
+          "Usted es el único que me entiende",
+          "No creerlo todo: el simple todo lo cree, pero el avisado mira bien sus pasos (Proverbios 14:15)",
+        ],
+        [
+          "Los favores que crecen",
+          "Primero una estampilla, después una llamada, después un paquete",
+          "No hacer favores a escondidas ni entrar o sacar nada sin permiso: ni una carta, ni un dulce, ni un mensaje",
+        ],
+        [
+          "Las historias de urgencia",
+          "Una necesidad urgente, como una madre muy enferma, para que el voluntario rompa una regla",
+          "Escuchar con compasión y orar, explicar que la regla no lo permite y ofrecer el camino oficial: el capellán de la unidad",
+        ],
+        [
+          "Los pedidos personales",
+          "Dinero, datos personales o contacto fuera de la cárcel",
+          "No dar su teléfono, su dirección ni ningún otro dato personal, y contar el pedido al capellán supervisor",
+        ],
+        [
+          "Los intentos de separar",
+          "Apartar al voluntario de su capellán o de su equipo",
+          "Avisar al capellán cuando algo incomoda, sin callarlo para no quedar mal, y seguir sirviendo sin rencor",
+        ],
+      ],
+    },
+  ],
+  // Emergencias y desastres
+  "capellania-4-3": [
+    // La lección dice qué frases no usar y, en otros párrafos, qué enseña la Biblia y qué hacer; el cuadro los junta, para que el alumno sepa qué hacer en lugar de cada frase que lastima.
+    {
+      t: "cuadro",
+      titulo: "Después del desastre: lo que lastima y lo que ayuda",
+      columnas: ["Lo que lastima", "Lo que enseña la Biblia", "Lo que hace el capellán"],
+      filas: [
+        [
+          "Decir que el desastre fue un castigo por los pecados de las víctimas",
+          "Los que murieron cuando cayó la torre de Siloé no eran más culpables que los demás (Lucas 13:4-5)",
+          "Le dice con amor lo que enseñó Jesús, y le recuerda que Dios no lo abandona y está cerca de los que sufren",
+        ],
+        [
+          "Querer explicarlo todo, como decir que todo pasa por algo cuando la persona sigue en shock",
+          "Los amigos de Job consolaron bien mientras callaron siete días (Job 2:11-13), y se equivocaron al querer explicarlo",
+          "No tiene que explicar por qué pasó: se queda a su lado y escucha, sin apurarse a responder",
+        ],
+        [
+          "Decir que no debe llorar ni enojarse, porque eso es falta de fe",
+          "La Biblia permite el lamento: los salmos y las Lamentaciones le dicen a Dios lo que duele",
+          "Le ofrece orar, aunque quiera decirle a Dios lo que le duele, y le recuerda que sus misericordias son nuevas cada mañana",
+        ],
+      ],
+    },
+  ],
+  "capellania-4-6": [
+    // La lección reparte en varias listas la preparación de la iglesia y el cuidado de sus voluntarios; la línea los ordena en el tiempo: antes, durante y después del desastre.
+    {
+      t: "linea",
+      titulo: "Antes, durante y después del desastre: la iglesia y sus voluntarios",
+      eventos: [
+        {
+          fecha: "Antes del desastre",
+          texto: "La iglesia hace un plan de emergencia para el templo y para las familias, porque la sabiduría se prepara antes.",
+          ref: "Proverbios 22:3",
+        },
+        {
+          fecha: "Antes, en cada casa",
+          texto: "La iglesia anima a guardar agua para al menos tres días: un galón por persona por día, como recomienda la guía Listo del gobierno.",
+        },
+        {
+          fecha: "Antes, con otros",
+          texto: "Se une a una organización de ayuda en los desastres y capacita a sus voluntarios.",
+        },
+        {
+          fecha: "Durante el desastre",
+          texto: "Sirve cuando lo piden las autoridades o la organización, por ejemplo como albergue o como centro de comida.",
+        },
+        {
+          fecha: "En cada turno",
+          texto: "Los voluntarios trabajan en equipo, por turnos y con descanso: como le advirtió Jetro a Moisés, nadie puede hacerlo solo.",
+          ref: "Éxodo 18:17-18",
+        },
+        {
+          fecha: "Al terminar",
+          texto: "Descansan, como Jesús llevó aparte a sus discípulos, y hablan de lo que vieron con su supervisor y con un compañero de confianza.",
+          ref: "Marcos 6:31",
+        },
+        {
+          fecha: "Si no mejora",
+          texto: "El voluntario busca a un profesional de la salud mental. La línea de SAMHSA, 1-800-985-5990, atiende también a los que ayudan.",
+        },
+        {
+          fecha: "Los meses siguientes",
+          texto: "La iglesia acompaña a las familias durante meses, porque la recuperación tarda.",
+        },
+      ],
+    },
+  ],
+  // Marco legal y ético del capellán
+  "capellania-5-2": [
+    // La lección da los límites del secreto en una lista, una comparación, una nota y un caso; el cuadro los junta por situación, con lo que hace el capellán y por qué, para decidir qué se guarda y qué se reporta.
+    {
+      t: "cuadro",
+      titulo: "Qué guarda y qué reporta el capellán en Texas",
+      columnas: ["La situación", "Qué hace el capellán", "Por qué"],
+      filas: [
+        [
+          "Antes de que le confíen algo",
+          "Puede decir que guarda todo, salvo una vida en peligro o el abuso de un niño, un anciano o una persona con discapacidad",
+          "Así nadie se siente traicionado después",
+        ],
+        [
+          "Le confiesa un pecado del que se arrepiente",
+          "Lo guarda y lo acompaña en su arrepentimiento",
+          "No pone a nadie en peligro; la regla 505 protege lo que se dice en confianza al ministro como consejero espiritual",
+        ],
+        [
+          "Le cuenta sus dudas de fe o sus problemas de familia",
+          "Lo guarda",
+          "El de espíritu fiel guarda el secreto (Proverbios 11:13)",
+        ],
+        [
+          "Hay motivos para creer que un niño sufre abuso o negligencia",
+          "Lo reporta enseguida a la línea de abuso de Texas y avisa a su supervisor, sin investigar por su cuenta",
+          "Todos deben reportarlo, también el clero, y el privilegio no lo impide (Código de Familia, sección 261.101)",
+        ],
+        [
+          "Hay motivos para creer que una persona mayor o con discapacidad sufre abuso, negligencia o explotación",
+          "Lo reporta enseguida",
+          "La ley también lo pide a quien tenga esos motivos (Código de Recursos Humanos, sección 48.051)",
+        ],
+        ["Piensa quitarse la vida o hacerle daño a otro", "Busca ayuda de inmediato", "Hay una vida en peligro"],
+        [
+          "La institución pide reportarlo, como un plan de fuga o de violencia",
+          "Lo reporta según las reglas del hospital o de la prisión",
+          "El capellán sigue también las normas de la institución donde sirve",
+        ],
+      ],
+    },
+  ],
+  "capellania-5-6": [
+    // La lección compara la norma que limita con la orden de pecar y lo muestra en un caso; los pasos convierten eso en un camino para distinguir una de otra y responder con respeto.
+    {
+      t: "pasos",
+      titulo: "Cuando la institución pide algo contra su conciencia",
+      pasos: [
+        {
+          titulo: "Escuchar y agradecer",
+          texto: "Agradecer la confianza y escuchar qué necesitan la institución y la persona que hay que atender.",
+        },
+        {
+          titulo: "Distinguir: ¿limita o pide pecar?",
+          texto: "Una norma que limita, como no repartir folletos sin permiso, no es lo mismo que una orden de pecar, como negar a Cristo, mentir en un informe o esconder un abuso.",
+        },
+        {
+          titulo: "Si la norma lo limita, obedecer",
+          texto: "La obedece aunque le incomode, porque Dios pide someterse a las autoridades (Romanos 13:1).",
+        },
+        {
+          titulo: "Si lo obliga a pecar, decirlo con respeto",
+          texto: "Obedece a Dios antes que a los hombres, como Pedro y Juan, y explica con respeto que su conciencia no se lo permite (Hechos 4:19-20).",
+        },
+        {
+          titulo: "Facilitar que otro atienda",
+          texto: "Busca con la institución a quien pueda dar esa atención, como un líder de la fe de la persona, y ofrece su compañía en lo que sí puede hacer.",
+        },
+        {
+          titulo: "Informar y preguntar ante la duda",
+          texto: "Informa a su supervisor y anota lo que se hizo. Si tiene una duda legal, pregunta al departamento legal de la institución o a un abogado, y no decide solo.",
+        },
+        {
+          titulo: "Aceptar las consecuencias y seguir amando",
+          texto: "Como Daniel, que siguió orando sin armar un escándalo, acepta las consecuencias y sigue sirviendo con el mismo amor, sin criticar la fe de nadie (Daniel 6:10).",
         },
       ],
     },

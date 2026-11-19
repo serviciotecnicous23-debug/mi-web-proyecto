@@ -367,7 +367,7 @@ export const NINEZ_4: LeccionContenido[] = [
         t: "lista",
         items: [
           "Toda persona que tiene causa razonable para creer que un niño sufre abuso o negligencia debe reportarlo de inmediato (Código de Familia de Texas, sección 261.101).",
-          "Los profesionales, como los maestros, las enfermeras, los médicos y los empleados de guarderías, deben reportarlo a más tardar 48 horas después de tener causa razonable para creerlo, y no pueden pedirle a otro que lo haga por ellos.",
+          "Los profesionales, como los maestros, las enfermeras, los médicos y los empleados de guarderías, deben reportarlo a más tardar 24 horas después de tener causa razonable para creerlo, y no pueden pedirle a otro que lo haga por ellos.",
           "La obligación vale sin excepción también para quienes reciben confidencias, como los pastores, los abogados y los consejeros.",
           "No reportar a sabiendas es un delito menor de clase A (sección 261.109).",
           "Se reporta a la Línea directa de Texas para reportar abuso, al 1-800-252-5400, a cualquier hora, o por internet en txabusehotline.org cuando no es una emergencia.",
@@ -411,7 +411,7 @@ export const NINEZ_4: LeccionContenido[] = [
       },
     ],
     ideaClave:
-      "Cuando un niño cuenta un abuso, el adulto abre la boca por el que no tiene voz: mantiene la calma, escucha, le cree, no promete el secreto, no lo interroga, escribe lo que dijo y lo reporta de inmediato. En Texas, toda persona con causa razonable para creer que un niño sufre abuso o negligencia debe reportarlo enseguida, los profesionales a más tardar en 48 horas, sin excepción para los pastores, a la línea 1-800-252-5400 o al 911 en una emergencia. Contárselo al pastor no reemplaza el reporte, y no se investiga por cuenta propia.",
+      "Cuando un niño cuenta un abuso, el adulto abre la boca por el que no tiene voz: mantiene la calma, escucha, le cree, no promete el secreto, no lo interroga, escribe lo que dijo y lo reporta de inmediato. En Texas, toda persona con causa razonable para creer que un niño sufre abuso o negligencia debe reportarlo enseguida, los profesionales a más tardar en 24 horas, sin excepción para los pastores, a la línea 1-800-252-5400 o al 911 en una emergencia. Contárselo al pastor no reemplaza el reporte, y no se investiga por cuenta propia.",
     paraLaVida: {
       texto: "No esperes a tener pruebas: basta con tener causa razonable para creerlo.",
       pregunta: "¿Saben todos los maestros de tu iglesia a qué número se reporta un abuso?",
