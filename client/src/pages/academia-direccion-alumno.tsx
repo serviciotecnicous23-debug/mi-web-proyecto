@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Award, BookOpen, History, Lock, PenLine, ShieldOff, ShieldCheck, UserRound } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Award, BookOpen, Brain, ClipboardList, History, LayoutDashboard, ListChecks, Lock, PenLine, ShieldOff, ShieldCheck, UserRound } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePerfilAlumno } from "@/components/academia/api-perfil";
+import { ActividadesPerfil, AprendizajePerfil, BitacoraPerfil, NotasPerfil, ResumenPerfil } from "@/components/academia/perfil-alumno";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
@@ -184,14 +187,22 @@ function Ficha({ d, propio }: { d: AlumnoDetalle; propio: boolean }) {
   );
 }
 
+const PESTANAS_PERFIL = ["resumen", "materias", "aprendizaje", "actividades", "seguimiento", "ficha"] as const;
+type PestanaPerfil = (typeof PESTANAS_PERFIL)[number];
+
 export default function AcademiaDireccionAlumno() {
   const { alumnoId } = useParams<{ alumnoId: string }>();
   const { user } = useAuth();
   const area = useArea();
   const q = useDireccionAlumno(alumnoId);
-  useTituloAcademia(area.base === "/admin/academia" ? "Ficha del alumno · Administración" : "Ficha del alumno");
+  const perfil = usePerfilAlumno(alumnoId, !!q.data);
+  useTituloAcademia(area.base === "/admin/academia" ? "Perfil del alumno · Administración" : "Perfil del alumno");
   // la materia que la Administración está gestionando (el panel lateral)
   const [materiaGestion, setMateriaGestion] = useState<string | null>(null);
+  const [tab, setTab] = useState<PestanaPerfil>(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return (PESTANAS_PERFIL as readonly string[]).includes(t ?? "") ? (t as PestanaPerfil) : "resumen";
+  });
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     return (
@@ -228,24 +239,58 @@ export default function AcademiaDireccionAlumno() {
           </div>
         </header>
 
-        {gestiona && <HerramientasAlumno d={d} alGestionar={setMateriaGestion} />}
-        <Ficha d={d} propio={propio} />
-        <MentorAlumno d={d} propio={propio} />
+        {perfil.data && perfil.data.alertas.some((x) => x.gravedad === "alta") && tab !== "resumen" && (
+          <button type="button" onClick={() => setTab("resumen")} className="w-full text-left glass-card p-3 border border-red-500/50 text-sm flex items-center gap-2" data-testid="perfil-aviso-alertas">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" aria-hidden="true" />
+            <span className="flex-1">{perfil.data.alertas.filter((x) => x.gravedad === "alta").map((x) => x.titulo).join(" · ")}</span>
+            <span className="font-medium">Ver</span>
+          </button>
+        )}
 
-        <section className="glass-card p-5">
-          <h2 className="font-semibold flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4 text-orange-600" /> Materias: por dónde va</h2>
-          <TablaAvance materias={d.materias} alGestionar={gestiona ? setMateriaGestion : undefined} />
-        </section>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as PestanaPerfil)}>
+          <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg mb-6" data-testid="perfil-pestanas">
+            <TabsTrigger value="resumen" className="flex-1 min-w-[120px] gap-1.5"><LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Resumen</TabsTrigger>
+            <TabsTrigger value="materias" className="flex-1 min-w-[120px] gap-1.5"><BookOpen className="w-4 h-4" aria-hidden="true" /> Materias y notas</TabsTrigger>
+            <TabsTrigger value="aprendizaje" className="flex-1 min-w-[120px] gap-1.5"><Brain className="w-4 h-4" aria-hidden="true" /> Aprendizaje</TabsTrigger>
+            <TabsTrigger value="actividades" className="flex-1 min-w-[120px] gap-1.5"><ListChecks className="w-4 h-4" aria-hidden="true" /> Actividades del nivel</TabsTrigger>
+            <TabsTrigger value="seguimiento" className="flex-1 min-w-[120px] gap-1.5" data-testid="perfil-tab-seguimiento"><ClipboardList className="w-4 h-4" aria-hidden="true" /> Seguimiento</TabsTrigger>
+            <TabsTrigger value="ficha" className="flex-1 min-w-[120px] gap-1.5"><UserRound className="w-4 h-4" aria-hidden="true" /> Ficha y documentos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumen">
+            {perfil.isLoading ? <p className="text-muted-foreground">Preparando el perfil…</p> : perfil.data ? <ResumenPerfil p={perfil.data} /> : <p className="text-sm text-red-600">{perfil.error?.message ?? "No se pudo preparar el perfil."}</p>}
+          </TabsContent>
+
+          <TabsContent value="materias" className="space-y-6">
+            <section className="glass-card p-5">
+              <h2 className="font-semibold flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4 text-orange-600" /> Materias: por dónde va</h2>
+              <TablaAvance materias={d.materias} alGestionar={gestiona ? setMateriaGestion : undefined} enlace={(id) => `${area.base}/materia/${id}`} />
+            </section>
+            {perfil.data && <NotasPerfil p={perfil.data} />}
+          </TabsContent>
+
+          <TabsContent value="aprendizaje">{perfil.data ? <AprendizajePerfil p={perfil.data} /> : <p className="text-muted-foreground">Preparando el perfil…</p>}</TabsContent>
+
+          <TabsContent value="actividades">{perfil.data ? <ActividadesPerfil p={perfil.data} /> : <p className="text-muted-foreground">Preparando el perfil…</p>}</TabsContent>
+
+          <TabsContent value="seguimiento" className="space-y-6">
+            {perfil.data?.puede.seguimiento && !propio && <BitacoraPerfil p={perfil.data} alumnoId={a.userId} nombre={a.nombre.split(" ")[0]} />}
+            {gestiona && <HerramientasAlumno d={d} alGestionar={(m) => { setMateriaGestion(m); setTab("materias"); }} />}
+            <MentorAlumno d={d} propio={propio} />
+            <section className="glass-card p-5">
+              <h2 className="font-semibold flex items-center gap-2 mb-3"><History className="w-4 h-4 text-orange-600" /> Su actividad</h2>
+              <ListaActividad items={d.actividad} />
+            </section>
+          </TabsContent>
+
+          <TabsContent value="ficha" className="space-y-6">
+            <Ficha d={d} propio={propio} />
+            <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
+            {d.puede.documentos && !propio && <Documentos d={d} />}
+            {d.puede.revisar && alumnoId && <Escritas id={alumnoId} propio={propio} />}
+          </TabsContent>
+        </Tabs>
         {gestiona && <GestionMateriaPanel alumnoId={a.userId} nombre={a.nombre} materiaId={materiaGestion} alCerrar={() => setMateriaGestion(null)} />}
-
-        <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
-        {d.puede.documentos && !propio && <Documentos d={d} />}
-        {d.puede.revisar && alumnoId && <Escritas id={alumnoId} propio={propio} />}
-
-        <section className="glass-card p-5">
-          <h2 className="font-semibold flex items-center gap-2 mb-3"><History className="w-4 h-4 text-orange-600" /> Su actividad</h2>
-          <ListaActividad items={d.actividad} />
-        </section>
       </div>
     </Layout>
   );

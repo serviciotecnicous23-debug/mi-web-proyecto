@@ -45,6 +45,8 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["academia_estudio", (id) => sql`user_id = ${id}`],
   ["academia_estudio_meta", (id) => sql`user_id = ${id}`],
   ["academia_actividades", (id) => sql`user_id = ${id}`],
+  // la bitácora de seguimiento que la Administración lleva de este alumno
+  ["academia_seguimiento", (id) => sql`alumno_id = ${id}`],
   ["academia_avisos_materia", (id) => sql`user_id = ${id}`],
   ["academia_ajustes", (id) => sql`user_id = ${id}`],
   ["academia_repaso_preguntas", (id) => sql`user_id = ${id}`],

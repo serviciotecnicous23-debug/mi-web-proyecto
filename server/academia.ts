@@ -26,6 +26,7 @@ import { registerAcademiaCarneRoutes } from "./academia-carne";
 import { registerAcademiaSalonRoutes } from "./academia-salon";
 import { nivelesCompletos, registerAcademiaInscripcionRoutes } from "./academia-inscripcion";
 import { registerAcademiaDireccionRoutes } from "./academia-direccion";
+import { registerAcademiaPerfilRoutes } from "./academia-perfil";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
@@ -620,6 +621,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaSalonRoutes(app);
   registerAcademiaInscripcionRoutes(app);
   registerAcademiaDireccionRoutes(app);
+  registerAcademiaPerfilRoutes(app);
   registerAcademiaRevisionRoutes(app);
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
