@@ -4967,6 +4967,60 @@ const AYUDA_HUMANITARIA: MateriaDef = {
   disponible: true,
 };
 
+const VOLUNTARIADO_ALIANZAS: MateriaDef = {
+  id: "obra-social-5",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 5,
+  titulo: "Voluntariado y alianzas",
+  resumen: "Cómo sirve la iglesia junto a otros por el bien de su ciudad: servir junto a otros, las alianzas con otras iglesias, con escuelas, negocios y organizaciones, y con el gobierno, los voluntarios de la comunidad y el cuidado de la alianza.",
+  base: "Eclesiastés 4:12; Filipenses 1:5",
+  memoria: "Eclesiastés 4:12",
+  lecciones: lecciones("obra-social-5", [
+    ["Juntos por el bien de la ciudad", "Eclesiastés 4:12; Juan 17:21; Filipenses 1:5"],
+    ["Alianzas con otras iglesias", "Marcos 9:39-40; Gálatas 2:9; 1 Corintios 3:9"],
+    ["Alianzas con escuelas, negocios y organizaciones", "Amós 3:3; Nehemías 2:8; Esdras 1:4"],
+    ["Alianzas con el gobierno", "Romanos 13:4; Daniel 1:8; Tito 3:1"],
+    ["Los voluntarios de la comunidad", "Éxodo 36:5; Hechos 28:2; Romanos 16:3"],
+    ["Cuidar la alianza", "Romanos 12:18; Hechos 15:39-40; 2 Timoteo 4:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa servir junto a otros por el bien de su ciudad: que entienda, con Eclesiastés 4:12 y Juan 17:21, que juntos se llega más lejos y que la unidad es testimonio, y que la iglesia puede aliarse con otras iglesias, escuelas, negocios, organizaciones y el gobierno sin dejar de ser iglesia; que forme alianzas con otras iglesias empezando por lo que las une, respetando las diferencias y compartiendo el mérito, como los apóstoles, que se dieron la diestra en señal de compañerismo; que se alíe con escuelas, negocios y organizaciones cuidando sus reglas, los valores del proyecto y los datos de las personas, con acuerdos por escrito; que colabore con el gobierno según la regla federal de 2024, en la que las organizaciones de fe compiten en igualdad y conservan su carácter religioso, pero no usan la ayuda federal directa para actividades explícitamente religiosas, que se ofrecen por separado, en tiempo o en lugar, y con participación voluntaria; que reciba a los voluntarios de la comunidad con una orientación, el cuidado de los niños y gratitud, reportando la sospecha de abuso de un menor como pide la ley: toda persona de inmediato, y los profesionales a más tardar en 24 horas; y que cuide cada alianza con comunicación, evaluación y paz, y la termine en paz cuando haga falta. No repite Equipos y voluntarios de la especialidad Liderazgo y administración. Lo legal es una guía general, no un consejo legal. Su base es la palabra del Predicador: «Y si alguno prevaleciere contra uno, dos le resistirán; y cordón de tres dobleces no se rompe pronto» (Eclesiastés 4:12).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia sirve junto a otros y qué cuida al hacerlo.", bloom: "comprender" },
+      { id: "o2", texto: "Formar una alianza con otras iglesias respetando sus diferencias.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir un acuerdo de colaboración con una escuela, un negocio o una organización.", bloom: "aplicar" },
+      { id: "o4", texto: "Colaborar con el gobierno según la regla federal de 2024 sin perder las convicciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Recibir y cuidar a los voluntarios de la comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una alianza y decidir si se renueva, se cambia o se termina en paz.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Eclesiastés 4:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los socios de una iglesia, las alianzas entre iglesias, los acuerdos de colaboración, la regla federal de 2024 con las órdenes ejecutivas 13279 y 13559, la recepción de los voluntarios de la comunidad y el cuidado de las alianzas.",
+      ser: "Un siervo que busca la unidad, se pone de acuerdo antes de caminar con otros, cuida sus convicciones y vive en paz con todos.",
+      hacer: "Sumarse a lo que otros ya hacen, organizar una despensa con otras iglesias, escribir un acuerdo con un negocio, manejar un fondo federal, recibir a los voluntarios de una empresa y resolver un problema con un socio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rachel Blackman", titulo: "Cómo asociarse con la iglesia local (guía ROOTS 11)", editorial: "Tearfund" },
+        { autor: "C. René Padilla y Tetsunao Yamamori (eds.)", titulo: "La iglesia local como agente de transformación: una eclesiología para la misión integral", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Isabel Carter", titulo: "La iglesia se moviliza (serie Pilares)", editorial: "Tearfund" },
+        { autor: "Amy L. Sherman", titulo: "El llamado del reino: mayordomía vocacional para el bien común", editorial: "Proyecto Nehemías" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Filipenses", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gks8CQX5mwQ", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 2, la ayuda del rey para reconstruir", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=2" },
+      { tipo: "guia", titulo: "Alianzas con las organizaciones de fe y de los barrios, la regla federal de 2024 (en inglés)", fuente: "Registro Federal de los Estados Unidos", url: "https://www.federalregister.gov/documents/2024/03/04/2024-03869/partnerships-with-faith-based-and-neighborhood-organizations" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5899,7 +5953,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
-    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, AYUDA_HUMANITARIA, ["Voluntariado y alianzas"],
+    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, AYUDA_HUMANITARIA, VOLUNTARIADO_ALIANZAS,
   ]),
 ];
 
