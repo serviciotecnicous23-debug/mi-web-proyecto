@@ -10,7 +10,7 @@ import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { loginUrl } from "@/lib/login-redirect";
-import { NOMBRE_ACADEMIA } from "@shared/academia";
+import { NOMBRE_ACADEMIA } from "@shared/academia-base";
 import { entregarEscrito, useEscrito } from "@/components/academia/api";
 import { EscritaCorregida } from "@/components/academia/examen";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";

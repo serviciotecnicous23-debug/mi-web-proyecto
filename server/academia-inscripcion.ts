@@ -14,7 +14,7 @@
  */
 import type { Express } from "express";
 import { pool } from "./db";
-import { REGLAMENTO, materiaPorId, requisitosMateria } from "@shared/academia";
+import { NIVELES, REGLAMENTO, materiaPorId, requisitosMateria } from "@shared/academia";
 import { ROLES_ACADEMIA } from "@shared/academia-permisos";
 import {
   FICHA_VACIA, nombreCompleto, paisDeCuenta, repartirNombre, validarFicha,
@@ -204,8 +204,10 @@ export function registerAcademiaInscripcionRoutes(app: Express) {
           `${nombreCompleto(f)} (${out.ok.matricula.numero}) ${out.ok.nueva ? "se inscribió en la academia" : "completó su ficha de inscripción"}${f.pais ? `, desde ${f.pais}` : ""}.`,
         );
       }
+      // por dónde empezar: la primera materia abierta del Nivel 1 (la pantalla de bienvenida no carga el catálogo)
+      const primera = NIVELES[0].materias.find((x) => x.disponible);
       res.setHeader("Cache-Control", "no-store");
-      res.json(out.ok);
+      res.json({ ...out.ok, empezarPor: primera ? { id: primera.id, titulo: primera.titulo } : null });
     } catch (err) {
       console.error("[academia] inscribirse:", err);
       res.sendStatus(500);

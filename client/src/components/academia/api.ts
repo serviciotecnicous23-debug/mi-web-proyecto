@@ -1,9 +1,9 @@
 // Lo que piden las pantallas de la academia al servidor (server/academia.ts y server/academia-examen.ts).
 import { useQuery } from "@tanstack/react-query";
 import type { EscritoBreveVista, EspecialidadDetalle,
-  AcademiaEstado, Apelable, ApelacionVista, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MateriaDetalle, MatriculaInfo, NivelEstado, PasoExamen,
-  RespuestaRepaso, ResultadoExamen, VerificacionAcademia,
-} from "@shared/academia";
+  AcademiaEstado, Apelable, ApelacionVista, BuscadorMateria, CarneVista, DocumentoAcademia, ExamenEstado, LeccionVista, MapaAcademia, MateriaDetalle, MatriculaInfo,
+  NivelEstado, PasoExamen, RespuestaRepaso, ResultadoExamen, VerificacionAcademia,
+} from "@shared/academia-base";
 import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, GestionMateria, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoGestion,
@@ -11,7 +11,7 @@ import type {
 } from "@shared/academia-direccion";
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
-import type { DiagnosticoVista, RepasoVersiculos } from "@shared/academia";
+import type { DiagnosticoVista, RepasoVersiculos } from "@shared/academia-base";
 import type { RepasoDelDia, RespuestaDelDia } from "@shared/repaso-del-dia";
 
 export class ErrorAcademia extends Error {
@@ -87,6 +87,28 @@ export function useNivel(n: string | undefined) {
 
 export const aceptarPacto = (n: number) => pedir<NivelEstado>("POST", `/api/academia/nivel/${n}/pacto`, { acepto: true });
 
+/**
+ * Lo que las pantallas necesitan saber del catálogo sin bajarlo (server/academia-mapa.ts): solo cambia al publicar, así
+ * que se pide una vez por visita (fuera de la clave «academia», que se vuelve a pedir al terminar cada examen).
+ */
+export function useMapaAcademia() {
+  return useQuery<MapaAcademia, ErrorAcademia>({ queryKey: ["academia-mapa"], queryFn: () => pedir("GET", "/api/academia/mapa"), retry: false, staleTime: Infinity });
+}
+
+/**
+ * Lo que encuentra el buscador del catálogo en cada materia (server/academia-mapa.ts): como el mapa, una vez por visita.
+ * Con `activo: false` no se pide (quien solo mira el catálogo no lo baja).
+ */
+export function useBuscadorAcademia(activo: boolean) {
+  return useQuery<Record<string, BuscadorMateria>, ErrorAcademia>({
+    queryKey: ["academia-buscador"],
+    queryFn: () => pedir("GET", "/api/academia/buscador"),
+    enabled: activo,
+    retry: false,
+    staleTime: Infinity,
+  });
+}
+
 /** Mis documentos de la academia (con `activo: false` no se piden: por ejemplo, sin sesión). */
 export function useCertificados(activo = true) {
   return useQuery<DocumentoAcademia[], ErrorAcademia>({
@@ -115,7 +137,8 @@ export function useInscripcion() {
   });
 }
 
-export type ResultadoInscripcion = { ficha: FichaVista; matricula: MatriculaInfo; nueva: boolean };
+/** `empezarPor`: la primera materia abierta del Nivel 1, para «Tu siguiente paso». */
+export type ResultadoInscripcion = { ficha: FichaVista; matricula: MatriculaInfo; nueva: boolean; empezarPor?: { id: string; titulo: string } | null };
 
 /** Inscribirme (con el reglamento y el código de honor, la primera vez) o corregir mi ficha. */
 export const inscribirme = (ficha: FichaInscripcion, aceptaciones?: { reglamento: boolean; honor: boolean }) =>

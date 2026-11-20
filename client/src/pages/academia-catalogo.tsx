@@ -3,15 +3,17 @@
 // (sin importar tildes ni mayúsculas, shared/buscar-texto.ts); los filtros por nivel, especialidad y estado quedan en
 // la dirección, así el enlace se puede compartir (la portada abre «Especialidades» con ?ver=especialidades). Cada
 // materia muestra el avance del alumno y abre su página (también las que están en preparación, con «Avísame»).
+// Las materias llegan con el estado de la academia y lo que encuentra el buscador, con /api/academia/buscador: la página
+// no carga el catálogo (shared/academia.ts).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Clock, GraduationCap, Layers, Library, Search, SearchX, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Clock, GraduationCap, Layers, Library, Loader2, Search, SearchX, X } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
-import { ESPECIALIDADES, NIVELES, type EstadoMateria, type Libro, type MateriaDef, type MateriaResumen } from "@shared/academia";
+import { ESPECIALIDAD_IDS, type BuscadorMateria, type EstadoMateria, type MateriaResumen } from "@shared/academia-base";
 import { contieneAlguno, contieneTodos, marcar, terminos } from "@shared/buscar-texto";
-import { useAcademiaEstado } from "@/components/academia/api";
+import { useAcademiaEstado, useBuscadorAcademia } from "@/components/academia/api";
 import { BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";
 
@@ -24,31 +26,33 @@ const ESTADOS: { id: FiltroEstado; texto: string }[] = [
   { id: "en-preparacion", texto: "En preparación" },
 ];
 /** «todo», un nivel («1» a «5»), «especialidades» o el id de una especialidad. */
-const VER_VALIDOS = new Set<string>(["todo", "1", "2", "3", "4", "5", "especialidades", ...ESPECIALIDADES.map((e) => e.id)]);
-const DEFS = new Map<string, MateriaDef>([...NIVELES.flatMap((n) => n.materias), ...ESPECIALIDADES.flatMap((e) => e.materias)].map((m) => [m.id, m]));
+const VER_VALIDOS = new Set<string>(["todo", "1", "2", "3", "4", "5", "especialidades", ...ESPECIALIDAD_IDS]);
 
 const pasaEstado = (e: EstadoMateria, f: FiltroEstado) => (f === "todas" ? true : f === "abiertas" ? e !== "en-preparacion" : e === f);
-const esEspecialidad = (ver: string) => ver === "especialidades" || ESPECIALIDADES.some((e) => e.id === ver);
+const esEspecialidad = (ver: string) => ver === "especialidades" || (ESPECIALIDAD_IDS as readonly string[]).includes(ver);
 
 /** Lo que la búsqueda encontró en la materia, con sus puntos para ordenar por relevancia. */
-type Coincide = { lecciones: { n: number; titulo: string }[]; memoria: boolean; libro: Libro | null; puntos: number };
-/** `lugar`: su nivel o su especialidad (se ve en los resultados de una búsqueda); `orden`: su lugar en el plan. */
-type Fila = { r: MateriaResumen; def: MateriaDef | undefined; minutos: number; coincide: Coincide | null; lugar: string; orden: number };
+type Coincide = { lecciones: { n: number; titulo: string }[]; memoria: boolean; libro: BuscadorMateria["libros"][number] | null; puntos: number };
+/**
+ * `b`: lo que el buscador encuentra en la materia (sin él, la búsqueda mira su título, su resumen y su lugar). `lugar`:
+ * su nivel o su especialidad (se ve en los resultados de una búsqueda); `orden`: su lugar en el plan.
+ */
+type Fila = { r: MateriaResumen; b: BuscadorMateria | undefined; minutos: number; coincide: Coincide | null; lugar: string; orden: number };
 type Grupo = { id: string; antetitulo: string; titulo: string; enlace: string | null; filas: Fila[] };
 
 /** Lo que la búsqueda encontró en la materia (null si no la encuentra). Sin búsqueda, todo pasa. */
-function buscarEn(def: MateriaDef | undefined, r: MateriaResumen, grupo: string, ts: string[]): Coincide | null | "todo" {
+function buscarEn(b: BuscadorMateria | undefined, r: MateriaResumen, grupo: string, ts: string[]): Coincide | null | "todo" {
   if (!ts.length) return "todo";
-  const libros = def?.silabo ? [...def.silabo.bibliografia.basica, ...def.silabo.bibliografia.complementaria] : [];
+  const libros = b?.libros ?? [];
   const campos = [
-    r.titulo, r.resumen, grupo, def?.base ?? "", def?.memoria ?? "", r.antes ?? "", def?.silabo?.proposito ?? "",
-    ...(def?.lecciones ?? []).map((l) => l.titulo),
-    ...libros.map((b) => `${b.autor} ${b.titulo}`),
+    r.titulo, r.resumen, grupo, b?.base ?? "", b?.memoria ?? "", r.antes ?? "", b?.proposito ?? "",
+    ...(b?.lecciones ?? []),
+    ...libros.map((l) => `${l.autor} ${l.titulo}`),
   ];
   if (!contieneTodos(campos.join("\n"), ts)) return null;
-  const lecciones = (def?.lecciones ?? []).map((l, i) => ({ n: i + 1, titulo: l.titulo })).filter((l) => contieneAlguno(l.titulo, ts));
-  const memoria = !!def?.memoria && contieneAlguno(def.memoria, ts);
-  const libro = libros.find((b) => contieneAlguno(`${b.autor} ${b.titulo}`, ts)) ?? null;
+  const lecciones = (b?.lecciones ?? []).map((titulo, i) => ({ n: i + 1, titulo })).filter((l) => contieneAlguno(l.titulo, ts));
+  const memoria = !!b?.memoria && contieneAlguno(b.memoria, ts);
+  const libro = libros.find((l) => contieneAlguno(`${l.autor} ${l.titulo}`, ts)) ?? null;
   // primero lo que lo dice en el título, después en sus lecciones, su versículo, su resumen, su bibliografía y sus pasajes
   const puntos =
     (contieneTodos(r.titulo, ts) ? 100 : contieneAlguno(r.titulo, ts) ? 40 : 0) +
@@ -56,7 +60,7 @@ function buscarEn(def: MateriaDef | undefined, r: MateriaResumen, grupo: string,
     (memoria ? 10 : 0) +
     (contieneAlguno(r.resumen, ts) ? 8 : 0) +
     (libro ? 5 : 0) +
-    (def?.base && contieneAlguno(def.base, ts) ? 3 : 0);
+    (b?.base && contieneAlguno(b.base, ts) ? 3 : 0);
   return { lecciones: lecciones.slice(0, 3), memoria, libro, puntos };
 }
 
@@ -88,7 +92,7 @@ function Chip({ activo, onClick, children, testid }: { activo: boolean; onClick:
 }
 
 function TarjetaCatalogo({ f, ts, conLugar = false }: { f: Fila; ts: string[]; conLugar?: boolean }) {
-  const { r, def, coincide } = f;
+  const { r, b, coincide } = f;
   return (
     <Link
       href={`/academia/materia/${r.id}`}
@@ -106,8 +110,8 @@ function TarjetaCatalogo({ f, ts, conLugar = false }: { f: Fila; ts: string[]; c
           {coincide.lecciones.map((l) => (
             <li key={l.n} className="flex items-start gap-1.5"><BookOpen className="w-3.5 h-3.5 mt-0.5 text-orange-500 shrink-0" /><span>Lección {l.n}: <Marcado texto={l.titulo} ts={ts} /></span></li>
           ))}
-          {coincide.memoria && def?.memoria && (
-            <li className="flex items-start gap-1.5"><BookMarked className="w-3.5 h-3.5 mt-0.5 text-orange-500 shrink-0" /><span>Versículo de memoria: <Marcado texto={def.memoria} ts={ts} /></span></li>
+          {coincide.memoria && b?.memoria && (
+            <li className="flex items-start gap-1.5"><BookMarked className="w-3.5 h-3.5 mt-0.5 text-orange-500 shrink-0" /><span>Versículo de memoria: <Marcado texto={b.memoria} ts={ts} /></span></li>
           )}
           {coincide.libro && (
             <li className="flex items-start gap-1.5"><Library className="w-3.5 h-3.5 mt-0.5 text-orange-500 shrink-0" /><span>Bibliografía: <Marcado texto={`${coincide.libro.autor}, ${coincide.libro.titulo}`} ts={ts} /></span></li>
@@ -160,18 +164,24 @@ export default function AcademiaCatalogo() {
 
   const ts = useMemo(() => terminos(texto), [texto]);
   const e = q.data;
+  // lo que encuentra el buscador se pide al ir a buscar (al tocar el buscador, o con una búsqueda en la dirección): quien
+  // solo mira el catálogo no lo baja. Una búsqueda antes de que llegue espera un momento (si no llega, busca sin él).
+  const [quiereBuscar, setQuiereBuscar] = useState(false);
+  const buscador = useBuscadorAcademia(quiereBuscar || ts.length > 0);
+  const indice = buscador.data;
+  const buscando = ts.length > 0 && buscador.isLoading;
 
   // todos los grupos (niveles y especialidades) con lo que pasa la búsqueda
   const grupos = useMemo<Grupo[]>(() => {
     if (!e) return [];
     let orden = 0;
     const fila = (r: MateriaResumen, grupo: string, lugar: string): Fila | null => {
-      const def = DEFS.get(r.id);
-      const c = buscarEn(def, r, grupo, ts);
+      const b = indice?.[r.id];
+      const c = buscarEn(b, r, grupo, ts);
       orden++;
       if (!c) return null;
-      // (los minutos reales de la materia los calcula el servidor; los fijos, solo si no los manda)
-      return { r, def, minutos: r.minutos ?? (def?.lecciones ?? []).reduce((a, l) => a + (l.minutos || 0), 0), coincide: c === "todo" ? null : c, lugar, orden };
+      // (los minutos reales de la materia los calcula el servidor)
+      return { r, b, minutos: r.minutos ?? 0, coincide: c === "todo" ? null : c, lugar, orden };
     };
     const niveles = e.niveles.map((n) => ({
       id: String(n.n), antetitulo: `Nivel ${n.n} · ${n.para}`, titulo: n.nombre, enlace: `/academia/nivel/${n.n}`,
@@ -183,7 +193,7 @@ export default function AcademiaCatalogo() {
       filas: esp.materias.map((r) => fila(r, `Especialidad ${esp.nombre}`, `Especialidad · ${esp.nombre}`)).filter((x): x is Fila => !!x),
     }));
     return [...niveles, ...especialidades];
-  }, [e, ts]);
+  }, [e, ts, indice]);
 
   // lo que pasa el filtro de «dónde» (para contar los estados) y después el de estado
   const enLugar = grupos.filter((g) => ver === "todo" || g.id === ver || (ver === "especialidades" && !/^\d$/.test(g.id)));
@@ -242,6 +252,7 @@ export default function AcademiaCatalogo() {
               type="search"
               value={texto}
               onChange={(ev) => setTexto(ev.target.value)}
+              onFocus={() => setQuiereBuscar(true)}
               onKeyDown={(ev) => { if (ev.key === "Escape" && texto) { ev.preventDefault(); setTexto(""); } }}
               placeholder="Busca una materia, una lección, un versículo o un autor"
               autoComplete="off"
@@ -293,8 +304,8 @@ export default function AcademiaCatalogo() {
       <div className="max-w-6xl mx-auto px-4 pb-16">
         <div className="flex flex-wrap items-center justify-between gap-2 py-4">
           <p className="text-sm text-muted-foreground" aria-live="polite" data-testid="catalogo-total">
-            {total === 0 ? "Ninguna materia" : total === 1 ? "1 materia" : `${total} materias`}
-            {ts.length ? ` con «${texto.trim()}»` : ""}
+            {buscando ? "Buscando…" : total === 0 ? "Ninguna materia" : total === 1 ? "1 materia" : `${total} materias`}
+            {!buscando && ts.length ? ` con «${texto.trim()}»` : ""}
           </p>
           {conFiltros && (
             <button type="button" onClick={limpiar} className="text-sm text-orange-700 dark:text-orange-300 hover:underline underline-offset-2" data-testid="catalogo-limpiar">
@@ -303,7 +314,11 @@ export default function AcademiaCatalogo() {
           )}
         </div>
 
-        {total === 0 ? (
+        {buscando ? (
+          <div className="py-16 flex items-center justify-center" data-testid="catalogo-buscando">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500" aria-hidden="true" />
+          </div>
+        ) : total === 0 ? (
           <div className="glass-card p-8 text-center" data-testid="catalogo-vacio">
             <SearchX className="w-10 h-10 mx-auto text-muted-foreground" aria-hidden="true" />
             <p className="font-semibold mt-3">No encontramos materias{ts.length ? ` con «${texto.trim()}»` : ""}{ver !== "todo" || estado !== "todas" ? " con estos filtros" : ""}.</p>

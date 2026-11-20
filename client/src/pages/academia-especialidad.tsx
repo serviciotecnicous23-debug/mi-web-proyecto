@@ -11,7 +11,7 @@ import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { loginUrl } from "@/lib/login-redirect";
-import { NOMBRE_ACADEMIA, medallaDe, type EspecialidadDetalle } from "@shared/academia";
+import { NOMBRE_ACADEMIA, medallaDe, type EspecialidadDetalle } from "@shared/academia-base";
 import { entregarTrabajo, useEspecialidad } from "@/components/academia/api";
 import { EscritaCorregida } from "@/components/academia/examen";
 import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";

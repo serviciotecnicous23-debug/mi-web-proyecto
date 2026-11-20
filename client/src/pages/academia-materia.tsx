@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
 import {
-  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, textoSegundos, tieneEscritoBreve,
+  APRUEBA, ESCRITO_BREVE, MINI_PRUEBA, NOMBRE_COMPONENTE, SUFICIENCIA, esLeccionPublica, examenDe, miniPruebasDe, parteEscrita, textoSegundos, tieneEscritoBreve,
   type MateriaDetalle, type Pesos,
-} from "@shared/academia";
+} from "@shared/academia-base";
 import {
   inscribirmeEnMateria, responderVersiculo, tiempoTexto, useMateria, versiculoEstudio, versiculoPractica, type VersiculoEstudio, type VersiculoPractica,
 } from "@/components/academia/api";
@@ -175,11 +175,10 @@ const fechaLarga = (iso: string) => new Date(iso).toLocaleDateString("es", { day
 /** La presentación de la materia: lo que se aprende, cómo es, cómo se evalúa y para quién es (antes de inscribirse). */
 function Presentacion({ d }: { d: MateriaDetalle }) {
   const m = d.materia;
-  const def = materiaPorId(m.id);
-  const medida = def ? examenDe(def) : null;
+  const medida = examenDe(m);
   const minutos = m.lecciones.reduce((a, l) => a + l.minutos, 0);
-  const nivel = m.nivel ? NIVELES[m.nivel - 1] : null;
-  const especialidad = !m.nivel && def?.especialidad ? ESPECIALIDADES.find((e) => e.id === def.especialidad) : undefined;
+  // su nivel o su especialidad vienen con la materia (la página no carga el catálogo)
+  const { nivel, especialidad } = d.lugar;
   return (
     <section className="space-y-5" data-testid="materia-presentacion">
       <div>
@@ -209,7 +208,7 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
             <p className="text-sm text-muted-foreground mt-1">{m.memoria}: lo lees varias veces y después lo armas sin mirar.</p>
           </div>
         )}
-        {def && (miniPruebasDe(def).length > 0 || tieneEscritoBreve(def)) && (
+        {(miniPruebasDe(m).length > 0 || tieneEscritoBreve(m)) && (
           <div className="glass-card p-5">
             <ListChecks className="w-6 h-6 text-orange-500" />
             <p className="font-semibold mt-2">Mini pruebas y escrito breve</p>
@@ -237,7 +236,7 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
             <div>
               <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4 text-orange-500" /> Para quién es</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Es una materia de la especialidad {especialidad.nombre}{def?.avanzada ? ", de las avanzadas" : ""}. Se puede tomar sola, como electiva, o con las{" "}
+                Es una materia de la especialidad {especialidad.nombre}{m.avanzada ? ", de las avanzadas" : ""}. Se puede tomar sola, como electiva, o con las{" "}
                 <Link href={`/academia/especialidad/${especialidad.id}`} className="underline underline-offset-2">otras materias de la especialidad</Link>
                 {d.requisitos.length ? `; para inscribirte hace falta ${d.requisitos.join(" y ")}.` : "."}
               </p>
@@ -288,14 +287,13 @@ export default function AcademiaMateria() {
   }
   const d = q.data;
   const m = d.materia;
-  const def = materiaPorId(m.id);
   const hechas = m.lecciones.filter((l) => l.completada).length;
   const siguiente = m.lecciones.find((l) => !l.completada);
-  const medida = def ? examenDe(def) : null;
+  const medida = examenDe(m);
   const ex = d.examen;
   const inscrito = !!d.inscrita;
   const verLecciones = inscrito || d.docente;
-  const primera = m.lecciones[0] && leccionPublica(m.lecciones[0].id) ? m.lecciones[0] : null;
+  const primera = m.lecciones[0] && esLeccionPublica(m.nivel, 0) ? m.lecciones[0] : null;
   const aqui = `/academia/materia/${m.id}`;
 
   const inscribir = async () => {
@@ -319,7 +317,7 @@ export default function AcademiaMateria() {
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           <Link href="/academia" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
           <p className="data-label mt-5">
-            {m.nivel ? `Nivel ${m.nivel}` : ["Especialidad", ESPECIALIDADES.find((e) => e.id === def?.especialidad)?.nombre].filter(Boolean).join(" · ")} · Materia {m.orden}
+            {m.nivel ? `Nivel ${m.nivel}` : ["Especialidad", d.lugar.especialidad?.nombre].filter(Boolean).join(" · ")} · Materia {m.orden}
           </p>
           <h1 className="heading-display font-display text-3xl md:text-5xl mt-2 mb-3" data-testid="materia-titulo">{m.titulo}</h1>
           <p className="text-lg text-muted-foreground max-w-3xl">{m.resumen}</p>

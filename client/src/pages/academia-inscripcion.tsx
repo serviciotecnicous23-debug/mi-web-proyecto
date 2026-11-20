@@ -14,7 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { loginUrl } from "@/lib/login-redirect";
-import { CODIGO_HONOR, ETAPAS, LEMA, NIVELES, NOMBRE_ACADEMIA, REGLAMENTO, type MatriculaInfo } from "@shared/academia";
+import { ETAPAS, LEMA, NIVELES_N, NOMBRE_ACADEMIA, type MatriculaInfo } from "@shared/academia-base";
+import { CODIGO_HONOR, REGLAMENTO } from "@shared/academia-reglamento";
 import {
   BAUTISMO, COMO_CONOCIO, LIMITES, PAISES, TIEMPO_FE, etiquetaDe, nombreCompleto, validarFicha,
   type ErroresFicha, type FichaInscripcion, type FichaVista, type IglesiaOpcion,
@@ -177,7 +178,7 @@ function AvisoPrivacidad() {
 
 function Bienvenida({ empezar, sinSesion, volver }: { empezar: () => void; sinSesion: boolean; volver: string | null }) {
   const tarjetas = [
-    { icono: Layers, titulo: `${NIVELES.length} niveles en ${ETAPAS.length} etapas`, texto: `${ETAPAS.map((e) => e.nombre).join(", ").replace(/, ([^,]*)$/, " y $1")}: del nuevo creyente al obrero, al maestro y al pastor.` },
+    { icono: Layers, titulo: `${NIVELES_N.length} niveles en ${ETAPAS.length} etapas`, texto: `${ETAPAS.map((e) => e.nombre).join(", ").replace(/, ([^,]*)$/, " y $1")}: del nuevo creyente al obrero, al maestro y al pastor.` },
     { icono: Smartphone, titulo: "A tu ritmo, desde el teléfono", texto: "Lecciones de 7 a 15 minutos según el nivel, con lectura, video y repaso, y un repaso del día para no olvidar. Es gratuita." },
     { icono: ClipboardCheck, titulo: "Evaluación justa y al instante", texto: "Exámenes con corrección automática, también de lo que escribes. Si una nota no te parece, se revisa." },
     { icono: Award, titulo: "Certificados verificables", texto: "Cada materia y cada nivel te dan su certificado con código QR, y recibes tu carné de estudiante." },
@@ -412,8 +413,8 @@ function PasoConfirmar({ f, iglesias, editar, nueva }: { f: FichaInscripcion; ig
   );
 }
 
-function Listo({ m, volver, nueva }: { m: MatriculaInfo; volver: string | null; nueva: boolean }) {
-  const primera = NIVELES[0].materias.find((x) => x.disponible);
+/** `primera`: la primera materia abierta del Nivel 1 (la manda el servidor con la inscripción). */
+function Listo({ m, volver, nueva, primera }: { m: MatriculaInfo; volver: string | null; nueva: boolean; primera: { id: string; titulo: string } | null }) {
   return (
     <div className="space-y-5">
       <section className="glass-card p-6 text-center border border-emerald-500/30" data-testid="inscripcion-lista">
@@ -558,7 +559,7 @@ export default function AcademiaInscripcion() {
         {!sinSesion && !d ? (
           <p className="glass-card p-5">{q.error?.message ?? "No se pudo cargar tu inscripción."}</p>
         ) : actual === "listo" && resultado ? (
-          <Listo m={resultado.matricula} volver={volver} nueva={resultado.nueva} />
+          <Listo m={resultado.matricula} volver={volver} nueva={resultado.nueva} primera={resultado.empezarPor ?? null} />
         ) : actual === null && d?.matricula && d.ficha ? (
           <div className="space-y-5" data-testid="inscripcion-hecha">
             {guardada && <p className="glass-card p-4 border border-emerald-500/30 text-sm flex items-center gap-2" role="status"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Tus datos quedaron guardados.</p>}

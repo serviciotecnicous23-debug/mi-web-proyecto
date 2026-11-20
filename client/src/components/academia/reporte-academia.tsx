@@ -3,7 +3,7 @@
 import { Link } from "wouter";
 import { Download, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia";
+import { NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia-base";
 import { enlaceReporte, useDireccionResumen, type ReporteCsv } from "@/components/academia/api";
 import { Barras, Indicador, ListaActividad, TablaMaterias, numero } from "@/components/academia/seguimiento";
 

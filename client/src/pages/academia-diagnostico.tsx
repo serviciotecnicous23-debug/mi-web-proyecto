@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { DIAGNOSTICO, NOMBRE_ACADEMIA, textoSegundos } from "@shared/academia";
+import { DIAGNOSTICO, NOMBRE_ACADEMIA, textoSegundos } from "@shared/academia-base";
 import { baseDiagnostico, useDiagnostico } from "@/components/academia/api";
 import { PantallaExamen } from "@/components/academia/examen";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";

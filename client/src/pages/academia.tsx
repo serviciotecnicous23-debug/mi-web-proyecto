@@ -15,7 +15,7 @@ import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type AcademiaEstado, type MateriaResumen } from "@shared/academia";
+import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type AcademiaEstado, type MateriaResumen } from "@shared/academia-base";
 import { useAcademiaEstado, useCertificados, useDiagnostico, useRepasoDelDia, useRepasoVersiculos } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";

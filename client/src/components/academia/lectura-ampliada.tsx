@@ -6,7 +6,7 @@ import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookMarked, Clock, ExternalLink, Loader2, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { LecturaAmpliada } from "@shared/academia";
+import type { LecturaAmpliada } from "@shared/academia-base";
 import { LIMITES, bloque, type CuadernoLista } from "@shared/cuaderno";
 import { ErrorCuaderno, crearNota, pedir } from "@/components/cuaderno/api";
 import { loginUrl } from "@/lib/login-redirect";

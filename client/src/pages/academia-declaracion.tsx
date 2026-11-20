@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { AlertTriangle, ArrowLeft, BookOpen, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
-import { NOMBRE_ACADEMIA } from "@shared/academia";
+import { NOMBRE_ACADEMIA } from "@shared/academia-base";
 import { DECLARACION_FE } from "@shared/academia-declaracion";
 import { useDeclaracion } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";

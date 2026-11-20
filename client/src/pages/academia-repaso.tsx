@@ -8,7 +8,7 @@ import { ArrowLeft, BookOpen, CheckCircle2, Clock, Sparkles, Trophy } from "luci
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
-import { CAJA_DOMINADO, NOMBRE_ACADEMIA, REPASO_VERSICULO_DIAS, type VersiculoRepaso } from "@shared/academia";
+import { CAJA_DOMINADO, NOMBRE_ACADEMIA, REPASO_VERSICULO_DIAS, type VersiculoRepaso } from "@shared/academia-base";
 import { responderRepasoVersiculo, useRepasoVersiculos, versiculoEstudio, versiculoParaRepasar, type VersiculoParaRepasar } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 
