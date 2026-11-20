@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 // Cambiar el número cuando cambie este archivo: así se borran las cachés viejas.
-const CACHE_NAME = "avivando-app-v8";
+const CACHE_NAME = "avivando-app-v9";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   "/manifest.json",
@@ -28,6 +28,10 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Los envíos (subir una foto, guardar, borrar) van directo al servidor, sin pasar por aquí: algunos navegadores
+  // (Safari en el iPhone) mandan vacío el archivo de un formulario reenviado por el service worker, y el servidor
+  // respondía «Unexpected end of form». Sin conexión tampoco hay nada que darles desde la caché.
+  if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return; // la radio, Google Fonts, etc.: el navegador decide
 
