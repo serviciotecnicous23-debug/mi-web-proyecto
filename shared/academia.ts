@@ -5131,6 +5131,62 @@ const HECHOS_A_FONDO: MateriaDef = {
   disponible: true,
 };
 
+const DANIEL_APOCALIPSIS: MateriaDef = {
+  id: "biblicos-avanzados-3",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 3,
+  titulo: "Daniel y Apocalipsis",
+  resumen: "Daniel y el Apocalipsis a fondo: la literatura apocalíptica, Daniel fiel en Babilonia, sus visiones, Cristo y las siete iglesias, las maneras de leer el Apocalipsis y la esperanza de la nueva creación.",
+  base: "Daniel 7:14; Apocalipsis 21:3-4",
+  memoria: "Daniel 7:14",
+  lecciones: lecciones("biblicos-avanzados-3", [
+    ["La literatura apocalíptica", "Daniel 7:15-16; Apocalipsis 1:1-3; Apocalipsis 1:19-20"],
+    ["Daniel: fieles en Babilonia", "Daniel 1:8; Daniel 3:17-18; Daniel 6:10"],
+    ["Las visiones de Daniel: Dios gobierna la historia", "Daniel 2:44; Daniel 7:13-14; Daniel 12:2-3"],
+    ["Apocalipsis: Cristo y sus siete iglesias", "Apocalipsis 1:17-18; Apocalipsis 2:10; Apocalipsis 3:20"],
+    ["Cómo se ha leído el Apocalipsis", "Apocalipsis 4:11; Apocalipsis 5:9-10; Apocalipsis 20:4"],
+    ["La esperanza final: la nueva creación", "Apocalipsis 19:11; Apocalipsis 21:3-4; Apocalipsis 22:20"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado lea a fondo Daniel y el Apocalipsis, más allá de su panorama en el Nivel 4 y de la escatología de Teología sistemática IV: que aprenda a leer la literatura apocalíptica, dejando que la Biblia explique sus símbolos y sin poner fechas, porque del día y la hora nadie sabe; que conozca a Daniel, llevado a Babilonia hacia el 605 antes de Cristo, y a sus amigos, que sirvieron en un imperio pagano sin negociar su fe, con las dos posturas sobre la fecha del libro, del siglo VI antes de Cristo o del 167 al 164 antes de Cristo, y su parte en arameo; que entienda las visiones de Daniel, los cuatro reinos, las setenta semanas y el hijo de hombre que recibe un reino eterno, el título que Jesús tomó para sí; que escuche a Cristo en medio de las siete iglesias de Asia, en un libro que la mayoría fecha hacia el año 95, bajo Domiciano, y otros antes del 70; que conozca las cuatro maneras de leer el Apocalipsis, la preterista, la historicista, la futurista y la idealista, y las posturas sobre el milenio y el rapto, presentadas sin escoger entre ellas, porque la postura del ministerio la dirá su declaración de fe; y que viva con la esperanza de la nueva creación, donde Dios enjugará toda lágrima. Su base es la palabra de Daniel: «su dominio es dominio eterno, que nunca pasará, y su reino uno que no será destruido» (Daniel 7:14).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la literatura apocalíptica y cómo se interpretan sus símbolos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar el ejemplo de Daniel y sus amigos a la vida en una cultura que no conoce a Dios.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar el mensaje de las visiones de Daniel y comparar las lecturas de los cuatro reinos y de las setenta semanas.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar el patrón de las cartas a las siete iglesias y aplicar una de ellas a una iglesia de hoy.", bloom: "aplicar" },
+      { id: "o5", texto: "Comparar las cuatro maneras de leer el Apocalipsis y las posturas sobre el milenio y el rapto.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar cómo la esperanza de la nueva creación transforma la vida, la adoración y la misión.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Daniel 7:14 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La literatura apocalíptica y sus símbolos, Daniel en Babilonia y las posturas sobre su fecha, los cuatro reinos, las setenta semanas y el hijo de hombre, las siete iglesias de Asia, las cuatro escuelas del Apocalipsis, las posturas sobre el milenio y el rapto, y la nueva creación.",
+      ser: "Un creyente fiel en medio de una cultura que no conoce a Dios, que espera a Cristo con esperanza y sin miedo, y que es humilde ante las posturas que no comparte.",
+      hacer: "Interpretar un símbolo con la misma Biblia, aconsejar a un joven presionado en su trabajo, enseñar Daniel 7 sin perderse en cálculos, aplicar una de las siete cartas a su iglesia, presentar las posturas sobre el milenio sin dividir y consolar a una familia con Apocalipsis 21.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Justo L. González y Catherine Gunsalus González", titulo: "Cómo leer el Apocalipsis", editorial: "CLIE" },
+        { autor: "Evis L. Carballosa", titulo: "Daniel y el reino mesiánico", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "C. Marvin Pate (ed.)", titulo: "Cuatro puntos de vista sobre el Apocalipsis", editorial: "Vida" },
+        { autor: "Darrell L. Bock (ed.)", titulo: "Tres perspectivas sobre el milenio y el más allá", editorial: "Publicaciones Faro de Gracia" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Daniel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yBO4FjCebrI", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=PgV57gK-Xow", minutos: 15 },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=DMXA-GERRzY", minutos: 15 },
+      { tipo: "video", titulo: "Cielo y Tierra", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=CJAbz0LBib4", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Apocalipsis 21, la nueva creación", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Apocalipsis&cap=21" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -6057,7 +6113,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
-    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
+    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, DANIEL_APOCALIPSIS, ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
