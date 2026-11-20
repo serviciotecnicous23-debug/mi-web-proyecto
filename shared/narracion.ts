@@ -217,6 +217,18 @@ const ABREVIATURAS: [RegExp, string][] = [
  */
 const PRONUNCIACION: [RegExp, string][] = [[/\bId y haced\b/g, "Id, y haced"]];
 
+/** Las siglas de verdad, que se dicen letra por letra: no se pasan a minúsculas. */
+const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM"]);
+/**
+ * Las palabras en mayúsculas sostenidas («YO SOY EL QUE SOY», «AL DIOS NO CONOCIDO» de la RV1960) se dicen como
+ * palabras y no como siglas. Quedan igual los números romanos y las siglas de `SIGLAS`.
+ */
+export function sinMayusculas(texto: string): string {
+  return texto.replace(/(?<!\p{L})(\p{Lu})(\p{Lu}+)(?!\p{L})/gu, (m, a: string, b: string) =>
+    /^[IVXLCDM]+$/.test(m) || SIGLAS.has(m) ? m : a + b.toLowerCase(),
+  );
+}
+
 /** Palabras femeninas comunes que siguen a un número (para decir «una vez», «veintiuna semanas»). */
 const FEMENINAS = new Set(["vez", "veces", "semana", "semanas", "hora", "horas", "noche", "noches", "persona", "personas", "cosa", "cosas", "carta", "cartas", "iglesia", "iglesias", "lección", "lecciones", "parte", "partes", "pregunta", "preguntas", "palabra", "palabras", "materia", "materias", "mujer", "mujeres", "familia", "familias"]);
 const esFemenina = (palabra: string) => FEMENINAS.has(palabra.toLowerCase()) || /^[a-záéíóúñ]+(as?|ión|iones|dad|dades)$/i.test(palabra) && !/^(día|días|mapa|mapas|programa|programas|problema|problemas|sistema|sistemas|tema|temas|idioma|idiomas|planeta|profeta|profetas|poema|poemas)$/i.test(palabra);
@@ -237,10 +249,17 @@ export function hablado(texto: string): string {
   // los paréntesis se dicen como una pausa corta
   t = t.replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ");
   // siglos y nombres con número romano
+  // un tramo de siglos («siglos I al XV»): los dos números
+  t = t.replace(/\b([Ss]iglos)\s+([IVXLC]+)(\s*(?:al|a|y|[-–])\s*)([IVXLC]+)\b/g, (m, s, r1, medio, r2) => {
+    const a = deRomano(r1);
+    const b = deRomano(r2);
+    return a && b ? `${s} ${enPalabras(a)}${/[-–]/.test(medio) ? " al " : medio}${enPalabras(b)}` : m;
+  });
   t = t.replace(/\b([Ss]iglos?)\s+([IVXLC]+)\b/g, (m, s, r) => {
     const n = deRomano(r);
     return n ? `${s} ${enPalabras(n)}` : m;
   });
+  t = sinMayusculas(t);
   // ordinales: 1.º, 2.ª, 3.er
   t = t.replace(/\b(\d{1,2})\.?\s?(º|ª|er|°)(?=\s|[.,;:])/g, (m, n, s) => {
     const k = Number(n);
@@ -309,7 +328,7 @@ function parteDeBloque(b: BloqueNarrable): { texto: string; pausa: number } {
       const texto = typeof b.texto === "string" ? sinNumerosDeVerso(b.texto) : "";
       if (!texto) return { texto: "", pausa: 0 };
       // las palabras de la RV1960 tal cual; para la voz, sin comillas ni números de verso, y los paréntesis como pausa
-      const dicho = texto.replace(/[«»“”"]/g, "").replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ").replace(/,\s*,/g, ",");
+      const dicho = sinMayusculas(texto).replace(/[«»“”"]/g, "").replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ").replace(/,\s*,/g, ",");
       return { texto: `${conPunto(encabezadoDeCita(String(b.ref)))} ${conPunto(dicho)}`, pausa: 0.9 };
     }
     case "video":
