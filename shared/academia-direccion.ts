@@ -34,6 +34,10 @@ export type MateriaReporte = {
   id: string;
   titulo: string;
   nivel: number | null;
+  /** «Nivel 1» o el nombre de la especialidad. */
+  grupo: string;
+  /** La especialidad a la que pertenece (null en las de los niveles). */
+  especialidad: string | null;
   orden: number;
   inscritos: number;
   enCurso: number;
@@ -58,8 +62,11 @@ export type DireccionResumen = {
   actividad: ActividadItem[];
   /** La academia ya está abierta para todos (o en vista previa). */
   abierta: boolean;
-  /** Respuestas escritas por revisar, pedidos de revisión y actividades por confirmar (para quien revisa). */
-  pendientes: { escritas: number; apelaciones: number; actividades: number };
+  /**
+   * Respuestas escritas por revisar, pedidos de revisión y actividades por confirmar (para quien revisa), con las
+   * actividades por tipo (`defensa` cuenta los proyectos con la defensa ya hecha, que esperan su evaluación).
+   */
+  pendientes: { escritas: number; apelaciones: number; actividades: number; porTipo?: { tipo: string; n: number }[] };
   puede: {
     exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean;
     /** La revisión del contenido: verla y dejar observaciones, aprobar materias y retirar preguntas del banco. */

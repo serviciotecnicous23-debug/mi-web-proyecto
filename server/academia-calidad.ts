@@ -13,7 +13,7 @@
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
-import { NIVELES, materiaPorId, type MateriaDef } from "@shared/academia";
+import { ESPECIALIDADES, NIVELES, materiaPorId, type MateriaDef } from "@shared/academia";
 import { ROLES_ACADEMIA, alcanceDe, type Capacidad } from "@shared/academia-permisos";
 import type {
   AprobacionContenido, ContenidoDetalle, ContenidoLista, ContenidoResumen, EscritaAnalisis, ObservacionContenido, PreguntaAnalisis,
@@ -33,9 +33,9 @@ const corto = (t: string, n = 90) => (t.length > n ? `${t.slice(0, n - 1).trimEn
 const puede = (role: string, c: Capacidad) => alcanceDe(role, c) !== "no";
 const ROLES_DIRECCION = ROLES_ACADEMIA.find((r) => r.id === "direccion")!.roles;
 
-/** Las materias con contenido (las que tienen banco), en el orden del catálogo. */
+/** Las materias con contenido (las que tienen banco), en el orden del catálogo: las de los niveles y las de las especialidades. */
 function materiasConContenido(): MateriaDef[] {
-  return NIVELES.flatMap((n) => n.materias).filter((m) => BANCOS.has(m.id));
+  return [...NIVELES.flatMap((n) => n.materias), ...ESPECIALIDADES.flatMap((e) => e.materias)].filter((m) => BANCOS.has(m.id));
 }
 
 // ---------------------------------------------------------------- las retiradas (la guarda está en academia-banco.ts)
@@ -131,6 +131,7 @@ export async function listaDeContenido(): Promise<ContenidoLista> {
       id: m.id,
       titulo: m.titulo,
       nivel: m.nivel,
+      grupo: m.nivel ? `Nivel ${m.nivel}` : ESPECIALIDADES.find((e) => e.id === m.especialidad)?.nombre ?? "Especialidad",
       disponible: m.disponible,
       lecciones: m.lecciones.length,
       preguntas: banco.final.length,

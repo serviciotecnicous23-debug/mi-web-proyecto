@@ -458,7 +458,7 @@ export function ActividadesPorConfirmar({ ajeno }: { ajeno: (userId: number) => 
   const { pendientes, recientes } = q.data;
   return (
     <>
-      <section className="space-y-3" data-testid="actividades-por-confirmar">
+      <section id="actividades-por-confirmar" className="space-y-3 scroll-mt-24" data-testid="actividades-por-confirmar">
         <h3 className="font-display text-xl font-bold">Actividades por confirmar ({pendientes.length})</h3>
         <p className="text-sm text-muted-foreground">
           Lo que piden los niveles además de sus materias: en el Nivel 2, las conversaciones de evangelismo y el servicio (cuenta cuando lo confirmas y se
