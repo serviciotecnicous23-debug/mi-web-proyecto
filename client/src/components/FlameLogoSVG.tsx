@@ -10,7 +10,7 @@
  * timing so the layers feel alive. Respects prefers-reduced-motion.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import gsap from 'gsap';
 
 interface FlameLogoSVGProps {
@@ -26,6 +26,14 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
   const innerRef = useRef<SVGPathElement>(null);
   const coreRef  = useRef<SVGCircleElement>(null);
   const glowRef  = useRef<SVGPathElement>(null);   // duplicate outer path for glow layer
+
+  // El logo se dibuja varias veces en la misma página (menú, menú del teléfono, pie):
+  // cada uno con sus propios identificadores de degradado y brillo, sin repetirlos.
+  const id = useId();
+  const outerGrad = `af-outer-grad-${id}`;
+  const innerGrad = `af-inner-grad-${id}`;
+  const outerGlow = `af-outer-glow-${id}`;
+  const coreGlow  = `af-core-glow-${id}`;
 
   useEffect(() => {
     if (!animate) return;
@@ -93,7 +101,7 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
     >
       <defs>
         {/* ── Outer flame gradient: base red → amber → gold tip ── */}
-        <linearGradient id="af-outer-grad" x1="30%" y1="100%" x2="20%" y2="0%">
+        <linearGradient id={outerGrad} x1="30%" y1="100%" x2="20%" y2="0%">
           <stop offset="0%"   stopColor="#b91c1c" />   {/* deep crimson  */}
           <stop offset="30%"  stopColor="#ea580c" />   {/* burnt orange  */}
           <stop offset="65%"  stopColor="#f97316" />   {/* vivid orange  */}
@@ -101,14 +109,14 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
         </linearGradient>
 
         {/* ── Inner flame gradient: orange → ivory ── */}
-        <linearGradient id="af-inner-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+        <linearGradient id={innerGrad} x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%"   stopColor="#fb923c" />
           <stop offset="60%"  stopColor="#fde68a" />
           <stop offset="100%" stopColor="#fffbeb" />
         </linearGradient>
 
         {/* ── Blurred glow layer behind the outer flame ── */}
-        <filter id="af-outer-glow" x="-60%" y="-40%" width="220%" height="200%">
+        <filter id={outerGlow} x="-60%" y="-40%" width="220%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blurred" />
           <feColorMatrix
             in="blurred" type="matrix"
@@ -122,7 +130,7 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
         </filter>
 
         {/* ── Crisp inner-core glow ── */}
-        <filter id="af-core-glow" x="-200%" y="-200%" width="500%" height="500%">
+        <filter id={coreGlow} x="-200%" y="-200%" width="500%" height="500%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b" />
           <feMerge>
             <feMergeNode in="b" />
@@ -138,8 +146,8 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
       <path
         ref={glowRef}
         d="M20,3 C22.5,8 31,15 31,25 C31,36.5 26,45 20,48 C14,45 9,36.5 9,25 C9,15 17.5,8 20,3 Z"
-        fill="url(#af-outer-grad)"
-        filter="url(#af-outer-glow)"
+        fill={`url(#${outerGrad})`}
+        filter={`url(#${outerGlow})`}
         opacity="0.18"
       />
 
@@ -147,14 +155,14 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
       <path
         ref={outerRef}
         d="M20,3 C22.5,8 31,15 31,25 C31,36.5 26,45 20,48 C14,45 9,36.5 9,25 C9,15 17.5,8 20,3 Z"
-        fill="url(#af-outer-grad)"
+        fill={`url(#${outerGrad})`}
       />
 
       {/* ── Inner lighter flame ─────────────────────────────────────── */}
       <path
         ref={innerRef}
         d="M20,15 C21.5,19.5 25.5,23 25.5,29.5 C25.5,35.5 23,40 20,42 C17,40 14.5,35.5 14.5,29.5 C14.5,23 18.5,19.5 20,15 Z"
-        fill="url(#af-inner-grad)"
+        fill={`url(#${innerGrad})`}
         opacity="0.8"
       />
 
@@ -166,7 +174,7 @@ export function FlameLogoSVG({ className = 'w-8 h-8', animate = true }: FlameLog
         r="3"
         fill="white"
         opacity="0.75"
-        filter="url(#af-core-glow)"
+        filter={`url(#${coreGlow})`}
       />
     </svg>
   );

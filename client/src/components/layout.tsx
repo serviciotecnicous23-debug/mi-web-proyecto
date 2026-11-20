@@ -1053,6 +1053,7 @@ function EmailVerifyBanner() {
             size="sm"
             className="h-7 text-xs text-amber-600 hover:text-amber-800"
             onClick={() => setDismissed(true)}
+            aria-label="Cerrar el aviso"
           >
             <X className="w-3 h-3" />
           </Button>

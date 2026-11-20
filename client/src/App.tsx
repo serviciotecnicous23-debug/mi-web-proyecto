@@ -1,9 +1,9 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { RadioDock } from "@/components/RadioDock";
@@ -23,6 +23,8 @@ function MediaDockSlot() {
 }
 import { PageTransition } from "@/components/PageTransition";
 import { GlassCursor } from "@/components/GlassCursor";
+import { Layout } from "@/components/layout";
+import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import { Loader2 } from "lucide-react";
@@ -114,6 +116,8 @@ function PageFallback() {
 
 function Router() {
   return (
+    // Si una página falla, el aviso sale con el menú; la radio y el menú de abajo siguen funcionando.
+    <AtrapaErrores aviso={ErrorDePagina}>
     <Suspense fallback={<PageFallback />}>
     <Switch>
       <Route path="/" component={Home} />
@@ -206,65 +210,121 @@ function Router() {
       <Route component={NotFound} />
     </Switch>
     </Suspense>
+    </AtrapaErrores>
   );
 }
 
-class ErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
+type AvisoDeError = ComponentType<{ error: Error; reintentar: () => void }>;
+type PropsErrorBoundary = { children: ReactNode; ruta: string; aviso: AvisoDeError };
+
+/**
+ * Muestra «Algo salió mal» si lo que envuelve falla, y se quita sola al cambiar de ruta
+ * (antes quedaba puesta en todas las páginas hasta recargar).
+ */
+class ErrorBoundary extends Component<PropsErrorBoundary, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: unknown) {
+    // Lo lanzado puede no ser un Error (null, un texto…): igual hay que mostrar el aviso.
+    if (error instanceof Error) return { error };
+    const mensaje = (error as { message?: unknown } | null)?.message;
+    return { error: new Error(typeof error === "string" ? error : typeof mensaje === "string" ? mensaje : "") };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Error en la aplicacion:", error, errorInfo);
-    // Report to Sentry
+  componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+    console.error("Error en la aplicación:", error, errorInfo);
     Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
-          <h1 style={{ color: "#e53e3e", fontSize: "1.5rem", marginBottom: "1rem" }}>
-            Algo salió mal
-          </h1>
-          <p style={{ color: "#666", marginBottom: "1rem" }}>
-            {this.state.error?.message || "Error desconocido"}
-          </p>
-          <button
-            onClick={() => {
-              this.setState({ hasError: false, error: null });
-              window.location.href = "/";
-            }}
-            style={{
-              padding: "0.5rem 1.5rem",
-              background: "#e67e22",
-              color: "white",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-              fontSize: "1rem",
-            }}
-          >
-            Volver al Inicio
-          </button>
-        </div>
-      );
+  componentDidUpdate(antes: PropsErrorBoundary, estadoAntes: { error: Error | null }) {
+    // Solo si el aviso ya estaba puesto: si la página nueva es la que acaba de fallar, no se reintenta en seguida.
+    if (this.state.error && estadoAntes.error && antes.ruta !== this.props.ruta) {
+      this.setState({ error: null });
     }
+  }
+
+  reintentar = () => this.setState({ error: null });
+
+  render() {
+    const Aviso = this.props.aviso;
+    if (this.state.error) return <Aviso error={this.state.error} reintentar={this.reintentar} />;
     return this.props.children;
   }
 }
 
+/** Lee la ruta aquí y no en App, para no volver a dibujar toda la app en cada cambio de página. */
+function AtrapaErrores({ aviso, children }: { aviso: AvisoDeError; children: ReactNode }) {
+  const [ruta] = useLocation();
+  return (
+    <ErrorBoundary ruta={ruta} aviso={aviso}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+/** Una página que falla: el aviso va con el menú, para seguir a otra parte sin recargar. */
+function ErrorDePagina({ error, reintentar }: { error: Error; reintentar: () => void }) {
+  const [, navegar] = useLocation();
+  return (
+    <Layout>
+      <div className="mx-auto max-w-xl px-4 py-16 text-center" role="alert" data-testid="pantalla-error">
+        <h1 className="mb-3 text-2xl font-bold text-red-600 dark:text-red-400">Algo salió mal</h1>
+        <p className="mb-2 text-muted-foreground">
+          Esta página tuvo un problema. Puedes ir a otra desde el menú, volver al inicio o recargarla.
+        </p>
+        <p className="mb-6 text-sm text-muted-foreground break-words">{error.message || "Error desconocido"}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            onClick={() => {
+              reintentar();
+              navegar("/");
+            }}
+            data-testid="boton-error-inicio"
+          >
+            Volver al inicio
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()} data-testid="boton-error-recargar">
+            Recargar la página
+          </Button>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+/** Si falla algo de fuera de las páginas (el tema, la radio, el menú de abajo…): sin menú, y al inicio recargando. */
+function ErrorGeneral({ error }: { error: Error; reintentar: () => void }) {
+  return (
+    <div role="alert" style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
+      <h1 style={{ color: "#e53e3e", fontSize: "1.5rem", marginBottom: "1rem" }}>
+        Algo salió mal
+      </h1>
+      <p style={{ color: "#666", marginBottom: "1rem" }}>
+        {error.message || "Error desconocido"}
+      </p>
+      <button
+        onClick={() => {
+          window.location.href = "/";
+        }}
+        style={{
+          padding: "0.5rem 1.5rem",
+          background: "#e67e22",
+          color: "white",
+          border: "none",
+          borderRadius: "0.375rem",
+          cursor: "pointer",
+          fontSize: "1rem",
+        }}
+      >
+        Volver al inicio
+      </button>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <ErrorBoundary>
+    <AtrapaErrores aviso={ErrorGeneral}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
@@ -280,7 +340,7 @@ function App() {
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </AtrapaErrores>
   );
 }
 
