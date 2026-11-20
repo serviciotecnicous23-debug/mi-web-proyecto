@@ -20,3 +20,15 @@ test("el plan del panel tiene las materias de los niveles y de las especialidade
   // los niveles van primero, en el orden del catálogo
   assert.deepEqual(plan.slice(0, NIVELES[0].materias.length).map((x) => x.m.id), NIVELES[0].materias.map((m) => m.id));
 });
+
+test("el resumen de las alertas de un alumno para la lista: cuántas de cada prioridad y sus títulos", async () => {
+  const { resumenAlertas } = await import("./academia-alertas");
+  assert.equal(resumenAlertas(undefined), undefined);
+  assert.equal(resumenAlertas([]), undefined);
+  const r = resumenAlertas([
+    { clave: "inactivo", gravedad: "alta", titulo: "Lleva 20 días sin estudiar", detalle: "" },
+    { clave: "atorado", gravedad: "media", titulo: "Se detuvo en la lección «Génesis»", detalle: "" },
+    { clave: "promedio", gravedad: "media", titulo: "Promedio de 60", detalle: "" },
+  ]);
+  assert.deepEqual(r, { alta: 1, media: 2, titulos: ["Lleva 20 días sin estudiar", "Se detuvo en la lección «Génesis»", "Promedio de 60"] });
+});

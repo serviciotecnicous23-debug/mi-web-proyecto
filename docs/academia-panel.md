@@ -84,6 +84,17 @@ guarda; las reglas están en `shared/academia-perfil.ts`, con sus pruebas. Tiene
 - El administrador ve todo.
 - El director, los maestros, los obreros y las iglesias aliadas (cada iglesia, solo sus alumnos) ven el avance, las notas, el aprendizaje y las alertas. No ven tres cosas: el texto de las preguntas que el alumno falla, sus reflexiones (que son personales) y la bitácora. Tampoco pueden anotar.
 
+## Alertas y tendencias en el panel (parte 3)
+
+`server/academia-alertas.ts` calcula las alertas de todos los alumnos a la vez, con pocas consultas y las mismas reglas
+del perfil (`alertasDe`). Quedan fuera las de la meta semanal y las de solo saber, que se ven en el perfil de cada uno.
+
+- **Resumen:**
+  - «Necesitan ayuda»: quienes tienen alertas que piden actuar o mirar, los más urgentes primero, con «Ver en la lista». Reemplaza a «Se detuvieron».
+  - «Las últimas 12 semanas»: las inscripciones, las lecciones completadas, los minutos de estudio y las materias aprobadas de cada semana.
+- **Alumnos:** la columna «Alertas», que dice cuántas tiene de cada prioridad (al pasar el puntero, cuáles son), y el filtro «Solo los que necesitan ayuda».
+- **Cada materia:** «Hasta dónde llegan» muestra cuántos inscritos completaron cada lección. Marca la lección donde más se detienen, si dos o más no la completaron.
+
 ## El plan por partes
 
 1. **Lo que no funcionaba:** la tabla de arriba.

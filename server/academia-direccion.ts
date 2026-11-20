@@ -18,6 +18,7 @@ import { academiaAbierta, accesoDe, claveFinal, frenar, inscritoDe } from "./aca
 import { fichaDe } from "./academia-inscripcion";
 import { aCsv } from "./academia-csv";
 import { archivoDelExpediente, enviarPdf, expedientePdf } from "./academia-pdf";
+import { alertasEnLote, embudoDe, resumenAlertas, tendenciasDe } from "./academia-alertas";
 
 type Permiso = { userId: number; role: string; alcance: Alcance; iglesiaId: number | null };
 
@@ -331,6 +332,19 @@ async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]>
   };
 }
 
+/** Quienes necesitan ayuda: los alumnos con alertas que piden actuar o mirar, los más urgentes primero (hasta 40). */
+async function ayudaDe(filas: AlumnoFila[]): Promise<DireccionResumen["ayuda"]> {
+  const alertas = await alertasEnLote(filas);
+  return filas
+    .filter((f) => alertas.has(f.userId))
+    .map((f) => ({ userId: f.userId, nombre: f.nombre, matricula: f.matricula, iglesia: f.iglesia, alertas: alertas.get(f.userId)! }))
+    .sort((a, b) => {
+      const altas = (x: typeof a) => x.alertas.filter((y) => y.gravedad === "alta").length;
+      return altas(b) - altas(a) || b.alertas.length - a.alertas.length || a.nombre.localeCompare(b.nombre, "es");
+    })
+    .slice(0, 40);
+}
+
 async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: string } | null> {
   if (!id) return null;
   const { rows } = await pool.query(`SELECT name FROM ministry_churches WHERE id = $1`, [id]);
@@ -371,6 +385,8 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         paises: contar(filas.map((f) => f.pais)),
         iglesias: contar(filas.map((f) => f.iglesia || "Sin iglesia")),
         detenidos: filas.filter((f) => f.enCurso.length > 0 && ahora - Date.parse(f.ultima) >= DIAS_DETENIDO * 86_400_000).slice(0, 50),
+        ayuda: await ayudaDe(filas),
+        tendencias: await tendenciasDe(ids),
         actividad: await actividadDe(ids, 40),
         abierta: await academiaAbierta(),
         pendientes: await pendientesDe(p),
@@ -408,7 +424,10 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       if (!p) return;
       const contacto = puede(p, "contacto");
       res.setHeader("Cache-Control", "no-store");
-      res.json({ alumnos: await filasDe(p, contacto), puede: { exportar: puede(p, "exportar"), contacto } });
+      const filas = await filasDe(p, contacto);
+      const alertas = await alertasEnLote(filas);
+      for (const f of filas) f.alertas = resumenAlertas(alertas.get(f.userId));
+      res.json({ alumnos: filas, puede: { exportar: puede(p, "exportar"), contacto } });
     } catch (err) {
       console.error("[academia] dirección, alumnos:", err);
       res.sendStatus(500);
@@ -454,7 +473,12 @@ export function registerAcademiaDireccionRoutes(app: Express) {
           return avance ? [{ ...f, avance }] : [];
         })
         .sort((a, b) => b.avance.inscrita.localeCompare(a.avance.inscrita));
-      const out: MateriaSeguimiento = { materia: reporteMaterias(avances).find((x) => x.id === m.id)!, alumnos, puede: { exportar: puede(p, "exportar") } };
+      const out: MateriaSeguimiento = {
+        materia: reporteMaterias(avances).find((x) => x.id === m.id)!,
+        alumnos,
+        puede: { exportar: puede(p, "exportar") },
+        embudo: await embudoDe(m.id, alumnos.map((a) => a.userId)),
+      };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
     } catch (err) {
