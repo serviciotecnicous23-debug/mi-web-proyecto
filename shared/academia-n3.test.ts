@@ -139,14 +139,13 @@ test("la diagnóstica mide los Niveles 1 y 2; a quien ya los completó le sugier
   assert.equal(s.empezar?.materiaId, "n3-hermeneutica");
 });
 
-test("los requisitos del reglamento que todavía no se registran (Niveles 3 a 5) son los de cada nivel y quedan pendientes", () => {
-  for (const n of [3, 4, 5] as const) {
+test("los requisitos del reglamento que todavía no se registran (Niveles 4 y 5) son los de cada nivel y quedan pendientes", () => {
+  for (const n of [4, 5] as const) {
     const nv = NIVELES.find((x) => x.n === n)!;
     const faltan = REQUISITOS_POR_HACER[n]!;
     assert.ok(faltan.length > 0, `Nivel ${n}`);
     for (const r of faltan) assert.ok(nv.requisitos.includes(r.texto), `Nivel ${n}: «${r.texto}» está en su reglamento`);
   }
-  // los Niveles 1 y 2 ya registran todos sus requisitos
-  assert.equal(REQUISITOS_POR_HACER[1], undefined);
-  assert.equal(REQUISITOS_POR_HACER[2], undefined);
+  // los Niveles 1 a 3 ya registran todos sus requisitos (los del Nivel 3, como actividades del nivel)
+  for (const n of [1, 2, 3] as const) assert.equal(REQUISITOS_POR_HACER[n], undefined, `Nivel ${n}`);
 });

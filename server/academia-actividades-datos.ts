@@ -4,7 +4,7 @@
  * sin importar las rutas, que a su vez cierran el nivel.
  */
 import { pool } from "./db";
-import { ACTIVIDADES_NIVEL, resumirActividades, type ActividadVista, type ResumenActividades } from "@shared/academia-actividades";
+import { ACTIVIDADES_NIVEL, PASOS_CONSOLIDACION, resumirActividades, type ActividadVista, type ResumenActividades } from "@shared/academia-actividades";
 import { diaTexas } from "./academia-comun";
 
 export const ACTIVIDADES_SQL = `
@@ -28,9 +28,21 @@ CREATE TABLE IF NOT EXISTS academia_actividades (
 );
 CREATE INDEX IF NOT EXISTS academia_actividades_alumno ON academia_actividades (user_id, nivel);
 CREATE INDEX IF NOT EXISTS academia_actividades_estado ON academia_actividades (estado, created_at);
+-- el Nivel 3: las horas de la práctica, el pasaje y el enlace de la enseñanza grabada y los pasos de la consolidación
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS horas numeric(4,1);
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS titulo text;
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS enlace text;
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS pasos jsonb;
 `;
 
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
+const PASOS = new Set<string>(PASOS_CONSOLIDACION.map((p) => p.id));
+
+/** Los pasos guardados (jsonb): solo los del plan, en su orden. */
+function pasosDe(v: unknown): ActividadVista["pasos"] {
+  const lista = typeof v === "string" ? (() => { try { return JSON.parse(v); } catch { return null; } })() : v;
+  return Array.isArray(lista) ? (lista.filter((p) => typeof p === "string" && PASOS.has(p)) as ActividadVista["pasos"]) : null;
+}
 
 export function actividadDe(r: any): ActividadVista {
   return {
@@ -43,6 +55,10 @@ export function actividadDe(r: any): ActividadVista {
     resultado: r.resultado ?? null,
     lugar: r.lugar ?? null,
     lider: r.lider ?? null,
+    horas: r.horas == null ? null : Number(r.horas),
+    titulo: r.titulo ?? null,
+    enlace: r.enlace ?? null,
+    pasos: pasosDe(r.pasos),
     detalle: String(r.detalle),
     estado: r.estado,
     motivo: r.motivo ?? null,
