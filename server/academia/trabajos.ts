@@ -291,6 +291,47 @@ const TRABAJO_COMUNICACIONES: ClaveEscrita = {
     "Cada trimestre evaluaremos el plan con el pastor: cuántas conversaciones empezaron en las redes y cuántas personas llegaron a la iglesia, cómo crecieron los oyentes de la radio, cuántas familias siguen la transmisión y cuántos testimonios grabamos, si los anuncios se entienden y si las cuentas y las personas están protegidas. Mediremos con humildad, porque Dios da el crecimiento (1 Corintios 3:6), y cambiaremos lo que haga falta.",
 };
 
+const TRABAJO_LIDERAZGO: ClaveEscrita = {
+  id: "trabajo-liderazgo-administracion",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para poner en orden la administración de tu iglesia que use lo aprendido en las cinco materias de la especialidad: cómo ordenará los registros, las reuniones, el templo y los riesgos; cómo manejará las finanzas con transparencia; cómo formará y cuidará los equipos y los voluntarios; cómo planeará y llevará sus proyectos; y cómo cumplirá el marco legal. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "administracion", peso: 15, texto: "Ordenar la administración: los registros y el archivo, las reuniones y las actas, el templo, los riesgos y el manual.", formas: ["registros", "archivo", "actas", "acta", "agenda", "quorum", "inventario", "mantenimiento", "manual"] },
+    { id: "finanzas", peso: 20, texto: "Manejar las finanzas con transparencia: el presupuesto, el conteo de la ofrenda entre dos, los recibos y el informe a la iglesia.", formas: ["presupuesto", "ofrenda*", "conteo", "recibo*", "auditoria", "tesorer*", "informe financiero", "finanzas"] },
+    { id: "equipos", peso: 20, texto: "Formar y cuidar los equipos y los voluntarios: los dones, la tarea por escrito, la capacitación, la revisión de antecedentes y el reconocimiento.", formas: ["voluntari*", "equipo*", "dones", "capacit*", "antecedentes"] },
+    { id: "proyectos", peso: 15, texto: "Planear con fe y llevar los proyectos: la misión, la visión, las metas, el cronograma, los riesgos y el presupuesto del proyecto.", formas: ["vision", "mision", "metas", "smart", "cronograma", "proyecto*", "plan del ano", "planificacion"] },
+    { id: "legal", peso: 20, texto: "Cumplir el marco legal: los estatutos y la corporación, las elecciones, las exenciones, los empleados, el reporte del abuso y la propiedad.", formas: ["estatutos", "corporacion", "exencion*", "501", "johnson", "24 horas", "sospecha de abuso", "zonificacion", "marco legal", "i 9", "abogado", "rluipa"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Hechos 6:2-4", "1 Corintios 12:28", "Tito 1:5", "Esdras 2:62", "Jeremías 32:14", "Esdras 8:33-34", "Hechos 15:6", "Hechos 15:22",
+    "Hechos 15:28", "2 Reyes 12:5", "2 Crónicas 24:13", "Proverbios 27:23", "Proverbios 22:3", "Lucas 14:28-30", "Eclesiastés 11:2",
+    "Éxodo 18:17-21", "1 Corintios 14:33", "Proverbios 24:3", "2 Corintios 8:20-21", "Lucas 16:10-11", "1 Corintios 4:2", "Proverbios 21:5",
+    "Proverbios 22:7", "2 Reyes 12:10-11", "Deuteronomio 19:15", "Marcos 12:41-44", "2 Corintios 9:7", "1 Corintios 16:2-3",
+    "Nehemías 13:13", "Lucas 16:2", "Romanos 13:8", "1 Timoteo 5:17-18", "Gálatas 6:6", "Lucas 10:7", "1 Corintios 12:18-21",
+    "1 Pedro 4:10", "Romanos 12:6-8", "Éxodo 35:21", "Marcos 3:14", "1 Timoteo 3:10", "1 Timoteo 5:22", "Proverbios 20:6", "Marcos 6:7",
+    "Lucas 10:17", "Hebreos 10:24", "Romanos 16:1-4", "Filipenses 2:29-30", "Tito 3:1", "Romanos 13:1", "Proverbios 16:9",
+    "Santiago 4:13-15", "Mateo 28:19-20", "Habacuc 2:2", "Nehemías 2:4-5", "Nehemías 2:17-18", "Filipenses 3:13-14", "1 Corintios 9:26",
+    "Nehemías 3:1", "Nehemías 6:15", "Nehemías 4:16", "Proverbios 24:6", "Lamentaciones 3:40", "2 Corintios 13:5", "Hechos 14:27",
+    "Mateo 22:21", "Hechos 5:29", "1 Timoteo 2:1-2", "1 Corintios 14:40", "Proverbios 11:14", "Romanos 12:17", "Romanos 13:7",
+    "Mateo 17:27", "Marcos 12:17", "Colosenses 4:1", "Levítico 19:13", "Santiago 5:4", "Deuteronomio 22:8", "Lucas 17:1-2",
+    "Jeremías 32:9-10", "Génesis 23:16",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para poner en orden la administración de nuestra iglesia. Su base es la palabra de los Proverbios: con sabiduría se edificará la casa, y con prudencia se afirmará (Proverbios 24:3). Un equipo de administración, con el aval del pastor, se reunirá cada mes para orar, planear y revisar lo hecho, para que el pastor persista en la oración y en el ministerio de la palabra (Hechos 6:4). " +
+    "Primero, la administración. Haremos el diagnóstico de la iglesia, las personas, los registros, el edificio, el dinero, el calendario y la comunicación, y pondremos un responsable para cada área. Ordenaremos los registros en un archivo con llave y con una copia digital, y los guardaremos el tiempo que pide la ley, como los cuatro años de la nómina, porque los que no hallaron su registro quedaron fuera del sacerdocio (Esdras 2:62). Cada reunión tendrá su agenda, su quórum y su acta, como el concilio de Jerusalén decidió con toda la iglesia y lo puso por escrito (Hechos 15:22). Tendremos el plan de mantenimiento del templo, el inventario de los bienes y la revisión de los riesgos y de los seguros, y escribiremos el manual de la iglesia con sus procesos, para que todo se haga decentemente y con orden (1 Corintios 14:40). " +
+    "Segundo, las finanzas. Haremos el presupuesto del año con la iglesia y lo seguiremos cada mes. La ofrenda la contarán siempre dos personas sin parentesco, que firmarán la hoja de conteo, y el que cuenta no será el que deposita, porque todo se confirma por el testimonio de dos o tres testigos (Deuteronomio 19:15). Daremos a cada donante su recibo, como pide el IRS para las donaciones de 250 dólares o más, y un informe claro a la iglesia cada trimestre, con una revisión de las cuentas al final del año, procurando hacer las cosas honradamente delante del Señor y delante de los hombres (2 Corintios 8:21). Pagaremos a tiempo al pastor y a los empleados, porque el obrero es digno de su salario (Lucas 10:7), y no tomaremos deudas que no podamos pagar, porque el que toma prestado es siervo del que presta (Proverbios 22:7). " +
+    "Tercero, los equipos y los voluntarios. Ayudaremos a cada hermano a descubrir sus dones y a servir con ellos, como buenos administradores de la multiforme gracia de Dios (1 Pedro 4:10). Cada ministerio tendrá su equipo, con la descripción de cada tarea por escrito, y los nuevos serán sometidos a prueba primero (1 Timoteo 3:10): una entrevista, las referencias y, para los que sirven con niños, la revisión de antecedentes y la capacitación en la protección de los menores. Capacitaremos a los voluntarios cada trimestre, resolveremos los conflictos con la verdad y con amor, y reconoceremos su trabajo en público, como Pablo saludaba a sus colaboradores (Romanos 16:3). Nadie cargará solo con todo, porque Moisés aprendió que el trabajo era demasiado pesado para uno solo (Éxodo 18:18). " +
+    "Cuarto, los proyectos. En un retiro de planificación, con oración y con humildad, porque el corazón del hombre piensa su camino, pero Jehová endereza sus pasos (Proverbios 16:9), escribiremos la misión, la visión y los valores de cada ministerio, alineados con la Gran Comisión (Mateo 28:19-20), y la visión quedará escrita y clara, como Dios le pidió a Habacuc (Habacuc 2:2). Pondremos pocas metas SMART en el plan del año y llevaremos cada proyecto, como la remodelación del salón, por sus etapas: el propósito y el alcance, el cronograma, la lista de riesgos con su plan B y el presupuesto con un margen, calculando los gastos antes de edificar (Lucas 14:28). Al cerrar cada proyecto lo evaluaremos, guardaremos lo aprendido y contaremos a la iglesia lo que Dios hizo (Hechos 14:27). " +
+    "Quinto, el marco legal. Revisaremos los estatutos con un abogado que conozca a las iglesias y confirmaremos que somos una corporación sin fines de lucro, con nuestro EIN y con la propiedad y las cuentas a nombre de la iglesia. Escribiremos una política para las elecciones: la iglesia no apoya ni ataca a candidatos, pero ora por todas las autoridades (1 Timoteo 2:1-2) y anima a votar. Pondremos en regla las exenciones, la 501(c)(3), la de franquicia y ventas con el AP-209 y la de la propiedad, y cumpliremos la nómina, dando a César lo que es de César (Mateo 22:21). Cada empleado tendrá por escrito su puesto y su salario, con el Formulario I-9, porque hacemos lo justo y recto (Colosenses 4:1). Y enseñaremos a todos a reportar la sospecha de abuso de un menor: toda persona de inmediato, y los profesionales a más tardar en 24 horas, porque ay de aquel por quien vienen los tropiezos (Lucas 17:1). " +
+    "Cada trimestre evaluaremos el plan con el pastor y el consejo: si los registros y las actas están al día, si el presupuesto se cumple y la iglesia recibió su informe, cuántos voluntarios sirven con su capacitación y su revisión, cómo van los proyectos del año y si los papeles legales están en regla. Nos examinaremos con honestidad (Lamentaciones 3:40), cambiaremos lo que haga falta y daremos gracias a Dios por lo que él hizo.",
+};
+
 /** El trabajo final de cada especialidad que ya lo tiene. */
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
@@ -302,4 +343,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["familia-consejeria", TRABAJO_FAMILIA],
   ["capellania", TRABAJO_CAPELLANIA],
   ["comunicaciones", TRABAJO_COMUNICACIONES],
+  ["liderazgo-administracion", TRABAJO_LIDERAZGO],
 ]);
