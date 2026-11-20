@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { sql } from "drizzle-orm";
 import { db } from "./db";
+import { borrarArchivosExternos } from "./file-storage";
 
 // "Eliminar mi cuenta" (Perfil). Lo piden las tiendas de apps y es un derecho de cada persona.
 //
@@ -87,6 +88,8 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
 /** Borra los datos personales de la cuenta y la deja anónima. Todo o nada (transacción). */
 export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible: string): Promise<void> {
   const alias = `eliminada-${userId}-${randomBytes(4).toString("hex")}`;
+  // los archivos del almacenamiento S3/R2 que se van con la cuenta: se borran al terminar (fuera de la transacción)
+  let externos: string[] = [];
   await db.transaction(async (tx) => {
     // Archivos que subió para sus publicaciones de Comunidad, su foto de perfil y la foto de su carné de la academia
     // (guardados en la base, /files/...): se borran, salvo que otra persona use el mismo archivo.
@@ -103,6 +106,23 @@ export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible:
               AND (p.file_url LIKE '/files/' || f.id || '/%' OR p.image_url LIKE '/files/' || f.id || '/%')
           )
       `);
+    }
+    // Los mismos archivos si están en el almacenamiento S3/R2 (con las mismas reglas): se quita su anotación aquí y el
+    // archivo se borra al terminar la transacción.
+    const hayExternos = await tx.execute(sql`SELECT to_regclass('public.archivos_externos') AS t`);
+    if ((hayExternos as unknown as { rows?: Array<{ t: string | null }> }).rows?.[0]?.t) {
+      const borrados = await tx.execute(sql`
+        DELETE FROM archivos_externos e
+        WHERE e.owner_id = ${userId}
+          AND (e.folder IN ('comunidad', 'avatars', 'chat', 'academia')
+               OR EXISTS (SELECT 1 FROM users u WHERE u.id = ${userId} AND u.avatar_url = e.url))
+          AND NOT EXISTS (
+            SELECT 1 FROM member_posts p
+            WHERE p.user_id <> ${userId} AND (p.file_url = e.url OR p.image_url = e.url)
+          )
+        RETURNING e.clave
+      `);
+      externos = ((borrados as unknown as { rows?: Array<{ clave: string }> }).rows ?? []).map((r) => String(r.clave));
     }
     for (const [tabla, condicion] of BORRADOS) {
       // Una base vieja puede no tener alguna tabla todavía: se salta en lugar de fallar.
@@ -129,4 +149,5 @@ export async function eliminarCuentaPropia(userId: number, hashDeClaveImposible:
       WHERE id = ${userId}
     `);
   });
+  if (externos.length) await borrarArchivosExternos(externos);
 }

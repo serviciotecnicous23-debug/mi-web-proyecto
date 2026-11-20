@@ -12,7 +12,7 @@ import fs from "node:fs";
 import { randomBytes } from "node:crypto";
 import sharp from "sharp";
 import { rateLimit } from "express-rate-limit";
-import { uploadFile, isS3Configured } from "./file-storage";
+import { uploadFile, isS3Configured, limiteExternoBytes, usoExterno } from "./file-storage";
 import { StorageFullError, serveStoredFile, storageStatus, safeFileName } from "./file-store";
 import { getLinkPreview, getLinkPreviews, isValidPreviewUrl } from "./link-preview";
 import { fileExtension, fileTypeOf, FILE_TYPE_LABELS, type FileType } from "@shared/media";
@@ -21,7 +21,7 @@ import { chatQuotaExceeded } from "./chat";
 const MB = 1024 * 1024;
 const TMP_DIR = path.join(os.tmpdir(), "avivando-subidas");
 
-/** Peso máximo por tipo. Sin S3/R2 los videos se limitan más: van dentro de la base. */
+/** Peso máximo por tipo. Sin S3/R2 los videos se limitan más: van dentro de la base (y con R2, a 100 MB: el espacio gratis es de 10 GB). */
 export function uploadLimitFor(type: FileType): number {
   switch (type) {
     case "image":
@@ -29,7 +29,7 @@ export function uploadLimitFor(type: FileType): number {
     case "audio":
       return 80 * MB;
     case "video":
-      return (isS3Configured ? 300 : 80) * MB;
+      return (isS3Configured ? 100 : 80) * MB;
     case "powerpoint":
       return 60 * MB;
     case "text":
@@ -158,8 +158,8 @@ export async function handleFileUpload(req: Request, res: Response, field = "fil
       }
     }
     const folder = String((req.query.carpeta as string) || "archivos").replace(/[^a-z0-9-]/gi, "").slice(0, 30) || "archivos";
-    // Chat: tope de espacio por persona cuando los archivos van dentro de la base (sin costo extra).
-    if (folder === "chat" && !isS3Configured) {
+    // Chat: tope de espacio por persona (dentro de la base o en S3/R2: así nadie llena el espacio gratis).
+    if (folder === "chat") {
       const quota = await chatQuotaExceeded(req.user!.id, buffer?.length ?? file.size);
       if (quota.exceeded) {
         return res.status(413).json({
@@ -239,6 +239,11 @@ export function registerMediaRoutes(
 
   app.get("/api/files/status", async (req, res) => {
     if (typeof req.isAuthenticated !== "function" || !req.isAuthenticated() || !helpers.isAdmin(req)) return res.sendStatus(403);
-    res.json({ storage: isS3Configured ? "s3" : "database", ...(await storageStatus()) });
+    res.json({
+      storage: isS3Configured ? "s3" : "database",
+      ...(await storageStatus()),
+      // lo subido a S3/R2 y su tope (el espacio gratis de Cloudflare R2 es de 10 GB, compartido con la voz de la academia)
+      externo: isS3Configured ? { bytes: await usoExterno(), limitBytes: limiteExternoBytes() } : null,
+    });
   });
 }

@@ -36,7 +36,20 @@ CREATE TABLE IF NOT EXISTS "stored_file_chunks" (
   "idx" integer NOT NULL,
   "data" bytea NOT NULL,
   PRIMARY KEY ("file_id", "idx")
-);`;
+);
+-- Los archivos subidos al almacenamiento S3/R2 (server/file-storage.ts): de quién son, de qué carpeta y cuánto pesan,
+-- para borrarlos con la cuenta o con el mensaje y para no pasar del espacio gratis.
+CREATE TABLE IF NOT EXISTS "archivos_externos" (
+  "clave" text PRIMARY KEY,
+  "url" text NOT NULL,
+  "owner_id" integer,
+  "folder" text,
+  "size" bigint NOT NULL DEFAULT 0,
+  "mime" text,
+  "created_at" timestamp DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS "archivos_externos_owner_idx" ON "archivos_externos" ("owner_id", "folder");
+CREATE INDEX IF NOT EXISTS "archivos_externos_url_idx" ON "archivos_externos" ("url");`;
 
 /** Nombre sin rutas ni caracteres raros (se conserva la ñ y las tildes). */
 export function safeFileName(name: string): string {

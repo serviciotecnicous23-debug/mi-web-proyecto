@@ -14,7 +14,7 @@ import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { pool } from "./db";
 import { storage } from "./storage";
-import { isOwnFileUrl } from "./file-storage";
+import { archivoExternoPorUrl, borrarArchivosExternos, isOwnFileUrl, usoExterno } from "./file-storage";
 import { isEmailConfigured, sendDirectMessageEmail } from "./email";
 import { isPushConfigured, sendPushToMany, type PushPayload } from "./push";
 import { DM_REACTIONS, insertDirectMessageSchema } from "@shared/schema";
@@ -202,18 +202,18 @@ async function markRead(userId: number, otherId: number) {
 
 // Columnas de texto donde podría estar la dirección de un archivo (para no borrar uno en uso).
 let fileRefColumns: Array<{ table: string; column: string }> | null = null;
-async function fileIsReferencedElsewhere(fileId: string): Promise<boolean> {
+async function fileIsReferencedElsewhere(marca: string): Promise<boolean> {
   if (!fileRefColumns) {
     const { rows } = await pool.query(
       `SELECT table_name, column_name FROM information_schema.columns
         WHERE table_schema = 'public' AND data_type IN ('text', 'character varying')
-          AND table_name NOT IN ('stored_files', 'stored_file_chunks', 'direct_messages', 'session')`,
+          AND table_name NOT IN ('stored_files', 'stored_file_chunks', 'archivos_externos', 'direct_messages', 'session')`,
     );
     fileRefColumns = rows
       .map((r) => ({ table: String(r.table_name), column: String(r.column_name) }))
       .filter((c) => /^[a-z_][a-z0-9_]*$/.test(c.table) && /^[a-z_][a-z0-9_]*$/.test(c.column));
   }
-  const like = `%/files/${fileId}%`;
+  const like = `%${marca}%`;
   const { rows: dm } = await pool.query(
     `SELECT 1 FROM direct_messages WHERE attachment_url LIKE $1 AND deleted_at IS NULL LIMIT 1`,
     [like],
@@ -234,13 +234,24 @@ async function fileIsReferencedElsewhere(fileId: string): Promise<boolean> {
 /** Al eliminar para todos, el archivo del chat se borra si nadie más lo usa (libera espacio). */
 async function releaseChatFile(url: string | null | undefined, ownerId: number) {
   const m = /^\/files\/([A-Za-z0-9_-]{16,40})(\/|$)/.exec(url || "");
-  if (!m) return;
+  if (!m) {
+    // un archivo del almacenamiento S3/R2: las mismas reglas (del chat, de quien lo subió y sin otro uso)
+    const ext = await archivoExternoPorUrl(url || "");
+    if (!ext || ext.folder !== "chat" || ext.ownerId !== ownerId) return;
+    try {
+      if (await fileIsReferencedElsewhere(ext.clave)) return;
+      await borrarArchivosExternos([ext.clave]);
+    } catch (err) {
+      console.error("[chat] no se pudo liberar el archivo:", err);
+    }
+    return;
+  }
   const fileId = m[1];
   try {
     const { rows } = await pool.query(`SELECT folder, owner_id FROM stored_files WHERE id = $1`, [fileId]);
     const f = rows[0];
     if (!f || f.folder !== "chat" || Number(f.owner_id) !== ownerId) return;
-    if (await fileIsReferencedElsewhere(fileId)) return;
+    if (await fileIsReferencedElsewhere(`/files/${fileId}`)) return;
     await pool.query(`DELETE FROM stored_files WHERE id = $1`, [fileId]);
   } catch (err) {
     console.error("[chat] no se pudo liberar el archivo:", err);
@@ -664,7 +675,7 @@ export function registerChatRoutes(app: Express) {
   });
 }
 
-/** Tope de espacio para archivos del chat por persona (MB). Solo cuando se guardan en la base. */
+/** Tope de espacio para archivos del chat por persona (MB): los guardados en la base y los de S3/R2. */
 export async function chatQuotaExceeded(userId: number, incomingBytes: number): Promise<{ exceeded: boolean; limitMb: number }> {
   const limitMb = Math.max(Number(process.env.CHAT_QUOTA_MB) || 150, 10);
   try {
@@ -672,7 +683,8 @@ export async function chatQuotaExceeded(userId: number, incomingBytes: number): 
       `SELECT coalesce(sum(size), 0)::bigint AS used FROM stored_files WHERE owner_id = $1 AND folder = 'chat'`,
       [userId],
     );
-    return { exceeded: Number(rows[0]?.used || 0) + incomingBytes > limitMb * 1024 * 1024, limitMb };
+    const externos = await usoExterno({ ownerId: userId, folder: "chat" });
+    return { exceeded: Number(rows[0]?.used || 0) + externos + incomingBytes > limitMb * 1024 * 1024, limitMb };
   } catch {
     return { exceeded: false, limitMb };
   }
