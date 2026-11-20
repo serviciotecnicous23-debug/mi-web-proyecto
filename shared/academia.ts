@@ -2720,6 +2720,8 @@ const SEMINARIO: MateriaDef = {
       ],
       complementaria: [
         { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+        // comprobado: https://openlibrary.org/works/OL26568581W (Vida, 2016, ISBN 9780829752656)
+        { autor: "Peter Scazzero", titulo: "El líder emocionalmente sano: cómo transformar tu vida interior transformará profundamente tu iglesia, tu equipo y el mundo", editorial: "Vida", nota: "Sobre todo su segunda parte: la planificación y las decisiones, la cultura y el equipo, el poder y los límites sabios, y los finales y los nuevos comienzos. Para leer con discernimiento: algunas prácticas contemplativas que describe no forman parte de esta materia." },
       ],
     },
     recursos: [
@@ -5864,7 +5866,11 @@ const HISTORIA_MUSICA: MateriaDef = {
         { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Los dos tomos: la iglesia antigua y medieval, y la Reforma y los avivamientos." },
         { autor: "J. Peter Burkholder, Donald J. Grout y Claude V. Palisca", titulo: "Historia de la música occidental", editorial: "Alianza Editorial" },
       ],
-      complementaria: [{ autor: "Marcos Witt", titulo: "Adoremos", editorial: "Editorial Caribe" }],
+      complementaria: [
+        { autor: "Marcos Witt", titulo: "Adoremos", editorial: "Editorial Caribe" },
+        // comprobado: https://openlibrary.org/works/OL4679126W (El Paso, Texas, 1963; 3.ª edición corregida, 1987)
+        { autor: "Cecilio McConnell", titulo: "La historia del himno en castellano", editorial: "Casa Bautista de Publicaciones", nota: "Para la lección de los himnos de los avivamientos: la historia de los himnos en español y de quienes los escribieron." },
+      ],
     },
     recursos: [
       { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=y9pED55wMM4", minutos: 7 },
