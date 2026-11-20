@@ -14,7 +14,7 @@ import {
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, alumnoDe, asegurarAlumno, avisarA, claveIntegral, enFila, estaInscrito, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
-import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
+import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type FilaPrueba, type Resolver } from "./academia-examen";
 import { codigoDocumento, emitirNivel } from "./academia-documentos";
 import { ACTIVIDADES_NIVEL, requisitosDeActividades } from "@shared/academia-actividades";
 import { resumenDe } from "./academia-actividades-datos";
@@ -46,6 +46,20 @@ export async function estadoIntegral(userId: number, nv: NivelDef): Promise<Exam
   if (!(await estaInscrito(userId))) falta.push("inscribirte en la academia");
   if (faltan > 0) falta.push(faltan === 1 ? "aprobar la materia que falta del nivel" : `aprobar las ${faltan} materias que faltan del nivel`);
   return { ...estadoBase(f, EXAMEN_INTEGRAL[nv.n], APRUEBA_INTEGRAL), falta, aprobado: !!f.aprobada_at, repasar: [] };
+}
+
+/** El integral para quien mira sin cuenta: cómo es y qué pide, sin intentos (antes decía que todavía no existía). */
+export function integralDelVisitante(nv: NivelDef): ExamenEstado {
+  const sinIntentos: FilaPrueba = {
+    intentos: 0, fallos: 0, mejor: null, vistas: null, curso: null, resultado: null, aprobada_at: null, pasados_curso: null, pasados_fallo: null, extra: 0,
+  };
+  const n = nv.materias.length;
+  return {
+    ...estadoBase(sinIntentos, EXAMEN_INTEGRAL[nv.n], APRUEBA_INTEGRAL),
+    falta: ["entrar con tu cuenta", n === 1 ? "aprobar la materia del nivel" : `aprobar las ${n} materias del nivel`],
+    aprobado: false,
+    repasar: [],
+  };
 }
 
 /** El examen integral de un nivel como evaluación (el mismo motor que el final de cada materia). */
@@ -93,6 +107,8 @@ export async function estadoNivel(userId: number | null, nv: NivelDef, vistaPrev
     pactoAt = nl[0]?.pacto_at ? new Date(nl[0].pacto_at).toISOString() : null;
     completado = nl[0]?.completado_at ? new Date(nl[0].completado_at).toISOString() : null;
     guardado = nl[0]?.promedio == null ? null : Number(nl[0].promedio);
+  } else if (integralDisponible(nv)) {
+    integral = integralDelVisitante(nv);
   }
   const prom = aprobadas.length ? promedio(aprobadas.map((a) => a.nota)) : null;
   const requisitos: RequisitoNivel[] = [

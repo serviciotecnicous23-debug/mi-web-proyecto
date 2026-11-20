@@ -10,6 +10,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { loginUrl } from "@/lib/login-redirect";
 import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, textoSegundos, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
 import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
@@ -362,12 +363,16 @@ function PedirRevision({ base, apelacion, apelable, alPedir }: { base: string; a
   );
 }
 
-function SinExamen({ mensaje, volver }: { mensaje: ReactNode; volver: DestinoExamen["volver"] }) {
+function SinExamen({ mensaje, volver, entrar = false }: { mensaje: ReactNode; volver: DestinoExamen["volver"]; entrar?: boolean }) {
   return (
     <Layout>
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
         <p className="text-lg mb-5">{mensaje}</p>
-        <Link href={volver.href}><Button variant="outline">Volver: {volver.texto}</Button></Link>
+        <div className="flex flex-wrap justify-center gap-3">
+          {/* sin cuenta: el botón para entrar y volver aquí (antes solo decía «Entra con tu cuenta») */}
+          {entrar && <Button asChild className="fire-btn-primary"><a href={loginUrl()}>Entrar</a></Button>}
+          <Button asChild variant="outline"><Link href={volver.href}>Volver: {volver.texto}</Link></Button>
+        </div>
       </div>
     </Layout>
   );
@@ -398,7 +403,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
   if (!destino) return <SinExamen mensaje="No se encontró el examen." volver={{ href: "/academia", texto: "la academia" }} />;
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
-  if (!q.data) return <SinExamen mensaje={q.error?.message ?? "No se encontró el examen."} volver={destino.volver} />;
+  if (!q.data) return <SinExamen mensaje={q.error?.message ?? "No se encontró el examen."} volver={destino.volver} entrar={q.error?.status === 401} />;
   const { estado, ultimo } = q.data;
   const medida = estado.medida;
   const base = destino.base;

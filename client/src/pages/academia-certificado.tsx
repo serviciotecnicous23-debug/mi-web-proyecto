@@ -5,6 +5,7 @@ import { Link, useParams } from "wouter";
 import { ArrowLeft, Award, Check, Copy, Download, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { loginUrl } from "@/lib/login-redirect";
 import { useCertificado } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { DocumentoAjustado, DocumentoVista } from "@/components/academia/documento";
@@ -17,11 +18,21 @@ export default function AcademiaCertificado() {
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {
+    // sin cuenta (o si el documento es de otra persona): entrar, o comprobarlo en la verificación pública con su código
+    const sinSesion = q.error?.status === 401;
     return (
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-20 text-center">
-          <p className="text-lg mb-5">{q.error?.message ?? "No encontramos ese documento."}</p>
-          <Link href="/academia"><Button variant="outline">Volver a la academia</Button></Link>
+          <p className="text-lg mb-5">
+            {sinSesion
+              ? "El documento completo lo ve su dueño al entrar con su cuenta. Cualquiera puede comprobar que es válido con su código."
+              : (q.error?.message ?? "No encontramos ese documento.")}
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {sinSesion && <Button asChild className="fire-btn-primary"><a href={loginUrl()}>Entrar</a></Button>}
+            {codigo && <Button asChild variant="outline"><Link href={`/academia/verificar/${encodeURIComponent(codigo)}`}>Verificar este código</Link></Button>}
+            <Button asChild variant="outline"><Link href="/academia">Volver a la academia</Link></Button>
+          </div>
         </div>
       </Layout>
     );

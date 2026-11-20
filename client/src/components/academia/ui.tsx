@@ -160,8 +160,8 @@ export function BloqueLeccion({ b, alVerVideo, marcas }: { b: BloqueVista; alVer
           {alVerVideo && idYouTube(b.url) ? <VideoYouTube id={idYouTube(b.url)!} titulo={b.titulo} alProgresar={alVerVideo} /> : <LinkEmbed url={b.url} />}
           <figcaption className="text-sm text-muted-foreground mt-2">
             {b.titulo} · Fuente: {b.fuente}{" "}
-            <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 hover:underline">
-              abrir <ExternalLink className="w-3 h-3" />
+            <a href={b.url} target="_blank" rel="noopener noreferrer" aria-label={`Abrir el video «${b.titulo}» en otra pestaña`} className="inline-flex items-center gap-0.5 py-1 hover:underline">
+              abrir <ExternalLink className="w-3 h-3" aria-hidden="true" />
             </a>
           </figcaption>
         </figure>
