@@ -4621,7 +4621,7 @@ const EQUIPOS_VOLUNTARIOS: MateriaDef = {
         { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
       ],
       complementaria: [
-        { autor: "Bill Hybels", titulo: "The Volunteer Revolution: Unleashing the Power of Everybody (en inglés)", editorial: "Zondervan" },
+        { autor: "Isabel Carter", titulo: "La iglesia se moviliza (serie Pilares)", editorial: "Tearfund" },
         { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
       ],
     },

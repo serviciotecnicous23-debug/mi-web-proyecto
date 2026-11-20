@@ -387,8 +387,49 @@ test("Liderazgo y administración tiene sus cinco materias, con la medida del Ni
   assert.equal(liderazgo.materias.length, 5);
 });
 
-test("las otras dos especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion"].includes(x.id))) {
+test("Obra social y misericordia tiene sus cinco materias, con la medida del Nivel 3", () => {
+  const obra = ESPECIALIDADES.find((x) => x.id === "obra-social")!;
+  const listas = obra.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["obra-social-1", "Teología de la compasión", "Lucas 6:36", 6, false],
+      ["obra-social-2", "Diaconía y servicio", "Santiago 1:27", 6, false],
+      ["obra-social-3", "Proyectos comunitarios", "Jeremías 29:7", 6, false],
+      ["obra-social-4", "Ayuda humanitaria y desastres", "Lamentaciones 3:22-23", 6, false],
+      ["obra-social-5", "Voluntariado y alianzas", "Eclesiastés 4:12", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+    // el plazo de Texas es de 24 horas para los profesionales, nunca de 48
+    assert.doesNotMatch(m.silabo!.proposito, /48 horas/, m.id);
+  }
+  // la base bíblica: la misión integral del Pacto de Lausana y el alivio, la rehabilitación y el desarrollo
+  assert.match(listas[0].silabo!.proposito, /Pacto de Lausana de 1974/);
+  assert.match(listas[0].silabo!.proposito, /Fikkert/);
+  // las que tocan la ley lo dicen: es una guía general, no un consejo legal
+  for (const i of [1, 2, 3, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // lo legal y lo práctico de cada una, comprobado: el IRS y el 2-1-1, la ley Bill Emerson, Esfera, FEMA y National VOAD, y la regla federal de 2024
+  assert.match(listas[1].silabo!.proposito, /Publicación 526 del IRS/);
+  assert.match(listas[1].silabo!.proposito, /2-1-1/);
+  assert.match(listas[2].silabo!.proposito, /Bill Emerson/);
+  for (const dato of [/Manual Esfera de 2018/, /FEMA/, /Publicación 3833 del IRS/, /National VOAD/]) assert.match(listas[3].silabo!.proposito, dato);
+  assert.match(listas[4].silabo!.proposito, /regla federal de 2024/);
+  // el plazo de Texas: toda persona reporta de inmediato, y los profesionales a más tardar en 24 horas
+  for (const i of [1, 2, 4]) assert.match(listas[i].silabo!.proposito, /24 horas/, listas[i].id);
+  assert.equal(obra.materias.length, 5);
+});
+
+test("la otra especialidad sigue en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion", "obra-social"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);

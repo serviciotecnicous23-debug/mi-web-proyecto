@@ -332,6 +332,48 @@ const TRABAJO_LIDERAZGO: ClaveEscrita = {
     "Cada trimestre evaluaremos el plan con el pastor y el consejo: si los registros y las actas están al día, si el presupuesto se cumple y la iglesia recibió su informe, cuántos voluntarios sirven con su capacitación y su revisión, cómo van los proyectos del año y si los papeles legales están en regla. Nos examinaremos con honestidad (Lamentaciones 3:40), cambiaremos lo que haga falta y daremos gracias a Dios por lo que él hizo.",
 };
 
+const TRABAJO_OBRA_SOCIAL: ClaveEscrita = {
+  id: "trabajo-obra-social",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para el ministerio de obra social y misericordia de tu iglesia que use lo aprendido en las cinco materias de la especialidad: la base bíblica de la compasión; cómo organizará el servicio de misericordia, el equipo y el fondo de ayuda; qué proyecto comunitario hará con el barrio; cómo se preparará y responderá ante un desastre; y con quiénes se aliará y cómo recibirá a los voluntarios. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "compasion", peso: 15, texto: "La base bíblica: el Dios que ve al necesitado, la compasión de Jesús y la palabra y la obra juntas.", formas: ["compasion", "misericordi*", "samaritano", "la palabra y la obra", "mision integral", "huerfano*", "viuda*"] },
+    { id: "diaconia", peso: 20, texto: "El servicio de misericordia: el equipo de buen testimonio y el fondo de ayuda con reglas.", formas: ["fondo de ayuda", "buen testimonio", "equipo de misericordia", "criterio*", "pago directo", "directamente", "diaconia"] },
+    { id: "proyecto", peso: 20, texto: "El proyecto con el barrio: conocer sus recursos, diseñar con los vecinos, cuidar y medir lo que cambia.", formas: ["despensa", "tutoria", "clases de ingles", "el mapa", "recursos del barrio", "lo que cambia", "banco de alimentos"] },
+    { id: "desastre", peso: 15, texto: "La preparación y la respuesta en un desastre: el plan, la imparcialidad, Esfera, las donaciones y la coordinación.", formas: ["esfera", "imparcial*", "cadena de llamadas", "albergue", "voad", "3833", "huracan", "inundacion"] },
+    { id: "alianzas", peso: 20, texto: "Las alianzas con otros y los voluntarios de la comunidad.", formas: ["alianza*", "otras iglesias", "socio*", "por escrito", "regla de 2024", "voluntarios de la comunidad"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Éxodo 3:7", "Deuteronomio 10:18", "Salmos 146:9", "Levítico 19:9-10", "Deuteronomio 15:11", "Isaías 58:6-7", "Mateo 9:36",
+    "Lucas 4:18-19", "Lucas 7:13", "Lucas 10:33-37", "Mateo 25:35-40", "Hechos 4:34-35", "Gálatas 2:10", "2 Corintios 8:12-14",
+    "Santiago 2:15-17", "1 Juan 3:17-18", "Efesios 2:10", "Lucas 6:36", "Marcos 10:45", "Juan 13:14-15", "1 Pedro 4:10-11",
+    "Hechos 6:1-6", "1 Timoteo 3:8-10", "Romanos 16:1-4", "1 Timoteo 5:4", "2 Tesalonicenses 3:10", "2 Corintios 8:20-21",
+    "Romanos 12:13", "Proverbios 3:27-28", "Hechos 9:36-39", "Proverbios 18:13", "Proverbios 14:15", "1 Tesalonicenses 5:14",
+    "Filipenses 2:3-4", "Mateo 6:3-4", "Gálatas 6:9", "Santiago 1:27", "Jeremías 29:7", "Mateo 5:14", "Proverbios 11:10",
+    "Nehemías 2:8", "Nehemías 2:15-18", "Juan 6:9-12", "Proverbios 20:5", "Proverbios 15:22", "Nehemías 3:28", "Nehemías 4:6",
+    "Marcos 6:37", "Proverbios 22:9", "2 Corintios 9:8", "Lucas 14:28", "Hageo 1:5", "1 Corintios 3:6", "1 Corintios 3:9",
+    "Salmos 126:3", "Lamentaciones 3:22-23", "Isaías 43:2", "Hechos 11:28-30", "Hechos 10:34", "Santiago 2:1", "Mateo 5:45",
+    "Isaías 58:7", "Proverbios 31:8", "1 Pedro 2:17", "Romanos 15:26", "Eclesiastés 4:9-12", "Nehemías 4:19-20", "Romanos 12:4-5",
+    "Génesis 41:35-36", "Levítico 19:34", "Mateo 2:14", "Juan 17:21", "Filipenses 1:5", "Marcos 9:39-40", "Gálatas 2:9", "Amós 3:3",
+    "Esdras 1:4", "Romanos 13:4", "Daniel 1:8", "Tito 3:1", "Éxodo 36:5", "Hechos 28:2", "Romanos 12:18", "Hechos 15:39-40",
+    "2 Timoteo 4:11", "Romanos 12:15",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para el ministerio de obra social y misericordia de nuestra iglesia. Su base es la palabra de Jesús: sed misericordiosos, como también vuestro Padre es misericordioso (Lucas 6:36). Un equipo, con el aval del pastor, se reunirá cada mes para orar, planear y revisar lo hecho. " +
+    "Primero, la base bíblica. Enseñaremos a la iglesia que Dios ve la aflicción del que sufre (Éxodo 3:7) y defiende al huérfano, a la viuda, al extranjero y al pobre (Deuteronomio 10:18). Aprenderemos de Jesús, que tuvo compasión de las multitudes (Mateo 9:36), y de la parábola del buen samaritano, para no pasar de largo ante el herido (Lucas 10:33-34). Uniremos la palabra y la obra, como pide la misión integral, porque la fe sin obras está muerta (Santiago 2:17), y distinguiremos el alivio, para las crisis, de la rehabilitación y el desarrollo, para ayudar sin hacer daño. " +
+    "Segundo, el servicio de misericordia. Formaremos un equipo de misericordia de buen testimonio, probado primero en tareas pequeñas (1 Timoteo 3:10), con funciones claras: la recepción, las visitas, la tesorería y los recursos. Tendremos un fondo de ayuda con criterios escritos, un límite por familia y decisión en equipo; pagaremos directamente a quien se le debe y guardaremos cada recibo, procurando hacer las cosas honradamente (2 Corintios 8:21). Organizaremos el cuidado práctico de los enfermos y de los ancianos con comidas, transporte y visitas, y en cada pedido escucharemos antes de responder (Proverbios 18:13) y orientaremos a las familias hacia los recursos de la comunidad, como el 2-1-1 de Texas. La confidencialidad nunca tapará un abuso: toda persona lo reporta de inmediato, y los profesionales a más tardar en 24 horas. " +
+    "Tercero, el proyecto con el barrio. Procuraremos la paz de la ciudad (Jeremías 29:7): caminaremos el barrio, escucharemos a los vecinos y haremos el mapa de sus necesidades y de sus recursos, como Nehemías observó el muro (Nehemías 2:15). Con ellos escogeremos el proyecto, una despensa mensual que abra espigas con clases de inglés y una bolsa de trabajo, y lo diseñaremos juntos, porque en la multitud de consejeros los planes se afirman (Proverbios 15:22). Revisaremos los alimentos y los guardaremos como piden las reglas, sabiendo que la ley Bill Emerson y la Ley del Donante de Buena Fe de Texas protegen a los que donan y reparten de buena fe. Haremos un presupuesto con margen, buscaremos varias fuentes de apoyo y mediremos lo que cambia en la vida de las familias, meditando bien sobre nuestros caminos (Hageo 1:5). " +
+    "Cuarto, la preparación y la respuesta en un desastre. Tendremos el plan de la iglesia, con una cadena de llamadas, la lista de los más vulnerables y lo necesario guardado, como José guardó para los años de hambre (Génesis 41:35-36). Si llega un desastre, no iremos por cuenta propia: nos coordinaremos con la red de organizaciones voluntarias y sus cuatro C, porque mejores son dos que uno (Eclesiastés 4:9). En un albergue ayudaremos de manera imparcial, según la necesidad y sin acepción de personas (Hechos 10:34), con las normas Esfera, como el mínimo de 15 litros de agua por persona y día, y cuidando la protección de los niños. Daremos dinero a organizaciones reconocidas, manejaremos el fondo para el desastre según la Publicación 3833 del IRS y seguiremos en la recuperación a largo plazo, recibiendo con amor a las familias que lleguen huyendo (Levítico 19:34). " +
+    "Quinto, las alianzas y los voluntarios. Cordón de tres dobleces no se rompe pronto (Eclesiastés 4:12): nos uniremos con otras iglesias en lo que nos une, respetando las diferencias (Marcos 9:40), y haremos alianzas con la escuela, con negocios del barrio y con el banco de alimentos, poniéndonos de acuerdo por escrito (Amós 3:3) y cuidando los datos de las familias. Si colaboramos con el gobierno, seguiremos la regla federal de 2024: las actividades religiosas irán por separado y serán voluntarias, con cuentas separadas, sin contaminarnos, como Daniel (Daniel 1:8). Recibiremos a los voluntarios de la comunidad con una orientación, con la revisión de antecedentes para los que sirvan con niños y con gratitud (Romanos 16:3), y cuidaremos cada alianza en paz (Romanos 12:18). " +
+    "Cada trimestre evaluaremos el plan con el pastor y el consejo: cuántas familias ayudó el fondo y con qué criterios, qué cambió en la vida de las familias de la despensa, si el plan para un desastre está al día, cómo van las alianzas y cómo están los que sirven. Mediremos con humildad, porque el crecimiento lo da Dios (1 Corintios 3:6), y cambiaremos lo que haga falta.",
+};
+
 /** El trabajo final de cada especialidad que ya lo tiene. */
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
@@ -344,4 +386,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["capellania", TRABAJO_CAPELLANIA],
   ["comunicaciones", TRABAJO_COMUNICACIONES],
   ["liderazgo-administracion", TRABAJO_LIDERAZGO],
+  ["obra-social", TRABAJO_OBRA_SOCIAL],
 ]);
