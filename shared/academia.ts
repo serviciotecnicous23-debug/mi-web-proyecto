@@ -4911,6 +4911,62 @@ const PROYECTOS_COMUNITARIOS: MateriaDef = {
   disponible: true,
 };
 
+const AYUDA_HUMANITARIA: MateriaDef = {
+  id: "obra-social-4",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 4,
+  titulo: "Ayuda humanitaria y desastres",
+  resumen: "Cómo responde la iglesia a los desastres con orden, con dignidad y sin acepción de personas: Dios en medio del desastre, los principios humanitarios, las normas Esfera, las donaciones que ayudan, la coordinación y la recuperación, y la preparación de la iglesia y la acogida al que huye.",
+  base: "Lamentaciones 3:22-23; Hechos 11:28-29",
+  memoria: "Lamentaciones 3:22-23",
+  lecciones: lecciones("obra-social-4", [
+    ["Dios en medio del desastre", "Lamentaciones 3:22-23; Isaías 43:2; Hechos 11:28-29"],
+    ["Los principios humanitarios", "Hechos 10:34; Santiago 2:1; Mateo 5:45"],
+    ["Las normas Esfera: ayudar con dignidad", "Isaías 58:7; Proverbios 31:8; 1 Pedro 2:17"],
+    ["Las donaciones que ayudan", "2 Corintios 8:12; Romanos 15:26; Proverbios 14:15"],
+    ["Responder juntos: la coordinación y la recuperación", "Eclesiastés 4:9-10; Nehemías 4:19-20; Romanos 12:4-5"],
+    ["Prepararse y recibir al que huye", "Génesis 41:35-36; Levítico 19:34; Mateo 2:14"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa responder a los desastres como Dios quiere y como enseñan los que más saben de la ayuda humanitaria: que confíe en las misericordias de Dios, que no decaen, y conozca las etapas de un desastre, la preparación, el rescate, el alivio y la recuperación, para servir en cada una con orden, como la iglesia de Antioquía en tiempo de hambre; que viva los cuatro principios humanitarios que reconoció la Asamblea General de la ONU, la humanidad, la neutralidad y la imparcialidad en 1991 y la independencia en 2004, ayudando según la necesidad, sin acepción de personas y sin condicionar la ayuda a la fe; que ayude con dignidad según el Manual Esfera de 2018, con su Carta Humanitaria, sus principios de protección y sus normas mínimas, como los 15 litros de agua por persona y por día; que done con sabiduría, como enseña FEMA, con dinero a organizaciones reconocidas y solo los artículos que se piden, y que maneje un fondo para un desastre según la Publicación 3833 del IRS, con criterios según la necesidad y registros, sin señalar la ayuda para una persona en particular; que se coordine con otros, con las cuatro C de National VOAD, sin ir por cuenta propia, y siga en la recuperación a largo plazo; y que prepare a la iglesia y reciba con amor a los que llegan huyendo. No repite Emergencias y desastres de la especialidad Capellanía. Lo legal es una guía general, no un consejo legal. Su base es la palabra del profeta: «Por la misericordia de Jehová no hemos sido consumidos, porque nunca decayeron sus misericordias. Nuevas son cada mañana; grande es tu fidelidad» (Lamentaciones 3:22-23).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo acompaña Dios a su pueblo en el desastre y qué hace la iglesia en cada etapa.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar los cuatro principios humanitarios al repartir la ayuda.", bloom: "aplicar" },
+      { id: "o3", texto: "Organizar un albergue con la dignidad y la protección que piden las normas Esfera.", bloom: "aplicar" },
+      { id: "o4", texto: "Donar y manejar un fondo para un desastre con sabiduría y según la Publicación 3833.", bloom: "aplicar" },
+      { id: "o5", texto: "Ubicar a la iglesia dentro de la respuesta coordinada y la recuperación de su comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el plan de la iglesia para un desastre y su manera de recibir al que huye.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Lamentaciones 3:22-23 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las etapas de un desastre, los cuatro principios humanitarios y las resoluciones 46/182 y 58/114, el Manual Esfera de 2018, las donaciones según FEMA y la Publicación 3833, las cuatro C de National VOAD y los grupos de recuperación a largo plazo, y el plan de la iglesia.",
+      ser: "Un siervo que confía en la fidelidad de Dios, ayuda sin acepción de personas, honra a cada persona y trabaja junto a otros.",
+      hacer: "Responder a una inundación en otra ciudad, repartir la ayuda en un albergue, preparar el albergue de la iglesia, manejar el fondo para un huracán, participar en el grupo de recuperación y recibir a las familias que llegan huyendo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Asociación Esfera", titulo: "El Manual Esfera: Carta Humanitaria y normas mínimas para la respuesta humanitaria", editorial: "Asociación Esfera" },
+        { autor: "Isabel Carter", titulo: "Cómo prepararnos para los desastres (serie Pilares)", editorial: "Tearfund" },
+      ],
+      complementaria: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "Robert D. Lupton", titulo: "Toxic Charity: How Churches and Charities Hurt Those They Help, and How to Reverse It (en inglés)", editorial: "HarperOne" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de la historia de Job: ¿por qué la vida de Job se volvió tan difícil?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=_AIvRQj8kHs", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lamentaciones 3, nuevas son cada mañana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lamentaciones&cap=3" },
+      { tipo: "guia", titulo: "Trabaje como voluntario y done", fuente: "FEMA, Agencia Federal para el Manejo de Emergencias", url: "https://www.fema.gov/es/disaster/recover/volunteer-donate" },
+      { tipo: "guia", titulo: "OCHA en mensaje: los principios humanitarios", fuente: "Oficina de las Naciones Unidas para la Coordinación de Asuntos Humanitarios (OCHA)", url: "https://www.unocha.org/publications/report/world/ocha-en-mensaje-principios-humanitarios" },
+      { tipo: "guia", titulo: "La ayuda en los desastres por medio de organizaciones caritativas, Publicación 3833 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p3833.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5843,7 +5899,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
-    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
+    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, AYUDA_HUMANITARIA, ["Voluntariado y alianzas"],
   ]),
 ];
 
