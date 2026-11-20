@@ -4746,6 +4746,115 @@ const MARCO_LEGAL_ORGANIZACIONES: MateriaDef = {
   disponible: true,
 };
 
+const TEOLOGIA_COMPASION: MateriaDef = {
+  id: "obra-social-1",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 1,
+  titulo: "Teología de la compasión",
+  resumen: "La base bíblica del servicio a los necesitados: el Dios que ve al necesitado, la justicia para el pobre en la ley y los profetas, la compasión de Jesús, el buen samaritano, la primera iglesia y los pobres, y la palabra y la obra juntas.",
+  base: "Lucas 6:36; Éxodo 3:7",
+  memoria: "Lucas 6:36",
+  lecciones: lecciones("obra-social-1", [
+    ["El Dios que ve al necesitado", "Éxodo 3:7; Deuteronomio 10:18; Salmos 146:9"],
+    ["La ley y los profetas: justicia para el pobre", "Levítico 19:9-10; Deuteronomio 15:11; Isaías 58:6-7"],
+    ["Jesús, movido a compasión", "Mateo 9:36; Lucas 4:18-19; Lucas 7:13"],
+    ["¿Quién es mi prójimo?", "Lucas 10:33-34; Lucas 10:36-37; Mateo 25:40"],
+    ["La primera iglesia y los pobres", "Hechos 4:34-35; Gálatas 2:10; 2 Corintios 8:13-14"],
+    ["La palabra y la obra juntas", "Santiago 2:15-17; 1 Juan 3:17-18; Efesios 2:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social conozca el corazón compasivo de Dios y sirva desde él: que vea, como Dios, la aflicción del huérfano, la viuda, el extranjero y el pobre, cada uno con su nombre y como imagen de Dios; que aprenda de la ley de Moisés y de los profetas a cuidar al pobre con dignidad, abriendo espigas y no solo dando regalos, y a unir el culto con la justicia; que imite la compasión de Jesús, que veía, se acercaba, sanaba, daba de comer y anunciaba el reino; que viva la parábola del buen samaritano, haciendo bien a todos, y mayormente a los de la familia de la fe; que organice la ayuda como la primera iglesia, con un equipo de buen testimonio y cuentas claras; y que una la palabra y la obra en la misión integral, como afirma el Pacto de Lausana de 1974, que dice también que la evangelización es primordial, distinguiendo el alivio, la rehabilitación y el desarrollo para ayudar sin hacer daño, como enseñan Corbett y Fikkert. Es la base bíblica de las otras cuatro materias de la especialidad. Su base es la palabra de Jesús: «Sed, pues, misericordiosos, como también vuestro Padre es misericordioso» (Lucas 6:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo ve Dios al necesitado y quiénes son los cuatro vulnerables de la ley.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo cuidaba la ley al pobre y qué enseñaron los profetas sobre el culto y la justicia.", bloom: "comprender" },
+      { id: "o3", texto: "Describir la compasión de Jesús y distinguirla de la lástima.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar la parábola del buen samaritano a una persona necesitada que es diferente.", bloom: "aplicar" },
+      { id: "o5", texto: "Proponer una manera de organizar la ayuda en la iglesia, como la primera iglesia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una ayuda con la misión integral y la distinción entre alivio, rehabilitación y desarrollo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Lucas 6:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El Dios que ve al necesitado, los cuatro vulnerables, la espiga, el diezmo del tercer año y el año de remisión, los profetas y la justicia, la compasión de Jesús, el buen samaritano, la primera iglesia y los pobres, el Pacto de Lausana y el alivio, la rehabilitación y el desarrollo.",
+      ser: "Un siervo compasivo como su Padre, que mira a cada persona con su nombre y la trata con dignidad, y que une la palabra y la obra.",
+      hacer: "Hacer el mapa de los necesitados del barrio, abrir espigas además de dar despensas, acompañar a una viuda, ayudar a una persona sin hogar, organizar la ayuda de la iglesia y evaluar si una ayuda levanta o crea dependencia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller", titulo: "Justicia generosa: cómo la gracia de Dios nos hace justos", editorial: "Andamio" },
+        { autor: "C. René Padilla", titulo: "Misión integral: ensayos sobre el Reino de Dios y la iglesia", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "John Stott", titulo: "La fe cristiana frente a los desafíos contemporáneos", editorial: "Nueva Creación" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Rut", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=f984fG4-xlE", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 10, el buen samaritano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=10" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Isaías 58, el ayuno que Dios escogió", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Isaias&cap=58" },
+    ],
+  },
+  disponible: true,
+};
+
+const DIACONIA_SERVICIO: MateriaDef = {
+  id: "obra-social-2",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 2,
+  titulo: "Diaconía y servicio",
+  resumen: "Cómo sirve la iglesia a los necesitados con orden y con amor: la diaconía como servicio, el carácter y el orden de los que sirven, el fondo de ayuda, el cuidado práctico, escuchar y orientar, y el corazón del que sirve.",
+  base: "Santiago 1:27; Marcos 10:45",
+  memoria: "Santiago 1:27",
+  lecciones: lecciones("obra-social-2", [
+    ["La diaconía: servir como Cristo", "Marcos 10:45; Juan 13:14-15; 1 Pedro 4:11"],
+    ["Los que sirven: carácter y orden", "Hechos 6:2-3; 1 Timoteo 3:8-10; Romanos 16:1-2"],
+    ["El fondo de ayuda", "1 Timoteo 5:4; 2 Tesalonicenses 3:10; 2 Corintios 8:21"],
+    ["El cuidado práctico", "Romanos 12:13; Proverbios 3:27-28; Hechos 9:39"],
+    ["Escuchar y orientar", "Proverbios 18:13; Proverbios 14:15; 1 Tesalonicenses 5:14"],
+    ["El corazón del que sirve", "Filipenses 2:3-4; Mateo 6:3-4; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la misericordia de la iglesia lo haga como Jesús y con orden: que entienda que la diaconía es el servicio, que Jesús vino a servir y nos dio ejemplo, y que cada uno sirve con su don y con el poder que Dios da; que forme un equipo de buen testimonio, honesto y probado primero, con funciones claras, como los siete de Hechos 6; que maneje un fondo de ayuda con los principios bíblicos de la familia primero, el trabajo y la honradez, y con reglas escritas: criterios, un límite por familia, decisión en equipo, pago directo y registro, sabiendo que, según la Publicación 526 del IRS, no se deduce lo que se da señalado para una persona en particular; que organice el cuidado práctico de comidas, transporte, reparaciones y compañía, con respeto y seguridad; que escuche antes de ayudar, con prudencia y confidencialidad, y oriente hacia los recursos de la comunidad, como el 2-1-1 de Texas, reportando la sospecha de abuso de un menor como pide la ley: toda persona de inmediato, y los profesionales a más tardar en 24 horas; y que sirva con humildad, sin buscar aplauso, con límites y descanso. Quién ejerce cada cargo, y el ministerio de la mujer, quedan para la declaración de fe del ministerio. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Santiago: «La religión pura y sin mácula delante de Dios el Padre es esta: Visitar a los huérfanos y a las viudas en sus tribulaciones» (Santiago 1:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la diaconía y por qué toda la iglesia sirve.", bloom: "comprender" },
+      { id: "o2", texto: "Formar un equipo de misericordia con personas probadas y funciones claras.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir las reglas de un fondo de ayuda y decidir un pedido con ellas.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar el cuidado práctico de una persona enferma o sola.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer una primera entrevista y orientar hacia los recursos de la comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el propio servicio y hacer un plan para servir por largo tiempo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Santiago 1:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La diaconía y los dones de servicio y de misericordia, el carácter de los que sirven según Hechos 6 y 1 Timoteo 3, las reglas de un fondo de ayuda y la Publicación 526, el cuidado práctico, la primera entrevista, el 2-1-1 de Texas y el reporte del abuso, y el cuidado del que sirve.",
+      ser: "Un siervo humilde y confiable, que sirve como Jesús, con orden, con prudencia y con alegría, sin buscar aplauso.",
+      hacer: "Ayudar a un hermano a encontrar su servicio, formar el equipo de misericordia, decidir un pedido para la renta, organizar el cuidado de una hermana operada, orientar a una madre sin luz y cuidar a una coordinadora agotada.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller", titulo: "Ministerios de misericordia: encarnando la parábola del buen samaritano", editorial: "Poiema Publicaciones" },
+        { autor: "Matt Smethurst", titulo: "Los diáconos: cómo sirven y fortalecen a la iglesia", editorial: "Poiema Publicaciones" },
+      ],
+      complementaria: [
+        { autor: "Alexander Strauch", titulo: "El diácono del Nuevo Testamento", editorial: "Editorial DIME" },
+        { autor: "Steve Corbett y Brian Fikkert, con Katie Casselberry", titulo: "Helping Without Hurting in Church Benevolence (en inglés)", editorial: "Moody Publishers" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 6, los siete que sirvieron a las mesas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "guia", titulo: "Contribuciones caritativas, Publicación 526 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/publications/p526" },
+      { tipo: "guia", titulo: "2-1-1 Texas: la línea gratuita y anónima que orienta hacia las ayudas sociales", fuente: "Comisión de Salud y Servicios Humanos de Texas", url: "https://www.211texas.org/about-2-1-1/" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5678,7 +5787,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
-    ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
+    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
   ]),
 ];
 
