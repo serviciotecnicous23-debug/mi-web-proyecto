@@ -123,10 +123,17 @@ español fluido, «tipo documental»):
 - **Dónde está el audio:** `client/public/voz/academia/<lección>-<huella del audio>.m4a` (AAC 40 kbps, mono, 24 kHz, −16 LUFS;
   unos 300 KB por minuto), servido en `/voz` con caché de un año (el nombre cambia si se graba otra vez) y sin pasar por el
   service worker (se pide por partes, como la música del juego). El registro es `server/academia/narraciones.ts`.
-  Grabados: el Nivel 1 (17-nov-2026: 32 lecciones, unos 175 minutos, ≈52 MB) y el Nivel 2 (19-nov-2026: 54 lecciones,
-  unos 275 minutos, ≈82 MB). Toda la academia son unas 28 horas (≈500 MB): para grabar los Niveles 3 a 5 y las
-  especialidades conviene un almacenamiento aparte (por ejemplo Cloudflare R2, 10 GB gratis) con `NARRACION_URL_BASE` en
-  Render, para no llenar el repositorio.
+  Grabados:
+  - el Nivel 1, el 17-nov-2026: 32 lecciones, unos 175 minutos, ≈52 MB, en el repositorio;
+  - el Nivel 2, el 19-nov-2026: 54 lecciones, unos 275 minutos, ≈82 MB, en el repositorio;
+  - el Nivel 3, el 20-nov-2026: 60 lecciones, unos 400 minutos, en Cloudflare R2.
+
+  Toda la academia son unas 62 horas (≈1,1 GB). **Desde el Nivel 3 el audio va en Cloudflare R2.** El depósito es
+  `avivando-academia-voz`, en la cuenta de Luis, con su dirección pública
+  `https://pub-e35c5f440e364310af9d4d053a59dcc8.r2.dev`. El plan gratis llega a 10 GB y no cobra la descarga.
+  - Cada entrada del registro guarda la dirección del audio en `url`. No hace falta ninguna variable en Render.
+  - `registrar --r2 avivando-academia-voz --base <esa dirección>` sube los audios con Wrangler y borra el viejo si una
+    lección se graba de nuevo. Usa la autorización de `npx wrangler login`, sin claves.
 - **Cómo grabar** (en la PC de Luis, unos 2 minutos de trabajo por cada 5 de audio):
   1. `npx tsx scripts/academia/narracion.ts estimar` (cuánto audio tiene cada nivel).
   2. `npx tsx scripts/academia/narracion.ts guion <carpeta> 2` (un nivel, una materia o una lección; los versículos se
