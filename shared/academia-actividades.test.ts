@@ -2,8 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  ACTIVIDADES_NIVEL, PASOS_CONSOLIDACION, PASOS_MINIMOS, detalleConsolidacion, detalleEnsenanza, detalleEvangelismo, detallePractica, detalleServicio,
-  diasDeServicio, diasEntre, enlaceValido, fechaValida, horasDe, horasTexto, requisitosDeActividades, resumirActividades, tiposDe, validarActividad,
+  ACTIVIDADES_NIVEL, APRUEBA_SERMON, MINUTOS_SERMON, PASOS_CONSOLIDACION, PASOS_MINIMOS, RUBRICA_SERMON, detalleConsolidacion, detalleEnsenanza,
+  detalleEvangelismo, detallePractica, detalleSermon, detalleServicio, diasDeServicio, diasEntre, enlaceValido, fechaValida, horasDe, horasTexto,
+  requisitosDeActividades, resumirActividades, tiposDe, validarActividad, validarEvaluacion,
 } from "./academia-actividades";
 import { NIVELES, PACTOS, REGLAMENTO, REQUISITOS_POR_HACER, VERSICULOS_NIVEL } from "./academia";
 
@@ -206,10 +207,83 @@ test("el reglamento dice lo que pide cada nivel, con los números del sistema", 
   const todo = sec!.puntos.join(" ");
   assert.ok(todo.includes("Nivel 2: 3 conversaciones de evangelismo y servir 1 mes (28 días)"));
   assert.ok(todo.includes("Nivel 3: 20 horas de práctica ministerial"));
+  assert.ok(todo.includes("Nivel 4: 30 horas de práctica ministerial supervisada y un sermón evaluado con rúbrica."));
+  assert.ok(todo.includes("fidelidad al texto, 25") && todo.includes("Cristo y la gracia, 15") && todo.includes("se aprueba con 70 de 100"));
+  assert.ok(todo.includes("de 20 a 30 minutos"));
   assert.ok(todo.includes(`al menos en ${PASOS_MINIMOS} de los ${PASOS_CONSOLIDACION.length} pasos`));
   assert.ok(todo.includes("hasta 12 en un día y 40 en un período"));
   assert.ok(todo.includes("de 10 a 15 minutos"));
   assert.ok(todo.includes("se avisa de inmediato al pastor y a las autoridades"));
   assert.ok(!todo.includes("48 horas"));
   assert.ok(REGLAMENTO.secciones[2].puntos.some((x) => x.includes("(sección 11)")), "la sección 3 la nombra");
+});
+
+test("el Nivel 4 pide 30 horas de práctica y un sermón evaluado con la rúbrica de Homilética II", () => {
+  assert.deepEqual(ACTIVIDADES_NIVEL[4], { practicaHoras: 30, sermon: 1 });
+  assert.deepEqual(tiposDe(ACTIVIDADES_NIVEL[4]!), ["practica", "sermon"]);
+  const nv = NIVELES.find((x) => x.n === 4)!;
+  for (const r of requisitosDeActividades(ACTIVIDADES_NIVEL[4]!, null)) assert.ok(nv.requisitos.includes(r.texto), `«${r.texto}» está en sus requisitos`);
+  assert.deepEqual(RUBRICA_SERMON.map((c) => c.max), [25, 15, 15, 15, 15, 15]);
+  assert.equal(RUBRICA_SERMON.reduce((s, c) => s + c.max, 0), 100, "la rúbrica suma 100");
+  assert.equal(APRUEBA_SERMON, 70);
+  assert.deepEqual(MINUTOS_SERMON, { min: 20, max: 30 });
+});
+
+test("el sermón: grabado con su enlace, o en vivo con el lugar y el maestro que lo escuchó", () => {
+  const base = {
+    tipo: "sermon",
+    fecha: "2026-11-10",
+    titulo: "Romanos 5:1-11 · La paz con Dios",
+    enlace: "https://youtu.be/sermon1",
+    detalle: "Idea central: justificados por la fe, tenemos paz con Dios. Propósito: que descansen en la gracia.",
+  };
+  const g = validarActividad(base, HOY, ["practica", "sermon"]);
+  assert.ok(g.ok && g.datos.enlace === "https://youtu.be/sermon1" && g.datos.lider === null, "grabado");
+  assert.ok(!validarActividad({ ...base, enlace: "" }, HOY).ok, "grabado sin enlace");
+  assert.ok(!validarActividad({ ...base, enlace: "http://youtu.be/x" }, HOY).ok, "grabado con http");
+  assert.ok(!validarActividad({ ...base, titulo: "Rom" }, HOY).ok, "sin el pasaje y el tema");
+  const vivo = { ...base, modo: "vivo", enlace: "", lugar: "Iglesia Casa del Alfarero, culto del domingo", lider: "Pastor Daniel" };
+  const v = validarActividad(vivo, HOY);
+  assert.ok(v.ok && v.datos.enlace === null && v.datos.lider === "Pastor Daniel", "en vivo, sin grabación");
+  assert.ok(validarActividad({ ...vivo, enlace: "https://youtu.be/vivo" }, HOY).ok, "en vivo, con grabación");
+  assert.ok(!validarActividad({ ...vivo, enlace: "javascript:alert(1)" }, HOY).ok, "en vivo, con un enlace malo");
+  assert.ok(!validarActividad({ ...vivo, lider: "" }, HOY).ok, "en vivo, sin el maestro");
+  assert.ok(!validarActividad({ ...vivo, lugar: "" }, HOY).ok, "en vivo, sin el lugar");
+  assert.ok(!validarActividad(base, HOY, ["practica", "ensenanza", "consolidacion"]).ok, "el Nivel 3 no pide sermón");
+});
+
+test("la evaluación del sermón: cada criterio dentro de su máximo, quién evaluó y la nota", () => {
+  const rubrica = { fidelidad: 22, idea: 13, estructura: 12, cristo: 14, aplicacion: 11, entrega: 12 };
+  const e = validarEvaluacion({ rubrica, evaluador: "Pastor Daniel" });
+  assert.ok(e.ok && e.nota === 84 && e.evaluacion.evaluador === "Pastor Daniel");
+  const comoTexto = validarEvaluacion({ rubrica: Object.fromEntries(Object.entries(rubrica).map(([k, v]) => [k, String(v)])), evaluador: "Pastor Daniel" });
+  assert.ok(comoTexto.ok && comoTexto.nota === 84, "los puntos pueden llegar como texto");
+  assert.ok(!validarEvaluacion({ rubrica: { ...rubrica, fidelidad: 26 }, evaluador: "Pastor Daniel" }).ok, "más que el máximo");
+  assert.ok(!validarEvaluacion({ rubrica: { ...rubrica, entrega: -1 }, evaluador: "Pastor Daniel" }).ok, "negativo");
+  assert.ok(!validarEvaluacion({ rubrica: { ...rubrica, idea: 7.5 }, evaluador: "Pastor Daniel" }).ok, "puntos enteros");
+  assert.ok(!validarEvaluacion({ rubrica: { ...rubrica, cristo: "" }, evaluador: "Pastor Daniel" }).ok, "un criterio vacío");
+  const { aplicacion, ...sinUno } = rubrica;
+  assert.ok(aplicacion && !validarEvaluacion({ rubrica: sinUno, evaluador: "Pastor Daniel" }).ok, "falta un criterio");
+  assert.ok(!validarEvaluacion({ rubrica, evaluador: "" }).ok, "sin quién evaluó");
+  assert.ok(!validarEvaluacion({ evaluador: "Pastor Daniel" }).ok, "sin rúbrica");
+});
+
+test("cuenta el sermón aprobado, con su nota, y el que no alcanzó", () => {
+  const pide = ACTIVIDADES_NIVEL[4]!;
+  type E = "pendiente" | "confirmada" | "rechazada";
+  const se = (estado: E, nota: number | null, fecha = "2026-11-01") => ({ tipo: "sermon" as const, estado, fecha, hasta: null, nota });
+  let r = resumirActividades(pide, [], HOY);
+  assert.equal(detalleSermon(r), "Sin enviar");
+  r = resumirActividades(pide, [se("pendiente", null)], HOY);
+  assert.equal(detalleSermon(r), "Enviado · por evaluar");
+  r = resumirActividades(pide, [se("rechazada", 62)], HOY);
+  assert.equal(r.sermon.nota, 62);
+  assert.equal(detalleSermon(r), "Evaluado con 62 · prepáralo otra vez");
+  r = resumirActividades(pide, [se("rechazada", null)], HOY);
+  assert.equal(detalleSermon(r), "Devuelto · corrígelo y envíalo otra vez");
+  r = resumirActividades(pide, [se("confirmada", 84, "2026-11-12"), se("rechazada", 62)], HOY);
+  assert.ok(r.sermon.hecho);
+  assert.equal(detalleSermon(r), "Aprobado con 84");
+  const req = requisitosDeActividades(pide, r);
+  assert.deepEqual(req.map((x) => [x.id, x.hecho]), [["practica", false], ["sermon", true]]);
 });

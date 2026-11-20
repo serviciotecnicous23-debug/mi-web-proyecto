@@ -4,7 +4,9 @@
  * sin importar las rutas, que a su vez cierran el nivel.
  */
 import { pool } from "./db";
-import { ACTIVIDADES_NIVEL, PASOS_CONSOLIDACION, resumirActividades, type ActividadVista, type ResumenActividades } from "@shared/academia-actividades";
+import {
+  ACTIVIDADES_NIVEL, PASOS_CONSOLIDACION, RUBRICA_SERMON, resumirActividades, type ActividadVista, type EvaluacionSermon, type ResumenActividades,
+} from "@shared/academia-actividades";
 import { diaTexas } from "./academia-comun";
 
 export const ACTIVIDADES_SQL = `
@@ -33,10 +35,22 @@ ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS horas numeric(4,1);
 ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS titulo text;
 ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS enlace text;
 ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS pasos jsonb;
+-- el Nivel 4: la nota del sermón (de 0 a 100) y su evaluación con la rúbrica (los puntos de cada criterio y quién evaluó)
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS nota integer;
+ALTER TABLE academia_actividades ADD COLUMN IF NOT EXISTS evaluacion jsonb;
 `;
 
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
 const PASOS = new Set<string>(PASOS_CONSOLIDACION.map((p) => p.id));
+
+/** La evaluación guardada (jsonb) de un sermón: los puntos de cada criterio y quién evaluó. */
+function evaluacionDe(v: unknown): EvaluacionSermon | null {
+  const e = typeof v === "string" ? (() => { try { return JSON.parse(v); } catch { return null; } })() : v;
+  if (!e || typeof e !== "object" || !(e as any).rubrica) return null;
+  const rubrica = {} as EvaluacionSermon["rubrica"];
+  for (const c of RUBRICA_SERMON) rubrica[c.id] = Number((e as any).rubrica[c.id] ?? 0);
+  return { rubrica, evaluador: String((e as any).evaluador ?? "") };
+}
 
 /** Los pasos guardados (jsonb): solo los del plan, en su orden. */
 function pasosDe(v: unknown): ActividadVista["pasos"] {
@@ -59,6 +73,8 @@ export function actividadDe(r: any): ActividadVista {
     titulo: r.titulo ?? null,
     enlace: r.enlace ?? null,
     pasos: pasosDe(r.pasos),
+    nota: r.nota == null ? null : Number(r.nota),
+    evaluacion: evaluacionDe(r.evaluacion),
     detalle: String(r.detalle),
     estado: r.estado,
     motivo: r.motivo ?? null,
