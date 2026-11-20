@@ -1,7 +1,8 @@
 /**
  * Las actividades que pide un nivel además de sus materias (docs/academia.md, «Las actividades del nivel»):
  * - en el Nivel 2, 3 conversaciones de evangelismo y servir 1 mes en un ministerio;
- * - en el Nivel 3, 20 horas de práctica ministerial, una enseñanza grabada aprobada y consolidar a 1 nuevo creyente.
+ * - en el Nivel 3, 20 horas de práctica ministerial, una enseñanza grabada aprobada y consolidar a 1 nuevo creyente;
+ * - en el Nivel 4, 30 horas de práctica ministerial y un sermón evaluado con la rúbrica de Homilética II.
  *
  * El alumno las registra desde la página del nivel y la Administración las confirma (o las devuelve con un motivo) en
  * «Para revisar». Cuentan las confirmadas; el servicio, además, cuando ya pasaron sus días desde que empezó, y la
@@ -10,7 +11,7 @@
  */
 import type { NivelN } from "./academia";
 
-export type TipoActividad = "evangelismo" | "servicio" | "practica" | "ensenanza" | "consolidacion";
+export type TipoActividad = "evangelismo" | "servicio" | "practica" | "ensenanza" | "consolidacion" | "sermon";
 export type EstadoActividad = "pendiente" | "confirmada" | "rechazada";
 
 /** Lo que pide un nivel: cuántas de cada una (el servicio, en días; la práctica, en horas). */
@@ -20,12 +21,14 @@ export type PideNivel = {
   practicaHoras?: number;
   ensenanza?: number;
   consolidacion?: number;
+  sermon?: number;
 };
 
 /** Lo que pide cada nivel (sus textos están en los requisitos de `NIVELES` y en el reglamento). */
 export const ACTIVIDADES_NIVEL: Partial<Record<NivelN, PideNivel>> = {
   2: { evangelismo: 3, servicioDias: 28 },
   3: { practicaHoras: 20, ensenanza: 1, consolidacion: 1 },
+  4: { practicaHoras: 30, sermon: 1 },
 };
 
 const CAMPO: Record<TipoActividad, keyof PideNivel> = {
@@ -34,6 +37,7 @@ const CAMPO: Record<TipoActividad, keyof PideNivel> = {
   practica: "practicaHoras",
   ensenanza: "ensenanza",
   consolidacion: "consolidacion",
+  sermon: "sermon",
 };
 export const TIPOS_ACTIVIDAD = Object.keys(CAMPO) as TipoActividad[];
 
@@ -49,6 +53,7 @@ export const NOMBRE_ACTIVIDAD: Record<TipoActividad, string> = {
   practica: "Práctica ministerial",
   ensenanza: "Enseñanza grabada",
   consolidacion: "Consolidación de un nuevo creyente",
+  sermon: "Sermón",
 };
 
 export const LIMITES_ACTIVIDAD = {
@@ -109,6 +114,24 @@ export const PAUTAS_ENSENANZA = [
   "Muestra a Cristo sin forzar el texto y se oye con claridad",
 ] as const;
 
+/**
+ * El sermón del Nivel 4 (Homilética II, lección 6): dura de 20 a 30 minutos, un maestro de la academia lo evalúa con
+ * esta rúbrica de 100 puntos y se aprueba con 70. Se presenta grabado (con su enlace) o en vivo, ante un maestro.
+ */
+export const MINUTOS_SERMON = { min: 20, max: 30 } as const;
+export const APRUEBA_SERMON = 70;
+export const RUBRICA_SERMON = [
+  { id: "fidelidad", corto: "Fidelidad al texto", texto: "Fidelidad al texto: el mensaje del sermón es el mensaje del pasaje", max: 25 },
+  { id: "idea", corto: "Idea central y propósito", texto: "Una idea central clara y un propósito definido", max: 15 },
+  { id: "estructura", corto: "Estructura", texto: "Estructura: puntos que salen del texto y transiciones", max: 15 },
+  { id: "cristo", corto: "Cristo y la gracia", texto: "Cristo y la gracia en el centro, sin forzar el texto", max: 15 },
+  { id: "aplicacion", corto: "Aplicación e ilustraciones", texto: "Aplicación concreta e ilustraciones verdaderas", max: 15 },
+  { id: "entrega", corto: "Entrega", texto: "Entrega: claridad, contacto con los oyentes y tiempo", max: 15 },
+] as const;
+export type CriterioSermon = (typeof RUBRICA_SERMON)[number]["id"];
+/** La evaluación de un sermón: los puntos de cada criterio y el maestro que lo evaluó. */
+export type EvaluacionSermon = { rubrica: Record<CriterioSermon, number>; evaluador: string };
+
 export type ActividadVista = {
   id: number;
   tipo: TipoActividad;
@@ -127,6 +150,9 @@ export type ActividadVista = {
   enlace: string | null;
   /** La consolidación: los pasos del plan que acompañó. */
   pasos: PasoConsolidacion[] | null;
+  /** El sermón evaluado: su nota de 0 a 100 y la evaluación de la Administración. */
+  nota: number | null;
+  evaluacion: EvaluacionSermon | null;
   detalle: string;
   estado: EstadoActividad;
   motivo: string | null;
@@ -144,6 +170,8 @@ export type ResumenActividades = {
   practica: { horas: number; porConfirmar: number; hecho: boolean };
   ensenanza: Conteo;
   consolidacion: Conteo;
+  /** `nota`: la del sermón aprobado o, si no, la del último evaluado. */
+  sermon: Conteo & { nota: number | null };
 };
 
 export type ActividadesNivel = ResumenActividades & {
@@ -229,6 +257,7 @@ const PIDE_FECHA: Record<TipoActividad, string> = {
   practica: "Escribe la fecha de la práctica (si fue un período, el día en que empezó).",
   ensenanza: "Escribe la fecha en que grabaste la enseñanza.",
   consolidacion: "Escribe la fecha en que empezaste a acompañarlo.",
+  sermon: "Escribe la fecha en que predicaste o grabaste el sermón.",
 };
 
 const PIDE_DETALLE: Record<TipoActividad, string> = {
@@ -237,6 +266,7 @@ const PIDE_DETALLE: Record<TipoActividad, string> = {
   practica: "qué hiciste en la práctica",
   ensenanza: "la idea central y el propósito de tu enseñanza",
   consolidacion: "cómo fue el acompañamiento",
+  sermon: "la idea central y el propósito de tu sermón",
 };
 
 type Validacion = { ok: true; datos: DatosActividad } | { ok: false; error: string };
@@ -313,6 +343,29 @@ export function validarActividad(cuerpo: any, hoy: string, tipos: readonly TipoA
     return { ok: true, datos: { ...vacio, tipo, fecha, titulo, enlace, lugar, detalle } };
   }
 
+  if (tipo === "sermon") {
+    const titulo = limpio(cuerpo?.titulo, LIMITES_ACTIVIDAD.titulo);
+    if (titulo.length < 5) return { ok: false, error: "Escribe el pasaje y el tema de tu sermón." };
+    const lugar = limpio(cuerpo?.lugar, LIMITES_ACTIVIDAD.lugar) || null;
+    const conEnlace = cuerpo?.enlace != null && String(cuerpo.enlace).trim() !== "";
+    const enlace = conEnlace ? enlaceValido(cuerpo.enlace) : null;
+    if (cuerpo?.modo === "vivo") {
+      // en vivo: lo escuchó un maestro de la academia (el enlace, si hay grabación, es opcional)
+      if (!lugar || lugar.length < 3) return { ok: false, error: "Escribe dónde lo predicaste: la iglesia y el culto." };
+      const lider = limpio(cuerpo?.lider, LIMITES_ACTIVIDAD.lider);
+      if (lider.length < 3) return { ok: false, error: "Escribe qué maestro de la academia lo escuchó en vivo." };
+      if (conEnlace && !enlace) return { ok: false, error: "El enlace de la grabación debe empezar con https://." };
+      return { ok: true, datos: { ...vacio, tipo, fecha, titulo, lugar, lider, enlace, detalle } };
+    }
+    if (!enlace) {
+      return {
+        ok: false,
+        error: "Pega el enlace de la grabación del sermón completo, que empiece con https://, o elige «en vivo» si lo escuchó un maestro de la academia.",
+      };
+    }
+    return { ok: true, datos: { ...vacio, tipo, fecha, titulo, enlace, lugar, detalle } };
+  }
+
   // la consolidación de un nuevo creyente
   const persona = limpio(cuerpo?.persona, LIMITES_ACTIVIDAD.persona);
   if (persona.length < 2) return { ok: false, error: "Escribe a quién acompañaste: la relación o sus iniciales, sin el nombre completo." };
@@ -326,7 +379,7 @@ export function validarActividad(cuerpo: any, hoy: string, tipos: readonly TipoA
   return { ok: true, datos: { ...vacio, tipo, fecha, hasta: h.hasta, persona, lider, pasos, detalle } };
 }
 
-type ParaResumir = Pick<ActividadVista, "tipo" | "estado" | "fecha" | "hasta"> & { horas?: number | null };
+type ParaResumir = Pick<ActividadVista, "tipo" | "estado" | "fecha" | "hasta"> & { horas?: number | null; nota?: number | null };
 
 function conteo(lista: ParaResumir[], tipo: TipoActividad, pide: number | undefined): Conteo {
   const de = lista.filter((a) => a.tipo === tipo);
@@ -347,6 +400,8 @@ export function resumirActividades(pide: PideNivel, lista: ParaResumir[], hoy: s
   const practicas = lista.filter((a) => a.tipo === "practica");
   const horasDeLas = (estado: EstadoActividad) => practicas.filter((a) => a.estado === estado).reduce((s, a) => s + (Number(a.horas) || 0), 0);
   const horas = horasDeLas("confirmada");
+  const sermones = lista.filter((a) => a.tipo === "sermon");
+  const evaluado = sermones.find((a) => a.estado === "confirmada") ?? sermones.find((a) => a.nota != null);
   return {
     pide,
     evangelismo: conteo(lista, "evangelismo", pide.evangelismo),
@@ -359,7 +414,24 @@ export function resumirActividades(pide: PideNivel, lista: ParaResumir[], hoy: s
     practica: { horas, porConfirmar: horasDeLas("pendiente"), hecho: horas >= (pide.practicaHoras ?? 0) },
     ensenanza: conteo(lista, "ensenanza", pide.ensenanza),
     consolidacion: conteo(lista, "consolidacion", pide.consolidacion),
+    sermon: { ...conteo(lista, "sermon", pide.sermon), nota: evaluado?.nota ?? null },
   };
+}
+
+/** Revisa la evaluación de un sermón: cada criterio entre 0 y su máximo, y quién lo evaluó. Devuelve también la nota. */
+export function validarEvaluacion(cuerpo: any): { ok: true; evaluacion: EvaluacionSermon; nota: number } | { ok: false; error: string } {
+  const r = cuerpo?.rubrica;
+  if (!r || typeof r !== "object") return { ok: false, error: "Pon los puntos de cada criterio de la rúbrica." };
+  const rubrica = {} as Record<CriterioSermon, number>;
+  for (const c of RUBRICA_SERMON) {
+    const crudo = r[c.id];
+    const v = typeof crudo === "number" ? crudo : typeof crudo === "string" && crudo.trim() ? Number(crudo) : NaN;
+    if (!Number.isInteger(v) || v < 0 || v > c.max) return { ok: false, error: `«${c.corto}» va de 0 a ${c.max} puntos.` };
+    rubrica[c.id] = v;
+  }
+  const evaluador = limpio(cuerpo?.evaluador, LIMITES_ACTIVIDAD.lider);
+  if (evaluador.length < 3) return { ok: false, error: "Escribe qué maestro de la academia evaluó el sermón." };
+  return { ok: true, evaluacion: { rubrica, evaluador }, nota: RUBRICA_SERMON.reduce((s, c) => s + rubrica[c.id], 0) };
 }
 
 /** Lo que se le muestra al alumno en cada requisito del nivel. */
@@ -396,6 +468,13 @@ export function detalleConsolidacion(r: ResumenActividades): string {
   return "Sin registrar";
 }
 
+export function detalleSermon(r: ResumenActividades): string {
+  if (r.sermon.hecho) return r.sermon.nota != null ? `Aprobado con ${r.sermon.nota}` : "Aprobado";
+  if (r.sermon.pendientes) return "Enviado · por evaluar";
+  if (r.sermon.devueltas) return r.sermon.nota != null ? `Evaluado con ${r.sermon.nota} · prepáralo otra vez` : "Devuelto · corrígelo y envíalo otra vez";
+  return "Sin enviar";
+}
+
 /** El texto de cada requisito, como en los requisitos de `NIVELES`. */
 export function textoRequisito(tipo: TipoActividad, pide: PideNivel): string {
   const n = pide[CAMPO[tipo]] ?? 0;
@@ -410,6 +489,8 @@ export function textoRequisito(tipo: TipoActividad, pide: PideNivel): string {
       return n === 1 ? "Una enseñanza grabada aprobada" : `${n} enseñanzas grabadas aprobadas`;
     case "consolidacion":
       return n === 1 ? "Consolidar a 1 nuevo creyente" : `Consolidar a ${n} nuevos creyentes`;
+    case "sermon":
+      return n === 1 ? "Un sermón evaluado con rúbrica" : `${n} sermones evaluados con rúbrica`;
   }
 }
 
@@ -419,6 +500,7 @@ const DETALLE: Record<TipoActividad, (r: ResumenActividades) => string> = {
   practica: detallePractica,
   ensenanza: detalleEnsenanza,
   consolidacion: detalleConsolidacion,
+  sermon: detalleSermon,
 };
 
 /** Los requisitos del nivel que salen de sus actividades (sin sesión, `r` es null y quedan pendientes). */

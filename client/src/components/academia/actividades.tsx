@@ -1,16 +1,17 @@
 // Las actividades del nivel (server/academia-actividades.ts): en el Nivel 2, las conversaciones de evangelismo y el
 // servicio en un ministerio; en el Nivel 3, las horas de práctica, la enseñanza grabada y la consolidación de un nuevo
-// creyente. El alumno las registra aquí y la Administración las confirma.
+// creyente; en el Nivel 4, las horas de práctica y el sermón, que se evalúa con la rúbrica. El alumno las registra aquí
+// y la Administración las confirma.
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock, ExternalLink, HandHeart, HeartHandshake, MessageCircleHeart, Sprout, Trash2, Undo2, Video, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, HandHeart, HeartHandshake, MessageCircleHeart, Mic, Sprout, Trash2, Undo2, Video, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LIMITES_ACTIVIDAD, MINUTOS_ENSENANZA, PASOS_CONSOLIDACION, PASOS_MINIMOS, RESULTADOS_EVANGELISMO, horasTexto, tiposDe, type ActividadVista,
-  type ActividadesNivel, type PasoConsolidacion, type TipoActividad,
+  APRUEBA_SERMON, LIMITES_ACTIVIDAD, MINUTOS_ENSENANZA, MINUTOS_SERMON, PASOS_CONSOLIDACION, PASOS_MINIMOS, RESULTADOS_EVANGELISMO, RUBRICA_SERMON,
+  horasTexto, tiposDe, type ActividadVista, type ActividadesNivel, type PasoConsolidacion, type TipoActividad,
 } from "@shared/academia-actividades";
 import { borrarActividad, registrarActividad, useActividades } from "@/components/academia/api";
 import { BarraAvance } from "@/components/academia/ui";
@@ -30,12 +31,40 @@ function Estado({ a }: { a: ActividadVista }) {
   if (a.estado === "confirmada") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-        <CheckCircle2 className="w-3.5 h-3.5" /> {a.tipo === "ensenanza" ? "Aprobada" : "Confirmada"}
+        <CheckCircle2 className="w-3.5 h-3.5" /> {a.tipo === "ensenanza" ? "Aprobada" : a.tipo === "sermon" ? "Aprobado" : "Confirmada"}
       </span>
     );
   }
-  if (a.estado === "rechazada") return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-red-500/15 text-red-700 dark:text-red-300"><Undo2 className="w-3.5 h-3.5" /> Devuelta</span>;
-  return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300"><Clock className="w-3.5 h-3.5" /> Por {a.tipo === "ensenanza" ? "revisar" : "confirmar"}</span>;
+  if (a.estado === "rechazada") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-red-500/15 text-red-700 dark:text-red-300">
+        <Undo2 className="w-3.5 h-3.5" /> {a.tipo === "sermon" ? (a.nota != null ? "Evaluado: no alcanzó" : "Devuelto") : "Devuelta"}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300">
+      <Clock className="w-3.5 h-3.5" /> {a.tipo === "sermon" ? "Por evaluar" : a.tipo === "ensenanza" ? "Por revisar" : "Por confirmar"}
+    </span>
+  );
+}
+
+/** La nota del sermón con los puntos de cada criterio de la rúbrica. */
+function NotaSermon({ a }: { a: ActividadVista }) {
+  if (a.nota == null || !a.evaluacion) return null;
+  return (
+    <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1.5" data-testid="sermon-nota">
+      <p className="font-semibold">
+        {a.nota} de 100 {a.nota >= APRUEBA_SERMON ? "· aprobado" : `· se aprueba con ${APRUEBA_SERMON}`}
+        <span className="font-normal text-muted-foreground"> · evaluó {a.evaluacion.evaluador}</span>
+      </p>
+      <ul className="flex flex-wrap gap-1.5">
+        {RUBRICA_SERMON.map((c) => (
+          <li key={c.id} className="rounded-full bg-background/60 px-2.5 py-0.5 text-xs">{c.corto}: {a.evaluacion!.rubrica[c.id]} de {c.max}</li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /** La primera línea de cada actividad registrada. */
@@ -50,6 +79,8 @@ function encabezado(a: ActividadVista): string {
       return `${a.titulo} · ${dia(a.fecha)}`;
     case "consolidacion":
       return `${a.persona} · desde el ${dia(a.fecha)}${a.hasta ? ` hasta el ${dia(a.hasta)}` : ""}`;
+    case "sermon":
+      return `${a.titulo} · ${dia(a.fecha)}`;
     default:
       return `${a.persona} · ${dia(a.fecha)}`;
   }
@@ -66,6 +97,20 @@ function Registrada({ a, alBorrar }: { a: ActividadVista; alBorrar: (id: number)
       {a.tipo === "practica" && <p className="text-xs text-muted-foreground">Supervisó: {a.lider}</p>}
       {a.tipo === "consolidacion" && <p className="text-xs text-muted-foreground">Coordinó: {a.lider}</p>}
       {a.tipo === "evangelismo" && a.resultado && <p className="text-xs text-muted-foreground">{a.resultado}</p>}
+      {a.tipo === "sermon" && (
+        <p className="text-xs text-muted-foreground">
+          {a.lider ? `En vivo${a.lugar ? ` en ${a.lugar}` : ""} · lo escuchó ${a.lider}` : `Grabado${a.lugar ? ` · ${a.lugar}` : ""}`}
+          {a.enlace && (
+            <>
+              {" · "}
+              <a href={a.enlace} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-700 dark:text-orange-300 hover:underline">
+                <ExternalLink className="w-3.5 h-3.5" /> Ver la grabación ({sitioDe(a.enlace)})
+              </a>
+            </>
+          )}
+        </p>
+      )}
+      {a.tipo === "sermon" && <NotaSermon a={a} />}
       {a.tipo === "ensenanza" && a.enlace && (
         <p className="text-xs">
           <a href={a.enlace} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-700 dark:text-orange-300 hover:underline">
@@ -98,6 +143,7 @@ const FORMULARIO: Record<TipoActividad, { detalle: string; boton: string; listo:
   practica: { detalle: "Qué hiciste en la práctica", boton: "Registrar la práctica", listo: "Práctica registrada" },
   ensenanza: { detalle: "La idea central y el propósito de tu enseñanza", boton: "Enviar mi enseñanza", listo: "Enseñanza enviada" },
   consolidacion: { detalle: "Cómo fue el acompañamiento", boton: "Registrar la consolidación", listo: "Consolidación registrada" },
+  sermon: { detalle: "La idea central y el propósito de tu sermón", boton: "Enviar mi sermón", listo: "Sermón enviado" },
 };
 
 function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; alGuardar: (v: ActividadesNivel) => void }) {
@@ -112,6 +158,7 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
   const [titulo, setTitulo] = useState("");
   const [enlace, setEnlace] = useState("");
   const [pasos, setPasos] = useState<PasoConsolidacion[]>([]);
+  const [modo, setModo] = useState<"grabado" | "vivo">("grabado");
   const [detalle, setDetalle] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +172,8 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
         return { tipo, fecha, titulo, enlace, lugar, detalle };
       case "consolidacion":
         return { tipo, fecha, hasta, persona, lider, pasos, detalle };
+      case "sermon":
+        return modo === "vivo" ? { tipo, modo, fecha, titulo, lugar, lider, enlace, detalle } : { tipo, modo, fecha, titulo, lugar, enlace, detalle };
       default:
         return { tipo, fecha, persona, resultado, detalle };
     }
@@ -262,6 +311,46 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
           </div>
         </>
       )}
+      {tipo === "sermon" && (
+        <>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Cómo lo presentas">
+            {(["grabado", "vivo"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setModo(m)}
+                className={`rounded-full border px-3 py-1 text-xs transition ${modo === m ? "border-orange-500 bg-orange-500/15 text-orange-700 dark:text-orange-300" : "border-border text-muted-foreground"}`}
+                aria-pressed={modo === m}
+                data-testid={`act-modo-${m}`}
+              >
+                {m === "grabado" ? "Grabado, con su enlace" : "En vivo, ante un maestro de la academia"}
+              </button>
+            ))}
+          </div>
+          <label className="block text-sm">
+            <span className="font-medium">El pasaje y el tema</span>
+            <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={LIMITES_ACTIVIDAD.titulo} placeholder="Romanos 5:1-11 · La paz con Dios" className="mt-1" data-testid="act-titulo" />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">El enlace de la grabación {modo === "vivo" && <span className="text-muted-foreground font-normal">(si lo grabaste)</span>}</span>
+            <Input type="url" value={enlace} onChange={(e) => setEnlace(e.target.value)} maxLength={LIMITES_ACTIVIDAD.enlace} placeholder="https://…" className="mt-1" data-testid="act-enlace" />
+          </label>
+          {modo === "grabado" && (
+            <p className="text-xs text-muted-foreground -mt-1">
+              El sermón completo, sin cortes, de {MINUTOS_SERMON.min} a {MINUTOS_SERMON.max} minutos: un video «no listado» de YouTube o un archivo de Google Drive
+              compartido con «cualquier persona que tenga el enlace», por ejemplo.
+            </p>
+          )}
+          <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+            {campoFecha(modo === "vivo" ? "Cuándo lo predicaste" : "Cuándo lo grabaste")}
+            <label className="block text-sm">
+              <span className="font-medium">Dónde lo predicaste {modo === "grabado" && <span className="text-muted-foreground font-normal">(si fue ante una congregación)</span>}</span>
+              <Input value={lugar} onChange={(e) => setLugar(e.target.value)} maxLength={LIMITES_ACTIVIDAD.lugar} placeholder="Mi iglesia, culto del domingo…" className="mt-1" data-testid="act-lugar" />
+            </label>
+          </div>
+          {modo === "vivo" && campoLider("Qué maestro de la academia lo escuchó", "Su nombre")}
+        </>
+      )}
       {tipo === "consolidacion" && (
         <>
           <label className="block text-sm">
@@ -345,6 +434,7 @@ function Seccion(props: {
 const INTRO: Record<number, string> = {
   2: "Lo que aprendes se vive: este nivel pide compartir tu fe y servir en tu iglesia.",
   3: "Lo que aprendes se vive: este nivel pide práctica ministerial en tu iglesia, una enseñanza grabada y acompañar a un nuevo creyente.",
+  4: "Lo que aprendes se vive: este nivel pide práctica ministerial en tu iglesia y predicar un sermón que un maestro de la academia evalúa con la rúbrica.",
 };
 
 export function ActividadesDelNivel({ n }: { n: number }) {
@@ -493,6 +583,41 @@ export function ActividadesDelNivel({ n }: { n: number }) {
           }
           otra={!v.consolidacion.hecho && !v.consolidacion.pendientes}
           abrirTexto="Registrar la consolidación"
+        />
+      )}
+
+      {tipos.includes("sermon") && (
+        <Seccion
+          {...comun}
+          tipo="sermon"
+          icono={Mic}
+          titulo="Sermón evaluado con rúbrica"
+          explica={`Un sermón de ${MINUTOS_SERMON.min} a ${MINUTOS_SERMON.max} minutos sobre un pasaje, preparado con Homilética II. Preséntalo grabado, con su enlace, o en vivo, ante un maestro de la academia. Un maestro lo evalúa con esta rúbrica de 100 puntos y se aprueba con ${APRUEBA_SERMON}; si no llega, recibes tu nota y lo que debes mejorar, y lo preparas otra vez.`}
+          avance={
+            <>
+              <ul className="grid gap-1 text-sm sm:grid-cols-2" aria-label="La rúbrica del sermón">
+                {RUBRICA_SERMON.map((c) => (
+                  <li key={c.id} className="flex justify-between gap-3 rounded-lg bg-muted/40 px-3 py-1.5">
+                    <span>{c.corto}</span>
+                    <span className="text-muted-foreground tabular-nums">{c.max}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm font-medium" data-testid="sermon-estado">
+                {v.sermon.hecho
+                  ? `Cumplido: sermón aprobado${v.sermon.nota != null ? ` con ${v.sermon.nota}` : ""}.`
+                  : v.sermon.pendientes
+                    ? "Enviado · por evaluar"
+                    : v.sermon.devueltas
+                      ? v.sermon.nota != null
+                        ? `Evaluado con ${v.sermon.nota}: prepáralo otra vez con lo que debes mejorar.`
+                        : "Devuelto: corrígelo y envíalo otra vez."
+                      : "Todavía sin enviar"}
+              </p>
+            </>
+          }
+          otra={!v.sermon.hecho && !v.sermon.pendientes}
+          abrirTexto={v.sermon.devueltas ? "Enviar otra vez mi sermón" : "Enviar mi sermón"}
         />
       )}
     </section>

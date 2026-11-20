@@ -1,20 +1,21 @@
 /**
  * Las actividades del nivel (docs/academia.md, «Las actividades del nivel»): en el Nivel 2, 3 conversaciones de
  * evangelismo y servir 1 mes en un ministerio; en el Nivel 3, 20 horas de práctica ministerial, una enseñanza grabada y
- * consolidar a 1 nuevo creyente.
+ * consolidar a 1 nuevo creyente; en el Nivel 4, 30 horas de práctica y un sermón evaluado con rúbrica.
  * - El alumno las registra desde la página del nivel (después de completar el nivel anterior) y puede borrar las que
  *   todavía no se confirmaron.
  * - La Administración las ve en «Para revisar», las confirma o las devuelve con un motivo; el alumno recibe un aviso en
  *   la campana. Nadie confirma lo suyo. Lo confirmado ya no cambia. La práctica se puede confirmar con menos horas de las
- *   registradas (las que confirma el líder que la supervisó).
+ *   registradas (las que confirma el líder que la supervisó). El sermón no se confirma: se evalúa con la rúbrica de
+ *   Homilética II (`accion: "evaluar"`), y queda aprobado con 70 o devuelto con su nota y lo que debe mejorar.
  * - Al confirmar, si el alumno ya cumple todo, el nivel se cierra y sale su certificado.
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
 import { NIVELES, ROLES_REVISION } from "@shared/academia";
 import {
-  ACTIVIDADES_NIVEL, LIMITES_ACTIVIDAD, horasDe, horasTexto, maximoDe, resumirActividades, tiposDe, validarActividad, type ActividadRevision,
-  type ActividadesNivel, type ActividadesPanel, type TipoActividad,
+  ACTIVIDADES_NIVEL, APRUEBA_SERMON, LIMITES_ACTIVIDAD, horasDe, horasTexto, maximoDe, resumirActividades, tiposDe, validarActividad, validarEvaluacion,
+  type ActividadRevision, type ActividadesNivel, type ActividadesPanel, type TipoActividad,
 } from "@shared/academia-actividades";
 import { avisarA, cuentasConRoles, diaTexas, enFila, frenar, inscritoDe } from "./academia-comun";
 import { nivelesCompletos } from "./academia-inscripcion";
@@ -72,6 +73,7 @@ const QUE_ES: Record<TipoActividad, string> = {
   practica: "tu práctica ministerial",
   ensenanza: "tu enseñanza grabada",
   consolidacion: "la consolidación que registraste",
+  sermon: "tu sermón",
 };
 const queEs = (tipo: string) => QUE_ES[tipo as TipoActividad] ?? "tu actividad";
 
@@ -86,6 +88,8 @@ function cual(a: { tipo: string; lugar?: string | null; titulo?: string | null; 
       return `la enseñanza grabada «${a.titulo}»`;
     case "consolidacion":
       return "la consolidación de un nuevo creyente";
+    case "sermon":
+      return `el sermón «${a.titulo}»`;
     default:
       return "una conversación de evangelismo";
   }
@@ -97,6 +101,7 @@ const POR_REVISAR: Record<TipoActividad, string> = {
   practica: "Una práctica por confirmar",
   ensenanza: "Una enseñanza grabada por revisar",
   consolidacion: "Una consolidación por confirmar",
+  sermon: "Un sermón por evaluar",
 };
 
 const CONFIRMADA: Record<TipoActividad, string> = {
@@ -105,6 +110,14 @@ const CONFIRMADA: Record<TipoActividad, string> = {
   practica: "Tu práctica fue confirmada",
   ensenanza: "Tu enseñanza grabada fue aprobada",
   consolidacion: "Tu consolidación fue confirmada",
+  sermon: "Tu sermón fue aprobado",
+};
+
+/** Las que van una a la vez: mientras una espera su revisión no se registra otra, y ya aprobada, ninguna más. */
+const UNA_A_LA_VEZ: Partial<Record<TipoActividad, { hecho: string; espera: string }>> = {
+  ensenanza: { hecho: "Tu enseñanza grabada ya fue aprobada.", espera: "Ya enviaste una enseñanza: espera a que la Administración la revise." },
+  consolidacion: { hecho: "Tu consolidación ya fue confirmada.", espera: "Ya registraste una consolidación: espera a que la Administración la confirme." },
+  sermon: { hecho: "Tu sermón ya fue aprobado.", espera: "Ya enviaste un sermón: espera a que la Administración lo evalúe." },
 };
 
 export function registerAcademiaActividadesRoutes(app: Express) {
@@ -140,16 +153,12 @@ export function registerAcademiaActividadesRoutes(app: Express) {
         if (vista.lista.filter((x) => x.tipo === d.tipo).length >= maximoDe(d.tipo)) {
           return { error: 409, message: "Ya registraste suficientes actividades de este tipo en el nivel." };
         }
-        // la enseñanza y la consolidación: una sola a la vez por revisar, y ninguna más cuando ya está aprobada
-        if (d.tipo === "ensenanza" || d.tipo === "consolidacion") {
+        // la enseñanza, la consolidación y el sermón: uno a la vez por revisar, y ninguno más cuando ya está aprobado
+        const una = UNA_A_LA_VEZ[d.tipo];
+        if (una && (d.tipo === "ensenanza" || d.tipo === "consolidacion" || d.tipo === "sermon")) {
           const r = vista[d.tipo];
-          if (r.hecho) return { error: 409, message: d.tipo === "ensenanza" ? "Tu enseñanza grabada ya fue aprobada." : "Tu consolidación ya fue confirmada." };
-          if (r.pendientes) {
-            return {
-              error: 409,
-              message: d.tipo === "ensenanza" ? "Ya enviaste una enseñanza: espera a que la Administración la revise." : "Ya registraste una consolidación: espera a que la Administración la confirme.",
-            };
-          }
+          if (r.hecho) return { error: 409, message: una.hecho };
+          if (r.pendientes) return { error: 409, message: una.espera };
         }
         await pool.query(
           `INSERT INTO academia_actividades (user_id, nivel, tipo, fecha, hasta, persona, resultado, lugar, lider, detalle, horas, titulo, enlace, pasos)
@@ -212,11 +221,19 @@ export function registerAcademiaActividadesRoutes(app: Express) {
       if (!p) return;
       const id = Number(req.params.id);
       if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ message: "No existe esa actividad." });
-      const accion = req.body?.accion === "confirmar" ? "confirmar" : req.body?.accion === "rechazar" ? "rechazar" : null;
+      const accion = (["confirmar", "rechazar", "evaluar"] as const).find((x) => x === req.body?.accion) ?? null;
       if (!accion) return res.status(400).json({ message: "Elige si confirmas la actividad o la devuelves." });
+      // el sermón se evalúa con la rúbrica: aprobado con 70 o más; si no, vuelve con su nota y lo que debe mejorar
+      const ev = accion === "evaluar" ? validarEvaluacion(req.body) : null;
+      if (ev && !ev.ok) return res.status(400).json({ message: ev.error });
+      const evaluado = ev && ev.ok ? ev : null;
+      const aprobado = accion === "confirmar" || (evaluado != null && evaluado.nota >= APRUEBA_SERMON);
       const motivo = typeof req.body?.motivo === "string" ? req.body.motivo.replace(/\s+/g, " ").trim().slice(0, LIMITES_ACTIVIDAD.motivoMax) : "";
       if (accion === "rechazar" && motivo.length < LIMITES_ACTIVIDAD.motivoMin) {
         return res.status(400).json({ message: "Escribe el motivo: el alumno lo recibe para corregir y volver a registrarla." });
+      }
+      if (evaluado && !aprobado && motivo.length < LIMITES_ACTIVIDAD.motivoMin) {
+        return res.status(400).json({ message: `Con ${evaluado.nota} no se aprueba: escribe qué debe mejorar, el alumno lo recibe con su nota.` });
       }
       // la práctica se puede confirmar con menos horas (las que confirma el líder que la supervisó)
       const pedidas = accion === "confirmar" ? req.body?.horas : undefined;
@@ -229,6 +246,8 @@ export function registerAcademiaActividadesRoutes(app: Express) {
       const alumnoId = Number(fila.user_id);
       if (alumnoId === p.userId) return res.status(403).json({ message: "No puedes confirmar tus propias actividades: lo hace otro administrador." });
       if (fila.estado !== "pendiente") return res.status(409).json({ message: fila.estado === "confirmada" ? "Esta actividad ya fue confirmada." : "Esta actividad ya fue devuelta." });
+      if (fila.tipo === "sermon" && accion === "confirmar") return res.status(400).json({ message: "El sermón se evalúa con la rúbrica." });
+      if (fila.tipo !== "sermon" && accion === "evaluar") return res.status(400).json({ message: "Solo el sermón se evalúa con la rúbrica." });
       const registradas = fila.horas == null ? null : Number(fila.horas);
       let horas = registradas;
       if (horasConfirmadas != null) {
@@ -237,33 +256,40 @@ export function registerAcademiaActividadesRoutes(app: Express) {
         horas = horasConfirmadas;
       }
       const r = await pool.query(
-        `UPDATE academia_actividades SET estado = $2, motivo = $3, revisor_id = $4, revisada_at = now(), horas = $5 WHERE id = $1 AND estado = 'pendiente'`,
-        [id, accion === "confirmar" ? "confirmada" : "rechazada", motivo || null, p.userId, horas],
+        `UPDATE academia_actividades SET estado = $2, motivo = $3, revisor_id = $4, revisada_at = now(), horas = $5, nota = $6, evaluacion = $7::jsonb
+          WHERE id = $1 AND estado = 'pendiente'`,
+        [id, aprobado ? "confirmada" : "rechazada", motivo || null, p.userId, horas, evaluado?.nota ?? null, evaluado ? JSON.stringify(evaluado.evaluacion) : null],
       );
       if (!r.rowCount) return res.status(409).json({ message: "Otra persona la revisó recién." });
       // si confirmó menos horas de las registradas, lo dicen el historial y el aviso
       const menos = horas != null && registradas != null && horas < registradas ? { horas, registradas } : null;
-      await registrarEnHistorial(req, accion === "confirmar" ? "academia_actividad_confirmada" : "academia_actividad_devuelta", alumnoId, {
-        texto: `${accion === "confirmar" ? "Confirmó" : "Devolvió"} ${cual(fila)} del Nivel ${fila.nivel}${menos ? ` (confirmó ${horasTexto(menos.horas)})` : ""}`,
+      await registrarEnHistorial(req, evaluado ? "academia_sermon_evaluado" : accion === "confirmar" ? "academia_actividad_confirmada" : "academia_actividad_devuelta", alumnoId, {
+        texto: evaluado
+          ? `Evaluó ${cual(fila)} del Nivel ${fila.nivel} con la rúbrica: ${evaluado.nota} de 100, ${aprobado ? "aprobado" : `por debajo de ${APRUEBA_SERMON}`} (evaluó ${evaluado.evaluacion.evaluador})`
+          : `${accion === "confirmar" ? "Confirmó" : "Devolvió"} ${cual(fila)} del Nivel ${fila.nivel}${menos ? ` (confirmó ${horasTexto(menos.horas)})` : ""}`,
         motivo: motivo || null,
       });
       const nv = NIVELES.find((x) => x.n === Number(fila.nivel));
       let cerrado = false;
-      if (accion === "confirmar" && nv) {
+      if (aprobado && nv) {
         const { rows: nl } = await pool.query(`SELECT completado_at FROM academia_niveles WHERE user_id = $1 AND nivel = $2`, [alumnoId, nv.n]);
         // «cerrado» solo si el nivel se completó justo con esta confirmación
         cerrado = !nl[0]?.completado_at && (await revisarNivel(alumnoId, nv));
       }
       const conMenos = menos ? ` con ${horasTexto(menos.horas)} de las ${horasTexto(menos.registradas)} horas que registraste` : "";
-      await avisarA(
-        [alumnoId],
-        accion === "confirmar" ? (CONFIRMADA[fila.tipo as TipoActividad] ?? "Tu actividad fue confirmada") : "Revisa una actividad de tu nivel",
-        accion === "confirmar"
-          ? `La Administración ${fila.tipo === "ensenanza" ? "aprobó" : "confirmó"} ${queEs(fila.tipo)}${conMenos}.${cerrado ? ` ¡Completaste el Nivel ${fila.nivel}!` : ""}${motivo ? ` Nota: ${motivo}` : ""}`
-          : `La Administración devolvió ${queEs(fila.tipo)}: ${motivo}. Puedes corregirla y registrarla otra vez.`,
-        `/academia/nivel/${fila.nivel}`,
-      );
-      res.json({ ok: true, estado: accion === "confirmar" ? "confirmada" : "rechazada", nivelCompleto: cerrado });
+      const completo = cerrado ? ` ¡Completaste el Nivel ${fila.nivel}!` : "";
+      const [titulo, contenido] = evaluado
+        ? aprobado
+          ? [CONFIRMADA.sermon, `La Administración evaluó tu sermón con la rúbrica: ${evaluado.nota} de 100.${completo}${motivo ? ` Nota: ${motivo}` : ""}`]
+          : ["Revisa la evaluación de tu sermón", `Tu sermón obtuvo ${evaluado.nota} de 100 y se aprueba con ${APRUEBA_SERMON}: ${motivo}. Prepáralo otra vez y vuelve a enviarlo.`]
+        : accion === "confirmar"
+          ? [
+              CONFIRMADA[fila.tipo as TipoActividad] ?? "Tu actividad fue confirmada",
+              `La Administración ${fila.tipo === "ensenanza" ? "aprobó" : "confirmó"} ${queEs(fila.tipo)}${conMenos}.${completo}${motivo ? ` Nota: ${motivo}` : ""}`,
+            ]
+          : ["Revisa una actividad de tu nivel", `La Administración devolvió ${queEs(fila.tipo)}: ${motivo}. Puedes corregirla y registrarla otra vez.`];
+      await avisarA([alumnoId], titulo, contenido, `/academia/nivel/${fila.nivel}`);
+      res.json({ ok: true, estado: aprobado ? "confirmada" : "rechazada", nivelCompleto: cerrado, nota: evaluado?.nota ?? null });
     } catch (err) {
       console.error("[academia] revisar actividad:", err);
       res.sendStatus(500);

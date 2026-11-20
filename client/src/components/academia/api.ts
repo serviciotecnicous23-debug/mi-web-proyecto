@@ -445,7 +445,7 @@ export function useEstudio(activo = true) {
 export const sumarEstudio = (minutos: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio", { minutos });
 export const cambiarMetaEstudio = (meta: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio/meta", { meta });
 
-// ---------------------------------------------------------------- las actividades del nivel (Niveles 2 y 3)
+// ---------------------------------------------------------------- las actividades del nivel (Niveles 2 a 4)
 type Actividades = import("@shared/academia-actividades").ActividadesNivel;
 export function useActividades(nivel: number, activo = true) {
   return useQuery<Actividades, ErrorAcademia>({
@@ -465,6 +465,7 @@ export function useActividadesPanel(activo = true) {
     retry: false,
   });
 }
-/** Confirmar o devolver una actividad; la práctica se puede confirmar con menos horas (`horas`). */
-export const revisarActividad = (id: number, accion: "confirmar" | "rechazar", motivo: string, horas?: string) =>
-  pedir<{ ok: boolean; estado: string; nivelCompleto: boolean }>("POST", `/api/academia/direccion/actividad/${id}`, { accion, motivo, ...(horas ? { horas } : {}) });
+/** Confirmar o devolver una actividad: la práctica, también con menos horas (`horas`); el sermón se evalúa con la rúbrica. */
+export type RevisionActividad = { accion: "confirmar" | "rechazar" | "evaluar"; motivo: string; horas?: string; rubrica?: Record<string, string>; evaluador?: string };
+export const revisarActividad = (id: number, cuerpo: RevisionActividad) =>
+  pedir<{ ok: boolean; estado: string; nivelCompleto: boolean; nota: number | null }>("POST", `/api/academia/direccion/actividad/${id}`, cuerpo);

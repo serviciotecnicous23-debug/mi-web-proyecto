@@ -1,20 +1,30 @@
 // «Para revisar» de la Administración: las actividades del nivel que los alumnos registraron (en el Nivel 2, las
-// conversaciones de evangelismo y los servicios; en el Nivel 3, la práctica, la enseñanza grabada y la consolidación).
-// Se confirman o se devuelven con un motivo; el alumno recibe un aviso. Nadie confirma lo suyo.
+// conversaciones de evangelismo y los servicios; en el Nivel 3, la práctica, la enseñanza grabada y la consolidación; en
+// el Nivel 4, la práctica y el sermón, que se evalúa con la rúbrica). Se confirman o se devuelven con un motivo; el
+// alumno recibe un aviso. Nadie confirma lo suyo.
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, ExternalLink, HandHeart, HeartHandshake, MessageCircleHeart, Sprout, Undo2, Video, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ExternalLink, HandHeart, HeartHandshake, MessageCircleHeart, Mic, Sprout, Undo2, Video, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { NOMBRE_ACTIVIDAD, PASOS_CONSOLIDACION, PAUTAS_ENSENANZA, horasDe, horasTexto, type ActividadRevision, type TipoActividad } from "@shared/academia-actividades";
-import { revisarActividad, useActividadesPanel } from "@/components/academia/api";
+import {
+  APRUEBA_SERMON, NOMBRE_ACTIVIDAD, PASOS_CONSOLIDACION, PAUTAS_ENSENANZA, RUBRICA_SERMON, horasDe, horasTexto, type ActividadRevision, type TipoActividad,
+} from "@shared/academia-actividades";
+import { revisarActividad, useActividadesPanel, type RevisionActividad } from "@/components/academia/api";
 import { hace } from "@/components/academia/seguimiento";
 import { useArea } from "@/components/academia/area";
 
 const dia = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
-const ICONO: Record<TipoActividad, LucideIcon> = { evangelismo: MessageCircleHeart, servicio: HandHeart, practica: HeartHandshake, ensenanza: Video, consolidacion: Sprout };
+const ICONO: Record<TipoActividad, LucideIcon> = {
+  evangelismo: MessageCircleHeart,
+  servicio: HandHeart,
+  practica: HeartHandshake,
+  ensenanza: Video,
+  consolidacion: Sprout,
+  sermon: Mic,
+};
 const TEXTO_PASO = new Map<string, string>(PASOS_CONSOLIDACION.map((p) => [p.id, p.texto]));
 const sitioDe = (url: string) => {
   try {
@@ -61,6 +71,22 @@ function Datos({ a }: { a: ActividadRevision }) {
           )}
         </>
       );
+    case "sermon":
+      return (
+        <>
+          <Dato t="Pasaje y tema">{a.titulo}</Dato>
+          <Dato t={a.lider ? "Predicado en vivo" : "Grabado"}>{dia(a.fecha)}{a.lugar ? ` · ${a.lugar}` : ""}</Dato>
+          {a.lider && <Dato t="Lo escuchó">{a.lider}</Dato>}
+          {a.enlace && (
+            <Dato t="Grabación">
+              <a href={a.enlace} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-700 dark:text-orange-300 hover:underline" data-testid="actividad-enlace">
+                Abrir <ExternalLink className="w-3.5 h-3.5" /> <span className="text-muted-foreground">({sitioDe(a.enlace)})</span>
+              </a>
+            </Dato>
+          )}
+          {a.nota != null && <Dato t="Nota">{a.nota} de 100{a.evaluacion ? ` (evaluó ${a.evaluacion.evaluador})` : ""}</Dato>}
+        </>
+      );
     case "consolidacion":
       return (
         <>
@@ -81,6 +107,59 @@ function Datos({ a }: { a: ActividadRevision }) {
   }
 }
 
+/** La evaluación de un sermón con la rúbrica de Homilética II: los puntos de cada criterio, quién evaluó y qué mejorar. */
+function EvaluarSermon({ ocupado, alGuardar }: { ocupado: boolean; alGuardar: (c: RevisionActividad) => void }) {
+  const [puntos, setPuntos] = useState<Record<string, string>>({});
+  const [evaluador, setEvaluador] = useState("");
+  const [comentario, setComentario] = useState("");
+  const valores = RUBRICA_SERMON.map((c) => {
+    const t = (puntos[c.id] ?? "").trim();
+    const v = t === "" ? NaN : Number(t);
+    return { c, v, bien: Number.isInteger(v) && v >= 0 && v <= c.max };
+  });
+  const completa = valores.every((x) => x.bien);
+  const total = valores.reduce((s, x) => s + (x.bien ? x.v : 0), 0);
+  const aprueba = completa && total >= APRUEBA_SERMON;
+  const listo = completa && evaluador.trim().length >= 3 && (aprueba || comentario.trim().length >= 5);
+  return (
+    <div className="space-y-2.5 rounded-lg bg-muted/50 p-3" data-testid="evaluar-sermon">
+      <p className="text-sm font-medium">La rúbrica (se aprueba con {APRUEBA_SERMON} de 100)</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {valores.map(({ c, bien }) => (
+          <label key={c.id} className="flex items-center justify-between gap-2 text-sm" title={c.texto}>
+            <span>{c.corto}</span>
+            <span className="flex items-center gap-1.5">
+              <Input
+                inputMode="numeric"
+                value={puntos[c.id] ?? ""}
+                onChange={(e) => setPuntos({ ...puntos, [c.id]: e.target.value })}
+                className={`w-16 text-right ${puntos[c.id] && !bien ? "border-red-500" : ""}`}
+                aria-label={`${c.corto}, de 0 a ${c.max}`}
+                data-testid={`rubrica-${c.id}`}
+              />
+              <span className="text-muted-foreground tabular-nums">/ {c.max}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <p className="text-sm font-semibold" data-testid="rubrica-total">
+        Total: {total} de 100 {completa ? (aprueba ? "· aprobado" : `· no alcanza (${APRUEBA_SERMON})`) : ""}
+      </p>
+      <Input value={evaluador} onChange={(e) => setEvaluador(e.target.value)} placeholder="Qué maestro de la academia lo evaluó" maxLength={80} data-testid="rubrica-evaluador" />
+      <Input
+        value={comentario}
+        onChange={(e) => setComentario(e.target.value)}
+        placeholder={aprueba || !completa ? "Un comentario para el alumno (opcional)" : "Qué debe mejorar (el alumno lo recibe con su nota)"}
+        maxLength={400}
+        data-testid="rubrica-comentario"
+      />
+      <Button className="fire-btn-primary" disabled={ocupado || !listo} onClick={() => alGuardar({ accion: "evaluar", motivo: comentario, rubrica: puntos, evaluador })} data-testid="rubrica-guardar">
+        Guardar la evaluación
+      </Button>
+    </div>
+  );
+}
+
 function TarjetaActividad({ a, puedeRevisar }: { a: ActividadRevision; puedeRevisar: boolean }) {
   const qc = useQueryClient();
   const { base } = useArea();
@@ -91,13 +170,21 @@ function TarjetaActividad({ a, puedeRevisar }: { a: ActividadRevision; puedeRevi
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const esEnsenanza = a.tipo === "ensenanza";
-  const decidir = async (accion: "confirmar" | "rechazar") => {
+  const esSermon = a.tipo === "sermon";
+  const enviar = async (cuerpo: RevisionActividad) => {
     setOcupado(true);
     setError(null);
     try {
-      const r = await revisarActividad(a.id, accion, accion === "rechazar" ? motivo : "", accion === "confirmar" && a.tipo === "practica" ? horas : undefined);
+      const r = await revisarActividad(a.id, cuerpo);
       toast({
-        title: accion === "confirmar" ? (esEnsenanza ? "Enseñanza aprobada" : "Actividad confirmada") : "Actividad devuelta",
+        title:
+          cuerpo.accion === "evaluar"
+            ? `Sermón evaluado: ${r.nota} de 100`
+            : cuerpo.accion === "confirmar"
+              ? esEnsenanza
+                ? "Enseñanza aprobada"
+                : "Actividad confirmada"
+              : "Actividad devuelta",
         description: r.nivelCompleto ? `${a.alumno.nombre} completó el Nivel ${a.nivel}.` : `${a.alumno.nombre} recibe un aviso.`,
       });
       void qc.invalidateQueries({ queryKey: ["academia", "direccion"] });
@@ -107,6 +194,8 @@ function TarjetaActividad({ a, puedeRevisar }: { a: ActividadRevision; puedeRevi
       setOcupado(false);
     }
   };
+  const decidir = (accion: "confirmar" | "rechazar") =>
+    enviar({ accion, motivo: accion === "rechazar" ? motivo : "", ...(accion === "confirmar" && a.tipo === "practica" ? { horas } : {}) });
   const Icono = ICONO[a.tipo] ?? MessageCircleHeart;
   const horasValidas = a.tipo !== "practica" || (() => {
     const h = horasDe(horas);
@@ -127,10 +216,14 @@ function TarjetaActividad({ a, puedeRevisar }: { a: ActividadRevision; puedeRevi
         </div>
         {a.estado === "confirmada" && (
           <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="w-3.5 h-3.5" /> {esEnsenanza ? "Aprobada" : "Confirmada"}
+            <CheckCircle2 className="w-3.5 h-3.5" /> {esEnsenanza ? "Aprobada" : esSermon ? "Aprobado" : "Confirmada"}
           </span>
         )}
-        {a.estado === "rechazada" && <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-red-500/15 text-red-700 dark:text-red-300"><Undo2 className="w-3.5 h-3.5" /> Devuelta</span>}
+        {a.estado === "rechazada" && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-red-500/15 text-red-700 dark:text-red-300">
+            <Undo2 className="w-3.5 h-3.5" /> {esSermon ? (a.nota != null ? "No alcanzó" : "Devuelto") : "Devuelta"}
+          </span>
+        )}
       </header>
       <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
         <Datos a={a} />
@@ -151,6 +244,11 @@ function TarjetaActividad({ a, puedeRevisar }: { a: ActividadRevision; puedeRevi
               <Button variant="destructive" disabled={ocupado || motivo.trim().length < 5} onClick={() => decidir("rechazar")} data-testid="actividad-devolver-enviar">Devolver</Button>
               <Button variant="ghost" onClick={() => setDevolviendo(false)}>Cancelar</Button>
             </div>
+          </div>
+        ) : esSermon ? (
+          <div className="space-y-2">
+            <EvaluarSermon ocupado={ocupado} alGuardar={enviar} />
+            <Button variant="outline" disabled={ocupado} onClick={() => setDevolviendo(true)} data-testid="actividad-devolver">Devolver sin evaluar (por ejemplo, si el enlace no abre)</Button>
           </div>
         ) : (
           <div className="flex flex-wrap items-end gap-2">
@@ -184,8 +282,9 @@ export function ActividadesPorConfirmar({ ajeno }: { ajeno: (userId: number) => 
         <h3 className="font-display text-xl font-bold">Actividades por confirmar ({pendientes.length})</h3>
         <p className="text-sm text-muted-foreground">
           Lo que piden los niveles además de sus materias: en el Nivel 2, las conversaciones de evangelismo y el servicio (cuenta cuando lo confirmas y se
-          cumplen sus 28 días); en el Nivel 3, las horas de práctica, la enseñanza grabada y la consolidación de un nuevo creyente. Confírmalas si son
-          verdaderas (pregúntale al líder que el alumno nombra) o devuélvelas con un motivo. La práctica se puede confirmar con menos horas.
+          cumplen sus 28 días); en el Nivel 3, las horas de práctica, la enseñanza grabada y la consolidación de un nuevo creyente; en el Nivel 4, las horas
+          de práctica y el sermón, que se evalúa con la rúbrica de Homilética II (se aprueba con {APRUEBA_SERMON}). Confírmalas si son verdaderas (pregúntale al
+          líder que el alumno nombra) o devuélvelas con un motivo. La práctica se puede confirmar con menos horas.
         </p>
         {pendientes.length ? pendientes.map((a) => <TarjetaActividad key={a.id} a={a} puedeRevisar={ajeno(a.alumno.userId)} />) : <p className="text-sm text-muted-foreground">Nada por confirmar.</p>}
       </section>
