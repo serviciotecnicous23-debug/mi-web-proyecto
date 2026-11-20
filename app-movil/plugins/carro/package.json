@@ -1,0 +1,24 @@
+{
+  "name": "capacitor-carro",
+  "version": "1.0.0",
+  "description": "Reproductor nativo con CarPlay y Android Auto para las apps de Avivando el Fuego (radio y ministerio).",
+  "private": true,
+  "license": "UNLICENSED",
+  "files": [
+    "Package.swift",
+    "ios/Sources",
+    "android/build.gradle",
+    "android/src/main"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  }
+}

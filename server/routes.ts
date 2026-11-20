@@ -77,6 +77,7 @@ import { registerPrayerWallRoutes } from "./prayer-wall";
 import { eliminarCuentaPropia } from "./account-deletion";
 import { registerReportRoutes } from "./reports";
 import { registerAcademiaRoutes } from "./academia";
+import { registerCarroRoutes } from "./carro";
 import { registerCuadernoRoutes } from "./cuaderno";
 import { academiaEnPlanilla } from "./academia-asignaciones";
 import { DEFAULT_AZURACAST_BASE_URL, AZURACAST_STATION_SHORTCODE } from "@shared/radio";
@@ -3020,6 +3021,8 @@ ${urls}
   // ========== ACADEMIA AVIVANDO EL FUEGO ==========
   // Niveles, materias, lecciones, repasos, versículos y exámenes con corrección automática (docs/academia.md).
   registerAcademiaRoutes(app);
+  // Lo que se escucha en el carro (CarPlay y Android Auto) desde la app del ministerio (server/carro.ts).
+  registerCarroRoutes(app);
   // El cuaderno de apuntes: el mismo en la academia y en la Biblioteca (server/cuaderno.ts).
   registerCuadernoRoutes(app);
 

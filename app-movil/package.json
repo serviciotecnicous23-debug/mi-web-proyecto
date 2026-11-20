@@ -1,0 +1,21 @@
+{
+  "name": "avivando-el-fuego-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "App del Ministerio Avivando el Fuego para Google Play y App Store: la web oficial dentro de la app, con CarPlay y Android Auto (complemento «Carro»).",
+  "type": "module",
+  "scripts": {
+    "sync": "cap sync",
+    "test": "node --test pruebas/*.test.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0",
+    "capacitor-carro": "file:plugins/carro"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "typescript": "^7.0.2"
+  }
+}
