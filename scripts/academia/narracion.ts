@@ -3,7 +3,7 @@
  *
  *   npx tsx scripts/academia/narracion.ts estimar
  *       Cuántas palabras y minutos de audio tiene cada nivel (los versículos se estiman), y cuánto pesaría.
- *   npx tsx scripts/academia/narracion.ts guion <carpeta> <nivel 1-5 | materia | lección>...
+ *   npx tsx scripts/academia/narracion.ts guion <carpeta> <nivel 1-5 | especialidades | materia | lección>...
  *       Escribe <carpeta>/<lección>.json con el guion que dice la voz (los versículos, de la RV1960 de la web publicada).
  *   npx tsx scripts/academia/narracion.ts registrar <carpeta> [--r2 <depósito> --base <dirección pública>]
  *       Toma los audios grabados (<lección>.m4a y <lección>.marcas.json, que deja scripts/academia/voz/narrar.py), los
@@ -100,7 +100,7 @@ function lecciones(pedidos: string[]): string[] {
   const ids = new Set<string>();
   for (const p of pedidos) {
     const n = Number(p);
-    const delNivel = Number.isInteger(n) && n >= 1 && n <= 5 ? materias.filter((m) => m.nivel === n) : [];
+    const delNivel = Number.isInteger(n) && n >= 1 && n <= 5 ? materias.filter((m) => m.nivel === n) : p === "especialidades" ? materias.filter((m) => m.nivel == null) : [];
     const deMateria = materias.filter((m) => m.id === p);
     const ms: MateriaDef[] = [...delNivel, ...deMateria];
     if (ms.length) ms.forEach((m) => m.lecciones.forEach((l) => CONTENIDO.has(l.id) && ids.add(l.id)));

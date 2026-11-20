@@ -230,7 +230,17 @@ const ABREVIATURAS: [RegExp, string][] = [
 const PRONUNCIACION: [RegExp, string][] = [[/\bId y haced\b/g, "Id, y haced"]];
 
 /** Las siglas de verdad, que se dicen letra por letra: no se pasan a minúsculas. */
-const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM"]);
+const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM", "ID", "CDC", "FTC", "RLUIPA"]);
+
+/** El nombre de cada letra, para decir «P52» («pe cincuenta y dos») o «ic3» («i ce tres»). */
+const LETRAS: Record<string, string> = {
+  a: "a", b: "be", c: "ce", d: "de", e: "e", f: "efe", g: "ge", h: "hache", i: "i", j: "jota", k: "ka", l: "ele", m: "eme",
+  n: "ene", ñ: "eñe", o: "o", p: "pe", q: "cu", r: "erre", s: "ese", t: "te", u: "u", v: "uve", w: "doble uve", x: "equis",
+  y: "ye", z: "zeta",
+};
+const deletreo = (s: string) => s.toLowerCase().split("").map((c) => (/\d/.test(c) ? enPalabras(Number(c)) : LETRAS[c] ?? c)).join(" ");
+/** Una parte de una dirección web: la palabra tal cual, o deletreada si es una sigla («ftc», «ic3»). */
+const parteDeDireccion = (p: string) => (/\d/.test(p) || !/[aeiouáéíóú]/i.test(p) || p.length <= 3 && p !== "gov" ? deletreo(p) : p);
 /**
  * Las palabras en mayúsculas sostenidas («YO SOY EL QUE SOY», «AL DIOS NO CONOCIDO» de la RV1960) se dicen como
  * palabras y no como siglas. Quedan igual los números romanos y las siglas de `SIGLAS`.
@@ -288,6 +298,13 @@ export function hablado(texto: string): string {
     if (s === "er") return base.replace(/ero$/, "er");
     return base;
   });
+  // las direcciones web («reportfraud.ftc.gov», «ic3.gov»)
+  t = t.replace(/\b((?:[a-z0-9-]+\.)+(?:gov|org|com|net|edu))\b/g, (d) => d.split(".").map(parteDeDireccion).join(" punto "));
+  // las leyes de Estados Unidos («42 U.S.C. 2000cc»)
+  t = t.replace(/\bU\.\s?S\.\s?C\.\s?/g, "del Código de los Estados Unidos, sección ");
+  // una letra con número («P52», «G4697» de Strong) y un número con letras («2000cc»)
+  t = t.replace(/\b([A-Z])(\d{1,5})\b/g, (_m, l: string, n: string) => `${LETRAS[l.toLowerCase()]} ${enPalabras(Number(n))}`);
+  t = t.replace(/\b(\d{1,5})([a-z]{1,3})\b/g, (m, n: string, l: string) => (/^(er|o|a|os|as|do|da|ro|ra|to|ta|vo|va|no|na|mo|ma)$/.test(l) ? m : `${enPalabras(Number(n))} ${deletreo(l)}`));
   // los teléfonos de emergencia y de ayuda se dicen cifra por cifra; los largos, por grupos
   t = t.replace(/\b(911|988)\b/g, (n) => n.split("").map((d) => enPalabras(Number(d))).join(" "));
   t = t.replace(/\b\d{1,3}(?:-\d{3,4}){2,}\b/g, (tel) =>
