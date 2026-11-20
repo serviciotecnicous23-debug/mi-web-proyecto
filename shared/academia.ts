@@ -15,7 +15,8 @@
 
 import type { NarracionVista } from "./narracion";
 import {
-  ACTIVIDADES_NIVEL, APRUEBA_SERMON, LIMITES_ACTIVIDAD, MINUTOS_ENSENANZA, MINUTOS_SERMON, PASOS_CONSOLIDACION, PASOS_MINIMOS, RUBRICA_SERMON,
+  ACTIVIDADES_NIVEL, APRUEBA_PROYECTO, APRUEBA_SERMON, LIMITES_ACTIVIDAD, MINUTOS_ENSENANZA, MINUTOS_SERMON, PARTES_PLAN, PASOS_CONSOLIDACION, PASOS_MINIMOS,
+  PROFESORES_DEFENSA, RUBRICA_PROYECTO, RUBRICA_SERMON,
 } from "./academia-actividades";
 
 export const NOMBRE_ACADEMIA = "Academia Avivando el Fuego";
@@ -5397,7 +5398,7 @@ export const NIVELES: NivelDef[] = [
     ritmo: "6 a 8 meses",
     recibe: "Diplomado Superior en Ministerio Cristiano",
     descripcion: "Pastorear, administrar, enseñar y formar a otros: el nivel de quienes multiplican.",
-    requisitos: ["Las 8 materias aprobadas", "El proyecto final con defensa en vivo", "Acompañar a 2 personas hasta terminar el Nivel 1"],
+    requisitos: ["Las 8 materias aprobadas", "El examen integral del nivel", "El proyecto final con defensa en vivo", "Acompañar a 2 personas hasta terminar el Nivel 1"],
     materias: [
       TEOLOGIA_PASTORAL,
       ADMINISTRACION,
@@ -6325,18 +6326,12 @@ export type RequisitoNivel = {
 };
 
 /**
- * Los requisitos del reglamento del Nivel 5 que todavía no se registran en la academia (el proyecto final y el
- * acompañamiento). Mientras falten, el nivel los muestra pendientes y no se cierra: así nadie recibe el diploma sin
- * ellos. Sus textos son los de `NIVELES`. Los de los Niveles 3 y 4 ya se registran como actividades del nivel
- * (shared/academia-actividades.ts).
+ * Los requisitos del reglamento que todavía no se registran en la academia. Mientras falte alguno, el nivel lo muestra
+ * pendiente y no se cierra: así nadie recibe un diploma sin él. Hoy no queda ninguno: los de los Niveles 2 a 5 se
+ * registran como actividades del nivel (shared/academia-actividades.ts). Sus textos serían los de `NIVELES`.
  */
 export type RequisitoPorHacer = { id: "practica" | "ensenanza" | "consolidacion" | "sermon" | "proyecto" | "acompanar"; texto: string };
-export const REQUISITOS_POR_HACER: Partial<Record<NivelN, RequisitoPorHacer[]>> = {
-  5: [
-    { id: "proyecto", texto: "El proyecto final con defensa en vivo" },
-    { id: "acompanar", texto: "Acompañar a 2 personas hasta terminar el Nivel 1" },
-  ],
-};
+export const REQUISITOS_POR_HACER: Partial<Record<NivelN, RequisitoPorHacer[]>> = {};
 
 /** El nivel y lo que falta para cerrarlo: materias, examen integral, versículos y pacto. */
 export type NivelEstado = {
@@ -6768,21 +6763,22 @@ function actividadesDelReglamento(): string[] {
   const n2 = ACTIVIDADES_NIVEL[2]!;
   const n3 = ACTIVIDADES_NIVEL[3]!;
   const n4 = ACTIVIDADES_NIVEL[4]!;
+  const n5 = ACTIVIDADES_NIVEL[5]!;
   const anios = Math.round(LIMITES_ACTIVIDAD.diasAtras / 365);
-  const porHacer = ([5] as const)
-    .filter((n) => REQUISITOS_POR_HACER[n]?.length)
-    .map((n) => `Nivel ${n}: ${REQUISITOS_POR_HACER[n]!.map((r) => minuscula(r.texto)).join(" y ")}; se podrán registrar más adelante, del mismo modo.`);
+  const enFrase = (t: string) => (t.startsWith("Cristo") ? t : minuscula(t));
   return [
     `Desde el Nivel 2, cada nivel pide también actividades en la vida de la iglesia. Se registran en la página del nivel, después de completar el nivel anterior, y pueden ser de los últimos ${anios} años.`,
     "Las confirma la Administración de la academia con el líder o el pastor que el alumno nombra, o las devuelve con un motivo para corregirlas. Cuentan las confirmadas y lo confirmado ya no cambia. Nadie confirma lo suyo.",
     `Nivel 2: ${n2.evangelismo} conversaciones de evangelismo y servir 1 mes (${n2.servicioDias} días) en un ministerio de la iglesia.`,
     `Nivel 3: ${n3.practicaHoras} horas de práctica ministerial supervisada por un líder de la iglesia, una enseñanza grabada aprobada y consolidar a ${n3.consolidacion} nuevo creyente.`,
     `Nivel 4: ${n4.practicaHoras} horas de práctica ministerial supervisada y un sermón evaluado con rúbrica.`,
+    `Nivel 5: el proyecto final con defensa en vivo y acompañar a ${n5.acompanar} personas hasta que terminen el Nivel 1.`,
     `La práctica se registra por día o por período, con el ministerio, quién la supervisó y sus horas: hasta ${LIMITES_ACTIVIDAD.horasDia} en un día y ${LIMITES_ACTIVIDAD.horasPeriodo} en un período. La Administración puede confirmar menos horas de las registradas.`,
     `La enseñanza grabada dura de ${MINUTOS_ENSENANZA.min} a ${MINUTOS_ENSENANZA.max} minutos y se prepara con los pasos de Homilética I. Se comparte con un enlace que la Administración pueda abrir, sin hacerla pública, y se aprueba si explica un pasaje en su contexto con una idea central y un propósito claros, un bosquejo que sale del texto, una ilustración, una aplicación y a Cristo en el centro.`,
     `Consolidar es acompañar a un nuevo creyente, en coordinación con la iglesia, al menos en ${PASOS_MINIMOS} de los ${PASOS_CONSOLIDACION.length} pasos del plan de consolidación de la materia Evangelismo y consolidación.`,
-    `El sermón dura de ${MINUTOS_SERMON.min} a ${MINUTOS_SERMON.max} minutos y se presenta grabado, con un enlace que la Administración pueda abrir, o en vivo, ante un maestro de la academia. Un maestro lo evalúa con la rúbrica de Homilética II (${RUBRICA_SERMON.map((c) => `${c.corto.startsWith("Cristo") ? c.corto : minuscula(c.corto)}, ${c.max}`).join("; ")}) y se aprueba con ${APRUEBA_SERMON} de 100; si no llega, se prepara otra vez con lo que debe mejorar.`,
-    ...porHacer,
+    `El sermón dura de ${MINUTOS_SERMON.min} a ${MINUTOS_SERMON.max} minutos y se presenta grabado, con un enlace que la Administración pueda abrir, o en vivo, ante un maestro de la academia. Un maestro lo evalúa con la rúbrica de Homilética II (${RUBRICA_SERMON.map((c) => `${enFrase(c.corto)}, ${c.max}`).join("; ")}) y se aprueba con ${APRUEBA_SERMON} de 100; si no llega, se prepara otra vez con lo que debe mejorar.`,
+    `El proyecto final es un plan de ministerio con las ${PARTES_PLAN.length} partes de la materia Seminario de liderazgo ministerial, escrito con el pastor o el mentor y entregado con un enlace. La Administración programa su defensa en vivo, en persona o en línea, ante ${PROFESORES_DEFENSA} profesores; después de ella, cada uno lo evalúa con su rúbrica (${RUBRICA_PROYECTO.map((c) => `${enFrase(c.corto)}, ${c.max}`).join("; ")}). La nota es el promedio de los dos y se aprueba con ${APRUEBA_PROYECTO} de 100; si no llega, se mejora y se defiende otra vez.`,
+    "Para acompañar, la Administración elige al alumno como mentor de personas que empiezan el Nivel 1: cuenta cada una que termina el Nivel 1 mientras la acompaña. No hace falta registrarlo, y desde la página del nivel se le puede pedir a la Administración a quién acompañar.",
     "De las personas con quienes hablas o a quienes acompañas se anota solo la relación o sus iniciales, nunca su nombre completo ni sus datos.",
     "Las normas de prudencia de las materias se cumplen siempre: con menores de edad, con conocimiento de sus padres y nunca a solas. Si aparece un abuso o un peligro, se avisa de inmediato al pastor y a las autoridades.",
   ];

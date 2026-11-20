@@ -2,7 +2,9 @@
  * Las actividades que pide un nivel además de sus materias (docs/academia.md, «Las actividades del nivel»):
  * - en el Nivel 2, 3 conversaciones de evangelismo y servir 1 mes en un ministerio;
  * - en el Nivel 3, 20 horas de práctica ministerial, una enseñanza grabada aprobada y consolidar a 1 nuevo creyente;
- * - en el Nivel 4, 30 horas de práctica ministerial y un sermón evaluado con la rúbrica de Homilética II.
+ * - en el Nivel 4, 30 horas de práctica ministerial y un sermón evaluado con la rúbrica de Homilética II;
+ * - en el Nivel 5, el proyecto final (un plan de ministerio) con su defensa en vivo ante 2 profesores, y acompañar como
+ *   mentor a 2 personas hasta que terminan el Nivel 1 (esto no se registra: lo cuenta la academia con los mentores).
  *
  * El alumno las registra desde la página del nivel y la Administración las confirma (o las devuelve con un motivo) en
  * «Para revisar». Cuentan las confirmadas; el servicio, además, cuando ya pasaron sus días desde que empezó, y la
@@ -11,7 +13,7 @@
  */
 import type { NivelN } from "./academia";
 
-export type TipoActividad = "evangelismo" | "servicio" | "practica" | "ensenanza" | "consolidacion" | "sermon";
+export type TipoActividad = "evangelismo" | "servicio" | "practica" | "ensenanza" | "consolidacion" | "sermon" | "proyecto";
 export type EstadoActividad = "pendiente" | "confirmada" | "rechazada";
 
 /** Lo que pide un nivel: cuántas de cada una (el servicio, en días; la práctica, en horas). */
@@ -22,6 +24,9 @@ export type PideNivel = {
   ensenanza?: number;
   consolidacion?: number;
   sermon?: number;
+  proyecto?: number;
+  /** Personas acompañadas como mentor hasta terminar el Nivel 1 (no se registra: se cuenta). */
+  acompanar?: number;
 };
 
 /** Lo que pide cada nivel (sus textos están en los requisitos de `NIVELES` y en el reglamento). */
@@ -29,6 +34,7 @@ export const ACTIVIDADES_NIVEL: Partial<Record<NivelN, PideNivel>> = {
   2: { evangelismo: 3, servicioDias: 28 },
   3: { practicaHoras: 20, ensenanza: 1, consolidacion: 1 },
   4: { practicaHoras: 30, sermon: 1 },
+  5: { proyecto: 1, acompanar: 2 },
 };
 
 const CAMPO: Record<TipoActividad, keyof PideNivel> = {
@@ -38,6 +44,7 @@ const CAMPO: Record<TipoActividad, keyof PideNivel> = {
   ensenanza: "ensenanza",
   consolidacion: "consolidacion",
   sermon: "sermon",
+  proyecto: "proyecto",
 };
 export const TIPOS_ACTIVIDAD = Object.keys(CAMPO) as TipoActividad[];
 
@@ -54,6 +61,7 @@ export const NOMBRE_ACTIVIDAD: Record<TipoActividad, string> = {
   ensenanza: "Enseñanza grabada",
   consolidacion: "Consolidación de un nuevo creyente",
   sermon: "Sermón",
+  proyecto: "Proyecto final",
 };
 
 export const LIMITES_ACTIVIDAD = {
@@ -132,6 +140,50 @@ export type CriterioSermon = (typeof RUBRICA_SERMON)[number]["id"];
 /** La evaluación de un sermón: los puntos de cada criterio y el maestro que lo evaluó. */
 export type EvaluacionSermon = { rubrica: Record<CriterioSermon, number>; evaluador: string };
 
+/**
+ * El proyecto final del Nivel 5: un plan de ministerio con las ocho partes de la materia Seminario de liderazgo
+ * ministerial (su lección del plan de ministerio), que se presenta y se defiende en vivo ante 2 profesores. Cada uno lo evalúa con
+ * esta rúbrica de 100 puntos (las partes del plan y la defensa); la nota es el promedio de los dos y se aprueba con 70.
+ */
+export const PARTES_PLAN = [
+  "El llamado y la visión",
+  "El diagnóstico",
+  "Las metas",
+  "El equipo",
+  "Los recursos",
+  "El calendario",
+  "La evaluación",
+  "El cuidado personal",
+] as const;
+export const APRUEBA_PROYECTO = 70;
+export const PROFESORES_DEFENSA = 2;
+export const RUBRICA_PROYECTO = [
+  { id: "vision", corto: "Llamado, visión y base bíblica", texto: "El llamado y la visión, con su base bíblica", max: 15 },
+  { id: "diagnostico", corto: "Diagnóstico", texto: "El diagnóstico: las fortalezas, las debilidades, las oportunidades y los riesgos", max: 10 },
+  { id: "metas", corto: "Metas", texto: "Las metas: pocas, claras, que se puedan medir y con fecha", max: 15 },
+  { id: "medios", corto: "Equipo, recursos y calendario", texto: "El equipo y su formación, los recursos con su presupuesto y el calendario", max: 15 },
+  { id: "cuidado", corto: "Evaluación y cuidado personal", texto: "La evaluación con su rendición de cuentas y el cuidado personal", max: 15 },
+  { id: "defensa", corto: "La defensa en vivo", texto: "La defensa en vivo: claridad, dominio del plan y respuestas a las preguntas", max: 30 },
+] as const;
+export type CriterioProyecto = (typeof RUBRICA_PROYECTO)[number]["id"];
+/** La defensa del proyecto: cuándo (hora de Texas) y dónde, en persona o en línea, ante qué profesores, y sus evaluaciones. */
+export type DefensaProyecto = {
+  fecha: string;
+  hora: string;
+  lugar: string | null;
+  enlace: string | null;
+  profesores: string[];
+  evaluaciones: { evaluador: string; rubrica: Record<CriterioProyecto, number>; nota: number }[] | null;
+};
+/** La defensa se programa desde un mes atrás (si ya se hizo) hasta seis meses adelante. */
+export const LIMITES_DEFENSA = { diasAntes: 31, diasDespues: 183 } as const;
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+/** «2026-12-05» → «5 de diciembre de 2026» (igual en el servidor y en el navegador). */
+export const fechaLarga = (f: string): string => `${Number(f.slice(8, 10))} de ${MESES[Number(f.slice(5, 7)) - 1]} de ${f.slice(0, 4)}`;
+/** Cuándo es la defensa, como se le dice al alumno. */
+export const cuandoDefensa = (d: { fecha: string; hora: string }): string => `el ${fechaLarga(d.fecha)} a las ${d.hora} (hora de Texas)`;
+
 export type ActividadVista = {
   id: number;
   tipo: TipoActividad;
@@ -153,6 +205,8 @@ export type ActividadVista = {
   /** El sermón evaluado: su nota de 0 a 100 y la evaluación de la Administración. */
   nota: number | null;
   evaluacion: EvaluacionSermon | null;
+  /** El proyecto final: su defensa programada y, después, las evaluaciones de los profesores. */
+  defensa: DefensaProyecto | null;
   detalle: string;
   estado: EstadoActividad;
   motivo: string | null;
@@ -172,6 +226,10 @@ export type ResumenActividades = {
   consolidacion: Conteo;
   /** `nota`: la del sermón aprobado o, si no, la del último evaluado. */
   sermon: Conteo & { nota: number | null };
+  /** `defensa`: la del proyecto que espera su evaluación, si ya está programada. */
+  proyecto: Conteo & { nota: number | null; defensa: { fecha: string; hora: string } | null };
+  /** Las personas que acompaña como mentor: las que terminaron el Nivel 1 mientras las acompañaba y las que siguen en él. */
+  acompanar: { terminaron: number; enCurso: number; hecho: boolean };
 };
 
 export type ActividadesNivel = ResumenActividades & {
@@ -258,6 +316,7 @@ const PIDE_FECHA: Record<TipoActividad, string> = {
   ensenanza: "Escribe la fecha en que grabaste la enseñanza.",
   consolidacion: "Escribe la fecha en que empezaste a acompañarlo.",
   sermon: "Escribe la fecha en que predicaste o grabaste el sermón.",
+  proyecto: "Escribe la fecha en que terminaste el plan.",
 };
 
 const PIDE_DETALLE: Record<TipoActividad, string> = {
@@ -267,6 +326,7 @@ const PIDE_DETALLE: Record<TipoActividad, string> = {
   ensenanza: "la idea central y el propósito de tu enseñanza",
   consolidacion: "cómo fue el acompañamiento",
   sermon: "la idea central y el propósito de tu sermón",
+  proyecto: "el ministerio del plan y su meta principal",
 };
 
 type Validacion = { ok: true; datos: DatosActividad } | { ok: false; error: string };
@@ -366,6 +426,17 @@ export function validarActividad(cuerpo: any, hoy: string, tipos: readonly TipoA
     return { ok: true, datos: { ...vacio, tipo, fecha, titulo, enlace, lugar, detalle } };
   }
 
+  if (tipo === "proyecto") {
+    const titulo = limpio(cuerpo?.titulo, LIMITES_ACTIVIDAD.titulo);
+    if (titulo.length < 5) return { ok: false, error: "Escribe el nombre de tu plan de ministerio." };
+    const enlace = enlaceValido(cuerpo?.enlace);
+    if (!enlace) return { ok: false, error: "Pega el enlace del plan escrito, que empiece con https:// (un documento de Google o un PDF compartido, por ejemplo)." };
+    const lider = limpio(cuerpo?.lider, LIMITES_ACTIVIDAD.lider);
+    if (lider.length < 3) return { ok: false, error: "Escribe con quién lo revisaste: tu pastor o tu mentor." };
+    if (cuerpo?.partes !== true) return { ok: false, error: `Confirma que tu plan tiene sus ${PARTES_PLAN.length} partes.` };
+    return { ok: true, datos: { ...vacio, tipo, fecha, titulo, enlace, lider, detalle } };
+  }
+
   // la consolidación de un nuevo creyente
   const persona = limpio(cuerpo?.persona, LIMITES_ACTIVIDAD.persona);
   if (persona.length < 2) return { ok: false, error: "Escribe a quién acompañaste: la relación o sus iniciales, sin el nombre completo." };
@@ -379,7 +450,7 @@ export function validarActividad(cuerpo: any, hoy: string, tipos: readonly TipoA
   return { ok: true, datos: { ...vacio, tipo, fecha, hasta: h.hasta, persona, lider, pasos, detalle } };
 }
 
-type ParaResumir = Pick<ActividadVista, "tipo" | "estado" | "fecha" | "hasta"> & { horas?: number | null; nota?: number | null };
+type ParaResumir = Pick<ActividadVista, "tipo" | "estado" | "fecha" | "hasta"> & { horas?: number | null; nota?: number | null; defensa?: DefensaProyecto | null };
 
 function conteo(lista: ParaResumir[], tipo: TipoActividad, pide: number | undefined): Conteo {
   const de = lista.filter((a) => a.tipo === tipo);
@@ -392,8 +463,16 @@ function conteo(lista: ParaResumir[], tipo: TipoActividad, pide: number | undefi
   };
 }
 
-/** El avance de un alumno en las actividades de su nivel. */
-export function resumirActividades(pide: PideNivel, lista: ParaResumir[], hoy: string): ResumenActividades {
+/**
+ * El avance de un alumno en las actividades de su nivel. `acompanados`: lo que cuenta la academia de las personas que
+ * acompaña como mentor (Nivel 5).
+ */
+export function resumirActividades(
+  pide: PideNivel,
+  lista: ParaResumir[],
+  hoy: string,
+  acompanados: { terminaron: number; enCurso: number } = { terminaron: 0, enCurso: 0 },
+): ResumenActividades {
   const servicios = lista.filter((a) => a.tipo === "servicio");
   const confirmados = servicios.filter((a) => a.estado === "confirmada");
   const dias = confirmados.length ? Math.max(...confirmados.map((a) => diasDeServicio(a, hoy))) : null;
@@ -402,6 +481,9 @@ export function resumirActividades(pide: PideNivel, lista: ParaResumir[], hoy: s
   const horas = horasDeLas("confirmada");
   const sermones = lista.filter((a) => a.tipo === "sermon");
   const evaluado = sermones.find((a) => a.estado === "confirmada") ?? sermones.find((a) => a.nota != null);
+  const proyectos = lista.filter((a) => a.tipo === "proyecto");
+  const pEvaluado = proyectos.find((a) => a.estado === "confirmada") ?? proyectos.find((a) => a.nota != null);
+  const pDefensa = proyectos.find((a) => a.estado === "pendiente")?.defensa;
   return {
     pide,
     evangelismo: conteo(lista, "evangelismo", pide.evangelismo),
@@ -415,7 +497,61 @@ export function resumirActividades(pide: PideNivel, lista: ParaResumir[], hoy: s
     ensenanza: conteo(lista, "ensenanza", pide.ensenanza),
     consolidacion: conteo(lista, "consolidacion", pide.consolidacion),
     sermon: { ...conteo(lista, "sermon", pide.sermon), nota: evaluado?.nota ?? null },
+    proyecto: {
+      ...conteo(lista, "proyecto", pide.proyecto),
+      nota: pEvaluado?.nota ?? null,
+      defensa: pDefensa ? { fecha: pDefensa.fecha, hora: pDefensa.hora } : null,
+    },
+    acompanar: { ...acompanados, hecho: acompanados.terminaron >= (pide.acompanar ?? 0) },
   };
+}
+
+/** Los puntos de un criterio: un entero (acepta texto); null si falta o no es entero. */
+function puntosDe(crudo: unknown): number | null {
+  const v = typeof crudo === "number" ? crudo : typeof crudo === "string" && crudo.trim() ? Number(crudo) : NaN;
+  return Number.isInteger(v) ? v : null;
+}
+
+/** Revisa la defensa que programa la Administración: fecha, hora, dónde (o el enlace) y los 2 profesores. */
+export function validarDefensa(cuerpo: any, hoy: string): { ok: true; defensa: Omit<DefensaProyecto, "evaluaciones"> } | { ok: false; error: string } {
+  const fecha = cuerpo?.fecha;
+  if (!fechaValida(fecha)) return { ok: false, error: "Escribe la fecha de la defensa." };
+  const dias = diasEntre(hoy, fecha);
+  if (dias < -LIMITES_DEFENSA.diasAntes || dias > LIMITES_DEFENSA.diasDespues) {
+    return { ok: false, error: "La fecha de la defensa debe estar entre el último mes y los próximos seis meses." };
+  }
+  const hora = typeof cuerpo?.hora === "string" ? cuerpo.hora.trim() : "";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return { ok: false, error: "Escribe la hora de la defensa, de 00:00 a 23:59 (por ejemplo, 19:00)." };
+  const lugar = limpio(cuerpo?.lugar, LIMITES_ACTIVIDAD.lugar) || null;
+  const conEnlace = cuerpo?.enlace != null && String(cuerpo.enlace).trim() !== "";
+  const enlace = conEnlace ? enlaceValido(cuerpo.enlace) : null;
+  if (conEnlace && !enlace) return { ok: false, error: "El enlace de la reunión debe empezar con https://." };
+  if (!lugar && !enlace) return { ok: false, error: "Escribe dónde será la defensa o el enlace de la reunión en línea." };
+  const profesores = (Array.isArray(cuerpo?.profesores) ? cuerpo.profesores : []).map((x: unknown) => limpio(x, LIMITES_ACTIVIDAD.lider)).filter((x: string) => x.length >= 3);
+  if (profesores.length !== PROFESORES_DEFENSA || profesores[0].toLowerCase() === profesores[1].toLowerCase()) {
+    return { ok: false, error: `Escribe los ${PROFESORES_DEFENSA} profesores que escucharán la defensa (dos personas distintas).` };
+  }
+  return { ok: true, defensa: { fecha, hora, lugar, enlace, profesores } };
+}
+
+/** Revisa las evaluaciones del proyecto: una por profesor, cada criterio dentro de su máximo. La nota es el promedio. */
+export function validarEvaluacionProyecto(cuerpo: any): { ok: true; evaluaciones: NonNullable<DefensaProyecto["evaluaciones"]>; nota: number } | { ok: false; error: string } {
+  const lista: any[] = Array.isArray(cuerpo?.evaluaciones) ? cuerpo.evaluaciones : [];
+  if (lista.length !== PROFESORES_DEFENSA) return { ok: false, error: `Pon la evaluación de los ${PROFESORES_DEFENSA} profesores.` };
+  const out: NonNullable<DefensaProyecto["evaluaciones"]> = [];
+  for (let i = 0; i < lista.length; i++) {
+    const evaluador = limpio(lista[i]?.evaluador, LIMITES_ACTIVIDAD.lider);
+    if (evaluador.length < 3) return { ok: false, error: `Escribe el nombre del profesor ${i + 1}.` };
+    const rubrica = {} as Record<CriterioProyecto, number>;
+    for (const c of RUBRICA_PROYECTO) {
+      const v = puntosDe(lista[i]?.rubrica?.[c.id]);
+      if (v == null || v < 0 || v > c.max) return { ok: false, error: `Profesor ${i + 1}: «${c.corto}» va de 0 a ${c.max} puntos.` };
+      rubrica[c.id] = v;
+    }
+    out.push({ evaluador, rubrica, nota: RUBRICA_PROYECTO.reduce((t, c) => t + rubrica[c.id], 0) });
+  }
+  if (out[0].evaluador.toLowerCase() === out[1].evaluador.toLowerCase()) return { ok: false, error: "Los dos profesores deben ser personas distintas." };
+  return { ok: true, evaluaciones: out, nota: Math.round(out.reduce((t, e) => t + e.nota, 0) / out.length) };
 }
 
 /** Revisa la evaluación de un sermón: cada criterio entre 0 y su máximo, y quién lo evaluó. Devuelve también la nota. */
@@ -424,9 +560,8 @@ export function validarEvaluacion(cuerpo: any): { ok: true; evaluacion: Evaluaci
   if (!r || typeof r !== "object") return { ok: false, error: "Pon los puntos de cada criterio de la rúbrica." };
   const rubrica = {} as Record<CriterioSermon, number>;
   for (const c of RUBRICA_SERMON) {
-    const crudo = r[c.id];
-    const v = typeof crudo === "number" ? crudo : typeof crudo === "string" && crudo.trim() ? Number(crudo) : NaN;
-    if (!Number.isInteger(v) || v < 0 || v > c.max) return { ok: false, error: `«${c.corto}» va de 0 a ${c.max} puntos.` };
+    const v = puntosDe(r[c.id]);
+    if (v == null || v < 0 || v > c.max) return { ok: false, error: `«${c.corto}» va de 0 a ${c.max} puntos.` };
     rubrica[c.id] = v;
   }
   const evaluador = limpio(cuerpo?.evaluador, LIMITES_ACTIVIDAD.lider);
@@ -475,6 +610,19 @@ export function detalleSermon(r: ResumenActividades): string {
   return "Sin enviar";
 }
 
+export function detalleProyecto(r: ResumenActividades): string {
+  if (r.proyecto.hecho) return r.proyecto.nota != null ? `Aprobado con ${r.proyecto.nota}` : "Aprobado";
+  if (r.proyecto.pendientes) return r.proyecto.defensa ? `Defensa ${cuandoDefensa(r.proyecto.defensa)}` : "Entregado · por programar la defensa";
+  if (r.proyecto.devueltas) return r.proyecto.nota != null ? `Evaluado con ${r.proyecto.nota} · mejóralo y entrégalo otra vez` : "Devuelto · corrígelo y entrégalo otra vez";
+  return "Sin entregar";
+}
+
+export function detalleAcompanar(r: ResumenActividades): string {
+  const pide = r.pide.acompanar ?? 0;
+  const base = `${Math.min(r.acompanar.terminaron, pide)} de ${pide} terminaron el Nivel 1`;
+  return !r.acompanar.hecho && r.acompanar.enCurso ? `${base} · ${r.acompanar.enCurso} en el Nivel 1` : base;
+}
+
 /** El texto de cada requisito, como en los requisitos de `NIVELES`. */
 export function textoRequisito(tipo: TipoActividad, pide: PideNivel): string {
   const n = pide[CAMPO[tipo]] ?? 0;
@@ -491,6 +639,8 @@ export function textoRequisito(tipo: TipoActividad, pide: PideNivel): string {
       return n === 1 ? "Consolidar a 1 nuevo creyente" : `Consolidar a ${n} nuevos creyentes`;
     case "sermon":
       return n === 1 ? "Un sermón evaluado con rúbrica" : `${n} sermones evaluados con rúbrica`;
+    case "proyecto":
+      return "El proyecto final con defensa en vivo";
   }
 }
 
@@ -501,14 +651,30 @@ const DETALLE: Record<TipoActividad, (r: ResumenActividades) => string> = {
   ensenanza: detalleEnsenanza,
   consolidacion: detalleConsolidacion,
   sermon: detalleSermon,
+  proyecto: detalleProyecto,
 };
 
-/** Los requisitos del nivel que salen de sus actividades (sin sesión, `r` es null y quedan pendientes). */
-export function requisitosDeActividades(pide: PideNivel, r: ResumenActividades | null): { id: TipoActividad; texto: string; hecho: boolean; detalle: string }[] {
-  return tiposDe(pide).map((tipo) => ({
+/**
+ * Los requisitos del nivel que salen de sus actividades (sin sesión, `r` es null y quedan pendientes), y en el Nivel 5
+ * el acompañamiento, que cuenta la academia.
+ */
+export function requisitosDeActividades(
+  pide: PideNivel,
+  r: ResumenActividades | null,
+): { id: TipoActividad | "acompanar"; texto: string; hecho: boolean; detalle: string }[] {
+  const out: { id: TipoActividad | "acompanar"; texto: string; hecho: boolean; detalle: string }[] = tiposDe(pide).map((tipo) => ({
     id: tipo,
     texto: textoRequisito(tipo, pide),
     hecho: !!r?.[tipo].hecho,
     detalle: r ? DETALLE[tipo](r) : "Pendiente",
   }));
+  if (pide.acompanar) {
+    out.push({
+      id: "acompanar",
+      texto: `Acompañar a ${pide.acompanar} personas hasta terminar el Nivel 1`,
+      hecho: !!r?.acompanar.hecho,
+      detalle: r ? detalleAcompanar(r) : "Pendiente",
+    });
+  }
+  return out;
 }

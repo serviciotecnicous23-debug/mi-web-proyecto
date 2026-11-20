@@ -2,9 +2,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  ACTIVIDADES_NIVEL, APRUEBA_SERMON, MINUTOS_SERMON, PASOS_CONSOLIDACION, PASOS_MINIMOS, RUBRICA_SERMON, detalleConsolidacion, detalleEnsenanza,
-  detalleEvangelismo, detallePractica, detalleSermon, detalleServicio, diasDeServicio, diasEntre, enlaceValido, fechaValida, horasDe, horasTexto,
-  requisitosDeActividades, resumirActividades, tiposDe, validarActividad, validarEvaluacion,
+  ACTIVIDADES_NIVEL, APRUEBA_PROYECTO, APRUEBA_SERMON, MINUTOS_SERMON, PARTES_PLAN, PASOS_CONSOLIDACION, PASOS_MINIMOS, PROFESORES_DEFENSA, RUBRICA_PROYECTO,
+  RUBRICA_SERMON, cuandoDefensa, detalleAcompanar, detalleConsolidacion, detalleEnsenanza, detalleEvangelismo, detallePractica, detalleProyecto, detalleSermon,
+  detalleServicio, diasDeServicio, diasEntre, enlaceValido, fechaLarga, fechaValida, horasDe, horasTexto, requisitosDeActividades, resumirActividades, tiposDe,
+  validarActividad, validarDefensa, validarEvaluacion, validarEvaluacionProyecto,
 } from "./academia-actividades";
 import { NIVELES, PACTOS, REGLAMENTO, REQUISITOS_POR_HACER, VERSICULOS_NIVEL } from "./academia";
 
@@ -91,7 +92,7 @@ test("el Nivel 3 pide 20 horas de práctica, una enseñanza grabada y una consol
   }
 });
 
-test("cada requisito de los niveles sale de algo que la academia registra", () => {
+test("cada requisito de los niveles sale de algo que la academia registra, y lo que el cierre pide está en sus requisitos", () => {
   for (const nv of NIVELES) {
     const salen = [
       `Las ${nv.materias.length} materias aprobadas`,
@@ -102,6 +103,8 @@ test("cada requisito de los niveles sale de algo que la academia registra", () =
       ...(REQUISITOS_POR_HACER[nv.n] ?? []).map((r) => r.texto),
     ];
     for (const t of nv.requisitos) assert.ok(salen.includes(t), `Nivel ${nv.n}: «${t}»`);
+    // y al revés: todo lo que pide el cierre del nivel se nombra en sus requisitos (también el integral del Nivel 5)
+    for (const t of salen) assert.ok(nv.requisitos.includes(t), `Nivel ${nv.n}: el cierre pide «${t}» y sus requisitos no lo dicen`);
   }
 });
 
@@ -210,6 +213,10 @@ test("el reglamento dice lo que pide cada nivel, con los números del sistema", 
   assert.ok(todo.includes("Nivel 4: 30 horas de práctica ministerial supervisada y un sermón evaluado con rúbrica."));
   assert.ok(todo.includes("fidelidad al texto, 25") && todo.includes("Cristo y la gracia, 15") && todo.includes("se aprueba con 70 de 100"));
   assert.ok(todo.includes("de 20 a 30 minutos"));
+  assert.ok(todo.includes("Nivel 5: el proyecto final con defensa en vivo y acompañar a 2 personas hasta que terminen el Nivel 1."));
+  assert.ok(todo.includes("ante 2 profesores") && todo.includes("la defensa en vivo, 30") && todo.includes("La nota es el promedio de los dos"));
+  assert.ok(todo.includes("mientras la acompaña"));
+  assert.ok(!todo.includes("se podrán registrar más adelante"), "ya no queda nada por registrar más adelante");
   assert.ok(todo.includes(`al menos en ${PASOS_MINIMOS} de los ${PASOS_CONSOLIDACION.length} pasos`));
   assert.ok(todo.includes("hasta 12 en un día y 40 en un período"));
   assert.ok(todo.includes("de 10 a 15 minutos"));
@@ -286,4 +293,88 @@ test("cuenta el sermón aprobado, con su nota, y el que no alcanzó", () => {
   assert.equal(detalleSermon(r), "Aprobado con 84");
   const req = requisitosDeActividades(pide, r);
   assert.deepEqual(req.map((x) => [x.id, x.hecho]), [["practica", false], ["sermon", true]]);
+});
+
+test("el Nivel 5 pide el proyecto final con su defensa y acompañar a 2 personas, con los textos de sus requisitos", () => {
+  assert.deepEqual(ACTIVIDADES_NIVEL[5], { proyecto: 1, acompanar: 2 });
+  assert.deepEqual(tiposDe(ACTIVIDADES_NIVEL[5]!), ["proyecto"], "acompañar no se registra");
+  const nv = NIVELES.find((x) => x.n === 5)!;
+  const req = requisitosDeActividades(ACTIVIDADES_NIVEL[5]!, null);
+  assert.deepEqual(req.map((r) => r.id), ["proyecto", "acompanar"]);
+  for (const r of req) assert.ok(nv.requisitos.includes(r.texto), `«${r.texto}» está en sus requisitos`);
+  assert.equal(PARTES_PLAN.length, 8);
+  assert.deepEqual(RUBRICA_PROYECTO.map((c) => c.max), [15, 10, 15, 15, 15, 30]);
+  assert.equal(RUBRICA_PROYECTO.reduce((s, c) => s + c.max, 0), 100, "la rúbrica suma 100");
+  assert.equal(APRUEBA_PROYECTO, 70);
+  assert.equal(PROFESORES_DEFENSA, 2);
+  for (const n of [1, 2, 3, 4, 5] as const) assert.equal(REQUISITOS_POR_HACER[n], undefined, `Nivel ${n}: ya no queda nada por hacer`);
+});
+
+test("el proyecto: el nombre del plan, su enlace, con quién lo revisó y sus 8 partes", () => {
+  const base = {
+    tipo: "proyecto",
+    fecha: "2026-11-10",
+    titulo: "Plan de discipulado de jóvenes 2027",
+    enlace: "https://docs.google.com/document/d/plan/edit",
+    lider: "Pastor Daniel",
+    partes: true,
+    detalle: "Un plan para formar a doce jóvenes como líderes de grupos pequeños durante el año 2027.",
+  };
+  const r = validarActividad(base, HOY, ["proyecto"]);
+  assert.ok(r.ok && r.datos.enlace === base.enlace && r.datos.lider === "Pastor Daniel");
+  assert.ok(!validarActividad({ ...base, partes: false }, HOY).ok, "sin confirmar las 8 partes");
+  assert.ok(!validarActividad({ ...base, enlace: "http://docs.google.com/x" }, HOY).ok, "enlace http");
+  assert.ok(!validarActividad({ ...base, lider: "" }, HOY).ok, "sin con quién lo revisó");
+  assert.ok(!validarActividad({ ...base, titulo: "Plan" }, HOY).ok, "sin nombre");
+  assert.ok(!validarActividad(base, HOY, ["practica", "sermon"]).ok, "el Nivel 4 no pide proyecto");
+});
+
+test("la defensa: fecha (del último mes a seis meses), hora, dónde o el enlace, y 2 profesores distintos", () => {
+  const base = { fecha: "2026-12-05", hora: "19:00", lugar: "Iglesia Casa del Alfarero", enlace: "", profesores: ["Pastor Daniel", "Pastora Ruth"] };
+  const d = validarDefensa(base, HOY);
+  assert.ok(d.ok && d.defensa.lugar === "Iglesia Casa del Alfarero" && d.defensa.enlace === null && d.defensa.profesores.length === 2);
+  assert.ok(validarDefensa({ ...base, lugar: "", enlace: "https://meet.example.com/abc" }, HOY).ok, "en línea");
+  assert.ok(validarDefensa({ ...base, fecha: "2026-10-20" }, HOY).ok, "ya se hizo hace unos días");
+  assert.ok(!validarDefensa({ ...base, fecha: "2026-09-01" }, HOY).ok, "hace más de un mes");
+  assert.ok(!validarDefensa({ ...base, fecha: "2027-08-01" }, HOY).ok, "más de seis meses adelante");
+  assert.ok(!validarDefensa({ ...base, hora: "25:00" }, HOY).ok, "una hora que no existe");
+  assert.ok(!validarDefensa({ ...base, hora: "7 pm" }, HOY).ok);
+  assert.ok(!validarDefensa({ ...base, lugar: "", enlace: "" }, HOY).ok, "sin dónde ni enlace");
+  assert.ok(!validarDefensa({ ...base, lugar: "", enlace: "javascript:alert(1)" }, HOY).ok, "un enlace malo");
+  assert.ok(!validarDefensa({ ...base, profesores: ["Pastor Daniel"] }, HOY).ok, "un solo profesor");
+  assert.ok(!validarDefensa({ ...base, profesores: ["Pastor Daniel", "pastor daniel"] }, HOY).ok, "el mismo dos veces");
+  assert.equal(fechaLarga("2026-12-05"), "5 de diciembre de 2026");
+  assert.equal(cuandoDefensa({ fecha: "2026-12-05", hora: "19:00" }), "el 5 de diciembre de 2026 a las 19:00 (hora de Texas)");
+});
+
+test("la evaluación del proyecto: los 2 profesores con la rúbrica y la nota como su promedio", () => {
+  const r1 = { vision: 13, diagnostico: 8, metas: 13, medios: 12, cuidado: 13, defensa: 25 }; // 84
+  const r2 = { vision: 12, diagnostico: 8, metas: 12, medios: 12, cuidado: 12, defensa: 23 }; // 79
+  const e = validarEvaluacionProyecto({ evaluaciones: [{ evaluador: "Pastor Daniel", rubrica: r1 }, { evaluador: "Pastora Ruth", rubrica: r2 }] });
+  assert.ok(e.ok && e.nota === 82 && e.evaluaciones[0].nota === 84 && e.evaluaciones[1].nota === 79, "82 = (84 + 79) / 2, redondeado");
+  assert.ok(!validarEvaluacionProyecto({ evaluaciones: [{ evaluador: "Pastor Daniel", rubrica: r1 }] }).ok, "falta un profesor");
+  assert.ok(!validarEvaluacionProyecto({ evaluaciones: [{ evaluador: "Pastor Daniel", rubrica: r1 }, { evaluador: "Pastor Daniel", rubrica: r2 }] }).ok, "el mismo dos veces");
+  assert.ok(!validarEvaluacionProyecto({ evaluaciones: [{ evaluador: "Pastor Daniel", rubrica: { ...r1, defensa: 31 } }, { evaluador: "Pastora Ruth", rubrica: r2 }] }).ok, "más que el máximo");
+  assert.ok(!validarEvaluacionProyecto({ evaluaciones: [{ evaluador: "", rubrica: r1 }, { evaluador: "Pastora Ruth", rubrica: r2 }] }).ok, "sin nombre");
+});
+
+test("cuenta el proyecto con su defensa y su nota, y a las personas acompañadas que terminaron el Nivel 1", () => {
+  const pide = ACTIVIDADES_NIVEL[5]!;
+  type E = "pendiente" | "confirmada" | "rechazada";
+  const defensa = { fecha: "2026-12-05", hora: "19:00", lugar: "La iglesia", enlace: null, profesores: ["A. B.", "C. D."], evaluaciones: null };
+  const pr = (estado: E, nota: number | null, conDefensa = false) => ({ tipo: "proyecto" as const, estado, fecha: "2026-11-01", hasta: null, nota, defensa: conDefensa ? defensa : null });
+  let r = resumirActividades(pide, [], HOY);
+  assert.equal(detalleProyecto(r), "Sin entregar");
+  assert.equal(detalleAcompanar(r), "0 de 2 terminaron el Nivel 1");
+  r = resumirActividades(pide, [pr("pendiente", null)], HOY, { terminaron: 1, enCurso: 2 });
+  assert.equal(detalleProyecto(r), "Entregado · por programar la defensa");
+  assert.equal(detalleAcompanar(r), "1 de 2 terminaron el Nivel 1 · 2 en el Nivel 1");
+  r = resumirActividades(pide, [pr("pendiente", null, true)], HOY);
+  assert.equal(detalleProyecto(r), "Defensa el 5 de diciembre de 2026 a las 19:00 (hora de Texas)");
+  r = resumirActividades(pide, [pr("rechazada", 63, true)], HOY);
+  assert.equal(detalleProyecto(r), "Evaluado con 63 · mejóralo y entrégalo otra vez");
+  r = resumirActividades(pide, [pr("confirmada", 82, true), pr("rechazada", 63, true)], HOY, { terminaron: 2, enCurso: 0 });
+  assert.equal(detalleProyecto(r), "Aprobado con 82");
+  assert.equal(detalleAcompanar(r), "2 de 2 terminaron el Nivel 1");
+  assert.ok(requisitosDeActividades(pide, r).every((x) => x.hecho));
 });

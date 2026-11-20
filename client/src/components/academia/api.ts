@@ -445,7 +445,7 @@ export function useEstudio(activo = true) {
 export const sumarEstudio = (minutos: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio", { minutos });
 export const cambiarMetaEstudio = (meta: number) => pedir<import("@shared/academia-salon").EstudioVista>("POST", "/api/academia/estudio/meta", { meta });
 
-// ---------------------------------------------------------------- las actividades del nivel (Niveles 2 a 4)
+// ---------------------------------------------------------------- las actividades del nivel (Niveles 2 a 5)
 type Actividades = import("@shared/academia-actividades").ActividadesNivel;
 export function useActividades(nivel: number, activo = true) {
   return useQuery<Actividades, ErrorAcademia>({
@@ -457,6 +457,8 @@ export function useActividades(nivel: number, activo = true) {
 }
 export const registrarActividad = (nivel: number, datos: Record<string, unknown>) => pedir<Actividades>("POST", `/api/academia/actividades/${nivel}`, datos);
 export const borrarActividad = (id: number) => pedir<Actividades>("POST", `/api/academia/actividades/item/${id}/borrar`, {});
+/** Nivel 5: pedirle a la Administración personas para acompañar como mentor. */
+export const pedirAcompanados = (nivel: number) => pedir<{ ok: boolean }>("POST", `/api/academia/actividades/${nivel}/acompanar`, {});
 export function useActividadesPanel(activo = true) {
   return useQuery<import("@shared/academia-actividades").ActividadesPanel, ErrorAcademia>({
     queryKey: ["academia", "direccion", "actividades"],
@@ -466,6 +468,20 @@ export function useActividadesPanel(activo = true) {
   });
 }
 /** Confirmar o devolver una actividad: la práctica, también con menos horas (`horas`); el sermón se evalúa con la rúbrica. */
-export type RevisionActividad = { accion: "confirmar" | "rechazar" | "evaluar"; motivo: string; horas?: string; rubrica?: Record<string, string>; evaluador?: string };
+export type RevisionActividad = {
+  accion: "confirmar" | "rechazar" | "evaluar" | "programar";
+  motivo: string;
+  horas?: string;
+  /** el sermón: los puntos de cada criterio y el maestro que lo evaluó */
+  rubrica?: Record<string, string>;
+  evaluador?: string;
+  /** el proyecto final: la defensa (cuándo, dónde, ante qué profesores) y, después, sus 2 evaluaciones */
+  fecha?: string;
+  hora?: string;
+  lugar?: string;
+  enlace?: string;
+  profesores?: string[];
+  evaluaciones?: { evaluador: string; rubrica: Record<string, string> }[];
+};
 export const revisarActividad = (id: number, cuerpo: RevisionActividad) =>
   pedir<{ ok: boolean; estado: string; nivelCompleto: boolean; nota: number | null }>("POST", `/api/academia/direccion/actividad/${id}`, cuerpo);

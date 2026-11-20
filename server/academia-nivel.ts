@@ -13,7 +13,7 @@ import {
   type CierreResumen, type ExamenEstado, type NivelDef, type NivelEstado, type RequisitoNivel,
 } from "@shared/academia";
 import { BANCOS, materiaDe } from "./academia/index";
-import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, estaInscrito, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
+import { accesoDe, alumnoDe, asegurarAlumno, avisarA, claveIntegral, enFila, estaInscrito, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
 import { codigoDocumento, emitirNivel } from "./academia-documentos";
 import { ACTIVIDADES_NIVEL, requisitosDeActividades } from "@shared/academia-actividades";
@@ -142,7 +142,31 @@ export async function revisarNivel(userId: number, nv: NivelDef): Promise<boolea
   await pool.query(`UPDATE academia_alumnos SET nivel = GREATEST(nivel, $2) WHERE user_id = $1`, [userId, Math.min(5, nv.n + 1)]);
   // el nivel completo recibe su certificado al instante
   await emitirNivel(userId, nv, e.materias.promedio);
+  // quien termina el Nivel 1 se lo cuenta a su mentor: en el Nivel 5, acompañar hasta el Nivel 1 es un requisito
+  if (nv.n === 1) await alTerminarElNivel1(userId).catch((err) => console.error("[academia] aviso al mentor:", err));
   return true;
+}
+
+/** Cuando alguien termina el Nivel 1, su mentor recibe un aviso y, si con eso cumple todo su Nivel 5, se le cierra. */
+async function alTerminarElNivel1(userId: number): Promise<void> {
+  const { rows } = await pool.query(
+    `SELECT a.mentor_user_id, i.nombres, i.apellidos, u.display_name, u.username
+       FROM academia_alumnos a JOIN users u ON u.id = a.user_id LEFT JOIN academia_inscripciones i ON i.user_id = a.user_id
+      WHERE a.user_id = $1`,
+    [userId],
+  );
+  const mentor = Number(rows[0]?.mentor_user_id);
+  if (!Number.isInteger(mentor) || mentor <= 0) return;
+  const r = rows[0];
+  const nombre = r.nombres ? `${r.nombres} ${r.apellidos ?? ""}`.trim() : String(r.display_name || r.username || "Una persona que acompañas");
+  await avisarA([mentor], `${nombre} terminó el Nivel 1`, `${nombre}, a quien acompañas en la academia, completó el Nivel 1.`, "/academia/acompanados");
+  const n5 = NIVELES.find((x) => x.n === 5);
+  if (!n5 || !ACTIVIDADES_NIVEL[5]?.acompanar) return;
+  const { rows: nl } = await pool.query(`SELECT completado_at FROM academia_niveles WHERE user_id = $1 AND nivel = 5`, [mentor]);
+  if (nl[0]?.completado_at) return;
+  if (await revisarNivel(mentor, n5)) {
+    await avisarA([mentor], "¡Completaste el Nivel 5!", "Con las personas que acompañaste hasta terminar el Nivel 1, cumpliste todo lo que pide el Nivel 5. Tu diploma ya está en tus documentos.", "/academia/nivel/5");
+  }
 }
 
 /** El cierre de cada nivel para la portada (solo los niveles con integral). */

@@ -98,7 +98,7 @@ export function registerAcademiaMentoresRoutes(app: Express) {
       if (!fila) return res.status(404).json({ message: "No existe ese alumno, o no es de tu iglesia." });
       const crudo = req.body?.mentorId;
       if (crudo === null) {
-        const { rowCount } = await pool.query(`UPDATE academia_alumnos SET mentor_user_id = NULL WHERE user_id = $1 AND mentor_user_id IS NOT NULL`, [alumnoId]);
+        const { rowCount } = await pool.query(`UPDATE academia_alumnos SET mentor_user_id = NULL, mentor_desde = NULL WHERE user_id = $1 AND mentor_user_id IS NOT NULL`, [alumnoId]);
         if (!rowCount) return res.status(409).json({ message: "Ese alumno no tenía mentor." });
         await registrar(req, "academia.mentor", alumnoId, `Quitó el mentor de ${fila.nombre}.`);
         return res.json({ mentor: null });
@@ -113,7 +113,8 @@ export function registerAcademiaMentoresRoutes(app: Express) {
       if (p.alcance === "iglesia" && Number(m.church_id) !== p.iglesiaId) return res.status(403).json({ message: "Elige a alguien de tu iglesia." });
       const { rows: antes } = await pool.query(`SELECT mentor_user_id FROM academia_alumnos WHERE user_id = $1`, [alumnoId]);
       if (Number(antes[0]?.mentor_user_id) === mentorId) return res.status(409).json({ message: "Ya es su mentor." });
-      await pool.query(`UPDATE academia_alumnos SET mentor_user_id = $2 WHERE user_id = $1`, [alumnoId, mentorId]);
+      // desde cuándo lo acompaña: en el Nivel 5 cuenta quien termina el Nivel 1 mientras lo acompaña (academia-actividades-datos.ts)
+      await pool.query(`UPDATE academia_alumnos SET mentor_user_id = $2, mentor_desde = now() WHERE user_id = $1`, [alumnoId, mentorId]);
       const nombre = nombreCuenta(m);
       await registrar(req, "academia.mentor", alumnoId, `Eligió a ${nombre} como mentor de ${fila.nombre}.`);
       const por = nombreCuenta({ display_name: (req.user as any)?.displayName, username: (req.user as any)?.username });
