@@ -4581,6 +4581,60 @@ const FINANZAS_TRANSPARENCIA: MateriaDef = {
   disponible: true,
 };
 
+const EQUIPOS_VOLUNTARIOS: MateriaDef = {
+  id: "liderazgo-administracion-3",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 3,
+  titulo: "Equipos y voluntarios",
+  resumen: "Cómo organizar a los que sirven en la iglesia: el cuerpo que sirve y el ciclo del voluntario, invitar y ubicar, seleccionar con cuidado, capacitar y acompañar, cuidar, reconocer y renovar, y las leyes que tocan a los voluntarios.",
+  base: "1 Pedro 4:10; 1 Corintios 12:18",
+  memoria: "1 Pedro 4:10",
+  lecciones: lecciones("liderazgo-administracion-3", [
+    ["El cuerpo que sirve", "1 Corintios 12:18-21; 1 Pedro 4:10; Romanos 12:6-8"],
+    ["Invitar y ubicar", "Éxodo 35:21; Marcos 3:14; Hechos 6:2-4"],
+    ["Seleccionar con cuidado", "1 Timoteo 3:10; 1 Timoteo 5:22; Proverbios 20:6"],
+    ["Capacitar y acompañar", "Marcos 6:7; Lucas 10:17; Hebreos 10:24"],
+    ["Cuidar, reconocer y renovar", "Éxodo 18:17-18; Romanos 16:1-4; Filipenses 2:29-30"],
+    ["La ley y los voluntarios", "Tito 3:1; Romanos 13:1; Proverbios 22:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que coordina a los voluntarios de la iglesia ayude a cada creyente a servir con su don: que organice el ciclo del voluntario, invitar, ubicar, preparar, acompañar, reconocer y renovar, con un mapa de servicio y un coordinador; que invite en persona, con la descripción de cada puesto y un primer paso pequeño; que seleccione con cuidado a los que sirven con niños, con el dinero o al volante, con la solicitud, las referencias, la revisión de antecedentes y la capacitación de protección; que capacite con la práctica y acompañe a cada voluntario; que cuide al que sirve, repartiendo la carga, reconociendo su trabajo y renovando su compromiso con libertad; y que cumpla las leyes que tocan a los voluntarios: la Ley de Protección del Voluntario de 1997, que no cubre el manejo de vehículos ni la responsabilidad de la iglesia, la ley de Texas del capítulo 84, los 14 centavos por milla y el reporte del abuso de un menor en Texas, de inmediato, y los profesionales a más tardar en 24 horas. Lleva a la gestión de los voluntarios lo que enseñan Liderazgo II (Nivel 5) y Protección de menores (especialidad Niñez), sin repetirlos. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pedro: «Cada uno según el don que ha recibido, minístrelo a los otros, como buenos administradores de la multiforme gracia de Dios» (1 Pedro 4:10).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué cada creyente tiene un lugar para servir, y el ciclo del voluntario.", bloom: "comprender" },
+      { id: "o2", texto: "Invitar en persona y escribir la descripción de un puesto de servicio.", bloom: "aplicar" },
+      { id: "o3", texto: "Seleccionar con cuidado a los voluntarios de los puestos delicados.", bloom: "aplicar" },
+      { id: "o4", texto: "Capacitar y acompañar a un equipo de voluntarios.", bloom: "aplicar" },
+      { id: "o5", texto: "Cuidar, reconocer y renovar a los que sirven.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar si un programa de voluntarios cumple las leyes que lo tocan.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Pedro 4:10 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo del voluntario y el mapa de servicio, la descripción de un puesto, los pasos de la selección, la capacitación práctica, las señales del cansancio y lo que protegen y no protegen las leyes de los voluntarios.",
+      ser: "Un coordinador que ve a cada hermano como un miembro con un don, invita con cariño, cuida a los pequeños y sirve al que sirve.",
+      hacer: "Hacer el mapa de servicio, escribir la descripción de un puesto, seleccionar a un voluntario para los niños, capacitar a un equipo, tener la conversación anual con un voluntario cansado y revisar la protección legal del programa.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Patrick Lencioni", titulo: "Las cinco disfunciones de un equipo", editorial: "Empresa Activa" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bill Hybels", titulo: "The Volunteer Revolution: Unleashing the Power of Everybody (en inglés)", editorial: "Zondervan" },
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 1 Corintios 12, un cuerpo con muchos miembros", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=12" },
+      { tipo: "guia", titulo: "Ley de Protección del Voluntario de 1997, 42 U.S.C. 14503 (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/14503" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5510,7 +5564,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
