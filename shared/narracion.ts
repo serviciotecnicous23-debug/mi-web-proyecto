@@ -187,6 +187,24 @@ export function citaDicha(texto: string): string {
   });
 }
 
+// «1 Corintios», «1 y 2 Samuel», «1, 2 y 3 Juan», «1-3 Juan»: libros con número que no llevan capítulo detrás
+const PATRON_LIBRO_CON_NUMERO = new RegExp(
+  `(?<![\\p{L}\\d:.,])([123](?:\\s*(?:,|y|al|a|[-–])\\s*[123])*)\\s+(Samuel|Reyes|${conOSinTilde("Crónicas")}|Corintios|Tesalonicenses|Timoteo|Pedro|Juan)(?![\\p{L}\\d])(?!\\s*\\d)`,
+  "gu",
+);
+
+/** Los libros con número sin capítulo: «1 y 2 Samuel» → «Primero y Segundo de Samuel»; «1-3 Juan» → «Primera a Tercera de Juan». */
+export function librosConNumero(texto: string): string {
+  return texto.replace(PATRON_LIBRO_CON_NUMERO, (_m, numeros: string, libro: string) => {
+    const dicho = DICHO.get(sinTilde(libro).toLowerCase()) ?? libro;
+    const orden = ORDEN_LIBRO[MASCULINOS.has(dicho) ? "m" : "f"];
+    const dichos = numeros
+      .split(/\s*(,|y|al|a|[-–])\s*/)
+      .map((p, i) => (i % 2 === 0 ? orden[Number(p)] : p === "," ? ", " : p === "y" ? " y " : " a "));
+    return `${dichos.join("")} de ${dicho}`;
+  });
+}
+
 /** La cita de un bloque de versículo, dicha con calma: «Mateo, capítulo dieciséis, versículos quince al diecisiete». */
 export function encabezadoDeCita(ref: string): string {
   const limpia = ref.replace(/\s*\(.*\)\s*$/, "").trim();
@@ -227,10 +245,20 @@ const ABREVIATURAS: [RegExp, string][] = [
  * Frases que la voz dice mejor con una pausa (lo comprobó whisper al grabar): los imperativos antiguos cortos de la
  * RV1960, como «Id y haced discípulos», se le mezclan si van seguidos.
  */
-const PRONUNCIACION: [RegExp, string][] = [[/\bId y haced\b/g, "Id, y haced"]];
+const PRONUNCIACION: [RegExp, string][] = [
+  [/\bId y haced\b/g, "Id, y haced"],
+  // el nombre de Dios en sus cuatro letras hebreas: la voz no lo dice si se le da escrito
+  [/\bYHWH\b/g, "i griega, hache, doble ve, hache"],
+];
 
 /** Las siglas de verdad, que se dicen letra por letra: no se pasan a minúsculas. */
-const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM", "ID", "CDC", "FTC", "RLUIPA"]);
+const SIGLAS = new Set([
+  "ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM", "ID", "CDC", "FTC", "RLUIPA",
+  // las de las especialidades: impuestos, leyes, radio, salud, capellanía y música
+  "IRS", "EIN", "FEMA", "VOAD", "OCHA", "USCIS", "EEOC", "FDA", "TDCJ", "DWC", "CFR", "FR", "AP", "FCC", "AM", "FM",
+  "HCJB", "KDKA", "COPPA", "CISA", "HIPAA", "ADA", "SAMHSA", "NIDA", "NCMEC", "DSM", "TR", "APC", "CPE", "PMBOK", "PMI",
+  "ASCAP", "BMI", "SESAC", "GMR",
+]);
 
 /** El nombre de cada letra, para decir «P52» («pe cincuenta y dos») o «ic3» («i ce tres»). */
 const LETRAS: Record<string, string> = {
@@ -255,6 +283,13 @@ export function sinMayusculas(texto: string): string {
 const FEMENINAS = new Set(["vez", "veces", "semana", "semanas", "hora", "horas", "noche", "noches", "persona", "personas", "cosa", "cosas", "carta", "cartas", "iglesia", "iglesias", "lección", "lecciones", "parte", "partes", "pregunta", "preguntas", "palabra", "palabras", "materia", "materias", "mujer", "mujeres", "familia", "familias"]);
 const esFemenina = (palabra: string) => FEMENINAS.has(palabra.toLowerCase()) || /^[a-záéíóúñ]+(as?|ión|iones|dad|dades)$/i.test(palabra) && !/^(día|días|mapa|mapas|programa|programas|problema|problemas|sistema|sistemas|tema|temas|idioma|idiomas|planeta|profeta|profetas|poema|poemas)$/i.test(palabra);
 
+/** Un número dicho cifra por cifra: «005» → «cero cero cinco». */
+const cifraPorCifra = (d: string) => d.split("").map((x) => enPalabras(Number(x))).join(" ");
+
+/** Lo que sigue a un número sin ser lo que se cuenta: ahí «uno» se dice entero («el Nivel 1 antes de…»). */
+const NO_SUSTANTIVO =
+  /^(de|del|y|e|o|u|a|al|por|para|en|con|sin|sobre|entre|hasta|desde|hacia|según|tras|antes|después|más|menos|que|como|cuando|donde|ni|pero|ya|no|se|lo|la|las|los|le|les|es|son|fue|era)$/i;
+
 /**
  * El texto como se dice en voz alta: las citas bíblicas, los números (con «un» y «una» delante de un sustantivo), los
  * siglos en romanos, los ordinales, los porcentajes, las abreviaturas y los signos que la voz no debe leer.
@@ -271,6 +306,13 @@ export function hablado(texto: string): string {
   for (const [p, r] of PRONUNCIACION) t = t.replace(p, r);
   // las citas, antes que los demás números; después, las que siguen sin el libro («Éxodo 12:14; 13:3»)
   t = citaDicha(t);
+  t = librosConNumero(t);
+  // un formulario o un código con guion («AP-209», «I-9», «DWC-005»): el guion no se dice («a»)
+  t = t.replace(/\b([A-Z]{1,6})-(\d+)\b/g, (_m, l: string, d: string) => `${l} ${d.startsWith("0") ? cifraPorCifra(d) : d}`);
+  // una hora de un horario, al empezar una frase («7:00, bienvenida», «7:10, juego»): no es una cita
+  t = t.replace(/(?<=(?:^|[.;:!?])\s*)(\d{1,2}):([0-5]\d)(?=,\s(?!\d))/g, (_m, h: string, mm: string) =>
+    mm === "00" ? `${enPalabras(Number(h))} en punto` : `${enPalabras(Number(h))} y ${enPalabras(Number(mm))}`,
+  );
   t = t.replace(/\b(\d{1,3}):(\d{1,3}(?:\s*[-–]\s*\d{1,3})?)\b/g, (_m, cap, versos) => `${enPalabras(Number(cap))}, ${versosDichos(versos)}`);
   // los paréntesis se dicen como una pausa corta
   t = t.replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*([.,;:!?])/g, "$1").replace(/\s*\)\s*/g, ", ");
@@ -285,8 +327,8 @@ export function hablado(texto: string): string {
     const n = deRomano(r);
     return n ? `${s} ${enPalabras(n)}` : m;
   });
-  // los demás números romanos (I a X): de una materia o de un rey
-  t = t.replace(/(?<!\p{L})(\p{L}+)\s+(I{1,3}|IV|V|VI{1,3}|IX|X)(?!\p{L})/gu, (m, antes: string, r: string) => {
+  // los demás números romanos (I a X): de una materia o de un rey (no la letra de un formulario: «Formulario I 9»)
+  t = t.replace(/(?<!\p{L})(\p{L}+)\s+(I{1,3}|IV|V|VI{1,3}|IX|X)(?![\p{L}\d]|\s+\d)/gu, (m, antes: string, r: string) => {
     const n = deRomano(r);
     if (!n) return m;
     const rey = /^\p{Lu}/u.test(antes) && !ANTES_DE_CURSO.has(antes.toLowerCase());
@@ -311,12 +353,17 @@ export function hablado(texto: string): string {
   t = t.replace(/\b(\d{1,5})([a-z]{1,3})\b/g, (m, n: string, l: string) => (/^(er|o|a|os|as|do|da|ro|ra|to|ta|vo|va|no|na|mo|ma)$/.test(l) ? m : `${enPalabras(Number(n))} ${deletreo(l)}`));
   // los teléfonos de emergencia y de ayuda se dicen cifra por cifra; los largos, por grupos
   t = t.replace(/\b(911|988)\b/g, (n) => n.split("").map((d) => enPalabras(Number(d))).join(" "));
+  t = t.replace(/\b([2-9])-1-1\b/g, (_m, d: string) => `${enPalabras(Number(d))} uno uno`);
+  // un número para mensajes de texto («escribir START al 88788»): cifra por cifra
+  t = t.replace(/(\b(?:escrib|env[ií]|mand|textea)\p{L}*[^.]{0,40}?\bal\s)(\d{5,6})\b/giu, (_m, antes: string, d: string) => `${antes}${cifraPorCifra(d)}`);
   t = t.replace(/\b\d{1,3}(?:-\d{3,4}){2,}\b/g, (tel) =>
     tel
       .split("-")
       .map((g) => (g.length === 4 ? `${porCifras(g.slice(0, 2))}, ${porCifras(g.slice(2))}` : enPalabras(Number(g))))
       .join(", "),
   );
+  // miles con coma, como en los Estados Unidos («120,000 dólares»): no es un decimal
+  t = t.replace(/\b(\d{1,3})((?:,\d{3})+)\b(?!,\d)/g, (_m, a: string, b: string) => a + b.replace(/,/g, ""));
   // porcentajes y decimales
   t = t.replace(/(\d+(?:,\d+)?)\s?%/g, (_m, n) => `${n} por ciento`);
   t = t.replace(/\b(\d+),(\d+)\b/g, (_m, a, b: string) => `${enPalabras(Number(a))} coma ${b.startsWith("0") ? b.split("").map((d) => enPalabras(Number(d))).join(" ") : enPalabras(Number(b))}`);
@@ -329,7 +376,10 @@ export function hablado(texto: string): string {
   // un número delante de un sustantivo: «1 libro» → «un libro», «21 semanas» → «veintiuna semanas»
   t = t.replace(/\b(\d+)(\s+)([a-záéíóúñ]+)/gi, (m, n, esp, palabra) => {
     const dicho = enPalabras(Number(n));
-    if (!/uno$|ientos$/.test(dicho) || /^(de|y|o|a|al|por|para|en|con)$/i.test(palabra)) return `${dicho}${esp}${palabra}`;
+    // no cambia delante de un nombre propio («en 1791 Juan Wesley»), de lo que no se cuenta («701 antes de Cristo») ni
+    // si es un año («en 1521 se negó», «en 1961 lleva»)
+    const anio = Number(n) >= 1000 && Number(n) <= 2100;
+    if (!/uno$|ientos$/.test(dicho) || NO_SUSTANTIVO.test(palabra) || /^[A-ZÁÉÍÓÚÑ]/.test(palabra) || anio) return `${dicho}${esp}${palabra}`;
     return `${esFemenina(palabra) ? femenino(dicho) : apocopar(dicho)}${esp}${palabra}`;
   });
   t = t.replace(/\b\d+\b/g, (n) => enPalabras(Number(n)));

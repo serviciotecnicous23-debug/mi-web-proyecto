@@ -33,6 +33,47 @@ test("las citas dentro de un párrafo", () => {
   assert.equal(citaDicha("Juanito 3 veces"), "Juanito 3 veces");
 });
 
+test("los libros con número que no llevan capítulo", () => {
+  assert.equal(hablado("Resumen del libro de 1 Corintios"), "Resumen del libro de Primera de Corintios");
+  assert.equal(
+    hablado("Josué, Jueces, Rut, 1 y 2 Samuel, 1 y 2 Reyes, 1 y 2 Crónicas."),
+    "Josué, Jueces, Rut, Primero y Segundo de Samuel, Primero y Segundo de Reyes, Primero y Segundo de Crónicas.",
+  );
+  assert.equal(hablado("Hebreos, Santiago, 1 y 2 Pedro, 1, 2 y 3 Juan y Judas"), "Hebreos, Santiago, Primera y Segunda de Pedro, Primera, Segunda y Tercera de Juan y Judas");
+  assert.equal(hablado("Resumen de los libros de 1-3 Juan"), "Resumen de los libros de Primera a Tercera de Juan");
+  assert.equal(hablado("de 1–3 Juan"), "de Primera a Tercera de Juan");
+  assert.equal(hablado("1 Timoteo, 2 Timoteo y Tito"), "Primera de Timoteo, Segunda de Timoteo y Tito");
+  assert.equal(hablado("lee 1 Juan 1:9 y 2 Pedro"), "lee Primera de Juan uno, nueve y Segunda de Pedro");
+  // un año delante de un nombre: el número no cambia
+  assert.equal(hablado("en 1791 Juan Wesley escribió"), "en mil setecientos noventa y uno Juan Wesley escribió");
+});
+
+test("las horas de un horario, los miles con coma y los números para mensajes", () => {
+  assert.equal(hablado("7:00, bienvenida: el equipo recibe"), "siete en punto, bienvenida: el equipo recibe");
+  assert.equal(hablado("un solo texto. 7:40, la Palabra"), "un solo texto. siete y cuarenta, la Palabra");
+  // una cita sin el libro sigue siendo una cita
+  assert.equal(hablado("Pablo escribe preso (1:13), agradece"), "Pablo escribe preso, uno, trece, agradece");
+  assert.equal(hablado("Lo que entró (5:12, 15)"), "Lo que entró, cinco, doce, quince");
+  assert.equal(hablado("entraron 120,000 dólares y 2,000 horas"), "entraron ciento veinte mil dólares y dos mil horas");
+  assert.equal(hablado("a unos 5,6 kilómetros"), "a unos cinco coma seis kilómetros");
+  assert.equal(hablado("o escribir START al 88788."), "o escribir Start al ocho ocho siete ocho ocho.");
+});
+
+test("los años y los números delante de lo que no se cuenta", () => {
+  assert.equal(hablado("en 1521 se negó en Worms"), "en mil quinientos veintiuno se negó en Worms");
+  assert.equal(hablado("hallada en 1961 lleva el nombre"), "hallada en mil novecientos sesenta y uno lleva el nombre");
+  assert.equal(hablado("y desde 2021 prohíbe"), "y desde dos mil veintiuno prohíbe");
+  assert.equal(hablado("hacia el 701 a. C."), "hacia el setecientos uno antes de Cristo");
+  assert.equal(hablado("en el Nivel 1 antes de diciembre"), "en el Nivel uno antes de diciembre");
+  assert.equal(hablado("en Texas, el 2-1-1 la conecta"), "en Texas, el dos uno uno la conecta");
+  // lo que sí se cuenta
+  assert.equal(hablado("vuelven a los 21 días"), "vuelven a los veintiún días");
+  // un formulario o un código con guion
+  assert.equal(hablado("el Formulario AP-209 ante la Contraloría"), "el Formulario AP doscientos nueve ante la Contraloría");
+  assert.equal(hablado("el Formulario I-9 y el DWC-005"), "el Formulario I nueve y el DWC cero cero cinco");
+  assert.equal(hablado("21 semanas y 1 libro"), "veintiuna semanas y un libro");
+});
+
 test("la cita de un bloque de versículo se dice con capítulo y versículos", () => {
   assert.equal(encabezadoDeCita("Mateo 16:15-17"), "Mateo, capítulo dieciséis, versículos quince al diecisiete");
   assert.equal(encabezadoDeCita("Juan 1:14"), "Juan, capítulo uno, versículo catorce");
@@ -67,6 +108,8 @@ test("el texto dicho: paréntesis, números, años, siglos y abreviaturas", () =
   assert.equal(hablado("La ley RLUIPA, 42 U.S.C. 2000cc, protege"), "La ley RLUIPA, cuarenta y dos del Código de los Estados Unidos, sección dos mil ce ce, protege");
   assert.equal(hablado("en reportfraud.ftc.gov y al FBI, en ic3.gov."), "en reportfraud punto efe te ce punto gov y al FBI, en i ce tres punto gov.");
   assert.equal(hablado("el letrero decía AL DIOS NO CONOCIDO y la ONU"), "el letrero decía Al Dios No Conocido y la ONU");
+  assert.equal(hablado("el IRS, la FEMA y la radio AM y FM; YO SOY"), "el IRS, la FEMA y la radio AM y FM; Yo Soy");
+  assert.equal(hablado("se escribe con cuatro letras, YHWH, que"), "se escribe con cuatro letras, i griega, hache, doble ve, hache, que");
   assert.equal(hablado("cierra el Antiguo Testamento. (Malaquías 1:1)"), "cierra el Antiguo Testamento. Malaquías uno, uno");
   assert.equal(hablado("«Dios es amor» —dice Juan— y basta"), "Dios es amor, dice Juan, y basta");
   assert.equal(hablado("en el año 30 d. C. y el 586 a. C."), "en el año treinta después de Cristo y el quinientos ochenta y seis antes de Cristo");
