@@ -121,7 +121,8 @@ test("la matrícula y el estatus: número AAF-año-número y el estatus sale del
 });
 
 test("el reglamento académico dice los mismos números que el sistema", () => {
-  assert.equal(REGLAMENTO.secciones.length, 10);
+  assert.equal(REGLAMENTO.secciones.length, 11);
+  assert.equal(REGLAMENTO.secciones[10].titulo, "11. Las actividades de los niveles");
   const todo = REGLAMENTO.secciones.flatMap((s) => s.puntos).join(" ");
   for (const dato of [`aprueba con ${APRUEBA}`, `con ${APRUEBA_INTEGRAL}`, "30 minutos", "24 horas", `${DIAS_PAUSA} días`, `${HONORES} o más`, "examen final (70 %)", "tercer fallo", CODIGO_HONOR]) {
     assert.ok(todo.includes(dato), `el reglamento debe decir «${dato}»`);

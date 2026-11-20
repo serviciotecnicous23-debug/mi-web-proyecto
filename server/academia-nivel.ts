@@ -16,7 +16,7 @@ import { BANCOS, materiaDe } from "./academia/index";
 import { accesoDe, alumnoDe, asegurarAlumno, claveIntegral, enFila, estaInscrito, frenar, marcarEstudio, MENSAJE_CERRADA } from "./academia-comun";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion, type Resolver } from "./academia-examen";
 import { codigoDocumento, emitirNivel } from "./academia-documentos";
-import { ACTIVIDADES_NIVEL, detalleEvangelismo, detalleServicio } from "@shared/academia-actividades";
+import { ACTIVIDADES_NIVEL, requisitosDeActividades } from "@shared/academia-actividades";
 import { resumenDe } from "./academia-actividades-datos";
 
 export function nivelDe(n: unknown): NivelDef | undefined {
@@ -105,13 +105,10 @@ export async function estadoNivel(userId: number | null, nv: NivelDef, vistaPrev
     },
   ];
   if (pide) requisitos.push({ id: "versiculos", texto: `${pide} versículos de memoria`, hecho: aprendidos >= pide, detalle: `${Math.min(aprendidos, pide)} de ${pide}` });
-  // las actividades del nivel (en el Nivel 2: evangelismo y servicio), confirmadas por la Administración
+  // las actividades del nivel, confirmadas por la Administración (en el Nivel 2, evangelismo y servicio; en el Nivel 3,
+  // la práctica, la enseñanza grabada y la consolidación)
   const act = ACTIVIDADES_NIVEL[nv.n];
-  if (act) {
-    const r = userId ? await resumenDe(userId, nv.n) : null;
-    requisitos.push({ id: "evangelismo", texto: `${act.evangelismo} conversaciones de evangelismo registradas`, hecho: !!r?.evangelismo.hecho, detalle: r ? detalleEvangelismo(r) : "Pendiente" });
-    requisitos.push({ id: "servicio", texto: "Servir 1 mes en un ministerio", hecho: !!r?.servicio.hecho, detalle: r ? detalleServicio(r) : "Pendiente" });
-  }
+  if (act) requisitos.push(...requisitosDeActividades(act, userId ? await resumenDe(userId, nv.n) : null));
   if (pactoDef) requisitos.push({ id: "pacto", texto: pactoDef.titulo, hecho: !!pactoAt, detalle: pactoAt ? "Aceptado" : "Pendiente" });
   // lo que el reglamento pide y todavía no se registra en la academia: pendiente, para que el nivel no se cierre sin ello
   for (const r of REQUISITOS_POR_HACER[nv.n] ?? []) requisitos.push({ id: r.id, texto: r.texto, hecho: false, detalle: "Pronto se podrá registrar en la academia" });

@@ -1,35 +1,84 @@
-// Las actividades del nivel (server/academia-actividades.ts): las conversaciones de evangelismo y el servicio en un
-// ministerio que pide el Nivel 2. El alumno las registra aquí y la Administración las confirma.
+// Las actividades del nivel (server/academia-actividades.ts): en el Nivel 2, las conversaciones de evangelismo y el
+// servicio en un ministerio; en el Nivel 3, las horas de práctica, la enseñanza grabada y la consolidación de un nuevo
+// creyente. El alumno las registra aquí y la Administración las confirma.
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock, HandHeart, MessageCircleHeart, Trash2, Undo2 } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, HandHeart, HeartHandshake, MessageCircleHeart, Sprout, Trash2, Undo2, Video, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { LIMITES_ACTIVIDAD, RESULTADOS_EVANGELISMO, type ActividadVista, type ActividadesNivel, type TipoActividad } from "@shared/academia-actividades";
+import {
+  LIMITES_ACTIVIDAD, MINUTOS_ENSENANZA, PASOS_CONSOLIDACION, PASOS_MINIMOS, RESULTADOS_EVANGELISMO, horasTexto, tiposDe, type ActividadVista,
+  type ActividadesNivel, type PasoConsolidacion, type TipoActividad,
+} from "@shared/academia-actividades";
 import { borrarActividad, registrarActividad, useActividades } from "@/components/academia/api";
 import { BarraAvance } from "@/components/academia/ui";
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 const dia = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+const TEXTO_PASO = new Map<string, string>(PASOS_CONSOLIDACION.map((p) => [p.id, p.texto]));
+const sitioDe = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
 
 function Estado({ a }: { a: ActividadVista }) {
-  if (a.estado === "confirmada") return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" /> Confirmada</span>;
+  if (a.estado === "confirmada") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+        <CheckCircle2 className="w-3.5 h-3.5" /> {a.tipo === "ensenanza" ? "Aprobada" : "Confirmada"}
+      </span>
+    );
+  }
   if (a.estado === "rechazada") return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-red-500/15 text-red-700 dark:text-red-300"><Undo2 className="w-3.5 h-3.5" /> Devuelta</span>;
-  return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300"><Clock className="w-3.5 h-3.5" /> Por confirmar</span>;
+  return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300"><Clock className="w-3.5 h-3.5" /> Por {a.tipo === "ensenanza" ? "revisar" : "confirmar"}</span>;
+}
+
+/** La primera línea de cada actividad registrada. */
+function encabezado(a: ActividadVista): string {
+  const periodo = `${dia(a.fecha)}${a.hasta ? ` al ${dia(a.hasta)}` : ""}`;
+  switch (a.tipo) {
+    case "servicio":
+      return `${a.lugar} · desde el ${dia(a.fecha)}${a.hasta ? ` hasta el ${dia(a.hasta)}` : ""}`;
+    case "practica":
+      return `${a.lugar} · ${periodo} · ${horasTexto(a.horas ?? 0)} ${a.horas === 1 ? "hora" : "horas"}`;
+    case "ensenanza":
+      return `${a.titulo} · ${dia(a.fecha)}`;
+    case "consolidacion":
+      return `${a.persona} · desde el ${dia(a.fecha)}${a.hasta ? ` hasta el ${dia(a.hasta)}` : ""}`;
+    default:
+      return `${a.persona} · ${dia(a.fecha)}`;
+  }
 }
 
 function Registrada({ a, alBorrar }: { a: ActividadVista; alBorrar: (id: number) => void }) {
   return (
-    <li className="rounded-xl border border-border p-3.5 space-y-1.5" data-testid="actividad" data-estado={a.estado}>
+    <li className="rounded-xl border border-border p-3.5 space-y-1.5" data-testid="actividad" data-tipo={a.tipo} data-estado={a.estado}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold">
-          {a.tipo === "servicio" ? `${a.lugar} · desde el ${dia(a.fecha)}${a.hasta ? ` hasta el ${dia(a.hasta)}` : ""}` : `${a.persona} · ${dia(a.fecha)}`}
-        </p>
+        <p className="text-sm font-semibold">{encabezado(a)}</p>
         <Estado a={a} />
       </div>
-      {a.tipo === "servicio" ? <p className="text-xs text-muted-foreground">Líder: {a.lider}</p> : a.resultado && <p className="text-xs text-muted-foreground">{a.resultado}</p>}
+      {a.tipo === "servicio" && <p className="text-xs text-muted-foreground">Líder: {a.lider}</p>}
+      {a.tipo === "practica" && <p className="text-xs text-muted-foreground">Supervisó: {a.lider}</p>}
+      {a.tipo === "consolidacion" && <p className="text-xs text-muted-foreground">Coordinó: {a.lider}</p>}
+      {a.tipo === "evangelismo" && a.resultado && <p className="text-xs text-muted-foreground">{a.resultado}</p>}
+      {a.tipo === "ensenanza" && a.enlace && (
+        <p className="text-xs">
+          <a href={a.enlace} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-700 dark:text-orange-300 hover:underline">
+            <ExternalLink className="w-3.5 h-3.5" /> Ver la grabación ({sitioDe(a.enlace)})
+          </a>
+          {a.lugar && <span className="text-muted-foreground"> · {a.lugar}</span>}
+        </p>
+      )}
+      {a.tipo === "consolidacion" && a.pasos && a.pasos.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5" aria-label="Pasos que acompañó">
+          {a.pasos.map((p) => <li key={p} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{TEXTO_PASO.get(p) ?? p}</li>)}
+        </ul>
+      )}
       <p className="text-sm text-muted-foreground whitespace-pre-line">{a.detalle}</p>
       {a.estado === "rechazada" && a.motivo && <p className="text-sm text-red-700 dark:text-red-300">Motivo: {a.motivo}</p>}
       {a.estado === "confirmada" && a.motivo && <p className="text-sm text-emerald-700 dark:text-emerald-300">Nota: {a.motivo}</p>}
@@ -42,6 +91,15 @@ function Registrada({ a, alBorrar }: { a: ActividadVista; alBorrar: (id: number)
   );
 }
 
+/** Lo que dice el campo del detalle y el botón de cada formulario. */
+const FORMULARIO: Record<TipoActividad, { detalle: string; boton: string; listo: string }> = {
+  evangelismo: { detalle: "De qué hablaron y cómo fue", boton: "Registrar la conversación", listo: "Conversación registrada" },
+  servicio: { detalle: "Qué haces en ese ministerio", boton: "Registrar mi servicio", listo: "Servicio registrado" },
+  practica: { detalle: "Qué hiciste en la práctica", boton: "Registrar la práctica", listo: "Práctica registrada" },
+  ensenanza: { detalle: "La idea central y el propósito de tu enseñanza", boton: "Enviar mi enseñanza", listo: "Enseñanza enviada" },
+  consolidacion: { detalle: "Cómo fue el acompañamiento", boton: "Registrar la consolidación", listo: "Consolidación registrada" },
+};
+
 function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; alGuardar: (v: ActividadesNivel) => void }) {
   const { toast } = useToast();
   const [fecha, setFecha] = useState(hoyLocal());
@@ -50,23 +108,45 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
   const [resultado, setResultado] = useState("");
   const [lugar, setLugar] = useState("");
   const [lider, setLider] = useState("");
+  const [horas, setHoras] = useState("");
+  const [titulo, setTitulo] = useState("");
+  const [enlace, setEnlace] = useState("");
+  const [pasos, setPasos] = useState<PasoConsolidacion[]>([]);
   const [detalle, setDetalle] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const datos = (): Record<string, unknown> => {
+    switch (tipo) {
+      case "servicio":
+        return { tipo, fecha, hasta, lugar, lider, detalle };
+      case "practica":
+        return { tipo, fecha, hasta, lugar, lider, horas, detalle };
+      case "ensenanza":
+        return { tipo, fecha, titulo, enlace, lugar, detalle };
+      case "consolidacion":
+        return { tipo, fecha, hasta, persona, lider, pasos, detalle };
+      default:
+        return { tipo, fecha, persona, resultado, detalle };
+    }
+  };
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setOcupado(true);
     setError(null);
     try {
-      const v = await registrarActividad(n, tipo === "servicio" ? { tipo, fecha, hasta, lugar, lider, detalle } : { tipo, fecha, persona, resultado, detalle });
+      const v = await registrarActividad(n, datos());
       alGuardar(v);
-      toast({ title: tipo === "servicio" ? "Servicio registrado" : "Conversación registrada", description: "La Administración la revisará y te llegará un aviso." });
+      toast({ title: FORMULARIO[tipo].listo, description: "La Administración la revisará y te llegará un aviso." });
       setPersona("");
       setResultado("");
       setDetalle("");
       setLugar("");
       setLider("");
       setHasta("");
+      setHoras("");
+      setTitulo("");
+      setEnlace("");
+      setPasos([]);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -74,40 +154,74 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
     }
   };
   const hoy = hoyLocal();
+  const campoFecha = (etiqueta: string) => (
+    <label className="block text-sm">
+      <span className="font-medium">{etiqueta}</span>
+      <Input type="date" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} className="mt-1" data-testid="act-fecha" />
+    </label>
+  );
+  const campoHasta = (etiqueta: string) => (
+    <label className="block text-sm">
+      <span className="font-medium">{etiqueta}</span>
+      <Input type="date" value={hasta} max={hoy} min={fecha} onChange={(e) => setHasta(e.target.value)} className="mt-1" data-testid="act-hasta" />
+    </label>
+  );
+  const campoLider = (etiqueta: string, ayuda: string) => (
+    <label className="block text-sm">
+      <span className="font-medium">{etiqueta}</span>
+      <Input value={lider} onChange={(e) => setLider(e.target.value)} maxLength={LIMITES_ACTIVIDAD.lider} placeholder={ayuda} className="mt-1" data-testid="act-lider" />
+    </label>
+  );
   return (
     <form onSubmit={enviar} className="space-y-3 rounded-xl bg-muted/40 p-4" data-testid={`form-${tipo}`}>
-      {tipo === "servicio" ? (
+      {(tipo === "servicio" || tipo === "practica") && (
         <>
           <label className="block text-sm">
-            <span className="font-medium">Ministerio</span>
-            <Input value={lugar} onChange={(e) => setLugar(e.target.value)} maxLength={LIMITES_ACTIVIDAD.lugar} placeholder="Ministerio de niños, alabanza, ujieres…" className="mt-1" data-testid="act-lugar" />
+            <span className="font-medium">{tipo === "servicio" ? "Ministerio" : "Ministerio o lugar"}</span>
+            <Input
+              value={lugar}
+              onChange={(e) => setLugar(e.target.value)}
+              maxLength={LIMITES_ACTIVIDAD.lugar}
+              placeholder={tipo === "servicio" ? "Ministerio de niños, alabanza, ujieres…" : "Grupo de jóvenes, visitas a enfermos, escuela dominical…"}
+              className="mt-1"
+              data-testid="act-lugar"
+            />
           </label>
-          <label className="block text-sm">
-            <span className="font-medium">Líder del ministerio</span>
-            <Input value={lider} onChange={(e) => setLider(e.target.value)} maxLength={LIMITES_ACTIVIDAD.lider} placeholder="Quién te acompaña en ese servicio" className="mt-1" data-testid="act-lider" />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
-              <span className="font-medium">Desde</span>
-              <Input type="date" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} className="mt-1" data-testid="act-fecha" />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium">Hasta <span className="text-muted-foreground font-normal">(si terminó)</span></span>
-              <Input type="date" value={hasta} max={hoy} min={fecha} onChange={(e) => setHasta(e.target.value)} className="mt-1" data-testid="act-hasta" />
-            </label>
+          {tipo === "servicio"
+            ? campoLider("Líder del ministerio", "Quién te acompaña en ese servicio")
+            : campoLider("Quién te supervisó", "El líder del ministerio o tu pastor")}
+          <div className={`grid gap-3 ${tipo === "practica" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+            {campoFecha(tipo === "servicio" ? "Desde" : "Fecha o desde")}
+            {tipo === "servicio" ? (
+              <label className="block text-sm">
+                <span className="font-medium">Hasta <span className="text-muted-foreground font-normal">(si terminó)</span></span>
+                <Input type="date" value={hasta} max={hoy} min={fecha} onChange={(e) => setHasta(e.target.value)} className="mt-1" data-testid="act-hasta" />
+              </label>
+            ) : (
+              campoHasta("Hasta (si fue un período)")
+            )}
+            {tipo === "practica" && (
+              <label className="block text-sm">
+                <span className="font-medium">Horas</span>
+                <Input inputMode="decimal" value={horas} onChange={(e) => setHoras(e.target.value)} placeholder="2 o 1,5" className="mt-1" data-testid="act-horas" />
+              </label>
+            )}
           </div>
+          {tipo === "practica" && (
+            <p className="text-xs text-muted-foreground -mt-1">
+              Hasta {LIMITES_ACTIVIDAD.horasDia} horas en un día y {LIMITES_ACTIVIDAD.horasPeriodo} en un período, de media hora en media hora.
+            </p>
+          )}
         </>
-      ) : (
+      )}
+      {tipo === "evangelismo" && (
         <>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
             <label className="block text-sm">
               <span className="font-medium">Con quién</span>
               <Input value={persona} onChange={(e) => setPersona(e.target.value)} maxLength={LIMITES_ACTIVIDAD.persona} placeholder="Un compañero de trabajo, mi vecina M. R.…" className="mt-1" data-testid="act-persona" />
             </label>
-            <label className="block text-sm">
-              <span className="font-medium">Cuándo</span>
-              <Input type="date" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} className="mt-1" data-testid="act-fecha" />
-            </label>
+            {campoFecha("Cuándo")}
           </div>
           <p className="text-xs text-muted-foreground -mt-1">Escribe la relación o sus iniciales, nunca su nombre completo ni sus datos.</p>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Cómo terminó">
@@ -125,8 +239,62 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
           </div>
         </>
       )}
+      {tipo === "ensenanza" && (
+        <>
+          <label className="block text-sm">
+            <span className="font-medium">El pasaje y el tema</span>
+            <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={LIMITES_ACTIVIDAD.titulo} placeholder="Juan 4:1-26 · El agua que da vida" className="mt-1" data-testid="act-titulo" />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">El enlace de la grabación</span>
+            <Input type="url" value={enlace} onChange={(e) => setEnlace(e.target.value)} maxLength={LIMITES_ACTIVIDAD.enlace} placeholder="https://…" className="mt-1" data-testid="act-enlace" />
+          </label>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Súbela donde se pueda ver con el enlace, sin hacerla pública: un video «no listado» de YouTube o un archivo de Google Drive compartido con
+            «cualquier persona que tenga el enlace», por ejemplo.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+            {campoFecha("Cuándo la grabaste")}
+            <label className="block text-sm">
+              <span className="font-medium">Dónde la diste <span className="text-muted-foreground font-normal">(si fue ante un grupo)</span></span>
+              <Input value={lugar} onChange={(e) => setLugar(e.target.value)} maxLength={LIMITES_ACTIVIDAD.lugar} placeholder="Grupo de jóvenes, célula, escuela dominical…" className="mt-1" data-testid="act-lugar" />
+            </label>
+          </div>
+        </>
+      )}
+      {tipo === "consolidacion" && (
+        <>
+          <label className="block text-sm">
+            <span className="font-medium">A quién acompañaste</span>
+            <Input value={persona} onChange={(e) => setPersona(e.target.value)} maxLength={LIMITES_ACTIVIDAD.persona} placeholder="Un joven de la célula, mi vecino J. P.…" className="mt-1" data-testid="act-persona" />
+          </label>
+          <p className="text-xs text-muted-foreground -mt-1">Escribe la relación o sus iniciales, nunca su nombre completo ni sus datos.</p>
+          {campoLider("Quién lo coordinó en tu iglesia", "Tu pastor o el líder de consolidación")}
+          <div className="grid grid-cols-2 gap-3">
+            {campoFecha("Desde")}
+            {campoHasta("Hasta (si terminó)")}
+          </div>
+          <fieldset className="space-y-1.5">
+            <legend className="text-sm font-medium">Los pasos que acompañaste <span className="text-muted-foreground font-normal">(al menos {PASOS_MINIMOS})</span></legend>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {PASOS_CONSOLIDACION.map((p) => (
+                <label key={p.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={pasos.includes(p.id)}
+                    onChange={(e) => setPasos(e.target.checked ? [...pasos, p.id] : pasos.filter((x) => x !== p.id))}
+                    className="h-4 w-4 accent-orange-600"
+                    data-testid={`act-paso-${p.id}`}
+                  />
+                  {p.texto}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </>
+      )}
       <label className="block text-sm">
-        <span className="font-medium">{tipo === "servicio" ? "Qué haces en ese ministerio" : "De qué hablaron y cómo fue"}</span>
+        <span className="font-medium">{FORMULARIO[tipo].detalle}</span>
         <Textarea value={detalle} onChange={(e) => setDetalle(e.target.value)} maxLength={LIMITES_ACTIVIDAD.detalleMax} rows={3} className="mt-1" data-testid="act-detalle" />
         <span className={`block text-xs mt-1 ${detalle.trim().length < LIMITES_ACTIVIDAD.detalleMin ? "text-muted-foreground" : "text-emerald-700 dark:text-emerald-300"}`}>
           {detalle.trim().length} / al menos {LIMITES_ACTIVIDAD.detalleMin} letras
@@ -134,11 +302,50 @@ function Formulario({ n, tipo, alGuardar }: { n: number; tipo: TipoActividad; al
       </label>
       {error && <p className="text-sm text-orange-700 dark:text-orange-300" role="alert">{error}</p>}
       <Button type="submit" className="fire-btn-primary" disabled={ocupado} data-testid={`act-registrar-${tipo}`}>
-        {tipo === "servicio" ? "Registrar mi servicio" : "Registrar la conversación"}
+        {FORMULARIO[tipo].boton}
       </Button>
     </form>
   );
 }
+
+/** Cada sección: su título, lo que pide, cómo va y si se puede registrar otra. */
+function Seccion(props: {
+  tipo: TipoActividad;
+  icono: LucideIcon;
+  titulo: string;
+  explica: string;
+  avance: React.ReactNode;
+  v: ActividadesNivel;
+  abierto: TipoActividad | null;
+  abrir: (t: TipoActividad) => void;
+  guardar: (v: ActividadesNivel) => void;
+  borrar: (id: number) => void;
+  /** ¿Se puede registrar otra? (la enseñanza y la consolidación, una a la vez) */
+  otra: boolean;
+  abrirTexto: string;
+}) {
+  const { tipo, v } = props;
+  const lista = v.lista.filter((a) => a.tipo === tipo);
+  const Icono = props.icono;
+  return (
+    <div className="space-y-3" data-testid={`seccion-${tipo}`}>
+      <h3 className="font-semibold text-lg flex items-center gap-2"><Icono className="w-5 h-5 text-orange-500" /> {props.titulo}</h3>
+      <p className="text-sm text-muted-foreground">{props.explica}</p>
+      {props.avance}
+      {lista.length > 0 && <ul className="space-y-2">{lista.map((a) => <Registrada key={a.id} a={a} alBorrar={props.borrar} />)}</ul>}
+      {v.puedeRegistrar && props.otra && (props.abierto === tipo ? (
+        <Formulario n={v.nivel} tipo={tipo} alGuardar={props.guardar} />
+      ) : (
+        <Button variant="outline" onClick={() => props.abrir(tipo)} data-testid={`act-abrir-${tipo}`}>{props.abrirTexto}</Button>
+      ))}
+    </div>
+  );
+}
+
+const INTRO: Record<number, string> = {
+  2: "Lo que aprendes se vive: este nivel pide compartir tu fe y servir en tu iglesia.",
+  3: "Lo que aprendes se vive: este nivel pide práctica ministerial en tu iglesia, una enseñanza grabada y acompañar a un nuevo creyente.",
+};
 
 export function ActividadesDelNivel({ n }: { n: number }) {
   const qc = useQueryClient();
@@ -170,57 +377,124 @@ export function ActividadesDelNivel({ n }: { n: number }) {
       toast({ title: "No se pudo borrar", description: e.message, variant: "destructive" });
     }
   };
-  const conversaciones = v.lista.filter((a) => a.tipo === "evangelismo");
-  const servicios = v.lista.filter((a) => a.tipo === "servicio");
+  const comun = { v, abierto, abrir: setAbierto, guardar, borrar };
+  const tipos = tiposDe(v.pide);
+  const pideEv = v.pide.evangelismo ?? 0;
+  const pideHoras = v.pide.practicaHoras ?? 0;
   return (
     <section className="glass-card p-5 md:p-6 space-y-6" data-testid="nivel-actividades">
       <div>
         <h2 className="font-display text-2xl font-bold">Actividades del nivel</h2>
         <p className="text-muted-foreground mt-1 text-[15px]">
-          Lo que aprendes se vive: este nivel pide compartir tu fe y servir en tu iglesia. Registra cada actividad; la Administración la confirma y te llega un
-          aviso.
+          {INTRO[n] ?? "Lo que aprendes se vive."} Registra cada actividad; la Administración la confirma y te llega un aviso.
         </p>
         {!v.puedeRegistrar && v.motivo && <p className="mt-3 text-sm text-orange-700 dark:text-orange-300" data-testid="actividades-cerradas">{v.motivo}</p>}
       </div>
 
-      <div className="space-y-3">
-        <h3 className="font-semibold text-lg flex items-center gap-2"><MessageCircleHeart className="w-5 h-5 text-orange-500" /> Conversaciones de evangelismo</h3>
-        <p className="text-sm text-muted-foreground">
-          {v.pide.evangelismo} conversaciones en las que compartiste el evangelio, como aprendiste en Evangelismo personal: con quién, cuándo y cómo fue.
-        </p>
-        <div className="max-w-md">
-          <BarraAvance valor={Math.min(v.evangelismo.confirmadas, v.pide.evangelismo)} de={v.pide.evangelismo} etiqueta={`${Math.min(v.evangelismo.confirmadas, v.pide.evangelismo)} de ${v.pide.evangelismo} confirmadas${v.evangelismo.pendientes ? ` · ${v.evangelismo.pendientes} por confirmar` : ""}`} />
-        </div>
-        {conversaciones.length > 0 && <ul className="space-y-2">{conversaciones.map((a) => <Registrada key={a.id} a={a} alBorrar={borrar} />)}</ul>}
-        {v.puedeRegistrar && (abierto === "evangelismo" ? (
-          <Formulario n={n} tipo="evangelismo" alGuardar={guardar} />
-        ) : (
-          <Button variant="outline" onClick={() => setAbierto("evangelismo")} data-testid="act-abrir-evangelismo">Registrar una conversación</Button>
-        ))}
-      </div>
+      {tipos.includes("evangelismo") && (
+        <Seccion
+          {...comun}
+          tipo="evangelismo"
+          icono={MessageCircleHeart}
+          titulo="Conversaciones de evangelismo"
+          explica={`${pideEv} conversaciones en las que compartiste el evangelio, como aprendiste en Evangelismo personal: con quién, cuándo y cómo fue.`}
+          avance={
+            <div className="max-w-md">
+              <BarraAvance
+                valor={Math.min(v.evangelismo.confirmadas, pideEv)}
+                de={pideEv}
+                etiqueta={`${Math.min(v.evangelismo.confirmadas, pideEv)} de ${pideEv} confirmadas${v.evangelismo.pendientes ? ` · ${v.evangelismo.pendientes} por confirmar` : ""}`}
+              />
+            </div>
+          }
+          otra
+          abrirTexto="Registrar una conversación"
+        />
+      )}
 
-      <div className="space-y-3">
-        <h3 className="font-semibold text-lg flex items-center gap-2"><HandHeart className="w-5 h-5 text-orange-500" /> Servicio en un ministerio</h3>
-        <p className="text-sm text-muted-foreground">
-          Sirve al menos un mes ({v.pide.servicioDias} días) en un ministerio de tu iglesia. Registra dónde, con qué líder y desde cuándo; cuenta cuando la
-          Administración lo confirma y se cumplen los días.
-        </p>
-        <p className="text-sm font-medium" data-testid="servicio-estado">
-          {v.servicio.hecho
-            ? "Cumplido: servicio confirmado."
-            : v.servicio.confirmado
-              ? `Confirmado · ${v.servicio.dias ?? 0} de ${v.pide.servicioDias} días`
-              : v.servicio.pendiente
-                ? "Registrado · por confirmar"
-                : "Todavía sin registrar"}
-        </p>
-        {servicios.length > 0 && <ul className="space-y-2">{servicios.map((a) => <Registrada key={a.id} a={a} alBorrar={borrar} />)}</ul>}
-        {v.puedeRegistrar && !v.servicio.hecho && (abierto === "servicio" ? (
-          <Formulario n={n} tipo="servicio" alGuardar={guardar} />
-        ) : (
-          <Button variant="outline" onClick={() => setAbierto("servicio")} data-testid="act-abrir-servicio">Registrar mi servicio</Button>
-        ))}
-      </div>
+      {tipos.includes("servicio") && (
+        <Seccion
+          {...comun}
+          tipo="servicio"
+          icono={HandHeart}
+          titulo="Servicio en un ministerio"
+          explica={`Sirve al menos un mes (${v.pide.servicioDias} días) en un ministerio de tu iglesia. Registra dónde, con qué líder y desde cuándo; cuenta cuando la Administración lo confirma y se cumplen los días.`}
+          avance={
+            <p className="text-sm font-medium" data-testid="servicio-estado">
+              {v.servicio.hecho
+                ? "Cumplido: servicio confirmado."
+                : v.servicio.confirmado
+                  ? `Confirmado · ${v.servicio.dias ?? 0} de ${v.pide.servicioDias} días`
+                  : v.servicio.pendiente
+                    ? "Registrado · por confirmar"
+                    : "Todavía sin registrar"}
+            </p>
+          }
+          otra={!v.servicio.hecho}
+          abrirTexto="Registrar mi servicio"
+        />
+      )}
+
+      {tipos.includes("practica") && (
+        <Seccion
+          {...comun}
+          tipo="practica"
+          icono={HeartHandshake}
+          titulo="Práctica ministerial"
+          explica={`${pideHoras} horas sirviendo en tu iglesia con un líder que te supervise: enseñar una clase, dirigir un grupo, visitar enfermos, evangelizar o acompañar a otros. Registra cada día o cada período con sus horas; cuentan las horas que la Administración confirma con ese líder.`}
+          avance={
+            <div className="max-w-md" data-testid="practica-estado">
+              <BarraAvance
+                valor={Math.min(v.practica.horas, pideHoras)}
+                de={pideHoras}
+                etiqueta={`${horasTexto(Math.min(v.practica.horas, pideHoras))} de ${pideHoras} horas confirmadas${v.practica.porConfirmar ? ` · ${horasTexto(v.practica.porConfirmar)} por confirmar` : ""}`}
+              />
+            </div>
+          }
+          otra={!v.practica.hecho}
+          abrirTexto="Registrar horas de práctica"
+        />
+      )}
+
+      {tipos.includes("ensenanza") && (
+        <Seccion
+          {...comun}
+          tipo="ensenanza"
+          icono={Video}
+          titulo="Enseñanza grabada"
+          explica={`Una enseñanza de ${MINUTOS_ENSENANZA.min} a ${MINUTOS_ENSENANZA.max} minutos preparada con los pasos de Homilética I: el pasaje, la idea central, el propósito, el bosquejo, la ilustración y la aplicación. Grábala, comparte el enlace y la Administración la aprueba o te dice qué mejorar.`}
+          avance={
+            <p className="text-sm font-medium" data-testid="ensenanza-estado">
+              {v.ensenanza.hecho ? "Cumplido: enseñanza aprobada." : v.ensenanza.pendientes ? "Enviada · por revisar" : v.ensenanza.devueltas ? "Devuelta: corrígela y envíala otra vez." : "Todavía sin enviar"}
+            </p>
+          }
+          otra={!v.ensenanza.hecho && !v.ensenanza.pendientes}
+          abrirTexto={v.ensenanza.devueltas ? "Enviar otra vez mi enseñanza" : "Enviar mi enseñanza"}
+        />
+      )}
+
+      {tipos.includes("consolidacion") && (
+        <Seccion
+          {...comun}
+          tipo="consolidacion"
+          icono={Sprout}
+          titulo="Consolidar a un nuevo creyente"
+          explica={`Acompaña a un nuevo creyente en los pasos del plan de consolidación que aprendiste en Evangelismo y consolidación, en coordinación con tu iglesia: al menos ${PASOS_MINIMOS} de los ${PASOS_CONSOLIDACION.length}. La Administración lo confirma con quien lo coordinó.`}
+          avance={
+            <p className="text-sm font-medium" data-testid="consolidacion-estado">
+              {v.consolidacion.hecho
+                ? "Cumplido: consolidación confirmada."
+                : v.consolidacion.pendientes
+                  ? "Registrada · por confirmar"
+                  : v.consolidacion.devueltas
+                    ? "Devuelta: corrígela y regístrala otra vez."
+                    : "Todavía sin registrar"}
+            </p>
+          }
+          otra={!v.consolidacion.hecho && !v.consolidacion.pendientes}
+          abrirTexto="Registrar la consolidación"
+        />
+      )}
     </section>
   );
 }
