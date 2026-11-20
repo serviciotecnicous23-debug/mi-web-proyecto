@@ -5187,6 +5187,114 @@ const DANIEL_APOCALIPSIS: MateriaDef = {
   disponible: true,
 };
 
+const GEOGRAFIA_HISTORIA_BIBLICA: MateriaDef = {
+  id: "biblicos-avanzados-4",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  orden: 4,
+  titulo: "Geografía e historia bíblica",
+  resumen: "La tierra y la historia de la Biblia: la geografía de la tierra de Israel, de los patriarcas al reino, el reino dividido y los imperios, el exilio y los persas, el tiempo entre los testamentos y el mundo romano de Jesús y de Pablo.",
+  base: "Hechos 17:26; Deuteronomio 11:11-12",
+  memoria: "Hechos 17:26",
+  lecciones: lecciones("biblicos-avanzados-4", [
+    ["La tierra de la Biblia", "Deuteronomio 8:7-9; Deuteronomio 11:10-12; Salmos 125:2"],
+    ["De los patriarcas al reino de David", "Génesis 12:1; Éxodo 12:40-41; 1 Reyes 6:1"],
+    ["El reino dividido y los imperios", "1 Reyes 12:16; 2 Reyes 17:6; 2 Reyes 25:8-9"],
+    ["El exilio, el regreso y los persas", "Jeremías 29:10; Esdras 1:1-2; Nehemías 2:5"],
+    ["Entre los dos testamentos", "Daniel 8:21-22; Juan 10:22-23; Gálatas 4:4"],
+    ["El mundo de Jesús y de Pablo", "Lucas 2:1; Lucas 3:1; Hechos 17:26"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante conozca la tierra y la historia de la Biblia para leerla en su lugar y en su tiempo: que describa la tierra de Israel, una franja pequeña entre el mar y el desierto, con la llanura costera, la Sefela, los montes centrales, el valle del Jordán, con el mar Muerto a unos 440 metros bajo el nivel del mar, y Transjordania, que dependía de la lluvia que Dios da; que siga la historia de los patriarcas al reino, con las dos fechas que se proponen para el éxodo, hacia el 1446 o hacia el 1270 al 1250 antes de Cristo, y el reino de David y de Salomón; que ubique el reino dividido, hacia el 931 o 930, la caída de Samaria ante Asiria en el 722 y la de Jerusalén ante Babilonia en el 587 o 586, y a los profetas en su tiempo; que conozca el regreso con Ciro de Persia, que tomó Babilonia en el 539, el templo terminado hacia el 515 y la obra de Esdras y de Nehemías; que entienda el tiempo entre los testamentos, de Alejandro, en el 333, a Herodes, con la Septuaginta, los macabeos y la fiesta de la dedicación; y que ubique a Jesús y a Pablo en el mundo romano de Augusto, Tiberio y Pilato. Las fechas antiguas son aproximadas, y se dicen con honestidad. Su base es la palabra de Pablo en Atenas: «Y de una sangre ha hecho todo el linaje de los hombres, para que habiten sobre toda la faz de la tierra; y les ha prefijado el orden de los tiempos, y los límites de su habitación» (Hechos 17:26).",
+    objetivos: [
+      { id: "o1", texto: "Describir las regiones, el clima y los caminos de la tierra de Israel.", bloom: "comprender" },
+      { id: "o2", texto: "Ubicar en el tiempo a los patriarcas, el éxodo y el reino, y comparar las fechas que se proponen para el éxodo.", bloom: "analizar" },
+      { id: "o3", texto: "Explicar el reino dividido y las caídas de Samaria y de Jerusalén, y ubicar a los profetas en su tiempo.", bloom: "comprender" },
+      { id: "o4", texto: "Explicar el regreso del exilio con los persas y la obra de Zorobabel, Esdras y Nehemías.", bloom: "comprender" },
+      { id: "o5", texto: "Explicar cómo el tiempo entre los testamentos preparó la venida de Cristo.", bloom: "analizar" },
+      { id: "o6", texto: "Ubicar el ministerio de Jesús y los viajes de Pablo en el mundo romano.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 17:26 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las cinco franjas de la tierra, las lluvias y los caminos, los patriarcas, el éxodo y el reino, los dos reinos, Asiria y Babilonia, el regreso con los persas, el tiempo entre los testamentos y el mundo romano.",
+      ser: "Un lector paciente y honesto, que ubica cada pasaje en su lugar y en su tiempo, y que confía en el Dios que gobierna la historia.",
+      hacer: "Usar un mapa en cada clase, hacer una línea del tiempo de Abraham a Salomón, ubicar un libro profético, animar a una iglesia que reconstruye, explicar el silencio entre Malaquías y Mateo y ubicar el ministerio de Jesús con Lucas 3:1.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Barry J. Beitzel", titulo: "Atlas bíblico de Tyndale", editorial: "Tyndale" },
+        { autor: "F. F. Bruce", titulo: "Israel y las naciones: la historia de Israel desde el éxodo hasta la destrucción del segundo templo", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "William Sanford LaSor, David Allan Hubbard y Frederic William Bush", titulo: "Panorama del Antiguo Testamento: mensaje, forma y trasfondo del Antiguo Testamento", editorial: "Nueva Creación" },
+        { autor: "D. S. Russell", titulo: "El período intertestamentario", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Josué", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=49ggVrdBN_Y", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de 1 y 2 Reyes", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8V-TefJJc0g", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías: un líder que ora y trabaja", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Esdras 1, el decreto de Ciro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Esdras&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
+const TRASFONDO_ARQUEOLOGIA: MateriaDef = {
+  id: "biblicos-avanzados-5",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  orden: 5,
+  titulo: "Trasfondo y arqueología bíblica",
+  resumen: "El mundo de la Biblia a la luz de la arqueología: qué es la arqueología y sus límites, los hallazgos del Antiguo y del Nuevo Testamento, cómo llegó a nosotros el texto, la vida diaria y el mundo religioso de los judíos.",
+  base: "Isaías 40:8; Lucas 1:3-4",
+  memoria: "Isaías 40:8",
+  lecciones: lecciones("biblicos-avanzados-5", [
+    ["La arqueología y la Biblia", "Lucas 1:3-4; 1 Tesalonicenses 5:21; Hebreos 11:1"],
+    ["Hallazgos del Antiguo Testamento", "2 Reyes 3:4-5; 2 Reyes 20:20; Números 6:24-26"],
+    ["Los manuscritos y el texto de la Biblia", "Isaías 40:8; Jeremías 36:27-28; Lucas 4:17"],
+    ["La vida diaria en tiempos bíblicos", "Lucas 2:7; Marcos 2:4; Juan 2:6"],
+    ["El mundo religioso de los judíos", "Lucas 4:16; Hechos 23:8; Marcos 7:3-4"],
+    ["Hallazgos del Nuevo Testamento", "Juan 5:2; Juan 9:7; Mateo 26:57"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante conozca el trasfondo de la Biblia y use la arqueología con honestidad: que sepa cómo trabaja la arqueología, con el tel, los estratos, la cerámica y el carbono 14, y que ilumina la Biblia pero no prueba la fe; que conozca los hallazgos del Antiguo Testamento, como las estelas de Merneptah, de Mesa y de Tel Dan, la inscripción de Siloé, los prismas de Senaquerib, el Cilindro de Ciro y los amuletos de Ketef Hinom, diciendo lo que muestra cada uno y su límite; que entienda cómo llegó a nosotros el texto, con los manuscritos del mar Muerto, hallados en 1947, el Gran Rollo de Isaías, los códices y el papiro P52, y responda con datos a la idea de que la Biblia se cambió; que conozca la vida diaria de los tiempos bíblicos y el mundo religioso de los judíos, con el templo, la sinagoga, los fariseos, los saduceos, los esenios y los zelotes; y que conozca los hallazgos del Nuevo Testamento, como la piedra de Pilato, el osario de Caifás y los estanques de Betesda y de Siloé, con Cristo siempre en el centro. Examina las noticias de hallazgos y evita las falsificaciones. Su base es la palabra del profeta: «Sécase la hierba, marchítase la flor; mas la palabra del Dios nuestro permanece para siempre» (Isaías 40:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo trabaja la arqueología y qué puede y qué no puede mostrar.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los principales hallazgos del Antiguo Testamento, con lo que muestra cada uno y su límite.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar cómo llegó a nosotros el texto de la Biblia y responder a la idea de que se cambió.", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar un pasaje a la luz de las costumbres de la vida diaria de su tiempo.", bloom: "aplicar" },
+      { id: "o5", texto: "Distinguir a los grupos judíos del tiempo de Jesús y explicar sus encuentros con él.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar el uso de un hallazgo del Nuevo Testamento en una enseñanza.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Isaías 40:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El tel, los estratos, la cerámica y el carbono 14; las estelas, Siloé, los prismas, el Cilindro de Ciro y Ketef Hinom; los manuscritos del mar Muerto y los códices; la vida diaria; el templo, la sinagoga y los grupos judíos; y los hallazgos del Nuevo Testamento.",
+      ser: "Un maestro que ama la verdad, examina todo antes de repetirlo, no exagera y pone siempre a Cristo en el centro.",
+      hacer: "Examinar la noticia de un hallazgo, enseñar un pasaje con un hallazgo, responder a la idea de que la Biblia se cambió, explicar una parábola con las costumbres de su tiempo, presentar a los grupos judíos sin caricaturas y preparar una exposición de arqueología.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Ralph Gower", titulo: "Nuevo manual de usos y costumbres de los tiempos bíblicos", editorial: "Portavoz" },
+        { autor: "Randall Price", titulo: "Las piedras claman", editorial: "Spanish House" },
+      ],
+      complementaria: [
+        { autor: "F. F. Bruce y Florentino García Martínez", titulo: "Los manuscritos del mar Muerto: Qumrán en el siglo XXI", editorial: "CLIE" },
+        { autor: "Craig S. Keener", titulo: "Comentario del contexto cultural de la Biblia: Nuevo Testamento", editorial: "Mundo Hispano" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Isaías (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=9lWr9EZchWg", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "Por qué el templo es tan importante en la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=t56W2zp823Q", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Jeremías 36, el rollo que el rey quemó", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Jeremias&cap=36" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -6113,7 +6221,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
-    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, DANIEL_APOCALIPSIS, ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
+    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, DANIEL_APOCALIPSIS, GEOGRAFIA_HISTORIA_BIBLICA, TRASFONDO_ARQUEOLOGIA,
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,

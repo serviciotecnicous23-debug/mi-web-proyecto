@@ -375,6 +375,47 @@ const TRABAJO_OBRA_SOCIAL: ClaveEscrita = {
 };
 
 /** El trabajo final de cada especialidad que ya lo tiene. */
+const TRABAJO_BIBLICOS: ClaveEscrita = {
+  id: "trabajo-biblicos-avanzados",
+  tipo: "trabajo",
+  pregunta:
+    "Escribe un plan de un año para un programa de estudio bíblico profundo en tu iglesia que use lo aprendido en las cinco materias de la especialidad: cómo enseñarás Romanos y el libro de los Hechos a fondo, con su ocasión, su mensaje y su historia; cómo presentarás la profecía de Daniel y el Apocalipsis, con sus posturas; cómo usarás la geografía y la historia bíblica; y cómo usarás el trasfondo y la arqueología. Explica cada parte con citas bíblicas y di cómo evaluarás el plan.",
+  ideas: [
+    { id: "romanos", peso: 20, texto: "Romanos a fondo: su ocasión, la justicia de Dios, las palabras de la salvación y su historia.", formas: ["romanos", "justicia de dios", "justificacion", "lutero", "wesley", "agustin", "nueva perspectiva"] },
+    { id: "hechos", peso: 15, texto: "El libro de los Hechos: Lucas, el plan de Hechos 1:8, el Espíritu y la misión.", formas: ["libro de los hechos", "hechos 1 8", "pentecostes", "concilio", "viajes de pablo", "metodo de pablo"] },
+    { id: "profecia", peso: 20, texto: "Daniel y el Apocalipsis: los símbolos explicados por la Biblia, las posturas con respeto y sin fechas.", formas: ["daniel", "apocalipsis", "simbolos", "milenio", "sin fechas", "siete iglesias"] },
+    { id: "geografia", peso: 15, texto: "La geografía y la historia: mapas y líneas del tiempo.", formas: ["mapa*", "linea del tiempo", "geografia", "los dos reinos", "exilio", "mundo romano"] },
+    { id: "arqueologia", peso: 20, negativa: true, texto: "El trasfondo y la arqueología, usados con honestidad.", formas: ["arqueologia", "hallazgo*", "manuscritos", "mar muerto", "estela", "trasfondo", "no prueban la fe"] },
+    { id: "evaluar", peso: 10, texto: "Evaluar el plan.", formas: ["evaluaremos", "evaluare", "evaluar", "cada trimestre", "revisaremos", "revisare"] },
+  ],
+  // casi todas las partes para la nota completa: un trabajo que une las cinco materias no puede dejar fuera dos
+  basta: 95,
+  citas: [
+    "Romanos 1:7", "Romanos 1:16-17", "Romanos 1:17", "Habacuc 2:4", "Romanos 3:21-22", "Romanos 3:23-24", "Romanos 3:24-25", "Romanos 5:10-11",
+    "Romanos 8:15", "Romanos 8:16", "Romanos 13:13-14", "Romanos 3:28", "Romanos 3:20", "Romanos 7:24-25", "Romanos 11:25-26", "Romanos 12:1-2",
+    "Romanos 14:1", "Romanos 15:7", "Romanos 15:23-24", "Romanos 16:1-2", "Lucas 1:1-4", "Lucas 1:3", "Hechos 1:1-3", "Hechos 1:8", "Hechos 2:1-4",
+    "Hechos 2:4", "Hechos 2:38-39", "Hechos 2:42", "Hechos 5:42", "Hechos 6:7", "Hechos 10:44-46", "Hechos 12:24", "Hechos 13:2-3", "Hechos 14:23",
+    "Hechos 15:10-11", "Hechos 15:11", "Hechos 15:28-29", "Hechos 16:10", "Hechos 17:2-3", "Hechos 26:22-23", "Hechos 27:23-24", "Hechos 28:30-31",
+    "Hechos 28:31", "Daniel 1:8", "Daniel 2:44", "Daniel 3:17-18", "Daniel 6:10", "Daniel 7:13-14", "Daniel 7:14", "Daniel 7:15-16",
+    "Daniel 12:2-3", "Apocalipsis 1:1-3", "Apocalipsis 1:3", "Apocalipsis 1:17-18", "Apocalipsis 1:19-20", "Apocalipsis 1:20", "Apocalipsis 2:10",
+    "Apocalipsis 3:20", "Apocalipsis 4:11", "Apocalipsis 5:9-10", "Apocalipsis 20:4", "Apocalipsis 19:11", "Apocalipsis 21:3-4", "Apocalipsis 22:20",
+    "Mateo 24:36", "Deuteronomio 8:7-9", "Deuteronomio 11:10-12", "Deuteronomio 11:11-12", "Salmos 125:2", "Génesis 12:1", "Éxodo 12:40-41",
+    "1 Reyes 6:1", "1 Reyes 12:16", "2 Reyes 17:6", "2 Reyes 25:8-9", "Jeremías 29:10", "Esdras 1:1-2", "Esdras 1:1", "Nehemías 2:5",
+    "Daniel 8:21-22", "Juan 10:22-23", "Gálatas 4:4", "Lucas 2:1", "Lucas 3:1", "Hechos 17:26", "Lucas 1:3-4", "1 Tesalonicenses 5:21",
+    "Hebreos 11:1", "2 Reyes 3:4-5", "2 Reyes 20:20", "Números 6:24-26", "Isaías 40:8", "Jeremías 36:27-28", "Lucas 4:17", "Lucas 2:7",
+    "Marcos 2:4", "Juan 2:6", "Lucas 4:16", "Hechos 23:8", "Marcos 7:3-4", "Juan 5:2", "Juan 9:7", "Mateo 26:57", "2 Timoteo 2:15",
+  ],
+  pesoCita: 10,
+  errores: [],
+  modelo:
+    "Plan de un año para el estudio bíblico profundo de nuestra iglesia. Su base es que la palabra del Dios nuestro permanece para siempre (Isaías 40:8). Un equipo de maestros, con el aval del pastor, preparará cada serie, y cada clase tendrá un mapa, una línea del tiempo y un tiempo para orar y aplicar lo aprendido. " +
+    "Primer trimestre: Romanos a fondo. Empezaremos por la ocasión de la carta: Pablo la escribió desde Corinto, hacia el año 57, a una iglesia de judíos y gentiles, camino a España, y Febe la llevó (Romanos 16:1-2). Explicaremos su tema, la justicia de Dios que se revela por la fe, como anunció Habacuc (Romanos 1:17), y las palabras de la salvación: la justificación, la redención, la propiciación, la reconciliación y la adopción (Romanos 3:24-25; 8:15). Contaremos cómo Romanos cambió a Agustín, a Lutero y a Wesley, que recibió la seguridad de ser hijo de Dios (Romanos 8:16). Presentaremos con respeto los debates, como la nueva perspectiva sobre Pablo y el yo de Romanos 7, y terminaremos en la vida: presentar el cuerpo en sacrificio vivo y recibirnos unos a otros como Cristo nos recibió (Romanos 12:1-2; 15:7). " +
+    "Segundo trimestre: el libro de los Hechos. Veremos a Lucas como historiador cuidadoso, que investigó con diligencia (Lucas 1:3), y el plan de Hechos 1:8, de Jerusalén hasta lo último de la tierra. Estudiaremos Pentecostés y los relatos del Espíritu (Hechos 2:1-4), presentando con respeto cómo los leen las distintas iglesias; el concilio, que afirmó que somos salvos por la gracia del Señor Jesús (Hechos 15:11); el método de Pablo, que oraba, trabajaba en equipo y constituía ancianos en cada iglesia (Hechos 14:23); y el final abierto del libro, con el evangelio predicado sin impedimento (Hechos 28:31). De allí saldrá el plan de misión de la iglesia. " +
+    "Tercer trimestre: Daniel y el Apocalipsis. Enseñaremos a leer la literatura apocalíptica dejando que la Biblia explique sus símbolos, como las siete estrellas y los siete candeleros (Apocalipsis 1:20). Veremos a Daniel, fiel en Babilonia (Daniel 1:8), y sus visiones, donde los reinos pasan y uno como un hijo de hombre recibe un reino eterno (Daniel 7:14). Leeremos las cartas a las siete iglesias como un espejo para la nuestra. Presentaremos las cuatro maneras de leer el Apocalipsis y las posturas sobre el milenio y el rapto, sin poner fechas, porque del día y la hora nadie sabe (Mateo 24:36), y dejando la postura del ministerio a su declaración de fe. Terminaremos con la esperanza de la nueva creación, donde Dios enjugará toda lágrima (Apocalipsis 21:3-4). " +
+    "Cuarto trimestre: la geografía, la historia y el trasfondo. Con un mapa recorreremos la tierra, que bebe de la lluvia del cielo (Deuteronomio 11:11-12), y con una línea del tiempo seguiremos la historia: los patriarcas, el reino, los dos reinos ante Asiria y Babilonia, el regreso con Ciro (Esdras 1:1), el tiempo entre los testamentos y el mundo romano de Jesús (Lucas 3:1), sabiendo que Dios fijó el orden de los tiempos (Hechos 17:26). Usaremos la arqueología con honestidad: los hallazgos, como la estela de Mesa o la inscripción de Siloé (2 Reyes 20:20), iluminan la Biblia, pero no prueban la fe (Hebreos 11:1). Estudiaremos los manuscritos del mar Muerto, la vida diaria y el mundo religioso de los judíos, y los hallazgos del Nuevo Testamento, como el estanque de Siloé (Juan 9:7), examinándolo todo (1 Tesalonicenses 5:21). " +
+    "Evaluaremos el plan cada trimestre con los maestros: cuántos terminaron cada serie, qué aprendieron en una prueba sencilla, qué preguntas quedaron y qué cambió en la vida de la iglesia, en su misión, su oración y su trato a los hermanos. Revisaremos y ajustaremos lo que haga falta, para que la Palabra no solo se estudie, sino que se viva.",
+};
+
 export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["evangelismo-misiones", TRABAJO_EVANGELISMO_MISIONES],
   ["alabanza", TRABAJO_ALABANZA],
@@ -387,4 +428,5 @@ export const TRABAJOS = new Map<EspecialidadId, ClaveEscrita>([
   ["comunicaciones", TRABAJO_COMUNICACIONES],
   ["liderazgo-administracion", TRABAJO_LIDERAZGO],
   ["obra-social", TRABAJO_OBRA_SOCIAL],
+  ["biblicos-avanzados", TRABAJO_BIBLICOS],
 ]);

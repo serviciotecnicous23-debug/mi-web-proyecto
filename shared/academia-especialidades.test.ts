@@ -428,11 +428,57 @@ test("Obra social y misericordia tiene sus cinco materias, con la medida del Niv
   assert.equal(obra.materias.length, 5);
 });
 
-test("la otra especialidad sigue en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion", "obra-social"].includes(x.id))) {
+test("Estudios bíblicos avanzados tiene sus cinco materias, con la medida del Nivel 3 y tres materias avanzadas", () => {
+  const biblicos = ESPECIALIDADES.find((x) => x.id === "biblicos-avanzados")!;
+  const listas = biblicos.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["biblicos-avanzados-1", "Romanos: su teología y su historia", "Romanos 3:23-24", 6, true],
+      ["biblicos-avanzados-2", "Hechos: la misión de la iglesia primitiva", "Hechos 5:42", 6, true],
+      ["biblicos-avanzados-3", "Daniel y Apocalipsis", "Daniel 7:14", 6, true],
+      ["biblicos-avanzados-4", "Geografía e historia bíblica", "Hechos 17:26", 6, false],
+      ["biblicos-avanzados-5", "Trasfondo y arqueología bíblica", "Isaías 40:8", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // las tres avanzadas piden el Nivel 3
+  for (const i of [0, 1, 2]) assert.deepEqual(requisitosMateria(listas[i], [1, 2, 3]), [], listas[i].id);
+  // Romanos no repite la Exégesis de un libro: Romanos del Nivel 5, y trae su historia comprobada
+  assert.match(listas[0].silabo!.proposito, /Exégesis de un libro: Romanos/);
+  for (const dato of [/386/, /1515 y 1516/, /24 de mayo de 1738/, /Sanders \(1977\)/]) assert.match(listas[0].silabo!.proposito, dato);
+  // Hechos: Galión hacia el 51 y el 52, el concilio hacia el 49 y los tres viajes
+  for (const dato of [/Galión/, /hacia el año 49/, /el 49 al 52/]) assert.match(listas[1].silabo!.proposito, dato);
+  // lo que espera la declaración de fe queda por confirmar: la elección y la perseverancia, las lenguas, el milenio y el rapto
+  assert.match(listas[0].silabo!.proposito, /la elección y la perseverancia queda para su declaración de fe/);
+  assert.match(listas[1].silabo!.proposito, /las lenguas y el bautismo en el Espíritu queda para su declaración de fe/);
+  assert.match(listas[2].silabo!.proposito, /el milenio y el rapto, presentadas sin escoger entre ellas/);
+  // Daniel: las dos posturas sobre su fecha; el Apocalipsis hacia el 95 o antes del 70
+  for (const dato of [/605 antes de Cristo/, /del 167 al 164 antes de Cristo/, /hacia el año 95/, /antes del 70/]) assert.match(listas[2].silabo!.proposito, dato);
+  // la geografía y la historia con sus fechas comprobadas, que son aproximadas
+  for (const dato of [/440 metros/, /hacia el 1446/, /el 722/, /el 587 o 586/, /el 539/]) assert.match(listas[3].silabo!.proposito, dato);
+  // la arqueología ilumina la Biblia, pero no prueba la fe
+  assert.match(listas[4].silabo!.proposito, /no prueba la fe/);
+  assert.match(listas[4].silabo!.proposito, /1947/);
+  assert.equal(biblicos.materias.length, 5);
+});
+
+test("las doce especialidades tienen ya sus cinco materias listas", () => {
+  assert.equal(ESPECIALIDADES.length, 12);
+  for (const e of ESPECIALIDADES) {
+    assert.equal(e.materias.length, 5, e.id);
     for (const m of e.materias) {
-      assert.equal(m.disponible, false, m.id);
-      assert.equal(m.lecciones.length, 0, m.id);
+      assert.equal(m.disponible, true, m.id);
+      assert.equal(m.lecciones.length, 6, m.id);
     }
   }
 });
