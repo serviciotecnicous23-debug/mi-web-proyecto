@@ -7,6 +7,7 @@ import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Award, Layers, PenLine, Send } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { loginUrl } from "@/lib/login-redirect";
@@ -135,6 +136,7 @@ function TrabajoFinal({ d }: { d: EspecialidadDetalle }) {
 export default function AcademiaEspecialidad() {
   const { especialidadId } = useParams<{ especialidadId: string }>();
   const q = useEspecialidad(especialidadId);
+  useTituloAcademia(q.data ? `Especialidad · ${q.data.nombre}` : "Especialidad");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {

@@ -8,6 +8,7 @@ import {
   ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle2, ClipboardCheck, IdCard, Layers, Pencil, ScrollText, ShieldCheck, Smartphone, UserRound,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -452,6 +453,7 @@ function Listo({ m, volver, nueva }: { m: MatriculaInfo; volver: string | null; 
 export default function AcademiaInscripcion() {
   const qc = useQueryClient();
   const q = useInscripcion();
+  useTituloAcademia("Inscripción");
   const volver = useMemo(() => volverDe(window.location.search), []);
   const [paso, setPaso] = useState<Paso | null>(null);
   const [editando, setEditando] = useState(false);

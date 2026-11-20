@@ -9,6 +9,7 @@ import {
   AlertTriangle, ArrowLeft, Ban, BookOpen, CheckCircle2, ChevronRight, Clock, MessageSquarePlus, RotateCcw, ShieldCheck, ShieldOff, XCircle,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -556,6 +557,7 @@ function Repaso({ d }: { d: ContenidoDetalle }) {
 export default function AcademiaDireccionContenido() {
   const { materiaId } = useParams<{ materiaId: string }>();
   const q = useContenidoMateria(materiaId);
+  useTituloAcademia(q.data ? `Revisión del contenido · ${q.data.materia.titulo}` : "Revisión del contenido");
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
     return t && ["lecciones", "examen", "escritas", "repaso"].includes(t) ? t : "lecciones";

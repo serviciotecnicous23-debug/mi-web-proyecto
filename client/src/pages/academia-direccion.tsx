@@ -10,6 +10,7 @@ import {
   AlertTriangle, ArrowLeft, BookCheck, BookOpen, ClipboardCheck, Clock, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -644,6 +645,7 @@ export default function AcademiaDireccion() {
   const area = useArea();
   const enlaces = useEnlaces();
   const q = useDireccionResumen();
+  useTituloAcademia(area.base === "/admin/academia" ? "Administración de la academia" : "Seguimiento de la academia");
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
     return t && ["resumen", "revisar", "alumnos", "materias", "contenido", "registro", "historial", "permisos"].includes(t) ? t : "resumen";

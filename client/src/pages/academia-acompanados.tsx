@@ -3,6 +3,7 @@
 import { Link } from "wouter";
 import { AlertTriangle, ArrowLeft, BookOpen, CheckCircle2, HeartHandshake } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { NOMBRE_ACADEMIA } from "@shared/academia";
@@ -12,6 +13,7 @@ import { Medidor, hace } from "@/components/academia/seguimiento";
 
 export default function AcademiaAcompanados() {
   const q = useAcompanados();
+  useTituloAcademia("Mis acompañados");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {

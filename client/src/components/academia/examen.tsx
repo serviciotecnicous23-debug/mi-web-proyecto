@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { loginUrl } from "@/lib/login-redirect";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, textoSegundos, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
 import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
@@ -382,6 +383,12 @@ function SinExamen({ mensaje, volver, entrar = false }: { mensaje: ReactNode; vo
 export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
   const qc = useQueryClient();
   const q = useExamen(destino?.base);
+  // la materia, si el título del examen no la dice ya (el integral y la diagnóstica no son de una materia)
+  useTituloAcademia(
+    !destino ? "Examen"
+      : destino.tipo === "integral" || destino.tipo === "diagnostico" || destino.titulo.includes(destino.volver.texto) ? destino.titulo
+        : `${destino.titulo} · ${destino.volver.texto}`,
+  );
   const [paso, setPaso] = useState<PasoExamen | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);

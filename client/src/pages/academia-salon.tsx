@@ -10,6 +10,7 @@ import {
   Layers, Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
@@ -173,6 +174,7 @@ export default function AcademiaSalon() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useAcademiaEstado();
+  useTituloAcademia("Mi salón");
   const e = q.data;
   const inscrito = !!e?.matricula && !!e?.ficha;
   const carne = useCarne();

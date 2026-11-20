@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Brain, CheckCircle2, RotateCcw, Sparkles, Trophy, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { REPASO_PREGUNTA_DIAS, type PreguntaDelDia, type RespuestaDelDia } from "@shared/repaso-del-dia";
@@ -20,6 +21,7 @@ const cuando = (iso: string) => {
 export default function AcademiaRepasoDia() {
   const qc = useQueryClient();
   const q = useRepasoDelDia(true);
+  useTituloAcademia("Repaso del día");
   // las preguntas de esta tanda quedan fijas mientras se responden (al terminar se pide otra)
   const [lista, setLista] = useState<PreguntaDelDia[] | null>(null);
   const [i, setI] = useState(0);

@@ -3,6 +3,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, BookOpen, Download, FileText, IdCard } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { ACLARACION_DOCUMENTOS, NOMBRE_ACADEMIA } from "@shared/academia";
@@ -13,6 +14,7 @@ import { atributosDeDescarga } from "@/components/academia/descargas";
 
 export default function AcademiaExpediente() {
   const q = useExpediente();
+  useTituloAcademia("Expediente académico");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {

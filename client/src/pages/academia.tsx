@@ -12,6 +12,7 @@ import {
   ScrollText, Search, Sparkles, Timer, X,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type AcademiaEstado, type MateriaResumen } from "@shared/academia";
@@ -398,6 +399,7 @@ const PASOS = [
 
 export default function AcademiaPage() {
   const q = useAcademiaEstado();
+  useTituloAcademia(null);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403 || !q.data) return <PantallaCerrada mensaje={q.error?.message} />;
   const e = q.data;

@@ -3,10 +3,12 @@
 import { Link } from "wouter";
 import { ArrowLeft, NotebookPen } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Cuaderno } from "@/components/cuaderno/cuaderno";
 
 export default function AcademiaCuaderno() {
   const nota = Number(new URLSearchParams(window.location.search).get("nota")) || null;
+  useTituloAcademia("Mi cuaderno");
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-16">

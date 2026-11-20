@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Download, FileText, IdCard, ImageDown, Info, RotateCw, Share2, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
@@ -110,6 +111,7 @@ export default function AcademiaCarne() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useCarne();
+  useTituloAcademia("Mi carné");
   const [donde] = useState(entornoDeDescarga);
   const c = q.data;
   const caras = useCarasParaCompartir(

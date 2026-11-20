@@ -3,6 +3,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Award, CheckCircle2, Compass, RotateCcw } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { DIAGNOSTICO, NOMBRE_ACADEMIA, textoSegundos } from "@shared/academia";
@@ -29,6 +30,7 @@ export function AcademiaDiagnosticoPrueba() {
 
 export default function AcademiaDiagnostico() {
   const q = useDiagnostico();
+  useTituloAcademia("Prueba diagnóstica");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (q.error?.status === 401) {
