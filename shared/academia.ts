@@ -5021,6 +5021,61 @@ const VOLUNTARIADO_ALIANZAS: MateriaDef = {
   disponible: true,
 };
 
+const ROMANOS_TEOLOGIA_HISTORIA: MateriaDef = {
+  id: "biblicos-avanzados-1",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 1,
+  titulo: "Romanos: su teología y su historia",
+  resumen: "La carta a los Romanos más allá de su recorrido por secciones: su ocasión, la justicia de Dios, las palabras de la salvación, la carta en la historia de la iglesia, sus grandes debates y su lugar en la iglesia de hoy.",
+  base: "Romanos 3:23-24; Romanos 1:16-17",
+  memoria: "Romanos 3:23-24",
+  lecciones: lecciones("biblicos-avanzados-1", [
+    ["La carta y su ocasión", "Romanos 1:7; Romanos 15:23-24; Romanos 16:1-2"],
+    ["La justicia de Dios revelada", "Romanos 1:17; Habacuc 2:4; Romanos 3:21-22"],
+    ["Las palabras de la salvación", "Romanos 3:24-25; Romanos 5:10-11; Romanos 8:15"],
+    ["Romanos en la historia de la iglesia", "Romanos 13:13-14; Romanos 3:28; Romanos 8:16"],
+    ["Los grandes debates de Romanos", "Romanos 3:20; Romanos 7:24-25; Romanos 11:25-26"],
+    ["Romanos en la iglesia de hoy", "Romanos 12:1-2; Romanos 14:1; Romanos 15:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado conozca la carta a los Romanos a fondo, sin repetir el recorrido por secciones de la Exégesis de un libro: Romanos del Nivel 5: que conozca su ocasión, escrita por Pablo casi seguro desde Corinto hacia el año 57, a una iglesia de judíos y gentiles que había vivido la expulsión de los judíos de Roma bajo Claudio, para preparar su viaje a España, presentar el evangelio, unir a la iglesia y pedir oración por la ofrenda para Jerusalén; que entienda su tema, la justicia de Dios que se revela por la fe, como anunció Habacuc 2:4, en sus tres sentidos de lo que Dios es, lo que da y lo que hace; que explique las palabras de la salvación, la justificación, la redención, la propiciación, la reconciliación y la adopción, con su imagen del tribunal, el mercado, el templo, la amistad y la familia; que cuente cómo Romanos cambió la vida de Agustín en el 386, de Martín Lutero, que la enseñó en Wittenberg en 1515 y 1516, y de Juan Wesley el 24 de mayo de 1738, y que el movimiento de santidad, del que salió el pentecostalismo, tiene sus raíces en ese avivamiento; que presente con justicia los grandes debates, la lectura de la Reforma y la nueva perspectiva sobre Pablo de E. P. Sanders (1977), James Dunn y N. T. Wright, las lecturas de Romanos 7 y las de Romanos 9 a 11, distinguiendo lo que todos afirman de lo que se discute; y que lleve la carta a la vida de la iglesia de hoy, con una vida de adoración y hermanos de distintas culturas que se reciben unos a otros. La postura del ministerio sobre la elección y la perseverancia queda para su declaración de fe. Su base es la palabra de Pablo: «por cuanto todos pecaron, y están destituidos de la gloria de Dios, siendo justificados gratuitamente por su gracia, mediante la redención que es en Cristo Jesús» (Romanos 3:23-24).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la ocasión de Romanos: quién la escribió, desde dónde, a quiénes, cuándo y para qué.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar qué es la justicia de Dios que revela el evangelio, con Romanos 1:17 y 3:21-26.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar las cinco palabras de la salvación en Romanos y la imagen de cada una.", bloom: "comprender" },
+      { id: "o4", texto: "Contar cómo Romanos cambió la vida de Agustín, de Lutero y de Wesley, y la historia de la iglesia.", bloom: "comprender" },
+      { id: "o5", texto: "Analizar los grandes debates sobre Romanos y presentarlos con justicia.", bloom: "analizar" },
+      { id: "o6", texto: "Aplicar Romanos 12 a 15 a la vida de la iglesia de hoy y planear un estudio de la carta.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Romanos 3:23-24 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La ocasión de la carta y la expulsión de los judíos bajo Claudio, la justicia de Dios y Habacuc 2:4, la justificación, la redención, la propiciación, la reconciliación y la adopción, Agustín, Lutero, Wesley y Barth, la nueva perspectiva sobre Pablo, Romanos 7 y Romanos 9 a 11.",
+      ser: "Un maestro que vive de la gracia que enseña, firme en lo esencial, humilde y justo en los debates, y que recibe al hermano distinto como Cristo lo recibió.",
+      hacer: "Presentar la ocasión de Romanos en cinco minutos, explicar Romanos 1:17 a un nuevo creyente, explicar la adopción a un joven sin papá, contar la historia de Wesley en una enseñanza, guiar un debate sin dividir a la clase y planear un estudio de Romanos en ocho reuniones.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Herman Ridderbos", titulo: "El pensamiento del apóstol Pablo", editorial: "Libros Desafío" },
+        { autor: "F. F. Bruce", titulo: "Pablo: apóstol del corazón liberado", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "N. T. Wright", titulo: "El verdadero pensamiento de Pablo", editorial: "CLIE" },
+        { autor: "Justo L. González", titulo: "Historia del pensamiento cristiano hasta el siglo XXI", editorial: "CLIE" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Sacrificio y Propiciación", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=54xtkWfl840", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 8, la vida en el Espíritu", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5947,7 +6002,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
-    ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
+    ROMANOS_TEOLOGIA_HISTORIA, ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
