@@ -4689,6 +4689,63 @@ const PLANIFICACION_PROYECTOS: MateriaDef = {
   disponible: true,
 };
 
+const MARCO_LEGAL_ORGANIZACIONES: MateriaDef = {
+  id: "liderazgo-administracion-5",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  avanzada: true,
+  orden: 5,
+  titulo: "Marco legal de las organizaciones religiosas",
+  resumen: "Lo que la ley de los Estados Unidos y de Texas protege y pide a una iglesia: la iglesia y el Estado, la forma legal de la iglesia, los impuestos de la iglesia, la iglesia como empleador, la responsabilidad, los seguros y la protección, y la propiedad y el uso del templo.",
+  base: "Mateo 22:21; Romanos 13:7",
+  memoria: "Mateo 22:21",
+  lecciones: lecciones("liderazgo-administracion-5", [
+    ["La iglesia y el Estado", "Mateo 22:21; Hechos 5:29; 1 Timoteo 2:1-2"],
+    ["La forma legal de la iglesia", "1 Corintios 14:40; Proverbios 11:14; Romanos 12:17"],
+    ["Los impuestos de la iglesia", "Romanos 13:7; Mateo 17:27; Marcos 12:17"],
+    ["La iglesia como empleador", "Colosenses 4:1; Levítico 19:13; Santiago 5:4"],
+    ["Responsabilidad, seguros y protección", "Deuteronomio 22:8; Lucas 17:1-2; Proverbios 22:3"],
+    ["La propiedad y el uso del templo", "Jeremías 32:9-10; Génesis 23:16; Lucas 14:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige o administra una iglesia conozca lo que la ley de los Estados Unidos y de Texas protege y pide, para servir con orden y con buen testimonio: que entienda la libertad religiosa que protegen la Primera Enmienda y la ley de Texas del capítulo 110 (1999), y que, por la enmienda Johnson, la iglesia no apoya ni ataca a candidatos, aunque enseña los temas morales y ora por todas las autoridades; que forme la iglesia como corporación sin fines de lucro, con el Formulario 202, al menos tres directores, estatutos completos, su EIN y la propiedad a su nombre; que sepa que la iglesia que cumple la 501(c)(3) está exenta automáticamente del impuesto federal sobre la renta y no presenta el 990, que en Texas pide la exención de franquicia y ventas con el AP-209 y la del impuesto a la propiedad, y que cumple la nómina de sus empleados; que contrate con justicia y por escrito, sabiendo que la excepción ministerial (Hosanna-Tabor, 2012) y la sección 702 del Título VII protegen la libertad de la iglesia para elegir a sus ministros y preferir a personas de su fe; que cuide a las personas con el deber de cuidado, los seguros y el reporte de los incidentes, y que reporte la sospecha de abuso de un menor como pide el Código de Familia de Texas: toda persona de inmediato, y los profesionales a más tardar en 24 horas, sin pedirle a otro que lo haga por ellos; y que compre y use la propiedad con la zonificación revisada, sabiendo que la ley RLUIPA protege a la iglesia. Profundiza lo legal de Administración y gobierno de la iglesia (Nivel 5), sin repetirlo. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «Dad, pues, a César lo que es de César, y a Dios lo que es de Dios» (Mateo 22:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué protege la libertad religiosa y qué puede y qué no puede hacer la iglesia en las elecciones.", bloom: "comprender" },
+      { id: "o2", texto: "Organizar la forma legal de una iglesia en Texas y revisar sus estatutos.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar de qué impuestos está exenta una iglesia y qué debe pedir y cumplir.", bloom: "comprender" },
+      { id: "o4", texto: "Contratar y tratar a los empleados de la iglesia como pide la ley y con justicia.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a un accidente y a una sospecha de abuso como pide la ley de Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la compra y el uso de una propiedad para la iglesia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 22:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La Primera Enmienda, la ley de Texas del capítulo 110 y la enmienda Johnson, la corporación sin fines de lucro y sus estatutos, las exenciones de impuestos y la nómina, la excepción ministerial y las obligaciones del empleador, el deber de cuidado, los seguros y el reporte del abuso, y la zonificación, la ley RLUIPA y la ADA.",
+      ser: "Un líder que da a César lo que es de César y a Dios lo que es de Dios, que cumple la ley con buen testimonio y que obedece a Dios antes que a los hombres.",
+      hacer: "Revisar la política de la iglesia para las elecciones, poner en orden los estatutos y la propiedad, revisar las exenciones, contratar a un empleado por escrito, responder a un accidente en el templo, reportar la sospecha de abuso y evaluar la compra de un terreno.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 13, las autoridades y lo que debemos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=13" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Ley RLUIPA, el uso religioso de la tierra, 42 U.S.C. 2000cc (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/2000cc" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5618,7 +5675,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
