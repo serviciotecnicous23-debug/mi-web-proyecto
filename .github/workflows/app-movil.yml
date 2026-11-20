@@ -1,0 +1,113 @@
+name: App móvil (CarPlay y Android Auto)
+
+# Compila y prueba la app del ministerio (app-movil/) en la nube: no hace falta Mac ni Android Studio.
+# - android: el APK de prueba (se descarga desde «Artifacts») y la prueba en un teléfono simulado que se conecta al
+#   reproductor como Android Auto (recorre las carpetas, pide la radio por voz y la hace sonar de verdad).
+# - iphone: las pruebas del complemento «Carro» en el simulador y la app compilada (sin firma: falta la cuenta de
+#   Apple Developer y el permiso de CarPlay, ver app-movil/README.md).
+
+on:
+  push:
+    branches: [main]
+    paths: ["app-movil/**", ".github/workflows/app-movil.yml"]
+  pull_request:
+    paths: ["app-movil/**", "server/carro*.ts", ".github/workflows/app-movil.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: app-movil-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: app-movil
+
+jobs:
+  android:
+    name: Android y Android Auto
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app-movil/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npx cap sync android
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compilar el APK y las pruebas del complemento
+        working-directory: app-movil/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :capacitor-carro:testDebugUnitTest :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: avivando-el-fuego-android-prueba
+          path: app-movil/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Permitir el teléfono simulado (KVM)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Prueba como Android Auto (teléfono simulado)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          working-directory: app-movil/android
+          script: ./gradlew --no-daemon :capacitor-carro:connectedDebugAndroidTest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-android
+          path: |
+            app-movil/plugins/carro/android/build/reports/
+            app-movil/plugins/carro/android/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+
+  iphone:
+    name: iPhone y CarPlay
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app-movil/package-lock.json
+      - run: npm ci
+      - run: npx cap sync ios
+      - name: Xcode
+        run: xcodebuild -version
+      - name: Pruebas del complemento en el simulador
+        working-directory: app-movil/plugins/carro
+        run: |
+          set -o pipefail
+          DESTINO=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          dispositivos = json.load(sys.stdin)['devices']
+          for sistema in sorted(dispositivos, reverse=True):
+              if 'iOS' not in sistema:
+                  continue
+              for d in dispositivos[sistema]:
+                  if d['name'].startswith('iPhone'):
+                      print(d['udid']); sys.exit(0)
+          ")
+          echo "Simulador: $DESTINO"
+          xcodebuild -list
+          ESQUEMA=$(xcodebuild -list -json | python3 -c "import json,sys; e=json.load(sys.stdin)['workspace']['schemes']; print('CapacitorCarro-Package' if 'CapacitorCarro-Package' in e else e[0])")
+          xcodebuild -scheme "$ESQUEMA" -destination "id=$DESTINO" test
+      - name: Compilar la app para el simulador
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Compilar la app para el iPhone (sin firma)
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
