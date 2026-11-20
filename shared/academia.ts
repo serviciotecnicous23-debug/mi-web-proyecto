@@ -4621,7 +4621,7 @@ const EQUIPOS_VOLUNTARIOS: MateriaDef = {
         { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
       ],
       complementaria: [
-        { autor: "Bill Hybels", titulo: "The Volunteer Revolution: Unleashing the Power of Everybody (en inglés)", editorial: "Zondervan" },
+        { autor: "Isabel Carter", titulo: "La iglesia se moviliza (serie Pilares)", editorial: "Tearfund" },
         { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
       ],
     },
@@ -4741,6 +4741,281 @@ const MARCO_LEGAL_ORGANIZACIONES: MateriaDef = {
       { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
       { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
       { tipo: "guia", titulo: "Ley RLUIPA, el uso religioso de la tierra, 42 U.S.C. 2000cc (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/2000cc" },
+    ],
+  },
+  disponible: true,
+};
+
+const TEOLOGIA_COMPASION: MateriaDef = {
+  id: "obra-social-1",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 1,
+  titulo: "Teología de la compasión",
+  resumen: "La base bíblica del servicio a los necesitados: el Dios que ve al necesitado, la justicia para el pobre en la ley y los profetas, la compasión de Jesús, el buen samaritano, la primera iglesia y los pobres, y la palabra y la obra juntas.",
+  base: "Lucas 6:36; Éxodo 3:7",
+  memoria: "Lucas 6:36",
+  lecciones: lecciones("obra-social-1", [
+    ["El Dios que ve al necesitado", "Éxodo 3:7; Deuteronomio 10:18; Salmos 146:9"],
+    ["La ley y los profetas: justicia para el pobre", "Levítico 19:9-10; Deuteronomio 15:11; Isaías 58:6-7"],
+    ["Jesús, movido a compasión", "Mateo 9:36; Lucas 4:18-19; Lucas 7:13"],
+    ["¿Quién es mi prójimo?", "Lucas 10:33-34; Lucas 10:36-37; Mateo 25:40"],
+    ["La primera iglesia y los pobres", "Hechos 4:34-35; Gálatas 2:10; 2 Corintios 8:13-14"],
+    ["La palabra y la obra juntas", "Santiago 2:15-17; 1 Juan 3:17-18; Efesios 2:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social conozca el corazón compasivo de Dios y sirva desde él: que vea, como Dios, la aflicción del huérfano, la viuda, el extranjero y el pobre, cada uno con su nombre y como imagen de Dios; que aprenda de la ley de Moisés y de los profetas a cuidar al pobre con dignidad, abriendo espigas y no solo dando regalos, y a unir el culto con la justicia; que imite la compasión de Jesús, que veía, se acercaba, sanaba, daba de comer y anunciaba el reino; que viva la parábola del buen samaritano, haciendo bien a todos, y mayormente a los de la familia de la fe; que organice la ayuda como la primera iglesia, con un equipo de buen testimonio y cuentas claras; y que una la palabra y la obra en la misión integral, como afirma el Pacto de Lausana de 1974, que dice también que la evangelización es primordial, distinguiendo el alivio, la rehabilitación y el desarrollo para ayudar sin hacer daño, como enseñan Corbett y Fikkert. Es la base bíblica de las otras cuatro materias de la especialidad. Su base es la palabra de Jesús: «Sed, pues, misericordiosos, como también vuestro Padre es misericordioso» (Lucas 6:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo ve Dios al necesitado y quiénes son los cuatro vulnerables de la ley.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo cuidaba la ley al pobre y qué enseñaron los profetas sobre el culto y la justicia.", bloom: "comprender" },
+      { id: "o3", texto: "Describir la compasión de Jesús y distinguirla de la lástima.", bloom: "comprender" },
+      { id: "o4", texto: "Aplicar la parábola del buen samaritano a una persona necesitada que es diferente.", bloom: "aplicar" },
+      { id: "o5", texto: "Proponer una manera de organizar la ayuda en la iglesia, como la primera iglesia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una ayuda con la misión integral y la distinción entre alivio, rehabilitación y desarrollo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Lucas 6:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El Dios que ve al necesitado, los cuatro vulnerables, la espiga, el diezmo del tercer año y el año de remisión, los profetas y la justicia, la compasión de Jesús, el buen samaritano, la primera iglesia y los pobres, el Pacto de Lausana y el alivio, la rehabilitación y el desarrollo.",
+      ser: "Un siervo compasivo como su Padre, que mira a cada persona con su nombre y la trata con dignidad, y que une la palabra y la obra.",
+      hacer: "Hacer el mapa de los necesitados del barrio, abrir espigas además de dar despensas, acompañar a una viuda, ayudar a una persona sin hogar, organizar la ayuda de la iglesia y evaluar si una ayuda levanta o crea dependencia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller", titulo: "Justicia generosa: cómo la gracia de Dios nos hace justos", editorial: "Andamio" },
+        { autor: "C. René Padilla", titulo: "Misión integral: ensayos sobre el Reino de Dios y la iglesia", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "John Stott", titulo: "La fe cristiana frente a los desafíos contemporáneos", editorial: "Nueva Creación" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Rut", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=f984fG4-xlE", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 10, el buen samaritano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=10" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Isaías 58, el ayuno que Dios escogió", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Isaias&cap=58" },
+    ],
+  },
+  disponible: true,
+};
+
+const DIACONIA_SERVICIO: MateriaDef = {
+  id: "obra-social-2",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 2,
+  titulo: "Diaconía y servicio",
+  resumen: "Cómo sirve la iglesia a los necesitados con orden y con amor: la diaconía como servicio, el carácter y el orden de los que sirven, el fondo de ayuda, el cuidado práctico, escuchar y orientar, y el corazón del que sirve.",
+  base: "Santiago 1:27; Marcos 10:45",
+  memoria: "Santiago 1:27",
+  lecciones: lecciones("obra-social-2", [
+    ["La diaconía: servir como Cristo", "Marcos 10:45; Juan 13:14-15; 1 Pedro 4:11"],
+    ["Los que sirven: carácter y orden", "Hechos 6:2-3; 1 Timoteo 3:8-10; Romanos 16:1-2"],
+    ["El fondo de ayuda", "1 Timoteo 5:4; 2 Tesalonicenses 3:10; 2 Corintios 8:21"],
+    ["El cuidado práctico", "Romanos 12:13; Proverbios 3:27-28; Hechos 9:39"],
+    ["Escuchar y orientar", "Proverbios 18:13; Proverbios 14:15; 1 Tesalonicenses 5:14"],
+    ["El corazón del que sirve", "Filipenses 2:3-4; Mateo 6:3-4; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la misericordia de la iglesia lo haga como Jesús y con orden: que entienda que la diaconía es el servicio, que Jesús vino a servir y nos dio ejemplo, y que cada uno sirve con su don y con el poder que Dios da; que forme un equipo de buen testimonio, honesto y probado primero, con funciones claras, como los siete de Hechos 6; que maneje un fondo de ayuda con los principios bíblicos de la familia primero, el trabajo y la honradez, y con reglas escritas: criterios, un límite por familia, decisión en equipo, pago directo y registro, sabiendo que, según la Publicación 526 del IRS, no se deduce lo que se da señalado para una persona en particular; que organice el cuidado práctico de comidas, transporte, reparaciones y compañía, con respeto y seguridad; que escuche antes de ayudar, con prudencia y confidencialidad, y oriente hacia los recursos de la comunidad, como el 2-1-1 de Texas, reportando la sospecha de abuso de un menor como pide la ley: toda persona de inmediato, y los profesionales a más tardar en 24 horas; y que sirva con humildad, sin buscar aplauso, con límites y descanso. Quién ejerce cada cargo, y el ministerio de la mujer, quedan para la declaración de fe del ministerio. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Santiago: «La religión pura y sin mácula delante de Dios el Padre es esta: Visitar a los huérfanos y a las viudas en sus tribulaciones» (Santiago 1:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la diaconía y por qué toda la iglesia sirve.", bloom: "comprender" },
+      { id: "o2", texto: "Formar un equipo de misericordia con personas probadas y funciones claras.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir las reglas de un fondo de ayuda y decidir un pedido con ellas.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar el cuidado práctico de una persona enferma o sola.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer una primera entrevista y orientar hacia los recursos de la comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el propio servicio y hacer un plan para servir por largo tiempo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Santiago 1:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La diaconía y los dones de servicio y de misericordia, el carácter de los que sirven según Hechos 6 y 1 Timoteo 3, las reglas de un fondo de ayuda y la Publicación 526, el cuidado práctico, la primera entrevista, el 2-1-1 de Texas y el reporte del abuso, y el cuidado del que sirve.",
+      ser: "Un siervo humilde y confiable, que sirve como Jesús, con orden, con prudencia y con alegría, sin buscar aplauso.",
+      hacer: "Ayudar a un hermano a encontrar su servicio, formar el equipo de misericordia, decidir un pedido para la renta, organizar el cuidado de una hermana operada, orientar a una madre sin luz y cuidar a una coordinadora agotada.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller", titulo: "Ministerios de misericordia: encarnando la parábola del buen samaritano", editorial: "Poiema Publicaciones" },
+        { autor: "Matt Smethurst", titulo: "Los diáconos: cómo sirven y fortalecen a la iglesia", editorial: "Poiema Publicaciones" },
+      ],
+      complementaria: [
+        { autor: "Alexander Strauch", titulo: "El diácono del Nuevo Testamento", editorial: "Editorial DIME" },
+        { autor: "Steve Corbett y Brian Fikkert, con Katie Casselberry", titulo: "Helping Without Hurting in Church Benevolence (en inglés)", editorial: "Moody Publishers" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 6, los siete que sirvieron a las mesas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "guia", titulo: "Contribuciones caritativas, Publicación 526 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/publications/p526" },
+      { tipo: "guia", titulo: "2-1-1 Texas: la línea gratuita y anónima que orienta hacia las ayudas sociales", fuente: "Comisión de Salud y Servicios Humanos de Texas", url: "https://www.211texas.org/about-2-1-1/" },
+    ],
+  },
+  disponible: true,
+};
+
+const PROYECTOS_COMUNITARIOS: MateriaDef = {
+  id: "obra-social-3",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 3,
+  titulo: "Proyectos comunitarios",
+  resumen: "Cómo hace la iglesia proyectos que buscan el bien de su ciudad: buscar el bien de la ciudad, conocer los recursos y las necesidades del barrio, diseñar con la comunidad, los proyectos concretos y sus cuidados, los recursos y la sostenibilidad, y medir y celebrar el cambio.",
+  base: "Jeremías 29:7; Nehemías 2:17-18",
+  memoria: "Jeremías 29:7",
+  lecciones: lecciones("obra-social-3", [
+    ["Buscar el bien de la ciudad", "Jeremías 29:7; Mateo 5:14; Proverbios 11:10"],
+    ["Conocer la comunidad: recursos y necesidades", "Nehemías 2:15; Juan 6:9; Proverbios 20:5"],
+    ["Diseñar un proyecto con la comunidad", "Proverbios 15:22; Nehemías 3:28; Nehemías 4:6"],
+    ["Proyectos que sirven: la despensa, las tutorías, las clases y la salud", "Marcos 6:37; Proverbios 22:9; Mateo 25:35"],
+    ["Los recursos y la sostenibilidad", "2 Corintios 9:8; Juan 6:12; Lucas 14:28"],
+    ["Medir y celebrar el cambio", "Hageo 1:5; 1 Corintios 3:6; Salmos 126:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa llevar adelante proyectos que buscan el bien de su ciudad: que, como pide Jeremías 29:7, procure la paz de la ciudad y ore por ella, y distinga un proyecto comunitario, que responde a una necesidad real, tiene propósito, tiempo y responsables, se hace con la comunidad y se evalúa, de una actividad suelta; que conozca la comunidad viendo sus necesidades y también sus recursos, las personas y sus dones, las asociaciones, las instituciones, los lugares y la economía del barrio, como enseñaron Kretzmann y McKnight; que diseñe el proyecto con los vecinos, con su propósito, sus actividades, sus recursos, sus responsables y sus resultados, distinguiendo lo que hacemos de lo que cambia; que organice proyectos concretos con sus cuidados, como una despensa según la ley federal Bill Emerson y la Ley del Donante de Buena Fe de Texas, que protegen a los que donan y reparten de buena fe alimentos aparentemente sanos, salvo la negligencia grave y otras faltas graves, o una tutoría con voluntarios revisados, dos adultos y el reporte del abuso, que toda persona hace de inmediato y los profesionales a más tardar en 24 horas; que planee los recursos, el presupuesto y la sostenibilidad; y que mida y celebre el cambio con honestidad, cuidando la privacidad de las personas. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jeremías: «Y procurad la paz de la ciudad a la cual os hice transportar, y rogad por ella a Jehová; porque en su paz tendréis vosotros paz» (Jeremías 29:7).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia busca el bien de su ciudad y qué es un proyecto comunitario.", bloom: "comprender" },
+      { id: "o2", texto: "Hacer el mapa de los recursos y de las necesidades de un barrio.", bloom: "aplicar" },
+      { id: "o3", texto: "Diseñar un proyecto con la comunidad, con su propósito, sus actividades y sus resultados.", bloom: "crear" },
+      { id: "o4", texto: "Organizar un proyecto concreto con los cuidados que pide la ley.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear los recursos, el presupuesto y la sostenibilidad de un proyecto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un proyecto midiendo lo que hacemos y lo que cambia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Jeremías 29:7 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El shalom y el bien de la ciudad, el proyecto comunitario, el mapa de los recursos de Kretzmann y McKnight, las partes de un proyecto, lo que hacemos y lo que cambia, la ley Bill Emerson y la Ley del Donante de Buena Fe de Texas, el presupuesto y la sostenibilidad, y la evaluación.",
+      ser: "Un servidor que ama su ciudad, escucha a sus vecinos, planea con otros y cuida lo que Dios provee.",
+      hacer: "Escoger una necesidad con los vecinos, hacer el mapa del barrio, diseñar una tutoría, abrir una despensa, sostener un proyecto cansado y evaluar unas clases de inglés.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "C. René Padilla y Tetsunao Yamamori (eds.)", titulo: "El proyecto de Dios y las necesidades humanas: más modelos de ministerio integral en América Latina", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Bryant L. Myers", titulo: "Fe, pobreza y desarrollo: principios y prácticas del desarrollo transformador", editorial: "JUANUNO1 Ediciones" },
+        { autor: "John P. Kretzmann y John L. McKnight", titulo: "Building Communities from the Inside Out: A Path Toward Finding and Mobilizing a Community's Assets (en inglés)", editorial: "ABCD Institute, Northwestern University" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Shalom - Paz", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ayvlscZUZ0c", minutos: 4 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías: un líder que ora y trabaja", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Jeremías 29, la carta a los desterrados", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Jeremias&cap=29" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 3, cada uno frente a su casa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=3" },
+      { tipo: "guia", titulo: "Ley Bill Emerson del Buen Samaritano para la donación de alimentos, 42 U.S.C. 1791 (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/1791" },
+      { tipo: "guia", titulo: "Ley del Donante de Buena Fe de Texas, capítulo 76 del Código de Prácticas y Remedios Civiles (en inglés)", fuente: "Legislatura de Texas", url: "https://statutes.capitol.texas.gov/Docs/CP/htm/CP.76.htm" },
+    ],
+  },
+  disponible: true,
+};
+
+const AYUDA_HUMANITARIA: MateriaDef = {
+  id: "obra-social-4",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 4,
+  titulo: "Ayuda humanitaria y desastres",
+  resumen: "Cómo responde la iglesia a los desastres con orden, con dignidad y sin acepción de personas: Dios en medio del desastre, los principios humanitarios, las normas Esfera, las donaciones que ayudan, la coordinación y la recuperación, y la preparación de la iglesia y la acogida al que huye.",
+  base: "Lamentaciones 3:22-23; Hechos 11:28-29",
+  memoria: "Lamentaciones 3:22-23",
+  lecciones: lecciones("obra-social-4", [
+    ["Dios en medio del desastre", "Lamentaciones 3:22-23; Isaías 43:2; Hechos 11:28-29"],
+    ["Los principios humanitarios", "Hechos 10:34; Santiago 2:1; Mateo 5:45"],
+    ["Las normas Esfera: ayudar con dignidad", "Isaías 58:7; Proverbios 31:8; 1 Pedro 2:17"],
+    ["Las donaciones que ayudan", "2 Corintios 8:12; Romanos 15:26; Proverbios 14:15"],
+    ["Responder juntos: la coordinación y la recuperación", "Eclesiastés 4:9-10; Nehemías 4:19-20; Romanos 12:4-5"],
+    ["Prepararse y recibir al que huye", "Génesis 41:35-36; Levítico 19:34; Mateo 2:14"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa responder a los desastres como Dios quiere y como enseñan los que más saben de la ayuda humanitaria: que confíe en las misericordias de Dios, que no decaen, y conozca las etapas de un desastre, la preparación, el rescate, el alivio y la recuperación, para servir en cada una con orden, como la iglesia de Antioquía en tiempo de hambre; que viva los cuatro principios humanitarios que reconoció la Asamblea General de la ONU, la humanidad, la neutralidad y la imparcialidad en 1991 y la independencia en 2004, ayudando según la necesidad, sin acepción de personas y sin condicionar la ayuda a la fe; que ayude con dignidad según el Manual Esfera de 2018, con su Carta Humanitaria, sus principios de protección y sus normas mínimas, como los 15 litros de agua por persona y por día; que done con sabiduría, como enseña FEMA, con dinero a organizaciones reconocidas y solo los artículos que se piden, y que maneje un fondo para un desastre según la Publicación 3833 del IRS, con criterios según la necesidad y registros, sin señalar la ayuda para una persona en particular; que se coordine con otros, con las cuatro C de National VOAD, sin ir por cuenta propia, y siga en la recuperación a largo plazo; y que prepare a la iglesia y reciba con amor a los que llegan huyendo. No repite Emergencias y desastres de la especialidad Capellanía. Lo legal es una guía general, no un consejo legal. Su base es la palabra del profeta: «Por la misericordia de Jehová no hemos sido consumidos, porque nunca decayeron sus misericordias. Nuevas son cada mañana; grande es tu fidelidad» (Lamentaciones 3:22-23).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo acompaña Dios a su pueblo en el desastre y qué hace la iglesia en cada etapa.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar los cuatro principios humanitarios al repartir la ayuda.", bloom: "aplicar" },
+      { id: "o3", texto: "Organizar un albergue con la dignidad y la protección que piden las normas Esfera.", bloom: "aplicar" },
+      { id: "o4", texto: "Donar y manejar un fondo para un desastre con sabiduría y según la Publicación 3833.", bloom: "aplicar" },
+      { id: "o5", texto: "Ubicar a la iglesia dentro de la respuesta coordinada y la recuperación de su comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el plan de la iglesia para un desastre y su manera de recibir al que huye.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Lamentaciones 3:22-23 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las etapas de un desastre, los cuatro principios humanitarios y las resoluciones 46/182 y 58/114, el Manual Esfera de 2018, las donaciones según FEMA y la Publicación 3833, las cuatro C de National VOAD y los grupos de recuperación a largo plazo, y el plan de la iglesia.",
+      ser: "Un siervo que confía en la fidelidad de Dios, ayuda sin acepción de personas, honra a cada persona y trabaja junto a otros.",
+      hacer: "Responder a una inundación en otra ciudad, repartir la ayuda en un albergue, preparar el albergue de la iglesia, manejar el fondo para un huracán, participar en el grupo de recuperación y recibir a las familias que llegan huyendo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Asociación Esfera", titulo: "El Manual Esfera: Carta Humanitaria y normas mínimas para la respuesta humanitaria", editorial: "Asociación Esfera" },
+        { autor: "Isabel Carter", titulo: "Cómo prepararnos para los desastres (serie Pilares)", editorial: "Tearfund" },
+      ],
+      complementaria: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "Robert D. Lupton", titulo: "Toxic Charity: How Churches and Charities Hurt Those They Help, and How to Reverse It (en inglés)", editorial: "HarperOne" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de la historia de Job: ¿por qué la vida de Job se volvió tan difícil?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=_AIvRQj8kHs", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lamentaciones 3, nuevas son cada mañana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lamentaciones&cap=3" },
+      { tipo: "guia", titulo: "Trabaje como voluntario y done", fuente: "FEMA, Agencia Federal para el Manejo de Emergencias", url: "https://www.fema.gov/es/disaster/recover/volunteer-donate" },
+      { tipo: "guia", titulo: "OCHA en mensaje: los principios humanitarios", fuente: "Oficina de las Naciones Unidas para la Coordinación de Asuntos Humanitarios (OCHA)", url: "https://www.unocha.org/publications/report/world/ocha-en-mensaje-principios-humanitarios" },
+      { tipo: "guia", titulo: "La ayuda en los desastres por medio de organizaciones caritativas, Publicación 3833 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p3833.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const VOLUNTARIADO_ALIANZAS: MateriaDef = {
+  id: "obra-social-5",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 5,
+  titulo: "Voluntariado y alianzas",
+  resumen: "Cómo sirve la iglesia junto a otros por el bien de su ciudad: servir junto a otros, las alianzas con otras iglesias, con escuelas, negocios y organizaciones, y con el gobierno, los voluntarios de la comunidad y el cuidado de la alianza.",
+  base: "Eclesiastés 4:12; Filipenses 1:5",
+  memoria: "Eclesiastés 4:12",
+  lecciones: lecciones("obra-social-5", [
+    ["Juntos por el bien de la ciudad", "Eclesiastés 4:12; Juan 17:21; Filipenses 1:5"],
+    ["Alianzas con otras iglesias", "Marcos 9:39-40; Gálatas 2:9; 1 Corintios 3:9"],
+    ["Alianzas con escuelas, negocios y organizaciones", "Amós 3:3; Nehemías 2:8; Esdras 1:4"],
+    ["Alianzas con el gobierno", "Romanos 13:4; Daniel 1:8; Tito 3:1"],
+    ["Los voluntarios de la comunidad", "Éxodo 36:5; Hechos 28:2; Romanos 16:3"],
+    ["Cuidar la alianza", "Romanos 12:18; Hechos 15:39-40; 2 Timoteo 4:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa servir junto a otros por el bien de su ciudad: que entienda, con Eclesiastés 4:12 y Juan 17:21, que juntos se llega más lejos y que la unidad es testimonio, y que la iglesia puede aliarse con otras iglesias, escuelas, negocios, organizaciones y el gobierno sin dejar de ser iglesia; que forme alianzas con otras iglesias empezando por lo que las une, respetando las diferencias y compartiendo el mérito, como los apóstoles, que se dieron la diestra en señal de compañerismo; que se alíe con escuelas, negocios y organizaciones cuidando sus reglas, los valores del proyecto y los datos de las personas, con acuerdos por escrito; que colabore con el gobierno según la regla federal de 2024, en la que las organizaciones de fe compiten en igualdad y conservan su carácter religioso, pero no usan la ayuda federal directa para actividades explícitamente religiosas, que se ofrecen por separado, en tiempo o en lugar, y con participación voluntaria; que reciba a los voluntarios de la comunidad con una orientación, el cuidado de los niños y gratitud, reportando la sospecha de abuso de un menor como pide la ley: toda persona de inmediato, y los profesionales a más tardar en 24 horas; y que cuide cada alianza con comunicación, evaluación y paz, y la termine en paz cuando haga falta. No repite Equipos y voluntarios de la especialidad Liderazgo y administración. Lo legal es una guía general, no un consejo legal. Su base es la palabra del Predicador: «Y si alguno prevaleciere contra uno, dos le resistirán; y cordón de tres dobleces no se rompe pronto» (Eclesiastés 4:12).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia sirve junto a otros y qué cuida al hacerlo.", bloom: "comprender" },
+      { id: "o2", texto: "Formar una alianza con otras iglesias respetando sus diferencias.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir un acuerdo de colaboración con una escuela, un negocio o una organización.", bloom: "aplicar" },
+      { id: "o4", texto: "Colaborar con el gobierno según la regla federal de 2024 sin perder las convicciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Recibir y cuidar a los voluntarios de la comunidad.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar una alianza y decidir si se renueva, se cambia o se termina en paz.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Eclesiastés 4:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los socios de una iglesia, las alianzas entre iglesias, los acuerdos de colaboración, la regla federal de 2024 con las órdenes ejecutivas 13279 y 13559, la recepción de los voluntarios de la comunidad y el cuidado de las alianzas.",
+      ser: "Un siervo que busca la unidad, se pone de acuerdo antes de caminar con otros, cuida sus convicciones y vive en paz con todos.",
+      hacer: "Sumarse a lo que otros ya hacen, organizar una despensa con otras iglesias, escribir un acuerdo con un negocio, manejar un fondo federal, recibir a los voluntarios de una empresa y resolver un problema con un socio.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rachel Blackman", titulo: "Cómo asociarse con la iglesia local (guía ROOTS 11)", editorial: "Tearfund" },
+        { autor: "C. René Padilla y Tetsunao Yamamori (eds.)", titulo: "La iglesia local como agente de transformación: una eclesiología para la misión integral", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Isabel Carter", titulo: "La iglesia se moviliza (serie Pilares)", editorial: "Tearfund" },
+        { autor: "Amy L. Sherman", titulo: "El llamado del reino: mayordomía vocacional para el bien común", editorial: "Proyecto Nehemías" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Filipenses", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gks8CQX5mwQ", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 2, la ayuda del rey para reconstruir", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=2" },
+      { tipo: "guia", titulo: "Alianzas con las organizaciones de fe y de los barrios, la regla federal de 2024 (en inglés)", fuente: "Registro Federal de los Estados Unidos", url: "https://www.federalregister.gov/documents/2024/03/04/2024-03869/partnerships-with-faith-based-and-neighborhood-organizations" },
     ],
   },
   disponible: true,
@@ -5678,7 +5953,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
-    ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
+    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, AYUDA_HUMANITARIA, VOLUNTARIADO_ALIANZAS,
   ]),
 ];
 
