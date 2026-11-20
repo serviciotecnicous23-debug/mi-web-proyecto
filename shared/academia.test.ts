@@ -31,6 +31,15 @@ test("cada materia del Nivel 1 tiene 4 lecciones y su versículo de memoria, y l
   }
 });
 
+test("cada materia disponible tiene al menos 2 libros básicos y 2 complementarios, sin repetir ninguno", () => {
+  for (const m of todasLasMaterias().filter((x) => x.disponible)) {
+    const { basica, complementaria } = m.silabo!.bibliografia;
+    assert.ok(basica.length >= 2 && complementaria.length >= 2, `${m.id}: ${basica.length} + ${complementaria.length} libros`);
+    const libros = [...basica, ...complementaria].map((l) => `${l.autor}|${l.titulo}`.toLowerCase());
+    assert.equal(new Set(libros).size, libros.length, `${m.id}: un libro repetido`);
+  }
+});
+
 test("los pesos de cada nivel suman 100", () => {
   for (const p of Object.values(PESOS_NIVEL)) assert.equal(p.final + p.repasos + p.versiculo + p.mini + p.escritos, 100);
 });

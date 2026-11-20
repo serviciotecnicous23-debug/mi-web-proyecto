@@ -1,0 +1,52 @@
+{
+  "appId": "com.ministerioavivandoelfuego.carro.test",
+  "appName": "Prueba del carro",
+  "plugins": {
+    "Carro": {
+      "titulo": "Prueba del carro",
+      "catalogo": {
+        "version": 1,
+        "titulo": "Prueba del carro",
+        "raiz": [
+          {
+            "id": "radio",
+            "titulo": "Radio",
+            "icono": "radio",
+            "hijos": [
+              {
+                "id": "radio:normal",
+                "titulo": "Radio en vivo",
+                "subtitulo": "Las 24 horas",
+                "audio": {
+                  "urls": [
+                    "https://radio.ministerioavivandoelfuego.com/listen/avivando_el_fuego/radio.mp3",
+                    "https://40.160.2.176.sslip.io/listen/avivando_el_fuego/radio.mp3"
+                  ],
+                  "enVivo": true,
+                  "metadatos": ["https://radio.ministerioavivandoelfuego.com/api/nowplaying/avivando_el_fuego"]
+                }
+              }
+            ]
+          },
+          {
+            "id": "academia",
+            "titulo": "Academia",
+            "icono": "academia",
+            "hijos": [
+              {
+                "id": "leccion:biblia-1",
+                "titulo": "La Biblia, lección 1",
+                "audio": { "urls": ["https://ministerioavivandoelfuego.com/voz/academia/n1-biblia-1-bae8c421.m4a"] }
+              },
+              {
+                "id": "leccion:biblia-2",
+                "titulo": "La Biblia, lección 2",
+                "audio": { "urls": ["https://ministerioavivandoelfuego.com/voz/academia/n1-biblia-1-bae8c421.m4a"] }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

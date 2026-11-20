@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- CarPlay Audio: Apple lo concede a pedido (developer.apple.com/contact/carplay). Hasta que lo
+	     apruebe, el perfil de firma no lo trae y Xcode no deja firmar para el iPhone: ver TIENDAS.md. -->
+	<key>com.apple.developer.carplay-audio</key>
+	<true/>
+</dict>
+</plist>

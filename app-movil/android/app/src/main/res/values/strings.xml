@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Avivando el Fuego</string>
+    <string name="title_activity_main">Avivando el Fuego</string>
+    <string name="package_name">com.ministerioavivandoelfuego.app</string>
+    <string name="custom_url_scheme">com.ministerioavivandoelfuego.app</string>
+</resources>
