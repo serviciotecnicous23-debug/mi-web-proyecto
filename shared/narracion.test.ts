@@ -56,6 +56,9 @@ test("el texto dicho: paréntesis, números, años, siglos y abreviaturas", () =
   assert.equal(hablado("llama al 911 o al 988"), "llama al nueve uno uno o al nueve ocho ocho");
   assert.equal(hablado("Id y haced discípulos"), "Id, y haced discípulos");
   assert.equal(hablado("Siglos I al XV: la Biblia se copia a mano"), "Siglos uno al quince: la Biblia se copia a mano");
+  assert.equal(hablado("en Teología sistemática IV y en Homilética I"), "en Teología sistemática cuatro y en Homilética uno");
+  assert.equal(hablado("Bajo Jeroboam II, Israel prosperó"), "Bajo Jeroboam segundo, Israel prosperó");
+  assert.equal(hablado("Historia de la iglesia II"), "Historia de la iglesia dos");
   assert.equal(hablado("el letrero decía AL DIOS NO CONOCIDO y la ONU"), "el letrero decía Al Dios No Conocido y la ONU");
   assert.equal(hablado("cierra el Antiguo Testamento. (Malaquías 1:1)"), "cierra el Antiguo Testamento. Malaquías uno, uno");
   assert.equal(hablado("«Dios es amor» —dice Juan— y basta"), "Dios es amor, dice Juan, y basta");

@@ -44,6 +44,11 @@ export type LeccionNarrable = {
 /** La grabación de una lección: el archivo, la huella con que se hizo, cuánto dura y dónde empieza cada lugar. */
 export type Narracion = {
   archivo: string;
+  /**
+   * Dónde está el audio, si no está en la web (por ejemplo en Cloudflare R2: «https://pub-….r2.dev/academia/…»). Sin
+   * ella se sirve de client/public/voz/academia/ (o de NARRACION_URL_BASE).
+   */
+  url?: string;
   huella: string;
   segundos: number;
   voz: string;
@@ -110,6 +115,13 @@ function deRomano(r: string): number | null {
 
 /** Dos cifras de un teléfono: «54» → «cincuenta y cuatro»; «00» → «cero cero». */
 const porCifras = (g: string) => (g.startsWith("0") ? g.split("").map((d) => enPalabras(Number(d))).join(" ") : enPalabras(Number(g)));
+
+/**
+ * Las palabras tras las que un número romano es el de una materia o un curso y se dice con el cardinal
+ * («Teología sistemática IV» → «cuatro»). Tras otro nombre propio es un rey o un papa y va con el ordinal
+ * («Jeroboam II» → «segundo»).
+ */
+const ANTES_DE_CURSO = new Set(["sistemática", "iglesia", "cristiano", "homilética", "liderazgo", "griego", "hebreo", "tomo", "volumen", "parte", "nivel", "concilio"]);
 
 const ORDINALES_M = ["", "primero", "segundo", "tercero", "cuarto", "quinto", "sexto", "séptimo", "octavo", "noveno", "décimo"];
 
@@ -258,6 +270,13 @@ export function hablado(texto: string): string {
   t = t.replace(/\b([Ss]iglos?)\s+([IVXLC]+)\b/g, (m, s, r) => {
     const n = deRomano(r);
     return n ? `${s} ${enPalabras(n)}` : m;
+  });
+  // los demás números romanos (I a X): de una materia o de un rey
+  t = t.replace(/(?<!\p{L})(\p{L}+)\s+(I{1,3}|IV|V|VI{1,3}|IX|X)(?!\p{L})/gu, (m, antes: string, r: string) => {
+    const n = deRomano(r);
+    if (!n) return m;
+    const rey = /^\p{Lu}/u.test(antes) && !ANTES_DE_CURSO.has(antes.toLowerCase());
+    return `${antes} ${rey && ORDINALES_M[n] ? ORDINALES_M[n] : enPalabras(n)}`;
   });
   t = sinMayusculas(t);
   // ordinales: 1.º, 2.ª, 3.er
