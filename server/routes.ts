@@ -1389,7 +1389,16 @@ ${urls}
   });
 
   // ========== AVATAR UPLOAD ==========
-  app.post("/api/upload/avatar", uploadLimiter as RequestHandler, avatarUpload.single("avatar") as RequestHandler, async (req: Request, res: Response) => {
+  // (si la imagen no llega entera, se dice claro y queda en el registro, en vez de un error 500 sin explicación)
+  const recibirAvatar: RequestHandler = (req, res, next) =>
+    avatarUpload.single("avatar")(req, res, (err: unknown) => {
+      if (!err) return next();
+      const e = err as { code?: string; message?: string };
+      console.error("[avatar] no se pudo leer la imagen:", e?.code ?? "", e?.message ?? String(err));
+      if (e?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ message: "La imagen no debe superar 5 MB." });
+      res.status(400).json({ message: "No llegó la imagen completa. Vuelve a intentarlo." });
+    });
+  app.post("/api/upload/avatar", uploadLimiter as RequestHandler, recibirAvatar, async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.file) return res.status(400).json({ message: "No se envío ninguna imagen" });
     try {
