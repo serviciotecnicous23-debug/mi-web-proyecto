@@ -161,6 +161,15 @@ function subirAR2(deposito: string, clave: string, ruta: string) {
   execSync(["npx", ...args.map((a) => (/[\s,]/.test(a) ? `"${a}"` : a))].join(" "), { stdio: ["ignore", "ignore", "inherit"] });
 }
 
+/** Borra un audio viejo de R2 (cuando la lección se grabó de nuevo): lo que no se pueda borrar solo se avisa. */
+function borrarDeR2(deposito: string, clave: string) {
+  try {
+    execSync(["npx", "wrangler", "r2", "object", "delete", `${deposito}/${clave}`, "--remote"].join(" "), { stdio: ["ignore", "ignore", "ignore"] });
+  } catch {
+    console.log(`(no se pudo borrar ${clave} de R2: queda sin uso)`);
+  }
+}
+
 function registrar(carpeta: string, r2?: { deposito: string; base: string }) {
   const previas: Record<string, Narracion> = {};
   if (fs.existsSync(REGISTRO)) {
@@ -186,7 +195,10 @@ function registrar(carpeta: string, r2?: { deposito: string; base: string }) {
     if (anterior && anterior.archivo !== archivo && !anterior.url) fs.rmSync(path.join(AUDIOS, anterior.archivo), { force: true });
     if (r2) {
       // en R2: se sube una sola vez (el nombre cambia si el audio cambia)
-      if (!(anterior?.url && anterior.archivo === archivo)) subirAR2(r2.deposito, `academia/${archivo}`, audio);
+      if (!(anterior?.url && anterior.archivo === archivo)) {
+        subirAR2(r2.deposito, `academia/${archivo}`, audio);
+        if (anterior?.url && anterior.archivo !== archivo) borrarDeR2(r2.deposito, `academia/${anterior.archivo}`);
+      }
       previas[d.leccionId] = { archivo, url: `${r2.base.replace(/\/+$/, "")}/academia/${archivo}`, huella: d.huella, segundos: d.segundos, voz: d.voz, marcas: d.marcas };
       console.log(`${d.leccionId}: en R2`);
     } else {

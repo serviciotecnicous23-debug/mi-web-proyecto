@@ -263,6 +263,10 @@ export function hablado(texto: string): string {
   let t = ` ${texto} `;
   // los signos que no se leen
   t = t.replace(/[«»“”"]/g, "").replace(/[‘’]/g, "'").replace(/\s*[—–]\s*(?=\D)/g, ", ").replace(/\s*\/\s*/g, " o ").replace(/&/g, " y ");
+  // «c. 48 d. C.» y «ca. 1000 a. C.» (circa): «hacia el año…»
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=siglos\b)/giu, "hacia los ");
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=siglo\b)/giu, "hacia el ");
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=\d)/gu, "hacia el año ");
   for (const [p, r] of ABREVIATURAS) t = t.replace(p, r);
   for (const [p, r] of PRONUNCIACION) t = t.replace(p, r);
   // las citas, antes que los demás números; después, las que siguen sin el libro («Éxodo 12:14; 13:3»)
