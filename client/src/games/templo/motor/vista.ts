@@ -168,7 +168,8 @@ export class Vista {
     // ACES (vivo y con contraste, el que ya tenían los mundos) y encima la gradación del juego. Se probó AgX: deja los
     // blancos grises en estas escenas claras.
     r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.shadowMap.type = this.calidad === "baja" ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    // PCF en todos los niveles: en three ya es suave (PCFSoftShadowMap se quitó y caía igual en PCF, con un aviso)
+    r.shadowMap.type = THREE.PCFShadowMap;
     r.shadowMap.needsUpdate = true;
     // en ahorro: sin tubería (el tono fílmico lo hace el dibujante al dibujar en pantalla)
     if (this.calidad === "baja") return;
