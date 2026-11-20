@@ -681,6 +681,8 @@ export default function AdminDashboard() {
   const denunciasPendientes = usePendingReportsCount(!!user);
   // /admin?tab=denuncias (el aviso de la campana) abre directo en Denuncias.
   const tabDeLaUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+  // la pestaña que eligió quien mira (null: la que corresponde al abrir, según la dirección o si hay solicitudes)
+  const [pestana, setPestana] = useState<string | null>(null);
   const { data: whatsappData } = useWhatsappLink();
   const updateWhatsappLink = useUpdateWhatsappLink();
   const [search, setSearch] = useState("");
@@ -725,6 +727,13 @@ export default function AdminDashboard() {
   }
 
   const pendingUsers = users?.filter((u: any) => !u.isActive) || [];
+  const PESTANAS = ["pending", "courses", "teacher-requests", "events", "content", "users", "messages", "posts", "denuncias", "radio-library", "live"];
+  const pestanaActual = pestana ?? (tabDeLaUrl && PESTANAS.includes(tabDeLaUrl) ? tabDeLaUrl : pendingUsers.length > 0 ? "pending" : "courses");
+  /** Las cifras de arriba llevan a su pestaña. */
+  const irAPestana = (t: string) => {
+    setPestana(t);
+    window.setTimeout(() => document.getElementById("admin-pestanas")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
   const activeUsers = users?.filter((u: any) => u.isActive) || [];
   const unreadMessages = contactMessages?.filter((m: any) => !m.isRead) || [];
   const obreros = users?.filter((u: any) => u.isActive) || [];
@@ -847,7 +856,8 @@ export default function AdminDashboard() {
         <TarjetaAcademiaPanel base="/admin/academia" />
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card>
+          <button type="button" onClick={() => irAPestana("users")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver la lista de miembros" data-testid="cifra-users-usuarios">
+          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Users className="h-4 w-4" /> Usuarios
@@ -855,7 +865,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent><div className="text-2xl font-bold" data-testid="text-total-users">{users?.length || 0}</div></CardContent>
           </Card>
-          <Card>
+          </button>
+          <button type="button" onClick={() => irAPestana("users")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver la lista de miembros" data-testid="cifra-users-activos">
+          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" /> Activos
@@ -863,7 +875,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent><div className="text-2xl font-bold text-green-600" data-testid="text-active-users">{activeUsers.length}</div></CardContent>
           </Card>
-          <Card>
+          </button>
+          <button type="button" onClick={() => irAPestana("courses")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los cursos" data-testid="cifra-courses-cursos">
+          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <GraduationCap className="h-4 w-4" /> Cursos
@@ -871,7 +885,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent><div className="text-2xl font-bold" data-testid="text-total-courses">{allCourses?.length || 0}</div></CardContent>
           </Card>
-          <Card>
+          </button>
+          <button type="button" onClick={() => irAPestana("events")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los eventos" data-testid="cifra-events-eventos">
+          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" /> Eventos
@@ -879,7 +895,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent><div className="text-2xl font-bold" data-testid="text-total-events">{allEvents?.length || 0}</div></CardContent>
           </Card>
-          <Card>
+          </button>
+          <button type="button" onClick={() => irAPestana("messages")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los mensajes de contacto" data-testid="cifra-messages-mensajes">
+          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Mail className="h-4 w-4" /> Mensajes
@@ -891,9 +909,10 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          </button>
         </div>
 
-        <Tabs defaultValue={tabDeLaUrl === "denuncias" ? "denuncias" : pendingUsers.length > 0 ? "pending" : "courses"}>
+        <Tabs value={pestanaActual} onValueChange={setPestana} id="admin-pestanas" className="scroll-mt-20">
           <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="pending" className="gap-2" data-testid="tab-pending">
               <UserPlus className="h-4 w-4" /> Solicitudes
