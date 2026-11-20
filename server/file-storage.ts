@@ -34,12 +34,23 @@ import { pool } from "./db";
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
-const S3_ENDPOINT = process.env.S3_ENDPOINT || "";
-const S3_REGION = process.env.S3_REGION || "auto";
-const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID || "";
-const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY || "";
-const S3_BUCKET = process.env.S3_BUCKET || "";
-const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL || "";
+// (se quitan los espacios que quedan al copiar y pegar en el panel de Render)
+const leer = (nombre: string) => (process.env[nombre] || "").trim();
+const S3_BUCKET = leer("S3_BUCKET");
+/**
+ * La dirección del servicio, sin la barra final ni el nombre del depósito: Cloudflare muestra en la página del depósito
+ * «https://<cuenta>.r2.cloudflarestorage.com/<depósito>», pero el cliente agrega el depósito solo.
+ */
+export function endpointLimpio(valor: string, deposito: string): string {
+  let e = valor.trim().replace(/\/+$/, "");
+  if (deposito && e.toLowerCase().endsWith(`/${deposito.toLowerCase()}`)) e = e.slice(0, -(deposito.length + 1));
+  return e;
+}
+const S3_ENDPOINT = endpointLimpio(leer("S3_ENDPOINT"), S3_BUCKET);
+const S3_REGION = leer("S3_REGION") || "auto";
+const S3_ACCESS_KEY_ID = leer("S3_ACCESS_KEY_ID");
+const S3_SECRET_ACCESS_KEY = leer("S3_SECRET_ACCESS_KEY");
+const S3_PUBLIC_URL = leer("S3_PUBLIC_URL").replace(/\/+$/, "");
 
 export const isS3Configured = !!(S3_ENDPOINT && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY && S3_BUCKET);
 
