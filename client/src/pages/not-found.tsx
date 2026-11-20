@@ -3,8 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { useEffect } from "react";
+import { TITULO_NO_ENCONTRADA } from "@shared/titulos";
 
 export default function NotFound() {
+  // También en las direcciones que no existen debajo de /academia, /juegos o /mensajes, donde App.tsx no pone el título.
+  useEffect(() => {
+    document.title = TITULO_NO_ENCONTRADA;
+  }, []);
+
   return (
     <Layout>
       <div className="flex-1 flex items-center justify-center py-20">

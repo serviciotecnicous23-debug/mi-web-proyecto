@@ -3,13 +3,14 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Component, lazy, Suspense, type ComponentType, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { RadioDock } from "@/components/RadioDock";
 import { AppStatus } from "@/components/AppStatus";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { useDock } from "@/components/media/player-store";
+import { normalizarRuta, tituloDeRuta } from "@shared/titulos";
 
 // La ventanita flotante (video que sigue mientras se navega) se descarga solo cuando hace falta.
 const MediaDock = lazy(() => import("@/components/media/MediaDock").then((m) => ({ default: m.MediaDock })));
@@ -114,11 +115,26 @@ function PageFallback() {
   );
 }
 
+/**
+ * El título de la pestaña de cada ruta (antes quedaba el de la primera página que se cargó). Va dentro del Suspense y
+ * antes de las rutas: cambia cuando la página nueva ya se ve, después de que la de antes devuelva el título que
+ * guardaba, y antes de que la página ponga el suyo. Las que ponen el suyo (la academia, Juegos, Mensajes) no se tocan.
+ */
+function TituloDeLaRuta() {
+  const ruta = normalizarRuta(useLocation()[0]);
+  useEffect(() => {
+    const titulo = tituloDeRuta(ruta);
+    if (titulo !== null) document.title = titulo;
+  }, [ruta]);
+  return null;
+}
+
 function Router() {
   return (
     // Si una página falla, el aviso sale con el menú; la radio y el menú de abajo siguen funcionando.
     <AtrapaErrores aviso={ErrorDePagina}>
     <Suspense fallback={<PageFallback />}>
+    <TituloDeLaRuta />
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/bienvenida" component={Bienvenida} />
