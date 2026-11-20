@@ -111,7 +111,10 @@ español fluido, «tipo documental»):
   versículos quince al diecisiete» y su texto de la RV1960; los esquemas: línea de tiempo, cuadro y pasos; los videos
   como «En la página tienes el video…»), «La idea clave» y «Para la vida», y termina invitando al repaso. `hablado`
   convierte lo escrito en lo que se dice: las citas («Juan 1:41» → «Juan uno, cuarenta y uno»; «1 Juan» → «Primera de
-  Juan»), los números, los años, los siglos, las abreviaturas y los teléfonos de ayuda.
+  Juan»), los libros con número sin capítulo («1 y 2 Samuel» → «Primero y Segundo de Samuel»; `librosConNumero`), los
+  números, los años («en 1521 se negó» → «veintiuno»), los siglos, las abreviaturas, las siglas (`SIGLAS`: quedan en
+  mayúsculas), las horas de un horario («7:00» → «siete en punto»), los miles con coma («120,000») y los teléfonos de
+  ayuda.
 - **La huella:** `huellaDeLeccion` (con las citas, no con el texto de la Biblia). La grabación guarda la huella con que se
   hizo; si la lección cambia (texto, orden, título, un esquema nuevo), la grabación deja de valer y la página vuelve a la
   voz del aparato hasta grabarla otra vez (`server/academia-narracion.ts`; `LeccionVista.narracion` llega en null).
@@ -126,14 +129,24 @@ español fluido, «tipo documental»):
   Grabados:
   - el Nivel 1, el 17-nov-2026: 32 lecciones, unos 175 minutos, ≈52 MB, en el repositorio;
   - el Nivel 2, el 19-nov-2026: 54 lecciones, unos 275 minutos, ≈82 MB, en el repositorio;
-  - el Nivel 3, el 20-nov-2026: 60 lecciones, unos 400 minutos, en Cloudflare R2.
+  - el Nivel 3, el 20-nov-2026: 60 lecciones, unos 400 minutos, en Cloudflare R2;
+  - el Nivel 4, el 20-nov-2026: 60 lecciones, unos 360 minutos, en Cloudflare R2.
+
+  El mismo día se grabaron otra vez 14 lecciones de los Niveles 1 a 3 que leían mal «c.» («hacia el año»), un año
+  («setecientos un antes de Cristo») o un libro con número sin capítulo («un Corintios» por «Primera de Corintios»).
+  Cuando cambia lo que dice la voz, `narrar.py` graba otra vez solo las lecciones cuyo guion cambió (guarda la huella
+  del guion en `<lección>.marcas.json`). Para ver antes qué lecciones cambian, generar los guiones en otra carpeta y
+  compararlos con los grabados.
 
   Toda la academia son unas 62 horas (≈1,1 GB). **Desde el Nivel 3 el audio va en Cloudflare R2.** El depósito es
   `avivando-academia-voz`, en la cuenta de Luis, con su dirección pública
   `https://pub-e35c5f440e364310af9d4d053a59dcc8.r2.dev`. El plan gratis llega a 10 GB y no cobra la descarga.
   - Cada entrada del registro guarda la dirección del audio en `url`. No hace falta ninguna variable en Render.
-  - `registrar --r2 avivando-academia-voz --base <esa dirección>` sube los audios con Wrangler y borra el viejo si una
-    lección se graba de nuevo. Usa la autorización de `npx wrangler login`, sin claves.
+  - `registrar --r2 avivando-academia-voz --base <esa dirección>` sube los audios con Wrangler. Usa la autorización
+    de `npx wrangler login`, sin claves. Si una lección se graba de nuevo, el audio viejo se queda en R2 (la web
+    publicada lo sigue pidiendo) y se anota en `<carpeta>/r2-por-borrar.txt`.
+  - Cuando el registro nuevo ya está publicado (`/api/version`), `limpiar-r2 <carpeta> --r2 avivando-academia-voz` borra
+    esos audios viejos. Solo borra los que el registro ya no usa.
 - **Cómo grabar** (en la PC de Luis, unos 2 minutos de trabajo por cada 5 de audio):
   1. `npx tsx scripts/academia/narracion.ts estimar` (cuánto audio tiene cada nivel).
   2. `npx tsx scripts/academia/narracion.ts guion <carpeta> 2` (un nivel, una materia o una lección; los versículos se

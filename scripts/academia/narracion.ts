@@ -9,7 +9,11 @@
  *       Toma los audios grabados (<lección>.m4a y <lección>.marcas.json, que deja scripts/academia/voz/narrar.py), los
  *       copia a client/public/voz/academia/ con su huella en el nombre y escribe server/academia/narraciones.ts.
  *       Con --r2 los sube a Cloudflare R2 (con Wrangler, que usa la autorización guardada por `npx wrangler login`) a
- *       <depósito>/academia/<archivo>, y el registro guarda la dirección <base>/academia/<archivo>.
+ *       <depósito>/academia/<archivo>, y el registro guarda la dirección <base>/academia/<archivo>. El audio viejo de
+ *       una lección grabada otra vez se queda en R2 (la web publicada todavía lo usa) y se anota en
+ *       <carpeta>/r2-por-borrar.txt.
+ *   npx tsx scripts/academia/narracion.ts limpiar-r2 <carpeta> --r2 <depósito>
+ *       Cuando el registro nuevo ya está publicado (/api/version), borra de R2 los audios viejos anotados.
  */
 import { execSync } from "node:child_process";
 import crypto from "node:crypto";
@@ -178,6 +182,7 @@ function registrar(carpeta: string, r2?: { deposito: string; base: string }) {
   }
   fs.mkdirSync(AUDIOS, { recursive: true });
   let nuevas = 0;
+  const porBorrar: string[] = [];
   for (const f of fs.readdirSync(carpeta).filter((x) => x.endsWith(".marcas.json"))) {
     const d = JSON.parse(fs.readFileSync(path.join(carpeta, f), "utf8")) as { leccionId: string; huella: string; segundos: number; voz: string; marcas: [string, number][] };
     const audio = path.join(carpeta, `${d.leccionId}.m4a`);
@@ -197,7 +202,8 @@ function registrar(carpeta: string, r2?: { deposito: string; base: string }) {
       // en R2: se sube una sola vez (el nombre cambia si el audio cambia)
       if (!(anterior?.url && anterior.archivo === archivo)) {
         subirAR2(r2.deposito, `academia/${archivo}`, audio);
-        if (anterior?.url && anterior.archivo !== archivo) borrarDeR2(r2.deposito, `academia/${anterior.archivo}`);
+        // el viejo no se borra todavía: la web publicada lo sigue pidiendo hasta que se publique este registro
+        if (anterior?.url && anterior.archivo !== archivo) porBorrar.push(`academia/${anterior.archivo}`);
       }
       previas[d.leccionId] = { archivo, url: `${r2.base.replace(/\/+$/, "")}/academia/${archivo}`, huella: d.huella, segundos: d.segundos, voz: d.voz, marcas: d.marcas };
       console.log(`${d.leccionId}: en R2`);
@@ -217,6 +223,37 @@ function registrar(carpeta: string, r2?: { deposito: string; base: string }) {
       `export const NARRACIONES: Record<string, Narracion> = ${JSON.stringify(orden)};\n`,
   );
   console.log(`Registradas ${nuevas} (en total ${Object.keys(orden).length}).`);
+  if (porBorrar.length) {
+    fs.appendFileSync(path.join(carpeta, "r2-por-borrar.txt"), porBorrar.map((c) => `${c}\n`).join(""));
+    console.log(`${porBorrar.length} audios viejos quedan en R2 hasta publicar: después, «limpiar-r2 ${carpeta} --r2 ${r2?.deposito}».`);
+  }
+}
+
+/** Borra de R2 los audios viejos anotados por «registrar» (solo los que el registro de ahora ya no usa). */
+function limpiarR2(carpeta: string, deposito: string) {
+  const lista = path.join(carpeta, "r2-por-borrar.txt");
+  if (!fs.existsSync(lista)) return console.log("No hay audios viejos por borrar.");
+  const enUso = new Set(Object.values(registroDeHoy()).map((n) => `academia/${n.archivo}`));
+  const quedan: string[] = [];
+  let borrados = 0;
+  for (const clave of new Set(fs.readFileSync(lista, "utf8").split(/\r?\n/).filter(Boolean))) {
+    if (enUso.has(clave)) {
+      console.log(`${clave}: el registro todavía lo usa; no se borra`);
+      quedan.push(clave);
+      continue;
+    }
+    borrarDeR2(deposito, clave);
+    borrados++;
+  }
+  if (quedan.length) fs.writeFileSync(lista, quedan.map((c) => `${c}\n`).join(""));
+  else fs.rmSync(lista);
+  console.log(`Borrados de R2: ${borrados}.`);
+}
+
+/** El registro de ahora (server/academia/narraciones.ts). */
+function registroDeHoy(): Record<string, Narracion> {
+  const m = /export const NARRACIONES: Record<string, Narracion> = (\{[\s\S]*\});/.exec(fs.readFileSync(REGISTRO, "utf8"));
+  return m ? JSON.parse(m[1]) : {};
 }
 
 /** La lección para la huella (sin el texto de la Biblia, que no entra en la huella). */
@@ -228,21 +265,22 @@ function leccionPlana(id: string): LeccionNarrable {
 }
 
 const [orden, ...resto] = process.argv.slice(2);
+const valor = (nombre: string) => {
+  const i = resto.indexOf(nombre);
+  return i >= 0 ? resto[i + 1] : undefined;
+};
 (async () => {
   if (orden === "estimar") await estimar();
   else if (orden === "guion" && resto.length >= 2) await guion(path.resolve(resto[0]), resto.slice(1));
+  else if (orden === "limpiar-r2" && resto[0] && valor("--r2")) limpiarR2(path.resolve(resto[0]), valor("--r2")!);
   else if (orden === "registrar" && resto[0]) {
-    const valor = (nombre: string) => {
-      const i = resto.indexOf(nombre);
-      return i >= 0 ? resto[i + 1] : undefined;
-    };
     const deposito = valor("--r2");
     const base = valor("--base");
     if (deposito && !base) throw new Error("Con --r2 hace falta --base <dirección pública del depósito>");
     registrar(path.resolve(resto[0]), deposito && base ? { deposito, base } : undefined);
   }
   else {
-    console.log("Uso: narracion.ts estimar | guion <carpeta> <nivel|materia|lección>... | registrar <carpeta> [--r2 <depósito> --base <dirección>]");
+    console.log("Uso: narracion.ts estimar | guion <carpeta> <nivel|materia|lección>... | registrar <carpeta> [--r2 <depósito> --base <dirección>] | limpiar-r2 <carpeta> --r2 <depósito>");
     process.exitCode = 1;
   }
 })().catch((e) => {
