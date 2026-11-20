@@ -3,6 +3,7 @@
 import { Link } from "wouter";
 import { AlertTriangle, ArrowLeft, BookOpen, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { NOMBRE_ACADEMIA } from "@shared/academia";
 import { DECLARACION_FE } from "@shared/academia-declaracion";
 import { useDeclaracion } from "@/components/academia/api";
@@ -12,6 +13,7 @@ const fechaLarga = (iso: string) => new Date(iso).toLocaleDateString("es", { day
 
 export default function AcademiaDeclaracion() {
   const q = useDeclaracion();
+  useTituloAcademia("Declaración de fe");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   const aprobada = q.data?.aprobacion ?? null;

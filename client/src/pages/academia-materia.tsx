@@ -8,6 +8,7 @@ import {
   ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
@@ -269,6 +270,7 @@ export default function AcademiaMateria() {
   const { materiaId } = useParams<{ materiaId: string }>();
   const qc = useQueryClient();
   const q = useMateria(materiaId);
+  useTituloAcademia(q.data?.materia.titulo ?? "Materia");
   const [inscribiendo, setInscribiendo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [recien, setRecien] = useState(false);

@@ -6,6 +6,7 @@ import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, PenLine, Send } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { loginUrl } from "@/lib/login-redirect";
@@ -20,6 +21,7 @@ export default function AcademiaEscrito() {
   const { materiaId } = useParams<{ materiaId: string }>();
   const qc = useQueryClient();
   const q = useEscrito(materiaId);
+  useTituloAcademia("Escrito breve");
   const [texto, setTexto] = useState("");
   const [pegado, setPegado] = useState(false);
   const [ocupado, setOcupado] = useState(false);

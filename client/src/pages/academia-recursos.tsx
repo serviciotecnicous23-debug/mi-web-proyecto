@@ -7,6 +7,7 @@ import { Link, useSearch } from "wouter";
 import { ArrowLeft, BookMarked, BookOpen, Clock, ExternalLink, FileText, Headphones, Layers, Library, Search, SearchX, Video, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import type { RecursoListado, RecursosAcademia, TipoRecurso } from "@shared/academia-recursos";
 import { contieneTodos, marcar, terminos } from "@shared/buscar-texto";
@@ -97,6 +98,7 @@ function Recurso({ r, ts }: { r: RecursoListado; ts: string[] }) {
 export default function AcademiaRecursos() {
   const q = useQuery<RecursosAcademia, ErrorAcademia>({ queryKey: ["academia", "recursos"], queryFn: () => pedir("GET", "/api/academia/recursos"), retry: false });
   const search = useSearch();
+  useTituloAcademia("Recursos de estudio");
   const inicial = useMemo(() => new URLSearchParams(search), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [texto, setTexto] = useState(inicial.get("q") ?? "");
   const [tipo, setTipo] = useState<TipoRecurso | "todos">(() => (TIPOS.find((t) => t.id === inicial.get("tipo"))?.id ?? "todos"));

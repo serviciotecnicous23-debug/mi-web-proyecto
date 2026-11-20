@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Award, CheckCircle2, Search, ShieldAlert, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NOMBRE_ACADEMIA, normalizarCodigo, type VerificacionAcademia } from "@shared/academia";
@@ -13,6 +14,7 @@ import { verificarDocumento } from "@/components/academia/api";
 
 export default function AcademiaVerificar() {
   const { codigo } = useParams<{ codigo?: string }>();
+  useTituloAcademia("Verificar un documento");
   const [, navegar] = useLocation();
   const [texto, setTexto] = useState(codigo ?? "");
   const [resultado, setResultado] = useState<VerificacionAcademia | null>(null);

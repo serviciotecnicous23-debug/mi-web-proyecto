@@ -2,10 +2,12 @@
 import { Link } from "wouter";
 import { ArrowLeft, BookOpen, ScrollText } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { LEMA, NOMBRE_ACADEMIA, REGLAMENTO } from "@shared/academia";
 
 export default function AcademiaReglamento() {
+  useTituloAcademia("Reglamento académico");
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-16">

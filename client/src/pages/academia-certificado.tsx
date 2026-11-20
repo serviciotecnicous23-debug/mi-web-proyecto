@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Award, Check, Copy, Download, ShieldCheck } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { useCertificado } from "@/components/academia/api";
@@ -14,6 +15,7 @@ import { atributosDeDescarga } from "@/components/academia/descargas";
 export default function AcademiaCertificado() {
   const { codigo } = useParams<{ codigo: string }>();
   const q = useCertificado(codigo);
+  useTituloAcademia(q.data ? (q.data.tipo === "materia" ? `Certificado · ${q.data.titulo}` : q.data.titulo) : "Documento de la academia");
   const [copiado, setCopiado] = useState(false);
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;

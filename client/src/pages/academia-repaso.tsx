@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, CheckCircle2, Clock, Sparkles, Trophy } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { CAJA_DOMINADO, NOMBRE_ACADEMIA, REPASO_VERSICULO_DIAS, type VersiculoRepaso } from "@shared/academia";
 import { responderRepasoVersiculo, useRepasoVersiculos, versiculoEstudio, versiculoParaRepasar, type VersiculoParaRepasar } from "@/components/academia/api";
@@ -99,6 +100,7 @@ function Repasar({ v, alTerminar }: { v: VersiculoRepaso; alTerminar: (materiaId
 export default function AcademiaRepaso() {
   const qc = useQueryClient();
   const q = useRepasoVersiculos();
+  useTituloAcademia("Mis versículos");
   // los que ya repasó en esta visita siguen arriba con su resultado, aunque la lista nueva diga que ya no tocan
   const [hechos, setHechos] = useState<string[]>([]);
   if (q.isLoading) return <Cargando />;

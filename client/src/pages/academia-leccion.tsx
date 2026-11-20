@@ -4,6 +4,7 @@ import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, PlayCircle, Save, Target, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +111,7 @@ export default function AcademiaLeccion() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useLeccion(leccionId);
+  useTituloAcademia(q.data?.leccion.titulo ?? "Lección");
   const [bien, setBien] = useState<Set<string>>(new Set());
   const [reflexion, setReflexion] = useState("");
   const [guardando, setGuardando] = useState(false);

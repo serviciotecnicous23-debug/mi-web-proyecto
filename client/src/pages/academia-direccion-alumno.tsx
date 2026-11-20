@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Award, BookOpen, History, Lock, PenLine, ShieldOff, ShieldCheck, UserRound } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -188,6 +189,7 @@ export default function AcademiaDireccionAlumno() {
   const { user } = useAuth();
   const area = useArea();
   const q = useDireccionAlumno(alumnoId);
+  useTituloAcademia(area.base === "/admin/academia" ? "Ficha del alumno · Administración" : "Ficha del alumno");
   // la materia que la Administración está gestionando (el panel lateral)
   const [materiaGestion, setMateriaGestion] = useState<string | null>(null);
   if (q.isLoading) return <Cargando />;

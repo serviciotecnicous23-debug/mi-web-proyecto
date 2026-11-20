@@ -3,6 +3,7 @@
 import { Link, useParams } from "wouter";
 import { ArrowLeft, CheckCircle2, Download, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
 import { enlaceReporte, useDireccionMateria } from "@/components/academia/api";
@@ -14,6 +15,7 @@ export default function AcademiaDireccionMateria() {
   const { materiaId } = useParams<{ materiaId: string }>();
   const area = useArea();
   const q = useDireccionMateria(materiaId);
+  useTituloAcademia(q.data ? `Seguimiento · ${q.data.materia.titulo}` : "Seguimiento de la materia");
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     return (

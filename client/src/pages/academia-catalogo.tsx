@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearch } from "wouter";
 import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Clock, GraduationCap, Layers, Library, Search, SearchX, X } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { ESPECIALIDADES, NIVELES, type EstadoMateria, type Libro, type MateriaDef, type MateriaResumen } from "@shared/academia";
 import { contieneAlguno, contieneTodos, marcar, terminos } from "@shared/buscar-texto";
@@ -126,6 +127,7 @@ function TarjetaCatalogo({ f, ts, conLugar = false }: { f: Fila; ts: string[]; c
 
 export default function AcademiaCatalogo() {
   const q = useAcademiaEstado();
+  useTituloAcademia("Catálogo de materias");
   const search = useSearch();
   // los filtros salen de la dirección al entrar y la dirección sigue a los filtros (sin llenar el historial)
   const inicial = useMemo(() => new URLSearchParams(search), []); // eslint-disable-line react-hooks/exhaustive-deps

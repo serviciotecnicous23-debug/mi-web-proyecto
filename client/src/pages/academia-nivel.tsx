@@ -5,6 +5,7 @@ import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Award, CheckCircle2, Circle, ClipboardCheck, GraduationCap, HandHeart, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { loginUrl } from "@/lib/login-redirect";
@@ -103,6 +104,7 @@ export default function AcademiaNivel() {
   const { n } = useParams<{ n: string }>();
   const qc = useQueryClient();
   const q = useNivel(n);
+  useTituloAcademia(q.data ? `Nivel ${q.data.nivel.n} · ${q.data.nivel.nombre}` : "Nivel");
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403) return <PantallaCerrada mensaje={q.error.message} />;
   if (!q.data) {
