@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import {
   Award, BookOpen, CheckCircle2, ClipboardCheck, GraduationCap, PauseCircle, Sparkles, UserCheck, UserPlus, UserX,
 } from "lucide-react";
-import { NOMBRE_ESTATUS, type EstatusAlumno, type EstatusVista } from "@shared/academia";
+import { NOMBRE_ESTATUS, type EstatusAlumno, type EstatusVista } from "@shared/academia-base";
 import type { ActividadItem, AlumnoDetalle, MateriaAvance, MateriaReporte } from "@shared/academia-direccion";
 
 export const fecha = (iso: string) => new Date(iso).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });

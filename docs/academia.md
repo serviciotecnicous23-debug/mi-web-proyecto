@@ -878,7 +878,18 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
 ## 6. La parte técnica
 
 **Archivos:**
-- `shared/academia.ts`: catálogo, reglas, notas y tipos de la API. Sin drizzle ni zod.
+- `shared/academia.ts`: el catálogo (niveles, materias con sus sílabos y especialidades) y lo que se calcula con él. Lo
+  importan el servidor, las pruebas y los guiones, **nunca las páginas**: pesa cientos de kB. Vuelve a exportar todo lo
+  de los dos siguientes, así el servidor importa solo de aquí.
+- `shared/academia-base.ts`: lo liviano, que importan las páginas: las constantes, las reglas de las notas y de los
+  exámenes, las etapas y los tipos de la API. Sin drizzle ni zod.
+- `shared/academia-reglamento.ts`: el reglamento académico y el código de honor (solo los bajan el reglamento y la
+  inscripción).
+- `server/academia-mapa.ts`: lo que las páginas necesitan del catálogo, por API. El mapa (`/api/academia/mapa`: el
+  título y el «Volver» de los exámenes), lo que encuentra el buscador del catálogo (`/api/academia/buscador`, que se pide
+  al ir a buscar) y lo que la materia recibe con ella (su nivel o su especialidad y, en preparación, las que ya se
+  pueden estudiar). Una pantalla nueva que necesite algo del catálogo lo pide así; `shared/academia-base.test.ts` falla
+  si una página importa `shared/academia.ts`.
 - `shared/academia-acceso.ts`: quién la ve en la vista previa. Lo usa el menú.
 - `server/academia-comun.ts`:
   - las tablas (`ACADEMIA_SQL`);

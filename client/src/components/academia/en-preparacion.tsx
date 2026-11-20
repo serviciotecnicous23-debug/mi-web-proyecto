@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, BellOff, BellRing, Hourglass, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { ESPECIALIDADES, NIVELES, type MateriaDetalle } from "@shared/academia";
+import type { MateriaDetalle } from "@shared/academia-base";
 import { avisarmeMateria } from "./api";
 
 export function EnPreparacion({ d }: { d: MateriaDetalle }) {
@@ -16,8 +16,8 @@ export function EnPreparacion({ d }: { d: MateriaDetalle }) {
   const [avisame, setAvisame] = useState(!!d.avisame);
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
-  const grupo = m.nivel ? NIVELES.find((n) => n.n === m.nivel)?.materias : ESPECIALIDADES.find((e) => e.id === m.especialidad)?.materias;
-  const listas = (grupo ?? []).filter((x) => x.disponible && x.id !== m.id);
+  // las de su nivel o su especialidad que ya se pueden estudiar: vienen con la materia (no se carga el catálogo)
+  const listas = d.abiertas ?? [];
 
   const cambiar = async () => {
     setOcupado(true);

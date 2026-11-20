@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { GraduationCap } from "lucide-react";
-import type { MatriculaInfo } from "@shared/academia";
+import type { MatriculaInfo } from "@shared/academia-base";
 import { useAcademiaVisible } from "@/lib/academia-visible";
 
 export function InsigniaAcademia() {

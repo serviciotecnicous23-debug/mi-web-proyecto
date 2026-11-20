@@ -30,6 +30,7 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
+import { abiertasJunto, lugarDeMateria, registerAcademiaMapaRoutes } from "./academia-mapa";
 import { minutosDeMateria, minutosReales } from "./academia-carga";
 import { minutosDeNarracion, narracionDe } from "./academia-narracion";
 import { registerAcademiaActividadesRoutes } from "./academia-actividades";
@@ -299,6 +300,9 @@ export function registerAcademiaRoutes(app: Express) {
         breve,
         avisame,
         ajustes,
+        // su nivel o su especialidad y, en preparación, las que ya se pueden estudiar (la página no carga el catálogo)
+        lugar: lugarDeMateria(m),
+        abiertas: m.disponible ? [] : abiertasJunto(m),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -620,6 +624,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
   registerAcademiaRecursosRoutes(app);
+  registerAcademiaMapaRoutes(app);
   registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);

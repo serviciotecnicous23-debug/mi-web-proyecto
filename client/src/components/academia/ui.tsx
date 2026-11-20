@@ -5,7 +5,7 @@ import { BookOpen, CheckCircle2, Clock, ExternalLink, GraduationCap, Headphones,
 import { LinkEmbed } from "@/components/media/LinkEmbed";
 import { Layout } from "@/components/layout";
 import { VideoYouTube } from "./video-youtube";
-import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla, idYouTube } from "@shared/academia";
+import { LEMA, NOMBRE_MEDALLA, calificacion, type BloqueVista, type EstadoMateria, type Medalla, idYouTube } from "@shared/academia-base";
 import { conMarcas, type Marca } from "@/components/cuaderno/marcas";
 
 // El número va con el color del texto del tema (se lee en claro y en oscuro); la medalla la dan el aro y el fondo.
