@@ -4635,6 +4635,60 @@ const EQUIPOS_VOLUNTARIOS: MateriaDef = {
   disponible: true,
 };
 
+const PLANIFICACION_PROYECTOS: MateriaDef = {
+  id: "liderazgo-administracion-4",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 4,
+  titulo: "Planificación y proyectos ministeriales",
+  resumen: "Cómo planear con fe y llevar los proyectos de la iglesia hasta el final: planificar con fe, la visión, la misión y los valores, las metas y el plan del año, un proyecto de principio a fin, el cronograma, los riesgos y el presupuesto del proyecto, y evaluar y aprender.",
+  base: "Proverbios 16:9; Lucas 14:28",
+  memoria: "Proverbios 16:9",
+  lecciones: lecciones("liderazgo-administracion-4", [
+    ["Planificar con fe", "Proverbios 16:9; Santiago 4:13-15; Lucas 14:28"],
+    ["La visión, la misión y los valores", "Mateo 28:19-20; Habacuc 2:2; Nehemías 2:17-18"],
+    ["Las metas y el plan del año", "Filipenses 3:13-14; 1 Corintios 9:26; Proverbios 21:5"],
+    ["Un proyecto de principio a fin", "Nehemías 2:4-5; Nehemías 3:1; Nehemías 6:15"],
+    ["El cronograma, los riesgos y el presupuesto", "Lucas 14:28-30; Nehemías 4:16; Proverbios 24:6"],
+    ["Evaluar y aprender", "Lamentaciones 3:40; 2 Corintios 13:5; Hechos 14:27"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige un ministerio planee con fe y lleve sus proyectos hasta el final: que planee en oración y con humildad, con el ciclo de mirar dónde estamos, decidir adónde vamos, cómo llegar y con qué, y revisar; que escriba con su equipo la misión, la visión y los valores, cortos y alineados con la Gran Comisión y con la visión de la iglesia; que convierta los deseos en pocas metas SMART, como propuso George T. Doran en 1981, y las ponga en el plan del año; que lleve cada proyecto, un esfuerzo temporal para crear un resultado único, como lo define la guía PMBOK, por sus etapas: iniciar con el propósito y el alcance, planear, ejecutar, controlar y cerrar; que use el cronograma, la lista de riesgos con su plan B y el presupuesto con un margen; y que evalúe con números honestos, guarde lo aprendido y cuente a la iglesia lo que Dios hizo. Baja a la práctica de los proyectos el ciclo de planificación de Administración y gobierno de la iglesia (Nivel 5) y el plan de ministerio del Seminario de liderazgo ministerial, sin repetirlos. Su base es la palabra de los Proverbios: «El corazón del hombre piensa su camino; Mas Jehová endereza sus pasos» (Proverbios 16:9).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo se planea con fe y el ciclo de la planificación.", bloom: "comprender" },
+      { id: "o2", texto: "Escribir la misión, la visión y los valores de un ministerio.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir metas SMART y armar el plan del año.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un proyecto ministerial por sus etapas.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer el cronograma, la lista de riesgos y el presupuesto de un proyecto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un proyecto con sus metas y guardar lo aprendido.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 16:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo de la planificación, la misión, la visión y los valores, las metas SMART, la definición y las etapas de un proyecto, el alcance, el cronograma, los riesgos, el presupuesto y la evaluación.",
+      ser: "Un líder que planea con fe y humildad, con su equipo, termina lo que empieza y da gracias a Dios por lo que él hace.",
+      hacer: "Preparar un retiro de planificación, escribir la visión de un ministerio, convertir un deseo en una meta SMART, llevar una escuela bíblica como proyecto, hacer el cronograma de una remodelación y evaluar un proyecto.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rick Warren", titulo: "Una iglesia con propósito: cómo crecer sin comprometer el mensaje y la misión", editorial: "Vida" },
+        { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Aubrey Malphurs", titulo: "Advanced Strategic Planning: A 21st-Century Model for Church and Ministry Leaders (en inglés)", editorial: "Baker Books" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 2, la visión y el plan para reedificar el muro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=2" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 14, calcular los gastos antes de edificar", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=14" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5564,7 +5618,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, ["Marco legal de las organizaciones religiosas", true],
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
