@@ -13,6 +13,11 @@
  *   S3_BUCKET            - Bucket name
  *   S3_PUBLIC_URL        - Public URL prefix for serving files (e.g., https://cdn.example.com)
  *                          If not set, generates S3 URLs directly
+ *   S3_LIMIT_MB          - Tope total de los archivos subidos (por defecto 6000 MB): con Cloudflare R2 deja lugar a la
+ *                          voz de la academia dentro de los 10 GB gratis. Al llegar, las subidas responden «lleno».
+ *
+ * Cada archivo subido a S3/R2 queda anotado en la tabla archivos_externos (dueño, carpeta y peso): así se borra con la
+ * cuenta o con el mensaje del chat, cuenta para el tope de cada persona y para el tope total.
  */
 
 import {
@@ -25,6 +30,7 @@ import { randomBytes } from "crypto";
 import fs from "fs";
 import path from "path";
 import { saveStoredBuffer, saveStoredPath, StorageFullError } from "./file-store";
+import { pool } from "./db";
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -51,6 +57,10 @@ function getS3Client(): S3Client {
         secretAccessKey: S3_SECRET_ACCESS_KEY,
       },
       forcePathStyle: true, // Required for R2, MinIO, etc.
+      // Cloudflare R2 no acepta todas las sumas de verificación que la biblioteca de AWS manda por defecto desde 2025:
+      // solo cuando la operación las exige (es lo que recomienda Cloudflare para R2).
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
   }
   return s3Client;
@@ -62,6 +72,50 @@ function generateKey(folder: string, originalName: string): string {
   const ext = path.extname(originalName).toLowerCase() || ".bin";
   const id = randomBytes(12).toString("hex");
   return `${folder}/${id}${ext}`;
+}
+
+/** Tope total de los archivos subidos a S3/R2 (bytes). */
+export function limiteExternoBytes(): number {
+  const mb = Number(process.env.S3_LIMIT_MB || 6000);
+  return (Number.isFinite(mb) && mb > 0 ? mb : 6000) * 1024 * 1024;
+}
+
+/** Lo que ocupan los archivos subidos a S3/R2 (de todos, de una persona o de una carpeta). */
+export async function usoExterno(filtro: { ownerId?: number; folder?: string } = {}): Promise<number> {
+  try {
+    const { rows } = await pool.query(
+      `SELECT coalesce(sum(size), 0)::bigint AS usado FROM archivos_externos
+        WHERE ($1::int IS NULL OR owner_id = $1) AND ($2::text IS NULL OR folder = $2)`,
+      [filtro.ownerId ?? null, filtro.folder ?? null],
+    );
+    return Number(rows[0]?.usado) || 0;
+  } catch {
+    return 0; // (tabla aún sin crear)
+  }
+}
+
+/** Los datos de un archivo subido a S3/R2, por su dirección (null si no es uno de ellos). */
+export async function archivoExternoPorUrl(url: string): Promise<{ clave: string; ownerId: number | null; folder: string | null } | null> {
+  if (!url || url.startsWith("/files/") || url.startsWith("data:")) return null;
+  try {
+    const { rows } = await pool.query(`SELECT clave, owner_id, folder FROM archivos_externos WHERE url = $1 LIMIT 1`, [url]);
+    const f = rows[0];
+    return f ? { clave: String(f.clave), ownerId: f.owner_id == null ? null : Number(f.owner_id), folder: f.folder ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Borra archivos de S3/R2 y su anotación (lo que no se pueda borrar queda anotado en el registro del servidor). */
+export async function borrarArchivosExternos(claves: string[]): Promise<void> {
+  for (const clave of claves) {
+    await deleteFile(clave);
+    try {
+      await pool.query(`DELETE FROM archivos_externos WHERE clave = $1`, [clave]);
+    } catch (err) {
+      console.error(`[archivos] no se pudo quitar la anotación de ${clave}:`, (err as Error).message);
+    }
+  }
 }
 
 function getPublicUrl(key: string): string {
@@ -130,8 +184,10 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
 
   const key = generateKey(folder, filename);
   const client = getS3Client();
-  const body = buffer ?? fs.createReadStream(filePath!);
   const size = buffer ? buffer.length : fs.statSync(filePath!).size;
+  // el tope total: nunca pasar del espacio gratis
+  if ((await usoExterno()) + size > limiteExternoBytes()) throw new StorageFullError();
+  const body = buffer ?? fs.createReadStream(filePath!);
 
   await client.send(
     new PutObjectCommand({
@@ -144,11 +200,16 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
     })
   );
 
-  return {
-    url: getPublicUrl(key),
-    key,
-    size,
-  };
+  const url = getPublicUrl(key);
+  try {
+    await pool.query(
+      `INSERT INTO archivos_externos (clave, url, owner_id, folder, size, mime) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (clave) DO NOTHING`,
+      [key, url, ownerId ?? null, folder, size, contentType],
+    );
+  } catch (err) {
+    console.error(`[archivos] no se pudo anotar ${key}:`, (err as Error).message);
+  }
+  return { url, key, size };
 }
 
 /**
