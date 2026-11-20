@@ -30,6 +30,7 @@ PAUSA_ORACIONES = 0.32   # entre trozos de un mismo lugar
 INTENTOS = 4
 INTENTOS_CORTOS = 7      # un trozo de 6 palabras o menos (un subtítulo): sale rápido y le cuesta más
 PARECIDO_MINIMO = 0.86   # lo que whisper entiende contra lo que debía decir (0 a 1)
+LISTA_PALABRAS_POR_SEGUNDO = 1.6  # un alfabeto se recita más despacio que una frase (la voz va a unas 2,3)
 
 # la cadena de locución (la de la Fábrica Viral, medida con OmniVoice) y el volumen final para el teléfono
 CADENA = ("highpass=f=80:poles=2,equalizer=f=300:t=q:w=0.9:g=-3,equalizer=f=3500:t=q:w=1:g=2,"
@@ -70,6 +71,19 @@ def palabras(t):
     t = re.sub(r"\d+", lambda m: num2words(int(m.group()), lang="es"), t.lower())
     t = t.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u")
     return re.sub(r"[^a-zñ ]", " ", t).split()
+
+
+def segundos_de_lista(texto):
+    """Cuánto debe durar un trozo que es una lista larga de palabras sueltas («Las letras son alfa, beta…»), o None.
+
+    OmniVoice calcula la duración por las letras del texto, como si fuera una frase: en un alfabeto corre y se come
+    letras (whisper oyó «tau, i, fi, xi, omega»), y con un punto entre grupos se salta grupos enteros. Con el tiempo de
+    una recitación las dice todas."""
+    partes = [x.strip() for x in re.split(r"[,.;:]|\sy\s", texto) if x.strip()]
+    sueltas = sum(1 for x in partes if len(x.split()) == 1)
+    if sueltas < 15 or sueltas < 0.8 * len(partes):
+        return None
+    return round(len(texto.split()) / LISTA_PALABRAS_POR_SEGUNDO, 1)
 
 
 def recortar(y):
@@ -125,6 +139,11 @@ def main():
         st = s.get_default_settings("omnivoice")
         st.update({"prompt": texto, "audio_prompt_type": "A", "audio_guide": str(REFERENCIA), "alt_prompt": VOZ["texto"],
                    "model_mode": "spanish", "seed": semilla})
+        lista = segundos_de_lista(texto)
+        if lista:
+            # la voz llena ese tiempo («Adjust Speed to Max duration» de Wan2GP)
+            st["duration_seconds"] = lista
+            st["custom_settings"] = {**(st.get("custom_settings") or {}), "adjust_speed_to_max_duration": "Yes"}
         r = s.submit_task(st).result()
         if not r.success:
             raise RuntimeError("; ".join(e.message for e in r.errors))

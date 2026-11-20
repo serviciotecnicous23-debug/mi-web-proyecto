@@ -130,7 +130,8 @@ español fluido, «tipo documental»):
   - el Nivel 1, el 17-nov-2026: 32 lecciones, unos 175 minutos, ≈52 MB, en el repositorio;
   - el Nivel 2, el 19-nov-2026: 54 lecciones, unos 275 minutos, ≈82 MB, en el repositorio;
   - el Nivel 3, el 20-nov-2026: 60 lecciones, unos 400 minutos, en Cloudflare R2;
-  - el Nivel 4, el 20-nov-2026: 60 lecciones, unos 360 minutos, en Cloudflare R2.
+  - el Nivel 4, el 20-nov-2026: 60 lecciones, unos 360 minutos, en Cloudflare R2;
+  - el Nivel 5, el 20-nov-2026: 48 lecciones, unos 260 minutos, en Cloudflare R2.
 
   El mismo día se grabaron otra vez 14 lecciones de los Niveles 1 a 3 que leían mal «c.» («hacia el año»), un año
   («setecientos un antes de Cristo») o un libro con número sin capítulo («un Corintios» por «Primera de Corintios»).
@@ -152,7 +153,9 @@ español fluido, «tipo documental»):
   2. `npx tsx scripts/academia/narracion.ts guion <carpeta> 2` (un nivel, una materia o una lección; los versículos se
      traen de la RV1960 de la web publicada).
   3. En WSL: `bash scripts/academia/voz/narrar.sh <carpeta>` (en segundo plano; se puede cortar y seguir). Cada trozo se
-     escucha con whisper y se graba otra vez si no dice lo que debía (`<lección>.qa.json`).
+     escucha con whisper y se graba otra vez si no dice lo que debía (`<lección>.qa.json`). OmniVoice calcula cuánto
+     dura cada trozo por las letras del texto: en una lista larga de palabras sueltas (los alfabetos griego y hebreo)
+     corre y se come letras, así que `segundos_de_lista` le da el tiempo de una recitación (1,6 palabras por segundo).
   4. `npx tsx scripts/academia/narracion.ts registrar <carpeta>` copia los audios y escribe el registro.
   5. Si se graba otro nivel, actualizar el paso «Lecciones cortas» de la portada (`PASOS` en
      `client/src/pages/academia.tsx`), que dice qué lecciones se escuchan.
