@@ -176,7 +176,8 @@ export function ListaActividad({ items, enlaceAlumno, vacio = "Todavía no hay a
 
 /** El avance de un alumno en cada materia: lecciones, versículo, examen, nota y certificado. */
 /** `alGestionar`: para la Administración, el botón «Gestionar» de cada materia (components/academia/gestion.tsx). */
-export function TablaAvance({ materias, conCertificado = true, propio = false, alGestionar }: { materias: MateriaAvance[]; conCertificado?: boolean; propio?: boolean; alGestionar?: (materiaId: string) => void }) {
+/** `enlace`: para el panel, el título de cada materia lleva a su página de seguimiento. */
+export function TablaAvance({ materias, conCertificado = true, propio = false, alGestionar, enlace }: { materias: MateriaAvance[]; conCertificado?: boolean; propio?: boolean; alGestionar?: (materiaId: string) => void; enlace?: (materiaId: string) => string }) {
   if (!materias.length) return propio ? null : <p className="text-sm text-muted-foreground">Todavía no se inscribió en ninguna materia.</p>;
   return (
     <div className="overflow-x-auto relative">
@@ -196,7 +197,7 @@ export function TablaAvance({ materias, conCertificado = true, propio = false, a
           {materias.map((m) => (
             <tr key={m.id} className="border-b border-border/60 last:border-0 align-top">
               <td className="py-2.5 pr-3">
-                <span className="font-medium">{m.titulo}</span>
+                {enlace ? <Link href={enlace(m.id)} className="font-medium hover:underline">{m.titulo}</Link> : <span className="font-medium">{m.titulo}</span>}
                 <span className="block text-xs text-muted-foreground">Inscrito el {fecha(m.inscrita)}</span>
               </td>
               <td className="py-2.5 px-2">
