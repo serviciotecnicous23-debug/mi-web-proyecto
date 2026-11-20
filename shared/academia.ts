@@ -5021,6 +5021,280 @@ const VOLUNTARIADO_ALIANZAS: MateriaDef = {
   disponible: true,
 };
 
+const ROMANOS_TEOLOGIA_HISTORIA: MateriaDef = {
+  id: "biblicos-avanzados-1",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 1,
+  titulo: "Romanos: su teología y su historia",
+  resumen: "La carta a los Romanos más allá de su recorrido por secciones: su ocasión, la justicia de Dios, las palabras de la salvación, la carta en la historia de la iglesia, sus grandes debates y su lugar en la iglesia de hoy.",
+  base: "Romanos 3:23-24; Romanos 1:16-17",
+  memoria: "Romanos 3:23-24",
+  lecciones: lecciones("biblicos-avanzados-1", [
+    ["La carta y su ocasión", "Romanos 1:7; Romanos 15:23-24; Romanos 16:1-2"],
+    ["La justicia de Dios revelada", "Romanos 1:17; Habacuc 2:4; Romanos 3:21-22"],
+    ["Las palabras de la salvación", "Romanos 3:24-25; Romanos 5:10-11; Romanos 8:15"],
+    ["Romanos en la historia de la iglesia", "Romanos 13:13-14; Romanos 3:28; Romanos 8:16"],
+    ["Los grandes debates de Romanos", "Romanos 3:20; Romanos 7:24-25; Romanos 11:25-26"],
+    ["Romanos en la iglesia de hoy", "Romanos 12:1-2; Romanos 14:1; Romanos 15:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado conozca la carta a los Romanos a fondo, sin repetir el recorrido por secciones de la Exégesis de un libro: Romanos del Nivel 5: que conozca su ocasión, escrita por Pablo casi seguro desde Corinto hacia el año 57, a una iglesia de judíos y gentiles que había vivido la expulsión de los judíos de Roma bajo Claudio, para preparar su viaje a España, presentar el evangelio, unir a la iglesia y pedir oración por la ofrenda para Jerusalén; que entienda su tema, la justicia de Dios que se revela por la fe, como anunció Habacuc 2:4, en sus tres sentidos de lo que Dios es, lo que da y lo que hace; que explique las palabras de la salvación, la justificación, la redención, la propiciación, la reconciliación y la adopción, con su imagen del tribunal, el mercado, el templo, la amistad y la familia; que cuente cómo Romanos cambió la vida de Agustín en el 386, de Martín Lutero, que la enseñó en Wittenberg en 1515 y 1516, y de Juan Wesley el 24 de mayo de 1738, y que el movimiento de santidad, del que salió el pentecostalismo, tiene sus raíces en ese avivamiento; que presente con justicia los grandes debates, la lectura de la Reforma y la nueva perspectiva sobre Pablo de E. P. Sanders (1977), James Dunn y N. T. Wright, las lecturas de Romanos 7 y las de Romanos 9 a 11, distinguiendo lo que todos afirman de lo que se discute; y que lleve la carta a la vida de la iglesia de hoy, con una vida de adoración y hermanos de distintas culturas que se reciben unos a otros. La postura del ministerio sobre la elección y la perseverancia queda para su declaración de fe. Su base es la palabra de Pablo: «por cuanto todos pecaron, y están destituidos de la gloria de Dios, siendo justificados gratuitamente por su gracia, mediante la redención que es en Cristo Jesús» (Romanos 3:23-24).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la ocasión de Romanos: quién la escribió, desde dónde, a quiénes, cuándo y para qué.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar qué es la justicia de Dios que revela el evangelio, con Romanos 1:17 y 3:21-26.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar las cinco palabras de la salvación en Romanos y la imagen de cada una.", bloom: "comprender" },
+      { id: "o4", texto: "Contar cómo Romanos cambió la vida de Agustín, de Lutero y de Wesley, y la historia de la iglesia.", bloom: "comprender" },
+      { id: "o5", texto: "Analizar los grandes debates sobre Romanos y presentarlos con justicia.", bloom: "analizar" },
+      { id: "o6", texto: "Aplicar Romanos 12 a 15 a la vida de la iglesia de hoy y planear un estudio de la carta.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Romanos 3:23-24 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La ocasión de la carta y la expulsión de los judíos bajo Claudio, la justicia de Dios y Habacuc 2:4, la justificación, la redención, la propiciación, la reconciliación y la adopción, Agustín, Lutero, Wesley y Barth, la nueva perspectiva sobre Pablo, Romanos 7 y Romanos 9 a 11.",
+      ser: "Un maestro que vive de la gracia que enseña, firme en lo esencial, humilde y justo en los debates, y que recibe al hermano distinto como Cristo lo recibió.",
+      hacer: "Presentar la ocasión de Romanos en cinco minutos, explicar Romanos 1:17 a un nuevo creyente, explicar la adopción a un joven sin papá, contar la historia de Wesley en una enseñanza, guiar un debate sin dividir a la clase y planear un estudio de Romanos en ocho reuniones.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Herman Ridderbos", titulo: "El pensamiento del apóstol Pablo", editorial: "Libros Desafío" },
+        { autor: "F. F. Bruce", titulo: "Pablo: apóstol del corazón liberado", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "N. T. Wright", titulo: "El verdadero pensamiento de Pablo", editorial: "CLIE" },
+        { autor: "Justo L. González", titulo: "Historia del pensamiento cristiano hasta el siglo XXI", editorial: "CLIE" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Sacrificio y Propiciación", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=54xtkWfl840", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 8, la vida en el Espíritu", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
+const HECHOS_A_FONDO: MateriaDef = {
+  id: "biblicos-avanzados-2",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 2,
+  titulo: "Hechos: la misión de la iglesia primitiva",
+  resumen: "El libro de los Hechos a fondo: Lucas como historiador y teólogo, el plan de Hechos 1:8, Pentecostés y el Espíritu, la iglesia de Jerusalén y el concilio, los viajes de Pablo y la plantación de iglesias, y los juicios de Pablo hasta Roma.",
+  base: "Hechos 5:42; Hechos 1:8",
+  memoria: "Hechos 5:42",
+  lecciones: lecciones("biblicos-avanzados-2", [
+    ["Lucas, historiador y teólogo", "Lucas 1:1-4; Hechos 1:1-3; Hechos 16:10"],
+    ["El plan del libro: hasta lo último de la tierra", "Hechos 1:8; Hechos 6:7; Hechos 12:24"],
+    ["Pentecostés y el Espíritu en Hechos", "Hechos 2:1-4; Hechos 2:38-39; Hechos 10:44-46"],
+    ["La iglesia de Jerusalén y el concilio", "Hechos 2:42; Hechos 15:10-11; Hechos 15:28-29"],
+    ["Los viajes de Pablo y la plantación de iglesias", "Hechos 13:2-3; Hechos 14:23; Hechos 17:2-3"],
+    ["Los juicios de Pablo y la llegada a Roma", "Hechos 26:22-23; Hechos 27:23-24; Hechos 28:30-31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado conozca a fondo el libro de los Hechos, más allá de Los Evangelios y Hechos del Nivel 3: que conozca a Lucas, el médico compañero de Pablo, como historiador cuidadoso y como teólogo, con los pasajes en nosotros y los datos que confirman otras fuentes, como la carta del emperador Claudio grabada en Delfos, que fecha a Galión, procónsul de Acaya, hacia el 51 y el 52; que siga el plan de Hechos 1:8, de Jerusalén a Judea y Samaria y hasta lo último de la tierra, con los seis resúmenes del crecimiento de la palabra; que estudie Pentecostés y los relatos en que los creyentes reciben el Espíritu, en Jerusalén, Samaria, Cesarea y Éfeso, y presente con respeto la lectura de las iglesias pentecostales y la de otras iglesias evangélicas; que aprenda de la iglesia de Jerusalén y del concilio, hacia el año 49, a vivir la comunión y a resolver los conflictos con la Palabra y el Espíritu, sabiendo que la salvación es por gracia; que conozca los tres viajes de Pablo, hacia el 46 al 48, el 49 al 52 y el 53 al 57, y su método para plantar iglesias; y que siga a Pablo desde su arresto hasta Roma, hacia el 60 al 62, donde el libro termina con el evangelio predicado sin impedimento. La postura del ministerio sobre las lenguas y el bautismo en el Espíritu queda para su declaración de fe. Su base es la palabra de Lucas: «Y todos los días, en el templo y por las casas, no cesaban de enseñar y predicar a Jesucristo» (Hechos 5:42).",
+    objetivos: [
+      { id: "o1", texto: "Explicar quién escribió Hechos y cómo trabajó Lucas como historiador y como teólogo.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el plan del libro según Hechos 1:8 y sus seis resúmenes del crecimiento.", bloom: "comprender" },
+      { id: "o3", texto: "Comparar los relatos del Espíritu en Hechos y presentar con respeto las lecturas de las iglesias.", bloom: "analizar" },
+      { id: "o4", texto: "Aplicar la manera en que el concilio de Jerusalén resolvió un conflicto a un desacuerdo de la iglesia de hoy.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar el método de Pablo a la plantación de una iglesia o de un grupo nuevo.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el final abierto de Hechos y lo que enseña para la misión de hoy.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hechos 5:42 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lucas y Teófilo, los pasajes en nosotros, Galión y los politarcas, el plan de Hechos 1:8 y los seis resúmenes, Pentecostés y los relatos del Espíritu, la iglesia de Jerusalén y el concilio, los tres viajes de Pablo y su método, y los juicios de Pablo hasta Roma.",
+      ser: "Un testigo lleno del Espíritu, que ama a la iglesia, resuelve los conflictos con la Palabra, sirve en equipo y no se rinde en las pruebas.",
+      hacer: "Defender con honestidad la confianza en Hechos, hacer el plan de Hechos 1:8 de su iglesia, estudiar los relatos del Espíritu con hermanos de varias iglesias, guiar un desacuerdo como el concilio, abrir un grupo nuevo con el método de Pablo y acompañar a un hermano preso.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "F. F. Bruce", titulo: "El libro de los Hechos", editorial: "CLIE" },
+        { autor: "Justo L. González", titulo: "Comentario al evangelio de Lucas y a los Hechos de los apóstoles", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Craig S. Keener", titulo: "Entre la historia y el Espíritu", editorial: "Editorial Patmos" },
+        { autor: "William W. Menzies y Robert P. Menzies", titulo: "Espíritu y poder: fundamentos de la experiencia pentecostal", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 15, el concilio de Jerusalén", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=15" },
+    ],
+  },
+  disponible: true,
+};
+
+const DANIEL_APOCALIPSIS: MateriaDef = {
+  id: "biblicos-avanzados-3",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 3,
+  titulo: "Daniel y Apocalipsis",
+  resumen: "Daniel y el Apocalipsis a fondo: la literatura apocalíptica, Daniel fiel en Babilonia, sus visiones, Cristo y las siete iglesias, las maneras de leer el Apocalipsis y la esperanza de la nueva creación.",
+  base: "Daniel 7:14; Apocalipsis 21:3-4",
+  memoria: "Daniel 7:14",
+  lecciones: lecciones("biblicos-avanzados-3", [
+    ["La literatura apocalíptica", "Daniel 7:15-16; Apocalipsis 1:1-3; Apocalipsis 1:19-20"],
+    ["Daniel: fieles en Babilonia", "Daniel 1:8; Daniel 3:17-18; Daniel 6:10"],
+    ["Las visiones de Daniel: Dios gobierna la historia", "Daniel 2:44; Daniel 7:13-14; Daniel 12:2-3"],
+    ["Apocalipsis: Cristo y sus siete iglesias", "Apocalipsis 1:17-18; Apocalipsis 2:10; Apocalipsis 3:20"],
+    ["Cómo se ha leído el Apocalipsis", "Apocalipsis 4:11; Apocalipsis 5:9-10; Apocalipsis 20:4"],
+    ["La esperanza final: la nueva creación", "Apocalipsis 19:11; Apocalipsis 21:3-4; Apocalipsis 22:20"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado lea a fondo Daniel y el Apocalipsis, más allá de su panorama en el Nivel 4 y de la escatología de Teología sistemática IV: que aprenda a leer la literatura apocalíptica, dejando que la Biblia explique sus símbolos y sin poner fechas, porque del día y la hora nadie sabe; que conozca a Daniel, llevado a Babilonia hacia el 605 antes de Cristo, y a sus amigos, que sirvieron en un imperio pagano sin negociar su fe, con las dos posturas sobre la fecha del libro, del siglo VI antes de Cristo o del 167 al 164 antes de Cristo, y su parte en arameo; que entienda las visiones de Daniel, los cuatro reinos, las setenta semanas y el hijo de hombre que recibe un reino eterno, el título que Jesús tomó para sí; que escuche a Cristo en medio de las siete iglesias de Asia, en un libro que la mayoría fecha hacia el año 95, bajo Domiciano, y otros antes del 70; que conozca las cuatro maneras de leer el Apocalipsis, la preterista, la historicista, la futurista y la idealista, y las posturas sobre el milenio y el rapto, presentadas sin escoger entre ellas, porque la postura del ministerio la dirá su declaración de fe; y que viva con la esperanza de la nueva creación, donde Dios enjugará toda lágrima. Su base es la palabra de Daniel: «su dominio es dominio eterno, que nunca pasará, y su reino uno que no será destruido» (Daniel 7:14).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la literatura apocalíptica y cómo se interpretan sus símbolos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar el ejemplo de Daniel y sus amigos a la vida en una cultura que no conoce a Dios.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar el mensaje de las visiones de Daniel y comparar las lecturas de los cuatro reinos y de las setenta semanas.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar el patrón de las cartas a las siete iglesias y aplicar una de ellas a una iglesia de hoy.", bloom: "aplicar" },
+      { id: "o5", texto: "Comparar las cuatro maneras de leer el Apocalipsis y las posturas sobre el milenio y el rapto.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar cómo la esperanza de la nueva creación transforma la vida, la adoración y la misión.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Daniel 7:14 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La literatura apocalíptica y sus símbolos, Daniel en Babilonia y las posturas sobre su fecha, los cuatro reinos, las setenta semanas y el hijo de hombre, las siete iglesias de Asia, las cuatro escuelas del Apocalipsis, las posturas sobre el milenio y el rapto, y la nueva creación.",
+      ser: "Un creyente fiel en medio de una cultura que no conoce a Dios, que espera a Cristo con esperanza y sin miedo, y que es humilde ante las posturas que no comparte.",
+      hacer: "Interpretar un símbolo con la misma Biblia, aconsejar a un joven presionado en su trabajo, enseñar Daniel 7 sin perderse en cálculos, aplicar una de las siete cartas a su iglesia, presentar las posturas sobre el milenio sin dividir y consolar a una familia con Apocalipsis 21.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Justo L. González y Catherine Gunsalus González", titulo: "Cómo leer el Apocalipsis", editorial: "CLIE" },
+        { autor: "Evis L. Carballosa", titulo: "Daniel y el reino mesiánico", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "C. Marvin Pate (ed.)", titulo: "Cuatro puntos de vista sobre el Apocalipsis", editorial: "Vida" },
+        { autor: "Darrell L. Bock (ed.)", titulo: "Tres perspectivas sobre el milenio y el más allá", editorial: "Publicaciones Faro de Gracia" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Daniel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yBO4FjCebrI", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=PgV57gK-Xow", minutos: 15 },
+      { tipo: "video", titulo: "Resumen del libro de Apocalipsis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=DMXA-GERRzY", minutos: 15 },
+      { tipo: "video", titulo: "Cielo y Tierra", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=CJAbz0LBib4", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Apocalipsis 21, la nueva creación", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Apocalipsis&cap=21" },
+    ],
+  },
+  disponible: true,
+};
+
+const GEOGRAFIA_HISTORIA_BIBLICA: MateriaDef = {
+  id: "biblicos-avanzados-4",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  orden: 4,
+  titulo: "Geografía e historia bíblica",
+  resumen: "La tierra y la historia de la Biblia: la geografía de la tierra de Israel, de los patriarcas al reino, el reino dividido y los imperios, el exilio y los persas, el tiempo entre los testamentos y el mundo romano de Jesús y de Pablo.",
+  base: "Hechos 17:26; Deuteronomio 11:11-12",
+  memoria: "Hechos 17:26",
+  lecciones: lecciones("biblicos-avanzados-4", [
+    ["La tierra de la Biblia", "Deuteronomio 8:7-9; Deuteronomio 11:10-12; Salmos 125:2"],
+    ["De los patriarcas al reino de David", "Génesis 12:1; Éxodo 12:40-41; 1 Reyes 6:1"],
+    ["El reino dividido y los imperios", "1 Reyes 12:16; 2 Reyes 17:6; 2 Reyes 25:8-9"],
+    ["El exilio, el regreso y los persas", "Jeremías 29:10; Esdras 1:1-2; Nehemías 2:5"],
+    ["Entre los dos testamentos", "Daniel 8:21-22; Juan 10:22-23; Gálatas 4:4"],
+    ["El mundo de Jesús y de Pablo", "Lucas 2:1; Lucas 3:1; Hechos 17:26"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante conozca la tierra y la historia de la Biblia para leerla en su lugar y en su tiempo: que describa la tierra de Israel, una franja pequeña entre el mar y el desierto, con la llanura costera, la Sefela, los montes centrales, el valle del Jordán, con el mar Muerto a unos 440 metros bajo el nivel del mar, y Transjordania, que dependía de la lluvia que Dios da; que siga la historia de los patriarcas al reino, con las dos fechas que se proponen para el éxodo, hacia el 1446 o hacia el 1270 al 1250 antes de Cristo, y el reino de David y de Salomón; que ubique el reino dividido, hacia el 931 o 930, la caída de Samaria ante Asiria en el 722 y la de Jerusalén ante Babilonia en el 587 o 586, y a los profetas en su tiempo; que conozca el regreso con Ciro de Persia, que tomó Babilonia en el 539, el templo terminado hacia el 515 y la obra de Esdras y de Nehemías; que entienda el tiempo entre los testamentos, de Alejandro, en el 333, a Herodes, con la Septuaginta, los macabeos y la fiesta de la dedicación; y que ubique a Jesús y a Pablo en el mundo romano de Augusto, Tiberio y Pilato. Las fechas antiguas son aproximadas, y se dicen con honestidad. Su base es la palabra de Pablo en Atenas: «Y de una sangre ha hecho todo el linaje de los hombres, para que habiten sobre toda la faz de la tierra; y les ha prefijado el orden de los tiempos, y los límites de su habitación» (Hechos 17:26).",
+    objetivos: [
+      { id: "o1", texto: "Describir las regiones, el clima y los caminos de la tierra de Israel.", bloom: "comprender" },
+      { id: "o2", texto: "Ubicar en el tiempo a los patriarcas, el éxodo y el reino, y comparar las fechas que se proponen para el éxodo.", bloom: "analizar" },
+      { id: "o3", texto: "Explicar el reino dividido y las caídas de Samaria y de Jerusalén, y ubicar a los profetas en su tiempo.", bloom: "comprender" },
+      { id: "o4", texto: "Explicar el regreso del exilio con los persas y la obra de Zorobabel, Esdras y Nehemías.", bloom: "comprender" },
+      { id: "o5", texto: "Explicar cómo el tiempo entre los testamentos preparó la venida de Cristo.", bloom: "analizar" },
+      { id: "o6", texto: "Ubicar el ministerio de Jesús y los viajes de Pablo en el mundo romano.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 17:26 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las cinco franjas de la tierra, las lluvias y los caminos, los patriarcas, el éxodo y el reino, los dos reinos, Asiria y Babilonia, el regreso con los persas, el tiempo entre los testamentos y el mundo romano.",
+      ser: "Un lector paciente y honesto, que ubica cada pasaje en su lugar y en su tiempo, y que confía en el Dios que gobierna la historia.",
+      hacer: "Usar un mapa en cada clase, hacer una línea del tiempo de Abraham a Salomón, ubicar un libro profético, animar a una iglesia que reconstruye, explicar el silencio entre Malaquías y Mateo y ubicar el ministerio de Jesús con Lucas 3:1.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Barry J. Beitzel", titulo: "Atlas bíblico de Tyndale", editorial: "Tyndale" },
+        { autor: "F. F. Bruce", titulo: "Israel y las naciones: la historia de Israel desde el éxodo hasta la destrucción del segundo templo", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "William Sanford LaSor, David Allan Hubbard y Frederic William Bush", titulo: "Panorama del Antiguo Testamento: mensaje, forma y trasfondo del Antiguo Testamento", editorial: "Nueva Creación" },
+        { autor: "D. S. Russell", titulo: "El período intertestamentario", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Josué", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=49ggVrdBN_Y", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de 1 y 2 Reyes", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8V-TefJJc0g", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías: un líder que ora y trabaja", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Esdras 1, el decreto de Ciro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Esdras&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
+const TRASFONDO_ARQUEOLOGIA: MateriaDef = {
+  id: "biblicos-avanzados-5",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  orden: 5,
+  titulo: "Trasfondo y arqueología bíblica",
+  resumen: "El mundo de la Biblia a la luz de la arqueología: qué es la arqueología y sus límites, los hallazgos del Antiguo y del Nuevo Testamento, cómo llegó a nosotros el texto, la vida diaria y el mundo religioso de los judíos.",
+  base: "Isaías 40:8; Lucas 1:3-4",
+  memoria: "Isaías 40:8",
+  lecciones: lecciones("biblicos-avanzados-5", [
+    ["La arqueología y la Biblia", "Lucas 1:3-4; 1 Tesalonicenses 5:21; Hebreos 11:1"],
+    ["Hallazgos del Antiguo Testamento", "2 Reyes 3:4-5; 2 Reyes 20:20; Números 6:24-26"],
+    ["Los manuscritos y el texto de la Biblia", "Isaías 40:8; Jeremías 36:27-28; Lucas 4:17"],
+    ["La vida diaria en tiempos bíblicos", "Lucas 2:7; Marcos 2:4; Juan 2:6"],
+    ["El mundo religioso de los judíos", "Lucas 4:16; Hechos 23:8; Marcos 7:3-4"],
+    ["Hallazgos del Nuevo Testamento", "Juan 5:2; Juan 9:7; Mateo 26:57"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante conozca el trasfondo de la Biblia y use la arqueología con honestidad: que sepa cómo trabaja la arqueología, con el tel, los estratos, la cerámica y el carbono 14, y que ilumina la Biblia pero no prueba la fe; que conozca los hallazgos del Antiguo Testamento, como las estelas de Merneptah, de Mesa y de Tel Dan, la inscripción de Siloé, los prismas de Senaquerib, el Cilindro de Ciro y los amuletos de Ketef Hinom, diciendo lo que muestra cada uno y su límite; que entienda cómo llegó a nosotros el texto, con los manuscritos del mar Muerto, hallados en 1947, el Gran Rollo de Isaías, los códices y el papiro P52, y responda con datos a la idea de que la Biblia se cambió; que conozca la vida diaria de los tiempos bíblicos y el mundo religioso de los judíos, con el templo, la sinagoga, los fariseos, los saduceos, los esenios y los zelotes; y que conozca los hallazgos del Nuevo Testamento, como la piedra de Pilato, el osario de Caifás y los estanques de Betesda y de Siloé, con Cristo siempre en el centro. Examina las noticias de hallazgos y evita las falsificaciones. Su base es la palabra del profeta: «Sécase la hierba, marchítase la flor; mas la palabra del Dios nuestro permanece para siempre» (Isaías 40:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo trabaja la arqueología y qué puede y qué no puede mostrar.", bloom: "comprender" },
+      { id: "o2", texto: "Describir los principales hallazgos del Antiguo Testamento, con lo que muestra cada uno y su límite.", bloom: "comprender" },
+      { id: "o3", texto: "Explicar cómo llegó a nosotros el texto de la Biblia y responder a la idea de que se cambió.", bloom: "aplicar" },
+      { id: "o4", texto: "Explicar un pasaje a la luz de las costumbres de la vida diaria de su tiempo.", bloom: "aplicar" },
+      { id: "o5", texto: "Distinguir a los grupos judíos del tiempo de Jesús y explicar sus encuentros con él.", bloom: "analizar" },
+      { id: "o6", texto: "Evaluar el uso de un hallazgo del Nuevo Testamento en una enseñanza.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Isaías 40:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El tel, los estratos, la cerámica y el carbono 14; las estelas, Siloé, los prismas, el Cilindro de Ciro y Ketef Hinom; los manuscritos del mar Muerto y los códices; la vida diaria; el templo, la sinagoga y los grupos judíos; y los hallazgos del Nuevo Testamento.",
+      ser: "Un maestro que ama la verdad, examina todo antes de repetirlo, no exagera y pone siempre a Cristo en el centro.",
+      hacer: "Examinar la noticia de un hallazgo, enseñar un pasaje con un hallazgo, responder a la idea de que la Biblia se cambió, explicar una parábola con las costumbres de su tiempo, presentar a los grupos judíos sin caricaturas y preparar una exposición de arqueología.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Ralph Gower", titulo: "Nuevo manual de usos y costumbres de los tiempos bíblicos", editorial: "Portavoz" },
+        { autor: "Randall Price", titulo: "Las piedras claman", editorial: "Spanish House" },
+      ],
+      complementaria: [
+        { autor: "F. F. Bruce y Florentino García Martínez", titulo: "Los manuscritos del mar Muerto: Qumrán en el siglo XXI", editorial: "CLIE" },
+        { autor: "Craig S. Keener", titulo: "Comentario del contexto cultural de la Biblia: Nuevo Testamento", editorial: "Mundo Hispano" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Isaías (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=9lWr9EZchWg", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "Por qué el templo es tan importante en la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=t56W2zp823Q", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Jeremías 36, el rollo que el rey quemó", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Jeremias&cap=36" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5947,7 +6221,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
-    ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
+    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, DANIEL_APOCALIPSIS, GEOGRAFIA_HISTORIA_BIBLICA, TRASFONDO_ARQUEOLOGIA,
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,

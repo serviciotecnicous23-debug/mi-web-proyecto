@@ -27,7 +27,7 @@ test("el trabajo final de cada especialidad: de tipo «trabajo», bien formado y
 });
 
 test("Evangelismo y misiones y Alabanza y adoración tienen su trabajo final: las demás todavía no tienen sus materias", () => {
-  for (const e of ESPECIALIDADES) assert.equal(tieneTrabajo(e), ["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion", "obra-social"].includes(e.id), e.id);
+  for (const e of ESPECIALIDADES) assert.equal(tieneTrabajo(e), ["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion", "obra-social", "biblicos-avanzados"].includes(e.id), e.id);
 });
 
 test("el trabajo final tiene su contexto para la revisión: una sola escrita que vale toda la nota", () => {
