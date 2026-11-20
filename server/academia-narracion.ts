@@ -36,7 +36,7 @@ function grabacionQueVale(leccionId: string) {
 
 export function narracionDe(leccionId: string): NarracionVista | null {
   const n = grabacionQueVale(leccionId);
-  return n ? { url: `${BASE}/${n.archivo}`, segundos: n.segundos, marcas: n.marcas } : null;
+  return n ? { url: n.url ?? `${BASE}/${n.archivo}`, segundos: n.segundos, marcas: n.marcas } : null;
 }
 
 /** Los minutos de la narración de una lección (para la lista de la materia), o null si no tiene. */

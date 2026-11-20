@@ -56,6 +56,16 @@ test("el texto dicho: paréntesis, números, años, siglos y abreviaturas", () =
   assert.equal(hablado("llama al 911 o al 988"), "llama al nueve uno uno o al nueve ocho ocho");
   assert.equal(hablado("Id y haced discípulos"), "Id, y haced discípulos");
   assert.equal(hablado("Siglos I al XV: la Biblia se copia a mano"), "Siglos uno al quince: la Biblia se copia a mano");
+  assert.equal(hablado("c. 48: Gálatas"), "hacia el año cuarenta y ocho: Gálatas");
+  assert.equal(hablado("c. siglo II a. C.: se copia"), "hacia el siglo dos antes de Cristo: se copia");
+  assert.equal(hablado("c. siglos VII al X: los masoretas"), "hacia los siglos siete al diez: los masoretas");
+  assert.equal(hablado("c. 6-4 a. C.: nace Jesús"), "hacia el año seis a cuatro antes de Cristo: nace Jesús");
+  assert.equal(hablado("en Teología sistemática IV y en Homilética I"), "en Teología sistemática cuatro y en Homilética uno");
+  assert.equal(hablado("Bajo Jeroboam II, Israel prosperó"), "Bajo Jeroboam segundo, Israel prosperó");
+  assert.equal(hablado("Historia de la iglesia II"), "Historia de la iglesia dos");
+  assert.equal(hablado("El papiro P52 y la palabra (Strong G4697)"), "El papiro pe cincuenta y dos y la palabra, Strong ge cuatro mil seiscientos noventa y siete");
+  assert.equal(hablado("La ley RLUIPA, 42 U.S.C. 2000cc, protege"), "La ley RLUIPA, cuarenta y dos del Código de los Estados Unidos, sección dos mil ce ce, protege");
+  assert.equal(hablado("en reportfraud.ftc.gov y al FBI, en ic3.gov."), "en reportfraud punto efe te ce punto gov y al FBI, en i ce tres punto gov.");
   assert.equal(hablado("el letrero decía AL DIOS NO CONOCIDO y la ONU"), "el letrero decía Al Dios No Conocido y la ONU");
   assert.equal(hablado("cierra el Antiguo Testamento. (Malaquías 1:1)"), "cierra el Antiguo Testamento. Malaquías uno, uno");
   assert.equal(hablado("«Dios es amor» —dice Juan— y basta"), "Dios es amor, dice Juan, y basta");

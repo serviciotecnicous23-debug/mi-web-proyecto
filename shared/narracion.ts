@@ -44,6 +44,11 @@ export type LeccionNarrable = {
 /** La grabación de una lección: el archivo, la huella con que se hizo, cuánto dura y dónde empieza cada lugar. */
 export type Narracion = {
   archivo: string;
+  /**
+   * Dónde está el audio, si no está en la web (por ejemplo en Cloudflare R2: «https://pub-….r2.dev/academia/…»). Sin
+   * ella se sirve de client/public/voz/academia/ (o de NARRACION_URL_BASE).
+   */
+  url?: string;
   huella: string;
   segundos: number;
   voz: string;
@@ -110,6 +115,13 @@ function deRomano(r: string): number | null {
 
 /** Dos cifras de un teléfono: «54» → «cincuenta y cuatro»; «00» → «cero cero». */
 const porCifras = (g: string) => (g.startsWith("0") ? g.split("").map((d) => enPalabras(Number(d))).join(" ") : enPalabras(Number(g)));
+
+/**
+ * Las palabras tras las que un número romano es el de una materia o un curso y se dice con el cardinal
+ * («Teología sistemática IV» → «cuatro»). Tras otro nombre propio es un rey o un papa y va con el ordinal
+ * («Jeroboam II» → «segundo»).
+ */
+const ANTES_DE_CURSO = new Set(["sistemática", "iglesia", "cristiano", "homilética", "liderazgo", "griego", "hebreo", "tomo", "volumen", "parte", "nivel", "concilio"]);
 
 const ORDINALES_M = ["", "primero", "segundo", "tercero", "cuarto", "quinto", "sexto", "séptimo", "octavo", "noveno", "décimo"];
 
@@ -218,7 +230,17 @@ const ABREVIATURAS: [RegExp, string][] = [
 const PRONUNCIACION: [RegExp, string][] = [[/\bId y haced\b/g, "Id, y haced"]];
 
 /** Las siglas de verdad, que se dicen letra por letra: no se pasan a minúsculas. */
-const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM"]);
+const SIGLAS = new Set(["ONU", "VIH", "ADN", "ARN", "OMS", "FBI", "ICE", "USA", "CCLI", "COMIBAM", "ID", "CDC", "FTC", "RLUIPA"]);
+
+/** El nombre de cada letra, para decir «P52» («pe cincuenta y dos») o «ic3» («i ce tres»). */
+const LETRAS: Record<string, string> = {
+  a: "a", b: "be", c: "ce", d: "de", e: "e", f: "efe", g: "ge", h: "hache", i: "i", j: "jota", k: "ka", l: "ele", m: "eme",
+  n: "ene", ñ: "eñe", o: "o", p: "pe", q: "cu", r: "erre", s: "ese", t: "te", u: "u", v: "uve", w: "doble uve", x: "equis",
+  y: "ye", z: "zeta",
+};
+const deletreo = (s: string) => s.toLowerCase().split("").map((c) => (/\d/.test(c) ? enPalabras(Number(c)) : LETRAS[c] ?? c)).join(" ");
+/** Una parte de una dirección web: la palabra tal cual, o deletreada si es una sigla («ftc», «ic3»). */
+const parteDeDireccion = (p: string) => (/\d/.test(p) || !/[aeiouáéíóú]/i.test(p) || p.length <= 3 && p !== "gov" ? deletreo(p) : p);
 /**
  * Las palabras en mayúsculas sostenidas («YO SOY EL QUE SOY», «AL DIOS NO CONOCIDO» de la RV1960) se dicen como
  * palabras y no como siglas. Quedan igual los números romanos y las siglas de `SIGLAS`.
@@ -241,6 +263,10 @@ export function hablado(texto: string): string {
   let t = ` ${texto} `;
   // los signos que no se leen
   t = t.replace(/[«»“”"]/g, "").replace(/[‘’]/g, "'").replace(/\s*[—–]\s*(?=\D)/g, ", ").replace(/\s*\/\s*/g, " o ").replace(/&/g, " y ");
+  // «c. 48 d. C.» y «ca. 1000 a. C.» (circa): «hacia el año…»
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=siglos\b)/giu, "hacia los ");
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=siglo\b)/giu, "hacia el ");
+  t = t.replace(/(?<!\p{L})c(?:a)?\.\s*(?=\d)/gu, "hacia el año ");
   for (const [p, r] of ABREVIATURAS) t = t.replace(p, r);
   for (const [p, r] of PRONUNCIACION) t = t.replace(p, r);
   // las citas, antes que los demás números; después, las que siguen sin el libro («Éxodo 12:14; 13:3»)
@@ -259,6 +285,13 @@ export function hablado(texto: string): string {
     const n = deRomano(r);
     return n ? `${s} ${enPalabras(n)}` : m;
   });
+  // los demás números romanos (I a X): de una materia o de un rey
+  t = t.replace(/(?<!\p{L})(\p{L}+)\s+(I{1,3}|IV|V|VI{1,3}|IX|X)(?!\p{L})/gu, (m, antes: string, r: string) => {
+    const n = deRomano(r);
+    if (!n) return m;
+    const rey = /^\p{Lu}/u.test(antes) && !ANTES_DE_CURSO.has(antes.toLowerCase());
+    return `${antes} ${rey && ORDINALES_M[n] ? ORDINALES_M[n] : enPalabras(n)}`;
+  });
   t = sinMayusculas(t);
   // ordinales: 1.º, 2.ª, 3.er
   t = t.replace(/\b(\d{1,2})\.?\s?(º|ª|er|°)(?=\s|[.,;:])/g, (m, n, s) => {
@@ -269,6 +302,13 @@ export function hablado(texto: string): string {
     if (s === "er") return base.replace(/ero$/, "er");
     return base;
   });
+  // las direcciones web («reportfraud.ftc.gov», «ic3.gov»)
+  t = t.replace(/\b((?:[a-z0-9-]+\.)+(?:gov|org|com|net|edu))\b/g, (d) => d.split(".").map(parteDeDireccion).join(" punto "));
+  // las leyes de Estados Unidos («42 U.S.C. 2000cc»)
+  t = t.replace(/\bU\.\s?S\.\s?C\.\s?/g, "del Código de los Estados Unidos, sección ");
+  // una letra con número («P52», «G4697» de Strong) y un número con letras («2000cc»)
+  t = t.replace(/\b([A-Z])(\d{1,5})\b/g, (_m, l: string, n: string) => `${LETRAS[l.toLowerCase()]} ${enPalabras(Number(n))}`);
+  t = t.replace(/\b(\d{1,5})([a-z]{1,3})\b/g, (m, n: string, l: string) => (/^(er|o|a|os|as|do|da|ro|ra|to|ta|vo|va|no|na|mo|ma)$/.test(l) ? m : `${enPalabras(Number(n))} ${deletreo(l)}`));
   // los teléfonos de emergencia y de ayuda se dicen cifra por cifra; los largos, por grupos
   t = t.replace(/\b(911|988)\b/g, (n) => n.split("").map((d) => enPalabras(Number(d))).join(" "));
   t = t.replace(/\b\d{1,3}(?:-\d{3,4}){2,}\b/g, (tel) =>

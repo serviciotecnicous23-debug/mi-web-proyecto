@@ -53,7 +53,16 @@ def trozos(texto):
             actual = f"{actual} {p}".strip()
     if actual:
         out.append(actual)
-    return out
+    # un trozo sin palabras de verdad («c.», «—») no se graba solo: se junta con el anterior (o con el siguiente)
+    juntos = []
+    for t in out:
+        if len(re.findall(r"[^\W\d_]{2,}", t)) < 2 and juntos:
+            juntos[-1] = f"{juntos[-1]} {t}"
+        elif juntos and len(re.findall(r"[^\W\d_]{2,}", juntos[-1])) < 2:
+            juntos[-1] = f"{juntos[-1]} {t}"
+        else:
+            juntos.append(t)
+    return juntos
 
 
 def palabras(t):
@@ -120,7 +129,11 @@ def main():
         if not r.success:
             raise RuntimeError("; ".join(e.message for e in r.errors))
         f = [x for x in r.generated_files if x.endswith((".wav", ".flac", ".mp3"))] or r.generated_files
+        if not f:
+            raise RuntimeError("la voz no devolvió audio")
         y, _ = librosa.load(f[0], sr=SR, mono=True)
+        if len(y) < SR * 0.2:
+            raise RuntimeError("audio vacío")
         return recortar(y)
 
     def escuchar(y):
@@ -128,7 +141,7 @@ def main():
                             language="es", temperature=0, condition_on_previous_text=False)
         return r["text"].strip()
 
-    for d in pendientes:
+    def grabar(d):
         t0 = time.time()
         lid = d["leccionId"]
         audio, marcas, qa = [np.zeros(int(0.25 * SR), dtype=np.float32)], [], []
@@ -139,7 +152,11 @@ def main():
             for k, texto in enumerate(ts):
                 mejor = None
                 for intento in range(INTENTOS_CORTOS if len(texto.split()) <= 6 else INTENTOS):
-                    y = decir(texto, 7 + intento * 101)
+                    try:
+                        y = decir(texto, 7 + intento * 101)
+                    except RuntimeError as e:
+                        print(f"[aviso] {lid} {parte['lugar']}: {e} (intento {intento + 1})", flush=True)
+                        continue
                     oido_txt = escuchar(y)
                     parecido = SequenceMatcher(None, palabras(texto), palabras(oido_txt), autojunk=False).ratio()
                     ritmo = len(palabras(texto)) / max(0.1, len(y) / SR)
@@ -148,6 +165,11 @@ def main():
                         mejor = (nota, y, parecido, oido_txt, intento)
                     if nota >= PARECIDO_MINIMO:
                         break
+                if mejor is None:
+                    # ningún intento dio audio: se salta ese trozo y se avisa (la lección sigue)
+                    print(f"[revisar] {lid} {parte['lugar']}: sin audio «{texto[:60]}»", flush=True)
+                    qa.append({"lugar": parte["lugar"], "texto": texto, "oido": "", "parecido": 0, "intentos": 0})
+                    continue
                 nota, y, parecido, oido_txt, intento = mejor
                 qa.append({"lugar": parte["lugar"], "texto": texto, "oido": oido_txt, "parecido": round(parecido, 3), "intentos": intento + 1})
                 if parecido < PARECIDO_MINIMO:
@@ -178,6 +200,12 @@ def main():
         flojos = [q for q in qa if q["parecido"] < PARECIDO_MINIMO]
         print(json.dumps({"leccion": lid, "segundos": segundos, "trozos": len(qa), "repetidos": sum(q["intentos"] > 1 for q in qa),
                           "flojos": len(flojos), "peor": min(q["parecido"] for q in qa), "tardo_s": round(time.time() - t0)}, ensure_ascii=False), flush=True)
+
+    for d in pendientes:
+        try:
+            grabar(d)
+        except Exception as e:  # una lección que falla no detiene las demás
+            print(f"[error] {d['leccionId']}: {e}", flush=True)
 
 
 if __name__ == "__main__":
