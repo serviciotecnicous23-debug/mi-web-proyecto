@@ -210,7 +210,7 @@ export const BANCO_BIBLICOS_AVANZADOS_1: BancoMateria = {
       ideas: [
         { id: "escuchar", peso: 25, texto: "Escucharlo con paciencia y sin juzgarlo.", formas: ["escuch*", "sin juzgar*", "con respeto", "con paciencia"] },
         { id: "gracia", peso: 25, negativa: true, texto: "La salvación es por gracia, por la fe, no por los años de servicio.", formas: ["por gracia", "por la fe", "por fe", "sin las obras", "justificad*", "no depende de"] },
-        { id: "espiritu", peso: 25, texto: "El Espíritu da testimonio de que somos hijos de Dios.", formas: ["da testimonio", "testimonio", "espiritu de adopcion", "abba", "8:16"] },
+        { id: "espiritu", peso: 25, texto: "El Espíritu da testimonio de que somos hijos de Dios.", formas: ["da testimonio", "testimonio", "espiritu de adopcion", "abba", "romanos 8 16"] },
         { id: "historia", peso: 25, texto: "La historia de Wesley o de Lutero, contada con sus datos ciertos.", formas: ["wesley", "aldersgate", "lutero", "agustin", "extranamente ardiente", "1738"] },
       ],
       basta: 85,
@@ -245,7 +245,7 @@ export const BANCO_BIBLICOS_AVANZADOS_1: BancoMateria = {
     pregunta: "Escribe cómo enseñarías la carta a los Romanos en tu iglesia durante el próximo año, usando lo aprendido en esta materia, con citas bíblicas.",
     ideas: [
       { id: "ocasion", peso: 15, texto: "La ocasión de la carta: Pablo, Roma, judíos y gentiles, España.", formas: ["espana", "judios y gentiles", "corinto", "febe", "la ocasion", "por que se escribio"] },
-      { id: "justicia", peso: 20, texto: "La justicia de Dios que se recibe por la fe.", formas: ["justicia de dios", "por la fe", "por fe", "habacuc", "1:17"] },
+      { id: "justicia", peso: 20, texto: "La justicia de Dios que se recibe por la fe.", formas: ["justicia de dios", "por la fe", "por fe", "habacuc", "romanos 1 17"] },
       { id: "palabras", peso: 15, texto: "Las palabras de la salvación.", formas: ["justificacion", "redencion", "propiciacion", "reconciliacion", "adopcion"] },
       { id: "historia", peso: 15, texto: "Romanos en la historia: Agustín, Lutero y Wesley.", formas: ["agustin", "lutero", "wesley", "la reforma", "aldersgate"] },
       { id: "debates", peso: 15, texto: "Los debates, presentados con respeto.", formas: ["debate*", "nueva perspectiva", "posturas", "con respeto", "romanos 7", "todo israel"] },

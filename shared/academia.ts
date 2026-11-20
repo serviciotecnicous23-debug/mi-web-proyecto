@@ -5076,6 +5076,61 @@ const ROMANOS_TEOLOGIA_HISTORIA: MateriaDef = {
   disponible: true,
 };
 
+const HECHOS_A_FONDO: MateriaDef = {
+  id: "biblicos-avanzados-2",
+  nivel: null,
+  especialidad: "biblicos-avanzados",
+  avanzada: true,
+  orden: 2,
+  titulo: "Hechos: la misión de la iglesia primitiva",
+  resumen: "El libro de los Hechos a fondo: Lucas como historiador y teólogo, el plan de Hechos 1:8, Pentecostés y el Espíritu, la iglesia de Jerusalén y el concilio, los viajes de Pablo y la plantación de iglesias, y los juicios de Pablo hasta Roma.",
+  base: "Hechos 5:42; Hechos 1:8",
+  memoria: "Hechos 5:42",
+  lecciones: lecciones("biblicos-avanzados-2", [
+    ["Lucas, historiador y teólogo", "Lucas 1:1-4; Hechos 1:1-3; Hechos 16:10"],
+    ["El plan del libro: hasta lo último de la tierra", "Hechos 1:8; Hechos 6:7; Hechos 12:24"],
+    ["Pentecostés y el Espíritu en Hechos", "Hechos 2:1-4; Hechos 2:38-39; Hechos 10:44-46"],
+    ["La iglesia de Jerusalén y el concilio", "Hechos 2:42; Hechos 15:10-11; Hechos 15:28-29"],
+    ["Los viajes de Pablo y la plantación de iglesias", "Hechos 13:2-3; Hechos 14:23; Hechos 17:2-3"],
+    ["Los juicios de Pablo y la llegada a Roma", "Hechos 26:22-23; Hechos 27:23-24; Hechos 28:30-31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el estudiante avanzado conozca a fondo el libro de los Hechos, más allá de Los Evangelios y Hechos del Nivel 3: que conozca a Lucas, el médico compañero de Pablo, como historiador cuidadoso y como teólogo, con los pasajes en nosotros y los datos que confirman otras fuentes, como la carta del emperador Claudio grabada en Delfos, que fecha a Galión, procónsul de Acaya, hacia el 51 y el 52; que siga el plan de Hechos 1:8, de Jerusalén a Judea y Samaria y hasta lo último de la tierra, con los seis resúmenes del crecimiento de la palabra; que estudie Pentecostés y los relatos en que los creyentes reciben el Espíritu, en Jerusalén, Samaria, Cesarea y Éfeso, y presente con respeto la lectura de las iglesias pentecostales y la de otras iglesias evangélicas; que aprenda de la iglesia de Jerusalén y del concilio, hacia el año 49, a vivir la comunión y a resolver los conflictos con la Palabra y el Espíritu, sabiendo que la salvación es por gracia; que conozca los tres viajes de Pablo, hacia el 46 al 48, el 49 al 52 y el 53 al 57, y su método para plantar iglesias; y que siga a Pablo desde su arresto hasta Roma, hacia el 60 al 62, donde el libro termina con el evangelio predicado sin impedimento. La postura del ministerio sobre las lenguas y el bautismo en el Espíritu queda para su declaración de fe. Su base es la palabra de Lucas: «Y todos los días, en el templo y por las casas, no cesaban de enseñar y predicar a Jesucristo» (Hechos 5:42).",
+    objetivos: [
+      { id: "o1", texto: "Explicar quién escribió Hechos y cómo trabajó Lucas como historiador y como teólogo.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el plan del libro según Hechos 1:8 y sus seis resúmenes del crecimiento.", bloom: "comprender" },
+      { id: "o3", texto: "Comparar los relatos del Espíritu en Hechos y presentar con respeto las lecturas de las iglesias.", bloom: "analizar" },
+      { id: "o4", texto: "Aplicar la manera en que el concilio de Jerusalén resolvió un conflicto a un desacuerdo de la iglesia de hoy.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar el método de Pablo a la plantación de una iglesia o de un grupo nuevo.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el final abierto de Hechos y lo que enseña para la misión de hoy.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hechos 5:42 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Lucas y Teófilo, los pasajes en nosotros, Galión y los politarcas, el plan de Hechos 1:8 y los seis resúmenes, Pentecostés y los relatos del Espíritu, la iglesia de Jerusalén y el concilio, los tres viajes de Pablo y su método, y los juicios de Pablo hasta Roma.",
+      ser: "Un testigo lleno del Espíritu, que ama a la iglesia, resuelve los conflictos con la Palabra, sirve en equipo y no se rinde en las pruebas.",
+      hacer: "Defender con honestidad la confianza en Hechos, hacer el plan de Hechos 1:8 de su iglesia, estudiar los relatos del Espíritu con hermanos de varias iglesias, guiar un desacuerdo como el concilio, abrir un grupo nuevo con el método de Pablo y acompañar a un hermano preso.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "F. F. Bruce", titulo: "El libro de los Hechos", editorial: "CLIE" },
+        { autor: "Justo L. González", titulo: "Comentario al evangelio de Lucas y a los Hechos de los apóstoles", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Craig S. Keener", titulo: "Entre la historia y el Espíritu", editorial: "Editorial Patmos" },
+        { autor: "William W. Menzies y Robert P. Menzies", titulo: "Espíritu y poder: fundamentos de la experiencia pentecostal", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 15, el concilio de Jerusalén", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=15" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -6002,7 +6057,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
-    ROMANOS_TEOLOGIA_HISTORIA, ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
+    ROMANOS_TEOLOGIA_HISTORIA, HECHOS_A_FONDO, ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
