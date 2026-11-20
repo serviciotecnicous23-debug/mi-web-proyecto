@@ -4527,6 +4527,60 @@ const ADMINISTRACION_ECLESIASTICA: MateriaDef = {
   disponible: true,
 };
 
+const FINANZAS_TRANSPARENCIA: MateriaDef = {
+  id: "liderazgo-administracion-2",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 2,
+  titulo: "Finanzas y transparencia",
+  resumen: "Cómo manejar el dinero de la iglesia con fidelidad y a la luz: los principios y la política financiera, el presupuesto, los controles internos, las ofrendas y sus recibos, los informes y la revisión, y el sostén del pastor y de los empleados.",
+  base: "2 Corintios 8:20-21; Lucas 16:10",
+  memoria: "2 Corintios 8:20",
+  lecciones: lecciones("liderazgo-administracion-2", [
+    ["El dinero de Dios en manos de la iglesia", "2 Corintios 8:20-21; Lucas 16:10-11; 1 Corintios 4:2"],
+    ["El presupuesto", "Lucas 14:28; Proverbios 21:5; Proverbios 22:7"],
+    ["Los controles internos", "2 Reyes 12:10-11; Deuteronomio 19:15; 2 Corintios 8:20-21"],
+    ["Las ofrendas y sus recibos", "Marcos 12:41-44; 2 Corintios 9:7; 1 Corintios 16:2-3"],
+    ["Los informes y la revisión", "Nehemías 13:13; Lucas 16:2; Romanos 13:8"],
+    ["El sostén del pastor y de los empleados", "1 Timoteo 5:17-18; Gálatas 6:6; Lucas 10:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las finanzas de la iglesia maneje el dinero de Dios con fidelidad y a la luz: que escriba la política financiera de la iglesia, con la mayordomía, el propósito de cada ofrenda, los controles y la rendición de cuentas; que arme un presupuesto real, con lo que entró en los últimos doce meses, las misiones desde el principio y una reserva; que aplique los controles internos: la regla de los dos para recoger y contar la ofrenda, la hoja de conteo firmada, las tareas separadas, los pagos con comprobante y la conciliación del banco; que dé a cada donante el reconocimiento escrito que pide el IRS para las donaciones de 250 dólares o más y use las ofrendas designadas para lo que se dieron; que informe al consejo y a la iglesia y organice la revisión anual, sabiendo que las iglesias no presentan el Formulario 990; y que sostenga con dignidad al pastor y a los empleados, con la asignación para vivienda designada antes de pagarla, el Seguro Social del ministro por cuenta propia y un plan de reembolsos con comprobantes. Baja a la práctica lo que enseñan Mayordomía cristiana (Nivel 2) y Administración y gobierno de la iglesia (Nivel 5), sin repetirlas. Lo legal y lo tributario son una guía general, no un consejo legal ni contable. Su base es el cuidado de Pablo con la ofrenda: «evitando que nadie nos censure en cuanto a esta ofrenda abundante que administramos» (2 Corintios 8:20).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los principios de las finanzas de la iglesia y escribir su política financiera.", bloom: "comprender" },
+      { id: "o2", texto: "Armar el presupuesto anual de una iglesia y seguirlo cada mes.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar los controles internos en el conteo, el depósito y los pagos.", bloom: "aplicar" },
+      { id: "o4", texto: "Manejar las ofrendas designadas y los recibos de las donaciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar los informes financieros y organizar la revisión anual.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el paquete de compensación del pastor con las reglas que pide la ley.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Corintios 8:20 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los principios y la política financiera, el presupuesto, los controles internos, los recibos que pide el IRS y las ofrendas designadas, los informes y la revisión, y las reglas del sostén del pastor.",
+      ser: "Un mayordomo fiel en lo poco, que maneja el dinero de Dios a la luz y protege a los que sirven con él.",
+      hacer: "Escribir la política financiera, armar el presupuesto del año, organizar el conteo del domingo, preparar un estado anual de donaciones, presentar el informe trimestral y armar el paquete del pastor.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Inés J. Figueroa", titulo: "La administración de las finanzas de las iglesias", editorial: "Abingdon Press" },
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+        { autor: "Randy Alcorn", titulo: "El principio del tesoro", editorial: "Unilit" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 2 Corintios 8, la ofrenda manejada con honradez", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Corintios&cap=8" },
+      { tipo: "guia", titulo: "Contribuciones caritativas: requisitos de comprobación y divulgación, Publicación 1771 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1771.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5456,7 +5510,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ADMINISTRACION_ECLESIASTICA, ["Finanzas y transparencia"], ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
