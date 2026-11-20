@@ -88,7 +88,7 @@ export function RadioLibraryAdmin() {
             Biblioteca de Radio
           </CardTitle>
           <CardDescription>
-            Sube música, prédicas, palabras, devocionales, testimonios y jingles. La página publica de radio reproduce esta biblioteca cuando no configuras una URL externa.
+            Sube música, prédicas, palabras, devocionales, testimonios y jingles. La página pública de la radio reproduce esta biblioteca cuando no configuras una URL externa.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -144,7 +144,7 @@ export function RadioLibraryAdmin() {
               <p className="mt-1 font-semibold">{currentCategory?.name || "Adoracion"}</p>
             </div>
             <div className="rounded-lg border bg-background p-4">
-              <p className="text-sm text-muted-foreground">Senal publica</p>
+              <p className="text-sm text-muted-foreground">Señal pública</p>
               <p className="mt-1 font-semibold">{data?.trackCount ? "Reproduce tus audios" : "Usa audio de prueba"}</p>
             </div>
           </div>
