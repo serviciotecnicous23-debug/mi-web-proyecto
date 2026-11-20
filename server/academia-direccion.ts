@@ -9,7 +9,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
-import { ESPECIALIDADES, HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno } from "@shared/academia";
+import { ESPECIALIDADES, HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno, type MateriaDef } from "@shared/academia";
 import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/academia-permisos";
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, GestionAlumno, MateriaAvance, MateriaReporte, MateriaSeguimiento,
@@ -162,12 +162,20 @@ export async function avancesPorAlumno(ids: number[]): Promise<Map<number, Mater
   return out;
 }
 
-/** El reporte de cada materia disponible: inscritos, en curso, aprobadas, promedio y avance medio. */
+/** Todas las materias del plan, en el orden del catálogo: las de los cinco niveles y después las de cada especialidad. */
+export function materiasDelPlan(): { m: MateriaDef; grupo: string }[] {
+  return [
+    ...NIVELES.flatMap((n) => n.materias.map((m) => ({ m, grupo: `Nivel ${n.n}` }))),
+    ...ESPECIALIDADES.flatMap((e) => e.materias.map((m) => ({ m, grupo: e.nombre }))),
+  ];
+}
+
+/** El reporte de cada materia disponible (de los niveles y de las especialidades): inscritos, en curso, aprobadas, promedio y avance medio. */
 function reporteMaterias(avances: Map<number, MateriaAvance[]>): MateriaReporte[] {
   const todas = [...avances.values()].flat();
-  return NIVELES.flatMap((n) => n.materias)
-    .filter((m) => m.disponible)
-    .map((m) => {
+  return materiasDelPlan()
+    .filter(({ m }) => m.disponible)
+    .map(({ m, grupo }) => {
       const filas = todas.filter((a) => a.id === m.id);
       const aprobadas = filas.filter((a) => a.estado === "aprobada");
       const notas = aprobadas.map((a) => a.nota).filter((n): n is number => n != null);
@@ -176,6 +184,8 @@ function reporteMaterias(avances: Map<number, MateriaAvance[]>): MateriaReporte[
         id: m.id,
         titulo: m.titulo,
         nivel: m.nivel,
+        grupo,
+        especialidad: m.especialidad ?? null,
         orden: m.orden,
         inscritos: filas.length,
         enCurso: filas.length - aprobadas.length,
@@ -300,13 +310,25 @@ function contar(valores: string[]): { nombre: string; n: number }[] {
 
 /** Lo que espera revisión (solo para quien revisa): las escritas marcadas, los pedidos de revisión y las actividades por confirmar. */
 async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
-  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0 };
-  const { rows } = await pool.query(
-    `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
-            (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones,
-            (SELECT count(*)::int FROM academia_actividades WHERE estado = 'pendiente') AS actividades`,
-  );
-  return { escritas: Number(rows[0]?.escritas ?? 0), apelaciones: Number(rows[0]?.apelaciones ?? 0), actividades: Number(rows[0]?.actividades ?? 0) };
+  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0, porTipo: [] };
+  const [{ rows }, { rows: tipos }] = await Promise.all([
+    pool.query(
+      `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
+              (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones,
+              (SELECT count(*)::int FROM academia_actividades WHERE estado = 'pendiente') AS actividades`,
+    ),
+    // el proyecto con la defensa ya programada cuenta aparte: espera la defensa y su evaluación, no que la programen
+    pool.query(
+      `SELECT CASE WHEN tipo = 'proyecto' AND defensa IS NOT NULL THEN 'defensa' ELSE tipo END AS tipo, count(*)::int AS n
+         FROM academia_actividades WHERE estado = 'pendiente' GROUP BY 1 ORDER BY 2 DESC`,
+    ),
+  ]);
+  return {
+    escritas: Number(rows[0]?.escritas ?? 0),
+    apelaciones: Number(rows[0]?.apelaciones ?? 0),
+    actividades: Number(rows[0]?.actividades ?? 0),
+    porTipo: (tipos as any[]).map((r) => ({ tipo: String(r.tipo), n: Number(r.n) })),
+  };
 }
 
 async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: string } | null> {
@@ -481,8 +503,8 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         }
       } else {
         datos = [
-          ["Nivel", "Materia", "Inscritos", "En curso", "Aprobadas", "Promedio de las aprobadas", "Avance medio (%)"],
-          ...reporteMaterias(avances).map((m) => [m.nivel ?? "Especialidad", m.titulo, m.inscritos, m.enCurso, m.aprobadas, m.promedio ?? "", m.avance]),
+          ["Nivel o especialidad", "Materia", "Inscritos", "En curso", "Aprobadas", "Promedio de las aprobadas", "Avance medio (%)"],
+          ...reporteMaterias(avances).map((m) => [m.grupo, m.titulo, m.inscritos, m.enCurso, m.aprobadas, m.promedio ?? "", m.avance]),
         ];
       }
       const fecha = new Date().toISOString().slice(0, 10);

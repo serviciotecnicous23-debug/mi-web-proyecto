@@ -38,7 +38,7 @@ export default function AcademiaDireccionMateria() {
         <Link href={`${area.base}?tab=materias`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Las materias</Link>
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
-            <p className="data-label text-orange-600 dark:text-orange-300">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · Seguimiento de la materia</p>
+            <p className="data-label text-orange-600 dark:text-orange-300">{m.grupo ?? (m.nivel ? `Nivel ${m.nivel}` : "Especialidad")} · Seguimiento de la materia</p>
             <h1 className="heading-display font-display text-3xl md:text-4xl mt-1" data-testid="materia-seguimiento-titulo">{m.titulo}</h1>
           </div>
           <div className="flex flex-wrap gap-2">

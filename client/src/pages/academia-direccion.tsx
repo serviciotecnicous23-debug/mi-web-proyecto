@@ -29,6 +29,7 @@ import {
 import type { ContenidoLista, ContenidoResumen } from "@shared/academia-calidad";
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
 import { ActividadesPorConfirmar } from "@/components/academia/actividades-panel";
+import { BandejaPendientes } from "@/components/academia/bandeja";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
 
@@ -129,43 +130,46 @@ function Apertura({ abierta, irA }: { abierta: boolean; irA: (tab: string) => vo
   );
 }
 
-function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }) {
+function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string, filtro?: FiltroAlumnos) => void }) {
   const enlaces = useEnlaces();
   const t = d.totales;
-  const porRevisar = d.pendientes.escritas + d.pendientes.apelaciones;
+  // en el resumen, las materias con alumnos (las de más inscritos primero); la lista completa está en «Materias»
+  const conAlumnos = [...d.materias].filter((m) => m.inscritos > 0).sort((a, b) => b.inscritos - a.inscritos || a.orden - b.orden);
+  const estatusPorNombre = (nombre: string) => ORDEN_ESTATUS.find((k) => NOMBRE_ESTATUS[k] === nombre);
   return (
     <div className="space-y-6">
       {d.puede.abrir && <Apertura abierta={d.abierta} irA={irA} />}
-      {d.puede.revisar && porRevisar > 0 && (
-        <button type="button" onClick={() => irA("revisar")} className="glass-card w-full p-4 flex items-center gap-3 text-left border border-orange-500/40 hover:-translate-y-0.5 transition" data-testid="direccion-por-revisar">
-          <ClipboardCheck className="w-5 h-5 text-orange-500 shrink-0" />
-          <span className="flex-1 text-sm">
-            <strong>Para revisar:</strong> {d.pendientes.escritas} {d.pendientes.escritas === 1 ? "respuesta escrita" : "respuestas escritas"} y {d.pendientes.apelaciones}{" "}
-            {d.pendientes.apelaciones === 1 ? "pedido de revisión" : "pedidos de revisión"}.
-          </span>
-          <span className="text-sm font-medium">Revisar</span>
-        </button>
-      )}
+      <BandejaPendientes d={d} cambiar={(tab) => irA(tab)} />
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5" data-testid="direccion-indicadores">
-        <Indicador etiqueta="Inscritos" valor={t.inscritos} nota={`${numero(t.nuevosMes)} en los últimos 30 días`} testId="indicador-inscritos" />
-        <Indicador etiqueta="Nuevos esta semana" valor={t.nuevosSemana} />
-        <Indicador etiqueta="Estudiantes activos" valor={d.estatus.activo} nota={`${numero(d.estatus.pausa)} en pausa · ${numero(d.estatus.aspirante)} sin empezar`} />
-        <Indicador etiqueta="Materias aprobadas" valor={t.aprobadas} nota={`${numero(t.lecciones)} lecciones completadas`} />
-        <Indicador etiqueta="Promedio general" valor={t.promedio ?? "—"} nota={t.niveles ? `${numero(t.niveles)} ${t.niveles === 1 ? "nivel completo" : "niveles completos"}` : "de las materias aprobadas"} />
+        <Indicador etiqueta="Inscritos" valor={t.inscritos} nota={`${numero(t.nuevosMes)} en los últimos 30 días`} testId="indicador-inscritos" alPulsar={() => irA("alumnos", {})} ayuda="Ver la lista de los alumnos" />
+        <Indicador etiqueta="Nuevos esta semana" valor={t.nuevosSemana} alPulsar={() => irA("alumnos", { orden: "recientes" })} ayuda="Ver los alumnos, los más recientes primero" testId="indicador-nuevos" />
+        <Indicador etiqueta="Estudiantes activos" valor={d.estatus.activo} nota={`${numero(d.estatus.pausa)} en pausa · ${numero(d.estatus.aspirante)} sin empezar`} alPulsar={() => irA("alumnos", { estatus: "activo" })} ayuda="Ver solo a los alumnos activos" testId="indicador-activos" />
+        <Indicador etiqueta="Materias aprobadas" valor={t.aprobadas} nota={`${numero(t.lecciones)} lecciones completadas`} alPulsar={() => irA("materias")} ayuda="Ver las materias con sus inscritos y aprobadas" testId="indicador-aprobadas" />
+        <Indicador etiqueta="Promedio general" valor={t.promedio ?? "—"} nota={t.niveles ? `${numero(t.niveles)} ${t.niveles === 1 ? "nivel completo" : "niveles completos"}` : "de las materias aprobadas"} alPulsar={() => irA("materias")} ayuda="Ver el promedio de cada materia" testId="indicador-promedio" />
       </div>
 
       <section className="glass-card p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h3 className="font-semibold">Materias: quiénes están inscritos y cuánto avanzan</h3>
-          <Button variant="ghost" size="sm" onClick={() => irA("materias")}>Ver todas</Button>
+          <h3 className="font-semibold">Materias con alumnos: quiénes están inscritos y cuánto avanzan</h3>
+          <Button variant="ghost" size="sm" onClick={() => irA("materias")}>Ver las {numero(d.materias.length)} materias</Button>
         </div>
-        <TablaMaterias materias={d.materias} enlace={enlaces.materia} />
+        {conAlumnos.length ? (
+          <TablaMaterias materias={conAlumnos.slice(0, 12)} enlace={enlaces.materia} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Todavía nadie se inscribió en una materia.</p>
+        )}
+        {conAlumnos.length > 12 && <p className="text-xs text-muted-foreground mt-2">Y {numero(conAlumnos.length - 12)} materias más con alumnos, en «Materias».</p>}
       </section>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        <Barras titulo="Alumnos por estatus" filas={ORDEN_ESTATUS.map((k) => ({ nombre: NOMBRE_ESTATUS[k], n: d.estatus[k] }))} testId="barras-estatus" />
-        <Barras titulo="Alumnos por país" filas={conOtros(d.paises)} vacio="Todavía no hay alumnos." />
-        <Barras titulo="Alumnos por iglesia" filas={conOtros(d.iglesias)} vacio="Todavía no hay alumnos." />
+        <Barras
+          titulo="Alumnos por estatus"
+          filas={ORDEN_ESTATUS.map((k) => ({ nombre: NOMBRE_ESTATUS[k], n: d.estatus[k] }))}
+          testId="barras-estatus"
+          alElegir={(nombre) => irA("alumnos", { estatus: estatusPorNombre(nombre) ?? "" })}
+        />
+        <Barras titulo="Alumnos por país" filas={conOtros(d.paises)} vacio="Todavía no hay alumnos." alElegir={(nombre) => irA("alumnos", { pais: nombre })} testId="barras-paises" />
+        <Barras titulo="Alumnos por iglesia" filas={conOtros(d.iglesias)} vacio="Todavía no hay alumnos." alElegir={(nombre) => irA("alumnos", { iglesia: nombre })} testId="barras-iglesias" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -200,19 +204,32 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string) => void }
   );
 }
 
-function Alumnos({ resumen }: { resumen: DireccionResumen }) {
+/** El orden de la lista de alumnos. */
+type OrdenAlumnos = "recientes" | "actividad" | "nombre" | "aprobadas" | "lecciones";
+const ORDENES: { id: OrdenAlumnos; texto: string }[] = [
+  { id: "recientes", texto: "Los inscritos más recientes" },
+  { id: "actividad", texto: "Actividad más reciente" },
+  { id: "nombre", texto: "Nombre (A a Z)" },
+  { id: "aprobadas", texto: "Más materias aprobadas" },
+  { id: "lecciones", texto: "Más lecciones completadas" },
+];
+/** Los filtros de la lista de alumnos: las cifras y las barras del resumen llevan a la lista ya filtrada. */
+export type FiltroAlumnos = { texto?: string; estatus?: string; materia?: string; iglesia?: string; pais?: string; orden?: OrdenAlumnos };
+
+function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: FiltroAlumnos | null }) {
   const enlaces = useEnlaces();
   const q = useDireccionAlumnos();
-  const [texto, setTexto] = useState("");
-  const [estatus, setEstatus] = useState("");
-  const [materia, setMateria] = useState("");
-  const [iglesia, setIglesia] = useState("");
-  const [pais, setPais] = useState("");
+  const [texto, setTexto] = useState(inicial?.texto ?? "");
+  const [estatus, setEstatus] = useState(inicial?.estatus ?? "");
+  const [materia, setMateria] = useState(inicial?.materia ?? "");
+  const [iglesia, setIglesia] = useState(inicial?.iglesia ?? "");
+  const [pais, setPais] = useState(inicial?.pais ?? "");
+  const [orden, setOrden] = useState<OrdenAlumnos>(inicial?.orden ?? "recientes");
   const lista = q.data?.alumnos ?? [];
   const contacto = !!q.data?.puede.contacto;
   const filtrados = useMemo(() => {
     const t = sinTildes(texto.trim());
-    return lista.filter(
+    const out = lista.filter(
       (a) =>
         (!t || sinTildes([a.nombre, a.matricula, a.correo ?? "", a.telefono ?? "", a.iglesia, a.ciudad].join(" ")).includes(t)) &&
         (!estatus || a.estatus.clave === estatus) &&
@@ -220,13 +237,23 @@ function Alumnos({ resumen }: { resumen: DireccionResumen }) {
         (!iglesia || (a.iglesia || "Sin iglesia") === iglesia) &&
         (!pais || a.pais === pais),
     );
-  }, [lista, texto, estatus, materia, iglesia, pais]);
+    const por: Record<OrdenAlumnos, (a: AlumnoFila, b: AlumnoFila) => number> = {
+      recientes: (a, b) => b.desde.localeCompare(a.desde),
+      actividad: (a, b) => b.ultima.localeCompare(a.ultima),
+      nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es"),
+      aprobadas: (a, b) => b.aprobadas - a.aprobadas || b.lecciones - a.lecciones,
+      lecciones: (a, b) => b.lecciones - a.lecciones || b.aprobadas - a.aprobadas,
+    };
+    return out.sort(por[orden]);
+  }, [lista, texto, estatus, materia, iglesia, pais, orden]);
+  const conFiltros = !!(texto || estatus || materia || iglesia || pais);
+  const limpiar = () => { setTexto(""); setEstatus(""); setMateria(""); setIglesia(""); setPais(""); };
   if (q.isLoading) return <p className="text-muted-foreground">Cargando a los alumnos…</p>;
   if (q.error) return <p className="text-sm text-red-600">{q.error.message}</p>;
   return (
     <div className="space-y-4">
-      <div className="flex flex-col lg:flex-row gap-2">
-        <div className="relative flex-1">
+      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2">
+        <div className="relative flex-1 min-w-[14rem]">
           <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
           <Input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={contacto ? "Buscar por nombre, matrícula, correo o teléfono" : "Buscar por nombre o matrícula"} className="pl-9 h-10" aria-label="Buscar alumnos" data-testid="alumnos-buscar" />
         </div>
@@ -236,24 +263,30 @@ function Alumnos({ resumen }: { resumen: DireccionResumen }) {
         </select>
         <select className={SELECT} value={materia} onChange={(e) => setMateria(e.target.value)} aria-label="Filtrar por materia en curso">
           <option value="">Cursando cualquier materia</option>
-          {resumen.materias.map((m) => <option key={m.id} value={m.titulo}>{m.titulo}</option>)}
+          {resumen.materias.filter((m) => m.enCurso > 0 || m.titulo === materia).map((m) => <option key={m.id} value={m.titulo}>{m.titulo}</option>)}
         </select>
-        {resumen.iglesias.length > 1 && (
-          <select className={SELECT} value={iglesia} onChange={(e) => setIglesia(e.target.value)} aria-label="Filtrar por iglesia">
+        {(resumen.iglesias.length > 1 || iglesia) && (
+          <select className={SELECT} value={iglesia} onChange={(e) => setIglesia(e.target.value)} aria-label="Filtrar por iglesia" data-testid="alumnos-iglesia">
             <option value="">Todas las iglesias</option>
             {resumen.iglesias.map((x) => <option key={x.nombre} value={x.nombre}>{x.nombre}</option>)}
           </select>
         )}
-        {resumen.paises.length > 1 && (
-          <select className={SELECT} value={pais} onChange={(e) => setPais(e.target.value)} aria-label="Filtrar por país">
+        {(resumen.paises.length > 1 || pais) && (
+          <select className={SELECT} value={pais} onChange={(e) => setPais(e.target.value)} aria-label="Filtrar por país" data-testid="alumnos-pais">
             <option value="">Todos los países</option>
             {resumen.paises.map((x) => <option key={x.nombre} value={x.nombre}>{x.nombre}</option>)}
           </select>
         )}
+        <select className={SELECT} value={orden} onChange={(e) => setOrden(e.target.value as OrdenAlumnos)} aria-label="Ordenar la lista" data-testid="alumnos-orden">
+          {ORDENES.map((o) => <option key={o.id} value={o.id}>{o.texto}</option>)}
+        </select>
       </div>
-      <p className="text-sm text-muted-foreground" data-testid="alumnos-cuantos">
-        {filtrados.length === lista.length ? `${numero(lista.length)} ${lista.length === 1 ? "alumno" : "alumnos"}` : `${numero(filtrados.length)} de ${numero(lista.length)} alumnos`}
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm text-muted-foreground" data-testid="alumnos-cuantos">
+          {filtrados.length === lista.length ? `${numero(lista.length)} ${lista.length === 1 ? "alumno" : "alumnos"}` : `${numero(filtrados.length)} de ${numero(lista.length)} alumnos`}
+        </p>
+        {conFiltros && <Button variant="ghost" size="sm" onClick={limpiar} data-testid="alumnos-limpiar">Quitar los filtros</Button>}
+      </div>
       <div className="glass-card p-0 overflow-x-auto">
         <table className="w-full text-sm" data-testid="tabla-alumnos">
           <thead>
@@ -300,6 +333,62 @@ function Alumnos({ resumen }: { resumen: DireccionResumen }) {
         </table>
       </div>
     </div>
+  );
+}
+
+/** Las materias del plan (niveles y especialidades), con un filtro y una búsqueda, agrupadas por nivel o especialidad. */
+function PestanaMaterias({ d }: { d: DireccionResumen }) {
+  const enlaces = useEnlaces();
+  const hayAlumnos = d.materias.some((m) => m.inscritos > 0);
+  const [ver, setVer] = useState<"alumnos" | "niveles" | "especialidades" | "todas">(hayAlumnos ? "alumnos" : "niveles");
+  const [texto, setTexto] = useState("");
+  const t = sinTildes(texto.trim());
+  const lista = d.materias.filter(
+    (m) =>
+      (ver === "todas" || (ver === "alumnos" ? m.inscritos > 0 : ver === "niveles" ? !m.especialidad : !!m.especialidad)) &&
+      (!t || sinTildes(`${m.titulo} ${m.grupo}`).includes(t)),
+  );
+  const grupos = [...new Set(lista.map((m) => m.grupo))];
+  const FILTROS: { id: typeof ver; texto: string }[] = [
+    { id: "alumnos", texto: `Con alumnos (${d.materias.filter((m) => m.inscritos > 0).length})` },
+    { id: "niveles", texto: `De los niveles (${d.materias.filter((m) => !m.especialidad).length})` },
+    { id: "especialidades", texto: `De las especialidades (${d.materias.filter((m) => !!m.especialidad).length})` },
+    { id: "todas", texto: `Todas (${d.materias.length})` },
+  ];
+  return (
+    <section className="glass-card p-5 space-y-4" data-testid="direccion-materias">
+      <p className="text-sm text-muted-foreground">Toca una materia para ver quiénes están inscritos y por dónde va cada uno.</p>
+      <div className="flex flex-col md:flex-row md:items-center gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Qué materias ver">
+          {FILTROS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setVer(f.id)}
+              aria-pressed={ver === f.id}
+              className={`rounded-full px-3.5 py-1.5 text-sm border transition-colors ${ver === f.id ? "bg-orange-600 border-orange-600 text-white" : "border-border hover:border-orange-500"}`}
+              data-testid={`materias-ver-${f.id}`}
+            >
+              {f.texto}
+            </button>
+          ))}
+        </div>
+        <div className="relative md:ml-auto md:w-64">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
+          <Input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar una materia" className="pl-9 h-10" aria-label="Buscar una materia" data-testid="materias-buscar" />
+        </div>
+      </div>
+      {lista.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">{ver === "alumnos" && !t ? "Todavía nadie se inscribió en una materia." : "Ninguna materia coincide."}</p>
+      ) : (
+        grupos.map((g) => (
+          <div key={g}>
+            <h4 className="data-label text-orange-600 dark:text-orange-300 mt-2 mb-1">{g}</h4>
+            <TablaMaterias materias={lista.filter((m) => m.grupo === g)} enlace={enlaces.materia} />
+          </div>
+        ))
+      )}
+    </section>
   );
 }
 
@@ -424,7 +513,8 @@ function TarjetaDeclaracion({ declaracion }: { declaracion: ContenidoLista["decl
   };
   return (
     <section
-      className={`glass-card p-5 border ${vigente ? "border-emerald-500/40" : "border-orange-500/40"}`}
+      id="contenido-declaracion"
+      className={`glass-card p-5 border scroll-mt-24 ${vigente ? "border-emerald-500/40" : "border-orange-500/40"}`}
       data-testid="contenido-declaracion"
       data-estado={vigente ? "aprobada" : a ? "cambio" : "pendiente"}
     >
@@ -498,61 +588,92 @@ function TarjetaDeclaracion({ declaracion }: { declaracion: ContenidoLista["decl
   );
 }
 
+type VerContenido = "pendientes" | "aprobadas" | "todas";
+
 function Contenido() {
   const enlaces = useEnlaces();
   const q = useContenido();
+  const [ver, setVer] = useState<VerContenido>("pendientes");
+  const [donde, setDonde] = useState<"" | "niveles" | "especialidades">("");
   if (q.isLoading) return <p className="text-muted-foreground">Cargando la revisión del contenido…</p>;
   if (!q.data) return <p className="text-sm text-red-600">{q.error?.message ?? "No se pudo cargar."}</p>;
   const { materias, total, aprobadas, abiertas, declaracion } = q.data;
   const mirar = materias.reduce((s, m) => s + m.alertas, 0);
+  const pendiente = (m: ContenidoResumen) => !m.aprobacion?.vigente;
+  const lista = materias.filter(
+    (m) => (ver === "todas" || (ver === "pendientes" ? pendiente(m) : !pendiente(m))) && (!donde || (donde === "niveles" ? !!m.nivel : !m.nivel)),
+  );
+  const grupoDe = (m: ContenidoResumen) => m.grupo ?? (m.nivel ? `Nivel ${m.nivel}` : "Especialidad");
+  const grupos = [...new Set(lista.map(grupoDe))];
+  const chip = (activo: boolean) => `rounded-full px-3.5 py-1.5 text-sm border transition-colors ${activo ? "bg-orange-600 border-orange-600 text-white" : "border-border hover:border-orange-500"}`;
   return (
     <div className="space-y-4" data-testid="direccion-contenido">
       <TarjetaDeclaracion declaracion={declaracion} />
       <p className="text-sm text-muted-foreground">
-        La revisión doctrinal: lee cada materia completa (sus lecciones, el banco del examen y el repaso), deja observaciones y apruébala antes de abrir la academia. Cuando haya alumnos, el análisis de preguntas marca las que conviene revisar.
+        La revisión doctrinal: lee cada materia completa (sus lecciones, el banco del examen y el repaso), deja observaciones y apruébala con el botón «Revisar y aprobar» de cada fila. Están las de los cinco niveles y las de las doce especialidades. Cuando haya alumnos, el análisis de preguntas marca las que conviene revisar.
       </p>
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
         <Indicador etiqueta="Materias aprobadas" valor={`${aprobadas} de ${total}`} nota="en la revisión doctrinal" testId="contenido-aprobadas" />
         <Indicador etiqueta="Observaciones abiertas" valor={abiertas} />
         <Indicador etiqueta="Preguntas para mirar" valor={mirar} nota="según el análisis de preguntas" />
       </div>
-      <div className="glass-card p-0 overflow-x-auto">
-        <table className="w-full text-sm" data-testid="tabla-contenido">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="py-2.5 px-4 font-medium">Materia</th>
-              <th className="py-2.5 px-3 font-medium">Revisión doctrinal</th>
-              <th className="py-2.5 px-3 font-medium text-right">Observaciones abiertas</th>
-              <th className="py-2.5 px-3 font-medium text-right">Para mirar</th>
-              <th className="py-2.5 px-3 font-medium text-right">Retiradas</th>
-              <th className="py-2.5 px-4 font-medium">Banco</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materias.map((m) => (
-              <tr key={m.id} className="border-b border-border/60 last:border-0 align-top" data-testid="fila-contenido" data-materia={m.id}>
-                <td className="py-2.5 px-4">
-                  <Link href={enlaces.contenido(m.id)} className="font-medium hover:underline">{m.titulo}</Link>
-                  <span className="block text-xs text-muted-foreground">{m.nivel ? `Nivel ${m.nivel}` : "Especialidad"} · {m.lecciones} lecciones</span>
-                </td>
-                <td className="py-2.5 px-3">
-                  <EstadoRevision m={m} />
-                  {m.aprobacion && <span className="block text-xs text-muted-foreground mt-1">{m.aprobacion.por} · {fecha(m.aprobacion.fecha)}</span>}
-                </td>
-                <td className="py-2.5 px-3 text-right tabular-nums">{m.abiertas || "—"}</td>
-                <td className="py-2.5 px-3 text-right tabular-nums">{m.alertas || "—"}</td>
-                <td className="py-2.5 px-3 text-right tabular-nums">{m.retiradas || "—"}</td>
-                <td className="py-2.5 px-4 whitespace-nowrap text-muted-foreground">{m.preguntas} preguntas · {m.escritas} escritas</td>
-              </tr>
-            ))}
-            {!materias.length && (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-muted-foreground">Todavía no hay materias con contenido.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Qué materias ver">
+        <button type="button" className={chip(ver === "pendientes")} aria-pressed={ver === "pendientes"} onClick={() => setVer("pendientes")} data-testid="contenido-ver-pendientes">Por aprobar ({total - aprobadas})</button>
+        <button type="button" className={chip(ver === "aprobadas")} aria-pressed={ver === "aprobadas"} onClick={() => setVer("aprobadas")} data-testid="contenido-ver-aprobadas">Aprobadas ({aprobadas})</button>
+        <button type="button" className={chip(ver === "todas")} aria-pressed={ver === "todas"} onClick={() => setVer("todas")} data-testid="contenido-ver-todas">Todas ({total})</button>
+        <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+        <button type="button" className={chip(donde === "")} aria-pressed={donde === ""} onClick={() => setDonde("")}>Niveles y especialidades</button>
+        <button type="button" className={chip(donde === "niveles")} aria-pressed={donde === "niveles"} onClick={() => setDonde("niveles")}>Solo los niveles</button>
+        <button type="button" className={chip(donde === "especialidades")} aria-pressed={donde === "especialidades"} onClick={() => setDonde("especialidades")} data-testid="contenido-especialidades">Solo las especialidades</button>
       </div>
+      {lista.length === 0 && (
+        <p className="glass-card p-6 text-center text-sm text-muted-foreground">
+          {materias.length === 0 ? "Todavía no hay materias con contenido." : ver === "pendientes" ? "No queda ninguna por aprobar con este filtro." : "Ninguna materia con este filtro."}
+        </p>
+      )}
+      {grupos.map((g) => (
+        <div key={g} className="glass-card p-0 overflow-x-auto">
+          <h4 className="data-label text-orange-600 dark:text-orange-300 px-4 pt-3">{g}</h4>
+          <table className="w-full text-sm" data-testid="tabla-contenido">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                <th className="py-2.5 px-4 font-medium">Materia</th>
+                <th className="py-2.5 px-3 font-medium">Revisión doctrinal</th>
+                <th className="py-2.5 px-3 font-medium text-right">Observaciones abiertas</th>
+                <th className="py-2.5 px-3 font-medium text-right">Para mirar</th>
+                <th className="py-2.5 px-3 font-medium text-right">Retiradas</th>
+                <th className="py-2.5 px-3 font-medium">Banco</th>
+                <th className="py-2.5 px-4"><span className="sr-only">Abrir</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.filter((m) => grupoDe(m) === g).map((m) => (
+                <tr key={m.id} className="border-b border-border/60 last:border-0 align-top" data-testid="fila-contenido" data-materia={m.id}>
+                  <td className="py-2.5 px-4">
+                    <Link href={enlaces.contenido(m.id)} className="font-medium hover:underline">{m.titulo}</Link>
+                    <span className="block text-xs text-muted-foreground">{m.lecciones} lecciones</span>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <EstadoRevision m={m} />
+                    {m.aprobacion && <span className="block text-xs text-muted-foreground mt-1">{m.aprobacion.por} · {fecha(m.aprobacion.fecha)}</span>}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">{m.abiertas || "—"}</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">{m.alertas || "—"}</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">{m.retiradas || "—"}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground">{m.preguntas} preguntas · {m.escritas} escritas</td>
+                  <td className="py-2.5 px-4 text-right">
+                    <Link href={enlaces.contenido(m.id)}>
+                      <Button size="sm" variant={pendiente(m) ? "default" : "outline"} className={pendiente(m) ? "fire-btn-primary whitespace-nowrap" : "whitespace-nowrap"} data-testid={`contenido-abrir-${m.id}`}>
+                        {pendiente(m) ? "Revisar y aprobar" : "Ver"}
+                      </Button>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
     </div>
   );
 }
@@ -650,6 +771,13 @@ export default function AcademiaDireccion() {
     const t = new URLSearchParams(window.location.search).get("tab");
     return t && ["resumen", "revisar", "alumnos", "materias", "contenido", "registro", "historial", "permisos"].includes(t) ? t : "resumen";
   });
+  // los filtros con que se abre la lista de alumnos (desde una cifra o una barra del resumen); `vez` la vuelve a armar
+  const [filtro, setFiltro] = useState<{ f: FiltroAlumnos; vez: number } | null>(null);
+  const irA = (destino: string, f?: FiltroAlumnos) => {
+    if (f) setFiltro((x) => ({ f, vez: (x?.vez ?? 0) + 1 }));
+    setTab(destino);
+    window.setTimeout(() => document.getElementById("direccion-pestanas")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     const sinSesion = q.error?.status === 401;
@@ -698,7 +826,7 @@ export default function AcademiaDireccion() {
           )}
         </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="mt-6">
+        <Tabs value={tab} onValueChange={setTab} className="mt-6 scroll-mt-20" id="direccion-pestanas">
           <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg mb-6">
             <TabsTrigger value="resumen" className="flex-1 min-w-[110px] gap-1.5"><LayoutDashboard className="w-4 h-4" /> Resumen</TabsTrigger>
             {d.puede.revisar && (
@@ -716,15 +844,10 @@ export default function AcademiaDireccion() {
             {d.puede.revisar && <TabsTrigger value="historial" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-historial"><FileClock className="w-4 h-4" /> Historial</TabsTrigger>}
             <TabsTrigger value="permisos" className="flex-1 min-w-[110px] gap-1.5" data-testid="direccion-tab-permisos"><ShieldCheck className="w-4 h-4" /> Roles y permisos</TabsTrigger>
           </TabsList>
-          <TabsContent value="resumen"><Resumen d={d} irA={setTab} /></TabsContent>
+          <TabsContent value="resumen"><Resumen d={d} irA={irA} /></TabsContent>
           <TabsContent value="revisar">{tab === "revisar" && d.puede.revisar && <Revisar />}</TabsContent>
-          <TabsContent value="alumnos">{tab === "alumnos" && <Alumnos resumen={d} />}</TabsContent>
-          <TabsContent value="materias">
-            <section className="glass-card p-5">
-              <p className="text-sm text-muted-foreground mb-3">Toca una materia para ver quiénes están inscritos y por dónde va cada uno.</p>
-              <TablaMaterias materias={d.materias} enlace={enlaces.materia} />
-            </section>
-          </TabsContent>
+          <TabsContent value="alumnos">{tab === "alumnos" && <Alumnos key={filtro?.vez ?? 0} resumen={d} inicial={filtro?.f} />}</TabsContent>
+          <TabsContent value="materias">{tab === "materias" && <PestanaMaterias d={d} />}</TabsContent>
           <TabsContent value="contenido">{tab === "contenido" && d.puede.contenido && <Contenido />}</TabsContent>
           <TabsContent value="registro">{tab === "registro" && <Registro />}</TabsContent>
           <TabsContent value="historial">{tab === "historial" && d.puede.revisar && <Historial />}</TabsContent>

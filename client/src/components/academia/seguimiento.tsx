@@ -23,34 +23,59 @@ export function hace(iso: string): string {
   return a === 1 ? "hace un año" : `hace ${a} años`;
 }
 
-/** Un indicador: la etiqueta, la cifra y una nota opcional. */
-export function Indicador({ etiqueta, valor, nota, testId }: { etiqueta: string; valor: string | number; nota?: string; testId?: string }) {
-  return (
-    <div className="glass-card p-4" data-testid={testId}>
+const PULSABLE =
+  "text-left w-full transition hover:-translate-y-0.5 hover:border-orange-500/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer";
+
+/** Un indicador: la etiqueta, la cifra y una nota opcional. Con `alPulsar`, es un botón que lleva a la lista que cuenta. */
+export function Indicador({ etiqueta, valor, nota, testId, alPulsar, ayuda }: { etiqueta: string; valor: string | number; nota?: string; testId?: string; alPulsar?: () => void; ayuda?: string }) {
+  const cifra = typeof valor === "number" ? numero(valor) : valor;
+  const cuerpo = (
+    <>
       <p className="text-sm text-muted-foreground">{etiqueta}</p>
-      <p className="text-3xl font-semibold mt-1.5 leading-none">{typeof valor === "number" ? numero(valor) : valor}</p>
+      <p className="text-3xl font-semibold mt-1.5 leading-none">{cifra}</p>
       {nota && <p className="text-xs text-muted-foreground mt-2">{nota}</p>}
-    </div>
+    </>
+  );
+  if (!alPulsar) return <div className="glass-card p-4" data-testid={testId}>{cuerpo}</div>;
+  return (
+    <button type="button" onClick={alPulsar} className={`glass-card p-4 border border-transparent ${PULSABLE}`} data-testid={testId} title={ayuda} aria-label={`${etiqueta}: ${cifra}.${ayuda ? ` ${ayuda}` : ""}`}>
+      {cuerpo}
+    </button>
   );
 }
 
-/** Barras horizontales de una sola serie, sobre una misma base: el título dice qué se cuenta (sin leyenda). */
-export function Barras({ titulo, filas, vacio = "Todavía no hay datos.", testId }: { titulo: string; filas: { nombre: string; n: number }[]; vacio?: string; testId?: string }) {
+/**
+ * Barras horizontales de una sola serie, sobre una misma base: el título dice qué se cuenta (sin leyenda). Con
+ * `alElegir`, cada fila es un botón (por ejemplo, para ver la lista de los alumnos de ese país).
+ */
+export function Barras({ titulo, filas, vacio = "Todavía no hay datos.", testId, alElegir }: { titulo: string; filas: { nombre: string; n: number }[]; vacio?: string; testId?: string; alElegir?: (nombre: string) => void }) {
   const tope = Math.max(1, ...filas.map((f) => f.n));
+  const fila = (f: { nombre: string; n: number }) => (
+    <>
+      <span className="truncate">{f.nombre}</span>
+      <span className="block h-3" aria-hidden="true">
+        {f.n > 0 && <span className="block h-3 rounded-r-[4px] bg-orange-600" style={{ width: `${Math.max(2, (100 * f.n) / tope)}%` }} />}
+      </span>
+      <span className="tabular-nums text-right">{numero(f.n)}</span>
+    </>
+  );
+  const COLUMNAS = "grid grid-cols-[minmax(0,8.5rem)_1fr_2.5rem] sm:grid-cols-[minmax(0,12rem)_1fr_2.5rem] items-center gap-3 text-sm";
   return (
     <section className="glass-card p-5" data-testid={testId}>
       <h3 className="font-semibold mb-3">{titulo}</h3>
       {filas.length === 0 ? (
         <p className="text-sm text-muted-foreground">{vacio}</p>
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="space-y-1.5">
           {filas.map((f) => (
-            <li key={f.nombre} className="grid grid-cols-[minmax(0,8.5rem)_1fr_2.5rem] sm:grid-cols-[minmax(0,12rem)_1fr_2.5rem] items-center gap-3 text-sm" title={`${f.nombre}: ${numero(f.n)}`}>
-              <span className="truncate">{f.nombre}</span>
-              <span className="block h-3" aria-hidden="true">
-                {f.n > 0 && <span className="block h-3 rounded-r-[4px] bg-orange-600" style={{ width: `${Math.max(2, (100 * f.n) / tope)}%` }} />}
-              </span>
-              <span className="tabular-nums text-right">{numero(f.n)}</span>
+            <li key={f.nombre} title={`${f.nombre}: ${numero(f.n)}`}>
+              {alElegir && f.nombre !== "Otros" && f.n > 0 ? (
+                <button type="button" onClick={() => alElegir(f.nombre)} className={`${COLUMNAS} w-full rounded-md px-1 py-1 text-left hover:bg-muted/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500`} aria-label={`${f.nombre}: ${numero(f.n)}. Ver la lista`}>
+                  {fila(f)}
+                </button>
+              ) : (
+                <div className={`${COLUMNAS} px-1 py-1`}>{fila(f)}</div>
+              )}
             </li>
           ))}
         </ul>
@@ -105,7 +130,7 @@ export function TablaMaterias({ materias, enlace }: { materias: MateriaReporte[]
             <tr key={m.id} className="border-b border-border/60 last:border-0">
               <td className="py-2.5 pr-3">
                 {enlace ? <Link href={enlace(m.id)} className="font-medium hover:underline">{m.titulo}</Link> : <span className="font-medium">{m.titulo}</span>}
-                {m.nivel && <span className="block text-xs text-muted-foreground">Nivel {m.nivel}</span>}
+                <span className="block text-xs text-muted-foreground">{m.grupo ?? (m.nivel ? `Nivel ${m.nivel}` : "Especialidad")}</span>
               </td>
               <td className="py-2.5 px-2 text-right tabular-nums">{numero(m.inscritos)}</td>
               <td className="py-2.5 px-2 text-right tabular-nums">{numero(m.enCurso)}</td>

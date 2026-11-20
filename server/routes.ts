@@ -384,6 +384,12 @@ function isAdmin(req: Request): boolean {
   return req.isAuthenticated() && (req.user?.role === "admin" || req.user?.role === "director" || req.user?.role === "staff_global");
 }
 
+/** Una cuenta para el panel de administración: sin la clave cifrada ni el código de verificación del correo. */
+function paraElPanel<T extends { password?: unknown; emailVerifyToken?: unknown; emailVerifyExpires?: unknown }>(u: T) {
+  const { password: _clave, emailVerifyToken: _codigo, emailVerifyExpires: _vence, ...resto } = u;
+  return resto;
+}
+
 function isTeacherOrAdmin(req: Request): boolean {
   return req.isAuthenticated() && (
     req.user?.role === "admin" || req.user?.role === "obrero" ||
@@ -2732,22 +2738,28 @@ ${urls}
   });
 
   // ========== ADMIN ==========
+  // La lista de cuentas para el panel: sin las cuentas que su dueño eliminó (quedan como filas anónimas e inactivas y no
+  // son solicitudes ni miembros) y sin datos que el navegador no necesita (la clave cifrada y el código de verificación).
   app.get(api.admin.listUsers.path, async (req, res) => {
     if (!isAdmin(req)) return res.sendStatus(403);
-    res.json(await storage.listUsers());
+    res.json((await storage.listUsers()).filter((u) => !esCuentaEliminada(u)).map(paraElPanel));
   });
 
   app.patch(api.admin.toggleActive.path, async (req, res) => {
     if (!isAdmin(req)) return res.sendStatus(403);
-    const user = await storage.toggleUserActive(parseInt(req.params.id));
+    const id = parseInt(req.params.id);
+    const actual = Number.isInteger(id) ? await storage.getUser(id) : undefined;
+    if (!actual) return res.sendStatus(404);
+    if (esCuentaEliminada(actual)) return res.status(409).json({ message: "Esa cuenta la eliminó su dueño: no se puede activar." });
+    const user = await storage.toggleUserActive(id);
     if (!user) return res.sendStatus(404);
-    
+
     // Send email when account is ACTIVATED (not deactivated)
     if (user.isActive && user.email && isEmailConfigured && user.emailNotifyAccountApproved !== false) {
       sendAccountApprovedEmail(user.email, user.displayName);
     }
-    
-    res.json(user);
+
+    res.json(paraElPanel(user));
   });
 
   app.patch(api.admin.updateRole.path, async (req, res) => {
@@ -2760,7 +2772,7 @@ ${urls}
     }
     const user = await storage.updateUserRole(id, role);
     if (!user) return res.sendStatus(404);
-    res.json(user);
+    res.json(paraElPanel(user));
   });
 
   app.patch(api.admin.updateUserInfo.path, async (req, res) => {
@@ -2769,15 +2781,15 @@ ${urls}
     const { cargo, country } = req.body;
     const user = await storage.updateUserInfo(id, cargo || null, country || null);
     if (!user) return res.sendStatus(404);
-    res.json(user);
+    res.json(paraElPanel(user));
   });
 
   app.get(api.admin.getUserDetail.path, async (req, res) => {
     if (!isAdmin(req)) return res.sendStatus(403);
     const id = parseInt(req.params.id);
     const user = await storage.getUser(id);
-    if (!user) return res.sendStatus(404);
-    const { password, ...safeUser } = user;
+    if (!user || esCuentaEliminada(user)) return res.sendStatus(404);
+    const safeUser = paraElPanel(user);
     const userEnrollments = await storage.listEnrollmentsByUser(id);
     const userPosts = await storage.listPostsByUser(id);
     const enrichedEnrollments = await Promise.all(

@@ -24,6 +24,8 @@ export type ContenidoResumen = {
   id: string;
   titulo: string;
   nivel: number | null;
+  /** «Nivel 1» o el nombre de la especialidad. */
+  grupo: string;
   disponible: boolean;
   lecciones: number;
   /** Preguntas del banco del examen final y preguntas escritas. */
