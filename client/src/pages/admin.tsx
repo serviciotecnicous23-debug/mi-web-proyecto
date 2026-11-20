@@ -195,10 +195,10 @@ function LiveStreamAdmin() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Radio className="h-5 w-5" /> Control de Transmision En Vivo
+            <Radio className="h-5 w-5" /> Control de la transmisión en vivo
           </CardTitle>
           <CardDescription>
-            Administra la senal de radio y las transmisiones en vivo. Cambia entre radio y plataformas de streaming.
+            Administra la señal de radio y las transmisiones en vivo. Cambia entre radio y plataformas de streaming.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -266,7 +266,7 @@ function LiveStreamAdmin() {
 
           <div className="border-t pt-4 space-y-4">
             <div>
-              <Label>URL de la Radio (senal de relleno 24/7)</Label>
+              <Label>URL de la radio (señal de relleno 24/7)</Label>
               <Input
                 value={radioUrl}
                 onChange={(e) => setRadioUrl(e.target.value)}
@@ -274,7 +274,7 @@ function LiveStreamAdmin() {
                 data-testid="input-radio-url"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                URL del stream de audio (MP3/AAC). Se reproduce cuando no hay transmision en vivo.
+                URL del stream de audio (MP3/AAC). Se reproduce cuando no hay transmisión en vivo.
               </p>
             </div>
 
@@ -284,7 +284,7 @@ function LiveStreamAdmin() {
                 onCheckedChange={setIsLive}
                 data-testid="switch-is-live"
               />
-              <Label>Activar transmision en vivo (desactiva la radio temporal)</Label>
+              <Label>Activar la transmisión en vivo (desactiva la radio temporal)</Label>
             </div>
 
             {isLive && (
@@ -297,7 +297,7 @@ function LiveStreamAdmin() {
                       <SelectItem value="youtube">YouTube Live</SelectItem>
                       <SelectItem value="facebook">Facebook Live</SelectItem>
                       <SelectItem value="tiktok">TikTok Live</SelectItem>
-                      <SelectItem value="restream">Restream.io (retransmision)</SelectItem>
+                      <SelectItem value="restream">Restream.io (retransmisión)</SelectItem>
                       <SelectItem value="hls">HLS Stream (m3u8)</SelectItem>
                       <SelectItem value="custom">Otra Plataforma (iframe)</SelectItem>
                     </SelectContent>
@@ -305,7 +305,7 @@ function LiveStreamAdmin() {
                 </div>
 
                 <div>
-                  <Label>URL de la Transmision</Label>
+                  <Label>URL de la transmisión</Label>
                   <Input
                     value={sourceUrl}
                     onChange={(e) => setSourceUrl(e.target.value)}
@@ -332,7 +332,7 @@ function LiveStreamAdmin() {
                 </div>
 
                 <div>
-                  <Label>Título de la Transmision (opcional)</Label>
+                  <Label>Título de la transmisión (opcional)</Label>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -1109,7 +1109,7 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Solicitudes de Maestros</CardTitle>
-                <CardDescription>Obreros que solicitan ensenar un curso. Al aprobar, el obrero se asigna automáticamente como maestro del curso.</CardDescription>
+                <CardDescription>Obreros que solicitan enseñar un curso. Al aprobar, el obrero se asigna automáticamente como maestro del curso.</CardDescription>
               </CardHeader>
               <CardContent>
                 {!teacherRequestsList?.length ? (
@@ -1653,7 +1653,7 @@ export default function AdminDashboard() {
                                   <div>
                                     <span className="font-medium">{c.course?.title || "Curso"}</span>
                                     <p className="text-xs text-muted-foreground">
-                                      Codigo: {c.certificateCode}
+                                      Código: {c.certificateCode}
                                     </p>
                                   </div>
                                   <div className="text-right">
@@ -1688,7 +1688,7 @@ export default function AdminDashboard() {
                                 </div>
                               ))}
                               {userDetail.posts.length > 10 && (
-                                <p className="text-xs text-muted-foreground">...y {userDetail.posts.length - 10} publicaciones mas.</p>
+                                <p className="text-xs text-muted-foreground">...y {userDetail.posts.length - 10} publicaciones más.</p>
                               )}
                             </div>
                           ) : (
@@ -1735,7 +1735,7 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Mensajes de Contacto</CardTitle>
-                <CardDescription>Mensajes recibidos a traves del formulario de contacto.</CardDescription>
+                <CardDescription>Mensajes recibidos a través del formulario de contacto.</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingMessages ? (
@@ -1787,7 +1787,7 @@ export default function AdminDashboard() {
                 {isLoadingPosts ? (
                   <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : !posts?.length ? (
-                  <div className="p-12 text-center text-muted-foreground">No hay publicaciones aun.</div>
+                  <div className="p-12 text-center text-muted-foreground">No hay publicaciones aún.</div>
                 ) : (
                   <div className="space-y-4">
                     {posts.map((post: any) => (

@@ -191,7 +191,7 @@ function CourseList({ userId, onSelect }: { userId: number; onSelect: (id: numbe
       {!courses?.length ? (
         <Card><CardContent className="py-12 text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No tienes cursos aun. Crea tu primer curso para comenzar.</p>
+          <p className="text-muted-foreground">No tienes cursos aún. Crea tu primer curso para comenzar.</p>
         </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

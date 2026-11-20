@@ -95,6 +95,12 @@ del perfil (`alertasDe`). Quedan fuera las de la meta semanal y las de solo sabe
 - **Alumnos:** la columna «Alertas», que dice cuántas tiene de cada prioridad (al pasar el puntero, cuáles son), y el filtro «Solo los que necesitan ayuda».
 - **Cada materia:** «Hasta dónde llegan» muestra cuántos inscritos completaron cada lección. Marca la lección donde más se detienen, si dos o más no la completaron.
 
+## El resto del panel general (parte 4)
+
+Se abrió y se probó cada pestaña del panel general con datos de prueba: Solicitudes, Cursos (con «Nuevo curso»), Maestros, Eventos (con «Nuevo evento»), Contenido, Miembros, Contacto, Publicaciones, Denuncias, Biblioteca de radio y En vivo. Todas cargan y sus botones funcionan.
+
+Se corrigieron 15 textos que se veían sin tilde: «transmisión», «señal», «enseñar», «Código», «más», «a través», «aún» y «pública», en el control de la transmisión en vivo, en Maestros, en Miembros, en Contacto, en Publicaciones, en la biblioteca de radio y en el panel de los maestros.
+
 ## El plan por partes
 
 1. **Lo que no funcionaba:** la tabla de arriba.
