@@ -4855,6 +4855,62 @@ const DIACONIA_SERVICIO: MateriaDef = {
   disponible: true,
 };
 
+const PROYECTOS_COMUNITARIOS: MateriaDef = {
+  id: "obra-social-3",
+  nivel: null,
+  especialidad: "obra-social",
+  orden: 3,
+  titulo: "Proyectos comunitarios",
+  resumen: "Cómo hace la iglesia proyectos que buscan el bien de su ciudad: buscar el bien de la ciudad, conocer los recursos y las necesidades del barrio, diseñar con la comunidad, los proyectos concretos y sus cuidados, los recursos y la sostenibilidad, y medir y celebrar el cambio.",
+  base: "Jeremías 29:7; Nehemías 2:17-18",
+  memoria: "Jeremías 29:7",
+  lecciones: lecciones("obra-social-3", [
+    ["Buscar el bien de la ciudad", "Jeremías 29:7; Mateo 5:14; Proverbios 11:10"],
+    ["Conocer la comunidad: recursos y necesidades", "Nehemías 2:15; Juan 6:9; Proverbios 20:5"],
+    ["Diseñar un proyecto con la comunidad", "Proverbios 15:22; Nehemías 3:28; Nehemías 4:6"],
+    ["Proyectos que sirven: la despensa, las tutorías, las clases y la salud", "Marcos 6:37; Proverbios 22:9; Mateo 25:35"],
+    ["Los recursos y la sostenibilidad", "2 Corintios 9:8; Juan 6:12; Lucas 14:28"],
+    ["Medir y celebrar el cambio", "Hageo 1:5; 1 Corintios 3:6; Salmos 126:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la obra social sepa llevar adelante proyectos que buscan el bien de su ciudad: que, como pide Jeremías 29:7, procure la paz de la ciudad y ore por ella, y distinga un proyecto comunitario, que responde a una necesidad real, tiene propósito, tiempo y responsables, se hace con la comunidad y se evalúa, de una actividad suelta; que conozca la comunidad viendo sus necesidades y también sus recursos, las personas y sus dones, las asociaciones, las instituciones, los lugares y la economía del barrio, como enseñaron Kretzmann y McKnight; que diseñe el proyecto con los vecinos, con su propósito, sus actividades, sus recursos, sus responsables y sus resultados, distinguiendo lo que hacemos de lo que cambia; que organice proyectos concretos con sus cuidados, como una despensa según la ley federal Bill Emerson y la Ley del Donante de Buena Fe de Texas, que protegen a los que donan y reparten de buena fe alimentos aparentemente sanos, salvo la negligencia grave y otras faltas graves, o una tutoría con voluntarios revisados, dos adultos y el reporte del abuso, que toda persona hace de inmediato y los profesionales a más tardar en 24 horas; que planee los recursos, el presupuesto y la sostenibilidad; y que mida y celebre el cambio con honestidad, cuidando la privacidad de las personas. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jeremías: «Y procurad la paz de la ciudad a la cual os hice transportar, y rogad por ella a Jehová; porque en su paz tendréis vosotros paz» (Jeremías 29:7).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia busca el bien de su ciudad y qué es un proyecto comunitario.", bloom: "comprender" },
+      { id: "o2", texto: "Hacer el mapa de los recursos y de las necesidades de un barrio.", bloom: "aplicar" },
+      { id: "o3", texto: "Diseñar un proyecto con la comunidad, con su propósito, sus actividades y sus resultados.", bloom: "crear" },
+      { id: "o4", texto: "Organizar un proyecto concreto con los cuidados que pide la ley.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear los recursos, el presupuesto y la sostenibilidad de un proyecto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un proyecto midiendo lo que hacemos y lo que cambia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Jeremías 29:7 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El shalom y el bien de la ciudad, el proyecto comunitario, el mapa de los recursos de Kretzmann y McKnight, las partes de un proyecto, lo que hacemos y lo que cambia, la ley Bill Emerson y la Ley del Donante de Buena Fe de Texas, el presupuesto y la sostenibilidad, y la evaluación.",
+      ser: "Un servidor que ama su ciudad, escucha a sus vecinos, planea con otros y cuida lo que Dios provee.",
+      hacer: "Escoger una necesidad con los vecinos, hacer el mapa del barrio, diseñar una tutoría, abrir una despensa, sostener un proyecto cansado y evaluar unas clases de inglés.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Steve Corbett y Brian Fikkert", titulo: "Cuando ayudar hace daño: cómo aliviar la pobreza sin lastimar a los pobres ni a uno mismo", editorial: "Vida" },
+        { autor: "C. René Padilla y Tetsunao Yamamori (eds.)", titulo: "El proyecto de Dios y las necesidades humanas: más modelos de ministerio integral en América Latina", editorial: "Ediciones Kairós" },
+      ],
+      complementaria: [
+        { autor: "Bryant L. Myers", titulo: "Fe, pobreza y desarrollo: principios y prácticas del desarrollo transformador", editorial: "JUANUNO1 Ediciones" },
+        { autor: "John P. Kretzmann y John L. McKnight", titulo: "Building Communities from the Inside Out: A Path Toward Finding and Mobilizing a Community's Assets (en inglés)", editorial: "ABCD Institute, Northwestern University" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Shalom - Paz", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ayvlscZUZ0c", minutos: 4 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías: un líder que ora y trabaja", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Jeremías 29, la carta a los desterrados", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Jeremias&cap=29" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 3, cada uno frente a su casa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=3" },
+      { tipo: "guia", titulo: "Ley Bill Emerson del Buen Samaritano para la donación de alimentos, 42 U.S.C. 1791 (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/1791" },
+      { tipo: "guia", titulo: "Ley del Donante de Buena Fe de Texas, capítulo 76 del Código de Prácticas y Remedios Civiles (en inglés)", fuente: "Legislatura de Texas", url: "https://statutes.capitol.texas.gov/Docs/CP/htm/CP.76.htm" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5787,7 +5843,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
-    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
+    TEOLOGIA_COMPASION, DIACONIA_SERVICIO, PROYECTOS_COMUNITARIOS, ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
   ]),
 ];
 
