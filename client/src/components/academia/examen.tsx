@@ -385,20 +385,25 @@ function SinExamen({ mensaje, volver, entrar = false }: { mensaje: ReactNode; vo
 /**
  * Un examen con su título y su «Volver» sacados del mapa de la academia (useMapaAcademia), así la página no carga el
  * catálogo. `destino` lo arma con el mapa (null: ese examen no existe) o, si el mapa no llegó, con textos generales
- * (`mapa` null): el examen funciona igual. El examen se pide a la vez que el mapa.
+ * (`mapa` null): el examen funciona igual. El examen se pide a la vez que el mapa, y la pantalla usa esa misma consulta:
+ * un solo pedido (con una segunda consulta, la pantalla lo volvía a pedir si el examen llegaba antes que el mapa).
  */
 export function PantallaExamenConMapa({ base, destino }: { base: string | undefined; destino: (mapa: MapaAcademia | null) => DestinoExamen | null }) {
   const mapa = useMapaAcademia();
-  useExamen(base);
+  const q = useExamen(base);
   if (mapa.isLoading) return <Cargando />;
   if (mapa.error?.status === 403) return <PantallaCerrada mensaje={mapa.error.message} />;
-  return <PantallaExamen destino={destino(mapa.data ?? null)} />;
+  return <Pantalla destino={destino(mapa.data ?? null)} q={q} />;
 }
 
 /** La pantalla completa de un examen. */
 export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
-  const qc = useQueryClient();
   const q = useExamen(destino?.base);
+  return <Pantalla destino={destino} q={q} />;
+}
+
+function Pantalla({ destino, q }: { destino: DestinoExamen | null; q: ReturnType<typeof useExamen> }) {
+  const qc = useQueryClient();
   // la materia, si el título del examen no la dice ya (el integral y la diagnóstica no son de una materia)
   useTituloAcademia(
     !destino ? "Examen"
