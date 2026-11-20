@@ -32,6 +32,13 @@ export default function AcademiaDireccionMateria() {
     );
   }
   const { materia: m, alumnos, puede } = q.data;
+  const embudo = q.data.embudo ?? [];
+  // la lección donde más alumnos se quedan (la mayor caída respecto a la anterior, si son al menos 2)
+  let masCae = -1;
+  for (let i = 1; i < embudo.length; i++) {
+    const cae = embudo[i - 1].completaron - embudo[i].completaron;
+    if (cae >= 2 && (masCae < 0 || cae > embudo[masCae - 1].completaron - embudo[masCae].completaron)) masCae = i;
+  }
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-16 space-y-6">
@@ -54,6 +61,27 @@ export default function AcademiaDireccionMateria() {
           <Indicador etiqueta="Promedio" valor={m.promedio ?? "—"} nota="de quienes la aprobaron" />
           <Indicador etiqueta="Avance medio" valor={`${m.avance} %`} nota="de las lecciones" />
         </div>
+
+        {embudo.length > 0 && m.inscritos > 0 && (
+          <section className="glass-card p-5" data-testid="materia-embudo">
+            <h2 className="font-semibold">Hasta dónde llegan</h2>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              Cuántos de los {m.inscritos} inscritos completaron cada lección. Donde baja de golpe, conviene mirar esa lección: puede ser larga o difícil.
+            </p>
+            <ul className="space-y-2.5">
+              {embudo.map((l, i) => (
+                <li key={l.n} className="grid grid-cols-[minmax(0,1fr)_7rem_3rem] sm:grid-cols-[minmax(0,1fr)_12rem_3rem] items-center gap-3 text-sm">
+                  <span className="min-w-0">
+                    <span className="block truncate">Lección {l.n}: {l.titulo}</span>
+                    {i === masCae && <span className="block text-xs text-orange-700 dark:text-orange-300">Aquí se detienen más: {embudo[i - 1].completaron - l.completaron} no la completaron</span>}
+                  </span>
+                  <Medidor valor={l.completaron} de={m.inscritos} etiqueta={`${l.completaron} de ${m.inscritos} completaron la lección ${l.n}`} />
+                  <span className="tabular-nums text-right">{l.completaron}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <div className="glass-card p-0 overflow-x-auto">
           <table className="w-full text-sm" data-testid="tabla-materia-alumnos">

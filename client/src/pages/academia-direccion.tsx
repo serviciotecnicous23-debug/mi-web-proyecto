@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle, ArrowLeft, BookCheck, BookOpen, ClipboardCheck, Clock, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
+  AlertCircle, AlertTriangle, ArrowLeft, BookCheck, BookOpen, ClipboardCheck, Clock, Download, FileClock, History, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
@@ -30,6 +30,7 @@ import type { ContenidoLista, ContenidoResumen } from "@shared/academia-calidad"
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
 import { ActividadesPorConfirmar } from "@/components/academia/actividades-panel";
 import { BandejaPendientes } from "@/components/academia/bandeja";
+import { BarrasSemanas } from "@/components/academia/perfil-graficos";
 import { Cargando } from "@/components/academia/ui";
 import { Barras, ChipEstatus, Indicador, ListaActividad, TablaMaterias, fecha, hace, numero } from "@/components/academia/seguimiento";
 
@@ -172,25 +173,46 @@ function Resumen({ d, irA }: { d: DireccionResumen; irA: (tab: string, filtro?: 
         <Barras titulo="Alumnos por iglesia" filas={conOtros(d.iglesias)} vacio="Todavía no hay alumnos." alElegir={(nombre) => irA("alumnos", { iglesia: nombre })} testId="barras-iglesias" />
       </div>
 
+      <section className="space-y-3" data-testid="direccion-tendencias">
+        <h3 className="font-semibold">Las últimas 12 semanas</h3>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <BarrasSemanas titulo="Inscripciones" semanas={d.tendencias} valor={(s) => s.inscripciones} unidad={(n) => `${numero(n)} ${n === 1 ? "inscripción" : "inscripciones"}`} />
+          <BarrasSemanas titulo="Lecciones completadas" semanas={d.tendencias} valor={(s) => s.lecciones} unidad={(n) => `${numero(n)} ${n === 1 ? "lección" : "lecciones"}`} />
+          <BarrasSemanas titulo="Minutos de estudio" semanas={d.tendencias} valor={(s) => s.minutos} unidad={(n) => `${numero(n)} min`} />
+          <BarrasSemanas titulo="Materias aprobadas" semanas={d.tendencias} valor={(s) => s.aprobadas} unidad={(n) => `${numero(n)} ${n === 1 ? "materia" : "materias"}`} />
+        </div>
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="glass-card p-5" data-testid="direccion-detenidos">
-          <h3 className="font-semibold">Se detuvieron</h3>
-          <p className="text-xs text-muted-foreground mb-3">Con materias en curso y 14 días o más sin estudiar. Un mensaje a tiempo ayuda a no abandonar.</p>
-          {d.detenidos.length === 0 ? (
+        <section className="glass-card p-5" data-testid="direccion-ayuda">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-semibold">Necesitan ayuda{d.ayuda.length ? ` (${numero(d.ayuda.length)})` : ""}</h3>
+            {d.ayuda.length > 0 && <Button variant="ghost" size="sm" onClick={() => irA("alumnos", { conAlertas: true })}>Ver en la lista</Button>}
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">Las mismas alertas del perfil de cada alumno: días sin estudiar, finales reprobados, promedio bajo, lecciones detenidas y quien no empezó. Un mensaje a tiempo ayuda a no abandonar.</p>
+          {d.ayuda.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nadie, por ahora.</p>
           ) : (
-            <ul className="space-y-2.5 text-sm">
-              {d.detenidos.map((a) => (
-                <li key={a.userId} className="flex items-start justify-between gap-3">
-                  <span className="min-w-0">
+            <ul className="space-y-3 text-sm">
+              {d.ayuda.slice(0, 12).map((a) => (
+                <li key={a.userId} className="border-b border-border/60 pb-2.5 last:border-0">
+                  <div className="flex items-baseline justify-between gap-3">
                     <Link href={enlaces.alumno(a.userId)} className="font-medium hover:underline">{a.nombre}</Link>
-                    <span className="block text-xs text-muted-foreground truncate">{a.enCurso.join(" · ")}</span>
-                  </span>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{hace(a.ultima)}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{[a.matricula, a.iglesia].filter(Boolean).join(" · ")}</span>
+                  </div>
+                  <ul className="mt-1 space-y-0.5">
+                    {a.alertas.map((x) => (
+                      <li key={x.clave} className="flex items-start gap-1.5 text-xs">
+                        {x.gravedad === "alta" ? <AlertTriangle className="w-3.5 h-3.5 mt-px text-red-600 shrink-0" aria-hidden="true" /> : <AlertCircle className="w-3.5 h-3.5 mt-px text-orange-600 shrink-0" aria-hidden="true" />}
+                        <span><span className="sr-only">{x.gravedad === "alta" ? "Atender pronto: " : "Para mirar: "}</span>{x.titulo}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
           )}
+          {d.ayuda.length > 12 && <p className="text-xs text-muted-foreground mt-2">Y {numero(d.ayuda.length - 12)} más en la lista de alumnos.</p>}
         </section>
         <section className="glass-card p-5">
           <div className="flex items-center justify-between gap-3 mb-3">
@@ -214,7 +236,7 @@ const ORDENES: { id: OrdenAlumnos; texto: string }[] = [
   { id: "lecciones", texto: "Más lecciones completadas" },
 ];
 /** Los filtros de la lista de alumnos: las cifras y las barras del resumen llevan a la lista ya filtrada. */
-export type FiltroAlumnos = { texto?: string; estatus?: string; materia?: string; iglesia?: string; pais?: string; orden?: OrdenAlumnos };
+export type FiltroAlumnos = { texto?: string; estatus?: string; materia?: string; iglesia?: string; pais?: string; orden?: OrdenAlumnos; conAlertas?: boolean };
 
 function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: FiltroAlumnos | null }) {
   const enlaces = useEnlaces();
@@ -225,6 +247,7 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
   const [iglesia, setIglesia] = useState(inicial?.iglesia ?? "");
   const [pais, setPais] = useState(inicial?.pais ?? "");
   const [orden, setOrden] = useState<OrdenAlumnos>(inicial?.orden ?? "recientes");
+  const [conAlertas, setConAlertas] = useState(!!inicial?.conAlertas);
   const lista = q.data?.alumnos ?? [];
   const contacto = !!q.data?.puede.contacto;
   const filtrados = useMemo(() => {
@@ -235,7 +258,8 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
         (!estatus || a.estatus.clave === estatus) &&
         (!materia || a.enCurso.includes(materia)) &&
         (!iglesia || (a.iglesia || "Sin iglesia") === iglesia) &&
-        (!pais || a.pais === pais),
+        (!pais || a.pais === pais) &&
+        (!conAlertas || !!a.alertas),
     );
     const por: Record<OrdenAlumnos, (a: AlumnoFila, b: AlumnoFila) => number> = {
       recientes: (a, b) => b.desde.localeCompare(a.desde),
@@ -245,9 +269,10 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
       lecciones: (a, b) => b.lecciones - a.lecciones || b.aprobadas - a.aprobadas,
     };
     return out.sort(por[orden]);
-  }, [lista, texto, estatus, materia, iglesia, pais, orden]);
-  const conFiltros = !!(texto || estatus || materia || iglesia || pais);
-  const limpiar = () => { setTexto(""); setEstatus(""); setMateria(""); setIglesia(""); setPais(""); };
+  }, [lista, texto, estatus, materia, iglesia, pais, orden, conAlertas]);
+  const conFiltros = !!(texto || estatus || materia || iglesia || pais || conAlertas);
+  const limpiar = () => { setTexto(""); setEstatus(""); setMateria(""); setIglesia(""); setPais(""); setConAlertas(false); };
+  const cuantosConAlertas = lista.filter((a) => !!a.alertas).length;
   if (q.isLoading) return <p className="text-muted-foreground">Cargando a los alumnos…</p>;
   if (q.error) return <p className="text-sm text-red-600">{q.error.message}</p>;
   return (
@@ -285,6 +310,15 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
         <p className="text-sm text-muted-foreground" data-testid="alumnos-cuantos">
           {filtrados.length === lista.length ? `${numero(lista.length)} ${lista.length === 1 ? "alumno" : "alumnos"}` : `${numero(filtrados.length)} de ${numero(lista.length)} alumnos`}
         </p>
+        <button
+          type="button"
+          onClick={() => setConAlertas((v) => !v)}
+          aria-pressed={conAlertas}
+          className={`rounded-full px-3 py-1 text-sm border transition-colors inline-flex items-center gap-1.5 ${conAlertas ? "bg-orange-600 border-orange-600 text-white" : "border-border hover:border-orange-500"}`}
+          data-testid="alumnos-con-alertas"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> Solo los que necesitan ayuda ({numero(cuantosConAlertas)})
+        </button>
         {conFiltros && <Button variant="ghost" size="sm" onClick={limpiar} data-testid="alumnos-limpiar">Quitar los filtros</Button>}
       </div>
       <div className="glass-card p-0 overflow-x-auto">
@@ -295,6 +329,7 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
               <th className="py-2.5 px-3 font-medium">Iglesia</th>
               <th className="py-2.5 px-3 font-medium">País</th>
               <th className="py-2.5 px-3 font-medium">Estatus</th>
+              <th className="py-2.5 px-3 font-medium">Alertas</th>
               <th className="py-2.5 px-3 font-medium text-right">Aprobadas</th>
               <th className="py-2.5 px-3 font-medium">En curso</th>
               <th className="py-2.5 px-3 font-medium text-right">Lecciones</th>
@@ -312,6 +347,16 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
                 <td className="py-2.5 px-3">{a.iglesia || <span className="text-muted-foreground">—</span>}</td>
                 <td className="py-2.5 px-3 whitespace-nowrap">{a.pais}</td>
                 <td className="py-2.5 px-3"><ChipEstatus e={a.estatus} /></td>
+                <td className="py-2.5 px-3 whitespace-nowrap" title={a.alertas?.titulos.join(" · ")}>
+                  {a.alertas ? (
+                    <span className="inline-flex items-center gap-2 text-xs">
+                      {a.alertas.alta > 0 && <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400"><AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />{a.alertas.alta}<span className="sr-only"> para atender pronto</span></span>}
+                      {a.alertas.media > 0 && <span className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-300"><AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />{a.alertas.media}<span className="sr-only"> para mirar</span></span>}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
                 <td className="py-2.5 px-3 text-right tabular-nums">{a.aprobadas} de {a.materias}</td>
                 <td className="py-2.5 px-3 max-w-[16rem]">{a.enCurso.length ? a.enCurso.join(" · ") : <span className="text-muted-foreground">—</span>}</td>
                 <td className="py-2.5 px-3 text-right tabular-nums">{a.lecciones}</td>
@@ -326,7 +371,7 @@ function Alumnos({ resumen, inicial }: { resumen: DireccionResumen; inicial?: Fi
             ))}
             {!filtrados.length && (
               <tr>
-                <td colSpan={contacto ? 9 : 8} className="py-8 text-center text-muted-foreground">{lista.length ? "Nadie coincide con la búsqueda." : "Todavía no hay alumnos inscritos."}</td>
+                <td colSpan={contacto ? 10 : 9} className="py-8 text-center text-muted-foreground">{lista.length ? "Nadie coincide con la búsqueda." : "Todavía no hay alumnos inscritos."}</td>
               </tr>
             )}
           </tbody>

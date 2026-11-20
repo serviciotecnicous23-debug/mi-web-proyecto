@@ -5,6 +5,14 @@
 import type { DocumentoAcademia, EstadoMateria, EstatusAlumno, EstatusVista } from "./academia";
 import type { FichaVista } from "./academia-inscripcion";
 import type { Alcance, RolAcademia } from "./academia-permisos";
+import type { AlertaPerfil } from "./academia-perfil";
+
+/** Las alertas de un alumno en la lista del panel: cuántas de cada prioridad y sus títulos (server/academia-alertas.ts). */
+export type AlertasFila = { alta: number; media: number; titulos: string[] };
+/** Una semana de la academia (de lunes a domingo) en las tendencias del panel. */
+export type SemanaPanel = { inicio: string; inscripciones: number; lecciones: number; minutos: number; aprobadas: number };
+/** Un alumno que necesita ayuda, con sus alertas (las que piden actuar o mirar). */
+export type AlumnoAyuda = { userId: number; nombre: string; matricula: string; iglesia: string; alertas: AlertaPerfil[] };
 
 export type ActividadTipo = "inscripcion" | "materia" | "aprobada" | "nivel" | "especialidad";
 export type ActividadItem = { tipo: ActividadTipo; userId: number; nombre: string; matricula: string | null; texto: string; fecha: string };
@@ -28,6 +36,8 @@ export type AlumnoFila = {
   /** Solo con el permiso de ver el contacto. */
   telefono?: string;
   correo?: string;
+  /** Sus alertas (en la lista de alumnos del panel). */
+  alertas?: AlertasFila;
 };
 
 export type MateriaReporte = {
@@ -59,6 +69,10 @@ export type DireccionResumen = {
   iglesias: { nombre: string; n: number }[];
   /** Con materias en curso y 14 días o más sin estudiar. */
   detenidos: AlumnoFila[];
+  /** Quienes tienen alertas que piden actuar o mirar, los más urgentes primero. */
+  ayuda: AlumnoAyuda[];
+  /** Las últimas 12 semanas: inscripciones, lecciones, minutos de estudio y materias aprobadas. */
+  tendencias: SemanaPanel[];
   actividad: ActividadItem[];
   /** La academia ya está abierta para todos (o en vista previa). */
   abierta: boolean;
@@ -163,7 +177,8 @@ export type GestionMateria = {
 /** Lo que responde una acción de la gestión: qué pasó (dicho para la Administración) y la materia como quedó. */
 export type ResultadoGestion = { mensaje: string; materia?: GestionMateria };
 
-export type MateriaSeguimiento = { materia: MateriaReporte; alumnos: (AlumnoFila & { avance: MateriaAvance })[]; puede: { exportar: boolean } };
+/** `embudo`: hasta dónde llegan los inscritos (cuántos completaron cada lección). */
+export type MateriaSeguimiento = { materia: MateriaReporte; alumnos: (AlumnoFila & { avance: MateriaAvance })[]; puede: { exportar: boolean }; embudo?: { n: number; titulo: string; completaron: number }[] };
 
 // ---------------------------------------------------------------- la revisión (fase A3)
 

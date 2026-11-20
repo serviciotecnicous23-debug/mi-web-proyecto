@@ -6,15 +6,15 @@
 // Los colores siguen la guía del panel (components/academia/seguimiento.tsx): naranja 600 en claro y en oscuro, y el
 // texto siempre en el color del texto.
 import { useState } from "react";
-import type { DiaEstudio, SemanaEstudio } from "@shared/academia-perfil";
+import type { DiaEstudio } from "@shared/academia-perfil";
 
 export const fechaCorta = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("es", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** Barras de las últimas semanas (la última es la actual, que todavía no termina). */
-export function BarrasSemanas({ titulo, semanas, valor, unidad, meta, testId }: {
+export function BarrasSemanas<T extends { inicio: string }>({ titulo, semanas, valor, unidad, meta, testId }: {
   titulo: string;
-  semanas: SemanaEstudio[];
-  valor: (s: SemanaEstudio) => number;
+  semanas: T[];
+  valor: (s: T) => number;
   unidad: (n: number) => string;
   meta?: number;
   testId?: string;
