@@ -9,7 +9,7 @@ import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NOMBRE_ACADEMIA, normalizarCodigo, type VerificacionAcademia } from "@shared/academia";
+import { NOMBRE_ACADEMIA, normalizarCodigo, type VerificacionAcademia } from "@shared/academia-base";
 import { verificarDocumento } from "@/components/academia/api";
 
 export default function AcademiaVerificar() {

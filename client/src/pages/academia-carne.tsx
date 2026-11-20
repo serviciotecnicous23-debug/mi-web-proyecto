@@ -11,7 +11,7 @@ import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
-import type { CarneVista } from "@shared/academia";
+import type { CarneVista } from "@shared/academia-base";
 import { useCarne } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { FotoCarne } from "@/components/academia/foto-carne";

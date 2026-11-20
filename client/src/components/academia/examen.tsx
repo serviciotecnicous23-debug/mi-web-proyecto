@@ -12,8 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { loginUrl } from "@/lib/login-redirect";
 import { useTituloAcademia } from "@/components/academia/titulo";
-import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, textoSegundos, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
-import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
+import {
+  DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, textoSegundos, type Apelable, type ApelacionVista, type EscritaExamen, type MapaAcademia,
+  type PasoExamen, type PreguntaExamen, type ResultadoExamen,
+} from "@shared/academia-base";
+import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen, useMapaAcademia } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
 const LETRAS = ["A", "B", "C", "D", "E", "F"];
@@ -377,6 +380,19 @@ function SinExamen({ mensaje, volver, entrar = false }: { mensaje: ReactNode; vo
       </div>
     </Layout>
   );
+}
+
+/**
+ * Un examen con su título y su «Volver» sacados del mapa de la academia (useMapaAcademia), así la página no carga el
+ * catálogo. `destino` lo arma con el mapa (null: ese examen no existe) o, si el mapa no llegó, con textos generales
+ * (`mapa` null): el examen funciona igual. El examen se pide a la vez que el mapa.
+ */
+export function PantallaExamenConMapa({ base, destino }: { base: string | undefined; destino: (mapa: MapaAcademia | null) => DestinoExamen | null }) {
+  const mapa = useMapaAcademia();
+  useExamen(base);
+  if (mapa.isLoading) return <Cargando />;
+  if (mapa.error?.status === 403) return <PantallaCerrada mensaje={mapa.error.message} />;
+  return <PantallaExamen destino={destino(mapa.data ?? null)} />;
 }
 
 /** La pantalla completa de un examen. */

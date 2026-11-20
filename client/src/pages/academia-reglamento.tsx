@@ -1,10 +1,11 @@
-// El reglamento académico de la academia (shared/academia.ts, REGLAMENTO): página pública, sin cuenta.
+// El reglamento académico de la academia (shared/academia-reglamento.ts, REGLAMENTO): página pública, sin cuenta.
 import { Link } from "wouter";
 import { ArrowLeft, BookOpen, ScrollText } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
-import { LEMA, NOMBRE_ACADEMIA, REGLAMENTO } from "@shared/academia";
+import { LEMA, NOMBRE_ACADEMIA } from "@shared/academia-base";
+import { REGLAMENTO } from "@shared/academia-reglamento";
 
 export default function AcademiaReglamento() {
   useTituloAcademia("Reglamento académico");

@@ -1,15 +1,20 @@
-// El examen final de una materia (server/academia-examen.ts): la pantalla común de los exámenes de la academia.
+// El examen final de una materia (server/academia-examen.ts): la pantalla común de los exámenes de la academia. El
+// título y el «Volver» salen del mapa de la academia (la página no carga el catálogo).
 import { useParams } from "wouter";
-import { materiaPorId } from "@shared/academia";
 import { baseExamen } from "@/components/academia/api";
-import { PantallaExamen } from "@/components/academia/examen";
+import { PantallaExamenConMapa } from "@/components/academia/examen";
 
 export default function AcademiaExamen() {
   const { materiaId } = useParams<{ materiaId: string }>();
-  const def = materiaId ? materiaPorId(materiaId) : undefined;
+  const base = materiaId ? baseExamen(materiaId) : undefined;
   return (
-    <PantallaExamen
-      destino={def ? { base: baseExamen(def.id), tipo: "materia", titulo: "Examen final", volver: { href: `/academia/materia/${def.id}`, texto: def.titulo } } : null}
+    <PantallaExamenConMapa
+      base={base}
+      destino={(mapa) => {
+        const m = materiaId ? mapa?.materias[materiaId] : undefined;
+        if (!base || (mapa && !m)) return null;
+        return { base, tipo: "materia", titulo: "Examen final", volver: { href: `/academia/materia/${materiaId}`, texto: m?.titulo ?? "la materia" } };
+      }}
     />
   );
 }

@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { NOMBRE_ACADEMIA } from "@shared/academia";
+import { NOMBRE_ACADEMIA } from "@shared/academia-base";
 import { useAcompanados } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { Medidor, hace } from "@/components/academia/seguimiento";

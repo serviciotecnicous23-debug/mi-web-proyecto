@@ -14,7 +14,7 @@ import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
-import type { AcademiaEstado } from "@shared/academia";
+import type { AcademiaEstado } from "@shared/academia-base";
 import {
   cambiarMetaEstudio, sumarEstudio, useAcademiaEstado, useCarne, useCertificados, useDiagnostico, useEstudio, useMateria, useRepasoDelDia, useRepasoVersiculos,
 } from "@/components/academia/api";

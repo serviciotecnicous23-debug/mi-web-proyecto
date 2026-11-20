@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { loginUrl } from "@/lib/login-redirect";
-import { NOMBRE_ACADEMIA, NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia";
+import { NOMBRE_ACADEMIA, NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia-base";
 import { CAPACIDADES, ROLES_ACADEMIA, rolAcademia, textoCelda } from "@shared/academia-permisos";
 import { PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion";
 import { useArea } from "@/components/academia/area";

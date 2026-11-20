@@ -9,7 +9,7 @@ import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { loginUrl } from "@/lib/login-redirect";
-import { HONORES, type NivelEstado } from "@shared/academia";
+import { HONORES, type NivelEstado } from "@shared/academia-base";
 import { aceptarPacto, tiempoTexto, useNivel } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { ActividadesDelNivel } from "@/components/academia/actividades";

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
-import { idYouTube, type BloqueoRepaso, type LeccionVista, type RespuestaRepaso } from "@shared/academia";
+import { idYouTube, type BloqueoRepaso, type LeccionVista, type RespuestaRepaso } from "@shared/academia-base";
 import { avanceVideo, completarLeccion, guardarReflexion, inscribirmeEnMateria, responderRepaso, useLeccion } from "@/components/academia/api";
 import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 import { HerramientasLectura, useTamanoLetra } from "@/components/academia/lectura";
