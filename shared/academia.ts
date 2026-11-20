@@ -4473,6 +4473,279 @@ const ETICA_SEGURIDAD_DIGITAL: MateriaDef = {
   disponible: true,
 };
 
+const ADMINISTRACION_ECLESIASTICA: MateriaDef = {
+  id: "liderazgo-administracion-1",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 1,
+  titulo: "Administración eclesiástica",
+  resumen: "Cómo administrar la iglesia para que la obra siga en orden: la administración al servicio del reino, los registros y el archivo, las reuniones y las actas, el templo y los bienes, los riesgos y los seguros, y los procesos y los manuales.",
+  base: "Proverbios 24:3; Hechos 6:2-4",
+  memoria: "Proverbios 24:3",
+  lecciones: lecciones("liderazgo-administracion-1", [
+    ["La administración al servicio del reino", "Hechos 6:2-4; 1 Corintios 12:28; Tito 1:5"],
+    ["Los registros y el archivo", "Esdras 2:62; Jeremías 32:14; Esdras 8:33-34"],
+    ["Las reuniones y las actas", "Hechos 15:6; Hechos 15:22; Hechos 15:28"],
+    ["El templo y los bienes", "2 Reyes 12:5; 2 Crónicas 24:13; Proverbios 27:23"],
+    ["Los riesgos y los seguros", "Proverbios 22:3; Lucas 14:28; Eclesiastés 11:2"],
+    ["Los procesos y los manuales", "Éxodo 18:20-21; 1 Corintios 14:33; Proverbios 24:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la administración de la iglesia la ordene para que la obra siga y el pastor se dedique a la oración y a la Palabra: que haga el diagnóstico de sus áreas, las personas, los registros, el edificio, el dinero, el calendario y la comunicación, con prioridades y responsables; que guarde bien los registros, con un archivo con llave, una copia digital y el tiempo que pide la ley, como los 4 años que el IRS pide para la nómina; que prepare y dirija las reuniones con agenda y quórum, y que escriba sus actas; que cuide el templo y los bienes con un plan de mantenimiento, el inventario y la seguridad; que prevea los riesgos de cada actividad y revise los seguros, sabiendo que en Texas un empleador privado puede no tener seguro de compensación laboral si avisa como pide la ley; y que escriba los procesos y el manual de la iglesia. Baja a la práctica lo que enseña Administración y gobierno de la iglesia (Nivel 5), sin repetirla. Lo legal es una guía general, no un consejo legal. Su base es la palabra de los Proverbios: «Con sabiduría se edificará la casa, Y con prudencia se afirmará» (Proverbios 24:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar para qué sirve la administración en la iglesia y hacer su diagnóstico.", bloom: "comprender" },
+      { id: "o2", texto: "Ordenar los registros y el archivo de la iglesia.", bloom: "aplicar" },
+      { id: "o3", texto: "Preparar y dirigir una reunión, y escribir su acta.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar el cuidado del templo y de los bienes.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar los riesgos de una actividad y los seguros de la iglesia.", bloom: "evaluar" },
+      { id: "o6", texto: "Escribir un procedimiento y armar el manual de la iglesia.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Proverbios 24:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las áreas de la administración, los registros de una iglesia y cuánto se guardan, la agenda, el quórum y el acta, el mantenimiento, el inventario y la seguridad, el manejo de los riesgos y los seguros, y los procedimientos y el manual.",
+      ser: "Un administrador que sirve para que otros sirvan, fiel en lo poco, que prevé con sabiduría y deja todo en orden.",
+      hacer: "Hacer el diagnóstico de una iglesia, ordenar su archivo, escribir un acta, hacer el plan de mantenimiento del año, el inventario de riesgos de un campamento y el procedimiento para reservar el templo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bruce P. Powers (ed.)", titulo: "Church Administration Handbook (en inglés)", editorial: "B&H Publishing" },
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 6, los siete que sirvieron para que la Palabra creciera", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const FINANZAS_TRANSPARENCIA: MateriaDef = {
+  id: "liderazgo-administracion-2",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 2,
+  titulo: "Finanzas y transparencia",
+  resumen: "Cómo manejar el dinero de la iglesia con fidelidad y a la luz: los principios y la política financiera, el presupuesto, los controles internos, las ofrendas y sus recibos, los informes y la revisión, y el sostén del pastor y de los empleados.",
+  base: "2 Corintios 8:20-21; Lucas 16:10",
+  memoria: "2 Corintios 8:20",
+  lecciones: lecciones("liderazgo-administracion-2", [
+    ["El dinero de Dios en manos de la iglesia", "2 Corintios 8:20-21; Lucas 16:10-11; 1 Corintios 4:2"],
+    ["El presupuesto", "Lucas 14:28; Proverbios 21:5; Proverbios 22:7"],
+    ["Los controles internos", "2 Reyes 12:10-11; Deuteronomio 19:15; 2 Corintios 8:20-21"],
+    ["Las ofrendas y sus recibos", "Marcos 12:41-44; 2 Corintios 9:7; 1 Corintios 16:2-3"],
+    ["Los informes y la revisión", "Nehemías 13:13; Lucas 16:2; Romanos 13:8"],
+    ["El sostén del pastor y de los empleados", "1 Timoteo 5:17-18; Gálatas 6:6; Lucas 10:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las finanzas de la iglesia maneje el dinero de Dios con fidelidad y a la luz: que escriba la política financiera de la iglesia, con la mayordomía, el propósito de cada ofrenda, los controles y la rendición de cuentas; que arme un presupuesto real, con lo que entró en los últimos doce meses, las misiones desde el principio y una reserva; que aplique los controles internos: la regla de los dos para recoger y contar la ofrenda, la hoja de conteo firmada, las tareas separadas, los pagos con comprobante y la conciliación del banco; que dé a cada donante el reconocimiento escrito que pide el IRS para las donaciones de 250 dólares o más y use las ofrendas designadas para lo que se dieron; que informe al consejo y a la iglesia y organice la revisión anual, sabiendo que las iglesias no presentan el Formulario 990; y que sostenga con dignidad al pastor y a los empleados, con la asignación para vivienda designada antes de pagarla, el Seguro Social del ministro por cuenta propia y un plan de reembolsos con comprobantes. Baja a la práctica lo que enseñan Mayordomía cristiana (Nivel 2) y Administración y gobierno de la iglesia (Nivel 5), sin repetirlas. Lo legal y lo tributario son una guía general, no un consejo legal ni contable. Su base es el cuidado de Pablo con la ofrenda: «evitando que nadie nos censure en cuanto a esta ofrenda abundante que administramos» (2 Corintios 8:20).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los principios de las finanzas de la iglesia y escribir su política financiera.", bloom: "comprender" },
+      { id: "o2", texto: "Armar el presupuesto anual de una iglesia y seguirlo cada mes.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar los controles internos en el conteo, el depósito y los pagos.", bloom: "aplicar" },
+      { id: "o4", texto: "Manejar las ofrendas designadas y los recibos de las donaciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar los informes financieros y organizar la revisión anual.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el paquete de compensación del pastor con las reglas que pide la ley.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Corintios 8:20 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los principios y la política financiera, el presupuesto, los controles internos, los recibos que pide el IRS y las ofrendas designadas, los informes y la revisión, y las reglas del sostén del pastor.",
+      ser: "Un mayordomo fiel en lo poco, que maneja el dinero de Dios a la luz y protege a los que sirven con él.",
+      hacer: "Escribir la política financiera, armar el presupuesto del año, organizar el conteo del domingo, preparar un estado anual de donaciones, presentar el informe trimestral y armar el paquete del pastor.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Inés J. Figueroa", titulo: "La administración de las finanzas de las iglesias", editorial: "Abingdon Press" },
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+        { autor: "Randy Alcorn", titulo: "El principio del tesoro", editorial: "Unilit" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 2 Corintios 8, la ofrenda manejada con honradez", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Corintios&cap=8" },
+      { tipo: "guia", titulo: "Contribuciones caritativas: requisitos de comprobación y divulgación, Publicación 1771 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1771.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const EQUIPOS_VOLUNTARIOS: MateriaDef = {
+  id: "liderazgo-administracion-3",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 3,
+  titulo: "Equipos y voluntarios",
+  resumen: "Cómo organizar a los que sirven en la iglesia: el cuerpo que sirve y el ciclo del voluntario, invitar y ubicar, seleccionar con cuidado, capacitar y acompañar, cuidar, reconocer y renovar, y las leyes que tocan a los voluntarios.",
+  base: "1 Pedro 4:10; 1 Corintios 12:18",
+  memoria: "1 Pedro 4:10",
+  lecciones: lecciones("liderazgo-administracion-3", [
+    ["El cuerpo que sirve", "1 Corintios 12:18-21; 1 Pedro 4:10; Romanos 12:6-8"],
+    ["Invitar y ubicar", "Éxodo 35:21; Marcos 3:14; Hechos 6:2-4"],
+    ["Seleccionar con cuidado", "1 Timoteo 3:10; 1 Timoteo 5:22; Proverbios 20:6"],
+    ["Capacitar y acompañar", "Marcos 6:7; Lucas 10:17; Hebreos 10:24"],
+    ["Cuidar, reconocer y renovar", "Éxodo 18:17-18; Romanos 16:1-4; Filipenses 2:29-30"],
+    ["La ley y los voluntarios", "Tito 3:1; Romanos 13:1; Proverbios 22:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que coordina a los voluntarios de la iglesia ayude a cada creyente a servir con su don: que organice el ciclo del voluntario, invitar, ubicar, preparar, acompañar, reconocer y renovar, con un mapa de servicio y un coordinador; que invite en persona, con la descripción de cada puesto y un primer paso pequeño; que seleccione con cuidado a los que sirven con niños, con el dinero o al volante, con la solicitud, las referencias, la revisión de antecedentes y la capacitación de protección; que capacite con la práctica y acompañe a cada voluntario; que cuide al que sirve, repartiendo la carga, reconociendo su trabajo y renovando su compromiso con libertad; y que cumpla las leyes que tocan a los voluntarios: la Ley de Protección del Voluntario de 1997, que no cubre el manejo de vehículos ni la responsabilidad de la iglesia, la ley de Texas del capítulo 84, los 14 centavos por milla y el reporte del abuso de un menor en Texas, de inmediato, y los profesionales a más tardar en 24 horas. Lleva a la gestión de los voluntarios lo que enseñan Liderazgo II (Nivel 5) y Protección de menores (especialidad Niñez), sin repetirlos. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pedro: «Cada uno según el don que ha recibido, minístrelo a los otros, como buenos administradores de la multiforme gracia de Dios» (1 Pedro 4:10).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué cada creyente tiene un lugar para servir, y el ciclo del voluntario.", bloom: "comprender" },
+      { id: "o2", texto: "Invitar en persona y escribir la descripción de un puesto de servicio.", bloom: "aplicar" },
+      { id: "o3", texto: "Seleccionar con cuidado a los voluntarios de los puestos delicados.", bloom: "aplicar" },
+      { id: "o4", texto: "Capacitar y acompañar a un equipo de voluntarios.", bloom: "aplicar" },
+      { id: "o5", texto: "Cuidar, reconocer y renovar a los que sirven.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar si un programa de voluntarios cumple las leyes que lo tocan.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Pedro 4:10 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo del voluntario y el mapa de servicio, la descripción de un puesto, los pasos de la selección, la capacitación práctica, las señales del cansancio y lo que protegen y no protegen las leyes de los voluntarios.",
+      ser: "Un coordinador que ve a cada hermano como un miembro con un don, invita con cariño, cuida a los pequeños y sirve al que sirve.",
+      hacer: "Hacer el mapa de servicio, escribir la descripción de un puesto, seleccionar a un voluntario para los niños, capacitar a un equipo, tener la conversación anual con un voluntario cansado y revisar la protección legal del programa.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Patrick Lencioni", titulo: "Las cinco disfunciones de un equipo", editorial: "Empresa Activa" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bill Hybels", titulo: "The Volunteer Revolution: Unleashing the Power of Everybody (en inglés)", editorial: "Zondervan" },
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 1 Corintios 12, un cuerpo con muchos miembros", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=12" },
+      { tipo: "guia", titulo: "Ley de Protección del Voluntario de 1997, 42 U.S.C. 14503 (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/14503" },
+    ],
+  },
+  disponible: true,
+};
+
+const PLANIFICACION_PROYECTOS: MateriaDef = {
+  id: "liderazgo-administracion-4",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 4,
+  titulo: "Planificación y proyectos ministeriales",
+  resumen: "Cómo planear con fe y llevar los proyectos de la iglesia hasta el final: planificar con fe, la visión, la misión y los valores, las metas y el plan del año, un proyecto de principio a fin, el cronograma, los riesgos y el presupuesto del proyecto, y evaluar y aprender.",
+  base: "Proverbios 16:9; Lucas 14:28",
+  memoria: "Proverbios 16:9",
+  lecciones: lecciones("liderazgo-administracion-4", [
+    ["Planificar con fe", "Proverbios 16:9; Santiago 4:13-15; Lucas 14:28"],
+    ["La visión, la misión y los valores", "Mateo 28:19-20; Habacuc 2:2; Nehemías 2:17-18"],
+    ["Las metas y el plan del año", "Filipenses 3:13-14; 1 Corintios 9:26; Proverbios 21:5"],
+    ["Un proyecto de principio a fin", "Nehemías 2:4-5; Nehemías 3:1; Nehemías 6:15"],
+    ["El cronograma, los riesgos y el presupuesto", "Lucas 14:28-30; Nehemías 4:16; Proverbios 24:6"],
+    ["Evaluar y aprender", "Lamentaciones 3:40; 2 Corintios 13:5; Hechos 14:27"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige un ministerio planee con fe y lleve sus proyectos hasta el final: que planee en oración y con humildad, con el ciclo de mirar dónde estamos, decidir adónde vamos, cómo llegar y con qué, y revisar; que escriba con su equipo la misión, la visión y los valores, cortos y alineados con la Gran Comisión y con la visión de la iglesia; que convierta los deseos en pocas metas SMART, como propuso George T. Doran en 1981, y las ponga en el plan del año; que lleve cada proyecto, un esfuerzo temporal para crear un resultado único, como lo define la guía PMBOK, por sus etapas: iniciar con el propósito y el alcance, planear, ejecutar, controlar y cerrar; que use el cronograma, la lista de riesgos con su plan B y el presupuesto con un margen; y que evalúe con números honestos, guarde lo aprendido y cuente a la iglesia lo que Dios hizo. Baja a la práctica de los proyectos el ciclo de planificación de Administración y gobierno de la iglesia (Nivel 5) y el plan de ministerio del Seminario de liderazgo ministerial, sin repetirlos. Su base es la palabra de los Proverbios: «El corazón del hombre piensa su camino; Mas Jehová endereza sus pasos» (Proverbios 16:9).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo se planea con fe y el ciclo de la planificación.", bloom: "comprender" },
+      { id: "o2", texto: "Escribir la misión, la visión y los valores de un ministerio.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir metas SMART y armar el plan del año.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un proyecto ministerial por sus etapas.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer el cronograma, la lista de riesgos y el presupuesto de un proyecto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un proyecto con sus metas y guardar lo aprendido.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 16:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo de la planificación, la misión, la visión y los valores, las metas SMART, la definición y las etapas de un proyecto, el alcance, el cronograma, los riesgos, el presupuesto y la evaluación.",
+      ser: "Un líder que planea con fe y humildad, con su equipo, termina lo que empieza y da gracias a Dios por lo que él hace.",
+      hacer: "Preparar un retiro de planificación, escribir la visión de un ministerio, convertir un deseo en una meta SMART, llevar una escuela bíblica como proyecto, hacer el cronograma de una remodelación y evaluar un proyecto.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rick Warren", titulo: "Una iglesia con propósito: cómo crecer sin comprometer el mensaje y la misión", editorial: "Vida" },
+        { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Aubrey Malphurs", titulo: "Advanced Strategic Planning: A 21st-Century Model for Church and Ministry Leaders (en inglés)", editorial: "Baker Books" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 2, la visión y el plan para reedificar el muro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=2" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 14, calcular los gastos antes de edificar", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=14" },
+    ],
+  },
+  disponible: true,
+};
+
+const MARCO_LEGAL_ORGANIZACIONES: MateriaDef = {
+  id: "liderazgo-administracion-5",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  avanzada: true,
+  orden: 5,
+  titulo: "Marco legal de las organizaciones religiosas",
+  resumen: "Lo que la ley de los Estados Unidos y de Texas protege y pide a una iglesia: la iglesia y el Estado, la forma legal de la iglesia, los impuestos de la iglesia, la iglesia como empleador, la responsabilidad, los seguros y la protección, y la propiedad y el uso del templo.",
+  base: "Mateo 22:21; Romanos 13:7",
+  memoria: "Mateo 22:21",
+  lecciones: lecciones("liderazgo-administracion-5", [
+    ["La iglesia y el Estado", "Mateo 22:21; Hechos 5:29; 1 Timoteo 2:1-2"],
+    ["La forma legal de la iglesia", "1 Corintios 14:40; Proverbios 11:14; Romanos 12:17"],
+    ["Los impuestos de la iglesia", "Romanos 13:7; Mateo 17:27; Marcos 12:17"],
+    ["La iglesia como empleador", "Colosenses 4:1; Levítico 19:13; Santiago 5:4"],
+    ["Responsabilidad, seguros y protección", "Deuteronomio 22:8; Lucas 17:1-2; Proverbios 22:3"],
+    ["La propiedad y el uso del templo", "Jeremías 32:9-10; Génesis 23:16; Lucas 14:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige o administra una iglesia conozca lo que la ley de los Estados Unidos y de Texas protege y pide, para servir con orden y con buen testimonio: que entienda la libertad religiosa que protegen la Primera Enmienda y la ley de Texas del capítulo 110 (1999), y que, por la enmienda Johnson, la iglesia no apoya ni ataca a candidatos, aunque enseña los temas morales y ora por todas las autoridades; que forme la iglesia como corporación sin fines de lucro, con el Formulario 202, al menos tres directores, estatutos completos, su EIN y la propiedad a su nombre; que sepa que la iglesia que cumple la 501(c)(3) está exenta automáticamente del impuesto federal sobre la renta y no presenta el 990, que en Texas pide la exención de franquicia y ventas con el AP-209 y la del impuesto a la propiedad, y que cumple la nómina de sus empleados; que contrate con justicia y por escrito, sabiendo que la excepción ministerial (Hosanna-Tabor, 2012) y la sección 702 del Título VII protegen la libertad de la iglesia para elegir a sus ministros y preferir a personas de su fe; que cuide a las personas con el deber de cuidado, los seguros y el reporte de los incidentes, y que reporte la sospecha de abuso de un menor como pide el Código de Familia de Texas: toda persona de inmediato, y los profesionales a más tardar en 24 horas, sin pedirle a otro que lo haga por ellos; y que compre y use la propiedad con la zonificación revisada, sabiendo que la ley RLUIPA protege a la iglesia. Profundiza lo legal de Administración y gobierno de la iglesia (Nivel 5), sin repetirlo. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «Dad, pues, a César lo que es de César, y a Dios lo que es de Dios» (Mateo 22:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué protege la libertad religiosa y qué puede y qué no puede hacer la iglesia en las elecciones.", bloom: "comprender" },
+      { id: "o2", texto: "Organizar la forma legal de una iglesia en Texas y revisar sus estatutos.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar de qué impuestos está exenta una iglesia y qué debe pedir y cumplir.", bloom: "comprender" },
+      { id: "o4", texto: "Contratar y tratar a los empleados de la iglesia como pide la ley y con justicia.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a un accidente y a una sospecha de abuso como pide la ley de Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la compra y el uso de una propiedad para la iglesia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 22:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La Primera Enmienda, la ley de Texas del capítulo 110 y la enmienda Johnson, la corporación sin fines de lucro y sus estatutos, las exenciones de impuestos y la nómina, la excepción ministerial y las obligaciones del empleador, el deber de cuidado, los seguros y el reporte del abuso, y la zonificación, la ley RLUIPA y la ADA.",
+      ser: "Un líder que da a César lo que es de César y a Dios lo que es de Dios, que cumple la ley con buen testimonio y que obedece a Dios antes que a los hombres.",
+      hacer: "Revisar la política de la iglesia para las elecciones, poner en orden los estatutos y la propiedad, revisar las exenciones, contratar a un empleado por escrito, responder a un accidente en el templo, reportar la sospecha de abuso y evaluar la compra de un terreno.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 13, las autoridades y lo que debemos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=13" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Ley RLUIPA, el uso religioso de la tierra, 42 U.S.C. 2000cc (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/2000cc" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -5402,7 +5675,7 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ["Administración eclesiástica"], ["Finanzas y transparencia"], ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],

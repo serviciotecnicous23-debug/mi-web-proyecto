@@ -348,8 +348,47 @@ test("Comunicaciones y medios tiene sus cinco materias, con la medida del Nivel 
   assert.equal(comunicaciones.materias.length, 5);
 });
 
-test("las otras tres especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones"].includes(x.id))) {
+test("Liderazgo y administración tiene sus cinco materias, con la medida del Nivel 3 y el marco legal como materia avanzada", () => {
+  const liderazgo = ESPECIALIDADES.find((x) => x.id === "liderazgo-administracion")!;
+  const listas = liderazgo.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["liderazgo-administracion-1", "Administración eclesiástica", "Proverbios 24:3", 6, false],
+      ["liderazgo-administracion-2", "Finanzas y transparencia", "2 Corintios 8:20", 6, false],
+      ["liderazgo-administracion-3", "Equipos y voluntarios", "1 Pedro 4:10", 6, false],
+      ["liderazgo-administracion-4", "Planificación y proyectos ministeriales", "Proverbios 16:9", 6, false],
+      ["liderazgo-administracion-5", "Marco legal de las organizaciones religiosas", "Mateo 22:21", 6, true],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // el marco legal, avanzado, pide el Nivel 3
+  assert.deepEqual(requisitosMateria(listas[4], [1, 2, 3]), [], listas[4].id);
+  // las que tocan la ley lo dicen: es una guía general, no un consejo legal
+  for (const i of [0, 1, 2, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // lo legal de cada una, comprobado: el IRS, la Ley de Protección del Voluntario de 1997, las metas SMART y el marco legal
+  assert.match(listas[0].silabo!.proposito, /IRS/);
+  assert.match(listas[1].silabo!.proposito, /IRS/);
+  assert.match(listas[2].silabo!.proposito, /1997/);
+  assert.match(listas[3].silabo!.proposito, /SMART/);
+  for (const dato of [/enmienda Johnson/, /capítulo 110/, /Formulario 202/, /AP-209/, /Hosanna-Tabor/, /sección 702/, /RLUIPA/]) assert.match(listas[4].silabo!.proposito, dato);
+  // el plazo de Texas: toda persona reporta de inmediato, y los profesionales a más tardar en 24 horas
+  for (const i of [2, 4]) assert.match(listas[i].silabo!.proposito, /24 horas/, listas[i].id);
+  assert.doesNotMatch(listas[4].silabo!.proposito, /48 horas/);
+  assert.equal(liderazgo.materias.length, 5);
+});
+
+test("las otras dos especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);
