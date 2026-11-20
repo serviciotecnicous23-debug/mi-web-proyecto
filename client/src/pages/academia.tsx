@@ -389,7 +389,7 @@ function RecienAbiertas({ lista }: { lista: { id: string; titulo: string }[] }) 
 }
 
 const PASOS = [
-  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De 7 a 15 minutos según el nivel (cada lección dice cuánto pide), con versículos de la Biblia, videos y una aplicación para la vida." },
+  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De 7 a 15 minutos según el nivel (cada lección dice cuánto pide), con versículos de la Biblia, videos y una aplicación para la vida. Las de los Niveles 1 y 2 también se escuchan con la voz de la academia, aun con la pantalla apagada." },
   { icon: ListChecks, titulo: "Repaso", texto: "Al terminar cada lección, preguntas con la respuesta y la cita al instante; después vuelven en días espaciados en el «Repaso del día»." },
   { icon: Sparkles, titulo: "Versículo de memoria", texto: "Uno por materia; vuelve a los 1, 3, 7 y 21 días para quedar en el corazón." },
   { icon: PenLine, titulo: "Examen final", texto: "Parte objetiva con reloj y parte escrita desde el celular, con corrección automática." },
@@ -564,6 +564,7 @@ export default function AcademiaPage() {
           <Link href="/academia/reglamento" className="inline-flex items-center gap-1.5 underline" data-testid="academia-reglamento"><ScrollText className="w-4 h-4" /> Reglamento académico</Link>
           <Link href="/academia/declaracion-de-fe" className="inline-flex items-center gap-1.5 underline" data-testid="academia-declaracion"><BookOpen className="w-4 h-4" /> Declaración de fe</Link>
           <Link href="/academia/verificar" className="inline-flex items-center gap-1.5 underline"><Award className="w-4 h-4" /> Verificar un documento</Link>
+          <Link href="/academia/recursos" className="inline-flex items-center gap-1.5 underline" data-testid="academia-recursos"><Search className="w-4 h-4" /> Recursos de estudio</Link>
         </p>
       </Seccion>
     </Layout>

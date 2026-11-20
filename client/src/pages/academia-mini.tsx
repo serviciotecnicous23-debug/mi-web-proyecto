@@ -17,7 +17,7 @@ export default function AcademiaMini() {
               tipo: "mini",
               titulo: `Mini prueba ${g.n} · ${def.titulo}`,
               volver: { href: `/academia/materia/${def.id}`, texto: def.titulo },
-              detalle: `${MINI_PRUEBA.objetivas} preguntas de las lecciones ${g.lecciones[0]} a ${g.lecciones[g.lecciones.length - 1]}, ${MINI_PRUEBA.segundos} segundos cada una. Sirve para afianzar lo que estudiaste.`,
+              detalle: `${MINI_PRUEBA.objetivas} preguntas de las lecciones ${g.lecciones[0]} a ${g.lecciones[g.lecciones.length - 1]}. Sirve para afianzar lo que estudiaste.`,
             }
           : null
       }

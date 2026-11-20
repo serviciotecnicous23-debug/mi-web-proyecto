@@ -15,7 +15,11 @@ export type Bloque =
   | { t: "versiculo"; ref: string }
   | { t: "video"; url: string; titulo: string; fuente: string; minutos?: number }
   | { t: "audio"; url: string; titulo: string }
-  | { t: "imagen"; src: string; alt: string; pie?: string };
+  | { t: "imagen"; src: string; alt: string; pie?: string }
+  // los esquemas visuales: línea de tiempo (4 a 10 eventos), cuadro comparativo (2 a 4 columnas) y pasos (3 a 7)
+  | { t: "linea"; titulo: string; eventos: { fecha: string; texto: string; ref?: string }[] }
+  | { t: "cuadro"; titulo: string; columnas: string[]; filas: string[][] }
+  | { t: "pasos"; titulo: string; pasos: { titulo: string; texto: string }[] };
 
 export type LeccionContenido = {
   id: string;

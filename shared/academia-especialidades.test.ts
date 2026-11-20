@@ -117,8 +117,278 @@ test("Intercesión y oración tiene sus cinco materias, con la medida del Nivel 
   assert.equal(intercesion.materias.length, 5);
 });
 
-test("las otras nueve especialidades siguen en preparación", () => {
-  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion"].includes(x.id))) {
+test("Ministerio pastoral empieza con «El ministerio pastoral», avanzada, y Hechos 20:28 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[0];
+  assert.equal(m.id, "pastoral-1");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Hechos 20:28");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Consejería pastoral», avanzada, e Isaías 50:4 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[1];
+  assert.equal(m.id, "pastoral-2");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Isaías 50:4");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Ordenanzas y ceremonias» y 1 Corintios 11:26 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[2];
+  assert.equal(m.id, "pastoral-3");
+  assert.ok(m.disponible);
+  assert.ok(!m.avanzada);
+  assert.equal(m.memoria, "1 Corintios 11:26");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral sigue con «Visitación y cuidado del rebaño» y Proverbios 27:23 de memoria", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[3];
+  assert.equal(m.id, "pastoral-4");
+  assert.ok(m.disponible);
+  assert.ok(!m.avanzada);
+  assert.equal(m.memoria, "Proverbios 27:23");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+});
+
+test("Ministerio pastoral termina con «Predicación pastoral», avanzada, y tiene sus cinco materias listas", () => {
+  const e = ESPECIALIDADES.find((x) => x.id === "pastoral")!;
+  const m = e.materias[4];
+  assert.equal(m.id, "pastoral-5");
+  assert.ok(m.disponible);
+  assert.equal(m.avanzada, true);
+  assert.equal(m.memoria, "Hechos 20:27");
+  assert.equal(m.lecciones.length, 6);
+  assert.equal(m.silabo!.objetivos.length, 7);
+  assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+  assert.equal(e.materias.length, 5);
+  for (const x of e.materias) assert.ok(x.disponible, x.id);
+});
+
+test("Niñez tiene sus cinco materias, con la medida del Nivel 3 y el Nivel 2 como requisito", () => {
+  const ninez = ESPECIALIDADES.find((x) => x.id === "ninez")!;
+  const listas = ninez.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["ninez-1", "Educación cristiana de la niñez", "Salmos 78:4", 6, false],
+      ["ninez-2", "El niño y su fe", "Juan 1:12", 6, false],
+      ["ninez-3", "Métodos para enseñar a niños", "Nehemías 8:8", 6, false],
+      ["ninez-4", "Protección de menores", "Salmos 82:3", 6, false],
+      ["ninez-5", "Organizar el ministerio infantil", "Habacuc 2:2", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+  }
+  // las lenguas como señal inicial quedan para la declaración de fe
+  assert.match(listas[1].silabo!.proposito, /declaración de fe por confirmar/);
+  // la protección de menores trae la ley de Texas y aclara que no es un consejo legal
+  assert.match(listas[3].silabo!.proposito, /Texas/);
+  assert.match(listas[3].silabo!.proposito, /no un consejo legal/);
+  assert.equal(ninez.materias.length, 5);
+});
+
+test("Juventud tiene sus cinco materias, con la medida del Nivel 3 y la consejería juvenil como avanzada", () => {
+  const juventud = ESPECIALIDADES.find((x) => x.id === "juventud")!;
+  const listas = juventud.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["juventud-1", "Discipulado de jóvenes", "1 Timoteo 4:12", 6, false],
+      ["juventud-2", "Cosmovisión cristiana y cultura", "Colosenses 2:8", 6, false],
+      ["juventud-3", "Consejería juvenil", "Proverbios 20:5", 6, true],
+      ["juventud-4", "Liderazgo juvenil", "Josué 1:9", 6, false],
+      ["juventud-5", "Evangelismo entre jóvenes", "1 Corintios 9:22", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // la consejería juvenil es avanzada: pide el Nivel 3, trae la ley de Texas y no es un consejo legal
+  assert.deepEqual(requisitosMateria(juventud.materias[2], [1, 2, 3]), []);
+  assert.match(listas[2].silabo!.proposito, /Texas/);
+  assert.match(listas[2].silabo!.proposito, /no un consejo legal/);
+  // la sexualidad sigue el artículo 14, y quién ejerce cada cargo queda para la declaración de fe
+  assert.match(listas[1].silabo!.proposito, /artículo 14/);
+  assert.match(listas[3].silabo!.proposito, /declaración de fe por confirmar/);
+  assert.equal(juventud.materias.length, 5);
+});
+
+test("Familia y consejería tiene sus cinco materias, con la medida del Nivel 3 y tres materias avanzadas", () => {
+  const familia = ESPECIALIDADES.find((x) => x.id === "familia-consejeria")!;
+  const listas = familia.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["familia-consejeria-1", "Consejería matrimonial", "Mateo 19:6", 6, true],
+      ["familia-consejeria-2", "Consejería familiar", "Malaquías 4:6", 6, true],
+      ["familia-consejeria-3", "Duelo y crisis", "Salmos 34:18", 6, false],
+      ["familia-consejeria-4", "Adicciones y restauración", "Juan 8:36", 6, true],
+      ["familia-consejeria-5", "Ética y límites del consejero", "2 Corintios 8:21", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // las avanzadas piden el Nivel 3
+  for (const i of [0, 1, 3]) assert.deepEqual(requisitosMateria(familia.materias[i], [1, 2, 3]), [], familia.materias[i].id);
+  // el matrimonio sigue el artículo 14, y lo legal es una guía general, no un consejo legal
+  assert.match(listas[0].silabo!.proposito, /artículo 14/);
+  for (const i of [0, 1, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // la ética trae lo que la ley de Texas pide reportar, comprobado
+  assert.match(listas[4].silabo!.proposito, /261\.101/);
+  assert.match(listas[4].silabo!.proposito, /48\.051/);
+  assert.equal(familia.materias.length, 5);
+});
+
+test("Capellanía tiene sus cinco materias, con la medida del Nivel 3 y dos materias avanzadas", () => {
+  const capellania = ESPECIALIDADES.find((x) => x.id === "capellania")!;
+  const listas = capellania.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["capellania-1", "Fundamentos de la capellanía", "Mateo 25:36", 6, false],
+      ["capellania-2", "Capellanía hospitalaria", "Salmos 41:3", 6, true],
+      ["capellania-3", "Capellanía penitenciaria", "Hebreos 13:3", 6, true],
+      ["capellania-4", "Emergencias y desastres", "Salmos 46:1", 6, false],
+      ["capellania-5", "Marco legal y ético del capellán", "Hechos 24:16", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // las avanzadas piden el Nivel 3
+  for (const i of [1, 2]) assert.deepEqual(requisitosMateria(capellania.materias[i], [1, 2, 3]), [], capellania.materias[i].id);
+  // la sanidad sigue el artículo 11, y lo legal es una guía general, no un consejo legal
+  assert.match(listas[1].silabo!.proposito, /artículo 11/);
+  for (const i of [1, 2, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // la penitenciaria trae la ley RLUIPA, y el marco legal la regla 505 y lo que se reporta en Texas, comprobados
+  assert.match(listas[2].silabo!.proposito, /RLUIPA/);
+  assert.match(listas[4].silabo!.proposito, /regla 505/);
+  assert.match(listas[4].silabo!.proposito, /261\.101/);
+  assert.match(listas[4].silabo!.proposito, /48\.051/);
+  assert.equal(capellania.materias.length, 5);
+});
+
+test("Comunicaciones y medios tiene sus cinco materias, con la medida del Nivel 3", () => {
+  const comunicaciones = ESPECIALIDADES.find((x) => x.id === "comunicaciones")!;
+  const listas = comunicaciones.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["comunicaciones-1", "Evangelismo en redes", "Mateo 10:27", 6, false],
+      ["comunicaciones-2", "Radio cristiana", "Romanos 10:17", 6, false],
+      ["comunicaciones-3", "Video y transmisiones", "1 Juan 1:3", 6, false],
+      ["comunicaciones-4", "Redacción y comunicación", "Colosenses 4:6", 6, false],
+      ["comunicaciones-5", "Ética y seguridad digital", "Mateo 10:16", 6, false],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, [1]), ["completar el Nivel 2 · Discipulado"], m.id);
+    // todas tocan alguna ley: lo legal es una guía general, no un consejo legal
+    assert.match(m.silabo!.proposito, /no un consejo legal/, m.id);
+  }
+  // lo legal de cada una, comprobado: la ley COPPA, las reglas de la FCC, la licencia de CCLI, la Ley de Redacción Clara y los pasos de la CISA
+  assert.match(listas[0].silabo!.proposito, /COPPA/);
+  assert.match(listas[1].silabo!.proposito, /FCC/);
+  assert.match(listas[2].silabo!.proposito, /CCLI/);
+  assert.match(listas[3].silabo!.proposito, /Ley de Redacción Clara de 2010/);
+  assert.match(listas[4].silabo!.proposito, /CISA/);
+  assert.match(listas[4].silabo!.proposito, /CyberTipline/);
+  assert.equal(comunicaciones.materias.length, 5);
+});
+
+test("Liderazgo y administración tiene sus cinco materias, con la medida del Nivel 3 y el marco legal como materia avanzada", () => {
+  const liderazgo = ESPECIALIDADES.find((x) => x.id === "liderazgo-administracion")!;
+  const listas = liderazgo.materias.filter((m) => m.disponible);
+  assert.deepEqual(
+    listas.map((m) => [m.id, m.titulo, m.memoria, m.lecciones.length, !!m.avanzada]),
+    [
+      ["liderazgo-administracion-1", "Administración eclesiástica", "Proverbios 24:3", 6, false],
+      ["liderazgo-administracion-2", "Finanzas y transparencia", "2 Corintios 8:20", 6, false],
+      ["liderazgo-administracion-3", "Equipos y voluntarios", "1 Pedro 4:10", 6, false],
+      ["liderazgo-administracion-4", "Planificación y proyectos ministeriales", "Proverbios 16:9", 6, false],
+      ["liderazgo-administracion-5", "Marco legal de las organizaciones religiosas", "Mateo 22:21", 6, true],
+    ],
+  );
+  for (const m of listas) {
+    assert.ok(m.lecciones.every((l) => l.minutos === 10), m.id);
+    assert.equal(m.silabo!.objetivos.length, 7, m.id);
+    assert.ok(m.silabo!.bibliografia.basica.length >= 2 && m.silabo!.bibliografia.complementaria.length >= 2, `${m.id}: 2+2 fuentes como pide la auditoría`);
+    assert.deepEqual(examenDe(m), EXAMEN_FINAL[3], m.id);
+    assert.deepEqual(pesosDe(m), PESOS_NIVEL[3], m.id);
+    assert.deepEqual(miniPruebasDe(m), [{ n: 1, lecciones: [1, 2, 3] }, { n: 2, lecciones: [4, 5, 6] }], m.id);
+    assert.equal(tieneEscritoBreve(m), true, m.id);
+    assert.deepEqual(requisitosMateria(m, m.avanzada ? [1, 2] : [1]), [`completar el Nivel ${m.avanzada ? "3 · Formación de obreros" : "2 · Discipulado"}`], m.id);
+  }
+  // el marco legal, avanzado, pide el Nivel 3
+  assert.deepEqual(requisitosMateria(listas[4], [1, 2, 3]), [], listas[4].id);
+  // las que tocan la ley lo dicen: es una guía general, no un consejo legal
+  for (const i of [0, 1, 2, 4]) assert.match(listas[i].silabo!.proposito, /no un consejo legal/, listas[i].id);
+  // lo legal de cada una, comprobado: el IRS, la Ley de Protección del Voluntario de 1997, las metas SMART y el marco legal
+  assert.match(listas[0].silabo!.proposito, /IRS/);
+  assert.match(listas[1].silabo!.proposito, /IRS/);
+  assert.match(listas[2].silabo!.proposito, /1997/);
+  assert.match(listas[3].silabo!.proposito, /SMART/);
+  for (const dato of [/enmienda Johnson/, /capítulo 110/, /Formulario 202/, /AP-209/, /Hosanna-Tabor/, /sección 702/, /RLUIPA/]) assert.match(listas[4].silabo!.proposito, dato);
+  // el plazo de Texas: toda persona reporta de inmediato, y los profesionales a más tardar en 24 horas
+  for (const i of [2, 4]) assert.match(listas[i].silabo!.proposito, /24 horas/, listas[i].id);
+  assert.doesNotMatch(listas[4].silabo!.proposito, /48 horas/);
+  assert.equal(liderazgo.materias.length, 5);
+});
+
+test("las otras dos especialidades siguen en preparación", () => {
+  for (const e of ESPECIALIDADES.filter((x) => !["evangelismo-misiones", "alabanza", "intercesion", "pastoral", "ninez", "juventud", "familia-consejeria", "capellania", "comunicaciones", "liderazgo-administracion"].includes(x.id))) {
     for (const m of e.materias) {
       assert.equal(m.disponible, false, m.id);
       assert.equal(m.lecciones.length, 0, m.id);

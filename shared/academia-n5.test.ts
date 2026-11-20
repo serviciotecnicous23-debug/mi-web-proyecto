@@ -78,7 +78,8 @@ test("«Administración y gobierno de la iglesia» va del orden a lo legal bási
   assert.match(m.lecciones[3].titulo, /dinero/);
   assert.match(m.lecciones[5].titulo, /legal/);
   assert.match(m.silabo!.proposito, /declaración de fe por confirmar/);
-  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor), ["Wilfredo Calderón"]);
+  // el suyo va primero; la revisión del 16-nov le puede sumar libros comprobados (shared/academia-complementos.ts)
+  assert.deepEqual(m.silabo!.bibliografia.basica.map((b) => b.autor).slice(0, 1), ["Wilfredo Calderón"]);
 });
 
 test("el «Seminario de liderazgo ministerial» cierra el Nivel 5 con cuatro casos y el plan de ministerio propio", () => {
@@ -104,12 +105,26 @@ test("las materias del Nivel 5 piden el Nivel 4 completo", () => {
   }
 });
 
-test("el Nivel 5 conserva su orden; solo Exégesis y Teología del avivamiento esperan la declaración de fe", () => {
+test("el Nivel 5 conserva su orden, y sus materias salen con los puntos de la declaración de fe por confirmar", () => {
   assert.equal(nivel5.materias.length, 8);
   assert.deepEqual(nivel5.materias.map((m) => m.orden), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.deepEqual(
     nivel5.materias.filter((m) => !m.disponible).map((m) => m.id),
-    ["n5-exegesis", "n5-avivamiento"],
+    [],
+    "el Nivel 5 está completo",
   );
+  const av = materiaPorId("n5-avivamiento")!;
+  assert.equal(av.memoria, "Habacuc 3:2");
+  assert.equal(av.lecciones.length, 6);
+  assert.equal(av.silabo!.objetivos.length, 7);
+  assert.match(av.silabo!.proposito, /declaración de fe por confirmar/);
+  assert.ok(av.silabo!.bibliografia.basica.length >= 2 && av.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
+  const ex = materiaPorId("n5-exegesis")!;
+  assert.ok(ex.disponible);
+  assert.equal(ex.memoria, "Romanos 8:1");
+  assert.equal(ex.lecciones.length, 6);
+  assert.equal(ex.silabo!.objetivos.length, 7);
+  assert.match(ex.silabo!.proposito, /declaración de fe por confirmar/);
+  assert.ok(ex.silabo!.bibliografia.basica.length >= 2 && ex.silabo!.bibliografia.complementaria.length >= 2, "2+2 fuentes como pide la auditoría");
   for (const m of nivel5.materias.filter((x) => !x.disponible)) assert.equal(m.lecciones.length, 0, `${m.id} sin lecciones todavía`);
 });

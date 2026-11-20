@@ -5,6 +5,8 @@
  */
 import type { BancoMateria, LeccionContenido, PreguntaObjetiva } from "./tipos";
 import { TRABAJOS } from "./trabajos";
+import { BLOQUES_EXTRA } from "./esquemas";
+import { CASOS } from "./casos";
 import { N1_SALVACION } from "./contenido/n1-salvacion";
 import { N1_ORACION } from "./contenido/n1-oracion";
 import { N1_BIBLIA } from "./contenido/n1-biblia";
@@ -47,6 +49,8 @@ import { N5_IDIOMAS } from "./contenido/n5-idiomas";
 import { N5_TEOLOGIA_PASTORAL } from "./contenido/n5-teologia-pastoral";
 import { N5_ADMINISTRACION } from "./contenido/n5-administracion";
 import { N5_SEMINARIO } from "./contenido/n5-seminario";
+import { N5_EXEGESIS } from "./contenido/n5-exegesis";
+import { N5_AVIVAMIENTO } from "./contenido/n5-avivamiento";
 import { EVANGELISMO_MISIONES_1 } from "./contenido/evangelismo-misiones-1";
 import { EVANGELISMO_MISIONES_2 } from "./contenido/evangelismo-misiones-2";
 import { EVANGELISMO_MISIONES_3 } from "./contenido/evangelismo-misiones-3";
@@ -62,6 +66,41 @@ import { INTERCESION_2 } from "./contenido/intercesion-2";
 import { INTERCESION_3 } from "./contenido/intercesion-3";
 import { INTERCESION_4 } from "./contenido/intercesion-4";
 import { INTERCESION_5 } from "./contenido/intercesion-5";
+import { PASTORAL_1 } from "./contenido/pastoral-1";
+import { PASTORAL_2 } from "./contenido/pastoral-2";
+import { PASTORAL_3 } from "./contenido/pastoral-3";
+import { PASTORAL_4 } from "./contenido/pastoral-4";
+import { PASTORAL_5 } from "./contenido/pastoral-5";
+import { NINEZ_1 } from "./contenido/ninez-1";
+import { NINEZ_2 } from "./contenido/ninez-2";
+import { NINEZ_3 } from "./contenido/ninez-3";
+import { NINEZ_4 } from "./contenido/ninez-4";
+import { NINEZ_5 } from "./contenido/ninez-5";
+import { JUVENTUD_1 } from "./contenido/juventud-1";
+import { JUVENTUD_2 } from "./contenido/juventud-2";
+import { JUVENTUD_3 } from "./contenido/juventud-3";
+import { JUVENTUD_4 } from "./contenido/juventud-4";
+import { JUVENTUD_5 } from "./contenido/juventud-5";
+import { FAMILIA_CONSEJERIA_1 } from "./contenido/familia-consejeria-1";
+import { FAMILIA_CONSEJERIA_2 } from "./contenido/familia-consejeria-2";
+import { FAMILIA_CONSEJERIA_3 } from "./contenido/familia-consejeria-3";
+import { FAMILIA_CONSEJERIA_4 } from "./contenido/familia-consejeria-4";
+import { FAMILIA_CONSEJERIA_5 } from "./contenido/familia-consejeria-5";
+import { CAPELLANIA_1 } from "./contenido/capellania-1";
+import { CAPELLANIA_2 } from "./contenido/capellania-2";
+import { CAPELLANIA_3 } from "./contenido/capellania-3";
+import { CAPELLANIA_4 } from "./contenido/capellania-4";
+import { CAPELLANIA_5 } from "./contenido/capellania-5";
+import { COMUNICACIONES_1 } from "./contenido/comunicaciones-1";
+import { COMUNICACIONES_2 } from "./contenido/comunicaciones-2";
+import { COMUNICACIONES_3 } from "./contenido/comunicaciones-3";
+import { COMUNICACIONES_4 } from "./contenido/comunicaciones-4";
+import { COMUNICACIONES_5 } from "./contenido/comunicaciones-5";
+import { LIDERAZGO_ADMINISTRACION_1 } from "./contenido/liderazgo-administracion-1";
+import { LIDERAZGO_ADMINISTRACION_2 } from "./contenido/liderazgo-administracion-2";
+import { LIDERAZGO_ADMINISTRACION_3 } from "./contenido/liderazgo-administracion-3";
+import { LIDERAZGO_ADMINISTRACION_4 } from "./contenido/liderazgo-administracion-4";
+import { LIDERAZGO_ADMINISTRACION_5 } from "./contenido/liderazgo-administracion-5";
 import { N2_DONES } from "./contenido/n2-dones";
 import { BANCO_N1_SALVACION } from "./bancos/n1-salvacion";
 import { BANCO_N1_ORACION } from "./bancos/n1-oracion";
@@ -105,6 +144,8 @@ import { BANCO_N5_IDIOMAS } from "./bancos/n5-idiomas";
 import { BANCO_N5_TEOLOGIA_PASTORAL } from "./bancos/n5-teologia-pastoral";
 import { BANCO_N5_ADMINISTRACION } from "./bancos/n5-administracion";
 import { BANCO_N5_SEMINARIO } from "./bancos/n5-seminario";
+import { BANCO_N5_EXEGESIS } from "./bancos/n5-exegesis";
+import { BANCO_N5_AVIVAMIENTO } from "./bancos/n5-avivamiento";
 import { BANCO_EVANGELISMO_MISIONES_1 } from "./bancos/evangelismo-misiones-1";
 import { BANCO_EVANGELISMO_MISIONES_2 } from "./bancos/evangelismo-misiones-2";
 import { BANCO_EVANGELISMO_MISIONES_3 } from "./bancos/evangelismo-misiones-3";
@@ -120,6 +161,41 @@ import { BANCO_INTERCESION_2 } from "./bancos/intercesion-2";
 import { BANCO_INTERCESION_3 } from "./bancos/intercesion-3";
 import { BANCO_INTERCESION_4 } from "./bancos/intercesion-4";
 import { BANCO_INTERCESION_5 } from "./bancos/intercesion-5";
+import { BANCO_PASTORAL_1 } from "./bancos/pastoral-1";
+import { BANCO_PASTORAL_2 } from "./bancos/pastoral-2";
+import { BANCO_PASTORAL_3 } from "./bancos/pastoral-3";
+import { BANCO_PASTORAL_4 } from "./bancos/pastoral-4";
+import { BANCO_PASTORAL_5 } from "./bancos/pastoral-5";
+import { BANCO_NINEZ_1 } from "./bancos/ninez-1";
+import { BANCO_NINEZ_2 } from "./bancos/ninez-2";
+import { BANCO_NINEZ_3 } from "./bancos/ninez-3";
+import { BANCO_NINEZ_4 } from "./bancos/ninez-4";
+import { BANCO_NINEZ_5 } from "./bancos/ninez-5";
+import { BANCO_JUVENTUD_1 } from "./bancos/juventud-1";
+import { BANCO_JUVENTUD_2 } from "./bancos/juventud-2";
+import { BANCO_JUVENTUD_3 } from "./bancos/juventud-3";
+import { BANCO_JUVENTUD_4 } from "./bancos/juventud-4";
+import { BANCO_JUVENTUD_5 } from "./bancos/juventud-5";
+import { BANCO_FAMILIA_CONSEJERIA_1 } from "./bancos/familia-consejeria-1";
+import { BANCO_FAMILIA_CONSEJERIA_2 } from "./bancos/familia-consejeria-2";
+import { BANCO_FAMILIA_CONSEJERIA_3 } from "./bancos/familia-consejeria-3";
+import { BANCO_FAMILIA_CONSEJERIA_4 } from "./bancos/familia-consejeria-4";
+import { BANCO_FAMILIA_CONSEJERIA_5 } from "./bancos/familia-consejeria-5";
+import { BANCO_CAPELLANIA_1 } from "./bancos/capellania-1";
+import { BANCO_CAPELLANIA_2 } from "./bancos/capellania-2";
+import { BANCO_CAPELLANIA_3 } from "./bancos/capellania-3";
+import { BANCO_CAPELLANIA_4 } from "./bancos/capellania-4";
+import { BANCO_CAPELLANIA_5 } from "./bancos/capellania-5";
+import { BANCO_COMUNICACIONES_1 } from "./bancos/comunicaciones-1";
+import { BANCO_COMUNICACIONES_2 } from "./bancos/comunicaciones-2";
+import { BANCO_COMUNICACIONES_3 } from "./bancos/comunicaciones-3";
+import { BANCO_COMUNICACIONES_4 } from "./bancos/comunicaciones-4";
+import { BANCO_COMUNICACIONES_5 } from "./bancos/comunicaciones-5";
+import { BANCO_LIDERAZGO_ADMINISTRACION_1 } from "./bancos/liderazgo-administracion-1";
+import { BANCO_LIDERAZGO_ADMINISTRACION_2 } from "./bancos/liderazgo-administracion-2";
+import { BANCO_LIDERAZGO_ADMINISTRACION_3 } from "./bancos/liderazgo-administracion-3";
+import { BANCO_LIDERAZGO_ADMINISTRACION_4 } from "./bancos/liderazgo-administracion-4";
+import { BANCO_LIDERAZGO_ADMINISTRACION_5 } from "./bancos/liderazgo-administracion-5";
 import { BANCO_N2_DONES } from "./bancos/n2-dones";
 
 /** El Nivel 1 completo (las 8 materias en su orden), lo publicado de los Niveles 2 a 5 y de las especialidades. */
@@ -128,11 +204,11 @@ const LECCIONES: LeccionContenido[] = [
   ...N2_PANORAMA_AT, ...N2_PANORAMA_NT, ...N2_DOCTRINAS, ...N2_DISCIPLINAS, ...N2_SERMON_MONTE, ...N2_MAYORDOMIA, ...N2_FAMILIA, ...N2_EVANGELISMO_PERSONAL, ...N2_DONES,
   ...N3_HERMENEUTICA, ...N3_METODOS_ESTUDIO, ...N3_PENTATEUCO_HISTORICOS, ...N3_EVANGELIOS_HECHOS, ...N3_ESPIRITU_SANTO, ...N3_EVANGELISMO_CONSOLIDACION, ...N3_LIDERAZGO_1, ...N3_HOMILETICA_1, ...N3_HISTORIA_1, ...N3_CONSEJERIA_BASICA,
   ...N4_SISTEMATICA_1, ...N4_SISTEMATICA_2, ...N4_SISTEMATICA_3, ...N4_SISTEMATICA_4, ...N4_POETICOS_PROFETICOS, ...N4_APOLOGETICA, ...N4_HOMILETICA_2, ...N4_HISTORIA_2, ...N4_ETICA, ...N4_EPISTOLAS_APOCALIPSIS,
-  ...N5_DIDACTICA, ...N5_LIDERAZGO_2, ...N5_IDIOMAS, ...N5_TEOLOGIA_PASTORAL, ...N5_ADMINISTRACION, ...N5_SEMINARIO,
+  ...N5_DIDACTICA, ...N5_LIDERAZGO_2, ...N5_IDIOMAS, ...N5_TEOLOGIA_PASTORAL, ...N5_ADMINISTRACION, ...N5_SEMINARIO, ...N5_EXEGESIS, ...N5_AVIVAMIENTO,
   // especialidades
   ...EVANGELISMO_MISIONES_1, ...EVANGELISMO_MISIONES_2, ...EVANGELISMO_MISIONES_3, ...EVANGELISMO_MISIONES_4, ...EVANGELISMO_MISIONES_5,
   ...ALABANZA_1, ...ALABANZA_2, ...ALABANZA_3, ...ALABANZA_4, ...ALABANZA_5,
-  ...INTERCESION_1, ...INTERCESION_2, ...INTERCESION_3, ...INTERCESION_4, ...INTERCESION_5,
+  ...INTERCESION_1, ...INTERCESION_2, ...INTERCESION_3, ...INTERCESION_4, ...INTERCESION_5, ...PASTORAL_1, ...PASTORAL_2, ...PASTORAL_3, ...PASTORAL_4, ...PASTORAL_5, ...NINEZ_1, ...NINEZ_2, ...NINEZ_3, ...NINEZ_4, ...NINEZ_5, ...JUVENTUD_1, ...JUVENTUD_2, ...JUVENTUD_3, ...JUVENTUD_4, ...JUVENTUD_5, ...FAMILIA_CONSEJERIA_1, ...FAMILIA_CONSEJERIA_2, ...FAMILIA_CONSEJERIA_3, ...FAMILIA_CONSEJERIA_4, ...FAMILIA_CONSEJERIA_5, ...CAPELLANIA_1, ...CAPELLANIA_2, ...CAPELLANIA_3, ...CAPELLANIA_4, ...CAPELLANIA_5, ...COMUNICACIONES_1, ...COMUNICACIONES_2, ...COMUNICACIONES_3, ...COMUNICACIONES_4, ...COMUNICACIONES_5, ...LIDERAZGO_ADMINISTRACION_1, ...LIDERAZGO_ADMINISTRACION_2, ...LIDERAZGO_ADMINISTRACION_3, ...LIDERAZGO_ADMINISTRACION_4, ...LIDERAZGO_ADMINISTRACION_5,
 ];
 const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N1_SALVACION, BANCO_N1_ORACION, BANCO_N1_BIBLIA, BANCO_N1_ESPIRITU,
@@ -140,20 +216,25 @@ const BANCOS_LISTA: BancoMateria[] = [
   BANCO_N2_PANORAMA_AT, BANCO_N2_PANORAMA_NT, BANCO_N2_DOCTRINAS, BANCO_N2_DISCIPLINAS, BANCO_N2_SERMON_MONTE, BANCO_N2_MAYORDOMIA, BANCO_N2_FAMILIA, BANCO_N2_EVANGELISMO_PERSONAL, BANCO_N2_DONES,
   BANCO_N3_HERMENEUTICA, BANCO_N3_METODOS_ESTUDIO, BANCO_N3_PENTATEUCO_HISTORICOS, BANCO_N3_EVANGELIOS_HECHOS, BANCO_N3_ESPIRITU_SANTO, BANCO_N3_EVANGELISMO_CONSOLIDACION, BANCO_N3_LIDERAZGO_1, BANCO_N3_HOMILETICA_1, BANCO_N3_HISTORIA_1, BANCO_N3_CONSEJERIA_BASICA,
   BANCO_N4_SISTEMATICA_1, BANCO_N4_SISTEMATICA_2, BANCO_N4_SISTEMATICA_3, BANCO_N4_SISTEMATICA_4, BANCO_N4_POETICOS_PROFETICOS, BANCO_N4_APOLOGETICA, BANCO_N4_HOMILETICA_2, BANCO_N4_HISTORIA_2, BANCO_N4_ETICA, BANCO_N4_EPISTOLAS_APOCALIPSIS,
-  BANCO_N5_DIDACTICA, BANCO_N5_LIDERAZGO_2, BANCO_N5_IDIOMAS, BANCO_N5_TEOLOGIA_PASTORAL, BANCO_N5_ADMINISTRACION, BANCO_N5_SEMINARIO,
+  BANCO_N5_DIDACTICA, BANCO_N5_LIDERAZGO_2, BANCO_N5_IDIOMAS, BANCO_N5_TEOLOGIA_PASTORAL, BANCO_N5_ADMINISTRACION, BANCO_N5_SEMINARIO, BANCO_N5_EXEGESIS, BANCO_N5_AVIVAMIENTO,
   // especialidades
   BANCO_EVANGELISMO_MISIONES_1, BANCO_EVANGELISMO_MISIONES_2, BANCO_EVANGELISMO_MISIONES_3, BANCO_EVANGELISMO_MISIONES_4, BANCO_EVANGELISMO_MISIONES_5,
   BANCO_ALABANZA_1, BANCO_ALABANZA_2, BANCO_ALABANZA_3, BANCO_ALABANZA_4, BANCO_ALABANZA_5,
-  BANCO_INTERCESION_1, BANCO_INTERCESION_2, BANCO_INTERCESION_3, BANCO_INTERCESION_4, BANCO_INTERCESION_5,
+  BANCO_INTERCESION_1, BANCO_INTERCESION_2, BANCO_INTERCESION_3, BANCO_INTERCESION_4, BANCO_INTERCESION_5, BANCO_PASTORAL_1, BANCO_PASTORAL_2, BANCO_PASTORAL_3, BANCO_PASTORAL_4, BANCO_PASTORAL_5, BANCO_NINEZ_1, BANCO_NINEZ_2, BANCO_NINEZ_3, BANCO_NINEZ_4, BANCO_NINEZ_5, BANCO_JUVENTUD_1, BANCO_JUVENTUD_2, BANCO_JUVENTUD_3, BANCO_JUVENTUD_4, BANCO_JUVENTUD_5, BANCO_FAMILIA_CONSEJERIA_1, BANCO_FAMILIA_CONSEJERIA_2, BANCO_FAMILIA_CONSEJERIA_3, BANCO_FAMILIA_CONSEJERIA_4, BANCO_FAMILIA_CONSEJERIA_5, BANCO_CAPELLANIA_1, BANCO_CAPELLANIA_2, BANCO_CAPELLANIA_3, BANCO_CAPELLANIA_4, BANCO_CAPELLANIA_5, BANCO_COMUNICACIONES_1, BANCO_COMUNICACIONES_2, BANCO_COMUNICACIONES_3, BANCO_COMUNICACIONES_4, BANCO_COMUNICACIONES_5, BANCO_LIDERAZGO_ADMINISTRACION_1, BANCO_LIDERAZGO_ADMINISTRACION_2, BANCO_LIDERAZGO_ADMINISTRACION_3, BANCO_LIDERAZGO_ADMINISTRACION_4, BANCO_LIDERAZGO_ADMINISTRACION_5,
 ];
 
-export const CONTENIDO = new Map(LECCIONES.map((l) => [l.id, l]));
-export const BANCOS = new Map(BANCOS_LISTA.map((b) => [b.materia, b]));
+// Lo que agregó la revisión del sistema de estudio (docs/academia-auditoria.md): los esquemas y los videos van al final
+// de la lectura de su lección (esquemas.ts) y las preguntas de casos, al banco del examen final (casos.ts).
+const LECCIONES_COMPLETAS: LeccionContenido[] = LECCIONES.map((l) => (BLOQUES_EXTRA[l.id]?.length ? { ...l, bloques: [...l.bloques, ...BLOQUES_EXTRA[l.id]] } : l));
+const BANCOS_COMPLETOS: BancoMateria[] = BANCOS_LISTA.map((b) => (CASOS[b.materia]?.length ? { ...b, final: [...b.final, ...CASOS[b.materia]] } : b));
+
+export const CONTENIDO = new Map(LECCIONES_COMPLETAS.map((l) => [l.id, l]));
+export const BANCOS = new Map(BANCOS_COMPLETOS.map((b) => [b.materia, b]));
 
 const PREGUNTAS = new Map<string, PreguntaObjetiva>();
 /** De qué materia es cada pregunta y cada escrita (el examen integral se reparte por materia). */
 const MATERIA_DE = new Map<string, string>();
-for (const b of BANCOS_LISTA) {
+for (const b of BANCOS_COMPLETOS) {
   for (const lista of Object.values(b.repaso)) for (const p of lista) PREGUNTAS.set(p.id, p);
   for (const p of b.final) {
     PREGUNTAS.set(p.id, p);

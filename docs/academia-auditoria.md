@@ -11,7 +11,8 @@ algo innovador, si se han puesto recursos o solamente en algunos». Se revisaron
 - **La evaluación ya está a nivel de un buen curso universitario en línea.** Los objetivos son medibles y tienen su nivel
   de Bloom. Cada pregunta mide un objetivo (tabla de especificaciones). Hay pruebas variadas y en secuencia, con la
   respuesta y la cita al instante. Hay honradez con reloj del servidor, revisión con apelación, análisis de preguntas y
-  tiempo extra. Los tiempos de los exámenes son justos: no hace falta cambiarlos.
+  tiempo extra. Los tiempos de los exámenes son justos: no hace falta cambiarlos. *(Actualizado el 17-nov: con las
+  preguntas de casos, ahora cada pregunta trae su tiempo según su largo y su dificultad; ver la sección 5.)*
 - **Lo que faltaba en el sistema, y se corrigió aquí:**
   - **El tiempo de cada lección:** decía 7 o 10 minutos fijos, y en los Niveles 3 a 5 pide unos 14. Ahora cada lección
     calcula su tiempo real.
@@ -241,6 +242,130 @@ caso de la vida real. «Tiempo» ya quedó corregido con los minutos reales. Ade
 - Un esquema, mapa, cuadro o línea de tiempo en las materias de historia, panorama y libros bíblicos.
 - En los Niveles 3 a 5, no más del 30 % de preguntas de memoria y al menos un 20 % de casos de la vida real.
 - Ejemplos resueltos paso a paso en las materias de método (hermenéutica, homilética, métodos de estudio).
+
+## 5. La segunda parte: el contenido de las materias y el tiempo de las pruebas (17-nov)
+
+Pedido de Luis (16-nov): agregar lo que falta «a lo que corresponde… en todas las materias», que «se puedan buscar los
+recursos de estudio necesarios» y revisar el tiempo de las pruebas, que se veía corto.
+
+**Lo nuevo en el sistema:**
+- **Los esquemas visuales** en la lectura de las lecciones: la línea de tiempo, el cuadro comparativo (una tarjeta por
+  fila en el teléfono) y los pasos. Muestran los resaltados del cuaderno y se leen bien con el lector de pantalla.
+- **La página de recursos de estudio** (`/academia/recursos`): todos los videos, audios, lecturas y lecturas ampliadas
+  de la academia, con un buscador y filtros por tipo, por nivel y por materia.
+- **La lectura ampliada** de los Niveles 4 y 5, con su reporte en el cuaderno (una sola nota por materia).
+- **El tiempo de cada pregunta**, según su largo y su dificultad.
+
+**Cómo se hizo el contenido.** Para cada materia publicada, un agente redactó lo que le faltaba leyendo sus lecciones y
+su banco:
+- de 1 a 3 esquemas;
+- los libros que faltaban para llegar a 2 básicos y 2 complementarios;
+- videos donde no había;
+- las preguntas de casos (2, 4 o 6 según el nivel);
+- en los Niveles 4 y 5, la lectura ampliada.
+
+Otros dos agentes lo revisaron por separado:
+- uno, el contenido y la Biblia: cada fecha, dato y cita en la RV1960, la doctrina del ministerio y que cada caso tenga
+  una sola respuesta defendible;
+- otro, las fuentes, los videos y la forma: cada libro en un catálogo serio, cada video con YouTube, que la respuesta
+  correcta no se delate por su largo, los largos y la ortografía.
+
+Lo que un revisor quitaba no entraba, y sus correcciones se juntaban campo por campo sin perder ninguna. Después, el
+programa que arma los registros vuelve a validar todo con las reglas de las pruebas: los límites de los esquemas, las
+citas, los objetivos del sílabo, las cuatro opciones distintas y que no haya texto bíblico entre comillas.
+
+**En el primer PR, 23 materias:** todo el Nivel 1, todo el Nivel 2 y seis del Nivel 3 (Hermenéutica, Métodos de estudio
+bíblico, Pentateuco y libros históricos, La persona y obra del Espíritu Santo, Evangelismo y consolidación y Liderazgo
+cristiano I).
+
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 69: 10 líneas de tiempo, 36 cuadros comparativos y 23 pasos |
+| Videos (las materias que no tenían) | 9, en Disciplinas espirituales, Familia y relaciones y Dones espirituales |
+| Preguntas de casos en el examen final | 88 |
+| Libros comprobados en la bibliografía | 7 |
+
+Los revisores corrigieron 53 esquemas, 74 preguntas (casi siempre porque la respuesta correcta se delataba por ser la más
+larga), 2 libros y 1 video. No hubo nada que quitar.
+
+**En el segundo PR, 10 materias más:**
+- del Nivel 3: Los Evangelios y Hechos, Homilética I e Historia de la iglesia I;
+- del Nivel 4: Teología sistemática I a IV y Libros poéticos y proféticos;
+- del Nivel 5: Exégesis de un libro: Romanos y Teología del avivamiento, publicadas el 16-nov.
+
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 30: 8 líneas de tiempo, 17 cuadros comparativos y 5 pasos |
+| Videos (las materias que no tenían) | 9, en Teología sistemática II, III y IV |
+| Preguntas de casos en el examen final | 60 |
+| Libros comprobados en la bibliografía | 6 |
+| Lecturas ampliadas con su reporte | las primeras 7 |
+
+**En el tercer PR, las 27 materias que faltaban:**
+- Cuidado y consejería básica, del Nivel 3;
+- Epístolas y Apocalipsis, Homilética II, Historia de la iglesia II, Apologética y Ética, del Nivel 4;
+- las otras seis del Nivel 5;
+- las especialidades Evangelismo y misiones, Alabanza y adoración e Intercesión y oración.
+
+| Lo que se agregó | Cuántos |
+|---|---|
+| Esquemas | 80: 11 líneas de tiempo, 43 cuadros comparativos y 26 pasos |
+| Videos (las materias que no tenían) | 6, en Epístolas y Apocalipsis y en Sonido y técnica |
+| Preguntas de casos en el examen final | 162 |
+| Libros comprobados en la bibliografía | 27 |
+| Lecturas ampliadas con su reporte | 11, las del resto de los Niveles 4 y 5 |
+
+Los revisores quitaron un esquema de Liderazgo II que casi copiaba un cuadro ya publicado en Liderazgo cristiano I.
+
+**Con eso, las 60 materias que estaban publicadas el 16-nov tienen sus esquemas, sus casos, sus fuentes y, en los
+Niveles 4 y 5, su lectura ampliada:**
+
+| En total | Cuántos |
+|---|---|
+| Esquemas | 179: 29 líneas de tiempo, 96 cuadros y 54 pasos |
+| Videos nuevos | 24 |
+| Preguntas de casos | 310 |
+| Libros | 40 |
+| Lecturas ampliadas | 18 |
+
+**En el cuarto PR, las especialidades publicadas después:** Ministerio pastoral, Niñez, Juventud, Familia y consejería
+y Capellanía. Ya venían con sus libros, sus videos y muchas preguntas de casos; solo les faltaban los esquemas. Un
+redactor por especialidad escribió de 2 a 3 por materia, y un revisor independiente comprobó cada uno contra su lección,
+las citas en la RV1960, lo legal y la forma.
+- **Esquemas:** 53, entre 7 líneas de tiempo, 32 cuadros comparativos y 14 pasos.
+- **Revisión:** los revisores corrigieron 19 esquemas y no quitaron ninguno. Por ejemplo, en un cuadro de Juventud
+  sumaron el 988 y el 911 ante el riesgo de suicidio, como pide la lección, y en Capellanía corrigieron una cita:
+  Proverbios 22:3 dice «se esconde», no «se prepara».
+- **Total:** con esto, las 85 materias publicadas tienen esquemas (232 en total).
+
+**Una corrección legal que salió de la revisión:** la ley SB 571 de Texas (2025) bajó de 48 a 24 horas el plazo para
+que un profesional reporte la sospecha de abuso o negligencia de un menor (Código de Familia 261.101(b); carta de la
+Agencia de Educación de Texas del 26 de junio de 2025). Se corrigió en «Protección de menores» (Niñez 4, lección 5 y su
+idea clave, y la pregunta f43 de su banco) y en Juventud 3, lección 6.
+
+**El tiempo de las pruebas.** Se midió lo que pide cada pregunta:
+- leerla, a 130 palabras por minuto (el ritmo de un lector promedio en el teléfono);
+- decidir, 25 segundos;
+- pensar según su nivel de Bloom: 5 segundos más si pide comprender, 20 si pide aplicar y 30 si pide analizar o
+  evaluar.
+
+Esta medida reemplaza la de la sección 1 (200 palabras por minuto más 12 s). Con las 3.313 preguntas de los finales:
+
+| | Preguntas | Tiempo |
+|---|---|---|
+| Recordar y comprender | 2.192 (66 %) | 60 s, el tiempo base: son cortas y alcanza |
+| Aplicar | 483 | mediana de 65 s, hasta 110 |
+| Analizar y evaluar | 634 | mediana de 75 s, hasta 120 |
+| Todas | 3.313 | el 71 % en 60 s; 84 pasan de 90 s |
+
+Ahora cada pregunta trae su tiempo (`segundosDePregunta`): nunca menos que el tiempo base ni más del doble. Las mini
+pruebas daban 45 segundos por pregunta; ahora dan 60 de base, como el final (de 60 a 85 según la pregunta). La prueba
+diagnóstica dice los minutos que de verdad pide (unos 31). Con tiempo extra, todo por 1,5.
+
+**Lo que hay que saber después de publicar:** la aprobación doctrinal de cada materia guarda la huella de su contenido.
+Con los esquemas, los casos y los libros nuevos, la huella cambia, y la pestaña «Contenido» del panel mostrará estas
+materias como cambiadas desde su aprobación. Así debe ser: la Dirección académica revisa lo agregado y vuelve a
+aprobarlas. Eso no cierra nada a los alumnos.
 
 ## Fuentes
 

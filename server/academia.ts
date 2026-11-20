@@ -29,7 +29,9 @@ import { registerAcademiaDireccionRoutes } from "./academia-direccion";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
+import { registerAcademiaRecursosRoutes } from "./academia-recursos";
 import { minutosDeMateria, minutosReales } from "./academia-carga";
+import { minutosDeNarracion, narracionDe } from "./academia-narracion";
 import { registerAcademiaActividadesRoutes } from "./academia-actividades";
 import { registerAcademiaCalidadRoutes } from "./academia-calidad";
 import { registerAcademiaAsignacionesRoutes } from "./academia-asignaciones";
@@ -275,7 +277,8 @@ export function registerAcademiaRoutes(app: Express) {
       }
       const out: MateriaDetalle = {
         // (los minutos de cada lección, los reales: server/academia-carga.ts)
-        materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, minutos: minutosReales(x.id, x.minutos), vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada })) },
+        // (y los de su narración grabada, si la tiene: la lista muestra que se puede escuchar)
+        materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, minutos: minutosReales(x.id, x.minutos), vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada, escuchar: minutosDeNarracion(x.id) })) },
         pesos: pesosDe(m),
         estado,
         nota: fila?.nota ?? null,
@@ -375,6 +378,8 @@ export function registerAcademiaRoutes(app: Express) {
         inscrita,
         docente,
         bloqueo,
+        // (si algún día se agregan bloques al servir la lección, las marcas ya no calzarían: sin grabación)
+        narracion: bloques.length !== contenido.bloques.length ? null : narracionDe(id),
       };
       res.setHeader("Cache-Control", "no-store");
       res.json(out);
@@ -614,6 +619,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaRevisionRoutes(app);
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
+  registerAcademiaRecursosRoutes(app);
   registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
   registerAcademiaAsignacionesRoutes(app);

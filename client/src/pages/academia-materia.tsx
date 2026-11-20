@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Info, Library, Lock, RotateCcw,
+  ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Headphones, Info, Library, Lock, RotateCcw,
   ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { loginUrl } from "@/lib/login-redirect";
 import {
-  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, tieneEscritoBreve,
+  APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, examenDe, leccionPublica, materiaPorId, miniPruebasDe, parteEscrita, textoSegundos, tieneEscritoBreve,
   type MateriaDetalle, type Pesos,
 } from "@shared/academia";
 import {
@@ -21,6 +21,7 @@ import {
 import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, Minutos, NotaMedalla, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
 import { AsignacionDeMateria } from "@/components/academia/asignaciones";
 import { EnPreparacion } from "@/components/academia/en-preparacion";
+import { LecturaAmpliadaCard } from "@/components/academia/lectura-ampliada";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -412,8 +413,16 @@ export default function AcademiaMateria() {
                     <p className="font-medium">{i + 1}. {l.titulo}</p>
                     <p className="text-xs text-muted-foreground">{l.base}</p>
                   </div>
-                  {!inscrito && primera?.id === l.id && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 shrink-0">Abierta</span>}
-                  <Minutos min={l.minutos} />
+                  {/* en el teléfono, una debajo de la otra: así el título tiene lugar */}
+                  <span className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-3 shrink-0">
+                    {!inscrito && primera?.id === l.id && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Abierta</span>}
+                    {l.escuchar ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-orange-700 dark:text-orange-300" title="Se puede escuchar con la voz de la academia" data-testid={`leccion-voz-${l.id}`}>
+                        <Headphones className="w-3.5 h-3.5" aria-hidden="true" /> <span className="sr-only">Para escuchar: </span>{l.escuchar} min
+                      </span>
+                    ) : null}
+                    <Minutos min={l.minutos} />
+                  </span>
                 </div>
               );
               return <li key={l.id}>{abre ? <Link href={`/academia/leccion/${l.id}`} className="block">{fila}</Link> : fila}</li>;
@@ -436,7 +445,7 @@ export default function AcademiaMateria() {
           <section className="glass-card p-5" data-testid="materia-minis">
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ListChecks className="w-5 h-5 text-orange-500" /> Mini pruebas</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Cada {MINI_PRUEBA.cada} lecciones, {MINI_PRUEBA.objetivas} preguntas de {MINI_PRUEBA.segundos} segundos. Tienes {MINI_PRUEBA.intentos} intentos, cada uno con
+              Cada {MINI_PRUEBA.cada} lecciones, {MINI_PRUEBA.objetivas} preguntas, {textoSegundos(MINI_PRUEBA)}. Tienes {MINI_PRUEBA.intentos} intentos, cada uno con
               preguntas nuevas, y cuenta el mejor. Juntas pesan el {d.pesos.mini} % de la nota.
             </p>
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -474,7 +483,7 @@ export default function AcademiaMateria() {
           <section className="glass-card p-5" data-testid="materia-examen">
             <h2 className="font-display text-xl font-bold mb-2 flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-orange-500" /> Examen final</h2>
             <ul className="text-sm text-muted-foreground space-y-1 mb-4">
-              <li>Parte A: {medida.objetivas} preguntas objetivas, {medida.segundos} segundos cada una, repartidas por todas las lecciones.</li>
+              <li>Parte A: {medida.objetivas} preguntas objetivas, {textoSegundos(medida)}, repartidas por todas las lecciones.</li>
               <li>Parte B: {parteEscrita(medida)}, desde tu celular y con corrección automática.</li>
               <li>Pesa {medida.pesoObjetiva} % la parte objetiva y {100 - medida.pesoObjetiva} % la escrita. Se aprueba con {APRUEBA}.</li>
             </ul>
@@ -581,11 +590,15 @@ export default function AcademiaMateria() {
                       </li>
                     ))}
                   </ul>
+                  <Link href={`/academia/recursos?materia=${encodeURIComponent(m.id)}`} className="mt-3 inline-flex items-center gap-1 text-sm text-orange-700 dark:text-orange-300 hover:underline">
+                    <Library className="w-4 h-4" /> Ver todos los recursos de esta materia, con los videos de sus lecciones
+                  </Link>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </section>
         )}
+        {m.silabo?.ampliada && <LecturaAmpliadaCard a={m.silabo.ampliada} materiaId={m.id} conSesion={d.conSesion} />}
       </div>
     </Layout>
   );

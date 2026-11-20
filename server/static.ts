@@ -31,6 +31,18 @@ export function serveStatic(app: Express) {
     next(err);
   });
 
+  // La narración grabada de las lecciones (/voz/academia/<lección>-<huella>.m4a): el nombre cambia si cambia el
+  // contenido, así que se guarda un año. Se pide por partes (Range) para poder adelantar.
+  app.use("/voz", express.static(path.join(distPath, "voz"), { maxAge: "1y", immutable: true, etag: true, fallthrough: false }));
+  app.use("/voz", (err: { status?: number; statusCode?: number; code?: string }, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const status = err?.status ?? err?.statusCode;
+    if (status === 404 || err?.code === "ENOENT") {
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(404).type("text/plain").send("No encontrado");
+    }
+    next(err);
+  });
+
   // Serve icons, manifest, SW with moderate caching
   app.use("/icons", express.static(path.join(distPath, "icons"), {
     maxAge: "7d",

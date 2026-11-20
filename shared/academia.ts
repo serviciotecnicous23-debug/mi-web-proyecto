@@ -13,6 +13,8 @@
  * University); del juego solo se toma la seguridad técnica de los exámenes (preguntas en el servidor y reloj).
  */
 
+import type { NarracionVista } from "./narracion";
+
 export const NOMBRE_ACADEMIA = "Academia Avivando el Fuego";
 /** El lema: 2 Timoteo 2:15 (RV1960, frase literal comprobada con la Biblia de la web). */
 export const LEMA = { frase: "Procura con diligencia presentarte a Dios aprobado", ref: "2 Timoteo 2:15" };
@@ -41,7 +43,12 @@ export type Silabo = {
   dimensiones: Record<Dimension, string>;
   bibliografia: { basica: Libro[]; complementaria: Libro[] };
   recursos: RecursoDef[];
+  /** Niveles 4 y 5: una lectura ampliada con su reporte (shared/academia-complementos.ts). */
+  ampliada?: LecturaAmpliada;
 };
+
+/** Una lectura ampliada: qué leer, de dónde, cuánto pide y las preguntas guía de su reporte (en el cuaderno). */
+export type LecturaAmpliada = { lectura: string; fuente: string; url?: string; minutos: number; reporte: string[] };
 
 export type EspecialidadId =
   | "evangelismo-misiones" | "pastoral" | "alabanza" | "ninez" | "juventud" | "familia-consejeria"
@@ -172,6 +179,8 @@ export type MedidaExamen = {
   breves?: number;
   /** Minutos para cada escrito breve del examen. */
   minutosBreve?: number;
+  /** El tiempo extra (×1,5) que dio la Administración: lo usa también el tiempo de cada pregunta. */
+  factor?: number;
 };
 export const EXAMEN_FINAL: Record<NivelN, MedidaExamen> = {
   1: { objetivas: 10, banco: 30, escritas: 1, pesoObjetiva: 80, segundos: 60, minutosEscrita: 6 },
@@ -202,11 +211,12 @@ export function parteEscrita(medida: MedidaExamen): string {
 }
 
 /**
- * Las mini pruebas (Nivel 2 en adelante): cada 3 lecciones, 6 preguntas de un banco de 18, 45 segundos cada una, sin
+ * Las mini pruebas (Nivel 2 en adelante): cada 3 lecciones, 6 preguntas de un banco de 18, de 60 a 120 segundos cada una, sin
  * escritas. Hay 3 intentos (cada uno con preguntas nuevas) y cuenta el mejor. Muestran la revisión al terminar: sirven
  * para aprender. Su nota, en promedio, es el componente «mini» de la materia (las que no se dieron cuentan 0).
  */
-export const MINI_PRUEBA = { objetivas: 6, banco: 18, segundos: 45, intentos: 3, cada: 3 } as const;
+// (desde la revisión del 16-nov dan 60 segundos de base, como el examen final: son de práctica, no de velocidad)
+export const MINI_PRUEBA = { objetivas: 6, banco: 18, segundos: 60, intentos: 3, cada: 3 } as const;
 export const MEDIDA_MINI: MedidaExamen = {
   objetivas: MINI_PRUEBA.objetivas, banco: MINI_PRUEBA.banco, escritas: 0, pesoObjetiva: 100, segundos: MINI_PRUEBA.segundos, minutosEscrita: 0,
 };
@@ -258,8 +268,28 @@ export function conTiempoExtra(medida: MedidaExamen): MedidaExamen {
     segundos: Math.round(medida.segundos * FACTOR_TIEMPO_EXTRA),
     minutosEscrita: Math.ceil(medida.minutosEscrita * FACTOR_TIEMPO_EXTRA),
     ...(medida.minutosBreve ? { minutosBreve: Math.ceil(medida.minutosBreve * FACTOR_TIEMPO_EXTRA) } : {}),
+    factor: FACTOR_TIEMPO_EXTRA,
   };
 }
+
+/**
+ * El tiempo de cada pregunta objetiva (docs/academia.md, «El tiempo de cada pregunta»; revisión del 16-nov en
+ * docs/academia-auditoria.md): lo que pide leerla con calma
+ * (130 palabras por minuto, el ritmo de un lector promedio en el teléfono), decidir (25 s) y pensar según su nivel de
+ * Bloom. Nunca menos que el tiempo base del examen ni más del doble; con tiempo extra, por 1,5. Así una pregunta corta de
+ * memoria sigue con el tiempo base y un caso largo para analizar tiene más.
+ */
+export const PALABRAS_POR_MINUTO_EXAMEN = 130;
+export const SEGUNDOS_PARA_DECIDIR = 25;
+export const SEGUNDOS_POR_BLOOM: Record<Bloom, number> = { recordar: 0, comprender: 5, aplicar: 20, analizar: 30, evaluar: 30, crear: 30 };
+export function segundosDePregunta(p: { texto: string; correcta: string; falsas: readonly string[]; bloom?: Bloom }, medida: Pick<MedidaExamen, "segundos" | "factor">): number {
+  const palabras = [p.texto, p.correcta, ...p.falsas].reduce((a, t) => a + t.split(/\s+/).filter(Boolean).length, 0);
+  const pide = (palabras / PALABRAS_POR_MINUTO_EXAMEN) * 60 + SEGUNDOS_PARA_DECIDIR + (p.bloom ? SEGUNDOS_POR_BLOOM[p.bloom] ?? 0 : 0);
+  const conFactor = Math.ceil((pide * (medida.factor ?? 1)) / 5) * 5;
+  return Math.min(2 * medida.segundos, Math.max(medida.segundos, conFactor));
+}
+/** El tiempo de las preguntas dicho para el alumno: «de 60 a 120 segundos cada una, según su largo y su dificultad». */
+export const textoSegundos = (medida: Pick<MedidaExamen, "segundos">) => `de ${medida.segundos} a ${2 * medida.segundos} segundos cada una, según su largo y su dificultad`;
 /** Margen por la conexión: una respuesta que llega hasta 6 s después del tiempo todavía vale. */
 export const MARGEN_SEGUNDOS = 6;
 /** Margen de la parte escrita (escribir en el teléfono). */
@@ -340,7 +370,8 @@ export function apruebaSuficiencia(objetiva: number, escrita: number): boolean {
 // ---------------------------------------------------------------- la prueba diagnóstica
 
 /**
- * La prueba diagnóstica: 2 preguntas de cada materia con contenido, 45 segundos cada una. Solo sugiere por dónde
+ * La prueba diagnóstica: 2 preguntas de cada materia con contenido, de 45 a 90 segundos cada una según su largo y su
+ * dificultad. Solo sugiere por dónde
  * empezar y qué materias se podrían aprobar por suficiencia: no da nada por aprobado. Se repite cada 30 días.
  */
 /**
@@ -466,6 +497,7 @@ export function puedeRevisar(role: string | null | undefined): boolean {
 
 // Viven en shared/citas.ts (liviano: lo usan también el cuaderno y la Biblioteca sin cargar el catálogo).
 export { citaVisible, enlaceBiblia, parsearCita, type Cita } from "./citas";
+import { aplicarComplementos } from "./academia-complementos";
 
 // ---------------------------------------------------------------- el catálogo
 
@@ -2696,6 +2728,2024 @@ const SEMINARIO: MateriaDef = {
   disponible: true,
 };
 
+const EXEGESIS: MateriaDef = {
+  id: "n5-exegesis",
+  nivel: 5,
+  orden: 6,
+  titulo: "Exégesis de un libro: Romanos",
+  resumen: "El método exegético aplicado a una carta entera: el contexto, el argumento de Romanos sección por sección, sus palabras clave y las lecturas evangélicas donde hay diferencias, hasta la vida práctica y la misión.",
+  base: "Romanos 1:16-17; 2 Timoteo 2:15",
+  memoria: "Romanos 8:1",
+  lecciones: lecciones("n5-exegesis", [
+    ["El método exegético: leer Romanos en su contexto", "2 Timoteo 2:15; Romanos 15:22-24; Romanos 1:1-4; Romanos 1:5; Romanos 1:16-17; Habacuc 2:4"],
+    ["Romanos 1:18 a 3:20: todos bajo pecado", "Romanos 1:18-20; Romanos 1:24-25; Romanos 2:1; Romanos 2:28-29; Romanos 3:19-20"],
+    ["Romanos 3:21 a 5:21: la justicia de Dios por la fe", "Romanos 3:21-26; Romanos 4:11; Romanos 5:1-5; Romanos 5:8; Romanos 5:12"],
+    ["Romanos 6 a 8: la vida nueva en el Espíritu", "Romanos 6:1-4; Romanos 6:11; Romanos 6:23; Romanos 7:18-19; Romanos 7:24-25; Romanos 8:1-2; Romanos 8:14-16; Romanos 8:26-28"],
+    ["Romanos 9 a 11: Dios fiel a sus promesas", "Romanos 9:6; Romanos 9:14-16; Romanos 10:9-10; Romanos 10:13-15; Romanos 11:25-26; Romanos 11:33"],
+    ["Romanos 12 a 16: la vida transformada y la misión", "Romanos 12:3-5; Romanos 13:1; Hechos 5:29; Romanos 14:1; Romanos 15:7; Romanos 15:20; Romanos 16:7; Romanos 16:25-26"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder aprenda a estudiar un libro bíblico entero con el método exegético, aplicándolo a la carta a los Romanos: el contexto histórico y literario, el argumento de Pablo sección por sección, las palabras clave como justificación, redención y propiciación, y la vida práctica y la misión que nacen de la doctrina. Donde los evangélicos leen distinto (Romanos 7, la elección en Romanos 9, el futuro de Israel y Junias en Romanos 16) se presentan las lecturas con respeto, y el ministerio de la mujer es un punto de la declaración de fe por confirmar. Su base es el llamado de Pablo a Timoteo: «Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad» (2 Timoteo 2:15).",
+    objetivos: [
+      { id: "o1", texto: "Aplicar los pasos del método exegético a un texto de Romanos.", bloom: "aplicar" },
+      { id: "o2", texto: "Explicar el argumento de Romanos 1:18 a 3:20 sobre el pecado de todos.", bloom: "comprender" },
+      { id: "o3", texto: "Analizar la justificación por la fe en Romanos 3:21 a 5:21, con sus palabras clave.", bloom: "analizar" },
+      { id: "o4", texto: "Explicar la vida nueva en el Espíritu en Romanos 6 a 8 y comparar con respeto las lecturas de Romanos 7.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar las lecturas de Romanos 9 a 11 sobre la elección y el futuro de Israel.", bloom: "evaluar" },
+      { id: "o6", texto: "Aplicar la enseñanza de Romanos 12 a 16 a la vida de la iglesia y a su misión.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Romanos 8:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El método exegético y el argumento completo de la carta a los Romanos.",
+      ser: "Un líder humilde ante el texto, que escucha a Dios antes de hablar.",
+      hacer: "Preparar enseñanzas fieles a partir del estudio de un libro entero, paso a paso.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gordon D. Fee", titulo: "Exégesis del Nuevo Testamento: manual para estudiantes y pastores", editorial: "Vida" },
+        { autor: "John Stott", titulo: "El mensaje de Romanos", editorial: "Certeza Unida" },
+      ],
+      complementaria: [
+        { autor: "Douglas J. Moo", titulo: "Comentario bíblico con aplicación NVI: Romanos", editorial: "Vida" },
+        { autor: "Gordon Fee y Douglas Stuart", titulo: "La lectura eficaz de la Biblia", editorial: "Vida" },
+        { autor: "Henry A. Virkler", titulo: "Hermenéutica: principios y procedimientos de interpretación bíblica", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=0tco1rQGC1o", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: la carta a los Romanos completa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=1" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const AVIVAMIENTO: MateriaDef = {
+  id: "n5-avivamiento",
+  nivel: 5,
+  orden: 7,
+  titulo: "Teología del avivamiento",
+  resumen: "Los principios bíblicos, la historia y el discernimiento del avivamiento: qué es, los avivamientos del Antiguo Testamento y de Hechos, los de la historia de la iglesia, cómo discernirlos y cómo buscarlos y sostener sus frutos.",
+  base: "Habacuc 3:2; Hechos 3:19",
+  memoria: "Habacuc 3:2",
+  lecciones: lecciones("n5-avivamiento", [
+    ["¿Qué es el avivamiento?", "Salmos 85:6; Habacuc 3:2; Isaías 57:15; Apocalipsis 2:4-5; Hechos 3:19"],
+    ["Los avivamientos en el Antiguo Testamento", "2 Crónicas 29:3; 2 Crónicas 30:26; 2 Reyes 22:11; 2 Reyes 23:3; Nehemías 8:8; Nehemías 8:10; 2 Crónicas 7:14"],
+    ["Pentecostés y los avivamientos de Hechos", "Joel 2:28-29; Hechos 2:1-4; Hechos 2:37-41; Hechos 4:31; Hechos 8:5-8; Hechos 19:18-20"],
+    ["La historia de los avivamientos", "Salmos 78:4; Hebreos 13:8"],
+    ["El discernimiento: examinadlo todo", "1 Tesalonicenses 5:19-21; 1 Juan 4:1-3; Mateo 7:15-17; 1 Corintios 14:33; 1 Corintios 14:40; Levítico 10:1-2"],
+    ["Buscar el avivamiento y sostener sus frutos", "Hechos 1:14; Santiago 4:8; Oseas 10:12; Hechos 2:42; Mateo 9:37-38; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder entienda el avivamiento con la Escritura, la historia y el discernimiento, siguiendo el artículo 15 de la declaración de fe: qué es y en qué se distingue de la evangelización, los avivamientos de Ezequías, Josías y Esdras y Nehemías, Pentecostés y los avivamientos de Hechos, los grandes avivamientos de la historia desde Herrnhut hasta Valparaíso, las señales de una obra verdadera del Espíritu según Jonathan Edwards, y cómo buscarlo y sostener sus frutos. Un punto de la declaración de fe por confirmar se presenta con respeto: las lenguas como señal inicial del bautismo en el Espíritu. Su base es la oración del profeta: «Oh Jehová, aviva tu obra en medio de los tiempos» (Habacuc 3:2).",
+    objetivos: [
+      { id: "o1", texto: "Definir el avivamiento con la Escritura y la declaración de fe, y distinguirlo de la evangelización y de un despertar.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar el patrón de los avivamientos del Antiguo Testamento y leer 2 Crónicas 7:14 en su contexto.", bloom: "analizar" },
+      { id: "o3", texto: "Explicar Pentecostés y los frutos de los avivamientos del libro de los Hechos.", bloom: "comprender" },
+      { id: "o4", texto: "Analizar los principales avivamientos de la historia, lo que tienen en común y sus frutos.", bloom: "analizar" },
+      { id: "o5", texto: "Evaluar las manifestaciones espirituales con los criterios bíblicos de discernimiento.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar cómo buscar el avivamiento y sostener sus frutos en la iglesia local.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Habacuc 3:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La teología bíblica del avivamiento, su historia y los criterios para discernirlo.",
+      ser: "Un líder humilde y con hambre de Dios, abierto al Espíritu y firme en la Palabra.",
+      hacer: "Guiar a la iglesia a buscar el avivamiento, a discernir sus manifestaciones y a cuidar sus frutos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Arthur Wallis", titulo: "En el día de su poder", editorial: "Unilit" },
+        { autor: "Jonathan Edwards", titulo: "Los afectos religiosos: la válida experiencia cristiana", editorial: "Publicaciones Faro de Gracia" },
+      ],
+      complementaria: [
+        { autor: "Justo L. González", titulo: "Historia del cristianismo", editorial: "Unilit", nota: "Para los moravos, los despertares y el metodismo." },
+        { autor: "Pablo A. Deiros", titulo: "Historia del cristianismo en América Latina", editorial: "Mundo Hispano", nota: "Para el pentecostalismo en América Latina." },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Qué sucedió en Pentecostés y por qué es importante", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OisTpQEle6E", minutos: 7 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras-Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: los primeros capítulos de Hechos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=2" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const MINISTERIO_PASTORAL: MateriaDef = {
+  id: "pastoral-1",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 1,
+  titulo: "El ministerio pastoral",
+  resumen: "La práctica del oficio pastoral: anciano, obispo y pastor, la autoridad que sirve, el equipo pastoral, la disciplina que restaura, la protección del rebaño y la salud del pastor.",
+  base: "Hechos 20:28; 1 Pedro 5:2-3",
+  memoria: "Hechos 20:28",
+  lecciones: lecciones("pastoral-1", [
+    ["Anciano, obispo y pastor", "Hechos 20:17; Hechos 20:28; Tito 1:7-9"],
+    ["Supervisar sin señorear", "Mateo 20:25-28; 1 Pedro 5:2-3; 3 Juan 1:9-10"],
+    ["Formar el equipo pastoral", "Éxodo 18:17-18; Tito 1:5; Filipenses 2:19-22; Colosenses 4:7-9"],
+    ["La disciplina que restaura", "Mateo 18:15-17; Gálatas 6:1; 2 Corintios 2:6-8"],
+    ["Proteger al rebaño", "Hechos 20:29-31; 2 Pedro 2:1-3; Ezequiel 34:4; Mateo 18:6"],
+    ["La salud del pastor", "1 Reyes 19:4-5; 2 Corintios 4:7-10; Gálatas 6:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que sirve como pastor, o se prepara para hacerlo, viva su oficio con la práctica que pide el Nuevo Testamento: los nombres y las tareas de anciano, obispo y pastor, una autoridad que sirve y no señorea, un equipo pastoral formado con paciencia, una disciplina que busca restaurar, la protección del rebaño frente al error y al abuso, con lo que pide la ley, y el cuidado de su propia salud. No repite Teología pastoral (Nivel 5) ni Cuidado y consejería básica (Nivel 3): las lleva a la práctica. Quién ejerce el pastorado es parte del ministerio de la mujer, un punto de la declaración de fe por confirmar. Su base es el encargo de Pablo a los ancianos de Éfeso: «mirad por vosotros, y por todo el rebaño en que el Espíritu Santo os ha puesto por obispos, para apacentar la iglesia del Señor» (Hechos 20:28).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los nombres y las tareas del oficio pastoral en el Nuevo Testamento.", bloom: "comprender" },
+      { id: "o2", texto: "Contrastar la autoridad que sirve con el liderazgo que domina, y reconocer sus señales de alerta.", bloom: "analizar" },
+      { id: "o3", texto: "Planificar la formación de un equipo pastoral según el ejemplo de Pablo.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar los pasos de la disciplina bíblica con el propósito de restaurar.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar las medidas para proteger al rebaño del error y del abuso.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar el cuidado de la propia salud y la rendición de cuentas del pastor.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 20:28 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El oficio pastoral del Nuevo Testamento y sus tareas prácticas.",
+      ser: "Un pastor siervo, que es ejemplo, rinde cuentas y cuida de sí mismo.",
+      hacer: "Guiar, formar un equipo, corregir para restaurar y proteger al rebaño.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John MacArthur (ed.)", titulo: "El ministerio pastoral: cómo pastorear bíblicamente", editorial: "Grupo Nelson" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 20, la despedida de Pablo a los ancianos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=20" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_PASTORAL: MateriaDef = {
+  id: "pastoral-2",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 2,
+  titulo: "Consejería pastoral",
+  resumen: "Aconsejar con la Palabra: qué es la consejería pastoral, el método de Jesús con la samaritana, la culpa y el perdón, la ansiedad y la tristeza profunda, los conflictos y la reconciliación, y los límites de la confidencialidad y de la derivación.",
+  base: "Colosenses 1:28; Isaías 50:4",
+  memoria: "Isaías 50:4",
+  lecciones: lecciones("pastoral-2", [
+    ["¿Qué es la consejería pastoral?", "Colosenses 1:28; Isaías 50:4; Romanos 15:14; Proverbios 11:14"],
+    ["El método de Jesús: la samaritana", "Juan 4:7-10; Juan 4:16-18; Juan 4:28-29"],
+    ["La culpa y el perdón", "Salmos 32:3-5; 1 Juan 1:9; 2 Corintios 7:10"],
+    ["La ansiedad y la tristeza profunda", "Salmos 42:5; Filipenses 4:6-7; 1 Pedro 5:7; Mateo 11:28"],
+    ["Conflictos y reconciliación", "Mateo 5:23-24; Romanos 12:18; Efesios 4:31-32"],
+    ["La confidencialidad, la derivación y los límites", "Proverbios 11:13; Proverbios 24:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que acompaña a otros como pastor aprenda a aconsejar con la Palabra: qué es la consejería pastoral y en qué se distinguen los enfoques evangélicos, el método de Jesús con la samaritana, cómo acompañar la culpa y el perdón, la ansiedad y la tristeza profunda, cómo ayudar a reconciliar a los que están en conflicto, y los límites de la confidencialidad, con lo que pide la ley en Texas, y cuándo derivar a un profesional. Lleva a la práctica Cuidado y consejería básica (Nivel 3) sin repetirla, y no reemplaza la atención médica ni la psicológica. Su base es la lengua del siervo de Jehová: «Jehová el Señor me dio lengua de sabios, para saber hablar palabras al cansado» (Isaías 50:4).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la consejería pastoral y en qué se distinguen los enfoques evangélicos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar a una conversación pastoral los pasos del método de Jesús con la samaritana.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir la culpa verdadera de la falsa culpa y acompañar a quien confiesa hacia el perdón.", bloom: "analizar" },
+      { id: "o4", texto: "Acompañar la ansiedad y la tristeza profunda con la Palabra, y reconocer cuándo hace falta ayuda médica.", bloom: "aplicar" },
+      { id: "o5", texto: "Planificar la reconciliación de un conflicto entre hermanos, distinguiendo perdonar de reconciliarse.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los límites de la confidencialidad y las razones para derivar a un profesional.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Isaías 50:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La consejería pastoral, sus enfoques evangélicos y sus límites.",
+      ser: "Un consejero que escucha, guarda la confidencia y acompaña con la Palabra y con amor.",
+      hacer: "Conducir una conversación pastoral, acompañar la culpa, la ansiedad y los conflictos, y derivar cuando hace falta.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Jay E. Adams", titulo: "Capacitado para orientar", editorial: "Portavoz" },
+        { autor: "Lawrence J. Crabb", titulo: "El arte de aconsejar bíblicamente", editorial: "Unilit" },
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "Carácter de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=oHMicgEfIrY", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 4, Jesús y la mujer samaritana", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=4" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const ORDENANZAS_CEREMONIAS: MateriaDef = {
+  id: "pastoral-3",
+  nivel: null,
+  especialidad: "pastoral",
+  orden: 3,
+  titulo: "Ordenanzas y ceremonias",
+  resumen: "La práctica del pastor que preside: las ordenanzas y las ceremonias, el bautismo en agua, la Santa Cena, la presentación de niños, la boda cristiana, con lo que pide la ley en Texas, y el funeral, cada una con su ejemplo resuelto paso a paso.",
+  base: "Mateo 28:19; 1 Corintios 11:23-26",
+  memoria: "1 Corintios 11:26",
+  lecciones: lecciones("pastoral-3", [
+    ["Ordenanzas y ceremonias", "Mateo 28:19-20; 1 Corintios 11:23-24; Hechos 2:41-42; 1 Corintios 14:40"],
+    ["El bautismo en agua", "Hechos 2:38; Hechos 8:36-38; Romanos 6:3-4; Mateo 28:19"],
+    ["La Santa Cena", "1 Corintios 11:23-26; 1 Corintios 10:16-17; 1 Corintios 11:27-29; Hechos 20:7"],
+    ["La presentación de niños", "1 Samuel 1:27-28; Lucas 2:22; Marcos 10:13-16; Deuteronomio 6:6-7; Efesios 6:4"],
+    ["La boda cristiana", "Génesis 2:24; Mateo 19:4-6; Hebreos 13:4; Efesios 5:25; 2 Corintios 6:14"],
+    ["El funeral y el consuelo", "Juan 11:35; Juan 11:25-26; 1 Tesalonicenses 4:13-14; Romanos 12:15; 2 Corintios 1:3-4"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que preside en su iglesia, o se prepara para hacerlo, celebre con orden y con sentido bíblico las ordenanzas y las ceremonias: que distinga lo que el Señor mandó de lo que la iglesia celebra, que prepare y dirija el bautismo en agua y la Santa Cena según la declaración de fe del ministerio (artículo 8), y que acompañe a las familias en la presentación de sus hijos, en la boda, con lo que pide la ley en Texas, y en el funeral. Lleva a la práctica pastoral la doctrina del Nivel 1 sobre el bautismo y la Cena, sin repetirla, y presenta con respeto las prácticas de otras iglesias. Su base es la palabra de Pablo sobre la Cena: «Así, pues, todas las veces que comiereis este pan, y bebiereis esta copa, la muerte del Señor anunciáis hasta que él venga» (1 Corintios 11:26).",
+    objetivos: [
+      { id: "o1", texto: "Distinguir las ordenanzas de las ceremonias y comparar con respeto cómo las entienden las iglesias.", bloom: "analizar" },
+      { id: "o2", texto: "Preparar y dirigir un bautismo en agua, con su clase, su entrevista y la seguridad en el agua.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar el sentido de la Santa Cena y dirigir su celebración con orden y reverencia.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar y dirigir una presentación de niños, con el compromiso de los padres y de la iglesia.", bloom: "aplicar" },
+      { id: "o5", texto: "Planificar una boda cristiana, con la consejería prematrimonial y lo que pide la ley en Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Acompañar a una familia en el duelo y dirigir un funeral con esperanza, también en los casos difíciles.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 11:26 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las ordenanzas y las ceremonias de la iglesia, su sentido bíblico y lo que pide la ley.",
+      ser: "Un pastor que preside con reverencia, orden y compasión, sin lucirse.",
+      hacer: "Preparar y dirigir el bautismo, la Santa Cena, la presentación de niños, la boda y el funeral.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Kittim Silva", titulo: "Manual para ceremonias religiosas", editorial: "CLIE" },
+        { autor: "Editorial Vida (ed.)", titulo: "Manual del ministro", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Guillermo I. Catalán", titulo: "Nuevo manual para ministros", editorial: "Mundo Hispano" },
+        { autor: "Stanley M. Horton (ed.)", titulo: "Teología sistemática: una perspectiva pentecostal", editorial: "Vida" },
+        { autor: "Myer Pearlman", titulo: "Teología bíblica y sistemática", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1): Hechos 1-12", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 1 Corintios 11, la Cena del Señor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=11" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const VISITACION_CUIDADO: MateriaDef = {
+  id: "pastoral-4",
+  nivel: null,
+  especialidad: "pastoral",
+  orden: 4,
+  titulo: "Visitación y cuidado del rebaño",
+  resumen: "El cuidado pastoral en la práctica: conocer a las ovejas con un mapa del rebaño, la visita en el hogar, la visita a los enfermos y a los que se mueren, los ancianos, los presos y los que están solos, la búsqueda de la oveja perdida y un plan de cuidado con toda la iglesia.",
+  base: "Proverbios 27:23; Juan 10:11-14",
+  memoria: "Proverbios 27:23",
+  lecciones: lecciones("pastoral-4", [
+    ["El pastor que conoce a sus ovejas", "Juan 10:11-14; Proverbios 27:23; Ezequiel 34:11-12; Jeremías 3:15"],
+    ["La visita en el hogar", "Hechos 20:20; Lucas 19:5-6; 1 Tesalonicenses 2:7-8; Romanos 12:13"],
+    ["Visitar a los enfermos", "Mateo 25:35-36; Santiago 5:14-15; 2 Corintios 12:9; Juan 14:1-3"],
+    ["Ancianos, presos y los que están solos", "Santiago 1:27; Levítico 19:32; Salmos 71:9; Hebreos 13:3; 2 Timoteo 1:16"],
+    ["Buscar a la oveja perdida", "Lucas 15:4-7; Ezequiel 34:16; Hebreos 10:24-25; Santiago 5:19-20"],
+    ["Un plan de cuidado: no solo el pastor", "Hechos 6:1-4; 1 Corintios 12:25-26; 1 Pedro 4:10; Gálatas 6:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que pastorea, o se prepara para hacerlo, cuide al rebaño persona por persona: que conozca a sus ovejas con un mapa del rebaño, que visite los hogares con un propósito y con prudencia, que acompañe a los enfermos y a los que se mueren según la declaración de fe del ministerio (artículo 11), que no olvide a los ancianos, a los presos y a los que están solos, que busque a los que se alejan sin acusarlos y que organice con toda la iglesia un plan de cuidado para que nadie quede sin visita. Lleva a la práctica Teología pastoral (Nivel 5) y El ministerio pastoral, sin repetirlas. Su base es el consejo del sabio a quien cuida un rebaño: «Sé diligente en conocer el estado de tus ovejas, Y mira con cuidado por tus rebaños» (Proverbios 27:23).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué el pastor conoce a sus ovejas, y armar un mapa del rebaño.", bloom: "aplicar" },
+      { id: "o2", texto: "Planear y hacer una visita pastoral en un hogar, con un propósito y con prudencia.", bloom: "aplicar" },
+      { id: "o3", texto: "Visitar a los enfermos en el hospital y acompañar a los que se mueren y a sus familias.", bloom: "aplicar" },
+      { id: "o4", texto: "Planear el cuidado de los ancianos, de los que no salen de casa y de los presos.", bloom: "aplicar" },
+      { id: "o5", texto: "Buscar a los que se alejan de la iglesia y ayudarlos a volver, sin acusarlos.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar un plan de cuidado en el que participe toda la iglesia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 27:23 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El cuidado pastoral en la Biblia y sus formas prácticas: la visita, el hospital, la cárcel y el plan de cuidado.",
+      ser: "Un pastor que conoce a sus ovejas, se queda en el peligro y busca a la que falta.",
+      hacer: "Visitar con prudencia, acompañar a los enfermos y a los que están solos, buscar a los que se alejan y organizar el cuidado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Z. Witmer", titulo: "El líder pastor: cómo lograr un pastoreo efectivo en tu iglesia", editorial: "P&R Publishing" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "John MacArthur (ed.)", titulo: "El ministerio pastoral: cómo pastorear bíblicamente", editorial: "Grupo Nelson" },
+        { autor: "Guillermo I. Catalán", titulo: "Nuevo manual para ministros", editorial: "Mundo Hispano" },
+        { autor: "Jorge A. León", titulo: "Psicología pastoral para la familia", editorial: "Caribe" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "video", titulo: "Lucas 9 a 19: cómo seguir a Jesús", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=sm8-GQl9P6w", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 15, la oveja perdida", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=15" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const PREDICACION_PASTORAL: MateriaDef = {
+  id: "pastoral-5",
+  nivel: null,
+  especialidad: "pastoral",
+  avanzada: true,
+  orden: 5,
+  titulo: "Predicación pastoral",
+  resumen: "La predicación del pastor que conoce a su rebaño: sus tareas, el plan de predicación del año, la predicación en las crisis, las ocasiones especiales, la corrección y el consuelo desde el púlpito y el crecimiento del predicador.",
+  base: "Hechos 20:27; 2 Timoteo 4:2",
+  memoria: "Hechos 20:27",
+  lecciones: lecciones("pastoral-5", [
+    ["El pastor que predica a su rebaño", "Juan 21:15-17; Ezequiel 3:17; 1 Corintios 14:3; 2 Timoteo 4:2"],
+    ["Planificar la predicación del año", "Hechos 20:27; 2 Timoteo 3:16-17; Lucas 24:27; Lucas 1:3"],
+    ["Predicar en tiempos de crisis", "Job 2:13; Salmos 46:1-2; Lamentaciones 3:21-23; Juan 16:33; Habacuc 3:17-18"],
+    ["Predicar en las ocasiones especiales", "Colosenses 4:5-6; Lucas 2:10-11; 1 Corintios 15:3-4; Efesios 5:31-32; 2 Corintios 5:1"],
+    ["Corregir y consolar desde el púlpito", "Isaías 40:1-2; 1 Tesalonicenses 5:14; Efesios 4:15; 2 Corintios 2:4; Gálatas 4:16"],
+    ["El pastor que crece como predicador", "1 Timoteo 4:15-16; Hechos 18:24-26; Proverbios 15:22; 2 Corintios 4:2; Hebreos 13:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el pastor, o quien se prepara para serlo, predique a su congregación como quien la apacienta: que conozca las tareas de la predicación pastoral, que planifique un año de predicación que anuncie todo el consejo de Dios, que sepa predicar en una crisis con lamento y con esperanza, que hable con claridad a los que vienen pocas veces en las ocasiones especiales, que corrija y consuele con la verdad en amor y que siga creciendo como predicador, con retroalimentación y con honestidad. No repite Homilética I (Nivel 3) ni Homilética II (Nivel 4), que enseñan a preparar y a presentar el sermón: las lleva a la vida de una congregación a lo largo del año. Su base es el testimonio de Pablo a los ancianos de Éfeso: «porque no he rehuido anunciaros todo el consejo de Dios» (Hechos 20:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar la predicación del pastor que conoce a su rebaño y sus tareas: alimentar, advertir, exhortar y consolar.", bloom: "comprender" },
+      { id: "o2", texto: "Diseñar un plan de predicación de un año que anuncie todo el consejo de Dios.", bloom: "crear" },
+      { id: "o3", texto: "Preparar un mensaje para un tiempo de crisis, con lamento y con esperanza.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar mensajes para las ocasiones especiales, claros para los que vienen pocas veces.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar cómo corregir y consolar desde el púlpito con la verdad en amor.", bloom: "evaluar" },
+      { id: "o6", texto: "Planificar su crecimiento como predicador, con retroalimentación y con honestidad.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Hechos 20:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La predicación pastoral, el plan de predicación del año y los mensajes para las crisis y las ocasiones especiales.",
+      ser: "Un predicador que apacienta con paciencia, dice la verdad en amor y sigue aprendiendo con humildad.",
+      hacer: "Planificar un año de predicación, predicar en las crisis y en las ocasiones especiales, y pedir retroalimentación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Stott", titulo: "La predicación: puente entre dos mundos", editorial: "Libros Desafío" },
+        { autor: "D. Martyn Lloyd-Jones", titulo: "La predicación y los predicadores", editorial: "Peregrino" },
+      ],
+      complementaria: [
+        { autor: "Haddon W. Robinson", titulo: "La predicación bíblica: desarrollo y presentación de mensajes expositivos", editorial: "Unilit" },
+        { autor: "Orlando E. Costas", titulo: "Comunicación por medio de la predicación", editorial: "Caribe" },
+        { autor: "James D. Crane", titulo: "El sermón eficaz", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 2 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lvNqjbjTytE", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 20, todo el consejo de Dios", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=20" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const EDUCACION_NINEZ: MateriaDef = {
+  id: "ninez-1",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 1,
+  titulo: "Educación cristiana de la niñez",
+  resumen: "Por qué y para qué la iglesia enseña a los niños: el mandato de contar a la generación venidera las obras de Dios, la familia y la iglesia juntas, Jesús y los niños, los niños que sirvieron a Dios en la Biblia, la enseñanza a los niños en la historia y la meta del ministerio: discípulos que aman a Dios.",
+  base: "Salmos 78:4-7; Deuteronomio 6:6-7",
+  memoria: "Salmos 78:4",
+  lecciones: lecciones("ninez-1", [
+    ["¿Por qué enseñar a los niños?", "Salmos 78:4-7; Deuteronomio 6:6-7; Mateo 19:14; Lucas 2:52"],
+    ["La familia y la iglesia, juntas", "2 Timoteo 1:5; 2 Timoteo 3:14-15; Efesios 6:4"],
+    ["Jesús y los niños", "Mateo 18:2-5; Marcos 10:13-16; Mateo 21:15-16"],
+    ["Niños que sirvieron a Dios", "1 Samuel 3:8-10; 2 Reyes 5:2-3; 2 Crónicas 34:1-3; Juan 6:9"],
+    ["La enseñanza a los niños en la historia", "Éxodo 12:26-27; Nehemías 8:2-3; Hechos 2:39"],
+    ["La meta: discípulos que aman a Dios", "Mateo 22:37-39; Proverbios 22:6; 3 Juan 1:4"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los niños, o se prepara para hacerlo, entienda por qué y para qué la iglesia los enseña: que conozca el mandato bíblico de contar a la generación venidera las obras de Dios, que vea cómo la familia y la iglesia enseñan juntas, que aprenda de la manera en que Jesús recibió a los niños y de los niños que sirvieron a Dios en la Biblia, que conozca cómo se enseñó a los niños en la historia de Israel y de la iglesia, y que escriba los objetivos de un ministerio que forma discípulos que aman a Dios y al prójimo. Es la base de la especialidad Niñez. Su base es la promesa de Israel: «No las encubriremos a sus hijos, Contando a la generación venidera las alabanzas de Jehová, Y su potencia, y las maravillas que hizo» (Salmos 78:4).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la Biblia manda enseñar a los niños.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar cómo la familia y la iglesia enseñan juntas a los niños.", bloom: "comprender" },
+      { id: "o3", texto: "Describir cómo recibió Jesús a los niños, y aplicarlo al ministerio.", bloom: "aplicar" },
+      { id: "o4", texto: "Analizar los ejemplos de niños que sirvieron a Dios en la Biblia.", bloom: "analizar" },
+      { id: "o5", texto: "Describir cómo se enseñó a los niños en la historia de Israel y de la iglesia.", bloom: "comprender" },
+      { id: "o6", texto: "Escribir los objetivos de un ministerio que forma discípulos que aman a Dios.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Salmos 78:4 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El mandato bíblico de enseñar a los niños, la tarea de la familia y de la iglesia, y la historia de la enseñanza a los niños.",
+      ser: "Un maestro que recibe a los niños como Jesús y los ve como parte del pueblo de Dios.",
+      hacer: "Enseñar junto con las familias y escribir objetivos para formar discípulos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "John Milton Gregory", titulo: "Las siete leyes de la enseñanza", editorial: "Casa Bautista de Publicaciones" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Deuteronomio", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=qfMplfJoYA0", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmos 78, contar a la generación venidera", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=78" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const NINO_Y_SU_FE: MateriaDef = {
+  id: "ninez-2",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 2,
+  titulo: "El niño y su fe",
+  resumen: "Cómo crece la fe de un niño y cómo acompañarla: las etapas de la fe, hablar de Dios a cada edad, guiar a un niño a Cristo sin presión, las preguntas difíciles, el niño que ora, adora y sirve, y los niños en situaciones difíciles.",
+  base: "Lucas 2:40; Juan 1:12",
+  memoria: "Juan 1:12",
+  lecciones: lecciones("ninez-2", [
+    ["Cómo crece la fe", "Lucas 2:40; 1 Corintios 13:11; 1 Pedro 2:2"],
+    ["Hablar de Dios a cada edad", "Deuteronomio 6:20-21; Marcos 4:33; 1 Corintios 3:1-2"],
+    ["Guiar a un niño a Cristo", "Juan 3:16; Romanos 3:23; Romanos 6:23; Juan 1:12; Romanos 10:9"],
+    ["Las preguntas difíciles", "Deuteronomio 1:39; 2 Samuel 12:23; Hechos 8:12; Joel 2:28"],
+    ["El niño que ora, adora y sirve", "Mateo 6:9-13; Salmos 8:2; Salmos 119:11; 1 Timoteo 4:12"],
+    ["Niños en situaciones difíciles", "Salmos 68:5; Salmos 34:18; Mateo 18:10; 2 Samuel 9:7; Lucas 14:13"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los niños acompañe el crecimiento de su fe según su edad: que conozca cómo crece la fe de un niño, que hable de Dios con palabras que cada edad entiende, que sepa guiar a un niño a Cristo con claridad y sin presión, que responda con la Biblia y con prudencia las preguntas difíciles, como la edad de la responsabilidad y el bautismo de los niños, según el artículo 8 de la declaración de fe del ministerio, que forme niños que oran, adoran y sirven, y que cuide con amor a los niños que viven situaciones difíciles. Si las lenguas son la señal inicial del bautismo en el Espíritu Santo es un punto de la declaración de fe por confirmar. Su base es la promesa del evangelio de Juan: «Mas a todos los que le recibieron, a los que creen en su nombre, les dio potestad de ser hechos hijos de Dios» (Juan 1:12).",
+    objetivos: [
+      { id: "o1", texto: "Describir cómo crece la fe de un niño en cada etapa.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar las verdades de la fe con palabras que cada edad entiende.", bloom: "aplicar" },
+      { id: "o3", texto: "Guiar a un niño a Cristo con claridad y sin presión.", bloom: "aplicar" },
+      { id: "o4", texto: "Responder con la Biblia y con prudencia las preguntas difíciles de los niños y de sus padres.", bloom: "analizar" },
+      { id: "o5", texto: "Formar niños que oran, adoran y sirven.", bloom: "aplicar" },
+      { id: "o6", texto: "Acompañar a los niños que viven situaciones difíciles.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 1:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Cómo crece la fe de un niño, el evangelio explicado a su edad y las respuestas bíblicas a sus preguntas difíciles.",
+      ser: "Un maestro paciente, que no presiona y que ama a cada niño en su situación.",
+      hacer: "Guiar a un niño a Cristo, enseñarle a orar y a servir, y acompañar a los que sufren.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Marty Machowski", titulo: "Cómo guiar a tu hijo a Cristo: pasos bíblicos para compartir el evangelio", editorial: "Editorial Bautista Independiente" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Grupo de Trabajo de Infancia de la Alianza Evangélica Española", titulo: "Protocolo de protección infantil", editorial: "Alianza Evangélica Española" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "El nacimiento de Jesús: Lucas 1 y 2", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=DTL5QW6Ez7s", minutos: 4 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 1, los que le recibieron", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=1" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const METODOS_NINEZ: MateriaDef = {
+  id: "ninez-3",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 3,
+  titulo: "Métodos para enseñar a niños",
+  resumen: "Cómo enseñar a los niños: las siete leyes de la enseñanza, contar historias bíblicas, preguntas, actividades y juegos, una clase paso a paso, la disciplina con amor y firmeza, y la vida y la semana del maestro.",
+  base: "Nehemías 8:8; Esdras 7:10",
+  memoria: "Nehemías 8:8",
+  lecciones: lecciones("ninez-3", [
+    ["Las siete leyes de la enseñanza", "Esdras 7:10; Nehemías 8:8; 2 Timoteo 2:2"],
+    ["Contar historias bíblicas", "Marcos 4:33-34; Salmos 78:2-3; Lucas 19:1-10"],
+    ["Preguntas, actividades y juegos", "Mateo 16:15-16; Lucas 10:36-37; Santiago 1:22"],
+    ["Una clase paso a paso", "Proverbios 16:3; Colosenses 3:23"],
+    ["La disciplina y el manejo de la clase", "Proverbios 15:1; Colosenses 3:21; Gálatas 5:22-23; 1 Corintios 13:4-5"],
+    ["El maestro y su vida", "1 Corintios 11:1; Tito 2:7; Hebreos 13:17"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el maestro de niños enseñe de manera que los niños entiendan y vivan la Palabra: que aplique las siete leyes de la enseñanza de John Milton Gregory, que cuente las historias de la Biblia con fidelidad y las lleve a Jesús, que use preguntas, actividades y juegos según la edad, que planifique una clase completa con su objetivo, que maneje la disciplina con amor y firmeza, sin humillar, y que cuide su propia vida y su semana de preparación. Cada lección trae un ejemplo resuelto paso a paso. Su base es la manera en que se enseñaba la ley en tiempos de Esdras: «Y leían en el libro de la ley de Dios claramente, y ponían el sentido, de modo que entendiesen la lectura» (Nehemías 8:8).",
+    objetivos: [
+      { id: "o1", texto: "Aplicar las siete leyes de la enseñanza a una clase de niños.", bloom: "aplicar" },
+      { id: "o2", texto: "Preparar y contar una historia bíblica con fidelidad, llevándola a Jesús.", bloom: "aplicar" },
+      { id: "o3", texto: "Usar preguntas, actividades y juegos adecuados a cada edad.", bloom: "aplicar" },
+      { id: "o4", texto: "Planificar una clase completa con un objetivo de saber, sentir y hacer.", bloom: "crear" },
+      { id: "o5", texto: "Manejar la disciplina de la clase con amor y firmeza, sin humillar.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la vida y la semana de preparación del maestro.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Nehemías 8:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las siete leyes de la enseñanza, el arte de contar historias, las preguntas y actividades por edad, y la planificación de una clase.",
+      ser: "Un maestro que vive lo que enseña, corrige con mansedumbre y se prepara con oración.",
+      hacer: "Contar historias, dirigir actividades y juegos, planificar clases y manejar la disciplina.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Milton Gregory", titulo: "Las siete leyes de la enseñanza", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Howard G. Hendricks", titulo: "Enseñando para cambiar vidas", editorial: "Unilit" },
+      ],
+      complementaria: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "video", titulo: "Evangelio de Lucas 19 a 23", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=KBE2nLYyCdc", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 8, leer y poner el sentido", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=8" },
+    ],
+  },
+  disponible: true,
+};
+
+const PROTECCION_MENORES: MateriaDef = {
+  id: "ninez-4",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 4,
+  titulo: "Protección de menores",
+  resumen: "Cómo la iglesia protege a los niños: por qué proteger, las formas y las señales del abuso, la política de protección y la selección de los voluntarios, las reglas de cada domingo, qué hacer cuando un niño cuenta algo, con lo que pide la ley en Texas, y el cuidado de las víctimas y de sus familias.",
+  base: "Mateo 18:6; Salmos 82:3-4",
+  memoria: "Salmos 82:3",
+  lecciones: lecciones("ninez-4", [
+    ["Por qué la iglesia protege a los niños", "Génesis 1:27; Mateo 18:6; Mateo 18:14; Salmos 82:3-4"],
+    ["Conocer el abuso y sus señales", "Proverbios 22:3; Juan 3:20-21; Efesios 5:11"],
+    ["La política de protección y la selección de voluntarios", "1 Timoteo 5:22; 1 Timoteo 3:7; Proverbios 14:15"],
+    ["Las reglas de cada domingo", "Nehemías 4:9; 2 Corintios 8:21; 1 Tesalonicenses 5:22"],
+    ["Cuando un niño cuenta algo: escuchar y reportar", "Proverbios 31:8-9; Romanos 13:3-4; Lucas 8:17"],
+    ["Cuidar a las víctimas, a las familias y a la iglesia", "2 Samuel 13:20-21; Salmos 147:3; 2 Corintios 1:3-4; Isaías 1:17"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que todo el que sirve con niños, y quienes dirigen ese ministerio, protejan a los niños como pide la Palabra: que entiendan por qué la iglesia protege a los pequeños, que conozcan las formas y las señales del abuso y el proceso con que un abusador se gana la confianza, que armen una política de protección escrita y seleccionen con cuidado a los voluntarios, que apliquen cada domingo la regla de los dos adultos y el registro de entrada y salida, que sepan escuchar a un niño que cuenta un abuso y reportarlo, con lo que pide la ley en Texas (Código de Familia, sección 261.101), y que acompañen a las víctimas y a sus familias. La lección legal es una guía general, no un consejo legal: en otros estados y países la ley cambia. Su base es el mandato de Dios a su pueblo: «Defended al débil y al huérfano; Haced justicia al afligido y al menesteroso» (Salmos 82:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia protege a los niños, y distinguir los mitos de la realidad del abuso.", bloom: "comprender" },
+      { id: "o2", texto: "Reconocer las formas y las señales del abuso, y el proceso de manipulación de un abusador.", bloom: "analizar" },
+      { id: "o3", texto: "Armar una política de protección escrita y seleccionar a los voluntarios paso a paso.", bloom: "aplicar" },
+      { id: "o4", texto: "Aplicar las reglas de cada domingo: los dos adultos, el registro de entrada y salida, el contacto y la comunicación.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a un niño que cuenta un abuso y reportarlo como pide la ley en Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo acompañar a las víctimas y a sus familias, y qué hace el liderazgo después de un reporte.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 82:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las formas y las señales del abuso, el proceso de manipulación, las partes de una política de protección y lo que pide la ley en Texas.",
+      ser: "Un servidor que ama a los niños, no calla el mal y defiende al débil.",
+      hacer: "Seleccionar voluntarios, aplicar las reglas de cada domingo, escuchar y reportar, y acompañar a las víctimas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Grupo de Trabajo de Infancia de la Alianza Evangélica Española", titulo: "Protocolo de protección infantil", editorial: "Alianza Evangélica Española" },
+        { autor: "Brad Hambrick (ed.)", titulo: "Cómo convertirse en una iglesia que cuida bien de los abusados", editorial: "ERLC y Lifeway" },
+      ],
+      complementaria: [
+        { autor: "Keeping Children Safe", titulo: "Los Estándares Internacionales de Protección Infantil Organizacional", editorial: "Keeping Children Safe" },
+        { autor: "Federación de Entidades Religiosas Evangélicas de España (FEREDE)", titulo: "Iglesias evangélicas: espacios seguros libres de violencia para la mujer y la infancia", editorial: "FEREDE" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Imagen de Dios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VsGlbwF4HtI", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=BEvicPpjQBE", minutos: 6 },
+      { tipo: "guia", titulo: "Línea directa de Texas para reportar abuso: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 18, estos pequeños", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=18" },
+    ],
+  },
+  disponible: true,
+};
+
+const ORGANIZAR_NINEZ: MateriaDef = {
+  id: "ninez-5",
+  nivel: null,
+  especialidad: "ninez",
+  orden: 5,
+  titulo: "Organizar el ministerio infantil",
+  resumen: "Cómo organizar el ministerio de niños de una iglesia: la misión, la visión y los valores, el equipo de voluntarios, los grupos por edad, las salas y el horario, el currículo y el calendario del año, el alcance a las familias del barrio, y el presupuesto y la evaluación.",
+  base: "Habacuc 2:2; 1 Corintios 14:40",
+  memoria: "Habacuc 2:2",
+  lecciones: lecciones("ninez-5", [
+    ["La visión y el propósito del ministerio", "Habacuc 2:2; Proverbios 29:18; Deuteronomio 31:12-13"],
+    ["Formar y cuidar el equipo", "Éxodo 18:17-18; Éxodo 18:21; Efesios 4:11-12; 1 Pedro 4:10; Mateo 9:37-38"],
+    ["Grupos por edad, salas y horario", "1 Corintios 14:33; 1 Corintios 14:40; Proverbios 24:3-4"],
+    ["El currículo y el calendario del año", "2 Timoteo 3:16-17; Josué 4:6-7; Lucas 2:41-42"],
+    ["Alcanzar a las familias y a la comunidad", "Mateo 9:36; Lucas 14:23; Hechos 16:31-32"],
+    ["Evaluar, presupuestar y crecer", "Lucas 14:28-30; 1 Corintios 4:2; Lamentaciones 3:40; Proverbios 15:22"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige el ministerio de niños, o se prepara para hacerlo, lo organice con orden y con propósito: que escriba con el pastor la misión, la visión y los valores del ministerio, que forme y cuide un equipo de voluntarios, que organice los grupos por edad, las salas y el horario según el tamaño de la iglesia, que elija un currículo y arme el calendario del año, que abra puertas a las familias del barrio con la Escuela Bíblica de Vacaciones y les dé seguimiento, y que arme el presupuesto y evalúe el ministerio con números y con fruto. Lleva a la práctica las otras cuatro materias de la especialidad. Su base es la palabra de Dios al profeta: «Escribe la visión, y declárala en tablas, para que corra el que leyere en ella» (Habacuc 2:2).",
+    objetivos: [
+      { id: "o1", texto: "Escribir la misión, la visión y los valores del ministerio de niños.", bloom: "crear" },
+      { id: "o2", texto: "Formar, sumar y cuidar un equipo de voluntarios.", bloom: "aplicar" },
+      { id: "o3", texto: "Organizar los grupos por edad, las salas y el horario según el tamaño de la iglesia.", bloom: "aplicar" },
+      { id: "o4", texto: "Elegir un currículo y armar el calendario del año.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear una Escuela Bíblica de Vacaciones y el seguimiento de las familias nuevas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el ministerio con números y con fruto, y poner metas concretas.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Habacuc 2:2 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La misión y la visión de un ministerio, sus servicios, la organización por edades, el currículo, el calendario y el presupuesto.",
+      ser: "Un líder que no hace todo solo, cuida a su equipo y rinde cuentas con fidelidad.",
+      hacer: "Escribir la misión, sumar voluntarios, organizar grupos y salas, planear el año y evaluar con metas.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Henry y Adriana Pabón", titulo: "Tu ministerio de niños puede crecer", editorial: "e625" },
+        { autor: "Steve Adams", titulo: "Ministerio con propósito para niños", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Brian Dembowczyk", titulo: "Ministerio de niños centrado en el evangelio", editorial: "B&H Español" },
+        { autor: "Keeping Children Safe", titulo: "Los Estándares Internacionales de Protección Infantil Organizacional", editorial: "Keeping Children Safe" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Éxodo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=y9pED55wMM4", minutos: 7 },
+      { tipo: "video", titulo: "La historia de la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=7Z_Bz34ohMA", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Éxodo 18, el consejo de Jetro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Exodo&cap=18" },
+    ],
+  },
+  disponible: true,
+};
+
+const DISCIPULADO_JOVENES: MateriaDef = {
+  id: "juventud-1",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 1,
+  titulo: "Discipulado de jóvenes",
+  resumen: "Cómo formar discípulos entre los jóvenes: por qué discipularlos, cómo formó Jesús a los suyos con los ocho principios de Coleman, Pablo y Timoteo, los grupos pequeños y la mentoría, las disciplinas del joven discípulo y el camino que lleva a hacer otros discípulos.",
+  base: "1 Timoteo 4:12; Marcos 3:14",
+  memoria: "1 Timoteo 4:12",
+  lecciones: lecciones("juventud-1", [
+    ["Por qué discipular a los jóvenes", "Eclesiastés 12:1; Lamentaciones 3:27; 1 Timoteo 4:12; Jeremías 1:6-8"],
+    ["Jesús, el que formó discípulos", "Lucas 6:12-13; Marcos 3:13-14; Mateo 4:19; Juan 15:15"],
+    ["Pablo y Timoteo", "Hechos 16:1-3; 2 Timoteo 3:10; 1 Corintios 4:17; Filipenses 2:20-22"],
+    ["Grupos pequeños y mentores", "Proverbios 27:17; Eclesiastés 4:9-10; Hebreos 10:24-25"],
+    ["Las disciplinas del joven discípulo", "Salmos 119:9-11; 1 Timoteo 4:7-8; Marcos 1:35; Daniel 1:8"],
+    ["Del discípulo al que hace discípulos", "Mateo 28:19-20; 2 Timoteo 2:2; Colosenses 1:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve con los jóvenes, o se prepara para hacerlo, forme discípulos y no solo entretenga: que entienda por qué la juventud es un tiempo decisivo, que aprenda de cómo eligió y formó Jesús a sus discípulos, con los ocho principios que resumió Robert E. Coleman, que acompañe a los jóvenes como Pablo acompañó a Timoteo, que organice grupos pequeños y mentorías con los cuidados que pide la protección de los menores, que ayude a cada joven a crecer con las disciplinas de la fe y que arme un camino de discipulado en el que los jóvenes lleguen a hacer otros discípulos. Su base es la palabra de Pablo a un líder joven: «Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza» (1 Timoteo 4:12).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la juventud es un tiempo decisivo y en qué se distingue un ministerio que forma discípulos.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar los ocho principios con que Jesús formó a sus discípulos.", bloom: "aplicar" },
+      { id: "o3", texto: "Planear una mentoría siguiendo el ejemplo de Pablo y Timoteo.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un grupo pequeño de discipulado para jóvenes.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar con un joven un plan sencillo de disciplinas espirituales.", bloom: "aplicar" },
+      { id: "o6", texto: "Diseñar un camino de discipulado que lleve a los jóvenes a hacer otros discípulos.", bloom: "crear" },
+      { id: "o7", texto: "Recitar 1 Timoteo 4:12 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El discipulado en la Biblia, el método de Jesús, la mentoría, los grupos pequeños y las disciplinas espirituales.",
+      ser: "Un líder que acompaña de cerca, vive lo que enseña y forma a otros.",
+      hacer: "Elegir y acompañar a pocos, dirigir un grupo pequeño, armar planes de vida espiritual y un camino de discipulado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Doug Fields", titulo: "Ministerio de jóvenes con propósito", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Lucas Leys", titulo: "El ministerio juvenil efectivo", editorial: "Vida" },
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Convicciones más que creencias", editorial: "Mundo Hispano" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de 2 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=lvNqjbjTytE", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 2 Timoteo 2, enseñar también a otros", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Timoteo&cap=2" },
+    ],
+  },
+  disponible: true,
+};
+
+const COSMOVISION_CULTURA: MateriaDef = {
+  id: "juventud-2",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 2,
+  titulo: "Cosmovisión cristiana y cultura",
+  resumen: "Cómo ayudar a los jóvenes a pensar con la Biblia en medio de su cultura: qué es una cosmovisión y la historia bíblica en cuatro actos, las cosmovisiones de hoy, la identidad en Cristo, las redes sociales y la tecnología, el discernimiento del arte y del entretenimiento, y cómo responder con verdad y amor.",
+  base: "Colosenses 2:8; Romanos 12:2",
+  memoria: "Colosenses 2:8",
+  lecciones: lecciones("juventud-2", [
+    ["Qué es una cosmovisión", "Romanos 12:2; Génesis 3:6; Romanos 8:21; 2 Corintios 10:5"],
+    ["Las cosmovisiones de hoy", "Colosenses 2:8; Jueces 21:25; 1 Juan 2:15-17; Hechos 17:22-23"],
+    ["La identidad en Cristo", "Salmos 139:13-14; 2 Corintios 5:17; Efesios 2:10; 1 Corintios 6:19-20"],
+    ["Las redes sociales y la tecnología", "Efesios 5:15-16; 1 Corintios 6:12; Salmos 101:3"],
+    ["El arte, la música y el entretenimiento", "1 Tesalonicenses 5:21; Filipenses 4:8; Colosenses 3:17"],
+    ["Responder con verdad y amor", "1 Pedro 3:15-16; Efesios 4:15; Colosenses 4:6; Hechos 17:26-28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que acompaña a los jóvenes los ayude a vivir su fe con inteligencia en medio de su cultura: que les enseñe qué es una cosmovisión y a mirar cada idea con la historia de la Biblia en cuatro actos, creación, caída, redención y consumación, que reconozca con ellos lo que tienen de verdad y lo que les falta a las cosmovisiones de hoy, que afirme su identidad en Cristo frente a la comparación y las redes, con el diseño de Dios para la sexualidad según el artículo 14 de la declaración de fe, enseñado con verdad y con amor, que los guíe en un uso sabio de la tecnología, que les enseñe a discernir el arte y el entretenimiento y que los prepare para responder con mansedumbre y con razones. Su base es la advertencia de Pablo: «Mirad que nadie os engañe por medio de filosofías y huecas sutilezas, según las tradiciones de los hombres, conforme a los rudimentos del mundo, y no según Cristo» (Colosenses 2:8).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es una cosmovisión y la historia de la Biblia en cuatro actos.", bloom: "comprender" },
+      { id: "o2", texto: "Analizar las cosmovisiones de hoy: lo que tienen de verdad y lo que les falta.", bloom: "analizar" },
+      { id: "o3", texto: "Acompañar a los jóvenes a afirmar su identidad en Cristo.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar con una familia un acuerdo para el uso sabio de la tecnología.", bloom: "aplicar" },
+      { id: "o5", texto: "Discernir el arte y el entretenimiento con preguntas bíblicas.", bloom: "evaluar" },
+      { id: "o6", texto: "Responder a las objeciones a la fe con verdad y amor.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Colosenses 2:8 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La cosmovisión cristiana, las ideas de la cultura de hoy, la identidad en Cristo y los criterios para discernir.",
+      ser: "Un joven y un líder que piensan con la Biblia, sin miedo y sin burla, con verdad y con amor.",
+      hacer: "Mirar las ideas con los cuatro actos, armar acuerdos de tecnología, analizar canciones y series, y responder con mansedumbre.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Albert M. Wolters con Michael W. Goheen", titulo: "La creación recuperada: bases bíblicas para una cosmovisión reformacional", editorial: "Poiema Publicaciones" },
+        { autor: "Rebecca McLaughlin", titulo: "10 preguntas que todo joven debe plantearse", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Convicciones más que creencias", editorial: "Mundo Hispano" },
+        { autor: "C. S. Lewis", titulo: "Mero cristianismo", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "La historia de la Biblia", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=7Z_Bz34ohMA", minutos: 6 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 17, Pablo en Atenas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_JUVENIL: MateriaDef = {
+  id: "juventud-3",
+  nivel: null,
+  especialidad: "juventud",
+  avanzada: true,
+  orden: 3,
+  titulo: "Consejería juvenil",
+  resumen: "Cómo acompañar a los jóvenes en sus luchas: el consejero de jóvenes y la adolescencia, escuchar y acompañar paso a paso, la ansiedad, la tristeza y el riesgo de suicidio, los conflictos con la familia, la sexualidad, el noviazgo y las adicciones, y los límites, el deber de reportar en Texas y la derivación.",
+  base: "Proverbios 20:5; Santiago 1:19",
+  memoria: "Proverbios 20:5",
+  lecciones: lecciones("juventud-3", [
+    ["El consejero de jóvenes", "Proverbios 20:5; Gálatas 6:1-2; Romanos 15:14"],
+    ["Escuchar y acompañar paso a paso", "Santiago 1:19; Proverbios 18:13; Lucas 24:15-17"],
+    ["La ansiedad, la tristeza y el riesgo de suicidio", "Salmos 42:5; 1 Reyes 19:4-8; Filipenses 4:6-7; 1 Pedro 5:7"],
+    ["Los jóvenes y sus familias", "Efesios 6:1-4; Lucas 15:20; Malaquías 4:6"],
+    ["La sexualidad, el noviazgo y las adicciones", "1 Tesalonicenses 4:3-5; 2 Timoteo 2:22; 1 Corintios 10:13; Proverbios 23:29-32"],
+    ["Los límites, la ley y la derivación", "Proverbios 11:13; Proverbios 11:14; Proverbios 12:15"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el líder que acompaña a los jóvenes sepa aconsejarlos con la Palabra y con prudencia: que entienda la adolescencia y el lugar del consejero junto a los profesionales, que escuche y dirija una conversación paso a paso, que reconozca las señales de la ansiedad, de la tristeza profunda y del riesgo de suicidio y actúe a tiempo con la línea 988, que acompañe los conflictos entre los jóvenes y sus padres sin tomar partido, que hable con claridad y con gracia de la sexualidad, del noviazgo y de las adicciones, y que conozca los límites de la confidencialidad, el deber de reportar el abuso de un menor en Texas (Código de Familia, sección 261.101) y cuándo derivar. No reemplaza la atención médica ni la psicológica, y lo legal es una guía general, no un consejo legal. Lleva a la práctica Cuidado y consejería básica (Nivel 3), sin repetirla. Su base es la palabra del sabio: «Como aguas profundas es el consejo en el corazón del hombre; Mas el hombre entendido lo alcanzará» (Proverbios 20:5).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el lugar del consejero de jóvenes, los cambios de la adolescencia y cuándo derivar.", bloom: "comprender" },
+      { id: "o2", texto: "Dirigir una conversación de consejería con un joven, escuchando y preguntando.", bloom: "aplicar" },
+      { id: "o3", texto: "Responder a un joven con ansiedad, tristeza profunda o riesgo de suicidio, buscando ayuda a tiempo.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar los conflictos entre un joven y sus padres, y actuar cuando la casa no es segura.", bloom: "aplicar" },
+      { id: "o5", texto: "Aconsejar sobre la sexualidad, el noviazgo y las adicciones con verdad y con gracia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los límites de la confidencialidad, el deber de reportar y la derivación.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 20:5 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La adolescencia, la consejería pastoral, las señales de riesgo, los recursos de ayuda y lo que pide la ley en Texas.",
+      ser: "Un consejero que escucha, guarda la confianza con sus límites y sabe pedir ayuda.",
+      hacer: "Conversar paso a paso, actuar ante el riesgo de suicidio, acompañar a las familias, reportar y derivar.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Josh McDowell y Bob Hostetler", titulo: "Manual para consejeros de jóvenes", editorial: "Mundo Hispano" },
+        { autor: "Tim Clinton y Chap Clark", titulo: "Consejería bíblica, tomo 3: manual de consulta sobre adolescentes", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+      { tipo: "guia", titulo: "Línea nacional de ayuda de SAMHSA: 1-800-662-4357", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/national-helpline" },
+    ],
+  },
+  disponible: true,
+};
+
+const LIDERAZGO_JUVENIL: MateriaDef = {
+  id: "juventud-4",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 4,
+  titulo: "Liderazgo juvenil",
+  resumen: "Cómo formar y ejercer el liderazgo en el ministerio juvenil: los jóvenes que Dios usó para guiar, liderar sirviendo, el carácter del líder joven, el equipo de liderazgo, la reunión de jóvenes y la charla, y la seguridad, la evaluación y la sucesión.",
+  base: "Josué 1:9; Marcos 10:43-45",
+  memoria: "Josué 1:9",
+  lecciones: lecciones("juventud-4", [
+    ["Jóvenes que Dios usó para guiar", "1 Samuel 17:33; 1 Samuel 17:45; Daniel 1:17; Ester 4:14"],
+    ["Liderar sirviendo", "Marcos 10:43-45; Juan 13:14-15; Filipenses 2:3-4"],
+    ["El carácter del líder joven", "1 Samuel 16:7; Proverbios 4:23; Tito 2:6-7; Proverbios 16:18; 1 Corintios 9:24-27"],
+    ["El equipo de liderazgo juvenil", "Nehemías 2:17-18; 1 Pedro 5:5; Hechos 15:37-39; 2 Timoteo 4:11"],
+    ["Planear y dirigir la reunión de jóvenes", "1 Corintios 14:26; Colosenses 3:16"],
+    ["Proteger, evaluar y pasar la posta", "Deuteronomio 31:7-8; Josué 1:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige el ministerio juvenil, y los jóvenes que empiezan a liderar, ejerzan el liderazgo como Jesús lo enseñó: que vean cómo Dios usó a jóvenes como David, Daniel y Ester, que lideren sirviendo, que cuiden el carácter antes que el talento, que formen un equipo de adultos y jóvenes con una visión compartida y segundas oportunidades, que planeen la reunión de jóvenes y preparen una charla, y que protejan a los menores en las salidas y los campamentos, evalúen el ministerio y preparen a los que vendrán después. Lleva al ministerio juvenil lo que enseñan Liderazgo cristiano I y Liderazgo II, sin repetirlas. Quién puede ejercer cada cargo en la iglesia es un punto de la declaración de fe por confirmar, y lo deciden sus pastores. Su base es la palabra de Dios a Josué: «Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo en dondequiera que vayas» (Josué 1:9).",
+    objetivos: [
+      { id: "o1", texto: "Describir cómo usó Dios a jóvenes para guiar, y reconocer a los jóvenes con potencial.", bloom: "comprender" },
+      { id: "o2", texto: "Aplicar el liderazgo de servicio que enseñó Jesús.", bloom: "aplicar" },
+      { id: "o3", texto: "Evaluar el carácter del líder joven por encima de su talento.", bloom: "evaluar" },
+      { id: "o4", texto: "Organizar un equipo de liderazgo juvenil y manejar sus desacuerdos.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear una reunión de jóvenes y preparar una charla corta.", bloom: "crear" },
+      { id: "o6", texto: "Organizar con seguridad las salidas y los campamentos, evaluar el ministerio y preparar la sucesión.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Josué 1:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El liderazgo bíblico, el carácter del líder, el trabajo en equipo, la reunión de jóvenes y la seguridad de las salidas.",
+      ser: "Un líder que sirve, cuida su corazón, da segundas oportunidades y prepara a otros.",
+      hacer: "Reconocer y formar líderes, planear reuniones y charlas, organizar campamentos seguros y pasar la posta.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Lucas Leys", titulo: "Lo que todo pastor debe saber de su líder de jóvenes", editorial: "Vida" },
+        { autor: "Doug Fields", titulo: "Ministerio de jóvenes con propósito", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "J. Oswald Sanders", titulo: "Liderazgo espiritual", editorial: "Portavoz" },
+        { autor: "John C. Maxwell", titulo: "Las 21 leyes irrefutables del liderazgo", editorial: "Grupo Nelson" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Samuel", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=34biq4ivs5I", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Josué", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=49ggVrdBN_Y", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 13, el lavamiento de los pies", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=13" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const EVANGELISMO_JOVENES: MateriaDef = {
+  id: "juventud-5",
+  nivel: null,
+  especialidad: "juventud",
+  orden: 5,
+  titulo: "Evangelismo entre jóvenes",
+  resumen: "Cómo alcanzar a los jóvenes con el evangelio: por qué los amigos llevan a los amigos a Jesús, el evangelio claro y el testimonio, la amistad y las conversaciones sobre la fe, la luz en la escuela y en las redes, los eventos y el seguimiento, y la perseverancia ante las dudas y el rechazo.",
+  base: "1 Corintios 9:22; Romanos 10:14",
+  memoria: "1 Corintios 9:22",
+  lecciones: lecciones("juventud-5", [
+    ["Por qué alcanzar a los jóvenes", "Romanos 10:14; Juan 1:40-42; 1 Corintios 9:22"],
+    ["El evangelio claro y el testimonio", "1 Corintios 15:3-4; Romanos 6:23; Efesios 2:8-9"],
+    ["Amistad y conversaciones sobre la fe", "Lucas 5:29-32; Proverbios 18:24; Colosenses 4:5"],
+    ["Luz en la escuela y en las redes", "Mateo 5:14-15; Filipenses 2:15; Daniel 6:10"],
+    ["Eventos, campamentos y seguimiento", "Hechos 2:41-42; Colosenses 2:6-7"],
+    ["Las dudas, el rechazo y la perseverancia", "Judas 1:22; Juan 20:27-28; Juan 16:8; 1 Corintios 3:6; Gálatas 6:9"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el ministerio juvenil alcance con el evangelio a los jóvenes que no conocen a Cristo: que los jóvenes creyentes vean a sus amigos como su campo misionero, que sepan explicar el evangelio con claridad y contar su testimonio, que compartan la fe en la amistad y en conversaciones sencillas, sin manipular, que sean luz en la escuela y en las redes, conociendo lo que permite la Ley de Igualdad de Acceso de 1984 en las escuelas públicas de los Estados Unidos, que preparen eventos evangelísticos que inviten sin presión y den seguimiento, y que perseveren ante las dudas y el rechazo. Lleva al mundo de los jóvenes lo que enseñan Compartir mi fe (Nivel 1) y Evangelismo personal (Nivel 2), sin repetirlas. Su base es la manera de Pablo: «a todos me he hecho de todo, para que de todos modos salve a algunos» (1 Corintios 9:22).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué los jóvenes creyentes son misioneros entre sus amigos.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar el evangelio en cuatro partes y contar un testimonio de dos minutos.", bloom: "aplicar" },
+      { id: "o3", texto: "Llevar una conversación cotidiana hacia la fe, sin presionar ni manipular.", bloom: "aplicar" },
+      { id: "o4", texto: "Guiar a los jóvenes a ser luz en la escuela y en las redes, con lo que permite la ley.", bloom: "aplicar" },
+      { id: "o5", texto: "Planear un evento evangelístico con una invitación clara y un seguimiento.", bloom: "crear" },
+      { id: "o6", texto: "Evaluar cómo perseverar ante las dudas y el rechazo.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Corintios 9:22 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El evangelio, el testimonio, la amistad que evangeliza, los derechos de los estudiantes y el seguimiento de los nuevos creyentes.",
+      ser: "Un joven que ama a sus amigos, vive su fe sin esconderla y persevera sin presionar.",
+      hacer: "Orar por nombres, explicar el evangelio, iniciar conversaciones, formar clubes, planear eventos y dar seguimiento.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Rebecca Manley Pippert", titulo: "Sal: en un mundo cambiante, el evangelio sigue siendo relevante", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Rebecca McLaughlin", titulo: "10 preguntas que todo joven debe plantearse", editorial: "Andamio" },
+        { autor: "Lucas Leys", titulo: "El ministerio juvenil efectivo", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OU16-2Sg_CQ", minutos: 10 },
+      { tipo: "video", titulo: "¿Qué significa la palabra evangelio?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=AxGypH5Dy3I", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 1, los primeros que siguieron a Jesús", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=1" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_MATRIMONIAL: MateriaDef = {
+  id: "familia-consejeria-1",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 1,
+  titulo: "Consejería matrimonial",
+  resumen: "Cómo acompañar a los matrimonios con la Palabra: el diseño de Dios y el lugar del consejero, la consejería prematrimonial, la comunicación y los conflictos, la infidelidad, el perdón y la restauración, la violencia en el hogar y el cuidado de los matrimonios en cada etapa.",
+  base: "Mateo 19:4-6; Efesios 5:25",
+  memoria: "Mateo 19:6",
+  lecciones: lecciones("familia-consejeria-1", [
+    ["El matrimonio según Dios y el consejero", "Génesis 2:18; Mateo 19:4-6; Efesios 5:25; Efesios 5:33"],
+    ["La consejería prematrimonial", "Amós 3:3; 2 Corintios 6:14; Hebreos 13:4"],
+    ["La comunicación y los conflictos", "Efesios 4:26; Efesios 4:29; Efesios 4:31-32"],
+    ["La infidelidad, el perdón y la restauración", "Oseas 3:1; Colosenses 3:13; Mateo 19:9; 1 Corintios 7:15"],
+    ["La violencia en el hogar", "Colosenses 3:19; 1 Pedro 3:7; Salmos 11:5"],
+    ["Acompañar a los matrimonios en cada etapa", "Eclesiastés 4:12; Cantares 8:7; Tito 2:3-5"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a los matrimonios con la Palabra y con prudencia: que conozca el diseño de Dios para el matrimonio, un pacto de amor y fidelidad entre un hombre y una mujer para toda la vida, según la declaración de fe del ministerio (artículo 14), y el lugar del consejero, que escucha a los dos sin tomar partido y deriva cuando hace falta; que prepare a los novios con una consejería prematrimonial; que ayude a los esposos a comunicarse y a resolver sus conflictos sin herirse; que acompañe con verdad y esperanza a los matrimonios heridos por la infidelidad, y presente con respeto lo que enseña la Biblia sobre el divorcio, dejando cada caso a los pastores; que ante la violencia en el hogar ponga primero la seguridad de la víctima, con el 911, la Línea Nacional sobre la Violencia Doméstica (1-800-799-7233) y el deber de reportar el maltrato de un menor en Texas (Código de Familia, sección 261.101), sin proponer consejería de pareja mientras haya violencia; y que cuide a los matrimonios en cada etapa con matrimonios mentores. No reemplaza la terapia ni la atención profesional, y lo legal es una guía general, no un consejo legal. Lleva a la consejería lo que enseñan Familia y relaciones (Nivel 2) y Cuidado y consejería básica (Nivel 3), sin repetirlas. Su base es la palabra de Jesús: «Así que no son ya más dos, sino una sola carne; por tanto, lo que Dios juntó, no lo separe el hombre» (Mateo 19:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el diseño de Dios para el matrimonio, el lugar del consejero de la iglesia y cuándo derivar.", bloom: "comprender" },
+      { id: "o2", texto: "Preparar a una pareja para el matrimonio con una consejería prematrimonial.", bloom: "aplicar" },
+      { id: "o3", texto: "Ayudar a un matrimonio a comunicarse y a resolver sus conflictos sin herirse.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar a un matrimonio herido por la infidelidad en un camino de perdón y restauración.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a la violencia en el hogar poniendo primero la seguridad de la víctima.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar el cuidado de los matrimonios en cada etapa, con matrimonios mentores.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 19:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El diseño bíblico del matrimonio, los temas de la consejería prematrimonial, la comunicación y el conflicto, la restauración después de la infidelidad, las señales de la violencia en el hogar y los recursos de ayuda.",
+      ser: "Un consejero que escucha a los dos, no toma partido, guarda la confianza con sus límites y pone primero la seguridad.",
+      hacer: "Preparar a los novios, acompañar los conflictos y la restauración, responder a la violencia con un plan de seguridad y organizar matrimonios mentores.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Timothy Keller y Kathy Keller", titulo: "El significado del matrimonio: cómo enfrentar las dificultades del compromiso con la sabiduría de Dios", editorial: "B&H Español" },
+        { autor: "Tim Clinton y John Trent", titulo: "Consejería bíblica, tomo 2: manual de consulta sobre el matrimonio y la familia", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary Chapman", titulo: "Los cinco lenguajes del amor", editorial: "Unilit" },
+        { autor: "Emerson Eggerichs", titulo: "Amor y respeto", editorial: "Grupo Nelson" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Efesios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yJgym5MGzM4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Eclesiastés", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=X4Brf1Z8N4E", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Efesios 5, el amor de Cristo en el matrimonio", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Efesios&cap=5" },
+      { tipo: "guia", titulo: "Línea Nacional sobre la Violencia Doméstica: 1-800-799-7233, o escribe START al 88788", fuente: "The National Domestic Violence Hotline", url: "https://espanol.thehotline.org/" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const CONSEJERIA_FAMILIAR: MateriaDef = {
+  id: "familia-consejeria-2",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 2,
+  titulo: "Consejería familiar",
+  resumen: "Cómo acompañar a las familias con la Palabra: la familia según Dios y el consejero familiar, la crianza con amor y con límites, los adolescentes y los hijos adultos, las familias ensambladas y los que crían solos, las crisis de la familia y el perdón y la reconciliación.",
+  base: "Malaquías 4:6; Deuteronomio 6:6-7",
+  memoria: "Malaquías 4:6",
+  lecciones: lecciones("familia-consejeria-2", [
+    ["La familia según Dios y el consejero familiar", "Salmos 127:1; Deuteronomio 6:6-7; Josué 24:15; Proverbios 24:3-4"],
+    ["Padres e hijos: criar con amor y con límites", "Efesios 6:1-4; Colosenses 3:21; Proverbios 22:6; Hebreos 12:11"],
+    ["Los adolescentes y los hijos adultos", "Lucas 2:48-52; Éxodo 20:12; Lucas 15:20"],
+    ["Las familias ensambladas y los que crían solos", "Salmos 68:5-6; Rut 1:16; Santiago 1:27"],
+    ["Las crisis de la familia", "Salmos 46:1; 2 Corintios 1:3-4; Rut 1:1; Mateo 2:14"],
+    ["El perdón y la reconciliación en la familia", "Génesis 45:4-5; Génesis 50:20-21; Lucas 15:28-32; Romanos 12:18; Malaquías 4:6"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a las familias con la Palabra y con prudencia: que conozca el propósito de Dios para la familia, que pasa la fe a los hijos en la vida diaria, y que mire a la familia entera sin buscar un culpable; que ayude a los padres a criar con amor y con límites, sabiendo que la disciplina nunca es maltrato y que el maltrato de un niño se reporta como pide la ley en Texas (Código de Familia, sección 261.101); que acompañe a los padres de adolescentes y de hijos adultos; que sostenga a las familias ensambladas y a los que crían solos; que esté presente en las crisis de la familia, también en las de la migración, y oriente a buscar una ayuda legal segura (según USCIS, un abogado o un representante acreditado, nunca un notario); y que prepare el camino del perdón y de la reconciliación sin poner en peligro a nadie. No reemplaza la terapia familiar profesional, y lo legal es una guía general, no un consejo legal. Lleva a la consejería lo que enseñan Familia y relaciones (Nivel 2) y Cuidado y consejería básica (Nivel 3), sin repetirlas. Su base es la promesa de Dios: «El hará volver el corazón de los padres hacia los hijos, y el corazón de los hijos hacia los padres» (Malaquías 4:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar el propósito de Dios para la familia y cómo mira el consejero a la familia entera.", bloom: "comprender" },
+      { id: "o2", texto: "Ayudar a unos padres a criar con amor y con límites, y reconocer cuándo hay maltrato.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar los conflictos con los hijos adolescentes y la relación con los hijos adultos.", bloom: "aplicar" },
+      { id: "o4", texto: "Aconsejar a una familia ensamblada y organizar el apoyo de la iglesia a los que crían solos.", bloom: "aplicar" },
+      { id: "o5", texto: "Acompañar paso a paso a una familia en crisis, con una ayuda segura.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y preparar un camino de perdón y de reconciliación en una familia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Malaquías 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El propósito de Dios para la familia, las maneras de criar, las etapas de los hijos, los desafíos de las familias ensambladas, las crisis de la familia y los recursos de ayuda segura.",
+      ser: "Un consejero que mira a la familia entera, no busca culpables, protege a los niños y espera con paciencia la obra de Dios.",
+      hacer: "Dirigir una reunión familiar, armar un plan de disciplina, mediar entre padres e hijos, organizar el apoyo de la iglesia y preparar una reunión de reconciliación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Tim Clinton y John Trent", titulo: "Consejería bíblica, tomo 2: manual de consulta sobre el matrimonio y la familia", editorial: "Portavoz" },
+        { autor: "Tedd Tripp", titulo: "Cómo pastorear el corazón de tu hijo", editorial: "Poiema Publicaciones" },
+      ],
+      complementaria: [
+        { autor: "Gary Chapman y Ross Campbell", titulo: "Los 5 lenguajes del amor de los niños", editorial: "Unilit" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Deuteronomio", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=qfMplfJoYA0", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Génesis 45, José se da a conocer a sus hermanos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Genesis&cap=45" },
+      { tipo: "guia", titulo: "Evite estafas: quién puede ayudarle en un caso de inmigración", fuente: "USCIS", url: "https://www.uscis.gov/es/evite-estafas/estafas-comunes" },
+      { tipo: "lectura", titulo: "Declaración de fe del Ministerio Avivando el Fuego", fuente: "Academia Avivando el Fuego", url: "/academia/declaracion-de-fe" },
+    ],
+  },
+  disponible: true,
+};
+
+const DUELO_CRISIS: MateriaDef = {
+  id: "familia-consejeria-3",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  orden: 3,
+  titulo: "Duelo y crisis",
+  resumen: "Cómo acompañar a los que sufren una pérdida o una crisis: el duelo y sus reacciones, el ministerio de la presencia, los duelos difíciles, los niños y el duelo, la primera ayuda psicológica en las crisis y la esperanza cristiana, con el cuidado del que consuela.",
+  base: "Salmos 34:18; 2 Corintios 1:3-4",
+  memoria: "Salmos 34:18",
+  lecciones: lecciones("familia-consejeria-3", [
+    ["El duelo: el dolor de perder", "Juan 11:33-35; Salmos 13:1-2; 1 Tesalonicenses 4:13-14; Salmos 34:18"],
+    ["Acompañar al que sufre", "Job 2:11-13; Job 16:2; Romanos 12:15; Gálatas 6:2"],
+    ["Los duelos difíciles", "2 Samuel 12:22-23; 2 Samuel 18:33; Lamentaciones 3:22-23"],
+    ["Los niños y el duelo", "Marcos 10:14; Salmos 27:10; Isaías 66:13"],
+    ["Las crisis: cuando la vida se sacude", "Isaías 43:2; Marcos 4:38-39; 1 Reyes 19:5-7"],
+    ["La esperanza cristiana y el cuidado del que consuela", "Juan 11:25-26; 1 Corintios 15:55-57; Apocalipsis 21:4; Éxodo 18:17-18; Marcos 6:31"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la iglesia sepa acompañar a los que sufren una pérdida o una crisis: que entienda el duelo como el dolor natural que sigue a una pérdida, que no es falta de fe, y conozca sus reacciones; que consuele con su presencia y con ayuda práctica durante el primer año, sin las explicaciones que hieren; que acompañe los duelos más difíciles, como la muerte de un hijo o el suicidio, y reconozca cuándo un duelo se complica y hay que derivar, con la línea 988 ante el riesgo de suicidio; que ayude a los niños en duelo con la verdad dicha con sencillez; que sirva en las crisis y en los desastres con los principios de la primera ayuda psicológica de la Organización Mundial de la Salud: observar, escuchar y conectar; y que comparta la esperanza de la resurrección sin apurar el llanto, cuidando también al equipo que consuela. No reemplaza la atención médica ni la psicológica. Lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3), y se completa con Visitación y cuidado del rebaño y con Ordenanzas y ceremonias, de la especialidad Ministerio pastoral, sin repetirlas. Su base es la promesa del salmo: «Cercano está Jehová a los quebrantados de corazón; Y salva a los contritos de espíritu» (Salmos 34:18).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es el duelo, sus reacciones y por qué llorar no es falta de fe.", bloom: "comprender" },
+      { id: "o2", texto: "Acompañar a una persona en duelo con presencia y ayuda práctica durante el primer año.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar los duelos difíciles y reconocer cuándo un duelo se complica y hay que derivar.", bloom: "aplicar" },
+      { id: "o4", texto: "Ayudar a un niño en duelo con la verdad dicha con sencillez.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a una crisis con los principios de la primera ayuda psicológica: observar, escuchar y conectar.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo compartir la esperanza cristiana y cómo cuidar al equipo que consuela.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 34:18 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El duelo y sus reacciones, los duelos difíciles, el duelo de los niños, la primera ayuda psicológica y la esperanza de la resurrección.",
+      ser: "Un consolador presente y paciente, que escucha más que habla, no juzga y cuida también su propia alma.",
+      hacer: "Visitar a una familia en duelo, armar el plan del primer año, acompañar después de un suicidio, hablar con un niño, servir en un desastre y cuidar al equipo de consuelo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "C. S. Lewis", titulo: "Una pena en observación", editorial: "Anagrama" },
+      ],
+      complementaria: [
+        { autor: "Jorge E. Maldonado", titulo: "Introducción al asesoramiento pastoral de la familia", editorial: "Abingdon Press" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Job", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=A3ifTHYTmMQ", minutos: 13 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2): la última cena, la cruz y la resurrección", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Juan 11, Jesús ante la tumba de Lázaro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Juan&cap=11" },
+      { tipo: "guia", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", fuente: "Organización Mundial de la Salud", url: "https://www.who.int/es/publications/i/item/9789241548205" },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+    ],
+  },
+  disponible: true,
+};
+
+const ADICCIONES_RESTAURACION: MateriaDef = {
+  id: "familia-consejeria-4",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  avanzada: true,
+  orden: 4,
+  titulo: "Adicciones y restauración",
+  resumen: "Cómo acompañar a los que luchan con una adicción y a sus familias: qué es una adicción, la familia y los límites con amor, el camino de la restauración, las recaídas y la gracia, las adicciones a conductas como la pornografía, el juego y las pantallas, y la iglesia que restaura.",
+  base: "Juan 8:36; Gálatas 6:1",
+  memoria: "Juan 8:36",
+  lecciones: lecciones("familia-consejeria-4", [
+    ["¿Qué es una adicción?", "Proverbios 23:31-35; Romanos 7:15; 1 Corintios 6:12; Juan 8:34-36"],
+    ["La familia del que lucha con una adicción", "Lucas 15:13-17; Gálatas 6:5; Efesios 4:15"],
+    ["El camino de la restauración", "1 Juan 1:9; Santiago 5:16; Eclesiastés 4:9-10; 2 Corintios 5:17"],
+    ["Las recaídas y la gracia", "Proverbios 24:16; Miqueas 7:8; Juan 21:15-17"],
+    ["Las adicciones de hoy: la pornografía, el juego y las pantallas", "Job 31:1; Mateo 5:28; 1 Timoteo 6:9-10; Efesios 5:15-16"],
+    ["La iglesia que restaura", "Gálatas 6:1; 1 Corintios 6:9-11; Isaías 61:1; Lucas 15:22-24"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia sepa acompañar a los que luchan con una adicción y a sus familias: que entienda la adicción como algo que domina, como enseña la Biblia, y como una enfermedad crónica del cerebro, como la describe el Instituto Nacional sobre el Abuso de Drogas (NIDA), y que derive siempre al médico, porque dejar algunas sustancias de golpe puede ser peligroso; que ayude a la familia a dejar de permitir la adicción y a poner límites con amor; que acompañe el camino de la restauración con la confesión, la rendición de cuentas y la comunidad; que reciba con gracia a los que recaen y los ayude a prevenir las recaídas; que reconozca las adicciones a conductas, como la pornografía, el juego y las pantallas; y que ayude a la iglesia a ser un lugar que restaura, con una red de recursos: la línea nacional de ayuda de SAMHSA (1-800-662-4357), los médicos, los programas de tratamiento y, ante una sobredosis, el 911 y la naloxona, que la FDA permite vender sin receta desde 2023. No reemplaza la atención médica ni el tratamiento profesional. Lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3), sin repetirla. Su base es la promesa de Jesús: «Así que, si el Hijo os libertare, seréis verdaderamente libres» (Juan 8:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es una adicción según la ciencia y según la Biblia, y reconocer sus señales.", bloom: "comprender" },
+      { id: "o2", texto: "Ayudar a la familia de alguien con una adicción a poner límites con amor.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar el camino de la restauración con la confesión, la rendición de cuentas y la comunidad.", bloom: "aplicar" },
+      { id: "o4", texto: "Recibir con gracia al que recae y armar un plan de prevención de recaídas.", bloom: "aplicar" },
+      { id: "o5", texto: "Aconsejar a quien lucha con la pornografía, el juego o las pantallas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar y organizar un ministerio de recuperación en la iglesia, con su red de recursos.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Juan 8:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Qué es una adicción según la Biblia y según la ciencia, cómo afecta a la familia, el camino de la restauración, las recaídas, las adicciones a conductas y los recursos de ayuda.",
+      ser: "Un consejero que recibe con gracia, dice la verdad con amor, no rescata de las consecuencias y no camina solo.",
+      hacer: "Conversar con quien reconoce un problema, ayudar a una familia a poner límites, armar planes de rendición de cuentas y de prevención de recaídas, y organizar un ministerio de recuperación.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "John Baker", titulo: "Celebremos la recuperación: guía del líder", editorial: "Vida" },
+        { autor: "Tim Clinton y Ron Hawkins", titulo: "Consejería bíblica: manual de consulta sobre 40 temas críticos", editorial: "Portavoz" },
+      ],
+      complementaria: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Gálatas", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=kMJLgLOWb3I", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 15, el hijo que volvió a casa", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=15" },
+      { tipo: "guia", titulo: "Línea nacional de ayuda de SAMHSA: 1-800-662-4357", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/national-helpline" },
+    ],
+  },
+  disponible: true,
+};
+
+const ETICA_LIMITES_CONSEJERO: MateriaDef = {
+  id: "familia-consejeria-5",
+  nivel: null,
+  especialidad: "familia-consejeria",
+  orden: 5,
+  titulo: "Ética y límites del consejero",
+  resumen: "La ética del que aconseja en la iglesia: el lugar y los límites del consejero, la confidencialidad y lo que la ley de Texas pide reportar, los límites con el otro sexo, el poder del consejero y la política de consejería, derivar y trabajar en red, y el cuidado del consejero.",
+  base: "2 Corintios 8:21; Proverbios 11:13",
+  memoria: "2 Corintios 8:21",
+  lecciones: lecciones("familia-consejeria-5", [
+    ["El lugar y los límites del consejero de la iglesia", "Romanos 15:14; 2 Corintios 3:5; Santiago 3:1"],
+    ["La confidencialidad y sus límites", "Proverbios 11:13; Proverbios 20:19; Proverbios 25:9"],
+    ["Los límites con el otro sexo y la integridad", "Proverbios 4:23; 2 Timoteo 2:22; Génesis 39:11-12; 1 Tesalonicenses 5:22"],
+    ["El poder del consejero y la protección del aconsejado", "Mateo 20:25-26; 1 Pedro 5:2-3; Ezequiel 34:4; 2 Corintios 4:2"],
+    ["Derivar bien y trabajar en red", "Éxodo 18:21-22; Proverbios 15:22; Lucas 10:33-35"],
+    ["El cuidado del consejero y la rendición de cuentas", "Hechos 20:28; 1 Timoteo 4:16; Proverbios 27:17; 2 Corintios 8:21"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que aconseja en la iglesia lo haga con integridad y dentro de sus límites: que sepa lo que le corresponde y lo que no, sin diagnosticar, recetar ni dar consejo legal, y sin presentarse como consejero profesional con licencia si no lo es (en Texas, Código de Ocupaciones, sección 503.054); que guarde la confianza y conozca sus límites: el peligro para una vida y el abuso de un niño (Código de Familia, sección 261.101) o de una persona mayor o con discapacidad (Código de Recursos Humanos, sección 48.051), que en Texas se reportan aunque se sepan en confianza; que ponga límites claros en su trato con el otro sexo, sabiendo que aprovecharse de quien aconseja es un abuso y, en Texas, un delito (Código Penal, sección 22.011); que use su lugar para servir y no para dominar, con una política de consejería escrita; que derive bien y trabaje en red; y que cuide su vida con Dios, su familia y su descanso, con supervisión y rendición de cuentas. Lo legal es una guía general, no un consejo legal. Completa las cuatro materias anteriores de la especialidad y lleva a la práctica lo que enseña Cuidado y consejería básica (Nivel 3). Su base es la palabra de Pablo: «procurando hacer las cosas honradamente, no sólo delante del Señor sino también delante de los hombres» (2 Corintios 8:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar lo que le corresponde al consejero de la iglesia y lo que no, y lo que pide la ley de Texas sobre su título.", bloom: "comprender" },
+      { id: "o2", texto: "Explicar la confidencialidad y sus límites, y reportar lo que la ley de Texas pide reportar.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar límites claros en el trato con el otro sexo y responder a las señales de un apego.", bloom: "aplicar" },
+      { id: "o4", texto: "Distinguir la consejería que libera de la que controla, y proponer una política de consejería.", bloom: "analizar" },
+      { id: "o5", texto: "Derivar a un profesional sin abandonar a la persona, y armar la red de recursos de la iglesia.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el cuidado del consejero y armar un plan de supervisión y de rendición de cuentas.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Corintios 8:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los límites de la consejería pastoral, la confidencialidad y lo que la ley de Texas pide reportar, los límites con el otro sexo, las relaciones dobles y el abuso de poder, la derivación y el cuidado del consejero.",
+      ser: "Un consejero íntegro, que guarda la confianza, sirve sin dominar, conoce sus límites y se deja aconsejar.",
+      hacer: "Explicar los límites de la confidencialidad, reportar el abuso, poner límites con el otro sexo, escribir una política de consejería, derivar bien y armar su plan de cuidado.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+        { autor: "Pablo Hoff", titulo: "El pastor como consejero", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Tim Clinton y Ron Hawkins", titulo: "Consejería bíblica: manual de consulta sobre 40 temas críticos", editorial: "Portavoz" },
+        { autor: "Jay E. Adams", titulo: "Capacitado para orientar", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 10, el buen samaritano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=10" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Línea 988 de prevención del suicidio y crisis, con atención en español", fuente: "988 Suicide & Crisis Lifeline", url: "https://988lifeline.org/es/" },
+    ],
+  },
+  disponible: true,
+};
+
+const FUNDAMENTOS_CAPELLANIA: MateriaDef = {
+  id: "capellania-1",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 1,
+  titulo: "Fundamentos de la capellanía",
+  resumen: "Qué es la capellanía y dónde sirve el capellán, el ministerio de la presencia, servir a personas de todas las creencias, el llamado y la formación del capellán, la visita paso a paso y el trabajo dentro de una institución.",
+  base: "Mateo 25:36; Jeremías 29:7",
+  memoria: "Mateo 25:36",
+  lecciones: lecciones("capellania-1", [
+    ["Qué es la capellanía", "Mateo 25:35-36; Mateo 25:40; Jeremías 29:7"],
+    ["El ministerio de la presencia", "Juan 1:14; Lucas 24:15; Mateo 28:20"],
+    ["Servir a personas de todas las creencias", "Hechos 17:22-23; 1 Pedro 3:15-16; Colosenses 4:5-6"],
+    ["El llamado y la formación del capellán", "Hechos 13:2-3; 2 Timoteo 2:15; 1 Timoteo 3:7"],
+    ["La visita del capellán paso a paso", "Santiago 1:19; Santiago 5:13-14; Hebreos 13:3"],
+    ["El capellán dentro de la institución", "Daniel 6:3-4; Tito 3:1-2; Colosenses 3:23"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que siente el llamado a la capellanía conozca su fundamento y su práctica: que entienda qué es un capellán, el ministro que la iglesia envía a los hospitales, las cárceles, las emergencias y otras instituciones para estar con las personas donde ellas están; que practique el ministerio de la presencia; que sirva con respeto a personas de todas las creencias, hablando de Cristo con mansedumbre cuando se lo piden y sin aprovecharse del dolor; que reciba el llamado, el aval de su iglesia y la formación que piden las instituciones (para la certificación profesional de la Asociación de Capellanes Profesionales: una maestría, cuatro unidades de educación pastoral clínica, el aval de su grupo de fe y 2,000 horas de experiencia); que sepa hacer una visita paso a paso; y que trabaje dentro de la institución con integridad, respetando sus normas y cuidando también al personal. Lleva a la capellanía lo que enseñan Cuidado y consejería básica (Nivel 3) y la especialidad Familia y consejería, sin repetirlas. Su base es la palabra de Jesús: «estuve desnudo, y me cubristeis; enfermo, y me visitasteis; en la cárcel, y vinisteis a mí» (Mateo 25:36).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué es la capellanía, dónde sirve el capellán y en qué se basa en la Biblia.", bloom: "comprender" },
+      { id: "o2", texto: "Practicar el ministerio de la presencia con la escucha que acompaña.", bloom: "aplicar" },
+      { id: "o3", texto: "Servir con respeto a personas de todas las creencias, sin aprovecharse de su dolor.", bloom: "aplicar" },
+      { id: "o4", texto: "Describir el llamado, el aval y la formación del capellán, y armar un plan para prepararse.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer una visita de capellanía paso a paso.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo trabaja el capellán dentro de una institución, con sus normas y su personal.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 25:36 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La base bíblica de la capellanía, los lugares donde sirve, el ministerio de la presencia, las muchas creencias de las instituciones, la formación del capellán y las normas institucionales.",
+      ser: "Un capellán presente, respetuoso e íntegro, que sirve a todos como a Cristo.",
+      hacer: "Visitar paso a paso, escuchar y acompañar, atender a personas de otra fe, prepararse con su iglesia y trabajar en equipo con la institución.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 25, el Rey que se identifica con los pequeños", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=25" },
+      { tipo: "guia", titulo: "Cómo se certifica un capellán profesional (en inglés)", fuente: "Board of Chaplaincy Certification Inc. (APC)", url: "https://www.apchaplains.org/bcci-site/becoming-certified/" },
+    ],
+  },
+  disponible: true,
+};
+
+const CAPELLANIA_HOSPITALARIA: MateriaDef = {
+  id: "capellania-2",
+  nivel: null,
+  especialidad: "capellania",
+  avanzada: true,
+  orden: 2,
+  titulo: "Capellanía hospitalaria",
+  resumen: "Cómo servir como capellán en un hospital: el enfermo y el equipo del hospital, orar por los enfermos según la declaración de fe, las normas de privacidad y de higiene, acompañar al que muere y a su familia, las pérdidas de los niños y de las madres, y las decisiones difíciles con el cuidado del personal.",
+  base: "Salmos 41:3; Mateo 25:36",
+  memoria: "Salmos 41:3",
+  lecciones: lecciones("capellania-2", [
+    ["El enfermo y el hospital", "Marcos 1:40-41; Salmos 41:3; 2 Corintios 4:16"],
+    ["Orar por los enfermos", "Santiago 5:14-15; 2 Reyes 20:5; 2 Corintios 12:8-9; 1 Timoteo 5:23"],
+    ["Las normas del hospital: privacidad, cuidados y orden", "1 Corintios 14:40; Proverbios 11:13; Filipenses 2:4"],
+    ["Acompañar al que muere y a su familia", "Salmos 23:4; Juan 14:1-3; Lucas 23:42-43; 2 Timoteo 4:6-8"],
+    ["Las pérdidas de los niños y de las madres", "Mateo 19:14; Salmos 139:13; Salmos 139:16; Isaías 49:15-16"],
+    ["Las decisiones difíciles y el cuidado del personal", "Eclesiastés 3:1-2; Filipenses 1:21-23; Proverbios 11:14; Gálatas 6:2"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán sepa servir en un hospital: que comprenda lo que vive el enfermo y trabaje con el equipo sin dar noticias médicas; que ore por los enfermos según la declaración de fe del ministerio, que enseña que Dios sana hoy en respuesta a la oración de fe y que buscar su sanidad no se opone a la atención médica (artículo 11), sin prometer ni culpar (si la sanidad está en la expiación es un punto de la declaración de fe por confirmar); que respete las normas de privacidad, pues la ley HIPAA permite al hospital dar al clero el nombre, el lugar, el estado general y la afiliación religiosa del paciente si este no se opuso, y las de higiene; que acompañe al que muere y a su familia, conociendo los cuidados paliativos, el hospicio y la Ley de Voluntades Anticipadas de Texas (Código de Salud y Seguridad, capítulo 166); que acompañe a los padres que pierden un hijo o un embarazo; y que acompañe las decisiones difíciles sin decidir por la familia, cuidando también al personal. No reemplaza al equipo médico, y lo legal es una guía general, no un consejo legal. Se apoya en Fundamentos de la capellanía y lleva al hospital lo que enseña Duelo y crisis, sin repetirlas. Su base es la promesa del salmo: «Jehová lo sustentará sobre el lecho del dolor; Mullirás toda su cama en su enfermedad» (Salmos 41:3).",
+    objetivos: [
+      { id: "o1", texto: "Describir lo que vive el enfermo y el lugar del capellán en el equipo del hospital.", bloom: "comprender" },
+      { id: "o2", texto: "Orar por los enfermos según la declaración de fe, con fe y con humildad.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar las normas de privacidad, de higiene y de orden del hospital.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar al que muere y a su familia, y explicar los cuidados paliativos y las voluntades anticipadas.", bloom: "aplicar" },
+      { id: "o5", texto: "Acompañar a los padres ante la enfermedad grave o la pérdida de un hijo o de un embarazo.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo acompañar una decisión difícil sin decidir por la familia, y cómo cuidar al personal.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 41:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La experiencia del enfermo, el equipo del hospital, la sanidad divina según la declaración de fe, la privacidad de la salud, los cuidados paliativos, el hospicio y las voluntades anticipadas de Texas.",
+      ser: "Un capellán compasivo y ordenado, que ora con fe y con humildad y respeta el trabajo del equipo médico.",
+      hacer: "Visitar en la sala y en cuidados intensivos, orar por los enfermos, acompañar a los que mueren y a sus familias, y acompañar las pérdidas de un bebé y las decisiones difíciles.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Henri J. M. Nouwen", titulo: "El sanador herido", editorial: "PPC" },
+        { autor: "C. S. Lewis", titulo: "El problema del dolor", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Juan (parte 2): la última cena, la cruz y la resurrección", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NUW1Frg8DA0", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmo 23, el Señor es mi pastor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=23" },
+      { tipo: "guia", titulo: "Los hospitales y el clero: lo que permite la ley de privacidad HIPAA (en inglés)", fuente: "Departamento de Salud y Servicios Humanos (HHS)", url: "https://www.hhs.gov/hipaa/for-professionals/faq/357/are-hospitals-able-to-inform-the-clergy-about-parishioners-in-the-hospital/index.html" },
+    ],
+  },
+  disponible: true,
+};
+
+const CAPELLANIA_PENITENCIARIA: MateriaDef = {
+  id: "capellania-3",
+  nivel: null,
+  especialidad: "capellania",
+  avanzada: true,
+  orden: 3,
+  titulo: "Capellanía penitenciaria",
+  resumen: "Cómo servir como capellán o voluntario en una cárcel o una prisión: lo que vive el preso, el evangelio tras las rejas con la libertad religiosa, la culpa, el perdón y la justicia sin olvidar a las víctimas, las familias de los presos, la prudencia y los límites que protegen a todos, y el regreso a la comunidad.",
+  base: "Hebreos 13:3; Mateo 25:36",
+  memoria: "Hebreos 13:3",
+  lecciones: lecciones("capellania-3", [
+    ["La cárcel y el preso", "Génesis 39:20-23; Salmos 102:19-20; Hebreos 13:3"],
+    ["El evangelio tras las rejas", "Hechos 16:25-26; Hechos 16:30-31; Filipenses 1:12-14; 2 Timoteo 2:9"],
+    ["La culpa, el perdón y la justicia", "Lucas 23:40-41; Lucas 23:42-43; Filemón 1:15-18; Miqueas 6:8"],
+    ["Las familias de los presos", "Salmos 68:5-6; Isaías 1:17; Salmos 146:7"],
+    ["Prudencia, límites y seguridad", "Mateo 10:16; Proverbios 14:15; 2 Corintios 8:21"],
+    ["El regreso a la comunidad", "Hechos 9:26-27; Filemón 1:10-11; Filemón 1:15-18"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán y el voluntario sepan servir en una cárcel o una prisión: que comprendan lo que vive el preso, la diferencia entre la cárcel del condado y la prisión del estado, y que Dios está con los presos, como estuvo con José; que lleven el evangelio tras las rejas dentro de las reglas, sabiendo que la ley federal RLUIPA protege la práctica religiosa de los presos (la Corte Suprema la confirmó en Cutter v. Wilkinson, en 2005) y que en Texas el sistema penitenciario (TDCJ) pide a sus voluntarios tener al menos 18 años, pasar una revisión de antecedentes, capacitarse y renovar cada dos años; que distingan el perdón de Dios de las consecuencias del delito, sin olvidar a las víctimas; que acompañen a las familias de los presos y a sus hijos, también con el programa Angel Tree de Prison Fellowship; que sirvan con prudencia y con límites claros, sin dejarse manipular y avisando lo que pone vidas en peligro; y que la iglesia reciba al que sale de la cárcel con un mentor, con ayuda práctica y con prudencia. Lo legal es una guía general, no un consejo legal. Se apoya en Fundamentos de la capellanía y lleva a la cárcel lo que enseña la especialidad Familia y consejería, sin repetirlas. Su base es la palabra de Hebreos: «Acordaos de los presos, como si estuvierais presos juntamente con ellos; y de los maltratados, como que también vosotros mismos estáis en el cuerpo» (Hebreos 13:3).",
+    objetivos: [
+      { id: "o1", texto: "Describir lo que vive una persona presa y explicar que Dios está con los presos.", bloom: "comprender" },
+      { id: "o2", texto: "Llevar el evangelio a la cárcel dentro de las reglas, respetando la libertad religiosa de cada preso.", bloom: "aplicar" },
+      { id: "o3", texto: "Distinguir el perdón de Dios de las consecuencias del delito, sin olvidar a las víctimas.", bloom: "analizar" },
+      { id: "o4", texto: "Acompañar a las familias de los presos y a sus hijos.", bloom: "aplicar" },
+      { id: "o5", texto: "Servir en la cárcel con prudencia y con límites claros, sin dejarse manipular.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo recibe la iglesia a una persona que sale de la cárcel.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hebreos 13:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La vida en la cárcel y en la prisión, la presencia de Dios con los presos, la libertad religiosa, las reglas de los voluntarios en Texas, el perdón y las consecuencias del delito, las familias de los presos y el regreso a la comunidad.",
+      ser: "Un capellán compasivo y prudente, que se acuerda de los presos sin ingenuidad y une la justicia con la misericordia.",
+      hacer: "Visitar a un preso, dirigir un estudio bíblico en la cárcel, acompañar la culpa y el arrepentimiento, apoyar a las familias, poner límites y preparar el regreso de los que salen.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+        { autor: "Ekkehard Heise", titulo: "Manual pastoral para el cuidado del alma y sanar la persona: poiménica", editorial: "CLIE" },
+      ],
+      complementaria: [
+        { autor: "Corrie ten Boom, con John y Elizabeth Sherrill", titulo: "El refugio secreto", editorial: "Ediciones Palabra" },
+        { autor: "Lennie Spitale", titulo: "Prison Ministry: Understanding Jail and Prison Culture (en inglés)", editorial: "Wheaton College Billy Graham Center Institute" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Génesis (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=MC8BqGu9B8A", minutos: 9 },
+      { tipo: "video", titulo: "Evangelio de Lucas 19 a 23", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=KBE2nLYyCdc", minutos: 5 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Filemón, el esclavo que volvió como hermano", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Filemon&cap=1" },
+      { tipo: "guia", titulo: "Cómo ser voluntario en las prisiones de Texas (en inglés)", fuente: "Departamento de Justicia Criminal de Texas (TDCJ)", url: "https://tdcj.texas.gov/divisions/cvsd/volunteer.html" },
+    ],
+  },
+  disponible: true,
+};
+
+const EMERGENCIAS_DESASTRES: MateriaDef = {
+  id: "capellania-4",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 4,
+  titulo: "Emergencias y desastres",
+  resumen: "Cómo servir como capellán en las emergencias y los desastres: dónde sirve y cómo trabaja dentro de un equipo, la primera ayuda psicológica, la fe en medio del desastre sin culpar a las víctimas, el aviso de una muerte, el cuidado de los niños y de los más vulnerables, y el cuidado del que ayuda con la preparación de la iglesia.",
+  base: "Salmos 46:1; Isaías 43:2",
+  memoria: "Salmos 46:1",
+  lecciones: lecciones("capellania-4", [
+    ["El capellán en las emergencias", "Salmos 46:1-3; Isaías 43:2; Lucas 10:33-34"],
+    ["La primera ayuda psicológica", "1 Reyes 19:5-7; Hechos 27:33-36; Santiago 2:15-16"],
+    ["La fe en medio del desastre", "Lucas 13:4-5; Job 2:11-13; Lamentaciones 3:22-23"],
+    ["Avisar una muerte y acompañar a la familia", "Juan 11:33-35; Romanos 12:15; Proverbios 25:20"],
+    ["Los niños y los más vulnerables", "Marcos 10:14-16; Isaías 40:11; Levítico 19:34"],
+    ["Cuidar al que cuida y preparar a la iglesia", "2 Corintios 1:3-4; Marcos 6:31; Éxodo 18:17-18; Proverbios 22:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán sepa servir en las emergencias y los desastres: que conozca dónde sirve el capellán de emergencias, con los bomberos, la policía y los paramédicos y en los albergues, y que nunca llegue por su cuenta, pues FEMA pide a los voluntarios unirse antes a una organización reconocida; que dé la primera ayuda psicológica que enseña la Organización Mundial de la Salud (observar, escuchar y conectar), atendiendo primero lo básico; que acompañe la fe en medio del desastre sin culpar a las víctimas, como enseñó Jesús con la torre de Siloé; que acompañe el aviso de una muerte en persona, a tiempo, en pareja, con palabras claras y con compasión; que cuide a los niños y a los más vulnerables; y que cuide su propia vida y prepare a la iglesia para servir antes, durante y después del desastre. No reemplaza la capacitación de cada departamento ni a los profesionales de la salud mental. Se apoya en Fundamentos de la capellanía y lleva a las emergencias lo que enseña Duelo y crisis, sin repetirlas. Su base es la confesión del salmo: «Dios es nuestro amparo y fortaleza, Nuestro pronto auxilio en las tribulaciones» (Salmos 46:1).",
+    objetivos: [
+      { id: "o1", texto: "Explicar dónde sirve el capellán en las emergencias, y servir dentro de un equipo sin llegar por su cuenta.", bloom: "comprender" },
+      { id: "o2", texto: "Dar la primera ayuda psicológica: observar, escuchar y conectar.", bloom: "aplicar" },
+      { id: "o3", texto: "Acompañar la fe en medio del desastre sin culpar a las víctimas.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar el aviso de una muerte en persona, a tiempo, en pareja, con palabras claras y con compasión.", bloom: "aplicar" },
+      { id: "o5", texto: "Cuidar a los niños y a los más vulnerables después de un desastre.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el cuidado del que ayuda y el plan de la iglesia para los desastres.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Salmos 46:1 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los lugares donde sirve el capellán de emergencias, la guía de FEMA para los voluntarios, la primera ayuda psicológica de la OMS, el sufrimiento y la fe, los principios para avisar una muerte, las reacciones de los niños y la preparación para los desastres.",
+      ser: "Un capellán sereno y compasivo, que confía en Dios en medio de la tribulación y sirve dentro del equipo.",
+      hacer: "Servir en un incendio o en un albergue, dar la primera ayuda psicológica, acompañar el aviso de una muerte, cuidar a los niños y a los más débiles, cuidarse a sí mismo y preparar a la iglesia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "H. Norman Wright", titulo: "Cómo aconsejar en situaciones de crisis", editorial: "CLIE" },
+        { autor: "Organización Mundial de la Salud, War Trauma Foundation y Visión Mundial Internacional", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", editorial: "Organización Mundial de la Salud" },
+      ],
+      complementaria: [
+        { autor: "Philip Yancey", titulo: "Dónde está Dios cuando duele", editorial: "Peniel" },
+        { autor: "C. S. Lewis", titulo: "El problema del dolor", editorial: "Rialp" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Salmos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=8yieTfiw_Ew", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de la historia de Job: ¿por qué la vida de Job se volvió tan difícil?", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=_AIvRQj8kHs", minutos: 6 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Salmo 46, Dios es nuestro amparo", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Salmos&cap=46" },
+      { tipo: "guia", titulo: "Primera ayuda psicológica: guía para trabajadores de campo", fuente: "Organización Mundial de la Salud", url: "https://www.who.int/es/publications/i/item/9789241548205" },
+      { tipo: "guia", titulo: "Línea de Ayuda para los Afectados por Catástrofes, con atención en español", fuente: "SAMHSA", url: "https://www.samhsa.gov/find-help/helplines/disaster-distress-helpline/espanol" },
+    ],
+  },
+  disponible: true,
+};
+
+const MARCO_LEGAL_CAPELLAN: MateriaDef = {
+  id: "capellania-5",
+  nivel: null,
+  especialidad: "capellania",
+  orden: 5,
+  titulo: "Marco legal y ético del capellán",
+  resumen: "El marco legal y ético del capellán: la libertad religiosa y su lugar en las instituciones públicas, lo que se le cuenta en confianza y sus límites en Texas, la integridad con el dinero y con el trato, los registros y la privacidad en las redes, el aval, la supervisión y el código de ética, y qué hacer cuando la ley y la conciencia chocan.",
+  base: "Hechos 24:16; Romanos 13:1",
+  memoria: "Hechos 24:16",
+  lecciones: lecciones("capellania-5", [
+    ["La libertad religiosa y el lugar del capellán", "Mateo 22:21; Romanos 13:1; 1 Timoteo 2:1-2"],
+    ["Lo que se le cuenta al capellán", "Proverbios 11:13; Santiago 5:16; Proverbios 31:8-9"],
+    ["La integridad del capellán", "Hechos 20:33-35; 1 Pedro 5:2-3; 2 Corintios 8:20-21"],
+    ["Los registros, la privacidad y las redes", "Lucas 16:10; Proverbios 10:19; Efesios 4:29"],
+    ["El aval, la supervisión y el código de ética", "Hebreos 13:17; Gálatas 6:1; Proverbios 27:17"],
+    ["Cuando la ley y la conciencia chocan", "Hechos 4:19-20; Daniel 6:10; 1 Timoteo 1:5"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el capellán conozca el marco legal y ético de su servicio: que entienda que la Primera Enmienda no permite una religión oficial y protege la libre práctica de la fe, y que por eso hay capellanes donde las personas no pueden ir a su iglesia (así lo reconoció el caso Katcoff v. Marsh en 1985), donde el capellán sirve a todos, realiza lo que su fe le permite y facilita lo demás; que guarde lo que le confían, sabiendo que en Texas la regla 505 de las Reglas de Evidencia protege lo que se le dice al clero como consejero espiritual, pero que el clero también debe reportar enseguida el abuso de un niño (Código de Familia, sección 261.101) y el de una persona mayor o con discapacidad (Código de Recursos Humanos, sección 48.051); que cuide su integridad con el dinero, los regalos y el trato; que escriba en los registros solo lo necesario y proteja la privacidad en las redes; que rinda cuentas con el aval de su iglesia, la supervisión y el código de ética de su asociación; y que, cuando la ley y la conciencia chocan, obedezca a Dios antes que a los hombres, con respeto. Lo legal es una guía general, no un consejo legal. Lleva al capellán lo que enseña Ética y límites del consejero, sin repetirla. Su base es la palabra de Pablo: «Y por esto procuro tener siempre una conciencia sin ofensa ante Dios y ante los hombres» (Hechos 24:16).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo protege la Primera Enmienda la libertad religiosa, y servir a todos en una institución pública.", bloom: "comprender" },
+      { id: "o2", texto: "Decidir qué guarda y qué reporta el capellán, según la ley de Texas.", bloom: "aplicar" },
+      { id: "o3", texto: "Cuidar la integridad con el dinero, los regalos, el trato y los papeles dobles.", bloom: "aplicar" },
+      { id: "o4", texto: "Escribir registros breves y proteger la privacidad de las personas en las conversaciones y en las redes.", bloom: "aplicar" },
+      { id: "o5", texto: "Explicar el aval, la supervisión y el código de ética, y responder cuando un compañero cruza un límite.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cuándo se obedece una norma y cuándo se obedece a Dios antes que a los hombres.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Hechos 24:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La Primera Enmienda y el lugar del capellán, la regla 505 de Texas y los deberes de reportar, la integridad ministerial, la privacidad de los registros y de las redes, el aval y los códigos de ética, y la objeción de conciencia.",
+      ser: "Un capellán íntegro y transparente, que respeta la ley y la fe de los demás, y cuida una conciencia sin ofensa ante Dios y ante los hombres.",
+      hacer: "Servir a personas de todas las creencias, guardar y reportar lo que corresponde, rechazar el dinero y los favores, escribir registros breves, rendir cuentas y responder con respeto a una orden que va contra su conciencia.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+        { autor: "Luz M. Rivera Miranda", titulo: "Capellanía institucional: nociones básicas de la capellanía", editorial: "Abingdon Press" },
+      ],
+      complementaria: [
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+        { autor: "Gary R. Collins", titulo: "Consejería cristiana efectiva", editorial: "Portavoz" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hebreos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=VqVAOqyoKCs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Daniel 6, fiel aun ante el edicto del rey", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Daniel&cap=6" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Código de ética de la Asociación de Capellanes Profesionales (en inglés)", fuente: "Association of Professional Chaplains", url: "https://www.apchaplains.org/wp-content/uploads/2022/06/APC-Code-of-Ethics.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const EVANGELISMO_REDES: MateriaDef = {
+  id: "comunicaciones-1",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 1,
+  titulo: "Evangelismo en redes",
+  resumen: "Cómo anunciar el evangelio en las redes: la plaza digital, conocer a la gente que está allí, el contenido que edifica, pasar de la pantalla a la mesa con el seguimiento, la política de redes de la iglesia con el cuidado de los niños, y medir con sabiduría.",
+  base: "Mateo 10:27; 1 Corintios 9:22",
+  memoria: "Mateo 10:27",
+  lecciones: lecciones("comunicaciones-1", [
+    ["El evangelio en el mundo digital", "Mateo 10:27; Hechos 17:17; 1 Corintios 9:22"],
+    ["Conocer a la gente que está en las redes", "Hechos 17:22-23; Juan 4:7-10; 1 Pedro 3:15"],
+    ["Contenido que edifica", "Proverbios 25:11; Colosenses 4:6; Filipenses 4:8"],
+    ["De la pantalla a la mesa", "Juan 1:39; Hechos 8:30-31; Hechos 2:46-47"],
+    ["Las redes de la iglesia: equipo, permisos y cuidado", "1 Corintios 14:40; Proverbios 22:3; Mateo 18:10"],
+    ["Medir con sabiduría y perseverar", "1 Corintios 3:6-7; Gálatas 6:9; Isaías 55:11"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia sepa anunciar el evangelio en las redes: que entienda que hoy las redes son una plaza donde está la gente, como la plaza donde Pablo hablaba cada día, y que cada red tiene su manera de hablar (según el Centro de Investigaciones Pew, en su encuesta de 2023, el 54 % de los adultos hispanos de los Estados Unidos usaba WhatsApp y el 49 % TikTok); que conozca y escuche a las personas antes de publicar; que publique lo que es verdadero y edifica, en el formato que conviene; que acompañe a los que escriben, de la pantalla a la mesa de la iglesia; que escriba una política de redes que cuide las cuentas y proteja a los niños, con lo que pide la ley COPPA para los menores de 13 años; y que mida con sabiduría, sabiendo que Dios da el crecimiento. No repite Evangelismo personal avanzado ni Evangelismo entre jóvenes. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «Lo que os digo en tinieblas, decidlo en la luz; y lo que oís al oído, proclamadlo desde las azoteas» (Mateo 10:27).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué las redes son hoy una plaza para anunciar el evangelio.", bloom: "comprender" },
+      { id: "o2", texto: "Conocer y escuchar a las personas que la iglesia quiere alcanzar antes de publicar.", bloom: "aplicar" },
+      { id: "o3", texto: "Publicar lo que es verdadero y edifica, en el formato que conviene.", bloom: "aplicar" },
+      { id: "o4", texto: "Acompañar a los que escriben, de la pantalla a la comunidad de la iglesia.", bloom: "aplicar" },
+      { id: "o5", texto: "Escribir una política de redes que cuide las cuentas y proteja a los niños.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar los números de las redes con sabiduría y perseverar.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 10:27 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La plaza digital y las redes que usa la gente, el público y su retrato, los formatos y el contenido que edifica, el seguimiento de los que escriben, la política de redes con la ley COPPA, y los números que importan.",
+      ser: "Un comunicador que anuncia a Cristo con verdad y con gracia, que escucha antes de hablar y que cuida a las personas más que a los números.",
+      hacer: "Elegir las redes de la iglesia, hacer el retrato de una persona, planear una semana de publicaciones, responder y acompañar a los que escriben, escribir la política de redes y leer los números del mes.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Robert E. Coleman", titulo: "Plan supremo de evangelización", editorial: "Casa Bautista de Publicaciones" },
+        { autor: "Rebecca Manley Pippert", titulo: "Sal: en un mundo cambiante, el evangelio sigue siendo relevante", editorial: "Andamio" },
+      ],
+      complementaria: [
+        { autor: "Neil Postman", titulo: "Divertirse hasta morir: el discurso público en la era del show business", editorial: "Ediciones de la Tempestad" },
+        { autor: "Tony Reinke", titulo: "12 Ways Your Phone Is Changing You (en inglés)", editorial: "Crossway" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=3jUPGTb80ms", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZKaaHQUdVCY", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 17, Pablo en la plaza y en el Areópago", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=17" },
+      { tipo: "guia", titulo: "El uso de las redes sociales en los Estados Unidos, 2024 (en inglés)", fuente: "Pew Research Center", url: "https://www.pewresearch.org/internet/2024/01/31/americans-social-media-use/" },
+    ],
+  },
+  disponible: true,
+};
+
+const RADIO_CRISTIANA: MateriaDef = {
+  id: "comunicaciones-2",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 2,
+  titulo: "Radio cristiana",
+  resumen: "Cómo usar la radio para el evangelio: la radio y su historia, la voz y el micrófono, la programación, la música y los derechos de autor, las reglas de la FCC para las emisoras no comerciales, y la atención de los oyentes.",
+  base: "Romanos 10:17; Salmos 19:4",
+  memoria: "Romanos 10:17",
+  lecciones: lecciones("comunicaciones-2", [
+    ["La radio al servicio del evangelio", "Romanos 10:14-15; Romanos 10:17; Salmos 19:4"],
+    ["La voz y el micrófono", "Nehemías 8:8; Proverbios 15:23; Colosenses 4:3-4"],
+    ["La programación de una radio cristiana", "Eclesiastés 3:1; Salmos 96:1-3; Efesios 5:19"],
+    ["La música y los derechos de autor", "Éxodo 20:15; Romanos 13:7; Lucas 10:7"],
+    ["La radio al aire y sus reglas", "Tito 3:1; 1 Pedro 2:13-14; Lucas 16:10"],
+    ["Los oyentes: llamadas, pedidos y comunidad", "Juan 10:27; Hechos 16:14; Santiago 1:19"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la radio de la iglesia sepa usarla para el evangelio: que entienda que la fe viene por el oír, y conozca cómo empezó la radio cristiana, con una de las primeras transmisiones de un culto, en Pittsburgh en 1921, y con HCJB, que salió al aire en Quito en 1931; que elija la clase de radio que le conviene a su iglesia; que hable con claridad, calidez y buen ritmo, y escriba para oír; que arme una programación pensada para quien escucha a cada hora; que ponga en regla la música, con las licencias de las canciones, de las sociedades de autores, y de las grabaciones, de SoundExchange; que, si tiene una emisora de AM o FM, obedezca las reglas de la FCC: la licencia, la identificación cada hora y el apoyo de los patrocinadores sin llamar a comprar; y que atienda a los oyentes con cuidado. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pablo: «Así que la fe es por el oír, y el oír, por la palabra de Dios» (Romanos 10:17).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la radio sirve al evangelio, y elegir la clase de radio que le conviene a una iglesia.", bloom: "comprender" },
+      { id: "o2", texto: "Hablar con claridad, calidez y buen ritmo, y escribir para oír.", bloom: "aplicar" },
+      { id: "o3", texto: "Armar una programación pensada para quien escucha a cada hora.", bloom: "aplicar" },
+      { id: "o4", texto: "Poner en regla la música de una radio, con las licencias de las canciones y de las grabaciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Aplicar las reglas de la FCC para una emisora no comercial: la licencia, la identificación y los patrocinadores.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo atiende la radio a sus oyentes, también a un oyente en crisis.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Romanos 10:17 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La historia de la radio cristiana, las clases de radio, la voz y la escritura para oír, la programación, las licencias de la música y las reglas de la FCC para las emisoras no comerciales.",
+      ser: "Un comunicador fiel y cuidadoso, que habla para que lo entiendan, respeta el trabajo de otros y escucha a sus oyentes.",
+      hacer: "Preparar y grabar un mensaje corto, armar la parrilla de un día, poner en regla la música, escribir el agradecimiento a un patrocinador y atender las llamadas al aire.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Mario Kaplún", titulo: "Producción de programas de radio: el guion, la realización", editorial: "CIESPAL" },
+        { autor: "José Ignacio López Vigil", titulo: "Manual urgente para radialistas apasionados", editorial: "Edición libre del autor (2005)" },
+      ],
+      complementaria: [
+        { autor: "John Stott", titulo: "La predicación: puente entre dos mundos", editorial: "Libros Desafío" },
+        { autor: "Tona J. Hangen", titulo: "Redeeming the Dial: Radio, Religion, and Popular Culture in America (en inglés)", editorial: "University of North Carolina Press" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 10, la fe viene por el oír", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=10" },
+      { tipo: "guia", titulo: "La radio FM de baja potencia (LPFM) (en inglés)", fuente: "Comisión Federal de Comunicaciones (FCC)", url: "https://www.fcc.gov/lpfm" },
+    ],
+  },
+  disponible: true,
+};
+
+const VIDEO_TRANSMISIONES: MateriaDef = {
+  id: "comunicaciones-3",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 3,
+  titulo: "Video y transmisiones",
+  resumen: "Cómo usar el video para el evangelio: las clases de video de una iglesia, contar historias como los testimonios, la cámara y la luz, la transmisión del culto, los derechos y los permisos, y la edición honesta.",
+  base: "1 Juan 1:3; Habacuc 2:2",
+  memoria: "1 Juan 1:3",
+  lecciones: lecciones("comunicaciones-3", [
+    ["El video al servicio del evangelio", "1 Juan 1:1-3; Juan 20:30-31; Habacuc 2:2"],
+    ["Contar historias con imágenes", "Marcos 5:19; Mateo 13:34; Salmos 107:2"],
+    ["La cámara y la luz", "Colosenses 3:23; Proverbios 22:29; Eclesiastés 9:10"],
+    ["La transmisión del culto", "Hebreos 10:24-25; Hechos 2:42; Salmos 22:22"],
+    ["Los derechos y los permisos en video", "Romanos 12:17; 2 Corintios 8:21; Proverbios 3:27"],
+    ["Editar y publicar con propósito", "1 Corintios 14:9; Hechos 2:8; Eclesiastés 12:10"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en el video de la iglesia sepa usarlo para el evangelio: que anuncie lo que ha visto y oído de Cristo, con la clase de video que conviene a cada propósito; que cuente historias verdaderas, como los testimonios, con su antes, su encuentro con Cristo y su después, y con el permiso de cada persona; que cuide lo básico de la imagen: la cámara quieta, el encuadre y la luz; que prepare la transmisión del culto con una prueba, un plan por si falla y un anfitrión en el chat, cuidando la intimidad de los que oran y a los niños, y animando a congregarse; que tenga en regla la música, las imágenes y los permisos, con la licencia de transmisión de CCLI, sabiendo que en YouTube un reclamo de Content ID afecta al video y una falta por infracción de derechos de autor cuenta contra el canal (tres en 90 días pueden hacer que se cancele); y que edite con verdad, con subtítulos y títulos honestos. El sonido se estudia en Sonido y técnica al servicio del culto, de la especialidad Alabanza. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Juan: «lo que hemos visto y oído, eso os anunciamos, para que también vosotros tengáis comunión con nosotros» (1 Juan 1:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar para qué usa la iglesia el video, y planear un ministerio de video.", bloom: "comprender" },
+      { id: "o2", texto: "Armar y grabar un testimonio en video que honre a Dios.", bloom: "aplicar" },
+      { id: "o3", texto: "Grabar con la cámara quieta, un buen encuadre y la luz adecuada.", bloom: "aplicar" },
+      { id: "o4", texto: "Preparar la transmisión del culto y cuidar a las personas.", bloom: "aplicar" },
+      { id: "o5", texto: "Tener en regla la música, las imágenes y los permisos de un video.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la edición de un video: el corte, los subtítulos, el título y la portada.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Juan 1:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las clases de video, el testimonio y sus partes, el lenguaje de la imagen, la transmisión del culto, las licencias y los permisos, las reglas de YouTube sobre los derechos de autor y la edición honesta.",
+      ser: "Un comunicador que anuncia lo que ha visto de Cristo, cuida la dignidad de las personas y trabaja de corazón, como para el Señor.",
+      hacer: "Planear un ministerio de video, grabar un testimonio y un anuncio, preparar una transmisión, poner en regla la música y los permisos, y editar un video corto con subtítulos.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Marcel Martin", titulo: "El lenguaje del cine", editorial: "Gedisa" },
+        { autor: "Robert McKee", titulo: "El guion: sustancia, estructura, estilo y principios de la escritura de guiones", editorial: "Alba Editorial" },
+      ],
+      complementaria: [
+        { autor: "Neil Postman", titulo: "Divertirse hasta morir: el discurso público en la era del show business", editorial: "Ediciones de la Tempestad" },
+        { autor: "Phil Cooke", titulo: "Unique: Telling Your Story in the Age of Brands and Social Media (en inglés)", editorial: "Baker Books" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen de los libros de 1-3 Juan", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=wQtMnuBzb4c", minutos: 11 },
+      { tipo: "video", titulo: "Resumen del libro de Marcos", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=gsXLQkppzUc", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Marcos 5, cuéntales cuán grandes cosas ha hecho el Señor", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Marcos&cap=5" },
+      { tipo: "guia", titulo: "Las faltas por infracción de derechos de autor en YouTube", fuente: "Ayuda de YouTube", url: "https://support.google.com/youtube/answer/2814000?hl=es" },
+    ],
+  },
+  disponible: true,
+};
+
+const REDACCION_COMUNICACION: MateriaDef = {
+  id: "comunicaciones-4",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 4,
+  titulo: "Redacción y comunicación",
+  resumen: "Cómo escribir y hablar con claridad en nombre de la iglesia: la palabra escrita al servicio del evangelio, el lenguaje claro, los anuncios, los boletines y los mensajes, las historias verdaderas, hablar en público y comunicar en una crisis.",
+  base: "Colosenses 4:6; Lucas 1:1-4",
+  memoria: "Colosenses 4:6",
+  lecciones: lecciones("comunicaciones-4", [
+    ["La palabra escrita al servicio del evangelio", "Lucas 1:1-4; Jeremías 30:2; Romanos 15:4"],
+    ["Escribir claro", "1 Corintios 14:19; Mateo 5:37; Proverbios 15:2"],
+    ["Los anuncios, los boletines y los mensajes", "Hechos 15:30-31; Lucas 14:21; Proverbios 25:25"],
+    ["Escribir una historia o un artículo", "Proverbios 18:13; Proverbios 18:17; Éxodo 23:1"],
+    ["Hablar en público", "Efesios 4:15; Proverbios 16:24; Hechos 2:14"],
+    ["Comunicar en una crisis", "Efesios 4:25; Proverbios 26:20; Proverbios 15:1"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia escriba y hable con claridad y con verdad: que escriba con cuidado, como Lucas, que investigó con diligencia y escribió por orden; que use el lenguaje claro, pensando en el lector, con lo más importante primero, frases cortas y palabras de todos los días, en la línea de la Ley de Redacción Clara de 2010, que les pide a las agencias federales de los Estados Unidos escribir de manera clara, breve y bien ordenada; que escriba anuncios que respondan qué, cuándo, dónde, para quién y por qué, adaptados al boletín, a WhatsApp y a las redes, sin cadenas ni datos privados; que escriba historias verdaderas, con los datos comprobados y con el permiso de las personas; que hable en público con preparación y brevedad; y que en una crisis comunique con una sola voz, con la verdad a tiempo y sin chismes, reportando el abuso de un menor como pide la ley de Texas. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pablo: «Sea vuestra palabra siempre con gracia, sazonada con sal, para que sepáis cómo debéis responder a cada uno» (Colosenses 4:6).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué la iglesia escribe con cuidado, y reconocer sus escritos.", bloom: "comprender" },
+      { id: "o2", texto: "Escribir en lenguaje claro y reescribir un texto confuso.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir un anuncio y adaptarlo al boletín, a WhatsApp y a las redes.", bloom: "aplicar" },
+      { id: "o4", texto: "Escribir una historia verdadera, con los datos comprobados y con permiso.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar y dar los anuncios del culto, y presentar a un invitado.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar cómo comunica la iglesia en una crisis o ante un rumor.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Colosenses 4:6 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los escritos de una iglesia, los principios del lenguaje claro, las cinco preguntas de un anuncio, las partes de una historia, cómo hablar en público y los pasos para comunicar en una crisis.",
+      ser: "Un comunicador que escribe y habla siguiendo la verdad en amor, que averigua antes de escribir y que frena el chisme.",
+      hacer: "Escribir la presentación de la iglesia, reescribir un anuncio confuso, adaptar un anuncio a tres lugares, escribir la historia de un evento, dar los anuncios del culto y responder a un rumor.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Daniel Cassany", titulo: "La cocina de la escritura", editorial: "Anagrama" },
+        { autor: "Real Academia Española", titulo: "Libro de estilo de la lengua española según la norma panhispánica", editorial: "Espasa" },
+      ],
+      complementaria: [
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+        { autor: "William Strunk Jr. y E. B. White", titulo: "The Elements of Style (en inglés)", editorial: "Longman" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Colosenses", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=AG4jqCUapng", minutos: 10 },
+      { tipo: "video", titulo: "Resumen de los libros de Esdras y Nehemías", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=OGdiLZ92nQs", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 1, investigar con diligencia y escribir por orden", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=1" },
+      { tipo: "guia", titulo: "Consultas sobre el buen uso del español", fuente: "FundéuRAE", url: "https://www.fundeu.es/" },
+    ],
+  },
+  disponible: true,
+};
+
+const ETICA_SEGURIDAD_DIGITAL: MateriaDef = {
+  id: "comunicaciones-5",
+  nivel: null,
+  especialidad: "comunicaciones",
+  orden: 5,
+  titulo: "Ética y seguridad digital",
+  resumen: "Cómo comunicar con ética y cuidar a las personas en internet: los compromisos del comunicador cristiano, la privacidad, las cuentas y las contraseñas seguras, las estafas en línea, la inteligencia artificial y la verdad, y cómo moderar y proteger en las redes de la iglesia.",
+  base: "Mateo 10:16; 2 Corintios 4:2",
+  memoria: "Mateo 10:16",
+  lecciones: lecciones("comunicaciones-5", [
+    ["La ética del comunicador cristiano", "2 Corintios 4:2; 1 Tesalonicenses 2:3-5; Proverbios 11:1"],
+    ["La privacidad y la dignidad de las personas", "Proverbios 11:13; Mateo 7:12; Proverbios 22:1"],
+    ["Cuentas y contraseñas seguras", "Nehemías 4:9; Lucas 16:10; Proverbios 27:12"],
+    ["Las estafas y el engaño en línea", "Mateo 10:16; Proverbios 14:15; 2 Corintios 11:14"],
+    ["La inteligencia artificial y la verdad", "Éxodo 20:16; Colosenses 3:9; 1 Tesalonicenses 5:21"],
+    ["Moderar y proteger en las redes de la iglesia", "Romanos 12:18; Proverbios 26:4; Mateo 18:6"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las comunicaciones de la iglesia lo haga con ética y cuide a las personas en internet: que diga la verdad, sin títulos engañosos ni números inflados, sin manipular, dando el crédito y diciendo cuándo algo es pagado, como pide la Comisión Federal de Comercio (FTC); que guarde la información de las personas, con las peticiones de oración compartidas solo con permiso y las fotos de los niños con el permiso escrito de sus padres, como pide la ley COPPA para los menores de 13 años; que proteja las cuentas de la iglesia con los cuatro pasos de la CISA: contraseñas fuertes, la verificación en dos pasos con un administrador de contraseñas, reconocer el phishing y actualizar los programas; que reconozca las estafas, como la del pastor falso que pide tarjetas de regalo, de la que alertó el Fiscal General de Texas; que use la inteligencia artificial con la verdad, sabiendo que la FCC aclaró en 2024 que las voces hechas con ella cuentan como voces artificiales en las llamadas automáticas; y que modere las redes con normas claras, sin que ningún adulto se escriba en privado con un menor, reportando el abuso como pide la ley de Texas y la explotación en internet a la CyberTipline. Lleva a las comunicaciones lo que enseña Protección de menores, de la especialidad Niñez, sin repetirla. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «He aquí, yo os envío como a ovejas en medio de lobos; sed, pues, prudentes como serpientes, y sencillos como palomas» (Mateo 10:16).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los compromisos del comunicador cristiano, y revisar una publicación con ellos.", bloom: "comprender" },
+      { id: "o2", texto: "Cuidar la información y la dignidad de las personas en las comunicaciones de la iglesia.", bloom: "aplicar" },
+      { id: "o3", texto: "Proteger las cuentas de la iglesia con contraseñas fuertes, la verificación en dos pasos y el control de los accesos.", bloom: "aplicar" },
+      { id: "o4", texto: "Reconocer y responder a las estafas en línea, como la del pastor falso.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar el uso de la inteligencia artificial y examinar un contenido antes de compartirlo.", bloom: "evaluar" },
+      { id: "o6", texto: "Moderar las redes de la iglesia y proteger a los menores.", bloom: "aplicar" },
+      { id: "o7", texto: "Recitar Mateo 10:16 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los compromisos del comunicador cristiano, los datos que se cuidan y la ley COPPA, los cuatro pasos de la CISA, las señales de un engaño y la estafa del pastor falso, la inteligencia artificial y las voces falsas, y las normas de la comunidad.",
+      ser: "Un comunicador prudente como serpiente y sencillo como paloma, que no engaña, guarda lo que le confían y protege a los más vulnerables.",
+      hacer: "Revisar una publicación con preguntas de ética, armar un formulario de peticiones de oración, quitar los accesos de quien deja el equipo, responder a un mensaje del pastor falso, examinar un video antes de compartirlo y responder a un perfil falso que escribe a los jóvenes.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Javier Darío Restrepo", titulo: "El zumbido y el moscardón: taller y consultorio de ética periodística", editorial: "Fondo de Cultura Económica y Fundación para un Nuevo Periodismo Iberoamericano" },
+        { autor: "Carissa Véliz", titulo: "Privacidad es poder: datos, vigilancia y libertad en la era digital", editorial: "Debate" },
+      ],
+      complementaria: [
+        { autor: "Marta Peirano", titulo: "El enemigo conoce el sistema: manipulación de ideas, personas e influencias después de la economía de la atención", editorial: "Debate" },
+        { autor: "Jason Thacker", titulo: "The Age of AI: Artificial Intelligence and the Future of Humanity (en inglés)", editorial: "Zondervan" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de Santiago", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=yDqK_U-ipfc", minutos: 9 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Mateo 10, prudentes como serpientes y sencillos como palomas", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Mateo&cap=10" },
+      { tipo: "guia", titulo: "Secure Our World: los cuatro pasos para estar seguros en línea (en inglés)", fuente: "Agencia de Ciberseguridad y Seguridad de Infraestructura (CISA)", url: "https://www.cisa.gov/secure-our-world" },
+    ],
+  },
+  disponible: true,
+};
+
+const ADMINISTRACION_ECLESIASTICA: MateriaDef = {
+  id: "liderazgo-administracion-1",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 1,
+  titulo: "Administración eclesiástica",
+  resumen: "Cómo administrar la iglesia para que la obra siga en orden: la administración al servicio del reino, los registros y el archivo, las reuniones y las actas, el templo y los bienes, los riesgos y los seguros, y los procesos y los manuales.",
+  base: "Proverbios 24:3; Hechos 6:2-4",
+  memoria: "Proverbios 24:3",
+  lecciones: lecciones("liderazgo-administracion-1", [
+    ["La administración al servicio del reino", "Hechos 6:2-4; 1 Corintios 12:28; Tito 1:5"],
+    ["Los registros y el archivo", "Esdras 2:62; Jeremías 32:14; Esdras 8:33-34"],
+    ["Las reuniones y las actas", "Hechos 15:6; Hechos 15:22; Hechos 15:28"],
+    ["El templo y los bienes", "2 Reyes 12:5; 2 Crónicas 24:13; Proverbios 27:23"],
+    ["Los riesgos y los seguros", "Proverbios 22:3; Lucas 14:28; Eclesiastés 11:2"],
+    ["Los procesos y los manuales", "Éxodo 18:20-21; 1 Corintios 14:33; Proverbios 24:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en la administración de la iglesia la ordene para que la obra siga y el pastor se dedique a la oración y a la Palabra: que haga el diagnóstico de sus áreas, las personas, los registros, el edificio, el dinero, el calendario y la comunicación, con prioridades y responsables; que guarde bien los registros, con un archivo con llave, una copia digital y el tiempo que pide la ley, como los 4 años que el IRS pide para la nómina; que prepare y dirija las reuniones con agenda y quórum, y que escriba sus actas; que cuide el templo y los bienes con un plan de mantenimiento, el inventario y la seguridad; que prevea los riesgos de cada actividad y revise los seguros, sabiendo que en Texas un empleador privado puede no tener seguro de compensación laboral si avisa como pide la ley; y que escriba los procesos y el manual de la iglesia. Baja a la práctica lo que enseña Administración y gobierno de la iglesia (Nivel 5), sin repetirla. Lo legal es una guía general, no un consejo legal. Su base es la palabra de los Proverbios: «Con sabiduría se edificará la casa, Y con prudencia se afirmará» (Proverbios 24:3).",
+    objetivos: [
+      { id: "o1", texto: "Explicar para qué sirve la administración en la iglesia y hacer su diagnóstico.", bloom: "comprender" },
+      { id: "o2", texto: "Ordenar los registros y el archivo de la iglesia.", bloom: "aplicar" },
+      { id: "o3", texto: "Preparar y dirigir una reunión, y escribir su acta.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar el cuidado del templo y de los bienes.", bloom: "aplicar" },
+      { id: "o5", texto: "Evaluar los riesgos de una actividad y los seguros de la iglesia.", bloom: "evaluar" },
+      { id: "o6", texto: "Escribir un procedimiento y armar el manual de la iglesia.", bloom: "crear" },
+      { id: "o7", texto: "Recitar Proverbios 24:3 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Las áreas de la administración, los registros de una iglesia y cuánto se guardan, la agenda, el quórum y el acta, el mantenimiento, el inventario y la seguridad, el manejo de los riesgos y los seguros, y los procedimientos y el manual.",
+      ser: "Un administrador que sirve para que otros sirvan, fiel en lo poco, que prevé con sabiduría y deja todo en orden.",
+      hacer: "Hacer el diagnóstico de una iglesia, ordenar su archivo, escribir un acta, hacer el plan de mantenimiento del año, el inventario de riesgos de un campamento y el procedimiento para reservar el templo.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bruce P. Powers (ed.)", titulo: "Church Administration Handbook (en inglés)", editorial: "B&H Publishing" },
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Tito", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=SuJmsIu_1-M", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Timoteo", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=K5xCbQcSsOE", minutos: 11 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Hechos 6, los siete que sirvieron para que la Palabra creciera", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Hechos&cap=6" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const FINANZAS_TRANSPARENCIA: MateriaDef = {
+  id: "liderazgo-administracion-2",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 2,
+  titulo: "Finanzas y transparencia",
+  resumen: "Cómo manejar el dinero de la iglesia con fidelidad y a la luz: los principios y la política financiera, el presupuesto, los controles internos, las ofrendas y sus recibos, los informes y la revisión, y el sostén del pastor y de los empleados.",
+  base: "2 Corintios 8:20-21; Lucas 16:10",
+  memoria: "2 Corintios 8:20",
+  lecciones: lecciones("liderazgo-administracion-2", [
+    ["El dinero de Dios en manos de la iglesia", "2 Corintios 8:20-21; Lucas 16:10-11; 1 Corintios 4:2"],
+    ["El presupuesto", "Lucas 14:28; Proverbios 21:5; Proverbios 22:7"],
+    ["Los controles internos", "2 Reyes 12:10-11; Deuteronomio 19:15; 2 Corintios 8:20-21"],
+    ["Las ofrendas y sus recibos", "Marcos 12:41-44; 2 Corintios 9:7; 1 Corintios 16:2-3"],
+    ["Los informes y la revisión", "Nehemías 13:13; Lucas 16:2; Romanos 13:8"],
+    ["El sostén del pastor y de los empleados", "1 Timoteo 5:17-18; Gálatas 6:6; Lucas 10:7"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que sirve en las finanzas de la iglesia maneje el dinero de Dios con fidelidad y a la luz: que escriba la política financiera de la iglesia, con la mayordomía, el propósito de cada ofrenda, los controles y la rendición de cuentas; que arme un presupuesto real, con lo que entró en los últimos doce meses, las misiones desde el principio y una reserva; que aplique los controles internos: la regla de los dos para recoger y contar la ofrenda, la hoja de conteo firmada, las tareas separadas, los pagos con comprobante y la conciliación del banco; que dé a cada donante el reconocimiento escrito que pide el IRS para las donaciones de 250 dólares o más y use las ofrendas designadas para lo que se dieron; que informe al consejo y a la iglesia y organice la revisión anual, sabiendo que las iglesias no presentan el Formulario 990; y que sostenga con dignidad al pastor y a los empleados, con la asignación para vivienda designada antes de pagarla, el Seguro Social del ministro por cuenta propia y un plan de reembolsos con comprobantes. Baja a la práctica lo que enseñan Mayordomía cristiana (Nivel 2) y Administración y gobierno de la iglesia (Nivel 5), sin repetirlas. Lo legal y lo tributario son una guía general, no un consejo legal ni contable. Su base es el cuidado de Pablo con la ofrenda: «evitando que nadie nos censure en cuanto a esta ofrenda abundante que administramos» (2 Corintios 8:20).",
+    objetivos: [
+      { id: "o1", texto: "Explicar los principios de las finanzas de la iglesia y escribir su política financiera.", bloom: "comprender" },
+      { id: "o2", texto: "Armar el presupuesto anual de una iglesia y seguirlo cada mes.", bloom: "aplicar" },
+      { id: "o3", texto: "Aplicar los controles internos en el conteo, el depósito y los pagos.", bloom: "aplicar" },
+      { id: "o4", texto: "Manejar las ofrendas designadas y los recibos de las donaciones.", bloom: "aplicar" },
+      { id: "o5", texto: "Preparar los informes financieros y organizar la revisión anual.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar el paquete de compensación del pastor con las reglas que pide la ley.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 2 Corintios 8:20 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "Los principios y la política financiera, el presupuesto, los controles internos, los recibos que pide el IRS y las ofrendas designadas, los informes y la revisión, y las reglas del sostén del pastor.",
+      ser: "Un mayordomo fiel en lo poco, que maneja el dinero de Dios a la luz y protege a los que sirven con él.",
+      hacer: "Escribir la política financiera, armar el presupuesto del año, organizar el conteo del domingo, preparar un estado anual de donaciones, presentar el informe trimestral y armar el paquete del pastor.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Inés J. Figueroa", titulo: "La administración de las finanzas de las iglesias", editorial: "Abingdon Press" },
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+      ],
+      complementaria: [
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+        { autor: "Randy Alcorn", titulo: "El principio del tesoro", editorial: "Unilit" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Hechos (parte 1)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=5h7Q0EK-m8I", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 2 Corintios 8, la ofrenda manejada con honradez", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=2%20Corintios&cap=8" },
+      { tipo: "guia", titulo: "Contribuciones caritativas: requisitos de comprobación y divulgación, Publicación 1771 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1771.pdf" },
+    ],
+  },
+  disponible: true,
+};
+
+const EQUIPOS_VOLUNTARIOS: MateriaDef = {
+  id: "liderazgo-administracion-3",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 3,
+  titulo: "Equipos y voluntarios",
+  resumen: "Cómo organizar a los que sirven en la iglesia: el cuerpo que sirve y el ciclo del voluntario, invitar y ubicar, seleccionar con cuidado, capacitar y acompañar, cuidar, reconocer y renovar, y las leyes que tocan a los voluntarios.",
+  base: "1 Pedro 4:10; 1 Corintios 12:18",
+  memoria: "1 Pedro 4:10",
+  lecciones: lecciones("liderazgo-administracion-3", [
+    ["El cuerpo que sirve", "1 Corintios 12:18-21; 1 Pedro 4:10; Romanos 12:6-8"],
+    ["Invitar y ubicar", "Éxodo 35:21; Marcos 3:14; Hechos 6:2-4"],
+    ["Seleccionar con cuidado", "1 Timoteo 3:10; 1 Timoteo 5:22; Proverbios 20:6"],
+    ["Capacitar y acompañar", "Marcos 6:7; Lucas 10:17; Hebreos 10:24"],
+    ["Cuidar, reconocer y renovar", "Éxodo 18:17-18; Romanos 16:1-4; Filipenses 2:29-30"],
+    ["La ley y los voluntarios", "Tito 3:1; Romanos 13:1; Proverbios 22:3"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que coordina a los voluntarios de la iglesia ayude a cada creyente a servir con su don: que organice el ciclo del voluntario, invitar, ubicar, preparar, acompañar, reconocer y renovar, con un mapa de servicio y un coordinador; que invite en persona, con la descripción de cada puesto y un primer paso pequeño; que seleccione con cuidado a los que sirven con niños, con el dinero o al volante, con la solicitud, las referencias, la revisión de antecedentes y la capacitación de protección; que capacite con la práctica y acompañe a cada voluntario; que cuide al que sirve, repartiendo la carga, reconociendo su trabajo y renovando su compromiso con libertad; y que cumpla las leyes que tocan a los voluntarios: la Ley de Protección del Voluntario de 1997, que no cubre el manejo de vehículos ni la responsabilidad de la iglesia, la ley de Texas del capítulo 84, los 14 centavos por milla y el reporte del abuso de un menor en Texas, de inmediato, y los profesionales a más tardar en 24 horas. Lleva a la gestión de los voluntarios lo que enseñan Liderazgo II (Nivel 5) y Protección de menores (especialidad Niñez), sin repetirlos. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Pedro: «Cada uno según el don que ha recibido, minístrelo a los otros, como buenos administradores de la multiforme gracia de Dios» (1 Pedro 4:10).",
+    objetivos: [
+      { id: "o1", texto: "Explicar por qué cada creyente tiene un lugar para servir, y el ciclo del voluntario.", bloom: "comprender" },
+      { id: "o2", texto: "Invitar en persona y escribir la descripción de un puesto de servicio.", bloom: "aplicar" },
+      { id: "o3", texto: "Seleccionar con cuidado a los voluntarios de los puestos delicados.", bloom: "aplicar" },
+      { id: "o4", texto: "Capacitar y acompañar a un equipo de voluntarios.", bloom: "aplicar" },
+      { id: "o5", texto: "Cuidar, reconocer y renovar a los que sirven.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar si un programa de voluntarios cumple las leyes que lo tocan.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar 1 Pedro 4:10 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo del voluntario y el mapa de servicio, la descripción de un puesto, los pasos de la selección, la capacitación práctica, las señales del cansancio y lo que protegen y no protegen las leyes de los voluntarios.",
+      ser: "Un coordinador que ve a cada hermano como un miembro con un don, invita con cariño, cuida a los pequeños y sirve al que sirve.",
+      hacer: "Hacer el mapa de servicio, escribir la descripción de un puesto, seleccionar a un voluntario para los niños, capacitar a un equipo, tener la conversación anual con un voluntario cansado y revisar la protección legal del programa.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Patrick Lencioni", titulo: "Las cinco disfunciones de un equipo", editorial: "Empresa Activa" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+      complementaria: [
+        { autor: "Bill Hybels", titulo: "The Volunteer Revolution: Unleashing the Power of Everybody (en inglés)", editorial: "Zondervan" },
+        { autor: "Ken Sande", titulo: "Pacificadores: guía bíblica para la resolución de conflictos personales", editorial: "Peacemaker Ministries" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Pedro", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=NXRkCxeO-C4", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: 1 Corintios 12, un cuerpo con muchos miembros", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=1%20Corintios&cap=12" },
+      { tipo: "guia", titulo: "Ley de Protección del Voluntario de 1997, 42 U.S.C. 14503 (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/14503" },
+    ],
+  },
+  disponible: true,
+};
+
+const PLANIFICACION_PROYECTOS: MateriaDef = {
+  id: "liderazgo-administracion-4",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  orden: 4,
+  titulo: "Planificación y proyectos ministeriales",
+  resumen: "Cómo planear con fe y llevar los proyectos de la iglesia hasta el final: planificar con fe, la visión, la misión y los valores, las metas y el plan del año, un proyecto de principio a fin, el cronograma, los riesgos y el presupuesto del proyecto, y evaluar y aprender.",
+  base: "Proverbios 16:9; Lucas 14:28",
+  memoria: "Proverbios 16:9",
+  lecciones: lecciones("liderazgo-administracion-4", [
+    ["Planificar con fe", "Proverbios 16:9; Santiago 4:13-15; Lucas 14:28"],
+    ["La visión, la misión y los valores", "Mateo 28:19-20; Habacuc 2:2; Nehemías 2:17-18"],
+    ["Las metas y el plan del año", "Filipenses 3:13-14; 1 Corintios 9:26; Proverbios 21:5"],
+    ["Un proyecto de principio a fin", "Nehemías 2:4-5; Nehemías 3:1; Nehemías 6:15"],
+    ["El cronograma, los riesgos y el presupuesto", "Lucas 14:28-30; Nehemías 4:16; Proverbios 24:6"],
+    ["Evaluar y aprender", "Lamentaciones 3:40; 2 Corintios 13:5; Hechos 14:27"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige un ministerio planee con fe y lleve sus proyectos hasta el final: que planee en oración y con humildad, con el ciclo de mirar dónde estamos, decidir adónde vamos, cómo llegar y con qué, y revisar; que escriba con su equipo la misión, la visión y los valores, cortos y alineados con la Gran Comisión y con la visión de la iglesia; que convierta los deseos en pocas metas SMART, como propuso George T. Doran en 1981, y las ponga en el plan del año; que lleve cada proyecto, un esfuerzo temporal para crear un resultado único, como lo define la guía PMBOK, por sus etapas: iniciar con el propósito y el alcance, planear, ejecutar, controlar y cerrar; que use el cronograma, la lista de riesgos con su plan B y el presupuesto con un margen; y que evalúe con números honestos, guarde lo aprendido y cuente a la iglesia lo que Dios hizo. Baja a la práctica de los proyectos el ciclo de planificación de Administración y gobierno de la iglesia (Nivel 5) y el plan de ministerio del Seminario de liderazgo ministerial, sin repetirlos. Su base es la palabra de los Proverbios: «El corazón del hombre piensa su camino; Mas Jehová endereza sus pasos» (Proverbios 16:9).",
+    objetivos: [
+      { id: "o1", texto: "Explicar cómo se planea con fe y el ciclo de la planificación.", bloom: "comprender" },
+      { id: "o2", texto: "Escribir la misión, la visión y los valores de un ministerio.", bloom: "aplicar" },
+      { id: "o3", texto: "Escribir metas SMART y armar el plan del año.", bloom: "aplicar" },
+      { id: "o4", texto: "Organizar un proyecto ministerial por sus etapas.", bloom: "aplicar" },
+      { id: "o5", texto: "Hacer el cronograma, la lista de riesgos y el presupuesto de un proyecto.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar un proyecto con sus metas y guardar lo aprendido.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Proverbios 16:9 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "El ciclo de la planificación, la misión, la visión y los valores, las metas SMART, la definición y las etapas de un proyecto, el alcance, el cronograma, los riesgos, el presupuesto y la evaluación.",
+      ser: "Un líder que planea con fe y humildad, con su equipo, termina lo que empieza y da gracias a Dios por lo que él hace.",
+      hacer: "Preparar un retiro de planificación, escribir la visión de un ministerio, convertir un deseo en una meta SMART, llevar una escuela bíblica como proyecto, hacer el cronograma de una remodelación y evaluar un proyecto.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Rick Warren", titulo: "Una iglesia con propósito: cómo crecer sin comprometer el mensaje y la misión", editorial: "Vida" },
+        { autor: "Henry y Richard Blackaby", titulo: "Liderazgo espiritual: cómo movilizar a las personas hacia el propósito de Dios", editorial: "B&H Español" },
+      ],
+      complementaria: [
+        { autor: "Aubrey Malphurs", titulo: "Advanced Strategic Planning: A 21st-Century Model for Church and Ministry Leaders (en inglés)", editorial: "Baker Books" },
+        { autor: "Peter F. Drucker", titulo: "Dirección de instituciones sin fines de lucro: teoría y práctica", editorial: "El Ateneo" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Proverbios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=pNjt_NfIam8", minutos: 9 },
+      { tipo: "video", titulo: "Resumen del libro de 1 Corintios", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=6f0kym4bUmE", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Nehemías 2, la visión y el plan para reedificar el muro", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Nehemias&cap=2" },
+      { tipo: "lectura", titulo: "Lectura ampliada: Lucas 14, calcular los gastos antes de edificar", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Lucas&cap=14" },
+    ],
+  },
+  disponible: true,
+};
+
+const MARCO_LEGAL_ORGANIZACIONES: MateriaDef = {
+  id: "liderazgo-administracion-5",
+  nivel: null,
+  especialidad: "liderazgo-administracion",
+  avanzada: true,
+  orden: 5,
+  titulo: "Marco legal de las organizaciones religiosas",
+  resumen: "Lo que la ley de los Estados Unidos y de Texas protege y pide a una iglesia: la iglesia y el Estado, la forma legal de la iglesia, los impuestos de la iglesia, la iglesia como empleador, la responsabilidad, los seguros y la protección, y la propiedad y el uso del templo.",
+  base: "Mateo 22:21; Romanos 13:7",
+  memoria: "Mateo 22:21",
+  lecciones: lecciones("liderazgo-administracion-5", [
+    ["La iglesia y el Estado", "Mateo 22:21; Hechos 5:29; 1 Timoteo 2:1-2"],
+    ["La forma legal de la iglesia", "1 Corintios 14:40; Proverbios 11:14; Romanos 12:17"],
+    ["Los impuestos de la iglesia", "Romanos 13:7; Mateo 17:27; Marcos 12:17"],
+    ["La iglesia como empleador", "Colosenses 4:1; Levítico 19:13; Santiago 5:4"],
+    ["Responsabilidad, seguros y protección", "Deuteronomio 22:8; Lucas 17:1-2; Proverbios 22:3"],
+    ["La propiedad y el uso del templo", "Jeremías 32:9-10; Génesis 23:16; Lucas 14:28"],
+  ], 10),
+  silabo: {
+    proposito:
+      "Que el que dirige o administra una iglesia conozca lo que la ley de los Estados Unidos y de Texas protege y pide, para servir con orden y con buen testimonio: que entienda la libertad religiosa que protegen la Primera Enmienda y la ley de Texas del capítulo 110 (1999), y que, por la enmienda Johnson, la iglesia no apoya ni ataca a candidatos, aunque enseña los temas morales y ora por todas las autoridades; que forme la iglesia como corporación sin fines de lucro, con el Formulario 202, al menos tres directores, estatutos completos, su EIN y la propiedad a su nombre; que sepa que la iglesia que cumple la 501(c)(3) está exenta automáticamente del impuesto federal sobre la renta y no presenta el 990, que en Texas pide la exención de franquicia y ventas con el AP-209 y la del impuesto a la propiedad, y que cumple la nómina de sus empleados; que contrate con justicia y por escrito, sabiendo que la excepción ministerial (Hosanna-Tabor, 2012) y la sección 702 del Título VII protegen la libertad de la iglesia para elegir a sus ministros y preferir a personas de su fe; que cuide a las personas con el deber de cuidado, los seguros y el reporte de los incidentes, y que reporte la sospecha de abuso de un menor como pide el Código de Familia de Texas: toda persona de inmediato, y los profesionales a más tardar en 24 horas, sin pedirle a otro que lo haga por ellos; y que compre y use la propiedad con la zonificación revisada, sabiendo que la ley RLUIPA protege a la iglesia. Profundiza lo legal de Administración y gobierno de la iglesia (Nivel 5), sin repetirlo. Lo legal es una guía general, no un consejo legal. Su base es la palabra de Jesús: «Dad, pues, a César lo que es de César, y a Dios lo que es de Dios» (Mateo 22:21).",
+    objetivos: [
+      { id: "o1", texto: "Explicar qué protege la libertad religiosa y qué puede y qué no puede hacer la iglesia en las elecciones.", bloom: "comprender" },
+      { id: "o2", texto: "Organizar la forma legal de una iglesia en Texas y revisar sus estatutos.", bloom: "aplicar" },
+      { id: "o3", texto: "Explicar de qué impuestos está exenta una iglesia y qué debe pedir y cumplir.", bloom: "comprender" },
+      { id: "o4", texto: "Contratar y tratar a los empleados de la iglesia como pide la ley y con justicia.", bloom: "aplicar" },
+      { id: "o5", texto: "Responder a un accidente y a una sospecha de abuso como pide la ley de Texas.", bloom: "aplicar" },
+      { id: "o6", texto: "Evaluar la compra y el uso de una propiedad para la iglesia.", bloom: "evaluar" },
+      { id: "o7", texto: "Recitar Mateo 22:21 de memoria.", bloom: "recordar" },
+    ],
+    dimensiones: {
+      conocer: "La Primera Enmienda, la ley de Texas del capítulo 110 y la enmienda Johnson, la corporación sin fines de lucro y sus estatutos, las exenciones de impuestos y la nómina, la excepción ministerial y las obligaciones del empleador, el deber de cuidado, los seguros y el reporte del abuso, y la zonificación, la ley RLUIPA y la ADA.",
+      ser: "Un líder que da a César lo que es de César y a Dios lo que es de Dios, que cumple la ley con buen testimonio y que obedece a Dios antes que a los hombres.",
+      hacer: "Revisar la política de la iglesia para las elecciones, poner en orden los estatutos y la propiedad, revisar las exenciones, contratar a un empleado por escrito, responder a un accidente en el templo, reportar la sospecha de abuso y evaluar la compra de un terreno.",
+    },
+    bibliografia: {
+      basica: [
+        { autor: "Wilfredo Calderón", titulo: "La administración en la iglesia cristiana", editorial: "Vida" },
+        { autor: "Joe E. Trull y James E. Carter", titulo: "Ética ministerial", editorial: "Mundo Hispano" },
+      ],
+      complementaria: [
+        { autor: "Richard R. Hammar", titulo: "Pastor, Church & Law (en inglés)", editorial: "Church Law & Tax" },
+        { autor: "Dan Busby, Vonna Laue, Michael Martin y John Van Drunen", titulo: "Zondervan Church and Nonprofit Tax and Financial Guide (en inglés)", editorial: "Zondervan" },
+      ],
+    },
+    recursos: [
+      { tipo: "video", titulo: "Resumen del libro de Mateo (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=EobkNEf-ySA", minutos: 8 },
+      { tipo: "video", titulo: "Resumen del libro de Romanos (parte 2)", fuente: "Proyecto Biblia", url: "https://www.youtube.com/watch?v=ZqScL0dHLsM", minutos: 10 },
+      { tipo: "lectura", titulo: "Lectura ampliada: Romanos 13, las autoridades y lo que debemos", fuente: "Biblioteca de la web (RV1960)", url: "/biblioteca?libro=Romanos&cap=13" },
+      { tipo: "guia", titulo: "Guía tributaria para iglesias y organizaciones religiosas, Publicación 1828 (en inglés)", fuente: "Servicio de Impuestos Internos (IRS)", url: "https://www.irs.gov/pub/irs-pdf/p1828.pdf" },
+      { tipo: "guia", titulo: "Línea de reportes de abuso de Texas: 1-800-252-5400", fuente: "Departamento de Servicios para la Familia y de Protección de Texas", url: "https://www.txabusehotline.org" },
+      { tipo: "guia", titulo: "Ley RLUIPA, el uso religioso de la tierra, 42 U.S.C. 2000cc (en inglés)", fuente: "Instituto de Información Legal de la Universidad Cornell", url: "https://www.law.cornell.edu/uscode/text/42/2000cc" },
+    ],
+  },
+  disponible: true,
+};
+
 export const NIVELES: NivelDef[] = [
   {
     n: 1,
@@ -2802,8 +4852,8 @@ export const NIVELES: NivelDef[] = [
       DIDACTICA,
       LIDERAZGO_2,
       IDIOMAS,
-      enPreparacion(5, 6, "n5-exegesis", "Exégesis de un libro", "Estudio profundo de Romanos o de Hechos."),
-      enPreparacion(5, 7, "n5-avivamiento", "Teología del avivamiento", "Los principios bíblicos, la historia y el discernimiento del avivamiento."),
+      EXEGESIS,
+      AVIVAMIENTO,
       SEMINARIO,
     ],
   },
@@ -3598,34 +5648,34 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
     EV_PERSONAL_AVANZADO, CAMPANAS, TEOLOGIA_MISIONES, MISION_TRANSCULTURAL, PLANTACION,
   ]),
   especialidad("pastoral", "Ministerio pastoral", "Pastorear, aconsejar, celebrar las ordenanzas y cuidar del rebaño.", [
-    ["El ministerio pastoral", true], ["Consejería pastoral", true], ["Ordenanzas y ceremonias"], ["Visitación y cuidado del rebaño"], ["Predicación pastoral", true],
+    MINISTERIO_PASTORAL, CONSEJERIA_PASTORAL, ORDENANZAS_CEREMONIAS, VISITACION_CUIDADO, PREDICACION_PASTORAL,
   ]),
   especialidad("alabanza", "Alabanza y adoración", "Adorar en espíritu y en verdad y dirigir el ministerio de alabanza.", [
     TEOLOGIA_ADORACION, ADORADOR, DIRIGIR_ALABANZA, HISTORIA_MUSICA, SONIDO_TECNICA,
   ]),
   especialidad("ninez", "Niñez", "Enseñar y cuidar a los niños con la Palabra.", [
-    ["Educación cristiana de la niñez"], ["El niño y su fe"], ["Métodos para enseñar a niños"], ["Protección de menores"], ["Organizar el ministerio infantil"],
+    EDUCACION_NINEZ, NINO_Y_SU_FE, METODOS_NINEZ, PROTECCION_MENORES, ORGANIZAR_NINEZ,
   ]),
   especialidad("juventud", "Juventud", "Discipular y liderar a la nueva generación.", [
-    ["Discipulado de jóvenes"], ["Cosmovisión cristiana y cultura"], ["Consejería juvenil", true], ["Liderazgo juvenil"], ["Evangelismo entre jóvenes"],
+    DISCIPULADO_JOVENES, COSMOVISION_CULTURA, CONSEJERIA_JUVENIL, LIDERAZGO_JUVENIL, EVANGELISMO_JOVENES,
   ]),
   especialidad("familia-consejeria", "Familia y consejería", "Acompañar matrimonios y familias con sabiduría bíblica y límites claros.", [
-    ["Consejería matrimonial", true], ["Consejería familiar", true], ["Duelo y crisis"], ["Adicciones y restauración", true], ["Ética y límites del consejero"],
+    CONSEJERIA_MATRIMONIAL, CONSEJERIA_FAMILIAR, DUELO_CRISIS, ADICCIONES_RESTAURACION, ETICA_LIMITES_CONSEJERO,
   ]),
   especialidad("intercesion", "Intercesión y oración", "Una vida de oración, ayuno e intercesión con base bíblica.", [
     TEOLOGIA_ORACION, INTERCESION_BIBLICA, AYUNO_BIBLICO, GUERRA_ESPIRITUAL, ORACION_AVIVAMIENTOS,
   ]),
   especialidad("comunicaciones", "Comunicaciones y medios", "Llevar el evangelio por la radio, las redes y las transmisiones.", [
-    ["Evangelismo en redes"], ["Radio cristiana"], ["Video y transmisiones"], ["Redacción y comunicación"], ["Ética y seguridad digital"],
+    EVANGELISMO_REDES, RADIO_CRISTIANA, VIDEO_TRANSMISIONES, REDACCION_COMUNICACION, ETICA_SEGURIDAD_DIGITAL,
   ]),
   especialidad("capellania", "Capellanía", "Servir en hospitales, cárceles y emergencias.", [
-    ["Fundamentos de la capellanía"], ["Capellanía hospitalaria", true], ["Capellanía penitenciaria", true], ["Emergencias y desastres"], ["Marco legal y ético del capellán"],
+    FUNDAMENTOS_CAPELLANIA, CAPELLANIA_HOSPITALARIA, CAPELLANIA_PENITENCIARIA, EMERGENCIAS_DESASTRES, MARCO_LEGAL_CAPELLAN,
   ]),
   especialidad("biblicos-avanzados", "Estudios bíblicos avanzados", "Libros a fondo, geografía, historia y trasfondo de la Biblia.", [
     ["Romanos", true], ["Hechos", true], ["Daniel y Apocalipsis", true], ["Geografía e historia bíblica"], ["Trasfondo y arqueología bíblica"],
   ]),
   especialidad("liderazgo-administracion", "Liderazgo y administración", "Administrar la obra con orden, transparencia y visión.", [
-    ["Administración eclesiástica"], ["Finanzas y transparencia"], ["Equipos y voluntarios"], ["Planificación y proyectos ministeriales"], ["Marco legal de las organizaciones religiosas", true],
+    ADMINISTRACION_ECLESIASTICA, FINANZAS_TRANSPARENCIA, EQUIPOS_VOLUNTARIOS, PLANIFICACION_PROYECTOS, MARCO_LEGAL_ORGANIZACIONES,
   ]),
   especialidad("obra-social", "Obra social y misericordia", "Servir al necesitado como lo hizo Jesús.", [
     ["Teología de la compasión"], ["Diaconía y servicio"], ["Proyectos comunitarios"], ["Ayuda humanitaria y desastres"], ["Voluntariado y alianzas"],
@@ -3636,6 +5686,8 @@ export const ESPECIALIDADES: EspecialidadDef[] = [
 
 const TODAS: MateriaDef[] = [...NIVELES.flatMap((n) => n.materias), ...ESPECIALIDADES.flatMap((e) => e.materias)];
 const POR_ID = new Map(TODAS.map((m) => [m.id, m]));
+// lo que agregó la revisión del sistema de estudio: más bibliografía y la lectura ampliada (shared/academia-complementos.ts)
+aplicarComplementos(POR_ID);
 const LECCION_POR_ID = new Map(TODAS.flatMap((m) => m.lecciones.map((l, i) => [l.id, { materia: m, leccion: l, indice: i }] as const)));
 
 export function todasLasMaterias(): MateriaDef[] {
@@ -3842,7 +5894,16 @@ export function normalizarCodigo(s: string): string {
   return `AAF-${fijo(m[1])}-${fijo(m[2])}`;
 }
 
-export type LeccionEstado = { id: string; titulo: string; minutos: number; base: string; vista: boolean; completada: boolean };
+export type LeccionEstado = {
+  id: string;
+  titulo: string;
+  minutos: number;
+  base: string;
+  vista: boolean;
+  completada: boolean;
+  /** Los minutos de su narración grabada con la voz de la academia (null o ausente: no tiene). */
+  escuchar?: number | null;
+};
 
 export type ExamenEstado = {
   medida: MedidaExamen;
@@ -3964,7 +6025,11 @@ export type BloqueVista =
   | { t: "versiculo"; ref: string; texto: string | null; enlace: string | null }
   | { t: "video"; url: string; titulo: string; fuente: string; minutos?: number }
   | { t: "audio"; url: string; titulo: string }
-  | { t: "imagen"; src: string; alt: string; pie?: string };
+  | { t: "imagen"; src: string; alt: string; pie?: string }
+  // los esquemas visuales (revisión del 16-nov): línea de tiempo, cuadro comparativo y pasos (o ejemplo resuelto)
+  | { t: "linea"; titulo: string; eventos: { fecha: string; texto: string; ref?: string }[] }
+  | { t: "cuadro"; titulo: string; columnas: string[]; filas: string[][] }
+  | { t: "pasos"; titulo: string; pasos: { titulo: string; texto: string }[] };
 
 export type PreguntaVista = { id: string; texto: string; opciones: string[] };
 
@@ -4025,6 +6090,8 @@ export type LeccionVista = {
   docente: boolean;
   /** Lo que falta para abrir el repaso (null: ya está abierto, o es la vista docente). */
   bloqueo: BloqueoRepaso | null;
+  /** La narración grabada con la voz de la academia (null: se escucha con la voz del aparato). */
+  narracion: NarracionVista | null;
 };
 
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };

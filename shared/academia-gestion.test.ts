@@ -17,8 +17,8 @@ test("el tiempo extra alarga cada reloj 1,5 veces y no cambia el examen", () => 
   assert.equal(n3.minutosBreve, 23);
   assert.equal(minutosDe(n3, "breve"), 23);
   assert.equal(minutosDe(n3, "corta"), 9);
-  // las mini pruebas: 45 segundos pasan a 68
-  assert.equal(conTiempoExtra(MEDIDA_MINI).segundos, 68);
+  // las mini pruebas: 60 segundos pasan a 90
+  assert.equal(conTiempoExtra(MEDIDA_MINI).segundos, 90);
   // no toca la medida original (es la de todos)
   assert.equal(EXAMEN_FINAL[1].segundos, 60);
 });

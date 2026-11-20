@@ -10,7 +10,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
+import { DIAGNOSTICO, DIAS_APELACION, MINI_PRUEBA, SUFICIENCIA, parteEscrita, textoSegundos, type Apelable, type ApelacionVista, type EscritaExamen, type PasoExamen, type PreguntaExamen, type ResultadoExamen } from "@shared/academia";
 import { empezarExamen, entregarEscrita, pasoExamen, pedirRevision, responderExamen, tiempoTexto, useExamen } from "@/components/academia/api";
 import { Cargando, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 
@@ -447,7 +447,7 @@ export function PantallaExamen({ destino }: { destino: DestinoExamen | null }) {
                 <h2 className="font-semibold text-lg mb-3">Antes de empezar</h2>
                 <ul className="space-y-2 text-[15px]">
                   {destino.detalle && <li className="flex gap-2"><Layers className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{destino.detalle}</li>}
-                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{medida.escritas > 0 ? "Parte A: " : ""}{medida.objetivas} preguntas, una por pantalla, con {medida.segundos} segundos cada una.</li>
+                  <li className="flex gap-2"><Timer className="w-4 h-4 mt-1 text-orange-500 shrink-0" />{medida.escritas > 0 ? "Parte A: " : ""}{medida.objetivas} preguntas, una por pantalla, {textoSegundos(medida)}.</li>
                   {medida.escritas > 0 && (
                     <li className="flex gap-2"><PenLine className="w-4 h-4 mt-1 text-orange-500 shrink-0" />Parte B: {parteEscrita(medida)}, con tus palabras.</li>
                   )}

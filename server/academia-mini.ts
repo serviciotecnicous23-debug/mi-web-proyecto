@@ -1,6 +1,7 @@
 /**
  * Las mini pruebas (docs/academia.md, «Las mini pruebas»): en las materias del Nivel 2 en adelante, una cada 3
- * lecciones (`miniPruebasDe`): 6 preguntas de un banco de 18, 45 segundos cada una, sin escritas. Hay 3 intentos, cada
+ * lecciones (`miniPruebasDe`): 6 preguntas de un banco de 18, de 60 a 120 segundos cada una según su largo y su
+ * dificultad (`segundosDePregunta`), sin escritas. Hay 3 intentos, cada
  * uno con preguntas nuevas, y cuenta el mejor: el componente «mini» de la materia es el promedio de sus mini pruebas.
  * Muestran la revisión completa al terminar (sirven para aprender) y no admiten pedidos de revisión (no hay escritas).
  * Usan el mismo motor que el examen final (`rutasDeEvaluacion`).
