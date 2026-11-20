@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Brain, CheckCircle2, RotateCcw, Sparkles, Trophy, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { loginUrl } from "@/lib/login-redirect";
 import { REPASO_PREGUNTA_DIAS, type PreguntaDelDia, type RespuestaDelDia } from "@shared/repaso-del-dia";
 import { responderRepasoDelDia, useRepasoDelDia } from "@/components/academia/api";
 import { BarraAvance, Cargando, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
@@ -38,8 +39,14 @@ export default function AcademiaRepasoDia() {
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-20 text-center">
           <Brain className="w-12 h-12 mx-auto text-orange-500" />
-          <p className="text-lg mt-4 mb-6">{q.error.message}</p>
-          {q.error.status === 409 && <Link href={enlaceInscripcion("/academia/repaso-del-dia")}><Button className="fire-btn-primary h-12 px-7">Inscribirme en la academia</Button></Link>}
+          <h1 className="font-display text-2xl font-bold mt-4">Repaso del día</h1>
+          <p className="text-lg mt-3 mb-6">{q.error.message}</p>
+          {/* siempre con salida: entrar (sin cuenta), inscribirse (sin inscripción) o volver a la academia */}
+          <div className="flex flex-wrap justify-center gap-3">
+            {q.error.status === 401 && <Button asChild className="fire-btn-primary h-12 px-7"><a href={loginUrl("/academia/repaso-del-dia")}>Entrar</a></Button>}
+            {q.error.status === 409 && <Button asChild className="fire-btn-primary h-12 px-7"><Link href={enlaceInscripcion("/academia/repaso-del-dia")}>Inscribirme en la academia</Link></Button>}
+            <Button asChild variant="outline" className="h-12 px-7"><Link href="/academia">Volver a la academia</Link></Button>
+          </div>
         </div>
       </Layout>
     );

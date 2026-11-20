@@ -43,7 +43,7 @@ export default function AcademiaVerificar() {
         <h1 className="heading-display font-display text-3xl md:text-4xl mt-2 mb-6 flex items-center gap-3"><Award className="w-8 h-8 text-orange-500" /> Verificar un documento</h1>
 
         <div className="flex gap-2 mb-6">
-          <Input value={texto} onChange={(e) => setTexto(e.target.value)} onKeyDown={(e) => e.key === "Enter" && buscar()} placeholder="AAF-XXXX-XXXX" className="text-[16px] uppercase" data-testid="verificar-codigo" />
+          <Input value={texto} onChange={(e) => setTexto(e.target.value)} onKeyDown={(e) => e.key === "Enter" && buscar()} placeholder="AAF-XXXX-XXXX" aria-label="Código del documento" autoComplete="off" autoCapitalize="characters" spellCheck={false} className="text-[16px] uppercase" data-testid="verificar-codigo" />
           <Button onClick={buscar} disabled={!texto.trim() || buscando}><Search className="w-4 h-4 mr-1.5" /> Verificar</Button>
         </div>
 

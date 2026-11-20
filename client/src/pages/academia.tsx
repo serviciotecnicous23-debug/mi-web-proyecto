@@ -401,7 +401,8 @@ export default function AcademiaPage() {
   if (q.isLoading) return <Cargando />;
   if (q.error?.status === 403 || !q.data) return <PantallaCerrada mensaje={q.error?.message} />;
   const e = q.data;
-  const totalMaterias = e.niveles.reduce((a, n) => a + n.materias.length, 0);
+  // las de los niveles y las de las especialidades, como las cuenta el catálogo al que lleva la cifra
+  const totalMaterias = e.niveles.reduce((a, n) => a + n.materias.length, 0) + e.especialidades.reduce((a, s) => a + s.materias.length, 0);
   const inscrito = !!e.matricula && e.ficha;
   const actual = nivelActual(e);
 

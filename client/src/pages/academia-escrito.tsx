@@ -8,6 +8,7 @@ import { ArrowLeft, PenLine, Send } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { loginUrl } from "@/lib/login-redirect";
 import { NOMBRE_ACADEMIA } from "@shared/academia";
 import { entregarEscrito, useEscrito } from "@/components/academia/api";
 import { EscritaCorregida } from "@/components/academia/examen";
@@ -30,7 +31,10 @@ export default function AcademiaEscrito() {
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-20 text-center">
           <p className="text-lg mb-5">{q.error?.message ?? "No se encontró el escrito."}</p>
-          <Link href={materiaId ? `/academia/materia/${materiaId}` : "/academia"}><Button variant="outline">Volver a la materia</Button></Link>
+          <div className="flex flex-wrap justify-center gap-3">
+            {q.error?.status === 401 && <Button asChild className="fire-btn-primary"><a href={loginUrl()}>Entrar</a></Button>}
+            <Button asChild variant="outline"><Link href={materiaId ? `/academia/materia/${materiaId}` : "/academia"}>Volver a la materia</Link></Button>
+          </div>
         </div>
       </Layout>
     );
