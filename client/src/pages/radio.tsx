@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Layout } from "@/components/layout";
+import { TITULOS } from "@shared/titulos";
 
 // La radio que se ve en esta página es la ORIGINAL (la página pública de AzuraCast con
 // el tema de fuego). La pinta <RadioDock /> desde App.tsx, por encima de las páginas,
@@ -8,7 +9,7 @@ import { Layout } from "@/components/layout";
 export default function RadioPage() {
   useEffect(() => {
     const previous = document.title;
-    document.title = "Radio Avivando el Fuego — Escucha en vivo 24/7";
+    document.title = TITULOS["/radio"];
     // La radio se desplaza por dentro: la página no, para que no salgan dos barras.
     document.documentElement.classList.add("radio-immersive");
     return () => {
