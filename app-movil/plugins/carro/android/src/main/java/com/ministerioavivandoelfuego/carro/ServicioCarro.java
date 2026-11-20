@@ -726,16 +726,16 @@ public class ServicioCarro extends MediaLibraryService {
 
         @Override
         public MediaSession.ConnectionResult onConnect(MediaSession s, MediaSession.ControllerInfo quien) {
-            MediaSession.ConnectionResult base = MediaLibrarySession.Callback.super.onConnect(s, quien);
-            if (!getPackageName().equals(quien.getPackageName())) return base;
-            // Solo la propia app puede usar el temporizador y «detener».
-            SessionCommands ordenes = base.availableSessionCommands.buildUpon()
-                .add(new SessionCommand(ORDEN_DORMIR, Bundle.EMPTY))
-                .add(new SessionCommand(ORDEN_DETENER, Bundle.EMPTY))
-                .build();
+            // Los permisos van explícitos: en Media3 1.11 el onConnect «por defecto» ya no los trae y quien se
+            // conectaba (Android Auto incluido) quedaba sin poder recorrer ni reproducir nada.
+            // Todos pueden recorrer la biblioteca y reproducir; solo la propia app, el temporizador y «detener».
+            SessionCommands.Builder ordenes = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon();
+            if (getPackageName().equals(quien.getPackageName())) {
+                ordenes.add(new SessionCommand(ORDEN_DORMIR, Bundle.EMPTY)).add(new SessionCommand(ORDEN_DETENER, Bundle.EMPTY));
+            }
             return new MediaSession.ConnectionResult.AcceptedResultBuilder(s)
-                .setAvailableSessionCommands(ordenes)
-                .setAvailablePlayerCommands(base.availablePlayerCommands)
+                .setAvailableSessionCommands(ordenes.build())
+                .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
                 .build();
         }
 

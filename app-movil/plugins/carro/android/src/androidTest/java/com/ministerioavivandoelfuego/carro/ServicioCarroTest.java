@@ -77,7 +77,17 @@ public class ServicioCarroTest {
             if (Boolean.TRUE.equals(en(condicion))) return;
             Thread.sleep(250);
         }
-        fail("No pasó en " + segundos + " s: " + que);
+        fail("No pasó en " + segundos + " s: " + que + " · " + diagnostico());
+    }
+
+    /** Cómo estaba el reproductor cuando algo no pasó (para entender el fallo desde el informe). */
+    private String diagnostico() {
+        try {
+            return en(() -> "estado=" + navegador.getPlaybackState() + " quiere=" + navegador.getPlayWhenReady()
+                + " error=" + navegador.getPlayerError() + " foto=" + navegador.getSessionExtras().getString(ServicioCarro.CLAVE_ESTADO));
+        } catch (Exception e) {
+            return "sin diagnóstico: " + e;
+        }
     }
 
     private static List<String> ids(List<MediaItem> items) {
