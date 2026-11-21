@@ -134,7 +134,8 @@ español fluido, «tipo documental»):
   - el Nivel 5, el 20-nov-2026: 48 lecciones, unos 260 minutos, en Cloudflare R2;
   - las especialidades, de tres en tres, en Cloudflare R2: Alabanza y adoración, Bíblicos avanzados y Capellanía el
     20-nov-2026 (90 lecciones, unos 550 minutos); Comunicaciones y medios, Evangelismo y misiones y Familia y
-    consejería el mismo día (90 lecciones, unos 500 minutos).
+    consejería el mismo día (90 lecciones, unos 500 minutos); Intercesión y oración, Juventud y Liderazgo y
+    administración el 21-nov-2026 (90 lecciones, unos 530 minutos).
 
   El mismo día se grabaron otra vez 14 lecciones de los Niveles 1 a 3 que leían mal «c.» («hacia el año»), un año
   («setecientos un antes de Cristo») o un libro con número sin capítulo («un Corintios» por «Primera de Corintios»).

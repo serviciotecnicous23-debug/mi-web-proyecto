@@ -162,7 +162,19 @@ async function guion(carpeta: string, pedidos: string[]) {
 function subirAR2(deposito: string, clave: string, ruta: string) {
   const args = ["wrangler", "r2", "object", "put", `${deposito}/${clave}`, "--file", ruta, "--content-type", "audio/mp4", "--cache-control", "public, max-age=31536000, immutable", "--remote"];
   // (en Windows npx es un .cmd y necesita la consola: se arma el comando con comillas)
-  execSync(["npx", ...args.map((a) => (/[\s,]/.test(a) ? `"${a}"` : a))].join(" "), { stdio: ["ignore", "ignore", "inherit"] });
+  const comando = ["npx", ...args.map((a) => (/[\s,]/.test(a) ? `"${a}"` : a))].join(" ");
+  // R2 a veces responde 500 («We encountered an internal error. Please try again.»): se espera y se intenta otra vez,
+  // para que un fallo suelto no corte el registro de toda la tanda
+  for (let intento = 1; ; intento++) {
+    try {
+      execSync(comando, { stdio: ["ignore", "ignore", "inherit"] });
+      return;
+    } catch (e) {
+      if (intento >= 4) throw e;
+      console.log(`${clave}: R2 no respondió (intento ${intento} de 4); se intenta otra vez`);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, intento * 10_000);
+    }
+  }
 }
 
 /** Borra un audio viejo de R2 (cuando la lección se grabó de nuevo): lo que no se pueda borrar solo se avisa. */
