@@ -279,3 +279,76 @@ export function tipoDeClave(clave: string): TipoIntento {
   if (clave.endsWith(":trabajo")) return "trabajo";
   return "otro";
 }
+
+// ---------------------------------------------------------------- el informe de una materia: lo que hizo en cada lección y examen
+
+/** Una duración en palabras cortas: «45 s», «18 min», «1 h 05 min». */
+export function duracion(segundos: number | null | undefined): string {
+  if (segundos == null || segundos < 0) return "—";
+  if (segundos < 60) return `${Math.round(segundos)} s`;
+  const min = Math.round(segundos / 60);
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")} min`;
+}
+
+export type PreguntaRepasoInforme = { id: string; texto: string | null; bien: boolean };
+export type LeccionInforme = {
+  n: number;
+  id: string;
+  titulo: string;
+  /** La primera vez que la abrió y cuándo la terminó. */
+  abierta: string | null;
+  completada: string | null;
+  /** Segundos de lectura medidos (se miden desde el 21-nov-2026; antes, 0). */
+  segundos: number;
+  videoSeg: number;
+  /** Las preguntas de repaso de la lección: si la acertó la primera vez. */
+  repaso: { bien: number; total: number; preguntas: PreguntaRepasoInforme[] };
+  /** Lo que escribió al terminarla (solo la Administración). */
+  reflexion: string | null;
+};
+/** Cada pregunta de un intento: si la acertó, cuánto tardó y (solo la Administración) qué decía y qué respondió. */
+export type PreguntaExamenInforme = {
+  id: string;
+  leccion: number | null;
+  bien: boolean;
+  tarde: boolean;
+  seg: number | null;
+  texto: string | null;
+  elegida: string | null;
+  correcta: string | null;
+  explica: string | null;
+};
+export type IntentoInforme = {
+  clave: string;
+  titulo: string;
+  tipo: TipoIntento;
+  intento: number;
+  nota: number;
+  aciertos: number;
+  de: number;
+  fecha: string;
+  /** Cuánto tardó en todo el intento (los intentos de antes del 21-nov-2026 no lo tienen). */
+  segundos: number | null;
+  aprobado: boolean;
+  preguntas: PreguntaExamenInforme[];
+};
+export type EscritaInforme = { id: number; examen: string; pregunta: string; respuesta: string; notaAuto: number; notaFinal: number | null; motivo: string | null; marcada: boolean; revisada: string | null; fecha: string };
+export type InformeMateria = {
+  materia: { id: string; titulo: string; grupo: string; lecciones: number };
+  estado: "aprobada" | "en-curso" | "sin-inscribir";
+  nota: number | null;
+  inicio: string | null;
+  aprobada: string | null;
+  componentes: ComponenteNota[];
+  lecciones: LeccionInforme[];
+  intentos: IntentoInforme[];
+  /** Sus respuestas escritas (solo la Administración). */
+  escritas: EscritaInforme[] | null;
+  versiculo: { ref: string; intentos: number; fallos: number; puntaje: number | null; aprendido: string | null; dominado: string | null } | null;
+  repasoDia: { total: number; dominadas: number; aciertos: number; fallos: number };
+  /** La suma del tiempo de lectura de sus lecciones y del tiempo en sus exámenes (segundos). */
+  tiempo: { lectura: number; examenes: number };
+  /** Si se ven los textos de las preguntas, sus respuestas y sus reflexiones (la Administración). */
+  completo: boolean;
+};

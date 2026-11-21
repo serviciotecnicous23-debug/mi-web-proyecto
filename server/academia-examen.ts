@@ -37,7 +37,8 @@ import { emitirMateria } from "./academia-documentos";
 
 export { elegirFinal } from "./academia-eleccion";
 
-type RespuestaA = { id: string; opcion: number; bien: boolean; tarde: boolean };
+/** `seg`: cuántos segundos tardó en responderla (el informe del alumno en el panel). */
+type RespuestaA = { id: string; opcion: number; bien: boolean; tarde: boolean; seg?: number };
 type NotaB = { id: string; nota: number; texto: string; respuestaId: number; correccion: CorreccionVista };
 type Curso = {
   ids: string[];
@@ -51,6 +52,8 @@ type Curso = {
   semilla: number;
   /** El lugar de la buena en cada pregunta (los intentos nuevos: cada 4 preguntas usan las 4 letras). */
   lugares?: number[];
+  /** Cuándo empezó el intento (milisegundos): al cerrarlo se guarda cuánto tardó. */
+  inicio?: number;
 };
 export type FilaPrueba = {
   intentos: number;
@@ -123,6 +126,7 @@ export function leerCurso(v: unknown): Curso | null {
     escritas: lista(c.escritas), e: Number(c.e) || 0, escritaEnviada: c.escritaEnviada === true,
     notasEscritas: Array.isArray(c.notasEscritas) ? c.notasEscritas : [], semilla: Number(c.semilla) || 1,
     lugares: Array.isArray(c.lugares) ? c.lugares.map((x) => Number(x) || 0) : undefined,
+    inicio: Number(c.inicio) || undefined,
   };
 }
 
@@ -260,7 +264,7 @@ async function pasoActual(userId: number, ev: Evaluacion, c: Curso, pasadosInici
     }
     if (c.enviada) {
       if ((pasados ?? 0) > segundosDePregunta(preguntaPorId(c.ids[c.i])!, medida) + MARGEN_SEGUNDOS) {
-        c.respuestas.push({ id: c.ids[c.i], opcion: -1, bien: false, tarde: true });
+        c.respuestas.push({ id: c.ids[c.i], opcion: -1, bien: false, tarde: true, seg: Math.round(pasados ?? 0) });
         c.i += 1;
         c.enviada = false;
         pasados = null;
@@ -332,9 +336,14 @@ async function cerrarIntento(userId: number, ev: Evaluacion, c: Curso): Promise<
   // el registro del intento: sus partes y su nota (si la Dirección académica cambia una escrita, se recalcula con esto)
   const numero = Number(f.intentos || 1);
   await pool.query(
-    `INSERT INTO academia_intentos (user_id, clave, intento, objetiva, escrita, nota, nota_auto, aciertos, de, respuestas)
-     VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9::jsonb) ON CONFLICT (user_id, clave, intento) DO NOTHING`,
-    [userId, clave, numero, objetiva, escrita, nota, aciertos, de, JSON.stringify(c.respuestas.map((r, lugar) => ({ id: r.id, bien: r.bien, tarde: r.tarde, elegida: elegidaDe(r, c, lugar) })))],
+    `INSERT INTO academia_intentos (user_id, clave, intento, objetiva, escrita, nota, nota_auto, aciertos, de, respuestas, segundos)
+     VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9::jsonb, $10) ON CONFLICT (user_id, clave, intento) DO NOTHING`,
+    [
+      userId, clave, numero, objetiva, escrita, nota, aciertos, de,
+      JSON.stringify(c.respuestas.map((r, lugar) => ({ id: r.id, bien: r.bien, tarde: r.tarde, elegida: elegidaDe(r, c, lugar), seg: r.seg }))),
+      // cuánto tardó (si el intento guardó cuándo empezó; los de antes no lo tienen), con un tope de un día
+      c.inicio ? Math.min(86_400, Math.max(0, Math.round((Date.now() - c.inicio) / 1000))) : null,
+    ],
   );
   let vistas = new Set([...lista(f.vistas), ...c.ids, ...c.escritas]);
   const retiradas = await preguntasRetiradas();
@@ -514,6 +523,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolverBase: Reso
           escritaEnviada: false,
           notasEscritas: [],
           semilla,
+          inicio: Date.now(),
         };
         await pool.query(
           `UPDATE academia_pruebas SET intentos = intentos + 1, curso = $3::jsonb, curso_at = NULL, resultado = NULL, updated_at = now() WHERE user_id = $1 AND clave = $2`,
@@ -572,7 +582,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolverBase: Reso
         const opciones = opcionesDe(p, c, c.i);
         if (opcion >= opciones.length) return { error: 400, message: "Respuesta no válida." };
         const tarde = Number(f.pasados_curso ?? 0) > segundosDePregunta(p, ev.medida) + MARGEN_SEGUNDOS;
-        c.respuestas.push({ id: p.id, opcion, bien: !tarde && opcion >= 0 && opciones[opcion] === p.correcta, tarde });
+        c.respuestas.push({ id: p.id, opcion, bien: !tarde && opcion >= 0 && opciones[opcion] === p.correcta, tarde, seg: Math.round(Number(f.pasados_curso ?? 0)) });
         c.i += 1;
         c.enviada = false;
         await guardarCurso(a.userId, ev.clave, c, "parar");

@@ -95,3 +95,12 @@ test("los aciertos agrupados, el porcentaje y el tipo de examen por su clave", (
   assert.equal(tipoDeClave("especialidad-alabanza:trabajo"), "trabajo");
   assert.equal(tipoDeClave("raro"), "otro");
 });
+
+test("las duraciones en palabras cortas", async () => {
+  const { duracion } = await import("./academia-perfil");
+  assert.equal(duracion(null), "—");
+  assert.equal(duracion(45), "45 s");
+  assert.equal(duracion(60), "1 min");
+  assert.equal(duracion(18 * 60 + 20), "18 min");
+  assert.equal(duracion(65 * 60), "1 h 05 min");
+});

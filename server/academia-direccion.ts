@@ -232,8 +232,9 @@ async function actividadDe(ids: number[], limite = 60): Promise<ActividadItem[]>
 /** El detalle de un alumno: su ficha (con permiso), su avance, sus niveles, sus certificados y su actividad. */
 async function detalleDe(fila: AlumnoFila, contacto: boolean): Promise<AlumnoDetalle> {
   const id = fila.userId;
-  const [avances, { rows: nv }, { rows: cs }, actividad, ficha] = await Promise.all([
-    avancesPorAlumno([id]),
+  // primero el avance (cinco consultas juntas) y después lo demás: así la ficha no ocupa muchas conexiones a la vez
+  const avances = await avancesPorAlumno([id]);
+  const [{ rows: nv }, { rows: cs }, actividad, ficha] = await Promise.all([
     pool.query(`SELECT nivel, pacto_at, completado_at, promedio FROM academia_niveles WHERE user_id = $1 ORDER BY nivel`, [id]),
     pool.query(`SELECT codigo, tipo, ref, titulo, nombre, nota, honores, via, emitido_at, revocado_at, motivo FROM academia_certificados WHERE user_id = $1 ORDER BY emitido_at`, [id]),
     actividadDe([id], 30),

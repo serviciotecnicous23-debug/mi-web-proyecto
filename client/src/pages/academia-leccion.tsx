@@ -105,6 +105,45 @@ function PreguntaRepaso({ leccionId, p, n, alResponder, alBloquear }: { leccionI
   );
 }
 
+/**
+ * El tiempo de lectura de la lección, para el informe del alumno en el panel: cada cinco segundos con la página a la
+ * vista y algún uso en los últimos dos minutos (desplazar, tocar o escribir) suma; se manda cada minuto y al salir.
+ */
+function useTiempoDeLectura(leccionId: string | undefined, activo: boolean) {
+  useEffect(() => {
+    if (!leccionId || !activo) return;
+    let acumulado = 0;
+    let ultimoUso = Date.now();
+    const usar = () => { ultimoUso = Date.now(); };
+    const enviar = () => {
+      if (acumulado < 5) return;
+      const segundos = Math.round(acumulado);
+      acumulado = 0;
+      void fetch(`/api/academia/leccion/${encodeURIComponent(leccionId)}/tiempo`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ segundos }), credentials: "include", keepalive: true,
+      }).catch(() => undefined);
+    };
+    const reloj = window.setInterval(() => {
+      if (document.visibilityState !== "visible" || Date.now() - ultimoUso > 120_000) return;
+      acumulado += 5;
+      if (acumulado >= 60) enviar();
+    }, 5000);
+    const alOcultar = () => { if (document.visibilityState === "hidden") enviar(); };
+    window.addEventListener("scroll", usar, { passive: true });
+    window.addEventListener("pointerdown", usar);
+    window.addEventListener("keydown", usar);
+    document.addEventListener("visibilitychange", alOcultar);
+    return () => {
+      window.clearInterval(reloj);
+      window.removeEventListener("scroll", usar);
+      window.removeEventListener("pointerdown", usar);
+      window.removeEventListener("keydown", usar);
+      document.removeEventListener("visibilitychange", alOcultar);
+      enviar();
+    };
+  }, [leccionId, activo]);
+}
+
 export default function AcademiaLeccion() {
   const { leccionId } = useParams<{ leccionId: string }>();
   const [, setLocation] = useLocation();
@@ -121,6 +160,8 @@ export default function AcademiaLeccion() {
   // el cuaderno: lo que el alumno resaltó (pintado en el texto) y el texto donde puede seleccionar
   const texto = useRef<HTMLElement | null>(null);
   const marcas = useMarcasDeLeccion(leccionId, !!q.data?.conSesion);
+  // el tiempo de lectura (solo del alumno inscrito: el que tiene su avance en la lección)
+  useTiempoDeLectura(leccionId, !!q.data?.progreso);
   // el tamaño de la letra de la lectura (A− y A+), recordado en este aparato
   const [tamano, setTamano] = useTamanoLetra();
 

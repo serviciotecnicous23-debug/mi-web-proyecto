@@ -211,6 +211,9 @@ ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "dominado_at" timesta
 ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "abierta_at" timestamp;
 ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_inicio" timestamp;
 ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "video_seg" integer NOT NULL DEFAULT 0;
+-- el informe de cada alumno (docs/academia-panel.md): cuánto tardó en cada examen y cuánto leyó cada lección
+ALTER TABLE "academia_intentos" ADD COLUMN IF NOT EXISTS "segundos" integer;
+ALTER TABLE "academia_lecciones" ADD COLUMN IF NOT EXISTS "segundos" integer NOT NULL DEFAULT 0;
 ALTER TABLE "academia_versiculos" ADD COLUMN IF NOT EXISTS "repasos" integer NOT NULL DEFAULT 0;
 CREATE TABLE IF NOT EXISTS "academia_contenido_aprobaciones" (
   "materia_id" text PRIMARY KEY,
