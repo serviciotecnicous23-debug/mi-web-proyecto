@@ -83,6 +83,10 @@ un buscador que no distingue tildes y filtros por tipo y por nivel que quedan en
 sin cuenta). Tiene enlace en el catálogo, en las herramientas del salón, en la portada y en el apartado «Recursos» de
 cada materia.
 
+**El laboratorio ministerial** (piloto del 21 de noviembre; todo en `docs/academia-laboratorio.md`): prácticas de la vida
+real en la página de algunas materias, antes del examen final. El alumno decide, ve lo que pasa con cada decisión y
+recibe un perfil por competencia, el camino ejemplar y una conversación de cierre. En el piloto no cuenta para la nota.
+
 **La lectura ampliada** (Niveles 4 y 5, `Silabo.ampliada`): un libro de la Biblia o una sección larga, con su enlace a
 la Biblioteca (`enlaceBiblia`: el libro como lo guarda la Biblioteca, sin tildes), o un capítulo de un libro de su
 bibliografía; con los minutos que pide (de 30 a 90) y 3 preguntas guía para un reporte de 150 a 300 palabras. La página

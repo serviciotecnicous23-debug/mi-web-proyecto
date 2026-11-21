@@ -12,6 +12,7 @@ import { ACADEMIA_SQL } from "./academia-comun";
 import { CUADERNO_SQL } from "./cuaderno";
 import { SALON_SQL } from "./academia-salon";
 import { ACTIVIDADES_SQL } from "./academia-actividades-datos";
+import { LABORATORIO_SQL } from "./academia-laboratorio";
 import { BIBLIA_SQL } from "./bible";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
@@ -1107,6 +1108,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(BIBLIA_SQL);
     } catch (err: any) {
       console.log(`  Migration note (salón): ${err?.message}`);
+    }
+    try {
+      // El laboratorio ministerial: los intentos de las prácticas de cada materia
+      await pool.query(LABORATORIO_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (laboratorio): ${err?.message}`);
     }
     // Puntajes de los juegos (una fila por persona y juego).
     try {
