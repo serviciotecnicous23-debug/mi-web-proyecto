@@ -22,7 +22,7 @@ export const ROLES_ACADEMIA: readonly RolDef[] = [
   {
     id: "direccion",
     nombre: "Administración de la academia",
-    quienes: "Solo la Administración de la web: es quien maneja la academia (revisa notas, aprueba el contenido, corrige documentos, elige mentores y la abre).",
+    quienes: "Solo la Administración de la web: es quien maneja la academia (revisa notas y actividades, aprueba el contenido, corrige documentos, elige mentores, sigue el laboratorio y la abre).",
     roles: ["admin"],
   },
   {
@@ -89,20 +89,20 @@ export const CAPACIDADES: readonly CapacidadDef[] = [
   {
     id: "avisos",
     texto: "Recibir un aviso con cada inscripción",
-    detalle: "En la campana de la web: quién se inscribió en la academia o en una materia.",
+    detalle: "En la campana de la web: quién se inscribió en la academia o en una materia. La Administración recibe además las actividades por confirmar, los pedidos de revisión y las observaciones del contenido.",
     alcance: { direccion: "todos", equipo: "no", iglesia: "iglesia", alumno: "no" },
   },
   {
     id: "revisar",
     texto: "Revisar respuestas escritas y cambiar notas",
-    detalle: "Confirmar la nota del corrector o cambiarla, siempre con un motivo que queda registrado y que ve el alumno; responder los pedidos de revisión.",
+    detalle: "Confirmar la nota del corrector o cambiarla, siempre con un motivo que queda registrado y que ve el alumno; responder los pedidos de revisión; confirmar o devolver las actividades de los niveles, evaluar el sermón y el proyecto final y programar su defensa.",
     alcance: SOLO_ADMIN,
   },
   {
     id: "gestionar",
     texto: "Gestionar el expediente de cada alumno",
     detalle:
-      "Ajustar la nota de una parte de una materia (o quitar el ajuste), aprobar por convalidación, quitar una espera o dar un intento más, marcar lecciones, inscribir o dar de baja de una materia, retirar o reactivar, dar tiempo extra en los exámenes y escribirle; siempre con un motivo que queda en el historial y que ve el alumno.",
+      "Ajustar la nota de una parte de una materia (o quitar el ajuste), aprobar por convalidación, quitar una espera o dar un intento más, marcar lecciones, inscribir o dar de baja de una materia, retirar o reactivar, dar tiempo extra en los exámenes y escribirle, siempre con un motivo que queda en el historial y que ve el alumno; y llevar su bitácora de seguimiento (el alumno no la ve).",
     alcance: SOLO_ADMIN,
   },
   {

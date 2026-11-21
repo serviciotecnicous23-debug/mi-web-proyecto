@@ -48,10 +48,17 @@ guarda; las reglas están en `shared/academia-perfil.ts`, con sus pruebas. Tiene
   - el avance por nivel y por especialidad;
   - el calendario de estudio de las últimas 12 semanas;
   - los minutos y las lecciones de cada semana, con su meta.
-- **Materias y notas:**
-  - por dónde va en cada materia, con «Gestionar» para la Administración;
-  - las partes de cada nota con su peso;
-  - cada intento de examen, con sus aciertos y su fecha.
+- **Informe por materia:** cada materia en que se inscribió (se abre la que viene en `?materia=<id>`, desde la página de
+  una materia o desde el informe del laboratorio; si no, la primera en curso):
+  - por dónde va, con «Gestionar» para la Administración;
+  - las partes de la nota con su peso;
+  - lo que hizo en cada lección y cada intento de examen, con sus aciertos, su fecha y cuánto tardó;
+  - sus respuestas escritas (solo la Administración);
+  - sus prácticas del laboratorio ministerial: los intentos, el primero, el mejor con su nivel, las acciones críticas y lo
+    que se llevó (solo la Administración, sin los intentos de prueba).
+
+  En el resumen, «Su avance por nivel» dice qué le falta a un nivel con todas sus materias aprobadas (el examen integral,
+  que se aprueba con 75) y a una especialidad con sus cinco materias (el trabajo final).
 - **Aprendizaje:**
   - el acierto por tipo de pregunta, de recordar a analizar;
   - las lecciones que más le cuestan y las que mejor domina;
@@ -101,6 +108,36 @@ La sección **Laboratorio** del panel, solo para la Administración, es el infor
 ministerial: cómo les va a los alumnos en cada práctica (el primer intento y el mejor, los niveles, dónde se
 equivocan, las acciones críticas más elegidas y lo que se llevan) y los últimos intentos. Todo en
 `docs/academia-laboratorio.md`.
+
+## La integración de la administración (21-nov)
+
+Una revisión de todo el panel buscó lo que quedó suelto después de los últimos cambios. Lo que se conectó:
+
+**El panel general (`/admin`):**
+- **Alianzas** (en Personas) y **Fichas** (en Cursos): las solicitudes de alianza de las iglesias y las fichas
+  ministeriales no tenían pantalla. Ahora se ven, se aprueban o se rechazan (con confirmación), y cada solicitud nueva
+  avisa a la Administración en la campana. Una ficha sin aprobar solo la ven su dueño y la Administración.
+- «Lo que te toca» cuenta también las alianzas, las fichas y lo que espera en la academia, con un toque que lleva a sus
+  Pendientes. La tarjeta de la academia muestra cuántas cosas esperan.
+- Borrar en Denuncias y en la Biblioteca de la radio pide confirmación, como el resto del panel.
+
+**El panel de la academia:**
+- El informe de cada materia del alumno trae sus prácticas del laboratorio, y «Los últimos intentos» del informe del
+  laboratorio abren esa materia en su perfil.
+- «Descargar» trae también los intentos del laboratorio en Excel (CSV), y el informe del laboratorio tiene su enlace.
+- La revisión del contenido de una materia con prácticas tiene la pestaña **Laboratorio**: cada práctica con todo su
+  texto, lo que vale cada opción, las acciones críticas y el orden de quien sabe, con «Probarla como alumno» y una caja
+  para dejar una observación. Las prácticas entran en la huella de la aprobación doctrinal: por eso las tres materias
+  del piloto (Consejería básica, Homilética I y Protección de menores), si ya estaban aprobadas, piden aprobarse otra vez; y si una práctica
+  cambia, la aprobación deja de estar vigente. Las demás materias no cambian.
+- «Necesitan ayuda» cuenta a todos (la lista muestra a los 40 más urgentes).
+- Una defensa del proyecto programada para más adelante ya no cuenta como pendiente hasta su día (en Texas).
+- Los avisos de la campana bajan a la parte exacta de Pendientes (`&ir=actividades-por-confirmar` o
+  `&ir=pendientes-apelaciones`).
+- En la página de una materia, el nombre de cada alumno abre el informe de esa materia, y el CSV trae solo su avance.
+- En el perfil, el examen integral sale aprobado desde 75 (antes lo marcaba desde 70) y la suficiencia con sus dos
+  partes (85 la objetiva y 75 la escrita).
+- Se pusieron al día los textos de los permisos, del historial y de esta guía.
 
 ## El resto del panel general (parte 4)
 

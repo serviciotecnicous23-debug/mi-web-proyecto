@@ -95,7 +95,7 @@ export function Cifras({ d, irA }: { d: DireccionResumen; irA: IrA }) {
     <div className="grid gap-3 grid-cols-2 lg:grid-cols-4" data-testid="direccion-indicadores">
       <Indicador etiqueta="Alumnos" valor={t.inscritos} nota={`${numero(t.nuevosSemana)} nuevos esta semana`} alPulsar={() => irA("alumnos", { alumnos: { orden: "recientes" } })} ayuda="Ver la lista de los alumnos" testId="indicador-inscritos" />
       <Indicador etiqueta="Activos" valor={d.estatus.activo} nota={`${numero(d.estatus.pausa)} en pausa · ${numero(d.estatus.aspirante)} sin empezar`} alPulsar={() => irA("alumnos", { alumnos: { estatus: "activo" } })} ayuda="Ver solo a los alumnos activos" testId="indicador-activos" />
-      <Indicador etiqueta="Necesitan ayuda" valor={d.ayuda.length} nota={d.ayuda.length ? "con alertas para mirar" : "nadie, por ahora"} alPulsar={() => irA("alumnos", { alumnos: { conAlertas: true } })} ayuda="Ver a los alumnos con alertas" testId="indicador-ayuda" />
+      <Indicador etiqueta="Necesitan ayuda" valor={d.ayudaTotal ?? d.ayuda.length} nota={d.ayuda.length ? "con alertas para mirar" : "nadie, por ahora"} alPulsar={() => irA("alumnos", { alumnos: { conAlertas: true } })} ayuda="Ver a los alumnos con alertas" testId="indicador-ayuda" />
       <Indicador etiqueta="Materias aprobadas" valor={t.aprobadas} nota={t.promedio != null ? `promedio ${t.promedio} · ${numero(t.lecciones)} lecciones` : `${numero(t.lecciones)} lecciones completadas`} alPulsar={() => irA("materias", { materias: "alumnos" })} ayuda="Ver las materias con sus alumnos" testId="indicador-aprobadas" />
     </div>
   );
@@ -107,7 +107,7 @@ export function NecesitanAyuda({ d, irA, enlaceAlumno }: { d: DireccionResumen; 
   return (
     <section className="space-y-2" data-testid="direccion-ayuda">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-bold">Necesitan ayuda ({numero(d.ayuda.length)})</h2>
+        <h2 className="font-display text-xl font-bold">Necesitan ayuda ({numero(d.ayudaTotal ?? d.ayuda.length)})</h2>
         {d.ayuda.length > 5 && <button type="button" className="text-sm font-medium underline" onClick={() => irA("alumnos", { alumnos: { conAlertas: true } })}>Ver todos</button>}
       </div>
       <ul className="space-y-2">

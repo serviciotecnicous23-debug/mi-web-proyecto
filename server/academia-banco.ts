@@ -8,12 +8,16 @@ import { createHash } from "node:crypto";
 import { examenDe, materiaPorId, type MateriaDef } from "@shared/academia";
 import { DECLARACION_FE } from "@shared/academia-declaracion";
 import { BANCOS, CONTENIDO, materiaDe } from "./academia/index";
+import { practicasDeMateria } from "./academia/laboratorio/index";
 
 /** La huella de todo lo que se revisa de una materia: su ficha, sus lecciones y su banco (sin «disponible»). */
 export function calcularHuella(m: MateriaDef): string {
   const { disponible: _disponible, ...ficha } = m;
   const lecciones = m.lecciones.map((l) => CONTENIDO.get(l.id) ?? null);
-  return createHash("sha256").update(JSON.stringify({ ficha, lecciones, banco: BANCOS.get(m.id) ?? null })).digest("hex").slice(0, 32);
+  // las prácticas del laboratorio también se aprueban: si cambian, la aprobación deja de estar vigente
+  const practicas = practicasDeMateria(m.id);
+  const laboratorio = practicas.length ? { laboratorio: practicas } : {};
+  return createHash("sha256").update(JSON.stringify({ ficha, lecciones, banco: BANCOS.get(m.id) ?? null, ...laboratorio })).digest("hex").slice(0, 32);
 }
 
 /** La huella de la declaración de fe: si su texto cambia, la aprobación deja de estar vigente. */

@@ -13,7 +13,9 @@
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
-import { APRUEBA, ESPECIALIDADES, NIVELES, NOMBRE_COMPONENTE, leccionPorId, materiaPorId, pesosDe, type Bloom, type MateriaDef } from "@shared/academia";
+import {
+  APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, NIVELES, NOMBRE_COMPONENTE, apruebaSuficiencia, leccionPorId, materiaPorId, pesosDe, type Bloom, type MateriaDef,
+} from "@shared/academia";
 import { alcanceDe, type Capacidad } from "@shared/academia-permisos";
 import { ACTIVIDADES_NIVEL, requisitosDeActividades } from "@shared/academia-actividades";
 import {
@@ -22,8 +24,10 @@ import {
   type PerfilAlumno, type PreguntaDificil, type TipoSeguimiento,
 } from "@shared/academia-perfil";
 import { BANCOS } from "./academia/index";
+import { practicasDeMateria } from "./academia/laboratorio/index";
+import { nivelDe } from "@shared/laboratorio";
 import { CASOS } from "./academia/casos";
-import { claveFinal, componentesDe, diaTexas, frenar } from "./academia-comun";
+import { claveFinal, claveIntegral, claveTrabajo, componentesDe, diaTexas, frenar } from "./academia-comun";
 import { avancesPorAlumno, filasDe, permisoDe } from "./academia-direccion";
 import { resumenDe } from "./academia-actividades-datos";
 import { registrar } from "./academia-revision";
@@ -63,6 +67,15 @@ function indicePreguntas(): Map<string, InfoPregunta> {
   return m;
 }
 
+/** Si un intento aprobó: el integral pide 75; la suficiencia, 85 en la objetiva y 75 en la escrita; lo demás, 70. */
+function aproboIntento(clave: string, r: { nota: unknown; objetiva?: unknown; escrita?: unknown }): boolean {
+  const tipo = tipoDeClave(clave);
+  const nota = Number(r.nota);
+  if (tipo === "integral") return nota >= APRUEBA_INTEGRAL;
+  if (tipo === "suficiencia" && r.objetiva != null && r.escrita != null) return apruebaSuficiencia(Number(r.objetiva), Number(r.escrita));
+  return nota >= APRUEBA;
+}
+
 /** El título de un examen por su clave. */
 function tituloExamen(clave: string): string {
   const [ref] = clave.split(":");
@@ -95,7 +108,7 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
   const est = await uno(`SELECT dia, minutos, sesiones FROM academia_estudio WHERE user_id = $1 ORDER BY dia`);
   const meta = await uno(`SELECT minutos_semana FROM academia_estudio_meta WHERE user_id = $1`);
   const lec = await uno(`SELECT leccion_id, vista_at, abierta_at, completada_at, repaso, reflexion, video_seg FROM academia_lecciones WHERE user_id = $1`);
-  const ints = await uno(`SELECT clave, intento, nota, aciertos, de, respuestas, cerrado_at FROM academia_intentos WHERE user_id = $1 ORDER BY cerrado_at DESC`);
+  const ints = await uno(`SELECT clave, intento, nota, objetiva, escrita, aciertos, de, respuestas, cerrado_at FROM academia_intentos WHERE user_id = $1 ORDER BY cerrado_at DESC`);
   const rep = await uno(`SELECT pregunta_id, aciertos, fallos, proximo_at, dominada_at FROM academia_repaso_preguntas WHERE user_id = $1`);
   const ver = await uno(`SELECT materia_id, aprendido_at, dominado_at FROM academia_versiculos WHERE user_id = $1`);
   const cua = await uno(
@@ -159,6 +172,13 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
   // ---- los niveles y las especialidades
   const nivelActual = NIVELES.find((n) => n.n === Number(a?.nivel ?? 1)) ?? null;
   const porNivel = new Map((niv as any[]).map((r) => [Number(r.nivel), r]));
+  // el mejor intento del integral de cada nivel y del trabajo final de cada especialidad (lo que falta para cerrarlos)
+  const cierreDe = (clave: string, aprueba: number) => {
+    const suyos = (ints as any[]).filter((r) => r.clave === clave);
+    if (!suyos.length) return null;
+    const mejor = Math.max(...suyos.map((r) => Number(r.nota)));
+    return { mejor, intentos: suyos.length, aprobado: mejor >= aprueba };
+  };
   const niveles: NivelAvance[] = NIVELES.map((n) => {
     const r = porNivel.get(n.n);
     return {
@@ -170,13 +190,17 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
       completado: r?.completado_at ? iso(r.completado_at) : null,
       promedio: r?.promedio == null ? null : Number(r.promedio),
       actual: nivelActual?.n === n.n,
+      integral: cierreDe(claveIntegral(n.n), APRUEBA_INTEGRAL),
     };
   });
   const certEsp = new Map((certs as any[]).map((r) => [String(r.ref), iso(r.emitido_at)]));
   const especialidades: EspecialidadAvance[] = ESPECIALIDADES.flatMap((e) => {
     const suyas = materias.filter((m) => e.materias.some((x) => x.id === m.id));
     if (!suyas.length && !certEsp.has(e.id)) return [];
-    return [{ id: e.id, nombre: e.nombre, aprobadas: suyas.filter((m) => m.estado === "aprobada").length, enCurso: suyas.filter((m) => m.estado !== "aprobada").length, de: e.materias.length, completada: certEsp.get(e.id) ?? null }];
+    return [{
+      id: e.id, nombre: e.nombre, aprobadas: suyas.filter((m) => m.estado === "aprobada").length, enCurso: suyas.filter((m) => m.estado !== "aprobada").length,
+      de: e.materias.length, completada: certEsp.get(e.id) ?? null, trabajo: cierreDe(claveTrabajo(e.id), APRUEBA),
+    }];
   });
   const delPrograma = NIVELES.flatMap((n) => n.materias);
   const aprobadasPrograma = delPrograma.filter((m) => aprobadas.some((x) => x.id === m.id)).length;
@@ -193,7 +217,7 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
       aciertos: Number(r.aciertos),
       de: Number(r.de),
       fecha: iso(r.cerrado_at),
-      aprobado: nota >= APRUEBA,
+      aprobado: aproboIntento(String(r.clave), r),
     };
   });
 
@@ -411,7 +435,7 @@ export async function informeDe(p: Permiso, id: number, materiaId: string): Prom
     [id, m.lecciones.map((l) => l.id)],
   );
   const ints = await uno(
-    `SELECT clave, intento, nota, aciertos, de, respuestas, cerrado_at, segundos FROM academia_intentos WHERE user_id = $1 AND clave LIKE $2 ORDER BY cerrado_at DESC`,
+    `SELECT clave, intento, nota, objetiva, escrita, aciertos, de, respuestas, cerrado_at, segundos FROM academia_intentos WHERE user_id = $1 AND clave LIKE $2 ORDER BY cerrado_at DESC`,
     [id, `${m.id}:%`],
   );
   const [ver] = await uno(`SELECT ref, intentos, fallos, puntaje, aprendido_at, dominado_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [id, m.id]);
@@ -427,6 +451,35 @@ export async function informeDe(p: Permiso, id: number, materiaId: string): Prom
       )
     : null;
   const comps: Record<string, number | undefined> = mat ? await componentesDe(id, m) : {};
+  // el laboratorio ministerial: sus prácticas en esta materia (solo la Administración, sin los intentos de prueba)
+  const practicas = puede(p, "laboratorio") ? practicasDeMateria(m.id) : [];
+  const labFilas = practicas.length
+    ? await uno(
+        `SELECT practica_id, intento, cuenta, estado, nota, criticas, cierre, terminado_at FROM academia_laboratorio WHERE user_id = $1 AND materia_id = $2 AND NOT prueba ORDER BY intento`,
+        [id, m.id],
+      )
+    : [];
+  const laboratorio = practicas.length
+    ? practicas.map((pr) => {
+        const mias = labFilas.filter((f) => f.practica_id === pr.id);
+        const hechas = mias.filter((f) => f.estado === "terminado" && f.nota != null);
+        const cuentan = hechas.filter((f) => f.cuenta);
+        const mejor = cuentan.length ? Math.max(...cuentan.map((f) => Number(f.nota))) : null;
+        const ultima = hechas[hechas.length - 1];
+        return {
+          id: pr.id,
+          titulo: pr.titulo,
+          intentos: mias.length,
+          terminados: hechas.length,
+          primero: cuentan.length ? Number(cuentan[0].nota) : null,
+          mejor,
+          nivel: mejor != null ? nivelDe(mejor) : null,
+          criticas: hechas.reduce((s, f) => s + Number(f.criticas ?? 0), 0),
+          ultimo: ultima?.terminado_at ? iso(ultima.terminado_at) : null,
+          llevo: [...hechas].reverse().find((f) => f.cierre?.llevo)?.cierre?.llevo ?? null,
+        };
+      })
+    : null;
   const pesos = pesosDe(m);
   const idx = indicePreguntas();
   const objetivas = new Map([...(banco?.final ?? []), ...Object.values(banco?.mini ?? {}).flat(), ...(CASOS[m.id] ?? [])].map((q) => [q.id, q]));
@@ -476,7 +529,7 @@ export async function informeDe(p: Permiso, id: number, materiaId: string): Prom
       de: Number(r.de),
       fecha: iso(r.cerrado_at),
       segundos: r.segundos == null ? null : Number(r.segundos),
-      aprobado: nota >= APRUEBA,
+      aprobado: aproboIntento(String(r.clave), r),
       preguntas,
     };
   });
@@ -519,6 +572,7 @@ export async function informeDe(p: Permiso, id: number, materiaId: string): Prom
     repasoDia: { total: Number(rep?.total ?? 0), dominadas: Number(rep?.dominadas ?? 0), aciertos: Number(rep?.aciertos ?? 0), fallos: Number(rep?.fallos ?? 0) },
     tiempo: { lectura: lecciones.reduce((s, l) => s + l.segundos, 0), examenes: intentos.reduce((s, x) => s + (x.segundos ?? 0), 0) },
     completo: admin,
+    laboratorio,
   };
 }
 

@@ -1,7 +1,7 @@
 // El informe del laboratorio ministerial en el panel de la academia (server/academia-laboratorio-informe.ts): cómo les
 // va a los alumnos en cada práctica, para seguir el piloto. Solo la Administración. No cuenta los intentos de prueba.
 import { Link } from "wouter";
-import { AlertTriangle, ArrowRight, ChevronRight, FlaskConical, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, ChevronRight, Download, FlaskConical, Loader2 } from "lucide-react";
 import { LABORATORIO, NOMBRE_FORMATO, type InformeLaboratorio as Informe, type InformePractica, type NivelCompetencia } from "@shared/laboratorio";
 import { useInformeLaboratorio } from "./laboratorio-api";
 import { Indicador, Medidor, hace, numero } from "./seguimiento";
@@ -21,6 +21,8 @@ const CHIP: Record<NivelCompetencia, string> = {
   Inicial: "bg-red-500/10 text-red-800 dark:text-red-200",
 };
 const cifra = (x: number | null, unidad = "") => (x == null ? "—" : `${numero(x)}${unidad}`);
+/** Todos los intentos en CSV (server/academia-laboratorio-informe.ts, RUTA_CSV_LABORATORIO). */
+export const CSV_LABORATORIO = "/api/academia/direccion/laboratorio/exportar";
 
 /** Cuántos alumnos quedaron en cada nivel con su mejor intento: una barra con cuatro tramos y su leyenda. */
 function Niveles({ n }: { n: Record<NivelCompetencia, number> }) {
@@ -152,7 +154,7 @@ function Ultimos({ d, enlaceAlumno }: { d: Informe; enlaceAlumno: (id: number) =
         <ul className="mt-2 space-y-2">
           {d.ultimos.map((u) => (
             <li key={u.id}>
-              <Link href={enlaceAlumno(u.alumno.id)} className="glass-card p-3 flex items-center gap-3 border border-transparent hover:border-orange-500/50 transition">
+              <Link href={`${enlaceAlumno(u.alumno.id)}?tab=informe&materia=${encodeURIComponent(u.materiaId)}`} className="glass-card p-3 flex items-center gap-3 border border-transparent hover:border-orange-500/50 transition">
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold truncate">{u.alumno.nombre}</span>
                   <span className="block text-xs text-muted-foreground truncate">{u.practica} · {hace(u.cuando)}{u.cuenta ? "" : " · práctica libre"}</span>
@@ -195,6 +197,11 @@ export function InformeLaboratorio({ enlaceAlumno }: { enlaceAlumno: (id: number
         <p className="text-sm text-muted-foreground mt-1">
           Cómo les va a los alumnos en las prácticas.{LABORATORIO.cuentaParaLaNota ? "" : " Es un piloto: todavía no cuenta para la nota."} No incluye tus intentos de prueba.
         </p>
+        {t.terminados > 0 && (
+          <a href={CSV_LABORATORIO} download className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline" data-testid="informe-descargar">
+            <Download className="w-4 h-4" aria-hidden="true" /> Descargar todos los intentos (Excel)
+          </a>
+        )}
       </div>
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4" data-testid="informe-cifras">
         <Indicador etiqueta="Alumnos que practicaron" valor={t.alumnos} />

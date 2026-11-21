@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import type { Confirmacion } from "./panel-general";
 import { useAdminRadioLibrary, useDeleteRadioTrack, useUploadRadioTracks } from "@/hooks/use-radio";
 import type { RadioCategoryId, RadioLibraryTrack } from "@shared/radio";
 
@@ -18,7 +19,7 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
-export function RadioLibraryAdmin() {
+export function RadioLibraryAdmin({ confirmar }: { confirmar?: (c: Confirmacion) => void } = {}) {
   const { data, isLoading } = useAdminRadioLibrary();
   const uploadTracks = useUploadRadioTracks();
   const deleteTrack = useDeleteRadioTrack();
@@ -196,8 +197,12 @@ export function RadioLibraryAdmin() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => void handleDelete(track)}
+                          onClick={() => {
+                            if (!confirmar) return void handleDelete(track);
+                            confirmar({ titulo: `¿Borrar el audio «${track.title}»?`, detalle: "Se quita de la biblioteca de la radio. No se puede deshacer.", boton: "Borrar el audio", accion: () => void handleDelete(track) });
+                          }}
                           disabled={deleteTrack.isPending}
+                          aria-label={`Borrar el audio «${track.title}»`}
                           data-testid={`button-delete-radio-${track.category}-${track.fileName}`}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />

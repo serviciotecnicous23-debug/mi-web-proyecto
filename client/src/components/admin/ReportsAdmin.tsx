@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import type { Confirmacion } from "./panel-general";
 import { MOTIVOS_DE_DENUNCIA, NOMBRE_DEL_TIPO, type MotivoDeDenuncia, type TipoDenunciable } from "@shared/reports";
 
 type Denuncia = {
@@ -69,7 +70,7 @@ export function usePendingReportsCount(enabled: boolean): number {
   return useMemo(() => agrupar(data || []).filter((g) => g.pendiente).length, [data]);
 }
 
-export function ReportsAdmin() {
+export function ReportsAdmin({ confirmar }: { confirmar?: (c: Confirmacion) => void } = {}) {
   const { data, isLoading } = useQuery<Denuncia[]>({ queryKey: CLAVE_LISTA });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -141,7 +142,12 @@ export function ReportsAdmin() {
                   variant="destructive"
                   size="sm"
                   disabled={resolver.isPending}
-                  onClick={() => resolver.mutate({ grupo: g, accion: "borrar" })}
+                  onClick={() => {
+                    const hacer = () => resolver.mutate({ grupo: g, accion: "borrar" });
+                    const texto = d.contentType === "jugador" ? "sacarlo de la ciudad" : d.contentType === "mensaje" ? "borrar el mensaje" : "eliminar el contenido";
+                    if (!confirmar) return hacer();
+                    confirmar({ titulo: `¿Seguro que quieres ${texto}?`, detalle: "No se puede deshacer.", boton: texto.charAt(0).toUpperCase() + texto.slice(1), accion: hacer });
+                  }}
                   data-testid={`button-report-borrar-${g.clave}`}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> {d.contentType === "jugador" ? "Sacarlo de la ciudad" : d.contentType === "mensaje" ? "Borrar el mensaje" : "Eliminar el contenido"}
@@ -152,7 +158,11 @@ export function ReportsAdmin() {
                   variant="destructive"
                   size="sm"
                   disabled={resolver.isPending}
-                  onClick={() => resolver.mutate({ grupo: g, accion: "sacar" })}
+                  onClick={() => {
+                    const hacer = () => resolver.mutate({ grupo: g, accion: "sacar" });
+                    if (!confirmar) return hacer();
+                    confirmar({ titulo: "¿Borrar el mensaje y sacar al autor de la ciudad?", detalle: "No se puede deshacer.", boton: "Borrar y sacar", accion: hacer });
+                  }}
                   data-testid={`button-report-sacar-${g.clave}`}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Borrarlo y sacar al autor de la ciudad

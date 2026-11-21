@@ -225,6 +225,7 @@ export type InformeLaboratorio = {
     id: number;
     alumno: { id: number; nombre: string };
     practica: string;
+    materiaId: string;
     nota: number | null;
     nivel: NivelCompetencia | null;
     criticas: number;

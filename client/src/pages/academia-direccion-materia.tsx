@@ -50,7 +50,7 @@ export default function AcademiaDireccionMateria() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/academia/materia/${m.id}`}><Button variant="outline" size="sm">Ver la materia</Button></Link>
-            {puede.exportar && <a href={enlaceReporte("avance.csv")} download><Button variant="outline" size="sm"><Download className="w-4 h-4 mr-1.5" /> Avance por materia</Button></a>}
+            {puede.exportar && <a href={`${enlaceReporte("avance.csv")}?materia=${encodeURIComponent(m.id)}`} download><Button variant="outline" size="sm"><Download className="w-4 h-4 mr-1.5" /> El avance en esta materia</Button></a>}
           </div>
         </header>
 
@@ -87,7 +87,7 @@ export default function AcademiaDireccionMateria() {
         <ul className="space-y-2 md:hidden" data-testid="tarjetas-materia-alumnos">
           {alumnos.map((a) => (
             <li key={a.userId}>
-              <Link href={`${area.base}/alumno/${a.userId}?tab=informe`} className="block glass-card p-4 border border-transparent hover:border-orange-500/50 transition">
+              <Link href={`${area.base}/alumno/${a.userId}?tab=informe&materia=${encodeURIComponent(m.id)}`} className="block glass-card p-4 border border-transparent hover:border-orange-500/50 transition">
                 <span className="flex items-start justify-between gap-2">
                   <span className="min-w-0">
                     <span className="block font-semibold leading-snug">{a.nombre}</span>
@@ -123,7 +123,7 @@ export default function AcademiaDireccionMateria() {
               {alumnos.map((a) => (
                 <tr key={a.userId} className="border-b border-border/60 last:border-0 align-top">
                   <td className="py-2.5 px-4">
-                    <Link href={`${area.base}/alumno/${a.userId}?tab=informe`} className="font-medium hover:underline">{a.nombre}</Link>
+                    <Link href={`${area.base}/alumno/${a.userId}?tab=informe&materia=${encodeURIComponent(m.id)}`} className="font-medium hover:underline">{a.nombre}</Link>
                     <span className="block text-xs text-muted-foreground">{[a.matricula, a.iglesia].filter(Boolean).join(" · ")}</span>
                     <span className="block mt-1"><ChipEstatus e={a.estatus} /></span>
                   </td>

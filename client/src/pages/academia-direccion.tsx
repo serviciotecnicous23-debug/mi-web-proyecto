@@ -1,10 +1,10 @@
-// El panel de la academia (server/academia-direccion.ts; docs/academia-panel.md). Cinco secciones, pensadas primero para
+// El panel de la academia (server/academia-direccion.ts; docs/academia-panel.md). Siete secciones, pensadas primero para
 // el teléfono: Inicio (lo que te toca, las cifras, quiénes necesitan ayuda y las tendencias), Pendientes (aprobar y
 // revisar), Alumnos, Materias (su seguimiento y su revisión doctrinal, con «Aprobar» en cada una), Laboratorio (el informe
 // del laboratorio ministerial, solo la Administración) e Historial. Cada rol
 // ve lo que le toca (shared/academia-permisos.ts): solo el administrador administra; el equipo del ministerio y las
 // iglesias aliadas solo consultan (las iglesias, a los alumnos de su iglesia).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,7 +30,7 @@ import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, ListaActividad, Medidor, fecha, hace, numero } from "@/components/academia/seguimiento";
 import { ActividadYDatos, Cifras, LoQueTeToca, NecesitanAyuda, Tendencias, type IrA } from "@/components/academia/panel-inicio";
 import { PanelMaterias, TarjetaDeclaracionSimple, type VerMaterias } from "@/components/academia/panel-materias";
-import { InformeLaboratorio } from "@/components/academia/laboratorio-informe";
+import { CSV_LABORATORIO, InformeLaboratorio } from "@/components/academia/laboratorio-informe";
 
 const ORDEN_ESTATUS: EstatusAlumno[] = ["aspirante", "activo", "pausa", "egresado", "graduado", "retirado"];
 const SELECT =
@@ -49,7 +49,7 @@ const REPORTES: { archivo: ReporteCsv; texto: string }[] = [
 ];
 
 /** Descargar los informes en CSV (se abren con Excel o con Google Sheets). */
-function MenuDescargas() {
+function MenuDescargas({ laboratorio = false }: { laboratorio?: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -62,6 +62,11 @@ function MenuDescargas() {
             <a href={enlaceReporte(r.archivo)} download className="cursor-pointer">{r.texto}</a>
           </DropdownMenuItem>
         ))}
+        {laboratorio && (
+          <DropdownMenuItem asChild>
+            <a href={CSV_LABORATORIO} download className="cursor-pointer">Los intentos del laboratorio</a>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -400,7 +405,7 @@ function Historial() {
   const items = q.data.historial;
   return (
     <section className="glass-card p-4 sm:p-5" data-testid="direccion-historial">
-      <p className="text-sm text-muted-foreground mb-4">Cada cambio de nota, pedido respondido, documento revocado o restaurado, nombre corregido, aprobación del contenido, pregunta retirada y apertura de la academia, con quién lo hizo y por qué.</p>
+      <p className="text-sm text-muted-foreground mb-4">Cada decisión de la Administración, con quién la tomó, cuándo y por qué: notas cambiadas y pedidos respondidos, la gestión del expediente, las actividades confirmadas o devueltas, las evaluaciones del sermón y del proyecto, las defensas programadas, los mentores, la bitácora, los documentos revocados o restaurados, los nombres corregidos, las observaciones y aprobaciones del contenido, las preguntas retiradas y la apertura de la academia.</p>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Todavía no hay cambios.</p>
       ) : (
@@ -495,7 +500,7 @@ function Permisos({ role }: { role: string | null | undefined }) {
             </li>
           ))}
         </ul>
-        <p className="text-xs text-muted-foreground mt-3">El rol de cada cuenta se asigna en Administración → Miembros. El servidor comprueba estos permisos en cada consulta.</p>
+        <p className="text-xs text-muted-foreground mt-3">El rol de cada cuenta se asigna en Administración → Personas → Miembros. El servidor comprueba estos permisos en cada consulta.</p>
       </section>
       <section className="glass-card p-0 overflow-x-auto">
         <table className="w-full text-sm">
@@ -557,6 +562,20 @@ export default function AcademiaDireccion() {
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, op?.ancla ? 450 : 30);
   };
+  // un aviso de la campana puede pedir bajar a una parte de la sección (&ir=actividades-por-confirmar): se espera a que aparezca
+  const irInicial = useRef(new URLSearchParams(window.location.search).get("ir"));
+  useEffect(() => {
+    const id = irInicial.current;
+    if (!id || !q.data) return;
+    irInicial.current = null;
+    let vueltas = 0;
+    const buscar = () => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else if (++vueltas < 20) window.setTimeout(buscar, 300);
+    };
+    window.setTimeout(buscar, 300);
+  }, [q.data]);
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     const sinSesion = q.error?.status === 401;
@@ -582,7 +601,7 @@ export default function AcademiaDireccion() {
   const items: { id: Seccion; texto: string; icono: typeof Inbox; badge?: number; si?: boolean }[] = [
     { id: "inicio", texto: "Inicio", icono: LayoutDashboard },
     { id: "pendientes", texto: "Pendientes", icono: Inbox, badge: pendientes, si: d.puede.revisar || d.puede.contenido },
-    { id: "alumnos", texto: "Alumnos", icono: Users, badge: d.ayuda.length || undefined },
+    { id: "alumnos", texto: "Alumnos", icono: Users, badge: (d.ayudaTotal ?? d.ayuda.length) || undefined },
     { id: "materias", texto: "Materias", icono: BookOpen },
     { id: "laboratorio", texto: "Laboratorio", icono: FlaskConical, si: !!d.puede.laboratorio },
     { id: "historial", texto: "Historial", icono: History },
@@ -605,7 +624,7 @@ export default function AcademiaDireccion() {
                   : "Todos los alumnos: su avance y sus notas, sin sus datos de contacto. Solo para ver."}
             </p>
           </div>
-          {d.puede.exportar && <MenuDescargas />}
+          {d.puede.exportar && <MenuDescargas laboratorio={d.puede.laboratorio} />}
         </div>
 
         <nav id="panel-secciones" className="mt-4 -mx-4 px-4 overflow-x-auto scroll-mt-20" aria-label="Secciones del panel">

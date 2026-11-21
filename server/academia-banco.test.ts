@@ -2,7 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { examenDe, materiaPorId } from "@shared/academia";
-import { BANCOS } from "./academia/index";
+import { createHash } from "node:crypto";
+import { BANCOS, CONTENIDO } from "./academia/index";
+import { PRACTICAS } from "./academia/laboratorio/index";
 import { calcularHuella, huellaDe, porQueNoSeRetira } from "./academia-banco";
 
 const banco = BANCOS.get("n1-salvacion")!;
@@ -67,4 +69,34 @@ test("la huella del contenido: estable, distinta por materia y sin contar «disp
   assert.equal(calcularHuella({ ...materia, disponible: !materia.disponible }), h);
   assert.notEqual(calcularHuella({ ...materia, resumen: `${materia.resumen} ` }), h);
   assert.notEqual(calcularHuella({ ...materia, lecciones: materia.lecciones.slice(1) }), h);
+});
+
+/** La huella como era antes del laboratorio: la ficha, las lecciones y el banco. */
+function huellaSinLaboratorio(m: NonNullable<ReturnType<typeof materiaPorId>>): string {
+  const { disponible: _disponible, ...ficha } = m;
+  const lecciones = m.lecciones.map((l) => CONTENIDO.get(l.id) ?? null);
+  return createHash("sha256").update(JSON.stringify({ ficha, lecciones, banco: BANCOS.get(m.id) ?? null })).digest("hex").slice(0, 32);
+}
+
+test("la huella incluye las prácticas del laboratorio solo en las materias que las tienen", () => {
+  const conPracticas = new Set(PRACTICAS.map((p) => p.materia));
+  assert.ok(conPracticas.size >= 1);
+  // las materias sin prácticas guardan la misma huella: sus aprobaciones siguen vigentes
+  assert.ok(!conPracticas.has(materia.id));
+  assert.equal(calcularHuella(materia), huellaSinLaboratorio(materia));
+  for (const id of Array.from(conPracticas)) {
+    const m = materiaPorId(id)!;
+    assert.notEqual(calcularHuella(m), huellaSinLaboratorio(m), id);
+    // si cambia una práctica, cambia la huella (y la aprobación deja de estar vigente)
+    const p = PRACTICAS.find((x) => x.materia === id)!;
+    const antes = calcularHuella(m);
+    const titulo = p.titulo;
+    p.titulo = `${titulo} `;
+    try {
+      assert.notEqual(calcularHuella(m), antes, id);
+    } finally {
+      p.titulo = titulo;
+    }
+    assert.equal(calcularHuella(m), antes, id);
+  }
 });
