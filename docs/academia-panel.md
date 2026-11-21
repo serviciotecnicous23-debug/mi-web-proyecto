@@ -138,6 +138,16 @@ Una revisión de todo el panel buscó lo que quedó suelto después de los últi
 - En el perfil, el examen integral sale aprobado desde 75 (antes lo marcaba desde 70) y la suficiencia con sus dos
   partes (85 la objetiva y 75 la escrita).
 - Se pusieron al día los textos de los permisos, del historial y de esta guía.
+- **A quién acompañar (Nivel 5):** el pedido queda guardado en `academia_alumnos.acompanar_pedido_at` (antes vivía en la
+  memoria del servidor); «Pendientes» lo cuenta y muestra la sección «A quién acompañar» con quienes esperan y las personas
+  del Nivel 1 sin mentor (`GET /api/academia/direccion/acompanar`). Se cumple solo cuando la Administración lo elige como
+  mentor de todos los que pide. El alumno ve que ya lo pidió.
+- **El integral y el trabajo final en la gestión:** en «Seguimiento», las herramientas traen «Integral y trabajo final»:
+  quitar la espera o reiniciar los fallos del integral, anular su intento en curso y dar una entrega más del trabajo final
+  (`POST …/alumno/:id/prueba`, con motivo, historial y aviso al alumno).
+- **Materias:** filtros «Con observaciones» y «Preguntas para mirar»; «N observaciones abiertas» lleva al primero, y si
+  se abre en «Por aprobar» sin nada por aprobar, se ven todas.
+- **Miembros:** «Ver» dice si la persona estudia en la academia, con «Su perfil en la academia».
 
 ## El resto del panel general (parte 4)
 

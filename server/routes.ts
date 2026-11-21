@@ -2817,7 +2817,10 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     );
     const attendanceRecords = await storage.listAttendanceByUser(id);
     const userCertificates = await storage.listCertificatesByUser(id);
-    res.json({ user: safeUser, enrollments: enrichedEnrollments, posts: userPosts, attendance: attendanceRecords, certificates: userCertificates });
+    // si estudia en la academia: su matrícula y su nivel, para abrir su perfil de alumno desde aquí
+    const { rows: alumno } = await pool.query(`SELECT matricula, nivel, estatus FROM academia_alumnos WHERE user_id = $1 AND matricula IS NOT NULL`, [id]);
+    const academia = alumno[0] ? { matricula: String(alumno[0].matricula), nivel: Number(alumno[0].nivel ?? 1), retirado: alumno[0].estatus === "retirado" } : null;
+    res.json({ user: safeUser, enrollments: enrichedEnrollments, posts: userPosts, attendance: attendanceRecords, certificates: userCertificates, academia });
   });
 
   app.delete(api.admin.deleteUser.path, async (req, res) => {

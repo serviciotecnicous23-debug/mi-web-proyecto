@@ -12,6 +12,8 @@ import { ROLES } from "@shared/roles";
 import { DIAS_DETENIDO_MENTOR, type Acompanado, type MisAcompanados } from "@shared/academia-escuela";
 import { accesoDe, avisarA, frenar, MENSAJE_CERRADA } from "./academia-comun";
 import { avancesPorAlumno, filasDe, permisoDe } from "./academia-direccion";
+import { acompanamientoDe } from "./academia-actividades-datos";
+import { ACTIVIDADES_NIVEL } from "@shared/academia-actividades";
 
 const etiquetaRol = (role: string) => (ROLES as Record<string, string>)[role] ?? (role === "admin" ? "Administración" : role === "obrero" ? "Obrero" : "Usuario");
 const nombreCuenta = (r: any) => String(r.display_name || r.username || "Alguien");
@@ -115,6 +117,11 @@ export function registerAcademiaMentoresRoutes(app: Express) {
       if (Number(antes[0]?.mentor_user_id) === mentorId) return res.status(409).json({ message: "Ya es su mentor." });
       // desde cuándo lo acompaña: en el Nivel 5 cuenta quien termina el Nivel 1 mientras lo acompaña (academia-actividades-datos.ts)
       await pool.query(`UPDATE academia_alumnos SET mentor_user_id = $2, mentor_desde = now() WHERE user_id = $1`, [alumnoId, mentorId]);
+      // si el mentor esperaba a quién acompañar (Nivel 5) y ya tiene a todos los que pide, su pedido queda cumplido
+      const ac = await acompanamientoDe(mentorId);
+      if (ac.pedido && ac.terminaron + ac.enCurso >= (ACTIVIDADES_NIVEL[5]?.acompanar ?? 0)) {
+        await pool.query(`UPDATE academia_alumnos SET acompanar_pedido_at = NULL WHERE user_id = $1`, [mentorId]);
+      }
       const nombre = nombreCuenta(m);
       await registrar(req, "academia.mentor", alumnoId, `Eligió a ${nombre} como mentor de ${fila.nombre}.`);
       const por = nombreCuenta({ display_name: (req.user as any)?.displayName, username: (req.user as any)?.username });

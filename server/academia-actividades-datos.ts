@@ -119,16 +119,21 @@ export async function actividadesDe(userId: number, nivel: number): Promise<Acti
  * Las personas que acompaña un mentor (Nivel 5): las que terminaron el Nivel 1 mientras las acompañaba (o, si las eligió
  * antes de que se guardara desde cuándo, cuando sea) y las que siguen en él.
  */
-export async function acompanamientoDe(mentorId: number): Promise<{ terminaron: number; enCurso: number }> {
-  const { rows } = await pool.query(
-    `SELECT count(*) FILTER (WHERE n.completado_at IS NOT NULL AND (a.mentor_desde IS NULL OR n.completado_at >= a.mentor_desde))::int AS terminaron,
-            count(*) FILTER (WHERE n.completado_at IS NULL)::int AS en_curso
-       FROM academia_alumnos a
-       LEFT JOIN academia_niveles n ON n.user_id = a.user_id AND n.nivel = 1
-      WHERE a.mentor_user_id = $1`,
-    [mentorId],
-  );
-  return { terminaron: Number(rows[0]?.terminaron ?? 0), enCurso: Number(rows[0]?.en_curso ?? 0) };
+export async function acompanamientoDe(mentorId: number): Promise<{ terminaron: number; enCurso: number; pedido: string | null }> {
+  const [{ rows }, { rows: yo }] = await Promise.all([
+    pool.query(
+      `SELECT count(*) FILTER (WHERE n.completado_at IS NOT NULL AND (a.mentor_desde IS NULL OR n.completado_at >= a.mentor_desde))::int AS terminaron,
+              count(*) FILTER (WHERE n.completado_at IS NULL)::int AS en_curso
+         FROM academia_alumnos a
+         LEFT JOIN academia_niveles n ON n.user_id = a.user_id AND n.nivel = 1
+        WHERE a.mentor_user_id = $1`,
+      [mentorId],
+    ),
+    // si pidió a quién acompañar y todavía espera (se borra cuando la Administración le da a todos los que pide)
+    pool.query(`SELECT acompanar_pedido_at FROM academia_alumnos WHERE user_id = $1`, [mentorId]),
+  ]);
+  const pedido = yo[0]?.acompanar_pedido_at ? new Date(yo[0].acompanar_pedido_at).toISOString() : null;
+  return { terminaron: Number(rows[0]?.terminaron ?? 0), enCurso: Number(rows[0]?.en_curso ?? 0), pedido };
 }
 
 /** El avance de un alumno en las actividades de un nivel (null si el nivel no pide actividades). */

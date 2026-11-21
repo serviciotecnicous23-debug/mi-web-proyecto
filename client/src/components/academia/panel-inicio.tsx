@@ -4,7 +4,7 @@
 // estatus, país e iglesia. Pensado primero para el teléfono.
 import { useState } from "react";
 import { Link } from "wouter";
-import { AlertCircle, AlertTriangle, BookCheck, CheckCircle2, ChevronRight, ClipboardCheck, FileWarning, Inbox, MessageSquareWarning, PenLine, ScrollText } from "lucide-react";
+import { AlertCircle, AlertTriangle, BookCheck, CheckCircle2, ChevronRight, ClipboardCheck, FileWarning, Inbox, MessageSquareWarning, PenLine, ScrollText, Users } from "lucide-react";
 import { NOMBRE_ESTATUS, type EstatusAlumno } from "@shared/academia-base";
 import type { DireccionResumen } from "@shared/academia-direccion";
 import { useContenido } from "@/components/academia/api";
@@ -52,12 +52,16 @@ export function LoQueTeToca({ d, irA }: { d: DireccionResumen; irA: IrA }) {
   if (d.puede.revisar) {
     if (p.escritas > 0) tareas.push({ clave: "escritas", icono: PenLine, titulo: `Revisar ${numero(p.escritas)} ${p.escritas === 1 ? "respuesta escrita" : "respuestas escritas"}`, detalle: "El corrector las marcó para que las mires.", accion: () => irA("pendientes", { ancla: "pendientes-escritas" }) });
     if (p.apelaciones > 0) tareas.push({ clave: "apelaciones", icono: MessageSquareWarning, titulo: `Responder ${numero(p.apelaciones)} ${p.apelaciones === 1 ? "pedido de revisión" : "pedidos de revisión"}`, detalle: "Alumnos que pidieron revisar un examen.", accion: () => irA("pendientes", { ancla: "pendientes-apelaciones" }) });
+    if ((p.acompanar ?? 0) > 0) {
+      const n = p.acompanar ?? 0;
+      tareas.push({ clave: "acompanar", icono: Users, titulo: `${numero(n)} ${n === 1 ? "alumno del Nivel 5 espera" : "alumnos del Nivel 5 esperan"} a quién acompañar`, detalle: "Elígelos como mentores de quienes empiezan el Nivel 1.", accion: () => irA("pendientes", { ancla: "acompanar-pendientes" }) });
+    }
     for (const x of p.porTipo ?? []) {
       const n = PENDIENTE_ACTIVIDAD[x.tipo];
       tareas.push({ clave: `act-${x.tipo}`, icono: ClipboardCheck, titulo: `${numero(x.n)} ${n ? (x.n === 1 ? n.uno : n.varios) : "actividades por confirmar"}`, detalle: "Lo que piden los niveles además de sus materias.", accion: () => irA("pendientes", { ancla: "actividades-por-confirmar" }) });
     }
   }
-  if (c && c.abiertas > 0) tareas.push({ clave: "observaciones", icono: FileWarning, titulo: `${numero(c.abiertas)} ${c.abiertas === 1 ? "observación abierta" : "observaciones abiertas"} en el contenido`, detalle: "No dejan aprobar su materia hasta resolverlas.", accion: () => irA("materias", { materias: "aprobar" }) });
+  if (c && c.abiertas > 0) tareas.push({ clave: "observaciones", icono: FileWarning, titulo: `${numero(c.abiertas)} ${c.abiertas === 1 ? "observación abierta" : "observaciones abiertas"} en el contenido`, detalle: "No dejan aprobar su materia hasta resolverlas.", accion: () => irA("materias", { materias: "observaciones" }) });
   const cargando = d.puede.contenido && contenido.isLoading;
   return (
     <section className="space-y-2" data-testid="lo-que-te-toca" data-tareas={tareas.length}>

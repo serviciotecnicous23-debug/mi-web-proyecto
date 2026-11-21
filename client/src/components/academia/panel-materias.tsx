@@ -1,7 +1,7 @@
 // La sección «Materias» del panel de la academia: en un solo lugar, el seguimiento de cada materia (inscritos, en curso,
 // aprobadas, promedio y avance) y su revisión doctrinal (aprobada o por aprobar, con «Aprobar» en cada una y «Aprobar
 // varias»). Tarjetas grandes para el teléfono; en la computadora van de a dos. También la tarjeta de la declaración de fe.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { AlertTriangle, CheckCircle2, Clock, ScrollText, Search, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Medidor, fecha, numero } from "@/components/academia/seguimiento";
 import { AprobarDeclaracion, AprobarMateria, AprobarVarias, QuitarDeclaracion, type MateriaParaAprobar } from "@/components/academia/panel-aprobar";
 
 const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-export type VerMaterias = "aprobar" | "alumnos" | "niveles" | "especialidades" | "todas";
+export type VerMaterias = "aprobar" | "observaciones" | "mirar" | "alumnos" | "niveles" | "especialidades" | "todas";
 
 function EstadoDoctrinal({ c }: { c: ContenidoResumen | undefined }) {
   if (!c) return null;
@@ -64,8 +64,17 @@ export function PanelMaterias({ d, inicial }: { d: DireccionResumen; inicial?: V
   const porId = useMemo(() => new Map((contenido.data?.materias ?? []).map((c) => [c.id, c])), [contenido.data]);
   const pendiente = (id: string) => admin && !!porId.get(id) && !porId.get(id)!.aprobacion?.vigente;
   const porAprobar = d.materias.filter((m) => pendiente(m.id));
+  const conObservaciones = admin ? d.materias.filter((m) => (porId.get(m.id)?.abiertas ?? 0) > 0) : [];
+  const paraMirar = admin ? d.materias.filter((m) => (porId.get(m.id)?.alertas ?? 0) > 0) : [];
   const conAlumnos = d.materias.filter((m) => m.inscritos > 0);
   const [ver, setVer] = useState<VerMaterias>(inicial ?? (conAlumnos.length ? "alumnos" : "todas"));
+  // si se abrió en «Por aprobar» (al volver de una materia o desde una tarea) y ya no queda ninguna, se ven todas
+  const yaAjustado = useRef(false);
+  useEffect(() => {
+    if (yaAjustado.current || !contenido.data) return;
+    yaAjustado.current = true;
+    if (ver === "aprobar" && porAprobar.length === 0) setVer("todas");
+  }, [contenido.data]);
   const [texto, setTexto] = useState("");
   const [eligiendo, setEligiendo] = useState(false);
   const [elegidas, setElegidas] = useState<Set<string>>(new Set());
@@ -74,7 +83,18 @@ export function PanelMaterias({ d, inicial }: { d: DireccionResumen; inicial?: V
   const t = sinTildes(texto.trim());
   const lista = d.materias.filter(
     (m) =>
-      (ver === "todas" || (ver === "aprobar" ? pendiente(m.id) : ver === "alumnos" ? m.inscritos > 0 : ver === "niveles" ? !m.especialidad : !!m.especialidad)) &&
+      (ver === "todas" ||
+        (ver === "aprobar"
+          ? pendiente(m.id)
+          : ver === "observaciones"
+            ? (porId.get(m.id)?.abiertas ?? 0) > 0
+            : ver === "mirar"
+              ? (porId.get(m.id)?.alertas ?? 0) > 0
+              : ver === "alumnos"
+                ? m.inscritos > 0
+                : ver === "niveles"
+                  ? !m.especialidad
+                  : !!m.especialidad)) &&
       (!t || sinTildes(`${m.titulo} ${m.grupo}`).includes(t)),
   );
   const grupos = [...new Set(lista.map((m) => m.grupo))];
@@ -84,6 +104,8 @@ export function PanelMaterias({ d, inicial }: { d: DireccionResumen; inicial?: V
   };
   const FILTROS: { id: VerMaterias; texto: string; si?: boolean }[] = [
     { id: "aprobar", texto: `Por aprobar (${porAprobar.length})`, si: admin },
+    { id: "observaciones", texto: `Con observaciones (${conObservaciones.length})`, si: admin && (conObservaciones.length > 0 || ver === "observaciones") },
+    { id: "mirar", texto: `Preguntas para mirar (${paraMirar.length})`, si: admin && (paraMirar.length > 0 || ver === "mirar") },
     { id: "alumnos", texto: `Con alumnos (${conAlumnos.length})` },
     { id: "niveles", texto: "Niveles" },
     { id: "especialidades", texto: "Especialidades" },
@@ -142,7 +164,15 @@ export function PanelMaterias({ d, inicial }: { d: DireccionResumen; inicial?: V
 
       {lista.length === 0 ? (
         <p className="glass-card p-6 text-center text-sm text-muted-foreground">
-          {ver === "aprobar" ? "No queda ninguna materia por aprobar. ¡Todo revisado!" : ver === "alumnos" ? "Todavía nadie se inscribió en una materia." : "Ninguna materia coincide."}
+          {ver === "aprobar"
+            ? "No queda ninguna materia por aprobar. ¡Todo revisado!"
+            : ver === "observaciones"
+              ? "No hay observaciones abiertas."
+              : ver === "mirar"
+                ? "El análisis no marcó preguntas para mirar."
+                : ver === "alumnos"
+                  ? "Todavía nadie se inscribió en una materia."
+                  : "Ninguna materia coincide."}
         </p>
       ) : (
         grupos.map((g) => (

@@ -6,8 +6,8 @@ import type { EscritoBreveVista, EspecialidadDetalle,
 } from "@shared/academia-base";
 import type { FichaInscripcion, FichaVista, InscripcionEstado } from "@shared/academia-inscripcion";
 import type {
-  ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, GestionMateria, HistorialItem, ItemRevision, MateriaSeguimiento, ResultadoGestion,
-  ResultadoRevision, RevisionPanel,
+  AcompanarPendientes, ActividadItem, AlumnoDetalle, AlumnoFila, ApelacionItem, DireccionResumen, GestionMateria, HistorialItem, ItemRevision, MateriaSeguimiento,
+  ResultadoGestion, ResultadoRevision, RevisionPanel,
 } from "@shared/academia-direccion";
 import type { ContenidoDetalle, ContenidoLista } from "@shared/academia-calidad";
 import type { AsignacionesCurso, MiAsignacion, MisAcompanados } from "@shared/academia-escuela";
@@ -221,6 +221,11 @@ export function useEscritasAlumno(id: string | undefined, activo = true) {
   });
 }
 
+/** «A quién acompañar» (Nivel 5): quienes lo pidieron y las personas del Nivel 1 sin mentor. */
+export function useAcompanar(activo = true) {
+  return useQuery<AcompanarPendientes, ErrorAcademia>({ queryKey: ["academia", "direccion", "acompanar"], queryFn: () => pedir("GET", "/api/academia/direccion/acompanar"), enabled: activo, retry: false });
+}
+
 export function useHistorial(activo = true) {
   return useQuery<{ historial: HistorialItem[] }, ErrorAcademia>({ queryKey: ["academia", "direccion", "historial"], queryFn: () => pedir("GET", "/api/academia/direccion/historial"), enabled: activo, retry: false });
 }
@@ -267,6 +272,9 @@ export const convalidarMateria = (alumnoId: number, materiaId: string, cuerpo: {
 export type AccionPrueba = "quitar-espera" | "reiniciar-fallos" | "intento-extra" | "anular-en-curso";
 export const accionPrueba = (alumnoId: number, materiaId: string, cuerpo: { clave: string; accion: AccionPrueba; motivo: string }) =>
   pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/prueba`, cuerpo);
+/** El examen integral de un nivel o el trabajo final de una especialidad (la clave dice cuál). */
+export const accionCierre = (alumnoId: number, cuerpo: { clave: string; accion: AccionPrueba; motivo: string }) =>
+  pedir<ResultadoGestion>("POST", `${rutaAlumno(alumnoId)}/prueba`, cuerpo);
 export const accionLeccion = (alumnoId: number, materiaId: string, cuerpo: { leccionId: string; accion: "completar" | "abrir"; motivo: string }) =>
   pedir<ResultadoGestion>("POST", `${rutaMateria(alumnoId, materiaId)}/leccion`, cuerpo);
 export const inscripcionEnMateria = (alumnoId: number, materiaId: string, cuerpo: { accion: "inscribir" | "baja"; motivo: string }) =>

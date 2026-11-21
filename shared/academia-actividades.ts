@@ -229,7 +229,7 @@ export type ResumenActividades = {
   /** `defensa`: la del proyecto que espera su evaluación, si ya está programada. */
   proyecto: Conteo & { nota: number | null; defensa: { fecha: string; hora: string } | null };
   /** Las personas que acompaña como mentor: las que terminaron el Nivel 1 mientras las acompañaba y las que siguen en él. */
-  acompanar: { terminaron: number; enCurso: number; hecho: boolean };
+  acompanar: { terminaron: number; enCurso: number; hecho: boolean; pedido?: string | null };
 };
 
 export type ActividadesNivel = ResumenActividades & {
@@ -471,7 +471,7 @@ export function resumirActividades(
   pide: PideNivel,
   lista: ParaResumir[],
   hoy: string,
-  acompanados: { terminaron: number; enCurso: number } = { terminaron: 0, enCurso: 0 },
+  acompanados: { terminaron: number; enCurso: number; pedido?: string | null } = { terminaron: 0, enCurso: 0 },
 ): ResumenActividades {
   const servicios = lista.filter((a) => a.tipo === "servicio");
   const confirmados = servicios.filter((a) => a.estado === "confirmada");

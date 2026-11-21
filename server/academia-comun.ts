@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS "academia_certificados" (
 );
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "honor_at" timestamp;
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "mentor_desde" timestamp;
+ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "acompanar_pedido_at" timestamp;
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "reglamento_version" text;
 ALTER TABLE "academia_alumnos" ADD COLUMN IF NOT EXISTS "carne_codigo" text;
 CREATE UNIQUE INDEX IF NOT EXISTS "academia_alumnos_carne_idx" ON "academia_alumnos" ("carne_codigo");
