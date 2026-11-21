@@ -513,7 +513,7 @@ export function registerChatRoutes(app: Express) {
                 title: `Mensaje de ${senderName}`,
                 body: preview,
                 url: `/mensajes?to=${me}`,
-                icon: "/icons/icon-192x192.png",
+                icon: "/icons/icon-192.png?v=6",
                 tag: `dm-${me}`,
               };
               return sendPushToMany(

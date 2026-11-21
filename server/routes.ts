@@ -841,6 +841,11 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     res.setHeader("Cache-Control", "no-store");
     res.json({ version: versionPublicada });
   });
+  // Si la web puede mandar correos (la clave de Resend): sin ella, la pantalla ofrece Contacto en vez de prometer un correo.
+  app.get("/api/correo", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ activo: isEmailConfigured });
+  });
   // La presencia de la ciudad (WebSocket) lee la misma sesión al conectarse.
   registrarRedCiudad(httpServer, sessionMiddleware);
 
@@ -987,7 +992,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
   app.post(api.auth.login.path, authLimiter as RequestHandler, (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message?: string }) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Error al iniciar sesion" });
+      if (!user) return res.status(401).json({ message: info?.message || "Error al iniciar sesión" });
       req.logIn(user, (err) => {
         if (err) return next(err);
         if (req.body?.remember === false) req.session.cookie.expires = null;
@@ -1378,7 +1383,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
         title,
         body,
         url: url || "/",
-        icon: "/icons/icon-192x192.png",
+        icon: "/icons/icon-192.png?v=6",
       };
 
       const subs = allSubs.map(s => ({
@@ -1697,7 +1702,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
         (async () => {
           try {
             const allSubs = await storage.getAllPushSubscriptions();
-            const payload: PushPayload = { title: "Nuevo Evento", body: event.title, url: "/eventos", icon: "/icons/icon-192x192.png" };
+            const payload: PushPayload = { title: "Nuevo Evento", body: event.title, url: "/eventos", icon: "/icons/icon-192.png?v=6" };
             const subs = allSubs.map(s => ({ id: s.id, subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } }));
             const expired = await sendPushToMany(subs, payload);
             if (expired.length > 0) await storage.deletePushSubscriptionsByIds(expired);
@@ -1787,7 +1792,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
             userId: req.user!.id,
             type: "evento_recordatorio",
             title: `Recordatorio: ${event.title}`,
-            content: `Te has confirmado para "${event.title}" el ${formattedDate} a las ${formattedTime}. Ubicacion: ${event.location}${event.meetingUrl ? '. Enlace: ' + event.meetingUrl : ''}`,
+            content: `Te has confirmado para "${event.title}" el ${formattedDate} a las ${formattedTime}. Ubicación: ${event.location}${event.meetingUrl ? '. Enlace: ' + event.meetingUrl : ''}`,
             link: "/eventos",
           });
           
@@ -1910,7 +1915,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
         (async () => {
           try {
             const allSubs = await storage.getAllPushSubscriptions();
-            const payload: PushPayload = { title: "Nuevo Curso Disponible", body: course.title, url: `/capacitaciones/${course.id}`, icon: "/icons/icon-192x192.png" };
+            const payload: PushPayload = { title: "Nuevo Curso Disponible", body: course.title, url: `/capacitaciones/${course.id}`, icon: "/icons/icon-192.png?v=6" };
             const subs = allSubs.map(s => ({ id: s.id, subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } }));
             const expired = await sendPushToMany(subs, payload);
             if (expired.length > 0) await storage.deletePushSubscriptionsByIds(expired);
@@ -2177,7 +2182,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
       });
     } catch (err) { console.error("Error creating live session tracking:", err); }
     // Send notification to all users
-    const notifLabels: Record<string, string> = { prayer: "Oracion", event: "Evento", live: "Transmision" };
+    const notifLabels: Record<string, string> = { prayer: "Oración", event: "Evento", live: "Transmisión" };
     const linkMap: Record<string, string> = { prayer: "/oracion", event: "/eventos", live: "/en-vivo" };
     await storage.createNotificationForAll({
       type: "sala_en_vivo",
@@ -2972,8 +2977,8 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     if (!!isLive && type !== "radio") {
       await storage.createNotificationForAll({
         type: "transmision",
-        title: "Nueva Transmision en Vivo",
-        content: (title || "").slice(0, 200) || "Se inicio una transmision en vivo",
+        title: "Nueva transmisión en vivo",
+        content: (title || "").slice(0, 200) || "Empezó una transmisión en vivo",
         link: "/en-vivo",
       });
     }
@@ -3623,7 +3628,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
       (async () => {
         try {
           const allSubs = await storage.getAllPushSubscriptions();
-          const payload: PushPayload = { title: "Nuevo Anuncio en Cartelera", body: ann.title, url: "/comunidad", icon: "/icons/icon-192x192.png" };
+          const payload: PushPayload = { title: "Nuevo Anuncio en Cartelera", body: ann.title, url: "/comunidad", icon: "/icons/icon-192.png?v=6" };
           const subs = allSubs.map(s => ({ id: s.id, subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } }));
           const expired = await sendPushToMany(subs, payload);
           if (expired.length > 0) await storage.deletePushSubscriptionsByIds(expired);
@@ -4204,26 +4209,10 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     res.json(report);
   });
 
-  // Public donation endpoint — no auth required
-  app.post(api.tithes.publicDonate.path, async (req, res) => {
-    try {
-      const input = api.tithes.publicDonate.input.parse(req.body);
-      const tithe = await storage.createTithe({
-        donorName: input.donorName,
-        amount: input.amount,
-        currency: input.currency || "USD",
-        type: "donacion",
-        method: input.method || "transferencia",
-        notes: input.notes || (input.email ? `Email: ${input.email}` : null),
-        userId: req.user?.id || null,
-        recordedBy: null as any,
-      });
-      res.status(201).json({ success: true, id: tithe.id });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
-      console.error("Public donation error:", err);
-      res.sendStatus(500);
-    }
+  // La donación «manual» sin pago ya no se registra: sin pedir sesión, cualquiera inflaba las cifras de Finanzas con dinero
+  // que nunca llegó. Para dar, la web lleva a Contacto (asunto «ofrenda»); con Stripe, el pago con tarjeta se registra solo.
+  app.post(api.tithes.publicDonate.path, (_req, res) => {
+    res.status(410).json({ message: "Para dar una ofrenda, escríbenos en Contacto: te enviaremos los datos." });
   });
 
   // Budget summary for admin
@@ -4232,14 +4221,8 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     try {
       const year = (req.query.year as string) || new Date().getFullYear().toString();
       const report = await storage.getTitheReport(undefined, year);
-      // Calculate monthly breakdown
-      const monthlyData: Record<string, number> = {};
-      if (report.rows) {
-        for (const r of report.rows) {
-          const month = new Date(r.createdAt).toISOString().slice(0, 7);
-          monthlyData[month] = (monthlyData[month] || 0) + (parseFloat(r.amount) || 0);
-        }
-      }
+      // cada mes, con las mismas reglas que el total: en dólares y solo lo confirmado
+      const monthlyData: Record<string, number> = report.porMes ?? {};
       const monthly = Object.entries(monthlyData)
         .map(([month, total]) => ({ month, total }))
         .sort((a, b) => a.month.localeCompare(b.month));

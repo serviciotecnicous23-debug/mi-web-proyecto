@@ -2434,15 +2434,33 @@ export class DatabaseStorage implements IStorage {
     const totalByType: Record<string, number> = {};
     const totalByMethod: Record<string, number> = {};
     const totalByRegion: Record<string, number> = {};
+    const porMes: Record<string, number> = {};
+    // Los totales van en dólares y solo con lo confirmado: otra moneda no se suma a los dólares (va aparte, por moneda), y
+    // lo que alguien anunció en el formulario público sin pagar (sin quién lo registró y sin pago con tarjeta) no cuenta.
+    const otrasMonedas: Record<string, number> = {};
+    let sinConfirmar = 0;
     let grandTotal = 0;
     for (const r of rows) {
       const amt = parseFloat(r.amount) || 0;
+      if (r.recordedBy == null && r.method !== "tarjeta") {
+        sinConfirmar++;
+        continue;
+      }
+      const moneda = (r.currency || "USD").toUpperCase();
+      if (moneda !== "USD") {
+        otrasMonedas[moneda] = (otrasMonedas[moneda] || 0) + amt;
+        continue;
+      }
       grandTotal += amt;
       totalByType[r.type] = (totalByType[r.type] || 0) + amt;
       totalByMethod[r.method] = (totalByMethod[r.method] || 0) + amt;
       if (r.regionName) totalByRegion[r.regionName] = (totalByRegion[r.regionName] || 0) + amt;
+      if (r.createdAt) {
+        const mes = new Date(r.createdAt).toISOString().slice(0, 7);
+        porMes[mes] = (porMes[mes] || 0) + amt;
+      }
     }
-    return { total: grandTotal, count: rows.length, byType: totalByType, byMethod: totalByMethod, byRegion: totalByRegion, rows };
+    return { total: grandTotal, count: rows.length, byType: totalByType, byMethod: totalByMethod, byRegion: totalByRegion, rows, porMes, otrasMonedas, sinConfirmar };
   }
 
   // ========== SERMONS ==========

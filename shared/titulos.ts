@@ -67,6 +67,8 @@ export const TITULOS = {
  * materia…), Juegos (el juego) y Mensajes (los no leídos). Aquí no se tocan.
  */
 const CON_TITULO_PROPIO = ["/academia", "/admin/academia", "/maestro/academia", "/mi-iglesia/academia", "/juegos", "/mensajes"];
+/** Hasta dónde llegan por debajo: Mensajes es una sola página y Juegos lleva a lo sumo el juego (/juegos/:slug). */
+const PARTES_COMO_MAXIMO: Record<string, number> = { "/mensajes": 2, "/juegos": 3 };
 
 /** La ruta sin la consulta, sin barras dobles y sin la barra del final (salvo la portada). */
 export function normalizarRuta(ruta: string): string {
@@ -87,7 +89,8 @@ for (const [ruta, titulo] of Object.entries(TITULOS)) {
  */
 export function tituloDeRuta(ruta: string): string | null {
   const r = normalizarRuta(ruta).toLowerCase();
-  if (CON_TITULO_PROPIO.some((p) => r === p || r.startsWith(`${p}/`))) return null;
+  const propia = CON_TITULO_PROPIO.find((p) => r === p || r.startsWith(`${p}/`));
+  if (propia) return r.split("/").length <= (PARTES_COMO_MAXIMO[propia] ?? Infinity) ? null : TITULO_NO_ENCONTRADA;
   const exacta = EXACTAS.get(r);
   if (exacta) return exacta;
   const partes = r.split("/");

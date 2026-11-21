@@ -19,7 +19,7 @@ import AnimatedSection from "@/components/AnimatedSection";
 import FireParticles from "@/components/FireParticles";
 
 const stats = [
-  { label: "Años de servicio", value: "7+" },
+  { label: "Sirviendo desde", value: "2017" },
   { label: "Países alcanzados", value: "3" },
   { label: "Iglesias aliadas", value: "10+" },
   { label: "Vidas impactadas", value: "1000+" },
@@ -389,7 +389,7 @@ export default function Home() {
                 </span>
                 <div>
                   <h3 className="heading-display font-display text-2xl md:text-3xl">Transmisiones en Vivo</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Radio &bull; YouTube &bull; Facebook &bull; Podcast</p>
+                  <p className="text-sm text-muted-foreground mt-1">Radio &bull; YouTube &bull; Facebook</p>
                 </div>
               </div>
               <div className="flex-1" />
@@ -407,7 +407,7 @@ export default function Home() {
       <section className="py-24 section-aurora">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
-            <span className="glass-pill inline-block mb-5 text-xs">Alianza para la Gran Comision</span>
+            <span className="glass-pill inline-block mb-5 text-xs">Alianza para la Gran Comisión</span>
             <h2 className="heading-display font-display text-5xl md:text-7xl">
               Una Red de <span className="fire-text">Iglesias Unidas</span>
             </h2>

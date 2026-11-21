@@ -40,7 +40,7 @@ const infoCards = [
 ];
 
 // /contacto?asunto=oracion deja elegido el asunto (lo usan la bienvenida y la app de la radio).
-const ASUNTOS = ["unirse", "oracion", "invitar", "otro"] as const;
+const ASUNTOS = ["unirse", "oracion", "invitar", "ofrenda", "otro"] as const;
 
 function asuntoDeLaUrl(): string {
   if (typeof window === "undefined") return "";
@@ -164,6 +164,7 @@ export default function Contacto() {
                           <SelectItem value="unirse">Quiero unirme al ministerio</SelectItem>
                           <SelectItem value="oracion">Solicitud de oración</SelectItem>
                           <SelectItem value="invitar">Invitar a mi ciudad/iglesia</SelectItem>
+                          <SelectItem value="ofrenda">Dar una ofrenda o apoyar una misión</SelectItem>
                           <SelectItem value="otro">Otro</SelectItem>
                         </SelectContent>
                       </Select>

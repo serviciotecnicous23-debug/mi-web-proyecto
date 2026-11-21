@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
+import { useConfirmar } from "@/components/confirmar";
 import { withAccents } from "@shared/labels";
 import { isAdminRole } from "@/lib/utils";
 
@@ -201,6 +202,7 @@ function PollDisplay({ postId, user }: { postId: number; user: any }) {
 
 function RegionManagementPanel() {
   const { toast } = useToast();
+  const { pedir, ventana } = useConfirmar();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editRegion, setEditRegion] = useState<MinistryRegion | null>(null);
   const [newRegionName, setNewRegionName] = useState("");
@@ -322,7 +324,7 @@ function RegionManagementPanel() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteMutation.mutate(region.id)}
+                    onClick={() => pedir({ titulo: `¿Borrar la región «${withAccents(region.name)}»?`, detalle: "No se puede deshacer.", boton: "Borrar la región", accion: () => deleteMutation.mutate(region.id) })}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-region-${region.id}`}
                   >
@@ -426,6 +428,7 @@ function RegionManagementPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ventana}
     </>
   );
 }
@@ -442,6 +445,7 @@ export default function RegionesPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { pedir, ventana } = useConfirmar();
 
   const { data: regions = [], isLoading: regionsLoading } = useQuery<MinistryRegion[]>({
     queryKey: ["/api/ministry-regions"],
@@ -806,7 +810,7 @@ export default function RegionesPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => deleteMutation.mutate(post.id)}
+                                  onClick={() => pedir({ titulo: "¿Borrar esta publicación?", detalle: "No se puede deshacer.", boton: "Borrar la publicación", accion: () => deleteMutation.mutate(post.id) })}
                                   disabled={deleteMutation.isPending}
                                   data-testid={`button-delete-region-post-${post.id}`}
                                 >
@@ -824,6 +828,7 @@ export default function RegionesPage() {
             ))}
           </Tabs>
         )}
+        {ventana}
       </div>
     </Layout>
   );

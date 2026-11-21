@@ -41,6 +41,7 @@ import {
 import { SiWhatsapp } from "react-icons/si";
 import { useReadingTracker } from "@/hooks/use-reading-tracker";
 import { ClubTab } from "@/components/biblioteca/club-tab";
+import { useConfirmar } from "@/components/confirmar";
 import { HIGHLIGHT_COLORS, RESOURCE_CATEGORIES, BIBLE_BOOKS } from "@shared/schema";
 import { isAdminRole } from "@/lib/utils";
 import {
@@ -224,6 +225,7 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
   const deleteHighlight = useDeleteBibleHighlight();
   const createNote = useCreateBibleNote();
   const deleteNote = useDeleteBibleNote();
+  const { pedir, ventana } = useConfirmar();
 
   useEffect(() => {
     // El texto lo sirve la propia web (server/bible.ts), con respaldo si un proveedor cae.
@@ -576,7 +578,7 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteNote.mutate(note.id)}
+                  onClick={() => pedir({ titulo: `¿Borrar la nota de ${bibleBookLabel(selectedBook)} ${chapter}:${selectedVerse}?`, detalle: "No se puede deshacer.", boton: "Borrar la nota", accion: () => deleteNote.mutate(note.id) })}
                   data-testid={`button-delete-note-${note.id}`}
                 >
                   <Trash2 className="w-4 h-4 text-destructive" />
@@ -586,6 +588,7 @@ function BibleTab({ target, onOpenNote }: { target?: ChapterTarget | null; onOpe
           </CardContent>
         </Card>
       )}
+      {ventana}
     </div>
   );
 }
@@ -655,6 +658,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { pedir: pedirPlan, ventana: ventanaPlan } = useConfirmar();
   const [viewPublic, setViewPublic] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   
@@ -1239,6 +1243,7 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
   // ===== VIEW: Plans list =====
   return (
     <div className="space-y-4">
+      {ventanaPlan}
       {/* Header with motivational message */}
       <Card className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
         <CardContent className="p-4">
@@ -1381,7 +1386,8 @@ function ReadingPlansTab({ prefillBooks, prefillPeriod, onOpenChapter }: {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => { e.stopPropagation(); deletePlan.mutate(plan.id); }}
+                          onClick={(e) => { e.stopPropagation(); pedirPlan({ titulo: `¿Borrar el plan «${plan.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar el plan", accion: () => deletePlan.mutate(plan.id) }); }}
+                          aria-label={`Borrar el plan «${plan.title}»`}
                           data-testid={`button-delete-plan-${plan.id}`}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
@@ -1421,6 +1427,7 @@ function ResourcesTab() {
   const createResource = useCreateLibraryResource();
   const deleteResource = useDeleteLibraryResource();
   const toggleLike = useToggleLibraryResourceLike();
+  const { pedir, ventana } = useConfirmar();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1671,7 +1678,7 @@ function ResourcesTab() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deleteResource.mutate(r.id)}
+                        onClick={() => pedir({ titulo: `¿Borrar el recurso «${r.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar el recurso", accion: () => deleteResource.mutate(r.id) })}
                         data-testid={`button-delete-resource-${r.id}`}
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
@@ -1684,6 +1691,7 @@ function ResourcesTab() {
           ))}
         </div>
       )}
+      {ventana}
     </div>
   );
 }

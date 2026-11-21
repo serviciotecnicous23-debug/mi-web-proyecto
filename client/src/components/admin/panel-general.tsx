@@ -5,14 +5,10 @@
 // - «Lo que te toca»: lo que espera a la Administración, cada cosa con un toque que lleva a resolverla;
 // - las cifras compactas;
 // - la ventana para confirmar lo que no se puede deshacer (borrar, rechazar o desactivar).
-import { useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import {
   BookOpen, Calendar, CheckCircle2, ChevronRight, Church, Flag, GraduationCap, Inbox, LayoutDashboard, Mail, MessageSquare, Radio, UserCheck, UserPlus, Users,
 } from "lucide-react";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 /** Las partes del panel (las pestañas de siempre; sus nombres siguen sirviendo en ?tab=). */
 export type Parte =
@@ -146,27 +142,5 @@ export function CifrasGenerales({ cifras, alElegir }: { cifras: { texto: string;
   );
 }
 
-/** Lo que se confirma: un título, qué pasa, el texto del botón y la acción. */
-export type Confirmacion = { titulo: string; detalle: string; boton: string; accion: () => void };
-
-/** La ventana para confirmar lo que no se puede deshacer. `pedir` la abre; `ventana` se pone una vez en la página. */
-export function useConfirmar(): { pedir: (c: Confirmacion) => void; ventana: ReactNode } {
-  const [c, setC] = useState<Confirmacion | null>(null);
-  const ventana = (
-    <AlertDialog open={!!c} onOpenChange={(v) => !v && setC(null)}>
-      <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-md rounded-2xl" data-testid="confirmar-accion">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{c?.titulo}</AlertDialogTitle>
-          <AlertDialogDescription>{c?.detalle}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-          <AlertDialogCancel className="h-12 mt-0">Cancelar</AlertDialogCancel>
-          <AlertDialogAction className="h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { c?.accion(); setC(null); }} data-testid="confirmar-si">
-            {c?.boton}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-  return { pedir: setC, ventana };
-}
+// la ventana para confirmar vive en components/confirmar.tsx (la usa también el resto de la web)
+export { useConfirmar, type Confirmacion } from "@/components/confirmar";

@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PublicDonationSection } from "@/components/PublicDonationSection";
+import { useConfirmar } from "@/components/confirmar";
 
 const COLORS = ["#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#f43f5e"];
 
@@ -39,6 +40,7 @@ export { PublicDonationSection };
 
 function AdminFinanceDashboard() {
   const { toast } = useToast();
+  const { pedir, ventana } = useConfirmar();
   const [open, setOpen] = useState(false);
   const [reportYear, setReportYear] = useState(new Date().getFullYear().toString());
   const [activeTab, setActiveTab] = useState("resumen");
@@ -221,7 +223,17 @@ function AdminFinanceDashboard() {
                     )}
                   </div>
                   <div className="text-2xl font-bold text-green-700">${report.total?.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">Total {reportYear}</p>
+                  <p className="text-xs text-muted-foreground">Total {reportYear} en dólares</p>
+                  {report.otrasMonedas && Object.keys(report.otrasMonedas).length > 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Aparte: {Object.entries(report.otrasMonedas as Record<string, number>).map(([m, v]) => `${m} ${Number(v).toLocaleString("es", { maximumFractionDigits: 2 })}`).join(" · ")}
+                    </p>
+                  )}
+                  {report.sinConfirmar > 0 && (
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-1">
+                      {report.sinConfirmar === 1 ? "1 donación anunciada en la web sin confirmar: no suma." : `${report.sinConfirmar} donaciones anunciadas en la web sin confirmar: no suman.`}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
@@ -536,7 +548,7 @@ function AdminFinanceDashboard() {
                         <td className="p-2 text-xs">{PAYMENT_METHODS[t.method] || t.method}</td>
                         <td className="p-2 text-xs">{t.regionName || "-"}</td>
                         <td className="p-2">
-                          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(t.id)}>
+                          <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Borrar el registro de ${t.donorName} (${t.currency} ${parseFloat(t.amount).toFixed(2)})?`, detalle: "No se puede deshacer.", boton: "Borrar el registro", accion: () => deleteMutation.mutate(t.id) })}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </td>
@@ -552,6 +564,7 @@ function AdminFinanceDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+      {ventana}
     </div>
   );
 }

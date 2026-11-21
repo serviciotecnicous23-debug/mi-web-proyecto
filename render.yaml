@@ -44,9 +44,10 @@ services:
         sync: false
       - key: S3_PUBLIC_URL
         sync: false
-      # Backup configuration
+      # Backup configuration: apagado a propósito (docs/vigilancia-y-respaldos.md). El pg_dump del servidor de Render es
+      # más viejo que la base PostgreSQL 18 y no puede copiarla; el respaldo diario lo hace .github/workflows/respaldo-base.yml.
       - key: BACKUP_ENABLED
-        value: "true"
+        value: "false"
       - key: BACKUP_CRON
         value: "0 3 * * *"
       - key: BACKUP_RETENTION_DAYS

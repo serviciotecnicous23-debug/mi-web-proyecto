@@ -21,6 +21,7 @@ import { FileAttachment } from "@/components/media/FileAttachment";
 import { AttachButton, AttachedFile, LinkDraftPreview } from "@/components/media/Composer";
 import type { UploadedFile } from "@/components/media/upload";
 import { ReportButton } from "@/components/moderacion/ReportButton";
+import { useConfirmar } from "@/components/confirmar";
 import { isAdminRole } from "@/lib/utils";
 
 /** El usuario se muestra con @ solo si no es un correo (hay cuentas cuyo usuario es su correo). */
@@ -41,6 +42,7 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
   const { data: comments = [], isLoading } = usePostComments(postId);
   const createComment = useCreatePostComment();
   const deleteComment = useDeletePostComment();
+  const { pedir, ventana } = useConfirmar();
   const [newComment, setNewComment] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
@@ -53,6 +55,7 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
 
   return (
     <div className="mt-3 pt-3 border-t space-y-3">
+      {ventana}
       {isLoading ? (
         <div className="flex justify-center py-2">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -80,7 +83,7 @@ function PostComments({ postId, user }: { postId: number; user: any }) {
                 {(comment.userId === user.id || isAdminRole(user.role)) && (
                   <button
                     className="text-[10px] text-destructive hover:underline"
-                    onClick={() => deleteComment.mutate({ id: comment.id, postId })}
+                    onClick={() => pedir({ titulo: "¿Borrar este comentario?", detalle: "No se puede deshacer.", boton: "Borrar el comentario", accion: () => deleteComment.mutate({ id: comment.id, postId }) })}
                   >
                     Eliminar
                   </button>
@@ -132,6 +135,7 @@ export default function Comunidad() {
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { pedir, ventana } = useConfirmar();
 
   if (isLoading) {
     return (
@@ -366,7 +370,7 @@ export default function Comunidad() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deletePost.mutate(post.id)}
+                        onClick={() => pedir({ titulo: "¿Borrar esta publicación?", detalle: "No se puede deshacer.", boton: "Borrar la publicación", accion: () => deletePost.mutate(post.id) })}
                         data-testid={`button-delete-community-post-${post.id}`}
                         title={post.userId === user.id ? "Eliminar mi publicación" : "Eliminar publicación (moderación)"}
                       >
@@ -379,6 +383,7 @@ export default function Comunidad() {
             ))}
           </div>
         )}
+        {ventana}
       </div>
     </Layout>
   );

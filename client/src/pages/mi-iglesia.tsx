@@ -15,6 +15,7 @@ import { useLocation } from "wouter";
 
 import { withAccents } from "@shared/labels";
 import { isAdminRole } from "@/lib/utils";
+import { loginUrl } from "@/lib/login-redirect";
 export default function MiIglesiaPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -96,16 +97,23 @@ export default function MiIglesiaPage() {
   });
 
   if (!user) {
-    return <Layout><div className="flex items-center justify-center min-h-screen text-gray-400">Inicie sesión para acceder</div></Layout>;
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+          <p className="text-muted-foreground">Entra con tu cuenta para ver tu iglesia.</p>
+          <a href={loginUrl("/mi-iglesia")}><Button className="bg-orange-500 hover:bg-orange-600 text-white h-11 px-6">Entrar</Button></a>
+        </div>
+      </Layout>
+    );
   }
 
   if (!effectiveChurchId && !isAdminUser) {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-          <Church className="w-16 h-16 text-gray-600 mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Sin Iglesia Aliada</h2>
-          <p className="text-gray-400 mb-6 max-w-md">
+          <Church className="w-16 h-16 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Sin Iglesia Aliada</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
             No estás vinculado a ninguna iglesia aliada. Puedes buscar una iglesia para unirte o continuar como miembro independiente.
           </p>
           <Button onClick={() => navigate("/buscar-iglesia")} className="bg-orange-500 hover:bg-orange-600">
@@ -130,11 +138,11 @@ export default function MiIglesiaPage() {
               <Church className="w-12 h-12 text-orange-500" />
             )}
             <div>
-              <h1 className="text-3xl font-bold text-white">{currentChurch?.name || "Mi Iglesia"}</h1>
-              <p className="text-gray-400">{currentChurch?.city}, {withAccents(currentChurch?.country)}</p>
+              <h1 className="text-3xl font-bold text-foreground">{currentChurch?.name || "Mi Iglesia"}</h1>
+              <p className="text-muted-foreground">{currentChurch?.city}, {withAccents(currentChurch?.country)}</p>
             </div>
             {currentChurch?.allianceStatus && (
-              <Badge className="ml-auto bg-green-500/20 text-green-400">{currentChurch.allianceStatus}</Badge>
+              <Badge className="ml-auto bg-green-500/20 text-green-700 dark:text-green-400">{currentChurch.allianceStatus}</Badge>
             )}
           </div>
 
@@ -143,16 +151,16 @@ export default function MiIglesiaPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: Users, label: "Miembros", value: dashboard?.memberCount || 0, color: "text-blue-400" },
-              { icon: BookOpen, label: "Cursos", value: dashboard?.courseCount || 0, color: "text-green-400" },
+              { icon: Users, label: "Miembros", value: dashboard?.memberCount || 0, color: "text-blue-700 dark:text-blue-400" },
+              { icon: BookOpen, label: "Cursos", value: dashboard?.courseCount || 0, color: "text-green-700 dark:text-green-400" },
               { icon: BarChart3, label: "Eventos", value: dashboard?.eventCount || 0, color: "text-purple-400" },
-              { icon: UserPlus, label: "Solicitudes", value: channelings?.filter((c: any) => c.status === "solicitado").length || 0, color: "text-orange-400" },
+              { icon: UserPlus, label: "Solicitudes", value: channelings?.filter((c: any) => c.status === "solicitado").length || 0, color: "text-orange-700 dark:text-orange-400" },
             ].map((s, i) => (
-              <Card key={i} className="bg-card/50 border-white/10">
+              <Card key={i} className="bg-card/50 border-border">
                 <CardContent className="pt-6 text-center">
                   <s.icon className={`w-8 h-8 ${s.color} mx-auto mb-2`} />
-                  <div className="text-2xl font-bold text-white">{s.value}</div>
-                  <div className="text-sm text-gray-400">{s.label}</div>
+                  <div className="text-2xl font-bold text-foreground">{s.value}</div>
+                  <div className="text-sm text-muted-foreground">{s.label}</div>
                 </CardContent>
               </Card>
             ))}
@@ -160,37 +168,37 @@ export default function MiIglesiaPage() {
 
           {/* Tabs */}
           <Tabs defaultValue="members" className="w-full">
-            <TabsList className="bg-card/50 border border-white/10 mb-4">
+            <TabsList className="bg-card/50 border border-border mb-4">
               <TabsTrigger value="members">Miembros</TabsTrigger>
               <TabsTrigger value="channeling">Solicitudes</TabsTrigger>
               <TabsTrigger value="permissions">Permisos</TabsTrigger>
             </TabsList>
 
             <TabsContent value="members">
-              <Card className="bg-card/50 border-white/10">
+              <Card className="bg-card/50 border-border">
                 <CardHeader>
-                  <CardTitle className="text-white">Miembros de la Iglesia</CardTitle>
+                  <CardTitle className="text-foreground">Miembros de la Iglesia</CardTitle>
                   <CardDescription>{members?.length || 0} miembros vinculados</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {members?.map((m: any) => (
-                      <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-white/5">
+                      <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-border/60">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={m.avatarUrl} />
                             <AvatarFallback><User className="w-5 h-5" /></AvatarFallback>
                           </Avatar>
                           <div>
-                            <span className="text-white font-medium">{m.displayName || m.username}</span>
-                            <div className="text-sm text-gray-400">{(ROLES as any)[m.role] || m.role}</div>
+                            <span className="text-foreground font-medium">{m.displayName || m.username}</span>
+                            <div className="text-sm text-muted-foreground">{(ROLES as any)[m.role] || m.role}</div>
                           </div>
                         </div>
-                        <Badge className="bg-white/10 text-gray-300">{m.memberType || "miembro"}</Badge>
+                        <Badge className="bg-muted text-foreground/85">{m.memberType || "miembro"}</Badge>
                       </div>
                     ))}
                     {(!members || members.length === 0) && (
-                      <p className="text-gray-500 text-center py-4">No hay miembros vinculados aún.</p>
+                      <p className="text-muted-foreground text-center py-4">No hay miembros vinculados aún.</p>
                     )}
                   </div>
                 </CardContent>
@@ -198,22 +206,22 @@ export default function MiIglesiaPage() {
             </TabsContent>
 
             <TabsContent value="channeling">
-              <Card className="bg-card/50 border-white/10">
+              <Card className="bg-card/50 border-border">
                 <CardHeader>
-                  <CardTitle className="text-white">Solicitudes de Vinculación</CardTitle>
+                  <CardTitle className="text-foreground">Solicitudes de Vinculación</CardTitle>
                   <CardDescription>Miembros que desean unirse a esta iglesia</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {channelings?.filter((c: any) => c.status === "solicitado").map((c: any) => (
-                      <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-white/5">
+                      <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-border/60">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback><User className="w-5 h-5" /></AvatarFallback>
                           </Avatar>
                           <div>
-                            <span className="text-white font-medium">{c.user?.displayName || c.user?.username}</span>
-                            {c.notes && <p className="text-sm text-gray-400">{c.notes}</p>}
+                            <span className="text-foreground font-medium">{c.user?.displayName || c.user?.username}</span>
+                            {c.notes && <p className="text-sm text-muted-foreground">{c.notes}</p>}
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -227,7 +235,7 @@ export default function MiIglesiaPage() {
                       </div>
                     ))}
                     {(!channelings || channelings.filter((c: any) => c.status === "solicitado").length === 0) && (
-                      <p className="text-gray-500 text-center py-4">No hay solicitudes pendientes.</p>
+                      <p className="text-muted-foreground text-center py-4">No hay solicitudes pendientes.</p>
                     )}
                   </div>
                 </CardContent>
@@ -235,26 +243,26 @@ export default function MiIglesiaPage() {
             </TabsContent>
 
             <TabsContent value="permissions">
-              <Card className="bg-card/50 border-white/10">
+              <Card className="bg-card/50 border-border">
                 <CardHeader>
-                  <CardTitle className="text-white">Permisos y Roles</CardTitle>
+                  <CardTitle className="text-foreground">Permisos y Roles</CardTitle>
                   <CardDescription>Administre quién tiene acceso a qué dentro de la iglesia</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {permissions?.map((p: any) => (
-                      <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-white/5">
+                      <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-border/60">
                         <div className="flex items-center gap-3">
-                          <Shield className="w-5 h-5 text-orange-400" />
-                          <span className="text-white">{p.user?.displayName || p.user?.username}</span>
+                          <Shield className="w-5 h-5 text-orange-700 dark:text-orange-400" />
+                          <span className="text-foreground">{p.user?.displayName || p.user?.username}</span>
                         </div>
-                        <Badge className="bg-orange-500/20 text-orange-300">
+                        <Badge className="bg-orange-500/20 text-orange-800 dark:text-orange-300">
                           {(CHURCH_PERMISSION_ROLES as any)[p.role] || p.role}
                         </Badge>
                       </div>
                     ))}
                     {(!permissions || permissions.length === 0) && (
-                      <p className="text-gray-500 text-center py-4">No hay permisos configurados.</p>
+                      <p className="text-muted-foreground text-center py-4">No hay permisos configurados.</p>
                     )}
                   </div>
                 </CardContent>
