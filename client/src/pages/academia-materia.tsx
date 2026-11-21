@@ -480,7 +480,7 @@ export default function AcademiaMateria() {
         )}
 
         {/* El laboratorio ministerial: prácticas de la vida real (solo en las materias que ya las tienen) */}
-        {m.disponible && (inscrito || d.docente) && <LaboratorioDeMateria materiaId={m.id} />}
+        {m.disponible && <LaboratorioDeMateria materiaId={m.id} />}
 
         {/* Examen final */}
         {m.disponible && inscrito && medida && (

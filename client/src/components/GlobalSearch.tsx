@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useAcademiaVisible } from "@/lib/academia-visible";
 import {
   CommandDialog,
   CommandEmpty,
@@ -26,6 +27,10 @@ import {
   Home,
   Radio,
   Sparkles,
+  Gamepad2,
+  Brain,
+  NotebookPen,
+  BadgeCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,8 +42,10 @@ function LogoNavIcon(props: { className?: string }) {
 
 // Static navigation items for instant results
 const PUBLIC_NAV_ITEMS = [
-  { label: "Inicio", href: "/", icon: Home, category: "Paginas" },
-  { label: "Eventos", href: "/eventos", icon: Calendar, category: "Paginas" },
+  { label: "Inicio", href: "/", icon: Home, category: "Páginas" },
+  { label: "Eventos", href: "/eventos", icon: Calendar, category: "Páginas" },
+  { label: "Biblia", href: "/biblioteca", icon: BookOpen, category: "Formación" },
+  { label: "Juegos", href: "/juegos", icon: Gamepad2, category: "Páginas" },
   { label: "Conócenos (bienvenida)", href: "/bienvenida", icon: Sparkles, category: "Ministerio" },
   { label: "Historia", href: "/historia", icon: BookOpen, category: "Ministerio" },
   { label: "Equipo", href: "/equipo", icon: Users, category: "Ministerio" },
@@ -46,15 +53,28 @@ const PUBLIC_NAV_ITEMS = [
   { label: "Iglesias", href: "/iglesias", icon: Church, category: "Ministerio" },
   { label: "Radio", href: "/radio", icon: Radio, category: "Medios" },
   { label: "En Vivo", href: "/en-vivo", icon: Video, category: "Medios" },
-  { label: "Calendario", href: "/calendario", icon: Calendar, category: "Paginas" },
-  { label: "Contacto", href: "/contacto", icon: MapPin, category: "Paginas" },
+  { label: "Calendario", href: "/calendario", icon: Calendar, category: "Páginas" },
+  { label: "Contacto", href: "/contacto", icon: MapPin, category: "Páginas" },
+];
+
+// La academia, cuando se ve (abierta para todos, o en vista previa para quien puede verla)
+const ACADEMIA_NAV_ITEMS = [
+  { label: "Academia", href: "/academia", icon: GraduationCap, category: "Academia" },
+  { label: "Catálogo de materias", href: "/academia/catalogo", icon: BookOpen, category: "Academia" },
+  { label: "Recursos de estudio", href: "/academia/recursos", icon: Library, category: "Academia" },
+  { label: "Verificar un certificado", href: "/academia/verificar", icon: BadgeCheck, category: "Academia" },
+];
+const ACADEMIA_MIEMBRO_NAV_ITEMS = [
+  { label: "Mi salón", href: "/academia/salon", icon: GraduationCap, category: "Academia" },
+  { label: "Repaso del día", href: "/academia/repaso-del-dia", icon: Brain, category: "Academia" },
+  { label: "Mi cuaderno", href: "/academia/cuaderno", icon: NotebookPen, category: "Academia" },
 ];
 
 // Additional items visible only to logged-in members
 const MEMBER_NAV_ITEMS = [
-  { label: "Capacitaciones", href: "/capacitaciones", icon: GraduationCap, category: "Formacion" },
-  { label: "Biblioteca", href: "/biblioteca", icon: Library, category: "Formacion" },
-  { label: "Sermones", href: "/sermones", icon: FileText, category: "Formacion" },
+  { label: "Capacitaciones", href: "/capacitaciones", icon: GraduationCap, category: "Formación" },
+  { label: "Planes de lectura y Club", href: "/biblioteca?tab=planes", icon: Library, category: "Formación" },
+  { label: "Sermones", href: "/sermones", icon: FileText, category: "Formación" },
   { label: "Comunidad", href: "/comunidad", icon: MessageSquare, category: "Comunidad" },
   { label: "Oración", href: "/oracion", icon: Heart, category: "Comunidad" },
   { label: "Grupos", href: "/grupos", icon: Users, category: "Comunidad" },
@@ -63,7 +83,7 @@ const MEMBER_NAV_ITEMS = [
 
 interface SearchResult {
   id: number;
-  type: "course" | "event" | "library" | "sermon" | "post";
+  type: "course" | "event" | "library" | "sermon" | "post" | "materia";
   title: string;
   description?: string;
   url: string;
@@ -73,7 +93,8 @@ const TYPE_META: Record<string, { label: string; icon: typeof GraduationCap; col
   course: { label: "Curso", icon: GraduationCap, color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" },
   event: { label: "Evento", icon: Calendar, color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
   library: { label: "Biblioteca", icon: Library, color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" },
-  sermon: { label: "Sermon", icon: FileText, color: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" },
+  sermon: { label: "Sermón", icon: FileText, color: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" },
+  materia: { label: "Materia", icon: GraduationCap, color: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300" },
   post: { label: "Publicación", icon: MessageSquare, color: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300" },
 };
 
@@ -84,12 +105,16 @@ export function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const academia = useAcademiaVisible();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Build nav items based on auth state
-  const NAV_ITEMS = user
-    ? [...PUBLIC_NAV_ITEMS, ...MEMBER_NAV_ITEMS]
-    : PUBLIC_NAV_ITEMS;
+  const NAV_ITEMS = [
+    ...PUBLIC_NAV_ITEMS,
+    ...(academia ? ACADEMIA_NAV_ITEMS : []),
+    ...(user ? MEMBER_NAV_ITEMS : []),
+    ...(user && academia ? ACADEMIA_MIEMBRO_NAV_ITEMS : []),
+  ];
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
@@ -185,9 +210,10 @@ export function GlobalSearch() {
         <Search className="h-5 w-5" />
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      {/* sin el filtro propio del buscador: lo del servidor ya viene filtrado (también por la descripción) y los enlaces se filtran arriba */}
+      <CommandDialog open={open} onOpenChange={setOpen} commandProps={{ shouldFilter: false }}>
         <CommandInput
-          placeholder="Buscar cursos, eventos, sermones, biblioteca..."
+          placeholder={academia ? "Buscar materias, cursos, eventos, sermones..." : "Buscar cursos, eventos, sermones, biblioteca..."}
           value={query}
           onValueChange={setQuery}
         />

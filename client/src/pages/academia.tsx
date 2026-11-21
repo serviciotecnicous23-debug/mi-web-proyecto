@@ -15,11 +15,12 @@ import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { loginUrl } from "@/lib/login-redirect";
-import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, type AcademiaEstado, type MateriaResumen } from "@shared/academia-base";
+import { APRUEBA, HONORES, LEMA, NOMBRE_ACADEMIA, PACTOS, type AcademiaEstado, type MateriaResumen } from "@shared/academia-base";
 import { useAcademiaEstado, useCertificados, useDiagnostico, useRepasoDelDia, useRepasoVersiculos } from "@/components/academia/api";
 import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, PantallaCerrada } from "@/components/academia/ui";
 import { PestanasClases } from "@/components/academia/pestanas-clases";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
+import { PracticasDeHoy } from "@/components/academia/laboratorio-materia";
 import { TarjetaAcompanados } from "@/components/academia/mentores";
 
 type Nivel = AcademiaEstado["niveles"][number];
@@ -66,7 +67,7 @@ const enlaceContinuar = (c: NonNullable<AcademiaEstado["continuar"]>) =>
   c.nivel ? `/academia/nivel/${c.nivel}` : c.leccionId ? `/academia/leccion/${c.leccionId}` : `/academia/materia/${c.materiaId}`;
 const textoContinuar = (c: NonNullable<AcademiaEstado["continuar"]>, aprobadas: number) =>
   c.nivel
-    ? `Cerrar el nivel: ${c.titulo.toLowerCase()}`
+    ? c.titulo === "Lo que falta para cerrar el nivel" ? "Ver lo que falta" : `Cerrar el nivel: ${c.titulo.toLowerCase()}`
     : c.inscribirse
       ? aprobadas ? "Inscribirme en la siguiente materia" : "Inscribirme en mi primera materia"
       : c.leccionId
@@ -165,6 +166,7 @@ function Escritorio({ e }: { e: AcademiaEstado }) {
                 )}
               </li>
             )}
+            <PracticasDeHoy activo={!!e.matricula} testId="academia-practica" />
             <li>
               {diag.data?.ultimo ? (
                 <Link href="/academia/diagnostico" className="flex items-start gap-2 hover:underline">
@@ -261,7 +263,11 @@ function NivelPlegable({ n, abiertoAlInicio, conSesion }: { n: Nivel; abiertoAlI
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground sm:ml-2">
                   <span className="inline-flex items-center gap-1">{n.cierre.integralAprobado ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Examen integral</span>
-                  <span className="inline-flex items-center gap-1">{n.cierre.pacto ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Pacto</span>
+                  {PACTOS[n.n] ? (
+                    <span className="inline-flex items-center gap-1">{n.cierre.pacto ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Pacto</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">{n.cierre.completado ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ListChecks className="w-4 h-4" />} Actividades del nivel</span>
+                  )}
                 </div>
                 <span className="sm:ml-auto text-sm text-orange-600 dark:text-orange-300 inline-flex items-center gap-1">Ver los requisitos <ArrowRight className="w-4 h-4" /></span>
               </div>
@@ -275,6 +281,7 @@ function NivelPlegable({ n, abiertoAlInicio, conSesion }: { n: Nivel; abiertoAlI
 }
 
 function Especialidades({ e }: { e: AcademiaEstado }) {
+  const conSesion = e.conSesion;
   const [abierto, setAbierto] = useState(false);
   return (
     <Seccion
@@ -290,6 +297,8 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mt-5">
           {e.especialidades.map((esp) => {
             const listas = esp.materias.filter((m) => m.estado !== "en-preparacion").length;
+            const aprobadasEsp = esp.materias.filter((m) => m.estado === "aprobada").length;
+            const empezadas = esp.materias.filter((m) => m.estado === "aprobada" || m.estado === "en-curso").length;
             return (
               <div key={esp.id} className="glass-card p-4" data-testid={`especialidad-${esp.id}`}>
                 <div className="flex items-center gap-2 mb-1"><Layers className="w-4 h-4 text-orange-500" /><h3 className="font-semibold">{esp.nombre}</h3></div>
@@ -307,7 +316,15 @@ function Especialidades({ e }: { e: AcademiaEstado }) {
                   ))}
                 </ul>
                 <p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  {listas ? <span className="text-xs text-muted-foreground">{listas} de {esp.materias.length} materias listas</span> : <ChipEstado estado="en-preparacion" />}
+                  {!listas ? (
+                    <ChipEstado estado="en-preparacion" />
+                  ) : conSesion && empezadas ? (
+                    <span className="text-xs text-muted-foreground">{aprobadasEsp} de {esp.materias.length} materias aprobadas</span>
+                  ) : listas < esp.materias.length ? (
+                    <span className="text-xs text-muted-foreground">{listas} de {esp.materias.length} materias abiertas</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{esp.materias.length} materias y un trabajo final</span>
+                  )}
                   {listas > 0 && (
                     <Link href={`/academia/especialidad/${esp.id}`} className="text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline underline-offset-2 inline-flex items-center gap-1" data-testid={`especialidad-ver-${esp.id}`}>
                       Ver la especialidad <ArrowRight className="w-4 h-4" />
@@ -390,11 +407,11 @@ function RecienAbiertas({ lista }: { lista: { id: string; titulo: string }[] }) 
 }
 
 const PASOS = [
-  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De 7 a 15 minutos según el nivel (cada lección dice cuánto pide), con versículos de la Biblia, videos y una aplicación para la vida. Todas también se escuchan con la voz de la academia, aun con la pantalla apagada." },
+  { icon: BookOpen, titulo: "Lecciones cortas", texto: "De unos 6 a 25 minutos (cada lección dice cuánto pide), con versículos de la Biblia, videos y una aplicación para la vida. Todas también se escuchan con la voz de la academia, aun con la pantalla apagada." },
   { icon: ListChecks, titulo: "Repaso", texto: "Al terminar cada lección, preguntas con la respuesta y la cita al instante; después vuelven en días espaciados en el «Repaso del día»." },
   { icon: Sparkles, titulo: "Versículo de memoria", texto: "Uno por materia; vuelve a los 1, 3, 7 y 21 días para quedar en el corazón." },
   { icon: PenLine, titulo: "Examen final", texto: "Parte objetiva con reloj y parte escrita desde el celular, con corrección automática." },
-  { icon: Award, titulo: "Certificado", texto: "Cada materia aprobada da su certificado; cada nivel, su diploma." },
+  { icon: Award, titulo: "Certificado", texto: "Cada materia aprobada da su certificado; cada nivel, su diploma, y cada especialidad, su certificado de especialidad." },
 ];
 
 export default function AcademiaPage() {
@@ -488,7 +505,7 @@ export default function AcademiaPage() {
               <p className="text-sm text-muted-foreground mt-1">
                 {e.matricula
                   ? `Ya tienes tu matrícula ${e.matricula.numero}. Llena tu ficha de inscripción para seguir guardando tu avance: tus certificados llevarán ese nombre.`
-                  : "Llena tu ficha, acepta el reglamento académico y el código de honor, y recibe tu número de matrícula y tu carné. Es gratuita y queda aprobada al instante. Sin inscripción puedes leer la primera lección de cada materia, pero no guardar tu avance."}
+                  : "Llena tu ficha, acepta el reglamento académico y el código de honor, y recibe tu número de matrícula y tu carné. Es gratuita y queda aprobada al instante. Sin inscripción puedes leer la primera lección de cada materia del Nivel 1, pero no guardar tu avance."}
               </p>
               <p className="text-sm mt-2">
                 <Link href="/academia/diagnostico" className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-300 hover:underline">

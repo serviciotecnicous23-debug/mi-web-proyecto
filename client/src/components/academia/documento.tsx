@@ -75,7 +75,7 @@ export function DocumentoVista({ d }: { d: DocumentoAcademia }) {
           </p>
         ) : esNivel ? (
           <p style={{ fontSize: "0.95em", margin: "10px 30px 0", lineHeight: "1.5" }}>
-            completó el <strong>{nivelTexto}</strong>: sus materias, el examen integral y el pacto, con un promedio de{" "}
+            completó el <strong>{nivelTexto}</strong>: sus materias, el examen integral y {d.nivel?.n === 1 ? "el pacto" : "las actividades del nivel"}, con un promedio de{" "}
             <strong style={{ color: "#b45309", fontSize: "1.1em" }}>{d.nota ?? "—"}</strong>
             {d.honores && <strong style={{ color: "#b45309" }}>, con honores</strong>}.
           </p>

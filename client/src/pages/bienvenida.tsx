@@ -63,7 +63,7 @@ const ENCUENTRAS = [
   { href: "/biblioteca", icon: BookOpen, titulo: "Biblia en línea", texto: "Lee en RV1960, NTV, LBLA y RV1909 desde cualquier dispositivo.", conCuenta: false },
   { href: "/en-vivo", icon: Video, titulo: "Cultos en vivo", texto: "Adoración y enseñanza transmitidas cada semana.", conCuenta: false },
   { href: "/contacto?asunto=oracion", icon: HandHeart, titulo: "Pedir oración", texto: "Cuéntanos tu necesidad y oramos contigo.", conCuenta: false },
-  { href: "/capacitaciones", icon: GraduationCap, titulo: "Clases bíblicas", texto: "Cursos con maestros, aula virtual y certificados.", conCuenta: true },
+  { href: "/academia", icon: GraduationCap, titulo: "Academia bíblica", texto: "Cinco niveles y doce especialidades, con lecciones para leer y escuchar, exámenes y certificados. Gratis.", conCuenta: false },
   { href: "/eventos", icon: Calendar, titulo: "Eventos", texto: "Cultos, vigilias, campañas y encuentros del ministerio.", conCuenta: false },
   { href: "/buscar-iglesia", icon: Church, titulo: "Una iglesia cerca", texto: "Te ayudamos a encontrar una congregación en tu ciudad.", conCuenta: false },
 ];

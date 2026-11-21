@@ -4,7 +4,31 @@ import { Link } from "wouter";
 import { ArrowRight, FlaskConical, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LABORATORIO, NOMBRE_FORMATO } from "@shared/laboratorio";
-import { textoLecciones, useLaboratorioMateria } from "./laboratorio-api";
+import { textoLecciones, useLaboratorioMateria, usePracticasPendientes } from "./laboratorio-api";
+
+/** Las prácticas del laboratorio que el alumno ya puede hacer: una línea por práctica en «Lo de hoy» y en «Para hoy». */
+export function PracticasDeHoy({ activo, testId }: { activo: boolean; testId?: string }) {
+  const q = usePracticasPendientes(activo);
+  const ps = q.data?.practicas ?? [];
+  if (!ps.length) return null;
+  return (
+    <>
+      {ps.slice(0, 2).map((p) => (
+        <li key={p.id}>
+          <Link href={`/academia/laboratorio/${p.id}`} className="flex items-start gap-2 font-medium hover:underline" data-testid={testId}>
+            <FlaskConical className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" aria-hidden="true" />
+            <span>
+              {p.enCurso ? "Sigue tu práctica" : "Práctica del laboratorio"}: {p.titulo} <span className="text-muted-foreground font-normal">({p.materia.titulo})</span>
+            </span>
+          </Link>
+        </li>
+      ))}
+      {ps.length > 2 && (
+        <li className="text-xs text-muted-foreground pl-6">Y {ps.length - 2 === 1 ? "1 práctica más" : `${ps.length - 2} prácticas más`} en la página de tus materias.</li>
+      )}
+    </>
+  );
+}
 
 export function LaboratorioDeMateria({ materiaId }: { materiaId: string }) {
   const q = useLaboratorioMateria(materiaId);

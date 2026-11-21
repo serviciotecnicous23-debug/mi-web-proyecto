@@ -253,7 +253,7 @@ function Resultado({ v, ocupado, alCierre, alCamino, alOtra, materia }: { v: Int
         <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-4 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Sin acciones críticas.</p>
       )}
       <p className="text-xs text-muted-foreground mt-3">
-        Práctica formativa: en el piloto no cuenta para la nota de la materia.
+        {LABORATORIO.cuentaParaLaNota ? "Esta práctica cuenta para la nota de la materia." : "Práctica formativa: en el piloto no cuenta para la nota de la materia."}
         {!v.cuenta ? " Este intento es de práctica libre o de prueba: no cambia tu mejor resultado." : ""}
       </p>
       <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -483,7 +483,7 @@ function Preparacion({ d, ocupado, error, alEmpezar }: { d: PracticaDetalle; ocu
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-3">
-          Práctica formativa: en el piloto no cuenta para la nota de la materia. Cada intento puede traer otra versión del caso. {nombre === "Ronda" ? "" : "Las opciones cambian de lugar en cada intento."}
+          {LABORATORIO.cuentaParaLaNota ? "Esta práctica cuenta para la nota de la materia." : "Práctica formativa: en el piloto no cuenta para la nota de la materia."} Cada intento puede traer otra versión del caso. {nombre === "Ronda" ? "" : "Las opciones cambian de lugar en cada intento."}
         </p>
       </div>
     </div>

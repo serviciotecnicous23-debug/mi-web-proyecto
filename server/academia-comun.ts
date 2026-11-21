@@ -339,7 +339,7 @@ export async function accesoDe(req: Request): Promise<Acceso> {
   return { ver: abierta || staff, vistaPrevia: !abierta && staff, abierta, userId: conSesion ? req.user!.id : null, role };
 }
 
-export const MENSAJE_CERRADA = "La Academia Avivando el Fuego abre muy pronto.";
+export const MENSAJE_CERRADA = "La Academia Avivando el Fuego no está abierta en este momento. Vuelve pronto.";
 
 /** El alumno con sesión que puede ver la academia, o la respuesta de error ya enviada. */
 export async function alumnoDe(req: Request, res: Response): Promise<{ userId: number; acceso: Acceso } | null> {

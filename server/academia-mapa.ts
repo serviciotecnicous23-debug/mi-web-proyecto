@@ -18,6 +18,7 @@
 import type { Express, Request, Response } from "express";
 import { ESPECIALIDADES, NIVELES, todasLasMaterias, type BuscadorMateria, type MapaAcademia, type MateriaDef, type MateriaDetalle } from "@shared/academia";
 import { accesoDe, MENSAJE_CERRADA } from "./academia-comun";
+import { practicasDeMateria } from "./academia/laboratorio/index";
 
 /** El nivel de una materia (o, si es de una especialidad, la especialidad). */
 export function lugarDeMateria(m: MateriaDef): MateriaDetalle["lugar"] {
@@ -60,6 +61,7 @@ export function buscadorDeLaAcademia(): Record<string, BuscadorMateria> {
           proposito: m.silabo?.proposito,
           lecciones: m.lecciones.map((l) => l.titulo),
           libros: [...(b?.basica ?? []), ...(b?.complementaria ?? [])].map((l) => ({ autor: l.autor, titulo: l.titulo })),
+          ...(practicasDeMateria(m.id).length ? { practicas: practicasDeMateria(m.id).map((p) => p.titulo) } : {}),
         },
       ];
     }),

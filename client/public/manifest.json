@@ -53,9 +53,9 @@
       ]
     },
     {
-      "name": "Clases y capacitaciones",
-      "short_name": "Clases",
-      "url": "/capacitaciones?source=shortcut",
+      "name": "Academia Avivando el Fuego",
+      "short_name": "Academia",
+      "url": "/academia?source=shortcut",
       "icons": [
         {
           "src": "/icons/maskable-192.png?v=6",

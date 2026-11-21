@@ -179,7 +179,7 @@ export async function certificadoPdf(d: DocumentoAcademia): Promise<Buffer> {
     y += 7;
     mixta([{ t: "con una nota de " }, { t: nota, estilo: "bold", color: COBRE, tam: 13 }, d.honores ? { t: ", con honores", estilo: "bold", color: COBRE } : { t: "" }, { t: "." }], y, 12, MARRON);
   } else if (esNivel) {
-    mixta([{ t: "completó el " }, { t: nivelTexto, estilo: "bold" }, { t: ": sus materias, el examen integral y el pacto," }], y, 12, MARRON);
+    mixta([{ t: "completó el " }, { t: nivelTexto, estilo: "bold" }, { t: `: sus materias, el examen integral y ${d.nivel?.n === 1 ? "el pacto" : "las actividades del nivel"},` }], y, 12, MARRON);
     y += 7;
     mixta([{ t: "con un promedio de " }, { t: nota, estilo: "bold", color: COBRE, tam: 13 }, d.honores ? { t: ", con honores", estilo: "bold", color: COBRE } : { t: "" }, { t: "." }], y, 12, MARRON);
   } else {

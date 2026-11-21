@@ -7,7 +7,7 @@
 // no carga el catálogo (shared/academia.ts).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Clock, GraduationCap, Layers, Library, Loader2, Search, SearchX, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Clock, FlaskConical, GraduationCap, Layers, Library, Loader2, Search, SearchX, X } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
@@ -123,6 +123,11 @@ function TarjetaCatalogo({ f, ts, conLugar = false }: { f: Fila; ts: string[]; c
         {r.lecciones > 0 && <span className="inline-flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {r.lecciones} lecciones</span>}
         {f.minutos > 0 && <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {f.minutos} min</span>}
         {r.avanzada && <span>Avanzada</span>}
+        {b?.practicas?.length ? (
+          <span className="inline-flex items-center gap-1 text-orange-700 dark:text-orange-300" title={b.practicas.join(" · ")}>
+            <FlaskConical className="w-3.5 h-3.5" aria-hidden="true" /> Laboratorio
+          </span>
+        ) : null}
       </div>
       {r.estado === "en-curso" && r.lecciones > 0 && <BarraAvance valor={r.hechas} de={r.lecciones} etiqueta={`${r.hechas} de ${r.lecciones} lecciones`} />}
     </Link>
@@ -234,7 +239,7 @@ export default function AcademiaCatalogo() {
             <Library className="w-4 h-4" /> Ver todos los recursos de estudio: videos, lecturas y lecturas ampliadas
           </Link>
           <p className="text-muted-foreground mt-2">
-            {todas.length} materias en {e.niveles.length} niveles y {e.especialidades.length} especialidades · {abiertas} abiertas · {lecciones} lecciones
+            {todas.length} materias en {e.niveles.length} niveles y {e.especialidades.length} especialidades{abiertas < todas.length ? ` · ${abiertas} abiertas` : ""} · {lecciones} lecciones
           </p>
           {e.alumno && (aprobadas > 0 || enCurso > 0) && (
             <p className="text-sm mt-1" data-testid="catalogo-mi-avance">
@@ -290,6 +295,9 @@ export default function AcademiaCatalogo() {
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Estado">
               {ESTADOS.filter((x) => e.conSesion || (x.id !== "en-curso" && x.id !== "aprobada")).map((x) => {
                 const n = enLugar.reduce((a, g) => a + g.filas.filter((f) => pasaEstado(f.r.estado, x.id)).length, 0);
+                // con todas las materias abiertas, «Abiertas» repite «Todas» y «En preparación» lleva a una lista vacía
+                const todasAbiertas = abiertas === todas.length;
+                if (estado !== x.id && ((x.id === "abiertas" && todasAbiertas) || (x.id === "en-preparacion" && n === 0))) return null;
                 return (
                   <Chip key={x.id} activo={estado === x.id} onClick={() => setEstado(x.id)} testid={`catalogo-estado-${x.id}`}>
                     {x.texto} <span className={`text-xs ${estado === x.id ? "text-white/85" : "text-muted-foreground"}`}>{n}</span>

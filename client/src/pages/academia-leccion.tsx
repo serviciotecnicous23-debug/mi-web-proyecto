@@ -283,7 +283,15 @@ export default function AcademiaLeccion() {
     try {
       const r = await completarLeccion(l.leccion.id, reflexion);
       await qc.invalidateQueries({ queryKey: ["academia"] });
-      toast({ title: "¡Lección completada!", description: r.siguiente ? "Sigue con la próxima cuando quieras." : "Terminaste las lecciones: ahora el versículo y el examen final." });
+      const practica = r.practicas?.[0];
+      toast({
+        title: "¡Lección completada!",
+        description: practica
+          ? `Se abrió una práctica del laboratorio: ${practica.titulo}. La encuentras en la página de la materia.`
+          : r.siguiente
+            ? "Sigue con la próxima cuando quieras."
+            : "Terminaste las lecciones: mira en la materia lo que falta.",
+      });
       setLocation(r.siguiente ? `/academia/leccion/${r.siguiente}` : `/academia/materia/${l.materia.id}`);
     } catch (e: any) {
       toast({ title: "Todavía no", description: e.message, variant: "destructive" });

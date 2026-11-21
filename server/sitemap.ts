@@ -2,13 +2,16 @@
  * /sitemap.xml: la lista de páginas públicas que se les da a Google y a Bing (21-nov-2026). Antes eran 17 páginas
  * fijas, todas con la fecha del día como «última modificación» (Google deja de creerle a esa fecha si siempre es hoy).
  * Ahora:
- * - van las páginas públicas de siempre y la portada de la academia;
+ * - van las páginas públicas de siempre y la portada de la academia (no las que piden cuenta, como /capacitaciones,
+ *   que manda al visitante a entrar);
  * - con la academia abierta (se ve sin cuenta), también su catálogo, sus recursos, el reglamento, la declaración de
- *   fe, cada nivel, cada especialidad y cada materia que ya se puede estudiar;
+ *   fe, cada nivel, cada especialidad, cada materia que ya se puede estudiar y la preparación de cada práctica del
+ *   laboratorio ministerial;
  * - sin «lastmod»: mejor no decir una fecha que no se sabe.
  * Lo que robots.txt cierra (/admin, /api, /perfil…) nunca entra: lo comprueba server/sitemap.test.ts.
  */
-import { ESPECIALIDADES, NIVELES, todasLasMaterias } from "@shared/academia";
+import { ESPECIALIDADES, NIVELES, materiaPorId, todasLasMaterias } from "@shared/academia";
+import { PRACTICAS } from "./academia/laboratorio/index";
 
 type Pagina = { loc: string; prioridad: string; frecuencia: "daily" | "weekly" | "monthly" | "yearly" };
 
@@ -20,13 +23,18 @@ const FIJAS: Pagina[] = [
   { loc: "/en-vivo", prioridad: "0.9", frecuencia: "daily" },
   { loc: "/radio", prioridad: "0.9", frecuencia: "daily" },
   { loc: "/eventos", prioridad: "0.9", frecuencia: "weekly" },
-  { loc: "/capacitaciones", prioridad: "0.8", frecuencia: "weekly" },
   { loc: "/academia", prioridad: "0.9", frecuencia: "weekly" },
   { loc: "/contacto", prioridad: "0.7", frecuencia: "yearly" },
   { loc: "/comunidad", prioridad: "0.7", frecuencia: "daily" },
   { loc: "/biblioteca", prioridad: "0.7", frecuencia: "weekly" },
   { loc: "/oracion", prioridad: "0.8", frecuencia: "weekly" },
   { loc: "/regiones", prioridad: "0.6", frecuencia: "monthly" },
+  { loc: "/iglesias", prioridad: "0.6", frecuencia: "monthly" },
+  { loc: "/buscar-iglesia", prioridad: "0.6", frecuencia: "monthly" },
+  { loc: "/alianza", prioridad: "0.5", frecuencia: "yearly" },
+  { loc: "/calendario", prioridad: "0.6", frecuencia: "weekly" },
+  { loc: "/sermones", prioridad: "0.6", frecuencia: "weekly" },
+  { loc: "/juegos", prioridad: "0.6", frecuencia: "monthly" },
   { loc: "/privacidad", prioridad: "0.3", frecuencia: "yearly" },
   { loc: "/terminos", prioridad: "0.3", frecuencia: "yearly" },
   { loc: "/login", prioridad: "0.3", frecuencia: "yearly" },
@@ -42,11 +50,16 @@ export function paginasDelSitemap(academiaAbierta: boolean): Pagina[] {
       { loc: "/academia/recursos", prioridad: "0.6", frecuencia: "monthly" },
       { loc: "/academia/reglamento", prioridad: "0.4", frecuencia: "yearly" },
       { loc: "/academia/declaracion-de-fe", prioridad: "0.5", frecuencia: "yearly" },
+      { loc: "/academia/verificar", prioridad: "0.4", frecuencia: "yearly" },
     );
     for (const n of NIVELES) paginas.push({ loc: `/academia/nivel/${n.n}`, prioridad: "0.7", frecuencia: "monthly" });
     for (const e of ESPECIALIDADES) paginas.push({ loc: `/academia/especialidad/${e.id}`, prioridad: "0.6", frecuencia: "monthly" });
     for (const m of todasLasMaterias()) {
       if (m.disponible) paginas.push({ loc: `/academia/materia/${m.id}`, prioridad: "0.6", frecuencia: "monthly" });
+    }
+    // la preparación de cada práctica del laboratorio (se ve sin cuenta; hacerla pide inscribirse en la materia)
+    for (const p of PRACTICAS) {
+      if (materiaPorId(p.materia)?.disponible) paginas.push({ loc: `/academia/laboratorio/${p.id}`, prioridad: "0.5", frecuencia: "monthly" });
     }
   }
   const vistas = new Set<string>();

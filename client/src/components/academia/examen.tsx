@@ -209,7 +209,8 @@ function Veredicto({ r, destino, aprueba }: { r: ResultadoExamen; destino: Desti
       {r.aprobado ? (
         <>
           <p className="font-semibold flex justify-center items-center gap-2 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-5 h-5" /> ¡Aprobaste el examen integral!</p>
-          <p className="text-sm mt-1">Para cerrar el nivel, solo falta aceptar el pacto.</p>
+          <p className="text-sm mt-1">Mira en la página del nivel lo que falta para cerrarlo.</p>
+          <Link href={destino.volver.href}><Button className="fire-btn-primary mt-3" data-testid="integral-ver-nivel">Ver lo que falta</Button></Link>
         </>
       ) : (
         <>

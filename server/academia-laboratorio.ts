@@ -8,9 +8,10 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { enlaceBiblia, materiaPorId, parsearCita, puedeRevisar, type MateriaDef } from "@shared/academia";
 import {
-  LABORATORIO, LIMITE_LLEVO, SENTIRES, nivelDe, type IntentoVista, type LaboratorioMateria, type PracticaDetalle, type PracticaResumen, type RespuestaPaso,
+  LABORATORIO, LIMITE_LLEVO, SENTIRES, nivelDe, type IntentoVista, type LaboratorioMateria, type PracticaDetalle, type PracticaResumen, type PracticasPendientes,
+  type RespuestaPaso,
 } from "@shared/laboratorio";
-import { practicaPorId, practicasDeMateria } from "./academia/laboratorio/index";
+import { PRACTICAS, practicaPorId, practicasDeMateria } from "./academia/laboratorio/index";
 import type { PracticaDef } from "./academia/laboratorio/tipos";
 import { estadoValido, medidoresVista, nuevoEstado, pasosDe, responder, resultado, terminado, varianteDe, vistaPaso, type EstadoIntento } from "./academia-laboratorio-motor";
 import {
@@ -157,7 +158,52 @@ async function intentoDe(req: Request, res: Response): Promise<{ userId: number;
   return { userId: a.userId, fila, p };
 }
 
+/** Las prácticas que se abren al completar la lección `n` de la materia: las que piden esa lección y ya tienen todas. */
+export async function practicasQueAbre(userId: number, m: MateriaDef, n: number): Promise<{ id: string; titulo: string }[]> {
+  const defs = practicasDeMateria(m.id).filter((p) => p.lecciones.includes(n));
+  if (!defs.length) return [];
+  const hechas = await leccionesHechas(userId, m);
+  return defs.filter((p) => !faltaDe(leccionesDe(p, m, hechas)).length).map((p) => ({ id: p.id, titulo: p.titulo }));
+}
+
+/**
+ * Las prácticas que el alumno ya puede hacer (inscrito en la materia y con sus lecciones terminadas) y todavía no
+ * terminó: van en «Lo de hoy» de la portada de la academia y en «Para hoy» del salón. Sin cuenta o sin inscripción, vacío.
+ */
+async function pendientesDe(userId: number): Promise<PracticasPendientes["practicas"]> {
+  if (!(await estaInscrito(userId))) return [];
+  const { rows } = await pool.query(`SELECT materia_id FROM academia_materias WHERE user_id = $1`, [userId]);
+  const inscritas = new Set(rows.map((r) => r.materia_id as string));
+  const defs = PRACTICAS.filter((p) => inscritas.has(p.materia));
+  if (!defs.length) return [];
+  const intentos = await intentosDe(userId, defs.map((p) => p.id), false);
+  const out: PracticasPendientes["practicas"] = [];
+  const hechasPorMateria = new Map<string, Set<string>>();
+  for (const p of defs) {
+    const m = materiaPorId(p.materia);
+    if (!m) continue;
+    const i = intentos.get(p.id);
+    if (i && i.mejor != null && !i.enCurso) continue;
+    if (!hechasPorMateria.has(m.id)) hechasPorMateria.set(m.id, await leccionesHechas(userId, m));
+    if (faltaDe(leccionesDe(p, m, hechasPorMateria.get(m.id)!)).length) continue;
+    out.push({ id: p.id, titulo: p.titulo, materia: { id: m.id, titulo: m.titulo }, enCurso: !!i?.enCurso });
+  }
+  return out;
+}
+
 export function registerAcademiaLaboratorioRoutes(app: Express) {
+  app.get("/api/academia/laboratorio/pendientes", async (req, res) => {
+    try {
+      const acceso = await accesoDe(req);
+      const out: PracticasPendientes = { practicas: acceso.ver && acceso.userId ? await pendientesDe(acceso.userId) : [] };
+      res.setHeader("Cache-Control", "no-store");
+      res.json(out);
+    } catch (e: any) {
+      console.error("laboratorio/pendientes:", e?.message);
+      res.status(500).json({ message: "No se pudieron cargar las prácticas." });
+    }
+  });
+
   // Las prácticas de una materia (vacío si no tiene): se ven en su página, antes del examen final.
   app.get("/api/academia/laboratorio/materia/:materiaId", async (req, res) => {
     try {
