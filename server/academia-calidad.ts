@@ -328,6 +328,44 @@ export function registerAcademiaCalidadRoutes(app: Express) {
   });
 
   // Aprobar una materia en la revisión doctrinal (sin observaciones abiertas), o quitar la aprobación con un motivo.
+  // Aprobar varias materias de una vez (la lista de materias del panel, con «Aprobar varias»). Las que tienen
+  // observaciones abiertas no se aprueban: se dicen en la respuesta. Una línea en el historial por cada una.
+  app.post("/api/academia/direccion/contenido/aprobar-varias", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "aprobar");
+      if (!p) return;
+      const ids = Array.isArray(req.body?.ids) ? [...new Set((req.body.ids as unknown[]).map(String))].slice(0, 120) : [];
+      if (!ids.length) return res.status(400).json({ message: "Elige al menos una materia." });
+      const notas = limpio(req.body?.notas, 500) || null;
+      const aprobadas: string[] = [];
+      const omitidas: { id: string; titulo: string; motivo: string }[] = [];
+      for (const id of ids) {
+        const m = materiaConBanco(id);
+        if (!m) {
+          omitidas.push({ id, titulo: id, motivo: "No existe o todavía no tiene contenido." });
+          continue;
+        }
+        const { rows: ab } = await pool.query(`SELECT count(*)::int AS n FROM academia_contenido_notas WHERE materia_id = $1 AND resuelta_at IS NULL`, [m.id]);
+        const abiertas = Number(ab[0]?.n ?? 0);
+        if (abiertas > 0) {
+          omitidas.push({ id: m.id, titulo: m.titulo, motivo: `Tiene ${abiertas === 1 ? "una observación abierta" : `${abiertas} observaciones abiertas`}.` });
+          continue;
+        }
+        await pool.query(
+          `INSERT INTO academia_contenido_aprobaciones (materia_id, user_id, aprobada_at, notas, huella) VALUES ($1, $2, now(), $3, $4)
+           ON CONFLICT (materia_id) DO UPDATE SET user_id = EXCLUDED.user_id, aprobada_at = now(), notas = EXCLUDED.notas, huella = EXCLUDED.huella`,
+          [m.id, p.userId, notas, huellaDe(m)],
+        );
+        await registrar(req, "academia.contenido.aprobar", `Aprobó en la revisión doctrinal la materia «${m.titulo}».`, notas);
+        aprobadas.push(m.id);
+      }
+      res.json({ aprobadas, omitidas });
+    } catch (err) {
+      console.error("[academia] contenido, aprobar varias:", err);
+      res.sendStatus(500);
+    }
+  });
+
   app.post("/api/academia/direccion/contenido/:materiaId/aprobar", async (req, res) => {
     try {
       const p = await permisoDe(req, res, "aprobar");

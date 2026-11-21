@@ -9,6 +9,7 @@ import {
   AlertTriangle, ArrowLeft, Ban, BookOpen, CheckCircle2, ChevronRight, Clock, MessageSquarePlus, RotateCcw, ShieldCheck, ShieldOff, XCircle,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { AprobarMateria } from "@/components/academia/panel-aprobar";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -248,6 +249,8 @@ function Aprobacion({ d }: { d: ContenidoDetalle }) {
     }
   };
   const vigente = !!a?.vigente;
+  const [ventana, setVentana] = useState(false);
+  const grupo = d.materia.nivel ? `Nivel ${d.materia.nivel}` : "Especialidad";
   return (
     <section className={`glass-card p-5 border ${vigente ? "border-emerald-500/40" : "border-orange-500/40"}`} data-testid="contenido-aprobacion" data-estado={vigente ? "aprobada" : a ? "cambio" : "pendiente"}>
       <div className="flex flex-col md:flex-row md:items-start gap-3">
@@ -269,7 +272,7 @@ function Aprobacion({ d }: { d: ContenidoDetalle }) {
         {d.puede.aprobar && !modo && (
           <div className="flex flex-wrap gap-2">
             {!vigente && (
-              <Button className="fire-btn-primary" onClick={() => setModo("aprobar")} disabled={abiertas > 0} data-testid="contenido-aprobar">
+              <Button className="fire-btn-primary h-11" onClick={() => setVentana(true)} data-testid="contenido-aprobar">
                 <ShieldCheck className="w-4 h-4 mr-1.5" /> {a ? "Aprobarla otra vez" : "Aprobar como administrador"}
               </Button>
             )}
@@ -302,6 +305,16 @@ function Aprobacion({ d }: { d: ContenidoDetalle }) {
         </div>
       )}
       {error && <p className="text-sm text-red-600 dark:text-red-400 mt-3" role="alert">{error}</p>}
+      {d.puede.aprobar && !vigente && (
+        // en el teléfono, mientras se leen las lecciones, el botón de aprobar queda siempre a mano
+        <div className="md:hidden fixed inset-x-0 bottom-[4.75rem] z-40 px-4">
+          <div className="glass-card border border-orange-500/60 p-3 flex items-center gap-3 shadow-xl">
+            <span className="flex-1 text-sm font-medium truncate">{abiertas ? `${abiertas} ${abiertas === 1 ? "observación abierta" : "observaciones abiertas"}` : "¿La revisaste?"}</span>
+            <Button className="fire-btn-primary h-11" onClick={() => setVentana(true)} data-testid="contenido-aprobar-barra">Aprobar esta materia</Button>
+          </div>
+        </div>
+      )}
+      <AprobarMateria materia={ventana ? { id: d.materia.id, titulo: d.materia.titulo, grupo, abiertas } : null} alCerrar={() => setVentana(false)} />
     </section>
   );
 }
@@ -585,7 +598,7 @@ export default function AcademiaDireccionContenido() {
   const repaso = d.repaso.reduce((s, r) => s + r.preguntas.length, 0);
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4 pt-6 pb-16 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 pt-6 pb-44 md:pb-16 space-y-6">
         <Link href="/admin/academia?tab=contenido" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" /> Revisión del contenido
         </Link>

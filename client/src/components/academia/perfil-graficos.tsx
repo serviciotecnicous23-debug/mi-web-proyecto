@@ -11,13 +11,15 @@ import type { DiaEstudio } from "@shared/academia-perfil";
 export const fechaCorta = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("es", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** Barras de las últimas semanas (la última es la actual, que todavía no termina). */
-export function BarrasSemanas<T extends { inicio: string }>({ titulo, semanas, valor, unidad, meta, testId }: {
+export function BarrasSemanas<T extends { inicio: string }>({ titulo, semanas, valor, unidad, meta, testId, compacto }: {
   titulo: string;
   semanas: T[];
   valor: (s: T) => number;
   unidad: (n: number) => string;
   meta?: number;
   testId?: string;
+  /** Más bajo (para el inicio del panel en el teléfono). */
+  compacto?: boolean;
 }) {
   const [activa, setActiva] = useState<number | null>(null);
   const valores = semanas.map(valor);
@@ -25,12 +27,12 @@ export function BarrasSemanas<T extends { inicio: string }>({ titulo, semanas, v
   const total = valores.reduce((a, b) => a + b, 0);
   const texto = (i: number) => `Semana del ${fechaCorta(semanas[i].inicio)}${i === semanas.length - 1 ? " (esta semana)" : ""}: ${unidad(valores[i])}`;
   return (
-    <section className="glass-card p-5" data-testid={testId}>
+    <section className={`glass-card ${compacto ? "p-4" : "p-5"}`} data-testid={testId}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
-        <h3 className="font-semibold">{titulo}</h3>
+        <h3 className={compacto ? "font-semibold text-sm" : "font-semibold"}>{titulo}</h3>
         <span className="text-xs text-muted-foreground" aria-live="polite">{activa != null ? texto(activa) : `En 12 semanas: ${unidad(total)}`}</span>
       </div>
-      <div className="relative h-36">
+      <div className={`relative ${compacto ? "h-20" : "h-36"}`}>
         {meta ? (
           <div className="absolute inset-x-0 border-t border-dashed border-foreground/40 pointer-events-none z-10" style={{ bottom: `${(100 * meta) / tope}%` }} aria-hidden="true">
             <span className="absolute right-0 -top-[18px] rounded bg-background/80 px-1 text-[11px] text-muted-foreground">Meta: {unidad(meta)}</span>
