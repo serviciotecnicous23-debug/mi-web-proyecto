@@ -101,6 +101,26 @@ Se abrió y se probó cada pestaña del panel general con datos de prueba: Solic
 
 Se corrigieron 15 textos que se veían sin tilde: «transmisión», «señal», «enseñar», «Código», «más», «a través», «aún» y «pública», en el control de la transmisión en vivo, en Maestros, en Miembros, en Contacto, en Publicaciones, en la biblioteca de radio y en el panel de los maestros.
 
+### El panel general, rehecho para el teléfono
+
+Luis revisa el panel en el teléfono. Así se veía el panel general (`/admin`) en 375×812:
+
+- el título, la descripción y la tarjeta de la academia llenaban la primera pantalla;
+- las 11 pestañas ocupaban unas 6 filas;
+- en Solicitudes, los botones Aprobar y Rechazar quedaban fuera de la pantalla, a la derecha de la tabla;
+- en Miembros, las acciones eran íconos sin nombre;
+- siete botones borraban sin preguntar: rechazar una solicitud, eliminar un miembro, y borrar un curso, una solicitud de maestro, un evento, un mensaje o una publicación.
+
+Ahora (piezas en `client/src/components/admin/panel-general.tsx`):
+
+- **Se abre en «Inicio».** Arriba va «Lo que te toca», con lo que espera a la Administración: cuentas nuevas, inscripciones a cursos, obreros que piden enseñar, mensajes sin leer y denuncias. Cada cosa se resuelve con un toque. Debajo van las cifras pequeñas, y cada una lleva a su lista.
+- **Las secciones van en una sola fila deslizable:** Inicio, Personas, Cursos, Comunidad, Sitio y Radio. Cada sección muestra en su píldora cuántas cosas esperan, y debajo sus partes en un selector simple: Personas tiene Solicitudes y Miembros; Cursos tiene Cursos y Maestros; Comunidad tiene Mensajes, Publicaciones y Denuncias; Sitio tiene Eventos y Textos de la web; Radio tiene Biblioteca y En vivo. La parte elegida queda en la dirección (`?tab=`), como antes, y el aviso de la campana sigue abriendo Denuncias.
+- **En el teléfono, Solicitudes y Miembros van en tarjetas** con sus botones a la vista. La tarjeta de Miembros tiene «Ver», «Activar» o «Desactivar», «Eliminar», el rol, y el cargo y el país, que antes solo se podían editar en la computadora. En la computadora siguen las tablas.
+- **Todo lo que no se puede deshacer pide confirmación** en una ventana con botones grandes. Desactivar una cuenta también la pide; activarla, no.
+- **Cursos:** primero van los cursos con inscripciones esperando. Al entrar, el primero de ellos se abre solo y la pantalla baja hasta sus botones de aprobar o rechazar.
+- **Borrar un curso que ya tiene alumnos aprobados o certificados solo lo desactiva**, para guardar sus notas y certificados. Eso ya era así, pero el aviso decía «Curso eliminado» aunque el curso seguía en la lista. Ahora el servidor dice qué pasó y el aviso dice «Curso desactivado».
+- La ventana «Ver» de un miembro ya cabe en el teléfono. Los mensajes de contacto tienen un botón «Marcar leído» con nombre.
+
 ## El plan por partes
 
 1. **Lo que no funcionaba:** la tabla de arriba.
@@ -115,4 +135,4 @@ Se corrigieron 15 textos que se veían sin tilde: «transmisión», «señal», 
    - quiénes necesitan ayuda y por qué;
    - las inscripciones, las lecciones y los minutos de cada semana;
    - en qué lección se detienen los alumnos de cada materia.
-4. **El resto del panel general:** probar cada pestaña con datos.
+4. **El resto del panel general:** probar cada pestaña con datos, y rehacerlo para el teléfono.

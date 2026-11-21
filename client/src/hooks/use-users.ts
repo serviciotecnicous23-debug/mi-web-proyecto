@@ -577,10 +577,16 @@ export function useDeleteCourse() {
       const url = buildUrl(api.courses.delete.path, { id });
       const res = await authFetch(url, { method: "DELETE" });
       if (!res.ok) throw new Error("Error al eliminar curso");
+      const cuerpo = await res.json().catch(() => ({}));
+      return cuerpo?.resultado as "borrado" | "desactivado" | undefined;
     },
-    onSuccess: () => {
+    onSuccess: (resultado) => {
       queryClient.invalidateQueries({ queryKey: [api.courses.list.path] });
-      toast({ title: "Curso eliminado" });
+      if (resultado === "desactivado") {
+        toast({ title: "Curso desactivado", description: "Tenía alumnos aprobados o certificados: se guardan sus notas y certificados, pero el curso ya no se ve ni acepta inscripciones." });
+      } else {
+        toast({ title: "Curso eliminado" });
+      }
     },
     onError: (error) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });

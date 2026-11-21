@@ -23,21 +23,21 @@ export function TarjetaAcademiaPanel({ base }: { base: string }) {
   return (
     <Link href={base}>
       <span
-        className="glass-card mb-8 p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 border border-orange-500/40 hover:-translate-y-0.5 transition cursor-pointer"
+        className="glass-card mb-4 sm:mb-8 p-4 md:p-6 flex flex-row items-center gap-3 sm:gap-4 border border-orange-500/40 hover:-translate-y-0.5 transition cursor-pointer"
         data-testid="panel-academia"
       >
-        <span className="w-12 h-12 rounded-2xl bg-orange-500/15 flex items-center justify-center shrink-0">
+        <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-orange-500/15 flex items-center justify-center shrink-0">
           <GraduationCap className="w-7 h-7 text-orange-500" aria-hidden="true" />
         </span>
         <span className="flex-1 min-w-0">
           <span className="flex flex-wrap items-center gap-2">
-            <strong className="text-lg">{titulo}</strong>
+            <strong className="text-base sm:text-lg leading-snug">{titulo}</strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs">
               {administra ? <ShieldCheck className="w-3 h-3" aria-hidden="true" /> : <Eye className="w-3 h-3" aria-hidden="true" />}
               {administra ? "La administras tú" : "Solo ver"}
             </span>
           </span>
-          <span className="block text-sm text-muted-foreground mt-1">{texto}</span>
+          <span className="hidden sm:block text-sm text-muted-foreground mt-1">{texto}</span>
         </span>
         <span className="inline-flex items-center gap-1.5 text-sm font-medium shrink-0">Entrar <ArrowRight className="w-4 h-4" aria-hidden="true" /></span>
       </span>

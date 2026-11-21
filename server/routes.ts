@@ -1952,8 +1952,9 @@ ${urls}
 
   app.delete(api.courses.delete.path, async (req, res) => {
     if (!isAdmin(req)) return res.sendStatus(403);
-    await storage.deleteCourse(parseInt(req.params.id));
-    res.sendStatus(200);
+    // el panel dice qué pasó: si tenía alumnos aprobados o certificados, el curso solo se desactiva
+    const resultado = await storage.deleteCourse(parseInt(req.params.id));
+    res.json({ resultado });
   });
 
   // ========== COURSE MATERIALS ==========

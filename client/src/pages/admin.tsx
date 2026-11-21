@@ -53,6 +53,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { withAccents } from "@shared/labels";
+import { CifrasGenerales, LoQueTeTocaGeneral, NavPanelGeneral, PARTES, useConfirmar, type Parte } from "@/components/admin/panel-general";
 // Inline Certificate Preview for Admin panel
 function CertificatePreview({ cert, containerId }: { cert: any; containerId: string }) {
   const studentName = cert.studentName || "Estudiante";
@@ -614,10 +615,10 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
             </Badge>
             {e.status === "solicitado" && (
               <>
-                <Button size="sm" variant="outline" onClick={() => updateEnrollment.mutate({ id: e.id, courseId, updates: { status: "aprobado" } })} data-testid={`button-admin-approve-enrollment-${e.id}`}>
+                <Button size="sm" className="h-10 md:h-9 px-4" onClick={() => updateEnrollment.mutate({ id: e.id, courseId, updates: { status: "aprobado" } })} data-testid={`button-admin-approve-enrollment-${e.id}`}>
                   <CheckCircle2 className="w-4 h-4 mr-1" /> Aprobar
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => updateEnrollment.mutate({ id: e.id, courseId, updates: { status: "rechazado" } })} data-testid={`button-admin-reject-enrollment-${e.id}`}>
+                <Button size="sm" variant="outline" className="h-10 md:h-9 px-4" onClick={() => updateEnrollment.mutate({ id: e.id, courseId, updates: { status: "rechazado" } })} data-testid={`button-admin-reject-enrollment-${e.id}`}>
                   <XCircle className="w-4 h-4 mr-1" /> Rechazar
                 </Button>
               </>
@@ -683,6 +684,8 @@ export default function AdminDashboard() {
   const tabDeLaUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
   // la pestaña que eligió quien mira (null: la que corresponde al abrir, según la dirección o si hay solicitudes)
   const [pestana, setPestana] = useState<string | null>(null);
+  // la ventana para confirmar lo que no se puede deshacer (borrar, rechazar o desactivar)
+  const { pedir: confirmarAccion, ventana: ventanaConfirmar } = useConfirmar();
   const { data: whatsappData } = useWhatsappLink();
   const updateWhatsappLink = useUpdateWhatsappLink();
   const [search, setSearch] = useState("");
@@ -727,16 +730,32 @@ export default function AdminDashboard() {
   }
 
   const pendingUsers = users?.filter((u: any) => !u.isActive) || [];
-  const PESTANAS = ["pending", "courses", "teacher-requests", "events", "content", "users", "messages", "posts", "denuncias", "radio-library", "live"];
-  const pestanaActual = pestana ?? (tabDeLaUrl && PESTANAS.includes(tabDeLaUrl) ? tabDeLaUrl : pendingUsers.length > 0 ? "pending" : "courses");
-  /** Las cifras de arriba llevan a su pestaña. */
+  // se abre en el inicio (o en la parte que diga ?tab=, como el aviso de la campana de las denuncias)
+  const pestanaActual = pestana ?? (tabDeLaUrl && (PARTES as string[]).includes(tabDeLaUrl) ? tabDeLaUrl : "inicio");
+  /** Ir a una parte del panel (o al inicio); queda en la dirección para poder volver o compartirla. */
   const irAPestana = (t: string) => {
     setPestana(t);
-    window.setTimeout(() => document.getElementById("admin-pestanas")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    let destino = "admin-pestanas";
+    // en Cursos, si hay inscripciones esperando, se abre el primer curso que las tiene y se va directo a él
+    if (t === "courses" && expandedCourse == null) {
+      const conPendientes = allCourses?.find((c: any) => (c.pendingCount || 0) > 0);
+      if (conPendientes) {
+        setExpandedCourse(conPendientes.id);
+        destino = `curso-${conPendientes.id}`;
+      }
+    }
+    window.history.replaceState(null, "", t === "inicio" ? window.location.pathname : `${window.location.pathname}?tab=${t}`);
+    window.setTimeout(() => document.getElementById(destino)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
   const activeUsers = users?.filter((u: any) => u.isActive) || [];
   const unreadMessages = contactMessages?.filter((m: any) => !m.isRead) || [];
   const obreros = users?.filter((u: any) => u.isActive) || [];
+  // lo que espera en cada parte (los números de la fila de secciones y de «Lo que te toca»)
+  const inscripcionesPorAprobar = allCourses?.reduce((n: number, c: any) => n + (c.pendingCount || 0), 0) ?? 0;
+  const maestrosPorAprobar = teacherRequestsList?.filter((r: any) => r.status === "solicitado").length ?? 0;
+  const avisos: Partial<Record<Parte, number>> = {
+    pending: pendingUsers.length, courses: inscripcionesPorAprobar, "teacher-requests": maestrosPorAprobar, messages: unreadMessages.length, denuncias: denunciasPendientes,
+  };
 
   const filteredUsers = users?.filter(
     (u: any) =>
@@ -845,75 +864,22 @@ export default function AdminDashboard() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-28 sm:py-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 sm:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold" data-testid="text-admin-title">Panel de Administración</h1>
-            <p className="text-muted-foreground mt-1">Gestiona miembros, cursos, eventos, contenido y mensajes del ministerio.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold" data-testid="text-admin-title">Administración</h1>
+            <p className="hidden sm:block text-muted-foreground mt-1">Lo que te toca, las personas, los cursos, la comunidad, la web y la radio del ministerio.</p>
           </div>
         </div>
 
         <TarjetaAcademiaPanel base="/admin/academia" />
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <button type="button" onClick={() => irAPestana("users")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver la lista de miembros" data-testid="cifra-users-usuarios">
-          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" /> Usuarios
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold" data-testid="text-total-users">{users?.length || 0}</div></CardContent>
-          </Card>
-          </button>
-          <button type="button" onClick={() => irAPestana("users")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver la lista de miembros" data-testid="cifra-users-activos">
-          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" /> Activos
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-600" data-testid="text-active-users">{activeUsers.length}</div></CardContent>
-          </Card>
-          </button>
-          <button type="button" onClick={() => irAPestana("courses")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los cursos" data-testid="cifra-courses-cursos">
-          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" /> Cursos
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold" data-testid="text-total-courses">{allCourses?.length || 0}</div></CardContent>
-          </Card>
-          </button>
-          <button type="button" onClick={() => irAPestana("events")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los eventos" data-testid="cifra-events-eventos">
-          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" /> Eventos
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold" data-testid="text-total-events">{allEvents?.length || 0}</div></CardContent>
-          </Card>
-          </button>
-          <button type="button" onClick={() => irAPestana("messages")} className="text-left rounded-xl transition hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" title="Ver los mensajes de contacto" data-testid="cifra-messages-mensajes">
-          <Card className="h-full hover:border-orange-500/50 cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Mail className="h-4 w-4" /> Mensajes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-unread-messages">
-                {unreadMessages.length} <span className="text-sm font-normal text-muted-foreground">sin leer</span>
-              </div>
-            </CardContent>
-          </Card>
-          </button>
-        </div>
+        {ventanaConfirmar}
+        <NavPanelGeneral actual={pestanaActual} alElegir={irAPestana} avisos={avisos} />
 
-        <Tabs value={pestanaActual} onValueChange={setPestana} id="admin-pestanas" className="scroll-mt-20">
-          <TabsList className="mb-4 flex-wrap">
+        <Tabs value={pestanaActual} onValueChange={irAPestana}>
+          {/* las pestañas de siempre quedan ocultas: se elige con la fila de secciones de arriba */}
+          <TabsList className="hidden">
             <TabsTrigger value="pending" className="gap-2" data-testid="tab-pending">
               <UserPlus className="h-4 w-4" /> Solicitudes
               {pendingUsers.length > 0 && <Badge variant="destructive" className="ml-1">{pendingUsers.length}</Badge>}
@@ -956,6 +922,21 @@ export default function AdminDashboard() {
             </TabsTrigger>
           </TabsList>
 
+          {/* El inicio: lo que te toca y las cifras */}
+          <TabsContent value="inicio" className="space-y-6">
+            <LoQueTeTocaGeneral avisos={avisos} alElegir={irAPestana} />
+            <CifrasGenerales
+              alElegir={irAPestana}
+              cifras={[
+                { texto: "Miembros activos", valor: activeUsers.length, nota: `${users?.length || 0} cuentas en total`, destino: "users" as Parte, testId: "cifra-users-activos" },
+                { texto: "Cuentas por aprobar", valor: pendingUsers.length, destino: "pending" as Parte, testId: "cifra-pending" },
+                { texto: "Cursos", valor: allCourses?.length || 0, nota: inscripcionesPorAprobar ? `${inscripcionesPorAprobar} inscripciones por aprobar` : undefined, destino: "courses" as Parte, testId: "cifra-courses-cursos" },
+                { texto: "Eventos", valor: allEvents?.length || 0, destino: "events" as Parte, testId: "cifra-events-eventos" },
+                { texto: "Mensajes sin leer", valor: unreadMessages.length, destino: "messages" as Parte, testId: "cifra-messages-mensajes" },
+              ]}
+            />
+          </TabsContent>
+
           {/* Solicitudes Tab */}
           <TabsContent value="pending">
             <Card>
@@ -969,6 +950,29 @@ export default function AdminDashboard() {
                 ) : pendingUsers.length === 0 ? (
                   <div className="p-12 text-center text-muted-foreground">No hay solicitudes pendientes.</div>
                 ) : (
+                  <>
+                  {/* en el teléfono: una tarjeta por solicitud, con sus dos botones a la vista */}
+                  <ul className="md:hidden divide-y divide-border" data-testid="tarjetas-solicitudes">
+                    {pendingUsers.map((u: any) => (
+                      <li key={u.id} className="p-4 space-y-3" data-testid={`tarjeta-pending-${u.id}`}>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-primary/5 text-primary text-xs">{u.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold leading-snug truncate">{u.displayName || u.username}</p>
+                            <p className="text-xs text-muted-foreground truncate">@{u.username}{u.email ? ` · ${u.email}` : ""}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Pide: <Badge variant="outline">{ROLES[u.role as keyof typeof ROLES] || u.role}</Badge> · {u.createdAt ? new Date(u.createdAt).toLocaleDateString("es-ES") : "-"}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button className="h-11" onClick={() => toggleActive.mutate(u.id)} disabled={toggleActive.isPending} data-testid={`tarjeta-approve-${u.id}`}><CheckCircle2 className="h-4 w-4 mr-1.5" /> Aprobar</Button>
+                          <Button className="h-11" variant="destructive" onClick={() => confirmarAccion({ titulo: "¿Rechazar esta solicitud?", detalle: `Se borra la cuenta de ${u.displayName || u.username}. No se puede deshacer.`, boton: "Sí, rechazarla", accion: () => deleteUser.mutate(u.id) })} disabled={deleteUser.isPending} data-testid={`tarjeta-reject-${u.id}`}><XCircle className="h-4 w-4 mr-1.5" /> Rechazar</Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1007,7 +1011,7 @@ export default function AdminDashboard() {
                               <Button size="sm" onClick={() => toggleActive.mutate(u.id)} disabled={toggleActive.isPending} data-testid={`button-approve-${u.id}`}>
                                 <CheckCircle2 className="h-4 w-4 mr-1" /> Aprobar
                               </Button>
-                              <Button size="sm" variant="destructive" onClick={() => deleteUser.mutate(u.id)} disabled={deleteUser.isPending} data-testid={`button-reject-${u.id}`}>
+                              <Button size="sm" variant="destructive" onClick={() => confirmarAccion({ titulo: "¿Rechazar esta solicitud?", detalle: `Se borra la cuenta de ${u.displayName || u.username}. No se puede deshacer.`, boton: "Sí, rechazarla", accion: () => deleteUser.mutate(u.id) })} disabled={deleteUser.isPending} data-testid={`button-reject-${u.id}`}>
                                 <XCircle className="h-4 w-4 mr-1" /> Rechazar
                               </Button>
                             </div>
@@ -1016,6 +1020,8 @@ export default function AdminDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1051,15 +1057,16 @@ export default function AdminDashboard() {
                   <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : !allCourses?.length ? (
                   <div className="p-12 text-center text-muted-foreground">
-                    No hay cursos creados. Haz clic en "Nuevo Curso" para crear uno.
+                    No hay cursos creados. Usa el botón «Nuevo Curso» para crear uno.
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {allCourses.map((course: Course) => {
+                    {/* primero los cursos con inscripciones esperando */}
+                    {[...allCourses].sort((a: any, b: any) => (b.pendingCount > 0 ? 1 : 0) - (a.pendingCount > 0 ? 1 : 0)).map((course: Course) => {
                       const teacher = users?.find((u: any) => u.id === course.teacherId);
                       const isExpanded = expandedCourse === course.id;
                       return (
-                        <Card key={course.id} data-testid={`admin-course-${course.id}`}>
+                        <Card key={course.id} id={`curso-${course.id}`} className="scroll-mt-20" data-testid={`admin-course-${course.id}`}>
                           <CardContent className="pt-4">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                               <div className="flex-1">
@@ -1074,7 +1081,7 @@ export default function AdminDashboard() {
                                   {!teacher && <span className="text-primary">Sin maestro asignado</span>}
                                   <span>Inscritos: {(course as any).enrolledCount || 0}{course.maxStudents ? `/${course.maxStudents}` : ""}</span>
                                   {(course as any).pendingCount > 0 && (
-                                    <Badge variant="destructive" className="text-xs animate-pulse">{(course as any).pendingCount} solicitud(es) pendiente(s)</Badge>
+                                    <Badge variant="destructive" className="text-xs animate-pulse">{(course as any).pendingCount} {(course as any).pendingCount === 1 ? "solicitud pendiente" : "solicitudes pendientes"}</Badge>
                                   )}
                                 </div>
                               </div>
@@ -1083,10 +1090,10 @@ export default function AdminDashboard() {
                                   {isExpanded ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />}
                                   Inscripciones {(course as any).pendingCount > 0 && `(${(course as any).pendingCount})`}
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => openEditCourseDialog(course)} data-testid={`button-edit-course-${course.id}`}>
+                                <Button variant="ghost" size="icon" onClick={() => openEditCourseDialog(course)} aria-label="Editar el curso" title="Editar el curso" data-testid={`button-edit-course-${course.id}`}>
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => deleteCourse.mutate(course.id)} disabled={deleteCourse.isPending} data-testid={`button-delete-course-${course.id}`}>
+                                <Button variant="ghost" size="icon" onClick={() => confirmarAccion({ titulo: `¿Borrar el curso «${course.title}»?`, detalle: "Si ya tiene alumnos aprobados o certificados, solo se desactiva y se guardan sus notas y certificados. Si no, se borra con sus inscripciones y materiales, y no se puede deshacer.", boton: "Sí, borrarlo", accion: () => deleteCourse.mutate(course.id) })} disabled={deleteCourse.isPending} aria-label="Borrar el curso" title="Borrar el curso" data-testid={`button-delete-course-${course.id}`}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
@@ -1139,7 +1146,7 @@ export default function AdminDashboard() {
                               </Button>
                             </>
                           )}
-                          <Button size="icon" variant="ghost" onClick={() => deleteTeacherRequest.mutate(req.id)} data-testid={`button-delete-teacher-request-${req.id}`}>
+                          <Button size="icon" variant="ghost" onClick={() => confirmarAccion({ titulo: "¿Borrar esta solicitud de maestro?", detalle: "La solicitud se borra. No se puede deshacer.", boton: "Sí, borrarla", accion: () => deleteTeacherRequest.mutate(req.id) })} aria-label="Borrar la solicitud" title="Borrar la solicitud" data-testid={`button-delete-teacher-request-${req.id}`}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -1190,8 +1197,8 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => openEditEventDialog(event)} data-testid={`button-edit-event-${event.id}`}><Pencil className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={() => deleteEvent.mutate(event.id)} disabled={deleteEvent.isPending} data-testid={`button-delete-event-${event.id}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => openEditEventDialog(event)} aria-label="Editar el evento" title="Editar el evento" data-testid={`button-edit-event-${event.id}`}><Pencil className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => confirmarAccion({ titulo: `¿Borrar el evento «${event.title}»?`, detalle: "Deja de verse en la web. No se puede deshacer.", boton: "Sí, borrarlo", accion: () => deleteEvent.mutate(event.id) })} disabled={deleteEvent.isPending} aria-label="Borrar el evento" title="Borrar el evento" data-testid={`button-delete-event-${event.id}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                               </div>
                             </div>
                           </CardContent>
@@ -1275,6 +1282,105 @@ export default function AdminDashboard() {
                 {isLoadingUsers ? (
                   <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : (
+                  <>
+                  {/* en el teléfono: una tarjeta por miembro, con sus acciones con nombre */}
+                  <ul className="md:hidden divide-y divide-border" data-testid="tarjetas-miembros">
+                    {filteredUsers?.map((u: any) => (
+                      <li key={u.id} className="p-4 space-y-3" data-testid={`tarjeta-user-${u.id}`}>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.displayName || u.username} />}
+                            <AvatarFallback className="bg-primary/5 text-primary text-xs">{(u.displayName || u.username).slice(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold leading-snug truncate">{u.displayName || u.username}</p>
+                            <p className="text-xs text-muted-foreground truncate">@{u.username}{u.email ? ` · ${u.email}` : ""}{u.phone ? ` · ${u.phone}` : ""}</p>
+                          </div>
+                          <span className={`inline-flex items-center gap-1 text-xs shrink-0 ${u.isActive ? "text-green-700 dark:text-green-400" : "text-primary"}`}>
+                            {u.isActive ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />} {u.isActive ? "Activo" : "Pendiente"}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Rol</p>
+                          {u.id === user?.id ? <Badge variant="default">{ROLES[u.role as keyof typeof ROLES]}</Badge> : <SelectorDeRol usuario={u} alCambiar={(role) => updateUserRole.mutate({ id: u.id, role })} />}
+                        </div>
+                        {editingUserInfo === u.id ? (
+                          <div className="space-y-2 rounded-lg border border-border p-3" data-testid={`tarjeta-editar-info-${u.id}`}>
+                            <Label className="text-xs">Cargo</Label>
+                            <Select value={userInfoForm.cargo || "none"} onValueChange={(v) => setUserInfoForm(f => ({ ...f, cargo: v === "none" ? "" : v }))}>
+                              <SelectTrigger className="h-11 w-full" aria-label="Cargo"><SelectValue placeholder="Cargo..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Sin cargo</SelectItem>
+                                {MINISTRY_POSITIONS.map(p => <SelectItem key={p} value={p}>{withAccents(p)}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <Label className="text-xs">País</Label>
+                            <Select value={userInfoForm.country || "none"} onValueChange={(v) => setUserInfoForm(f => ({ ...f, country: v === "none" ? "" : v }))}>
+                              <SelectTrigger className="h-11 w-full" aria-label="País"><SelectValue placeholder="País..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Sin país</SelectItem>
+                                {MINISTRY_COUNTRIES.map(c => <SelectItem key={c} value={c}>{withAccents(c)}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <Button variant="outline" className="h-11" onClick={() => setEditingUserInfo(null)}>Cancelar</Button>
+                              <Button
+                                className="h-11"
+                                onClick={() => {
+                                  updateUserInfo.mutate({ id: u.id, cargo: userInfoForm.cargo || null, country: userInfoForm.country || null });
+                                  setEditingUserInfo(null);
+                                }}
+                                data-testid={`tarjeta-save-info-${u.id}`}
+                              >
+                                <Save className="w-4 h-4 mr-1.5" /> Guardar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs text-muted-foreground min-w-0">{[u.cargo ? withAccents(u.cargo) : "", u.country ? withAccents(u.country) : ""].filter(Boolean).join(" · ") || "Sin cargo ni país"}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 px-2 text-xs shrink-0"
+                              onClick={() => {
+                                setEditingUserInfo(u.id);
+                                setUserInfoForm({ cargo: u.cargo || "", country: u.country || "" });
+                              }}
+                              data-testid={`tarjeta-edit-info-${u.id}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5 mr-1" /> Cargo y país
+                            </Button>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button variant="outline" className="h-10 px-2 text-xs" onClick={() => setSelectedUserId(u.id)} data-testid={`tarjeta-detail-${u.id}`}><Eye className="h-4 w-4 mr-1" /> Ver</Button>
+                          <Button
+                            variant="outline"
+                            className="h-10 px-2 text-xs"
+                            disabled={u.id === user?.id || toggleActive.isPending}
+                            onClick={() => (u.isActive
+                              ? confirmarAccion({ titulo: `¿Desactivar a ${u.displayName || u.username}?`, detalle: "No podrá entrar hasta que la vuelvas a activar.", boton: "Sí, desactivarla", accion: () => toggleActive.mutate(u.id) })
+                              : toggleActive.mutate(u.id))}
+                            data-testid={`tarjeta-toggle-${u.id}`}
+                          >
+                            {u.isActive ? <><XCircle className="h-4 w-4 mr-1" /> Desactivar</> : <><CheckCircle2 className="h-4 w-4 mr-1" /> Activar</>}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-10 px-2 text-xs text-red-600 dark:text-red-400"
+                            disabled={u.id === user?.id || deleteUser.isPending}
+                            onClick={() => confirmarAccion({ titulo: `¿Eliminar a ${u.displayName || u.username}?`, detalle: "Se borra su cuenta. No se puede deshacer.", boton: "Sí, eliminarla", accion: () => deleteUser.mutate(u.id) })}
+                            data-testid={`tarjeta-delete-${u.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                    {filteredUsers?.length === 0 && <li className="p-8 text-center text-sm text-muted-foreground">No se encontraron usuarios.</li>}
+                  </ul>
+                  <div className="hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1379,14 +1485,24 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => setSelectedUserId(u.id)} data-testid={`button-view-detail-${u.id}`}>
+                              <Button variant="ghost" size="icon" onClick={() => setSelectedUserId(u.id)} aria-label="Ver el detalle" title="Ver el detalle" data-testid={`button-view-detail-${u.id}`}>
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => toggleActive.mutate(u.id)} disabled={u.id === user?.id || toggleActive.isPending} data-testid={`button-toggle-${u.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => (u.isActive
+                                  ? confirmarAccion({ titulo: `¿Desactivar a ${u.displayName || u.username}?`, detalle: "No podrá entrar hasta que la vuelvas a activar.", boton: "Sí, desactivarla", accion: () => toggleActive.mutate(u.id) })
+                                  : toggleActive.mutate(u.id))}
+                                disabled={u.id === user?.id || toggleActive.isPending}
+                                aria-label={u.isActive ? "Desactivar la cuenta" : "Activar la cuenta"}
+                                title={u.isActive ? "Desactivar la cuenta" : "Activar la cuenta"}
+                                data-testid={`button-toggle-${u.id}`}
+                              >
                                 {u.isActive ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                               </Button>
                               {u.id !== user?.id && (
-                                <Button variant="ghost" size="icon" onClick={() => deleteUser.mutate(u.id)} disabled={deleteUser.isPending} data-testid={`button-delete-user-${u.id}`}>
+                                <Button variant="ghost" size="icon" onClick={() => confirmarAccion({ titulo: `¿Eliminar a ${u.displayName || u.username}?`, detalle: "Se borra su cuenta. No se puede deshacer.", boton: "Sí, eliminarla", accion: () => deleteUser.mutate(u.id) })} disabled={deleteUser.isPending} aria-label="Eliminar la cuenta" title="Eliminar la cuenta" data-testid={`button-delete-user-${u.id}`}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               )}
@@ -1399,6 +1515,8 @@ export default function AdminDashboard() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1453,7 +1571,7 @@ export default function AdminDashboard() {
             </Card>
 
             <Dialog open={!!selectedUserId} onOpenChange={(open) => { if (!open) setSelectedUserId(null); }}>
-              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[calc(100vw-1rem)] max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 rounded-2xl">
                 {isLoadingDetail ? (
                   <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : userDetail ? (
@@ -1466,10 +1584,10 @@ export default function AdminDashboard() {
                             {(userDetail.user.displayName || userDetail.user.username).slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
+                        <div className="min-w-0 text-left">
                           <span className="text-xl">{userDetail.user.displayName || userDetail.user.username}</span>
-                          <p className="text-sm text-muted-foreground font-normal">@{userDetail.user.username} · ID: {userDetail.user.id}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-muted-foreground font-normal break-all">@{userDetail.user.username} · ID: {userDetail.user.id}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="secondary" data-testid="badge-user-role">
                               {ROLES[userDetail.user.role as keyof typeof ROLES] || userDetail.user.role}
                             </Badge>
@@ -1512,8 +1630,8 @@ export default function AdminDashboard() {
                               <span className="font-medium">{userDetail.user.phone || "No registrado"}</span>
                             </div>
                             <div className="col-span-2" data-testid="text-user-bio">
-                              <span className="text-muted-foreground block text-xs mb-0.5">Biografia</span>
-                              <span className="font-medium">{userDetail.user.bio || "Sin biografia"}</span>
+                              <span className="text-muted-foreground block text-xs mb-0.5">Biografía</span>
+                              <span className="font-medium">{userDetail.user.bio || "Sin biografía"}</span>
                             </div>
                             <div data-testid="text-user-registered">
                               <span className="text-muted-foreground block text-xs mb-0.5">Fecha de Registro</span>
@@ -1590,7 +1708,7 @@ export default function AdminDashboard() {
                             <div>
                               <span className="text-muted-foreground block text-xs mb-0.5">Contraseña</span>
                               <span className="font-mono text-xs bg-muted px-2 py-1 rounded text-muted-foreground">••••••••</span>
-                              <p className="text-[10px] text-muted-foreground mt-1">La contraseña esta cifrada y no se puede visualizar por seguridad.</p>
+                              <p className="text-[10px] text-muted-foreground mt-1">La contraseña está cifrada y no se puede ver, por seguridad.</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground block text-xs mb-0.5">Verificación de Email</span>
@@ -1751,18 +1869,19 @@ export default function AdminDashboard() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="font-semibold">{msg.name}</span>
-                                <span className="text-xs text-muted-foreground">({msg.email})</span>
+                                <span className="text-xs text-muted-foreground break-all">({msg.email})</span>
                                 {!msg.isRead && <Badge variant="default">Nuevo</Badge>}
                               </div>
                               <div className="text-sm font-medium text-primary mb-1">{msg.subject}</div>
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{msg.content}</p>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{msg.content}</p>
                               <span className="text-xs text-muted-foreground mt-2 block">{msg.createdAt ? new Date(msg.createdAt).toLocaleString('es-ES') : ''}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => toggleMessageRead.mutate(msg.id)} data-testid={`button-toggle-read-${msg.id}`}>
-                                {msg.isRead ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              <Button variant="outline" size="sm" className="h-10 md:h-9" onClick={() => toggleMessageRead.mutate(msg.id)} data-testid={`button-toggle-read-${msg.id}`}>
+                                {msg.isRead ? <EyeOff className="h-4 w-4 mr-1.5" /> : <Eye className="h-4 w-4 mr-1.5" />}
+                                {msg.isRead ? "Marcar sin leer" : "Marcar leído"}
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteMessage.mutate(msg.id)} data-testid={`button-delete-message-${msg.id}`}>
+                              <Button variant="ghost" size="icon" onClick={() => confirmarAccion({ titulo: "¿Borrar este mensaje?", detalle: `El mensaje de ${msg.name} se borra. No se puede deshacer.`, boton: "Sí, borrarlo", accion: () => deleteMessage.mutate(msg.id) })} aria-label="Borrar el mensaje" title="Borrar el mensaje" data-testid={`button-delete-message-${msg.id}`}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
@@ -1806,7 +1925,7 @@ export default function AdminDashboard() {
                               </div>
                               <p className="text-sm whitespace-pre-wrap">{post.content}</p>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => deleteMemberPost.mutate(post.id)} data-testid={`button-delete-post-${post.id}`}>
+                            <Button variant="ghost" size="icon" onClick={() => confirmarAccion({ titulo: "¿Borrar esta publicación?", detalle: `La publicación de ${post.user?.displayName || post.user?.username || "este miembro"} se borra de la comunidad. No se puede deshacer.`, boton: "Sí, borrarla", accion: () => deleteMemberPost.mutate(post.id) })} aria-label="Borrar la publicación" title="Borrar la publicación" data-testid={`button-delete-post-${post.id}`}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
