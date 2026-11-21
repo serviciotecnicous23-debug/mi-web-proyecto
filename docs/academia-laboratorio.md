@@ -54,6 +54,21 @@ En la página de la materia, antes del examen final, aparece la tarjeta **Labora
   `client/src/pages/academia-laboratorio.tsx` (la práctica).
 - `server/academia-laboratorio.test.ts`: revisa cada práctica y el motor (`npx tsx --test server/academia-laboratorio.test.ts`).
 
+## El informe en el panel
+
+En el panel de la academia (`/admin/academia`), la sección **Laboratorio** (solo la Administración: capacidad
+`laboratorio`) muestra cómo les va a los alumnos, sin los intentos de prueba de la Administración:
+
+- las cifras: alumnos que practicaron, prácticas terminadas, el promedio (con el mejor intento de cada alumno) y qué
+  parte tuvo una acción crítica;
+- por práctica: el promedio del primer intento y el del mejor (lo que mejoran al repetir), los niveles, dónde más se
+  equivocan, las acciones críticas más elegidas, el promedio de cada competencia, cómo se sintieron y lo que se llevan
+  (sin nombres);
+- los últimos 20 intentos, y cada uno abre el perfil del alumno.
+
+Lo arma `server/academia-laboratorio-informe.ts` (`armarInforme`, sin base de datos, con sus pruebas en
+`server/academia-laboratorio-informe.test.ts`); la pantalla es `client/src/components/academia/laboratorio-informe.tsx`.
+
 ## Las prácticas del piloto
 
 | Materia | Práctica | Formato | Lecciones |
@@ -82,5 +97,5 @@ reporta de inmediato; los profesionales, a más tardar en 24 horas).
 
 - El peso (la propuesta: 15 % de la nota; 10 % en el Nivel 1) y si una acción crítica obliga a repetirla.
 - Como el camino ejemplar se ve al terminar, el segundo intento es más fácil: conviene que cuente el primero, o el
-  promedio, o tener más versiones de cada caso.
-- Un informe en la Dirección: intentos, promedio y las acciones críticas más comunes de cada práctica.
+  promedio, o tener más versiones de cada caso. El informe muestra el promedio del primer intento y el del mejor para
+  decidirlo con datos.

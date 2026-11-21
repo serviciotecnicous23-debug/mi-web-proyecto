@@ -1,6 +1,6 @@
 // Lo que piden al servidor las pantallas del laboratorio ministerial (server/academia-laboratorio.ts).
 import { useQuery } from "@tanstack/react-query";
-import type { IntentoVista, LaboratorioMateria, PracticaDetalle, RespuestaPaso } from "@shared/laboratorio";
+import type { InformeLaboratorio, IntentoVista, LaboratorioMateria, PracticaDetalle, RespuestaPaso } from "@shared/laboratorio";
 import { pedir, type ErrorAcademia } from "./api";
 
 export function useLaboratorioMateria(materiaId: string | undefined) {
@@ -34,4 +34,14 @@ export const guardarCierre = (intentoId: number, cuerpo: { sentir: string | null
 export function textoLecciones(ns: number[]): string {
   if (ns.length === 1) return `la lección ${ns[0]}`;
   return `las lecciones ${ns.slice(0, -1).join(", ")} y ${ns[ns.length - 1]}`;
+}
+
+/** El informe del laboratorio en el panel de la academia (solo la Administración). */
+export function useInformeLaboratorio(activo: boolean) {
+  return useQuery<InformeLaboratorio, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "laboratorio"],
+    queryFn: () => pedir("GET", "/api/academia/direccion/laboratorio"),
+    enabled: activo,
+    retry: false,
+  });
 }

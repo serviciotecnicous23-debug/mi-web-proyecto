@@ -87,6 +87,8 @@ export type DireccionResumen = {
     contenido: boolean; aprobar: boolean; banco: boolean;
     /** Elegir el mentor de un alumno. */
     mentores: boolean;
+    /** El informe del laboratorio ministerial. */
+    laboratorio: boolean;
   };
 };
 
