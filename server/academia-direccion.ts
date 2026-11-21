@@ -394,6 +394,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         puede: {
           exportar: puede(p, "exportar"), contacto: puede(p, "contacto"), revisar: puede(p, "revisar"), documentos: puede(p, "documentos"), abrir: puede(p, "abrir"),
           contenido: puede(p, "contenido"), aprobar: puede(p, "aprobar"), banco: puede(p, "banco"), mentores: puede(p, "mentores"),
+          laboratorio: puede(p, "laboratorio"),
         },
       };
       res.setHeader("Cache-Control", "no-store");

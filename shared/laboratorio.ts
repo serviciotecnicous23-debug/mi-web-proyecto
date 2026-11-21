@@ -175,3 +175,55 @@ export type IntentoVista = {
 };
 
 export type RespuestaPaso = { consecuencia: ConsecuenciaVista; intento: IntentoVista };
+
+// ---------------------------------------------------------------- el informe de la Administración
+
+/** Un paso de una práctica en el informe: cuántos respondieron y cuántos eligieron lo mejor. */
+export type InformePaso = {
+  titulo: string;
+  /** La versión del caso, si el paso es de una versión distinta de la principal. */
+  version: string | null;
+  respuestas: number;
+  /** Qué parte eligió lo mejor (de 0 a 100). */
+  mejor: number | null;
+};
+
+export type InformePractica = {
+  id: string;
+  titulo: string;
+  formato: FormatoPractica;
+  materia: { id: string; titulo: string };
+  /** Alumnos con un intento terminado de los que cuentan. */
+  alumnos: number;
+  terminados: number;
+  enCurso: number;
+  /** El promedio del primer intento de cada alumno y el de su mejor intento. */
+  primero: number | null;
+  mejor: number | null;
+  /** Qué parte de los intentos terminados tuvo una acción crítica (de 0 a 100). */
+  conCritica: number | null;
+  /** Cuántos alumnos quedaron en cada nivel con su mejor intento. */
+  niveles: Record<NivelCompetencia, number>;
+  competencias: { nombre: string; leccion: string; pct: number | null }[];
+  pasos: InformePaso[];
+  /** Las acciones críticas más elegidas. */
+  criticas: { paso: string; texto: string; veces: number }[];
+  sentir: { sentir: string; n: number }[];
+  /** Lo que se llevan, sin nombres (los más recientes). */
+  llevo: string[];
+};
+
+export type InformeLaboratorio = {
+  totales: { alumnos: number; terminados: number; promedio: number | null; conCritica: number | null };
+  practicas: InformePractica[];
+  ultimos: {
+    id: number;
+    alumno: { id: number; nombre: string };
+    practica: string;
+    nota: number | null;
+    nivel: NivelCompetencia | null;
+    criticas: number;
+    cuando: string;
+    cuenta: boolean;
+  }[];
+};

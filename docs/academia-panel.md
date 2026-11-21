@@ -95,6 +95,13 @@ del perfil (`alertasDe`). Quedan fuera las de la meta semanal y las de solo sabe
 - **Alumnos:** la columna «Alertas», que dice cuántas tiene de cada prioridad (al pasar el puntero, cuáles son), y el filtro «Solo los que necesitan ayuda».
 - **Cada materia:** «Hasta dónde llegan» muestra cuántos inscritos completaron cada lección. Marca la lección donde más se detienen, si dos o más no la completaron.
 
+## El laboratorio ministerial (21-nov)
+
+La sección **Laboratorio** del panel, solo para la Administración, es el informe del piloto del laboratorio
+ministerial: cómo les va a los alumnos en cada práctica (el primer intento y el mejor, los niveles, dónde se
+equivocan, las acciones críticas más elegidas y lo que se llevan) y los últimos intentos. Todo en
+`docs/academia-laboratorio.md`.
+
 ## El resto del panel general (parte 4)
 
 Se abrió y se probó cada pestaña del panel general con datos de prueba: Solicitudes, Cursos (con «Nuevo curso»), Maestros, Eventos (con «Nuevo evento»), Contenido, Miembros, Contacto, Publicaciones, Denuncias, Biblioteca de radio y En vivo. Todas cargan y sus botones funcionan.

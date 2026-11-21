@@ -14,7 +14,7 @@ export type RolAcademia = "direccion" | "equipo" | "iglesia" | "alumno";
 export type Alcance = "todos" | "iglesia" | "propio" | "no";
 export type Capacidad =
   | "panel" | "avance" | "notas" | "contacto" | "exportar" | "avisos" | "revisar" | "gestionar" | "documentos" | "contenido" | "aprobar" | "banco" | "mentores"
-  | "abrir";
+  | "abrir" | "laboratorio";
 
 export type RolDef = { id: RolAcademia; nombre: string; quienes: string; roles: readonly string[] };
 
@@ -139,6 +139,12 @@ export const CAPACIDADES: readonly CapacidadDef[] = [
     id: "abrir",
     texto: "Abrir o cerrar la academia para todos",
     detalle: "Mientras está cerrada, solo la ven la Administración, los maestros, los líderes y las iglesias aliadas.",
+    alcance: SOLO_ADMIN,
+  },
+  {
+    id: "laboratorio",
+    texto: "Ver el informe del laboratorio ministerial",
+    detalle: "Cómo les va a los alumnos en las prácticas: sus notas y niveles, dónde más se equivocan, las acciones críticas más comunes y lo que se llevan.",
     alcance: SOLO_ADMIN,
   },
 ];
