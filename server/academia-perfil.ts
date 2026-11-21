@@ -18,8 +18,8 @@ import { alcanceDe, type Capacidad } from "@shared/academia-permisos";
 import { ACTIVIDADES_NIVEL, requisitosDeActividades } from "@shared/academia-actividades";
 import {
   LIMITES_SEGUIMIENTO, NOMBRE_BLOOM, TIPOS_SEGUIMIENTO, agruparAciertos, alertasDe, diasEntre, diasRecientes, lunesDe, porciento, rachaVigente, semanasDe,
-  tipoDeClave, type Acierto, type EspecialidadAvance, type IntentoExamen, type MateriaNotas, type NivelAvance, type NotaSeguimiento, type PerfilAlumno,
-  type PreguntaDificil, type TipoSeguimiento,
+  tipoDeClave, type Acierto, type EspecialidadAvance, type InformeMateria, type IntentoExamen, type MateriaNotas, type NivelAvance, type NotaSeguimiento,
+  type PerfilAlumno, type PreguntaDificil, type TipoSeguimiento,
 } from "@shared/academia-perfil";
 import { BANCOS } from "./academia/index";
 import { CASOS } from "./academia/casos";
@@ -393,6 +393,135 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
   };
 }
 
+/**
+ * El informe de una materia del alumno: cada lección (cuándo la abrió y la terminó, cuánto leyó, el video, su repaso y su
+ * reflexión), cada intento de examen con cada pregunta (si la acertó y cuánto tardó; la Administración ve además el
+ * texto, lo que respondió y la correcta), sus respuestas escritas, el versículo y su repaso del día.
+ */
+export async function informeDe(p: Permiso, id: number, materiaId: string): Promise<InformeMateria | null> {
+  const [fila] = await filasDe(p, false, id);
+  const m = materiaPorId(materiaId);
+  if (!fila || !m) return null;
+  const admin = puede(p, "revisar");
+  const banco = BANCOS.get(m.id);
+  const uno = async (sql: string, params: unknown[]) => (await pool.query(sql, params)).rows as any[];
+  const [mat] = await uno(`SELECT estado, nota, inicio_at, aprobada_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [id, m.id]);
+  const lec = await uno(
+    `SELECT leccion_id, abierta_at, vista_at, completada_at, segundos, video_seg, repaso, reflexion FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`,
+    [id, m.lecciones.map((l) => l.id)],
+  );
+  const ints = await uno(
+    `SELECT clave, intento, nota, aciertos, de, respuestas, cerrado_at, segundos FROM academia_intentos WHERE user_id = $1 AND clave LIKE $2 ORDER BY cerrado_at DESC`,
+    [id, `${m.id}:%`],
+  );
+  const [ver] = await uno(`SELECT ref, intentos, fallos, puntaje, aprendido_at, dominado_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [id, m.id]);
+  const [rep] = await uno(
+    `SELECT count(*)::int AS total, count(dominada_at)::int AS dominadas, COALESCE(sum(aciertos), 0)::int AS aciertos, COALESCE(sum(fallos), 0)::int AS fallos
+       FROM academia_repaso_preguntas WHERE user_id = $1 AND materia_id = $2`,
+    [id, m.id],
+  );
+  const esc = admin
+    ? await uno(
+        `SELECT id, clave, pregunta_id, texto, nota_auto, nota_final, motivo, revisar, revisada_at, created_at FROM academia_respuestas WHERE user_id = $1 AND clave LIKE $2 ORDER BY created_at DESC`,
+        [id, `${m.id}:%`],
+      )
+    : null;
+  const comps: Record<string, number | undefined> = mat ? await componentesDe(id, m) : {};
+  const pesos = pesosDe(m);
+  const idx = indicePreguntas();
+  const objetivas = new Map([...(banco?.final ?? []), ...Object.values(banco?.mini ?? {}).flat(), ...(CASOS[m.id] ?? [])].map((q) => [q.id, q]));
+  const porLeccion = new Map(lec.map((r) => [String(r.leccion_id), r]));
+  const lecciones = m.lecciones.map((l, i) => {
+    const r = porLeccion.get(l.id);
+    const resultados = (r?.repaso ?? {}) as Record<string, { primera?: boolean; ok?: boolean }>;
+    const preguntas = (banco?.repaso[l.id] ?? [])
+      .filter((q) => resultados[q.id])
+      .map((q) => ({ id: q.id, texto: admin ? q.texto : null, bien: resultados[q.id].primera ?? !!resultados[q.id].ok }));
+    return {
+      n: i + 1,
+      id: l.id,
+      titulo: l.titulo,
+      abierta: r && (r.abierta_at || r.vista_at) ? iso(r.abierta_at ?? r.vista_at) : null,
+      completada: r?.completada_at ? iso(r.completada_at) : null,
+      segundos: Number(r?.segundos ?? 0),
+      videoSeg: Number(r?.video_seg ?? 0),
+      repaso: { bien: preguntas.filter((q) => q.bien).length, total: preguntas.length, preguntas },
+      reflexion: admin && typeof r?.reflexion === "string" && r.reflexion.trim() ? String(r.reflexion).trim() : null,
+    };
+  });
+  const intentos = ints.map((r) => {
+    const nota = Number(r.nota);
+    const preguntas = (Array.isArray(r.respuestas) ? r.respuestas : []).map((x: any) => {
+      const info = idx.get(String(x.id));
+      const q = objetivas.get(String(x.id));
+      return {
+        id: String(x.id),
+        leccion: info?.leccion ?? null,
+        bien: !!x.bien,
+        tarde: !!x.tarde,
+        seg: x.seg == null ? null : Number(x.seg),
+        texto: admin ? info?.texto ?? null : null,
+        elegida: admin ? (x.elegida == null ? null : String(x.elegida)) : null,
+        correcta: admin ? q?.correcta ?? null : null,
+        explica: admin ? q?.explica ?? null : null,
+      };
+    });
+    return {
+      clave: String(r.clave),
+      titulo: tituloExamen(String(r.clave)),
+      tipo: tipoDeClave(String(r.clave)),
+      intento: Number(r.intento),
+      nota,
+      aciertos: Number(r.aciertos),
+      de: Number(r.de),
+      fecha: iso(r.cerrado_at),
+      segundos: r.segundos == null ? null : Number(r.segundos),
+      aprobado: nota >= APRUEBA,
+      preguntas,
+    };
+  });
+  const escritas = esc
+    ? esc.map((r) => ({
+        id: Number(r.id),
+        examen: tituloExamen(String(r.clave)),
+        pregunta: banco?.escritas.find((e) => e.id === r.pregunta_id)?.pregunta ?? "Pregunta escrita",
+        respuesta: String(r.texto ?? ""),
+        notaAuto: Number(r.nota_auto),
+        notaFinal: r.nota_final == null ? null : Number(r.nota_final),
+        motivo: r.motivo ?? null,
+        marcada: !!r.revisar,
+        revisada: r.revisada_at ? iso(r.revisada_at) : null,
+        fecha: iso(r.created_at),
+      }))
+    : null;
+  return {
+    materia: { id: m.id, titulo: m.titulo, grupo: grupoDe(m), lecciones: m.lecciones.length },
+    estado: !mat ? "sin-inscribir" : mat.estado === "aprobada" ? "aprobada" : "en-curso",
+    nota: mat?.nota == null ? null : Number(mat.nota),
+    inicio: mat?.inicio_at ? iso(mat.inicio_at) : null,
+    aprobada: mat?.aprobada_at ? iso(mat.aprobada_at) : null,
+    componentes: (Object.keys(pesos) as (keyof typeof pesos)[])
+      .filter((k) => pesos[k] > 0)
+      .map((k) => ({ id: k, texto: NOMBRE_COMPONENTE[k], peso: pesos[k], valor: comps[k] == null ? null : Math.round(comps[k]!) })),
+    lecciones,
+    intentos,
+    escritas,
+    versiculo: ver
+      ? {
+          ref: String(ver.ref),
+          intentos: Number(ver.intentos ?? 0),
+          fallos: Number(ver.fallos ?? 0),
+          puntaje: ver.puntaje == null ? null : Number(ver.puntaje),
+          aprendido: ver.aprendido_at ? iso(ver.aprendido_at) : null,
+          dominado: ver.dominado_at ? iso(ver.dominado_at) : null,
+        }
+      : null,
+    repasoDia: { total: Number(rep?.total ?? 0), dominadas: Number(rep?.dominadas ?? 0), aciertos: Number(rep?.aciertos ?? 0), fallos: Number(rep?.fallos ?? 0) },
+    tiempo: { lectura: lecciones.reduce((s, l) => s + l.segundos, 0), examenes: intentos.reduce((s, x) => s + (x.segundos ?? 0), 0) },
+    completo: admin,
+  };
+}
+
 /** El id del alumno de la ruta, o null. */
 function idDe(req: Request): number | null {
   const id = Number(req.params.alumnoId);
@@ -413,6 +542,23 @@ export function registerAcademiaPerfilRoutes(app: Express) {
       res.json(perfil);
     } catch (err) {
       console.error("[academia] perfil del alumno:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  // El informe de una materia del alumno: lo que hizo en cada lección y en cada examen (con permiso de ver el avance).
+  app.get("/api/academia/direccion/alumno/:alumnoId/informe/:materiaId", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "avance");
+      if (!p) return;
+      const id = idDe(req);
+      if (!id) return res.status(404).json({ message: "No existe ese alumno." });
+      const informe = await informeDe(p, id, String(req.params.materiaId || ""));
+      if (!informe) return res.status(404).json({ message: "No existe ese alumno o esa materia, o no es de tu iglesia." });
+      res.setHeader("Cache-Control", "no-store");
+      res.json(informe);
+    } catch (err) {
+      console.error("[academia] informe de la materia:", err);
       res.sendStatus(500);
     }
   });

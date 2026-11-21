@@ -425,6 +425,25 @@ export function registerAcademiaRoutes(app: Express) {
     }
   });
 
+  // El tiempo de lectura de la lección (el informe del alumno en el panel): la página lo manda de a poco mientras está a
+  // la vista y el alumno la usa. Solo suma en la fila del alumno (la crea al abrir la lección), con topes.
+  app.post("/api/academia/leccion/:leccionId/tiempo", async (req, res) => {
+    try {
+      const acceso = await accesoDe(req);
+      if (!acceso.userId) return res.status(401).json({ message: "Entra con tu cuenta." });
+      const id = String(req.params.leccionId || "");
+      if (!leccionPorId(id)) return res.status(404).json({ message: "Esa lección no existe." });
+      const seg = Math.max(0, Math.min(120, Math.floor(Number(req.body?.segundos) || 0)));
+      if (!seg) return res.json({ ok: true });
+      if (frenar(`lt:${acceso.userId}`, 20_000)) return res.status(429).json({ message: "Espera un momento." });
+      await pool.query(`UPDATE academia_lecciones SET segundos = LEAST(segundos + $3, 86400) WHERE user_id = $1 AND leccion_id = $2`, [acceso.userId, id, seg]);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[academia] tiempo de la lección:", err);
+      res.sendStatus(500);
+    }
+  });
+
   // El repaso de la lección: se corrige al instante, con la explicación y la cita. Cuenta el acierto a la primera.
   app.post("/api/academia/repaso", async (req, res) => {
     const leccionId = String(req.body?.leccionId || "");

@@ -1,6 +1,6 @@
 // Lo que pide el perfil completo del alumno en el panel (server/academia-perfil.ts): el perfil y la bitácora de seguimiento.
 import { useQuery } from "@tanstack/react-query";
-import type { PerfilAlumno, TipoSeguimiento } from "@shared/academia-perfil";
+import type { InformeMateria, PerfilAlumno, TipoSeguimiento } from "@shared/academia-perfil";
 import { ErrorAcademia, pedir } from "@/components/academia/api";
 
 /** `activo`: se pide después de la ficha del alumno (así no van las dos consultas juntas). */
@@ -19,4 +19,14 @@ export function anotarSeguimiento(alumnoId: number, cuerpo: { tipo: TipoSeguimie
 
 export function borrarSeguimiento(notaId: number) {
   return pedir<{ ok: boolean }>("POST", `/api/academia/direccion/seguimiento/${notaId}/borrar`);
+}
+
+/** El informe de una materia del alumno (se pide al abrirlo). */
+export function useInformeMateria(alumnoId: number, materiaId: string, activo: boolean) {
+  return useQuery<InformeMateria, ErrorAcademia>({
+    queryKey: ["academia", "direccion", "informe", alumnoId, materiaId],
+    queryFn: () => pedir("GET", `/api/academia/direccion/alumno/${alumnoId}/informe/${encodeURIComponent(materiaId)}`),
+    enabled: activo,
+    retry: false,
+  });
 }

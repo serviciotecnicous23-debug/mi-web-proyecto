@@ -5,9 +5,9 @@ import { Link, useParams } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, Award, BookOpen, Brain, ClipboardList, History, LayoutDashboard, ListChecks, Lock, PenLine, ShieldOff, ShieldCheck, UserRound } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerfilAlumno } from "@/components/academia/api-perfil";
-import { ActividadesPerfil, AprendizajePerfil, BitacoraPerfil, NotasPerfil, ResumenPerfil } from "@/components/academia/perfil-alumno";
+import { ActividadesPerfil, AprendizajePerfil, BitacoraPerfil, ResumenPerfil } from "@/components/academia/perfil-alumno";
+import { InformePorMateria } from "@/components/academia/informe-materia";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
@@ -187,8 +187,9 @@ function Ficha({ d, propio }: { d: AlumnoDetalle; propio: boolean }) {
   );
 }
 
-const PESTANAS_PERFIL = ["resumen", "materias", "aprendizaje", "actividades", "seguimiento", "ficha"] as const;
+const PESTANAS_PERFIL = ["resumen", "informe", "aprendizaje", "actividades", "seguimiento", "ficha"] as const;
 type PestanaPerfil = (typeof PESTANAS_PERFIL)[number];
+const pestanaDe = (t: string | null): PestanaPerfil => (t === "materias" ? "informe" : (PESTANAS_PERFIL as readonly string[]).includes(t ?? "") ? (t as PestanaPerfil) : "resumen");
 
 export default function AcademiaDireccionAlumno() {
   const { alumnoId } = useParams<{ alumnoId: string }>();
@@ -199,10 +200,11 @@ export default function AcademiaDireccionAlumno() {
   useTituloAcademia(area.base === "/admin/academia" ? "Perfil del alumno · Administración" : "Perfil del alumno");
   // la materia que la Administración está gestionando (el panel lateral)
   const [materiaGestion, setMateriaGestion] = useState<string | null>(null);
-  const [tab, setTab] = useState<PestanaPerfil>(() => {
-    const t = new URLSearchParams(window.location.search).get("tab");
-    return (PESTANAS_PERFIL as readonly string[]).includes(t ?? "") ? (t as PestanaPerfil) : "resumen";
-  });
+  const [tab, setTabEstado] = useState<PestanaPerfil>(() => pestanaDe(new URLSearchParams(window.location.search).get("tab")));
+  const setTab = (t: PestanaPerfil) => {
+    setTabEstado(t);
+    window.history.replaceState(null, "", `${window.location.pathname}?tab=${t}`);
+  };
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
     return (
@@ -222,74 +224,89 @@ export default function AcademiaDireccionAlumno() {
   const a = d.fila;
   const propio = !!user && user.id === a.userId;
   const gestiona = !!d.puede.gestionar && !propio && !!d.gestion;
+  const altas = perfil.data?.alertas.filter((x) => x.gravedad === "alta") ?? [];
+  const items: { id: PestanaPerfil; texto: string; icono: typeof BookOpen; badge?: number }[] = [
+    { id: "resumen", texto: "Resumen", icono: LayoutDashboard, badge: perfil.data?.alertas.filter((x) => x.gravedad !== "info").length || undefined },
+    { id: "informe", texto: "Informe por materia", icono: BookOpen },
+    { id: "aprendizaje", texto: "Aprendizaje", icono: Brain },
+    { id: "actividades", texto: "Actividades", icono: ListChecks },
+    { id: "seguimiento", texto: "Seguimiento", icono: ClipboardList },
+    { id: "ficha", texto: "Ficha", icono: UserRound },
+  ];
+  const cargando = <p className="text-muted-foreground">Preparando el perfil…</p>;
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4 pt-6 pb-16 space-y-6">
-        <Link href={`${area.base}?tab=alumnos`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Los alumnos</Link>
-        <header className="flex items-start gap-4">
-          {d.ficha?.foto && <img src={d.ficha.foto} alt={`Foto del carné de ${a.nombre}`} className="w-20 h-[100px] rounded-xl object-cover border border-orange-500/40 shrink-0" data-testid="alumno-foto" />}
+      <div className="max-w-5xl mx-auto px-4 pt-4 sm:pt-6 pb-28 space-y-5">
+        <Link href={`${area.base}?tab=alumnos`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> Los alumnos</Link>
+        <header className="flex items-start gap-3 sm:gap-4">
+          {d.ficha?.foto && <img src={d.ficha.foto} alt={`Foto del carné de ${a.nombre}`} className="w-16 h-20 sm:w-20 sm:h-[100px] rounded-xl object-cover border border-orange-500/40 shrink-0" data-testid="alumno-foto" />}
           <div className="min-w-0">
-          <p className="data-label text-orange-600 dark:text-orange-300">Alumno · Matrícula {a.matricula}</p>
-          <h1 className="heading-display font-display text-3xl md:text-4xl mt-1" data-testid="alumno-nombre">{a.nombre}</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-3 text-sm">
-            <ChipEstatus e={a.estatus} />
-            <span className="text-muted-foreground">Promoción {a.promocion} · inscrito el {fecha(a.desde)} · última actividad {hace(a.ultima)}</span>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">{[a.iglesia, a.pais].filter(Boolean).join(" · ")}</p>
+            <p className="data-label text-orange-600 dark:text-orange-300">Matrícula {a.matricula}</p>
+            <h1 className="heading-display font-display text-2xl sm:text-4xl mt-1 leading-tight" data-testid="alumno-nombre">{a.nombre}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+              <ChipEstatus e={a.estatus} />
+              <span className="text-muted-foreground">Última actividad {hace(a.ultima)}</span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{[a.iglesia, a.pais, `inscrito el ${fecha(a.desde)}`].filter(Boolean).join(" · ")}</p>
           </div>
         </header>
 
-        {perfil.data && perfil.data.alertas.some((x) => x.gravedad === "alta") && tab !== "resumen" && (
+        {altas.length > 0 && tab !== "resumen" && (
           <button type="button" onClick={() => setTab("resumen")} className="w-full text-left glass-card p-3 border border-red-500/50 text-sm flex items-center gap-2" data-testid="perfil-aviso-alertas">
             <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" aria-hidden="true" />
-            <span className="flex-1">{perfil.data.alertas.filter((x) => x.gravedad === "alta").map((x) => x.titulo).join(" · ")}</span>
+            <span className="flex-1">{altas.map((x) => x.titulo).join(" · ")}</span>
             <span className="font-medium">Ver</span>
           </button>
         )}
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as PestanaPerfil)}>
-          <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg mb-6" data-testid="perfil-pestanas">
-            <TabsTrigger value="resumen" className="flex-1 min-w-[120px] gap-1.5"><LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Resumen</TabsTrigger>
-            <TabsTrigger value="materias" className="flex-1 min-w-[120px] gap-1.5"><BookOpen className="w-4 h-4" aria-hidden="true" /> Materias y notas</TabsTrigger>
-            <TabsTrigger value="aprendizaje" className="flex-1 min-w-[120px] gap-1.5"><Brain className="w-4 h-4" aria-hidden="true" /> Aprendizaje</TabsTrigger>
-            <TabsTrigger value="actividades" className="flex-1 min-w-[120px] gap-1.5"><ListChecks className="w-4 h-4" aria-hidden="true" /> Actividades del nivel</TabsTrigger>
-            <TabsTrigger value="seguimiento" className="flex-1 min-w-[120px] gap-1.5" data-testid="perfil-tab-seguimiento"><ClipboardList className="w-4 h-4" aria-hidden="true" /> Seguimiento</TabsTrigger>
-            <TabsTrigger value="ficha" className="flex-1 min-w-[120px] gap-1.5"><UserRound className="w-4 h-4" aria-hidden="true" /> Ficha y documentos</TabsTrigger>
-          </TabsList>
+        <nav className="-mx-4 px-4 overflow-x-auto" aria-label="Secciones del perfil" data-testid="perfil-pestanas">
+          <ul className="flex gap-2 w-max pb-1">
+            {items.map((s) => {
+              const Icono = s.icono;
+              const activa = tab === s.id;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setTab(s.id)}
+                    aria-current={activa ? "page" : undefined}
+                    className={`inline-flex items-center gap-2 rounded-full h-11 px-4 text-sm font-medium border whitespace-nowrap transition-colors ${activa ? "bg-orange-600 border-orange-600 text-white" : "bg-card border-border hover:border-orange-500"}`}
+                    data-testid={`perfil-tab-${s.id}`}
+                  >
+                    <Icono className="w-4 h-4" aria-hidden="true" /> {s.texto}
+                    {s.badge ? <span className={`rounded-full text-[11px] px-1.5 leading-5 font-semibold ${activa ? "bg-white text-orange-700" : "bg-orange-600 text-white"}`}>{s.badge}</span> : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-          <TabsContent value="resumen">
-            {perfil.isLoading ? <p className="text-muted-foreground">Preparando el perfil…</p> : perfil.data ? <ResumenPerfil p={perfil.data} /> : <p className="text-sm text-red-600">{perfil.error?.message ?? "No se pudo preparar el perfil."}</p>}
-          </TabsContent>
-
-          <TabsContent value="materias" className="space-y-6">
-            <section className="glass-card p-5">
-              <h2 className="font-semibold flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4 text-orange-600" /> Materias: por dónde va</h2>
-              <TablaAvance materias={d.materias} alGestionar={gestiona ? setMateriaGestion : undefined} enlace={(id) => `${area.base}/materia/${id}`} />
-            </section>
-            {perfil.data && <NotasPerfil p={perfil.data} />}
-          </TabsContent>
-
-          <TabsContent value="aprendizaje">{perfil.data ? <AprendizajePerfil p={perfil.data} /> : <p className="text-muted-foreground">Preparando el perfil…</p>}</TabsContent>
-
-          <TabsContent value="actividades">{perfil.data ? <ActividadesPerfil p={perfil.data} /> : <p className="text-muted-foreground">Preparando el perfil…</p>}</TabsContent>
-
-          <TabsContent value="seguimiento" className="space-y-6">
-            {perfil.data?.puede.seguimiento && !propio && <BitacoraPerfil p={perfil.data} alumnoId={a.userId} nombre={a.nombre.split(" ")[0]} />}
-            {gestiona && <HerramientasAlumno d={d} alGestionar={(m) => { setMateriaGestion(m); setTab("materias"); }} />}
-            <MentorAlumno d={d} propio={propio} />
-            <section className="glass-card p-5">
-              <h2 className="font-semibold flex items-center gap-2 mb-3"><History className="w-4 h-4 text-orange-600" /> Su actividad</h2>
-              <ListaActividad items={d.actividad} />
-            </section>
-          </TabsContent>
-
-          <TabsContent value="ficha" className="space-y-6">
-            <Ficha d={d} propio={propio} />
-            <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
-            {d.puede.documentos && !propio && <Documentos d={d} />}
-            {d.puede.revisar && alumnoId && <Escritas id={alumnoId} propio={propio} />}
-          </TabsContent>
-        </Tabs>
+        <div>
+          {tab === "resumen" && (perfil.isLoading ? cargando : perfil.data ? <ResumenPerfil p={perfil.data} /> : <p className="text-sm text-red-600">{perfil.error?.message ?? "No se pudo preparar el perfil."}</p>)}
+          {tab === "informe" && (perfil.data ? <InformePorMateria alumnoId={a.userId} materias={perfil.data.materias} alGestionar={gestiona ? setMateriaGestion : undefined} /> : cargando)}
+          {tab === "aprendizaje" && (perfil.data ? <AprendizajePerfil p={perfil.data} /> : cargando)}
+          {tab === "actividades" && (perfil.data ? <ActividadesPerfil p={perfil.data} /> : cargando)}
+          {tab === "seguimiento" && (
+            <div className="space-y-5">
+              {perfil.data?.puede.seguimiento && !propio && <BitacoraPerfil p={perfil.data} alumnoId={a.userId} nombre={a.nombre.split(" ")[0]} />}
+              {gestiona && <HerramientasAlumno d={d} alGestionar={(m) => { setMateriaGestion(m); setTab("informe"); }} />}
+              <MentorAlumno d={d} propio={propio} />
+              <section className="glass-card p-4 sm:p-5">
+                <h2 className="font-semibold flex items-center gap-2 mb-3"><History className="w-4 h-4 text-orange-600" aria-hidden="true" /> Su actividad</h2>
+                <ListaActividad items={d.actividad} />
+              </section>
+            </div>
+          )}
+          {tab === "ficha" && (
+            <div className="space-y-5">
+              <Ficha d={d} propio={propio} />
+              <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
+              {d.puede.documentos && !propio && <Documentos d={d} />}
+              {d.puede.revisar && alumnoId && <Escritas id={alumnoId} propio={propio} />}
+            </div>
+          )}
+        </div>
         {gestiona && <GestionMateriaPanel alumnoId={a.userId} nombre={a.nombre} materiaId={materiaGestion} alCerrar={() => setMateriaGestion(null)} />}
       </div>
     </Layout>
