@@ -362,6 +362,15 @@ export function hablado(texto: string): string {
       .map((g) => (g.length === 4 ? `${porCifras(g.slice(0, 2))}, ${porCifras(g.slice(2))}` : enPalabras(Number(g))))
       .join(", "),
   );
+  // los artículos de ley («Código de Familia, sección 261.101», «secciones 261.106 y 261.109», «Código Penal 22.011»,
+  // «47 CFR 73.1201»): el punto se dice «punto», con los ceros de después; no son miles («doscientos sesenta y un mil»)
+  t = t.replace(
+    /((?<!\p{L})(?:secci[oó]n(?:es)?|C[oó]digo(?:\s+(?:de\s+)?\p{L}+){0,3}|CFR|§§?))((?:[\s,]+(?:y\s+|o\s+|a\s+)?\d+\.\d+(?!\d|\.\d))+)/gu,
+    (_m, antes: string, numeros: string) => antes + numeros.replace(/(\d+)\.(\d+)/g, (_n, a: string, b: string) => {
+      const ceros = /^0*/.exec(b)![0].length;
+      return `${enPalabras(Number(a))} punto ${"cero ".repeat(ceros)}${ceros < b.length ? enPalabras(Number(b.slice(ceros))) : ""}`.trim();
+    }),
+  );
   // miles con coma, como en los Estados Unidos («120,000 dólares»): no es un decimal
   t = t.replace(/\b(\d{1,3})((?:,\d{3})+)\b(?!,\d)/g, (_m, a: string, b: string) => a + b.replace(/,/g, ""));
   // porcentajes y decimales

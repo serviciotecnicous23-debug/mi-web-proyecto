@@ -74,6 +74,23 @@ test("los años y los números delante de lo que no se cuenta", () => {
   assert.equal(hablado("21 semanas y 1 libro"), "veintiuna semanas y un libro");
 });
 
+test("los artículos de ley se dicen con «punto», no como miles", () => {
+  assert.equal(
+    hablado("Se reporta (Código de Familia, sección 261.101)."),
+    "Se reporta, Código de Familia, sección doscientos sesenta y uno punto ciento uno.",
+  );
+  assert.match(hablado("Es un delito (Código Penal, sección 22.011)."), /sección veintidós punto cero once/);
+  assert.match(hablado("Lo pide el Código de Recursos Humanos 48.051."), /Humanos cuarenta y ocho punto cero cincuenta y uno/);
+  assert.match(hablado("Puede quedar exento (Código Tributario, sección 11.20)."), /sección once punto veinte/);
+  assert.match(
+    hablado("Lo dicen las secciones 261.106 y 261.109."),
+    /secciones doscientos sesenta y uno punto ciento seis y doscientos sesenta y uno punto ciento nueve/,
+  );
+  assert.match(hablado("La identificación de 47 CFR 73.1201."), /CFR setenta y tres punto mil doscientos uno/);
+  // fuera de una ley, el punto sigue siendo de miles
+  assert.match(hablado("Hay 5.674 manuscritos."), /cinco mil seiscientos setenta y cuatro manuscritos/);
+});
+
 test("la cita de un bloque de versículo se dice con capítulo y versículos", () => {
   assert.equal(encabezadoDeCita("Mateo 16:15-17"), "Mateo, capítulo dieciséis, versículos quince al diecisiete");
   assert.equal(encabezadoDeCita("Juan 1:14"), "Juan, capítulo uno, versículo catorce");
