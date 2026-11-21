@@ -176,6 +176,11 @@ export type IntentoVista = {
 
 export type RespuestaPaso = { consecuencia: ConsecuenciaVista; intento: IntentoVista };
 
+/** Las prácticas que el alumno ya puede hacer y todavía no terminó (para «Lo de hoy» y el salón). */
+export type PracticasPendientes = {
+  practicas: { id: string; titulo: string; materia: { id: string; titulo: string }; enCurso: boolean }[];
+};
+
 // ---------------------------------------------------------------- el informe de la Administración
 
 /** Un paso de una práctica en el informe: cuántos respondieron y cuántos eligieron lo mejor. */

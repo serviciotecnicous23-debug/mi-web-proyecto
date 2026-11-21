@@ -179,9 +179,9 @@ function AvisoPrivacidad() {
 function Bienvenida({ empezar, sinSesion, volver }: { empezar: () => void; sinSesion: boolean; volver: string | null }) {
   const tarjetas = [
     { icono: Layers, titulo: `${NIVELES_N.length} niveles en ${ETAPAS.length} etapas`, texto: `${ETAPAS.map((e) => e.nombre).join(", ").replace(/, ([^,]*)$/, " y $1")}: del nuevo creyente al obrero, al maestro y al pastor.` },
-    { icono: Smartphone, titulo: "A tu ritmo, desde el teléfono", texto: "Lecciones de 7 a 15 minutos según el nivel, con lectura, video y repaso, y un repaso del día para no olvidar. Es gratuita." },
+    { icono: Smartphone, titulo: "A tu ritmo, desde el teléfono", texto: "Lecciones de unos 6 a 25 minutos (cada una dice cuánto pide), con lectura, video y repaso, y un repaso del día para no olvidar. Es gratuita." },
     { icono: ClipboardCheck, titulo: "Evaluación justa y al instante", texto: "Exámenes con corrección automática, también de lo que escribes. Si una nota no te parece, se revisa." },
-    { icono: Award, titulo: "Certificados verificables", texto: "Cada materia y cada nivel te dan su certificado con código QR, y recibes tu carné de estudiante." },
+    { icono: Award, titulo: "Certificados verificables", texto: "Cada materia, cada nivel y cada especialidad te dan su certificado con código QR, y recibes tu carné de estudiante." },
   ];
   return (
     <div className="space-y-6" data-testid="inscripcion-bienvenida">

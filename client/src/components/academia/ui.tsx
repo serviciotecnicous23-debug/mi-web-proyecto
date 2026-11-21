@@ -82,8 +82,8 @@ export function AvisoVistaPrevia() {
       <div className="glass-card p-4 flex items-start gap-3 border border-orange-500/30" role="note" data-testid="academia-vista-previa">
         <ShieldCheck className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
         <p className="text-sm">
-          <strong>Vista previa.</strong> Por ahora la ven solo la Administración y, para consultar, los maestros y las iglesias aliadas. Cuando el Nivel 1
-          esté completo y aprobado, se abrirá para todos.
+          <strong>Vista previa.</strong> La academia está cerrada al público: por ahora la ven solo la Administración y, para consultar, los maestros y
+          las iglesias aliadas. La Administración la abre para todos desde su panel.
         </p>
       </div>
     </div>

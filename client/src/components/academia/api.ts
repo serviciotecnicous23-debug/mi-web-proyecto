@@ -428,7 +428,11 @@ export const avanceVideo = (leccionId: string, segundos: number) =>
   pedir<{ visto: number; falta: number }>("POST", `/api/academia/leccion/${encodeURIComponent(leccionId)}/video`, { segundos });
 
 export const completarLeccion = (leccionId: string, reflexion: string) =>
-  pedir<{ completada: boolean; siguiente: string | null }>("POST", `/api/academia/leccion/${encodeURIComponent(leccionId)}/completar`, { reflexion });
+  pedir<{ completada: boolean; siguiente: string | null; practicas?: { id: string; titulo: string }[] }>(
+    "POST",
+    `/api/academia/leccion/${encodeURIComponent(leccionId)}/completar`,
+    { reflexion },
+  );
 
 export const guardarReflexion = (leccionId: string, texto: string) =>
   pedir<{ guardada: boolean }>("POST", `/api/academia/leccion/${encodeURIComponent(leccionId)}/reflexion`, { texto });

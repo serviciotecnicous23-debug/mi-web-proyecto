@@ -301,7 +301,7 @@ export default function Home() {
 
           <div className="area-rows">
             {areas.map((a, i) => (
-              <Link key={a.title} href={i === 1 ? "/radio" : i === 5 ? "/alianza" : "/eventos"}>
+              <Link key={a.title} href={i === 1 ? "/radio" : i === 3 ? "/academia" : i === 5 ? "/alianza" : "/eventos"}>
                 <div className="area-row" data-testid={`card-area-${a.title}`}>
                   <span className="area-idx">{String(i + 1).padStart(2, "0")}</span>
                   <span>

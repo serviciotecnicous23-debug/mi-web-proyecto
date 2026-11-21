@@ -82,7 +82,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       puntos: [
         `La academia tiene ${NIVELES_N.length} niveles en ${ETAPAS.length} etapas. Cada nivel tiene materias, y cada materia, lecciones cortas con su repaso, un versículo de memoria y un examen final.`,
         `Cada alumno avanza a su ritmo. Una materia se aprueba con el examen final aprobado y una nota de ${APRUEBA} o más.`,
-        "Un nivel se cierra con todas sus materias aprobadas, el examen integral, los versículos de memoria que pide, su pacto y las actividades que pide en la vida de la iglesia (sección 11). Las especialidades se abren al terminar el Nivel 2.",
+        "Un nivel se cierra con todas sus materias aprobadas, el examen integral, los versículos de memoria que pide, el pacto en el Nivel 1 y las actividades que pide en la vida de la iglesia (sección 11). Las especialidades se abren al terminar el Nivel 2.",
       ],
     },
     {

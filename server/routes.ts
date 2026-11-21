@@ -50,6 +50,7 @@ import { pool } from "./db";
 import { estadoDeSalud } from "./salud";
 import { armarSitemap } from "./sitemap";
 import { academiaAbierta } from "./academia-comun";
+import { ESPECIALIDADES as ESPECIALIDADES_ACADEMIA, todasLasMaterias } from "@shared/academia";
 import { cerrarSesionesDe, esCuentaEliminada } from "./sesiones";
 import { api } from "@shared/routes";
 import { resolveSiteUrl } from "@shared/site";
@@ -563,6 +564,34 @@ Sitemap: ${SITE_URL}/sitemap.xml`
         description?: string;
         url: string;
       }> = [];
+      const sinTildes = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+      // esta ruta se registra antes que las sesiones: puede no saber quién pregunta
+      const conSesion = typeof (req as any).isAuthenticated === "function" && req.isAuthenticated();
+
+      // Las materias de la academia abierta (primero, para que no las corte el límite)
+      try {
+        if (await academiaAbierta()) {
+          const nq = sinTildes(q);
+          const lugar = new Map(ESPECIALIDADES_ACADEMIA.flatMap((e) => e.materias.map((m) => [m.id, e.nombre] as const)));
+          todasLasMaterias()
+            .map((m, i) => ({ m, i }))
+            .filter(({ m }) => m.disponible && (sinTildes(m.titulo).includes(nq) || sinTildes(m.resumen ?? "").includes(nq)))
+            .sort((a, b) => Number(sinTildes(b.m.titulo).includes(nq)) - Number(sinTildes(a.m.titulo).includes(nq)))
+            .slice(0, 5)
+            .forEach(({ m, i }) =>
+              results.push({
+                id: i,
+                type: "materia",
+                title: m.titulo,
+                description: `${m.nivel ? `Nivel ${m.nivel}` : lugar.get(m.id) ?? "Especialidad"} · ${(m.resumen ?? "").slice(0, 90)}`,
+                url: `/academia/materia/${m.id}`,
+              }),
+            );
+        }
+      } catch (err) {
+        console.error("Búsqueda, materias de la academia:", err);
+      }
 
       // Search courses
       try {
@@ -608,20 +637,22 @@ Sitemap: ${SITE_URL}/sitemap.xml`
           );
       } catch {}
 
-      // Search library resources
+      // Search library resources (son de los miembros activos, como su lista en la Biblioteca)
       try {
-        const resources = await storage.listLibraryResources(undefined as any, q);
-        (resources as any[])
-          .slice(0, 5)
-          .forEach((r: any) =>
-            results.push({
-              id: r.id,
-              type: "library",
-              title: r.title,
-              description: r.description?.slice(0, 100),
-              url: `/biblioteca`,
-            })
-          );
+        if (conSesion && req.user?.isActive) {
+          const resources = await storage.listLibraryResources(undefined as any, q);
+          (resources as any[])
+            .slice(0, 5)
+            .forEach((r: any) =>
+              results.push({
+                id: r.id,
+                type: "library",
+                title: r.title,
+                description: r.description?.slice(0, 100),
+                url: `/biblioteca?tab=recursos`,
+              })
+            );
+        }
       } catch {}
 
       // Search sermons
@@ -654,7 +685,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
             results.push({
               id: p.id,
               type: "post",
-              title: p.content?.slice(0, 80) || "Publicacion",
+              title: p.content?.slice(0, 80) || "Publicación",
               description: undefined,
               url: `/comunidad`,
             })

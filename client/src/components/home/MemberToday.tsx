@@ -165,6 +165,16 @@ export function MemberToday({ agenda }: { agenda: TodayAgendaItem[] }) {
               Ver todas
             </Link>
           </div>
+          {conLaAcademia && (
+            <Link href="/academia/salon" className="today-row mb-1" data-testid="today-academia">
+              <GraduationCap className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">Mi salón de la academia</span>
+                <span className="block text-xs text-muted-foreground">Lo que sigue, el repaso del día y las prácticas</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </Link>
+          )}
           {clases.length > 0 ? (
             <ul className="space-y-1">
               {clases.map((e) => (
@@ -186,7 +196,7 @@ export function MemberToday({ agenda }: { agenda: TodayAgendaItem[] }) {
                 ? `Tienes ${plural(pendientes, "solicitud", "solicitudes")} esperando aprobación. `
                 : completadas > 0
                   ? `Completaste ${plural(completadas, "curso", "cursos")}. ¿Seguimos con otro? `
-                  : "Aún no estás en ninguna clase. "}
+                  : conLaAcademia ? "Aún no estás en ninguna clase en vivo. " : "Aún no estás en ninguna clase. "}
               <Link href="/capacitaciones" className="text-primary underline underline-offset-2">
                 Ver capacitaciones
               </Link>

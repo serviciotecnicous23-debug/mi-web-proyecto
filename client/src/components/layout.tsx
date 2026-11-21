@@ -603,7 +603,10 @@ export function Navbar() {
             ? conAcademia(memberDesktopNavGroups, conLaAcademia).map((group) => (
                 <DesktopNavGroup key={group.title} group={group} location={location} />
               ))
-            : publicDesktopNavItems.map((item) => {
+            : (conLaAcademia
+                ? publicDesktopNavItems.flatMap((item) => ("href" in item && item.href === "/biblioteca" ? [item, { href: "/academia", label: "Academia" }] : [item]))
+                : publicDesktopNavItems
+              ).map((item) => {
                 if ("links" in item) {
                   return <DesktopNavGroup key={item.title} group={item} location={location} />;
                 }

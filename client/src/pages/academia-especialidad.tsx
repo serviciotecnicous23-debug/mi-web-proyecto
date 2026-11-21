@@ -195,7 +195,7 @@ export default function AcademiaEspecialidad() {
             {d.conSesion ? (
               <div className="w-full sm:w-64"><BarraAvance valor={d.aprobadas} de={total} etiqueta={`${d.aprobadas} de ${total} materias aprobadas`} /></div>
             ) : (
-              <span className="text-sm text-muted-foreground">{listas} de {total} materias listas</span>
+              <span className="text-sm text-muted-foreground">{listas < total ? `${listas} de ${total} materias abiertas` : `${total} materias y un trabajo final`}</span>
             )}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

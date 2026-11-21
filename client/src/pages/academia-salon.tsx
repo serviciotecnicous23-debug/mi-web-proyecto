@@ -16,10 +16,13 @@ import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
 import type { AcademiaEstado } from "@shared/academia-base";
 import {
-  cambiarMetaEstudio, sumarEstudio, useAcademiaEstado, useCarne, useCertificados, useDiagnostico, useEstudio, useMateria, useRepasoDelDia, useRepasoVersiculos,
+  cambiarMetaEstudio, sumarEstudio, useAcademiaEstado, useActividades, useCarne, useCertificados, useDiagnostico, useEspecialidad, useEstudio, useMateria, useRepasoDelDia,
+  useRepasoVersiculos,
 } from "@/components/academia/api";
+import { TarjetaAcompanados } from "@/components/academia/mentores";
 import { BarraAvance, Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
+import { PracticasDeHoy } from "@/components/academia/laboratorio-materia";
 import { Temporizador } from "@/components/academia/salon/temporizador";
 import { SemanaEstudio } from "@/components/academia/salon/semana";
 import { crearNota, useCuaderno, useResaltados } from "@/components/cuaderno/api";
@@ -69,10 +72,64 @@ function PendientesMateria({ id }: { id: string }) {
   );
 }
 
+/** El trabajo final de una especialidad con sus cinco materias aprobadas, si ya se puede entregar y no se entregó. */
+function TrabajoFinalPendiente({ id }: { id: string }) {
+  const q = useEspecialidad(id);
+  const d = q.data;
+  const t = d?.trabajo;
+  if (!d || !t || d.certificado || t.cerrado || t.falta.length || t.entregas > 0) return null;
+  return (
+    <li>
+      <Link href={`/academia/especialidad/${id}#trabajo-final`} className="flex items-start gap-2 font-medium hover:underline" data-testid="salon-trabajo-final">
+        <Award className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" /> El trabajo final de «{d.nombre}» está listo
+      </Link>
+    </li>
+  );
+}
+
+const fechaLarga = (aaaammdd: string) => new Date(`${aaaammdd}T12:00:00`).toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
+
+/** Las actividades del nivel en curso: las devueltas, para corregirlas, y la defensa del proyecto, si ya tiene fecha. */
+function ActividadesDeHoy({ nivel }: { nivel: number }) {
+  const q = useActividades(nivel);
+  const a = q.data;
+  if (!a) return null;
+  const devueltas = [a.evangelismo, a.ensenanza, a.consolidacion, a.sermon, a.proyecto].reduce((s, c) => s + (c?.devueltas ?? 0), 0);
+  const defensa = a.proyecto?.defensa ?? null;
+  if (!devueltas && !defensa) return null;
+  return (
+    <>
+      {devueltas > 0 && (
+        <li>
+          <Link href={`/academia/nivel/${nivel}`} className="flex items-start gap-2 font-medium hover:underline" data-testid="salon-actividad-devuelta">
+            <ListChecks className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
+            {devueltas === 1 ? "Una actividad del nivel volvió para que la corrijas" : `${devueltas} actividades del nivel volvieron para que las corrijas`}
+          </Link>
+        </li>
+      )}
+      {defensa && (
+        <li>
+          <Link href={`/academia/nivel/${nivel}`} className="flex items-start gap-2 font-medium hover:underline" data-testid="salon-defensa">
+            <CalendarCheck2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" /> La defensa de tu proyecto: {fechaLarga(defensa.fecha)} a las {defensa.hora}
+          </Link>
+        </li>
+      )}
+    </>
+  );
+}
+
 /** Una materia en curso: su avance, la lección que sigue y sus recursos (videos y lecturas del sílabo). */
 function MateriaEnCurso({ id }: { id: string }) {
   const q = useMateria(id);
   const d = q.data;
+  // si no se pudo cargar, al menos el enlace a la materia (antes quedaba cargando para siempre)
+  if (q.error) {
+    return (
+      <Link href={`/academia/materia/${id}`} className="glass-card p-5 flex items-center gap-2 text-sm font-medium hover:underline">
+        <GraduationCap className="w-4 h-4 text-orange-500" /> Abrir la materia
+      </Link>
+    );
+  }
   if (!d) return <div className="glass-card p-5 animate-pulse h-40" />;
   const hechas = d.materia.lecciones.filter((l) => l.completada).length;
   const siguiente = d.materia.lecciones.find((l) => !l.completada);
@@ -80,7 +137,7 @@ function MateriaEnCurso({ id }: { id: string }) {
   return (
     <div className="glass-card p-5 flex flex-col gap-3" data-testid={`salon-materia-${id}`}>
       <div>
-        <p className="text-xs text-muted-foreground">Nivel {d.materia.nivel}</p>
+        <p className="text-xs text-muted-foreground">{d.materia.nivel ? `Nivel ${d.materia.nivel}` : d.lugar.especialidad?.nombre ?? "Especialidad"}</p>
         <Link href={`/academia/materia/${id}`} className="font-semibold leading-snug hover:underline">{d.materia.titulo}</Link>
       </div>
       <BarraAvance valor={hechas} de={d.materia.lecciones.length} etiqueta={`${hechas} de ${d.materia.lecciones.length} lecciones`} />
@@ -207,7 +264,12 @@ export default function AcademiaSalon() {
     );
   }
 
-  const materiasEnCurso = e.niveles.flatMap((n) => n.materias).filter((m) => m.estado === "en-curso").map((m) => m.id);
+  const materiasEnCurso = [...e.niveles.flatMap((n) => n.materias), ...e.especialidades.flatMap((x) => x.materias)]
+    .filter((m) => m.estado === "en-curso")
+    .map((m) => m.id);
+  // las especialidades con sus cinco materias aprobadas (su trabajo final) y el nivel en curso (sus actividades)
+  const especialidadesListas = e.especialidades.filter((x) => x.materias.length > 0 && x.materias.every((m) => m.estado === "aprobada")).map((x) => x.id);
+  const nivelEnCurso = e.niveles.find((n) => n.cierre && !n.cierre.completado && n.materias.some((m) => m.estado !== "en-preparacion"))?.n ?? null;
   const nombre = carne.data?.nombre ?? "";
   const primerNombre = nombre.split(/\s+/)[0] ?? "";
   const pendientesVersos = versos.data?.pendientes ?? 0;
@@ -294,6 +356,9 @@ export default function AcademiaSalon() {
                 </li>
               )}
               {materiasEnCurso.map((id) => <PendientesMateria key={id} id={id} />)}
+              <PracticasDeHoy activo={inscrito} testId="salon-practica" />
+              {especialidadesListas.map((id) => <TrabajoFinalPendiente key={id} id={id} />)}
+              {nivelEnCurso && nivelEnCurso > 1 ? <ActividadesDeHoy nivel={nivelEnCurso} /> : null}
               {!diag.data?.ultimo && (
                 <li>
                   <Link href="/academia/diagnostico" className="flex items-start gap-2 hover:underline">
@@ -324,6 +389,11 @@ export default function AcademiaSalon() {
         {/* las asignaciones de los cursos de la Escuela (si tiene) */}
         <div className="mt-4">
           <MisAsignacionesPortada activo />
+        </div>
+
+        {/* a quién acompaña como mentor (si acompaña a alguien) */}
+        <div className="-mx-4">
+          <TarjetaAcompanados activo={inscrito} />
         </div>
 
         {materiasEnCurso.length > 0 && (

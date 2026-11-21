@@ -8,7 +8,7 @@
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import {
-  miniPruebasDe, NOMBRE_COMPONENTE, SUFICIENCIA,
+  miniPruebasDe, NOMBRE_COMPONENTE, PACTOS, SUFICIENCIA,
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
   type AcademiaEstado, type BloqueVista, type EstadoMateria, type LeccionVista, type MateriaDef, type MateriaDetalle, type MateriaResumen, type RespuestaRepaso,
   bloqueoDe, segundosDeLectura, videoQuePide, type BloqueoRepaso,
@@ -31,7 +31,7 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
-import { registerAcademiaLaboratorioRoutes } from "./academia-laboratorio";
+import { practicasQueAbre, registerAcademiaLaboratorioRoutes } from "./academia-laboratorio";
 import { registerAcademiaLaboratorioInformeRoutes } from "./academia-laboratorio-informe";
 import { abiertasJunto, lugarDeMateria, registerAcademiaMapaRoutes } from "./academia-mapa";
 import { minutosDeMateria, minutosReales } from "./academia-carga";
@@ -173,20 +173,28 @@ export function registerAcademiaRoutes(app: Express) {
         cierre: integralDisponible({ ...n, materias: ms }) ? cierres.get(n.n) ?? sinAvance : null,
       }));
       const especialidades = ESPECIALIDADES.map(({ materias: ms, ...e }) => ({ ...e, materias: ms.map(resumen) }));
-      // Continuar: la primera materia en curso (o la primera disponible), en su primera lección sin terminar; con las
-      // materias de un nivel aprobadas, el cierre de ese nivel (el examen integral y después el pacto).
+      // Continuar: la primera materia en curso de un nivel (o, si no hay, la de una especialidad, o la primera
+      // disponible del plan), en su primera lección sin terminar; con las materias de un nivel aprobadas, el cierre de
+      // ese nivel: el examen integral, el pacto (solo el Nivel 1 tiene pacto) y lo demás que pide en la página del nivel.
       let continuar: AcademiaEstado["continuar"] = null;
       if (userId) {
         const completos = [...cierres].filter(([, c]) => !!c.completado).map(([n]) => n);
         const todas = NIVELES.flatMap((n) => n.materias).filter((m) => m.disponible);
+        const deEspecialidad = ESPECIALIDADES.flatMap((e) => e.materias).filter((m) => m.disponible);
         const m =
           todas.find((x) => materias.get(x.id)?.estado === "en-curso") ??
+          deEspecialidad.find((x) => materias.get(x.id)?.estado === "en-curso") ??
           todas.find((x) => !materias.has(x.id) && !requisitosMateria(x, completos).length);
         const porCerrar = niveles.find((n) => n.cierre && !n.cierre.completado && n.materias.every((x) => x.estado === "aprobada"));
-        if (porCerrar && (!m || m.nivel! > porCerrar.n)) {
+        if (porCerrar && (!m || m.nivel == null || m.nivel > porCerrar.n)) {
+          const pacto = PACTOS[porCerrar.n];
           continuar = {
             leccionId: null,
-            titulo: porCerrar.cierre!.integralAprobado ? "El pacto del creyente" : "Examen integral",
+            titulo: !porCerrar.cierre!.integralAprobado
+              ? "Examen integral"
+              : pacto && !porCerrar.cierre!.pacto
+                ? pacto.titulo
+                : "Lo que falta para cerrar el nivel",
             materiaId: "",
             materia: `Nivel ${porCerrar.n} · ${porCerrar.nombre}`,
             n: 0,
@@ -530,7 +538,9 @@ export function registerAcademiaRoutes(app: Express) {
         await marcarEstudio(a.userId);
         await recalcularMateria(a.userId, l.materia);
         const ms = l.materia.lecciones;
-        return { completada: true, siguiente: l.indice < ms.length - 1 ? ms[l.indice + 1].id : null };
+        // las prácticas del laboratorio que se abren con esta lección (la lección lo avisa)
+        const practicas = await practicasQueAbre(a.userId, l.materia, l.indice + 1).catch(() => []);
+        return { completada: true, siguiente: l.indice < ms.length - 1 ? ms[l.indice + 1].id : null, practicas };
       });
       if ("error" in out) return res.status(out.error as number).json({ message: out.message });
       res.json(out);

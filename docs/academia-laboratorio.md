@@ -24,6 +24,11 @@ En la página de la materia, antes del examen final, aparece la tarjeta **Labora
    con el intento y se puede llevar al cuaderno (una nota de la materia).
 6. **El camino ejemplar:** lo que mejor ayudaba en cada paso, junto a lo que eligió.
 
+**Dónde más aparece (22-nov):** «Lo de hoy» de la portada de la academia y «Para hoy» del salón muestran las prácticas
+que el alumno ya puede hacer y todavía no terminó (`GET /api/academia/laboratorio/pendientes`); al completar la lección
+que abre una práctica, la lección lo avisa; el catálogo marca las materias con laboratorio; y las prácticas están en el
+mapa del sitio con su título y su descripción para Google y para las vistas previas al compartir.
+
 ## Las reglas (shared/laboratorio.ts)
 
 - Cada escena (o ronda) mide **una competencia** y vale hasta 2 puntos (`MAX_PASO`): la ejemplar 2, una parcial 1, las

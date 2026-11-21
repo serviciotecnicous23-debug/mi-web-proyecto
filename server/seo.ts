@@ -1,6 +1,8 @@
 import { SITE_ORIGIN } from "@shared/site";
 import { RADIO_OFFICIAL_URL } from "@shared/radio";
 import { TITULOS, TITULO_NO_ENCONTRADA, normalizarRuta, tituloDeRuta } from "@shared/titulos";
+import { ESPECIALIDADES, NIVELES, leccionPorId, materiaPorId, todasLasMaterias } from "@shared/academia";
+import { practicaPorId } from "./academia/laboratorio/index";
 
 // Cabecera de cada página tal como la recibe Google. La web es una SPA: sin esto,
 // todas las rutas salían con el título y la descripción de la portada, y con una
@@ -119,6 +121,74 @@ export const PAGE_META: Record<string, PageMeta> = {
   },
 };
 
+// ---------------------------------------------------------------- la academia
+
+/** El nombre de la academia en los títulos (el mismo de client/src/components/academia/titulo.ts). */
+const TITULO_ACADEMIA = "Academia Avivando el Fuego";
+const conAcademia = (t: string) => `${t} · ${TITULO_ACADEMIA}`;
+
+/**
+ * El título y la descripción de las páginas de la academia que van en el mapa del sitio (21-nov-2026). Antes salían con
+ * los de la portada de la web: al compartir una materia por WhatsApp se veía la vista previa del ministerio. Los títulos
+ * son los mismos que pone cada página al navegar. Devuelve null si la ruta no es una de ellas.
+ */
+export function metaDeAcademia(path: string): PageMeta | null {
+  if (path === "/academia") {
+    return {
+      title: TITULO_ACADEMIA,
+      description: `La academia bíblica del Ministerio Avivando el Fuego: ${NIVELES.length} niveles y ${ESPECIALIDADES.length} especialidades, con lecciones para leer y escuchar, exámenes con corrección automática y certificados. La inscripción es gratuita.`,
+    };
+  }
+  if (path === "/academia/catalogo") {
+    const n = todasLasMaterias().filter((m) => m.disponible).length;
+    return { title: conAcademia("Catálogo de materias"), description: `Las ${n} materias de la Academia Avivando el Fuego, por nivel y por especialidad, con buscador.` };
+  }
+  if (path === "/academia/verificar") {
+    return { title: conAcademia("Verificar un documento"), description: "Comprueba con su código si un certificado, un diploma o un carné de la Academia Avivando el Fuego es auténtico." };
+  }
+  if (path === "/academia/reglamento") {
+    return { title: conAcademia("Reglamento académico"), description: "El reglamento académico de la Academia Avivando el Fuego: la inscripción, la evaluación, las notas, los certificados y el código de honor." };
+  }
+  if (path === "/academia/declaracion-de-fe") {
+    return { title: conAcademia("Declaración de fe"), description: "Lo que cree y enseña la Academia Avivando el Fuego, artículo por artículo y con su base bíblica." };
+  }
+  if (path === "/academia/recursos") {
+    return { title: conAcademia("Recursos de estudio"), description: "Los videos, audios, lecturas y guías de todas las materias de la Academia Avivando el Fuego, en un solo lugar y con buscador." };
+  }
+  const [, , tipo, id, ...resto] = path.split("/");
+  if (!id || resto.length) return null;
+  if (tipo === "materia") {
+    const m = materiaPorId(id);
+    return m ? { title: conAcademia(m.titulo), description: m.resumen } : null;
+  }
+  if (tipo === "nivel") {
+    const n = NIVELES.find((x) => String(x.n) === id);
+    return n ? { title: conAcademia(`Nivel ${n.n} · ${n.nombre}`), description: n.descripcion } : null;
+  }
+  if (tipo === "especialidad") {
+    const e = ESPECIALIDADES.find((x) => x.id === id);
+    return e ? { title: conAcademia(`Especialidad · ${e.nombre}`), description: e.resumen } : null;
+  }
+  if (tipo === "laboratorio") {
+    const p = practicaPorId(id);
+    const m = p ? materiaPorId(p.materia) : undefined;
+    return p && m ? { title: conAcademia(p.titulo), description: `Práctica del laboratorio ministerial de ${m.titulo}. ${p.situacion}` } : null;
+  }
+  return null;
+}
+
+/** Las páginas de la academia con un id (materia, lección, nivel, especialidad o práctica) que no existe. */
+function esPaginaDeAcademiaInexistente(path: string): boolean {
+  const [, raiz, tipo, id, ...resto] = path.split("/");
+  if (raiz !== "academia" || !id || resto.length) return false;
+  if (tipo === "materia") return !materiaPorId(id);
+  if (tipo === "leccion") return !leccionPorId(id);
+  if (tipo === "nivel") return !NIVELES.some((x) => String(x.n) === id);
+  if (tipo === "especialidad") return !ESPECIALIDADES.some((x) => x.id === id);
+  if (tipo === "laboratorio") return !practicaPorId(id);
+  return false;
+}
+
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -136,7 +206,7 @@ function setMeta(html: string, pattern: RegExp, replacement: string): string {
  * misma lista de rutas que los títulos (shared/titulos.ts), que shared/titulos.test.ts mantiene igual a la de App.tsx.
  */
 export function esRutaInexistente(rawPath: string): boolean {
-  return tituloDeRuta(rawPath) === TITULO_NO_ENCONTRADA;
+  return tituloDeRuta(rawPath) === TITULO_NO_ENCONTRADA || esPaginaDeAcademiaInexistente(canonicalPath(rawPath));
 }
 
 /** index.html con la canónica, el título, la descripción y los datos propios de la ruta. */
@@ -148,7 +218,7 @@ export function renderPageHtml(indexHtml: string, rawPath: string): string {
   html = setMeta(html, /<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${escapeAttr(url)}" />`);
   html = setMeta(html, /<meta property="og:url" content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${escapeAttr(url)}" />`);
 
-  const meta = PAGE_META[path];
+  const meta = PAGE_META[path] ?? metaDeAcademia(path);
   if (!meta) return html;
 
   const title = escapeAttr(meta.title);

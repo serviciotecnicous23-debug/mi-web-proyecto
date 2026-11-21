@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Award, CheckCircle2, Circle, ClipboardCheck, GraduationCap, HandHeart, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Award, CheckCircle2, Circle, ClipboardCheck, GraduationCap, HandHeart, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
@@ -128,7 +128,7 @@ export default function AcademiaNivel() {
     <Layout>
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-16 space-y-6">
         <div>
-          <Link href="/academia#camino" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
+          <Link href="/academia" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Academia</Link>
           <p className="data-label mt-4">Nivel {nv.n} · {nv.para}</p>
           <h1 className="heading-display font-display text-3xl md:text-5xl mt-1">{nv.nombre}</h1>
           <p className="text-muted-foreground mt-2 flex items-center gap-1.5"><Award className="w-4 h-4 text-orange-500" /> {nv.recibe}</p>
@@ -171,6 +171,11 @@ export default function AcademiaNivel() {
           {!e.conSesion && (
             <a href={loginUrl(`/academia/nivel/${nv.n}`)}><Button className="fire-btn-primary mt-5">Entrar para estudiar</Button></a>
           )}
+          <p className="mt-4">
+            <Link href={`/academia/catalogo?ver=${nv.n}`} className="text-sm font-medium text-orange-700 dark:text-orange-300 hover:underline inline-flex items-center gap-1" data-testid="nivel-ver-materias">
+              Ver las materias del nivel en el catálogo <ArrowRight className="w-4 h-4" />
+            </Link>
+          </p>
         </section>
 
         {e.conSesion && ACTIVIDADES_NIVEL[nv.n as 1 | 2 | 3 | 4 | 5] && <ActividadesDelNivel n={nv.n} />}

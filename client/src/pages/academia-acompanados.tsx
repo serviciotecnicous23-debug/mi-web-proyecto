@@ -43,7 +43,8 @@ export default function AcademiaAcompanados() {
         {acompanados.length === 0 ? (
           <p className="glass-card p-6 text-sm text-muted-foreground" data-testid="acompanados-vacio">
             <HeartHandshake className="w-5 h-5 inline -mt-0.5 mr-1.5 text-orange-500" aria-hidden="true" />
-            Todavía no acompañas a nadie. La Administración de la academia te puede elegir como mentor de un alumno.
+            Todavía no acompañas a nadie. La Administración de la academia te puede elegir como mentor de un alumno. Si estás en el Nivel 5, pídelo desde{" "}
+            <Link href="/academia/nivel/5" className="font-medium text-orange-700 dark:text-orange-300 hover:underline">la página del Nivel 5</Link>, con «Pedir a quién acompañar».
           </p>
         ) : (
           <>

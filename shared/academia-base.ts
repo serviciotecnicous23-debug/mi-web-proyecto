@@ -716,7 +716,15 @@ export type MapaAcademia = {
  * /api/academia/buscador): sus pasajes, su versículo de memoria, su propósito, sus lecciones y su bibliografía (la
  * básica y después la complementaria).
  */
-export type BuscadorMateria = { base?: string; memoria?: string; proposito?: string; lecciones: string[]; libros: Pick<Libro, "autor" | "titulo">[] };
+export type BuscadorMateria = {
+  base?: string;
+  memoria?: string;
+  proposito?: string;
+  lecciones: string[];
+  libros: Pick<Libro, "autor" | "titulo">[];
+  /** Las prácticas del laboratorio ministerial de la materia (sus títulos), si tiene. */
+  practicas?: string[];
+};
 
 /** El escrito breve de una materia, para el alumno. */
 export type EscritoBreveVista = {
