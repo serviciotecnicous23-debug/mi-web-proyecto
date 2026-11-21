@@ -47,6 +47,9 @@ import { registerLogrosEnLineaRoutes } from "./logros-en-linea";
 import { registerJuegosGrupoRoutes } from "./juegos-grupo";
 import { memoryStorage } from "./memory-storage";
 import { pool } from "./db";
+import { estadoDeSalud } from "./salud";
+import { armarSitemap } from "./sitemap";
+import { academiaAbierta } from "./academia-comun";
 import { cerrarSesionesDe, esCuentaEliminada } from "./sesiones";
 import { api } from "@shared/routes";
 import { resolveSiteUrl } from "@shared/site";
@@ -517,42 +520,12 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     });
   });
 
-  app.get("/sitemap.xml", (_req, res) => {
-    const pages = [
-      { loc: "/", priority: "1.0", changefreq: "weekly" },
-      { loc: "/bienvenida", priority: "0.8", changefreq: "monthly" },
-      { loc: "/historia", priority: "0.8", changefreq: "monthly" },
-      { loc: "/equipo", priority: "0.7", changefreq: "monthly" },
-      { loc: "/en-vivo", priority: "0.9", changefreq: "daily" },
-      { loc: "/radio", priority: "0.9", changefreq: "daily" },
-      { loc: "/eventos", priority: "0.9", changefreq: "weekly" },
-      { loc: "/capacitaciones", priority: "0.8", changefreq: "weekly" },
-      { loc: "/contacto", priority: "0.7", changefreq: "yearly" },
-      { loc: "/comunidad", priority: "0.7", changefreq: "daily" },
-      { loc: "/biblioteca", priority: "0.7", changefreq: "weekly" },
-      { loc: "/oracion", priority: "0.8", changefreq: "weekly" },
-      { loc: "/regiones", priority: "0.6", changefreq: "monthly" },
-      { loc: "/privacidad", priority: "0.3", changefreq: "yearly" },
-      { loc: "/terminos", priority: "0.3", changefreq: "yearly" },
-      { loc: "/login", priority: "0.3", changefreq: "yearly" },
-      { loc: "/registro", priority: "0.5", changefreq: "yearly" },
-    ];
-    const today = new Date().toISOString().split("T")[0];
-    const urls = pages.map(p =>
-      `  <url>
-    <loc>${SITE_URL}${p.loc}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${p.changefreq}</changefreq>
-    <priority>${p.priority}</priority>
-  </url>`
-    ).join("\n");
-
-    res.type("application/xml").send(
-`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>`
-    );
+  // El mapa del sitio: las páginas públicas y, con la academia abierta, sus niveles, especialidades y materias
+  // (server/sitemap.ts).
+  app.get("/sitemap.xml", async (_req, res) => {
+    const abierta = await academiaAbierta().catch(() => false);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.type("application/xml").send(armarSitemap(SITE_URL, abierta));
   });
 
   // Health check endpoint (used by Render)
@@ -563,6 +536,13 @@ ${urls}
       uptime: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Para los vigilantes de afuera (UptimeRobot): el servidor y también la base (server/salud.ts).
+  app.get("/api/salud", async (_req, res) => {
+    const { status, cuerpo } = await estadoDeSalud(() => pool.query("SELECT 1"));
+    res.setHeader("Cache-Control", "no-store");
+    res.status(status).json(cuerpo);
   });
 
   // ========== AGENT ECOSYSTEM (Fase 1) ==========
