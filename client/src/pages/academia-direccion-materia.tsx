@@ -41,12 +41,12 @@ export default function AcademiaDireccionMateria() {
   }
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 pt-6 pb-16 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6 pb-28 space-y-5">
         <Link href={`${area.base}?tab=materias`} className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Las materias</Link>
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
             <p className="data-label text-orange-600 dark:text-orange-300">{m.grupo ?? (m.nivel ? `Nivel ${m.nivel}` : "Especialidad")} · Seguimiento de la materia</p>
-            <h1 className="heading-display font-display text-3xl md:text-4xl mt-1" data-testid="materia-seguimiento-titulo">{m.titulo}</h1>
+            <h1 className="heading-display font-display text-2xl sm:text-4xl mt-1 leading-tight" data-testid="materia-seguimiento-titulo">{m.titulo}</h1>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/academia/materia/${m.id}`}><Button variant="outline" size="sm">Ver la materia</Button></Link>
@@ -83,7 +83,29 @@ export default function AcademiaDireccionMateria() {
           </section>
         )}
 
-        <div className="glass-card p-0 overflow-x-auto">
+        {/* en el teléfono: una tarjeta por alumno (la tabla, en la computadora) */}
+        <ul className="space-y-2 md:hidden" data-testid="tarjetas-materia-alumnos">
+          {alumnos.map((a) => (
+            <li key={a.userId}>
+              <Link href={`${area.base}/alumno/${a.userId}?tab=informe`} className="block glass-card p-4 border border-transparent hover:border-orange-500/50 transition">
+                <span className="flex items-start justify-between gap-2">
+                  <span className="min-w-0">
+                    <span className="block font-semibold leading-snug">{a.nombre}</span>
+                    <span className="block text-xs text-muted-foreground">{[a.matricula, a.iglesia].filter(Boolean).join(" · ")}</span>
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums shrink-0">{a.avance.estado === "aprobada" && a.avance.nota != null ? a.avance.nota : ""}</span>
+                </span>
+                <span className="mt-2 block"><Medidor valor={a.avance.lecciones} de={a.avance.de} etiqueta={`${a.avance.lecciones} de ${a.avance.de} lecciones`} /></span>
+                <span className="block text-xs mt-1.5">
+                  {a.avance.estado === "aprobada" ? "Aprobada" : "En curso"} · {a.avance.lecciones} de {a.avance.de} lecciones · versículo {a.avance.versiculo ? "aprendido" : "pendiente"} · {a.avance.intentos ? `final: ${a.avance.intentos} ${a.avance.intentos === 1 ? "intento" : "intentos"}, mejor ${a.avance.mejor ?? "—"}` : "sin dar el final"}
+                </span>
+                <span className="block text-xs text-muted-foreground mt-1">Última actividad {hace(a.ultima)} · toca para ver su informe</span>
+              </Link>
+            </li>
+          ))}
+          {!alumnos.length && <li className="glass-card p-6 text-center text-sm text-muted-foreground">Todavía no hay alumnos inscritos en esta materia.</li>}
+        </ul>
+        <div className="glass-card p-0 overflow-x-auto hidden md:block">
           <table className="w-full text-sm" data-testid="tabla-materia-alumnos">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
@@ -101,7 +123,7 @@ export default function AcademiaDireccionMateria() {
               {alumnos.map((a) => (
                 <tr key={a.userId} className="border-b border-border/60 last:border-0 align-top">
                   <td className="py-2.5 px-4">
-                    <Link href={`${area.base}/alumno/${a.userId}`} className="font-medium hover:underline">{a.nombre}</Link>
+                    <Link href={`${area.base}/alumno/${a.userId}?tab=informe`} className="font-medium hover:underline">{a.nombre}</Link>
                     <span className="block text-xs text-muted-foreground">{[a.matricula, a.iglesia].filter(Boolean).join(" · ")}</span>
                     <span className="block mt-1"><ChipEstatus e={a.estatus} /></span>
                   </td>
