@@ -136,7 +136,8 @@ export interface IStorage {
   listCoursesByTeacher(teacherId: number): Promise<Course[]>;
   searchCourses(query: string, category?: string): Promise<Course[]>;
   updateCourse(id: number, updates: UpdateCourse): Promise<Course | undefined>;
-  deleteCourse(id: number): Promise<void>;
+  /** «desactivado» si tenía alumnos aprobados o certificados (se guardan); «borrado» si no. */
+  deleteCourse(id: number): Promise<"borrado" | "desactivado">;
 
   createCourseMaterial(material: InsertCourseMaterial): Promise<CourseMaterial>;
   listCourseMaterials(courseId: number): Promise<CourseMaterial[]>;
@@ -865,7 +866,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deleteCourse(id: number): Promise<void> {
+  async deleteCourse(id: number): Promise<"borrado" | "desactivado"> {
     // Soft-delete: deactivate and close enrollment instead of destroying data
     // This preserves enrollments, certificates, and student achievements
     const hasCertificates = await db.select({ id: certificates.id }).from(certificates).where(eq(certificates.courseId, id)).limit(1);
@@ -874,6 +875,7 @@ export class DatabaseStorage implements IStorage {
     if (hasCertificates.length > 0 || hasCompletedEnrollments.length > 0) {
       // Soft delete: keep data, just deactivate
       await db.update(courses).set({ isActive: false, enrollmentStatus: "closed" }).where(eq(courses.id, id));
+      return "desactivado";
     } else {
       // No completions or certificates — safe to hard delete
       await db.delete(enrollments).where(eq(enrollments.courseId, id));
@@ -883,6 +885,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(courseAnnouncements).where(eq(courseAnnouncements.courseId, id));
       await db.delete(courseSchedule).where(eq(courseSchedule.courseId, id));
       await db.delete(courses).where(eq(courses.id, id));
+      return "borrado";
     }
   }
 

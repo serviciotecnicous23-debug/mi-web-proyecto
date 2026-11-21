@@ -40,7 +40,7 @@ export function SelectorDeRol({ usuario, alCambiar }: { usuario: Cuenta; alCambi
       </Select>
       <p className="text-[11px] leading-snug text-muted-foreground" data-testid={`role-detalle-${usuario.id}`}>{detalleDeRol(usuario.role)}</p>
       <AlertDialog open={!!pendiente} onOpenChange={(abierto) => !abierto && setPendiente(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-md rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-orange-600" /> ¿Darle a {nombre} el rol «{pendiente ? ROLES[pendiente] : ""}»?
@@ -49,9 +49,10 @@ export function SelectorDeRol({ usuario, alCambiar }: { usuario: Cuenta; alCambi
               {pendiente ? detalleDeRol(pendiente) : ""} Dale este rol solo a personas de toda confianza.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel className="h-12 mt-0">Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              className="h-12"
               onClick={() => {
                 if (pendiente) alCambiar(pendiente);
                 setPendiente(null);
