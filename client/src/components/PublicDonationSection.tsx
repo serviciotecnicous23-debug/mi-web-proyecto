@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import {
@@ -73,28 +73,6 @@ export function PublicDonationSection() {
     },
   });
 
-  // Manual donation mutation (fallback)
-  const manualMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await fetch("/api/donations/public", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Error al procesar la donación");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({ title: "¡Gracias por tu generosidad!", description: "Tu donación ha sido registrada exitosamente." });
-      setDonateOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/tithes"] });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "No se pudo procesar. Intenta de nuevo.", variant: "destructive" });
-    },
-  });
-
   const handleStripeDonate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -108,19 +86,6 @@ export function PublicDonationSection() {
       email: fd.get("email") as string,
       amount,
       currency: (fd.get("currency") as string) || "usd",
-    });
-  };
-
-  const handleManualDonate = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    manualMutation.mutate({
-      donorName: fd.get("donorName"),
-      amount: fd.get("amount"),
-      currency: fd.get("currency") || "USD",
-      method: fd.get("method") || "transferencia",
-      email: fd.get("email") || null,
-      notes: fd.get("notes") || null,
     });
   };
 
@@ -186,34 +151,29 @@ export function PublicDonationSection() {
                 </CardContent>
               </Card>
             )}
-            <Card className="bg-white/60 dark:bg-card/60">
+            {/* sin Stripe no hay pago en línea: se escribe y la Administración manda los datos (antes prometía medios de pago que no hay) */}
+            <Card className="bg-white/60 dark:bg-card/60 sm:col-span-2">
               <CardContent className="p-4">
                 <h3 className="font-semibold text-sm flex items-center gap-2 mb-2">
-                  <Banknote className="h-4 w-4 text-green-600" /> Transferencia Bancaria
+                  <Banknote className="h-4 w-4 text-green-600" /> {stripeEnabled ? "Transferencia u otro medio" : "Para dar una ofrenda"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  También puedes realizar una transferencia directa.
-                  Contacta al equipo administrativo para los datos bancarios.
+                  Escríbenos y te enviaremos los datos para dar tu ofrenda o apoyar una misión.{" "}
+                  <Link href="/contacto?asunto=ofrenda" className="font-medium text-orange-700 dark:text-orange-300 underline">Escribir en Contacto</Link>
                 </p>
               </CardContent>
             </Card>
-            {!stripeEnabled && (
-              <Card className="bg-white/60 dark:bg-card/60">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-sm flex items-center gap-2 mb-2">
-                    <CreditCard className="h-4 w-4 text-blue-600" /> Otros Métodos
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    PayPal y otros métodos digitales disponibles.
-                    Todas las transacciones son seguras y confidenciales.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Donation button */}
           <div className="text-center pt-2">
+            {!stripeEnabled ? (
+              <Link href="/contacto?asunto=ofrenda">
+                <Button variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30 gap-2">
+                  <Heart className="h-3.5 w-3.5" /> Apoyar el ministerio
+                </Button>
+              </Link>
+            ) : (
             <Dialog open={donateOpen} onOpenChange={setDonateOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -235,7 +195,7 @@ export function PublicDonationSection() {
                 </DialogHeader>
 
                 {stripeEnabled ? (
-                  /* ===== STRIPE CHECKOUT FORM ===== */
+                  /* ===== el pago con tarjeta (Stripe) ===== */
                   <form onSubmit={handleStripeDonate} className="space-y-3">
                     <div>
                       <Label>Tu nombre</Label>
@@ -298,61 +258,10 @@ export function PublicDonationSection() {
                       <span>Pago seguro procesado por Stripe. No almacenamos datos de tu tarjeta.</span>
                     </div>
                   </form>
-                ) : (
-                  /* ===== MANUAL DONATION FORM (fallback when Stripe not configured) ===== */
-                  <form onSubmit={handleManualDonate} className="space-y-3">
-                    <div>
-                      <Label>Tu nombre</Label>
-                      <Input name="donorName" required placeholder="Nombre completo" />
-                    </div>
-                    <div>
-                      <Label>Email (opcional)</Label>
-                      <Input name="email" type="email" placeholder="correo@ejemplo.com" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>Monto</Label>
-                        <Input name="amount" type="number" step="0.01" min="1" required placeholder="0.00" />
-                      </div>
-                      <div>
-                        <Label>Moneda</Label>
-                        <Select name="currency" defaultValue="USD">
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="VES">VES</SelectItem>
-                            <SelectItem value="PEN">PEN</SelectItem>
-                            <SelectItem value="COP">COP</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Método de pago</Label>
-                      <Select name="method" defaultValue="transferencia">
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="transferencia">Transferencia Bancaria</SelectItem>
-                          <SelectItem value="paypal">PayPal</SelectItem>
-                          <SelectItem value="otro">Otro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Nota (opcional)</Label>
-                      <Textarea name="notes" rows={2} placeholder="Mensaje o referencia de pago..." />
-                    </div>
-                    <Button type="submit" disabled={manualMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700">
-                      {manualMutation.isPending ? "Procesando..." : "Confirmar Donación"}
-                    </Button>
-                    <p className="text-[10px] text-muted-foreground text-center">
-                      Al enviar, confirmas que esta donación es voluntaria.
-                    </p>
-                  </form>
-                )}
+                ) : null}
               </DialogContent>
             </Dialog>
+            )}
           </div>
         </CardContent>
       </Card>

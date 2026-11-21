@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePrayerAttendees, useMyPrayerAttendance, useAttendPrayer, useCancelPrayerAttendance } from "@/hooks/use-users";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PrayerWall } from "@/components/oracion/prayer-wall";
+import { useConfirmar } from "@/components/confirmar";
 import { isTeacherOrAdminRole, isAdminRole } from "@/lib/utils";
 
 const createPrayerSchema = z.object({
@@ -367,6 +368,7 @@ function PrayerActivityCard({ activity, user, deleteMutation, getPlatformLabel, 
   const { data: myAttendance } = useMyPrayerAttendance(activity.id);
   const attendMutation = useAttendPrayer();
   const cancelMutation = useCancelPrayerAttendance();
+  const { pedir, ventana } = useConfirmar();
 
   const count = attendeesData?.count || { confirmado: 0, tal_vez: 0 };
   const totalAttendees = (count.confirmado || 0) + (count.tal_vez || 0);
@@ -430,7 +432,7 @@ function PrayerActivityCard({ activity, user, deleteMutation, getPlatformLabel, 
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => deleteMutation.mutate(activity.id)}
+                onClick={() => pedir({ titulo: `¿Borrar la actividad «${activity.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar la actividad", accion: () => deleteMutation.mutate(activity.id) })}
                 disabled={deleteMutation.isPending}
                 data-testid={`button-delete-prayer-${activity.id}`}
               >
@@ -709,6 +711,7 @@ function PrayerActivityCard({ activity, user, deleteMutation, getPlatformLabel, 
           </div>
         </DialogContent>
       </Dialog>
+      {ventana}
     </>
   );
 }

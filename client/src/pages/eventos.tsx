@@ -249,7 +249,7 @@ export default function Eventos() {
           <div className="hud-frame rounded-md py-20 text-center">
             <p className="heading-display text-3xl sm:text-5xl text-foreground/15 md:text-7xl">Próximamente</p>
             <p className="accent-serif mx-auto mt-4 max-w-md text-muted-foreground">
-              Pronto anunciaremos nuevos eventos. Mantente atento a nuestras redes sociales.
+              Pronto anunciaremos nuevos eventos. Vuelve pronto a esta página o escucha la radio mientras tanto.
             </p>
           </div>
         ) : (

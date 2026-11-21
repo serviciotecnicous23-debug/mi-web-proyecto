@@ -655,6 +655,15 @@ function AdminCourseEnrollments({ courseId, updateEnrollment }: { courseId: numb
   );
 }
 
+/** Los asuntos del formulario de Contacto (client/src/pages/contacto.tsx), con su nombre. */
+const ASUNTO_CONTACTO: Record<string, string> = {
+  unirse: "Quiere unirse al ministerio",
+  oracion: "Pide oración",
+  invitar: "Invita a su ciudad o iglesia",
+  ofrenda: "Quiere dar una ofrenda",
+  otro: "Otro",
+};
+
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -1898,7 +1907,7 @@ export default function AdminDashboard() {
                                 <span className="text-xs text-muted-foreground break-all">({msg.email})</span>
                                 {!msg.isRead && <Badge variant="default">Nuevo</Badge>}
                               </div>
-                              <div className="text-sm font-medium text-primary mb-1">{msg.subject}</div>
+                              <div className="text-sm font-medium text-primary mb-1">{ASUNTO_CONTACTO[msg.subject] ?? msg.subject}</div>
                               <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{msg.content}</p>
                               <span className="text-xs text-muted-foreground mt-2 block">{msg.createdAt ? new Date(msg.createdAt).toLocaleString('es-ES') : ''}</span>
                             </div>

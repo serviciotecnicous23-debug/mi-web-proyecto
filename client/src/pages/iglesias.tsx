@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SocialLinksDisplay, SocialLinksFormFields } from "@/components/SocialLinks";
+import { useConfirmar } from "@/components/confirmar";
 
 import { withAccents } from "@shared/labels";
 type ChurchPostData = {
@@ -49,6 +50,7 @@ type ChurchPostData = {
 // ========== CHURCH MANAGEMENT PANEL (Admin) ==========
 function ChurchManagementPanel() {
   const { toast } = useToast();
+  const { pedir, ventana } = useConfirmar();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editChurch, setEditChurch] = useState<MinistryChurch | null>(null);
   const [formData, setFormData] = useState({
@@ -295,7 +297,7 @@ function ChurchManagementPanel() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteMutation.mutate(church.id)}
+                    onClick={() => pedir({ titulo: `¿Borrar la iglesia «${church.name}»?`, detalle: "No se puede deshacer.", boton: "Borrar la iglesia", accion: () => deleteMutation.mutate(church.id) })}
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -396,6 +398,7 @@ function ChurchManagementPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ventana}
     </>
   );
 }
@@ -475,6 +478,7 @@ export default function IglesiasPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const postImageRef = useRef<HTMLInputElement>(null);
   const isAdmin = isAdminRole(user?.role);
+  const { pedir, ventana } = useConfirmar();
 
   const { data: churches = [], isLoading: loadingChurches } = useQuery<MinistryChurch[]>({
     queryKey: ["/api/ministry-churches"],
@@ -719,7 +723,7 @@ export default function IglesiasPage() {
                             variant="ghost"
                             size="icon"
                             className="shrink-0"
-                            onClick={() => deletePostMutation.mutate(post.id)}
+                            onClick={() => pedir({ titulo: "¿Borrar esta publicación?", detalle: "No se puede deshacer.", boton: "Borrar la publicación", accion: () => deletePostMutation.mutate(post.id) })}
                             disabled={deletePostMutation.isPending}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -802,6 +806,7 @@ export default function IglesiasPage() {
             {renderChurchSection(respaldoChurches, "respaldo")}
           </TabsContent>
         </Tabs>
+        {ventana}
       </div>
     </Layout>
   );

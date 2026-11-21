@@ -80,6 +80,9 @@ test("busca la ruta como la encuentra wouter", () => {
   assert.equal(tituloDeRuta("/no-existe"), TITULO_NO_ENCONTRADA);
   assert.equal(tituloDeRuta("/academiax"), TITULO_NO_ENCONTRADA);
   assert.equal(tituloDeRuta("/juegosx"), TITULO_NO_ENCONTRADA);
+  // Mensajes es una sola página y Juegos lleva a lo sumo el juego: lo de más abajo no existe
+  assert.equal(tituloDeRuta("/mensajes/x"), TITULO_NO_ENCONTRADA);
+  assert.equal(tituloDeRuta("/juegos/memoria/otra"), TITULO_NO_ENCONTRADA);
 });
 
 test("la ruta se arregla igual que la canónica de server/seo.ts", () => {

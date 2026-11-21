@@ -11,6 +11,7 @@ import { Church, MapPin, Globe, Users, Search, Heart, ExternalLink } from "lucid
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { loginUrl } from "@/lib/login-redirect";
 
 export default function BuscarIglesiaPage() {
   const { user } = useAuth();
@@ -62,8 +63,8 @@ export default function BuscarIglesiaPage() {
           {/* Header */}
           <div className="text-center mb-10">
             <Church className="w-14 h-14 text-orange-500 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-2">Buscar Iglesia Aliada</h1>
-            <p className="text-gray-400 max-w-lg mx-auto">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Buscar Iglesia Aliada</h1>
+            <p className="text-muted-foreground max-w-lg mx-auto">
               Encuentra una iglesia de la red de Avivando el Fuego cerca de ti y solicita unirte.
               Tu solicitud será revisada por el pastor local.
             </p>
@@ -71,7 +72,7 @@ export default function BuscarIglesiaPage() {
 
           {/* Search */}
           <div className="relative max-w-md mx-auto mb-8">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               className="pl-10"
               placeholder="Buscar por nombre, ciudad o país..."
@@ -82,11 +83,11 @@ export default function BuscarIglesiaPage() {
 
           {/* Church Grid */}
           {isLoading ? (
-            <div className="text-center text-gray-400 py-12">Cargando iglesias...</div>
+            <div className="text-center text-muted-foreground py-12">Cargando iglesias...</div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered?.map((church: any) => (
-                <Card key={church.id} className="bg-card/50 border-white/10 hover:border-orange-500/30 transition-all group">
+                <Card key={church.id} className="bg-card/50 border-border hover:border-orange-500/30 transition-all group">
                   {church.imageUrl && (
                     <div className="h-40 overflow-hidden rounded-t-lg">
                       <img src={church.imageUrl} alt={church.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
@@ -95,9 +96,9 @@ export default function BuscarIglesiaPage() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-white text-lg">{church.name}</CardTitle>
+                        <CardTitle className="text-foreground text-lg">{church.name}</CardTitle>
                         {church.pastor && (
-                          <CardDescription className="text-gray-400">Pastor: {church.pastor}</CardDescription>
+                          <CardDescription className="text-muted-foreground">Pastor: {church.pastor}</CardDescription>
                         )}
                       </div>
                       {church.logoUrl && (
@@ -107,22 +108,22 @@ export default function BuscarIglesiaPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {(church.city || church.country) && (
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4 shrink-0" />
                         {[church.city, church.country].filter(Boolean).join(", ")}
                       </div>
                     )}
                     {church.description && (
-                      <p className="text-sm text-gray-400 line-clamp-2">{church.description}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{church.description}</p>
                     )}
                     <div className="flex gap-2 flex-wrap">
                       {church.website && (
-                        <a href={church.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300">
+                        <a href={church.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-orange-700 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300">
                           <Globe className="w-3 h-3" /> Web
                         </a>
                       )}
                       {church.facebook && (
-                        <a href={church.facebook} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                        <a href={church.facebook} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                           <ExternalLink className="w-3 h-3" /> Facebook
                         </a>
                       )}
@@ -132,8 +133,15 @@ export default function BuscarIglesiaPage() {
                         <Heart className="w-4 h-4 mr-2" /> Solicitar Unirme
                       </Button>
                     )}
+                    {!user && (
+                      <a href={loginUrl("/buscar-iglesia")} className="block mt-2">
+                        <Button variant="outline" className="w-full">
+                          <Heart className="w-4 h-4 mr-2" /> Entra para pedir unirte
+                        </Button>
+                      </a>
+                    )}
                     {user?.churchId === church.id && (
-                      <Badge className="bg-green-500/20 text-green-400 w-full justify-center py-1">
+                      <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 w-full justify-center py-1">
                         <Users className="w-3 h-3 mr-1" /> Ya eres miembro
                       </Badge>
                     )}
@@ -141,8 +149,8 @@ export default function BuscarIglesiaPage() {
                 </Card>
               ))}
               {(!filtered || filtered.length === 0) && (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  No se encontraron iglesias. Intenta con otra búsqueda.
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  {search.trim() ? "No se encontraron iglesias. Intenta con otra búsqueda." : "Todavía no hay iglesias aliadas para mostrar."}
                 </div>
               )}
             </div>

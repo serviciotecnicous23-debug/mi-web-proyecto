@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useCorreoActivo } from "@/lib/correo";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { enLaRadio, radioDeOtroSitio, RADIO_OFICIAL_CON_JUEGOS } from "@/lib/incrustado";
 import { loginUrl } from "@/lib/login-redirect";
@@ -26,6 +27,7 @@ import {
   BarChart3,
   DollarSign,
   ChevronDown,
+  ChevronRight,
   Home,
   Calendar,
   Video,
@@ -72,8 +74,6 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { ScrollToTop, BackToTop } from "@/components/ScrollToTop";
 import { LogoIcon } from "@/components/LogoIcon";
 import { FlameLogoSVG } from "@/components/FlameLogoSVG";
-import { Fire3DScene } from "@/components/Fire3DScene";
-import type { Fire3DSceneHandle } from "@/components/Fire3DScene";
 
 // Escritorio — VISITANTES. "Conócenos" lleva a la bienvenida. La radio no va aquí: tiene su
 // botón propio en la barra (antes salía dos veces). Regiones, Iglesias, Historia y Equipo van
@@ -426,8 +426,14 @@ function setAppIconBadge(count: number) {
   else nav.clearAppBadge?.().catch(() => {});
 }
 
+/** «Mi iglesia» (el panel de la iglesia: sus miembros, las solicitudes para unirse y su academia): para quien tiene iglesia,
+ * para el administrador de una iglesia y para la Administración. */
+const conMiIglesia = (u: { churchId?: number | null; role: string }) => !!u.churchId || u.role === "admin_iglesia" || isAdminRole(u.role);
+
 // ========== NOTIFICATION BELL ==========
 function NotificationBell() {
+  const [, irA] = useLocation();
+  const [abierta, setAbierta] = useState(false);
   const { data: countData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
     refetchInterval: 30000,
@@ -449,12 +455,37 @@ function NotificationBell() {
   const unreadCount = countData?.count || 0;
   const recentNotifs = notifications.slice(0, 8);
 
+  /** Abrir un aviso: se marca leído y, si tiene enlace dentro de la web, lleva ahí. */
+  const abrir = (n: Notification) => {
+    if (!n.isRead) {
+      void apiRequest("PATCH", `/api/notifications/${n.id}/read`)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+        })
+        .catch(() => undefined);
+    }
+    if (n.link && n.link.startsWith("/")) {
+      setAbierta(false);
+      irA(n.link);
+    }
+  };
+
   useEffect(() => {
     setAppIconBadge(unreadCount);
+    // si cambia el número de no leídos, la lista se pone al día
+    queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
   }, [unreadCount]);
 
   return (
-    <Popover>
+    <Popover
+      open={abierta}
+      onOpenChange={(v) => {
+        setAbierta(v);
+        // al abrirla, la lista se pide de nuevo (pudo llegar un aviso después de cargar la página)
+        if (v) queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      }}
+    >
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" data-testid="button-notifications" aria-label={`Notificaciones${unreadCount > 0 ? ` - ${unreadCount} sin leer` : ""}`}>
           <Bell className="w-5 h-5" aria-hidden="true" />
@@ -465,7 +496,7 @@ function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-[min(20rem,calc(100vw-1.5rem))] p-0" align="end" collisionPadding={12}>
         <div className="flex items-center justify-between gap-2 p-3 border-b">
           <p className="font-semibold text-sm">Notificaciones</p>
           {unreadCount > 0 && (
@@ -479,17 +510,26 @@ function NotificationBell() {
             <p className="text-sm text-muted-foreground text-center py-6">Sin notificaciones</p>
           ) : (
             recentNotifs.map((n) => (
-              <div
+              <button
+                type="button"
                 key={n.id}
-                className={`p-3 border-b last:border-0 text-sm ${!n.isRead ? "bg-primary/5" : ""}`}
+                onClick={() => abrir(n)}
+                className={`block w-full text-left p-3 border-b last:border-0 text-sm hover:bg-muted/60 focus-visible:outline-hidden focus-visible:bg-muted/60 transition-colors ${!n.isRead ? "bg-primary/5" : ""}`}
                 data-testid={`notification-${n.id}`}
               >
-                <p className="font-medium">{n.title}</p>
-                <p className="text-muted-foreground text-xs mt-0.5">{n.content}</p>
-                <p className="text-muted-foreground text-[10px] mt-1">
-                  {new Date(n.createdAt).toLocaleDateString("es", { day: "numeric", month: "short" })}
-                </p>
-              </div>
+                <span className="flex items-start gap-2">
+                  {!n.isRead && <span className="mt-1.5 w-2 h-2 rounded-full bg-orange-500 shrink-0" aria-hidden="true" />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{n.title}</span>
+                    <span className="block text-muted-foreground text-xs mt-0.5 break-words">{n.content}</span>
+                    <span className="block text-muted-foreground text-[10px] mt-1">
+                      {new Date(n.createdAt).toLocaleDateString("es", { day: "numeric", month: "short" })}
+                      {!n.isRead ? <span className="sr-only"> · sin leer</span> : null}
+                    </span>
+                  </span>
+                  {n.link && n.link.startsWith("/") && <ChevronRight className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" aria-hidden="true" />}
+                </span>
+              </button>
             ))
           )}
         </div>
@@ -632,19 +672,14 @@ export function Navbar() {
               Radio
             </Button>
           </Link>
-          <Link href="/radio">
-            <Button size="icon" className="hidden fire-btn-primary" data-testid="link-radio-quick-mobile" aria-label="Escuchar radio">
-              <Radio className="w-4 h-4" />
-            </Button>
-          </Link>
           <GlobalSearch />
+          {user && <NotificationBell />}
           <ThemeToggle />
 
           {/* Desktop auth area */}
           <div className="hidden md:flex items-center gap-2">
             {user ? (
               <>
-                <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" data-testid="button-user-menu" aria-label="Menú de usuario">
@@ -718,6 +753,14 @@ export function Navbar() {
                         Certificados
                       </Link>
                     </DropdownMenuItem>
+                    {conMiIglesia(user) && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/mi-iglesia" className="cursor-pointer" data-testid="link-mi-iglesia">
+                          <Church className="mr-2 h-4 w-4" aria-hidden="true" />
+                          Mi iglesia
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     {isTeacherOrAdminRole(user.role) && (
                       <DropdownMenuItem asChild>
                         <Link href="/maestro" className="cursor-pointer">
@@ -873,6 +916,13 @@ export function Navbar() {
                         <Award className="w-4 h-4" aria-hidden="true" /> Certificados
                       </Button>
                     </Link>
+                    {conMiIglesia(user) && (
+                      <Link href="/mi-iglesia" onClick={closeMenu}>
+                        <Button variant="ghost" className="w-full justify-start gap-3" size="sm" data-testid="link-mobile-mi-iglesia">
+                          <Church className="w-4 h-4" aria-hidden="true" /> Mi iglesia
+                        </Button>
+                      </Link>
+                    )}
                     <Link href="/mensajes" onClick={closeMenu}>
                       <Button variant="ghost" className="w-full justify-start gap-3" size="sm" data-testid="link-mobile-mensajes">
                         <Mail className="w-4 h-4" aria-hidden="true" /> Mensajes
@@ -989,6 +1039,7 @@ export function Footer() {
         <div className="border-t border-border/40 mt-8 pt-6 text-center">
           <nav aria-label="Enlaces del pie de página" className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-3 text-xs">
             <Link href="/bienvenida" className="text-muted-foreground hover:text-primary" data-testid="footer-link-bienvenida">Conócenos</Link>
+            <Link href="/sermones" className="text-muted-foreground hover:text-primary" data-testid="footer-link-sermones">Sermones</Link>
             <Link href="/contacto" className="text-muted-foreground hover:text-primary" data-testid="footer-link-contacto">Contacto</Link>
             <Link href="/privacidad" className="text-muted-foreground hover:text-primary" data-testid="footer-link-privacidad">Privacidad</Link>
             <Link href="/terminos" className="text-muted-foreground hover:text-primary" data-testid="footer-link-terminos">Términos</Link>
@@ -1007,9 +1058,10 @@ function EmailVerifyBanner() {
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const correoActivo = useCorreoActivo();
 
-  // Don't show if: not logged in, already verified, no email, or dismissed
-  if (!user || user.emailVerified || !user.email || dismissed) return null;
+  // no se muestra sin sesión, ya verificado, sin correo, cerrado, o si la web no puede mandar correos
+  if (!user || user.emailVerified || !user.email || dismissed || correoActivo !== true) return null;
 
   async function handleResend() {
     setSending(true);
@@ -1103,24 +1155,9 @@ function BarraDeLaRadio() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const fireRef = useRef<Fire3DSceneHandle>(null);
   const radio = enLaRadio();
   // En /radio la radio original ocupa la pantalla: sin pie ni botón de subir (y dentro de la radio, tampoco).
   const immersive = location === "/radio" || radio;
-
-  // ── Fire state bridge: Hero (intense) at home-top → Ember (drifting) elsewhere ──
-  useEffect(() => {
-    const transition = () => {
-      const isHome      = location === "/";
-      const scrolledDown = window.scrollY > 260;
-      const mode: "hero" | "ember" = "ember";
-      fireRef.current?.setMode(mode);
-    };
-    // Immediate on location change
-    transition();
-    window.addEventListener("scroll", transition, { passive: true });
-    return () => window.removeEventListener("scroll", transition);
-  }, [location]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">

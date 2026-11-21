@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { withAccents } from "@shared/labels";
 import { InsigniaAcademia } from "@/components/academia/insignia-perfil";
+import { useConfirmar } from "@/components/confirmar";
 import { isAdminRole } from "@/lib/utils";
 /**
  * "Eliminar mi cuenta": lo exigen las tiendas de apps y es un derecho de cada persona.
@@ -167,6 +168,7 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: myEnrollments } = useMyEnrollments();
+  const { pedir, ventana } = useConfirmar();
 
   // complex Zod schema causes TypeScript recursion errors; use any for form type
   const form = useForm<any>({
@@ -808,7 +810,7 @@ export default function Profile() {
                               {f.friend?.country && <p className="text-xs text-muted-foreground">{withAccents(f.friend.country)}</p>}
                             </div>
                           </div>
-                          <Button size="icon" variant="ghost" onClick={() => removeFriendMutation.mutate(f.id)} title="Eliminar amigo">
+                          <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Quitar a ${f.friend?.displayName || f.friend?.username || "esta persona"} de tus amigos?`, detalle: "No se puede deshacer.", boton: "Quitar", accion: () => removeFriendMutation.mutate(f.id) })} title="Eliminar amigo">
                             <UserMinus className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </div>
@@ -870,6 +872,7 @@ export default function Profile() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ventana}
     </Layout>
   );
 }

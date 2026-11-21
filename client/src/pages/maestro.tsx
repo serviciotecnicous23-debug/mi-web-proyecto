@@ -42,6 +42,7 @@ import { es } from "date-fns/locale";
 
 import { withAccents } from "@shared/labels";
 import { AttendanceDialog } from "@/components/planillas/AttendanceDialog";
+import { useConfirmar } from "@/components/confirmar";
 import { isTeacherOrAdminRole } from "@/lib/utils";
 // Inline Certificate Preview for Maestro panel
 function MaestroCertificatePreview({ cert, containerId }: { cert: any; containerId: string }) {
@@ -297,6 +298,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
   const { data: courseScheduleData } = useCourseSchedule(courseId);
   const createScheduleEntry = useCreateCourseScheduleEntry();
   const deleteScheduleEntry = useDeleteCourseScheduleEntry();
+  const { pedir, ventana } = useConfirmar();
 
   const [materialDialog, setMaterialDialog] = useState(false);
   const [sessionDialog, setSessionDialog] = useState(false);
@@ -586,7 +588,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                         {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
                         <Badge variant="outline" className="text-xs mt-1">{MATERIAL_TYPES[m.materialType as keyof typeof MATERIAL_TYPES]}</Badge>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteMaterial.mutate({ id: m.id, courseId })} data-testid={`button-delete-material-${m.id}`}>
+                      <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Borrar el material «${m.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar el material", accion: () => deleteMaterial.mutate({ id: m.id, courseId }) })} data-testid={`button-delete-material-${m.id}`}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -634,7 +636,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                             <CheckCircle2 className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" onClick={() => deleteSession.mutate({ id: s.id, courseId })} data-testid={`button-delete-session-${s.id}`}>
+                        <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Borrar la sesión «${s.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar la sesión", accion: () => deleteSession.mutate({ id: s.id, courseId }) })} data-testid={`button-delete-session-${s.id}`}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -691,7 +693,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                           {entry.meetingUrl && <p className="text-xs text-primary truncate">{entry.meetingUrl}</p>}
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteScheduleEntry.mutate({ id: entry.id, courseId })} data-testid={`button-delete-schedule-${entry.id}`}>
+                      <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Borrar el horario de ${entry.startTime} a ${entry.endTime}?`, detalle: "No se puede deshacer.", boton: "Borrar el horario", accion: () => deleteScheduleEntry.mutate({ id: entry.id, courseId }) })} data-testid={`button-delete-schedule-${entry.id}`}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -730,7 +732,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
                           {a.createdAt ? new Date(a.createdAt).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" }) : ""}
                         </p>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteAnnouncement.mutate({ id: a.id, courseId })} data-testid={`button-delete-announcement-${a.id}`}>
+                      <Button size="icon" variant="ghost" onClick={() => pedir({ titulo: `¿Borrar el anuncio «${a.title}»?`, detalle: "No se puede deshacer.", boton: "Borrar el anuncio", accion: () => deleteAnnouncement.mutate({ id: a.id, courseId }) })} data-testid={`button-delete-announcement-${a.id}`}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -874,6 +876,7 @@ function CourseManager({ courseId, onBack }: { courseId: number; onBack: () => v
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ventana}
     </div>
   );
 }

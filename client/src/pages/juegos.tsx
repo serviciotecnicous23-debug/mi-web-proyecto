@@ -86,7 +86,7 @@ function Sala() {
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center text-muted-foreground">
           <Gamepad2 className="mb-2 h-8 w-8 opacity-60" />
           <p className="font-semibold text-foreground">Vienen más juegos</p>
-          <p className="mt-1 text-sm">Preguntas bíblicas, versículos para armar y aventuras. ¿Cuál te gustaría? Cuéntanos en Contacto.</p>
+          <p className="mt-1 text-sm">Preguntas bíblicas, versículos para armar y aventuras. ¿Cuál te gustaría? Cuéntanos en <Link href="/contacto" className="underline font-medium">Contacto</Link>.</p>
         </div>
       </div>
 

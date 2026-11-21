@@ -62,7 +62,7 @@ async function avisar(userId: number, tipo: TipoAviso, clave: string, titulo: st
   const subs = await storage.getPushSubscriptionsByUser(userId);
   const vencidas = await sendPushToMany(
     subs.map((s) => ({ id: s.id, subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } })),
-    { title: titulo, body: cuerpo, url: URL_JUEGO, tag: `jer-${tipo}`, icon: "/icons/icon-192x192.png" },
+    { title: titulo, body: cuerpo, url: URL_JUEGO, tag: `jer-${tipo}`, icon: "/icons/icon-192.png?v=6" },
     { ttl },
   );
   if (vencidas.length) await storage.deletePushSubscriptionsByIds(vencidas);
