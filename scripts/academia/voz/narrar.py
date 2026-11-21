@@ -38,11 +38,16 @@ CADENA = ("highpass=f=80:poles=2,equalizer=f=300:t=q:w=0.9:g=-3,equalizer=f=3500
           "acompressor=threshold=-21dB:ratio=3:attack=15:release=120:knee=4:makeup=1.259,"
           "alimiter=limit=0.8414:attack=5:release=60:level=disabled")
 LUFS = -16
+# una inicial con punto («C. S. Lewis», «William J. Seymour») no termina la oración: si el corte entre dos trozos caía
+# ahí, la voz decía «ce, ese» como fin de frase, hacía una pausa y seguía con «Lewis»
+INICIAL = re.compile(r"(?<!\w)([A-ZÁÉÍÓÚÑ])\.(?=\s+[A-ZÁÉÍÓÚÑ])")
+PUNTO_DE_INICIAL = "․"  # «․»: no corta la oración; vuelve a ser «.» en el trozo que se graba
 
 
 def trozos(texto):
     """El texto en trozos de una a tres oraciones, sin pasar de MAX_TROZO letras (las largas se cortan en comas)."""
-    oraciones = re.findall(r"[^.!?…]+[.!?…]+[»”\"]?\s*|[^.!?…]+$", texto.strip())
+    texto = INICIAL.sub(rf"\1{PUNTO_DE_INICIAL}", texto.strip())
+    oraciones = re.findall(r"[^.!?…]+[.!?…]+[»”\"]?\s*|[^.!?…]+$", texto)
     out, actual = [], ""
     for o in oraciones:
         o = o.strip()
@@ -63,7 +68,7 @@ def trozos(texto):
             juntos[-1] = f"{juntos[-1]} {t}"
         else:
             juntos.append(t)
-    return juntos
+    return [t.replace(PUNTO_DE_INICIAL, ".") for t in juntos]
 
 
 def palabras(t):

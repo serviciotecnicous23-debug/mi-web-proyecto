@@ -117,8 +117,9 @@ español fluido, «tipo documental»):
   convierte lo escrito en lo que se dice: las citas («Juan 1:41» → «Juan uno, cuarenta y uno»; «1 Juan» → «Primera de
   Juan»), los libros con número sin capítulo («1 y 2 Samuel» → «Primero y Segundo de Samuel»; `librosConNumero`), los
   números, los años («en 1521 se negó» → «veintiuno»), los siglos, las abreviaturas, las siglas (`SIGLAS`: quedan en
-  mayúsculas), las horas de un horario («7:00» → «siete en punto»), los miles con coma («120,000») y los teléfonos de
-  ayuda.
+  mayúsculas), las horas de un horario («7:00» → «siete en punto»), los miles con coma («120,000»), los artículos de
+  ley («Código de Familia, sección 261.101» → «doscientos sesenta y uno punto ciento uno», no «doscientos sesenta y un
+  mil ciento uno») y los teléfonos de ayuda.
 - **La huella:** `huellaDeLeccion` (con las citas, no con el texto de la Biblia). La grabación guarda la huella con que se
   hizo; si la lección cambia (texto, orden, título, un esquema nuevo), la grabación deja de valer y la página vuelve a la
   voz del aparato hasta grabarla otra vez (`server/academia-narracion.ts`; `LeccionVista.narracion` llega en null).
@@ -139,7 +140,11 @@ español fluido, «tipo documental»):
   - las especialidades, de tres en tres, en Cloudflare R2: Alabanza y adoración, Bíblicos avanzados y Capellanía el
     20-nov-2026 (90 lecciones, unos 550 minutos); Comunicaciones y medios, Evangelismo y misiones y Familia y
     consejería el mismo día (90 lecciones, unos 500 minutos); Intercesión y oración, Juventud y Liderazgo y
-    administración el 21-nov-2026 (90 lecciones, unos 530 minutos).
+    administración el 21-nov-2026 (90 lecciones, unos 530 minutos); Niñez, Obra social y Ministerio pastoral el
+    mismo día (90 lecciones, unos 520 minutos). Con eso, **las 614 lecciones de la academia tienen voz**.
+
+  El 21-nov se grabaron otra vez 10 lecciones de las especialidades que leían los artículos de ley como miles, y 10 de
+  toda la academia en las que el corte entre dos trozos caía justo después de una inicial («C. S. Lewis»).
 
   El mismo día se grabaron otra vez 14 lecciones de los Niveles 1 a 3 que leían mal «c.» («hacia el año»), un año
   («setecientos un antes de Cristo») o un libro con número sin capítulo («un Corintios» por «Primera de Corintios»).
@@ -147,7 +152,8 @@ español fluido, «tipo documental»):
   del guion en `<lección>.marcas.json`). Para ver antes qué lecciones cambian, generar los guiones en otra carpeta y
   compararlos con los grabados.
 
-  Toda la academia son unas 62 horas (≈1,1 GB). **Desde el Nivel 3 el audio va en Cloudflare R2.** El depósito es
+  Toda la academia son unas 60 horas de voz (≈1 GB: 134 MB en el repositorio y ≈910 MB en R2).
+  **Desde el Nivel 3 el audio va en Cloudflare R2.** El depósito es
   `avivando-academia-voz`, en la cuenta de Luis, con su dirección pública
   `https://pub-e35c5f440e364310af9d4d053a59dcc8.r2.dev`. El plan gratis llega a 10 GB y no cobra la descarga.
   - Cada entrada del registro guarda la dirección del audio en `url`. No hace falta ninguna variable en Render.
@@ -164,6 +170,8 @@ español fluido, «tipo documental»):
      escucha con whisper y se graba otra vez si no dice lo que debía (`<lección>.qa.json`). OmniVoice calcula cuánto
      dura cada trozo por las letras del texto: en una lista larga de palabras sueltas (los alfabetos griego y hebreo)
      corre y se come letras, así que `segundos_de_lista` le da el tiempo de una recitación (1,6 palabras por segundo).
+     Un trozo nunca se corta después de una inicial («C. S. Lewis», «William J. Seymour»: `INICIAL`), porque la voz la
+     decía como fin de frase y hacía una pausa antes del apellido.
   4. `npx tsx scripts/academia/narracion.ts registrar <carpeta>` copia los audios y escribe el registro.
   5. Si se graba otro nivel, actualizar el paso «Lecciones cortas» de la portada (`PASOS` en
      `client/src/pages/academia.tsx`), que dice qué lecciones se escuchan.
