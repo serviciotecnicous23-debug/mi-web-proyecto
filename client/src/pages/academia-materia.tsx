@@ -23,6 +23,7 @@ import { AvisoInscripcion, AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, 
 import { AsignacionDeMateria } from "@/components/academia/asignaciones";
 import { EnPreparacion } from "@/components/academia/en-preparacion";
 import { LecturaAmpliadaCard } from "@/components/academia/lectura-ampliada";
+import { LaboratorioDeMateria } from "@/components/academia/laboratorio-materia";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -477,6 +478,9 @@ export default function AcademiaMateria() {
             </Link>
           </section>
         )}
+
+        {/* El laboratorio ministerial: prácticas de la vida real (solo en las materias que ya las tienen) */}
+        {m.disponible && (inscrito || d.docente) && <LaboratorioDeMateria materiaId={m.id} />}
 
         {/* Examen final */}
         {m.disponible && inscrito && medida && (

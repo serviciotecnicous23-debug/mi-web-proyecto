@@ -31,6 +31,7 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
+import { registerAcademiaLaboratorioRoutes } from "./academia-laboratorio";
 import { abiertasJunto, lugarDeMateria, registerAcademiaMapaRoutes } from "./academia-mapa";
 import { minutosDeMateria, minutosReales } from "./academia-carga";
 import { minutosDeNarracion, narracionDe } from "./academia-narracion";
@@ -645,6 +646,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
   registerAcademiaRecursosRoutes(app);
+  registerAcademiaLaboratorioRoutes(app);
   registerAcademiaMapaRoutes(app);
   registerAcademiaActividadesRoutes(app);
   registerAcademiaCalidadRoutes(app);
