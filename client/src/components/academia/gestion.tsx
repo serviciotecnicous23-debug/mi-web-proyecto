@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Award,
   BookOpen, CheckCircle2, ChevronDown, ClipboardCheck, Clock, Hourglass, ListChecks, Loader2, MessageSquare, PenLine, RotateCcw, Scale, Settings2, ShieldCheck,
   Timer, UserCheck, UserMinus, UserPlus, XCircle,
 } from "lucide-react";
@@ -15,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AlumnoDetalle, ComponenteGestion, GestionMateria, PruebaGestion, ResultadoGestion } from "@shared/academia-direccion";
 import {
-  accionLeccion, accionPrueba, ajustarComponente, cambiarEstatusAlumno, cambiarTiempoExtra, convalidarMateria, escribirAlumno, inscripcionEnMateria,
+  accionCierre, accionLeccion, accionPrueba, ajustarComponente, cambiarEstatusAlumno, cambiarTiempoExtra, convalidarMateria, escribirAlumno, inscripcionEnMateria,
   useGestionMateria, useHistorialAlumno, type AccionPrueba,
 } from "./api";
 import { fecha } from "./seguimiento";
@@ -173,6 +174,9 @@ function FilaComponente({ c, fija, alAjustar, alQuitar }: { c: ComponenteGestion
   );
 }
 
+/** El título con la primera letra en minúscula, sin tocar los nombres propios («del examen integral del Nivel 1»). */
+const minuscula = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
 function TarjetaPrueba({ p, alAccion }: { p: PruebaGestion; alAccion: (accion: AccionPrueba, titulo: string, detalle: string, peligro?: boolean) => void }) {
   const tope = p.tope != null ? p.tope + p.extra : null;
   return (
@@ -180,7 +184,7 @@ function TarjetaPrueba({ p, alAccion }: { p: PruebaGestion; alAccion: (accion: A
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="font-medium">{p.titulo}</span>
         <span className="text-sm text-muted-foreground tabular-nums">
-          {tope != null ? `${p.intentos} de ${tope} ${p.tipo === "breve" ? "entregas" : "intentos"}` : `${p.intentos} ${p.intentos === 1 ? "intento" : "intentos"}`}
+          {tope != null ? `${p.intentos} de ${tope} ${p.tipo === "breve" || p.tipo === "trabajo" ? "entregas" : "intentos"}` : `${p.intentos} ${p.intentos === 1 ? "intento" : "intentos"}`}
           {p.extra ? ` (${p.extra} de más)` : ""}
           {p.mejor != null ? ` · mejor ${p.mejor}` : ""}
         </span>
@@ -192,23 +196,23 @@ function TarjetaPrueba({ p, alAccion }: { p: PruebaGestion; alAccion: (accion: A
         {p.enCurso && <span className="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300"><Clock className="w-3.5 h-3.5" /> Tiene un intento en curso</span>}
       </div>
       <div className="flex flex-wrap gap-2">
-        {p.tipo === "final" && (p.espera > 0 || p.pideRepaso) && (
-          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("quitar-espera", `Quitar la espera del ${p.titulo.toLowerCase()}`, "Podrá intentarlo ya, sin esperar ni volver a leer las lecciones.")} data-testid="quitar-espera">
+        {(p.tipo === "final" || p.tipo === "integral") && (p.espera > 0 || p.pideRepaso) && (
+          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("quitar-espera", `Quitar la espera del ${minuscula(p.titulo)}`, "Podrá intentarlo ya, sin esperar ni volver a leer las lecciones.")} data-testid="quitar-espera">
             <Timer className="w-3.5 h-3.5 mr-1" /> Quitar la espera
           </Button>
         )}
-        {p.tipo === "final" && p.fallos > 0 && (
-          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("reiniciar-fallos", `Reiniciar los fallos del ${p.titulo.toLowerCase()}`, "Los fallos vuelven a cero: las esperas empiezan otra vez desde la más corta. Las notas de sus intentos no cambian.")} data-testid="reiniciar-fallos">
+        {(p.tipo === "final" || p.tipo === "integral") && p.fallos > 0 && (
+          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("reiniciar-fallos", `Reiniciar los fallos del ${minuscula(p.titulo)}`, "Los fallos vuelven a cero: las esperas empiezan otra vez desde la más corta. Las notas de sus intentos no cambian.")} data-testid="reiniciar-fallos">
             <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reiniciar los fallos
           </Button>
         )}
         {p.tope != null && (
-          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("intento-extra", p.tipo === "breve" ? "Dar una entrega más del escrito breve" : `Dar un intento más: ${p.titulo.toLowerCase()}`, "Cuenta su mejor nota, como siempre.")} data-testid="intento-extra">
-            <UserPlus className="w-3.5 h-3.5 mr-1" /> {p.tipo === "breve" ? "Una entrega más" : "Un intento más"}
+          <Button size="sm" variant="outline" className="h-8" onClick={() => alAccion("intento-extra", p.tipo === "breve" ? "Dar una entrega más del escrito breve" : p.tipo === "trabajo" ? `Dar una entrega más del ${p.titulo.replace("Trabajo final · ", "trabajo final de ")}` : `Dar un intento más: ${minuscula(p.titulo)}`, "Cuenta su mejor nota, como siempre.")} data-testid="intento-extra">
+            <UserPlus className="w-3.5 h-3.5 mr-1" /> {p.tipo === "breve" || p.tipo === "trabajo" ? "Una entrega más" : "Un intento más"}
           </Button>
         )}
         {p.enCurso && (
-          <Button size="sm" variant="outline" className="h-8 text-red-700 dark:text-red-300" onClick={() => alAccion("anular-en-curso", `Anular el intento en curso: ${p.titulo.toLowerCase()}`, "No cuenta: se borran sus respuestas de ese intento y puede empezarlo otra vez (con otras preguntas).", true)} data-testid="anular-en-curso">
+          <Button size="sm" variant="outline" className="h-8 text-red-700 dark:text-red-300" onClick={() => alAccion("anular-en-curso", `Anular el intento en curso: ${minuscula(p.titulo)}`, "No cuenta: se borran sus respuestas de ese intento y puede empezarlo otra vez (con otras preguntas).", true)} data-testid="anular-en-curso">
             <XCircle className="w-3.5 h-3.5 mr-1" /> Anular el intento en curso
           </Button>
         )}
@@ -545,6 +549,20 @@ export function HerramientasAlumno({ d, alGestionar }: { d: AlumnoDetalle; alGes
           </Button>
         </div>
       </div>
+      {(g.cierres?.length ?? 0) > 0 && (
+        <Seccion icono={Award} titulo="Integral y trabajo final" testid="gestion-cierres">
+          <p className="text-sm text-muted-foreground">Los exámenes integrales de sus niveles y los trabajos finales de sus especialidades que ya empezó.</p>
+          <ul className="space-y-2">
+            {g.cierres!.map((p) => (
+              <TarjetaPrueba
+                key={p.clave}
+                p={p}
+                alAccion={(accion, titulo, detalle, peligro) => abrir({ titulo, detalle, peligro, confirmar: (motivo) => accionCierre(id, { clave: p.clave, accion, motivo }) })}
+              />
+            ))}
+          </ul>
+        </Seccion>
+      )}
       {g.inscribibles.length > 0 && (
         <div className="space-y-2">
           <label className="text-sm block" htmlFor="gestion-otra-materia">Otra materia (para inscribirlo o convalidarla)</label>

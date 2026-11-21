@@ -82,7 +82,11 @@ export type DireccionResumen = {
    * Respuestas escritas por revisar, pedidos de revisión y actividades por confirmar (para quien revisa), con las
    * actividades por tipo (`defensa` cuenta los proyectos con la defensa ya hecha, que esperan su evaluación).
    */
-  pendientes: { escritas: number; apelaciones: number; actividades: number; porTipo?: { tipo: string; n: number }[] };
+  pendientes: {
+    escritas: number; apelaciones: number; actividades: number; porTipo?: { tipo: string; n: number }[];
+    /** Alumnos del Nivel 5 que pidieron a quién acompañar y todavía esperan. */
+    acompanar?: number;
+  };
   puede: {
     exportar: boolean; contacto: boolean; revisar: boolean; documentos: boolean; abrir: boolean;
     /** La revisión del contenido: verla y dejar observaciones, aprobar materias y retirar preguntas del banco. */
@@ -133,6 +137,15 @@ export type GestionAlumno = {
   tiempoExtra: boolean;
   /** Las materias abiertas en las que todavía no está inscrito (para inscribirlo). */
   inscribibles: { id: string; titulo: string; grupo: string }[];
+  /** Los exámenes integrales de sus niveles y los trabajos finales de sus especialidades que ya empezó (para gestionarlos). */
+  cierres?: PruebaGestion[];
+};
+
+/** «A quién acompañar» (Nivel 5): quienes lo pidieron y esperan, y las personas del Nivel 1 que todavía no tienen mentor. */
+export type AcompanarPendientes = {
+  pide: number;
+  esperan: { userId: number; nombre: string; matricula: string; pedido: string; acompana: number }[];
+  sinMentor: { userId: number; nombre: string; matricula: string; desde: string }[];
 };
 
 /** Una parte de la nota de una materia: su peso, lo que calcula el sistema y el ajuste de la Administración, si hay. */
@@ -148,7 +161,7 @@ export type ComponenteGestion = {
 export type PruebaGestion = {
   clave: string;
   titulo: string;
-  tipo: "final" | "mini" | "breve" | "suficiencia";
+  tipo: "final" | "mini" | "breve" | "suficiencia" | "integral" | "trabajo";
   intentos: number;
   /** El tope de intentos (null: sin tope, como el examen final, que pide esperas). */
   tope: number | null;

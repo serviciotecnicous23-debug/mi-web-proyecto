@@ -223,7 +223,8 @@ export function registerAcademiaActividadesRoutes(app: Express) {
     }
   });
 
-  // Pedir a la Administración personas para acompañar (Nivel 5): un aviso en la campana, como mucho cada 12 horas.
+  // Pedir a la Administración personas para acompañar (Nivel 5): queda guardado (lo cuenta «Pendientes» del panel hasta que
+  // la Administración le da a todos los que pide) y avisa en la campana, como mucho cada 12 horas.
   app.post("/api/academia/actividades/:nivel/acompanar", async (req, res) => {
     try {
       const a = await inscritoDe(req, res);
@@ -233,9 +234,15 @@ export function registerAcademiaActividadesRoutes(app: Express) {
       const vista = await vistaDe(a.userId, nv.n);
       if (!vista.puedeRegistrar) return res.status(409).json({ message: vista.motivo! });
       if (vista.acompanar.hecho) return res.status(409).json({ message: "Ya cumpliste este requisito." });
-      if (frenar(`acompanar:${a.userId}`, 12 * 3_600_000)) {
+      if (frenar(`acompanar:${a.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const { rows: ya } = await pool.query(
+        `SELECT EXTRACT(EPOCH FROM now() - acompanar_pedido_at)::float / 3600 AS horas FROM academia_alumnos WHERE user_id = $1 AND acompanar_pedido_at IS NOT NULL`,
+        [a.userId],
+      );
+      if (ya[0] && Number(ya[0].horas) < 12) {
         return res.status(429).json({ message: "Ya se lo pediste a la Administración: te llegará un aviso cuando te elija como mentor de alguien." });
       }
+      await pool.query(`UPDATE academia_alumnos SET acompanar_pedido_at = now() WHERE user_id = $1`, [a.userId]);
       const { rows } = await pool.query(
         `SELECT i.nombres, i.apellidos, u.display_name, u.username FROM users u LEFT JOIN academia_inscripciones i ON i.user_id = u.id WHERE u.id = $1`,
         [a.userId],
@@ -246,7 +253,7 @@ export function registerAcademiaActividadesRoutes(app: Express) {
         admins,
         "Un alumno del Nivel 5 pide a quién acompañar",
         `${nombre} necesita acompañar a ${nv.pide.acompanar} personas hasta que terminen el Nivel 1 (requisito del Nivel 5). Elígelo como mentor desde la ficha de cada persona que empieza.`,
-        `/admin/academia/alumno/${a.userId}`,
+        "/admin/academia?tab=pendientes&ir=acompanar-pendientes",
       );
       res.json({ ok: true });
     } catch (err) {

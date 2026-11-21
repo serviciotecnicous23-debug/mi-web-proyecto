@@ -26,7 +26,7 @@ import { BANCOS } from "./academia/index";
 import {
   COMPONENTES_AJUSTABLES, asegurarMateria, avisarA, claveBreve, claveFinal, claveMini, componentesCalculados, enFila, estadoDe, frenar, viaFija,
 } from "./academia-comun";
-import { permisoDe } from "./academia-direccion";
+import { cierresDe, permisoDe } from "./academia-direccion";
 import { emitirMateria } from "./academia-documentos";
 import { MENSAJE_PROPIO, reconsiderarEspecialidad, reconsiderarMateria, reconsiderarNivel, registrar, revocarPorNota } from "./academia-revision";
 import { claveSuficiencia, topeSuficiencia } from "./academia-suficiencia";
@@ -214,7 +214,7 @@ async function enCadena(alumno: number, m: MateriaDef, motivo: string): Promise<
   return [...partes, ...(await nivelYEspecialidad(alumno, m, motivo))];
 }
 
-type Hecho = { texto: string; aviso: string; titulo?: string; recalculo?: string[] };
+type Hecho = { texto: string; aviso: string; titulo?: string; recalculo?: string[]; enlace?: string };
 type Fallo = { error: string; status?: number };
 
 /** Responde una acción: la deja en el historial, le avisa al alumno y devuelve la materia como quedó. */
@@ -225,7 +225,7 @@ async function cerrarAccion(req: Request, res: Response, c: Contexto, accion: st
   }
   const extra = out.recalculo?.length ? ` ${out.recalculo.join(" ")}` : "";
   await registrar(req, accion, c.alumno, `${out.texto}${extra}`, c.motivo || null);
-  void avisarA([c.alumno], out.titulo ?? "La Administración de la academia actualizó tu expediente", `${out.aviso}${c.motivo ? ` Motivo: ${c.motivo}` : ""}`, c.m ? `/academia/materia/${c.m.id}` : "/academia/expediente").catch(
+  void avisarA([c.alumno], out.titulo ?? "La Administración de la academia actualizó tu expediente", `${out.aviso}${c.motivo ? ` Motivo: ${c.motivo}` : ""}`, out.enlace ?? (c.m ? `/academia/materia/${c.m.id}` : "/academia/expediente")).catch(
     (err) => console.error("[academia] aviso de gestión:", err),
   );
   const r: ResultadoGestion = { mensaje: `${out.texto}${extra}`, ...(conMateria && c.m ? { materia: await gestionDe(c.alumno, c.m) } : {}) };
@@ -449,6 +449,65 @@ export function registerAcademiaGestionRoutes(app: Express) {
       });
       await cerrarAccion(req, res, c, `academia.prueba-${accion}`, out);
     })().catch(errorInterno(res, "prueba"));
+  });
+
+  // Los cierres: el examen integral de un nivel (quitar la espera, reiniciar los fallos o anular el intento en curso) y el
+  // trabajo final de una especialidad (una entrega más). Solo los que ya empezó (cierresDe en server/academia-direccion.ts).
+  app.post(`${base}/prueba`, (req, res) => {
+    (async () => {
+      const c = await contextoDe(req, res);
+      if (!c) return;
+      const clave = String(req.body?.clave || "");
+      const accion = String(req.body?.accion || "");
+      if (frenar(`agest:${c.porId}`, 500)) return void res.status(429).json({ message: "Espera un momento." });
+      const out = await enFila(c.alumno, async (): Promise<Hecho | Fallo> => {
+        const prueba = (await cierresDe(c.alumno)).find((x) => x.clave === clave);
+        if (!prueba) return { error: "Esa prueba no es suya, o todavía no la empezó.", status: 404 };
+        const nombre = minuscula(prueba.titulo);
+        const ref = clave.split(":")[0];
+        const enlace = prueba.tipo === "integral" ? `/academia/nivel/${ref.replace("nivel-", "")}` : `/academia/especialidad/${ref.replace("especialidad-", "")}`;
+        switch (accion) {
+          case "quitar-espera": {
+            if (prueba.tipo !== "integral") return { error: "Solo el examen integral tiene espera." };
+            const r = await pool.query(`UPDATE academia_pruebas SET fallo_at = NULL WHERE user_id = $1 AND clave = $2 AND fallo_at IS NOT NULL`, [c.alumno, clave]);
+            if (!r.rowCount) return { error: "Ese examen no tiene espera." };
+            return { texto: `Quitó la espera del ${nombre}.`, aviso: `Ya puedes volver a dar el ${nombre} sin esperar.`, enlace };
+          }
+          case "reiniciar-fallos": {
+            if (prueba.tipo !== "integral") return { error: "Solo el examen integral cuenta los fallos para las esperas." };
+            const r = await pool.query(`UPDATE academia_pruebas SET fallos = 0, fallo_at = NULL WHERE user_id = $1 AND clave = $2 AND fallos > 0`, [c.alumno, clave]);
+            if (!r.rowCount) return { error: "Ese examen no tiene fallos." };
+            return {
+              texto: `Reinició los fallos del ${nombre} (eran ${prueba.fallos}): las esperas empiezan otra vez desde cero.`,
+              aviso: `Ya puedes volver a dar el ${nombre}: las esperas empiezan otra vez desde cero.`,
+              enlace,
+            };
+          }
+          case "intento-extra": {
+            if (prueba.tipo !== "trabajo") return { error: "El examen integral no tiene tope de intentos: para dejarlo intentar ya, quita la espera." };
+            if (prueba.extra >= EXTRA_MAX) return { error: `Ya tiene ${EXTRA_MAX} entregas de más en este trabajo.` };
+            await pool.query(`UPDATE academia_pruebas SET extra = extra + 1, updated_at = now() WHERE user_id = $1 AND clave = $2`, [c.alumno, clave]);
+            const de = prueba.titulo.replace("Trabajo final · ", "");
+            return { texto: `Le dio una entrega más del trabajo final de ${de}.`, aviso: `Tienes una entrega más del trabajo final de ${de}.`, enlace };
+          }
+          case "anular-en-curso": {
+            if (!prueba.enCurso) return { error: "No tiene un intento en curso en esa prueba." };
+            const { rows } = await pool.query(`SELECT intentos FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [c.alumno, clave]);
+            const intento = Number(rows[0]?.intentos ?? 0);
+            // lo que escribió en ese intento tampoco cuenta (ni queda para revisar)
+            await pool.query(`DELETE FROM academia_respuestas WHERE user_id = $1 AND clave = $2 AND intento = $3`, [c.alumno, clave, intento]);
+            await pool.query(
+              `UPDATE academia_pruebas SET curso = NULL, curso_at = NULL, intentos = GREATEST(intentos - 1, 0), updated_at = now() WHERE user_id = $1 AND clave = $2`,
+              [c.alumno, clave],
+            );
+            return { texto: `Anuló el intento ${intento} en curso del ${nombre}: no cuenta.`, aviso: `Se anuló tu intento en curso del ${nombre}: no cuenta y puedes empezarlo otra vez.`, enlace };
+          }
+          default:
+            return { error: "Elige qué hacer con esa prueba.", status: 400 };
+        }
+      });
+      await cerrarAccion(req, res, c, `academia.prueba-${accion}`, out, false);
+    })().catch(errorInterno(res, "cierre"));
   });
 
   // Marcar una lección como completada, o volver a abrirla (para que la lea otra vez).

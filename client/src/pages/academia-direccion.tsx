@@ -22,6 +22,7 @@ import { CAPACIDADES, ROLES_ACADEMIA, rolAcademia, textoCelda } from "@shared/ac
 import { useArea } from "@/components/academia/area";
 import type { ActividadItem, AlumnoFila, DireccionResumen } from "@shared/academia-direccion";
 import {
+  useAcompanar,
   cambiarApertura, enlaceReporte, useContenido, useDireccionActividad, useDireccionAlumnos, useDireccionResumen, useHistorial, useRevision, type ReporteCsv,
 } from "@/components/academia/api";
 import { TarjetaApelacion, TarjetaRevision } from "@/components/academia/revision";
@@ -356,8 +357,63 @@ function Pendientes({ d, irA }: { d: DireccionResumen; irA: IrA }) {
           </button>
         </section>
       )}
+      {d.puede.mentores && <AQuienAcompanar />}
       {d.puede.revisar && <Revisar />}
     </div>
+  );
+}
+
+/** «A quién acompañar» (Nivel 5): quienes lo pidieron y las personas del Nivel 1 sin mentor, para elegir los mentores. */
+function AQuienAcompanar() {
+  const enlaces = useEnlaces();
+  const q = useAcompanar(true);
+  const x = q.data;
+  if (!x || (!x.esperan.length && !x.sinMentor.length)) return null;
+  return (
+    <section id="acompanar-pendientes" className="space-y-3 scroll-mt-24" data-testid="acompanar-pendientes">
+      <h2 className="font-display text-xl font-bold">A quién acompañar ({x.esperan.length})</h2>
+      <p className="text-sm text-muted-foreground">
+        En el Nivel 5 cada alumno acompaña a {x.pide} personas hasta que terminan el Nivel 1. Para elegirlo como mentor, abre el perfil de quien empieza
+        (la lista de abajo) y, en «Seguimiento», elige al mentor. El pedido se cumple solo cuando ya acompaña a {x.pide}.
+      </p>
+      {x.esperan.length > 0 && (
+        <ul className="space-y-2">
+          {x.esperan.map((a) => (
+            <li key={a.userId}>
+              <Link href={enlaces.alumno(a.userId)} className="glass-card p-3 flex items-center gap-3 border border-orange-500/40 hover:border-orange-500 transition">
+                <Users className="w-5 h-5 text-orange-600 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold truncate">{a.nombre}</span>
+                  <span className="block text-xs text-muted-foreground">Lo pidió {hace(a.pedido)} · acompaña a {a.acompana} de {x.pide}{a.matricula ? ` · ${a.matricula}` : ""}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      <details className="glass-card p-4" open={x.esperan.length > 0} data-testid="sin-mentor">
+        <summary className="font-semibold cursor-pointer">En el Nivel 1 sin mentor ({x.sinMentor.length})</summary>
+        {x.sinMentor.length === 0 ? (
+          <p className="text-sm text-muted-foreground mt-2">Todos los del Nivel 1 ya tienen mentor.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-border/60">
+            {x.sinMentor.map((s) => (
+              <li key={s.userId}>
+                <Link href={`${enlaces.alumno(s.userId)}?tab=seguimiento`} className="flex items-center gap-3 py-2.5 hover:underline">
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium truncate">{s.nombre}</span>
+                    <span className="block text-xs text-muted-foreground">Empezó {hace(s.desde)}{s.matricula ? ` · ${s.matricula}` : ""}</span>
+                  </span>
+                  <span className="text-sm text-orange-700 dark:text-orange-300 shrink-0">Elegir mentor</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
+    </section>
   );
 }
 
@@ -597,7 +653,7 @@ export default function AcademiaDireccion() {
   const administra = d.rol === "direccion";
   const c = contenido.data;
   const porAprobar = c ? c.total - c.aprobadas + (c.declaracion.aprobacion?.vigente ? 0 : 1) : 0;
-  const pendientes = (d.puede.revisar ? d.pendientes.escritas + d.pendientes.apelaciones + d.pendientes.actividades : 0) + (d.puede.contenido ? porAprobar : 0);
+  const pendientes = (d.puede.revisar ? d.pendientes.escritas + d.pendientes.apelaciones + d.pendientes.actividades + (d.pendientes.acompanar ?? 0) : 0) + (d.puede.contenido ? porAprobar : 0);
   const items: { id: Seccion; texto: string; icono: typeof Inbox; badge?: number; si?: boolean }[] = [
     { id: "inicio", texto: "Inicio", icono: LayoutDashboard },
     { id: "pendientes", texto: "Pendientes", icono: Inbox, badge: pendientes, si: d.puede.revisar || d.puede.contenido },

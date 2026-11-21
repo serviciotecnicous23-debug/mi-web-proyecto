@@ -9,12 +9,15 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
-import { ESPECIALIDADES, HONORES, NIVELES, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno, type MateriaDef } from "@shared/academia";
+import {
+  ESPECIALIDADES, HONORES, NIVELES, TRABAJO_ESPECIALIDAD, esperaFinalMin, estatusDe, leccionPorId, materiaPorId, type EstadoMateria, type EstatusAlumno, type MateriaDef,
+} from "@shared/academia";
+import { ACTIVIDADES_NIVEL } from "@shared/academia-actividades";
 import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/academia-permisos";
 import type {
-  ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, GestionAlumno, MateriaAvance, MateriaReporte, MateriaSeguimiento,
+  AcompanarPendientes, ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, GestionAlumno, MateriaAvance, MateriaReporte, MateriaSeguimiento, PruebaGestion,
 } from "@shared/academia-direccion";
-import { academiaAbierta, accesoDe, claveFinal, diaTexas, frenar, inscritoDe } from "./academia-comun";
+import { academiaAbierta, accesoDe, claveFinal, claveIntegral, claveTrabajo, diaTexas, frenar, inscritoDe } from "./academia-comun";
 import { fichaDe } from "./academia-inscripcion";
 import { aCsv } from "./academia-csv";
 import { archivoDelExpediente, enviarPdf, expedientePdf } from "./academia-pdf";
@@ -291,7 +294,7 @@ async function gestionAlumnoDe(id: number, inscritas: string[]): Promise<Gestion
     ...NIVELES.flatMap((n) => n.materias.filter((m) => m.disponible && !ya.has(m.id)).map((m) => ({ id: m.id, titulo: m.titulo, grupo: `Nivel ${n.n}` }))),
     ...ESPECIALIDADES.flatMap((e) => e.materias.filter((m) => m.disponible && !ya.has(m.id)).map((m) => ({ id: m.id, titulo: m.titulo, grupo: e.nombre }))),
   ];
-  return { retirado: rows[0]?.estatus === "retirado", tiempoExtra: !!rows[0]?.tiempo_extra, inscribibles };
+  return { retirado: rows[0]?.estatus === "retirado", tiempoExtra: !!rows[0]?.tiempo_extra, inscribibles, cierres: await cierresDe(id) };
 }
 
 // ---------------------------------------------------------------- los reportes en CSV
@@ -312,7 +315,7 @@ function contar(valores: string[]): { nombre: string; n: number }[] {
 
 /** Lo que espera revisión (solo para quien revisa): las escritas marcadas, los pedidos de revisión y las actividades por confirmar. */
 export async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
-  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0, porTipo: [] };
+  if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0, porTipo: [], acompanar: 0 };
   // una defensa programada para más adelante todavía no se puede evaluar: no cuenta hasta su día (en Texas)
   const hoy = diaTexas();
   const porConfirmar = `estado = 'pendiente' AND NOT (tipo = 'proyecto' AND defensa IS NOT NULL AND COALESCE(defensa->>'fecha', '') > $1)`;
@@ -320,7 +323,8 @@ export async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendie
     pool.query(
       `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
               (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones,
-              (SELECT count(*)::int FROM academia_actividades WHERE ${porConfirmar}) AS actividades`,
+              (SELECT count(*)::int FROM academia_actividades WHERE ${porConfirmar}) AS actividades,
+              (SELECT count(*)::int FROM academia_alumnos WHERE acompanar_pedido_at IS NOT NULL) AS acompanar`,
       [hoy],
     ),
     // el proyecto con la defensa ya programada cuenta aparte: espera la defensa y su evaluación, no que la programen
@@ -335,7 +339,89 @@ export async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendie
     apelaciones: Number(rows[0]?.apelaciones ?? 0),
     actividades: Number(rows[0]?.actividades ?? 0),
     porTipo: (tipos as any[]).map((r) => ({ tipo: String(r.tipo), n: Number(r.n) })),
+    acompanar: Number(rows[0]?.acompanar ?? 0),
   };
+}
+
+const nombreSql = `COALESCE(NULLIF(trim(concat_ws(' ', i.nombres, i.apellidos)), ''), NULLIF(trim(u.display_name), ''), u.username, 'Alumno')`;
+
+/** «A quién acompañar»: los del Nivel 5 que lo pidieron (y a cuántos acompañan) y los del Nivel 1 sin mentor. */
+export async function acompanarPendientes(p: Permiso): Promise<AcompanarPendientes> {
+  const deIglesia = p.alcance === "iglesia" ? ` AND i.iglesia_id = ${Number(p.iglesiaId) || 0}` : "";
+  const [{ rows: esperan }, { rows: sinMentor }] = await Promise.all([
+    pool.query(
+      `SELECT a.user_id, a.matricula, a.acompanar_pedido_at, ${nombreSql} AS nombre,
+              (SELECT count(*)::int FROM academia_alumnos x WHERE x.mentor_user_id = a.user_id) AS acompana
+         FROM academia_alumnos a JOIN users u ON u.id = a.user_id LEFT JOIN academia_inscripciones i ON i.user_id = a.user_id
+        WHERE a.acompanar_pedido_at IS NOT NULL${deIglesia}
+        ORDER BY a.acompanar_pedido_at`,
+    ),
+    // los del Nivel 1, activos, que todavía no lo terminaron ni tienen mentor (los más recientes primero)
+    pool.query(
+      `SELECT a.user_id, a.matricula, i.created_at AS desde, ${nombreSql} AS nombre
+         FROM academia_alumnos a JOIN users u ON u.id = a.user_id JOIN academia_inscripciones i ON i.user_id = a.user_id
+        WHERE a.matricula IS NOT NULL AND a.reglamento_at IS NOT NULL AND COALESCE(a.nivel, 1) = 1 AND a.mentor_user_id IS NULL
+          AND COALESCE(a.estatus, '') <> 'retirado'
+          AND NOT EXISTS (SELECT 1 FROM academia_niveles n WHERE n.user_id = a.user_id AND n.nivel = 1 AND n.completado_at IS NOT NULL)${deIglesia}
+        ORDER BY i.created_at DESC
+        LIMIT 60`,
+    ),
+  ]);
+  return {
+    pide: ACTIVIDADES_NIVEL[5]?.acompanar ?? 0,
+    esperan: (esperan as any[]).map((r) => ({ userId: Number(r.user_id), nombre: String(r.nombre), matricula: String(r.matricula ?? ""), pedido: new Date(r.acompanar_pedido_at).toISOString(), acompana: Number(r.acompana) })),
+    sinMentor: (sinMentor as any[]).map((r) => ({ userId: Number(r.user_id), nombre: String(r.nombre), matricula: String(r.matricula ?? ""), desde: new Date(r.desde).toISOString() })),
+  };
+}
+
+/**
+ * Los cierres que ya empezó: el examen integral de cada nivel (sus esperas tras reprobar son las del examen final) y el
+ * trabajo final de cada especialidad (con sus entregas). Para gestionarlos desde el perfil (server/academia-gestion.ts).
+ */
+export async function cierresDe(id: number): Promise<PruebaGestion[]> {
+  const { rows } = await pool.query(
+    `SELECT clave, intentos, fallos, mejor, extra, curso IS NOT NULL AS en_curso, EXTRACT(EPOCH FROM now() - fallo_at)::float AS pasados_fallo
+       FROM academia_pruebas WHERE user_id = $1 AND (clave LIKE 'nivel-%:integral' OR clave LIKE 'especialidad-%:trabajo')`,
+    [id],
+  );
+  const porClave = new Map((rows as any[]).map((r) => [String(r.clave), r]));
+  const out: PruebaGestion[] = [];
+  for (const n of NIVELES) {
+    const f = porClave.get(claveIntegral(n.n));
+    if (!f) continue;
+    const fallos = Number(f.fallos ?? 0);
+    out.push({
+      clave: claveIntegral(n.n),
+      titulo: `Examen integral del Nivel ${n.n}`,
+      tipo: "integral",
+      intentos: Number(f.intentos ?? 0),
+      tope: null,
+      extra: Number(f.extra ?? 0),
+      fallos,
+      mejor: f.mejor == null ? null : Number(f.mejor),
+      espera: fallos && f.pasados_fallo != null ? Math.max(0, Math.ceil(esperaFinalMin(fallos) * 60 - Number(f.pasados_fallo))) : 0,
+      pideRepaso: false,
+      enCurso: !!f.en_curso,
+    });
+  }
+  for (const e of ESPECIALIDADES) {
+    const f = porClave.get(claveTrabajo(e.id));
+    if (!f) continue;
+    out.push({
+      clave: claveTrabajo(e.id),
+      titulo: `Trabajo final · ${e.nombre}`,
+      tipo: "trabajo",
+      intentos: Number(f.intentos ?? 0),
+      tope: TRABAJO_ESPECIALIDAD.entregas,
+      extra: Number(f.extra ?? 0),
+      fallos: 0,
+      mejor: f.mejor == null ? null : Number(f.mejor),
+      espera: 0,
+      pideRepaso: false,
+      enCurso: false,
+    });
+  }
+  return out;
 }
 
 /** Quienes necesitan ayuda: los alumnos con alertas que piden actuar o mirar, los más urgentes primero (todos: el resumen manda 40). */
@@ -357,6 +443,19 @@ async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: strin
 }
 
 export function registerAcademiaDireccionRoutes(app: Express) {
+  // «A quién acompañar» (Nivel 5): quienes lo pidieron y las personas del Nivel 1 sin mentor (sección «Pendientes»).
+  app.get("/api/academia/direccion/acompanar", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "mentores");
+      if (!p) return;
+      res.setHeader("Cache-Control", "no-store");
+      res.json(await acompanarPendientes(p));
+    } catch (err) {
+      console.error("[academia] a quién acompañar:", err);
+      res.sendStatus(500);
+    }
+  });
+
   // El resumen: inscritos, estatus, materias, países, iglesias, quiénes se detuvieron y la actividad reciente.
   app.get("/api/academia/direccion/resumen", async (req, res) => {
     try {

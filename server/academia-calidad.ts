@@ -310,7 +310,8 @@ export function registerAcademiaCalidadRoutes(app: Express) {
       const r = await pendientesDe(p);
       const contenido = alcanceDe(p.role, "contenido") !== "no" ? await contenidoPorAprobar() : 0;
       res.setHeader("Cache-Control", "no-store");
-      res.json({ escritas: r.escritas, apelaciones: r.apelaciones, actividades: r.actividades, contenido, total: r.escritas + r.apelaciones + r.actividades + contenido });
+      const acompanar = r.acompanar ?? 0;
+      res.json({ escritas: r.escritas, apelaciones: r.apelaciones, actividades: r.actividades, acompanar, contenido, total: r.escritas + r.apelaciones + r.actividades + acompanar + contenido });
     } catch (err) {
       console.error("[academia] pendientes:", err);
       res.sendStatus(500);

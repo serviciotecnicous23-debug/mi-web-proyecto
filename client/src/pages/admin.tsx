@@ -1638,6 +1638,17 @@ export default function AdminDashboard() {
                         </div>
                       </DialogTitle>
                       <DialogDescription>Información completa del usuario en el sistema</DialogDescription>
+                      {userDetail.academia && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/5 px-3 py-2 text-sm" data-testid="miembro-academia">
+                          <span className="min-w-0 flex-1">
+                            Estudia en la academia: matrícula <strong>{userDetail.academia.matricula}</strong> · Nivel {userDetail.academia.nivel}
+                            {userDetail.academia.retirado ? " · retirado" : ""}
+                          </span>
+                          <Link href={`/admin/academia/alumno/${userDetail.user.id}`}>
+                            <Button size="sm" variant="outline" className="h-9">Su perfil en la academia</Button>
+                          </Link>
+                        </div>
+                      )}
                     </DialogHeader>
 
                     <div className="space-y-4">

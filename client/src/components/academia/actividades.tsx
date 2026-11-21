@@ -541,6 +541,7 @@ const INTRO: Record<number, string> = {
 /** Nivel 5: acompañar como mentor a personas en su Nivel 1. No se registra: lo cuenta la academia con los mentores. */
 function Acompanar({ v }: { v: ActividadesNivel }) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [ocupado, setOcupado] = useState(false);
   const pide = v.pide.acompanar ?? 0;
   const pedir = async () => {
@@ -548,6 +549,7 @@ function Acompanar({ v }: { v: ActividadesNivel }) {
     try {
       await pedirAcompanados(v.nivel);
       toast({ title: "Pedido enviado", description: "La Administración te elegirá como mentor de personas que empiezan el Nivel 1; te llegará un aviso." });
+      void qc.invalidateQueries({ queryKey: ["academia"] });
     } catch (e: any) {
       toast({ title: "No se pudo enviar", description: e.message, variant: "destructive" });
     } finally {
@@ -568,10 +570,16 @@ function Acompanar({ v }: { v: ActividadesNivel }) {
         {(v.acompanar.terminaron > 0 || v.acompanar.enCurso > 0) && (
           <Button asChild variant="outline"><Link href="/academia/acompanados">Ver a quienes acompañas</Link></Button>
         )}
-        {v.puedeRegistrar && !v.acompanar.hecho && (
+        {v.puedeRegistrar && !v.acompanar.hecho && !v.acompanar.pedido && (
           <Button variant="outline" disabled={ocupado} onClick={pedir} data-testid="acompanar-pedir">Pedir a quién acompañar</Button>
         )}
       </div>
+      {!v.acompanar.hecho && v.acompanar.pedido && (
+        <p className="text-sm text-muted-foreground" data-testid="acompanar-pedido">
+          Se lo pediste a la Administración el {new Date(v.acompanar.pedido).toLocaleDateString("es", { day: "numeric", month: "long" })}. Te llegará un aviso
+          cuando te elija como mentor de alguien.
+        </p>
+      )}
     </div>
   );
 }
