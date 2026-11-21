@@ -1,6 +1,6 @@
 import { SITE_ORIGIN } from "@shared/site";
 import { RADIO_OFFICIAL_URL } from "@shared/radio";
-import { TITULOS, normalizarRuta } from "@shared/titulos";
+import { TITULOS, TITULO_NO_ENCONTRADA, normalizarRuta, tituloDeRuta } from "@shared/titulos";
 
 // Cabecera de cada página tal como la recibe Google. La web es una SPA: sin esto,
 // todas las rutas salían con el título y la descripción de la portada, y con una
@@ -128,6 +128,15 @@ export const canonicalPath = normalizarRuta;
 
 function setMeta(html: string, pattern: RegExp, replacement: string): string {
   return pattern.test(html) ? html.replace(pattern, replacement) : html;
+}
+
+/**
+ * Si la dirección no es ninguna página de la web (21-nov-2026). Antes respondían «200» como si existieran, y Google las
+ * marcaba «soft 404». Ahora salen con «404» y la misma página, que muestra «Página no encontrada». Se decide con la
+ * misma lista de rutas que los títulos (shared/titulos.ts), que shared/titulos.test.ts mantiene igual a la de App.tsx.
+ */
+export function esRutaInexistente(rawPath: string): boolean {
+  return tituloDeRuta(rawPath) === TITULO_NO_ENCONTRADA;
 }
 
 /** index.html con la canónica, el título, la descripción y los datos propios de la ruta. */

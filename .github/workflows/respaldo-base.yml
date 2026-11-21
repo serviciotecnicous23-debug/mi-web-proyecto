@@ -1,0 +1,163 @@
+name: Respaldo de la base
+
+# Copia diaria de la base de datos de la web, cifrada, en una carpeta privada de Cloudflare R2, y prueba de que se puede
+# restaurar (docs/vigilancia-y-respaldos.md). Hasta que se pongan los secretos RESPALDO_*, no hace nada.
+# - schedule y workflow_dispatch: el respaldo de verdad (en main, con los secretos).
+# - pull_request que cambie este flujo o su script: un simulacro con una base de prueba, sin secretos ni subidas.
+
+on:
+  schedule:
+    - cron: "17 9 * * *" # todos los días, 9:17 UTC (3:17 a. m. en Texas en invierno, 4:17 en verano)
+  workflow_dispatch:
+  pull_request:
+    paths: [".github/workflows/respaldo-base.yml", "script/respaldo-base.sh"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: respaldo-base-${{ github.event_name == 'pull_request' && github.ref || 'diario' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  respaldo:
+    name: ${{ github.event_name == 'pull_request' && 'Simulacro del respaldo' || 'Respaldo diario' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Una base PostgreSQL 18 vacía donde se prueba a restaurar cada copia (y, en el simulacro, la base de origen).
+    services:
+      prueba:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: prueba
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PRUEBA: postgresql://postgres:prueba@localhost:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PostgreSQL 18 (pg_dump y pg_restore)
+        run: docker pull -q postgres:18-alpine
+
+      # ───── Simulacro (solicitudes de cambio): base de prueba, sin secretos ni subidas ─────
+      - name: "Simulacro: base de prueba"
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "RESPALDO_CLAVE=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          docker run --rm --network host postgres:18-alpine psql "$PRUEBA/postgres" -X -v ON_ERROR_STOP=1 -q \
+            -c "create database origen" -c "create database restaurada"
+          docker run --rm -i --network host postgres:18-alpine psql "$PRUEBA/origen" -X -v ON_ERROR_STOP=1 -q <<'SQL'
+          create table users (id serial primary key, username text not null unique, display_name text, created_at timestamp default now());
+          insert into users (username, display_name) select 'alumno-' || g, 'Alumno Ñandú Peña ' || g from generate_series(1, 250) g;
+          create table biblia_capitulos (version text, libro int, capitulo int, versos jsonb not null, primary key (version, libro, capitulo));
+          insert into biblia_capitulos values ('rv1909', 43, 3, '[{"verse":16,"text":"Porque de tal manera amó Dios al mundo"}]');
+          create table inscripciones (id serial primary key, user_id int references users(id) on delete cascade, materia text);
+          insert into inscripciones (user_id, materia) select g, 'n1-salvacion' from generate_series(1, 250, 2) g;
+          SQL
+
+      - name: "Simulacro: copiar, cifrar, restaurar y comparar"
+        if: github.event_name == 'pull_request'
+        run: |
+          bash script/respaldo-base.sh respaldar "$PRUEBA/origen" "$RUNNER_TEMP/base.dump.gpg"
+          if RESPALDO_CLAVE=otra-clave bash script/respaldo-base.sh tablas "$RUNNER_TEMP/base.dump.gpg" > /dev/null 2>&1; then
+            echo "::error::La copia se pudo abrir con otra clave"; exit 1
+          fi
+          en_copia=$(bash script/respaldo-base.sh tablas "$RUNNER_TEMP/base.dump.gpg")
+          echo "Tablas en la copia: $en_copia"
+          [ "$en_copia" -eq 3 ]
+          bash script/respaldo-base.sh restaurar "$RUNNER_TEMP/base.dump.gpg" "$PRUEBA/restaurada"
+          bash script/respaldo-base.sh contar "$PRUEBA/origen" > "$RUNNER_TEMP/origen.txt"
+          bash script/respaldo-base.sh contar "$PRUEBA/restaurada" > "$RUNNER_TEMP/restaurada.txt"
+          cat "$RUNNER_TEMP/restaurada.txt"
+          diff "$RUNNER_TEMP/origen.txt" "$RUNNER_TEMP/restaurada.txt"
+          grep -qx "users 250" "$RUNNER_TEMP/restaurada.txt"
+          docker run --rm --network host postgres:18-alpine psql "$PRUEBA/restaurada" -X -At \
+            -c "select display_name from users where id = 7" -c "select versos->0->>'text' from biblia_capitulos" > "$RUNNER_TEMP/textos.txt"
+          grep -q "Alumno Ñandú Peña 7" "$RUNNER_TEMP/textos.txt"
+          grep -q "amó Dios" "$RUNNER_TEMP/textos.txt"
+          echo "El simulacro salió bien: la copia se cifra, no abre con otra clave y se restaura igual, con sus tildes."
+
+      # ───── El respaldo de verdad (todos los días y a mano), solo con los secretos ─────
+      - name: ¿Está configurado?
+        id: config
+        if: github.event_name != 'pull_request'
+        env:
+          URL: ${{ secrets.RESPALDO_DATABASE_URL }}
+          CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+          ENDPOINT: ${{ secrets.RESPALDO_R2_ENDPOINT }}
+          BUCKET: ${{ secrets.RESPALDO_R2_BUCKET }}
+          LLAVE: ${{ secrets.RESPALDO_R2_ACCESS_KEY_ID }}
+          SECRETO: ${{ secrets.RESPALDO_R2_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::notice::El respaldo todavía no está configurado (faltan los secretos RESPALDO_*). Ver docs/vigilancia-y-respaldos.md"
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          faltan=""
+          for v in CLAVE ENDPOINT BUCKET LLAVE SECRETO; do [ -n "${!v}" ] || faltan="$faltan $v"; done
+          if [ -n "$faltan" ]; then echo "::error::Faltan secretos del respaldo:$faltan"; exit 1; fi
+          echo "listo=si" >> "$GITHUB_OUTPUT"
+
+      - name: Avisar a Healthchecks que empieza
+        if: steps.config.outputs.listo == 'si'
+        env:
+          HC: ${{ secrets.RESPALDO_HEALTHCHECKS_URL }}
+        run: '[ -z "$HC" ] || curl -fsS -m 10 --retry 3 "$HC/start" > /dev/null || true'
+
+      - name: Copiar y cifrar la base
+        if: steps.config.outputs.listo == 'si'
+        env:
+          URL: ${{ secrets.RESPALDO_DATABASE_URL }}
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+        run: bash script/respaldo-base.sh respaldar "$URL" "$RUNNER_TEMP/base.dump.gpg"
+
+      - name: Probar que la copia se restaura
+        if: steps.config.outputs.listo == 'si'
+        env:
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+        run: |
+          docker run --rm --network host postgres:18-alpine psql "$PRUEBA/postgres" -X -v ON_ERROR_STOP=1 -q -c "create database restaurada"
+          en_copia=$(bash script/respaldo-base.sh tablas "$RUNNER_TEMP/base.dump.gpg")
+          bash script/respaldo-base.sh restaurar "$RUNNER_TEMP/base.dump.gpg" "$PRUEBA/restaurada"
+          bash script/respaldo-base.sh contar "$PRUEBA/restaurada" > "$RUNNER_TEMP/restaurada.txt"
+          restauradas=$(wc -l < "$RUNNER_TEMP/restaurada.txt")
+          cuentas=$(awk '$1 == "users" {print $2}' "$RUNNER_TEMP/restaurada.txt")
+          echo "Tablas en la copia: $en_copia; restauradas: $restauradas; cuentas: ${cuentas:-0}"
+          [ "$en_copia" -gt 0 ] || { echo "::error::La copia no trae tablas"; exit 1; }
+          [ "$restauradas" -ge "$en_copia" ] || { echo "::error::Faltan tablas al restaurar la copia"; exit 1; }
+          [ "${cuentas:-0}" -gt 0 ] || { echo "::error::La tabla de cuentas quedó vacía al restaurar"; exit 1; }
+
+      - name: Guardar en R2
+        if: steps.config.outputs.listo == 'si'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.RESPALDO_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.RESPALDO_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          # R2 todavía no acepta todas las sumas de comprobación nuevas de la AWS CLI
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          ENDPOINT: ${{ secrets.RESPALDO_R2_ENDPOINT }}
+          BUCKET: ${{ secrets.RESPALDO_R2_BUCKET }}
+        run: |
+          hoy=$(date -u +%F)
+          aws s3 cp "$RUNNER_TEMP/base.dump.gpg" "s3://$BUCKET/diario/$hoy.dump.gpg" --endpoint-url "$ENDPOINT" --only-show-errors
+          if [ "$(date -u +%d)" = "01" ]; then
+            aws s3 cp "$RUNNER_TEMP/base.dump.gpg" "s3://$BUCKET/mensual/$(date -u +%Y-%m).dump.gpg" --endpoint-url "$ENDPOINT" --only-show-errors
+          fi
+          echo "Guardada en R2: diario/$hoy.dump.gpg"
+
+      - name: Avisar a Healthchecks que salió bien
+        if: steps.config.outputs.listo == 'si'
+        env:
+          HC: ${{ secrets.RESPALDO_HEALTHCHECKS_URL }}
+        run: '[ -z "$HC" ] || curl -fsS -m 10 --retry 3 "$HC" > /dev/null || true'
+
+      - name: Avisar a Healthchecks que falló
+        if: failure() && steps.config.outputs.listo == 'si'
+        env:
+          HC: ${{ secrets.RESPALDO_HEALTHCHECKS_URL }}
+        run: '[ -z "$HC" ] || curl -fsS -m 10 --retry 3 "$HC/fail" > /dev/null || true'

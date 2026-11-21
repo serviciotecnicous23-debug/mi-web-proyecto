@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+import { gunzipSync } from "zlib";
 import {
   BIBLE_BOOK_CHAPTERS, bibleBookNumber, isBibleVersion,
   type BibleChapterPayload, type BibleVersion,
@@ -5,11 +8,45 @@ import {
 
 // Texto bíblico servido por la propia web. Antes cada navegador lo pedía a
 // bible-api.deno.dev, que dejó de existir (NXDOMAIN, nov. 2026) y dejó la Biblia
-// en blanco para todos. Ahora el servidor lo pide a Bolls (RV1960, NTV, LBLA) o a
-// getBible (RV1909, dominio público), lo guarda en memoria y en la base (biblia_capitulos) y, si la versión pedida
-// no responde, sirve la RV1909 avisando con `fallbackFrom`.
+// en blanco para todos. Ahora el servidor lo pide a Bolls (RV1960, NTV, LBLA), lo guarda en memoria y en la base
+// (biblia_capitulos) y, si la versión pedida no responde, sirve la RV1909 avisando con `fallbackFrom`.
+// La RV1909 (dominio público) va dentro de la web desde el 21-nov-2026: no depende de getBible ni de la base, así que
+// el respaldo siempre responde (ver más abajo). getBible queda solo por si faltara el archivo.
 
 type Verse = { verse: number; text: string };
+
+// ─── La RV1909 dentro de la web ─────────────────────────────────────────────────────────────────────────────────────
+// server/data/biblia/rv1909.json.gz: [libro 1..66][capítulo 1..n] -> [[versículo, texto], ...]. Sale de la RV1909 de
+// open-bibles (github.com/seven1m/open-bibles, spa-rv1909.usfx.xml, «Public Domain») sin las etiquetas de Strong y sin
+// los títulos de los salmos dentro del versículo 1, igual que la de getBible que se servía antes (cómo se armó:
+// docs/vigilancia-y-respaldos.md). Unos 4 MB en memoria, que se cargan la primera vez que alguien la pide.
+type Rv1909 = [number, string][][][];
+let rv1909: Rv1909 | null | undefined;
+
+function cargarRv1909(): Rv1909 | null {
+  if (rv1909 !== undefined) return rv1909;
+  const aqui = typeof __dirname !== "undefined" ? __dirname : null;
+  const candidatas = [
+    path.join(process.cwd(), "server", "data", "biblia", "rv1909.json.gz"),
+    ...(aqui ? [path.join(aqui, "..", "server", "data", "biblia", "rv1909.json.gz")] : []),
+  ];
+  for (const archivo of candidatas) {
+    try {
+      const datos = JSON.parse(gunzipSync(fs.readFileSync(archivo)).toString("utf8"));
+      if (Array.isArray(datos) && datos.length === 66) return (rv1909 = datos as Rv1909);
+    } catch {
+      // la siguiente
+    }
+  }
+  console.warn("[biblia] no se encontró la RV1909 de la web (server/data/biblia/rv1909.json.gz); se pedirá a getBible");
+  return (rv1909 = null);
+}
+
+/** Un capítulo de la RV1909 que va dentro de la web, o null si no está (libro de 1 a 66). */
+export function capituloRv1909Local(libro: number, capitulo: number): Verse[] | null {
+  const cap = cargarRv1909()?.[libro - 1]?.[capitulo - 1];
+  return cap?.length ? cap.map(([verse, text]) => ({ verse, text })) : null;
+}
 
 const TIMEOUT_MS = 8000;
 const CACHE_MAX = 800; // capítulos (~5 KB cada uno)
@@ -151,6 +188,15 @@ export async function getBibleChapter(version: string, book: string, chapter: nu
   if (pending) return pending;
 
   const load = (async (): Promise<BibleChapterPayload> => {
+    // La RV1909 sale de la propia web, sin pedirla a nadie (y por eso el respaldo de las demás siempre responde).
+    if (version === "rv1909") {
+      const local = capituloRv1909Local(bookNumber, chapter);
+      if (local) {
+        const payload: BibleChapterPayload = { version, book, chapter, verses: local };
+        remember(key, payload);
+        return payload;
+      }
+    }
     const guardado = await leerGuardado(version, bookNumber, chapter);
     if (guardado) {
       const payload: BibleChapterPayload = { version, book, chapter, verses: guardado };
