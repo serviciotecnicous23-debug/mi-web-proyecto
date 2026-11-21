@@ -93,7 +93,17 @@ export function ResumenPerfil({ p }: { p: PerfilAlumno }) {
                 <span className="min-w-0">
                   <span className={`block truncate ${n.actual ? "font-semibold" : ""}`}>Nivel {n.n} · {n.nombre}{n.actual ? " · cursando" : ""}</span>
                   <span className="block text-xs text-muted-foreground">
-                    {n.completado ? `Completo el ${fecha(n.completado)}${n.promedio != null ? ` · promedio ${n.promedio}` : ""}` : n.aprobadas || n.enCurso ? `En curso${n.enCurso ? ` · ${n.enCurso} ${n.enCurso === 1 ? "materia" : "materias"} cursando` : ""}` : "Sin empezar"}
+                    {n.completado
+                      ? `Completo el ${fecha(n.completado)}${n.promedio != null ? ` · promedio ${n.promedio}` : ""}`
+                      : n.de > 0 && n.aprobadas === n.de
+                        ? n.integral?.aprobado
+                          ? `Integral aprobado con ${n.integral.mejor} · todavía no cierra el nivel`
+                          : n.integral
+                            ? `Materias completas · integral: mejor ${n.integral.mejor} de ${n.integral.intentos} ${n.integral.intentos === 1 ? "intento" : "intentos"} (se aprueba con 75)`
+                            : "Materias completas · le falta el examen integral"
+                        : n.aprobadas || n.enCurso
+                          ? `En curso${n.enCurso ? ` · ${n.enCurso} ${n.enCurso === 1 ? "materia" : "materias"} cursando` : ""}`
+                          : "Sin empezar"}
                   </span>
                 </span>
                 <Medidor valor={n.aprobadas} de={n.de} etiqueta={`Nivel ${n.n}: ${n.aprobadas} de ${n.de} materias aprobadas`} />
@@ -109,7 +119,19 @@ export function ResumenPerfil({ p }: { p: PerfilAlumno }) {
                   <li key={x.id} className="grid grid-cols-[minmax(0,1fr)_7rem_4.5rem] sm:grid-cols-[minmax(0,1fr)_9rem_4.5rem] items-center gap-3">
                     <span className="min-w-0">
                       <span className="block truncate">{x.nombre}</span>
-                      <span className="block text-xs text-muted-foreground">{x.completada ? `Completa el ${fecha(x.completada)}` : `${x.enCurso} en curso`}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {x.completada
+                          ? `Completa el ${fecha(x.completada)}`
+                          : x.aprobadas === x.de
+                            ? x.trabajo?.aprobado
+                              ? `Trabajo final aprobado con ${x.trabajo.mejor}`
+                              : x.trabajo
+                                ? `Trabajo final: mejor ${x.trabajo.mejor} (se aprueba con 70)`
+                                : "Materias completas · le falta el trabajo final"
+                            : x.enCurso
+                              ? `${x.enCurso} en curso`
+                              : "Ninguna en curso ahora"}
+                      </span>
                     </span>
                     <Medidor valor={x.aprobadas} de={x.de} etiqueta={`${x.nombre}: ${x.aprobadas} de ${x.de} materias aprobadas`} />
                     <span className="tabular-nums text-right">{x.aprobadas} de {x.de}</span>

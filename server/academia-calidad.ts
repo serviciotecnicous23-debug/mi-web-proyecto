@@ -16,14 +16,17 @@ import { pool } from "./db";
 import { ESPECIALIDADES, NIVELES, materiaPorId, type MateriaDef } from "@shared/academia";
 import { ROLES_ACADEMIA, alcanceDe, type Capacidad } from "@shared/academia-permisos";
 import type {
-  AprobacionContenido, ContenidoDetalle, ContenidoLista, ContenidoResumen, EscritaAnalisis, ObservacionContenido, PreguntaAnalisis,
+  AprobacionContenido, ContenidoDetalle, ContenidoLista, ContenidoResumen, EscenaRevision, EscritaAnalisis, ObservacionContenido, PracticaRevision, PreguntaAnalisis,
 } from "@shared/academia-calidad";
 import { BANCOS, materiaDe } from "./academia/index";
 import { huellaDe, huellaDeclaracion, porQueNoSeRetira } from "./academia-banco";
+import { practicasDeMateria } from "./academia/laboratorio/index";
+import type { EscenaDef, PracticaDef } from "./academia/laboratorio/tipos";
+import { NOMBRE_FORMATO } from "@shared/laboratorio";
 import { ID_DECLARACION, PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion";
 import { ANALISIS, cifrasDeEscritas, cifrasDePreguntas, gravedad, type CifrasPregunta, type IntentoRegistrado } from "./academia-analisis";
 import { accesoDe, avisarA, claveFinal, claveIntegral, cuentasConRoles, frenar, olvidarRetiradas } from "./academia-comun";
-import { permisoDe } from "./academia-direccion";
+import { pendientesDe, permisoDe } from "./academia-direccion";
 import { minutosReales } from "./academia-carga";
 
 const iso = (v: unknown) => new Date(v as string).toISOString();
@@ -112,6 +115,13 @@ async function aprobacionesDe(): Promise<Map<string, AprobacionContenido>> {
 async function abiertasPorMateria(): Promise<Map<string, number>> {
   const { rows } = await pool.query(`SELECT materia_id, count(*)::int AS n FROM academia_contenido_notas WHERE resuelta_at IS NULL GROUP BY materia_id`);
   return new Map((rows as any[]).map((r) => [String(r.materia_id), Number(r.n)]));
+}
+
+/** Cuántas materias (y la declaración de fe) esperan su aprobación doctrinal vigente. Liviano: sin el análisis. */
+export async function contenidoPorAprobar(): Promise<number> {
+  const apr = await aprobacionesDe();
+  const sin = materiasConContenido().filter((m) => !apr.get(m.id)?.vigente).length;
+  return sin + (apr.get(ID_DECLARACION)?.vigente ? 0 : 1);
 }
 
 /** La lista de la revisión del contenido, con lo que falta para abrir la academia. */
@@ -216,6 +226,60 @@ async function detalleDe(m: MateriaDef, role: string, userId: number): Promise<C
     })),
     umbrales: { minimo: ANALISIS.minimo, muyDificil: ANALISIS.muyDificil, muyFacil: ANALISIS.muyFacil, discriminaPoco: ANALISIS.discriminaPoco, tarde: ANALISIS.tarde },
     puede: { observar: puede(role, "contenido"), aprobar: puede(role, "aprobar"), banco: puede(role, "banco") },
+    laboratorio: practicasDeMateria(m.id).map(practicaRevision),
+  };
+}
+
+// ---------------------------------------------------------------- las prácticas del laboratorio, para revisarlas
+
+/** Una práctica con todo su texto y lo que vale cada opción (solo para quien revisa el contenido). */
+export function practicaRevision(p: PracticaDef): PracticaRevision {
+  const competencia = new Map(p.competencias.map((c) => [c.id, c.nombre]));
+  const escena = (e: EscenaDef, version: string | null): EscenaRevision => ({
+    id: e.id,
+    titulo: e.titulo,
+    version,
+    competencia: competencia.get(e.competencia) ?? e.competencia,
+    narra: [...e.narra],
+    segun: e.segun ? { si: e.segun.si, no: e.segun.no } : null,
+    quien: e.quien ?? null,
+    dice: e.dice ?? null,
+    pregunta: e.pregunta ?? null,
+    opciones: e.opciones.map((o) => ({ texto: o.texto, puntos: o.puntos, ejemplar: !!o.ejemplar, critica: o.critica ?? null, responde: o.responde ?? null, pasa: o.pasa, explica: o.explica })),
+    camino: { titulo: e.camino.titulo, porque: e.camino.porque },
+  });
+  // las escenas de todas las versiones y, después de cada una, la que la cambia en otra versión del caso
+  const escenas: EscenaRevision[] = [];
+  for (const e of p.escenas ?? []) {
+    escenas.push(escena(e, null));
+    for (const v of p.variantes ?? []) {
+      const otra = v.escenas.find((x) => x.id === e.id);
+      if (otra) escenas.push(escena(otra, v.nombre));
+    }
+  }
+  return {
+    id: p.id,
+    titulo: p.titulo,
+    formato: NOMBRE_FORMATO[p.formato],
+    rol: p.rol,
+    situacion: p.situacion,
+    objetivo: p.objetivo,
+    minutos: p.minutos,
+    lecciones: [...p.lecciones],
+    lectura: p.lectura ?? null,
+    antes: [...p.antes],
+    cierre: p.cierre,
+    competencias: p.competencias.map((c) => ({ nombre: c.nombre, leccion: c.leccion, peso: c.peso })),
+    escenas,
+    rondas: (p.rondas ?? []).map((r) => ({
+      id: r.id,
+      titulo: r.titulo,
+      competencia: competencia.get(r.competencia) ?? r.competencia,
+      situacion: r.situacion,
+      pregunta: r.pregunta,
+      opciones: r.opciones.map((o) => ({ texto: o.texto, porque: o.porque, critica: o.critica ?? null })),
+      camino: { titulo: r.camino.titulo, porque: r.camino.porque },
+    })),
   };
 }
 
@@ -238,6 +302,21 @@ const materiaConBanco = (id: string) => {
 
 export function registerAcademiaCalidadRoutes(app: Express) {
   // La lista: cada materia con contenido, su aprobación, sus observaciones abiertas, sus alertas y sus retiradas.
+  // Lo que espera a la Administración en la academia, liviano, para el inicio del panel general (/admin).
+  app.get("/api/academia/direccion/pendientes", async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "panel");
+      if (!p) return;
+      const r = await pendientesDe(p);
+      const contenido = alcanceDe(p.role, "contenido") !== "no" ? await contenidoPorAprobar() : 0;
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ escritas: r.escritas, apelaciones: r.apelaciones, actividades: r.actividades, contenido, total: r.escritas + r.apelaciones + r.actividades + contenido });
+    } catch (err) {
+      console.error("[academia] pendientes:", err);
+      res.sendStatus(500);
+    }
+  });
+
   app.get("/api/academia/direccion/contenido", async (req, res) => {
     try {
       const p = await permisoDe(req, res, "contenido");

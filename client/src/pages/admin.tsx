@@ -17,6 +17,9 @@ import {
 import { Link, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { TarjetaAcademiaPanel } from "@/components/academia/entrada-panel";
+import { AlianzasAdmin, FichasAdmin, useAlianzas, useFichas } from "@/components/admin/alianzas-fichas";
+import { rolAcademia } from "@shared/academia-permisos";
+import { useQuery } from "@tanstack/react-query";
 import { RadioLibraryAdmin } from "@/components/admin/RadioLibraryAdmin";
 import { SelectorDeRol } from "@/components/admin/SelectorDeRol";
 import { isAdminRole } from "@/lib/utils";
@@ -680,6 +683,19 @@ export default function AdminDashboard() {
   const deleteTeacherRequest = useDeleteTeacherRequest();
   const updateUserInfo = useUpdateUserInfo();
   const denunciasPendientes = usePendingReportsCount(!!user);
+  // las solicitudes de alianza, las fichas ministeriales y lo que espera en la academia (revisión del 21-nov)
+  const esAdminWeb = !!user && isAdminRole(user.role);
+  const { data: alianzas } = useAlianzas(esAdminWeb);
+  const { data: fichas } = useFichas(esAdminWeb);
+  const { data: academiaPendientes } = useQuery<{ total: number }>({
+    queryKey: ["academia", "direccion", "pendientes"],
+    queryFn: async () => {
+      const r = await fetch("/api/academia/direccion/pendientes", { credentials: "include" });
+      return r.ok ? r.json() : { total: 0 };
+    },
+    enabled: !!user && rolAcademia(user.role) === "direccion",
+    retry: false,
+  });
   // /admin?tab=denuncias (el aviso de la campana) abre directo en Denuncias.
   const tabDeLaUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
   // la pestaña que eligió quien mira (null: la que corresponde al abrir, según la dirección o si hay solicitudes)
@@ -755,6 +771,8 @@ export default function AdminDashboard() {
   const maestrosPorAprobar = teacherRequestsList?.filter((r: any) => r.status === "solicitado").length ?? 0;
   const avisos: Partial<Record<Parte, number>> = {
     pending: pendingUsers.length, courses: inscripcionesPorAprobar, "teacher-requests": maestrosPorAprobar, messages: unreadMessages.length, denuncias: denunciasPendientes,
+    alliance: alianzas?.filter((a) => a.status === "pendiente").length ?? 0,
+    fichas: fichas?.filter((f) => !f.isApproved).length ?? 0,
   };
 
   const filteredUsers = users?.filter(
@@ -872,7 +890,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <TarjetaAcademiaPanel base="/admin/academia" />
+        <TarjetaAcademiaPanel base="/admin/academia" pendientes={academiaPendientes?.total ?? 0} />
 
         {ventanaConfirmar}
         <NavPanelGeneral actual={pestanaActual} alElegir={irAPestana} avisos={avisos} />
@@ -924,7 +942,7 @@ export default function AdminDashboard() {
 
           {/* El inicio: lo que te toca y las cifras */}
           <TabsContent value="inicio" className="space-y-6">
-            <LoQueTeTocaGeneral avisos={avisos} alElegir={irAPestana} />
+            <LoQueTeTocaGeneral avisos={avisos} alElegir={irAPestana} academia={academiaPendientes?.total ?? 0} />
             <CifrasGenerales
               alElegir={irAPestana}
               cifras={[
@@ -1109,6 +1127,14 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Las solicitudes de alianza de las iglesias y las fichas ministeriales por aprobar */}
+          <TabsContent value="alliance">
+            <AlianzasAdmin confirmar={confirmarAccion} />
+          </TabsContent>
+          <TabsContent value="fichas">
+            <FichasAdmin />
           </TabsContent>
 
           {/* Teacher Requests Tab */}
@@ -1528,7 +1554,7 @@ export default function AdminDashboard() {
                   <SiWhatsapp className="h-5 w-5 text-green-500" />
                   <CardTitle>Enlace de Grupo WhatsApp</CardTitle>
                 </div>
-                <CardDescription>Configura el enlace del grupo de WhatsApp del Club de Lectura. Los miembros podran verlo y unirse desde la sección de Biblioteca.</CardDescription>
+                <CardDescription>Configura el enlace del grupo de WhatsApp del Club de Lectura. Los miembros podrán verlo y unirse desde la sección de Biblioteca.</CardDescription>
               </CardHeader>
               <CardContent>
                 {whatsappLinkEdit ? (
@@ -1940,12 +1966,12 @@ export default function AdminDashboard() {
 
           {/* Denuncias Tab */}
           <TabsContent value="denuncias">
-            <ReportsAdmin />
+            <ReportsAdmin confirmar={confirmarAccion} />
           </TabsContent>
 
           {/* Biblioteca Radio Tab */}
           <TabsContent value="radio-library">
-            <RadioLibraryAdmin />
+            <RadioLibraryAdmin confirmar={confirmarAccion} />
           </TabsContent>
 
           {/* En Vivo Tab */}
@@ -1991,7 +2017,7 @@ export default function AdminDashboard() {
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCourse ? "Editar Curso" : "Nuevo Curso"}</DialogTitle>
-            <DialogDescription>{editingCourse ? "Modifica los detalles del curso." : "Completa los datos para crear un nuevo curso de capacitacion."}</DialogDescription>
+            <DialogDescription>{editingCourse ? "Modifica los detalles del curso." : "Completa los datos para crear un nuevo curso de capacitación."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div><Label>Título *</Label><Input value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} data-testid="input-course-title" /></div>
@@ -2036,7 +2062,7 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Max Estudiantes</Label><Input type="number" value={courseForm.maxStudents} onChange={(e) => setCourseForm({ ...courseForm, maxStudents: e.target.value })} placeholder="Ilimitado" data-testid="input-course-max-students" /></div>
+              <div><Label>Máximo de estudiantes</Label><Input type="number" value={courseForm.maxStudents} onChange={(e) => setCourseForm({ ...courseForm, maxStudents: e.target.value })} placeholder="Ilimitado" data-testid="input-course-max-students" /></div>
               <div><Label>URL de Imagen</Label><Input value={courseForm.imageUrl} onChange={(e) => setCourseForm({ ...courseForm, imageUrl: e.target.value })} placeholder="https://..." data-testid="input-course-image" /></div>
             </div>
             <div className="flex items-center gap-3">

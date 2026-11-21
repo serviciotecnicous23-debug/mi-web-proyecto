@@ -98,7 +98,7 @@ function Intento({ x, completo }: { x: IntentoInforme; completo: boolean }) {
             Lo cerró el {fechaHora(x.fecha)}. {x.segundos != null ? `Tardó ${duracion(x.segundos)} en todo el examen.` : "Este intento es de antes de que se midiera su duración."}
           </p>
           {x.preguntas.length === 0 ? (
-            <p className="text-muted-foreground">Este examen fue solo escrito: sus respuestas están en «Respuestas escritas».</p>
+            <p className="text-muted-foreground">{completo ? "Este examen fue solo escrito: sus respuestas están en «Respuestas escritas»." : "Este examen fue solo escrito."}</p>
           ) : (
             <ol className="space-y-2.5">
               {x.preguntas.map((q, i) => (
@@ -168,6 +168,31 @@ function Contenido({ r }: { r: InformeMateria }) {
         )}
       </section>
 
+      {r.laboratorio && r.laboratorio.length > 0 && (
+        <section data-testid="informe-laboratorio">
+          <h4 className="font-semibold mb-1">Laboratorio ministerial</h4>
+          <ul className="space-y-2">
+            {r.laboratorio.map((x) => (
+              <li key={x.id} className="rounded-xl border border-border p-3 text-sm space-y-1">
+                <p className="font-medium">{x.titulo}</p>
+                {x.terminados === 0 ? (
+                  <p className="text-muted-foreground">{x.intentos ? "La empezó y todavía no la termina." : "Todavía no la hizo."}</p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {x.terminados} {x.terminados === 1 ? "intento terminado" : "intentos terminados"}
+                    {x.primero != null ? ` · primero ${x.primero}` : ""}
+                    {x.mejor != null ? ` · mejor ${x.mejor}${x.nivel ? ` (${x.nivel})` : ""}` : ""}
+                    {x.criticas ? ` · ${x.criticas} ${x.criticas === 1 ? "acción crítica" : "acciones críticas"}` : ""}
+                    {x.ultimo ? ` · ${fechaCorta(x.ultimo)}` : ""}
+                  </p>
+                )}
+                {x.llevo && <p className="border-l-2 border-orange-500/50 pl-2 italic break-words">Lo que se lleva: {x.llevo}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {r.escritas && r.escritas.length > 0 && (
         <section>
           <h4 className="font-semibold mb-1">Respuestas escritas ({r.escritas.length})</h4>
@@ -223,7 +248,11 @@ export function InformeMateriaVista({ alumnoId, materiaId }: { alumnoId: number;
 
 /** Las materias del alumno: cada una se abre con un toque y muestra su informe completo. */
 export function InformePorMateria({ alumnoId, materias, alGestionar }: { alumnoId: number; materias: MateriaNotas[]; alGestionar?: (materiaId: string) => void }) {
-  const [abierta, setAbierta] = useState<string | null>(() => materias.find((m) => m.estado === "en-curso")?.id ?? materias[0]?.id ?? null);
+  // ?materia=<id> abre esa materia (desde la página de una materia o el informe del laboratorio); si no, la primera en curso
+  const [abierta, setAbierta] = useState<string | null>(() => {
+    const pedida = new URLSearchParams(window.location.search).get("materia");
+    return (pedida && materias.some((m) => m.id === pedida) ? pedida : null) ?? materias.find((m) => m.estado === "en-curso")?.id ?? materias[0]?.id ?? null;
+  });
   if (!materias.length) return <p className="glass-card p-6 text-center text-sm text-muted-foreground">Todavía no se inscribió en ninguna materia. Cuando empiece, aquí verás cada lección y cada examen.</p>;
   return (
     <div className="space-y-3" data-testid="informe-por-materia">

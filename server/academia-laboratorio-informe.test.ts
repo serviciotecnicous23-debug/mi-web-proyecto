@@ -5,7 +5,10 @@ import { alcanceDe } from "@shared/academia-permisos";
 import { PRACTICAS, practicaPorId } from "./academia/laboratorio/index";
 import type { PracticaDef } from "./academia/laboratorio/tipos";
 import { nuevoEstado, pasosDe, responder, resultado, terminado, type EstadoIntento } from "./academia-laboratorio-motor";
-import { LLEVO, ULTIMOS, armarInforme, type FilaInforme } from "./academia-laboratorio-informe";
+import { LLEVO, ULTIMOS, armarInforme, filasCsvLaboratorio, type FilaInforme } from "./academia-laboratorio-informe";
+import { aCsv } from "./academia-csv";
+import { practicaRevision } from "./academia-calidad";
+import { nivelDe } from "@shared/laboratorio";
 
 function azarFijo(semilla: number) {
   let x = semilla >>> 0;
@@ -156,4 +159,53 @@ test("un estado que no cuadra se salta, y el informe se corta en sus límites", 
   assert.equal(x.terminados, ULTIMOS + 5);
   assert.equal(x.llevo.length, LLEVO);
   assert.equal(inf.ultimos.length, ULTIMOS);
+});
+
+test("el CSV del laboratorio: un renglón por intento, con su nivel y sin fórmulas", () => {
+  const p = PRACTICAS[0];
+  const filas = [
+    {
+      id: 1, user_id: 7, practica_id: p.id, materia_id: p.materia, intento: 1, cuenta: true, estado: "terminado", datos: null, nota: 84, criticas: 0,
+      cierre: { sentir: "Seguro", llevo: "=Escuchar primero" }, created_at: "2026-11-20T14:40:00Z", terminado_at: "2026-11-20T15:00:00Z", nombre: "Ana Pérez",
+      matricula: "AF-2026-0007",
+    },
+    {
+      id: 2, user_id: 7, practica_id: p.id, materia_id: p.materia, intento: 4, cuenta: false, estado: "en-curso", datos: null, nota: null, criticas: 0,
+      cierre: null, created_at: "2026-11-21T10:00:00Z", terminado_at: null, nombre: "Ana Pérez", matricula: null,
+    },
+  ];
+  const datos = filasCsvLaboratorio(filas);
+  assert.equal(datos.length, 3);
+  assert.deepEqual(datos[0].slice(0, 4), ["Matrícula", "Alumno", "Materia", "Práctica"]);
+  const [, hecho, abierto] = datos;
+  assert.equal(hecho[0], "AF-2026-0007");
+  assert.equal(hecho[3], p.titulo);
+  assert.deepEqual(hecho.slice(4, 9), [1, "Cuenta", "Terminada", 84, nivelDe(84)]);
+  assert.equal(hecho[13], "2026-11-20");
+  assert.deepEqual(abierto.slice(4, 9), [4, "Práctica libre", "Sin terminar", "", ""]);
+  assert.equal(abierto[12], "2026-11-21");
+  assert.equal(abierto[13], "");
+  // lo que escribió no se toma como fórmula en Excel
+  assert.ok(aCsv(datos).includes("'=Escuchar primero"));
+});
+
+test("la revisión doctrinal de cada práctica trae todo su texto: escenas, versiones, críticas y el orden de quien sabe", () => {
+  for (const p of PRACTICAS) {
+    const r = practicaRevision(p);
+    assert.equal(r.titulo, p.titulo);
+    assert.equal(r.escenas.filter((e) => !e.version).length, p.escenas?.length ?? 0, p.id);
+    const cambiadas = (p.variantes ?? []).reduce((s, v) => s + v.escenas.filter((e) => (p.escenas ?? []).some((b) => b.id === e.id)).length, 0);
+    assert.equal(r.escenas.filter((e) => e.version).length, cambiadas, p.id);
+    const nombres = new Set(p.competencias.map((c) => c.nombre));
+    for (const e of r.escenas) {
+      // cada escena dice su competencia por su nombre y tiene su mejor opción
+      assert.ok(nombres.has(e.competencia), `${p.id}/${e.id}: ${e.competencia}`);
+      assert.ok(e.opciones.some((o) => o.ejemplar), `${p.id}/${e.id}`);
+    }
+    const criticas = (p.escenas ?? []).flatMap((e) => e.opciones).filter((o) => o.critica).length;
+    assert.equal(r.escenas.filter((e) => !e.version).flatMap((e) => e.opciones).filter((o) => o.critica).length, criticas, p.id);
+    // las rondas, en el orden de quien sabe (el alumno las ve mezcladas)
+    assert.equal(r.rondas.length, p.rondas?.length ?? 0, p.id);
+    (p.rondas ?? []).forEach((x, i) => assert.deepEqual(r.rondas[i].opciones.map((o) => o.texto), x.opciones.map((o) => o.texto)));
+  }
 });

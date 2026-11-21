@@ -179,7 +179,7 @@ export function registerAcademiaActividadesRoutes(app: Express) {
       if (out.error !== undefined) return res.status(out.error).json({ message: out.message });
       // la Administración la confirma en «Para revisar» (solo un aviso en la campana, sin correo)
       const admins = await cuentasConRoles(ROLES_REVISION, a.userId);
-      void avisarA(admins, POR_REVISAR[d.tipo], `Un alumno registró ${cual(d)} para el Nivel ${nv.n}.`, "/admin/academia?tab=revisar").catch(() => undefined);
+      void avisarA(admins, POR_REVISAR[d.tipo], `Un alumno registró ${cual(d)} para el Nivel ${nv.n}.`, "/admin/academia?tab=pendientes&ir=actividades-por-confirmar").catch(() => undefined);
       res.json(out.vista);
     } catch (err) {
       console.error("[academia] registrar actividad:", err);

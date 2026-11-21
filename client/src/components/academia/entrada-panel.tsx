@@ -9,19 +9,19 @@ import { rolAcademia } from "@shared/academia-permisos";
 import { baseDelRol } from "./area";
 
 /** La tarjeta de la academia en un panel (administración, maestro o «Mi iglesia»). */
-export function TarjetaAcademiaPanel({ base }: { base: string }) {
+export function TarjetaAcademiaPanel({ base, pendientes = 0 }: { base: string; pendientes?: number }) {
   const { user } = useAuth();
   const rol = rolAcademia(user?.role);
   if (!user || rol === "alumno") return null;
   const administra = rol === "direccion";
   const titulo = administra ? "Administración de la Academia" : rol === "iglesia" ? "Los alumnos de tu iglesia en la Academia" : "Seguimiento de la Academia";
   const texto = administra
-    ? "Alumnos y su avance, revisión de notas y pedidos de revisión, revisión doctrinal del contenido, documentos, mentores y la apertura de la academia."
+    ? "Alumnos y su avance, notas y pedidos de revisión, las actividades de los niveles, la revisión doctrinal del contenido, el laboratorio, documentos, mentores y la apertura."
     : rol === "iglesia"
       ? "Quiénes de tu iglesia estudian, por dónde va cada uno y sus notas. Solo para ver: la academia la administra la Administración."
       : "Quiénes estudian, por dónde va cada uno y sus notas. Solo para ver: la academia la administra la Administración.";
   return (
-    <Link href={base}>
+    <Link href={administra ? "/admin/academia" : base}>
       <span
         className="glass-card mb-4 sm:mb-8 p-4 md:p-6 flex flex-row items-center gap-3 sm:gap-4 border border-orange-500/40 hover:-translate-y-0.5 transition cursor-pointer"
         data-testid="panel-academia"
@@ -36,6 +36,11 @@ export function TarjetaAcademiaPanel({ base }: { base: string }) {
               {administra ? <ShieldCheck className="w-3 h-3" aria-hidden="true" /> : <Eye className="w-3 h-3" aria-hidden="true" />}
               {administra ? "La administras tú" : "Solo ver"}
             </span>
+            {administra && pendientes > 0 && (
+              <span className="rounded-full bg-orange-600 text-white text-xs font-semibold px-2 py-0.5" data-testid="panel-academia-pendientes">
+                {pendientes} {pendientes === 1 ? "espera" : "esperan"}
+              </span>
+            )}
           </span>
           <span className="hidden sm:block text-sm text-muted-foreground mt-1">{texto}</span>
         </span>

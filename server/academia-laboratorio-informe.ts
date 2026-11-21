@@ -11,6 +11,8 @@ import { PRACTICAS } from "./academia/laboratorio/index";
 import type { PracticaDef } from "./academia/laboratorio/tipos";
 import { estadoValido, nombreVariante, pasosDe, resultado, type Paso } from "./academia-laboratorio-motor";
 import { permisoDe } from "./academia-direccion";
+import { frenar } from "./academia-comun";
+import { aCsv } from "./academia-csv";
 
 /** Un intento con el nombre del alumno, como sale de la base (sin los de prueba). */
 export type FilaInforme = {
@@ -27,6 +29,31 @@ export type FilaInforme = {
   terminado_at: string | Date | null;
   nombre: string;
 };
+
+/** El enlace para descargar todos los intentos en CSV (lo usan el menú «Descargar» y el informe). */
+export const RUTA_CSV_LABORATORIO = "/api/academia/direccion/laboratorio/exportar";
+
+const dia = (v: string | Date | null | undefined) => (v ? new Date(v).toISOString().slice(0, 10) : "");
+
+/** Los renglones del CSV: un intento por renglón, con su nota, su nivel y lo que escribió al cerrar. */
+export function filasCsvLaboratorio(filas: (FilaInforme & { materia_id: string; matricula: string | null; created_at: string | Date | null })[]): unknown[][] {
+  const practica = new Map(PRACTICAS.map((p) => [p.id, p]));
+  return [
+    [
+      "Matrícula", "Alumno", "Materia", "Práctica", "Intento", "Tipo", "Estado", "Nota", "Nivel", "Acciones críticas", "Cómo se sintió",
+      "Lo que se lleva", "Empezó el", "Terminó el",
+    ],
+    ...filas.map((f) => {
+      const terminado = f.estado === "terminado";
+      return [
+        f.matricula ?? "", f.nombre, materiaPorId(f.materia_id)?.titulo ?? f.materia_id, practica.get(f.practica_id)?.titulo ?? f.practica_id, f.intento,
+        f.cuenta ? "Cuenta" : "Práctica libre", terminado ? "Terminada" : "Sin terminar", terminado && f.nota != null ? f.nota : "",
+        terminado && f.nota != null ? nivelDe(f.nota) : "", terminado ? f.criticas : "", f.cierre?.sentir ?? "",
+        typeof f.cierre?.llevo === "string" ? f.cierre.llevo.trim() : "", dia(f.created_at), dia(f.terminado_at),
+      ];
+    }),
+  ];
+}
 
 /** Los últimos intentos que muestra el informe. */
 export const ULTIMOS = 20;
@@ -158,6 +185,7 @@ export function armarInforme(filas: FilaInforme[]): InformeLaboratorio {
     });
   }
   const titulos = new Map(PRACTICAS.map((p) => [p.id, p.titulo]));
+  const materiaDe = new Map(PRACTICAS.map((p) => [p.id, p.materia]));
   const ultimos = filas
     .filter((f) => f.estado === "terminado" && titulos.has(f.practica_id))
     .sort((a, b) => tiempo(b.terminado_at) - tiempo(a.terminado_at) || b.id - a.id)
@@ -166,6 +194,7 @@ export function armarInforme(filas: FilaInforme[]): InformeLaboratorio {
       id: f.id,
       alumno: { id: f.user_id, nombre: f.nombre },
       practica: titulos.get(f.practica_id)!,
+      materiaId: materiaDe.get(f.practica_id)!,
       nota: f.nota,
       nivel: f.nota != null ? nivelDe(f.nota) : null,
       criticas: f.criticas,
@@ -199,6 +228,35 @@ export function registerAcademiaLaboratorioInformeRoutes(app: Express) {
     } catch (e: any) {
       console.error("laboratorio/informe:", e?.message);
       res.status(500).json({ message: "No se pudo cargar el informe del laboratorio." });
+    }
+  });
+
+  // Todos los intentos en CSV (se abre con Excel o con Google Sheets), sin los de prueba de la Administración.
+  app.get(RUTA_CSV_LABORATORIO, async (req, res) => {
+    try {
+      const p = await permisoDe(req, res, "laboratorio");
+      if (!p) return;
+      if (frenar(`axl:${p.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
+      const { rows } = await pool.query(
+        `SELECT l.id, l.user_id, l.practica_id, l.materia_id, l.intento, l.cuenta, l.estado, l.nota, l.criticas, l.cierre, l.created_at, l.terminado_at,
+                al.matricula,
+                COALESCE(NULLIF(trim(concat_ws(' ', i.nombres, i.apellidos)), ''), NULLIF(trim(u.display_name), ''), u.username, 'Alumno') AS nombre
+           FROM academia_laboratorio l
+           JOIN users u ON u.id = l.user_id
+           LEFT JOIN academia_inscripciones i ON i.user_id = l.user_id
+           LEFT JOIN academia_alumnos al ON al.user_id = l.user_id
+          WHERE NOT l.prueba
+          ORDER BY l.created_at DESC, l.id DESC
+          LIMIT 20000`,
+      );
+      const fecha = new Date().toISOString().slice(0, 10);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="academia-laboratorio-${fecha}.csv"`);
+      res.setHeader("Cache-Control", "no-store");
+      res.send(aCsv(filasCsvLaboratorio(rows as any[])));
+    } catch (e: any) {
+      console.error("laboratorio/exportar:", e?.message);
+      if (!res.headersSent) res.status(500).json({ message: "No se pudo preparar el archivo del laboratorio." });
     }
   });
 }

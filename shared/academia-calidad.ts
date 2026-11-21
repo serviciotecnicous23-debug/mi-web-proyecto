@@ -101,4 +101,49 @@ export type ContenidoDetalle = {
   /** Los umbrales del análisis, para explicarlos en la pantalla. */
   umbrales: { minimo: number; muyDificil: number; muyFacil: number; discriminaPoco: number; tarde: number };
   puede: { observar: boolean; aprobar: boolean; banco: boolean };
+  /** Las prácticas del laboratorio ministerial de la materia, con todo su texto (entran en la aprobación doctrinal). */
+  laboratorio?: PracticaRevision[];
+};
+
+/** Una opción de una escena, con lo que vale: la mejor vale 2 puntos; una acción crítica pone en peligro a la persona. */
+export type OpcionRevision = { texto: string; puntos: number; ejemplar: boolean; critica: string | null; responde: string | null; pasa: string; explica: string };
+export type EscenaRevision = {
+  id: string;
+  titulo: string;
+  /** La versión del caso que la cambia (null: la de todas las versiones). */
+  version: string | null;
+  competencia: string;
+  narra: string[];
+  segun: { si: string; no: string } | null;
+  quien: string | null;
+  dice: string | null;
+  pregunta: string | null;
+  opciones: OpcionRevision[];
+  camino: { titulo: string; porque: string };
+};
+/** Una ronda para ordenar: sus opciones en el orden de quien sabe (de la más apropiada a la menos). */
+export type RondaRevision = {
+  id: string;
+  titulo: string;
+  competencia: string;
+  situacion: string;
+  pregunta: string;
+  opciones: { texto: string; porque: string; critica: string | null }[];
+  camino: { titulo: string; porque: string };
+};
+export type PracticaRevision = {
+  id: string;
+  titulo: string;
+  formato: string;
+  rol: string;
+  situacion: string;
+  objetivo: string;
+  minutos: number;
+  lecciones: number[];
+  lectura: string | null;
+  antes: string[];
+  cierre: string;
+  competencias: { nombre: string; leccion: string; peso: number }[];
+  escenas: EscenaRevision[];
+  rondas: RondaRevision[];
 };

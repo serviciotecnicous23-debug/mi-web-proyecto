@@ -69,8 +69,10 @@ export type DireccionResumen = {
   iglesias: { nombre: string; n: number }[];
   /** Con materias en curso y 14 días o más sin estudiar. */
   detenidos: AlumnoFila[];
-  /** Quienes tienen alertas que piden actuar o mirar, los más urgentes primero. */
+  /** Quienes tienen alertas que piden actuar o mirar, los más urgentes primero (hasta 40). */
   ayuda: AlumnoAyuda[];
+  /** Cuántos son en total (la lista trae los 40 más urgentes). */
+  ayudaTotal?: number;
   /** Las últimas 12 semanas: inscripciones, lecciones, minutos de estudio y materias aprobadas. */
   tendencias: SemanaPanel[];
   actividad: ActividadItem[];

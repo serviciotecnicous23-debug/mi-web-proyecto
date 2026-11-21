@@ -4697,15 +4697,35 @@ Sitemap: ${SITE_URL}/sitemap.xml`
 
   // ========== REFORMA MINISTERIAL: NUEVAS RUTAS ==========
 
+  /** Un aviso en la campana de la administración (uno sin leer de cada tipo a la vez, para no llenarla). */
+  async function avisarAdministracion(tipo: string, titulo: string, contenido: string, enlace: string): Promise<void> {
+    try {
+      const { rows } = await pool.query(
+        `SELECT u.id FROM users u
+          WHERE u.role IN ('admin', 'director', 'staff_global') AND u.is_active = true
+            AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.user_id = u.id AND n.type = $1 AND n.is_read = false)`,
+        [tipo],
+      );
+      for (const a of rows) await storage.createNotification({ userId: a.id, type: tipo, title: titulo, content: contenido, link: enlace });
+    } catch (err) {
+      console.error(`[avisos] No se pudo avisar a la administración (${tipo})`, err);
+    }
+  }
+
   // --- Teacher Profiles ---
+  // Las fichas sin aprobar solo las ven la Administración y su dueño (antes cualquiera veía su declaración doctrinal).
   app.get("/api/teacher-profiles", async (req, res) => {
     const profiles = await storage.listTeacherProfiles();
-    res.json(profiles);
+    const yo = req.isAuthenticated() ? req.user!.id : null;
+    res.json(isAdmin(req) ? profiles : profiles.filter((p) => p.isApproved || p.userId === yo));
   });
 
+  // Con el nombre y la foto de la persona (antes la ficha salía sin ellos).
   app.get("/api/teacher-profiles/:userId", async (req, res) => {
-    const profile = await storage.getTeacherProfile(parseInt(req.params.userId));
-    if (!profile) return res.sendStatus(404);
+    const id = parseInt(req.params.userId);
+    const profile = (await storage.listTeacherProfiles()).find((p) => p.userId === id);
+    const yo = req.isAuthenticated() ? req.user!.id : null;
+    if (!profile || (!profile.isApproved && profile.userId !== yo && !isAdmin(req))) return res.sendStatus(404);
     res.json(profile);
   });
 
@@ -4714,8 +4734,14 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     try {
       const existing = await storage.getTeacherProfile(req.user!.id);
       if (existing) return res.status(400).json({ message: "Ya tienes una ficha ministerial" });
-      const profile = await storage.createTeacherProfile(req.user!.id, req.body);
+      // solo los campos de la ficha: la aprobación la da la Administración (antes se podía mandar «isApproved: true»)
+      const { insertTeacherProfileSchema } = await import("@shared/schema");
+      const datos = insertTeacherProfileSchema.safeParse(req.body ?? {});
+      if (!datos.success) return res.status(400).json({ message: "Revisa los datos de la ficha." });
+      const profile = await storage.createTeacherProfile(req.user!.id, datos.data);
       await storage.createAuditLog({ userId: req.user!.id, action: "create", entityType: "teacher_profile", entityId: profile.id });
+      const nombre = req.user!.displayName || req.user!.username;
+      await avisarAdministracion("ficha_ministerial", "Nueva ficha ministerial para aprobar", `${nombre} llenó su ficha ministerial.`, "/admin?tab=fichas");
       res.status(201).json(profile);
     } catch (err) {
       res.sendStatus(500);
@@ -4726,8 +4752,20 @@ Sitemap: ${SITE_URL}/sitemap.xml`
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const targetUserId = parseInt(req.params.userId);
     if (targetUserId !== req.user!.id && !isAdmin(req)) return res.sendStatus(403);
-    const profile = await storage.updateTeacherProfile(targetUserId, req.body);
+    const { insertTeacherProfileSchema, updateTeacherProfileSchema } = await import("@shared/schema");
+    // la Administración puede aprobar o quitar la aprobación; el dueño solo cambia sus campos
+    const datos = (isAdmin(req) ? updateTeacherProfileSchema : insertTeacherProfileSchema.partial()).safeParse(req.body ?? {});
+    if (!datos.success) return res.status(400).json({ message: "Revisa los datos de la ficha." });
+    const antes = await storage.getTeacherProfile(targetUserId);
+    if (!antes) return res.sendStatus(404);
+    // si el dueño cambia una ficha ya aprobada, vuelve a revisión (como el contenido de la academia)
+    const vuelveARevision = !isAdmin(req) && antes.isApproved && Object.keys(datos.data).length > 0;
+    const profile = await storage.updateTeacherProfile(targetUserId, vuelveARevision ? { ...datos.data, isApproved: false } : datos.data);
     if (!profile) return res.sendStatus(404);
+    if (vuelveARevision) {
+      const nombre = req.user!.displayName || req.user!.username;
+      await avisarAdministracion("ficha_ministerial", "Una ficha ministerial cambió", `${nombre} cambió su ficha ministerial: vuelve a esperar tu aprobación.`, "/admin?tab=fichas");
+    }
     res.json(profile);
   });
 
@@ -4751,6 +4789,7 @@ Sitemap: ${SITE_URL}/sitemap.xml`
       const { insertAllianceRequestSchema } = await import("@shared/schema");
       const data = insertAllianceRequestSchema.parse(req.body);
       const request = await storage.createAllianceRequest(data);
+      await avisarAdministracion("alianza", "Nueva solicitud de alianza", `${data.churchName} (${data.pastorName}) pidió ser iglesia aliada.`, "/admin?tab=alliance");
       res.status(201).json(request);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });

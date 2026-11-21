@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle, ArrowLeft, Ban, BookOpen, CheckCircle2, ChevronRight, Clock, MessageSquarePlus, RotateCcw, ShieldCheck, ShieldOff, XCircle,
+  AlertTriangle, ArrowLeft, Ban, BookOpen, CheckCircle2, ChevronRight, CircleDot, Clock, FlaskConical, MessageSquarePlus, RotateCcw, ShieldCheck, ShieldOff, XCircle,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { AprobarMateria } from "@/components/academia/panel-aprobar";
@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { loginUrl } from "@/lib/login-redirect";
-import type { ContenidoDetalle, EscritaAnalisis, ObservacionContenido, PreguntaAnalisis } from "@shared/academia-calidad";
+import type { ContenidoDetalle, EscritaAnalisis, ObservacionContenido, PracticaRevision, PreguntaAnalisis } from "@shared/academia-calidad";
 import {
   accionPregunta, aprobarContenido, desaprobarContenido, observarContenido, resolverObservacion, useContenidoMateria,
 } from "@/components/academia/api";
@@ -565,6 +565,158 @@ function Repaso({ d }: { d: ContenidoDetalle }) {
   );
 }
 
+// ---------------------------------------------------------------- el laboratorio
+
+/** Una observación sobre una práctica: queda en las observaciones de la materia, con el nombre de la práctica. */
+function ObservarPractica({ materiaId, titulo }: { materiaId: string; titulo: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [texto, setTexto] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const enviar = async () => {
+    setOcupado(true);
+    setError(null);
+    try {
+      await observarContenido(materiaId, `Práctica «${titulo}»: ${texto.trim()}`, null);
+      toast({ title: "Observación guardada", description: "Queda en «Lecciones y observaciones» hasta que se resuelva." });
+      setTexto("");
+      void qc.invalidateQueries({ queryKey: ["academia", "direccion"] });
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <div className="rounded-xl border border-border p-3 space-y-2">
+      <label className="text-sm block">
+        Una observación sobre esta práctica
+        <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={2} maxLength={1400} className="mt-1 text-[16px]" data-testid="practica-observacion-texto" />
+      </label>
+      <Button size="sm" className="fire-btn-primary" onClick={enviar} disabled={ocupado || texto.trim().length < 8} data-testid="practica-observacion-enviar">
+        <MessageSquarePlus className="w-4 h-4 mr-1.5" /> {ocupado ? "Guardando…" : "Dejar la observación"}
+      </Button>
+      {error && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+const puntos = (n: number) => `${n} ${n === 1 ? "punto" : "puntos"}`;
+
+function TarjetaPractica({ p, materiaId, puedeObservar }: { p: PracticaRevision; materiaId: string; puedeObservar: boolean }) {
+  const pasos = p.escenas.filter((e) => !e.version).length + p.rondas.length;
+  return (
+    <details className="glass-card p-4 group" data-testid="contenido-practica" data-id={p.id}>
+      <summary className="cursor-pointer list-none flex items-start gap-2 font-medium">
+        <ChevronRight className="w-4 h-4 mt-1 shrink-0 transition group-open:rotate-90" aria-hidden="true" />
+        <span className="min-w-0">
+          <span className="block">{p.titulo}</span>
+          <span className="block text-xs text-muted-foreground font-normal">
+            {p.formato} · unos {p.minutos} minutos · {pasos} {pasos === 1 ? "paso" : "pasos"} · lecciones {p.lecciones.join(", ")}
+          </span>
+        </span>
+      </summary>
+      <div className="mt-4 space-y-4 text-sm min-w-0">
+        <div className="space-y-1.5">
+          <p><span className="font-semibold">El alumno hace de:</span> {p.rol}</p>
+          <p><span className="font-semibold">La situación:</span> {p.situacion}</p>
+          <p><span className="font-semibold">El objetivo:</span> {p.objetivo}</p>
+          {p.lectura && <p><span className="font-semibold">Para leer antes:</span> {p.lectura}</p>}
+        </div>
+        {p.antes.length > 0 && (
+          <div>
+            <p className="font-semibold">Antes de empezar</p>
+            <ul className="list-disc pl-5 mt-1 space-y-1">{p.antes.map((t) => <li key={t}>{t}</li>)}</ul>
+          </div>
+        )}
+        <div>
+          <p className="font-semibold">Lo que mide</p>
+          <ul className="mt-1 space-y-0.5">
+            {p.competencias.map((c) => <li key={c.nombre}>{c.nombre} <span className="text-muted-foreground">({c.leccion}) · {c.peso} %</span></li>)}
+          </ul>
+        </div>
+        {p.escenas.map((e, k) => (
+          <section key={`${e.id}-${e.version ?? ""}`} className={`rounded-xl border p-3 space-y-2 ${e.version ? "border-dashed border-orange-500/50" : "border-border"}`}>
+            <p className="font-semibold">
+              {e.version ? "Otra versión" : `Escena ${p.escenas.slice(0, k + 1).filter((x) => !x.version).length}`}: {e.titulo}
+              {e.version && <span className="font-normal text-muted-foreground"> ({e.version})</span>}
+            </p>
+            <p className="text-xs text-muted-foreground">Mide: {e.competencia}</p>
+            {e.narra.map((t, i) => <p key={i}>{t}</p>)}
+            {e.segun && <p className="text-muted-foreground">Si antes eligió lo mejor: {e.segun.si} Si no: {e.segun.no}</p>}
+            {e.dice && <p className="italic">{e.quien ? `${e.quien}: ` : ""}{e.dice}</p>}
+            <p className="font-medium">{e.pregunta ?? "¿Qué haces?"}</p>
+            <ul className="space-y-2">
+              {e.opciones.map((o, i) => (
+                <li
+                  key={i}
+                  className={`rounded-lg border p-2.5 ${o.critica ? "border-red-500/40 bg-red-500/5" : o.ejemplar ? "border-emerald-500/40 bg-emerald-500/5" : "border-border bg-muted/30"}`}
+                  data-testid="practica-opcion"
+                >
+                  <p className="flex gap-2">
+                    {o.critica ? (
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-600" aria-hidden="true" />
+                    ) : o.ejemplar ? (
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                    ) : (
+                      <CircleDot className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    <span className="min-w-0 break-words">{o.texto}</span>
+                  </p>
+                  <p className="text-xs font-semibold mt-1">{o.critica ? "Acción crítica" : o.ejemplar ? "La mejor" : "Se puede mejorar"} · {puntos(o.puntos)}</p>
+                  {o.critica && <p className="text-xs mt-0.5 text-red-800 dark:text-red-200">{o.critica}</p>}
+                  {o.responde && <p className="text-xs mt-0.5 italic">Responde: {o.responde}</p>}
+                  <p className="text-xs mt-0.5 text-muted-foreground">Lo que pasa: {o.pasa}</p>
+                  <p className="text-xs mt-0.5 text-muted-foreground">Por qué: {o.explica}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground"><span className="font-semibold">En el camino ejemplar:</span> {e.camino.titulo}. {e.camino.porque}</p>
+          </section>
+        ))}
+        {p.rondas.map((r, k) => (
+          <section key={r.id} className="rounded-xl border border-border p-3 space-y-2">
+            <p className="font-semibold">Ronda {k + 1}: {r.titulo}</p>
+            <p className="text-xs text-muted-foreground">Mide: {r.competencia}</p>
+            <p>{r.situacion}</p>
+            <p className="font-medium">{r.pregunta}</p>
+            <p className="text-xs text-muted-foreground">En el orden de quien sabe (el alumno las ve mezcladas):</p>
+            <ol className="space-y-2 list-decimal pl-5">
+              {r.opciones.map((o, i) => (
+                <li key={i} className="pl-1">
+                  <span className="break-words">{o.texto}</span>
+                  <span className="block text-xs text-muted-foreground">{o.porque}</span>
+                  {o.critica && <span className="block text-xs text-red-800 dark:text-red-200">Ponerla primero es una acción crítica: {o.critica}</span>}
+                </li>
+              ))}
+            </ol>
+            <p className="text-xs text-muted-foreground"><span className="font-semibold">En el camino ejemplar:</span> {r.camino.titulo}. {r.camino.porque}</p>
+          </section>
+        ))}
+        <p><span className="font-semibold">La pregunta del cierre:</span> {p.cierre}</p>
+        <Link href={`/academia/laboratorio/${p.id}`}>
+          <Button size="sm" variant="outline"><FlaskConical className="w-4 h-4 mr-1.5" aria-hidden="true" /> Probarla como alumno</Button>
+        </Link>
+        {puedeObservar && <ObservarPractica materiaId={materiaId} titulo={p.titulo} />}
+      </div>
+    </details>
+  );
+}
+
+function Laboratorio({ d }: { d: ContenidoDetalle }) {
+  const practicas = d.laboratorio ?? [];
+  return (
+    <div className="space-y-3" data-testid="contenido-laboratorio">
+      <p className="text-sm text-muted-foreground">
+        Las prácticas del laboratorio ministerial de esta materia, con todo su texto y lo que vale cada opción (el alumno lo ve recién al responder).
+        Entran en la aprobación doctrinal de la materia: si cambian, la aprobación deja de estar vigente. Tus intentos de prueba no cuentan en el informe.
+      </p>
+      {practicas.map((p) => <TarjetaPractica key={p.id} p={p} materiaId={d.materia.id} puedeObservar={d.puede.observar} />)}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- la página
 
 export default function AcademiaDireccionContenido() {
@@ -573,7 +725,7 @@ export default function AcademiaDireccionContenido() {
   useTituloAcademia(q.data ? `Revisión del contenido · ${q.data.materia.titulo}` : "Revisión del contenido");
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    return t && ["lecciones", "examen", "escritas", "repaso"].includes(t) ? t : "lecciones";
+    return t && ["lecciones", "examen", "escritas", "repaso", "laboratorio"].includes(t) ? t : "lecciones";
   });
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -631,6 +783,11 @@ export default function AcademiaDireccionContenido() {
             <TabsTrigger value="examen" className="flex-1 min-w-[140px]" data-testid="contenido-tab-examen">Análisis del examen</TabsTrigger>
             <TabsTrigger value="escritas" className="flex-1 min-w-[140px]" data-testid="contenido-tab-escritas">Preguntas escritas</TabsTrigger>
             <TabsTrigger value="repaso" className="flex-1 min-w-[140px]" data-testid="contenido-tab-repaso">Repaso</TabsTrigger>
+            {(d.laboratorio?.length ?? 0) > 0 && (
+              <TabsTrigger value="laboratorio" className="flex-1 min-w-[140px]" data-testid="contenido-tab-laboratorio">
+                Laboratorio <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] leading-5">{d.laboratorio!.length}</span>
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="lecciones"><Lecciones d={d} /></TabsContent>
           <TabsContent value="examen">{tab === "examen" && <Analisis d={d} />}</TabsContent>
@@ -643,6 +800,7 @@ export default function AcademiaDireccionContenido() {
             </div>
           </TabsContent>
           <TabsContent value="repaso">{tab === "repaso" && <Repaso d={d} />}</TabsContent>
+          {(d.laboratorio?.length ?? 0) > 0 && <TabsContent value="laboratorio">{tab === "laboratorio" && <Laboratorio d={d} />}</TabsContent>}
         </Tabs>
       </div>
     </Layout>

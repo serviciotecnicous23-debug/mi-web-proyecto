@@ -38,8 +38,13 @@ export const TIPOS_SEGUIMIENTO: { id: TipoSeguimiento; texto: string }[] = [
 export const LIMITES_SEGUIMIENTO = { min: 5, max: 1500 };
 export type NotaSeguimiento = { id: number; tipo: TipoSeguimiento; texto: string; autor: string; fecha: string };
 
-export type NivelAvance = { n: number; nombre: string; aprobadas: number; enCurso: number; de: number; completado: string | null; promedio: number | null; actual: boolean };
-export type EspecialidadAvance = { id: string; nombre: string; aprobadas: number; enCurso: number; de: number; completada: string | null };
+/** El mejor intento de un examen de cierre: el integral de un nivel (se aprueba con 75) o el trabajo final de una especialidad (70). */
+export type CierreAvance = { mejor: number; intentos: number; aprobado: boolean };
+export type NivelAvance = {
+  n: number; nombre: string; aprobadas: number; enCurso: number; de: number; completado: string | null; promedio: number | null; actual: boolean;
+  integral?: CierreAvance | null;
+};
+export type EspecialidadAvance = { id: string; nombre: string; aprobadas: number; enCurso: number; de: number; completada: string | null; trabajo?: CierreAvance | null };
 export type ComponenteNota = { id: string; texto: string; peso: number; valor: number | null };
 export type MateriaNotas = {
   id: string;
@@ -251,7 +256,7 @@ export function alertasDe(d: DatosAlertas): AlertaPerfil[] {
   const { escritas, actividades } = d.porRevisar;
   if (escritas + actividades > 0) {
     const partes = [escritas ? `${escritas} ${escritas === 1 ? "respuesta escrita" : "respuestas escritas"}` : "", actividades ? `${actividades} ${actividades === 1 ? "actividad" : "actividades"}` : ""].filter(Boolean);
-    out.push({ clave: "revision", gravedad: "info", titulo: `Espera tu revisión: ${partes.join(" y ")}`, detalle: "Están en «Para revisar» del panel." });
+    out.push({ clave: "revision", gravedad: "info", titulo: `Espera tu revisión: ${partes.join(" y ")}`, detalle: "Están en «Pendientes» del panel." });
   }
   const orden: Record<GravedadAlerta, number> = { alta: 0, media: 1, info: 2 };
   return out.sort((a, b) => orden[a.gravedad] - orden[b.gravedad]);
@@ -351,4 +356,22 @@ export type InformeMateria = {
   tiempo: { lectura: number; examenes: number };
   /** Si se ven los textos de las preguntas, sus respuestas y sus reflexiones (la Administración). */
   completo: boolean;
+  /** Sus prácticas del laboratorio ministerial en esta materia (solo la Administración; sin los intentos de prueba). */
+  laboratorio?: PracticaInforme[] | null;
+};
+
+/** Una práctica del laboratorio en el informe de una materia: sus intentos, el primero, el mejor y lo que se llevó. */
+export type PracticaInforme = {
+  id: string;
+  titulo: string;
+  intentos: number;
+  terminados: number;
+  primero: number | null;
+  mejor: number | null;
+  /** El nivel con su mejor intento: Ejemplar, Competente, En desarrollo o Inicial. */
+  nivel: string | null;
+  criticas: number;
+  ultimo: string | null;
+  /** Lo que escribió en «Lo que me llevo» la última vez. */
+  llevo: string | null;
 };

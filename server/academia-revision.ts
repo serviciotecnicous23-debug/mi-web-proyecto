@@ -8,8 +8,8 @@
  * - abrir o cerrar la academia para todos;
  * - el historial de todos esos cambios (audit_log, entity_type «academia»), con quién, cuándo y por qué.
  *
- * Cada ruta comprueba su capacidad (shared/academia-permisos.ts): revisar, la Dirección académica y los profesores; los
- * documentos, la Dirección académica; abrir la academia, la Administración y el Director del Ministerio.
+ * Cada ruta comprueba su capacidad (shared/academia-permisos.ts). Revisar, corregir los documentos y abrir la academia son
+ * solo de la Administración (el rol «admin» de la web); los maestros, los líderes y las iglesias solo consultan.
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
@@ -572,7 +572,7 @@ export function registerAcademiaRevisionRoutes(app: Express) {
     }
   });
 
-  // Abrir la academia para todos (o volver a la vista previa). Solo la Administración y el Director del Ministerio.
+  // Abrir la academia para todos (o volver a la vista previa). Solo la Administración.
   app.post("/api/academia/direccion/apertura", async (req, res) => {
     try {
       const p = await permisoDe(req, res, "abrir");

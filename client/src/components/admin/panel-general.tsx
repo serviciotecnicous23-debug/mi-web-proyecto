@@ -6,18 +6,22 @@
 // - las cifras compactas;
 // - la ventana para confirmar lo que no se puede deshacer (borrar, rechazar o desactivar).
 import { useState, type ReactNode } from "react";
-import { BookOpen, Calendar, CheckCircle2, ChevronRight, Flag, GraduationCap, Inbox, LayoutDashboard, Mail, MessageSquare, Radio, UserPlus, Users } from "lucide-react";
+import { Link } from "wouter";
+import {
+  BookOpen, Calendar, CheckCircle2, ChevronRight, Church, Flag, GraduationCap, Inbox, LayoutDashboard, Mail, MessageSquare, Radio, UserCheck, UserPlus, Users,
+} from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 /** Las partes del panel (las pestañas de siempre; sus nombres siguen sirviendo en ?tab=). */
-export type Parte = "pending" | "users" | "courses" | "teacher-requests" | "messages" | "posts" | "denuncias" | "events" | "content" | "radio-library" | "live";
+export type Parte =
+  | "pending" | "users" | "alliance" | "courses" | "teacher-requests" | "fichas" | "messages" | "posts" | "denuncias" | "events" | "content" | "radio-library" | "live";
 export type Grupo = { id: string; texto: string; icono: typeof Users; partes: { id: Parte; texto: string }[] };
 
 export const GRUPOS: Grupo[] = [
-  { id: "personas", texto: "Personas", icono: Users, partes: [{ id: "pending", texto: "Solicitudes" }, { id: "users", texto: "Miembros" }] },
-  { id: "cursos", texto: "Cursos", icono: GraduationCap, partes: [{ id: "courses", texto: "Cursos" }, { id: "teacher-requests", texto: "Maestros" }] },
+  { id: "personas", texto: "Personas", icono: Users, partes: [{ id: "pending", texto: "Solicitudes" }, { id: "users", texto: "Miembros" }, { id: "alliance", texto: "Alianzas" }] },
+  { id: "cursos", texto: "Cursos", icono: GraduationCap, partes: [{ id: "courses", texto: "Cursos" }, { id: "teacher-requests", texto: "Maestros" }, { id: "fichas", texto: "Fichas" }] },
   { id: "comunidad", texto: "Comunidad", icono: MessageSquare, partes: [{ id: "messages", texto: "Mensajes" }, { id: "posts", texto: "Publicaciones" }, { id: "denuncias", texto: "Denuncias" }] },
   { id: "sitio", texto: "Sitio", icono: Calendar, partes: [{ id: "events", texto: "Eventos" }, { id: "content", texto: "Textos de la web" }] },
   { id: "radio", texto: "Radio", icono: Radio, partes: [{ id: "radio-library", texto: "Biblioteca" }, { id: "live", texto: "En vivo" }] },
@@ -71,23 +75,42 @@ export function NavPanelGeneral({ actual, alElegir, avisos }: { actual: string; 
 
 type Tarea = { clave: string; icono: typeof Inbox; uno: string; varios: string; detalle: string; destino: Parte; n: number };
 
-/** Lo que espera a la Administración: cuentas por aprobar, inscripciones, maestros, mensajes y denuncias. */
-export function LoQueTeTocaGeneral({ avisos, alElegir }: { avisos: Partial<Record<Parte, number>>; alElegir: (destino: string) => void }) {
+/**
+ * Lo que espera a la Administración: cuentas por aprobar, solicitudes de alianza, inscripciones, maestros, fichas
+ * ministeriales, mensajes, denuncias y, aparte, lo que espera en la academia (que lleva a su panel).
+ */
+export function LoQueTeTocaGeneral({ avisos, alElegir, academia = 0 }: { avisos: Partial<Record<Parte, number>>; alElegir: (destino: string) => void; academia?: number }) {
   const tareas: Tarea[] = [
     { clave: "cuentas", icono: UserPlus, uno: "cuenta nueva por aprobar", varios: "cuentas nuevas por aprobar", detalle: "Pidieron unirse al ministerio. Aprueba o rechaza cada una.", destino: "pending" as Parte, n: avisos.pending ?? 0 },
+    { clave: "alianzas", icono: Church, uno: "iglesia que pide ser aliada", varios: "iglesias que piden ser aliadas", detalle: "Llegaron desde la página «Alianza». Escríbele al pastor y decide.", destino: "alliance" as Parte, n: avisos.alliance ?? 0 },
     { clave: "inscripciones", icono: GraduationCap, uno: "inscripción a un curso por aprobar", varios: "inscripciones a cursos por aprobar", detalle: "El curso se abre solo, con los botones para aprobar o rechazar.", destino: "courses" as Parte, n: avisos.courses ?? 0 },
     { clave: "maestros", icono: BookOpen, uno: "obrero que pide enseñar un curso", varios: "obreros que piden enseñar un curso", detalle: "Al aprobar, queda como maestro del curso.", destino: "teacher-requests" as Parte, n: avisos["teacher-requests"] ?? 0 },
+    { clave: "fichas", icono: UserCheck, uno: "ficha ministerial por aprobar", varios: "fichas ministeriales por aprobar", detalle: "Al aprobarse, cada ficha aparece en el directorio de maestros.", destino: "fichas" as Parte, n: avisos.fichas ?? 0 },
     { clave: "mensajes", icono: Mail, uno: "mensaje de contacto sin leer", varios: "mensajes de contacto sin leer", detalle: "Lo que escribieron en el formulario de contacto.", destino: "messages" as Parte, n: avisos.messages ?? 0 },
     { clave: "denuncias", icono: Flag, uno: "denuncia por revisar", varios: "denuncias por revisar", detalle: "Lo que los miembros denunciaron en la comunidad.", destino: "denuncias" as Parte, n: avisos.denuncias ?? 0 },
   ].filter((t) => t.n > 0);
   return (
     <section className="space-y-2" data-testid="lo-que-te-toca-general" data-tareas={tareas.length}>
       <h2 className="text-xl font-bold flex items-center gap-2">
-        {tareas.length ? <Inbox className="w-5 h-5 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />}
-        {tareas.length ? "Lo que te toca" : "Todo al día"}
+        {tareas.length || academia ? <Inbox className="w-5 h-5 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />}
+        {tareas.length || academia ? "Lo que te toca" : "Todo al día"}
       </h2>
-      {!tareas.length && <p className="text-sm text-muted-foreground">No hay cuentas, inscripciones, mensajes ni denuncias esperando.</p>}
+      {!tareas.length && !academia && (
+        <p className="text-sm text-muted-foreground">No hay cuentas, alianzas, inscripciones, obreros, fichas, mensajes, denuncias ni nada de la academia esperando.</p>
+      )}
       <ul className="space-y-2">
+        {academia > 0 && (
+          <li>
+            <Link href="/admin/academia?tab=pendientes" className="w-full glass-card border border-orange-500/40 p-4 flex items-center gap-3 text-left min-h-[72px] hover:border-orange-500 transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange-500" data-testid="tarea-general-academia">
+              <span className="rounded-full bg-orange-500/15 p-2.5 shrink-0"><GraduationCap className="w-5 h-5 text-orange-600" aria-hidden="true" /></span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-semibold leading-snug">{academia} {academia === 1 ? "cosa espera en la academia" : "cosas esperan en la academia"}</span>
+                <span className="block text-sm text-muted-foreground mt-0.5">Respuestas escritas, pedidos de revisión, actividades de los niveles o materias por aprobar.</span>
+              </span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" aria-hidden="true" />
+            </Link>
+          </li>
+        )}
         {tareas.map((t) => {
           const Icono = t.icono;
           return (

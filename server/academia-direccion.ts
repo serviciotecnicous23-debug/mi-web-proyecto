@@ -14,7 +14,7 @@ import { alcanceDe, rolAcademia, type Alcance, type Capacidad } from "@shared/ac
 import type {
   ActividadItem, AlumnoDetalle, AlumnoFila, DireccionResumen, GestionAlumno, MateriaAvance, MateriaReporte, MateriaSeguimiento,
 } from "@shared/academia-direccion";
-import { academiaAbierta, accesoDe, claveFinal, frenar, inscritoDe } from "./academia-comun";
+import { academiaAbierta, accesoDe, claveFinal, diaTexas, frenar, inscritoDe } from "./academia-comun";
 import { fichaDe } from "./academia-inscripcion";
 import { aCsv } from "./academia-csv";
 import { archivoDelExpediente, enviarPdf, expedientePdf } from "./academia-pdf";
@@ -311,18 +311,23 @@ function contar(valores: string[]): { nombre: string; n: number }[] {
 }
 
 /** Lo que espera revisión (solo para quien revisa): las escritas marcadas, los pedidos de revisión y las actividades por confirmar. */
-async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
+export async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]> {
   if (!puede(p, "revisar")) return { escritas: 0, apelaciones: 0, actividades: 0, porTipo: [] };
+  // una defensa programada para más adelante todavía no se puede evaluar: no cuenta hasta su día (en Texas)
+  const hoy = diaTexas();
+  const porConfirmar = `estado = 'pendiente' AND NOT (tipo = 'proyecto' AND defensa IS NOT NULL AND COALESCE(defensa->>'fecha', '') > $1)`;
   const [{ rows }, { rows: tipos }] = await Promise.all([
     pool.query(
       `SELECT (SELECT count(*)::int FROM academia_respuestas WHERE revisar AND revisada_at IS NULL) AS escritas,
               (SELECT count(*)::int FROM academia_apelaciones WHERE estado = 'pendiente') AS apelaciones,
-              (SELECT count(*)::int FROM academia_actividades WHERE estado = 'pendiente') AS actividades`,
+              (SELECT count(*)::int FROM academia_actividades WHERE ${porConfirmar}) AS actividades`,
+      [hoy],
     ),
     // el proyecto con la defensa ya programada cuenta aparte: espera la defensa y su evaluación, no que la programen
     pool.query(
       `SELECT CASE WHEN tipo = 'proyecto' AND defensa IS NOT NULL THEN 'defensa' ELSE tipo END AS tipo, count(*)::int AS n
-         FROM academia_actividades WHERE estado = 'pendiente' GROUP BY 1 ORDER BY 2 DESC`,
+         FROM academia_actividades WHERE ${porConfirmar} GROUP BY 1 ORDER BY 2 DESC`,
+      [hoy],
     ),
   ]);
   return {
@@ -333,7 +338,7 @@ async function pendientesDe(p: Permiso): Promise<DireccionResumen["pendientes"]>
   };
 }
 
-/** Quienes necesitan ayuda: los alumnos con alertas que piden actuar o mirar, los más urgentes primero (hasta 40). */
+/** Quienes necesitan ayuda: los alumnos con alertas que piden actuar o mirar, los más urgentes primero (todos: el resumen manda 40). */
 async function ayudaDe(filas: AlumnoFila[]): Promise<DireccionResumen["ayuda"]> {
   const alertas = await alertasEnLote(filas);
   return filas
@@ -342,8 +347,7 @@ async function ayudaDe(filas: AlumnoFila[]): Promise<DireccionResumen["ayuda"]> 
     .sort((a, b) => {
       const altas = (x: typeof a) => x.alertas.filter((y) => y.gravedad === "alta").length;
       return altas(b) - altas(a) || b.alertas.length - a.alertas.length || a.nombre.localeCompare(b.nombre, "es");
-    })
-    .slice(0, 40);
+    });
 }
 
 async function iglesiaDe(id: number | null): Promise<{ id: number; nombre: string } | null> {
@@ -386,7 +390,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         paises: contar(filas.map((f) => f.pais)),
         iglesias: contar(filas.map((f) => f.iglesia || "Sin iglesia")),
         detenidos: filas.filter((f) => f.enCurso.length > 0 && ahora - Date.parse(f.ultima) >= DIAS_DETENIDO * 86_400_000).slice(0, 50),
-        ayuda: await ayudaDe(filas),
+        ...(await ayudaDe(filas).then((todos) => ({ ayuda: todos.slice(0, 40), ayudaTotal: todos.length }))),
         tendencias: await tendenciasDe(ids),
         actividad: await actividadDe(ids, 40),
         abierta: await academiaAbierta(),
@@ -496,6 +500,9 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       if (!p) return;
       const archivo = String(req.params.archivo || "");
       if (!["alumnos.csv", "avance.csv", "materias.csv"].includes(archivo)) return res.status(404).json({ message: "No existe ese reporte." });
+      // el avance de una sola materia (desde su página): ?materia=<id>
+      const soloMateria = archivo === "avance.csv" && typeof req.query.materia === "string" ? materiaPorId(req.query.materia) ?? null : null;
+      if (archivo === "avance.csv" && typeof req.query.materia === "string" && !soloMateria) return res.status(404).json({ message: "Esa materia no existe." });
       if (frenar(`ax:${p.userId}`, 1500)) return res.status(429).json({ message: "Espera un momento." });
       const contacto = puede(p, "contacto");
       const filas = await filasDe(p, contacto);
@@ -521,6 +528,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
         ];
         for (const f of filas) {
           for (const a of avances.get(f.userId) ?? []) {
+            if (soloMateria && a.id !== soloMateria.id) continue;
             datos.push([
               f.matricula, f.nombre, f.iglesia, a.titulo, fechaCorta(a.inscrita), a.estado === "aprobada" ? "Aprobada" : "En curso", a.lecciones, a.de,
               a.versiculo ? "Sí" : "No", a.intentos, a.mejor ?? "", a.nota ?? "", fechaCorta(a.aprobada), a.certificado ?? "",
@@ -535,7 +543,7 @@ export function registerAcademiaDireccionRoutes(app: Express) {
       }
       const fecha = new Date().toISOString().slice(0, 10);
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="academia-${archivo.replace(".csv", "")}-${fecha}.csv"`);
+      res.setHeader("Content-Disposition", `attachment; filename="academia-${archivo.replace(".csv", "")}${soloMateria ? `-${soloMateria.id}` : ""}-${fecha}.csv"`);
       res.setHeader("Cache-Control", "no-store");
       res.send(aCsv(datos));
     } catch (err) {

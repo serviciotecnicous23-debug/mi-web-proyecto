@@ -655,7 +655,7 @@ export function rutasDeEvaluacion(app: Express, base: string, resolverBase: Reso
         revisores,
         "Pedido de revisión de un examen",
         `${await nombreAcademico(a.userId)} pidió que se revise ${ctx?.enFrase ?? "su examen"}: «${mensaje.slice(0, 160)}${mensaje.length > 160 ? "…" : ""}»`,
-        "/admin/academia?tab=revisar",
+        "/admin/academia?tab=pendientes&ir=pendientes-apelaciones",
       ).catch((err) => console.error("[academia] aviso de apelación:", err));
       res.setHeader("Cache-Control", "no-store");
       res.json({ apelacion: out.ok });
