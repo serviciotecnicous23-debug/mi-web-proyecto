@@ -131,7 +131,9 @@ español fluido, «tipo documental»):
   - el Nivel 2, el 19-nov-2026: 54 lecciones, unos 275 minutos, ≈82 MB, en el repositorio;
   - el Nivel 3, el 20-nov-2026: 60 lecciones, unos 400 minutos, en Cloudflare R2;
   - el Nivel 4, el 20-nov-2026: 60 lecciones, unos 360 minutos, en Cloudflare R2;
-  - el Nivel 5, el 20-nov-2026: 48 lecciones, unos 260 minutos, en Cloudflare R2.
+  - el Nivel 5, el 20-nov-2026: 48 lecciones, unos 260 minutos, en Cloudflare R2;
+  - las especialidades, de tres en tres, en Cloudflare R2: Alabanza y adoración, Bíblicos avanzados y Capellanía el
+    20-nov-2026 (90 lecciones, unos 550 minutos).
 
   El mismo día se grabaron otra vez 14 lecciones de los Niveles 1 a 3 que leían mal «c.» («hacia el año»), un año
   («setecientos un antes de Cristo») o un libro con número sin capítulo («un Corintios» por «Primera de Corintios»).
