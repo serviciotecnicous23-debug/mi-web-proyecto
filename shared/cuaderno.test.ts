@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  LIMITES, PLANTILLAS, bloque, bloquesValidos, citaEscrita, citaGuardada, citasDeNota, etiquetasValidas, paraBuscar, sinMarcas, textoPlano, trozosDe,
+  LIMITES, PLANTILLAS, bloque, bloquesValidos, citaEscrita, citaGuardada, citasDeNota, etiquetasValidas, grupoDeFecha, paraBuscar, sinMarcas, textoPlano, trozosDe,
 } from "./cuaderno";
 
 test("las marcas: negrita, cursiva y resaltado, sin tocar el resto", () => {
@@ -80,4 +80,25 @@ test("las plantillas traen bloques válidos y nuevos cada vez", () => {
     assert.ok("bloques" in bloquesValidos(a), p.id);
     assert.notEqual(a[0].id, b[0].id, `${p.id}: ids nuevos en cada nota`);
   }
+});
+
+test("el subrayado y el tachado, como en Notas, sin confundirse con la cursiva", () => {
+  const z = trozosDe("Es ++importante++ y ya no ~~pendiente~~, con _fe_.");
+  assert.deepEqual(z.filter((x) => x.subrayado).map((x) => x.t), ["importante"]);
+  assert.deepEqual(z.filter((x) => x.tachado).map((x) => x.t), ["pendiente"]);
+  assert.deepEqual(z.filter((x) => x.cursiva).map((x) => x.t), ["fe"]);
+  assert.equal(sinMarcas("Es ++importante++ y ~~no~~"), "Es importante y no");
+  // un signo suelto no se toma como marca
+  assert.equal(trozosDe("2 + 2 = 4 y ~ 5").length, 1);
+});
+
+test("los grupos de la lista por fecha: hoy, ayer, los últimos 7 y 30 días, el mes y el año", () => {
+  const ahora = new Date(2026, 10, 23, 10, 0);
+  const hace = (d: number) => new Date(2026, 10, 23 - d, 9, 0).toISOString();
+  assert.equal(grupoDeFecha(hace(0), ahora), "Hoy");
+  assert.equal(grupoDeFecha(hace(1), ahora), "Ayer");
+  assert.equal(grupoDeFecha(hace(3), ahora), "Últimos 7 días");
+  assert.equal(grupoDeFecha(hace(20), ahora), "Últimos 30 días");
+  assert.equal(grupoDeFecha(new Date(2026, 2, 5).toISOString(), ahora), "Marzo");
+  assert.equal(grupoDeFecha(new Date(2025, 6, 1).toISOString(), ahora), "2025");
 });

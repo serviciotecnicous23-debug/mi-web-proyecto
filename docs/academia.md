@@ -203,33 +203,43 @@ la sincronización de la biblioteca»). Es el mismo cuaderno en la academia (`/a
 - **Las notas** están hechas de bloques, como un cuaderno digital moderno, pensado para el teléfono (`shared/cuaderno.ts`,
   `client/src/components/cuaderno/`). Los tipos de bloque son texto, título, subtítulo, lista, lista numerada, tarea,
   cita, versículo, resaltado, idea importante y separador.
-  - El texto lleva marcas ligeras: `**negrita**`, `_cursiva_` y `==resaltado==`.
+  - El texto lleva marcas ligeras: `**negrita**`, `_cursiva_`, `++subrayado++`, `~~tachado~~` y `==resaltado==`.
   - Una cita escrita a mano («Juan 3:16», «1 Corintios 13:4-7», también en minúscula) se vuelve un enlace: al tocarla se
     ve el versículo de la RV1960 sin salir de la nota.
   - El bloque de versículo trae el texto del pasaje.
-- **El editor:**
-  - Se toca un bloque para escribir. Enter crea el siguiente, y las listas siguen siendo listas. Borrar en un bloque
-    vacío lo quita, y «/» abre el menú de bloques. Tab da sangría a las listas.
-  - La barra tiene el tipo de bloque, negrita, cursiva, resaltar, insertar un versículo, **dictar con la voz** (el
-    reconocimiento de voz del navegador, en español), las plantillas, deshacer, subir, bajar y eliminar.
-  - **Plantillas de estudio:** notas de clase (método Cornell), estudio inductivo, devocional, notas de una prédica y
-    lista de oración.
+- **El editor, con el estilo de Notas de Apple** (rehecho el 23-nov porque Luis lo veía complicado y con muchas preguntas):
+  - Una nota es **el título y el texto**, nada más. La fecha va arriba, el título grande y el texto se escribe de corrido:
+    cada renglón es un bloque, pero no se ven cajas. Tocar debajo del texto sigue escribiendo.
+  - **Una nota nueva se abre al instante** y se crea en el servidor con lo primero que se escribe (`notaNueva` en
+    `api.ts`, id 0): no hay que elegir nada antes y no quedan notas vacías. En la lección, el título es el de la lección.
+  - La barra (arriba, fija mientras se escribe): **«Aa»** con el estilo del renglón (título, encabezado, cuerpo o cita),
+    las marcas (negrita, cursiva, subrayado, tachado y resaltar), las listas (viñetas, numerada y tareas) y la sangría; la
+    **lista de tareas** con el círculo de Notas; **insertar** un versículo, una idea importante o una línea; **dictar con
+    la voz**; deshacer y **Listo** (deja de escribir).
+  - Enter sigue la lista, borrar en un renglón vacío de lista lo vuelve texto y en uno de texto lo quita, «/» abre el menú
+    de estilos y Tab da sangría. Ctrl+B, Ctrl+I y Ctrl+U ponen o quitan la marca.
+  - Ya no se ofrecen plantillas con preguntas (siguen en `PLANTILLAS` de `shared/cuaderno.ts` para el servidor).
+  - La letra es la del sistema y la hoja es blanca (oscura en el tema oscuro): clases `notas-sistema`, `notas-papel` y
+    `notas-campo` en `client/src/styles.css`.
 - **Se guarda solo,** un momento después del último cambio (`useNotaEditable`).
   - Sin conexión, lo escrito queda en el teléfono y se manda al volver la conexión.
   - Cada guardado lleva la versión de la nota. Si otro equipo guardó antes, el servidor responde 409 con lo guardado y la
     página no pisa nada: guarda lo de este equipo como una copia.
-- **La organización:** búsqueda sin tildes («oracion» encuentra «oración»), fijadas arriba, etiquetas, un filtro por
-  materia (las notas de una lección quedan unidas a su materia) y una papelera que se vacía sola a los 30 días.
+- **La organización, como en Notas:** las carpetas en una fila (todas, fijadas, cada materia, las etiquetas y
+  Eliminadas), la búsqueda sin tildes («oracion» encuentra «oración») y las notas agrupadas por fecha: Fijadas, Hoy, Ayer,
+  Últimos 7 días, Últimos 30 días, el mes y el año (`grupoDeFecha`). Cada nota muestra el título, la hora y el comienzo del
+  texto. El lápiz escribe una nota nueva (en el teléfono, flotante). Fijar, las etiquetas (opcionales) y eliminar van en
+  «⋯»; las eliminadas se recuperan durante 30 días.
 - **En la lección:**
   - Al seleccionar un texto con el dedo o el mouse aparece una barra para **resaltarlo** en cinco colores, **pasarlo al
     cuaderno** (como cita, con el enlace a la lección) o copiarlo.
   - Lo resaltado queda pintado en la lección y, como lo pasado al cuaderno, **se guarda también al final de la nota de
     la lección**, con su color y el enlace a la lección: todo lo que se toma de una lección está en un solo lugar. El
     aviso trae «Ver mi nota», que abre la nota justo en lo nuevo.
-  - El botón «Cuaderno» abre la nota de esa lección (se escribe mientras se lee, en blanco o con las notas de clase) y
-    sus resaltados, con «Volver a la lección» arriba y «Listo» al final.
-  - En Mi cuaderno, cada nota abierta tiene «Listo» (la cierra; se guarda sola) y, si es de una lección, «Volver a la
-    lección».
+  - El botón «Cuaderno» abre directo la nota de esa lección (título y texto, sin elegir nada antes) y sus resaltados,
+    con «‹ Lección» arriba y «Volver a la lección» al final.
+  - En Mi cuaderno, cada nota abierta tiene «‹ Notas» (vuelve a la lista; se guarda sola) y, si es de una lección, «Ir a
+    la lección».
   - **No se abre dentro de los exámenes,** por el código de honor: se usa para estudiar y repasar antes.
 - **En la Biblioteca:**
   - El cuaderno muestra también lo que se resaltó y anotó en la Biblia, versículo por versículo.

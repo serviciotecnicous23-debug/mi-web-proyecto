@@ -1,4 +1,4 @@
-// El texto de un bloque del cuaderno con su formato: **negrita**, _cursiva_, ==resaltado== y las citas bíblicas como
+// El texto de un bloque del cuaderno con su formato: **negrita**, _cursiva_, ++subrayado++, ~~tachado~~, ==resaltado== y las citas bíblicas como
 // enlaces. Al tocar una cita se ve el versículo (RV1960) sin salir de la nota, con el botón para abrir el capítulo.
 import { Fragment } from "react";
 import { BookOpen } from "lucide-react";
@@ -76,6 +76,8 @@ export function TextoCuaderno({ texto, ayuda, alAbrirCita }: { texto: string; ay
       {trozosDe(texto).map((z, i) => {
         let nodo: React.ReactNode = z.cita ? <EnlaceCita texto={z.t} cita={z.cita} alAbrirCita={alAbrirCita} /> : z.t;
         if (z.resaltado) nodo = <mark className={`${fondoDeColor("amarillo")} rounded px-0.5 text-inherit`}>{nodo}</mark>;
+        if (z.tachado) nodo = <s className="decoration-current">{nodo}</s>;
+        if (z.subrayado) nodo = <u className="underline-offset-2">{nodo}</u>;
         if (z.cursiva) nodo = <em>{nodo}</em>;
         if (z.negrita) nodo = <strong>{nodo}</strong>;
         return <Fragment key={i}>{nodo}</Fragment>;

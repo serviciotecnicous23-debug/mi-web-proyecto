@@ -2021,3 +2021,19 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
+
+/* El cuaderno con el estilo de Notas de Apple (components/cuaderno): la letra del sistema y la hoja blanca, oscura en el
+   tema oscuro. CSS normal, sin capa: en Tailwind 4 una utilidad del mismo elemento no la pisa. */
+.notas-sistema {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.notas-papel { background-color: #ffffff; }
+.dark .notas-papel { background-color: #1c1c1e; }
+/* el título y los renglones de la nota, sin el vidrio ni el brillo de los demás campos de la web: una hoja limpia */
+.notas-campo,
+.notas-campo:focus {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}

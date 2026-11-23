@@ -1,18 +1,19 @@
 // El cuaderno dentro de una lección: al seleccionar un texto (con el dedo o el mouse) aparece una barra para
-// resaltarlo en cinco colores, pasarlo al cuaderno o copiarlo; el botón «Cuaderno» abre la nota de esa lección (se
-// escribe mientras se lee) y sus resaltados. Lo resaltado se ve pintado en la lección (marcas.tsx) y, como lo pasado al
-// cuaderno, queda también en la nota de la lección: el aviso trae «Ver mi nota», que la abre justo en lo nuevo.
+// resaltarlo en cinco colores, pasarlo al cuaderno o copiarlo; el botón «Cuaderno» abre la nota de esa lección, con el
+// estilo de Notas: el título y el texto, sin elegir nada antes (si todavía no hay nota, se crea con lo primero que se
+// escribe). Lo resaltado se ve pintado en la lección (marcas.tsx) y, como lo pasado al cuaderno, queda también en la
+// nota de la lección: el aviso trae «Ver mi nota», que la abre justo en lo nuevo.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Copy, ExternalLink, FilePlus2, Highlighter, LayoutTemplate, NotebookPen, Trash2, X } from "lucide-react";
+import { ChevronLeft, Copy, ExternalLink, Highlighter, NotebookPen, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/hooks/use-toast";
 import { COLORES, bloque, type BloqueCuaderno, type ColorCuaderno, type NotaCompleta, type ResaltadoLeccion } from "@shared/cuaderno";
-import { agregarALeccion, borrarResaltado, cambiarResaltado, crearNota, resaltar, useCuadernoLeccion } from "./api";
+import { agregarALeccion, borrarResaltado, cambiarResaltado, notaNueva, resaltar, useCuadernoLeccion } from "./api";
 import { EditorNota } from "./editor";
 import { fondoDeColor } from "./texto";
 import type { Marca } from "./marcas";
@@ -134,9 +135,9 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     try {
       for (const p of partes) {
         if (hechos) await esperar(320);
-        const { notaLeccion: notaNueva, ...r } = await resaltar({ leccionId, bloque: p.bloque, texto: p.texto.slice(0, 1200), color });
-        qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r], nota: notaNueva ?? v.nota } : { nota: notaNueva, resaltados: [r] }));
-        if (notaNueva) ultimaNota = notaNueva;
+        const { notaLeccion: notaDelServidor, ...r } = await resaltar({ leccionId, bloque: p.bloque, texto: p.texto.slice(0, 1200), color });
+        qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: [...v.resaltados, r], nota: notaDelServidor ?? v.nota } : { nota: notaDelServidor, resaltados: [r] }));
+        if (notaDelServidor) ultimaNota = notaDelServidor;
         hechos++;
       }
       qc.invalidateQueries({ queryKey: ["cuaderno", "resaltados"] });
@@ -182,15 +183,8 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
     }
   };
 
-  const empezar = async (plantilla?: string) => {
-    try {
-      const n = await crearNota({ leccionId, ...(plantilla ? { plantilla } : { bloques: [bloque("texto")] }) });
-      qc.setQueryData(clave, (v: any) => (v ? { ...v, nota: n } : { nota: n, resaltados: [] }));
-      qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
-    } catch (e: any) {
-      toast({ title: "No se pudo crear la nota", description: e?.message, variant: "destructive" });
-    }
-  };
+  // la nota de la lección todavía sin crear: el título es el de la lección y se crea con lo primero que se escriba
+  const borrador = useMemo(() => notaNueva({ leccionId, titulo: leccionTitulo, leccionTitulo }), [leccionId, leccionTitulo]);
   const quitarResaltado = async (r: ResaltadoLeccion) => {
     await borrarResaltado(r.id);
     qc.setQueryData(clave, (v: any) => (v ? { ...v, resaltados: v.resaltados.filter((x: ResaltadoLeccion) => x.id !== r.id) } : v));
@@ -248,67 +242,71 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
       </div>
 
       <Sheet open={abierto} onOpenChange={setAbierto}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-4 sm:p-6" data-testid="cuaderno-panel">
-          <SheetHeader className="text-left">
-            <Button variant="outline" size="sm" onClick={() => setAbierto(false)} className="self-start mb-2" data-testid="cuaderno-volver-leccion">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Volver a la lección
-            </Button>
-            <SheetTitle className="flex items-center gap-2"><NotebookPen className="w-5 h-5 text-orange-500" /> Mi cuaderno</SheetTitle>
-            <p className="text-sm text-muted-foreground">{leccionTitulo}</p>
+        <SheetContent side="right" className="notas-papel notas-sistema w-full sm:max-w-xl overflow-y-auto p-4 sm:p-6" data-testid="cuaderno-panel">
+          <SheetHeader className="text-left space-y-0">
+            <div className="flex items-center gap-1 -ml-2 pr-8">
+              <button type="button" onClick={() => setAbierto(false)} className="h-9 pl-1 pr-2 rounded-full inline-flex items-center text-[16px] text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" data-testid="cuaderno-volver-leccion">
+                <ChevronLeft className="w-6 h-6 -ml-0.5" /> Lección
+              </button>
+              <span className="flex-1" />
+              {nota && (
+                <Link href={`/academia/cuaderno?nota=${nota.id}`} className="h-9 px-2 rounded-full inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-500/10">
+                  Mi cuaderno <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
+            <SheetTitle className="sr-only">Mi nota de la lección {leccionTitulo}</SheetTitle>
           </SheetHeader>
-          <div className="flex items-center gap-1.5 mt-3 mb-3">
-            {([["nota", "Mi nota"], ["resaltados", `Resaltados (${resaltados.length})`]] as const).map(([v, t]) => (
-              <button key={v} type="button" onClick={() => setPestana(v)} className={`px-3 py-1.5 rounded-full text-sm border ${pestana === v ? "bg-orange-600 text-white border-orange-600" : "border-border hover:bg-muted"}`}>
-                {t}
+          <div className="inline-flex w-full rounded-xl bg-muted/70 p-0.5 mt-2 mb-1" role="group" aria-label="Qué ver">
+            {([["nota", "Mi nota"], ["resaltados", `Resaltados (${resaltados.length})`]] as const).map(([v, tx]) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={pestana === v}
+                onClick={() => setPestana(v)}
+                className={`flex-1 h-8 rounded-[10px] text-sm transition ${pestana === v ? "bg-white dark:bg-[#48484a] shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {tx}
               </button>
             ))}
-            {nota && (
-              <Link href={`/academia/cuaderno?nota=${nota.id}`} className="ml-auto text-xs text-orange-700 dark:text-orange-300 hover:underline inline-flex items-center gap-1">
-                Abrir en mi cuaderno <ExternalLink className="w-3 h-3" />
-              </Link>
-            )}
           </div>
 
           {pestana === "nota" &&
             (q.isLoading ? (
-              <p className="text-sm text-muted-foreground">Abriendo tu nota…</p>
-            ) : nota ? (
+              <p className="text-sm text-muted-foreground mt-3">Abriendo tu nota…</p>
+            ) : (
               <EditorNota
-                key={nota.id}
-                nota={nota}
+                // la misma clave antes y después de crearse: no se pierde lo que se está escribiendo
+                key={`leccion-${leccionId}`}
+                nota={nota ?? borrador}
                 compacto
                 registrarAgregar={(f) => {
                   agregar.current = f;
                 }}
-                alGuardar={(r: NotaCompleta) => qc.setQueryData(clave, (v: any) => (v ? { ...v, nota: r } : v))}
+                alGuardar={(r: NotaCompleta) => {
+                  qc.setQueryData(clave, (v: any) => (v ? { ...v, nota: r } : { nota: r, resaltados: [] }));
+                }}
               />
-            ) : (
-              <div className="glass-card p-4 text-sm" data-testid="cuaderno-panel-vacio">
-                <p className="mb-3">Toma apuntes mientras lees: quedan en tu cuaderno, unidos a esta lección, y los ves en todos tus equipos.</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" className="fire-btn-primary" onClick={() => empezar("clase")} data-testid="cuaderno-empezar-clase"><LayoutTemplate className="w-4 h-4 mr-1" /> Notas de clase</Button>
-                  <Button size="sm" variant="outline" onClick={() => empezar()} data-testid="cuaderno-empezar"><FilePlus2 className="w-4 h-4 mr-1" /> En blanco</Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">Consejo: selecciona un texto de la lección. Lo que resaltes o pases «Al cuaderno» se guarda aquí, en tu nota de esta lección.</p>
-              </div>
             ))}
 
-          {pestana === "nota" && nota && (
-            <div ref={fin} className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-              <Button size="sm" className="fire-btn-primary" onClick={() => setAbierto(false)} data-testid="cuaderno-listo">Listo, volver a la lección</Button>
-              <span className="text-xs text-muted-foreground">Se guarda solo mientras escribes.</span>
+          {pestana === "nota" && (
+            <div ref={fin} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+              <button type="button" onClick={() => setAbierto(false)} className="h-10 px-4 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-[15px] font-semibold" data-testid="cuaderno-listo">
+                Volver a la lección
+              </button>
+              <span className="text-xs text-muted-foreground">Se guarda sola mientras escribes. Selecciona texto de la lección para pasarlo aquí.</span>
             </div>
           )}
 
           {pestana === "resaltados" &&
             (resaltados.length ? (
-              <ul className="space-y-2" data-testid="cuaderno-panel-resaltados">
+              <ul className="space-y-2 mt-2" data-testid="cuaderno-panel-resaltados">
                 {resaltados.map((r) => (
                   <li key={r.id} className="rounded-xl border p-2">
                     <p className={`rounded-lg px-2 py-1 text-[15px] leading-7 ${fondoDeColor(r.color)}`}>{r.texto}</p>
                     <div className="flex items-center gap-1 mt-1.5">
                       {COLORES.map((c) => (
-                        <button key={c} type="button" onClick={() => colorResaltado(r, c)} className={`w-5 h-5 rounded-full border ${PUNTO[c]} ${r.color === c ? "ring-2 ring-offset-1 ring-orange-500" : "border-black/10"}`} aria-label={`Cambiar a ${c}`} />
+                        <button key={c} type="button" onClick={() => colorResaltado(r, c)} className={`w-5 h-5 rounded-full border ${PUNTO[c]} ${r.color === c ? "ring-2 ring-offset-1 ring-amber-500" : "border-black/10"}`} aria-label={`Cambiar a ${c}`} />
                       ))}
                       <span className="flex-1" />
                       <Button size="sm" variant="ghost" onClick={() => quitarResaltado(r)} aria-label="Quitar el resaltado"><Trash2 className="w-4 h-4" /></Button>
@@ -317,7 +315,7 @@ export function CuadernoEnLeccion({ leccionId, leccionTitulo, contenedor }: { le
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">Selecciona un texto de la lección con el dedo o el mouse y elige un color.</p>
+              <p className="text-sm text-muted-foreground mt-3">Selecciona un texto de la lección con el dedo o el mouse y elige un color.</p>
             ))}
         </SheetContent>
       </Sheet>

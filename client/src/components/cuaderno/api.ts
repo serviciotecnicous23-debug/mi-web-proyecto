@@ -3,7 +3,7 @@
 // volver la conexión; si otro equipo guardó antes, no se pisa nada: lo de este equipo queda como copia.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { BloqueCuaderno, CuadernoLista, NotaCompleta, NotaResumen, ResaltadoLeccion } from "@shared/cuaderno";
+import { bloque, type BloqueCuaderno, type CuadernoLista, type NotaCompleta, type NotaResumen, type ResaltadoLeccion } from "@shared/cuaderno";
 
 export class ErrorCuaderno extends Error {
   status: number;
@@ -101,6 +101,21 @@ export const borrarResaltado = (id: number) => pedir<{ borrado: boolean }>("DELE
 
 // ---------------------------------------------------------------- el guardado automático
 
+/**
+ * Una nota nueva, todavía sin guardar (id 0): se abre al instante, como en Notas, y se crea en el servidor recién con lo
+ * primero que se escribe. Si no se escribe nada, no queda ninguna nota vacía.
+ */
+export function notaNueva(extra: Partial<NotaCompleta> = {}): NotaCompleta {
+  const ahora = new Date().toISOString();
+  return {
+    id: 0, titulo: "", extracto: "", materiaId: null, materiaTitulo: null, leccionId: null, leccionTitulo: null, etiquetas: [], color: null,
+    fijada: false, actualizada: ahora, borrada: null, bloques: [bloque("texto")], version: 0, creada: ahora, ...extra,
+  };
+}
+
+/** Si la nota tiene algo escrito (una nota nueva sin nada no se crea). */
+const tieneAlgo = (n: NotaCompleta) => !!n.titulo.trim() || n.bloques.some((b) => b.texto.trim() || b.ref?.trim() || b.t === "separador");
+
 export type EstadoGuardado = "guardado" | "guardando" | "pendiente" | "sin-conexion" | "conflicto" | "error";
 type Pendiente = { titulo: string; bloques: BloqueCuaderno[]; version: number; cuando: number };
 const CLAVE = (id: number) => `cuaderno:pendiente:${id}`;
@@ -135,6 +150,7 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
   const enVuelo = useRef(false);
   const otraVez = useRef(false);
   const ultima = useRef<NotaCompleta | null>(inicial);
+  const primera = useRef(true);
 
   // al abrir otra nota (o al llegar la del servidor), se toma esa; si había algo pendiente en este equipo, se recupera
   useEffect(() => {
@@ -143,6 +159,11 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
       ultima.current = null;
       return;
     }
+    // la que este editor acaba de crear o de guardar (llega de vuelta por el padre): ya la tiene, igual o más nueva, y lo
+    // escrito mientras tanto sigue aquí (al abrirla, la primera vez, siempre se toma y se recupera lo pendiente)
+    const yaLaTiene = !primera.current && !!ultima.current && inicial.id !== 0 && ultima.current.id === inicial.id && version.current >= inicial.version;
+    primera.current = false;
+    if (yaLaTiene) return;
     const pend = leerPendiente(inicial.id);
     if (pend && pend.version === inicial.version) {
       const recuperada = { ...inicial, titulo: pend.titulo, bloques: pend.bloques };
@@ -171,6 +192,29 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
     enVuelo.current = true;
     setEstado("guardando");
     try {
+      if (n.id === 0) {
+        // la nota nueva se crea con lo primero que se escribe (sin nada escrito, no se crea)
+        if (!tieneAlgo(n)) {
+          setEstado("guardado");
+          return;
+        }
+        const r = await crearNota({ titulo: n.titulo, bloques: n.bloques, materiaId: n.materiaId, leccionId: n.leccionId });
+        version.current = r.version;
+        // lo que se escribió mientras se creaba sigue en este editor y se guarda enseguida
+        const actual = ultima.current ?? n;
+        const siguio = actual !== n;
+        const adoptada: NotaCompleta = { ...r, titulo: actual.titulo, bloques: actual.bloques };
+        ultima.current = adoptada;
+        setNota((x) => (x ? { ...x, id: r.id, version: r.version, creada: r.creada, actualizada: r.actualizada, materiaId: r.materiaId, materiaTitulo: r.materiaTitulo, leccionId: r.leccionId, leccionTitulo: r.leccionTitulo } : x));
+        if (siguio) {
+          guardarPendiente(r.id, { titulo: actual.titulo, bloques: actual.bloques, version: r.version, cuando: Date.now() });
+          otraVez.current = true;
+        }
+        setEstado(siguio ? "pendiente" : "guardado");
+        qc.invalidateQueries({ queryKey: ["cuaderno", "lista"] });
+        alGuardar?.(siguio ? adoptada : r);
+        return;
+      }
       const r = await pedir<NotaCompleta>("PUT", `/api/cuaderno/notas/${n.id}`, { titulo: n.titulo, bloques: n.bloques, version: version.current });
       version.current = r.version;
       guardarPendiente(n.id, null);
@@ -190,10 +234,10 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
           setEstado("error");
         }
       } else if (!navigator.onLine || !(e instanceof ErrorCuaderno)) {
-        guardarPendiente(n.id, { titulo: n.titulo, bloques: n.bloques, version: version.current, cuando: Date.now() });
+        if (n.id !== 0) guardarPendiente(n.id, { titulo: n.titulo, bloques: n.bloques, version: version.current, cuando: Date.now() });
         setEstado("sin-conexion");
       } else {
-        guardarPendiente(n.id, { titulo: n.titulo, bloques: n.bloques, version: version.current, cuando: Date.now() });
+        if (n.id !== 0) guardarPendiente(n.id, { titulo: n.titulo, bloques: n.bloques, version: version.current, cuando: Date.now() });
         setEstado("error");
       }
     } finally {
@@ -220,7 +264,8 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
         if (!n) return n;
         const nueva = f(n);
         ultima.current = nueva;
-        guardarPendiente(nueva.id, { titulo: nueva.titulo, bloques: nueva.bloques, version: version.current, cuando: Date.now() });
+        // (la nota nueva todavía no tiene id: se guarda en el teléfono recién cuando existe)
+        if (nueva.id !== 0) guardarPendiente(nueva.id, { titulo: nueva.titulo, bloques: nueva.bloques, version: version.current, cuando: Date.now() });
         return nueva;
       });
       setEstado("pendiente");
@@ -239,7 +284,8 @@ export function useNotaEditable(inicial: NotaCompleta | null, alGuardar?: (n: No
       window.removeEventListener("online", alVolver);
       if (temporizador.current) {
         window.clearTimeout(temporizador.current);
-        if (ultima.current && leerPendiente(ultima.current.id)) void enviar();
+        const u = ultima.current;
+        if (u && (u.id === 0 ? tieneAlgo(u) : leerPendiente(u.id))) void enviar();
       }
     };
   }, [enviar, programar]);
