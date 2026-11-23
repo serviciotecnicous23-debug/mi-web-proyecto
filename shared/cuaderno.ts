@@ -3,7 +3,7 @@
  *
  * Cada persona tiene su cuaderno, con notas hechas de bloques, como un cuaderno digital moderno: párrafos, títulos,
  * listas, tareas, citas copiadas de las lecciones, versículos que traen su texto de la RV1960, resaltados y avisos. El
- * texto lleva marcas ligeras (**negrita**, _cursiva_, ==resaltado==) y las citas bíblicas que se escriben («Juan 3:16»,
+ * texto lleva marcas ligeras (**negrita**, _cursiva_, ++subrayado++, ~~tachado~~, ==resaltado==) y las citas bíblicas que se escriben («Juan 3:16»,
  * también en minúscula desde el teléfono) se vuelven enlaces a la Biblia de la web. Se guarda en la cuenta: se ve igual
  * en todos los equipos. Este módulo es liviano (no carga el catálogo de la academia): lo usan el servidor y la página.
  */
@@ -21,7 +21,7 @@ export type BloqueCuaderno = {
   /** Corto y al azar: identifica el bloque al moverlo o editarlo. */
   id: string;
   t: TipoBloque;
-  /** El texto, con marcas ligeras: **negrita**, _cursiva_, ==resaltado==. */
+  /** El texto, con marcas ligeras: **negrita**, _cursiva_, ++subrayado++, ~~tachado~~, ==resaltado==. */
   texto: string;
   /** Tarea hecha. */
   hecho?: boolean;
@@ -100,9 +100,9 @@ export function bloque(t: TipoBloque, texto = "", extra: Partial<BloqueCuaderno>
 
 // ---------------------------------------------------------------- las marcas de formato y las citas
 
-export type Trozo = { t: string; negrita?: boolean; cursiva?: boolean; resaltado?: boolean; cita?: Cita };
+export type Trozo = { t: string; negrita?: boolean; cursiva?: boolean; subrayado?: boolean; tachado?: boolean; resaltado?: boolean; cita?: Cita };
 
-const MARCAS = /(\*\*[^*\n]+\*\*|==[^=\n]+==|(?<![\p{L}\p{N}])_[^_\n]+_(?![\p{L}\p{N}]))/gu;
+const MARCAS = /(\*\*[^*\n]+\*\*|==[^=\n]+==|~~[^~\n]+~~|\+\+[^+\n]+\+\+|(?<![\p{L}\p{N}])_[^_\n]+_(?![\p{L}\p{N}]))/gu;
 
 /** Parte el texto en trozos con su formato (las marcas no se anidan: es un cuaderno, no un procesador de texto). */
 export function trozosDe(texto: string): Trozo[] {
@@ -113,6 +113,8 @@ export function trozosDe(texto: string): Trozo[] {
     const s = m[0];
     if (s.startsWith("**")) out.push(...conCitas(s.slice(2, -2), { negrita: true }));
     else if (s.startsWith("==")) out.push(...conCitas(s.slice(2, -2), { resaltado: true }));
+    else if (s.startsWith("~~")) out.push(...conCitas(s.slice(2, -2), { tachado: true }));
+    else if (s.startsWith("++")) out.push(...conCitas(s.slice(2, -2), { subrayado: true }));
     else out.push(...conCitas(s.slice(1, -1), { cursiva: true }));
     ultimo = m.index! + s.length;
   }
@@ -181,6 +183,24 @@ export function textoPlano(bloques: BloqueCuaderno[]): string {
     .map((b) => (b.t === "versiculo" ? [b.ref ?? "", sinMarcas(b.texto)].filter(Boolean).join(" ") : sinMarcas(b.texto)))
     .filter((t) => t.trim())
     .join("\n");
+}
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+/**
+ * El grupo de una nota en la lista, como en Notas de Apple: «Hoy», «Ayer», «Últimos 7 días», «Últimos 30 días», el mes
+ * (de este año) o el año. Con la fecha de este equipo.
+ */
+export function grupoDeFecha(iso: string, ahora: Date = new Date()): string {
+  const d = new Date(iso);
+  const dia = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dias = Math.round((dia(ahora) - dia(d)) / 86_400_000);
+  if (dias <= 0) return "Hoy";
+  if (dias === 1) return "Ayer";
+  if (dias < 7) return "Últimos 7 días";
+  if (dias < 30) return "Últimos 30 días";
+  if (d.getFullYear() === ahora.getFullYear()) return MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1);
+  return String(d.getFullYear());
 }
 
 /** Sin tildes y en minúsculas: así se busca («oracion» encuentra «oración»). */

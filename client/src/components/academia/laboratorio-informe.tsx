@@ -203,6 +203,26 @@ export function InformeLaboratorio({ enlaceAlumno }: { enlaceAlumno: (id: number
           </a>
         )}
       </div>
+      {/* para la Administración: probar cada práctica como un alumno (sus intentos quedan como prueba) */}
+      <section className="glass-card p-4 sm:p-5" data-testid="informe-probar">
+        <h3 className="font-display text-lg font-bold">Probar las prácticas</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">Hazlas como un alumno, sin inscribirte: tus intentos quedan como prueba y no cuentan en este informe.</p>
+        <ul className="mt-2 divide-y divide-border/60">
+          {d.practicas.map((x) => (
+            <li key={x.id}>
+              <Link href={`/academia/laboratorio/${x.id}`} className="flex items-center gap-3 py-3 group" data-testid="informe-probar-practica">
+                <FlaskConical className="w-5 h-5 text-orange-500 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium leading-snug group-hover:underline">{x.titulo}</span>
+                  <span className="block text-xs text-muted-foreground">{x.materia.titulo} · {NOMBRE_FORMATO[x.formato]}</span>
+                </span>
+                <span className="text-sm font-semibold text-orange-700 dark:text-orange-300 shrink-0">Probar</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4" data-testid="informe-cifras">
         <Indicador etiqueta="Alumnos que practicaron" valor={t.alumnos} />
         <Indicador etiqueta="Prácticas terminadas" valor={t.terminados} />

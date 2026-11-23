@@ -25,7 +25,7 @@ import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
 import { PracticasDeHoy } from "@/components/academia/laboratorio-materia";
 import { Temporizador } from "@/components/academia/salon/temporizador";
 import { SemanaEstudio } from "@/components/academia/salon/semana";
-import { crearNota, useCuaderno, useResaltados } from "@/components/cuaderno/api";
+import { useCuaderno, useResaltados } from "@/components/cuaderno/api";
 
 const enlaceContinuar = (c: NonNullable<AcademiaEstado["continuar"]>) =>
   c.nivel ? `/academia/nivel/${c.nivel}` : c.leccionId ? `/academia/leccion/${c.leccionId}` : `/academia/materia/${c.materiaId}`;
@@ -171,17 +171,10 @@ function MateriaEnCurso({ id }: { id: string }) {
 
 function MiCuaderno() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const notas = useCuaderno({ vista: "todas" });
   const res = useResaltados();
-  const nueva = async () => {
-    try {
-      const n = await crearNota({ plantilla: "clase" });
-      setLocation(`/academia/cuaderno?nota=${n.id}`);
-    } catch (e: any) {
-      toast({ title: "No se pudo crear la nota", description: e?.message, variant: "destructive" });
-    }
-  };
+  // una nota en blanco, con su título y su texto: se crea con lo primero que se escribe (sin plantillas ni preguntas)
+  const nueva = () => setLocation("/academia/cuaderno?nueva=1");
   const lista = (notas.data?.notas ?? []).slice(0, 4);
   return (
     <Tarjeta
