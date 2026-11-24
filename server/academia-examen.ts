@@ -33,7 +33,7 @@ import {
   alumnoDe, asegurarAlumno, asegurarMateria, avisarA, claveFinal, contextoExamen, cuentasConRoles, enFila, estaInscrito, frenar, inscritoDe, marcarEstudio,
   nombreAcademico, preguntasRetiradas, recalcularMateria,
 } from "./academia-comun";
-import { emitirMateria } from "./academia-documentos";
+import { leccionesSinPractica, practicasObligatorias } from "./academia-practicas-nota";
 
 export { elegirFinal } from "./academia-eleccion";
 
@@ -192,6 +192,11 @@ export async function estadoExamen(userId: number, m: MateriaDef): Promise<Exame
   const pendientes = ids.filter((id) => !completadas.has(id)).length;
   if (pendientes) falta.push(pendientes === ids.length ? `completar las ${ids.length} lecciones` : `completar ${pendientes === 1 ? "1 lección" : `${pendientes} lecciones`}`);
   if (m.memoria && !v[0]?.aprendido_at) falta.push("aprender el versículo de memoria");
+  // las prácticas de las lecciones son obligatorias para quien todavía no aprobó la materia (si la materia las tiene)
+  if (mat[0] && (await practicasObligatorias(userId, m))) {
+    const sin = await leccionesSinPractica(userId, m);
+    if (sin) falta.push(sin === ids.length ? `hacer la práctica que cuenta de las ${ids.length} lecciones` : `hacer la práctica que cuenta de ${sin === 1 ? "1 lección" : `${sin} lecciones`}`);
+  }
   const base = estadoBase(f, medida, APRUEBA);
   return {
     ...base,
@@ -220,7 +225,6 @@ export function evaluacionDeMateria(m: MateriaDef): Evaluacion {
     alCerrar: async (userId) => {
       const materia = await recalcularMateria(userId, m);
       // la materia aprobada recibe su certificado al instante
-      if (materia.aprobada) await emitirMateria(userId, m, materia.nota);
       return { aprobada: materia.aprobada, materia: { nota: materia.nota, aprobada: materia.aprobada, medalla: materia.aprobada ? medallaDe(materia.nota) : null } };
     },
     yaAprobado: "Ya aprobaste esta materia.",

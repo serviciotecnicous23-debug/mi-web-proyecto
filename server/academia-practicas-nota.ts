@@ -1,7 +1,9 @@
 /**
  * Las prácticas en la nota de la materia (docs/academia-practicas.md, «La nota»):
- * - entran solo cuando la materia tiene la práctica de todas sus lecciones (se anota el día en que quedó completa);
- * - valen para quien empezó la materia desde ese día: quien ya la cursaba termina con la fórmula de antes;
+ * - entran cuando la materia tiene la práctica de todas sus lecciones, para todo el que todavía no la aprobó, y son
+ *   obligatorias: sin la práctica que cuenta de cada lección no se presenta el examen final;
+ * - quien ya aprobó la materia conserva su nota tal como quedó: puede practicar todo lo que quiera sin que cambie (al
+ *   aprobar, se guardan los pesos con que aprobó: `pesos_aprobada`);
  * - la Administración puede sacarlas de la nota de una materia y cambiar los pesos de cada nivel (por defecto,
  *   `PESOS_CON_PRACTICAS`).
  * El componente es el promedio de la mejor práctica que cuenta de cada lección (la que falta cuenta 0).
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS academia_practicas_pesos (
   updated_at timestamp NOT NULL DEFAULT now(),
   por integer
 );
+ALTER TABLE "academia_materias" ADD COLUMN IF NOT EXISTS "pesos_aprobada" jsonb;
 `;
 
 type Config = { cuenta: boolean; desde: Date };
@@ -80,21 +83,68 @@ export async function configDe(materiaId: string): Promise<{ completa: boolean; 
   return { completa, cuenta: completa && (c?.cuenta ?? true), desde: c ? c.desde.toISOString() : null };
 }
 
-/** Si las prácticas entran en la nota de este alumno en esta materia. */
-export async function practicasCuentan(userId: number | null, m: Pick<MateriaDef, "id">): Promise<boolean> {
-  if (!userId || !materiaConPracticas(m.id)) return false;
+/** Si la materia tiene todas sus prácticas y la Administración las dejó en la nota. */
+async function cuentanEnLaMateria(m: Pick<MateriaDef, "id">): Promise<boolean> {
+  if (!materiaConPracticas(m.id)) return false;
   const c = (await cargar()).config.get(m.id);
-  if (!c || !c.cuenta) return false;
-  const { rows } = await pool.query(`SELECT inicio_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
-  // sin inscribirse todavía: cuando se inscriba, empieza con la fórmula nueva
-  if (!rows[0]) return true;
-  return new Date(rows[0].inicio_at).getTime() >= c.desde.getTime();
+  return c ? c.cuenta : true;
 }
 
-/** Los pesos de la nota de la materia para este alumno (con prácticas o con la fórmula de antes). */
+/** Unos pesos guardados que todavía sirven (los de quien aprobó con prácticas). */
+function pesosGuardados(p: unknown, nivel: NivelN): Pesos | null {
+  if (!p || typeof p !== "object") return null;
+  const base = PESOS_NIVEL[nivel];
+  const claves = Object.keys(base) as (keyof Pesos)[];
+  const v = p as Partial<Pesos>;
+  if (!claves.every((k) => Number.isInteger(v[k]) && (v[k] as number) >= 0)) return null;
+  return claves.reduce((a, k) => a + (v[k] as number), 0) === 100 ? (v as Pesos) : null;
+}
+
+/**
+ * Los pesos de la nota de la materia para este alumno:
+ * - si la aprobó con prácticas, los pesos con que aprobó (su nota no cambia);
+ * - si la aprobó antes de que la materia tuviera prácticas, la fórmula de antes (tampoco cambia);
+ * - si todavía no la aprobó (o no se inscribió), con prácticas cuando la materia las tiene todas.
+ */
 export async function pesosDeAlumno(userId: number | null, m: Pick<MateriaDef, "id" | "nivel">): Promise<Pesos> {
-  if (await practicasCuentan(userId, m)) return pesosConPracticas((m.nivel ?? 3) as NivelN);
+  const nivel = (m.nivel ?? 3) as NivelN;
+  if (userId) {
+    const { rows } = await pool.query(`SELECT estado, pesos_aprobada FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+    const f = rows[0];
+    const guardados = f ? pesosGuardados(f.pesos_aprobada, nivel) : null;
+    if (guardados) return guardados;
+    if (f?.estado === "aprobada") return pesosDe(m);
+  }
+  if (await cuentanEnLaMateria(m)) return pesosConPracticas(nivel);
   return pesosDe(m);
+}
+
+/** Si las prácticas entran en la nota de este alumno en esta materia. */
+export async function practicasCuentan(userId: number | null, m: Pick<MateriaDef, "id" | "nivel">): Promise<boolean> {
+  return (await pesosDeAlumno(userId, m)).practicas > 0;
+}
+
+/** Si el alumno ya aprobó la materia (por cualquier vía). */
+export async function materiaAprobadaPor(userId: number, materiaId: string): Promise<boolean> {
+  const { rows } = await pool.query(`SELECT estado FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, materiaId]);
+  return rows[0]?.estado === "aprobada";
+}
+
+/** Si las prácticas son obligatorias para este alumno: cuentan en su nota y todavía no aprobó la materia. */
+export async function practicasObligatorias(userId: number, m: Pick<MateriaDef, "id" | "nivel">): Promise<boolean> {
+  if (await materiaAprobadaPor(userId, m.id)) return false;
+  return practicasCuentan(userId, m);
+}
+
+/** Cuántas lecciones de la materia no tienen todavía su práctica que cuenta terminada. */
+export async function leccionesSinPractica(userId: number, m: MateriaDef): Promise<number> {
+  const ids = m.lecciones.map((l) => l.id);
+  if (!ids.length) return 0;
+  const { rows } = await pool.query(
+    `SELECT count(*)::int AS n FROM academia_practicas_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[]) AND mejor IS NOT NULL`,
+    [userId, ids],
+  );
+  return ids.length - Number(rows[0]?.n ?? 0);
 }
 
 /** El componente «Prácticas» (0–100) de un alumno en una materia. */

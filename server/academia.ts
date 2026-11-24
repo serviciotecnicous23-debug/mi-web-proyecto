@@ -50,7 +50,7 @@ import { registerAcademiaDiagnosticoRoutes } from "./academia-diagnostico";
 import { registerAcademiaVersiculosRoutes } from "./academia-versiculos";
 import { estadoExamen, leerCurso, registerAcademiaExamenRoutes } from "./academia-examen";
 import { cierresDe, integralDisponible, registerAcademiaNivelRoutes } from "./academia-nivel";
-import { codigoDocumento, emitirMateria, registerAcademiaDocumentosRoutes } from "./academia-documentos";
+import { codigoDocumento, registerAcademiaDocumentosRoutes } from "./academia-documentos";
 
 export { ACADEMIA_SQL } from "./academia-comun";
 
@@ -240,20 +240,26 @@ export function registerAcademiaRoutes(app: Express) {
       if (!m) return res.status(404).json({ message: "No existe esa materia." });
       const userId = acceso.userId;
       let lec = new Map<string, { vista: boolean; completada: boolean }>();
-      let fila: { estado: string; nota: number | null; inicio: string; via: string } | undefined;
+      let fila: { estado: string; nota: number | null; inicio: string; via: string; aprobada: string | null } | undefined;
       let suf: { intentos: number; curso: unknown; extra: number } | undefined;
       let completos: number[] = [];
       let versiculo: MateriaDetalle["versiculo"] = m.memoria ? { ref: m.memoria, aprendido: false, puntaje: null, intentos: 0 } : null;
       if (userId) {
         const [{ rows: l }, { rows: mt }, { rows: v }, { rows: sf }] = await Promise.all([
           pool.query(`SELECT leccion_id, completada_at IS NOT NULL AS completada FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`, [userId, m.lecciones.map((x) => x.id)]),
-          pool.query(`SELECT estado, nota, inicio_at, via FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
+          pool.query(`SELECT estado, nota, inicio_at, via, aprobada_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, curso, extra FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveSuficiencia(m.id)]),
         ]);
         lec = new Map(l.map((r: any) => [r.leccion_id, { vista: true, completada: !!r.completada }]));
         fila = mt[0]
-          ? { estado: mt[0].estado, nota: mt[0].nota == null ? null : Number(mt[0].nota), inicio: new Date(mt[0].inicio_at).toISOString(), via: String(mt[0].via || "cursada") }
+          ? {
+              estado: mt[0].estado,
+              nota: mt[0].nota == null ? null : Number(mt[0].nota),
+              inicio: new Date(mt[0].inicio_at).toISOString(),
+              via: String(mt[0].via || "cursada"),
+              aprobada: mt[0].aprobada_at ? new Date(mt[0].aprobada_at).toISOString() : null,
+            }
           : undefined;
         suf = sf[0] ? { intentos: Number(sf[0].intentos || 0), curso: sf[0].curso, extra: Number(sf[0].extra || 0) } : undefined;
         completos = await nivelesCompletos(userId);
@@ -300,7 +306,21 @@ export function registerAcademiaRoutes(app: Express) {
         medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         versiculo,
         examen,
-        certificado: userId && estado === "aprobada" ? (await codigoDocumento(userId, "materia", m.id)) ?? (await emitirMateria(userId, m, fila?.nota ?? 0)) : null,
+        // (desde el 23-nov ya no se emite un certificado por materia: queda el de antes, si había, y su insignia)
+        certificado: userId && estado === "aprobada" ? await codigoDocumento(userId, "materia", m.id) : null,
+        insignia:
+          userId && estado === "aprobada" && fila?.nota != null
+            ? {
+                materiaId: m.id,
+                titulo: m.titulo,
+                nivel: m.nivel ?? null,
+                especialidad: m.especialidad ? (ESPECIALIDADES.find((e) => e.id === m.especialidad)?.nombre ?? null) : null,
+                nota: fila.nota,
+                medalla: medallaDe(fila.nota),
+                fecha: fila.aprobada,
+                via: fila.via,
+              }
+            : null,
         matriculado: userId ? await estaInscrito(userId) : false,
         inscrita: fila?.inicio ?? null,
         requisitos: requisitosMateria(m, completos),

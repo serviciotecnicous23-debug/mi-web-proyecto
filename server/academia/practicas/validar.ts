@@ -69,8 +69,17 @@ export const huecosDe = (texto: string) => [...texto.matchAll(HUECO)].map((m) =>
 
 const vacio = (s: unknown) => typeof s !== "string" || !s.trim();
 
+/**
+ * Los largos máximos de lo que se muestra (en letras): en el teléfono, un texto más largo no cabe bien en una tarjeta,
+ * un botón o un recuadro, y las formas de jugar (deslizar, elegir entre tres…) lo muestran en espacios chicos.
+ */
+export const LARGOS = { grupo: 40, frase: 90, frente: 90, reverso: 120, afirmacion: 140, opcion: 150, parIzq: 70, parDer: 90, paso: 90 } as const;
+
 function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string): string[] {
   const out: string[] = [];
+  const largo = (s: unknown, max: number, que: string) => {
+    if (typeof s === "string" && s.length > max) out.push(`${donde}: ${que} es muy largo (${s.length} letras; máximo ${max}): «${s.slice(0, 50)}…»`);
+  };
   const apoyo = (frase: string, d = donde) => {
     if (vacio(frase)) out.push(`${d}: falta la frase de la lección (apoyo)`);
     else if (!estaEnLeccion(frase, texto)) out.push(`${d}: la frase de apoyo no está en la lección: «${frase}»`);
@@ -87,7 +96,11 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       (v.tarjetas ?? []).forEach((t: any, i: number) => {
         if (vacio(t.frente) || vacio(t.reverso)) out.push(`${donde}: la tarjeta ${i + 1} está incompleta`);
         apoyo(t.apoyo, `${donde} tarjeta ${i + 1}`);
+        largo(t.frente, LARGOS.frente, `la pregunta de la tarjeta ${i + 1}`);
+        largo(t.reverso, LARGOS.reverso, `la respuesta de la tarjeta ${i + 1}`);
       });
+      // (en «Relámpago», las respuestas de las otras tarjetas son las opciones que no van: deben ser distintas)
+      if (new Set((v.tarjetas ?? []).map((t: any) => normalizarFrase(t.reverso))).size !== (v.tarjetas ?? []).length) out.push(`${donde}: dos tarjetas tienen la misma respuesta`);
       break;
     }
     case "completa": {
@@ -106,6 +119,10 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       explica();
       const pares = (v.pares ?? []) as [string, string][];
       entre(pares.length, 3, 5, "los pares");
+      for (const p of pares) {
+        largo(p[0], LARGOS.parIzq, "una idea de la izquierda");
+        largo(p[1], LARGOS.parDer, "una idea de la derecha");
+      }
       if (new Set(pares.map((p) => p[0])).size !== pares.length || new Set(pares.map((p) => p[1])).size !== pares.length) out.push(`${donde}: hay pares repetidos`);
       if (pares.some((p) => vacio(p[0]) || vacio(p[1]))) out.push(`${donde}: hay un par incompleto`);
       break;
@@ -117,6 +134,8 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       entre(grupos.length, 2, 3, "los grupos");
       const frases = v.frases ?? [];
       entre(frases.length, 4, 8, "las frases");
+      for (const g of grupos) largo(g, LARGOS.grupo, "el nombre de un grupo");
+      for (const f of frases) largo(f.texto, LARGOS.frase, "una frase");
       for (const f of frases) if (!Number.isInteger(f.grupo) || f.grupo < 0 || f.grupo >= grupos.length) out.push(`${donde}: «${f.texto}» va a un grupo que no existe`);
       for (let g = 0; g < grupos.length; g++) if (!frases.some((f: any) => f.grupo === g)) out.push(`${donde}: el grupo «${grupos[g]}» no tiene frases`);
       break;
@@ -127,6 +146,7 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       if (vacio(v.consigna)) out.push(`${donde}: falta la consigna`);
       entre(v.pasos?.length ?? 0, 3, 6, "los pasos");
       if (new Set(v.pasos ?? []).size !== (v.pasos ?? []).length) out.push(`${donde}: hay pasos repetidos`);
+      for (const p of v.pasos ?? []) largo(p, LARGOS.paso, "un paso");
       break;
     }
     case "verdad": {
@@ -135,6 +155,7 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       af.forEach((x: any, i: number) => {
         if (vacio(x.texto) || vacio(x.explica) || typeof x.verdad !== "boolean") out.push(`${donde}: la afirmación ${i + 1} está incompleta`);
         apoyo(x.apoyo, `${donde} afirmación ${i + 1}`);
+        largo(x.texto, LARGOS.afirmacion, `la afirmación ${i + 1}`);
       });
       if (af.length >= 2 && (af.every((x: any) => x.verdad) || af.every((x: any) => !x.verdad))) out.push(`${donde}: mezcla verdades y errores (no todas iguales)`);
       break;
@@ -155,6 +176,7 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       entre(op.length, 3, 4, "las opciones");
       if (op.filter((o: any) => o.bien).length !== 1) out.push(`${donde}: debe haber una sola opción buena`);
       if (op.some((o: any) => vacio(o.texto) || vacio(o.explica))) out.push(`${donde}: cada opción lleva su texto y su explicación`);
+      for (const o of op) largo(o.texto, LARGOS.opcion, "una opción");
       break;
     }
     case "explica": {

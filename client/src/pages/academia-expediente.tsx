@@ -11,6 +11,7 @@ import { useExpediente } from "@/components/academia/api";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { ChipEstatus, NivelesYCertificados, TablaAvance, fecha } from "@/components/academia/seguimiento";
 import { atributosDeDescarga } from "@/components/academia/descargas";
+import { VitrinaInsignias, insigniasDe } from "@/components/academia/insignias";
 
 export default function AcademiaExpediente() {
   const q = useExpediente();
@@ -69,6 +70,7 @@ export default function AcademiaExpediente() {
           <TablaAvance materias={d.materias} propio />
         </section>
 
+        <VitrinaInsignias insignias={insigniasDe(d.materias)} />
         <NivelesYCertificados d={d} propio />
 
         <p className="text-xs text-muted-foreground">Expediente al {fecha(new Date().toISOString())}. {ACLARACION_DOCUMENTOS}</p>

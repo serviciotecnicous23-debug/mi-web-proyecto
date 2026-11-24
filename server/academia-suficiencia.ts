@@ -14,7 +14,6 @@ import { pool } from "./db";
 import { NIVELES, SUFICIENCIA, apruebaSuficiencia, materiaPorId, medallaDe, requisitosMateria, type ExamenEstado, type MateriaDef } from "@shared/academia";
 import { BANCOS } from "./academia/index";
 import { asegurarAlumno, asegurarMateria, claveFinal, estaInscrito, marcarEstudio, medidaSuficiencia } from "./academia-comun";
-import { emitirMateria } from "./academia-documentos";
 import { estadoBase, filaDe, rutasDeEvaluacion, type Evaluacion } from "./academia-examen";
 import { nivelesCompletos } from "./academia-inscripcion";
 
@@ -65,7 +64,7 @@ async function estadoSuficiencia(userId: number, m: MateriaDef): Promise<ExamenE
   return { ...base, espera: 0, falta: aprobada ? [] : falta, aprobado: aprobada, repasar: [], cerrado };
 }
 
-/** Deja la materia aprobada por suficiencia, con la nota del examen, y emite su certificado (o lo vuelve a dar por válido). */
+/** Deja la materia aprobada por suficiencia, con la nota del examen (su insignia sale sola de la materia aprobada). */
 export async function aprobarPorSuficiencia(userId: number, m: MateriaDef, nota: number): Promise<void> {
   await asegurarMateria(userId, m.id);
   const { rows: v } = await pool.query(`SELECT puntaje FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
@@ -74,8 +73,6 @@ export async function aprobarPorSuficiencia(userId: number, m: MateriaDef, nota:
       WHERE user_id = $1 AND materia_id = $2 AND (estado <> 'aprobada' OR via = 'suficiencia')`,
     [userId, m.id, nota, JSON.stringify({ final: nota, versiculo: Number(v[0]?.puntaje ?? 0) })],
   );
-  const { rows: c } = await pool.query(`SELECT codigo FROM academia_certificados WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`, [userId, m.id]);
-  if (!c.length) await emitirMateria(userId, m, nota, "suficiencia");
 }
 
 /** El examen de suficiencia de una materia como evaluación (las mismas rutas que el examen final). */

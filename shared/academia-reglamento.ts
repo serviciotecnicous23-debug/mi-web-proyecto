@@ -13,6 +13,7 @@ import {
   ACLARACION_DOCUMENTOS, APRUEBA, APRUEBA_INTEGRAL, DIAS_APELACION, DIAS_PAUSA, ESPERA_FINAL_MIN, ETAPAS,
   FALLOS_PARA_REPASAR, HONORES, LEMA, NIVELES_N, NOMBRE_ACADEMIA, PESOS_NIVEL,
 } from "./academia-base";
+import { PESOS_CON_PRACTICAS } from "./practicas";
 
 /** El código de honor que se acepta al inscribirse (y antes de cada examen). */
 export const CODIGO_HONOR =
@@ -54,7 +55,7 @@ function actividadesDelReglamento(): string[] {
  * sistema, así que nunca dicen otra cosa. Si cambia algo de fondo, sube la versión: queda guardada en cada matrícula.
  */
 export const REGLAMENTO: { version: string; titulo: string; base: string; intro: string; secciones: SeccionReglamento[] } = {
-  version: "2026-11-20",
+  version: "2026-11-23",
   titulo: "Reglamento académico",
   base: LEMA.ref,
   intro: `Este reglamento ordena la vida académica de la ${NOMBRE_ACADEMIA}. Al inscribirte lo aceptas, junto con el código de honor.`,
@@ -89,7 +90,8 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       titulo: "4. La evaluación",
       puntos: [
         `Las notas van de 0 a 100. Una materia se aprueba con ${APRUEBA}; el examen integral de un nivel, con ${APRUEBA_INTEGRAL}.`,
-        `En el Nivel 1, la nota de la materia sale del examen final (${PESOS_NIVEL[1].final} %), los repasos de las lecciones (${PESOS_NIVEL[1].repasos} %) y el versículo de memoria (${PESOS_NIVEL[1].versiculo} %).`,
+        `En el Nivel 1, la nota de la materia sale del examen final (${PESOS_CON_PRACTICAS[1].final} %), las prácticas de las lecciones (${PESOS_CON_PRACTICAS[1].practicas} %), los repasos de las lecciones (${PESOS_CON_PRACTICAS[1].repasos} %) y el versículo de memoria (${PESOS_CON_PRACTICAS[1].versiculo} %). En las materias que todavía no tienen prácticas, el examen final pesa ${PESOS_NIVEL[1].final} %.`,
+        "Cada lección tiene su práctica: primero la guiada y luego la que cuenta, que se puede repetir hasta 3 veces por día (vale la mejor). En las materias que ya las tienen, las prácticas son obligatorias: sin la práctica que cuenta de cada lección no se presenta el examen final. Quien ya aprobó una materia puede practicar cuando quiera sin que su nota cambie.",
         "El examen final tiene una parte objetiva, con un tiempo para cada pregunta que lleva el servidor, y una parte escrita que el sistema corrige al instante, idea por idea.",
         `Si no apruebas, puedes intentarlo otra vez después de ${ESPERA_FINAL_MIN[0]} minutos y, desde el segundo fallo, después de ${ESPERA_FINAL_MIN[1] / 60} horas. Desde el ${ordinal(FALLOS_PARA_REPASAR)} fallo hay que volver a leer las lecciones antes de intentarlo. Cada intento trae preguntas distintas.`,
         `Un nivel se cierra con honores cuando el promedio de sus materias es de ${HONORES} o más.`,
@@ -124,7 +126,7 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
     {
       titulo: "8. Los documentos",
       puntos: [
-        "Cada materia aprobada y cada nivel completo dan un certificado con un código y un QR. Cualquiera puede verificarlos en la web, sin ver las notas.",
+        "Cada materia aprobada te da su insignia: queda en tu vitrina, con tu nota y tu medalla. Los certificados quedan para los logros mayores: cada nivel completo, cada especialidad y la graduación. Llevan un código y un QR, y cualquiera puede verificarlos en la web, sin ver las notas.",
         "El carné digital acredita tu matrícula y también se verifica con su QR.",
         "Solo la Administración de la academia puede corregir o revocar un documento, siempre con un motivo.",
       ],

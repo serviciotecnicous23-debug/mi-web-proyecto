@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { BookOpen, MapPin, MessageCircle } from "lucide-react";
 import type { RespuestaPractica } from "@shared/practicas";
-import { Escribir, Opciones, Ordena, type PropsPieza } from "./piezas";
+import { Escribir, Opciones, Ordena, type PropsPieza, type VistaPieza } from "./piezas";
 
 const bien = "border-emerald-500 bg-emerald-500/12";
 const mal = "border-rose-500 bg-rose-500/12";
 
 // ---------------------------------------------------------------- línea del tiempo
 
-export function Linea({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"linea">) {
+export function Linea({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"linea">>) {
   return (
     <div data-testid="pieza-linea">
       <Ordena items={vista.eventos} correcto={correccion ? correccion.correcto : null} fechas={correccion ? correccion.fechas : null} bloqueado={bloqueado} alCambiar={(orden) => alCambiar({ pieza: "linea", orden })} linea />
@@ -21,7 +21,7 @@ export function Linea({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"l
 
 // ---------------------------------------------------------------- mapa de ideas
 
-export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"mapa-ideas">) {
+export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"mapa-ideas">>) {
   const [elegidas, setElegidas] = useState<(number | null)[]>(() => vista.enlaces.map(() => null));
   const [abierto, setAbierto] = useState<number | null>(null);
   useEffect(() => {
@@ -95,7 +95,7 @@ export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPiez
 
 // ---------------------------------------------------------------- mapa bíblico
 
-export function Mapa({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"mapa">) {
+export function Mapa({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"mapa">>) {
   const [punto, setPunto] = useState<{ x: number; y: number } | null>(null);
   const caja = useRef<HTMLDivElement>(null);
   useEffect(() => setPunto(null), [vista.lugar, vista.paso]);
@@ -127,7 +127,7 @@ export function Mapa({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"ma
 
 // ---------------------------------------------------------------- marca en el pasaje
 
-export function Pasaje({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"pasaje">) {
+export function Pasaje({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"pasaje">>) {
   const [sel, setSel] = useState<Set<number>>(new Set());
   useEffect(() => {
     alCambiar(sel.size ? { pieza: "pasaje", palabras: [...sel].sort((a, b) => a - b) } : null);
@@ -175,7 +175,7 @@ const VALOR: Record<0 | 1 | 2, { texto: string; cls: string }> = {
   0: { texto: "No era lo apropiado", cls: "bg-rose-600 text-white" },
 };
 
-export function Escenario({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"escenario">) {
+export function Escenario({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"escenario">>) {
   const quieto = useReducedMotion();
   return (
     <div data-testid="pieza-escenario">
@@ -185,7 +185,7 @@ export function Escenario({ vista, correccion, bloqueado, alCambiar }: PropsPiez
         <p className="text-[16px] leading-relaxed">{vista.escena.narra}</p>
       </motion.div>
       <p className="font-bold text-lg mb-3">{vista.escena.pregunta}</p>
-      {correccion && <p className={`inline-block rounded-full px-3 py-1 text-xs font-bold mb-3 ${VALOR[correccion.valor].cls}`}>{VALOR[correccion.valor].texto}</p>}
+      {correccion && <p className={`inline-block rounded-full px-3 py-1 text-xs font-bold mb-3 ${VALOR[correccion.valor as 0 | 1 | 2].cls}`}>{VALOR[correccion.valor as 0 | 1 | 2].texto}</p>}
       <Opciones
         opciones={vista.escena.opciones}
         correcta={correccion ? correccion.mejor : null}
@@ -199,7 +199,7 @@ export function Escenario({ vista, correccion, bloqueado, alCambiar }: PropsPiez
 
 // ---------------------------------------------------------------- caso de estudio
 
-export function Caso({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"caso">) {
+export function Caso({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"caso">>) {
   const [abierto, setAbierto] = useState(vista.paso === 0);
   useEffect(() => setAbierto(vista.paso === 0), [vista.paso]);
   const actual = vista.actual;

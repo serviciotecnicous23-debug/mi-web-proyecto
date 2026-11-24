@@ -418,7 +418,13 @@ export default function AcademiaLeccion() {
               <div className="flex-1">
                 <h2 className="font-display text-xl font-bold leading-tight">Práctica de la lección</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {prac.data.actividades} actividades con lo que enseña esta lección, unos {prac.data.minutos} minutos. {prac.data.cuentaEnNota ? "La que cuenta entra en tu nota." : ""}
+                  {prac.data.actividades} actividades con lo que enseña esta lección, unos {prac.data.minutos} minutos. {prac.data.obligatoria
+                    ? "La que cuenta es obligatoria para el examen final y entra en tu nota."
+                    : prac.data.aprobada
+                      ? "Ya aprobaste la materia: practica cuando quieras."
+                      : prac.data.cuentaEnNota
+                        ? "La que cuenta entra en tu nota."
+                        : ""}
                 </p>
                 <div className="mt-2"><Estrellas n={prac.data.estrellas} /></div>
               </div>

@@ -560,6 +560,24 @@ export type NivelEstado = {
 
 export type TipoDocumento = "materia" | "nivel" | "especialidad";
 
+/**
+ * La insignia de una materia aprobada (23-nov-2026, pedido de Luis): reemplaza el certificado de cada materia, que le
+ * quitaba mérito a los certificados. Se ve enmarcada en la vitrina del alumno, con su nota y su medalla. Los
+ * certificados (con código y QR) quedan para los logros mayores: el nivel completo, la especialidad y la graduación.
+ */
+export type InsigniaMateria = {
+  materiaId: string;
+  titulo: string;
+  nivel: number | null;
+  especialidad: string | null;
+  nota: number;
+  medalla: Medalla | null;
+  /** Cuándo la aprobó (ISO), si se sabe. */
+  fecha: string | null;
+  /** cursada, suficiencia o convalidada. */
+  via: string;
+};
+
 /** Un documento de la academia (certificado de materia, de nivel o de especialidad), como lo ven su dueño y la Dirección académica. */
 export type DocumentoAcademia = {
   codigo: string;
@@ -677,8 +695,13 @@ export type MateriaDetalle = {
   medalla: Medalla | null;
   versiculo: { ref: string; aprendido: boolean; puntaje: number | null; intentos: number } | null;
   examen: ExamenEstado | null;
-  /** El código del certificado de la materia, cuando está aprobada. */
+  /**
+   * El código del certificado de la materia, solo si se emitió antes del 23-nov-2026: desde entonces cada materia
+   * aprobada da su insignia (`insignia`) y los certificados quedan para el nivel, la especialidad y la graduación.
+   */
   certificado: string | null;
+  /** La insignia de la materia aprobada (para la vitrina del alumno). */
+  insignia: InsigniaMateria | null;
   /** Con sesión e inscrito en la academia (ficha y matrícula). */
   matriculado: boolean;
   /** Desde cuándo está inscrito en esta materia (null si no lo está: se ve su presentación). */
