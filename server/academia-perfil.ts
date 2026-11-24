@@ -13,6 +13,7 @@
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
+import { pesosDeAlumno } from "./academia-practicas-nota";
 import {
   APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, NIVELES, NOMBRE_COMPONENTE, apruebaSuficiencia, leccionPorId, materiaPorId, pesosDe, type Bloom, type MateriaDef,
 } from "@shared/academia";
@@ -146,7 +147,7 @@ export async function perfilDe(p: Permiso, id: number): Promise<PerfilAlumno | n
     const m = materiaPorId(av.id);
     if (!m) continue;
     const comps = await componentesDe(id, m);
-    const pesos = pesosDe(m);
+    const pesos = await pesosDeAlumno(id, m);
     const hechas = hechasPorMateria.get(m.id) ?? new Set<string>();
     const siguiente = m.lecciones.find((l) => !hechas.has(l.id));
     materias.push({
@@ -480,7 +481,7 @@ export async function informeDe(p: Permiso, id: number, materiaId: string): Prom
         };
       })
     : null;
-  const pesos = pesosDe(m);
+  const pesos = await pesosDeAlumno(id, m);
   const idx = indicePreguntas();
   const objetivas = new Map([...(banco?.final ?? []), ...Object.values(banco?.mini ?? {}).flat(), ...(CASOS[m.id] ?? [])].map((q) => [q.id, q]));
   const porLeccion = new Map(lec.map((r) => [String(r.leccion_id), r]));

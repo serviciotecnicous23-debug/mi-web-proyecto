@@ -46,6 +46,13 @@ const BORRADOS: Array<[tabla: string, condicion: (id: number) => ReturnType<type
   ["academia_estudio_meta", (id) => sql`user_id = ${id}`],
   ["academia_actividades", (id) => sql`user_id = ${id}`],
   ["academia_laboratorio", (id) => sql`user_id = ${id}`],
+  // el motor de prácticas de las lecciones (server/academia-practicas.ts)
+  ["academia_practicas_respuestas", (id) => sql`user_id = ${id}`],
+  ["academia_practicas_intentos", (id) => sql`user_id = ${id}`],
+  ["academia_practicas_lecciones", (id) => sql`user_id = ${id}`],
+  ["academia_practicas_items", (id) => sql`user_id = ${id}`],
+  ["academia_practicas_marcas", (id) => sql`user_id = ${id}`],
+  ["academia_practicas_medallas", (id) => sql`user_id = ${id}`],
   // la bitácora de seguimiento que la Administración lleva de este alumno
   ["academia_seguimiento", (id) => sql`alumno_id = ${id}`],
   ["academia_avisos_materia", (id) => sql`user_id = ${id}`],

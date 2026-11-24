@@ -23,6 +23,8 @@ import { TarjetaAcompanados } from "@/components/academia/mentores";
 import { BarraAvance, Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
 import { PracticasDeHoy } from "@/components/academia/laboratorio-materia";
+import { PracticaDelDiaItem, textoPracticar } from "@/components/practicas/del-dia";
+import { useResumenDelDia } from "@/components/practicas/api";
 import { Temporizador } from "@/components/academia/salon/temporizador";
 import { SemanaEstudio } from "@/components/academia/salon/semana";
 import { useCuaderno, useResaltados } from "@/components/cuaderno/api";
@@ -231,6 +233,7 @@ export default function AcademiaSalon() {
   const estudio = useEstudio(inscrito);
   const versos = useRepasoVersiculos(inscrito);
   const repasoDia = useRepasoDelDia(inscrito);
+  const practicaDia = useResumenDelDia(inscrito);
   const diag = useDiagnostico(inscrito);
   const docs = useCertificados(inscrito);
   if (q.isLoading) return <Cargando />;
@@ -348,6 +351,7 @@ export default function AcademiaSalon() {
                   </Link>
                 </li>
               )}
+              <PracticaDelDiaItem activo={inscrito} testId="salon-practica-dia" />
               {materiasEnCurso.map((id) => <PendientesMateria key={id} id={id} />)}
               <PracticasDeHoy activo={inscrito} testId="salon-practica" />
               {especialidadesListas.map((id) => <TrabajoFinalPendiente key={id} id={id} />)}
@@ -404,6 +408,7 @@ export default function AcademiaSalon() {
             <Herramienta href="/academia/cuaderno" icono={NotebookPen} titulo="Mi cuaderno" texto="Apuntes, resaltados y lo de la Biblia" />
             <Herramienta href="/biblioteca" icono={Library} titulo="La Biblia" texto="Lee, resalta y lleva tus notas al cuaderno" />
             <Herramienta href="/academia/recursos" icono={BookOpenCheck} titulo="Recursos de estudio" texto="Videos, lecturas y lecturas ampliadas de todas las materias" />
+            <Herramienta href="/academia/practicar" icono={Flame} titulo="Practicar" texto={textoPracticar(practicaDia.data?.pendientes, practicaDia.data?.firmes, practicaDia.data?.total)} />
             <Herramienta href="/academia/repaso-del-dia" icono={Brain} titulo="Repaso del día" texto={repasoDia.data ? `${repasoDia.data.dominadas} dominadas · ${repasoDia.data.pendientes} para hoy` : "Las preguntas de tus lecciones vuelven para no olvidarlas"} />
             <Herramienta href="/academia/repaso" icono={BookOpen} titulo="Mis versículos" texto={versos.data ? `${versos.data.dominados} dominados · ${pendientesVersos} para hoy` : "El repaso de los versículos de memoria"} />
             <Herramienta href="/academia/diagnostico" icono={Compass} titulo="Prueba diagnóstica" texto="Te sugiere por dónde seguir" />

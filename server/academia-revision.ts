@@ -13,6 +13,7 @@
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
+import { pesosDeAlumno } from "./academia-practicas-nota";
 import {
   APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, HONORES, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
   type EspecialidadDef, type MateriaDef, type NivelDef, type ResultadoExamen, type TipoDocumento,
@@ -232,7 +233,7 @@ export async function reconsiderarMateria(userId: number, m: MateriaDef, motivo:
   // aprobada por suficiencia o convalidada: su nota es fija (la del examen de suficiencia o la de la convalidación)
   if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
-  const nota = notaMateria(pesosDe(m), componentes);
+  const nota = notaMateria(await pesosDeAlumno(userId, m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
   const { rows } = await pool.query(`SELECT estado FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   const estaba = rows[0]?.estado === "aprobada";

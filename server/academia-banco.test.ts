@@ -5,6 +5,7 @@ import { examenDe, materiaPorId } from "@shared/academia";
 import { createHash } from "node:crypto";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import { PRACTICAS } from "./academia/laboratorio/index";
+import { PRACTICAS_POR_MATERIA } from "./academia/practicas/index";
 import { calcularHuella, huellaDe, porQueNoSeRetira } from "./academia-banco";
 
 const banco = BANCOS.get("n1-salvacion")!;
@@ -71,6 +72,23 @@ test("la huella del contenido: estable, distinta por materia y sin contar «disp
   assert.notEqual(calcularHuella({ ...materia, lecciones: materia.lecciones.slice(1) }), h);
 });
 
+test("la huella incluye las prácticas de las lecciones: si cambia una frase, la aprobación deja de estar vigente", () => {
+  const pm = PRACTICAS_POR_MATERIA.get(materia.id)!;
+  assert.ok(Object.keys(pm.lecciones).length > 0);
+  // con prácticas, la huella ya no es la de antes
+  assert.notEqual(calcularHuella(materia), huellaSinLaboratorio(materia));
+  const a = pm.lecciones["n1-salvacion-1"][1] as any;
+  const antes = calcularHuella(materia);
+  const texto = a.versiones[0].explica;
+  a.versiones[0].explica = `${texto} `;
+  try {
+    assert.notEqual(calcularHuella(materia), antes);
+  } finally {
+    a.versiones[0].explica = texto;
+  }
+  assert.equal(calcularHuella(materia), antes);
+});
+
 /** La huella como era antes del laboratorio: la ficha, las lecciones y el banco. */
 function huellaSinLaboratorio(m: NonNullable<ReturnType<typeof materiaPorId>>): string {
   const { disponible: _disponible, ...ficha } = m;
@@ -81,9 +99,11 @@ function huellaSinLaboratorio(m: NonNullable<ReturnType<typeof materiaPorId>>): 
 test("la huella incluye las prácticas del laboratorio solo en las materias que las tienen", () => {
   const conPracticas = new Set(PRACTICAS.map((p) => p.materia));
   assert.ok(conPracticas.size >= 1);
-  // las materias sin prácticas guardan la misma huella: sus aprobaciones siguen vigentes
-  assert.ok(!conPracticas.has(materia.id));
-  assert.equal(calcularHuella(materia), huellaSinLaboratorio(materia));
+  // las materias sin prácticas (ni del laboratorio ni de las lecciones) guardan la misma huella: sus aprobaciones siguen
+  // vigentes
+  const sinNada = materiaPorId("n3-hermeneutica")!;
+  assert.ok(!conPracticas.has(sinNada.id) && !PRACTICAS_POR_MATERIA.has(sinNada.id));
+  assert.equal(calcularHuella(sinNada), huellaSinLaboratorio(sinNada));
   for (const id of Array.from(conPracticas)) {
     const m = materiaPorId(id)!;
     assert.notEqual(calcularHuella(m), huellaSinLaboratorio(m), id);

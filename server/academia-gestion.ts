@@ -17,6 +17,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
+import { pesosDeAlumno } from "./academia-practicas-nota";
 import {
   APRUEBA, ESCRITO_BREVE, ESPECIALIDADES, FALLOS_PARA_REPASAR, MINI_PRUEBA, NIVELES, NOMBRE_COMPONENTE, SUFICIENCIA, esperaFinalMin, materiaPorId,
   miniPruebasDe, pesosDe, tieneEscritoBreve, type MateriaDef, type Pesos,
@@ -86,7 +87,7 @@ async function contextoDe(req: Request, res: Response, opciones: { motivo?: bool
 
 /** Lo que la Administración ve de una materia del alumno para gestionarla. */
 export async function gestionDe(alumno: number, m: MateriaDef): Promise<GestionMateria> {
-  const pesos = pesosDe(m);
+  const pesos = await pesosDeAlumno(alumno, m);
   const { rows: mt } = await pool.query(`SELECT estado, nota, via, inicio_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [alumno, m.id]);
   const fila = mt[0] as { estado: string; nota: number | null; via: string; inicio_at: string } | undefined;
   const calculados = await componentesCalculados(alumno, m);
@@ -258,7 +259,7 @@ export function registerAcademiaGestionRoutes(app: Express) {
       if (!c) return;
       const m = c.m!;
       const componente = String(req.body?.componente || "") as keyof Pesos;
-      if (!(COMPONENTES_AJUSTABLES as readonly string[]).includes(componente) || !pesosDe(m)[componente]) {
+      if (!(COMPONENTES_AJUSTABLES as readonly string[]).includes(componente) || !(await pesosDeAlumno(c.alumno, m))[componente]) {
         return void res.status(400).json({ message: "Esa parte no pesa en la nota de esta materia." });
       }
       const quitar = req.body?.nota === null;

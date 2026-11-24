@@ -12,15 +12,33 @@ import { loginUrl } from "@/lib/login-redirect";
 import { REPASO_PREGUNTA_DIAS, type PreguntaDelDia, type RespuestaDelDia } from "@shared/repaso-del-dia";
 import { responderRepasoDelDia, useRepasoDelDia } from "@/components/academia/api";
 import { BarraAvance, Cargando, PantallaCerrada, enlaceInscripcion } from "@/components/academia/ui";
+import { useResumenDelDia } from "@/components/practicas/api";
+import { PRACTICAS } from "@shared/practicas";
 
 const cuando = (iso: string) => {
   const dias = Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
   return dias <= 0 ? "hoy" : dias === 1 ? "mañana" : `en ${dias} días`;
 };
 
+/** Después del repaso: la práctica del día, si hoy toca algo (server/academia-practicas.ts). */
+function SiguePractica({ n }: { n: number }) {
+  if (n <= 0) return null;
+  const k = Math.min(n, PRACTICAS.porDia);
+  return (
+    <Link href="/academia/practicar/dia" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3 text-left" data-testid="repaso-dia-practica">
+      <span>
+        <span className="block font-extrabold">Ahora, la práctica del día</span>
+        <span className="block text-sm opacity-95">{k} {k === 1 ? "actividad" : "actividades"} de tus lecciones, unos 5 minutos</span>
+      </span>
+      <ArrowRight className="w-5 h-5 shrink-0" />
+    </Link>
+  );
+}
+
 export default function AcademiaRepasoDia() {
   const qc = useQueryClient();
   const q = useRepasoDelDia(true);
+  const practicaDia = useResumenDelDia(true);
   useTituloAcademia("Repaso del día");
   // las preguntas de esta tanda quedan fijas mientras se responden (al terminar se pide otra)
   const [lista, setLista] = useState<PreguntaDelDia[] | null>(null);
@@ -109,6 +127,7 @@ export default function AcademiaRepasoDia() {
               <p className="mt-3">¡Estás al día! Hoy no te toca ninguna pregunta.{d.proxima ? ` La próxima vuelve ${cuando(d.proxima)}.` : ""}</p>
             )}
             <Link href="/academia/salon"><Button variant="outline" className="mt-4">Volver a mi salón</Button></Link>
+            <SiguePractica n={practicaDia.data?.pendientes ?? 0} />
           </div>
         ) : terminado ? (
           <div className="glass-card p-6 mt-6 text-center" data-testid="repaso-dia-fin">
@@ -121,6 +140,7 @@ export default function AcademiaRepasoDia() {
               )}
               <Link href="/academia/salon"><Button variant="outline" className="w-full">Volver a mi salón</Button></Link>
             </div>
+            <SiguePractica n={practicaDia.data?.pendientes ?? 0} />
           </div>
         ) : p ? (
           <div className="mt-6">

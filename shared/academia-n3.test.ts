@@ -120,7 +120,8 @@ test("las materias del Nivel 3 se evalúan como pide el reglamento", () => {
   assert.equal(f.breves, 1);
   assert.equal(f.pesoObjetiva, 60);
   // la nota: mini pruebas 20 %, final 40 %, escritos 30 %, versículo 10 %
-  assert.deepEqual(PESOS_NIVEL[3], { final: 40, repasos: 0, versiculo: 10, mini: 20, escritos: 30 });
+  // (las prácticas de las lecciones pesan 0 hasta que la materia las tiene todas: shared/practicas.ts)
+  assert.deepEqual(PESOS_NIVEL[3], { final: 40, practicas: 0, repasos: 0, versiculo: 10, mini: 20, escritos: 30 });
   assert.equal(notaMateria(PESOS_NIVEL[3], { final: 80, mini: 90, escritos: 70, versiculo: 100 }), 81);
 });
 

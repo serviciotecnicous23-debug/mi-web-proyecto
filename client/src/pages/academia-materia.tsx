@@ -24,6 +24,7 @@ import { AsignacionDeMateria } from "@/components/academia/asignaciones";
 import { EnPreparacion } from "@/components/academia/en-preparacion";
 import { LecturaAmpliadaCard } from "@/components/academia/lectura-ampliada";
 import { LaboratorioDeMateria } from "@/components/academia/laboratorio-materia";
+import { CaminoPracticas } from "@/components/practicas/camino";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -440,6 +441,9 @@ export default function AcademiaMateria() {
             boton="Completar mi inscripción"
           />
         )}
+
+        {/* El camino de prácticas: la práctica de cada lección y la misión de la materia (solo si ya las tiene) */}
+        {m.disponible && <CaminoPracticas materiaId={m.id} />}
 
         {/* Nivel 2 en adelante: las mini pruebas y el escrito breve */}
         {m.disponible && inscrito && d.minis.length > 0 && (
