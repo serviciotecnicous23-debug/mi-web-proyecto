@@ -241,6 +241,6 @@ test("estrellas, estados, componente y pesos", () => {
     assert.equal(problemaDePesos(PESOS_CON_PRACTICAS[n], PESOS_NIVEL[n]), null, `nivel ${n}`);
     assert.equal(Object.values(PESOS_CON_PRACTICAS[n]).reduce((a, b) => a + b, 0), 100);
   }
-  assert.match(problemaDePesos({ ...PESOS_CON_PRACTICAS[1], final: 40 }, PESOS_NIVEL[1]) ?? "", /sumar 100/);
+  assert.match(problemaDePesos({ ...PESOS_CON_PRACTICAS[1], final: 50 }, PESOS_NIVEL[1]) ?? "", /sumar 100/);
   assert.match(problemaDePesos({ ...PESOS_CON_PRACTICAS[1], final: 45, mini: 5 }, PESOS_NIVEL[1]) ?? "", /no tiene/);
 });

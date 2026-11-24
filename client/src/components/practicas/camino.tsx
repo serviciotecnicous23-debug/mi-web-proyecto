@@ -66,7 +66,14 @@ export function CaminoPracticas({ materiaId }: { materiaId: string }) {
         <span className="text-sm font-semibold inline-flex items-center gap-1"><Star className="w-4 h-4 text-amber-500" fill="currentColor" /> {c.estrellas} de {c.posibles}</span>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Cada lección tiene su práctica: primero la guiada y luego la que cuenta. {c.cuentaEnNota ? `Las prácticas entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.` : "Te ayudan a no olvidar."}
+        Cada lección tiene su práctica: primero la guiada y luego la que cuenta.{" "}
+        {c.obligatoria
+          ? `Las que cuentan son obligatorias para el examen final y entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.`
+          : c.aprobada
+            ? "Ya aprobaste la materia: practica cuando quieras, tu nota ya no cambia."
+            : c.cuentaEnNota
+              ? `Las prácticas entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.`
+              : "Te ayudan a no olvidar."}
       </p>
       <div className="relative rounded-3xl border border-border bg-gradient-to-b from-amber-50/60 to-transparent dark:from-amber-950/20 p-4 overflow-hidden">
         <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden preserveAspectRatio="none" viewBox="0 0 100 100">

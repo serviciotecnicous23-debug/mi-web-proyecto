@@ -1,7 +1,8 @@
 /**
- * Los documentos de la academia (docs/academia.md, «Los documentos»): el certificado de cada materia aprobada, el del
- * nivel completo y el de cada especialidad completa (sus cinco materias y su trabajo final). Salen solos, con un código
- * verificable (AAF-XXXX-XXXX) y un QR que lleva a la verificación pública.
+ * Los documentos de la academia (docs/academia.md, «Los documentos»): el certificado del nivel completo y el de cada
+ * especialidad completa (sus cinco materias y su trabajo final). Salen solos, con un código verificable
+ * (AAF-XXXX-XXXX) y un QR que lleva a la verificación pública. Desde el 23-nov-2026 cada materia aprobada da su
+ * insignia (en la vitrina del alumno) y no un certificado; los certificados de materia emitidos antes siguen valiendo.
  *
  * - El alumno ve sus documentos completos, con la nota o el promedio; la Dirección académica también.
  * - La verificación pública dice si el documento es válido, de quién es, qué es y cuándo se emitió, sin notas.
@@ -62,11 +63,6 @@ async function emitir(userId: number, tipo: TipoDocumento, ref: string, titulo: 
   throw new Error("No se pudo emitir el documento.");
 }
 
-/** El certificado de una materia aprobada (los honores son del nivel: el promedio de sus materias). */
-export function emitirMateria(userId: number, m: MateriaDef, nota: number, via = "cursada"): Promise<string> {
-  return emitir(userId, "materia", m.id, m.titulo, nota, false, via);
-}
-
 /** El certificado del nivel completo, con su promedio. */
 export function emitirNivel(userId: number, nv: NivelDef, promedio: number | null): Promise<string> {
   return emitir(userId, "nivel", String(nv.n), nv.recibe, promedio, promedio != null && promedio >= HONORES);
@@ -88,18 +84,13 @@ export async function codigoDocumento(userId: number, tipo: TipoDocumento, ref: 
   return (rows[0]?.codigo as string) ?? null;
 }
 
-/** Emite los documentos que falten de lo ya aprobado (por ejemplo, lo que se aprobó antes de que existieran). */
+/** Emite los certificados de nivel que falten de lo ya completado (por ejemplo, lo que se completó antes de que existieran). */
 export async function asegurarDocumentos(userId: number): Promise<void> {
-  const [{ rows: mats }, { rows: nivs }, { rows: docs }] = await Promise.all([
-    pool.query(`SELECT materia_id, nota, via FROM academia_materias WHERE user_id = $1 AND estado = 'aprobada'`, [userId]),
+  const [{ rows: nivs }, { rows: docs }] = await Promise.all([
     pool.query(`SELECT nivel, promedio FROM academia_niveles WHERE user_id = $1 AND completado_at IS NOT NULL`, [userId]),
     pool.query(`SELECT tipo, ref FROM academia_certificados WHERE user_id = $1`, [userId]),
   ]);
   const hay = new Set(docs.map((d: any) => `${d.tipo}:${d.ref}`));
-  for (const r of mats) {
-    const m = materiaPorId(r.materia_id);
-    if (m && !hay.has(`materia:${m.id}`)) await emitirMateria(userId, m, Number(r.nota ?? 0), r.via || "cursada");
-  }
   for (const r of nivs) {
     const nv = NIVELES.find((x) => x.n === Number(r.nivel));
     if (nv && !hay.has(`nivel:${nv.n}`)) await emitirNivel(userId, nv, r.promedio == null ? null : Number(r.promedio));

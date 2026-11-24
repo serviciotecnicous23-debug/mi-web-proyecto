@@ -10,7 +10,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { leccionPorId, materiaPorId, puedeRevisar, type MateriaDef, type NivelN } from "@shared/academia";
 import {
-  ESCALON_FIRME, MEDALLAS_PRACTICA, NOMBRE_MODO, PESOS_CON_PRACTICAS, PIEZAS, PRACTICAS, componentePracticas, esCalificable, estadoObjetivo, estrellasDe,
+  ESCALON_FIRME, MEDALLAS_PRACTICA, MODALIDADES, NOMBRE_FORMATO, NOMBRE_MODO, NOMBRE_PIEZA, PESOS_CON_PRACTICAS, PIEZAS, PRACTICAS, componentePracticas, type Modalidad, esCalificable, estadoObjetivo, estrellasDe,
   intercalarPorLeccion, medallaPractica, minutosDe, notaIntento, problemaDePesos, siguienteEscalon,
   type CaminoMateria, type Devolucion, type IntentoVista, type JuegoPregunta, type JuegoVista, type MedallaPractica, type ModoPractica, type ObjetivoResultado,
   type PracticaDelDiaResumen, type PracticaLeccionVista, type RespuestaPractica, type ResultadoPractica,
@@ -19,9 +19,11 @@ import { PESOS_NIVEL, type Pesos } from "@shared/academia-base";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import { PRACTICAS_POR_MATERIA, actividadPorId, actividadesDe, leccionesConPractica, materiaConPracticas } from "./academia/practicas/index";
 import type { Actividad } from "./academia/practicas/tipos";
-import { contestar, nuevoEstado, pistaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { contestar, formatoDe, formatosPosibles, nuevoEstado, pistaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { numeroDe } from "./orden-examen";
+import { ordenDeOpciones } from "@shared/estudios";
 import {
-  PRACTICAS_NOTA_SQL, asegurarConfig, componentePracticasDe, configDe, olvidarConfig, pesosConPracticas, practicasCuentan,
+  PRACTICAS_NOTA_SQL, asegurarConfig, componentePracticasDe, configDe, materiaAprobadaPor, olvidarConfig, pesosConPracticas, practicasCuentan, practicasObligatorias,
 } from "./academia-practicas-nota";
 import { MENSAJE_CERRADA, accesoDe, diaTexas, enFila, estaInscrito, frenar, inscritaEnMateria, marcarEstudio, recalcularMateria, type Acceso } from "./academia-comun";
 import { permisoDe } from "./academia-direccion";
@@ -42,6 +44,7 @@ CREATE TABLE IF NOT EXISTS academia_practicas_intentos (
   terminado_at timestamp
 );
 CREATE INDEX IF NOT EXISTS academia_practicas_intentos_alumno ON academia_practicas_intentos (user_id, leccion_id, modo);
+ALTER TABLE academia_practicas_intentos ADD COLUMN IF NOT EXISTS modalidad text;
 CREATE INDEX IF NOT EXISTS academia_practicas_intentos_materia ON academia_practicas_intentos (materia_id, terminado_at);
 CREATE TABLE IF NOT EXISTS academia_practicas_lecciones (
   user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -201,6 +204,9 @@ async function practicaDeLeccion(acceso: Acceso, leccionId: string): Promise<Pra
   else if (!modo.prueba && !modo.inscrito) falta = "Inscríbete en la materia para practicar.";
   else if (!modo.prueba && !completada) falta = "Termina la lección y su repaso para abrir la práctica.";
   const piezas = actividades.map((a) => a.pieza);
+  // (la Administración prueba sin que cuente: para ella no entra en ninguna nota)
+  const cuentaEnNota = !modo.prueba && (await practicasCuentan(modo.userId, m));
+  const aprobada = !modo.prueba && !!modo.userId && (await materiaAprobadaPor(modo.userId, m.id));
   return {
     leccion: { id: leccionId, titulo: l.leccion.titulo, n: l.indice + 1, completada },
     materia: { id: m.id, titulo: m.titulo, nivel: (m.nivel ?? null) as NivelN | null },
@@ -215,8 +221,10 @@ async function practicaDeLeccion(acceso: Acceso, leccionId: string): Promise<Pra
     quedanHoy: modo.prueba ? PRACTICAS.intentosPorDia : Math.max(0, PRACTICAS.intentosPorDia - hoy),
     objetivos: objetivosDe(leccionId, resumen, firmes),
     falta,
-    // (la Administración prueba sin que cuente: para ella no entra en ninguna nota)
-    cuentaEnNota: !modo.prueba && (await practicasCuentan(modo.userId, m)),
+    cuentaEnNota,
+    obligatoria: cuentaEnNota && !aprobada && !!modo.userId,
+    aprobada,
+    formas: formasDe(actividades),
     prueba: modo.prueba,
     conSesion: !!acceso.userId,
   };
@@ -224,10 +232,23 @@ async function practicaDeLeccion(acceso: Acceso, leccionId: string): Promise<Pra
 
 // ---------------------------------------------------------------- los intentos
 
-type FilaIntento = { id: number; user_id: number; modo: ModoPractica; materia_id: string; leccion_id: string | null; prueba: boolean; items: EstadoItem[]; terminado_at: string | null };
+type FilaIntento = {
+  id: number;
+  user_id: number;
+  modo: ModoPractica;
+  materia_id: string;
+  leccion_id: string | null;
+  prueba: boolean;
+  items: EstadoItem[];
+  terminado_at: string | null;
+  modalidad: string | null;
+};
 
 async function intentoDe(id: number, userId: number): Promise<FilaIntento | null> {
-  const { rows } = await pool.query(`SELECT id, user_id, modo, materia_id, leccion_id, prueba, items, terminado_at FROM academia_practicas_intentos WHERE id = $1 AND user_id = $2`, [id, userId]);
+  const { rows } = await pool.query(
+    `SELECT id, user_id, modo, materia_id, leccion_id, prueba, items, terminado_at, modalidad FROM academia_practicas_intentos WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
   return (rows[0] as FilaIntento | undefined) ?? null;
 }
 
@@ -250,22 +271,77 @@ function vistaIntento(f: FilaIntento): IntentoVista {
     items: f.items.map((e, i) => {
       const a = actividadPorId(e.leccion, e.actividad)!;
       const objetivos = CONTENIDO.get(e.leccion)?.objetivos ?? [];
-      return { n: i, pieza: a.pieza, objetivo: objetivos[a.objetivo] ?? "", leccion: f.modo === "guiada" || f.modo === "cuenta" ? null : leccionPorId(e.leccion)?.leccion.titulo ?? null, vista: vistaDe(a, e), hecha: e.terminada };
+      return {
+        n: i,
+        pieza: a.pieza,
+        formato: formatoDe(a, e),
+        objetivo: objetivos[a.objetivo] ?? "",
+        leccion: f.modo === "guiada" || f.modo === "cuenta" ? null : leccionPorId(e.leccion)?.leccion.titulo ?? null,
+        vista: vistaDe(a, e),
+        hecha: e.terminada,
+      };
     }),
     pistas: f.modo === "guiada",
     cierre: f.modo === "mision" ? mision?.cierre ?? null : null,
-    // (como en el reproductor: las tarjetas no suman puntos)
-    puntos: f.items.reduce((s, e) => (actividadPorId(e.leccion, e.actividad)?.pieza === "tarjetas" ? s : s + e.puntajes.reduce((x, p) => x + Math.round(p * 10), 0)), 0),
+    modalidad: (MODALIDADES as readonly string[]).includes(String(f.modalidad)) ? (f.modalidad as Modalidad) : "camino",
+    // (como en el reproductor: 10 por cada paso bien; los puntos de más de la modalidad los lleva el teléfono)
+    puntos: f.items.reduce((s, e) => s + e.puntajes.reduce((x, p) => x + Math.round(p * 10), 0), 0),
   };
 }
 
-async function crearIntento(userId: number, modo: ModoPractica, materiaId: string, leccionId: string | null, prueba: boolean, items: EstadoItem[]): Promise<FilaIntento> {
+/** Los nombres de las formas de jugar que pueden tocar en estas actividades (para anunciarlas antes de empezar). */
+function formasDe(actividades: Actividad[]): string[] {
+  const nombres = new Set<string>();
+  for (const a of actividades)
+    a.versiones.forEach((_, v) => {
+      for (const f of formatosPosibles(a, v, "guiada")) nombres.add(f === "normal" || a.pieza === "linea" ? NOMBRE_PIEZA[a.pieza] : NOMBRE_FORMATO[f]);
+    });
+  return [...nombres];
+}
+
+/** La modalidad de un intento, al azar (en la que cuenta, nunca contra el reloj). */
+function modalidadPara(modo: ModoPractica, semilla: number): Modalidad {
+  const posibles = MODALIDADES.filter((x) => modo !== "cuenta" || x !== "reloj");
+  return posibles[numeroDe(`modalidad:${semilla}`) % posibles.length];
+}
+
+async function crearIntento(userId: number, modo: ModoPractica, materiaId: string, leccionId: string | null, prueba: boolean, items: EstadoItem[], semilla: number): Promise<FilaIntento> {
   const { rows } = await pool.query(
-    `INSERT INTO academia_practicas_intentos (user_id, modo, materia_id, leccion_id, prueba, items) VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-     RETURNING id, user_id, modo, materia_id, leccion_id, prueba, items, terminado_at`,
-    [userId, modo, materiaId, leccionId, prueba, JSON.stringify(items)],
+    `INSERT INTO academia_practicas_intentos (user_id, modo, materia_id, leccion_id, prueba, items, modalidad) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+     RETURNING id, user_id, modo, materia_id, leccion_id, prueba, items, terminado_at, modalidad`,
+    [userId, modo, materiaId, leccionId, prueba, JSON.stringify(items), modalidadPara(modo, semilla)],
   );
   return rows[0] as FilaIntento;
+}
+
+/**
+ * Las actividades de un intento con su forma de jugar: variadas (una forma no se repite mientras haya otras) y
+ * distintas en cada intento, para que nadie sepa con qué se va a encontrar.
+ */
+function conFormatos(lista: { leccion: string; a: Actividad; version: number }[], modo: ModoPractica, semilla: number): EstadoItem[] {
+  const usados = new Map<string, number>();
+  return lista.map(({ leccion, a, version }, k) => {
+    const posibles = formatosPosibles(a, version, modo);
+    const menos = Math.min(...posibles.map((f) => usados.get(f) ?? 0));
+    const candidatos = posibles.filter((f) => (usados.get(f) ?? 0) === menos);
+    const formato = candidatos[numeroDe(`${semilla}:${leccion}:${a.id}:${k}`) % candidatos.length];
+    usados.set(formato, (usados.get(formato) ?? 0) + 1);
+    return nuevoEstado(leccion, a, version, semilla, formato);
+  });
+}
+
+/** Un orden variado: mezclado en cada intento, sin dos piezas iguales seguidas (si se puede) y «explícalo» al final. */
+function ordenVariado<T extends { a: Actividad }>(lista: T[], semilla: number): T[] {
+  const finales = lista.filter((x) => x.a.pieza === "explica");
+  const resto = ordenDeOpciones(lista.length, semilla >>> 0)
+    .map((i) => lista[i])
+    .filter((x) => x.a.pieza !== "explica");
+  const out: T[] = [];
+  while (resto.length) {
+    const j = resto.findIndex((x) => x.a.pieza !== out[out.length - 1]?.a.pieza);
+    out.push(resto.splice(j >= 0 ? j : 0, 1)[0]);
+  }
+  return [...out, ...finales];
 }
 
 /** La versión de cada actividad: va rotando con los intentos, para que la que cuenta no repita la guiada. */
@@ -294,8 +370,9 @@ async function empezarLeccion(acceso: Acceso, leccionId: string, modo: "guiada" 
   const vuelta = Number(previos[0]?.n ?? 0);
   const actividades = (actividadesDe(leccionId) ?? []).filter((a) => modo === "guiada" || esCalificable(a.pieza));
   const semilla = randomInt(1, 2 ** 31 - 1);
-  const items = actividades.map((a) => nuevoEstado(leccionId, a, versionPara(a, vuelta), semilla));
-  return vistaIntento(await crearIntento(userId, modo, p.materia.id, leccionId, p.prueba, items));
+  const lista = ordenVariado(actividades.map((a) => ({ leccion: leccionId, a, version: versionPara(a, vuelta) })), semilla);
+  const items = conFormatos(lista, modo, semilla);
+  return vistaIntento(await crearIntento(userId, modo, p.materia.id, leccionId, p.prueba, items, semilla));
 }
 
 /** Actualiza el calendario de una actividad después de responderla (en la práctica del día y en la misión). */
@@ -351,20 +428,42 @@ async function responder(userId: number, id: number, n: number, r: RespuestaPrac
 /** Lo que se guarda de cada respuesta para el panel (el texto de lo que eligió, no solo su número). */
 function resumenRespuesta(a: Actividad, e: EstadoItem, r: RespuestaPractica): unknown {
   const v: any = a.versiones[e.version];
+  const res = r as any;
+  const ronda = e.rondas?.[e.paso];
+  switch (formatoDe(a, e)) {
+    case "relampago":
+      return { elegida: v.tarjetas[ronda?.opciones?.[res.opcion] ?? -1]?.reverso ?? null };
+    case "elige-pareja":
+      return { elegida: v.pares[ronda?.opciones?.[res.opcion] ?? -1]?.[1] ?? null };
+    case "desliza":
+      return { elegida: v.grupos[res.grupo] ?? null, frase: v.frases[e.orden.frases?.[e.paso] ?? -1]?.texto ?? null };
+    case "intruso":
+      return { elegida: v.frases[ronda?.frases?.[res.frase] ?? -1]?.texto ?? null };
+    case "escalones":
+      return { elegida: v.pasos[e.orden.pasos?.filter((k: number) => k >= e.paso)[res.opcion] ?? -1] ?? null };
+    case "donde-va":
+      return { elegida: Number.isInteger(res.opcion) ? `En el lugar ${res.opcion + 1}` : null };
+    case "cual-falsa": {
+      const x = ronda?.items?.[res.frase];
+      return { elegida: x ? (a.versiones[x.v] as any).afirmaciones[x.i].texto : null };
+    }
+    default:
+      break;
+  }
   switch (r.pieza) {
     case "situacion":
-      return { elegida: v.opciones[e.orden.opciones?.[r.opcion] ?? -1]?.texto ?? null };
+      return { elegida: v.opciones[e.orden.opciones?.[res.opcion] ?? -1]?.texto ?? null };
     case "error":
       return { elegida: v.frases[e.orden.frases?.[r.frase] ?? -1] ?? null };
     case "verdad":
-      return { verdad: r.verdad };
+      return { verdad: res.verdad };
     case "completa":
       return { huecos: r.huecos };
     case "explica":
       return { texto: String(r.texto ?? "").slice(0, 600) };
     case "escenario": {
       const esc = v.escenas.find((x: any) => x.id === e.escena);
-      return { escena: e.escena, elegida: esc?.opciones[e.orden[`esc:${esc?.id}`]?.[r.opcion] ?? -1]?.texto ?? null };
+      return { escena: e.escena, elegida: esc?.opciones[e.orden[`esc:${esc?.id}`]?.[res.opcion] ?? -1]?.texto ?? null };
     }
     default:
       return r;
@@ -477,7 +576,8 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
     await marcarEstudio(userId);
     medallas = await medallasNuevas(userId, f.materia_id);
     const m = materiaPorId(f.materia_id);
-    if (m && f.modo === "cuenta" && (await practicasCuentan(userId, m))) await recalcularMateria(userId, m).catch(() => undefined);
+    // (quien ya aprobó practica libre: su nota ya no cambia)
+    if (m && f.modo === "cuenta" && (await practicasObligatorias(userId, m))) await recalcularMateria(userId, m).catch(() => undefined);
   } else if (f.prueba) {
     estrellas = estrellasDe(true, f.modo === "guiada" ? null : puntaje);
     mejor = f.modo === "guiada" ? null : puntaje;
@@ -555,12 +655,16 @@ async function practicaDelDia(userId: number): Promise<IntentoVista | { vacio: t
   const elegidas = intercalarPorLeccion(lista, PRACTICAS.porDia);
   if (!elegidas.length) return { vacio: true, resumen: await resumenDelDia(userId) };
   const semilla = randomInt(1, 2 ** 31 - 1);
-  const items = elegidas.map((x) => {
-    const a = actividadPorId(x.leccion, actividadDeClave(x.clave))!;
-    // (la versión va rotando con cada repaso; el primero trae la de la guiada, no la que acaba de ver en la que cuenta)
-    return nuevoEstado(x.leccion, a, versionPara(a, x.vueltas), semilla);
-  });
-  return vistaIntento(await crearIntento(userId, "dia", elegidas[0].materia, null, false, items));
+  // (la versión va rotando con cada repaso; el primero trae la de la guiada, no la que acaba de ver en la que cuenta)
+  const items = conFormatos(
+    elegidas.map((x) => {
+      const a = actividadPorId(x.leccion, actividadDeClave(x.clave))!;
+      return { leccion: x.leccion, a, version: versionPara(a, x.vueltas) };
+    }),
+    "dia",
+    semilla,
+  );
+  return vistaIntento(await crearIntento(userId, "dia", elegidas[0].materia, null, false, items, semilla));
 }
 
 // ---------------------------------------------------------------- el camino y la misión
@@ -584,7 +688,8 @@ async function caminoDe(acceso: Acceso, m: MateriaDef): Promise<CaminoMateria> {
   const completa = materiaConPracticas(m.id);
   const todas = ids.every((id) => hechas.has(id));
   const mision = res.get(`mision:${m.id}`);
-  const cuenta = await practicasCuentan(modo.userId, m);
+  const cuenta = !modo.prueba && (await practicasCuentan(modo.userId, m));
+  const aprobada = !modo.prueba && !!modo.userId && (await materiaAprobadaPor(modo.userId, m.id));
   return {
     materia: { id: m.id, titulo: m.titulo, nivel: (m.nivel ?? null) as NivelN | null },
     paradas,
@@ -598,6 +703,8 @@ async function caminoDe(acceso: Acceso, m: MateriaDef): Promise<CaminoMateria> {
       titulo: PRACTICAS_POR_MATERIA.get(m.id)?.mision?.titulo ?? "Misión de la materia",
     },
     cuentaEnNota: cuenta,
+    obligatoria: cuenta && !aprobada && !!modo.userId,
+    aprobada,
     componente: cuenta && modo.userId ? componentePracticas(ids.map((id) => res.get(id)?.mejor ?? null)) : null,
   };
 }
@@ -622,8 +729,12 @@ async function empezarMision(acceso: Acceso, m: MateriaDef): Promise<{ error: nu
   const elegidas = porLeccion.map((lista) => lista[0]).filter(Boolean);
   const resto = porLeccion.flatMap((lista) => lista.slice(1)).sort((x, y) => x.k - y.k || x.r - y.r);
   while (elegidas.length < Math.max(6, m.lecciones.length) && resto.length) elegidas.push(resto.shift()!);
-  const items = elegidas.map((x) => nuevoEstado(x.l, x.a, versionPara(x.a, (escalon.get(claveDe(x.l, x.a.id)) ?? 0) + 1), semilla));
-  return vistaIntento(await crearIntento(userId, "mision", m.id, null, modo.prueba, items));
+  const items = conFormatos(
+    elegidas.map((x) => ({ leccion: x.l, a: x.a, version: versionPara(x.a, (escalon.get(claveDe(x.l, x.a.id)) ?? 0) + 1) })),
+    "mision",
+    semilla,
+  );
+  return vistaIntento(await crearIntento(userId, "mision", m.id, null, modo.prueba, items, semilla));
 }
 
 // ---------------------------------------------------------------- los juegos libres

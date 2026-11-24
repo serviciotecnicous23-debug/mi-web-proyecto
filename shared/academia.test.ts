@@ -6,6 +6,7 @@ import {
   VERSICULOS_NIVEL, calificacion, citaVisible, codigoDe, enlaceBiblia, esperaFinalMin, estatusDe, leccionPublica, materiaAprobada, medallaDe, normalizarCodigo,
   notaExamen, notaMateria, numeroMatricula, parsearCita, puntajeVersiculo, todasLasMaterias, veVistaPrevia,
 } from "./academia";
+import { PESOS_CON_PRACTICAS } from "./practicas";
 
 test("el catálogo: 5 niveles con 8, 9, 10, 10 y 8 materias, y 12 especialidades de 5", () => {
   assert.deepEqual(NIVELES.map((n) => n.materias.length), [8, 9, 10, 10, 8]);
@@ -133,7 +134,7 @@ test("el reglamento académico dice los mismos números que el sistema", () => {
   assert.equal(REGLAMENTO.secciones.length, 11);
   assert.equal(REGLAMENTO.secciones[10].titulo, "11. Las actividades de los niveles");
   const todo = REGLAMENTO.secciones.flatMap((s) => s.puntos).join(" ");
-  for (const dato of [`aprueba con ${APRUEBA}`, `con ${APRUEBA_INTEGRAL}`, "30 minutos", "24 horas", `${DIAS_PAUSA} días`, `${HONORES} o más`, "examen final (70 %)", "tercer fallo", CODIGO_HONOR]) {
+  for (const dato of [`aprueba con ${APRUEBA}`, `con ${APRUEBA_INTEGRAL}`, "30 minutos", "24 horas", `${DIAS_PAUSA} días`, `${HONORES} o más`, `examen final (${PESOS_CON_PRACTICAS[1].final} %)`, `el examen final pesa ${PESOS_NIVEL[1].final} %`, "insignia", "tercer fallo", CODIGO_HONOR]) {
     assert.ok(todo.includes(dato), `el reglamento debe decir «${dato}»`);
   }
   assert.ok(todo.includes("No es un título universitario oficial"));

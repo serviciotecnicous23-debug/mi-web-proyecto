@@ -39,7 +39,7 @@ export const NOMBRE_PIEZA: Record<Pieza, string> = {
 
 /** La consigna de cada pieza cuando la actividad no trae una propia. */
 export const CONSIGNA_PIEZA: Record<Pieza, string> = {
-  tarjetas: "Responde de memoria y luego voltea la tarjeta.",
+  tarjetas: "Lee la pregunta y toca la respuesta correcta.",
   completa: "Toca una palabra y luego el espacio donde va.",
   relaciona: "Une cada idea de la izquierda con la que le corresponde.",
   clasifica: "Lleva cada frase a su grupo.",
@@ -56,12 +56,103 @@ export const CONSIGNA_PIEZA: Record<Pieza, string> = {
   caso: "Lee el caso y responde paso a paso.",
 };
 
-/** Las tarjetas son para aprender (el alumno se califica solo): no entran en la práctica que cuenta. */
+/** Las tarjetas son el repaso del comienzo («Relámpago»): no entran en la práctica que cuenta. */
 export const PIEZAS_FORMATIVAS: readonly Pieza[] = ["tarjetas"];
 export const esCalificable = (p: Pieza) => !PIEZAS_FORMATIVAS.includes(p);
 
+/**
+ * Las formas de jugar cada pieza (23-nov, pedido de Luis: «que cada avance sea una actividad diferente»). El mismo
+ * contenido de la lección se juega de varias formas, elegidas al azar en cada intento, así que nadie sabe con qué se va
+ * a encontrar. Todas se califican de 0 a 1 y cuentan igual para el dominio y la nota.
+ */
+export const FORMATOS = {
+  tarjetas: ["relampago"],
+  completa: ["banco", "elige", "escribe"],
+  relaciona: ["parejas", "elige-pareja"],
+  clasifica: ["recuadros", "desliza", "intruso"],
+  ordena: ["lista", "escalones", "donde-va"],
+  verdad: ["verdad-o-error", "cual-falsa"],
+  error: ["frases", "detective"],
+  situacion: ["opciones", "chat"],
+  explica: ["texto"],
+  linea: ["lista"],
+  "mapa-ideas": ["normal"],
+  mapa: ["normal"],
+  pasaje: ["normal"],
+  escenario: ["normal"],
+  caso: ["normal"],
+} as const satisfies Record<Pieza, readonly string[]>;
+export type Formato = (typeof FORMATOS)[Pieza][number];
+
+/** Las formas que no van en la práctica que cuenta (escribir la palabra exacta es más difícil: es para aprender). */
+export const FORMATOS_SOLO_PARA_APRENDER: readonly Formato[] = ["escribe"];
+
+/** El nombre de cada forma de jugar (la etiqueta de arriba de la actividad). */
+export const NOMBRE_FORMATO: Record<Formato, string> = {
+  relampago: "Relámpago",
+  banco: "Completa la idea",
+  elige: "Elige la palabra",
+  escribe: "Escríbela",
+  parejas: "Relaciona",
+  "elige-pareja": "Elige la pareja",
+  recuadros: "Clasifica",
+  desliza: "Desliza",
+  intruso: "¿Cuál no va?",
+  lista: "Ordena",
+  escalones: "Escalones",
+  "donde-va": "¿Dónde va?",
+  "verdad-o-error": "¿Verdad o error?",
+  "cual-falsa": "¿Cuál es falsa?",
+  frases: "Encuentra el error",
+  detective: "Detective",
+  opciones: "Situación",
+  chat: "Conversación",
+  texto: "Explícalo con tus palabras",
+  normal: "Práctica",
+};
+
+/** Cómo se juega cada forma, en una frase (se ve arriba de la actividad y en la primera vez, más grande). */
+export const COMO_SE_JUEGA: Record<Formato, string> = {
+  relampago: "Lee la pregunta y toca la respuesta correcta.",
+  banco: "Toca una palabra de abajo y después el espacio donde va.",
+  elige: "En cada espacio, toca la palabra que va.",
+  escribe: "Escribe en cada espacio la palabra que falta.",
+  parejas: "Toca una idea de la izquierda y después su pareja de la derecha.",
+  "elige-pareja": "Toca lo que corresponde a la idea de arriba.",
+  recuadros: "Toca una frase y después el recuadro del grupo donde va.",
+  desliza: "Lleva cada frase a su lado: deslízala o toca el grupo.",
+  intruso: "Tres frases van juntas y una no. Toca la que no va.",
+  lista: "Pon los pasos en orden: arrástralos o usa las flechas.",
+  escalones: "Arma la escalera: toca lo que va en cada escalón, del primero al último.",
+  "donde-va": "Un paso se salió de la lista. Toca el lugar donde va.",
+  "verdad-o-error": "¿Es verdad o es un error? Desliza o toca.",
+  "cual-falsa": "Toca la frase que se pide.",
+  frases: "Una de estas frases tiene un error. Tócala.",
+  detective: "Lee el texto como un detective y toca la frase que tiene un error.",
+  opciones: "Elige qué harías o qué dirías.",
+  chat: "Te escribieron: elige tu respuesta.",
+  texto: "Escribe tu respuesta con tus palabras.",
+  normal: "",
+};
+
 /** Las piezas que se responden en varios pasos (cada paso con su devolución). */
 export const PIEZAS_POR_PASOS: readonly Pieza[] = ["verdad", "mapa", "escenario", "caso"];
+
+/**
+ * La modalidad de cada intento (se elige al azar): cambia cómo se ven el avance y los puntos, nunca la nota.
+ * - camino: la llama que avanza;
+ * - escalera: cada acierto sube un escalón y cada error baja uno; arriba hay un premio de puntos;
+ * - racha: los aciertos seguidos multiplican los puntos (×2 desde 3, ×3 desde 6);
+ * - reloj: responder en menos de 20 segundos da puntos de más (nunca en la que cuenta: ahí no hay reloj).
+ */
+export const MODALIDADES = ["camino", "escalera", "racha", "reloj"] as const;
+export type Modalidad = (typeof MODALIDADES)[number];
+export const NOMBRE_MODALIDAD: Record<Modalidad, { nombre: string; regla: string }> = {
+  camino: { nombre: "El camino de la llama", regla: "Cada actividad enciende un poco más la llama." },
+  escalera: { nombre: "Escalera de fuego", regla: "Cada acierto sube un escalón y cada error baja uno. Llega arriba para el premio." },
+  racha: { nombre: "Racha encendida", regla: "Los aciertos seguidos multiplican tus puntos: ×2 desde 3 y ×3 desde 6." },
+  reloj: { nombre: "Contra el reloj", regla: "Si respondes bien en menos de 20 segundos, ganas puntos de más." },
+};
 
 // ---------------------------------------------------------------- las reglas
 
@@ -99,31 +190,43 @@ export type PasoCasoVista =
 
 /** Una actividad como la ve el alumno: sin las respuestas (las piezas por pasos muestran un paso a la vez). */
 export type ItemVista = { consigna: string } & (
-  | { pieza: "tarjetas"; tarjetas: { frente: string; reverso: string }[] }
-  | { pieza: "completa"; partes: (string | { hueco: number })[]; banco: string[] }
-  | { pieza: "relaciona"; izquierda: string[]; derecha: string[] }
-  | { pieza: "clasifica"; grupos: string[]; frases: string[] }
-  | { pieza: "ordena"; pasos: string[] }
-  | { pieza: "verdad"; afirmacion: string; paso: number; pasos: number }
-  | { pieza: "error"; frases: string[] }
-  | { pieza: "situacion"; caso: string; pregunta: string; opciones: string[] }
-  | { pieza: "explica"; pregunta: string; min: number; max: number }
-  | { pieza: "linea"; eventos: string[] }
-  | { pieza: "mapa-ideas"; nodos: { id: string; texto: string; x: number; y: number }[]; enlaces: { de: string; a: string }[]; relaciones: string[] }
-  | { pieza: "mapa"; imagen: string; alt: string; lugar: string; paso: number; pasos: number }
-  | { pieza: "pasaje"; ref: string; palabras: string[]; cuantas: number }
-  | { pieza: "escenario"; situacion: string; escena: EscenaVista; paso: number }
-  | { pieza: "caso"; titulo: string; relato: string[]; actual: PasoCasoVista; paso: number; pasos: number }
+  | { pieza: "tarjetas"; formato: "relampago"; pregunta: string; opciones: string[]; paso: number; pasos: number }
+  | { pieza: "completa"; formato: "banco"; partes: (string | { hueco: number })[]; banco: string[] }
+  | { pieza: "completa"; formato: "elige"; partes: (string | { hueco: number })[]; opciones: string[][] }
+  | { pieza: "completa"; formato: "escribe"; partes: (string | { hueco: number })[]; letras: number[]; iniciales: string[] }
+  | { pieza: "relaciona"; formato: "parejas"; izquierda: string[]; derecha: string[] }
+  | { pieza: "relaciona"; formato: "elige-pareja"; idea: string; opciones: string[]; paso: number; pasos: number }
+  | { pieza: "clasifica"; formato: "recuadros"; grupos: string[]; frases: string[] }
+  | { pieza: "clasifica"; formato: "desliza"; grupos: string[]; frase: string; paso: number; pasos: number }
+  | { pieza: "clasifica"; formato: "intruso"; frases: string[]; paso: number; pasos: number }
+  | { pieza: "ordena"; formato: "lista"; pasos: string[] }
+  | { pieza: "ordena"; formato: "escalones"; colocados: string[]; opciones: string[]; paso: number; pasos: number }
+  | { pieza: "ordena"; formato: "donde-va"; suelto: string; lista: string[]; paso: number; pasos: number }
+  | { pieza: "verdad"; formato: "verdad-o-error"; afirmacion: string; paso: number; pasos: number }
+  | { pieza: "verdad"; formato: "cual-falsa"; busca: "falsa" | "verdad"; afirmaciones: string[]; paso: number; pasos: number }
+  | { pieza: "error"; formato: "frases" | "detective"; frases: string[] }
+  | { pieza: "situacion"; formato: "opciones" | "chat"; caso: string; pregunta: string; opciones: string[] }
+  | { pieza: "explica"; formato: "texto"; pregunta: string; min: number; max: number }
+  | { pieza: "linea"; formato: "lista"; eventos: string[] }
+  | { pieza: "mapa-ideas"; formato: "normal"; nodos: { id: string; texto: string; x: number; y: number }[]; enlaces: { de: string; a: string }[]; relaciones: string[] }
+  | { pieza: "mapa"; formato: "normal"; imagen: string; alt: string; lugar: string; paso: number; pasos: number }
+  | { pieza: "pasaje"; formato: "normal"; ref: string; palabras: string[]; cuantas: number }
+  | { pieza: "escenario"; formato: "normal"; situacion: string; escena: EscenaVista; paso: number }
+  | { pieza: "caso"; formato: "normal"; titulo: string; relato: string[]; actual: PasoCasoVista; paso: number; pasos: number }
 );
 
-/** Lo que manda el alumno al contestar (los índices son los del orden en que se le mostró). */
+/**
+ * Lo que manda el alumno al contestar (los índices son los del orden en que se le mostró). Según la forma de jugar:
+ * `opcion` (relámpago, elige la pareja, escalones; en ¿dónde va?, el lugar), `grupo` (desliza), `frase` (¿cuál no va?,
+ * ¿cuál es falsa?), o el campo de siempre de la pieza.
+ */
 export type RespuestaPractica =
-  | { pieza: "tarjetas"; calif: ("bien" | "duda" | "mal")[] }
+  | { pieza: "tarjetas"; opcion: number }
   | { pieza: "completa"; huecos: string[] }
-  | { pieza: "relaciona"; pares: number[] }
-  | { pieza: "clasifica"; grupos: number[] }
-  | { pieza: "ordena"; orden: number[] }
-  | { pieza: "verdad"; verdad: boolean }
+  | { pieza: "relaciona"; pares?: number[]; opcion?: number }
+  | { pieza: "clasifica"; grupos?: number[]; grupo?: number; frase?: number }
+  | { pieza: "ordena"; orden?: number[]; opcion?: number }
+  | { pieza: "verdad"; verdad?: boolean; frase?: number }
   | { pieza: "error"; frase: number }
   | { pieza: "situacion"; opcion: number }
   | { pieza: "explica"; texto: string }
@@ -136,12 +239,17 @@ export type RespuestaPractica =
 
 /** La corrección de cada pieza (lo que se marca en pantalla después de contestar). */
 export type Correccion =
-  | { pieza: "tarjetas" }
+  | { pieza: "tarjetas"; correcta: number }
   | { pieza: "completa"; correctas: string[]; marcas: boolean[]; error: string | null }
-  | { pieza: "relaciona"; correctas: number[]; marcas: boolean[] }
-  | { pieza: "clasifica"; correctas: number[]; marcas: boolean[]; explicas: (string | null)[] }
-  | { pieza: "ordena"; correcto: number[] }
-  | { pieza: "verdad"; verdad: boolean }
+  | { pieza: "relaciona"; formato?: undefined; correctas: number[]; marcas: boolean[] }
+  | { pieza: "relaciona"; formato: "elige-pareja"; correcta: number }
+  | { pieza: "clasifica"; formato?: undefined; correctas: number[]; marcas: boolean[]; explicas: (string | null)[] }
+  | { pieza: "clasifica"; formato: "desliza"; grupo: number; explica: string | null }
+  | { pieza: "clasifica"; formato: "intruso"; intruso: number; grupoDe: string; grupoDeLasOtras: string }
+  | { pieza: "ordena"; formato?: undefined; correcto: number[] }
+  | { pieza: "ordena"; formato: "escalones" | "donde-va"; correcta: number }
+  | { pieza: "verdad"; formato?: undefined; verdad: boolean }
+  | { pieza: "verdad"; formato: "cual-falsa"; correcta: number }
   | { pieza: "error"; malo: number; correccion: string }
   | { pieza: "situacion"; correcta: number; explicas: string[] }
   | { pieza: "explica"; nota: number; ideas: { texto: string; ok: boolean }[]; avisos: string[]; modelo: string }
@@ -182,6 +290,7 @@ export type IntentoVista = {
   items: {
     n: number;
     pieza: Pieza;
+    formato: Formato;
     objetivo: string;
     /** De qué lección es (en la práctica del día y en la misión se mezclan). */
     leccion: string | null;
@@ -193,6 +302,8 @@ export type IntentoVista = {
   pistas: boolean;
   /** La misión: el texto con que termina cuando se cumple. */
   cierre: string | null;
+  /** La modalidad de este intento (cómo se ven el avance y los puntos). */
+  modalidad: Modalidad;
   /** Los puntos que ya lleva (al retomar un intento a medias). */
   puntos: number;
 };
@@ -244,6 +355,12 @@ export type PracticaLeccionVista = {
   falta: string | null;
   /** Si la práctica de esta materia entra en la nota del alumno. */
   cuentaEnNota: boolean;
+  /** La práctica que cuenta es obligatoria: el examen final la pide (entra en su nota y todavía no aprobó la materia). */
+  obligatoria: boolean;
+  /** Ya aprobó la materia: practica cuando quiera y su nota ya no cambia. */
+  aprobada: boolean;
+  /** Las formas de jugar que le pueden tocar en esta lección (sus nombres). */
+  formas: string[];
   prueba: boolean;
   conSesion: boolean;
 };
@@ -265,6 +382,10 @@ export type CaminoMateria = {
   posibles: number;
   mision: { abierta: boolean; mejor: number | null; falta: string | null; titulo: string };
   cuentaEnNota: boolean;
+  /** Las prácticas que cuentan son obligatorias para el examen final (todavía no aprobó la materia). */
+  obligatoria: boolean;
+  /** Ya aprobó la materia: practica libre. */
+  aprobada: boolean;
   /** El componente de la nota (0–100) si cuenta. */
   componente: number | null;
 };
@@ -364,13 +485,17 @@ export function minutosDe(piezas: Pieza[]): number {
 
 // ---------------------------------------------------------------- los pesos de la nota
 
-/** Los pesos de la nota cuando las prácticas cuentan (el panel los puede cambiar por nivel; suman 100). */
+/**
+ * Los pesos de la nota cuando las prácticas cuentan (el panel los puede cambiar por nivel; suman 100). Equilibrados
+ * (23-nov, pedido de Luis): las prácticas pesan casi como el examen final, porque son completas y se pueden repetir
+ * (vale la mejor), así que ayudan a subir la nota a quien va abajo, según su porcentaje.
+ */
 export const PESOS_CON_PRACTICAS: Record<NivelN, Pesos> = {
-  1: { final: 50, practicas: 20, repasos: 15, versiculo: 15, mini: 0, escritos: 0 },
-  2: { final: 40, practicas: 15, repasos: 0, versiculo: 10, mini: 20, escritos: 15 },
-  3: { final: 35, practicas: 15, repasos: 0, versiculo: 10, mini: 15, escritos: 25 },
-  4: { final: 35, practicas: 15, repasos: 0, versiculo: 10, mini: 15, escritos: 25 },
-  5: { final: 35, practicas: 15, repasos: 0, versiculo: 10, mini: 15, escritos: 25 },
+  1: { final: 40, practicas: 30, repasos: 15, versiculo: 15, mini: 0, escritos: 0 },
+  2: { final: 35, practicas: 25, repasos: 0, versiculo: 10, mini: 15, escritos: 15 },
+  3: { final: 30, practicas: 25, repasos: 0, versiculo: 10, mini: 15, escritos: 20 },
+  4: { final: 30, practicas: 25, repasos: 0, versiculo: 10, mini: 15, escritos: 20 },
+  5: { final: 30, practicas: 25, repasos: 0, versiculo: 10, mini: 15, escritos: 20 },
 };
 
 /** Por qué unos pesos no sirven (o null si sirven): enteros de 0 a 100 que suman 100, con examen final y prácticas. */

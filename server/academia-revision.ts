@@ -24,7 +24,6 @@ import { escritaPorId } from "./academia/index";
 import {
   avisarA, claveFinal, claveIntegral, claveTrabajo, componentesDe, contextoExamen, enFila, frenar, olvidarApertura, viaFija, type ContextoExamen,
 } from "./academia-comun";
-import { emitirMateria } from "./academia-documentos";
 import { avanceEspecialidad, revisarEspecialidad } from "./academia-especialidad";
 import { aprobarPorSuficiencia } from "./academia-suficiencia";
 import { estadoNivel, revisarNivel } from "./academia-nivel";
@@ -233,17 +232,20 @@ export async function reconsiderarMateria(userId: number, m: MateriaDef, motivo:
   // aprobada por suficiencia o convalidada: su nota es fija (la del examen de suficiencia o la de la convalidación)
   if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
-  const nota = notaMateria(await pesosDeAlumno(userId, m), componentes);
+  const pesos = await pesosDeAlumno(userId, m);
+  const nota = notaMateria(pesos, componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
   const { rows } = await pool.query(`SELECT estado FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   const estaba = rows[0]?.estado === "aprobada";
+  // (aprobada: se guardan los pesos con que aprobó; si deja de estar aprobada, vuelve a la fórmula de quien cursa)
   await pool.query(
     `UPDATE academia_materias
         SET nota = $3, componentes = $4::jsonb,
+            pesos_aprobada = CASE WHEN $5 THEN COALESCE(pesos_aprobada, $6::jsonb) ELSE NULL END,
             estado = CASE WHEN $5 THEN 'aprobada' ELSE 'en-curso' END,
             aprobada_at = CASE WHEN $5 THEN COALESCE(aprobada_at, now()) ELSE NULL END
       WHERE user_id = $1 AND materia_id = $2`,
-    [userId, m.id, nota, JSON.stringify(componentes), aprobada],
+    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos)],
   );
   await pool.query(
     `UPDATE academia_pruebas SET aprobada_at = CASE WHEN $3 THEN COALESCE(aprobada_at, now()) ELSE NULL END WHERE user_id = $1 AND clave = $2`,
@@ -251,8 +253,8 @@ export async function reconsiderarMateria(userId: number, m: MateriaDef, motivo:
   );
   if (aprobada) {
     const { rows: c } = await pool.query(`SELECT 1 FROM academia_certificados WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`, [userId, m.id]);
+    // (el certificado de la materia, si se emitió antes del 23-nov, vuelve a valer; uno nuevo ya no se emite)
     if (c.length) await restaurarSiFueNota(userId, "materia", m.id, nota);
-    else await emitirMateria(userId, m, nota);
   } else if (estaba) {
     await revocarPorNota(userId, "materia", m.id, motivo);
   }

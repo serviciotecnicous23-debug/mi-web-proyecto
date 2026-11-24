@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Link } from "wouter";
 import { motion, useReducedMotion } from "motion/react";
 import { Award, CalendarClock, Flame, RotateCcw, Star } from "lucide-react";
-import { NOMBRE_ESTADO, PRACTICAS, type EstadoObjetivo, type IntentoVista, type ResultadoPractica } from "@shared/practicas";
+import { NOMBRE_ESTADO, NOMBRE_MODALIDAD, PRACTICAS, type EstadoObjetivo, type IntentoVista, type ResultadoPractica } from "@shared/practicas";
 import { sonarFinal } from "./sonido";
 
 const COLOR_ESTADO: Record<EstadoObjetivo, string> = {
@@ -42,7 +42,7 @@ export function Estrellas({ n, antes = n, grande = false }: { n: number; antes?:
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
 
-export function Resultado({ r, intento, alSalir, alOtraVez }: { r: ResultadoPractica; intento: IntentoVista; alSalir: () => void; alOtraVez?: (modo: "guiada" | "cuenta") => void }) {
+export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: ResultadoPractica; intento: IntentoVista; puntos?: number; alSalir: () => void; alOtraVez?: (modo: "guiada" | "cuenta") => void }) {
   const quieto = useReducedMotion();
   useEffect(() => {
     sonarFinal(r.estrellas);
@@ -90,6 +90,11 @@ export function Resultado({ r, intento, alSalir, alOtraVez }: { r: ResultadoPrac
           {r.puntaje}
           <span className="text-2xl text-muted-foreground"> / 100</span>
         </p>
+        {puntos != null && puntos > 0 && (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-200 px-3 py-1 text-sm font-bold" data-testid="resultado-puntos">
+            <Flame className="w-4 h-4" fill="currentColor" fillOpacity={0.35} /> {puntos} puntos · {NOMBRE_MODALIDAD[intento.modalidad ?? "camino"].nombre}
+          </p>
+        )}
         <p className="mt-2 text-[15px] text-muted-foreground max-w-sm mx-auto">{mensaje}</p>
         {r.modo === "cuenta" && r.mejor != null && <p className="mt-1 text-sm font-semibold">Tu mejor nota en esta lección: {r.mejor}</p>}
         {r.modo === "mision" && intento.cierre && r.puntaje >= PRACTICAS.domina && (

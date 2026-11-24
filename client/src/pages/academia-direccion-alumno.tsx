@@ -23,6 +23,7 @@ import { GestionMateriaPanel, HerramientasAlumno } from "@/components/academia/g
 import { useArea } from "@/components/academia/area";
 import { Cargando } from "@/components/academia/ui";
 import { ChipEstatus, ListaActividad, NivelesYCertificados, TablaAvance, fecha, hace } from "@/components/academia/seguimiento";
+import { VitrinaInsignias, insigniasDe } from "@/components/academia/insignias";
 
 const fechaNacimiento = (f: string) => new Date(`${f}T12:00:00Z`).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -301,6 +302,7 @@ export default function AcademiaDireccionAlumno() {
           {tab === "ficha" && (
             <div className="space-y-5">
               <Ficha d={d} propio={propio} />
+              <VitrinaInsignias insignias={insigniasDe(d.materias)} propio={propio} />
               <NivelesYCertificados d={d} sinCertificados={d.puede.documentos && !propio} />
               {d.puede.documentos && !propio && <Documentos d={d} />}
               {d.puede.revisar && alumnoId && <Escritas id={alumnoId} propio={propio} />}

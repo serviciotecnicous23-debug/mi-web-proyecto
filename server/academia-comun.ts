@@ -703,16 +703,19 @@ export async function recalcularMateria(userId: number, m: MateriaDef): Promise<
     return { nota: Number(ya[0].nota ?? 0), aprobada: true, componentes: (ya[0].componentes ?? {}) as Componentes };
   }
   const componentes = await componentesDe(userId, m);
-  const nota = notaMateria(await pesosDeAlumno(userId, m), componentes);
+  const pesos = await pesosDeAlumno(userId, m);
+  const nota = notaMateria(pesos, componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
   await asegurarMateria(userId, m.id);
+  // al aprobar quedan guardados los pesos con que aprobó: después puede practicar sin que su nota cambie
   await pool.query(
     `UPDATE academia_materias
         SET nota = $3, componentes = $4::jsonb,
+            pesos_aprobada = CASE WHEN estado <> 'aprobada' AND $5 THEN $6::jsonb ELSE pesos_aprobada END,
             estado = CASE WHEN estado = 'aprobada' OR $5 THEN 'aprobada' ELSE 'en-curso' END,
             aprobada_at = CASE WHEN aprobada_at IS NULL AND $5 THEN now() ELSE aprobada_at END
       WHERE user_id = $1 AND materia_id = $2`,
-    [userId, m.id, nota, JSON.stringify(componentes), aprobada],
+    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos)],
   );
   return { nota, aprobada, componentes };
 }

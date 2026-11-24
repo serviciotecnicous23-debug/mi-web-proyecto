@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, BookOpen, CheckCircle2, Clock, Flame, Lock, PartyPopper, Play, ShieldCheck, Target } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Clock, Flame, Lock, PartyPopper, Play, ShieldCheck, Shuffle, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { loginUrl } from "@/lib/login-redirect";
 import { useToast } from "@/hooks/use-toast";
-import { NOMBRE_PIEZA, PRACTICAS, type IntentoVista } from "@shared/practicas";
+import { PRACTICAS, type IntentoVista } from "@shared/practicas";
 import { empezarLeccion, usePracticaLeccion } from "@/components/practicas/api";
 import { Reproductor } from "@/components/practicas/reproductor";
 import { EstadoChip, Estrellas } from "@/components/practicas/resultado";
@@ -86,16 +86,25 @@ export default function AcademiaPractica() {
             <span className="inline-flex items-center gap-1 text-muted-foreground"><Clock className="w-4 h-4" /> {p.minutos} min</span>
             {p.mejor != null && <span className="font-semibold">Tu mejor: {p.mejor}</span>}
           </div>
-          {p.piezas.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {p.piezas.map((x) => (
-                <span key={x} className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">{NOMBRE_PIEZA[x]}</span>
-              ))}
+          {p.formas.length > 0 && (
+            <div className="mt-3" data-testid="practica-formas">
+              <p className="text-sm font-semibold flex items-center gap-1.5"><Shuffle className="w-4 h-4 text-amber-600" /> Cada vez se juega distinto. Te puede tocar:</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {p.formas.map((x) => (
+                  <span key={x} className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">{x}</span>
+                ))}
+              </div>
             </div>
           )}
-          <p className="mt-3 text-sm flex items-start gap-1.5">
+          <p className="mt-3 text-sm flex items-start gap-1.5" data-testid="practica-regla">
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
-            {p.cuentaEnNota ? "La práctica que cuenta entra en tu nota de la materia (vale tu mejor intento)." : "Es para aprender y no olvidar: no cambia tu nota."}
+            {p.obligatoria
+              ? `Es obligatoria: el examen final pide la práctica que cuenta de cada lección. Entra en tu nota (vale tu mejor intento) y la puedes hacer hasta ${PRACTICAS.intentosPorDia} veces por día.`
+              : p.aprobada
+                ? "Ya aprobaste esta materia: practica cuando quieras. Tu nota ya no cambia."
+                : p.cuentaEnNota
+                  ? "La práctica que cuenta entra en tu nota de la materia (vale tu mejor intento)."
+                  : "Es para aprender y no olvidar: no cambia tu nota."}
           </p>
         </div>
 
@@ -140,7 +149,10 @@ export default function AcademiaPractica() {
                 <Target className="w-6 h-6" />
               </span>
               <span className="flex-1">
-                <span className="block font-extrabold text-[17px]">La práctica que cuenta</span>
+                <span className="block font-extrabold text-[17px]">
+                  La práctica que cuenta
+                  {p.obligatoria && <span className="ml-2 align-middle rounded-full bg-orange-600 text-white px-2 py-0.5 text-[11px] font-bold" data-testid="cuenta-obligatoria">Obligatoria</span>}
+                </span>
                 <span className="block text-sm text-muted-foreground">
                   {!p.guiada && !p.prueba
                     ? "Se abre cuando terminas la guiada."

@@ -20,7 +20,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
           {
             tarjetas: [
               { frente: "¿Qué confesó Pedro acerca de Jesús?", reverso: "Que Jesús es el Cristo, el Hijo del Dios viviente.", apoyo: "Pedro respondió que Jesús es el Cristo, el Hijo del Dios viviente." },
-              { frente: "¿Qué significa la palabra Cristo?", reverso: "Lo mismo que Mesías en hebreo: el Ungido, el Salvador prometido por Dios.", apoyo: "La palabra Cristo viene del griego y significa lo mismo que Mesías en hebreo" },
+              { frente: "¿Qué significa la palabra Cristo?", reverso: "Significa lo mismo que Mesías en hebreo: el Ungido, el Salvador prometido.", apoyo: "La palabra Cristo viene del griego y significa lo mismo que Mesías en hebreo" },
               { frente: "¿Por qué Juan llama a Jesús el Verbo?", reverso: "Porque es la Palabra de Dios: la expresión perfecta de quién es Dios.", apoyo: "Jesús es la expresión perfecta de quién es Dios." },
               { frente: "¿Qué es recibir a Jesús?", reverso: "Confiar en Él como Salvador y darle el primer lugar como Señor.", apoyo: "Recibirlo es confiar en Él como Salvador y darle el primer lugar como Señor." },
             ],
@@ -41,27 +41,30 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "completa",
         versiones: [
           {
-            texto: "Pedro confesó que Jesús es el [[Cristo]], el Hijo del Dios [[viviente]]. La palabra Cristo significa lo mismo que [[Mesías]] en hebreo: el Ungido.",
+            consigna: "Completa lo que confesó Pedro y lo que significa la palabra Cristo.",
+            texto: "Pedro confesó que Jesús es el [[Cristo]], el Hijo del Dios [[viviente]]. La palabra Cristo significa lo mismo que [[Mesías]] en hebreo: el Ungido, el Salvador que Dios había prometido.",
             distractores: ["profeta", "maestro", "Elías"],
             errores: {
-              profeta: "Eso decía la gente: unos lo veían como uno de los profetas. Pedro fue más allá.",
-              maestro: "Jesús enseñaba, pero Pedro confesó mucho más: que es el Cristo, el Hijo del Dios viviente.",
+              profeta: "Eso decía la gente: que era alguno de los profetas. Pedro confesó mucho más.",
+              maestro: "Mucha gente lo considera un buen maestro, pero Pedro confesó mucho más.",
               Elías: "Algunos decían que era Elías: una opinión respetuosa, pero no suficiente.",
             },
             apoyo: "Pedro respondió que Jesús es el Cristo, el Hijo del Dios viviente.",
             ref: "Mateo 16:16; Juan 1:41",
-            explica: "Cristo (en griego) y Mesías (en hebreo) quieren decir lo mismo: el Ungido, el Salvador que Dios había prometido.",
+            explica: "Pedro confesó que Jesús es el Cristo, el Hijo del Dios viviente. Cristo (en griego) y Mesías (en hebreo) quieren decir lo mismo: el Ungido.",
           },
           {
-            texto: "Cuando Jesús preguntó qué decía la gente, unos respondieron Juan el Bautista y otros [[Elías]]. Pedro dijo que Jesús es el [[Cristo]], y Jesús le explicó que eso se lo había revelado el [[Padre]].",
-            distractores: ["Moisés", "rey", "pueblo"],
+            consigna: "Completa lo que confesó Pedro y quién se lo reveló.",
+            texto: "Pedro confesó que Jesús es el [[Cristo]], el Hijo del Dios viviente. Esa respuesta no salió de su inteligencia: se la reveló el [[Padre]]. Conocer de verdad a Jesús es un [[regalo]] de Dios.",
+            distractores: ["profeta", "pueblo", "Elías"],
             errores: {
-              pueblo: "La respuesta de Pedro no vino de la gente ni de su inteligencia: se la reveló el Padre.",
-              rey: "Pedro no dijo solo que era un rey: confesó que es el Cristo, el Hijo del Dios viviente.",
+              profeta: "Eso decía la gente: que era alguno de los profetas. Pedro confesó mucho más.",
+              pueblo: "La gente solo tenía opiniones. La respuesta de Pedro se la reveló el Padre.",
+              Elías: "Algunos decían que era Elías: una opinión respetuosa, pero no suficiente.",
             },
             apoyo: "esa respuesta no salió de la inteligencia de Pedro, sino que se la reveló el Padre",
             ref: "Mateo 16:13-17",
-            explica: "La gente tenía opiniones respetuosas pero insuficientes. Conocer de verdad a Jesús es un regalo que Dios da.",
+            explica: "La gente tenía opiniones respetuosas, pero no suficientes. Conocer de verdad a Jesús es un regalo que Dios da.",
           },
         ],
       },
@@ -71,17 +74,19 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "verdad",
         versiones: [
           {
+            consigna: "Sobre Jesús, Dios y hombre: ¿es verdad o es un error?",
             afirmaciones: [
               { texto: "Jesús empezó a existir cuando nació en Belén.", verdad: false, explica: "Juan dice que el Verbo ya existía en el principio, estaba con Dios y era Dios: Jesús es el Hijo eterno.", apoyo: "Jesús no empezó a existir en Belén.", ref: "Juan 1:1-2" },
               { texto: "Como hombre, Jesús tuvo hambre, se cansó y lloró.", verdad: true, explica: "El Verbo se hizo hombre de verdad: nació de una mujer y vivió como uno de nosotros.", apoyo: "Jesús nació de una mujer, creció, tuvo hambre, se cansó y lloró.", ref: "Juan 1:14" },
-              { texto: "Todas las cosas fueron hechas por medio de Jesús.", verdad: true, explica: "Antes de nacer como hombre ya era el Hijo eterno, y la creación fue hecha por medio de Él.", apoyo: "todas las cosas fueron hechas por medio de Él", ref: "Juan 1:3" },
+              { texto: "Todas las cosas fueron hechas por medio de Jesús.", verdad: true, explica: "Antes de nacer como hombre ya era el Hijo eterno, y todo fue hecho por medio de Él.", apoyo: "todas las cosas fueron hechas por medio de Él", ref: "Juan 1:3" },
             ],
           },
           {
+            consigna: "Sobre Jesús, Dios y hombre: ¿es verdad o es un error?",
             afirmaciones: [
-              { texto: "Jesús fue un buen maestro, pero no era Dios.", verdad: false, explica: "Juan dice que el Verbo era Dios y que se hizo hombre: Jesús es verdadero Dios y verdadero hombre.", apoyo: "Por eso decimos que Jesús es verdadero Dios y verdadero hombre.", ref: "Juan 1:1, 14" },
+              { texto: "Jesús fue solo un buen maestro, como muchos otros.", verdad: false, explica: "Juan dice que el Verbo era Dios y que se hizo hombre: Jesús es verdadero Dios y verdadero hombre.", apoyo: "Por eso decimos que Jesús es verdadero Dios y verdadero hombre.", ref: "Juan 1:1, 14" },
               { texto: "Juan llama a Jesús el Verbo, es decir, la Palabra de Dios.", verdad: true, explica: "Así como nuestras palabras expresan lo que pensamos, Jesús es la expresión perfecta de quién es Dios.", apoyo: "llama a Jesús el Verbo, es decir, la Palabra de Dios", ref: "Juan 1:1" },
-              { texto: "Jesús se hizo hombre, pero nunca sintió cansancio ni dolor.", verdad: false, explica: "Jesús tuvo hambre, se cansó y lloró: era hombre de verdad, y así pudo tomar nuestro lugar.", apoyo: "Jesús nació de una mujer, creció, tuvo hambre, se cansó y lloró.", ref: "Juan 1:14" },
+              { texto: "Jesús era Dios, pero solo aparentaba ser hombre.", verdad: false, explica: "Jesús fue hombre de verdad: tuvo hambre, se cansó y lloró. Así pudo tomar nuestro lugar.", apoyo: "Jesús nació de una mujer, creció, tuvo hambre, se cansó y lloró.", ref: "Juan 1:14" },
             ],
           },
         ],
@@ -92,30 +97,31 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "clasifica",
         versiones: [
           {
-            consigna: "Lleva cada frase a su grupo.",
+            consigna: "¿Es saber acerca de Jesús o es recibirlo? Lleva cada frase a su grupo.",
             grupos: ["Saber acerca de Jesús", "Recibir a Jesús"],
             frases: [
-              { texto: "Conocer los datos de su vida", grupo: 0 },
-              { texto: "Decir que fue un buen maestro", grupo: 0, explica: "Es una opinión respetuosa, pero no basta." },
-              { texto: "Haber nacido en una familia cristiana", grupo: 0, explica: "Ser hijo de Dios no viene por la familia en que nacimos." },
+              { texto: "Saber los datos de su vida", grupo: 0 },
+              { texto: "Opinar que fue un buen maestro", grupo: 0, explica: "Es una opinión respetuosa, pero no basta para ser hijo de Dios." },
+              { texto: "Saber lo que la gente dice de Él", grupo: 0, explica: "Cada persona tiene que responder por sí misma quién es Jesús." },
               { texto: "Confiar en Él como Salvador", grupo: 1 },
               { texto: "Darle el primer lugar como Señor", grupo: 1 },
               { texto: "Creer en su nombre", grupo: 1 },
             ],
-            apoyo: "Aquí está la diferencia entre saber acerca de Jesús y conocerlo.",
+            apoyo: "Recibirlo es confiar en Él como Salvador y darle el primer lugar como Señor.",
             ref: "Juan 1:12-13",
-            explica: "Saber datos u opinar bien de Jesús no hace a nadie hijo de Dios; eso pasa cuando lo recibimos y creemos en su nombre.",
+            explica: "Saber cosas de Jesús no hace a nadie hijo de Dios. Eso pasa cuando lo recibimos y creemos en su nombre.",
           },
           {
-            consigna: "¿Qué nos hace hijos de Dios y qué no?",
-            grupos: ["No nos hace hijos de Dios", "Así llegamos a ser hijos de Dios"],
+            consigna: "¿Así llegamos a ser hijos de Dios o no? Lleva cada frase a su grupo.",
+            grupos: ["Así llegamos a ser hijos de Dios", "Esto no nos hace hijos de Dios"],
             frases: [
-              { texto: "La familia en que nacimos", grupo: 0 },
-              { texto: "Nuestra fuerza de voluntad", grupo: 0 },
-              { texto: "La decisión de otra persona", grupo: 0 },
-              { texto: "Saber muchos datos de Jesús", grupo: 0, explica: "Saber acerca de Jesús no es lo mismo que recibirlo." },
-              { texto: "Recibir a Jesús", grupo: 1 },
-              { texto: "Creer en su nombre", grupo: 1 },
+              { texto: "Recibir a Jesús", grupo: 0 },
+              { texto: "Creer en el nombre de Jesús", grupo: 0 },
+              { texto: "Confiar en Jesús como Salvador", grupo: 0 },
+              { texto: "La familia en que nacimos", grupo: 1 },
+              { texto: "Nuestra fuerza de voluntad", grupo: 1 },
+              { texto: "La decisión de otra persona", grupo: 1 },
+              { texto: "Saber muchos datos de Jesús", grupo: 1, explica: "Saber acerca de Jesús no es lo mismo que recibirlo." },
             ],
             apoyo: "Ser hijo de Dios no viene por la familia en que nacimos, ni por nuestra fuerza de voluntad, ni por la decisión de otra persona",
             ref: "Juan 1:12-13",
@@ -132,27 +138,27 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "En el trabajo, un compañero te dice: Jesús fue un buen maestro, como muchos otros.",
             pregunta: "¿Qué le respondes?",
             opciones: [
-              { texto: "Sí, cada quien tiene su maestro y todos valen lo mismo.", explica: "Así Jesús queda como uno más. Las opiniones de la gente eran respetuosas, pero ninguna era suficiente." },
-              { texto: "Fue más que un maestro: la Biblia dice que es Dios hecho hombre, y yo confío en Él.", bien: true, explica: "Responde con respeto, dice quién es Jesús según Juan 1 y cuenta lo que Él significa para ti." },
-              { texto: "Mejor no hablemos de religión.", explica: "Evitar el tema pierde la ocasión de responder la pregunta más importante." },
-              { texto: "Si no crees en Jesús, no tiene sentido hablar contigo.", explica: "Es una respuesta dura que cierra la puerta. Se puede hablar de Jesús con firmeza y con amor." },
+              { texto: "Tienes razón: fue un buen maestro, como tantos otros que hubo.", explica: "Así Jesús queda como uno más. Las opiniones de la gente eran respetuosas, pero ninguna era suficiente." },
+              { texto: "Fue más que un maestro: la Biblia dice que es Dios hecho hombre.", bien: true, explica: "Responde con respeto y dice quién es Jesús según Juan 1: Dios hecho hombre." },
+              { texto: "Mejor no hablemos de religión, que eso siempre trae problemas.", explica: "Evitar el tema pierde la ocasión de decir quién es Jesús." },
+              { texto: "Si no crees en Jesús, no tiene sentido seguir hablando contigo.", explica: "Es una respuesta dura que cierra la puerta. Se puede hablar de Jesús con respeto." },
             ],
             apoyo: "Eran opiniones respetuosas, pero ninguna era suficiente.",
             ref: "Juan 1:1, 14",
-            explica: "Jesús enseñó como nadie, pero la Biblia dice mucho más: es el Cristo, Dios hecho hombre.",
+            explica: "Mucha gente ve a Jesús como un buen maestro, pero la Biblia dice mucho más: es Dios hecho hombre.",
           },
           {
             caso: "Tu sobrina de 12 años te pregunta si Jesús ya existía antes de nacer en Belén.",
             pregunta: "¿Qué le respondes?",
             opciones: [
-              { texto: "Sí: antes de nacer como hombre ya era el Hijo eterno, y todo fue hecho por medio de Él.", bien: true, explica: "Así lo enseña Juan 1:1-3: el Verbo ya existía en el principio." },
-              { texto: "No, empezó a existir cuando nació de María.", explica: "Jesús no empezó a existir en Belén: ya existía en el principio y estaba con Dios." },
-              { texto: "Nadie lo sabe; es un misterio sin respuesta.", explica: "La Biblia sí responde: Juan dice que el Verbo existía en el principio." },
-              { texto: "Existía, pero como un ángel.", explica: "Juan no dice que era un ángel: dice que el Verbo era Dios." },
+              { texto: "Sí: antes de nacer como hombre ya era el Hijo eterno.", bien: true, explica: "Así lo enseña Juan 1:1-3: el Verbo ya existía en el principio, y todo fue hecho por medio de Él." },
+              { texto: "No: empezó a existir cuando nació de María, en Belén.", explica: "Jesús no empezó a existir en Belén: ya existía en el principio y estaba con Dios." },
+              { texto: "Nadie lo sabe: es un misterio que la Biblia no responde.", explica: "La Biblia sí responde: Juan dice que el Verbo ya existía en el principio." },
+              { texto: "Sí, ya existía, pero como un ángel que Dios había creado.", explica: "Juan no dice que era un ángel: dice que el Verbo era Dios y que todo fue hecho por medio de Él." },
             ],
             apoyo: "Antes de nacer como hombre ya era el Hijo eterno, y todas las cosas fueron hechas por medio de Él.",
             ref: "Juan 1:1-3",
-            explica: "Jesús es el Hijo eterno: no empezó a existir en Belén, sino que se hizo hombre allí.",
+            explica: "Jesús es el Hijo eterno: no empezó a existir en Belén, sino que allí se hizo hombre.",
           },
         ],
       },
@@ -211,7 +217,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
           {
             tarjetas: [
               { frente: "¿Solo los crímenes graves son pecado?", reverso: "No: también el orgullo, la mentira, la envidia, el rencor y no amar a Dios por encima de todo.", apoyo: "También son pecado el orgullo, la mentira, la envidia, el rencor y no amar a Dios por encima de todo" },
-              { frente: "¿Qué quiere decir estar destituidos de la gloria de Dios?", reverso: "Que nos quedamos cortos: ninguno llega a la medida santa de Dios.", apoyo: "quiere decir que nos quedamos cortos: ninguno llega a la medida santa de Dios" },
+              { frente: "¿Qué quiere decir estar «destituidos de la gloria de Dios»?", reverso: "Que nos quedamos cortos: ninguno llega a la medida santa de Dios.", apoyo: "quiere decir que nos quedamos cortos: ninguno llega a la medida santa de Dios" },
               { frente: "¿Cuál es la paga del pecado?", reverso: "La muerte: la separación de Dios.", apoyo: "lo que el pecado nos da a cambio es la muerte, la separación de Dios" },
               { frente: "¿Cuándo murió Cristo por nosotros?", reverso: "Cuando todavía éramos pecadores.", apoyo: "Cristo murió por nosotros cuando todavía éramos pecadores." },
             ],
@@ -224,6 +230,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "error",
         versiones: [
           {
+            consigna: "Una de estas frases sobre el pecado está equivocada. Tócala.",
             frases: [
               "Pecar es apartarse de lo que Dios quiere.",
               "El orgullo, la mentira y el rencor también son pecado.",
@@ -237,6 +244,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             explica: "El pecado no es solo cosa de crímenes graves: todos nos quedamos cortos ante la medida santa de Dios.",
           },
           {
+            consigna: "Una de estas frases sobre el pecado está equivocada. Tócala.",
             frases: [
               "Todos hemos pecado y nos quedamos cortos ante la gloria de Dios.",
               "Ninguno llega a la medida santa de Dios.",
@@ -257,32 +265,34 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "clasifica",
         versiones: [
           {
+            consigna: "¿Es la paga del pecado o el regalo de Dios? Lleva cada frase a su grupo.",
             grupos: ["La paga del pecado", "El regalo de Dios"],
             frases: [
               { texto: "La muerte", grupo: 0 },
               { texto: "La separación de Dios", grupo: 0 },
-              { texto: "Lo que ganamos por pecar", grupo: 0 },
+              { texto: "Lo que ganamos por pecar", grupo: 0, explica: "Una paga es lo que uno gana: el pecado nos da la muerte." },
               { texto: "La vida eterna", grupo: 1 },
-              { texto: "Lo que no se puede comprar", grupo: 1 },
-              { texto: "Lo que Dios da en Cristo Jesús", grupo: 1 },
+              { texto: "Lo que solo se recibe con gratitud", grupo: 1, explica: "Un regalo no se puede pagar ni ganar: solo se recibe." },
+              { texto: "Lo que Dios nos da en Cristo Jesús", grupo: 1 },
             ],
             apoyo: "La muerte la ganamos; la vida eterna, Dios nos la regala.",
             ref: "Romanos 6:23",
-            explica: "Una paga se gana: el pecado nos da muerte. Una dádiva es un regalo: Dios nos regala la vida eterna en Cristo.",
+            explica: "Una paga se gana: el pecado nos da la muerte. Una dádiva es un regalo: Dios nos regala la vida eterna en Cristo.",
           },
           {
-            grupos: ["La mala noticia", "La buena noticia"],
+            consigna: "¿Es la mala noticia o la buena noticia? Lleva cada frase a su grupo.",
+            grupos: ["Mala noticia: el pecado", "Buena noticia: el amor de Dios"],
             frases: [
               { texto: "Todos hemos pecado", grupo: 0 },
               { texto: "La paga del pecado es muerte", grupo: 0 },
               { texto: "Nos quedamos cortos ante Dios", grupo: 0 },
               { texto: "Dios envió a su Hijo", grupo: 1 },
-              { texto: "Cristo murió y resucitó por nosotros", grupo: 1 },
+              { texto: "Jesús resucitó al tercer día", grupo: 1 },
               { texto: "La vida eterna es un regalo", grupo: 1 },
             ],
-            apoyo: "La primera es una mala noticia: la paga del pecado es muerte.",
+            apoyo: "Todos pecamos y merecemos la muerte, pero Dios nos ama, y en Cristo, que murió y resucitó por nosotros, nos regala la vida eterna.",
             ref: "Romanos 6:23; 5:8",
-            explica: "El evangelio es buena noticia porque responde a un problema real: Dios mismo dio el primer paso en Cristo.",
+            explica: "El evangelio es buena noticia porque resuelve un problema real: el pecado. Dios mismo dio el primer paso en Cristo.",
           },
         ],
       },
@@ -292,18 +302,18 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "ordena",
         versiones: [
           {
-            consigna: "Pon en orden lo que pasa en Juan 3:16.",
+            consigna: "Ordena lo que dice Juan 3:16, del primer paso al último.",
             pasos: ["Dios amó al mundo", "Dios dio a su Hijo", "Nosotros creemos en Él", "Recibimos vida eterna"],
             apoyo: "Dios amó, Dios dio, nosotros creemos y recibimos vida eterna",
             ref: "Juan 3:16",
             explica: "La iniciativa es de Dios: primero Él amó y dio; nosotros creemos y recibimos.",
           },
           {
-            consigna: "Ordena cómo respondió Dios a nuestro problema, según la lección.",
-            pasos: ["Dios nos amó cuando todavía éramos pecadores", "Envió a su Hijo, Jesús", "Jesús murió en la cruz en nuestro lugar", "Al tercer día resucitó", "Quien cree recibe vida eterna"],
+            consigna: "Ordena cómo nos llega la salvación, del primer paso al último.",
+            pasos: ["Dios nos amó cuando todavía éramos pecadores", "Dios envió a su Hijo, Jesús", "Jesús murió en la cruz en nuestro lugar", "Al tercer día, Jesús resucitó", "Quien cree en Él recibe vida eterna"],
             apoyo: "Dios no nos dejó perdidos: Él mismo dio el primer paso.",
             ref: "Juan 3:16; Romanos 5:8",
-            explica: "Dios no esperó a que fuéramos buenos: amó, envió a su Hijo, y quien cree recibe la vida eterna.",
+            explica: "Dios no esperó a que fuéramos buenos: nos amó y envió a su Hijo. Quien cree en Él recibe la vida eterna.",
           },
         ],
       },
@@ -316,23 +326,23 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "Una amiga te dice: Yo soy buena persona, no le hago daño a nadie; seguro que Dios me acepta por eso.",
             pregunta: "¿Qué le respondes con amor?",
             opciones: [
-              { texto: "Tienes razón: lo importante es ser buena persona.", explica: "Nadie puede presentarse ante Dios diciendo que es lo bastante bueno: todos nos quedamos cortos." },
-              { texto: "Ser buena es bueno, pero nadie llega a la medida de Dios. Por eso la salvación es un regalo que Dios da en Cristo.", bien: true, explica: "Reconoce lo bueno, explica el problema del pecado y presenta el regalo de Dios." },
-              { texto: "Nadie es bueno, así que no hay esperanza.", explica: "Se queda en la mala noticia: falta el regalo de Dios en Cristo." },
-              { texto: "Si haces más obras buenas, Dios te aceptará.", explica: "La salvación no se gana: las buenas obras vienen después, como fruto y no como precio." },
+              { texto: "Tienes razón: si eres buena persona y no le haces daño a nadie, Dios te acepta.", explica: "Nadie puede presentarse ante Dios diciendo que es lo bastante bueno: todos nos quedamos cortos." },
+              { texto: "Ser buena es bueno, pero no basta: la salvación es un regalo de Dios en Cristo.", bien: true, explica: "Reconoce lo bueno, pero muestra que no basta: la salvación es un regalo que Dios da en Cristo." },
+              { texto: "Nadie es bueno de verdad, así que nadie tiene esperanza de salvarse.", explica: "Se queda en la mala noticia: falta el regalo de Dios en Cristo." },
+              { texto: "Te falta poco: si haces más obras buenas cada día, Dios te va a aceptar.", explica: "La salvación no se gana: las buenas obras vienen después, como fruto y no como precio." },
             ],
             apoyo: "Por eso nadie puede decir que se salvó por ser buena persona.",
             ref: "Romanos 3:23; 6:23",
             explica: "La salvación no es un premio por portarse bien: es un regalo que se recibe con gratitud.",
           },
           {
-            caso: "Un compañero de estudio te pregunta: Si la salvación es gratis, ¿para qué sirven las buenas obras?",
+            caso: "Un compañero de estudio te pregunta: Si la salvación es un regalo, ¿para qué sirven las buenas obras?",
             pregunta: "¿Qué le respondes?",
             opciones: [
-              { texto: "No sirven para nada.", explica: "Las buenas obras son importantes; solo que no son el precio de la salvación." },
-              { texto: "Son importantes, pero vienen después: son fruto de la salvación, no su precio.", bien: true, explica: "Así lo dice la lección con Efesios 2:10." },
-              { texto: "Sirven para pagar una parte de la salvación.", explica: "Un regalo no se compra: si se paga, ya no es regalo." },
-              { texto: "Sirven para que Dios nos ame más.", explica: "Dios nos amó cuando todavía éramos pecadores (Romanos 5:8)." },
+              { texto: "No sirven para nada: si ya eres salvo, da igual cómo vivas después.", explica: "Las buenas obras son importantes; solo que no son el precio de la salvación." },
+              { texto: "Son importantes, pero vienen después, como fruto y no como precio.", bien: true, explica: "Las obras vienen después de recibir la salvación, como su fruto (Efesios 2:10)." },
+              { texto: "Sirven para pagar una parte de la salvación, y Dios pone el resto.", explica: "Un regalo no se compra: si se paga, ya no es regalo." },
+              { texto: "Sirven para que Dios nos ame un poco más cada vez que hacemos algo bueno.", explica: "Dios nos amó cuando todavía éramos pecadores (Romanos 5:8)." },
             ],
             apoyo: "Las buenas obras son importantes, pero vienen después, como fruto de la salvación y no como su precio",
             ref: "Efesios 2:10",
@@ -388,15 +398,15 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
           {
             tarjetas: [
               { frente: "¿Qué significa arrepentirse?", reverso: "Cambiar de mentalidad y volverse a Dios: dar media vuelta.", apoyo: "La palabra del Nuevo Testamento significa cambiar de mentalidad" },
-              { frente: "¿Qué promete Dios a quien se arrepiente y se convierte?", reverso: "Le borra los pecados.", apoyo: "a quien se arrepiente y se convierte, Dios le borra los pecados" },
+              { frente: "¿Qué hace Dios con los pecados de quien se arrepiente?", reverso: "Los borra: no los guarda para echárselos en cara.", apoyo: "a quien se arrepiente y se convierte, Dios le borra los pecados" },
               { frente: "¿Qué es la gracia?", reverso: "El favor de Dios que no merecemos.", apoyo: "La gracia es el favor de Dios que no merecemos" },
-              { frente: "¿Qué es la fe en esta lección?", reverso: "La mano vacía que recibe el regalo.", apoyo: "La fe es la mano vacía que recibe ese regalo." },
+              { frente: "¿Qué es la fe?", reverso: "La mano vacía que recibe el regalo de Dios.", apoyo: "La fe es la mano vacía que recibe ese regalo." },
             ],
           },
           {
             tarjetas: [
               { frente: "¿Arrepentirse es solo sentir tristeza?", reverso: "No: es reconocer el pecado, dejar de justificarlo y volverse a Dios.", apoyo: "Arrepentirse no es solo sentir tristeza o vergüenza." },
-              { frente: "¿Guarda Dios los pecados que borra?", reverso: "No los guarda para echárnoslos en cara después.", apoyo: "No los guarda para echárselos en cara después." },
+              { frente: "¿Qué promete Dios en Hechos 3:19 a quien se arrepiente?", reverso: "Que le borra los pecados.", apoyo: "Fíjate en la promesa: a quien se arrepiente y se convierte, Dios le borra los pecados." },
               { frente: "¿Qué es creer con el corazón?", reverso: "Confiar de verdad en que Jesús murió por ti y en que Dios lo levantó de los muertos.", apoyo: "Creer con el corazón es confiar de verdad en que Jesús murió por ti y en que Dios lo levantó de los muertos." },
               { frente: "¿Qué es confesar con la boca?", reverso: "Declarar abiertamente que Jesús es tu Señor.", apoyo: "Confesar con la boca es declarar abiertamente que Jesús es tu Señor" },
             ],
@@ -409,17 +419,19 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "verdad",
         versiones: [
           {
+            consigna: "Sobre el arrepentimiento: ¿es verdad o es un error?",
             afirmaciones: [
-              { texto: "Arrepentirse es solo sentirse triste por lo que hice.", verdad: false, explica: "Es cambiar de mentalidad y de dirección: reconocer el pecado, dejar de justificarlo y volverse a Dios.", apoyo: "Arrepentirse no es solo sentir tristeza o vergüenza.", ref: "Hechos 3:19" },
+              { texto: "Arrepentirse es solo sentir tristeza por el pecado.", verdad: false, explica: "Es cambiar de mentalidad y de dirección: reconocer el pecado, dejar de justificarlo y volverse a Dios.", apoyo: "Arrepentirse no es solo sentir tristeza o vergüenza.", ref: "Hechos 3:19" },
               { texto: "A quien se arrepiente y se convierte, Dios le borra los pecados.", verdad: true, explica: "Es la promesa de Hechos 3:19: el arrepentimiento es la puerta al perdón.", apoyo: "a quien se arrepiente y se convierte, Dios le borra los pecados", ref: "Hechos 3:19" },
               { texto: "El arrepentimiento es un castigo que pagamos por nuestros pecados.", verdad: false, explica: "No es un castigo que pagamos: es la puerta por la que entramos al perdón.", apoyo: "El arrepentimiento no es un castigo que pagamos: es la puerta por la que entramos al perdón." },
             ],
           },
           {
+            consigna: "Sobre el arrepentimiento: ¿es verdad o es un error?",
             afirmaciones: [
               { texto: "Arrepentirse es como dar media vuelta en un camino equivocado.", verdad: true, explica: "La Biblia lo describe como un cambio de dirección: volverse a Dios.", apoyo: "Es como quien va por un camino equivocado, se da cuenta y da media vuelta." },
               { texto: "Dios perdona, pero guarda los pecados para recordárnoslos después.", verdad: false, explica: "Dios borra los pecados de quien se arrepiente: no los usa contra nosotros.", apoyo: "No los guarda para echárselos en cara después.", ref: "Hechos 3:19" },
-              { texto: "Arrepentirse incluye dejar de justificar mi pecado.", verdad: true, explica: "Reconocer el pecado sin excusas es parte de volverse a Dios.", apoyo: "dejar de justificar mi pecado y volverme a Él" },
+              { texto: "Arrepentirse incluye dejar de justificar el pecado.", verdad: true, explica: "Reconocer el pecado sin excusas es parte de volverse a Dios.", apoyo: "dejar de justificar mi pecado y volverme a Él" },
             ],
           },
         ],
@@ -430,21 +442,22 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "completa",
         versiones: [
           {
-            texto: "La [[gracia]] es el favor de Dios que no merecemos. La [[fe]] es la mano vacía que recibe ese regalo.",
-            distractores: ["suerte", "obediencia", "ley"],
+            consigna: "Completa las dos palabras clave de Efesios 2:8-9.",
+            texto: "La [[gracia]] es el favor de Dios que no merecemos. La [[fe]] es la mano vacía que recibe el regalo de Dios.",
+            distractores: ["suerte", "obediencia", "tristeza"],
             errores: {
-              obediencia: "La obediencia es fruto de la fe, pero no es la mano que recibe el regalo: esa mano es la fe.",
-              ley: "La ley no salva: la gracia es el favor que Dios nos da sin que lo merezcamos.",
+              obediencia: "La salvación no es por obras: es por gracia, mediante la fe.",
             },
             apoyo: "La gracia es el favor de Dios que no merecemos: Dios nos da lo bueno que no ganamos.",
             ref: "Efesios 2:8-9",
             explica: "Por gracia, mediante la fe: Dios da el regalo y la fe lo recibe.",
           },
           {
-            texto: "La fe que salva no es solo aceptar que Jesús existió: es [[confianza]] personal, como quien se [[sienta]] en una silla confiando en que lo va a sostener.",
-            distractores: ["costumbre", "levanta", "sabiduría"],
+            consigna: "Completa qué es la fe que salva.",
+            texto: "La fe que salva es [[confianza]] personal: apoyar todo el [[peso]] de la vida en lo que Jesús hizo, como quien se [[sienta]] en una silla confiando en que lo va a sostener.",
+            distractores: ["costumbre", "sabiduría", "levanta"],
             errores: {
-              costumbre: "La fe no es una costumbre religiosa: es apoyar todo el peso de la vida en Jesús.",
+              costumbre: "La fe no es una costumbre: es apoyar todo el peso de la vida en Jesús.",
               sabiduría: "No es solo saber cosas de Dios: hasta los demonios creen que hay un solo Dios.",
             },
             apoyo: "La fe que salva es confianza personal",
@@ -459,26 +472,27 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "relaciona",
         versiones: [
           {
+            consigna: "Une cada idea con lo que la lección dice de ella.",
             pares: [
               ["La gracia", "El favor de Dios que no merecemos"],
-              ["La fe", "La mano vacía que recibe el regalo"],
-              ["Creer como los demonios", "Aceptar que hay un solo Dios, sin confiar en Él"],
               ["La fe que salva", "Apoyar todo el peso de mi vida en lo que Jesús hizo"],
+              ["Los demonios", "Creen que hay un solo Dios, y tiemblan"],
+              ["Las obras", "Nadie podrá decir que se salvó por ellas"],
             ],
             apoyo: "La fe que salva es confianza personal: apoyar todo el peso de mi vida en lo que Jesús hizo por mí",
             ref: "Efesios 2:8-9; Santiago 2:19",
-            explica: "Saber que Dios existe no basta: la fe que salva es confianza personal en Jesús, y recibe lo que la gracia da.",
+            explica: "Saber que Dios existe no basta: la fe que salva confía en Jesús. Y la salvación es por gracia, no por obras.",
           },
           {
+            consigna: "Une cada idea con lo que la lección dice de ella.",
             pares: [
-              ["La gracia", "Dios nos da lo bueno que no ganamos"],
-              ["La fe", "Confianza personal en lo que Jesús hizo"],
-              ["Las obras", "No son el camino para salvarse"],
-              ["La gloria", "Es toda de Dios"],
+              ["La gracia", "Lo bueno que Dios nos da sin que lo ganemos"],
+              ["La fe", "La mano vacía que recibe el regalo"],
+              ["Creer solo que Dios existe", "Hasta los demonios lo creen, y tiemblan"],
             ],
-            apoyo: "Toda la gloria es de Dios.",
-            ref: "Efesios 2:8-9",
-            explica: "No es por obras, para que nadie se gloríe: nadie podrá decir que lo logró por sí mismo.",
+            apoyo: "La gracia es el favor de Dios que no merecemos: Dios nos da lo bueno que no ganamos.",
+            ref: "Efesios 2:8-9; Santiago 2:19",
+            explica: "La gracia es el regalo de Dios y la fe es la mano que lo recibe. Creer solo que Dios existe no basta.",
           },
         ],
       },
@@ -491,10 +505,10 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "Después de la reunión, un joven te dice: Quiero recibir a Jesús, pero no sé qué palabras exactas tengo que decir.",
             pregunta: "¿Qué le explicas?",
             opciones: [
-              { texto: "Si no dices la oración exacta, no cuenta.", explica: "No son las palabras las que salvan, sino la fe en Jesús que esas palabras expresan." },
-              { texto: "Lo que salva es creer de corazón en Jesús y confesarlo como tu Señor; puedes decírselo a Dios con tus palabras.", bien: true, explica: "Es lo que enseña Romanos 10:9-10: creer con el corazón y confesar con la boca." },
-              { texto: "Primero arregla tu vida y después vuelves.", explica: "La salvación es un regalo: no hay que arreglarse primero para recibirla." },
-              { texto: "Basta con que vengas a la iglesia.", explica: "Asistir es bueno, pero la salvación se recibe creyendo en Jesús y confesándolo como Señor." },
+              { texto: "Tienes que decir una oración exacta; si cambias una palabra, no cuenta.", explica: "No son las palabras las que salvan, sino la fe en Jesús que esas palabras expresan." },
+              { texto: "Cree en Jesús de corazón y confiésalo como Señor; dilo con tus palabras.", bien: true, explica: "Es lo que enseña Romanos 10:9-10: creer con el corazón y confesar con la boca." },
+              { texto: "Primero arregla tu vida, y cuando estés mejor vuelves a hablar con Dios.", explica: "La salvación es un regalo: no hay que arreglarse primero para recibirla." },
+              { texto: "No hace falta decir nada: basta con que vengas a la iglesia cada domingo.", explica: "Ir a la iglesia es bueno, pero la salvación se recibe creyendo en Jesús y confesándolo como Señor." },
             ],
             apoyo: "Recuerda: no son las palabras las que salvan, sino la fe en Jesús que esas palabras expresan.",
             ref: "Romanos 10:9-10",
@@ -504,10 +518,10 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "Una señora de tu iglesia dice: Yo creo en Jesús en mi corazón, pero eso es algo privado; no hace falta decirlo.",
             pregunta: "¿Qué le respondes con cariño?",
             opciones: [
-              { texto: "Tiene razón: la fe es solo del corazón.", explica: "La fe nace en el corazón, pero no se queda escondida: se dice y se vive." },
-              { texto: "La fe nace en el corazón, pero también se confiesa: decimos que Jesús es nuestro Señor.", bien: true, explica: "Romanos 10:9-10 une las dos cosas: creer con el corazón y confesar con la boca." },
-              { texto: "Decirlo es lo único que importa.", explica: "Las palabras sin fe no salvan: hace falta creer de verdad." },
-              { texto: "Solo los pastores deben decirlo en público.", explica: "Romanos 10:9 es para todo el que cree." },
+              { texto: "Tiene razón: la fe es algo del corazón, y no hace falta decírselo a nadie.", explica: "Creer con el corazón es necesario, pero Romanos 10:9-10 también habla de confesar con la boca." },
+              { texto: "La fe nace en el corazón, y también se dice: confesamos que Jesús es Señor.", bien: true, explica: "Une las dos cosas de Romanos 10:9-10: creer con el corazón y confesar con la boca." },
+              { texto: "Lo único que importa es decirlo; lo que crea en su corazón da igual.", explica: "Las palabras sin fe no salvan: hace falta creer de verdad con el corazón." },
+              { texto: "Decirlo en público les toca a los pastores; usted puede guardarlo para sí.", explica: "Romanos 10:9 es para todo el que cree, no solo para los pastores." },
             ],
             apoyo: "La fe nace en el corazón, pero no se queda escondida: se dice y se vive.",
             ref: "Romanos 10:9-10",
@@ -563,8 +577,8 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
           {
             tarjetas: [
               { frente: "¿Quién era Nicodemo?", reverso: "Un principal de los judíos, fariseo: religioso, respetado y cumplidor.", apoyo: "Era fariseo: un hombre religioso, respetado y cumplidor." },
-              { frente: "¿Qué le dijo Jesús a Nicodemo?", reverso: "Que para ver el reino de Dios hay que nacer de nuevo.", apoyo: "para ver el reino de Dios hay que nacer de nuevo" },
-              { frente: "¿Quién da la vida nueva por dentro?", reverso: "El Espíritu Santo, a quien cree en Jesús.", apoyo: "el Espíritu Santo da una vida nueva por dentro a quien cree en Jesús" },
+              { frente: "¿Qué le dijo Jesús a Nicodemo sobre el reino de Dios?", reverso: "Que para verlo hay que nacer de nuevo.", apoyo: "para ver el reino de Dios hay que nacer de nuevo" },
+              { frente: "¿Quién da la vida nueva por dentro?", reverso: "El Espíritu Santo: la da a quien cree en Jesús.", apoyo: "el Espíritu Santo da una vida nueva por dentro a quien cree en Jesús" },
             ],
           },
           {
@@ -582,11 +596,12 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "clasifica",
         versiones: [
           {
-            grupos: ["Es nacer de nuevo", "No es nacer de nuevo"],
+            consigna: "¿Esto es nacer de nuevo o no? Lleva cada frase a su grupo.",
+            grupos: ["Sí es nacer de nuevo", "No es nacer de nuevo"],
             frases: [
               { texto: "Una obra de Dios por su Espíritu", grupo: 0 },
               { texto: "Recibir vida nueva por dentro al creer en Jesús", grupo: 0 },
-              { texto: "Un regalo, como el primer nacimiento", grupo: 0 },
+              { texto: "Un regalo de Dios, como el primer nacimiento", grupo: 0, explica: "Así como no hiciste nada para nacer la primera vez, el nuevo nacimiento es un regalo." },
               { texto: "Empezar otra vez con fuerza de voluntad", grupo: 1 },
               { texto: "Cambiar de religión", grupo: 1 },
               { texto: "Mejorar un poco", grupo: 1 },
@@ -596,7 +611,8 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             explica: "Nacer de nuevo es una obra de Dios: el Espíritu Santo da vida nueva a quien cree.",
           },
           {
-            grupos: ["Es nacer de nuevo", "No es nacer de nuevo"],
+            consigna: "¿Qué es nacer de nuevo y qué no? Lleva cada frase a su grupo.",
+            grupos: ["Sí es nacer de nuevo", "No es nacer de nuevo"],
             frases: [
               { texto: "Nacer del Espíritu", grupo: 0 },
               { texto: "Un regalo de Dios", grupo: 0 },
@@ -617,13 +633,15 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "verdad",
         versiones: [
           {
+            consigna: "Sobre ser nueva criatura en Cristo: ¿es verdad o es un error?",
             afirmaciones: [
-              { texto: "Ser nueva criatura quiere decir que ya no tendrás luchas ni tentaciones.", verdad: false, explica: "Seguirá habiendo luchas, pero ahora tienes una identidad nueva, un corazón nuevo y al Espíritu Santo.", apoyo: "Eso no quiere decir que ya no tendrás luchas ni tentaciones", ref: "2 Corintios 5:17" },
+              { texto: "Al ser nueva criatura, se acaban las luchas y las tentaciones.", verdad: false, explica: "Seguirá habiendo luchas, pero ahora tienes una identidad nueva, un corazón nuevo y al Espíritu Santo.", apoyo: "Eso no quiere decir que ya no tendrás luchas ni tentaciones", ref: "2 Corintios 5:17" },
               { texto: "Lo viejo ya no tiene la última palabra sobre la vida de quien está en Cristo.", verdad: true, explica: "En Cristo empezó un cambio de fondo, aunque crecer lleve tiempo.", apoyo: "Lo viejo ya no tiene la última palabra sobre tu vida." },
               { texto: "El creyente tiene al Espíritu Santo para vivir de otra manera.", verdad: true, explica: "Ser nueva criatura incluye un corazón nuevo y la ayuda del Espíritu Santo.", apoyo: "un corazón nuevo y al Espíritu Santo para vivir de otra manera" },
             ],
           },
           {
+            consigna: "Sobre ser nueva criatura en Cristo: ¿es verdad o es un error?",
             afirmaciones: [
               { texto: "Crecer como nueva criatura lleva tiempo, pero el cambio de fondo ya empezó.", verdad: true, explica: "El cambio de fondo empieza al estar en Cristo; el crecimiento sigue toda la vida.", apoyo: "Crecer llevará tiempo, pero el cambio de fondo ya empezó." },
               { texto: "Quien está en Cristo sigue siendo el mismo; solo cambia algunas costumbres.", verdad: false, explica: "No es solo un cambio de costumbres: quien está en Cristo es una nueva criatura.", apoyo: "Quien está en Cristo es una nueva criatura.", ref: "2 Corintios 5:17" },
@@ -641,10 +659,10 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "Un creyente nuevo te dice: Hay días en que no siento nada y dudo de ser salvo.",
             pregunta: "¿Qué le respondes?",
             opciones: [
-              { texto: "Si no lo sientes, quizá no eres salvo.", explica: "La seguridad no se apoya en lo que sentimos, que cambia." },
-              { texto: "Lo que sientes cambia, pero la promesa de Dios no: el que tiene al Hijo tiene la vida.", bien: true, explica: "Lleva su seguridad a lo que Dios prometió en su Palabra (1 Juan 5:12)." },
-              { texto: "Ora más fuerte hasta que lo sientas.", explica: "Orar es bueno, pero la seguridad viene de la promesa de Dios, no de un sentimiento." },
-              { texto: "Bautízate otra vez para estar seguro.", explica: "La seguridad no viene de repetir algo: viene de lo que Dios prometió." },
+              { texto: "Si no lo sientes, a lo mejor no eres salvo; revisa tu corazón con cuidado.", explica: "La seguridad no se apoya en lo que sentimos, que cambia." },
+              { texto: "Lo que sientes cambia, pero la promesa no: el que tiene al Hijo tiene la vida.", bien: true, explica: "Lleva su seguridad a lo que Dios prometió en su Palabra (1 Juan 5:12)." },
+              { texto: "Ora más fuerte cada día, hasta que vuelvas a sentir de nuevo que eres salvo.", explica: "Orar es bueno, pero la seguridad viene de la promesa de Dios, no de un sentimiento." },
+              { texto: "Bautízate otra vez, y así vas a estar seguro de que de verdad eres salvo.", explica: "La seguridad no viene de repetir algo: viene de lo que Dios prometió." },
             ],
             apoyo: "La seguridad no se apoya en lo que sentimos, que cambia, sino en lo que Dios prometió, que no cambia",
             ref: "1 Juan 5:11-13",
@@ -654,10 +672,10 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             caso: "Una hermana te cuenta: Ayer volví a fallar en algo que había dejado. Seguro ya no soy hija de Dios.",
             pregunta: "¿Qué le dices?",
             opciones: [
-              { texto: "Un hijo que tropieza no deja de ser hijo: confiésalo a Dios y recibe su perdón.", bien: true, explica: "Así lo enseña la lección con 1 Juan 1:9." },
-              { texto: "Tienes que volver a empezar desde cero.", explica: "No se pierde la vida nueva por tropezar: se vuelve a Dios y se recibe su perdón." },
-              { texto: "No pasa nada, sigue igual.", explica: "La seguridad no es permiso para pecar: hay que confesar y dejar que Dios corrija." },
-              { texto: "Espera a sentirte mejor para hablar con Dios.", explica: "Lo que toca es volver a Dios ya, confesar y recibir su perdón." },
+              { texto: "Un hijo que tropieza no deja de ser hijo: confiésalo a Dios y recibe su perdón.", bien: true, explica: "Vuelve a Dios, confiesa y recibe su perdón: así lo enseña 1 Juan 1:9." },
+              { texto: "Perdiste la salvación: ahora tienes que volver a empezar todo desde cero.", explica: "Un hijo que tropieza no deja de ser hijo: se vuelve a Dios y se recibe su perdón." },
+              { texto: "No pasa nada; como ya eres salva, no hace falta que se lo digas a Dios.", explica: "La seguridad no es permiso para pecar: hay que confesar y dejar que Dios corrija." },
+              { texto: "Espera unos días a sentirte mejor, y después vuelve a hablar con Dios de eso.", explica: "Lo que toca es volver a Dios ya, confesar y recibir su perdón." },
             ],
             apoyo: "Un hijo que tropieza no deja de ser hijo.",
             ref: "1 Juan 1:9",
@@ -671,6 +689,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
         pieza: "error",
         versiones: [
           {
+            consigna: "Una de estas frases sobre la seguridad de la salvación está equivocada. Tócala.",
             frases: [
               "Juan escribió para que los creyentes supieran que tienen vida eterna.",
               "La seguridad de la salvación depende de cómo me siento cada día.",
@@ -684,6 +703,7 @@ export const PRACTICAS_N1_SALVACION: PracticasMateria = {
             explica: "Los sentimientos cambian; la promesa de Dios no.",
           },
           {
+            consigna: "Una de estas frases sobre la vida del creyente está equivocada. Tócala.",
             frases: [
               "Nacer de nuevo es una obra de Dios.",
               "Quien sabe que es amado por Dios quiere agradarle.",

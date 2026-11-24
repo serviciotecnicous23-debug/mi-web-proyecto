@@ -3,13 +3,20 @@
 // Cada pieza avisa su respuesta con `alCambiar` (null mientras está incompleta); las que se responden con un toque
 // (verdad o error) la envían sola con `alEnviar`.
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, Reorder, motion, useDragControls, useReducedMotion } from "motion/react";
-import { ArrowDown, ArrowUp, Check, GripVertical, Quote, RotateCcw, X } from "lucide-react";
-import type { Correccion, Devolucion, ItemVista, RespuestaPractica } from "@shared/practicas";
+import { Reorder, motion, useDragControls, useReducedMotion } from "motion/react";
+import { ArrowDown, ArrowUp, Check, GripVertical, Hand, Quote, X, Zap } from "lucide-react";
+import type { Devolucion, Formato, ItemVista, RespuestaPractica } from "@shared/practicas";
 
-export type PropsPieza<P extends ItemVista["pieza"]> = {
-  vista: Extract<ItemVista, { pieza: P }>;
-  correccion: Extract<Correccion, { pieza: P }> | null;
+/** La vista de una forma de jugar. */
+export type VistaDe<F extends Formato> = Extract<ItemVista, { formato: F }>;
+/** La vista de una pieza que se juega de una sola forma (o cuyas formas comparten la vista). */
+export type VistaPieza<P extends ItemVista["pieza"]> = Extract<ItemVista, { pieza: P }>;
+
+export type PropsPieza<V extends ItemVista> = {
+  vista: V;
+  /** La corrección del paso (de la forma de esta pieza), después de comprobar. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  correccion: any;
   devolucion: Devolucion | null;
   bloqueado: boolean;
   alCambiar: (r: RespuestaPractica | null) => void;
@@ -39,73 +46,58 @@ export function Marca({ ok }: { ok: boolean }) {
   );
 }
 
-// ---------------------------------------------------------------- tarjetas de ideas
+// ---------------------------------------------------------------- relámpago (las tarjetas de la lección)
 
-export function Tarjetas({ vista, bloqueado, alEnviar }: PropsPieza<"tarjetas">) {
-  const [i, setI] = useState(0);
-  const [volteada, setVolteada] = useState(false);
-  const [calif, setCalif] = useState<("bien" | "duda" | "mal")[]>([]);
+/**
+ * «Relámpago»: la pregunta de cada tarjeta con tres respuestas (la suya y las de otras tarjetas). Antes el alumno
+ * volteaba la tarjeta y se calificaba solo («lo sabía»), lo que confundía al comienzo y dejaba hacer trampa.
+ */
+export function Relampago({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"relampago">>) {
   const quieto = useReducedMotion();
-  const t = vista.tarjetas[Math.min(i, vista.tarjetas.length - 1)];
-  const calificar = (c: "bien" | "duda" | "mal") => {
-    const nuevas = [...calif, c];
-    setCalif(nuevas);
-    if (nuevas.length >= vista.tarjetas.length) alEnviar({ pieza: "tarjetas", calif: nuevas });
-    else {
-      setVolteada(false);
-      setI(i + 1);
-    }
-  };
+  const [sel, setSel] = useState<number | null>(null);
+  useEffect(() => setSel(null), [vista.pregunta]);
   return (
-    <div className="flex flex-col items-center" data-testid="pieza-tarjetas">
-      <p className="text-xs font-semibold text-muted-foreground mb-3">Tarjeta {Math.min(i + 1, vista.tarjetas.length)} de {vista.tarjetas.length}</p>
-      <div className="w-full [perspective:1200px]">
-        {/* un giro de una sola cara (sin caras de atrás: en algunos teléfonos se veían al revés) */}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.button
-            key={`${i}-${volteada ? "r" : "p"}`}
-            type="button"
-            onClick={() => !bloqueado && setVolteada((v) => !v)}
-            initial={quieto ? false : { opacity: 0, rotateY: -80 }}
-            animate={{ opacity: 1, rotateY: 0 }}
-            exit={quieto ? undefined : { opacity: 0, rotateY: 80 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className={`w-full min-h-[220px] rounded-3xl border-2 p-6 flex flex-col justify-center text-left ${
-              volteada ? "border-emerald-500/60 bg-card" : "border-amber-400/60 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30"
-            }`}
-            aria-label={volteada ? `Respuesta: ${t.reverso}` : `Pregunta: ${t.frente}. Toca para voltear.`}
-            data-testid="tarjeta"
-          >
-            {volteada ? (
-              <>
-                <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 mb-2">Respuesta</span>
-                <span className="text-lg leading-relaxed">{t.reverso}</span>
-                <span className="mt-3 text-xs text-muted-foreground">{t.frente}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 mb-2">Pregunta</span>
-                <span className="text-xl font-semibold leading-snug">{t.frente}</span>
-                <span className="mt-4 text-sm text-muted-foreground flex items-center gap-1.5"><RotateCcw className="w-4 h-4" /> Respóndela en tu mente y toca para voltear</span>
-              </>
-            )}
-          </motion.button>
-        </AnimatePresence>
+    <div data-testid="pieza-relampago">
+      <p className="text-xs font-semibold text-muted-foreground mb-2">Pregunta {vista.paso + 1} de {vista.pasos}</p>
+      <motion.div
+        key={vista.pregunta}
+        initial={quieto ? false : { opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="rounded-3xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-5 mb-4"
+      >
+        <Zap className="w-6 h-6 text-amber-500 mb-1" fill="currentColor" fillOpacity={0.3} aria-hidden />
+        <p className="text-xl font-bold leading-snug">{vista.pregunta}</p>
+      </motion.div>
+      <div className="grid gap-2" role="radiogroup" aria-label="Respuestas">
+        {vista.opciones.map((o, k) => {
+          const cls = correccion ? (k === correccion.correcta ? bien : sel === k ? mal : "border-border bg-card opacity-70") : sel === k ? elegido : base;
+          return (
+            <motion.button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={sel === k}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                if (bloqueado) return;
+                setSel(k);
+                alEnviar({ pieza: "tarjetas", opcion: k });
+              }}
+              className={`text-left rounded-2xl border-2 px-4 py-3 text-[15px] leading-snug min-h-[52px] ${cls}`}
+              data-testid={`opcion-${k}`}
+            >
+              {o}
+            </motion.button>
+          );
+        })}
       </div>
-      {volteada && !bloqueado && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-3 gap-2 w-full mt-4" role="group" aria-label="¿Cómo te fue?">
-          <button type="button" onClick={() => calificar("mal")} className="h-12 rounded-2xl border-2 border-rose-400/70 text-rose-700 dark:text-rose-300 font-semibold text-sm">No lo sabía</button>
-          <button type="button" onClick={() => calificar("duda")} className="h-12 rounded-2xl border-2 border-amber-400/70 text-amber-700 dark:text-amber-300 font-semibold text-sm">Dudé</button>
-          <button type="button" onClick={() => calificar("bien")} className="h-12 rounded-2xl border-2 border-emerald-500/70 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">Lo sabía</button>
-        </motion.div>
-      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------- completa la idea
 
-export function Completa({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"completa">) {
+export function Completa({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaDe<"banco">>) {
   const huecos = vista.partes.filter((p) => typeof p !== "string").length;
   const [llenos, setLlenos] = useState<(number | null)[]>(() => Array(huecos).fill(null));
   const [activo, setActivo] = useState(0);
@@ -198,7 +190,7 @@ export function Completa({ vista, correccion, bloqueado, alCambiar }: PropsPieza
 
 // ---------------------------------------------------------------- relaciona
 
-export function Relaciona({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"relaciona">) {
+export function Relaciona({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaDe<"parejas">>) {
   const n = vista.izquierda.length;
   const [pares, setPares] = useState<(number | null)[]>(() => Array(n).fill(null));
   const [izq, setIzq] = useState<number | null>(0);
@@ -273,11 +265,24 @@ export function Relaciona({ vista, correccion, bloqueado, alCambiar }: PropsPiez
   );
 }
 
-// ---------------------------------------------------------------- clasifica
+// ---------------------------------------------------------------- clasifica (recuadros)
 
-export function Clasifica({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"clasifica">) {
+/** Los colores de los grupos (siempre con su nombre: el color nunca va solo). */
+const COLORES_GRUPO = [
+  { caja: "border-sky-400/70 bg-sky-500/5", titulo: "bg-sky-500 text-white" },
+  { caja: "border-violet-400/70 bg-violet-500/5", titulo: "bg-violet-500 text-white" },
+  { caja: "border-teal-400/70 bg-teal-500/5", titulo: "bg-teal-600 text-white" },
+];
+
+/**
+ * «Clasifica»: los recuadros de los grupos van arriba, cada uno con su color y su nombre, y las frases por llevar
+ * debajo. Se toca una frase (queda marcada) y después el recuadro donde va; los recuadros se encienden mientras hay una
+ * frase marcada. (Luis no entendía «a qué correspondía qué cosa»: ahora se ve qué tocar en cada momento.)
+ */
+export function Clasifica({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaDe<"recuadros">>) {
+  const quieto = useReducedMotion();
   const [grupoDe, setGrupoDe] = useState<(number | null)[]>(() => Array(vista.frases.length).fill(null));
-  const [sel, setSel] = useState<number | null>(0);
+  const [sel, setSel] = useState<number | null>(null);
   useEffect(() => {
     alCambiar(grupoDe.every((g) => g != null) ? { pieza: "clasifica", grupos: grupoDe as number[] } : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -287,25 +292,28 @@ export function Clasifica({ vista, correccion, bloqueado, alCambiar }: PropsPiez
     const nuevos = [...grupoDe];
     nuevos[sel] = g;
     setGrupoDe(nuevos);
-    const sig = nuevos.findIndex((x) => x == null);
-    setSel(sig < 0 ? null : sig);
+    setSel(null);
   };
-  const ficha = (k: number) => {
+  const ficha = (k: number, enGrupo: boolean) => {
     const ok = correccion ? correccion.marcas[k] : null;
     return (
       <motion.button
         key={k}
-        layoutId={`frase-${k}`}
+        layoutId={quieto ? undefined : `frase-${k}`}
         type="button"
-        onClick={() => !bloqueado && setSel(k)}
-        className={`text-left rounded-xl border-2 px-3 py-2 text-[15px] leading-snug flex items-start gap-2 ${ok === true ? bien : ok === false ? mal : sel === k ? elegido : base}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!bloqueado) setSel(sel === k ? null : k);
+        }}
+        className={`text-left rounded-xl border-2 px-3 py-2 leading-snug flex items-start gap-2 ${enGrupo ? "text-[14px]" : "text-[15px]"} ${
+          ok === true ? bien : ok === false ? mal : sel === k ? elegido : "border-border bg-card"
+        }`}
+        aria-pressed={sel === k}
         data-testid={`frase-${k}`}
       >
         <span className="flex-1">
           {vista.frases[k]}
-          {correccion && ok === false && (
-            <span className="block text-xs font-semibold text-emerald-700 dark:text-emerald-300 mt-1">Va en: {vista.grupos[correccion.correctas[k]]}</span>
-          )}
+          {correccion && ok === false && <span className="block text-xs font-semibold text-emerald-700 dark:text-emerald-300 mt-1">Va en: {vista.grupos[correccion.correctas[k]]}</span>}
           {correccion && correccion.explicas[k] && <span className="block text-xs text-muted-foreground mt-1">{correccion.explicas[k]}</span>}
         </span>
         {ok != null && <Marca ok={ok} />}
@@ -313,32 +321,48 @@ export function Clasifica({ vista, correccion, bloqueado, alCambiar }: PropsPiez
     );
   };
   const sueltas = grupoDe.map((g, k) => (g == null ? k : -1)).filter((k) => k >= 0);
+  const enciende = sel != null && !bloqueado;
   return (
     <div data-testid="pieza-clasifica">
+      <div className={`grid gap-2.5 ${vista.grupos.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+        {vista.grupos.map((g, gi) => {
+          const color = COLORES_GRUPO[gi % COLORES_GRUPO.length];
+          return (
+            <motion.div
+              key={gi}
+              role="button"
+              tabIndex={0}
+              onClick={() => llevar(gi)}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && llevar(gi)}
+              animate={enciende && !quieto ? { scale: [1, 1.02, 1] } : { scale: 1 }}
+              transition={enciende ? { repeat: Infinity, duration: 1.4 } : undefined}
+              className={`rounded-2xl border-2 overflow-hidden min-h-[110px] flex flex-col ${color.caja} ${enciende ? "ring-2 ring-amber-500/70 cursor-pointer" : ""}`}
+              aria-label={`Recuadro: ${g}`}
+              data-testid={`grupo-${gi}`}
+            >
+              <p className={`px-3 py-1.5 text-[13px] font-bold leading-tight ${color.titulo}`}>{g}</p>
+              <div className="p-2 flex flex-col gap-1.5 flex-1">
+                {grupoDe.map((x, k) => (x === gi ? ficha(k, true) : null))}
+                {enciende && <p className="text-[12px] font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-1 mt-auto"><Hand className="w-3.5 h-3.5" /> Toca aquí para ponerla</p>}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+      {!correccion && (
+        <p className="text-sm font-semibold mt-4 mb-2">
+          {sueltas.length
+            ? sel == null
+              ? `1. Toca una frase · 2. Toca su recuadro (quedan ${sueltas.length})`
+              : "Ahora toca el recuadro donde va esa frase."
+            : "Todas están en su recuadro. Si quieres cambiar una, tócala y elige otro recuadro."}
+        </p>
+      )}
       {sueltas.length > 0 && (
-        <div className="flex flex-col gap-2 mb-4" role="group" aria-label="Frases por llevar">
-          {sueltas.map(ficha)}
+        <div className="flex flex-col gap-2" role="group" aria-label="Frases por llevar">
+          {sueltas.map((k) => ficha(k, false))}
         </div>
       )}
-      {sel != null && !bloqueado && <p className="text-sm text-muted-foreground mb-2">Ahora toca el grupo donde va.</p>}
-      <div className={`grid gap-3 ${vista.grupos.length === 3 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
-        {vista.grupos.map((g, gi) => (
-          <div
-            key={gi}
-            role="button"
-            tabIndex={0}
-            onClick={() => llevar(gi)}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && llevar(gi)}
-            className={`rounded-2xl border-2 p-3 min-h-[96px] transition-colors ${sel != null && !bloqueado ? "border-amber-500/70 bg-amber-500/5 cursor-pointer" : "border-border bg-muted/30"}`}
-            data-testid={`grupo-${gi}`}
-          >
-            <p className="font-bold text-sm mb-2 text-foreground/80">{g}</p>
-            <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-              {grupoDe.map((x, k) => (x === gi ? ficha(k) : null))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -434,7 +458,7 @@ export function Ordena({ items, correcto, fechas, bloqueado, alCambiar, linea }:
 
 // ---------------------------------------------------------------- ¿verdad o error?
 
-export function Verdad({ vista, correccion, devolucion, bloqueado, alEnviar }: PropsPieza<"verdad">) {
+export function Verdad({ vista, correccion, devolucion, bloqueado, alEnviar }: PropsPieza<VistaDe<"verdad-o-error">>) {
   const quieto = useReducedMotion();
   const [elegida, setElegida] = useState<boolean | null>(null);
   useEffect(() => setElegida(null), [vista.afirmacion]);
@@ -496,7 +520,7 @@ export function Verdad({ vista, correccion, devolucion, bloqueado, alEnviar }: P
 
 // ---------------------------------------------------------------- encuentra el error
 
-export function EncuentraError({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"error">) {
+export function EncuentraError({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"error">>) {
   const [sel, setSel] = useState<number | null>(null);
   useEffect(() => {
     alCambiar(sel == null ? null : { pieza: "error", frase: sel });
@@ -567,7 +591,7 @@ export function Opciones({ opciones, correcta, explicas, bloqueado, alElegir, ma
   );
 }
 
-export function Situacion({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"situacion">) {
+export function Situacion({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"situacion">>) {
   return (
     <div data-testid="pieza-situacion">
       <div className="rounded-3xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/40 dark:to-indigo-950/30 border border-sky-300/50 dark:border-sky-700/50 p-4 mb-4">
@@ -640,6 +664,6 @@ export function Escribir({ pregunta, min, max, correccion, bloqueado, alCambiar 
   );
 }
 
-export function Explica({ vista, correccion, bloqueado, alCambiar }: PropsPieza<"explica">) {
+export function Explica({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaDe<"texto">>) {
   return <Escribir pregunta={vista.pregunta} min={vista.min} max={vista.max} correccion={correccion} bloqueado={bloqueado} alCambiar={(t) => alCambiar(t == null ? null : { pieza: "explica", texto: t })} />;
 }

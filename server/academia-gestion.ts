@@ -28,7 +28,6 @@ import {
   COMPONENTES_AJUSTABLES, asegurarMateria, avisarA, claveBreve, claveFinal, claveMini, componentesCalculados, enFila, estadoDe, frenar, viaFija,
 } from "./academia-comun";
 import { cierresDe, permisoDe } from "./academia-direccion";
-import { emitirMateria } from "./academia-documentos";
 import { MENSAJE_PROPIO, reconsiderarEspecialidad, reconsiderarMateria, reconsiderarNivel, registrar, revocarPorNota } from "./academia-revision";
 import { claveSuficiencia, topeSuficiencia } from "./academia-suficiencia";
 
@@ -363,8 +362,6 @@ export function registerAcademiaGestionRoutes(app: Express) {
             `UPDATE academia_certificados SET nota = $3, via = 'convalidada', revocado_at = NULL, motivo = NULL WHERE user_id = $1 AND tipo = 'materia' AND ref = $2`,
             [c.alumno, m.id, nota],
           );
-        } else {
-          await emitirMateria(c.alumno, m, nota, "convalidada");
         }
         const recalculo = await nivelYEspecialidad(c.alumno, m, c.motivo);
         const tope = topeSuficiencia(m);

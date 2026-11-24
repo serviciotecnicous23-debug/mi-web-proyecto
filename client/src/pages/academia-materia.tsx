@@ -25,6 +25,7 @@ import { EnPreparacion } from "@/components/academia/en-preparacion";
 import { LecturaAmpliadaCard } from "@/components/academia/lectura-ampliada";
 import { LaboratorioDeMateria } from "@/components/academia/laboratorio-materia";
 import { CaminoPracticas } from "@/components/practicas/camino";
+import { InsigniaEnmarcada } from "@/components/academia/insignias";
 
 const BLOOM: Record<string, string> = { recordar: "Recordar", comprender: "Comprender", aplicar: "Aplicar", analizar: "Analizar", evaluar: "Evaluar", crear: "Crear" };
 
@@ -255,7 +256,7 @@ function Presentacion({ d }: { d: MateriaDetalle }) {
           )}
           <div>
             <h3 className="font-semibold flex items-center gap-2"><Award className="w-4 h-4 text-orange-500" /> Lo que recibes</h3>
-            <p className="text-sm text-muted-foreground mt-1">Al aprobarla, el certificado de la materia, con un código QR que cualquiera puede verificar.</p>
+            <p className="text-sm text-muted-foreground mt-1">Al aprobarla, su insignia en tu vitrina, con tu nota y tu medalla. Al completar el nivel, su certificado, con un código QR que cualquiera puede verificar.</p>
           </div>
           <div>
             <h3 className="font-semibold flex items-center gap-2"><GraduationCap className="w-4 h-4 text-orange-500" /> A tu ritmo</h3>
@@ -329,6 +330,16 @@ export default function AcademiaMateria() {
             {m.memoria && <span className="text-sm text-muted-foreground">Versículo: {m.memoria}</span>}
           </div>
           {d.estado === "aprobada" && d.nota != null && <div className="mt-5"><NotaMedalla nota={d.nota} medalla={d.medalla} grande /></div>}
+          {d.insignia && (
+            <div className="mt-5 flex items-center gap-4" data-testid="materia-insignia">
+              <InsigniaEnmarcada i={d.insignia} grande />
+              <div className="text-sm max-w-[220px]">
+                <p className="font-bold text-base">Tu insignia</p>
+                <p className="text-muted-foreground mt-1">Quedó en tu vitrina. El certificado llega al completar el nivel.</p>
+                <Link href="/academia/expediente" className="inline-block mt-2 font-semibold text-orange-700 dark:text-orange-300 hover:underline">Ver mi vitrina</Link>
+              </div>
+            </div>
+          )}
           {m.disponible && inscrito && m.lecciones.length > 0 && (
             <div className="mt-5 max-w-md"><BarraAvance valor={hechas} de={m.lecciones.length} etiqueta={`${hechas} de ${m.lecciones.length} lecciones`} /></div>
           )}
@@ -342,7 +353,7 @@ export default function AcademiaMateria() {
           <div className="mt-6 flex flex-wrap gap-3">
             {d.certificado && (
               <Link href={`/academia/certificado/${d.certificado}`}>
-                <Button size="lg" className="fire-btn-primary h-12" data-testid="materia-certificado"><Award className="w-4 h-4 mr-2" /> Ver tu certificado</Button>
+                <Button size="lg" variant="outline" className="h-12" data-testid="materia-certificado"><Award className="w-4 h-4 mr-2" /> El certificado que se emitió</Button>
               </Link>
             )}
             {m.disponible && inscrito && siguiente && (
