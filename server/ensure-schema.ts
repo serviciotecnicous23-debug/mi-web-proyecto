@@ -13,6 +13,7 @@ import { CUADERNO_SQL } from "./cuaderno";
 import { SALON_SQL } from "./academia-salon";
 import { ACTIVIDADES_SQL } from "./academia-actividades-datos";
 import { LABORATORIO_SQL } from "./academia-laboratorio";
+import { PRACTICAS_SQL } from "./academia-practicas";
 import { BIBLIA_SQL } from "./bible";
 import { GAME_SAVES_SQL, GAME_SCORES_SQL } from "./games";
 import { JERUSALEN_SQL } from "./jerusalen";
@@ -1114,6 +1115,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await pool.query(LABORATORIO_SQL);
     } catch (err: any) {
       console.log(`  Migration note (laboratorio): ${err?.message}`);
+    }
+    try {
+      // El motor de prácticas de las lecciones: intentos, calendario de repasos, marcas, medallas y la nota
+      await pool.query(PRACTICAS_SQL);
+    } catch (err: any) {
+      console.log(`  Migration note (prácticas): ${err?.message}`);
     }
     // Puntajes de los juegos (una fila por persona y juego).
     try {

@@ -101,6 +101,10 @@ const AcademiaEscrito = lazy(() => import("@/pages/academia-escrito"));
 const AcademiaEspecialidad = lazy(() => import("@/pages/academia-especialidad"));
 const AcademiaCatalogo = lazy(() => import("@/pages/academia-catalogo"));
 const AcademiaRepasoDia = lazy(() => import("@/pages/academia-repaso-dia"));
+const AcademiaPractica = lazy(() => import("@/pages/academia-practica"));
+const AcademiaPracticar = lazy(() => import("@/pages/academia-practicar"));
+const AcademiaPracticarSesion = lazy(() => import("@/pages/academia-practicar-sesion"));
+const AcademiaJuego = lazy(() => import("@/pages/academia-juego"));
 const AcademiaRecursos = lazy(() => import("@/pages/academia-recursos"));
 const AcademiaLaboratorio = lazy(() => import("@/pages/academia-laboratorio"));
 const AlianzaPage = lazy(() => import("@/pages/alianza"));
@@ -179,6 +183,11 @@ function Router() {
       <Route path="/academia" component={AcademiaPage} />
       <Route path="/academia/catalogo" component={AcademiaCatalogo} />
       <Route path="/academia/repaso-del-dia" component={AcademiaRepasoDia} />
+      <Route path="/academia/practica/:leccionId" component={AcademiaPractica} />
+      <Route path="/academia/practicar" component={AcademiaPracticar} />
+      <Route path="/academia/practicar/dia" component={AcademiaPracticarSesion} />
+      <Route path="/academia/practicar/mision/:materiaId" component={AcademiaPracticarSesion} />
+      <Route path="/academia/practicar/juego/:juego" component={AcademiaJuego} />
       <Route path="/academia/recursos" component={AcademiaRecursos} />
       <Route path="/academia/laboratorio/:practicaId" component={AcademiaLaboratorio} />
       <Route path="/academia/materia/:materiaId" component={AcademiaMateria} />

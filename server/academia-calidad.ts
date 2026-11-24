@@ -21,6 +21,7 @@ import type {
 import { BANCOS, materiaDe } from "./academia/index";
 import { huellaDe, huellaDeclaracion, porQueNoSeRetira } from "./academia-banco";
 import { practicasDeMateria } from "./academia/laboratorio/index";
+import { actividadesDe, leccionesConPractica } from "./academia/practicas/index";
 import type { EscenaDef, PracticaDef } from "./academia/laboratorio/tipos";
 import { NOMBRE_FORMATO } from "@shared/laboratorio";
 import { ID_DECLARACION, PUNTOS_A_CONFIRMAR } from "@shared/academia-declaracion";
@@ -227,6 +228,10 @@ async function detalleDe(m: MateriaDef, role: string, userId: number): Promise<C
     umbrales: { minimo: ANALISIS.minimo, muyDificil: ANALISIS.muyDificil, muyFacil: ANALISIS.muyFacil, discriminaPoco: ANALISIS.discriminaPoco, tarde: ANALISIS.tarde },
     puede: { observar: puede(role, "contenido"), aprobar: puede(role, "aprobar"), banco: puede(role, "banco") },
     laboratorio: practicasDeMateria(m.id).map(practicaRevision),
+    practicas: {
+      lecciones: leccionesConPractica(m.id),
+      actividades: m.lecciones.reduce((s, l) => s + (actividadesDe(l.id)?.length ?? 0), 0),
+    },
   };
 }
 

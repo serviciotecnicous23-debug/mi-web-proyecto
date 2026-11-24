@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle, AlertTriangle, ArrowLeft, BookCheck, BookOpen, ChevronRight, Download, FlaskConical, History, Inbox, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, SlidersHorizontal, Users,
+  AlertCircle, AlertTriangle, ArrowLeft, BookCheck, BookOpen, ChevronRight, Download, Flame, FlaskConical, History, Inbox, LayoutDashboard, Lock, LockOpen, Search, ShieldCheck, SlidersHorizontal, Users,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
@@ -32,6 +32,7 @@ import { ChipEstatus, ListaActividad, Medidor, fecha, hace, numero } from "@/com
 import { ActividadYDatos, Cifras, LoQueTeToca, NecesitanAyuda, Tendencias, type IrA } from "@/components/academia/panel-inicio";
 import { PanelMaterias, TarjetaDeclaracionSimple, type VerMaterias } from "@/components/academia/panel-materias";
 import { CSV_LABORATORIO, InformeLaboratorio } from "@/components/academia/laboratorio-informe";
+import { PanelPracticas } from "@/components/practicas/panel";
 
 const ORDEN_ESTATUS: EstatusAlumno[] = ["aspirante", "activo", "pausa", "egresado", "graduado", "retirado"];
 const SELECT =
@@ -589,7 +590,7 @@ function Permisos({ role }: { role: string | null | undefined }) {
   );
 }
 
-const SECCIONES = ["inicio", "pendientes", "alumnos", "materias", "laboratorio", "historial", "permisos"] as const;
+const SECCIONES = ["inicio", "pendientes", "alumnos", "materias", "practicas", "laboratorio", "historial", "permisos"] as const;
 type Seccion = (typeof SECCIONES)[number];
 /** Los nombres de antes (los avisos de la campana y los enlaces guardados siguen funcionando). */
 const ALIAS: Record<string, Seccion> = { resumen: "inicio", revisar: "pendientes", contenido: "materias", registro: "historial" };
@@ -659,6 +660,7 @@ export default function AcademiaDireccion() {
     { id: "pendientes", texto: "Pendientes", icono: Inbox, badge: pendientes, si: d.puede.revisar || d.puede.contenido },
     { id: "alumnos", texto: "Alumnos", icono: Users, badge: (d.ayudaTotal ?? d.ayuda.length) || undefined },
     { id: "materias", texto: "Materias", icono: BookOpen },
+    { id: "practicas", texto: "Prácticas", icono: Flame, si: !!d.puede.contenido },
     { id: "laboratorio", texto: "Laboratorio", icono: FlaskConical, si: !!d.puede.laboratorio },
     { id: "historial", texto: "Historial", icono: History },
   ];
@@ -722,6 +724,7 @@ export default function AcademiaDireccion() {
           {seccion === "pendientes" && <Pendientes d={d} irA={irA} />}
           {seccion === "alumnos" && <Alumnos key={filtroAlumnos?.vez ?? 0} resumen={d} inicial={filtroAlumnos?.f} />}
           {seccion === "materias" && <PanelMaterias key={verMaterias?.vez ?? 0} d={d} inicial={verMaterias?.v} />}
+          {seccion === "practicas" && d.puede.contenido && <PanelPracticas enlaceAlumno={enlaces.alumno} />}
           {seccion === "laboratorio" && d.puede.laboratorio && <InformeLaboratorio enlaceAlumno={enlaces.alumno} />}
           {seccion === "historial" && <HistorialSeccion d={d} />}
           {seccion === "permisos" && <Permisos role={user?.role} />}

@@ -901,8 +901,11 @@ La nota automática vale mientras quien tenga el cargo no la cambie.
      título. Usa la medida, las mini pruebas y los pesos del Nivel 3.
 5. Corre las pruebas: `npx tsx --test server/academia-correccion.test.ts shared/academia.test.ts`, y después
    `npx tsx scripts/academia/verificar.ts`, que comprueba citas, bancos y claves contra la Biblia de la web.
-6. Revisión doctrinal (la materia aparece sola en la pestaña «Contenido» del panel) y piloto. Después,
-   `disponible: true` (eso no cambia la huella de la aprobación).
+6. Escribe sus **prácticas** en `server/academia/practicas/<id>.ts` (una por lección, hechas con su texto) y regístralas
+   en `server/academia/practicas/index.ts`: la guía está en `docs/academia-practicas.md`. Con todas sus lecciones, las
+   prácticas entran en la nota de quien empiece la materia desde ese día.
+7. Revisión doctrinal (la materia aparece sola en la pestaña «Contenido» del panel; sus prácticas, en su pestaña) y
+   piloto. Después, `disponible: true` (eso no cambia la huella de la aprobación).
 
 ## 6. La parte técnica
 

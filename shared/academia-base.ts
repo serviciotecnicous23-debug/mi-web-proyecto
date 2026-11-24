@@ -117,17 +117,22 @@ export function medallaDe(nota: number): Medalla | null {
 }
 export const NOMBRE_MEDALLA: Record<Medalla, string> = { oro: "Medalla de oro", plata: "Medalla de plata", bronce: "Medalla de bronce" };
 
-/** Los pesos de la nota de una materia (suman 100). */
-export type Pesos = { final: number; repasos: number; versiculo: number; mini: number; escritos: number };
+/**
+ * Los pesos de la nota de una materia (suman 100). Las prácticas de las lecciones (shared/practicas.ts) pesan 0 hasta
+ * que la materia tiene todas sus prácticas: entonces valen los pesos de `PESOS_CON_PRACTICAS` para quien empieza la
+ * materia desde ese día (server/academia-practicas-nota.ts).
+ */
+export type Pesos = { final: number; practicas: number; repasos: number; versiculo: number; mini: number; escritos: number };
 export const PESOS_NIVEL: Record<NivelN, Pesos> = {
-  1: { final: 70, repasos: 15, versiculo: 15, mini: 0, escritos: 0 },
-  2: { final: 50, repasos: 0, versiculo: 10, mini: 25, escritos: 15 },
-  3: { final: 40, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
-  4: { final: 40, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
-  5: { final: 40, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
+  1: { final: 70, practicas: 0, repasos: 15, versiculo: 15, mini: 0, escritos: 0 },
+  2: { final: 50, practicas: 0, repasos: 0, versiculo: 10, mini: 25, escritos: 15 },
+  3: { final: 40, practicas: 0, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
+  4: { final: 40, practicas: 0, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
+  5: { final: 40, practicas: 0, repasos: 0, versiculo: 10, mini: 20, escritos: 30 },
 };
 export const NOMBRE_COMPONENTE: Record<keyof Pesos, string> = {
   final: "Examen final",
+  practicas: "Prácticas de las lecciones",
   repasos: "Repasos de las lecciones",
   versiculo: "Versículo de memoria",
   mini: "Mini pruebas",

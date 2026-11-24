@@ -9,6 +9,7 @@ import { examenDe, materiaPorId, type MateriaDef } from "@shared/academia";
 import { DECLARACION_FE } from "@shared/academia-declaracion";
 import { BANCOS, CONTENIDO, materiaDe } from "./academia/index";
 import { practicasDeMateria } from "./academia/laboratorio/index";
+import { PRACTICAS_POR_MATERIA } from "./academia/practicas/index";
 
 /** La huella de todo lo que se revisa de una materia: su ficha, sus lecciones y su banco (sin «disponible»). */
 export function calcularHuella(m: MateriaDef): string {
@@ -17,7 +18,10 @@ export function calcularHuella(m: MateriaDef): string {
   // las prácticas del laboratorio también se aprueban: si cambian, la aprobación deja de estar vigente
   const practicas = practicasDeMateria(m.id);
   const laboratorio = practicas.length ? { laboratorio: practicas } : {};
-  return createHash("sha256").update(JSON.stringify({ ficha, lecciones, banco: BANCOS.get(m.id) ?? null, ...laboratorio })).digest("hex").slice(0, 32);
+  // y las prácticas de las lecciones (server/academia/practicas/), con sus respuestas
+  const pm = PRACTICAS_POR_MATERIA.get(m.id);
+  const deLecciones = pm && Object.values(pm.lecciones).some((a) => a.length) ? { practicas: pm } : {};
+  return createHash("sha256").update(JSON.stringify({ ficha, lecciones, banco: BANCOS.get(m.id) ?? null, ...laboratorio, ...deLecciones })).digest("hex").slice(0, 32);
 }
 
 /** La huella de la declaración de fe: si su texto cambia, la aprobación deja de estar vigente. */

@@ -21,6 +21,7 @@ import {
   accionPregunta, aprobarContenido, desaprobarContenido, observarContenido, resolverObservacion, useContenidoMateria,
 } from "@/components/academia/api";
 import { Cargando } from "@/components/academia/ui";
+import { DetallePracticas } from "@/components/practicas/panel";
 import { Indicador, Medidor, fecha, hace } from "@/components/academia/seguimiento";
 
 const CHIP = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs whitespace-nowrap";
@@ -725,7 +726,7 @@ export default function AcademiaDireccionContenido() {
   useTituloAcademia(q.data ? `Revisión del contenido · ${q.data.materia.titulo}` : "Revisión del contenido");
   const [tab, setTab] = useState(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    return t && ["lecciones", "examen", "escritas", "repaso", "laboratorio"].includes(t) ? t : "lecciones";
+    return t && ["lecciones", "examen", "escritas", "repaso", "practicas", "laboratorio"].includes(t) ? t : "lecciones";
   });
   if (q.isLoading) return <Cargando />;
   if (!q.data) {
@@ -783,6 +784,11 @@ export default function AcademiaDireccionContenido() {
             <TabsTrigger value="examen" className="flex-1 min-w-[140px]" data-testid="contenido-tab-examen">Análisis del examen</TabsTrigger>
             <TabsTrigger value="escritas" className="flex-1 min-w-[140px]" data-testid="contenido-tab-escritas">Preguntas escritas</TabsTrigger>
             <TabsTrigger value="repaso" className="flex-1 min-w-[140px]" data-testid="contenido-tab-repaso">Repaso</TabsTrigger>
+            {(d.practicas?.lecciones ?? 0) > 0 && (
+              <TabsTrigger value="practicas" className="flex-1 min-w-[140px]" data-testid="contenido-tab-practicas">
+                Prácticas <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] leading-5">{d.practicas!.actividades}</span>
+              </TabsTrigger>
+            )}
             {(d.laboratorio?.length ?? 0) > 0 && (
               <TabsTrigger value="laboratorio" className="flex-1 min-w-[140px]" data-testid="contenido-tab-laboratorio">
                 Laboratorio <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] leading-5">{d.laboratorio!.length}</span>
@@ -800,6 +806,19 @@ export default function AcademiaDireccionContenido() {
             </div>
           </TabsContent>
           <TabsContent value="repaso">{tab === "repaso" && <Repaso d={d} />}</TabsContent>
+          {(d.practicas?.lecciones ?? 0) > 0 && (
+            <TabsContent value="practicas">
+              {tab === "practicas" && (
+                <div className="space-y-3" data-testid="contenido-practicas">
+                  <p className="text-sm text-muted-foreground">
+                    Las prácticas de las lecciones, con cada versión y su respuesta (el alumno la ve recién al contestar). Entran en la aprobación doctrinal de la
+                    materia: si cambian, la aprobación deja de estar vigente. Pruébalas como alumno con el botón de cada lección: tus intentos no cuentan.
+                  </p>
+                  <DetallePracticas id={d.materia.id} />
+                </div>
+              )}
+            </TabsContent>
+          )}
           {(d.laboratorio?.length ?? 0) > 0 && <TabsContent value="laboratorio">{tab === "laboratorio" && <Laboratorio d={d} />}</TabsContent>}
         </Tabs>
       </div>

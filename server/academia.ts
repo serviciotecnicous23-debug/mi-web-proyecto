@@ -7,6 +7,7 @@
  */
 import type { Express, Request, Response } from "express";
 import { pool } from "./db";
+import { pesosDeAlumno } from "./academia-practicas-nota";
 import {
   miniPruebasDe, NOMBRE_COMPONENTE, PACTOS, SUFICIENCIA,
   ESPECIALIDADES, ETAPAS, NIVELES, leccionPorId, leccionPublica, materiaPorId, medallaDe, pesosDe, puedeRevisar, puntajeVersiculo, requisitosMateria,
@@ -30,6 +31,7 @@ import { registerAcademiaPerfilRoutes } from "./academia-perfil";
 import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
+import { registerAcademiaPracticasRoutes } from "./academia-practicas";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
 import { practicasQueAbre, registerAcademiaLaboratorioRoutes } from "./academia-laboratorio";
 import { registerAcademiaLaboratorioInformeRoutes } from "./academia-laboratorio-informe";
@@ -291,7 +293,7 @@ export function registerAcademiaRoutes(app: Express) {
         // (los minutos de cada lección, los reales: server/academia-carga.ts)
         // (y los de su narración grabada, si la tiene: la lista muestra que se puede escuchar)
         materia: { ...m, lecciones: m.lecciones.map((x) => ({ ...x, minutos: minutosReales(x.id, x.minutos), vista: !!lec.get(x.id)?.vista, completada: !!lec.get(x.id)?.completada, escuchar: minutosDeNarracion(x.id) })) },
-        pesos: pesosDe(m),
+        pesos: await pesosDeAlumno(userId, m),
         estado,
         nota: fila?.nota ?? null,
         componentes,
@@ -656,6 +658,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaRevisionRoutes(app);
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
+  registerAcademiaPracticasRoutes(app);
   registerAcademiaRecursosRoutes(app);
   registerAcademiaLaboratorioRoutes(app);
   registerAcademiaLaboratorioInformeRoutes(app);

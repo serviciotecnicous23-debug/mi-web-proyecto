@@ -21,6 +21,7 @@ import { AvisoVistaPrevia, BarraAvance, Cargando, ChipEstado, NotaMedalla, Panta
 import { PestanasClases } from "@/components/academia/pestanas-clases";
 import { MisAsignacionesPortada } from "@/components/academia/asignaciones";
 import { PracticasDeHoy } from "@/components/academia/laboratorio-materia";
+import { PracticaDelDiaItem } from "@/components/practicas/del-dia";
 import { TarjetaAcompanados } from "@/components/academia/mentores";
 
 type Nivel = AcademiaEstado["niveles"][number];
@@ -166,6 +167,7 @@ function Escritorio({ e }: { e: AcademiaEstado }) {
                 )}
               </li>
             )}
+            <PracticaDelDiaItem activo={!!e.matricula} testId="academia-practica-dia" />
             <PracticasDeHoy activo={!!e.matricula} testId="academia-practica" />
             <li>
               {diag.data?.ultimo ? (

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Eye, IdCard, Lightbulb, ListChecks, Lock, PenLine, PlayCircle, Save, Target, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Eye, Flame, IdCard, Lightbulb, ListChecks, Lock, PenLine, PlayCircle, Save, Target, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { BarraAvance, BloqueLeccion, Cargando, Minutos, PantallaCerrada, enlaceI
 import { HerramientasLectura, useTamanoLetra } from "@/components/academia/lectura";
 import { CuadernoEnLeccion, useMarcasDeLeccion } from "@/components/cuaderno/en-leccion";
 import { conMarcas } from "@/components/cuaderno/marcas";
+import { usePracticaLeccion } from "@/components/practicas/api";
+import { Estrellas } from "@/components/practicas/resultado";
 
 type Intento = { elegida: number; r: RespuestaRepaso };
 
@@ -150,6 +152,8 @@ export default function AcademiaLeccion() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const q = useLeccion(leccionId);
+  // la práctica de la lección (server/academia-practicas.ts): se abre al completarla
+  const prac = usePracticaLeccion(leccionId);
   useTituloAcademia(q.data?.leccion.titulo ?? "Lección");
   const [bien, setBien] = useState<Set<string>>(new Set());
   const [reflexion, setReflexion] = useState("");
@@ -284,6 +288,14 @@ export default function AcademiaLeccion() {
       const r = await completarLeccion(l.leccion.id, reflexion);
       await qc.invalidateQueries({ queryKey: ["academia"] });
       const practica = r.practicas?.[0];
+      // con práctica sin hacer, primero la práctica (es lo que hace que la lección no se olvide): la página la saluda
+      const p = prac.data;
+      if (p?.existe && !p.guiada && !p.prueba) {
+        if (practica) toast({ title: "Se abrió una práctica del laboratorio", description: `${practica.titulo}. La encuentras en la página de la materia.` });
+        await qc.invalidateQueries({ queryKey: ["practicas"] });
+        setLocation(`/academia/practica/${l.leccion.id}?tras=1`);
+        return;
+      }
       toast({
         title: "¡Lección completada!",
         description: practica
@@ -398,6 +410,30 @@ export default function AcademiaLeccion() {
             </div>
           )}
         </section>
+
+        {prac.data?.existe && (
+          <section className="mb-8 rounded-3xl border-2 border-amber-400/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 p-5" data-testid="leccion-practica">
+            <div className="flex items-start gap-3">
+              <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 text-white flex items-center justify-center shrink-0"><Flame className="w-6 h-6" fill="currentColor" fillOpacity={0.3} /></span>
+              <div className="flex-1">
+                <h2 className="font-display text-xl font-bold leading-tight">Práctica de la lección</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {prac.data.actividades} actividades con lo que enseña esta lección, unos {prac.data.minutos} minutos. {prac.data.cuentaEnNota ? "La que cuenta entra en tu nota." : ""}
+                </p>
+                <div className="mt-2"><Estrellas n={prac.data.estrellas} /></div>
+              </div>
+            </div>
+            {prac.data.falta && !completada ? (
+              <p className="mt-3 text-sm flex items-center gap-1.5 text-muted-foreground"><Lock className="w-4 h-4" /> Se abre cuando completes la lección.</p>
+            ) : (
+              <Link href={`/academia/practica/${l.leccion.id}`}>
+                <Button className="fire-btn-primary h-11 mt-3 w-full sm:w-auto" data-testid="leccion-ir-practica">
+                  {prac.data.guiada ? (prac.data.estrellas >= 3 ? "Ver la práctica" : "Seguir practicando") : "Practicar ahora"} <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            )}
+          </section>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
           {l.anterior ? (

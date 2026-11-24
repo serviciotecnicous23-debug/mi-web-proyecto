@@ -150,7 +150,7 @@ export type AcompanarPendientes = {
 
 /** Una parte de la nota de una materia: su peso, lo que calcula el sistema y el ajuste de la Administración, si hay. */
 export type ComponenteGestion = {
-  id: "final" | "repasos" | "versiculo" | "mini" | "escritos";
+  id: "final" | "practicas" | "repasos" | "versiculo" | "mini" | "escritos";
   texto: string;
   peso: number;
   calculado: number;

@@ -103,6 +103,8 @@ export type ContenidoDetalle = {
   puede: { observar: boolean; aprobar: boolean; banco: boolean };
   /** Las prácticas del laboratorio ministerial de la materia, con todo su texto (entran en la aprobación doctrinal). */
   laboratorio?: PracticaRevision[];
+  /** Las prácticas de las lecciones (el motor de prácticas): cuántas tiene; su texto se ve en su pestaña. */
+  practicas?: { lecciones: number; actividades: number };
 };
 
 /** Una opción de una escena, con lo que vale: la mejor vale 2 puntos; una acción crítica pone en peligro a la persona. */

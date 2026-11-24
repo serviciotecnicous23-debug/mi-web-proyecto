@@ -4,6 +4,8 @@
  */
 import type { Request, Response } from "express";
 import { pool } from "./db";
+import { componentePracticasDe, pesosDeAlumno } from "./academia-practicas-nota";
+import { materiaConPracticas } from "./academia/practicas/index";
 import { numeroDe } from "./orden-examen";
 import { getBibleChapter } from "./bible";
 import { resolveSiteUrl } from "@shared/site";
@@ -630,7 +632,7 @@ export const claveTrabajo = (especialidadId: string) => `especialidad-${especial
 export const claveIntegral = (nivel: number) => `nivel-${nivel}:integral`;
 
 /** Las partes de la nota que se pueden ajustar (las que pesan en la materia). */
-export const COMPONENTES_AJUSTABLES = ["final", "repasos", "versiculo", "mini", "escritos"] as const;
+export const COMPONENTES_AJUSTABLES = ["final", "practicas", "repasos", "versiculo", "mini", "escritos"] as const;
 /** La materia aprobada así tiene su nota fija: no se recalcula con los componentes del curso. */
 export const viaFija = (via: unknown) => via === "suficiencia" || via === "convalidada";
 
@@ -687,6 +689,8 @@ export async function componentesCalculados(userId: number, m: MateriaDef): Prom
     if (minis.length) comps.mini = Math.round(minis.reduce((s, g) => s + (mejor.get(claveMini(m.id, g.n)) ?? 0), 0) / minis.length);
     if (tieneEscritoBreve(m)) comps.escritos = mejor.get(claveBreve(m.id)) ?? 0;
   }
+  // las prácticas de las lecciones (cuando la materia las tiene todas): el promedio de la mejor de cada lección
+  if (materiaConPracticas(m.id)) comps.practicas = await componentePracticasDe(userId, m);
   return comps;
 }
 
@@ -699,7 +703,7 @@ export async function recalcularMateria(userId: number, m: MateriaDef): Promise<
     return { nota: Number(ya[0].nota ?? 0), aprobada: true, componentes: (ya[0].componentes ?? {}) as Componentes };
   }
   const componentes = await componentesDe(userId, m);
-  const nota = notaMateria(pesosDe(m), componentes);
+  const nota = notaMateria(await pesosDeAlumno(userId, m), componentes);
   const aprobada = materiaAprobada(nota, componentes.final ?? 0);
   await asegurarMateria(userId, m.id);
   await pool.query(
