@@ -311,12 +311,15 @@ async function retoDeLeccion(modo: Modo, m: MateriaDef, resumen: Resumen | undef
   return { abierto: true, mejor, dominado, puntos: extraDeLecciones(x.base ?? x.nota ?? 0, 1, m.lecciones.length), falta: null };
 }
 
-/** Los nombres de las formas de jugar que pueden tocar en estas actividades (para anunciarlas antes de empezar). */
+/**
+ * Los nombres de las formas de jugar que pueden tocar en estas actividades (para anunciarlas antes de empezar): las de
+ * la práctica que cuenta (sin «Escríbela», que queda para el reto de dominio).
+ */
 function formasDe(actividades: Actividad[]): string[] {
   const nombres = new Set<string>();
   for (const a of actividades)
     a.versiones.forEach((_, v) => {
-      for (const f of formatosPosibles(a, v, "guiada")) nombres.add(f === "normal" || (a.pieza === "linea" && f === "lista") ? NOMBRE_PIEZA[a.pieza] : NOMBRE_FORMATO[f]);
+      for (const f of formatosPosibles(a, v, "cuenta")) nombres.add(f === "normal" || (a.pieza === "linea" && f === "lista") ? NOMBRE_PIEZA[a.pieza] : NOMBRE_FORMATO[f]);
     });
   return [...nombres];
 }
@@ -496,6 +499,18 @@ function resumenRespuesta(a: Actividad, e: EstadoItem, r: RespuestaPractica): un
       return { elegida: listaDe(a, v).textos[ordenDeLista(a, e).filter((k: number) => k >= e.paso)[res.opcion] ?? -1] ?? null };
     case "donde-va":
       return { elegida: Number.isInteger(res.opcion) ? `En el lugar ${res.opcion + 1}` : null };
+    case "anagrama":
+      return { elegida: String((res.huecos ?? [])[0] ?? "") || null };
+    case "sopa":
+      return { trazos: Array.isArray(res.trazos) ? res.trazos.length : 0 };
+    case "crucigrama":
+      return { huecos: Array.isArray(res.huecos) ? res.huecos.slice(0, 6) : [] };
+    case "arma":
+      return { orden: Array.isArray(res.orden) ? res.orden.slice(0, 8) : [] };
+    case "memoria":
+      return { cartas: Array.isArray(res.cartas) ? res.cartas.slice(0, 2) : [] };
+    case "atrapa":
+      return { atrapadas: Array.isArray(res.atrapadas) ? res.atrapadas.length : 0 };
     case "cual-falsa": {
       const x = ronda?.items?.[res.frase];
       return { elegida: x ? (a.versiones[x.v] as any).afirmaciones[x.i].texto : null };

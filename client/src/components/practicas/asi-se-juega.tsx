@@ -5,7 +5,9 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
 import {
+  Blocks,
   BookOpen,
+  Brain,
   Briefcase,
   CalendarRange,
   ChevronsUp,
@@ -31,6 +33,10 @@ import {
   TextCursorInput,
   Timer,
   Footprints,
+  Grid3x3,
+  HandGrab,
+  Puzzle,
+  Shuffle,
   Zap,
 } from "lucide-react";
 import { NOMBRE_FORMATO, NOMBRE_MODALIDAD, NOMBRE_PIEZA, type ItemVista, type Modalidad } from "@shared/practicas";
@@ -51,11 +57,17 @@ const FORMAS: Record<string, { icono: LucideIcon; pasos: string[] }> = {
   banco: { icono: PenLine, pasos: ["Abajo hay un banco de palabras.", "Toca una palabra y después el espacio de la frase donde va.", "Cuando llenes todos los espacios, toca Comprobar."] },
   elige: { icono: TextCursorInput, pasos: ["Cada espacio de la frase trae dos palabras.", "Toca la que completa bien la idea.", "Cuando elijas en todos, toca Comprobar."] },
   escribe: { icono: PencilLine, pasos: ["Lee la frase: le faltan palabras.", "Escribe en cada espacio la que falta: te mostramos su primera letra y cuántas letras tiene.", "Las tildes y las mayúsculas no importan. Después toca Comprobar."] },
+  anagrama: { icono: Shuffle, pasos: ["Lee la frase: le faltan palabras y vas a llenarlas una por una.", "Las letras de la palabra que falta están revueltas: tócalas en el orden correcto.", "Si te equivocas, toca una letra puesta para quitarla. Después toca Comprobar."] },
+  sopa: { icono: Grid3x3, pasos: ["Lee la frase: le faltan palabras.", "Búscalas en la sopa: toca la primera letra de cada una y después la última (o desliza el dedo).", "Ojo: también hay palabras que no van. Cuando marques todas, toca Comprobar."] },
+  crucigrama: { icono: Puzzle, pasos: ["Arriba está la frase: cada espacio tiene el número de su palabra en el crucigrama.", "Toca una casilla o un número y escribe: la letra pasa sola a la siguiente.", "Donde dos palabras se cruzan, la letra sirve para las dos. Después toca Comprobar."] },
+  arma: { icono: Blocks, pasos: ["La idea de la lección está cortada en trozos revueltos.", "Toca los trozos en el orden en que se leen, del primero al último.", "Si te equivocas, toca un trozo puesto para devolverlo. Después toca Comprobar."] },
   parejas: { icono: Link2, pasos: ["A la izquierda hay ideas y a la derecha, lo que les corresponde.", "Toca una idea y después su pareja: quedan con el mismo color y número.", "Cuando unas todas, toca Comprobar."] },
   "elige-pareja": { icono: Link2, pasos: ["Arriba aparece una idea.", "Toca, de las opciones, la que le corresponde.", "Así con cada pareja, una por una."] },
+  memoria: { icono: Brain, pasos: ["Las cartas están boca abajo: cada una tiene su pareja.", "Destapa dos: si van juntas, quedan a la vista; si no, se vuelven a tapar.", "Recuerda dónde está cada una hasta encontrar todas las parejas. Los primeros errores no te bajan."] },
   recuadros: { icono: LayoutGrid, pasos: ["Arriba están los recuadros: uno por cada grupo.", "Toca una frase de abajo y después el recuadro del grupo donde va.", "Cuando pongas todas, toca Comprobar."] },
   desliza: { icono: MoveHorizontal, pasos: ["Arriba están los dos grupos, uno a cada lado.", "Desliza la frase hacia el lado de su grupo, o toca el botón del grupo.", "Así con cada frase, una por una."] },
   intruso: { icono: SearchX, pasos: ["Aparecen cuatro frases.", "Tres son del mismo grupo y una no.", "Toca la que no va con las demás."] },
+  atrapa: { icono: HandGrab, pasos: ["Arriba dice qué frases debes atrapar.", "Las frases caen una por una: toca solo las de ese grupo y deja pasar las demás.", "Si prefieres, puedes elegirlas de una lista, sin prisa. Al final verás cómo te fue."] },
   lista: { icono: ListOrdered, pasos: ["Los pasos están revueltos.", "Arrástralos desde el asa o muévelos con las flechas.", "Cuando estén en orden, toca Comprobar."] },
   escalones: { icono: Footprints, pasos: ["Vas a armar una escalera, del primer paso al último.", "En cada escalón, toca lo que va ahí.", "Cada escalón queda puesto y sigues con el próximo."] },
   "donde-va": { icono: SquareDashed, pasos: ["Arriba está un paso que se salió de la lista.", "Abajo está la lista en su orden, con lugares marcados Aquí.", "Toca el lugar donde va ese paso."] },

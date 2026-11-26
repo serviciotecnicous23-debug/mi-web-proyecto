@@ -57,9 +57,9 @@ también se arrastra), sonidos cortos que se apagan con un toque y respeto por �
 | Pieza | Formas (la primera es la de siempre) | Desde |
 | --- | --- | --- |
 | `tarjetas` | Relámpago: la pregunta de cada tarjeta con su respuesta y dos de otras tarjetas (no entra en la que cuenta) | Nivel 1 |
-| `completa` | Completa la idea (banco de palabras), Elige la palabra (dos por hueco), Escríbela (con la primera letra y cuántas letras; solo para aprender) | Nivel 1 |
-| `relaciona` | Relaciona (las dos columnas), Elige la pareja (una idea y tres opciones, de a una) | Nivel 1 |
-| `clasifica` | Clasifica (recuadros de colores), Desliza (dos grupos, de a una frase), ¿Cuál no va? (tres del mismo grupo y una que no) | Nivel 1 |
+| `completa` | Completa la idea (banco de palabras), Elige la palabra (dos por hueco), Escríbela (con la primera letra y cuántas letras; solo en el reto), Anagrama (las letras de cada palabra revueltas, de a una), Sopa de letras (con las palabras que no van escondidas también), Crucigrama (la frase arriba con el número de cada palabra), Arma la frase (una oración en trozos revueltos) | Nivel 1 |
+| `relaciona` | Relaciona (las dos columnas), Elige la pareja (una idea y tres opciones, de a una), Memoria (cartas boca abajo que se destapan de a dos) | Nivel 1 |
+| `clasifica` | Clasifica (recuadros de colores), Desliza (dos grupos, de a una frase), ¿Cuál no va? (tres del mismo grupo y una que no), ¡Atrápalas! (las frases caen y se atrapan las del grupo que se pide; también de una lista, sin prisa) | Nivel 1 |
 | `ordena` | Ordena (arrastrar), Escalones (qué va en cada escalón), ¿Dónde va? (un paso salió de la lista: se toca su lugar) | Nivel 1 |
 | `verdad` | ¿Verdad o error?, ¿Cuál es falsa? (tres frases de las dos versiones; a veces se busca la verdadera) | Nivel 1 |
 | `error` | Encuentra el error, Detective (las frases seguidas, como un texto) | Nivel 1 |
@@ -76,6 +76,32 @@ Una forma solo se elige si la actividad la permite (`formatosPosibles`): Relámp
 con 3 parejas; Desliza con 2 grupos; ¿Cuál no va? con un grupo de 3 frases o más; Escalones con 3 pasos o hechos; ¿Dónde va?
 con 4; ¿Cuál es falsa? con frases verdaderas y falsas suficientes entre las dos versiones. Las 15 piezas ya funcionan: los
 niveles siguientes solo traen contenido.
+
+### Las dinámicas del catálogo de Luis (26-nov)
+
+Del catálogo de 50 dinámicas que pasó Luis, seis ya se juegan con el mismo contenido, combinadas con las demás formas en
+cada lección (no hace falta escribir nada nuevo en las materias). Cuándo se puede cada una:
+
+- **Anagrama** (`completa`): de 1 a 3 palabras que faltan, cada una de una sola palabra de 3 a 14 letras y distintas
+  entre sí. Va de a una palabra; las letras nunca salen en su orden.
+- **Sopa de letras** (`completa`): de 1 a 4 palabras de 3 a 9 letras. Cuadrícula de 9 por 9, palabras para leerse de
+  izquierda a derecha o hacia abajo (también en diagonal) y hasta 2 de las que no van escondidas. Se marca tocando la
+  primera letra y la última (o deslizando el dedo); vale la parte de las palabras que encontró.
+- **Crucigrama** (`completa`): de 2 a 4 palabras de 3 a 12 letras que se puedan cruzar en una letra igual (`crucigramaDe`,
+  siempre el mismo para el mismo texto; hasta 12 por 12). Las tildes no importan; la ñ sí.
+- **Arma la frase** (`completa`): **una sola oración** del texto (la que lleva más palabras clave, de 8 a 32 palabras),
+  en 3 a 5 trozos cortados donde mejor se lee (en las comas, nunca después de «de», «que», «y»…). Con dos oraciones el
+  orden también podría ir al revés, por eso se arma una. **Nunca un texto con « »** (Luis: versículos no; conceptos sí).
+  Se califica como Ordena (los pares que quedaron en su orden).
+- **Memoria** (`relaciona`): de 3 a 5 parejas con todos los textos distintos. Cada volteo es un paso (sin el panel de
+  la devolución entre volteos); se perdonan los primeros errores (una vez y media las parejas) y después cada uno resta
+  0,1, nunca por debajo de 0,5 (`notaMemoria`).
+- **¡Atrápalas!** (`clasifica`): el grupo con más frases (2 o más, y 2 o más de los otros grupos), hasta 8 frases. Cada
+  frase cae de 4 a 7 segundos según su largo; vale la parte de frases bien decididas (atrapada o dejada pasar). Con el
+  movimiento reducido del teléfono, o si el alumno lo prefiere, se eligen de una lista.
+
+Sopa, crucigrama y ¡Atrápalas! no van contra el reloj. La prueba de formas juega las seis en todas las actividades donde
+caben (con tres semillas, todo bien y todo mal) y revisa que nada delate la respuesta.
 
 ## 3. Cómo se escribe la práctica de una materia
 
