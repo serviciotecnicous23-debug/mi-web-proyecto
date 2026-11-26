@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, MessageSquareQuote, PenLine, Send, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleMinus, MessageSquareQuote, PenLine, Send, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,8 +75,8 @@ export function TarjetaRevision({ item, puedeRevisar, conAlumno = true }: { item
           <ul className="space-y-1 text-sm">
             {item.ideas.map((i) => (
               <li key={i.texto} className="flex gap-2">
-                {i.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" aria-label="La encontró" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" aria-label="No la encontró" />}
-                <span>{i.texto} <span className="text-muted-foreground">({i.peso} puntos)</span></span>
+                {i.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" aria-label="La encontró" /> : i.medio ? <CircleMinus className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" aria-label="A medias" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" aria-label="No la encontró" />}
+                <span>{i.texto} <span className="text-muted-foreground">({i.medio && !i.ok ? `a medias: ${i.peso / 2} de ${i.peso}` : `${i.peso}`} puntos)</span></span>
               </li>
             ))}
           </ul>

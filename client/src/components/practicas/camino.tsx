@@ -2,7 +2,7 @@
 // Va en la página de la materia; cada parada abre la práctica de su lección.
 import { Link } from "wouter";
 import { motion, useReducedMotion } from "motion/react";
-import { Flag, Lock, Star } from "lucide-react";
+import { Crown, Flag, Lock, Star } from "lucide-react";
 import type { CaminoMateria } from "@shared/practicas";
 import { useCamino } from "./api";
 
@@ -66,15 +66,27 @@ export function CaminoPracticas({ materiaId }: { materiaId: string }) {
         <span className="text-sm font-semibold inline-flex items-center gap-1"><Star className="w-4 h-4 text-amber-500" fill="currentColor" /> {c.estrellas} de {c.posibles}</span>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Cada lección tiene su práctica: primero la guiada y luego la que cuenta.{" "}
+        Cada lección tiene su práctica: la puedes repetir cuando quieras y vale tu mejor intento.{" "}
         {c.obligatoria
-          ? `Las que cuentan son obligatorias para el examen final y entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.`
+          ? `Son obligatorias para el examen final y entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.`
           : c.aprobada
-            ? "Ya aprobaste la materia: practica cuando quieras, tu nota ya no cambia."
+            ? "Ya aprobaste la materia: practica cuando quieras. Tu nota no baja, y con el reto de dominio de cada lección puedes subirla."
             : c.cuentaEnNota
               ? `Las prácticas entran en tu nota${c.componente != null ? ` (llevas ${c.componente})` : ""}.`
               : "Te ayudan a no olvidar."}
       </p>
+      {c.reto && (
+        <div className="mb-4 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/20 px-4 py-3" data-testid="camino-reto">
+          <p className="font-bold flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-600" /> Puntos extra: {c.reto.extra} de {c.reto.posible}
+          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {c.reto.posible === 0
+              ? "Tu nota ya es 100."
+              : `Dominaste ${c.reto.dominadas} de ${c.reto.lecciones} retos. Cada reto de dominio (90 o más, sin pistas) completa su parte de lo que te falta para 100: entra a la práctica de cada lección.`}
+          </p>
+        </div>
+      )}
       <div className="relative rounded-3xl border border-border bg-gradient-to-b from-amber-50/60 to-transparent dark:from-amber-950/20 p-4 overflow-hidden">
         <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden preserveAspectRatio="none" viewBox="0 0 100 100">
           <path d="M 20 0 C 80 15, 80 25, 50 40 S 20 70, 50 80 S 80 95, 50 100" fill="none" stroke="currentColor" strokeOpacity={0.12} strokeWidth={6} strokeDasharray="1 3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />

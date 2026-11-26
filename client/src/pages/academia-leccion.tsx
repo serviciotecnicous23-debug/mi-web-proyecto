@@ -419,11 +419,11 @@ export default function AcademiaLeccion() {
                 <h2 className="font-display text-xl font-bold leading-tight">Práctica de la lección</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   {prac.data.actividades} actividades con lo que enseña esta lección, unos {prac.data.minutos} minutos. {prac.data.obligatoria
-                    ? "La que cuenta es obligatoria para el examen final y entra en tu nota."
+                    ? "Es obligatoria para el examen final y entra en tu nota (vale tu mejor intento)."
                     : prac.data.aprobada
                       ? "Ya aprobaste la materia: practica cuando quieras."
                       : prac.data.cuentaEnNota
-                        ? "La que cuenta entra en tu nota."
+                        ? "Entra en tu nota (vale tu mejor intento)."
                         : ""}
                 </p>
                 <div className="mt-2"><Estrellas n={prac.data.estrellas} /></div>

@@ -1,18 +1,18 @@
-// La práctica de una lección (server/academia-practicas.ts): primero la guiada (con pistas y la explicación de cada
-// respuesta) y después la que cuenta (otras versiones, sin pistas, 3 intentos por día; vale la mejor). Se abre al
-// terminar la lección; con `?tras=1` saluda a quien acaba de completarla.
+// La práctica de una lección (server/academia-practicas.ts): una sola, la que cuenta, completa (el Relámpago, las
+// actividades en muchas formas y la pista, que deja esa actividad en la mitad). Se repite cuando quiera y vale la
+// mejor. Se abre al terminar la lección; con `?tras=1` saluda a quien acaba de completarla.
 import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, BookOpen, CheckCircle2, Clock, Flame, Lock, PartyPopper, Play, ShieldCheck, Shuffle, Target } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Crown, Flame, Lock, PartyPopper, Play, RotateCcw, ShieldCheck, Shuffle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
 import { Cargando, PantallaCerrada } from "@/components/academia/ui";
 import { loginUrl } from "@/lib/login-redirect";
 import { useToast } from "@/hooks/use-toast";
 import { PRACTICAS, type IntentoVista } from "@shared/practicas";
-import { empezarLeccion, usePracticaLeccion } from "@/components/practicas/api";
+import { empezarLeccion, empezarReto, usePracticaLeccion } from "@/components/practicas/api";
 import { Reproductor } from "@/components/practicas/reproductor";
 import { EstadoChip, Estrellas } from "@/components/practicas/resultado";
 
@@ -25,7 +25,8 @@ export default function AcademiaPractica() {
   const quieto = useReducedMotion();
   const q = usePracticaLeccion(leccionId);
   const [intento, setIntento] = useState<IntentoVista | null>(null);
-  const [abriendo, setAbriendo] = useState<"guiada" | "cuenta" | null>(null);
+  const [abriendo, setAbriendo] = useState<"practica" | "reto" | null>(null);
+  const [ultimo, setUltimo] = useState<"practica" | "reto">("practica");
   useTituloAcademia(q.data ? `Práctica: ${q.data.leccion.titulo}` : "Práctica de la lección");
   void ubicacion;
 
@@ -43,10 +44,11 @@ export default function AcademiaPractica() {
   }
   const p = q.data;
 
-  const empezar = async (modo: "guiada" | "cuenta") => {
-    setAbriendo(modo);
+  const empezar = async (que: "practica" | "reto" = "practica") => {
+    setAbriendo(que);
+    setUltimo(que);
     try {
-      setIntento(await empezarLeccion(p.leccion.id, modo));
+      setIntento(await (que === "reto" ? empezarReto(p.leccion.id) : empezarLeccion(p.leccion.id)));
     } catch (e: any) {
       toast({ title: "Todavía no", description: e?.message, variant: "destructive" });
     } finally {
@@ -59,7 +61,6 @@ export default function AcademiaPractica() {
     void qc.invalidateQueries({ queryKey: ["academia"] });
   };
 
-  const cuentaBloqueada = !p.prueba && (!p.guiada || p.quedanHoy <= 0);
   return (
     <Layout>
       <div className="max-w-xl mx-auto px-4 pt-5 pb-16" data-testid="practica-leccion">
@@ -99,11 +100,11 @@ export default function AcademiaPractica() {
           <p className="mt-3 text-sm flex items-start gap-1.5" data-testid="practica-regla">
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
             {p.obligatoria
-              ? `Es obligatoria: el examen final pide la práctica que cuenta de cada lección. Entra en tu nota (vale tu mejor intento) y la puedes hacer hasta ${PRACTICAS.intentosPorDia} veces por día.`
+              ? "Es obligatoria: el examen final pide la práctica de cada lección. Entra en tu nota y la puedes repetir cuando quieras: vale tu mejor intento."
               : p.aprobada
-                ? "Ya aprobaste esta materia: practica cuando quieras. Tu nota ya no cambia."
+                ? "Ya aprobaste esta materia: practica cuando quieras. Tu nota no baja, y con el reto de dominio puedes subirla."
                 : p.cuentaEnNota
-                  ? "La práctica que cuenta entra en tu nota de la materia (vale tu mejor intento)."
+                  ? "La práctica entra en tu nota de la materia. La puedes repetir cuando quieras: vale tu mejor intento."
                   : "Es para aprender y no olvidar: no cambia tu nota."}
           </p>
         </div>
@@ -121,48 +122,62 @@ export default function AcademiaPractica() {
             )}
           </div>
         ) : (
-          <div className="mt-5 grid gap-3">
+          <div className="mt-5">
             <button
               type="button"
-              onClick={() => empezar("guiada")}
+              onClick={() => void empezar("practica")}
               disabled={!!abriendo}
-              className={`text-left rounded-3xl border-2 p-4 flex items-center gap-4 transition ${!p.guiada ? "border-amber-500 bg-amber-500/10" : "border-border bg-card"}`}
-              data-testid="empezar-guiada"
+              className="w-full text-left rounded-3xl border-2 border-orange-500 bg-orange-500/10 p-4 flex items-center gap-4 transition disabled:opacity-60"
+              data-testid="empezar-practica"
             >
               <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 text-white flex items-center justify-center shrink-0">
-                {p.guiada ? <CheckCircle2 className="w-6 h-6" /> : <Play className="w-6 h-6" fill="currentColor" />}
-              </span>
-              <span className="flex-1">
-                <span className="block font-extrabold text-[17px]">{p.guiada ? "Repetir la práctica guiada" : "Empezar la práctica guiada"}</span>
-                <span className="block text-sm text-muted-foreground">Con pistas y la explicación de cada respuesta. {p.actividades} actividades.</span>
-              </span>
-              {abriendo === "guiada" && <span className="text-sm">…</span>}
-            </button>
-            <button
-              type="button"
-              onClick={() => empezar("cuenta")}
-              disabled={!!abriendo || cuentaBloqueada}
-              className={`text-left rounded-3xl border-2 p-4 flex items-center gap-4 transition disabled:opacity-60 ${p.guiada && !cuentaBloqueada ? "border-orange-600 bg-orange-500/10" : "border-border bg-card"}`}
-              data-testid="empezar-cuenta"
-            >
-              <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center shrink-0">
-                <Target className="w-6 h-6" />
+                {p.guiada ? <RotateCcw className="w-6 h-6" /> : <Play className="w-6 h-6" fill="currentColor" />}
               </span>
               <span className="flex-1">
                 <span className="block font-extrabold text-[17px]">
-                  La práctica que cuenta
+                  {p.guiada ? "Practicar otra vez" : "Empezar la práctica"}
                   {p.obligatoria && <span className="ml-2 align-middle rounded-full bg-orange-600 text-white px-2 py-0.5 text-[11px] font-bold" data-testid="cuenta-obligatoria">Obligatoria</span>}
                 </span>
                 <span className="block text-sm text-muted-foreground">
-                  {!p.guiada && !p.prueba
-                    ? "Se abre cuando terminas la guiada."
-                    : p.quedanHoy <= 0 && !p.prueba
-                      ? "Ya hiciste los 3 intentos de hoy. Vuelve mañana."
-                      : `Sin pistas y con otras preguntas. Domina con ${PRACTICAS.domina} o más. ${p.prueba ? "" : `Te quedan ${p.quedanHoy} ${p.quedanHoy === 1 ? "intento" : "intentos"} hoy.`}`}
+                  {p.actividades} actividades. Si te trabas, pide una pista (esa actividad vale la mitad). {p.guiada ? `Domina con ${PRACTICAS.domina} o más: vale tu mejor intento.` : `Con ${PRACTICAS.domina} o más dominas la lección.`}
                 </span>
               </span>
-              {abriendo === "cuenta" && <span className="text-sm">…</span>}
+              {abriendo === "practica" && <span className="text-sm">…</span>}
             </button>
+            {p.reto && (
+              <div className={`mt-3 rounded-3xl border-2 p-4 ${p.reto.abierto ? "border-amber-500/70 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/20" : "border-dashed border-border"}`} data-testid="reto-dominio">
+                <div className="flex items-start gap-3">
+                  <span className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${p.reto.abierto ? "bg-gradient-to-br from-yellow-400 to-amber-600 text-white" : "bg-muted text-muted-foreground"}`}>
+                    {p.reto.abierto ? <Crown className="w-6 h-6" /> : <Lock className="w-5 h-5" />}
+                  </span>
+                  <div className="flex-1">
+                    <p className="font-extrabold text-[17px] leading-tight">
+                      Reto de dominio: puntos extra
+                      {p.reto.dominado && <span className="ml-2 align-middle rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[11px] font-bold">Dominado</span>}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {p.reto.abierto
+                        ? p.reto.dominado
+                          ? `Ya lo dominaste${p.reto.mejor != null ? ` (tu mejor: ${p.reto.mejor})` : ""}: esta lección ya suma sus puntos extra a tu nota.`
+                          : `Sin pistas y cada actividad en su forma más difícil. Con ${PRACTICAS.retoDomina} o más ${p.reto.puntos > 0 ? `sumas +${p.reto.puntos} a tu nota de la materia` : "lo dominas"}.${p.reto.mejor != null ? ` Tu mejor: ${p.reto.mejor}.` : ""}`
+                        : p.reto.falta}
+                    </p>
+                    {p.reto.abierto && (
+                      <button
+                        type="button"
+                        onClick={() => void empezar("reto")}
+                        disabled={!!abriendo}
+                        className="mt-3 h-11 px-5 rounded-2xl font-bold text-white bg-gradient-to-r from-yellow-500 to-amber-600 inline-flex items-center gap-2 disabled:opacity-60"
+                        data-testid="empezar-reto"
+                      >
+                        <Crown className="w-4 h-4" /> {p.reto.mejor != null ? "Intentar el reto otra vez" : "Hacer el reto"}
+                        {abriendo === "reto" && <span className="text-sm">…</span>}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -177,7 +192,7 @@ export default function AcademiaPractica() {
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-muted-foreground">Nuevo, Aprendiendo, Dominado (80 o más en la que cuenta) y Firme (lo recuerdas a los 30 días).</p>
+            <p className="mt-3 text-xs text-muted-foreground">Nuevo, Aprendiendo, Dominado (80 o más en la práctica) y Firme (lo recuerdas a los 30 días).</p>
           </div>
         )}
 
@@ -190,10 +205,10 @@ export default function AcademiaPractica() {
         <Reproductor
           intento={intento}
           alSalir={cerrar}
-          alOtraVez={(modo) => {
+          alOtraVez={() => {
             setIntento(null);
             void qc.invalidateQueries({ queryKey: ["practicas"] });
-            void empezar(modo);
+            void empezar(ultimo);
           }}
         />
       )}

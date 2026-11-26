@@ -691,6 +691,8 @@ export type MateriaDetalle = {
   pesos: Pesos;
   estado: EstadoMateria;
   nota: number | null;
+  /** Los puntos extra del reto de dominio que ya están dentro de la nota (0 si no tiene). */
+  extra: number;
   componentes: Componentes;
   medalla: Medalla | null;
   versiculo: { ref: string; aprendido: boolean; puntaje: number | null; intentos: number } | null;
@@ -892,7 +894,8 @@ export type LeccionVista = {
 export type RespuestaRepaso = { bien: boolean; correcta: string; explica: string; ref: string; todas: boolean };
 
 /** Una idea de la clave de corrección, como se le devuelve al alumno (sin sus formas aceptadas). */
-export type IdeaDevuelta = { texto: string; ok: boolean };
+/** Una idea de la clave: la dijo (`ok`), la dijo a medias (`medio`, vale la mitad: se ve en amarillo) o no. */
+export type IdeaDevuelta = { texto: string; ok: boolean; medio?: boolean };
 export type CorreccionVista = {
   nota: number;
   ideas: IdeaDevuelta[];

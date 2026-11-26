@@ -13,7 +13,7 @@
  */
 import type { Express, Request } from "express";
 import { pool } from "./db";
-import { pesosDeAlumno } from "./academia-practicas-nota";
+import { extraDe, pesosDeAlumno } from "./academia-practicas-nota";
 import {
   APRUEBA, APRUEBA_INTEGRAL, ESPECIALIDADES, HONORES, NIVELES, apruebaSuficiencia, materiaAprobada, medallaDe, normalizarCodigo, notaExamen, notaMateria, pesosDe,
   type EspecialidadDef, type MateriaDef, type NivelDef, type ResultadoExamen, type TipoDocumento,
@@ -59,8 +59,9 @@ const nombreDe = (r: any) => (r.nombres ? `${r.nombres} ${r.apellidos ?? ""}`.tr
 function itemDe(r: any): ItemRevision {
   const clave = escritaPorId(r.pregunta_id);
   const ctx = contextoExamen(r.clave);
-  const det = (r.detalle ?? {}) as { ideas?: string[]; errores?: string[]; marcas?: string[] };
+  const det = (r.detalle ?? {}) as { ideas?: string[]; medias?: string[]; errores?: string[]; marcas?: string[] };
   const ok = new Set(det.ideas ?? []);
+  const medias = new Set(det.medias ?? []);
   const errores = new Set(det.errores ?? []);
   return {
     id: Number(r.id),
@@ -68,7 +69,7 @@ function itemDe(r: any): ItemRevision {
     examen: { clave: r.clave, titulo: ctx?.titulo ?? r.clave, intento: Number(r.intento) },
     pregunta: clave?.pregunta ?? "(pregunta retirada del banco)",
     modelo: clave?.modelo ?? "",
-    ideas: (clave?.ideas ?? []).map((i) => ({ texto: i.texto, peso: i.peso, ok: ok.has(i.id) })),
+    ideas: (clave?.ideas ?? []).map((i) => ({ texto: i.texto, peso: i.peso, ok: ok.has(i.id), ...(medias.has(i.id) ? { medio: true } : {}) })),
     errores: (clave?.errores ?? []).filter((e) => errores.has(e.id)).map((e) => e.texto),
     citas: clave?.citas ?? [],
     texto: r.texto ?? "",
@@ -233,19 +234,22 @@ export async function reconsiderarMateria(userId: number, m: MateriaDef, motivo:
   if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) return { nota: Number(ya[0].nota ?? 0), aprobada: true, cambio: null };
   const componentes = await componentesDe(userId, m);
   const pesos = await pesosDeAlumno(userId, m);
-  const nota = notaMateria(pesos, componentes);
-  const aprobada = materiaAprobada(nota, componentes.final ?? 0);
+  const base = notaMateria(pesos, componentes);
+  const aprobada = materiaAprobada(base, componentes.final ?? 0);
+  // (aprobada, suma los puntos extra del reto de dominio; sin aprobar, no tiene)
+  const extra = aprobada ? await extraDe(userId, m, base) : 0;
+  const nota = Math.min(100, base + extra);
   const { rows } = await pool.query(`SELECT estado FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   const estaba = rows[0]?.estado === "aprobada";
   // (aprobada: se guardan los pesos con que aprobó; si deja de estar aprobada, vuelve a la fórmula de quien cursa)
   await pool.query(
     `UPDATE academia_materias
-        SET nota = $3, componentes = $4::jsonb,
+        SET nota = $3, componentes = $4::jsonb, nota_base = $7, extra = $8,
             pesos_aprobada = CASE WHEN $5 THEN COALESCE(pesos_aprobada, $6::jsonb) ELSE NULL END,
             estado = CASE WHEN $5 THEN 'aprobada' ELSE 'en-curso' END,
             aprobada_at = CASE WHEN $5 THEN COALESCE(aprobada_at, now()) ELSE NULL END
       WHERE user_id = $1 AND materia_id = $2`,
-    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos)],
+    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos), base, extra],
   );
   await pool.query(
     `UPDATE academia_pruebas SET aprobada_at = CASE WHEN $3 THEN COALESCE(aprobada_at, now()) ELSE NULL END WHERE user_id = $1 AND clave = $2`,

@@ -2,17 +2,15 @@
 // de corrido (cada renglón es un bloque, pero no se ven cajas ni formularios). Enter sigue la lista, borrar en un renglón
 // vacío lo quita y Tab da sangría. La barra tiene «Aa» (el estilo del renglón: título, encabezado, cuerpo o cita; negrita,
 // cursiva, subrayado, tachado y resaltado; las listas y la sangría), la lista de tareas, insertar (un versículo, una idea
-// importante o una línea), dictar con la voz y deshacer. Se guarda solo (api.ts): una nota nueva se crea con lo primero
-// que se escribe.
-import { useEffect, useMemo, useRef, useState } from "react";
+// importante o una línea) y deshacer. Se guarda solo (api.ts): una nota nueva se crea con lo primero que se escribe.
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   AlertTriangle, Bold, BookOpen, Check, Cloud, CloudOff, Highlighter, Italic, Lightbulb, List, ListChecks, ListIndentDecrease, ListIndentIncrease,
-  ListOrdered, Loader2, Mic, MicOff, Minus, Plus, Strikethrough, TextQuote, Underline, Undo2,
+  ListOrdered, Loader2, Minus, Plus, Strikethrough, TextQuote, Underline, Undo2,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
 import { bloque, citaEscrita, type BloqueCuaderno, type NotaCompleta, type TipoBloque } from "@shared/cuaderno";
 import { citaVisible } from "@shared/citas";
 import { useNotaEditable, type EstadoGuardado } from "./api";
@@ -59,18 +57,6 @@ function EstadoChip({ estado }: { estado: EstadoGuardado }) {
   );
 }
 
-/** El reconocimiento de voz del navegador (Chrome, Edge, Safari): para dictar en lugar de escribir. */
-function reconocedor(): any | null {
-  const w = window as any;
-  const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-  if (!SR) return null;
-  const r = new SR();
-  r.lang = "es-ES";
-  r.continuous = true;
-  r.interimResults = false;
-  return r;
-}
-
 /** La fecha de arriba, como en Notas: «23 de noviembre de 2026, 10:42». */
 const fechaDeNota = (iso: string) =>
   new Date(iso).toLocaleString("es", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -88,7 +74,6 @@ type Props = {
 };
 
 export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, registrarAgregar, soloLeer }: Props) {
-  const { toast } = useToast();
   const { nota, estado, cambiar } = useNotaEditable(inicial, alGuardar);
   const [enfocado, setEnfocado] = useState<string | null>(null);
   const [cursorAlFinal, setCursorAlFinal] = useState(true);
@@ -96,9 +81,6 @@ export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, re
   const historia = useRef<BloqueCuaderno[][]>([]);
   const areas = useRef(new Map<string, HTMLTextAreaElement>());
   const titulo = useRef<HTMLInputElement | null>(null);
-  const [dictando, setDictando] = useState(false);
-  const voz = useRef<any>(null);
-  const puedeDictar = useMemo(() => typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition), []);
 
   const bloques = nota?.bloques ?? [];
   const setBloques = (f: (b: BloqueCuaderno[]) => BloqueCuaderno[], conHistoria = true) =>
@@ -126,8 +108,6 @@ export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, re
     const p = cursorAlFinal ? a.value.length : 0;
     a.setSelectionRange(p, p);
   }, [enfocado, cursorAlFinal]);
-
-  useEffect(() => () => voz.current?.stop?.(), []);
 
   if (!nota) return null;
 
@@ -219,43 +199,6 @@ export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, re
       a.focus();
       a.setSelectionRange(desde, hasta);
     });
-  };
-
-  const dictar = () => {
-    if (dictando) {
-      voz.current?.stop?.();
-      setDictando(false);
-      return;
-    }
-    const r = reconocedor();
-    if (!r) return;
-    let destino = enfocado;
-    if (!destino) {
-      const nuevo = bloque("texto");
-      insertarDespues(bloques.length ? bloques[bloques.length - 1].id : null, nuevo);
-      destino = nuevo.id;
-    }
-    r.onresult = (ev: any) => {
-      const dicho = Array.from(ev.results as ArrayLike<any>)
-        .slice(ev.resultIndex)
-        .filter((x: any) => x.isFinal)
-        .map((x: any) => x[0].transcript)
-        .join(" ")
-        .trim();
-      if (dicho && destino) cambiarBloque(destino, (b) => ({ ...b, texto: `${b.texto}${b.texto && !/\s$/.test(b.texto) ? " " : ""}${dicho}` }));
-    };
-    r.onerror = (ev: any) => {
-      setDictando(false);
-      if (ev?.error === "not-allowed") toast({ title: "Sin permiso para el micrófono", description: "Permite el micrófono en tu navegador para dictar.", variant: "destructive" });
-    };
-    r.onend = () => setDictando(false);
-    voz.current = r;
-    try {
-      r.start();
-      setDictando(true);
-    } catch {
-      setDictando(false);
-    }
   };
 
   const alTeclear = (e: React.KeyboardEvent<HTMLTextAreaElement>, b: BloqueCuaderno) => {
@@ -420,18 +363,6 @@ export function EditorNota({ nota: inicial, compacto, alAbrirCita, alGuardar, re
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {puedeDictar && (
-            <button
-              type="button"
-              className={`${BOTON_BARRA} ${dictando ? "bg-red-600 text-white hover:bg-red-700" : ""}`}
-              onClick={dictar}
-              aria-label={dictando ? "Dejar de dictar" : "Dictar con la voz"}
-              title={dictando ? "Dejar de dictar" : "Dictar con la voz"}
-              data-testid="cuaderno-dictar"
-            >
-              {dictando ? <MicOff className="w-[18px] h-[18px]" /> : <Mic className="w-[18px] h-[18px]" />}
-            </button>
-          )}
           <button type="button" className={BOTON_BARRA} onMouseDown={(e) => e.preventDefault()} onClick={deshacer} disabled={!historia.current.length} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
             <Undo2 className="w-[18px] h-[18px]" />
           </button>

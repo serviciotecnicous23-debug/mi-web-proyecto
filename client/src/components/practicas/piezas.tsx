@@ -4,7 +4,7 @@
 // (verdad o error) la envían sola con `alEnviar`.
 import { useEffect, useRef, useState } from "react";
 import { Reorder, motion, useDragControls, useReducedMotion } from "motion/react";
-import { ArrowDown, ArrowUp, Check, GripVertical, Hand, Quote, X, Zap } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, GripVertical, Hand, Minus, Quote, X, Zap } from "lucide-react";
 import type { Devolucion, Formato, ItemVista, RespuestaPractica } from "@shared/practicas";
 
 /** La vista de una forma de jugar. */
@@ -38,7 +38,11 @@ const mal = "border-rose-500 bg-rose-500/12 text-rose-900 dark:text-rose-100";
 const elegido = "border-amber-500 bg-amber-500/15 ring-2 ring-amber-500/40";
 const base = "border-border bg-card hover:border-amber-400/70";
 
-export function Marca({ ok }: { ok: boolean }) {
+export function Marca({ ok, medio = false }: { ok: boolean; medio?: boolean }) {
+  if (!ok && medio)
+    return (
+      <span className="inline-flex w-6 h-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white" aria-label="A medias"><Minus className="w-4 h-4" /></span>
+    );
   return ok ? (
     <span className="inline-flex w-6 h-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white" aria-label="Bien"><Check className="w-4 h-4" /></span>
   ) : (
@@ -608,7 +612,7 @@ export function Situacion({ vista, correccion, bloqueado, alCambiar }: PropsPiez
 
 export const contarPalabras = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 
-export function Escribir({ pregunta, min, max, correccion, bloqueado, alCambiar }: { pregunta: string; min: number; max: number; correccion: { nota: number; ideas: { texto: string; ok: boolean }[]; avisos?: string[]; modelo: string } | null; bloqueado: boolean; alCambiar: (texto: string | null) => void }) {
+export function Escribir({ pregunta, min, max, correccion, bloqueado, alCambiar }: { pregunta: string; min: number; max: number; correccion: { nota: number; ideas: { texto: string; ok: boolean; medio?: boolean }[]; avisos?: string[]; modelo: string } | null; bloqueado: boolean; alCambiar: (texto: string | null) => void }) {
   const [texto, setTexto] = useState("");
   const n = contarPalabras(texto);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -642,8 +646,11 @@ export function Escribir({ pregunta, min, max, correccion, bloqueado, alCambiar 
           <ul className="space-y-1.5">
             {correccion.ideas.map((i, k) => (
               <li key={k} className="flex items-start gap-2 text-[15px]">
-                <Marca ok={i.ok} />
-                <span>{i.texto}</span>
+                <Marca ok={i.ok} medio={i.medio} />
+                <span>
+                  {i.texto}
+                  {!i.ok && i.medio && <span className="ml-1 text-xs font-semibold text-amber-700 dark:text-amber-300">(a medias)</span>}
+                </span>
               </li>
             ))}
           </ul>

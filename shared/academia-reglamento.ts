@@ -13,7 +13,7 @@ import {
   ACLARACION_DOCUMENTOS, APRUEBA, APRUEBA_INTEGRAL, DIAS_APELACION, DIAS_PAUSA, ESPERA_FINAL_MIN, ETAPAS,
   FALLOS_PARA_REPASAR, HONORES, LEMA, NIVELES_N, NOMBRE_ACADEMIA, PESOS_NIVEL,
 } from "./academia-base";
-import { PESOS_CON_PRACTICAS } from "./practicas";
+import { PESOS_CON_PRACTICAS, PRACTICAS } from "./practicas";
 
 /** El código de honor que se acepta al inscribirse (y antes de cada examen). */
 export const CODIGO_HONOR =
@@ -55,7 +55,7 @@ function actividadesDelReglamento(): string[] {
  * sistema, así que nunca dicen otra cosa. Si cambia algo de fondo, sube la versión: queda guardada en cada matrícula.
  */
 export const REGLAMENTO: { version: string; titulo: string; base: string; intro: string; secciones: SeccionReglamento[] } = {
-  version: "2026-11-23",
+  version: "2026-11-24",
   titulo: "Reglamento académico",
   base: LEMA.ref,
   intro: `Este reglamento ordena la vida académica de la ${NOMBRE_ACADEMIA}. Al inscribirte lo aceptas, junto con el código de honor.`,
@@ -91,7 +91,9 @@ export const REGLAMENTO: { version: string; titulo: string; base: string; intro:
       puntos: [
         `Las notas van de 0 a 100. Una materia se aprueba con ${APRUEBA}; el examen integral de un nivel, con ${APRUEBA_INTEGRAL}.`,
         `En el Nivel 1, la nota de la materia sale del examen final (${PESOS_CON_PRACTICAS[1].final} %), las prácticas de las lecciones (${PESOS_CON_PRACTICAS[1].practicas} %), los repasos de las lecciones (${PESOS_CON_PRACTICAS[1].repasos} %) y el versículo de memoria (${PESOS_CON_PRACTICAS[1].versiculo} %). En las materias que todavía no tienen prácticas, el examen final pesa ${PESOS_NIVEL[1].final} %.`,
-        "Cada lección tiene su práctica: primero la guiada y luego la que cuenta, que se puede repetir hasta 3 veces por día (vale la mejor). En las materias que ya las tienen, las prácticas son obligatorias: sin la práctica que cuenta de cada lección no se presenta el examen final. Quien ya aprobó una materia puede practicar cuando quiera sin que su nota cambie.",
+        `En el Nivel 2, sale del examen final (${PESOS_CON_PRACTICAS[2].final} %), las prácticas de las lecciones (${PESOS_CON_PRACTICAS[2].practicas} %), las mini pruebas (${PESOS_CON_PRACTICAS[2].mini} %), los escritos (${PESOS_CON_PRACTICAS[2].escritos} %) y el versículo de memoria (${PESOS_CON_PRACTICAS[2].versiculo} %). La página de cada materia muestra con qué pesos se calcula tu nota.`,
+        "Cada lección tiene una práctica que cuenta para la nota. Se puede repetir sin límite y vale el mejor intento; si pides una pista, esa actividad vale la mitad. En las materias que ya las tienen, las prácticas son obligatorias: sin la práctica de cada lección no se presenta el examen final. Quien ya aprobó una materia puede practicar cuando quiera sin que su nota baje.",
+        `Los puntos extra: con la materia aprobada cursándola, cada lección tiene su reto de dominio (sin pistas y cada actividad en su forma más difícil). Con ${PRACTICAS.retoDomina} o más queda dominado y completa su parte de lo que le falta a tu nota para llegar a 100. Los puntos extra nunca deciden si apruebas: eso lo deciden el examen final y la nota del curso.`,
         "El examen final tiene una parte objetiva, con un tiempo para cada pregunta que lleva el servidor, y una parte escrita que el sistema corrige al instante, idea por idea.",
         `Si no apruebas, puedes intentarlo otra vez después de ${ESPERA_FINAL_MIN[0]} minutos y, desde el segundo fallo, después de ${ESPERA_FINAL_MIN[1] / 60} horas. Desde el ${ordinal(FALLOS_PARA_REPASAR)} fallo hay que volver a leer las lecciones antes de intentarlo. Cada intento trae preguntas distintas.`,
         `Un nivel se cierra con honores cuando el promedio de sus materias es de ${HONORES} o más.`,

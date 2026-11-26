@@ -1,7 +1,7 @@
 // Pruebas del corrector automático de respuestas escritas: npx tsx --test server/academia-correccion.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buscarForma, citasEscritas, corregirEscrita, distancia, palabrasDe, problemasDeClave } from "./academia-correccion";
+import { buscarForma, citasEscritas, corregirEscrita, distancia, palabrasDe, problemasDeClave, type ClaveEscrita } from "./academia-correccion";
 import { BANCOS } from "./academia/index";
 
 const e1 = BANCOS.get("n1-salvacion")!.escritas.find((e) => e.id === "n1-salvacion-e1")!;
@@ -98,4 +98,55 @@ test("la respuesta fuera de tiempo vale cero y la pegada queda para revisar", ()
   const pegada = corregirEscrita(e1, e1.modelo, { pegado: true });
   assert.ok(pegada.revisar);
   assert.ok(pegada.nota >= 90);
+});
+
+// (una clave de prueba con ideas de varias palabras: las que el orden puede cambiar)
+const cruz: ClaveEscrita = {
+  id: "prueba-cruz",
+  tipo: "corta",
+  pregunta: "¿Qué hizo Jesús por nosotros en la cruz?",
+  ideas: [
+    { id: "murio", peso: 50, texto: "Que murió en nuestro lugar.", formas: ["murio en nuestro lugar", "murio por nosotros"] },
+    { id: "pago", peso: 50, texto: "Que pagó el precio del pecado.", formas: ["pago el precio del pecado"] },
+  ],
+  modelo: "Jesús murió en nuestro lugar y pagó el precio del pecado en la cruz.",
+};
+
+test("lo mismo con las palabras en otro orden vale entero", () => {
+  const r = corregirEscrita(cruz, "En la cruz, por nosotros Jesús murió; el precio de nuestro pecado lo pagó él completo para darnos vida eterna.");
+  assert.ok(r.nota >= 90, `nota ${r.nota}`);
+  assert.deepEqual(r.ideas.map((i) => i.ok), [true, true]);
+});
+
+test("una idea a medias vale la mitad y se marca en amarillo", () => {
+  const r = corregirEscrita(cruz, "Jesús pagó todo por nuestro pecado cuando estuvo en la cruz, y así nos dio una vida nueva con Dios para siempre.");
+  assert.equal(r.ideas[0].ok, false);
+  assert.ok(!r.ideas[0].medio, "de morir no dijo nada");
+  assert.equal(r.ideas[1].ok, false);
+  assert.equal(r.ideas[1].medio, true);
+  assert.equal(r.nota, 25);
+  assert.deepEqual(r.detalle.medias, ["pago"]);
+});
+
+test("con una negación cerca, ni entera ni a medias", () => {
+  const r = corregirEscrita(cruz, "Hay quienes dicen que Jesús no murió por nosotros ni pagó el precio del pecado, pero eso no es lo que enseña la Biblia.");
+  assert.deepEqual(r.ideas.map((i) => i.ok || !!i.medio), [false, false]);
+});
+
+test("una forma con su «no» no le da media idea a lo contrario", () => {
+  const gozo: ClaveEscrita = {
+    id: "prueba-gozo",
+    tipo: "corta",
+    pregunta: "¿De qué depende el gozo del creyente?",
+    ideas: [
+      { id: "no-circ", peso: 50, texto: "Que no depende de las circunstancias.", formas: ["no depende de las circunstancias"] },
+      { id: "cristo", peso: 50, texto: "Que viene de Cristo.", formas: ["viene de cristo", "esta en cristo"] },
+    ],
+    modelo: "El gozo del creyente no depende de las circunstancias: viene de Cristo y de su presencia.",
+  };
+  const contrario = corregirEscrita(gozo, "Pienso que el gozo depende de las circunstancias que uno vive cada día, si te va bien estás feliz y si no, no.");
+  assert.equal(contrario.ideas[0].ok, false);
+  assert.ok(!contrario.ideas[0].medio, "lo contrario no se lleva media idea");
+  const bien = corregirEscrita(gozo, "El gozo verdadero de las circunstancias no depende, porque Cristo nos lo da y viene de él aunque todo vaya mal en la vida.");
+  assert.ok(bien.ideas[0].ok || bien.ideas[0].medio, "con su negación y en otro orden sí cuenta");
 });

@@ -14,10 +14,23 @@ import { PRACTICAS_N1_BAUTISMO_CENA } from "./n1-bautismo-cena";
 import { PRACTICAS_N1_IGLESIA } from "./n1-iglesia";
 import { PRACTICAS_N1_VIDA_NUEVA } from "./n1-vida-nueva";
 import { PRACTICAS_N1_COMPARTIR_FE } from "./n1-compartir-fe";
+import { PRACTICAS_N2_PANORAMA_AT } from "./n2-panorama-at";
+import { PRACTICAS_N2_PANORAMA_NT } from "./n2-panorama-nt";
+import { PRACTICAS_N2_DOCTRINAS } from "./n2-doctrinas";
+import { PRACTICAS_N2_DISCIPLINAS } from "./n2-disciplinas";
+import { PRACTICAS_N2_SERMON_MONTE } from "./n2-sermon-monte";
+import { PRACTICAS_N2_MAYORDOMIA } from "./n2-mayordomia";
+import { PRACTICAS_N2_FAMILIA } from "./n2-familia";
+import { PRACTICAS_N2_EVANGELISMO_PERSONAL } from "./n2-evangelismo-personal";
+import { PRACTICAS_N2_DONES } from "./n2-dones";
 
 const LISTA: PracticasMateria[] = [
   PRACTICAS_N1_SALVACION, PRACTICAS_N1_ORACION, PRACTICAS_N1_BIBLIA, PRACTICAS_N1_ESPIRITU,
   PRACTICAS_N1_BAUTISMO_CENA, PRACTICAS_N1_IGLESIA, PRACTICAS_N1_VIDA_NUEVA, PRACTICAS_N1_COMPARTIR_FE,
+  // Nivel 2
+  PRACTICAS_N2_PANORAMA_AT, PRACTICAS_N2_PANORAMA_NT, PRACTICAS_N2_DOCTRINAS,
+  PRACTICAS_N2_DISCIPLINAS, PRACTICAS_N2_SERMON_MONTE, PRACTICAS_N2_MAYORDOMIA,
+  PRACTICAS_N2_FAMILIA, PRACTICAS_N2_EVANGELISMO_PERSONAL, PRACTICAS_N2_DONES,
 ];
 
 export const PRACTICAS_POR_MATERIA = new Map(LISTA.map((p) => [p.materia, p]));

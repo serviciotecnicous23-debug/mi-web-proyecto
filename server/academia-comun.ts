@@ -4,7 +4,7 @@
  */
 import type { Request, Response } from "express";
 import { pool } from "./db";
-import { componentePracticasDe, pesosDeAlumno } from "./academia-practicas-nota";
+import { componentePracticasDe, extraDe, pesosDeAlumno } from "./academia-practicas-nota";
 import { materiaConPracticas } from "./academia/practicas/index";
 import { numeroDe } from "./orden-examen";
 import { getBibleChapter } from "./bible";
@@ -696,7 +696,7 @@ export async function componentesCalculados(userId: number, m: MateriaDef): Prom
 
 /** Vuelve a calcular la nota de la materia y la guarda. Devuelve la nota y si quedó aprobada. */
 export async function recalcularMateria(userId: number, m: MateriaDef): Promise<{ nota: number; aprobada: boolean; componentes: Componentes }> {
-  const { rows: ya } = await pool.query(`SELECT estado, via, nota, componentes FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
+  const { rows: ya } = await pool.query(`SELECT estado, via, nota, nota_base, extra, componentes FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]);
   if (ya[0]?.estado === "aprobada" && viaFija(ya[0].via)) {
     // aprobada por suficiencia (o convalidada): su nota es la del examen de suficiencia (o la de la convalidación), no la de
     // los componentes del curso
@@ -704,18 +704,25 @@ export async function recalcularMateria(userId: number, m: MateriaDef): Promise<
   }
   const componentes = await componentesDe(userId, m);
   const pesos = await pesosDeAlumno(userId, m);
-  const nota = notaMateria(pesos, componentes);
-  const aprobada = materiaAprobada(nota, componentes.final ?? 0);
+  // ya aprobada, el recálculo nunca le baja la nota sin los puntos extra (solo una corrección de la Dirección puede:
+  // `reconsiderarMateria`)
+  const estaba = ya[0]?.estado === "aprobada";
+  const previa = estaba ? Number(ya[0].nota_base ?? Number(ya[0].nota ?? 0) - Number(ya[0].extra ?? 0)) : 0;
+  const base = Math.max(notaMateria(pesos, componentes), estaba && Number.isFinite(previa) ? previa : 0);
+  const aprobada = materiaAprobada(base, componentes.final ?? 0);
   await asegurarMateria(userId, m.id);
-  // al aprobar quedan guardados los pesos con que aprobó: después puede practicar sin que su nota cambie
+  // aprobada, suma los puntos extra del reto de dominio (nunca deciden si aprueba: eso lo decide la nota sin ellos)
+  const extra = aprobada || estaba ? await extraDe(userId, m, base) : 0;
+  const nota = Math.min(100, base + extra);
+  // al aprobar quedan guardados los pesos con que aprobó: después puede practicar sin que su nota baje
   await pool.query(
     `UPDATE academia_materias
-        SET nota = $3, componentes = $4::jsonb,
+        SET nota = $3, componentes = $4::jsonb, nota_base = $7, extra = $8,
             pesos_aprobada = CASE WHEN estado <> 'aprobada' AND $5 THEN $6::jsonb ELSE pesos_aprobada END,
             estado = CASE WHEN estado = 'aprobada' OR $5 THEN 'aprobada' ELSE 'en-curso' END,
             aprobada_at = CASE WHEN aprobada_at IS NULL AND $5 THEN now() ELSE aprobada_at END
       WHERE user_id = $1 AND materia_id = $2`,
-    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos)],
+    [userId, m.id, nota, JSON.stringify(componentes), aprobada, JSON.stringify(pesos), base, extra],
   );
   return { nota, aprobada, componentes };
 }

@@ -56,8 +56,11 @@ export const CONSIGNA_PIEZA: Record<Pieza, string> = {
   caso: "Lee el caso y responde paso a paso.",
 };
 
-/** Las tarjetas son el repaso del comienzo («Relámpago»): no entran en la práctica que cuenta. */
-export const PIEZAS_FORMATIVAS: readonly Pieza[] = ["tarjetas"];
+/**
+ * Las piezas que no se califican. Desde el 26-nov ninguna: las tarjetas se juegan como Relámpago (tres respuestas, sin
+ * trampa) dentro de la práctica que cuenta.
+ */
+export const PIEZAS_FORMATIVAS: readonly Pieza[] = [];
 export const esCalificable = (p: Pieza) => !PIEZAS_FORMATIVAS.includes(p);
 
 /**
@@ -75,7 +78,7 @@ export const FORMATOS = {
   error: ["frases", "detective"],
   situacion: ["opciones", "chat"],
   explica: ["texto"],
-  linea: ["lista"],
+  linea: ["lista", "escalones", "donde-va"],
   "mapa-ideas": ["normal"],
   mapa: ["normal"],
   pasaje: ["normal"],
@@ -157,10 +160,10 @@ export const NOMBRE_MODALIDAD: Record<Modalidad, { nombre: string; regla: string
 // ---------------------------------------------------------------- las reglas
 
 export const PRACTICAS = {
-  /** Intentos por día de la práctica que cuenta (vale la mejor). */
-  intentosPorDia: 3,
   /** Desde este porcentaje, un objetivo queda dominado (y la lección gana su segunda estrella). */
   domina: 80,
+  /** Desde este porcentaje, el reto de dominio de una lección queda dominado (y da su parte de los puntos extra). */
+  retoDomina: 90,
   /** Actividades de la práctica del día, como máximo (junto con las preguntas del Repaso del día). */
   porDia: 6,
   /** Nunca más de estas seguidas de la misma lección en la práctica del día. */
@@ -173,13 +176,23 @@ export const PRACTICAS = {
   fallosAyuda: 3,
 } as const;
 
-export type ModoPractica = "guiada" | "cuenta" | "dia" | "mision";
+export type ModoPractica = "guiada" | "cuenta" | "dia" | "mision" | "reto";
 export const NOMBRE_MODO: Record<ModoPractica, string> = {
   guiada: "Práctica guiada",
-  cuenta: "Práctica que cuenta",
+  cuenta: "Práctica de la lección",
   dia: "Práctica del día",
   mision: "Misión de la materia",
+  reto: "Reto de dominio",
 };
+
+/**
+ * Los puntos extra de una materia aprobada (el reto de dominio, 26-nov): lo que le falta para 100, en la parte de las
+ * lecciones con el reto dominado. Con todos dominados, la nota llega a 100.
+ */
+export function extraDeLecciones(base: number, dominadas: number, lecciones: number): number {
+  if (!lecciones || base >= 100) return 0;
+  return Math.round(((100 - Math.max(0, base)) * Math.max(0, Math.min(dominadas, lecciones))) / lecciones);
+}
 
 // ---------------------------------------------------------------- lo que ve el alumno
 
@@ -200,8 +213,8 @@ export type ItemVista = { consigna: string } & (
   | { pieza: "clasifica"; formato: "desliza"; grupos: string[]; frase: string; paso: number; pasos: number }
   | { pieza: "clasifica"; formato: "intruso"; frases: string[]; paso: number; pasos: number }
   | { pieza: "ordena"; formato: "lista"; pasos: string[] }
-  | { pieza: "ordena"; formato: "escalones"; colocados: string[]; opciones: string[]; paso: number; pasos: number }
-  | { pieza: "ordena"; formato: "donde-va"; suelto: string; lista: string[]; paso: number; pasos: number }
+  | { pieza: "ordena" | "linea"; formato: "escalones"; colocados: string[]; opciones: string[]; paso: number; pasos: number }
+  | { pieza: "ordena" | "linea"; formato: "donde-va"; suelto: string; lista: string[]; paso: number; pasos: number }
   | { pieza: "verdad"; formato: "verdad-o-error"; afirmacion: string; paso: number; pasos: number }
   | { pieza: "verdad"; formato: "cual-falsa"; busca: "falsa" | "verdad"; afirmaciones: string[]; paso: number; pasos: number }
   | { pieza: "error"; formato: "frases" | "detective"; frases: string[] }
@@ -230,7 +243,7 @@ export type RespuestaPractica =
   | { pieza: "error"; frase: number }
   | { pieza: "situacion"; opcion: number }
   | { pieza: "explica"; texto: string }
-  | { pieza: "linea"; orden: number[] }
+  | { pieza: "linea"; orden?: number[]; opcion?: number }
   | { pieza: "mapa-ideas"; relaciones: number[] }
   | { pieza: "mapa"; x: number; y: number }
   | { pieza: "pasaje"; palabras: number[] }
@@ -247,18 +260,18 @@ export type Correccion =
   | { pieza: "clasifica"; formato: "desliza"; grupo: number; explica: string | null }
   | { pieza: "clasifica"; formato: "intruso"; intruso: number; grupoDe: string; grupoDeLasOtras: string }
   | { pieza: "ordena"; formato?: undefined; correcto: number[] }
-  | { pieza: "ordena"; formato: "escalones" | "donde-va"; correcta: number }
+  | { pieza: "ordena" | "linea"; formato: "escalones" | "donde-va"; correcta: number }
   | { pieza: "verdad"; formato?: undefined; verdad: boolean }
   | { pieza: "verdad"; formato: "cual-falsa"; correcta: number }
   | { pieza: "error"; malo: number; correccion: string }
   | { pieza: "situacion"; correcta: number; explicas: string[] }
-  | { pieza: "explica"; nota: number; ideas: { texto: string; ok: boolean }[]; avisos: string[]; modelo: string }
-  | { pieza: "linea"; correcto: number[]; fechas: string[] }
+  | { pieza: "explica"; nota: number; ideas: { texto: string; ok: boolean; medio?: boolean }[]; avisos: string[]; modelo: string }
+  | { pieza: "linea"; formato?: undefined; correcto: number[]; fechas: string[] }
   | { pieza: "mapa-ideas"; correctas: number[]; marcas: boolean[] }
   | { pieza: "mapa"; x: number; y: number; bien: boolean }
   | { pieza: "pasaje"; correctas: number[] }
   | { pieza: "escenario"; valor: 0 | 1 | 2; mejor: number; explicas: string[] }
-  | { pieza: "caso"; correcta?: number; explicas?: string[]; nota?: number; ideas?: { texto: string; ok: boolean }[]; modelo?: string };
+  | { pieza: "caso"; correcta?: number; explicas?: string[]; nota?: number; ideas?: { texto: string; ok: boolean; medio?: boolean }[]; modelo?: string };
 
 /** Lo que vuelve al contestar un paso: la nota del paso, por qué, la frase de la lección y el paso siguiente. */
 export type Devolucion = {
@@ -321,9 +334,9 @@ export type ResultadoPractica = {
   /** Cuándo vuelve a preguntar el motor (ISO), si hay algo programado. */
   proxima: string | null;
   medallas: { clave: string; nombre: string }[];
-  /** Intentos de la que cuenta que quedan hoy. */
-  quedanHoy: number;
   mejor: number | null;
+  /** El reto de dominio: los puntos extra de la materia antes y después, y su nota nueva. */
+  extra?: { antes: number; ahora: number; nota: number } | null;
   siguiente: { tipo: "leccion" | "materia" | "dia"; href: string; texto: string } | null;
   prueba: boolean;
 };
@@ -345,19 +358,24 @@ export type PracticaLeccionVista = {
   actividades: number;
   minutos: number;
   piezas: Pieza[];
+  /** Ya hizo la práctica al menos una vez (o la guiada de antes del 26-nov). */
   guiada: boolean;
   mejor: number | null;
   estrellas: number;
   intentos: number;
-  quedanHoy: number;
   objetivos: ObjetivoResultado[];
   /** Lo que falta para empezar, o null si se puede. */
   falta: string | null;
   /** Si la práctica de esta materia entra en la nota del alumno. */
   cuentaEnNota: boolean;
+  /**
+   * El reto de dominio (los puntos extra): abierto al aprobar la materia por el curso. `puntos`: lo que da esta lección
+   * al dominarlo; `falta`: por qué todavía no se puede.
+   */
+  reto: { abierto: boolean; mejor: number | null; dominado: boolean; puntos: number; falta: string | null } | null;
   /** La práctica que cuenta es obligatoria: el examen final la pide (entra en su nota y todavía no aprobó la materia). */
   obligatoria: boolean;
-  /** Ya aprobó la materia: practica cuando quiera y su nota ya no cambia. */
+  /** Ya aprobó la materia: practica cuando quiera, su nota no baja y el reto de dominio la puede subir. */
   aprobada: boolean;
   /** Las formas de jugar que le pueden tocar en esta lección (sus nombres). */
   formas: string[];
@@ -382,6 +400,8 @@ export type CaminoMateria = {
   posibles: number;
   mision: { abierta: boolean; mejor: number | null; falta: string | null; titulo: string };
   cuentaEnNota: boolean;
+  /** Los puntos extra de la materia (con la materia aprobada por el curso): los que tiene y los que puede ganar. */
+  reto: { abierto: boolean; extra: number; posible: number; dominadas: number; lecciones: number; base: number } | null;
   /** Las prácticas que cuentan son obligatorias para el examen final (todavía no aprobó la materia). */
   obligatoria: boolean;
   /** Ya aprobó la materia: practica libre. */
@@ -447,7 +467,7 @@ export function intercalarPorLeccion<T extends { leccion: string }>(lista: T[], 
 
 // ---------------------------------------------------------------- estrellas, estados y nota de la práctica
 
-/** Las estrellas de una lección: 1 al hacer la guiada, 2 con 80 % en la que cuenta y 3 con todo bien. */
+/** Las estrellas de una lección: 1 al hacer la práctica, 2 con 80 % y 3 con todo bien (vale la mejor). */
 export function estrellasDe(guiada: boolean, mejor: number | null): number {
   if (!guiada) return 0;
   if (mejor != null && mejor >= 100) return 3;

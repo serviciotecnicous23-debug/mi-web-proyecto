@@ -5,7 +5,7 @@ import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, ArrowRight, Award, BookMarked, BookOpen, CheckCircle2, Circle, ClipboardCheck, ExternalLink, Eye, GraduationCap, Headphones, Info, Library, Lock, RotateCcw,
-  ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
+  Crown, ListChecks, PenLine, Sparkles, Target, Timer, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
@@ -329,7 +329,16 @@ export default function AcademiaMateria() {
             {m.lecciones.length > 0 && <span className="text-sm text-muted-foreground">{m.lecciones.length} lecciones · unos {m.lecciones.reduce((a, l) => a + l.minutos, 0)} minutos</span>}
             {m.memoria && <span className="text-sm text-muted-foreground">Versículo: {m.memoria}</span>}
           </div>
-          {d.estado === "aprobada" && d.nota != null && <div className="mt-5"><NotaMedalla nota={d.nota} medalla={d.medalla} grande /></div>}
+          {d.estado === "aprobada" && d.nota != null && (
+            <div className="mt-5">
+              <NotaMedalla nota={d.nota} medalla={d.medalla} grande />
+              {d.extra > 0 && (
+                <p className="mt-2 text-sm text-amber-700 dark:text-amber-300 flex items-center gap-1.5" data-testid="materia-extra">
+                  <Crown className="w-4 h-4 shrink-0" /> Incluye +{d.extra} de puntos extra del reto de dominio.
+                </p>
+              )}
+            </div>
+          )}
           {d.insignia && (
             <div className="mt-5 flex items-center gap-4" data-testid="materia-insignia">
               <InsigniaEnmarcada i={d.insignia} grande />

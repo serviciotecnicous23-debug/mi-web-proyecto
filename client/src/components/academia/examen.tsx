@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, Clock, Layers, MessageSquareQuote, PenLine, ShieldCheck, Timer, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, CircleMinus, ClipboardCheck, Clock, Layers, MessageSquareQuote, PenLine, ShieldCheck, Timer, XCircle } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -231,7 +231,10 @@ export function EscritaCorregida({ w }: { w: ResultadoExamen["escritas"][number]
       <p className="font-semibold mb-2">Nota: {w.nota} <span className="text-muted-foreground font-normal">· {w.palabras} palabras</span></p>
       <ul className="space-y-1 text-sm mb-2">
         {w.ideas.map((idea) => (
-          <li key={idea.texto} className="flex items-start gap-2">{idea.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>{idea.texto}</span></li>
+          <li key={idea.texto} className="flex items-start gap-2">
+            {idea.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" aria-label="La dijiste" /> : idea.medio ? <CircleMinus className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" aria-label="A medias" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" aria-label="Faltó" />}
+            <span>{idea.texto}{!idea.ok && idea.medio && <span className="ml-1 text-xs font-semibold text-amber-700 dark:text-amber-300">(a medias: vale la mitad)</span>}</span>
+          </li>
         ))}
         {w.cita.pedida && (
           <li className="flex items-start gap-2">{w.cita.valida ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}<span>Una cita bíblica que lo enseñe{w.cita.encontrada ? `: ${w.cita.encontrada}` : ""}</span></li>

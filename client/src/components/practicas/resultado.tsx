@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { motion, useReducedMotion } from "motion/react";
-import { Award, CalendarClock, Flame, RotateCcw, Star } from "lucide-react";
+import { Award, CalendarClock, Crown, Flame, RotateCcw, Star } from "lucide-react";
 import { NOMBRE_ESTADO, NOMBRE_MODALIDAD, PRACTICAS, type EstadoObjetivo, type IntentoVista, type ResultadoPractica } from "@shared/practicas";
 import { sonarFinal } from "./sonido";
 
@@ -42,7 +42,7 @@ export function Estrellas({ n, antes = n, grande = false }: { n: number; antes?:
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
 
-export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: ResultadoPractica; intento: IntentoVista; puntos?: number; alSalir: () => void; alOtraVez?: (modo: "guiada" | "cuenta") => void }) {
+export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: ResultadoPractica; intento: IntentoVista; puntos?: number; alSalir: () => void; alOtraVez?: () => void }) {
   const quieto = useReducedMotion();
   useEffect(() => {
     sonarFinal(r.estrellas);
@@ -62,23 +62,36 @@ export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: Resul
           ? r.puntaje >= PRACTICAS.domina
             ? "¡Misión cumplida!"
             : "Misión a medias"
-          : "Práctica del día hecha";
+          : r.modo === "reto"
+            ? r.puntaje >= PRACTICAS.retoDomina
+              ? "¡Reto dominado!"
+              : `Casi: necesitas ${PRACTICAS.retoDomina}`
+            : "Práctica del día hecha";
   const mensaje =
     r.modo === "guiada"
       ? "Practicaste lo de la lección. Cuando quieras, haz la práctica que cuenta para ganar las otras estrellas."
       : r.modo === "cuenta"
         ? r.puntaje >= PRACTICAS.domina
           ? "Demostraste lo que aprendiste. El motor te lo volverá a preguntar para que no se te olvide."
-          : `Para dominarla necesitas ${PRACTICAS.domina} o más. Repasa la lección y vuelve a intentarlo: vale la mejor.`
+          : `Para dominarla necesitas ${PRACTICAS.domina} o más. Repasa lo que faltó y vuelve a intentarlo cuando quieras: vale la mejor.`
         : r.modo === "mision"
           ? "Juntaste lo de todas las lecciones de la materia."
-          : "Lo que repasaste hoy queda más firme.";
-  const puedeCuenta = r.modo === "guiada" && !r.prueba && alOtraVez;
-  const puedeOtra = r.modo === "cuenta" && (r.quedanHoy > 0 || r.prueba) && (r.mejor ?? 0) < 100 && alOtraVez;
+          : r.modo === "reto"
+            ? r.puntaje >= PRACTICAS.retoDomina
+              ? "Demostraste que dominas la lección, sin pistas y en su forma más difícil."
+              : "Repasa lo que faltó y vuelve a intentarlo cuando quieras: vale tu mejor intento."
+            : "Lo que repasaste hoy queda más firme.";
+  const puedeOtra = (r.modo === "cuenta" || r.modo === "guiada" || r.modo === "reto") && alOtraVez;
+  // sin dominarla todavía, lo primero es intentarlo otra vez; ya dominada, la lección siguiente
+  const otraPrimero = !!puedeOtra && (r.mejor ?? 0) < PRACTICAS.domina;
   return (
     <div className="text-center pt-2" data-testid="resultado-practica">
       <motion.div initial={quieto ? false : { scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
-        {r.modo === "guiada" || r.modo === "cuenta" ? (
+        {r.modo === "reto" ? (
+          <span className={`inline-flex w-20 h-20 rounded-full text-white items-center justify-center shadow-lg ${r.puntaje >= PRACTICAS.retoDomina ? "bg-gradient-to-br from-yellow-400 to-amber-600" : "bg-muted text-muted-foreground"}`}>
+            <Crown className="w-11 h-11" />
+          </span>
+        ) : r.modo === "guiada" || r.modo === "cuenta" ? (
           <Estrellas n={r.estrellas} antes={r.antes} grande />
         ) : (
           <span className="inline-flex w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-red-500 text-white items-center justify-center shadow-lg">
@@ -101,6 +114,12 @@ export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: Resul
           <p className="mt-4 rounded-2xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-[15px] leading-relaxed" data-testid="cierre-mision">{intento.cierre}</p>
         )}
         {r.modo === "mision" && r.mejor != null && <p className="mt-2 text-sm font-semibold">Tu mejor misión: {r.mejor}</p>}
+        {r.modo === "reto" && r.mejor != null && <p className="mt-1 text-sm font-semibold">Tu mejor reto en esta lección: {r.mejor}</p>}
+        {r.modo === "reto" && r.extra && r.extra.ahora > r.extra.antes && (
+          <p className="mt-4 rounded-2xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-[15px] font-semibold" data-testid="resultado-extra">
+            +{r.extra.ahora - r.extra.antes} puntos extra: tu nota de la materia ahora es {r.extra.nota}.
+          </p>
+        )}
       </motion.div>
 
       {r.objetivos.length > 0 && (
@@ -139,18 +158,18 @@ export function Resultado({ r, intento, puntos, alSalir, alOtraVez }: { r: Resul
       )}
 
       <div className="mt-6 flex flex-col gap-2">
-        {puedeCuenta && (
-          <button type="button" onClick={() => alOtraVez!("cuenta")} className="h-12 rounded-2xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600" data-testid="hacer-cuenta">
-            Hacer la práctica que cuenta
-          </button>
-        )}
         {puedeOtra && (
-          <button type="button" onClick={() => alOtraVez!("cuenta")} className="h-12 rounded-2xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center gap-2" data-testid="otra-vez">
-            <RotateCcw className="w-4 h-4" /> Intentar otra vez{!r.prueba && ` (te quedan ${r.quedanHoy} hoy)`}
+          <button
+            type="button"
+            onClick={() => alOtraVez!()}
+            className={`h-12 rounded-2xl font-bold flex items-center justify-center gap-2 ${otraPrimero ? "text-white bg-gradient-to-r from-amber-500 to-orange-600" : "border-2 border-border"}`}
+            data-testid="otra-vez"
+          >
+            <RotateCcw className="w-4 h-4" /> {(r.mejor ?? 0) >= 100 ? "Practicar otra vez" : "Intentar otra vez (vale la mejor)"}
           </button>
         )}
         {r.siguiente && !r.prueba && (
-          <Link href={r.siguiente.href} onClick={alSalir} className={`h-12 rounded-2xl font-bold flex items-center justify-center ${puedeCuenta || puedeOtra ? "border-2 border-border" : "text-white bg-gradient-to-r from-amber-500 to-orange-600"}`}>
+          <Link href={r.siguiente.href} onClick={alSalir} className={`h-12 rounded-2xl font-bold flex items-center justify-center ${otraPrimero ? "border-2 border-border" : "text-white bg-gradient-to-r from-amber-500 to-orange-600"}`}>
             {r.siguiente.texto}
           </Link>
         )}

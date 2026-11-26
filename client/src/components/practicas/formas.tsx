@@ -4,6 +4,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, ChevronUp, Footprints, MessageCircle, Plus, Search, User, X } from "lucide-react";
+import type { RespuestaPractica } from "@shared/practicas";
 import { Marca, Opciones, type PropsPieza, type VistaDe, type VistaPieza } from "./piezas";
 
 const bien = "border-emerald-500 bg-emerald-500/12 text-emerald-900 dark:text-emerald-100";
@@ -281,7 +282,7 @@ export function Escalones({ vista, correccion, bloqueado, alEnviar }: PropsPieza
         {vista.colocados.length === 0 && <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Footprints className="w-4 h-4" /> ¿Qué va primero?</p>}
       </div>
       <p className="text-sm font-bold mb-2 flex items-center gap-1.5"><ChevronUp className="w-4 h-4 text-amber-600" /> ¿Qué va en el escalón {vista.paso + 1}?</p>
-      <OpcionesDeUnToque opciones={vista.opciones} correcta={correccion ? correccion.correcta : null} bloqueado={bloqueado} alElegir={(k) => alEnviar({ pieza: "ordena", opcion: k })} />
+      <OpcionesDeUnToque opciones={vista.opciones} correcta={correccion ? correccion.correcta : null} bloqueado={bloqueado} alElegir={(k) => alEnviar({ pieza: vista.pieza, opcion: k } as RespuestaPractica)} />
     </div>
   );
 }
@@ -306,7 +307,7 @@ export function DondeVa({ vista, correccion, bloqueado, alEnviar }: PropsPieza<V
         onClick={() => {
           if (bloqueado) return;
           setSel(s);
-          alEnviar({ pieza: "ordena", opcion: s });
+          alEnviar({ pieza: vista.pieza, opcion: s } as RespuestaPractica);
         }}
         className={`w-full rounded-xl border-2 px-3 min-h-[38px] text-[13px] font-bold flex items-center justify-center gap-1.5 ${cls}`}
         aria-label={s === 0 ? "Ponerlo al comienzo" : s === vista.lista.length ? "Ponerlo al final" : `Ponerlo después de: ${vista.lista[s - 1]}`}
@@ -332,7 +333,7 @@ export function DondeVa({ vista, correccion, bloqueado, alEnviar }: PropsPieza<V
     <div data-testid="pieza-donde-va">
       <Paso paso={vista.paso} pasos={vista.pasos} texto="Ronda" />
       <motion.div key={vista.suelto} initial={quieto ? false : { opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border-2 border-amber-400/70 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-4 mb-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200 mb-1">¿Dónde va este paso?</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200 mb-1">{vista.pieza === "linea" ? "¿Dónde va este hecho?" : "¿Dónde va este paso?"}</p>
         <p className="text-lg font-bold leading-snug">{vista.suelto}</p>
       </motion.div>
       <div className="space-y-1.5">

@@ -64,7 +64,7 @@ export default function AcademiaPracticarSesion() {
             <Sparkles className="w-10 h-10 mx-auto text-orange-500" />
             <p className="font-display text-2xl font-bold mt-3">¡Estás al día!</p>
             <p className="mt-2 text-muted-foreground">
-              {vacio.total > 0 ? `Hoy no te toca ninguna actividad. El próximo repaso llega ${vacio.proxima ? cuando(vacio.proxima) : "pronto"}.` : "Cuando hagas la práctica guiada de una lección, sus actividades volverán aquí en días espaciados."}
+              {vacio.total > 0 ? `Hoy no te toca ninguna actividad. El próximo repaso llega ${vacio.proxima ? cuando(vacio.proxima) : "pronto"}.` : "Cuando hagas la práctica de una lección, sus actividades volverán aquí en días espaciados."}
             </p>
             <Link href="/academia/practicar" className="mt-5 inline-flex h-11 px-6 items-center rounded-2xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600">Volver a Practicar</Link>
           </>

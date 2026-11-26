@@ -210,7 +210,7 @@ export type ItemRevision = {
   pregunta: string;
   modelo: string;
   /** Las ideas de la clave: su peso y si el corrector la encontró. */
-  ideas: { texto: string; peso: number; ok: boolean }[];
+  ideas: { texto: string; peso: number; ok: boolean; medio?: boolean }[];
   /** Los conceptos errados que el corrector encontró. */
   errores: string[];
   citas: string[];

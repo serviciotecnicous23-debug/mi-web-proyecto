@@ -24,11 +24,18 @@ export function Linea({ vista, correccion, bloqueado, alCambiar }: PropsPieza<Vi
 export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPieza<VistaPieza<"mapa-ideas">>) {
   const [elegidas, setElegidas] = useState<(number | null)[]>(() => vista.enlaces.map(() => null));
   const [abierto, setAbierto] = useState<number | null>(null);
+  const elegir = useRef<HTMLDivElement>(null);
   useEffect(() => {
     alCambiar(elegidas.every((x) => x != null) ? { pieza: "mapa-ideas", relaciones: elegidas as number[] } : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elegidas]);
+  // (en el teléfono las opciones quedan debajo del mapa: al tocar una unión, la pantalla baja hasta ellas)
+  useEffect(() => {
+    if (abierto != null) elegir.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [abierto]);
   const nodo = (id: string) => vista.nodos.find((n) => n.id === id)!;
+  // (en el teléfono, una idea puesta muy a un lado se salía del lienzo: su centro queda donde cabe entera)
+  const enX = (x: number, margen: number) => `${Math.max(margen, Math.min(100 - margen, x))}%`;
   return (
     <div data-testid="pieza-mapa-ideas">
       <div className="relative w-full aspect-[4/5] sm:aspect-[4/3] rounded-3xl border-2 border-border bg-muted/20 overflow-hidden">
@@ -40,7 +47,7 @@ export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPiez
           })}
         </svg>
         {vista.nodos.map((n) => (
-          <div key={n.id} className="absolute -translate-x-1/2 -translate-y-1/2 max-w-[42%] rounded-2xl border-2 border-amber-500/70 bg-card px-3 py-2 text-center text-[13px] font-bold shadow-sm" style={{ left: `${n.x}%`, top: `${n.y}%` }}>
+          <div key={n.id} className="absolute -translate-x-1/2 -translate-y-1/2 w-max max-w-[42%] rounded-2xl border-2 border-amber-500/70 bg-card px-3 py-2 text-center text-[13px] font-bold leading-tight shadow-sm" style={{ left: enX(n.x, 21), top: `${Math.max(8, Math.min(92, n.y))}%` }}>
             {n.texto}
           </div>
         ))}
@@ -54,8 +61,8 @@ export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPiez
               key={i}
               type="button"
               onClick={() => !bloqueado && setAbierto(abierto === i ? null : i)}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 px-2.5 py-1 text-xs font-semibold bg-background ${ok === true ? bien : ok === false ? mal : k != null ? "border-amber-500" : "border-dashed border-muted-foreground/60"}`}
-              style={{ left: `${(a.x + b.x) / 2}%`, top: `${(a.y + b.y) / 2}%` }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 w-max max-w-[46%] rounded-full border-2 px-2.5 py-1 text-xs font-semibold leading-tight bg-background ${ok === true ? bien : ok === false ? mal : k != null ? "border-amber-500" : "border-dashed border-muted-foreground/60"}`}
+              style={{ left: enX((a.x + b.x) / 2, 23), top: `${(a.y + b.y) / 2}%` }}
               data-testid={`enlace-${i}`}
             >
               {k != null ? vista.relaciones[k] : "¿?"}
@@ -65,7 +72,7 @@ export function MapaIdeas({ vista, correccion, bloqueado, alCambiar }: PropsPiez
         })}
       </div>
       {abierto != null && !bloqueado && (
-        <div className="mt-3 rounded-2xl border border-border bg-card p-3">
+        <div ref={elegir} className="mt-3 rounded-2xl border-2 border-amber-500/60 bg-card p-3" data-testid="mapa-elegir">
           <p className="text-sm font-semibold mb-2">
             ¿Cómo se une «{nodo(vista.enlaces[abierto].de).texto}» con «{nodo(vista.enlaces[abierto].a).texto}»?
           </p>
@@ -138,7 +145,7 @@ export function Pasaje({ vista, correccion, bloqueado, alCambiar }: PropsPieza<V
     <div data-testid="pieza-pasaje">
       <p className="text-sm font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1.5 mb-2"><BookOpen className="w-4 h-4" /> {vista.ref}</p>
       <p className="text-xs text-muted-foreground mb-3">Marca {vista.cuantas} {vista.cuantas === 1 ? "palabra" : "palabras"}.</p>
-      <p className="text-[18px] leading-[2.2] font-serif">
+      <p className="text-[18px] leading-[2.2]">
         {vista.palabras.map((w, k) => {
           const marcada = sel.has(k);
           const ok = correccion ? correctas.has(k) : null;
