@@ -200,7 +200,7 @@ function revisarVista(a: Actividad, e: EstadoItem, donde: string) {
       const correcta = (e.rondas![0].trozos as string[]).join(" ");
       assert.ok(vista.trozos.length >= 3 && vista.trozos.length <= 5, `${donde}: ${vista.trozos.length} trozos`);
       assert.ok(conPalabras(v.texto).includes(correcta), `${donde}: la oración no es del texto`);
-      assert.ok(!/[.!?…]\s+[A-ZÁÉÍÓÚÑ]/.test(correcta.replace(/[a-zA-Z]\.\s/g, "")), `${donde}: arma más de una oración: ${correcta}`);
+      assert.ok(!/[.!?…]\s+[A-ZÁÉÍÓÚÑ]/.test(correcta.replace(/\b[a-zA-Z]\.\s/g, "")), `${donde}: arma más de una oración: ${correcta}`);
       assert.deepEqual(palabras(vista.trozos.join(" ")), palabras(correcta), `${donde}: los trozos no son la oración`);
       assert.notEqual(vista.trozos.join(" "), correcta, `${donde}: los trozos van en su orden`);
       assert.ok(!/[«»]/.test(v.texto), `${donde}: una cita no se arma`);
