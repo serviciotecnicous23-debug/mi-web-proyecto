@@ -1,10 +1,10 @@
 // Las dinámicas del catálogo de Luis (26-nov): el mismo contenido de la lección, jugado como anagrama, sopa de letras,
-// crucigrama, «Arma la frase», memoria y «¡Atrápalas!». Todo se hace con un dedo y está pensado primero para el
-// teléfono (375 de ancho). La memoria y «¡Atrápalas!» envían solas con `alEnviar`; las demás avisan su respuesta con
-// `alCambiar` (null mientras está incompleta) y piden «Comprobar».
+// crucigrama, «Arma la frase», «Adivina la palabra», memoria, «¡Atrápalas!» y «Globos». Todo se hace con un dedo y está
+// pensado primero para el teléfono (375 de ancho). Adivina la palabra, la memoria, ¡Atrápalas! y Globos envían solas con
+// `alEnviar`; las demás avisan su respuesta con `alCambiar` (null mientras está incompleta) y piden «Comprobar».
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Check, Flame, HandGrab, RotateCcw, X } from "lucide-react";
+import { Balloon, Check, Droplet, Flame, HandGrab, RotateCcw, X } from "lucide-react";
 import { Marca, type PropsPieza, type VistaDe } from "./piezas";
 
 const bien = "border-emerald-500 bg-emerald-500/12 text-emerald-900 dark:text-emerald-100";
@@ -653,48 +653,151 @@ export function Memoria({ vista, correccion, bloqueado, alEnviar }: PropsPieza<V
   );
 }
 
-// ---------------------------------------------------------------- ¡atrápalas!
+// ---------------------------------------------------------------- frases que se mueven: ¡atrápalas! y globos
 
-/** Cuánto tarda en caer una frase: más si es larga (que se alcance a leer). */
+/** Cuánto tarda en cruzar una frase: más si es larga (que se alcance a leer). */
 const segundosDeCaida = (texto: string) => Math.min(7, 3.8 + texto.split(/\s+/).length * 0.2);
-/** El lugar de cada frase al caer (siempre el mismo para el mismo número, para que no salte de un lado a otro). */
+/** El lugar de cada frase (siempre el mismo para el mismo número, para que no salte de un lado a otro). */
 const LUGARES = [50, 42, 58, 46, 54, 40, 60, 48];
 
 /**
- * «¡Atrápalas!»: las frases caen una por una y se atrapan con un toque solo las del grupo que se pide (las demás se
- * dejan pasar). Sin prisa (o con el movimiento reducido del teléfono), se eligen de una lista.
+ * Las frases que cruzan la pantalla de a una (caen o suben) y se tocan las que se piden. Sin prisa (o con el movimiento
+ * reducido del teléfono) se eligen de una lista.
  */
-export function Atrapalas({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"atrapa">>) {
+function FrasesQueSeMueven({ frases, sentido, intro, contador, ayudaLista, icono, bloqueado, alTerminar }: {
+  frases: string[];
+  sentido: "cae" | "sube";
+  intro: ReactNode;
+  contador: string;
+  ayudaLista: string;
+  icono: ReactNode;
+  bloqueado: boolean;
+  alTerminar: (tocadas: number[]) => void;
+}) {
   const quieto = useReducedMotion();
-  const [estado, setEstado] = useState<"listo" | "cayendo" | "fin">("listo");
+  const [estado, setEstado] = useState<"listo" | "jugando" | "fin">("listo");
   const [actual, setActual] = useState(0);
-  const [atrapadas, setAtrapadas] = useState<number[]>([]);
-  const [atrapada, setAtrapada] = useState<number | null>(null);
+  const [tocadas, setTocadas] = useState<number[]>([]);
+  const [tocada, setTocada] = useState<number | null>(null);
   const [sinPrisa, setSinPrisa] = useState(false);
-  const c = correccion?.formato === "atrapa" ? (correccion as { deGrupo: boolean[]; atrapadas: number[] }) : null;
-  const lista = !!quieto || sinPrisa;
-  const enviar = (a: number[]) => {
+  const cae = sentido === "cae";
+  const terminar = (t: number[]) => {
     setEstado("fin");
-    alEnviar({ pieza: "clasifica", atrapadas: a });
+    alTerminar(t);
   };
-  const pasar = (a: number[]) => {
-    setAtrapada(null);
-    if (actual + 1 >= vista.frases.length) enviar(a);
+  const pasar = (t: number[]) => {
+    setTocada(null);
+    if (actual + 1 >= frases.length) terminar(t);
     else setActual(actual + 1);
   };
-  const atrapar = () => {
-    if (estado !== "cayendo" || atrapada != null) return;
-    const a = [...atrapadas, actual];
-    setAtrapadas(a);
-    setAtrapada(actual);
-    window.setTimeout(() => pasar(a), 380);
+  const tocar = () => {
+    if (estado !== "jugando" || tocada != null) return;
+    const t = [...tocadas, actual];
+    setTocadas(t);
+    setTocada(actual);
+    window.setTimeout(() => pasar(t), 380);
   };
 
-  // la corrección: cada frase, si era del grupo y si la atrapó
-  if (c)
+  if (quieto || sinPrisa)
     return (
-      <div data-testid="pieza-atrapa">
-        <Cartel pregunta={vista.pregunta} grupo={vista.grupo} />
+      <div>
+        <p className="mt-3 text-sm text-muted-foreground">{ayudaLista}</p>
+        <div className="mt-2 grid gap-2">
+          {frases.map((f, d) => {
+            const la = tocadas.includes(d);
+            return (
+              <button
+                key={d}
+                type="button"
+                disabled={bloqueado || estado === "fin"}
+                onClick={() => setTocadas(la ? tocadas.filter((x) => x !== d) : [...tocadas, d])}
+                aria-pressed={la}
+                className={`text-left rounded-2xl border-2 px-4 py-3 text-[15px] leading-snug min-h-[52px] flex items-center gap-2 ${la ? "border-amber-500 bg-amber-500/15 ring-2 ring-amber-500/40" : "border-border bg-card"}`}
+                data-testid={`frase-${d}`}
+              >
+                <span className="flex-1">{f}</span>
+                {la && icono}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          disabled={bloqueado || estado === "fin"}
+          onClick={() => terminar(tocadas)}
+          className="mt-4 w-full h-12 rounded-2xl font-bold text-[17px] text-white bg-gradient-to-r from-amber-500 to-orange-600 disabled:opacity-60"
+          data-testid="arcade-listo"
+        >
+          {estado === "fin" ? "Revisando…" : "Listo"}
+        </button>
+      </div>
+    );
+
+  return (
+    <div
+      className={`relative mt-3 h-[340px] overflow-hidden rounded-3xl border-2 border-border ${cae ? "bg-gradient-to-b from-sky-50 to-amber-50 dark:from-sky-950/40 dark:to-amber-950/30" : "bg-gradient-to-t from-amber-50 to-sky-100 dark:from-amber-950/30 dark:to-sky-950/50"}`}
+    >
+      <style>
+        {"@keyframes academia-caer { from { transform: translate(-50%, -130px); } to { transform: translate(-50%, 350px); } } @keyframes academia-subir { from { transform: translate(-50%, 350px); } to { transform: translate(-50%, -170px); } }"}
+      </style>
+      {estado === "listo" && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          {icono}
+          <p className="text-[15px] leading-snug">{intro}</p>
+          <button type="button" onClick={() => setEstado("jugando")} disabled={bloqueado} className="h-12 px-8 rounded-2xl font-black text-[17px] text-white bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg shadow-orange-500/25" data-testid="arcade-empezar">
+            ¡Empezar!
+          </button>
+          <button type="button" onClick={() => setSinPrisa(true)} className="text-sm font-semibold text-muted-foreground underline" data-testid="arcade-sin-prisa">
+            Prefiero elegirlas sin prisa
+          </button>
+        </div>
+      )}
+      {estado === "jugando" && actual < frases.length && (
+        <button
+          key={actual}
+          type="button"
+          onClick={tocar}
+          onAnimationEnd={() => tocada == null && pasar(tocadas)}
+          className={
+            cae
+              ? `absolute top-0 w-[78%] rounded-2xl border-2 px-3 py-3 text-[15px] font-semibold leading-snug text-left shadow-lg transition-colors ${tocada === actual ? "border-amber-500 bg-amber-400 text-amber-950" : "border-amber-400 bg-card"}`
+              : `absolute top-0 w-[74%] rounded-[2.2rem] border-2 px-4 py-4 text-[15px] font-semibold leading-snug text-center shadow-lg transition-all duration-300 ${tocada === actual ? "border-amber-500 bg-amber-300 text-amber-950 opacity-40 scale-125" : "border-sky-400 bg-gradient-to-b from-sky-100 to-sky-200 dark:from-sky-800 dark:to-sky-900"}`
+          }
+          style={{
+            left: `${LUGARES[actual % LUGARES.length]}%`,
+            animation: `${cae ? "academia-caer" : "academia-subir"} ${segundosDeCaida(frases[actual])}s linear forwards`,
+            animationPlayState: tocada === actual ? "paused" : "running",
+          }}
+          data-testid={cae ? "cae" : "sube"}
+        >
+          {!cae && tocada === actual ? "¡Pop!" : frases[actual]}
+          {!cae && tocada !== actual && <span aria-hidden className="absolute left-1/2 top-full h-7 w-px bg-sky-500/70" />}
+        </button>
+      )}
+      {estado === "fin" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-[15px] font-semibold text-muted-foreground">Revisando…</p>
+        </div>
+      )}
+      <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-background/80 backdrop-blur text-xs font-bold flex justify-between" aria-live="polite">
+        <span>
+          Frase {Math.min(actual + 1, frases.length)} de {frases.length}
+        </span>
+        <span className="text-amber-700 dark:text-amber-300">
+          {contador}: {tocadas.length}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** «¡Atrápalas!»: las frases caen y se atrapan con un toque solo las del grupo que se pide. */
+export function Atrapalas({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"atrapa">>) {
+  const c = correccion?.formato === "atrapa" ? (correccion as { deGrupo: boolean[]; atrapadas: number[] }) : null;
+  return (
+    <div data-testid="pieza-atrapa">
+      <Cartel pregunta={vista.pregunta} grupo={vista.grupo} />
+      {c ? (
         <div className="mt-3 grid gap-2">
           {vista.frases.map((f, d) => {
             const era = c.deGrupo[d];
@@ -712,89 +815,22 @@ export function Atrapalas({ vista, correccion, bloqueado, alEnviar }: PropsPieza
             );
           })}
         </div>
-      </div>
-    );
-
-  if (lista)
-    return (
-      <div data-testid="pieza-atrapa">
-        <Cartel pregunta={vista.pregunta} grupo={vista.grupo} />
-        <p className="mt-3 text-sm text-muted-foreground">Toca las frases que atraparías; las demás déjalas sin tocar.</p>
-        <div className="mt-2 grid gap-2">
-          {vista.frases.map((f, d) => {
-            const la = atrapadas.includes(d);
-            return (
-              <button
-                key={d}
-                type="button"
-                disabled={bloqueado || estado === "fin"}
-                onClick={() => setAtrapadas(la ? atrapadas.filter((x) => x !== d) : [...atrapadas, d])}
-                aria-pressed={la}
-                className={`text-left rounded-2xl border-2 px-4 py-3 text-[15px] leading-snug min-h-[52px] flex items-center gap-2 ${la ? "border-amber-500 bg-amber-500/15 ring-2 ring-amber-500/40" : "border-border bg-card"}`}
-                data-testid={`frase-${d}`}
-              >
-                <span className="flex-1">{f}</span>
-                {la && <HandGrab className="w-5 h-5 text-amber-600 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-        <button
-          type="button"
-          disabled={bloqueado || estado === "fin"}
-          onClick={() => enviar(atrapadas)}
-          className="mt-4 w-full h-12 rounded-2xl font-bold text-[17px] text-white bg-gradient-to-r from-amber-500 to-orange-600 disabled:opacity-60"
-          data-testid="atrapa-listo"
-        >
-          {estado === "fin" ? "Revisando…" : "Listo"}
-        </button>
-      </div>
-    );
-
-  return (
-    <div data-testid="pieza-atrapa">
-      <Cartel pregunta={vista.pregunta} grupo={vista.grupo} />
-      <div className="relative mt-3 h-[340px] overflow-hidden rounded-3xl border-2 border-border bg-gradient-to-b from-sky-50 to-amber-50 dark:from-sky-950/40 dark:to-amber-950/30">
-        <style>{"@keyframes academia-caer { from { transform: translate(-50%, -130px); } to { transform: translate(-50%, 350px); } }"}</style>
-        {estado === "listo" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-            <HandGrab className="w-12 h-12 text-amber-500" />
-            <p className="text-[15px] leading-snug">
+      ) : (
+        <FrasesQueSeMueven
+          frases={vista.frases}
+          sentido="cae"
+          intro={
+            <>
               Van a caer {vista.frases.length} frases, una por una. Tócalas para atrapar solo las del grupo <b>{vista.grupo}</b>.
-            </p>
-            <button type="button" onClick={() => setEstado("cayendo")} disabled={bloqueado} className="h-12 px-8 rounded-2xl font-black text-[17px] text-white bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg shadow-orange-500/25" data-testid="atrapa-empezar">
-              ¡Empezar!
-            </button>
-            <button type="button" onClick={() => setSinPrisa(true)} className="text-sm font-semibold text-muted-foreground underline" data-testid="atrapa-sin-prisa">
-              Prefiero elegirlas sin prisa
-            </button>
-          </div>
-        )}
-        {estado === "cayendo" && actual < vista.frases.length && (
-          <button
-            key={actual}
-            type="button"
-            onClick={atrapar}
-            onAnimationEnd={() => atrapada == null && pasar(atrapadas)}
-            className={`absolute top-0 w-[78%] rounded-2xl border-2 px-3 py-3 text-[15px] font-semibold leading-snug text-left shadow-lg transition-colors ${atrapada === actual ? "border-amber-500 bg-amber-400 text-amber-950 scale-90" : "border-amber-400 bg-card"}`}
-            style={{ left: `${LUGARES[actual % LUGARES.length]}%`, animation: `academia-caer ${segundosDeCaida(vista.frases[actual])}s linear forwards`, animationPlayState: atrapada === actual ? "paused" : "running" }}
-            data-testid="cae"
-          >
-            {vista.frases[actual]}
-          </button>
-        )}
-        {estado === "fin" && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-[15px] font-semibold text-muted-foreground">Revisando…</p>
-          </div>
-        )}
-        <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-background/80 backdrop-blur text-xs font-bold flex justify-between" aria-live="polite">
-          <span>
-            Frase {Math.min(actual + 1, vista.frases.length)} de {vista.frases.length}
-          </span>
-          <span className="text-amber-700 dark:text-amber-300">Atrapadas: {atrapadas.length}</span>
-        </div>
-      </div>
+            </>
+          }
+          contador="Atrapadas"
+          ayudaLista="Toca las frases que atraparías; las demás déjalas sin tocar."
+          icono={<HandGrab className="w-6 h-6 text-amber-600 shrink-0" />}
+          bloqueado={bloqueado}
+          alTerminar={(t) => alEnviar({ pieza: "clasifica", atrapadas: t })}
+        />
+      )}
     </div>
   );
 }
@@ -807,6 +843,148 @@ function Cartel({ pregunta, grupo }: { pregunta: string | null; grupo: string })
         <HandGrab className="w-3.5 h-3.5" /> Atrapa solo las que son
       </p>
       <p className="text-xl font-black leading-tight">{grupo}</p>
+    </div>
+  );
+}
+
+/** «Globos»: suben globos con afirmaciones y se revientan solo las que son verdad (los errores se dejan ir). */
+export function Globos({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"globos">>) {
+  const c = correccion?.formato === "globos" ? (correccion as { verdaderas: boolean[]; reventadas: number[]; explicas: string[] }) : null;
+  return (
+    <div data-testid="pieza-globos">
+      <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white px-4 py-3 shadow-md">
+        <p className="text-[11px] font-bold uppercase tracking-wide opacity-90 flex items-center gap-1">
+          <Balloon className="w-3.5 h-3.5" /> Revienta solo las que dicen la
+        </p>
+        <p className="text-xl font-black leading-tight">Verdad</p>
+      </div>
+      {c ? (
+        <div className="mt-3 grid gap-2">
+          {vista.frases.map((f, d) => {
+            const era = c.verdaderas[d];
+            const la = c.reventadas.includes(d);
+            const ok = era === la;
+            const nota = era ? (la ? "Era verdad: bien que la reventaste" : "Era verdad: se te fue") : la ? "Era un error: no había que reventarla" : "Era un error: bien que la dejaste ir";
+            return (
+              <div key={d} className={`rounded-2xl border-2 px-3 py-2 flex items-start gap-2 ${ok ? bien : mal}`} data-testid={`globo-${d}`}>
+                <div className="flex-1">
+                  <p className="text-[15px] font-semibold leading-snug">{f}</p>
+                  <p className="text-xs font-bold opacity-80 mt-0.5">{nota}</p>
+                  {c.explicas[d] && <p className="text-[13px] leading-snug mt-1 opacity-90">{c.explicas[d]}</p>}
+                </div>
+                <Marca ok={ok} />
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <FrasesQueSeMueven
+          frases={vista.frases}
+          sentido="sube"
+          intro={
+            <>
+              Van a subir {vista.frases.length} globos, uno por uno. Revienta con un toque solo los que dicen la <b>verdad</b>; los errores déjalos ir.
+            </>
+          }
+          contador="Reventados"
+          ayudaLista="Toca las frases que son verdad; los errores déjalos sin tocar."
+          icono={<Balloon className="w-6 h-6 text-sky-600 shrink-0" />}
+          bloqueado={bloqueado}
+          alTerminar={(t) => alEnviar({ pieza: "verdad", reventadas: t })}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- adivina la palabra
+
+const ALFABETO = [..."ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"];
+/** Una letra para comparar: en mayúscula y sin tilde (la ñ queda). */
+const sinTilde = (s: string) => s.normalize("NFD").replace(/[̀́̈]/g, "").normalize("NFC").toUpperCase();
+
+/**
+ * «Adivina la palabra» (el ahorcado del catálogo, con una lámpara de aceite): se tocan letras; las que están aparecen en
+ * su lugar y cada una que no está gasta una gota. Con 6 gastadas se apaga la lámpara.
+ */
+export function Adivina({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"adivina">>) {
+  const [tocada, setTocada] = useState<string | null>(null);
+  useEffect(() => setTocada(null), [vista.dichas.length]);
+  const c = correccion?.formato === "adivina" ? (correccion as { letra: string; acierto: boolean; palabra: string | null; resuelta: boolean | null }) : null;
+  const dichas = new Set(vista.dichas);
+  const aciertos = new Set(vista.patron.filter((x): x is string => !!x).map(sinTilde));
+  // (la letra recién tocada, mientras llega el paso nuevo)
+  const nueva = !!c && !dichas.has(c.letra);
+  if (c && nueva) {
+    dichas.add(c.letra);
+    if (c.acierto) aciertos.add(c.letra);
+  }
+  const quedan = Math.max(0, vista.gotas - vista.fallos - (nueva && !c!.acierto ? 1 : 0));
+  const final = c?.palabra ?? null;
+  const tocar = (l: string) => {
+    if (bloqueado || dichas.has(l) || tocada) return;
+    setTocada(l);
+    alEnviar({ pieza: "completa", letra: l });
+  };
+  // (en la computadora también se juega con el teclado)
+  useEffect(() => {
+    const tecla = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const l = sinTilde(e.key);
+      if (l.length === 1 && ALFABETO.includes(l)) tocar(l);
+    };
+    window.addEventListener("keydown", tecla);
+    return () => window.removeEventListener("keydown", tecla);
+  });
+  const letras = final ? [...final] : vista.patron;
+  return (
+    <div data-testid="pieza-adivina">
+      <Frase compacta partes={vista.partes} hueco={() => <Espacio chico texto={final ?? "?"} estado={final ? "lleno" : "activo"} marca={final ? !!c?.resuelta : null} />} />
+      <div className="mt-4 flex justify-center gap-1.5 flex-wrap" aria-label="La palabra, letra por letra">
+        {letras.map((x, k) => (
+          <span
+            key={k}
+            className={`w-9 h-11 rounded-xl border-2 flex items-center justify-center text-xl font-black uppercase ${final ? (c?.resuelta ? bien : mal) : x ? "border-amber-500 bg-amber-500/15" : "border-dashed border-muted-foreground/40"}`}
+            data-testid={`letra-palabra-${k}`}
+          >
+            {x ?? ""}
+          </span>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-3" aria-label={`Aceite de la lámpara: ${quedan} de ${vista.gotas} gotas`} data-testid="lampara">
+        <Flame
+          className={`w-9 h-9 transition-transform ${quedan ? "text-orange-500" : "text-muted-foreground/40"}`}
+          style={{ transform: `scale(${quedan ? 0.6 + (0.4 * quedan) / vista.gotas : 0.55})` }}
+          fill="currentColor"
+          fillOpacity={quedan ? 0.35 : 0}
+        />
+        <div className="flex gap-1">
+          {Array.from({ length: vista.gotas }, (_, k) => (
+            <Droplet key={k} className={`w-5 h-5 ${k < quedan ? "text-amber-500" : "text-muted-foreground/30"}`} fill={k < quedan ? "currentColor" : "none"} />
+          ))}
+        </div>
+      </div>
+      {!final && (
+        <div className="mt-4 grid grid-cols-7 gap-1.5" role="group" aria-label="Letras para tocar">
+          {ALFABETO.map((l) => {
+            const dicha = dichas.has(l);
+            const esta = aciertos.has(l);
+            return (
+              <button
+                key={l}
+                type="button"
+                disabled={bloqueado || dicha}
+                onClick={() => tocar(l)}
+                className={`h-11 rounded-xl border-2 text-[17px] font-black ${dicha ? (esta ? "border-emerald-500 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-border bg-muted text-muted-foreground line-through") : "border-amber-400/70 bg-card"}`}
+                aria-label={dicha ? `${l}: ${esta ? "está en la palabra" : "no está"}` : `Letra ${l}`}
+                data-testid={`tecla-${l}`}
+              >
+                {l}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -511,6 +511,10 @@ function resumenRespuesta(a: Actividad, e: EstadoItem, r: RespuestaPractica): un
       return { cartas: Array.isArray(res.cartas) ? res.cartas.slice(0, 2) : [] };
     case "atrapa":
       return { atrapadas: Array.isArray(res.atrapadas) ? res.atrapadas.length : 0 };
+    case "adivina":
+      return { elegida: String(res.letra ?? "") || null };
+    case "globos":
+      return { reventadas: Array.isArray(res.reventadas) ? res.reventadas.length : 0 };
     case "cual-falsa": {
       const x = ronda?.items?.[res.frase];
       return { elegida: x ? (a.versiones[x.v] as any).afirmaciones[x.i].texto : null };

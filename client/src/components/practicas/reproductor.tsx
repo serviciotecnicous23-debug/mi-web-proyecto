@@ -14,14 +14,14 @@ import { cambiarSonido, sonarBien, sonarMal, sonarMedio, sonidoActivo } from "./
 import { Clasifica, Completa, EncuentraError, Explica, Relaciona, Relampago, Situacion, Verdad, Ordena as OrdenaLista, type PropsPieza } from "./piezas";
 import { Chat, CualFalsa, Desliza, Detective, DondeVa, EligePalabra, EligePareja, Escalones, Escribela, Intruso } from "./formas";
 import { Caso, Escenario, Linea, Mapa, MapaIdeas, Pasaje } from "./piezas-avanzadas";
-import { Anagrama, ArmaLaFrase, Atrapalas, Crucigrama, Memoria, Sopa } from "./dinamicas";
+import { Adivina, Anagrama, ArmaLaFrase, Atrapalas, Crucigrama, Globos, Memoria, Sopa } from "./dinamicas";
 import { AsiSeJuega, claveForma, iconoForma, nombreForma, TarjetaModalidad, useFormasVistas } from "./asi-se-juega";
 import { Resultado } from "./resultado";
 
 /** Las formas que se responden solas con un toque (no muestran «Comprobar»). */
-const SOLAS = new Set<Formato>(["relampago", "elige-pareja", "desliza", "intruso", "escalones", "donde-va", "verdad-o-error", "cual-falsa", "memoria", "atrapa"]);
+const SOLAS = new Set<Formato>(["relampago", "elige-pareja", "desliza", "intruso", "escalones", "donde-va", "verdad-o-error", "cual-falsa", "memoria", "atrapa", "adivina", "globos"]);
 /** Las que llevan su tiempo y no van contra el reloj (buscar en la sopa, escribir el crucigrama, ver caer las frases). */
-const SIN_RELOJ = new Set<Formato>(["texto", "sopa", "crucigrama", "atrapa"]);
+const SIN_RELOJ = new Set<Formato>(["texto", "sopa", "crucigrama", "atrapa", "adivina", "globos"]);
 
 /** La modalidad «Contra el reloj»: segundos para el premio y puntos que da. */
 const RELOJ_SEGUNDOS = 20;
@@ -86,6 +86,10 @@ function Pieza(props: Omit<PropsPieza<any>, "vista" | "correccion"> & { vista: I
       return <Memoria {...p} />;
     case "atrapa":
       return <Atrapalas {...p} />;
+    case "adivina":
+      return <Adivina {...p} />;
+    case "globos":
+      return <Globos {...p} />;
     default:
       break;
   }
@@ -262,7 +266,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   const [paso, setPaso] = useState(0);
   const [respuesta, setRespuesta] = useState<RespuestaPractica | null>(null);
   const [devolucion, setDevolucion] = useState<Devolucion | null>(null);
-  /** La memoria, entre volteo y volteo: la devolución no abre su panel y se sigue sola. */
+  /** La memoria entre volteo y volteo, y «Adivina la palabra» entre letra y letra: la devolución no abre su panel y se sigue sola. */
   const [callada, setCallada] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [pista, setPista] = useState<string | null>(null);
@@ -283,8 +287,8 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   const vista = n < total ? vistas[n] : null;
   // (escribir con sus palabras no va contra el reloj: nadie escribe 15 palabras en 20 segundos)
   const sinReloj = !!vista && (SIN_RELOJ.has(vista.formato) || vista.pieza === "caso");
-  // (la memoria no cambia de pantalla entre volteos: las cartas se quedan donde están)
-  const clavePaso = vista?.formato === "memoria" ? "memoria" : paso;
+  // (la memoria no cambia de pantalla entre volteos, ni «Adivina la palabra» entre letras de la misma palabra)
+  const clavePaso = vista?.formato === "memoria" || vista?.formato === "adivina" ? vista.formato : paso;
 
   // las formas de jugar distintas de este intento (para la portada)
   const formas = useMemo(() => new Set(intento.items.map((i) => claveForma(i.vista))).size, [intento.items]);
@@ -358,15 +362,15 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
     setError(null);
     try {
       const d = await responder(intento.id, n, r);
-      // (un volteo de la memoria que no fue pareja no es un error: es parte del juego)
-      const volteo = vista?.formato === "memoria" && !!d.siguiente;
+      // (un volteo de la memoria que no fue pareja, o una letra que no está, no es un error: es parte del juego)
+      const volteo = !!d.siguiente && (vista?.formato === "memoria" || (vista?.formato === "adivina" && !(d.correccion as { palabra?: string | null }).palabra));
       setCallada(volteo);
       setDevolucion(d);
       if (d.bien) sonarBien();
       else if (d.puntaje >= 0.5 || volteo) sonarMedio();
       else sonarMal();
       // los puntos: los del paso y, según la modalidad, los de más (nunca cambian la nota)
-      const base = Math.round(d.puntaje * 10);
+      const base = volteo && vista?.formato === "adivina" ? (d.bien ? 2 : 0) : Math.round(d.puntaje * 10);
       const s = d.bien ? seguidas + 1 : volteo ? seguidas : 0;
       setSeguidas(s);
       let bono = 0;
@@ -426,7 +430,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   // la memoria se sigue sola entre volteos (un momento para ver las dos cartas)
   useEffect(() => {
     if (!devolucion || !callada) return;
-    const t = window.setTimeout(seguir, devolucion.bien ? 650 : 1150);
+    const t = window.setTimeout(seguir, vista?.formato === "adivina" ? 280 : devolucion.bien ? 650 : 1150);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [devolucion, callada]);
