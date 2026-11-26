@@ -3,7 +3,7 @@
 // delata la respuesta y cada forma trae su consigna. Así una materia nueva queda probada en todas sus formas sola.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contestar, crucigramaDe, enLetras, escritoIgual, formatoDificil, formatosPosibles, listaDe, notaMemoria, nuevoEstado, ordenDeLista, preguntaDe, trozosDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { contestar, crucigramaDe, enLetras, escritoIgual, formatoDificil, formatosPosibles, listaDe, notaAdivina, notaMemoria, nuevoEstado, ordenDeLista, preguntaDe, trozosDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
 import { TODAS_LAS_PRACTICAS } from "./academia/practicas/index";
 import type { Actividad } from "./academia/practicas/tipos";
 import { FORMATOS, FORMATOS_SOLO_PARA_APRENDER, extraDeLecciones, type Formato, type RespuestaPractica } from "@shared/practicas";
@@ -99,6 +99,19 @@ function respuesta(a: Actividad, e: EstadoItem, bien: boolean): RespuestaPractic
       const r0 = e.rondas![0];
       const del = (r0.frases as number[]).map((k, d) => (v.frases[k].grupo === r0.grupo ? d : -1)).filter((d) => d >= 0);
       return { pieza: "clasifica", atrapadas: bien ? del : (r0.frases as number[]).map((_, d) => d).filter((d) => !del.includes(d)) };
+    }
+    case "adivina": {
+      // (bien: la próxima letra que falta; mal: una que no está, hasta que se apague la lámpara)
+      const palabra = enLetras(huecos(v.texto)[e.paso].trim());
+      const dichas = new Set((e.orden.dichas ?? []).map((x) => String.fromCodePoint(x)));
+      const faltan = [...new Set([...palabra])].filter((x) => !dichas.has(x));
+      const ajenas = [..."ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"].filter((x) => !palabra.includes(x) && !dichas.has(x));
+      return { pieza: "completa", letra: (bien ? faltan[0] : ajenas[0]).toLowerCase() };
+    }
+    case "globos": {
+      const items = e.rondas![0].items as { v: number; i: number }[];
+      const verdad = items.map((x) => (a.versiones[x.v] as any).afirmaciones[x.i].verdad as boolean);
+      return { pieza: "verdad", reventadas: items.map((_, d) => d).filter((d) => verdad[d] === bien) };
     }
     default:
       return null;
@@ -203,6 +216,21 @@ function revisarVista(a: Actividad, e: EstadoItem, donde: string) {
       assert.ok(v.grupos.includes(vista.grupo), donde);
       assert.deepEqual([...vista.frases].sort(), v.frases.map((f: any) => f.texto).sort(), donde);
       break;
+    case "adivina": {
+      const palabra = [...huecos(v.texto)[vista.hueco].trim()];
+      assert.equal(vista.patron.length, palabra.length, donde);
+      assert.ok(vista.patron.every((x, k) => x === null || x === palabra[k]), `${donde}: el patrón no es de la palabra`);
+      assert.deepEqual(vista.hechas, huecos(v.texto).slice(0, vista.hueco), donde);
+      assert.ok(vista.fallos < vista.gotas, donde);
+      break;
+    }
+    case "globos": {
+      const items = e.rondas![0].items as { v: number; i: number }[];
+      const verdad = items.map((x) => (a.versiones[x.v] as any).afirmaciones[x.i].verdad as boolean);
+      assert.ok(verdad.filter(Boolean).length >= 2 && verdad.filter((x) => !x).length >= 2, `${donde}: hacen falta 2 verdades y 2 errores`);
+      distintas(vista.frases, "frases");
+      break;
+    }
     default:
       break;
   }
@@ -401,6 +429,45 @@ test("la sopa, el crucigrama, la memoria y «¡Atrápalas!» califican a medias 
   const otra = (r0.frases as number[]).findIndex((k) => k > 2);
   const at = contestar(clasifica, ea, { pieza: "clasifica", atrapadas: [...del, otra] });
   assert.ok(Math.abs(at.devolucion.puntaje - 4 / 5) < 1e-9, "una de cinco mal");
+});
+
+test("«Adivina la palabra» y «Globos»: la lámpara, la nota de cada palabra y las verdades reventadas", () => {
+  assert.equal(notaAdivina(0), 1);
+  assert.equal(notaAdivina(2), 1, "se perdonan 2 gotas");
+  assert.ok(Math.abs(notaAdivina(4) - 0.7) < 1e-9);
+  assert.equal(notaAdivina(6), 0, "con la lámpara apagada vale 0");
+  const completa = { id: "z5", objetivo: 0, pieza: "completa", versiones: [{ texto: "La [[gracia]] es el favor de Dios que no merecemos.", distractores: ["ley"], explica: "Así es.", apoyo: "una frase" }] } as unknown as Actividad;
+  // seis letras que no están: se apaga la lámpara y la palabra vale 0
+  let e = nuevoEstado("prueba", completa, 0, 3, "adivina");
+  assert.equal(e.formato, "adivina");
+  let d = null as ReturnType<typeof contestar>["devolucion"] | null;
+  for (const l of ["Z", "X", "Q", "W", "K", "J"]) {
+    const r = contestar(completa, e, { pieza: "completa", letra: l });
+    d = r.devolucion;
+    e = r.estado;
+  }
+  assert.equal(d!.terminada, true);
+  assert.equal(d!.puntajeActividad, 0);
+  assert.ok(d!.correccion.pieza === "completa" && d!.correccion.formato === "adivina" && d!.correccion.palabra === "gracia" && d!.correccion.resuelta === false);
+  // una letra repetida no gasta aceite; con la palabra entera y una gota gastada, vale 1
+  let e2 = nuevoEstado("prueba", completa, 0, 3, "adivina");
+  e2 = contestar(completa, e2, { pieza: "completa", letra: "Z" }).estado;
+  e2 = contestar(completa, e2, { pieza: "completa", letra: "z" }).estado;
+  assert.deepEqual(e2.orden.fallos, [1]);
+  for (const l of ["G", "R", "A", "C", "I"]) e2 = contestar(completa, e2, { pieza: "completa", letra: l }).estado;
+  assert.equal(e2.terminada, true);
+  assert.equal(e2.puntaje, 1);
+  // globos: reventar un error resta solo esa
+  const verdad = { id: "z6", objetivo: 0, pieza: "verdad", versiones: [
+    { afirmaciones: [{ texto: "Dios es amor.", verdad: true, explica: "Sí.", apoyo: "a" }, { texto: "La fe es un salario.", verdad: false, explica: "No.", apoyo: "b" }] },
+    { afirmaciones: [{ texto: "Cristo resucitó.", verdad: true, explica: "Sí.", apoyo: "c" }, { texto: "La gracia se compra.", verdad: false, explica: "No.", apoyo: "d" }] },
+  ] } as unknown as Actividad;
+  const eg = nuevoEstado("prueba", verdad, 0, 5, "globos");
+  assert.equal(eg.formato, "globos");
+  const items = eg.rondas![0].items as { v: number; i: number }[];
+  const ver = items.map((x) => (verdad.versiones[x.v] as any).afirmaciones[x.i].verdad as boolean);
+  const g = contestar(verdad, eg, { pieza: "verdad", reventadas: [...items.map((_, k) => k).filter((k) => ver[k]), ver.indexOf(false)] });
+  assert.ok(Math.abs(g.devolucion.puntaje - 3 / 4) < 1e-9, "una de cuatro mal");
 });
 
 test("los puntos extra completan lo que falta para 100, en la parte de cada reto dominado", () => {

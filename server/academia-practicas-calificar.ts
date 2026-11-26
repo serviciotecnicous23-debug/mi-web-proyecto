@@ -69,7 +69,7 @@ export const ordenDeLista = (a: Actividad, e: EstadoItem): number[] => (a.pieza 
 const conFecha = (l: { textos: string[]; fechas: (string | null)[] }, k: number) => (l.fechas[k] ? `${l.textos[k]} (${l.fechas[k]})` : l.textos[k]);
 
 /** Las formas que se arman por rondas (`EstadoItem.rondas`). */
-const POR_RONDAS = new Set<Formato>(["relampago", "elige", "elige-pareja", "intruso", "donde-va", "cual-falsa", "anagrama", "sopa", "crucigrama", "arma", "memoria", "atrapa"]);
+const POR_RONDAS = new Set<Formato>(["relampago", "elige", "elige-pareja", "intruso", "donde-va", "cual-falsa", "anagrama", "sopa", "crucigrama", "arma", "memoria", "atrapa", "adivina", "globos"]);
 
 /** Todas las afirmaciones de una actividad de verdad o error (de todas sus versiones), con su versión. */
 function afirmacionesDe(a: Actividad): { v: number; i: number; verdad: boolean }[] {
@@ -122,6 +122,10 @@ export function formatosPosibles(a: Actividad, version: number, modo: ModoPracti
         return (v.pares?.length ?? 0) >= 3 && v.pares.length <= 5 && new Set((v.pares as string[][]).flat().map((x) => normalizar(x))).size === v.pares.length * 2;
       case "atrapa":
         return grupoParaAtrapar(v) != null;
+      case "adivina":
+        return huecosDe(v.texto).length <= 2 && !!palabrasSueltas(v, 4, 12);
+      case "globos":
+        return !!globosDe(a, 1, "posible");
       default:
         return true;
     }
@@ -130,12 +134,12 @@ export function formatosPosibles(a: Actividad, version: number, modo: ModoPracti
 
 /** Las formas de cada pieza, de la más difícil a la más fácil (el reto de dominio usa la más difícil que se pueda). */
 const DIFICULTAD: Partial<Record<Pieza, Formato[]>> = {
-  completa: ["escribe", "crucigrama", "anagrama", "elige", "sopa", "arma", "banco"],
+  completa: ["escribe", "crucigrama", "adivina", "anagrama", "elige", "sopa", "arma", "banco"],
   relaciona: ["parejas", "memoria", "elige-pareja"],
   clasifica: ["recuadros", "atrapa", "intruso", "desliza"],
   ordena: ["lista", "donde-va", "escalones"],
   linea: ["lista", "donde-va", "escalones"],
-  verdad: ["cual-falsa", "verdad-o-error"],
+  verdad: ["cual-falsa", "globos", "verdad-o-error"],
   error: ["detective", "frases"],
   situacion: ["chat", "opciones"],
 };
@@ -427,6 +431,31 @@ function grupoParaAtrapar(v: any): number | null {
 const perdonadosMemoria = (pares: number) => Math.round(pares * 1.5);
 export const notaMemoria = (pares: number, fallos: number) => Math.max(0.5, 1 - Math.max(0, fallos - perdonadosMemoria(pares)) * 0.1);
 
+/**
+ * «Adivina la palabra» (el ahorcado del catálogo, con una lámpara: nada de horca en la academia): cada letra que no está
+ * gasta una gota de aceite; con 6 gastadas se apaga la lámpara y la palabra vale 0. Resuelta, se perdonan 2 gotas y
+ * después cada una resta 0,15 (nunca menos de 0,4).
+ */
+export const GOTAS_LAMPARA = 6;
+export const notaAdivina = (fallos: number) => (fallos >= GOTAS_LAMPARA ? 0 : Math.max(0.4, 1 - Math.max(0, fallos - 2) * 0.15));
+const letrasDeAdivinar = (w: string) => new Set([...enLetras(w)]);
+
+/** «Globos»: las afirmaciones que suben (de todas las versiones y sin repetir: hasta 3 verdades y 3 errores, 2 o más de cada una). */
+function globosDe(a: Actividad, semilla: number, clave: string): { v: number; i: number }[] | null {
+  const vistas = new Set<string>();
+  const todas = afirmacionesDe(a).filter((x) => {
+    const t = normalizar((a.versiones[x.v] as any).afirmaciones[x.i].texto);
+    if (vistas.has(t)) return false;
+    vistas.add(t);
+    return true;
+  });
+  const verdades = todas.filter((x) => x.verdad);
+  const errores = todas.filter((x) => !x.verdad);
+  if (verdades.length < 2 || errores.length < 2) return null;
+  const elegidas = [...tomar(verdades, 3, semilla, `${clave}:globos:v`), ...tomar(errores, 3, semilla, `${clave}:globos:e`)];
+  return mezclar(elegidas.length, semilla, `${clave}:globos`).map((k) => ({ v: elegidas[k].v, i: elegidas[k].i }));
+}
+
 /** Arma las rondas de una forma por pasos (null si la forma no las usa). */
 function rondasDe(a: Actividad, v: any, f: Formato, semilla: number, clave: string): any[] | null {
   switch (f) {
@@ -555,6 +584,13 @@ function rondasDe(a: Actividad, v: any, f: Formato, semilla: number, clave: stri
       const g = grupoParaAtrapar(v);
       return g == null ? null : [{ grupo: g, frases: mezclar(v.frases.length, semilla, `${clave}:atrapa`) }];
     }
+    case "adivina":
+      // (una ronda por palabra; las letras dichas y las gotas gastadas van en el orden del estado)
+      return huecosDe(v.texto).map(() => ({}));
+    case "globos": {
+      const items = globosDe(a, semilla, clave);
+      return items ? [{ items }] : null;
+    }
     default:
       return null;
   }
@@ -613,7 +649,12 @@ export function nuevoEstado(leccion: string, a: Actividad, version: number, semi
   }
   const rondas = rondasDe(a, v, f, semilla, clave);
   // (si la sopa, el crucigrama o los trozos no se pudieron armar, la actividad va en su forma de siempre)
-  if (!rondas && (f === "sopa" || f === "crucigrama" || f === "arma" || f === "atrapa") && f !== posibles[0]) return nuevoEstado(leccion, a, version, semilla, posibles[0]);
+  if (!rondas && (f === "sopa" || f === "crucigrama" || f === "arma" || f === "atrapa" || f === "globos") && f !== posibles[0]) return nuevoEstado(leccion, a, version, semilla, posibles[0]);
+  if (f === "adivina") {
+    orden.dichas = [];
+    orden.fallos = [0];
+    orden.notas = [];
+  }
   if (f === "memoria") {
     orden.descubiertas = [];
     orden.fallos = [0];
@@ -638,6 +679,12 @@ export function nuevoEstado(leccion: string, a: Actividad, version: number, semi
       break;
     case "memoria":
       total = v.pares.length;
+      break;
+    case "adivina":
+      total = rondas?.length ?? 1;
+      break;
+    case "globos":
+      total = 1;
       break;
     default:
       total = pasosDe(a, version);
@@ -817,6 +864,30 @@ export function vistaDe(a: Actividad, e: EstadoItem): ItemVista {
       const r = e.rondas![0];
       return { pieza: "clasifica", formato: "atrapa", consigna: COMO_SE_JUEGA.atrapa, pregunta: preguntaDe(v.consigna), grupo: v.grupos[r.grupo], frases: (r.frases as number[]).map((i) => v.frases[i].texto) };
     }
+    case "adivina": {
+      const v: any = versionDe(a, e);
+      const hs = huecosDe(v.texto);
+      const palabra = hs[p].trim();
+      const dichas = (e.orden.dichas ?? []).map((x) => String.fromCodePoint(x));
+      return {
+        pieza: "completa",
+        formato: "adivina",
+        consigna: consigna(v),
+        partes: partesDe(v.texto),
+        hueco: p,
+        hechas: hs.slice(0, p),
+        patron: [...palabra].map((ch) => (dichas.includes(enLetras(ch)) ? ch : null)),
+        dichas,
+        fallos: e.orden.fallos?.[0] ?? 0,
+        gotas: GOTAS_LAMPARA,
+        paso: p,
+        pasos: total,
+      };
+    }
+    case "globos": {
+      const r = e.rondas![0];
+      return { pieza: "verdad", formato: "globos", consigna: COMO_SE_JUEGA.globos, frases: (r.items as { v: number; i: number }[]).map((x) => (a.versiones[x.v] as any).afirmaciones[x.i].texto as string) };
+    }
     default:
       break;
   }
@@ -927,6 +998,12 @@ export function pistaDe(a: Actividad, e: EstadoItem): string {
     const r = e.rondas![Math.min(e.paso, e.rondas!.length - 1)];
     const otra = r.items.find((_: unknown, k: number) => k !== r.correcta);
     return (a.versiones[otra.v] as any).afirmaciones[otra.i].apoyo ?? "";
+  }
+  if (f === "globos" && e.rondas) {
+    // (la de una afirmación que no sube: la de una que sube la delataría)
+    const suben = new Set((e.rondas[0].items as { v: number; i: number }[]).map((x) => `${x.v}:${x.i}`));
+    const otra = afirmacionesDe(a).find((x) => !suben.has(`${x.v}:${x.i}`));
+    return otra ? ((a.versiones[otra.v] as any).afirmaciones[otra.i].apoyo ?? "") : "";
   }
   if (a.pieza === "verdad") return v.afirmaciones[Math.min(e.paso, v.afirmaciones.length - 1)].apoyo;
   return v.apoyo ?? "";
@@ -1191,6 +1268,52 @@ export function contestar(a: Actividad, e: EstadoItem, r: RespuestaPractica): { 
         explica: [bien < frases.length ? `Las del grupo ${v.grupos[r.grupo]} eran: ${del.join("; ")}.` : "", v.explica].filter(Boolean).join(" "),
         apoyo: v.apoyo,
         ref: v.ref ?? null,
+      };
+      break;
+    }
+    case "adivina": {
+      // (cada letra es un paso; la palabra termina resuelta o con la lámpara apagada, y entonces sigue la otra)
+      const palabra = huecosDe(v.texto)[e.paso].trim();
+      const letra = enLetras(String(res.letra ?? "")).slice(0, 1);
+      const dichas = [...(e.orden.dichas ?? [])];
+      const notas = [...(e.orden.notas ?? [])];
+      const nueva = !!letra && !dichas.includes(letra.codePointAt(0)!);
+      const acierto = nueva && letrasDeAdivinar(palabra).has(letra);
+      if (nueva) dichas.push(letra.codePointAt(0)!);
+      const fallos = (e.orden.fallos?.[0] ?? 0) + (nueva && !acierto ? 1 : 0);
+      const dichasTexto = new Set(dichas.map((x) => String.fromCodePoint(x)));
+      const resuelta = [...letrasDeAdivinar(palabra)].every((x) => dichasTexto.has(x));
+      const termina = resuelta || fallos >= GOTAS_LAMPARA;
+      if (termina) notas.push(Math.round(notaAdivina(resuelta ? fallos : GOTAS_LAMPARA) * 100));
+      const pasoNuevo = termina ? e.paso + 1 : e.paso;
+      const fin = pasoNuevo >= total;
+      c = {
+        puntaje: acierto ? 1 : 0,
+        correccion: { pieza: "completa", formato: "adivina", letra, acierto, palabra: termina ? palabra : null, resuelta: termina ? resuelta : null },
+        explica: termina ? [resuelta ? "" : `Se apagó la lámpara. Era: ${palabra}.`, fin ? v.explica : ""].filter(Boolean).join(" ") : "",
+        apoyo: termina ? v.apoyo : "",
+        ref: termina ? (v.ref ?? null) : null,
+        pasoNuevo,
+        ordenNuevo: { ...e.orden, dichas: termina ? [] : dichas, fallos: [termina ? 0 : fallos], notas },
+        terminar: fin,
+        puntajeFinal: notas.reduce((x, y) => x + y, 0) / Math.max(1, notas.length) / 100,
+      };
+      break;
+    }
+    case "globos": {
+      const items = e.rondas![0].items as { v: number; i: number }[];
+      const afirm = (x: { v: number; i: number }) => (a.versiones[x.v] as any).afirmaciones[x.i];
+      const reventadas = [...new Set(((Array.isArray(res.reventadas) ? res.reventadas : []) as unknown[]).map((x) => entero(x, items.length)).filter((x) => x >= 0))];
+      const verdaderas = items.map((x) => !!afirm(x).verdad);
+      const bien = verdaderas.filter((ver, d) => ver === reventadas.includes(d)).length;
+      const primeraMal = verdaderas.findIndex((ver, d) => ver !== reventadas.includes(d));
+      const base = afirm(items[primeraMal >= 0 ? primeraMal : 0]);
+      c = {
+        puntaje: bien / items.length,
+        correccion: { pieza: "verdad", formato: "globos", verdaderas, reventadas, explicas: items.map((x) => afirm(x).explica as string) },
+        explica: bien < items.length ? `Eran verdad: ${items.filter((_, d) => verdaderas[d]).map((x) => afirm(x).texto).join("; ")}.` : "",
+        apoyo: base.apoyo,
+        ref: base.ref ?? null,
       };
       break;
     }

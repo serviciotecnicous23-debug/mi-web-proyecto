@@ -70,11 +70,11 @@ export const esCalificable = (p: Pieza) => !PIEZAS_FORMATIVAS.includes(p);
  */
 export const FORMATOS = {
   tarjetas: ["relampago"],
-  completa: ["banco", "elige", "escribe", "anagrama", "sopa", "crucigrama", "arma"],
+  completa: ["banco", "elige", "escribe", "anagrama", "sopa", "crucigrama", "arma", "adivina"],
   relaciona: ["parejas", "elige-pareja", "memoria"],
   clasifica: ["recuadros", "desliza", "intruso", "atrapa"],
   ordena: ["lista", "escalones", "donde-va"],
-  verdad: ["verdad-o-error", "cual-falsa"],
+  verdad: ["verdad-o-error", "cual-falsa", "globos"],
   error: ["frases", "detective"],
   situacion: ["opciones", "chat"],
   explica: ["texto"],
@@ -100,6 +100,7 @@ export const NOMBRE_FORMATO: Record<Formato, string> = {
   sopa: "Sopa de letras",
   crucigrama: "Crucigrama",
   arma: "Arma la frase",
+  adivina: "Adivina la palabra",
   parejas: "Relaciona",
   "elige-pareja": "Elige la pareja",
   memoria: "Memoria",
@@ -112,6 +113,7 @@ export const NOMBRE_FORMATO: Record<Formato, string> = {
   "donde-va": "¿Dónde va?",
   "verdad-o-error": "¿Verdad o error?",
   "cual-falsa": "¿Cuál es falsa?",
+  globos: "Globos",
   frases: "Encuentra el error",
   detective: "Detective",
   opciones: "Situación",
@@ -130,6 +132,7 @@ export const COMO_SE_JUEGA: Record<Formato, string> = {
   sopa: "Busca en la sopa de letras las palabras que completan la frase.",
   crucigrama: "Escribe cada palabra del crucigrama con su pista.",
   arma: "Toca los trozos en orden para armar la idea.",
+  adivina: "Adivina la palabra que falta letra por letra: cada letra que no está gasta una gota de aceite de la lámpara.",
   parejas: "Toca una idea de la izquierda y después su pareja de la derecha.",
   "elige-pareja": "Toca lo que corresponde a la idea de arriba.",
   memoria: "Destapa dos cartas: si van juntas, quedan a la vista.",
@@ -142,6 +145,7 @@ export const COMO_SE_JUEGA: Record<Formato, string> = {
   "donde-va": "Un paso se salió de la lista. Toca el lugar donde va.",
   "verdad-o-error": "¿Es verdad o es un error? Desliza o toca.",
   "cual-falsa": "Toca la frase que se pide.",
+  globos: "Los globos suben con frases: revienta solo las que son verdad.",
   frases: "Una de estas frases tiene un error. Tócala.",
   detective: "Lee el texto como un detective y toca la frase que tiene un error.",
   opciones: "Elige qué harías o qué dirías.",
@@ -223,6 +227,7 @@ export type ItemVista = { consigna: string } & (
   | { pieza: "completa"; formato: "sopa"; partes: (string | { hueco: number })[]; filas: string[]; buscar: number }
   | { pieza: "completa"; formato: "crucigrama"; partes: (string | { hueco: number })[]; filas: number; columnas: number; palabras: { n: number; hueco: number; fila: number; col: number; dir: "h" | "v"; largo: number }[] }
   | { pieza: "completa"; formato: "arma"; trozos: string[] }
+  | { pieza: "completa"; formato: "adivina"; partes: (string | { hueco: number })[]; hueco: number; hechas: string[]; patron: (string | null)[]; dichas: string[]; fallos: number; gotas: number; paso: number; pasos: number }
   | { pieza: "relaciona"; formato: "parejas"; izquierda: string[]; derecha: string[] }
   | { pieza: "relaciona"; formato: "elige-pareja"; idea: string; opciones: string[]; paso: number; pasos: number }
   | { pieza: "relaciona"; formato: "memoria"; cartas: string[]; descubiertas: number[]; fallos: number; paso: number; pasos: number }
@@ -235,6 +240,7 @@ export type ItemVista = { consigna: string } & (
   | { pieza: "ordena" | "linea"; formato: "donde-va"; suelto: string; lista: string[]; paso: number; pasos: number }
   | { pieza: "verdad"; formato: "verdad-o-error"; afirmacion: string; paso: number; pasos: number }
   | { pieza: "verdad"; formato: "cual-falsa"; busca: "falsa" | "verdad"; afirmaciones: string[]; paso: number; pasos: number }
+  | { pieza: "verdad"; formato: "globos"; frases: string[] }
   | { pieza: "error"; formato: "frases" | "detective"; frases: string[] }
   | { pieza: "situacion"; formato: "opciones" | "chat"; caso: string; pregunta: string; opciones: string[] }
   | { pieza: "explica"; formato: "texto"; pregunta: string; min: number; max: number }
@@ -253,11 +259,11 @@ export type ItemVista = { consigna: string } & (
  */
 export type RespuestaPractica =
   | { pieza: "tarjetas"; opcion: number }
-  | { pieza: "completa"; huecos?: string[]; trazos?: number[][]; orden?: number[] }
+  | { pieza: "completa"; huecos?: string[]; trazos?: number[][]; orden?: number[]; letra?: string }
   | { pieza: "relaciona"; pares?: number[]; opcion?: number; cartas?: number[] }
   | { pieza: "clasifica"; grupos?: number[]; grupo?: number; frase?: number; atrapadas?: number[] }
   | { pieza: "ordena"; orden?: number[]; opcion?: number }
-  | { pieza: "verdad"; verdad?: boolean; frase?: number }
+  | { pieza: "verdad"; verdad?: boolean; frase?: number; reventadas?: number[] }
   | { pieza: "error"; frase: number }
   | { pieza: "situacion"; opcion: number }
   | { pieza: "explica"; texto: string }
@@ -275,6 +281,7 @@ export type Correccion =
   | { pieza: "completa"; formato: "anagrama"; correcta: string; bien: boolean }
   | { pieza: "completa"; formato: "sopa"; elegidas: { texto: string; trazo: number[]; bien: boolean }[]; faltan: { texto: string; trazo: number[] }[]; palabras: string[] }
   | { pieza: "completa"; formato: "arma"; correcto: number[]; texto: string }
+  | { pieza: "completa"; formato: "adivina"; letra: string; acierto: boolean; palabra: string | null; resuelta: boolean | null }
   | { pieza: "relaciona"; formato?: undefined; correctas: number[]; marcas: boolean[] }
   | { pieza: "relaciona"; formato: "elige-pareja"; correcta: number }
   | { pieza: "relaciona"; formato: "memoria"; cartas: number[]; par: boolean }
@@ -286,6 +293,7 @@ export type Correccion =
   | { pieza: "ordena" | "linea"; formato: "escalones" | "donde-va"; correcta: number }
   | { pieza: "verdad"; formato?: undefined; verdad: boolean }
   | { pieza: "verdad"; formato: "cual-falsa"; correcta: number }
+  | { pieza: "verdad"; formato: "globos"; verdaderas: boolean[]; reventadas: number[]; explicas: string[] }
   | { pieza: "error"; malo: number; correccion: string }
   | { pieza: "situacion"; correcta: number; explicas: string[] }
   | { pieza: "explica"; nota: number; ideas: { texto: string; ok: boolean; medio?: boolean }[]; avisos: string[]; modelo: string }

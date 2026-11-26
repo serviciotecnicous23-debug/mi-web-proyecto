@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
 import {
+  Balloon,
   Blocks,
   BookOpen,
   Brain,
@@ -12,6 +13,7 @@ import {
   CalendarRange,
   ChevronsUp,
   Clapperboard,
+  Droplets,
   Flame,
   LayoutGrid,
   Link2,
@@ -60,6 +62,7 @@ const FORMAS: Record<string, { icono: LucideIcon; pasos: string[] }> = {
   anagrama: { icono: Shuffle, pasos: ["Lee la frase: le faltan palabras y vas a llenarlas una por una.", "Las letras de la palabra que falta están revueltas: tócalas en el orden correcto.", "Si te equivocas, toca una letra puesta para quitarla. Después toca Comprobar."] },
   sopa: { icono: Grid3x3, pasos: ["Lee la frase: le faltan palabras.", "Búscalas en la sopa: toca la primera letra de cada una y después la última (o desliza el dedo).", "Ojo: también hay palabras que no van. Cuando marques todas, toca Comprobar."] },
   crucigrama: { icono: Puzzle, pasos: ["Arriba está la frase: cada espacio tiene el número de su palabra en el crucigrama.", "Toca una casilla o un número y escribe: la letra pasa sola a la siguiente.", "Donde dos palabras se cruzan, la letra sirve para las dos. Después toca Comprobar."] },
+  adivina: { icono: Droplets, pasos: ["La frase tiene un espacio: adivina la palabra que falta.", "Toca las letras: las que están aparecen en su lugar.", "Cada letra que no está gasta una gota de aceite de la lámpara: con 6 se apaga. Las 2 primeras no te bajan la nota."] },
   arma: { icono: Blocks, pasos: ["La idea de la lección está cortada en trozos revueltos.", "Toca los trozos en el orden en que se leen, del primero al último.", "Si te equivocas, toca un trozo puesto para devolverlo. Después toca Comprobar."] },
   parejas: { icono: Link2, pasos: ["A la izquierda hay ideas y a la derecha, lo que les corresponde.", "Toca una idea y después su pareja: quedan con el mismo color y número.", "Cuando unas todas, toca Comprobar."] },
   "elige-pareja": { icono: Link2, pasos: ["Arriba aparece una idea.", "Toca, de las opciones, la que le corresponde.", "Así con cada pareja, una por una."] },
@@ -72,6 +75,7 @@ const FORMAS: Record<string, { icono: LucideIcon; pasos: string[] }> = {
   escalones: { icono: Footprints, pasos: ["Vas a armar una escalera, del primer paso al último.", "En cada escalón, toca lo que va ahí.", "Cada escalón queda puesto y sigues con el próximo."] },
   "donde-va": { icono: SquareDashed, pasos: ["Arriba está un paso que se salió de la lista.", "Abajo está la lista en su orden, con lugares marcados Aquí.", "Toca el lugar donde va ese paso."] },
   "verdad-o-error": { icono: Scale, pasos: ["Lee la afirmación.", "Toca Verdad o Error (o desliza: a la derecha es verdad, a la izquierda es error).", "Vienen una tras otra."] },
+  globos: { icono: Balloon, pasos: ["Los globos suben, cada uno con una frase.", "Revienta con un toque solo los que dicen la verdad; los errores déjalos ir.", "Si prefieres, elígelas de una lista, sin prisa. Al final verás cada una con su explicación."] },
   "cual-falsa": { icono: ShieldQuestion, pasos: ["Aparecen tres frases.", "Fíjate en lo que se pide: la que NO es verdad o la que SÍ lo es.", "Toca esa frase."] },
   frases: { icono: SpellCheck, pasos: ["Lee todas las frases.", "Una tiene un error.", "Tócala y después toca Comprobar."] },
   detective: { icono: Search, pasos: ["Lee el texto completo, como un detective.", "Una de sus frases tiene un error.", "Toca esa frase y después Comprobar."] },

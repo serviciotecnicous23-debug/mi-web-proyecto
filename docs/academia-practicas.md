@@ -57,11 +57,11 @@ también se arrastra), sonidos cortos que se apagan con un toque y respeto por �
 | Pieza | Formas (la primera es la de siempre) | Desde |
 | --- | --- | --- |
 | `tarjetas` | Relámpago: la pregunta de cada tarjeta con su respuesta y dos de otras tarjetas (no entra en la que cuenta) | Nivel 1 |
-| `completa` | Completa la idea (banco de palabras), Elige la palabra (dos por hueco), Escríbela (con la primera letra y cuántas letras; solo en el reto), Anagrama (las letras de cada palabra revueltas, de a una), Sopa de letras (con las palabras que no van escondidas también), Crucigrama (la frase arriba con el número de cada palabra), Arma la frase (una oración en trozos revueltos) | Nivel 1 |
+| `completa` | Completa la idea (banco de palabras), Elige la palabra (dos por hueco), Escríbela (con la primera letra y cuántas letras; solo en el reto), Anagrama (las letras de cada palabra revueltas, de a una), Sopa de letras (con las palabras que no van escondidas también), Crucigrama (la frase arriba con el número de cada palabra), Arma la frase (una oración en trozos revueltos), Adivina la palabra (letra por letra, con la lámpara de aceite) | Nivel 1 |
 | `relaciona` | Relaciona (las dos columnas), Elige la pareja (una idea y tres opciones, de a una), Memoria (cartas boca abajo que se destapan de a dos) | Nivel 1 |
 | `clasifica` | Clasifica (recuadros de colores), Desliza (dos grupos, de a una frase), ¿Cuál no va? (tres del mismo grupo y una que no), ¡Atrápalas! (las frases caen y se atrapan las del grupo que se pide; también de una lista, sin prisa) | Nivel 1 |
 | `ordena` | Ordena (arrastrar), Escalones (qué va en cada escalón), ¿Dónde va? (un paso salió de la lista: se toca su lugar) | Nivel 1 |
-| `verdad` | ¿Verdad o error?, ¿Cuál es falsa? (tres frases de las dos versiones; a veces se busca la verdadera) | Nivel 1 |
+| `verdad` | ¿Verdad o error?, ¿Cuál es falsa? (tres frases de las dos versiones; a veces se busca la verdadera), Globos (suben las afirmaciones y se revientan las verdaderas) | Nivel 1 |
 | `error` | Encuentra el error, Detective (las frases seguidas, como un texto) | Nivel 1 |
 | `situacion` | Situación, Conversación (el caso llega como un mensaje) | Nivel 1 |
 | `explica` | Explícalo con tus palabras; se corrige con una clave | Nivel 1 |
@@ -79,7 +79,7 @@ niveles siguientes solo traen contenido.
 
 ### Las dinámicas del catálogo de Luis (26-nov)
 
-Del catálogo de 50 dinámicas que pasó Luis, seis ya se juegan con el mismo contenido, combinadas con las demás formas en
+Del catálogo de 50 dinámicas que pasó Luis, ocho ya se juegan con el mismo contenido, combinadas con las demás formas en
 cada lección (no hace falta escribir nada nuevo en las materias). Cuándo se puede cada una:
 
 - **Anagrama** (`completa`): de 1 a 3 palabras que faltan, cada una de una sola palabra de 3 a 14 letras y distintas
@@ -100,7 +100,15 @@ cada lección (no hace falta escribir nada nuevo en las materias). Cuándo se pu
   frase cae de 4 a 7 segundos según su largo; vale la parte de frases bien decididas (atrapada o dejada pasar). Con el
   movimiento reducido del teléfono, o si el alumno lo prefiere, se eligen de una lista.
 
-Sopa, crucigrama y ¡Atrápalas! no van contra el reloj. La prueba de formas juega las seis en todas las actividades donde
+- **Adivina la palabra** (`completa`, el ahorcado del catálogo con una lámpara de aceite: nada de horca en la academia):
+  1 o 2 palabras que faltan, de una sola palabra de 4 a 12 letras. Cada letra es un paso (sin el panel entre letras); cada
+  letra que no está gasta una gota y con 6 se apaga la lámpara (la palabra vale 0). Resuelta, se perdonan 2 gotas y
+  después cada una resta 0,15, nunca por debajo de 0,4 (`notaAdivina`).
+- **Globos** (`verdad`): de todas las versiones, sin repetir, hasta 3 verdades y 3 errores (2 o más de cada uno). Suben de
+  a uno y se revientan los verdaderos; vale la parte de globos bien decididos y al corregir cada uno trae su explicación.
+  La pista es la frase de una afirmación que no sube (la de una que sube la delataría).
+
+Sopa, crucigrama, ¡Atrápalas!, Adivina la palabra y Globos no van contra el reloj. La prueba de formas juega las seis en todas las actividades donde
 caben (con tres semillas, todo bien y todo mal) y revisa que nada delate la respuesta.
 
 ## 3. Cómo se escribe la práctica de una materia
