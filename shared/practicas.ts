@@ -227,7 +227,7 @@ export type ItemVista = { consigna: string } & (
   | { pieza: "completa"; formato: "sopa"; partes: (string | { hueco: number })[]; filas: string[]; buscar: number }
   | { pieza: "completa"; formato: "crucigrama"; partes: (string | { hueco: number })[]; filas: number; columnas: number; palabras: { n: number; hueco: number; fila: number; col: number; dir: "h" | "v"; largo: number }[] }
   | { pieza: "completa"; formato: "arma"; trozos: string[] }
-  | { pieza: "completa"; formato: "adivina"; partes: (string | { hueco: number })[]; hueco: number; hechas: string[]; patron: (string | null)[]; dichas: string[]; fallos: number; gotas: number; paso: number; pasos: number }
+  | { pieza: "completa"; formato: "adivina"; partes: (string | { hueco: number })[]; hueco: number; patron: (string | null)[]; dichas: string[]; fallos: number; gotas: number }
   | { pieza: "relaciona"; formato: "parejas"; izquierda: string[]; derecha: string[] }
   | { pieza: "relaciona"; formato: "elige-pareja"; idea: string; opciones: string[]; paso: number; pasos: number }
   | { pieza: "relaciona"; formato: "memoria"; cartas: string[]; descubiertas: number[]; fallos: number; paso: number; pasos: number }

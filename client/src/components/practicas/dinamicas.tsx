@@ -909,7 +909,7 @@ const sinTilde = (s: string) => s.normalize("NFD").replace(/[̀́̈]/g, "").norm
  */
 export function Adivina({ vista, correccion, bloqueado, alEnviar }: PropsPieza<VistaDe<"adivina">>) {
   const [tocada, setTocada] = useState<string | null>(null);
-  useEffect(() => setTocada(null), [vista.dichas.length, vista.hueco]);
+  useEffect(() => setTocada(null), [vista.dichas.length]);
   const c = correccion?.formato === "adivina" ? (correccion as { letra: string; acierto: boolean; palabra: string | null; resuelta: boolean | null }) : null;
   const dichas = new Set(vista.dichas);
   const aciertos = new Set(vista.patron.filter((x): x is string => !!x).map(sinTilde));
@@ -939,20 +939,7 @@ export function Adivina({ vista, correccion, bloqueado, alEnviar }: PropsPieza<V
   const letras = final ? [...final] : vista.patron;
   return (
     <div data-testid="pieza-adivina">
-      {vista.pasos > 1 && <p className="text-xs font-semibold text-muted-foreground mb-2">Palabra {vista.paso + 1} de {vista.pasos}</p>}
-      <Frase
-        compacta
-        partes={vista.partes}
-        hueco={(h) =>
-          h < vista.hueco ? (
-            <Espacio chico texto={vista.hechas[h]} estado="hecho" />
-          ) : h === vista.hueco ? (
-            <Espacio chico texto={final ?? "?"} estado={final ? "lleno" : "activo"} marca={final ? !!c?.resuelta : null} />
-          ) : (
-            <Espacio chico texto="…" estado="vacio" />
-          )
-        }
-      />
+      <Frase compacta partes={vista.partes} hueco={() => <Espacio chico texto={final ?? "?"} estado={final ? "lleno" : "activo"} marca={final ? !!c?.resuelta : null} />} />
       <div className="mt-4 flex justify-center gap-1.5 flex-wrap" aria-label="La palabra, letra por letra">
         {letras.map((x, k) => (
           <span

@@ -102,7 +102,7 @@ function respuesta(a: Actividad, e: EstadoItem, bien: boolean): RespuestaPractic
     }
     case "adivina": {
       // (bien: la próxima letra que falta; mal: una que no está, hasta que se apague la lámpara)
-      const palabra = enLetras(huecos(v.texto)[e.paso].trim());
+      const palabra = enLetras(huecos(v.texto)[e.rondas![0].hueco].trim());
       const dichas = new Set((e.orden.dichas ?? []).map((x) => String.fromCodePoint(x)));
       const faltan = [...new Set([...palabra])].filter((x) => !dichas.has(x));
       const ajenas = [..."ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"].filter((x) => !palabra.includes(x) && !dichas.has(x));
@@ -220,7 +220,7 @@ function revisarVista(a: Actividad, e: EstadoItem, donde: string) {
       const palabra = [...huecos(v.texto)[vista.hueco].trim()];
       assert.equal(vista.patron.length, palabra.length, donde);
       assert.ok(vista.patron.every((x, k) => x === null || x === palabra[k]), `${donde}: el patrón no es de la palabra`);
-      assert.deepEqual(vista.hechas, huecos(v.texto).slice(0, vista.hueco), donde);
+      assert.equal(vista.partes.filter((x) => typeof x !== "string").length, 1, `${donde}: se adivina una sola palabra`);
       assert.ok(vista.fallos < vista.gotas, donde);
       break;
     }

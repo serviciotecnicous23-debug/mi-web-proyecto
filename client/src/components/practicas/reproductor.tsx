@@ -288,7 +288,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   // (escribir con sus palabras no va contra el reloj: nadie escribe 15 palabras en 20 segundos)
   const sinReloj = !!vista && (SIN_RELOJ.has(vista.formato) || vista.pieza === "caso");
   // (la memoria no cambia de pantalla entre volteos, ni «Adivina la palabra» entre letras de la misma palabra)
-  const clavePaso = vista?.formato === "memoria" ? "memoria" : vista?.formato === "adivina" ? `adivina-${vista.hueco}` : paso;
+  const clavePaso = vista?.formato === "memoria" || vista?.formato === "adivina" ? vista.formato : paso;
 
   // las formas de jugar distintas de este intento (para la portada)
   const formas = useMemo(() => new Set(intento.items.map((i) => claveForma(i.vista))).size, [intento.items]);

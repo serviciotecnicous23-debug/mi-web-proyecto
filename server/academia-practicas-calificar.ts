@@ -123,7 +123,7 @@ export function formatosPosibles(a: Actividad, version: number, modo: ModoPracti
       case "atrapa":
         return grupoParaAtrapar(v) != null;
       case "adivina":
-        return huecosDe(v.texto).length <= 2 && !!palabrasSueltas(v, 4, 12);
+        return adivinables(v.texto).length > 0;
       case "globos":
         return !!globosDe(a, 1, "posible");
       default:
@@ -439,6 +439,16 @@ export const notaMemoria = (pares: number, fallos: number) => Math.max(0.5, 1 - 
 export const GOTAS_LAMPARA = 6;
 export const notaAdivina = (fallos: number) => (fallos >= GOTAS_LAMPARA ? 0 : Math.max(0.4, 1 - Math.max(0, fallos - 2) * 0.15));
 const letrasDeAdivinar = (w: string) => new Set([...enLetras(w)]);
+/**
+ * Las palabras que se pueden adivinar de una completa (sus índices): una sola palabra (solo letras) de 4 a 12 letras que
+ * no aparece en otra parte del texto (con las demás puestas, la delataría: «el [[Cristo]]… La palabra Cristo significa»).
+ */
+function adivinables(texto: string): number[] {
+  const todas = texto.replace(/\[\[([^\]]+)\]\]/g, "$1").split(/[^\p{L}]+/u).map(enLetras);
+  return huecosDe(texto)
+    .map((h, k) => (/^\p{L}+$/u.test(h.trim()) && enLetras(h).length >= 4 && enLetras(h).length <= 12 && todas.filter((w) => w === enLetras(h)).length === 1 ? k : -1))
+    .filter((k) => k >= 0);
+}
 
 /** «Globos»: las afirmaciones que suben (de todas las versiones y sin repetir: hasta 3 verdades y 3 errores, 2 o más de cada una). */
 function globosDe(a: Actividad, semilla: number, clave: string): { v: number; i: number }[] | null {
@@ -584,9 +594,11 @@ function rondasDe(a: Actividad, v: any, f: Formato, semilla: number, clave: stri
       const g = grupoParaAtrapar(v);
       return g == null ? null : [{ grupo: g, frases: mezclar(v.frases.length, semilla, `${clave}:atrapa`) }];
     }
-    case "adivina":
-      // (una ronda por palabra; las letras dichas y las gotas gastadas van en el orden del estado)
-      return huecosDe(v.texto).map(() => ({}));
+    case "adivina": {
+      // (una sola palabra, al azar entre las que se pueden adivinar; las demás se muestran puestas en la frase)
+      const buenas = adivinables(v.texto);
+      return buenas.length ? [{ hueco: buenas[mezclar(buenas.length, semilla, `${clave}:adivina`)[0]] }] : null;
+    }
     case "globos": {
       const items = globosDe(a, semilla, clave);
       return items ? [{ items }] : null;
@@ -649,7 +661,7 @@ export function nuevoEstado(leccion: string, a: Actividad, version: number, semi
   }
   const rondas = rondasDe(a, v, f, semilla, clave);
   // (si la sopa, el crucigrama o los trozos no se pudieron armar, la actividad va en su forma de siempre)
-  if (!rondas && (f === "sopa" || f === "crucigrama" || f === "arma" || f === "atrapa" || f === "globos") && f !== posibles[0]) return nuevoEstado(leccion, a, version, semilla, posibles[0]);
+  if (!rondas && (f === "sopa" || f === "crucigrama" || f === "arma" || f === "atrapa" || f === "globos" || f === "adivina") && f !== posibles[0]) return nuevoEstado(leccion, a, version, semilla, posibles[0]);
   if (f === "adivina") {
     orden.dichas = [];
     orden.fallos = [0];
@@ -679,9 +691,6 @@ export function nuevoEstado(leccion: string, a: Actividad, version: number, semi
       break;
     case "memoria":
       total = v.pares.length;
-      break;
-    case "adivina":
-      total = rondas?.length ?? 1;
       break;
     case "globos":
       total = 1;
@@ -867,21 +876,19 @@ export function vistaDe(a: Actividad, e: EstadoItem): ItemVista {
     case "adivina": {
       const v: any = versionDe(a, e);
       const hs = huecosDe(v.texto);
-      const palabra = hs[p].trim();
+      const k = e.rondas![0].hueco as number;
       const dichas = (e.orden.dichas ?? []).map((x) => String.fromCodePoint(x));
       return {
         pieza: "completa",
         formato: "adivina",
         consigna: consigna(v),
-        partes: partesDe(v.texto),
-        hueco: p,
-        hechas: hs.slice(0, p),
-        patron: [...palabra].map((ch) => (dichas.includes(enLetras(ch)) ? ch : null)),
+        // (las otras palabras que faltan van puestas: se adivina una sola)
+        partes: partesDe(v.texto).map((x) => (typeof x === "string" || x.hueco === k ? x : hs[x.hueco])),
+        hueco: k,
+        patron: [...hs[k].trim()].map((ch) => (dichas.includes(enLetras(ch)) ? ch : null)),
         dichas,
         fallos: e.orden.fallos?.[0] ?? 0,
         gotas: GOTAS_LAMPARA,
-        paso: p,
-        pasos: total,
       };
     }
     case "globos": {
@@ -1265,15 +1272,15 @@ export function contestar(a: Actividad, e: EstadoItem, r: RespuestaPractica): { 
       c = {
         puntaje: bien / frases.length,
         correccion: { pieza: "clasifica", formato: "atrapa", deGrupo, atrapadas },
-        explica: [bien < frases.length ? `Las del grupo ${v.grupos[r.grupo]} eran: ${del.join("; ")}.` : "", v.explica].filter(Boolean).join(" "),
+        explica: [bien < frases.length ? `Las del grupo ${v.grupos[r.grupo]} eran: ${del.map((x: string) => x.replace(/[.]+$/, "")).join("; ")}.` : "", v.explica].filter(Boolean).join(" "),
         apoyo: v.apoyo,
         ref: v.ref ?? null,
       };
       break;
     }
     case "adivina": {
-      // (cada letra es un paso; la palabra termina resuelta o con la lámpara apagada, y entonces sigue la otra)
-      const palabra = huecosDe(v.texto)[e.paso].trim();
+      // (cada letra es un paso; termina con la palabra resuelta o con la lámpara apagada)
+      const palabra = huecosDe(v.texto)[e.rondas![0].hueco as number].trim();
       const letra = enLetras(String(res.letra ?? "")).slice(0, 1);
       const dichas = [...(e.orden.dichas ?? [])];
       const notas = [...(e.orden.notas ?? [])];
@@ -1311,7 +1318,8 @@ export function contestar(a: Actividad, e: EstadoItem, r: RespuestaPractica): { 
       c = {
         puntaje: bien / items.length,
         correccion: { pieza: "verdad", formato: "globos", verdaderas, reventadas, explicas: items.map((x) => afirm(x).explica as string) },
-        explica: bien < items.length ? `Eran verdad: ${items.filter((_, d) => verdaderas[d]).map((x) => afirm(x).texto).join("; ")}.` : "",
+        // (cada afirmación sin su punto final: «Eran verdad: una; otra.»)
+        explica: bien < items.length ? `Eran verdad: ${items.filter((_, d) => verdaderas[d]).map((x) => String(afirm(x).texto).replace(/[.。]+$/, "")).join("; ")}.` : "",
         apoyo: base.apoyo,
         ref: base.ref ?? null,
       };

@@ -101,8 +101,9 @@ cada lección (no hace falta escribir nada nuevo en las materias). Cuándo se pu
   movimiento reducido del teléfono, o si el alumno lo prefiere, se eligen de una lista.
 
 - **Adivina la palabra** (`completa`, el ahorcado del catálogo con una lámpara de aceite: nada de horca en la academia):
-  1 o 2 palabras que faltan, de una sola palabra de 4 a 12 letras. Cada letra es un paso (sin el panel entre letras); cada
-  letra que no está gasta una gota y con 6 se apaga la lámpara (la palabra vale 0). Resuelta, se perdonan 2 gotas y
+  se adivina UNA de las palabras que faltan (una sola palabra de 4 a 12 letras; las otras se muestran puestas en la
+  frase). Cada letra es un paso (sin el panel entre letras); cada
+  letra que no está gasta una gota y con 6 se apaga la lámpara (vale 0). Resuelta, se perdonan 2 gotas y
   después cada una resta 0,15, nunca por debajo de 0,4 (`notaAdivina`).
 - **Globos** (`verdad`): de todas las versiones, sin repetir, hasta 3 verdades y 3 errores (2 o más de cada uno). Suben de
   a uno y se revientan los verdaderos; vale la parte de globos bien decididos y al corregir cada uno trae su explicación.
