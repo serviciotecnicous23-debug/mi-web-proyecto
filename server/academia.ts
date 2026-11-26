@@ -32,6 +32,7 @@ import { registerAcademiaRevisionRoutes } from "./academia-revision";
 import { registerAcademiaGestionRoutes } from "./academia-gestion";
 import { registerAcademiaRepasoDiaRoutes } from "./academia-repaso-dia";
 import { registerAcademiaPracticasRoutes } from "./academia-practicas";
+import { registerAcademiaHonorRoutes } from "./academia-honor";
 import { registerAcademiaRecursosRoutes } from "./academia-recursos";
 import { practicasQueAbre, registerAcademiaLaboratorioRoutes } from "./academia-laboratorio";
 import { registerAcademiaLaboratorioInformeRoutes } from "./academia-laboratorio-informe";
@@ -240,14 +241,14 @@ export function registerAcademiaRoutes(app: Express) {
       if (!m) return res.status(404).json({ message: "No existe esa materia." });
       const userId = acceso.userId;
       let lec = new Map<string, { vista: boolean; completada: boolean }>();
-      let fila: { estado: string; nota: number | null; inicio: string; via: string; aprobada: string | null } | undefined;
+      let fila: { estado: string; nota: number | null; inicio: string; via: string; aprobada: string | null; extra: number } | undefined;
       let suf: { intentos: number; curso: unknown; extra: number } | undefined;
       let completos: number[] = [];
       let versiculo: MateriaDetalle["versiculo"] = m.memoria ? { ref: m.memoria, aprendido: false, puntaje: null, intentos: 0 } : null;
       if (userId) {
         const [{ rows: l }, { rows: mt }, { rows: v }, { rows: sf }] = await Promise.all([
           pool.query(`SELECT leccion_id, completada_at IS NOT NULL AS completada FROM academia_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`, [userId, m.lecciones.map((x) => x.id)]),
-          pool.query(`SELECT estado, nota, inicio_at, via, aprobada_at FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
+          pool.query(`SELECT estado, nota, inicio_at, via, aprobada_at, extra FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, puntaje, aprendido_at FROM academia_versiculos WHERE user_id = $1 AND materia_id = $2`, [userId, m.id]),
           pool.query(`SELECT intentos, curso, extra FROM academia_pruebas WHERE user_id = $1 AND clave = $2`, [userId, claveSuficiencia(m.id)]),
         ]);
@@ -259,6 +260,7 @@ export function registerAcademiaRoutes(app: Express) {
               inicio: new Date(mt[0].inicio_at).toISOString(),
               via: String(mt[0].via || "cursada"),
               aprobada: mt[0].aprobada_at ? new Date(mt[0].aprobada_at).toISOString() : null,
+              extra: Number(mt[0].extra ?? 0),
             }
           : undefined;
         suf = sf[0] ? { intentos: Number(sf[0].intentos || 0), curso: sf[0].curso, extra: Number(sf[0].extra || 0) } : undefined;
@@ -302,6 +304,7 @@ export function registerAcademiaRoutes(app: Express) {
         pesos: await pesosDeAlumno(userId, m),
         estado,
         nota: fila?.nota ?? null,
+        extra: estado === "aprobada" ? fila?.extra ?? 0 : 0,
         componentes,
         medalla: estado === "aprobada" && fila?.nota != null ? medallaDe(fila.nota) : null,
         versiculo,
@@ -679,6 +682,7 @@ export function registerAcademiaRoutes(app: Express) {
   registerAcademiaGestionRoutes(app);
   registerAcademiaRepasoDiaRoutes(app);
   registerAcademiaPracticasRoutes(app);
+  registerAcademiaHonorRoutes(app);
   registerAcademiaRecursosRoutes(app);
   registerAcademiaLaboratorioRoutes(app);
   registerAcademiaLaboratorioInformeRoutes(app);

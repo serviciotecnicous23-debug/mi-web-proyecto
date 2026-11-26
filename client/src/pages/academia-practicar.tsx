@@ -65,7 +65,7 @@ export default function AcademiaPracticar() {
                 <>
                   <p className="text-2xl font-black mt-1">{d && d.total > 0 ? "¡Estás al día!" : "Todavía no hay repasos"}</p>
                   <p className="text-sm opacity-95 mt-1">
-                    {d && d.total > 0 ? `El próximo repaso llega ${d.proxima ? cuando(d.proxima) : "pronto"}.` : "Cuando hagas la práctica guiada de una lección, sus actividades vuelven aquí a los 1, 3, 7, 15, 30 y 60 días."}
+                    {d && d.total > 0 ? `El próximo repaso llega ${d.proxima ? cuando(d.proxima) : "pronto"}.` : "Cuando hagas la práctica de una lección, sus actividades vuelven aquí a los 1, 3, 7, 15, 30 y 60 días."}
                   </p>
                 </>
               )}

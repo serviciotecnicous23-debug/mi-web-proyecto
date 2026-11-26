@@ -10,7 +10,7 @@
  */
 import { pool } from "./db";
 import { PESOS_NIVEL, pesosDe, type MateriaDef, type NivelN, type Pesos } from "@shared/academia-base";
-import { PESOS_CON_PRACTICAS, componentePracticas, problemaDePesos } from "@shared/practicas";
+import { PESOS_CON_PRACTICAS, PRACTICAS, componentePracticas, extraDeLecciones, problemaDePesos } from "@shared/practicas";
 import { materiaConPracticas, materiasConPracticas } from "./academia/practicas/index";
 
 export const PRACTICAS_NOTA_SQL = `
@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS academia_practicas_pesos (
   por integer
 );
 ALTER TABLE "academia_materias" ADD COLUMN IF NOT EXISTS "pesos_aprobada" jsonb;
+ALTER TABLE "academia_materias" ADD COLUMN IF NOT EXISTS "nota_base" integer;
+ALTER TABLE "academia_materias" ADD COLUMN IF NOT EXISTS "extra" integer NOT NULL DEFAULT 0;
 `;
 
 type Config = { cuenta: boolean; desde: Date };
@@ -134,6 +136,33 @@ export async function materiaAprobadaPor(userId: number, materiaId: string): Pro
 export async function practicasObligatorias(userId: number, m: Pick<MateriaDef, "id" | "nivel">): Promise<boolean> {
   if (await materiaAprobadaPor(userId, m.id)) return false;
   return practicasCuentan(userId, m);
+}
+
+/** Cómo está la materia del alumno: estado, vía, la nota (con los puntos extra), la nota sin ellos y los puntos extra. */
+export async function materiaDelAlumno(userId: number, materiaId: string): Promise<{ estado: string | null; via: string | null; nota: number | null; base: number | null; extra: number }> {
+  const { rows } = await pool.query(`SELECT estado, via, nota, nota_base, extra FROM academia_materias WHERE user_id = $1 AND materia_id = $2`, [userId, materiaId]);
+  const r = rows[0];
+  if (!r) return { estado: null, via: null, nota: null, base: null, extra: 0 };
+  const nota = r.nota == null ? null : Number(r.nota);
+  return { estado: r.estado ?? null, via: r.via ?? null, nota, base: r.nota_base == null ? nota : Number(r.nota_base), extra: Number(r.extra ?? 0) };
+}
+
+/** El reto de dominio (los puntos extra) se abre con la materia aprobada por el curso (no por suficiencia ni convalidada). */
+export async function retoAbierto(userId: number, m: Pick<MateriaDef, "id">): Promise<boolean> {
+  if (!materiaConPracticas(m.id)) return false;
+  const x = await materiaDelAlumno(userId, m.id);
+  return x.estado === "aprobada" && x.via !== "suficiencia" && x.via !== "convalidada";
+}
+
+/** Los puntos extra de la materia: lo que le falta para 100, en la parte de las lecciones con el reto dominado. */
+export async function extraDe(userId: number, m: MateriaDef, base: number): Promise<number> {
+  const ids = m.lecciones.map((l) => l.id);
+  if (!ids.length || !materiaConPracticas(m.id)) return 0;
+  const { rows } = await pool.query(
+    `SELECT count(*)::int AS n FROM academia_practicas_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[]) AND reto_mejor >= $3`,
+    [userId, ids, PRACTICAS.retoDomina],
+  );
+  return extraDeLecciones(base, Number(rows[0]?.n ?? 0), ids.length);
 }
 
 /** Cuántas lecciones de la materia no tienen todavía su práctica que cuenta terminada. */

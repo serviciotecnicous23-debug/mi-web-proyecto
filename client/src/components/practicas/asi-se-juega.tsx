@@ -37,12 +37,12 @@ import { NOMBRE_FORMATO, NOMBRE_MODALIDAD, NOMBRE_PIEZA, type ItemVista, type Mo
 
 /** La clave de la forma de jugar de una actividad (las piezas de una sola forma usan su pieza). */
 export function claveForma(v: ItemVista): string {
-  return v.formato === "normal" || v.pieza === "linea" ? `pieza:${v.pieza}` : v.formato;
+  return v.formato === "normal" || (v.pieza === "linea" && v.formato === "lista") ? `pieza:${v.pieza}` : v.formato;
 }
 
 /** El nombre de la forma de jugar (la etiqueta de arriba de la actividad). */
 export function nombreForma(v: ItemVista): string {
-  return v.formato === "normal" || v.pieza === "linea" ? NOMBRE_PIEZA[v.pieza] : NOMBRE_FORMATO[v.formato];
+  return v.formato === "normal" || (v.pieza === "linea" && v.formato === "lista") ? NOMBRE_PIEZA[v.pieza] : NOMBRE_FORMATO[v.formato];
 }
 
 /** Cómo se juega cada forma, paso a paso (lo que se ve la primera vez). */

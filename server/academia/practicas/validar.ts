@@ -73,7 +73,7 @@ const vacio = (s: unknown) => typeof s !== "string" || !s.trim();
  * Los largos máximos de lo que se muestra (en letras): en el teléfono, un texto más largo no cabe bien en una tarjeta,
  * un botón o un recuadro, y las formas de jugar (deslizar, elegir entre tres…) lo muestran en espacios chicos.
  */
-export const LARGOS = { grupo: 40, frase: 90, frente: 90, reverso: 120, afirmacion: 140, opcion: 150, parIzq: 70, parDer: 90, paso: 90 } as const;
+export const LARGOS = { grupo: 40, frase: 90, frente: 90, reverso: 120, afirmacion: 140, opcion: 150, parIzq: 70, parDer: 90, paso: 90, nodo: 40, relacion: 28, fecha: 30 } as const;
 
 function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string): string[] {
   const out: string[] = [];
@@ -192,6 +192,10 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       if (vacio(v.consigna)) out.push(`${donde}: falta la consigna`);
       entre(v.eventos?.length ?? 0, 4, 7, "los hechos");
       if ((v.eventos ?? []).some((e: any) => vacio(e.texto) || vacio(e.fecha))) out.push(`${donde}: cada hecho lleva su texto y su fecha`);
+      for (const e of v.eventos ?? []) {
+        largo(e.texto, LARGOS.paso, "un hecho");
+        largo(e.fecha, LARGOS.fecha, "una fecha");
+      }
       break;
     }
     case "mapa-ideas": {
@@ -202,9 +206,11 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       const ids = new Set(nodos.map((n: any) => n.id));
       if (ids.size !== nodos.length) out.push(`${donde}: hay ideas con el mismo id`);
       for (const n of nodos) if (!(n.x >= 0 && n.x <= 100 && n.y >= 0 && n.y <= 100)) out.push(`${donde}: la idea ${n.id} está fuera del lienzo`);
+      for (const n of nodos) largo(n.texto, LARGOS.nodo, `la idea ${n.id}`);
       const enlaces = v.enlaces ?? [];
       entre(enlaces.length, 2, 6, "los enlaces");
       for (const e of enlaces) if (!ids.has(e.de) || !ids.has(e.a) || vacio(e.relacion)) out.push(`${donde}: el enlace ${e.de}→${e.a} no está bien`);
+      for (const r of [...enlaces.map((e: any) => e.relacion), ...(v.distractores ?? [])]) largo(r, LARGOS.relacion, "una relación");
       const opciones = new Set([...enlaces.map((e: any) => e.relacion), ...(v.distractores ?? [])]);
       if (opciones.size < 3) out.push(`${donde}: hacen falta al menos 3 relaciones para elegir`);
       break;
@@ -222,6 +228,8 @@ function problemasDeVersion(a: Actividad, v: any, donde: string, texto: string):
       explica();
       if (vacio(v.ref) || vacio(v.consigna)) out.push(`${donde}: falta la cita o la consigna`);
       if (!huecosDe(v.texto ?? "").length) out.push(`${donde}: marca con [[ ]] las palabras que hay que tocar`);
+      // (el pasaje es la RV1960 al pie de la letra: se copia de una cita escrita en la lección, entre « »)
+      if (!estaEnLeccion(String(v.texto ?? "").replace(HUECO, "$1"), texto)) out.push(`${donde}: el pasaje debe estar copiado tal cual de una cita de la lección`);
       break;
     }
     case "escenario": {

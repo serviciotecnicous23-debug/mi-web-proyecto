@@ -7,7 +7,9 @@
  * debe tener, cada una con sus formas aceptadas y su peso. El corrector:
  *
  * - normaliza lo escrito (sin mayúsculas, tildes ni signos) y tolera faltas pequeñas (se escribe en el teléfono);
- * - busca cada idea, con hasta 2 palabras de más entre las palabras de una forma;
+ * - busca cada idea, con hasta 2 palabras de más entre las palabras de una forma; si no está así, la busca con sus
+ *   palabras en otro orden (todas cerca: vale entera) o a medias (dos tercios de sus palabras: vale la mitad y se ve en
+ *   amarillo), siempre que no haya una negación cerca (pedido de Luis, 26-nov: «lo mismo con otras palabras»);
  * - entiende la negación: «no es un regalo» no cuenta como «es un regalo»; «no es por obras» sí cuenta cuando la idea
  *   es justamente esa (idea `negativa`);
  * - marca los conceptos errados afirmados («es por obras») y anula la idea que contradicen;
@@ -67,7 +69,7 @@ export type ClaveEscrita = {
 
 export type ResultadoCorreccion = CorreccionVista & {
   /** Para la Dirección académica: qué ideas y errores encontró, y por qué la marcó. */
-  detalle: { ideas: string[]; errores: string[]; marcas: string[]; puntos: number; total: number };
+  detalle: { ideas: string[]; medias: string[]; errores: string[]; marcas: string[]; puntos: number; total: number };
 };
 
 // ---------------------------------------------------------------- normalización
@@ -201,6 +203,51 @@ function aparece(ws: string[], formas: string[], negativa: boolean, estricta = f
   return false;
 }
 
+/**
+ * Las palabras vacías para buscar una idea en otro orden: artículos, preposiciones, conjunciones y «es/son/ser» (los
+ * pronombres y los verbos sí cuentan: «murió por nosotros» busca «murió» y «nosotros»).
+ */
+const VACIAS = new Set(
+  "a al ante con contra de del desde e el en entre es la las le les lo los o para por que se ser si sino son su sus u un una uno unos y ya".split(" "),
+);
+const esVacia = (token: string) =>
+  token.startsWith("(") ? token.slice(1, -1).split("|").every((a) => VACIAS.has(a.replace(/\*$/, ""))) : VACIAS.has(token.replace(/\*$/, ""));
+
+/**
+ * La idea con sus palabras en otro orden o a medias, cuando no aparece tal cual. Mira las palabras con contenido de cada
+ * forma (sin «de», «la», «es»…; hacen falta 2 o más):
+ * - todas en 8 palabras seguidas: vale entera (1);
+ * - dos tercios o más en 12 palabras seguidas: vale la mitad (0,5);
+ * siempre que no haya una negación en esas palabras ni en las 3 de antes (en una idea negativa, al revés: tiene que
+ * haberla). Los conceptos errados no usan esto: un error solo se marca si está escrito tal cual.
+ */
+function creditoFlexible(ws: string[], formas: string[], negativa: boolean): number {
+  let mejor = 0;
+  for (const f of formas) {
+    const tokens = normalizar(f).trim().split(/\s+/).filter(Boolean);
+    // (una forma que trae su negación, «no depende de las circunstancias», pide la negación en lo escrito; sin esto,
+    // «depende de las circunstancias», que dice lo contrario, se llevaba media idea)
+    const esNegador = (t: string) => (t.startsWith("(") ? t.slice(1, -1).split("|").some((x) => NEGADORES.has(x)) : NEGADORES.has(t));
+    const conNegadorEnForma = negativa || tokens.some(esNegador);
+    const cs = tokens.filter((t) => !esVacia(t) && !esNegador(t)).map(comparadorDe);
+    if (cs.length < 2) continue;
+    for (let i = 0; i < ws.length; i++) {
+      if (!cs.some((c) => c(ws[i]))) continue;
+      for (const largo of [8, 12]) {
+        const ventana = ws.slice(i, i + largo);
+        const presentes = cs.filter((c) => ventana.some((w) => c(w))).length;
+        const credito = presentes === cs.length && largo === 8 ? 1 : presentes >= 2 && presentes / cs.length >= 2 / 3 ? 0.5 : 0;
+        if (credito <= mejor) continue;
+        const conNegacion = ws.slice(Math.max(0, i - 3), i + largo).some((w) => NEGADORES.has(w));
+        if (conNegadorEnForma ? !conNegacion : conNegacion) continue;
+        mejor = credito;
+        if (mejor === 1) return 1;
+      }
+    }
+  }
+  return mejor;
+}
+
 // ---------------------------------------------------------------- citas bíblicas
 
 const LIBRO_NORMAL = new Map(Object.keys(BIBLE_BOOK_CHAPTERS).map((k) => [normalizar(k).replace(/\s+/g, ""), k]));
@@ -266,12 +313,20 @@ export function corregirEscrita(clave: ClaveEscrita, texto: string, op: Opciones
     marcas.push(`concepto errado: ${e.id}`);
   }
 
-  // las ideas
+  // las ideas: tal cual, en otro orden (entera) o a medias (la mitad)
   const encontradas = new Set<string>();
+  const medias = new Set<string>();
   for (const idea of clave.ideas) {
-    if (!anuladas.has(idea.id) && aparece(ws, idea.formas, !!idea.negativa)) encontradas.add(idea.id);
+    if (anuladas.has(idea.id)) continue;
+    if (aparece(ws, idea.formas, !!idea.negativa)) {
+      encontradas.add(idea.id);
+      continue;
+    }
+    const credito = creditoFlexible(ws, idea.formas, !!idea.negativa);
+    if (credito >= 1) encontradas.add(idea.id);
+    else if (credito > 0) medias.add(idea.id);
   }
-  let puntos = clave.ideas.filter((i) => encontradas.has(i.id)).reduce((a, i) => a + i.peso, 0);
+  let puntos = clave.ideas.reduce((a, i) => a + (encontradas.has(i.id) ? i.peso : medias.has(i.id) ? i.peso / 2 : 0), 0);
   let total = clave.ideas.reduce((a, i) => a + i.peso, 0);
 
   // la cita
@@ -339,12 +394,12 @@ export function corregirEscrita(clave: ClaveEscrita, texto: string, op: Opciones
   if (dudosa) marcas.push("nota dudosa");
   return {
     nota,
-    ideas: clave.ideas.map((i) => ({ texto: i.texto, ok: encontradas.has(i.id) })),
+    ideas: clave.ideas.map((i) => ({ texto: i.texto, ok: encontradas.has(i.id), ...(medias.has(i.id) ? { medio: true } : {}) })),
     cita: { pedida: !!pesoCita, encontrada: citaEncontrada, valida: citaValida },
     avisos,
     revisar: marcas.length > 0,
     palabras: todas.length,
-    detalle: { ideas: [...encontradas], errores: errores.map((e) => e.id), marcas, puntos, total },
+    detalle: { ideas: [...encontradas], medias: [...medias], errores: errores.map((e) => e.id), marcas, puntos, total },
   };
 }
 

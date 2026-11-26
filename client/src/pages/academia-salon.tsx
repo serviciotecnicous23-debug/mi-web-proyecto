@@ -7,7 +7,7 @@ import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight, Award, BookOpen, BookOpenCheck, Brain, CalendarCheck2, CheckCircle2, ClipboardList, Compass, FileText, Flame, GraduationCap, Highlighter, IdCard,
-  Layers, Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Users, Video,
+  Layers, Library, ListChecks, NotebookPen, PenLine, PlayCircle, ScrollText, Sparkles, Timer, Trophy, Users, Video,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTituloAcademia } from "@/components/academia/titulo";
@@ -414,6 +414,7 @@ export default function AcademiaSalon() {
             <Herramienta href="/academia/diagnostico" icono={Compass} titulo="Prueba diagnóstica" texto="Te sugiere por dónde seguir" />
             <Herramienta href="/academia/carne" icono={IdCard} titulo="Mi carné" texto="Para mostrarlo o descargarlo en PDF" />
             <Herramienta href="/academia/expediente" icono={FileText} titulo="Mi expediente" texto="Tus materias, notas y certificados" />
+            <Herramienta href="/academia/cuadro-de-honor" icono={Trophy} titulo="Cuadro de honor" texto="La clasificación, los estudiantes y sus logros" />
             <Herramienta href="/capacitaciones" icono={Users} titulo="Clases en vivo" texto="Los cursos de la Escuela" />
             <Herramienta href="/academia/reglamento" icono={ScrollText} titulo="Reglamento" texto="Cómo se estudia y se evalúa" />
           </div>

@@ -91,6 +91,8 @@ const AcademiaExpediente = lazy(() => import("@/pages/academia-expediente"));
 const AcademiaCarne = lazy(() => import("@/pages/academia-carne"));
 const AcademiaCuaderno = lazy(() => import("@/pages/academia-cuaderno"));
 const AcademiaSalon = lazy(() => import("@/pages/academia-salon"));
+const AcademiaHonor = lazy(() => import("@/pages/academia-honor"));
+const AcademiaHonorAlumno = lazy(() => import("@/pages/academia-honor-alumno"));
 const AcademiaSuficiencia = lazy(() => import("@/pages/academia-suficiencia"));
 const AcademiaDiagnostico = lazy(() => import("@/pages/academia-diagnostico"));
 const AcademiaDiagnosticoPrueba = lazy(() => import("@/pages/academia-diagnostico").then((m) => ({ default: m.AcademiaDiagnosticoPrueba })));
@@ -204,6 +206,8 @@ function Router() {
       <Route path="/academia/carne" component={AcademiaCarne} />
       <Route path="/academia/cuaderno" component={AcademiaCuaderno} />
       <Route path="/academia/salon" component={AcademiaSalon} />
+      <Route path="/academia/cuadro-de-honor" component={AcademiaHonor} />
+      <Route path="/academia/cuadro-de-honor/:id" component={AcademiaHonorAlumno} />
       <Route path="/academia/expediente" component={AcademiaExpediente} />
       <Route path="/academia/acompanados" component={AcademiaAcompanados} />
       <Route path="/academia/suficiencia/:materiaId" component={AcademiaSuficiencia} />

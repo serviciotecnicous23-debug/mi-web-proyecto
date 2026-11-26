@@ -214,8 +214,8 @@ la sincronización de la biblioteca»). Es el mismo cuaderno en la academia (`/a
     `api.ts`, id 0): no hay que elegir nada antes y no quedan notas vacías. En la lección, el título es el de la lección.
   - La barra (arriba, fija mientras se escribe): **«Aa»** con el estilo del renglón (título, encabezado, cuerpo o cita),
     las marcas (negrita, cursiva, subrayado, tachado y resaltar), las listas (viñetas, numerada y tareas) y la sangría; la
-    **lista de tareas** con el círculo de Notas; **insertar** un versículo, una idea importante o una línea; **dictar con
-    la voz**; deshacer y **Listo** (deja de escribir).
+    **lista de tareas** con el círculo de Notas; **insertar** un versículo, una idea importante o una línea; deshacer y
+    **Listo** (deja de escribir). (El dictado por voz se quitó el 26-nov: no dejaba bien el texto.)
   - Enter sigue la lista, borrar en un renglón vacío de lista lo vuelve texto y en uno de texto lo quita, «/» abre el menú
     de estilos y Tab da sangría. Ctrl+B, Ctrl+I y Ctrl+U ponen o quitan la marca.
   - Ya no se ofrecen plantillas con preguntas (siguen en `PLANTILLAS` de `shared/cuaderno.ts` para el servidor).
@@ -724,14 +724,17 @@ Las del repaso no se retiran: se corrigen en el contenido.
 vive solo en el servidor: las ideas con su peso y sus formas aceptadas, las citas que la sostienen, los conceptos
 errados y una respuesta modelo. El corrector:
 - normaliza el texto (sin tildes ni signos) y tolera faltas pequeñas;
-- busca cada forma con hasta 2 palabras de más en medio;
+- busca cada forma con hasta 2 palabras de más en medio; si no está así, la busca **en otro orden** (todas sus
+  palabras con contenido en 8 palabras seguidas: vale entera) o **a medias** (dos tercios de ellas en 12 palabras: vale
+  la mitad y se ve en amarillo), siempre sin una negación cerca; una forma que trae su «no» pide la negación también
+  (26-nov: «lo mismo con otras palabras» ya no sale en rojo);
 - entiende la negación: «no es por obras» cuenta, pero «es por obras» es un concepto errado y anula la idea;
 - reconoce citas bíblicas escritas por el alumno, también abreviadas, y comprueba que existan;
 - pide un mínimo de palabras;
 - detecta las listas de palabras sueltas y las copias de la pregunta;
 - deja anotado el texto pegado;
-- da la nota idea por idea y marca **para revisar** lo dudoso (de 40 a 74, conceptos errados, texto pegado, listas o
-  copias).
+- da la nota idea por idea, en verde (la dijo), amarillo (a medias) o rojo (faltó), y marca **para revisar** lo dudoso
+  (de 40 a 74, conceptos errados, texto pegado, listas o copias).
 
 La nota automática vale mientras quien tenga el cargo no la cambie.
 

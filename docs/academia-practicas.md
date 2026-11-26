@@ -6,16 +6,23 @@ evidencia de cada decisión, está en el documento «Motor de prácticas de la A
 
 ## 1. Qué ve el alumno
 
-- **La práctica guiada** de cada lección: se abre al completar la lección (la página de la lección lleva directo a ella,
-  con `?tras=1`). Empieza con un **Relámpago** (las preguntas de las tarjetas, cada una con tres respuestas) y sigue con
-  las actividades, con **pistas** (la frase de la lección) y la explicación de cada respuesta. Al terminarla, la lección
-  gana su primera estrella y sus actividades entran al calendario de repasos.
-- **La práctica que cuenta**: se abre después de la guiada. Sin pistas, con **otras versiones** de las actividades y
-  **3 intentos por día** (vale la mejor). Con 80 o más, los objetivos quedan **dominados** (2 estrellas); con 100, las 3.
-  Se corrige en el servidor: las respuestas no llegan al teléfono antes de contestar.
+- **La práctica de cada lección** (una sola desde el 26-nov, pedido de Luis: «que solamente dejes una sola, la que
+  vale, y que sea completa»): se abre al completar la lección (la página de la lección lleva directo a ella, con
+  `?tras=1`). Empieza con un **Relámpago** (las preguntas de las tarjetas, cada una con tres respuestas) y sigue con las
+  actividades en muchas formas. **Cuenta para la nota** y se repite **sin límite** (vale la mejor): con 80 o más los
+  objetivos quedan **dominados** (2 estrellas); con 100, las 3; al hacerla, la primera. Si se traba, puede pedir **una
+  pista** (la frase de la lección): esa actividad vale la mitad. Cada intento trae otras versiones. Se corrige en el
+  servidor: las respuestas no llegan al teléfono antes de contestar. Al terminarla, sus actividades entran al calendario
+  de repasos.
 - **Es obligatoria** para quien cursa la materia (en las materias cuyas prácticas entran en la nota): el examen final
-  pide la práctica que cuenta de cada lección (`leccionesSinPractica` en `estadoExamen`). Quien ya aprobó la materia
-  practica cuando quiera y su nota ya no cambia (no se recalcula y sus pesos quedaron guardados al aprobar).
+  pide la práctica de cada lección (`leccionesSinPractica` en `estadoExamen`). Quien ya aprobó la materia practica
+  cuando quiera y su nota no baja.
+- **El reto de dominio: los puntos extra** (26-nov). Con la materia aprobada cursándola, cada lección tiene su reto:
+  todas sus actividades en su forma más difícil (`formatoDificil`: escribir en vez de elegir, ¿cuál es falsa?,
+  detective…) y sin pistas. Con 90 o más queda dominado y completa su parte de lo que le falta a la nota para llegar a
+  100 (`extraDeLecciones`: con todos dominados, la nota llega a 100). Los puntos extra nunca deciden si aprueba: eso lo
+  deciden el examen final y la nota del curso. Se guardan aparte (`academia_materias.nota_base` y `extra`) y el cuadro
+  de honor los pesa la mitad.
 - **La práctica del día** (`/academia/practicar/dia`): lo que toca repasar hoy, hasta 6 actividades, mezcladas (nunca más
   de 2 seguidas de la misma lección). Vuelven a los 1, 3, 7, 15, 30 y 60 días: bien sube un escalón, a medias repite, mal
   baja dos y vuelve mañana. Lo respondido bien después de 30 días queda **firme**.
@@ -58,7 +65,7 @@ también se arrastra), sonidos cortos que se apagan con un toque y respeto por �
 | `error` | Encuentra el error, Detective (las frases seguidas, como un texto) | Nivel 1 |
 | `situacion` | Situación, Conversación (el caso llega como un mensaje) | Nivel 1 |
 | `explica` | Explícalo con tus palabras; se corrige con una clave | Nivel 1 |
-| `linea` | Ordena hechos en el tiempo; al corregir ve las fechas | Nivel 2 |
+| `linea` | Línea del tiempo (ordenar los hechos; al corregir ve las fechas), Escalones y ¿Dónde va? (con la fecha al corregir) | Nivel 2 |
 | `mapa-ideas` | Elige la relación de cada enlace entre ideas | Nivel 2 |
 | `mapa` | Toca un lugar en una imagen (un mapa) | Nivel 2 |
 | `pasaje` | Toca las palabras de un pasaje que responden | Nivel 2 |
@@ -66,8 +73,8 @@ también se arrastra), sonidos cortos que se apagan con un toque y respeto por �
 | `caso` | Lee un caso y responde por pasos | Nivel 4 |
 
 Una forma solo se elige si la actividad la permite (`formatosPosibles`): Relámpago con 3 tarjetas o más; Elige la pareja
-con 3 parejas; Desliza con 2 grupos; ¿Cuál no va? con un grupo de 3 frases o más; Escalones con 3 pasos; ¿Dónde va? con
-4; ¿Cuál es falsa? con frases verdaderas y falsas suficientes entre las dos versiones. Las 15 piezas ya funcionan: los
+con 3 parejas; Desliza con 2 grupos; ¿Cuál no va? con un grupo de 3 frases o más; Escalones con 3 pasos o hechos; ¿Dónde va?
+con 4; ¿Cuál es falsa? con frases verdaderas y falsas suficientes entre las dos versiones. Las 15 piezas ya funcionan: los
 niveles siguientes solo traen contenido.
 
 ## 3. Cómo se escribe la práctica de una materia
@@ -98,7 +105,10 @@ El modelo es `server/academia/practicas/n1-salvacion.ts` y el formato exacto, `s
      versiones).
    - Situación: el caso como «Quién te dice: el mensaje» (Conversación lo usa) y opciones de largo parecido (la buena
      no puede delatarse por ser la más larga). Una sola buena; las otras, errores creíbles; cada una con su explicación.
-   - Los largos máximos (`LARGOS` en `validar.ts`): grupo 40, frase 90, pregunta de tarjeta 90, respuesta 120…
+   - Los largos máximos (`LARGOS` en `validar.ts`): grupo 40, frase 90, pregunta de tarjeta 90, respuesta 120, idea del
+     mapa 40, relación 28, fecha 30…
+   - `pasaje`: solo con una cita escrita en la lección entre « » (los bloques `versiculo` traen solo la cita, sin el
+     texto); la prueba revisa que esté copiada. No hay imágenes para `mapa` todavía.
 7. `completa`: las palabras que no van deben ser claramente incorrectas en ese lugar; `errores` explica las típicas.
 8. `explica`: clave de tipo `"corta"` (15 a 60 palabras) con 2 o 3 ideas que suman 100 y una respuesta `modelo` que
    saque 90 o más con su propia clave. Ids: `pr-<leccionId>-<actividadId>-<n>`.
@@ -119,6 +129,8 @@ Cuando todas las lecciones de una materia tienen práctica, la materia queda **c
   cursaba termina con la fórmula de antes.
 - El componente «Prácticas» es el promedio de la mejor práctica que cuenta de cada lección (la que falta cuenta 0).
   Como se puede repetir (vale la mejor), ayuda a subir la nota a quien va abajo, según su peso.
+- **Los puntos extra** se suman a la nota de la materia aprobada (`recalcularMateria` y `reconsiderarMateria`):
+  `nota = nota sin extra + extra`, hasta 100. Las aprobadas por suficiencia o convalidadas no tienen reto.
 - Pesos por defecto (`PESOS_CON_PRACTICAS`, en %, equilibrados el 23-nov): Nivel 1: final 40, prácticas 30, repasos
   15, versículo 15. Nivel 2: final 35, prácticas 25, mini 15, escritos 15, versículo 10. Niveles 3 a 5 y
   especialidades: final 30, prácticas 25, mini 15, escritos 20, versículo 10. Fuera de eso, `PESOS_NIVEL` pone las
@@ -157,6 +169,7 @@ La revisión doctrinal de cada materia (`/admin/academia/contenido/<id>`) tiene 
 | La nota y si la práctica es obligatoria | `server/academia-practicas-nota.ts` |
 | Reproductor (modalidades), piezas, formas, «Así se juega», resultado, camino, panel | `client/src/components/practicas/` |
 | Insignias y vitrina | `client/src/components/academia/insignias.tsx` |
+| El cuadro de honor (clasificación, comunidad y perfiles) | `shared/academia-honor.ts`, `server/academia-honor.ts`, `academia-honor.tsx`, `academia-honor-alumno.tsx` |
 | Páginas | `academia-practica.tsx`, `academia-practicar.tsx`, `academia-practicar-sesion.tsx`, `academia-juego.tsx` |
 
 Tablas (aditivas; se borran con la cuenta): `academia_practicas_intentos` (cada intento con el estado de sus
@@ -173,3 +186,18 @@ Rutas del alumno (`/api/academia/practicas/…`): `leccion/:id`, `leccion/:id/em
 Un intento a medias se retoma durante un día (en el teléfono se corta a veces); los intentos empezados de la que cuenta
 también cuentan para el límite del día. Un intento de antes de las formas se sigue jugando: sus actividades toman la
 forma de siempre.
+
+## 7. El cuadro de honor
+
+`/academia/cuadro-de-honor` (26-nov, pedido de Luis): lo ven los estudiantes inscritos y la Administración, nunca es
+público.
+
+- **La clasificación**, general y por nivel. Los **puntos de honor** son la suma de las notas de las materias aprobadas
+  sin los puntos extra, más la mitad de los puntos extra (`puntosDeHonor`). A igual puntaje va primero el mejor promedio
+  sin extra (quien respondió todo bien no queda debajo de quien llegó con práctica), después quien aprobó más materias y
+  después quien llegó antes (`compararHonor`). Los tres primeros van en un podio.
+- **La comunidad**: los estudiantes activos y los egresados, con buscador por nombre.
+- **El perfil** de cada uno: su puesto (general y en su nivel), sus números, los niveles que cerró, su vitrina de
+  insignias y sus medallas de práctica.
+- Solo se muestra el nombre corto (primer nombre y primer apellido), el nivel, el país y la iglesia; nunca el teléfono ni
+  el correo. Cada estudiante puede ocultarse (`academia_alumnos.en_cuadro`; por defecto se muestra).

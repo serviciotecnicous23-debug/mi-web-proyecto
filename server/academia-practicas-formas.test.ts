@@ -3,10 +3,10 @@
 // delata la respuesta y cada forma trae su consigna. Así una materia nueva queda probada en todas sus formas sola.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contestar, escritoIgual, formatosPosibles, nuevoEstado, preguntaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { contestar, escritoIgual, formatoDificil, formatosPosibles, listaDe, nuevoEstado, ordenDeLista, preguntaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
 import { TODAS_LAS_PRACTICAS } from "./academia/practicas/index";
 import type { Actividad } from "./academia/practicas/tipos";
-import { FORMATOS, FORMATOS_SOLO_PARA_APRENDER, type Formato, type RespuestaPractica } from "@shared/practicas";
+import { FORMATOS, FORMATOS_SOLO_PARA_APRENDER, extraDeLecciones, type Formato, type RespuestaPractica } from "@shared/practicas";
 
 const huecos = (texto: string) => [...texto.matchAll(/\[\[([^\]]+)\]\]/g)].map((m) => m[1]);
 const normal = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -35,18 +35,17 @@ function respuesta(a: Actividad, e: EstadoItem, bien: boolean): RespuestaPractic
       return { pieza: "clasifica", grupo: otra(v.frases[e.orden.frases[e.paso]].grupo, 2) };
     case "intruso":
       return { pieza: "clasifica", frase: otra(r.frases.indexOf(r.intruso), r.frases.length) };
-    case "lista":
-      if (a.pieza !== "ordena") return null;
-      {
-        const orden = v.pasos.map((_: unknown, i: number) => e.orden.pasos.indexOf(i));
-        return { pieza: "ordena", orden: bien ? orden : [...orden].reverse() };
-      }
+    case "lista": {
+      if (a.pieza !== "ordena" && a.pieza !== "linea") return null;
+      const orden = listaDe(a, v).textos.map((_: unknown, i: number) => ordenDeLista(a, e).indexOf(i));
+      return { pieza: a.pieza, orden: bien ? orden : [...orden].reverse() } as RespuestaPractica;
+    }
     case "escalones": {
-      const opciones = e.orden.pasos.filter((k) => k >= e.paso);
-      return { pieza: "ordena", opcion: otra(opciones.indexOf(e.paso), opciones.length) };
+      const opciones = ordenDeLista(a, e).filter((k) => k >= e.paso);
+      return { pieza: a.pieza, opcion: otra(opciones.indexOf(e.paso), opciones.length) } as RespuestaPractica;
     }
     case "donde-va":
-      return { pieza: "ordena", opcion: otra(r.hueco, v.pasos.length) };
+      return { pieza: a.pieza, opcion: otra(r.hueco, listaDe(a, v).textos.length) } as RespuestaPractica;
     case "verdad-o-error":
       return { pieza: "verdad", verdad: bien ? v.afirmaciones[e.paso].verdad : !v.afirmaciones[e.paso].verdad };
     case "cual-falsa":
@@ -100,7 +99,7 @@ function revisarVista(a: Actividad, e: EstadoItem, donde: string) {
       assert.equal(vista.colocados.length, vista.paso, donde);
       break;
     case "donde-va":
-      assert.equal(vista.lista.length, v.pasos.length - 1, donde);
+      assert.equal(vista.lista.length, listaDe(a, v).textos.length - 1, donde);
       assert.ok(!vista.lista.includes(vista.suelto), `${donde}: el paso suelto sigue en la lista`);
       break;
     case "cual-falsa":
@@ -151,7 +150,7 @@ for (const p of TODAS_LAS_PRACTICAS) {
         });
       }
     }
-    assert.ok(jugadas > 0);
+    assert.ok(jugadas > 0 || Object.values(p.lecciones).every((l) => !l.length), "hay actividades y ninguna se jugó");
   });
 }
 
@@ -193,4 +192,55 @@ test("un intento de antes de las formas (sin forma ni rondas) se sigue jugando",
       assert.equal(r.devolucion.terminada, true, "el relámpago de antes termina en un paso");
     }
   }
+});
+
+test("la línea del tiempo se juega en sus tres formas (lista, escalones y ¿dónde va?)", () => {
+  const eventos = [
+    { texto: "Dios llama a Abraham", fecha: "Hacia el 2000 a. C." },
+    { texto: "Moisés saca al pueblo de Egipto", fecha: "Hacia el 1446 a. C." },
+    { texto: "David reina en Jerusalén", fecha: "Hacia el 1000 a. C." },
+    { texto: "El pueblo va al exilio en Babilonia", fecha: "586 a. C." },
+    { texto: "El regreso a Jerusalén", fecha: "538 a. C." },
+  ];
+  const v = { consigna: "Ordena los hechos del primero al último.", eventos, explica: "Así avanza la historia.", apoyo: "una frase" };
+  const a = { id: "z1", objetivo: 0, pieza: "linea", versiones: [v, { ...v, eventos: [...eventos].reverse().reverse() }] } as unknown as Actividad;
+  const formas = formatosPosibles(a, 0, "guiada");
+  assert.deepEqual(formas, ["lista", "escalones", "donde-va"]);
+  for (const f of formas) {
+    for (const semilla of [3, 77, 2024]) {
+      const donde = `línea ${f} (semilla ${semilla})`;
+      const e = nuevoEstado("prueba", a, 0, semilla, f);
+      assert.equal(jugar(a, e, true, donde), 1, `${donde}: todo bien no vale 1`);
+      assert.ok(jugar(a, e, false, donde) < 1, `${donde}: todo mal vale 1`);
+    }
+  }
+  // al corregir ¿dónde va? o escalones, la explicación trae la fecha
+  const e = nuevoEstado("prueba", a, 0, 5, "escalones");
+  const r = contestar(a, e, respuesta(a, e, false)!);
+  assert.match(r.devolucion.explica, /a\. C\./);
+  assert.equal(vistaDe(a, e).pieza, "linea");
+});
+
+test("el reto de dominio usa la forma más difícil que se pueda, y se juega entero", () => {
+  const p = TODAS_LAS_PRACTICAS.find((x) => x.materia === "n1-salvacion")!;
+  for (const [leccion, actividades] of Object.entries(p.lecciones)) {
+    for (const a of actividades) {
+      if (a.pieza === "explica") continue;
+      const f = formatoDificil(a, 0);
+      assert.ok(formatosPosibles(a, 0, "reto").includes(f), `${leccion}/${a.id}: ${f}`);
+      if (a.pieza === "completa") assert.equal(f, "escribe", "completar se escribe en el reto");
+      if (a.pieza === "verdad") assert.equal(f, "cual-falsa");
+      if (FORMATOS[a.pieza].length > 1) assert.equal(jugar(a, nuevoEstado(leccion, a, 0, 11, f), true, `${leccion}/${a.id} reto`), 1);
+    }
+  }
+});
+
+test("los puntos extra completan lo que falta para 100, en la parte de cada reto dominado", () => {
+  assert.equal(extraDeLecciones(80, 0, 6), 0);
+  assert.equal(extraDeLecciones(80, 3, 6), 10);
+  assert.equal(extraDeLecciones(80, 6, 6), 20, "con todos dominados llega a 100");
+  assert.equal(extraDeLecciones(74, 1, 4), 7, "26 ÷ 4 = 6,5: se redondea");
+  assert.equal(extraDeLecciones(100, 6, 6), 0);
+  assert.equal(extraDeLecciones(90, 9, 6), 10, "nunca más que las lecciones");
+  assert.equal(extraDeLecciones(90, 2, 0), 0);
 });

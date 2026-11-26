@@ -41,8 +41,10 @@ export function useMedallas(activo = true) {
   });
 }
 
-export const empezarLeccion = (leccionId: string, modo: "guiada" | "cuenta") =>
-  pedir<IntentoVista>("POST", `/api/academia/practicas/leccion/${encodeURIComponent(leccionId)}/empezar`, { modo });
+export const empezarLeccion = (leccionId: string) =>
+  pedir<IntentoVista>("POST", `/api/academia/practicas/leccion/${encodeURIComponent(leccionId)}/empezar`, { modo: "cuenta" });
+export const empezarReto = (leccionId: string) =>
+  pedir<IntentoVista>("POST", `/api/academia/practicas/leccion/${encodeURIComponent(leccionId)}/reto`, {});
 export const empezarMision = (materiaId: string) => pedir<IntentoVista>("POST", `/api/academia/practicas/materia/${encodeURIComponent(materiaId)}/mision`, {});
 export const practicaDelDia = () => pedir<IntentoVista | { vacio: true; resumen: PracticaDelDiaResumen }>("GET", "/api/academia/practicas/dia");
 export const responder = (intento: number, n: number, respuesta: RespuestaPractica) =>

@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BookOpen, CircleHelp, Flag, Flame, Lightbulb, Loader2, Play, Timer, Volume2, VolumeX, X } from "lucide-react";
+import { BookOpen, CircleHelp, Crown, Flag, Flame, Lightbulb, Loader2, Play, Timer, Volume2, VolumeX, X } from "lucide-react";
 import { NOMBRE_MODO, type Devolucion, type Formato, type IntentoVista, type ItemVista, type Modalidad, type RespuestaPractica, type ResultadoPractica } from "@shared/practicas";
 import { useConfirmar } from "@/components/confirmar";
 import { pedirPista, responder, terminarIntento } from "./api";
@@ -233,7 +233,7 @@ const guardarBono = (clave: string, valor: number) => {
 
 // ---------------------------------------------------------------- el reproductor
 
-export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoVista; alSalir: () => void; alOtraVez?: (modo: "guiada" | "cuenta") => void }) {
+export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoVista; alSalir: () => void; alOtraVez?: () => void }) {
   const quieto = useReducedMotion();
   const { pedir: confirmar, ventana } = useConfirmar();
   const modalidad: Modalidad = intento.modalidad ?? "camino";
@@ -438,7 +438,11 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
       ? `Misión · ${intento.materia.titulo}`
       : intento.modo === "dia"
         ? "Práctica del día"
-        : `${NOMBRE_MODO[intento.modo]}${intento.leccion ? ` · Lección ${intento.leccion.n}` : ""}`;
+        : intento.modo === "reto"
+          ? `${intento.leccion ? `Lección ${intento.leccion.n} · ` : ""}Reto de dominio`
+          : intento.modo === "cuenta"
+          ? `${intento.leccion ? `Lección ${intento.leccion.n} · ` : ""}Cuenta para tu nota`
+          : `${NOMBRE_MODO[intento.modo]}${intento.leccion ? ` · Lección ${intento.leccion.n}` : ""}`;
   const contenido = (
     <div className="fixed inset-0 z-50 bg-background text-foreground flex flex-col" role="dialog" aria-modal="true" aria-label={intento.titulo} data-testid="reproductor" data-modalidad={modalidad}>
       {/* arriba: salir, la llama de avance, la modalidad y los puntos */}
@@ -479,19 +483,19 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
           {intento.prueba && <p className="mb-3 rounded-xl bg-sky-500/10 border border-sky-500/30 px-3 py-2 text-xs text-sky-900 dark:text-sky-100">Vista de la Administración: pruebas la práctica y nada cuenta.</p>}
           {portada && !resultado ? (
             <motion.div initial={quieto ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center pt-4" data-testid="portada-practica">
-              <span className="inline-flex w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-red-600 text-white items-center justify-center shadow-xl rotate-3">
-                {intento.modo === "mision" ? <Flag className="w-10 h-10" /> : <Flame className="w-10 h-10" fill="currentColor" fillOpacity={0.3} />}
+              <span className={`inline-flex w-20 h-20 rounded-3xl text-white items-center justify-center shadow-xl rotate-3 ${intento.modo === "reto" ? "bg-gradient-to-br from-yellow-400 to-amber-600" : "bg-gradient-to-br from-orange-500 to-red-600"}`}>
+                {intento.modo === "mision" ? <Flag className="w-10 h-10" /> : intento.modo === "reto" ? <Crown className="w-10 h-10" /> : <Flame className="w-10 h-10" fill="currentColor" fillOpacity={0.3} />}
               </span>
               <p className="mt-4 text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">{etiquetaModo}</p>
               <h2 className="mt-1 text-[28px] font-black leading-tight">{intento.titulo}</h2>
-              {(intento.modo === "mision" || intento.modo === "dia") && <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground max-w-md mx-auto">{intento.subtitulo}</p>}
+              {(intento.modo === "mision" || intento.modo === "dia" || intento.modo === "reto") && <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground max-w-md mx-auto">{intento.subtitulo}</p>}
               <p className="mt-3 text-sm font-semibold">
                 {total} {total === 1 ? "actividad" : "actividades"}
                 {formas > 1 ? ` · ${formas} formas de jugar` : ""}
                 {intento.modo === "mision" ? " de todas las lecciones" : ""}
               </p>
-              {intento.modo === "cuenta" && !intento.prueba && <p className="mt-1 text-sm text-muted-foreground">Cuenta para tu nota: vale la mejor de las que hagas hoy.</p>}
-              <TarjetaModalidad modalidad={modalidad} />
+              {intento.modo === "cuenta" && !intento.prueba && <p className="mt-1 text-sm text-muted-foreground">Vale tu mejor intento: la puedes repetir cuando quieras.</p>}
+              {intento.modo !== "reto" && <TarjetaModalidad modalidad={modalidad} />}
               <button type="button" onClick={() => setPortada(false)} className="mt-6 h-14 px-8 rounded-2xl font-black text-lg text-white bg-gradient-to-r from-amber-500 to-orange-600 inline-flex items-center gap-2 shadow-lg shadow-orange-500/25" data-testid="empezar-portada">
                 <Play className="w-5 h-5" fill="currentColor" /> {intento.modo === "mision" ? "Empezar la misión" : "Empezar"}
               </button>
@@ -537,7 +541,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
                         className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-300 hover:underline"
                         data-testid="pista"
                       >
-                        <Lightbulb className="w-4 h-4" /> Ver una pista
+                        <Lightbulb className="w-4 h-4" /> Ver una pista{intento.modo === "cuenta" && <span className="font-normal text-muted-foreground"> (esta actividad valdrá la mitad)</span>}
                       </button>
                     )}
                   </div>

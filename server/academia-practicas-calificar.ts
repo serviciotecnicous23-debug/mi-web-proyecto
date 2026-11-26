@@ -10,7 +10,7 @@
 import { ordenDeOpciones } from "@shared/estudios";
 import {
   CONSIGNA_PIEZA, COMO_SE_JUEGA, FORMATOS, FORMATOS_SOLO_PARA_APRENDER,
-  type Correccion, type Devolucion, type Formato, type ItemVista, type ModoPractica, type RespuestaPractica,
+  type Correccion, type Devolucion, type Formato, type ItemVista, type ModoPractica, type Pieza, type RespuestaPractica,
 } from "@shared/practicas";
 import { ESCRITA } from "@shared/academia";
 import { corregirEscrita, distancia, normalizar } from "./academia-correccion";
@@ -55,6 +55,19 @@ function versionDe<A extends Actividad>(a: A, e: EstadoItem): A["versiones"][num
 /** La forma de jugar de un estado (los de antes de las formas: la primera de su pieza). */
 export const formatoDe = (a: Actividad, e: EstadoItem): Formato => e.formato ?? (FORMATOS[a.pieza][0] as Formato);
 
+/**
+ * La lista en su orden de una actividad que se ordena: los pasos de `ordena` o los hechos de la `linea` (con su fecha,
+ * que se muestra al corregir). Escalones y ¿Dónde va? juegan las dos.
+ */
+export function listaDe(a: Actividad, v: any): { textos: string[]; fechas: (string | null)[] } {
+  if (a.pieza === "linea") return { textos: v.eventos.map((x: any) => x.texto as string), fechas: v.eventos.map((x: any) => x.fecha as string) };
+  return { textos: (v.pasos ?? []) as string[], fechas: ((v.pasos ?? []) as string[]).map(() => null) };
+}
+/** El orden mezclado en que se muestran los pasos o los hechos. */
+export const ordenDeLista = (a: Actividad, e: EstadoItem): number[] => (a.pieza === "linea" ? e.orden.eventos : e.orden.pasos) ?? [];
+/** Un paso o un hecho para las explicaciones (el hecho, con su fecha). */
+const conFecha = (l: { textos: string[]; fechas: (string | null)[] }, k: number) => (l.fechas[k] ? `${l.textos[k]} (${l.fechas[k]})` : l.textos[k]);
+
 /** Las formas que se arman por rondas (`EstadoItem.rondas`). */
 const POR_RONDAS = new Set<Formato>(["relampago", "elige", "elige-pareja", "intruso", "donde-va", "cual-falsa"]);
 
@@ -86,9 +99,9 @@ export function formatosPosibles(a: Actividad, version: number, modo: ModoPracti
       case "intruso":
         return intrusoPosible(v);
       case "escalones":
-        return (v.pasos?.length ?? 0) >= 3;
+        return listaDe(a, v).textos.length >= 3;
       case "donde-va":
-        return (v.pasos?.length ?? 0) >= 4;
+        return listaDe(a, v).textos.length >= 4;
       case "cual-falsa": {
         const af = afirmacionesDe(a);
         const f1 = af.filter((x) => !x.verdad).length;
@@ -99,6 +112,24 @@ export function formatosPosibles(a: Actividad, version: number, modo: ModoPracti
         return true;
     }
   });
+}
+
+/** Las formas de cada pieza, de la más difícil a la más fácil (el reto de dominio usa la más difícil que se pueda). */
+const DIFICULTAD: Partial<Record<Pieza, Formato[]>> = {
+  completa: ["escribe", "elige", "banco"],
+  relaciona: ["parejas", "elige-pareja"],
+  clasifica: ["recuadros", "intruso", "desliza"],
+  ordena: ["lista", "donde-va", "escalones"],
+  linea: ["lista", "donde-va", "escalones"],
+  verdad: ["cual-falsa", "verdad-o-error"],
+  error: ["detective", "frases"],
+  situacion: ["chat", "opciones"],
+};
+
+/** La forma más difícil de una actividad (para el reto de dominio). */
+export function formatoDificil(a: Actividad, version: number): Formato {
+  const posibles = formatosPosibles(a, version, "reto");
+  return (DIFICULTAD[a.pieza] ?? []).find((f) => posibles.includes(f)) ?? posibles[0] ?? (FORMATOS[a.pieza][0] as Formato);
 }
 
 /** Cuántos pasos tiene una actividad en su forma de siempre (las que no van por pasos tienen 1). */
@@ -192,7 +223,7 @@ function rondasDe(a: Actividad, v: any, f: Formato, semilla: number, clave: stri
     }
     case "donde-va": {
       // (un paso sale de la lista y el alumno toca el lugar donde va: así nada se adivina por descarte)
-      const n = v.pasos.length;
+      const n = listaDe(a, v).textos.length;
       return tomar(Array.from({ length: n }, (_, k) => k), 2, semilla, `${clave}:huecos`)
         .sort((x, y) => x - y)
         .map((hueco) => ({ hueco }));
@@ -294,7 +325,7 @@ export function nuevoEstado(leccion: string, a: Actividad, version: number, semi
       total = v.frases.length;
       break;
     case "escalones":
-      total = Math.max(1, v.pasos.length - 1);
+      total = Math.max(1, listaDe(a, v).textos.length - 1);
       break;
     default:
       total = pasosDe(a, version);
@@ -402,14 +433,19 @@ export function vistaDe(a: Actividad, e: EstadoItem): ItemVista {
     }
     case "escalones": {
       const v: any = versionDe(a, e);
-      const colocados = (v.pasos as string[]).slice(0, p);
-      const opciones = e.orden.pasos.filter((k) => k >= p).map((k) => v.pasos[k] as string);
-      return { pieza: "ordena", formato: "escalones", consigna: v.consigna || COMO_SE_JUEGA.escalones, colocados, opciones, paso: p, pasos: total };
+      const l = listaDe(a, v).textos;
+      const colocados = l.slice(0, p);
+      const opciones = ordenDeLista(a, e)
+        .filter((k) => k >= p)
+        .map((k) => l[k]);
+      return { pieza: a.pieza === "linea" ? "linea" : "ordena", formato: "escalones", consigna: v.consigna || COMO_SE_JUEGA.escalones, colocados, opciones, paso: p, pasos: total };
     }
     case "donde-va": {
       const v: any = versionDe(a, e);
       const r = e.rondas![p];
-      return { pieza: "ordena", formato: "donde-va", consigna: COMO_SE_JUEGA["donde-va"], suelto: v.pasos[r.hueco], lista: (v.pasos as string[]).filter((_, k) => k !== r.hueco), paso: p, pasos: total };
+      const l = listaDe(a, v).textos;
+      const consigna = a.pieza === "linea" ? "Un hecho se salió de la línea del tiempo. Toca el lugar donde va." : COMO_SE_JUEGA["donde-va"];
+      return { pieza: a.pieza === "linea" ? "linea" : "ordena", formato: "donde-va", consigna, suelto: l[r.hueco], lista: l.filter((_, k) => k !== r.hueco), paso: p, pasos: total };
     }
     case "cual-falsa": {
       const r = e.rondas![p];
@@ -649,13 +685,14 @@ export function contestar(a: Actividad, e: EstadoItem, r: RespuestaPractica): { 
       break;
     }
     case "escalones": {
-      const opciones = e.orden.pasos.filter((k) => k >= e.paso);
+      const l = listaDe(a, v);
+      const opciones = ordenDeLista(a, e).filter((k) => k >= e.paso);
       const k = entero(res.opcion, opciones.length);
       const bien = k >= 0 && opciones[k] === e.paso;
       c = {
         puntaje: bien ? 1 : 0,
-        correccion: { pieza: "ordena", formato: "escalones", correcta: opciones.indexOf(e.paso) },
-        explica: [bien ? "" : `En el escalón ${e.paso + 1} va: ${v.pasos[e.paso]}.`, ultimo ? v.explica : ""].filter(Boolean).join(" "),
+        correccion: { pieza: a.pieza === "linea" ? "linea" : "ordena", formato: "escalones", correcta: opciones.indexOf(e.paso) },
+        explica: [bien ? (l.fechas[e.paso] ? `Así es: ${conFecha(l, e.paso)}.` : "") : `En el escalón ${e.paso + 1} va: ${conFecha(l, e.paso)}.`, ultimo ? v.explica : ""].filter(Boolean).join(" "),
         apoyo: v.apoyo,
         ref: v.ref ?? null,
       };
@@ -664,13 +701,14 @@ export function contestar(a: Actividad, e: EstadoItem, r: RespuestaPractica): { 
     case "donde-va": {
       // (los lugares van del 0, antes del primero, al último, después del último)
       const ronda = e.rondas![e.paso];
-      const k = entero(res.opcion, v.pasos.length);
+      const l = listaDe(a, v);
+      const k = entero(res.opcion, l.textos.length);
       const bien = k === ronda.hueco;
-      const donde = ronda.hueco === 0 ? "al comienzo" : `después de: ${v.pasos[ronda.hueco - 1]}`;
+      const donde = ronda.hueco === 0 ? "al comienzo" : `después de: ${conFecha(l, ronda.hueco - 1)}`;
       c = {
         puntaje: bien ? 1 : 0,
-        correccion: { pieza: "ordena", formato: "donde-va", correcta: ronda.hueco },
-        explica: [bien ? "" : `Va en el lugar ${ronda.hueco + 1}, ${donde}.`, ultimo ? v.explica : ""].filter(Boolean).join(" "),
+        correccion: { pieza: a.pieza === "linea" ? "linea" : "ordena", formato: "donde-va", correcta: ronda.hueco },
+        explica: [bien ? (l.fechas[ronda.hueco] ? `Así es: ${conFecha(l, ronda.hueco)}.` : "") : `Va en el lugar ${ronda.hueco + 1}, ${donde}.`, ultimo ? v.explica : ""].filter(Boolean).join(" "),
         apoyo: v.apoyo,
         ref: v.ref ?? null,
       };

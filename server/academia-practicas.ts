@@ -1,6 +1,6 @@
 /**
- * El motor de prácticas de la academia (docs/academia-practicas.md): la práctica de cada lección (guiada y la que
- * cuenta), la práctica del día, el camino y la misión de cada materia, los juegos libres, las medallas y lo que ve la
+ * El motor de prácticas de la academia (docs/academia-practicas.md): la práctica de cada lección (una sola, que cuenta
+ * y se repite sin límite: vale la mejor), la práctica del día, el camino y la misión de cada materia, los juegos libres, las medallas y lo que ve la
  * Administración. Arma y califica server/academia-practicas-calificar.ts; las respuestas viven en
  * server/academia/practicas/ y nunca se mandan antes de contestar. La Administración prueba sin inscribirse (sus
  * intentos quedan como prueba y no cuentan).
@@ -10,7 +10,7 @@ import type { Express, Request, Response } from "express";
 import { pool } from "./db";
 import { leccionPorId, materiaPorId, puedeRevisar, type MateriaDef, type NivelN } from "@shared/academia";
 import {
-  ESCALON_FIRME, MEDALLAS_PRACTICA, MODALIDADES, NOMBRE_FORMATO, NOMBRE_MODO, NOMBRE_PIEZA, PESOS_CON_PRACTICAS, PIEZAS, PRACTICAS, componentePracticas, type Modalidad, esCalificable, estadoObjetivo, estrellasDe,
+  ESCALON_FIRME, MEDALLAS_PRACTICA, MODALIDADES, NOMBRE_FORMATO, extraDeLecciones, NOMBRE_MODO, NOMBRE_PIEZA, PESOS_CON_PRACTICAS, PIEZAS, PRACTICAS, componentePracticas, type Modalidad, esCalificable, estadoObjetivo, estrellasDe,
   intercalarPorLeccion, medallaPractica, minutosDe, notaIntento, problemaDePesos, siguienteEscalon,
   type CaminoMateria, type Devolucion, type IntentoVista, type JuegoPregunta, type JuegoVista, type MedallaPractica, type ModoPractica, type ObjetivoResultado,
   type PracticaDelDiaResumen, type PracticaLeccionVista, type RespuestaPractica, type ResultadoPractica,
@@ -19,11 +19,12 @@ import { PESOS_NIVEL, type Pesos } from "@shared/academia-base";
 import { BANCOS, CONTENIDO } from "./academia/index";
 import { PRACTICAS_POR_MATERIA, actividadPorId, actividadesDe, leccionesConPractica, materiaConPracticas } from "./academia/practicas/index";
 import type { Actividad } from "./academia/practicas/tipos";
-import { contestar, formatoDe, formatosPosibles, nuevoEstado, pistaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { contestar, formatoDe, formatoDificil, formatosPosibles, listaDe, nuevoEstado, ordenDeLista, pistaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
 import { numeroDe } from "./orden-examen";
 import { ordenDeOpciones } from "@shared/estudios";
 import {
-  PRACTICAS_NOTA_SQL, asegurarConfig, componentePracticasDe, configDe, materiaAprobadaPor, olvidarConfig, pesosConPracticas, practicasCuentan, practicasObligatorias,
+  PRACTICAS_NOTA_SQL, asegurarConfig, componentePracticasDe, configDe, materiaAprobadaPor, materiaDelAlumno, olvidarConfig, pesosConPracticas, practicasCuentan, practicasObligatorias,
+  retoAbierto,
 } from "./academia-practicas-nota";
 import { MENSAJE_CERRADA, accesoDe, diaTexas, enFila, estaInscrito, frenar, inscritaEnMateria, marcarEstudio, recalcularMateria, type Acceso } from "./academia-comun";
 import { permisoDe } from "./academia-direccion";
@@ -58,6 +59,8 @@ CREATE TABLE IF NOT EXISTS academia_practicas_lecciones (
   updated_at timestamp NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, leccion_id)
 );
+ALTER TABLE academia_practicas_lecciones ADD COLUMN IF NOT EXISTS reto_mejor integer;
+ALTER TABLE academia_practicas_lecciones ADD COLUMN IF NOT EXISTS reto_at timestamp;
 CREATE TABLE IF NOT EXISTS academia_practicas_items (
   user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   clave text NOT NULL,
@@ -141,28 +144,28 @@ async function completadas(userId: number, ids: string[]): Promise<Set<string>> 
   return new Set((rows as any[]).map((r) => String(r.leccion_id)));
 }
 
-type Resumen = { guiada: boolean; mejor: number | null; objetivos: Record<string, number>; intentos: number; estrellas: number };
+type Resumen = { guiada: boolean; mejor: number | null; objetivos: Record<string, number>; intentos: number; estrellas: number; reto: number | null };
+/** Ya hizo la práctica de la lección (la de ahora, que cuenta, o la guiada de antes del 26-nov). */
+const hecha = (r?: Resumen | null) => !!r && (r.guiada || r.mejor != null);
 async function resumenesDe(userId: number, ids: string[]): Promise<Map<string, Resumen>> {
   if (!ids.length) return new Map();
   const { rows } = await pool.query(
-    `SELECT leccion_id, guiada_at, mejor, objetivos, intentos, estrellas FROM academia_practicas_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`,
+    `SELECT leccion_id, guiada_at, mejor, objetivos, intentos, estrellas, reto_mejor FROM academia_practicas_lecciones WHERE user_id = $1 AND leccion_id = ANY($2::text[])`,
     [userId, ids],
   );
   return new Map(
     (rows as any[]).map((r) => [
       String(r.leccion_id),
-      { guiada: !!r.guiada_at, mejor: r.mejor == null ? null : Number(r.mejor), objetivos: (r.objetivos ?? {}) as Record<string, number>, intentos: Number(r.intentos), estrellas: Number(r.estrellas) },
+      {
+        guiada: !!r.guiada_at,
+        mejor: r.mejor == null ? null : Number(r.mejor),
+        objetivos: (r.objetivos ?? {}) as Record<string, number>,
+        intentos: Number(r.intentos),
+        estrellas: Number(r.estrellas),
+        reto: r.reto_mejor == null ? null : Number(r.reto_mejor),
+      },
     ]),
   );
-}
-
-/** Cuántos intentos de la que cuenta empezó hoy (los empezados también cuentan: no se puede abrir y abandonar). */
-async function intentosHoy(userId: number, leccionId: string): Promise<number> {
-  const { rows } = await pool.query(
-    `SELECT count(*)::int AS n FROM academia_practicas_intentos WHERE user_id = $1 AND leccion_id = $2 AND modo = 'cuenta' AND NOT prueba AND created_at >= $3`,
-    [userId, leccionId, inicioDiaTexas()],
-  );
-  return Number(rows[0]?.n ?? 0);
 }
 
 /** Si todas las actividades calificables de cada objetivo están firmes (respondidas bien después de 30 días). */
@@ -181,7 +184,7 @@ function objetivosDe(leccionId: string, r: Resumen | undefined, firmes: Map<numb
   const objetivos = CONTENIDO.get(leccionId)?.objetivos ?? [];
   return objetivos.map((texto, n) => {
     const pct = r?.objetivos?.[String(n)];
-    return { n, texto, pct: pct ?? 0, estado: estadoObjetivo(!!r?.guiada, pct ?? null, firmes.get(n) ?? false) };
+    return { n, texto, pct: pct ?? 0, estado: estadoObjetivo(hecha(r), pct ?? null, firmes.get(n) ?? false) };
   });
 }
 
@@ -196,7 +199,6 @@ async function practicaDeLeccion(acceso: Acceso, leccionId: string): Promise<Pra
   const hechas = modo.userId && modo.inscrito ? await completadas(modo.userId, [leccionId]) : new Set<string>();
   const resumen = modo.userId && !modo.prueba ? (await resumenesDe(modo.userId, [leccionId])).get(leccionId) : undefined;
   const firmes = modo.userId && !modo.prueba ? await firmesPorObjetivo(modo.userId, leccionId, actividades) : new Map<number, boolean>();
-  const hoy = modo.userId && !modo.prueba ? await intentosHoy(modo.userId, leccionId) : 0;
   const completada = hechas.has(leccionId);
   let falta: string | null = null;
   if (!acceso.userId) falta = "Entra con tu cuenta para practicar.";
@@ -214,17 +216,17 @@ async function practicaDeLeccion(acceso: Acceso, leccionId: string): Promise<Pra
     actividades: actividades.length,
     minutos: minutosDe(piezas),
     piezas: [...new Set(piezas)],
-    guiada: !!resumen?.guiada,
+    guiada: hecha(resumen),
     mejor: resumen?.mejor ?? null,
-    estrellas: estrellasDe(!!resumen?.guiada, resumen?.mejor ?? null),
+    estrellas: estrellasDe(hecha(resumen), resumen?.mejor ?? null),
     intentos: resumen?.intentos ?? 0,
-    quedanHoy: modo.prueba ? PRACTICAS.intentosPorDia : Math.max(0, PRACTICAS.intentosPorDia - hoy),
     objetivos: objetivosDe(leccionId, resumen, firmes),
     falta,
     cuentaEnNota,
     obligatoria: cuentaEnNota && !aprobada && !!modo.userId,
     aprobada,
     formas: formasDe(actividades),
+    reto: await retoDeLeccion(modo, m, resumen),
     prueba: modo.prueba,
     conSesion: !!acceso.userId,
   };
@@ -257,9 +259,15 @@ function vistaIntento(f: FilaIntento): IntentoVista {
   const l = f.leccion_id ? leccionPorId(f.leccion_id) : undefined;
   const mision = f.modo === "mision" ? PRACTICAS_POR_MATERIA.get(f.materia_id)?.mision : undefined;
   const titulo =
-    f.modo === "guiada" || f.modo === "cuenta" ? l?.leccion.titulo ?? "Práctica" : f.modo === "mision" ? mision?.titulo ?? `Misión: ${m?.titulo ?? ""}` : "Práctica del día";
+    f.modo === "guiada" || f.modo === "cuenta" || f.modo === "reto" ? l?.leccion.titulo ?? "Práctica" : f.modo === "mision" ? mision?.titulo ?? `Misión: ${m?.titulo ?? ""}` : "Práctica del día";
   const subtitulo =
-    f.modo === "mision" ? mision?.intro ?? "Un reto con lo de todas las lecciones de la materia." : f.modo === "dia" ? "Lo que el motor te trae hoy para no olvidarlo." : NOMBRE_MODO[f.modo];
+    f.modo === "mision"
+      ? mision?.intro ?? "Un reto con lo de todas las lecciones de la materia."
+      : f.modo === "dia"
+        ? "Lo que el motor te trae hoy para no olvidarlo."
+        : f.modo === "reto"
+          ? `Sin pistas y cada actividad en su forma más difícil. Con ${PRACTICAS.retoDomina} o más lo dominas y ganas tus puntos extra.`
+          : NOMBRE_MODO[f.modo];
   return {
     id: f.id,
     modo: f.modo,
@@ -276,12 +284,13 @@ function vistaIntento(f: FilaIntento): IntentoVista {
         pieza: a.pieza,
         formato: formatoDe(a, e),
         objetivo: objetivos[a.objetivo] ?? "",
-        leccion: f.modo === "guiada" || f.modo === "cuenta" ? null : leccionPorId(e.leccion)?.leccion.titulo ?? null,
+        leccion: f.modo === "guiada" || f.modo === "cuenta" || f.modo === "reto" ? null : leccionPorId(e.leccion)?.leccion.titulo ?? null,
         vista: vistaDe(a, e),
         hecha: e.terminada,
       };
     }),
-    pistas: f.modo === "guiada",
+    // (en la que cuenta, la actividad con pista vale la mitad)
+    pistas: f.modo === "guiada" || f.modo === "cuenta",
     cierre: f.modo === "mision" ? mision?.cierre ?? null : null,
     modalidad: (MODALIDADES as readonly string[]).includes(String(f.modalidad)) ? (f.modalidad as Modalidad) : "camino",
     // (como en el reproductor: 10 por cada paso bien; los puntos de más de la modalidad los lleva el teléfono)
@@ -289,18 +298,33 @@ function vistaIntento(f: FilaIntento): IntentoVista {
   };
 }
 
+/** El reto de dominio de una lección, como lo ve el alumno (null si la lección no tiene práctica). */
+async function retoDeLeccion(modo: Modo, m: MateriaDef, resumen: Resumen | undefined): Promise<PracticaLeccionVista["reto"]> {
+  if (!materiaConPracticas(m.id)) return null;
+  const mejor = resumen?.reto ?? null;
+  const dominado = (mejor ?? 0) >= PRACTICAS.retoDomina;
+  if (modo.prueba) return { abierto: true, mejor: null, dominado: false, puntos: 0, falta: null };
+  if (!modo.userId) return { abierto: false, mejor: null, dominado: false, puntos: 0, falta: "Se abre al aprobar la materia." };
+  const x = await materiaDelAlumno(modo.userId, m.id);
+  if (x.estado !== "aprobada") return { abierto: false, mejor, dominado, puntos: 0, falta: "Se abre al aprobar la materia: ahí puedes completar tu nota hasta 100." };
+  if (x.via === "suficiencia" || x.via === "convalidada") return { abierto: false, mejor, dominado, puntos: 0, falta: "Los puntos extra son para las materias aprobadas cursándolas." };
+  return { abierto: true, mejor, dominado, puntos: extraDeLecciones(x.base ?? x.nota ?? 0, 1, m.lecciones.length), falta: null };
+}
+
 /** Los nombres de las formas de jugar que pueden tocar en estas actividades (para anunciarlas antes de empezar). */
 function formasDe(actividades: Actividad[]): string[] {
   const nombres = new Set<string>();
   for (const a of actividades)
     a.versiones.forEach((_, v) => {
-      for (const f of formatosPosibles(a, v, "guiada")) nombres.add(f === "normal" || a.pieza === "linea" ? NOMBRE_PIEZA[a.pieza] : NOMBRE_FORMATO[f]);
+      for (const f of formatosPosibles(a, v, "guiada")) nombres.add(f === "normal" || (a.pieza === "linea" && f === "lista") ? NOMBRE_PIEZA[a.pieza] : NOMBRE_FORMATO[f]);
     });
   return [...nombres];
 }
 
 /** La modalidad de un intento, al azar (en la que cuenta, nunca contra el reloj). */
 function modalidadPara(modo: ModoPractica, semilla: number): Modalidad {
+  // (el reto de dominio va sin adornos: se trata de saberlo todo, no de los puntos)
+  if (modo === "reto") return "camino";
   const posibles = MODALIDADES.filter((x) => modo !== "cuenta" || x !== "reloj");
   return posibles[numeroDe(`modalidad:${semilla}`) % posibles.length];
 }
@@ -344,19 +368,20 @@ function ordenVariado<T extends { a: Actividad }>(lista: T[], semilla: number): 
   return [...out, ...finales];
 }
 
-/** La versión de cada actividad: va rotando con los intentos, para que la que cuenta no repita la guiada. */
+/** La versión de cada actividad: va rotando con los intentos, para que cada intento traiga otras palabras y ejemplos. */
 const versionPara = (a: Actividad, vuelta: number) => ((vuelta % a.versiones.length) + a.versiones.length) % a.versiones.length;
 
-async function empezarLeccion(acceso: Acceso, leccionId: string, modo: "guiada" | "cuenta"): Promise<{ error: number; message: string } | IntentoVista> {
+/**
+ * La práctica de una lección: una sola, la que cuenta, completa (desde el 26-nov junta lo de la guiada: el Relámpago del
+ * comienzo y la pista, que deja esa actividad en la mitad). Se repite sin límite y vale la mejor.
+ */
+async function empezarLeccion(acceso: Acceso, leccionId: string): Promise<{ error: number; message: string } | IntentoVista> {
   const p = await practicaDeLeccion(acceso, leccionId);
   if (!p) return { error: 404, message: "No se encontró la lección." };
   if (p.falta) return { error: 409, message: p.falta };
   const userId = acceso.userId!;
-  if (modo === "cuenta" && !p.prueba) {
-    if (!p.guiada) return { error: 409, message: "Primero haz la práctica guiada de esta lección." };
-    if (p.quedanHoy <= 0) return { error: 429, message: "Ya hiciste los 3 intentos de hoy. Vuelve mañana: lo que practiques hoy te ayudará." };
-  }
-  // un intento a medias del mismo modo se retoma (en el teléfono se corta a veces)
+  const modo = "cuenta" as const;
+  // un intento a medias se retoma (en el teléfono se corta a veces)
   const { rows: abiertos } = await pool.query(
     `SELECT id FROM academia_practicas_intentos WHERE user_id = $1 AND leccion_id = $2 AND modo = $3 AND prueba = $4 AND terminado_at IS NULL AND created_at > now() - interval '1 day'
       ORDER BY id DESC LIMIT 1`,
@@ -368,11 +393,39 @@ async function empezarLeccion(acceso: Acceso, leccionId: string, modo: "guiada" 
   }
   const { rows: previos } = await pool.query(`SELECT count(*)::int AS n FROM academia_practicas_intentos WHERE user_id = $1 AND leccion_id = $2 AND prueba = $3`, [userId, leccionId, p.prueba]);
   const vuelta = Number(previos[0]?.n ?? 0);
-  const actividades = (actividadesDe(leccionId) ?? []).filter((a) => modo === "guiada" || esCalificable(a.pieza));
+  const actividades = actividadesDe(leccionId) ?? [];
   const semilla = randomInt(1, 2 ** 31 - 1);
   const lista = ordenVariado(actividades.map((a) => ({ leccion: leccionId, a, version: versionPara(a, vuelta) })), semilla);
   const items = conFormatos(lista, modo, semilla);
   return vistaIntento(await crearIntento(userId, modo, p.materia.id, leccionId, p.prueba, items, semilla));
+}
+
+/**
+ * El reto de dominio de una lección (los puntos extra, 26-nov): con la materia aprobada por el curso, todas las
+ * actividades en su forma más difícil y sin pistas. Con 90 o más queda dominado y suma su parte de lo que le falta a la
+ * nota para llegar a 100. Se repite sin límite.
+ */
+async function empezarReto(acceso: Acceso, leccionId: string): Promise<{ error: number; message: string } | IntentoVista> {
+  const p = await practicaDeLeccion(acceso, leccionId);
+  if (!p) return { error: 404, message: "No se encontró la lección." };
+  if (p.falta) return { error: 409, message: p.falta };
+  if (!p.reto?.abierto) return { error: 409, message: p.reto?.falta ?? "El reto todavía no está abierto." };
+  const userId = acceso.userId!;
+  const { rows: abiertos } = await pool.query(
+    `SELECT id FROM academia_practicas_intentos WHERE user_id = $1 AND leccion_id = $2 AND modo = 'reto' AND prueba = $3 AND terminado_at IS NULL AND created_at > now() - interval '1 day'
+      ORDER BY id DESC LIMIT 1`,
+    [userId, leccionId, p.prueba],
+  );
+  if (abiertos[0]) {
+    const f = await intentoDe(Number(abiertos[0].id), userId);
+    if (f && f.items.every((e) => actividadPorId(e.leccion, e.actividad))) return vistaIntento(f);
+  }
+  const { rows: previos } = await pool.query(`SELECT count(*)::int AS n FROM academia_practicas_intentos WHERE user_id = $1 AND leccion_id = $2 AND prueba = $3`, [userId, leccionId, p.prueba]);
+  const vuelta = Number(previos[0]?.n ?? 0);
+  const semilla = randomInt(1, 2 ** 31 - 1);
+  const lista = ordenVariado((actividadesDe(leccionId) ?? []).map((a) => ({ leccion: leccionId, a, version: versionPara(a, vuelta + 1) })), semilla);
+  const items = lista.map(({ leccion, a, version }) => nuevoEstado(leccion, a, version, semilla, formatoDificil(a, version)));
+  return vistaIntento(await crearIntento(userId, "reto", p.materia.id, leccionId, p.prueba, items, semilla));
 }
 
 /** Actualiza el calendario de una actividad después de responderla (en la práctica del día y en la misión). */
@@ -440,7 +493,7 @@ function resumenRespuesta(a: Actividad, e: EstadoItem, r: RespuestaPractica): un
     case "intruso":
       return { elegida: v.frases[ronda?.frases?.[res.frase] ?? -1]?.texto ?? null };
     case "escalones":
-      return { elegida: v.pasos[e.orden.pasos?.filter((k: number) => k >= e.paso)[res.opcion] ?? -1] ?? null };
+      return { elegida: listaDe(a, v).textos[ordenDeLista(a, e).filter((k: number) => k >= e.paso)[res.opcion] ?? -1] ?? null };
     case "donde-va":
       return { elegida: Number.isInteger(res.opcion) ? `En el lugar ${res.opcion + 1}` : null };
     case "cual-falsa": {
@@ -509,12 +562,14 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
     const a = actividadPorId(e.leccion, e.actividad);
     return a && esCalificable(a.pieza);
   });
-  const puntaje = notaIntento(calificables.map((e) => (e.terminada ? e.puntaje ?? 0 : 0)));
+  // (en la que cuenta, la actividad en la que pidió la pista vale la mitad)
+  const valor = (e: EstadoItem) => (e.terminada ? (f.modo === "cuenta" && e.pista ? Math.min(e.puntaje ?? 0, 0.5) : e.puntaje ?? 0) : 0);
+  const puntaje = notaIntento(calificables.map(valor));
   // lo que sacó en cada objetivo (en la práctica de una lección)
   const porObjetivo = new Map<number, number[]>();
   for (const e of calificables) {
     const a = actividadPorId(e.leccion, e.actividad)!;
-    porObjetivo.set(a.objetivo, [...(porObjetivo.get(a.objetivo) ?? []), e.terminada ? e.puntaje ?? 0 : 0]);
+    porObjetivo.set(a.objetivo, [...(porObjetivo.get(a.objetivo) ?? []), valor(e)]);
   }
   const objetivosPct: Record<string, number> = {};
   for (const [o, lista] of porObjetivo) objetivosPct[String(o)] = notaIntento(lista);
@@ -526,9 +581,31 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
   let estrellas = 0;
   let mejor: number | null = null;
   let medallas: { clave: string; nombre: string }[] = [];
-  if (!f.prueba && clave && !ya) {
+  let extra: ResultadoPractica["extra"] = null;
+  if (!f.prueba && f.modo === "reto" && leccionId && !ya) {
+    const m = materiaPorId(f.materia_id);
+    const antesX = await materiaDelAlumno(userId, f.materia_id);
+    await pool.query(
+      `INSERT INTO academia_practicas_lecciones (user_id, leccion_id, materia_id, reto_mejor, reto_at) VALUES ($1, $2, $3, $4, now())
+       ON CONFLICT (user_id, leccion_id) DO UPDATE SET
+         reto_at = CASE WHEN academia_practicas_lecciones.reto_mejor IS NULL OR EXCLUDED.reto_mejor > academia_practicas_lecciones.reto_mejor THEN now() ELSE academia_practicas_lecciones.reto_at END,
+         reto_mejor = GREATEST(COALESCE(academia_practicas_lecciones.reto_mejor, 0), EXCLUDED.reto_mejor), updated_at = now()`,
+      [userId, leccionId, f.materia_id, puntaje],
+    );
+    const r1 = (await resumenesDe(userId, [leccionId])).get(leccionId);
+    mejor = r1?.reto ?? puntaje;
+    estrellas = estrellasDe(hecha(r1), r1?.mejor ?? null);
+    antes = estrellas;
+    if (m && (await retoAbierto(userId, m))) {
+      const nuevo = await recalcularMateria(userId, m).catch(() => null);
+      const despues = await materiaDelAlumno(userId, f.materia_id);
+      extra = { antes: antesX.extra, ahora: despues.extra, nota: nuevo?.nota ?? despues.nota ?? 0 };
+    }
+    await marcarEstudio(userId);
+    medallas = await medallasNuevas(userId, f.materia_id);
+  } else if (!f.prueba && clave && !ya) {
     const r0 = (await resumenesDe(userId, [clave])).get(clave);
-    antes = estrellasDe(!!r0?.guiada, r0?.mejor ?? null);
+    antes = estrellasDe(hecha(r0), r0?.mejor ?? null);
     if (f.modo === "guiada" && leccionId) {
       await pool.query(
         `INSERT INTO academia_practicas_lecciones (user_id, leccion_id, materia_id, guiada_at, intentos) VALUES ($1, $2, $3, now(), 1)
@@ -554,8 +631,17 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
            intentos = academia_practicas_lecciones.intentos + 1, updated_at = now()`,
         [userId, clave, f.materia_id, puntaje, JSON.stringify(objetivosPct), f.modo === "mision" ? new Date() : null],
       );
-      // lo que falló en la que cuenta vuelve mañana al calendario
-      if (f.modo === "cuenta") {
+      // lo practicado entra al calendario (vuelve mañana; si ya estaba, sigue su calendario) y lo que falló vuelve mañana
+      if (f.modo === "cuenta" && leccionId) {
+        const acts = (actividadesDe(leccionId) ?? []).filter((a) => esCalificable(a.pieza));
+        if (acts.length) {
+          await pool.query(
+            `INSERT INTO academia_practicas_items (user_id, clave, materia_id, leccion_id, objetivo, escalon, proximo_at)
+             SELECT $1, x.clave, $2, $3, x.objetivo, 0, now() + interval '1 day' FROM unnest($4::text[], $5::int[]) AS x(clave, objetivo)
+             ON CONFLICT (user_id, clave) DO NOTHING`,
+            [userId, f.materia_id, leccionId, acts.map((a) => claveDe(leccionId, a.id)), acts.map((a) => a.objetivo)],
+          );
+        }
         for (const e of calificables) {
           if ((e.puntaje ?? 0) >= 0.5 && e.terminada) {
             await pool.query(`UPDATE academia_practicas_items SET fallos_seguidos = 0 WHERE user_id = $1 AND clave = $2`, [userId, claveDe(e.leccion, e.actividad)]);
@@ -571,12 +657,12 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
     }
     const r1 = (await resumenesDe(userId, [clave])).get(clave);
     mejor = r1?.mejor ?? null;
-    estrellas = estrellasDe(f.modo === "mision" ? true : !!r1?.guiada, r1?.mejor ?? null);
+    estrellas = estrellasDe(f.modo === "mision" ? true : hecha(r1), r1?.mejor ?? null);
     await pool.query(`UPDATE academia_practicas_lecciones SET estrellas = $3 WHERE user_id = $1 AND leccion_id = $2`, [userId, clave, estrellas]);
     await marcarEstudio(userId);
     medallas = await medallasNuevas(userId, f.materia_id);
     const m = materiaPorId(f.materia_id);
-    // (quien ya aprobó practica libre: su nota ya no cambia)
+    // (quien ya aprobó practica libre: la práctica ya no le cambia la nota; el reto de dominio sí la puede subir)
     if (m && f.modo === "cuenta" && (await practicasObligatorias(userId, m))) await recalcularMateria(userId, m).catch(() => undefined);
   } else if (f.prueba) {
     estrellas = estrellasDe(true, f.modo === "guiada" ? null : puntaje);
@@ -593,11 +679,10 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
     objetivos = (CONTENIDO.get(leccionId)?.objetivos ?? []).map((texto, n) => {
       const pct = objetivosPct[String(n)] ?? 0;
       const mejorPct = r?.objetivos?.[String(n)] ?? null;
-      return { n, texto, pct, estado: estadoObjetivo(f.prueba ? true : !!r?.guiada, f.prueba ? (f.modo === "guiada" ? null : pct) : mejorPct, firmes.get(n) ?? false) };
+      return { n, texto, pct, estado: estadoObjetivo(f.prueba ? true : hecha(r), f.prueba ? (f.modo === "guiada" ? null : pct) : mejorPct, firmes.get(n) ?? false) };
     });
   }
   const { rows: prox } = await pool.query(`SELECT min(proximo_at) AS p FROM academia_practicas_items WHERE user_id = $1 AND proximo_at IS NOT NULL`, [userId]);
-  const hoy = leccionId && f.modo === "cuenta" && !f.prueba ? await intentosHoy(userId, leccionId) : 0;
   let siguiente: ResultadoPractica["siguiente"] = null;
   if (leccionId) {
     const l = leccionPorId(leccionId);
@@ -613,8 +698,8 @@ async function terminar(userId: number, id: number): Promise<{ error: number; me
     objetivos,
     proxima: iso(prox[0]?.p),
     medallas,
-    quedanHoy: f.prueba ? PRACTICAS.intentosPorDia : Math.max(0, PRACTICAS.intentosPorDia - hoy),
     mejor,
+    extra,
     siguiente,
     prueba: f.prueba,
   };
@@ -679,8 +764,8 @@ async function caminoDe(acceso: Acceso, m: MateriaDef): Promise<CaminoMateria> {
     return {
       leccion: { id: l.id, titulo: l.titulo, n: i + 1, completada: hechas.has(l.id) },
       existe: !!actividadesDe(l.id),
-      guiada: !!r?.guiada,
-      estrellas: estrellasDe(!!r?.guiada, r?.mejor ?? null),
+      guiada: hecha(r),
+      estrellas: estrellasDe(hecha(r), r?.mejor ?? null),
       mejor: r?.mejor ?? null,
       abierta: modo.prueba || hechas.has(l.id),
     };
@@ -703,6 +788,12 @@ async function caminoDe(acceso: Acceso, m: MateriaDef): Promise<CaminoMateria> {
       titulo: PRACTICAS_POR_MATERIA.get(m.id)?.mision?.titulo ?? "Misión de la materia",
     },
     cuentaEnNota: cuenta,
+    reto: modo.userId && !modo.prueba && completa && (await retoAbierto(modo.userId, m)) ? await (async () => {
+      const x = await materiaDelAlumno(modo.userId!, m.id);
+      const base = x.base ?? x.nota ?? 0;
+      const dominadas = ids.filter((id) => (res.get(id)?.reto ?? 0) >= PRACTICAS.retoDomina).length;
+      return { abierto: true, extra: x.extra, posible: Math.max(0, 100 - base), dominadas, lecciones: ids.length, base };
+    })() : null,
     obligatoria: cuenta && !aprobada && !!modo.userId,
     aprobada,
     componente: cuenta && modo.userId ? componentePracticas(ids.map((id) => res.get(id)?.mejor ?? null)) : null,
@@ -829,11 +920,23 @@ export function registerAcademiaPracticasRoutes(app: Express) {
     try {
       const acceso = await conCuenta(req, res);
       if (!acceso) return;
-      const modo = req.body?.modo === "cuenta" ? "cuenta" : "guiada";
+      // (desde el 26-nov hay una sola práctica: el `modo` que mande un teléfono con la versión de antes no cambia nada)
       if (frenar(`prac-empezar:${acceso.userId}`, 800)) return res.status(429).json({ message: "Espera un momento." });
-      enviar(res, await enFila(acceso.userId, () => empezarLeccion(acceso, String(req.params.leccionId), modo)));
+      enviar(res, await enFila(acceso.userId, () => empezarLeccion(acceso, String(req.params.leccionId))));
     } catch (err) {
       console.error("[academia] prácticas, empezar:", err);
+      res.sendStatus(500);
+    }
+  });
+
+  app.post("/api/academia/practicas/leccion/:leccionId/reto", async (req, res) => {
+    try {
+      const acceso = await conCuenta(req, res);
+      if (!acceso) return;
+      if (frenar(`prac-reto:${acceso.userId}`, 800)) return res.status(429).json({ message: "Espera un momento." });
+      enviar(res, await enFila(acceso.userId, () => empezarReto(acceso, String(req.params.leccionId))));
+    } catch (err) {
+      console.error("[academia] prácticas, reto:", err);
       res.sendStatus(500);
     }
   });
@@ -853,7 +956,7 @@ export function registerAcademiaPracticasRoutes(app: Express) {
     }
   });
 
-  // La pista de la guiada: la frase de la lección que ayuda (queda anotado que la pidió).
+  // La pista: la frase de la lección que ayuda. Queda anotado que la pidió: en la que cuenta, esa actividad vale la mitad.
   app.post("/api/academia/practicas/intento/:id/pista", async (req, res) => {
     try {
       const acceso = await conCuenta(req, res);
@@ -863,7 +966,7 @@ export function registerAcademiaPracticasRoutes(app: Express) {
       const out = await enFila(acceso.userId, async () => {
         const f = await intentoDe(id, acceso.userId);
         if (!f || f.terminado_at) return { error: 404, message: "No se encontró esa práctica." };
-        if (f.modo !== "guiada") return { error: 409, message: "En esta práctica no hay pistas." };
+        if (f.modo !== "guiada" && f.modo !== "cuenta") return { error: 409, message: "En esta práctica no hay pistas." };
         const e = f.items[n];
         const a = e ? actividadPorId(e.leccion, e.actividad) : null;
         if (!e || !a) return { error: 400, message: "Esa actividad no está en la práctica." };
@@ -1232,7 +1335,7 @@ export async function informeAlumno(userId: number, m: MateriaDef): Promise<Info
   for (const [i, l] of m.lecciones.entries()) {
     const r = res.get(l.id);
     const firmes = await firmesPorObjetivo(userId, l.id, actividadesDe(l.id) ?? []);
-    lecciones.push({ id: l.id, n: i + 1, titulo: l.titulo, guiada: !!r?.guiada, mejor: r?.mejor ?? null, estrellas: estrellasDe(!!r?.guiada, r?.mejor ?? null), objetivos: objetivosDe(l.id, r, firmes) });
+    lecciones.push({ id: l.id, n: i + 1, titulo: l.titulo, guiada: hecha(r), mejor: r?.mejor ?? null, estrellas: estrellasDe(hecha(r), r?.mejor ?? null), objetivos: objetivosDe(l.id, r, firmes) });
   }
   return { cuenta: await practicasCuentan(userId, m), componente: await componentePracticasDe(userId, m), lecciones, mision: res.get(`mision:${m.id}`)?.mejor ?? null };
 }
