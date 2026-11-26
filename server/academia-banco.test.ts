@@ -101,9 +101,12 @@ test("la huella incluye las prácticas del laboratorio solo en las materias que 
   assert.ok(conPracticas.size >= 1);
   // las materias sin prácticas (ni del laboratorio ni de las lecciones) guardan la misma huella: sus aprobaciones siguen
   // vigentes
-  const sinNada = materiaPorId("n3-hermeneutica")!;
-  assert.ok(!conPracticas.has(sinNada.id) && !PRACTICAS_POR_MATERIA.has(sinNada.id));
-  assert.equal(calcularHuella(sinNada), huellaSinLaboratorio(sinNada));
+  // (una materia que todavía no tiene ninguna: cuando todas las tengan, esta parte ya no hace falta)
+  const idSinNada = Array.from(BANCOS.keys()).find((id) => !conPracticas.has(id) && !PRACTICAS_POR_MATERIA.has(id) && !!materiaPorId(id));
+  if (idSinNada) {
+    const sinNada = materiaPorId(idSinNada)!;
+    assert.equal(calcularHuella(sinNada), huellaSinLaboratorio(sinNada), idSinNada);
+  }
   for (const id of Array.from(conPracticas)) {
     const m = materiaPorId(id)!;
     assert.notEqual(calcularHuella(m), huellaSinLaboratorio(m), id);
