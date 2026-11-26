@@ -3,12 +3,27 @@
 // delata la respuesta y cada forma trae su consigna. Así una materia nueva queda probada en todas sus formas sola.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contestar, escritoIgual, formatoDificil, formatosPosibles, listaDe, nuevoEstado, ordenDeLista, preguntaDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
+import { contestar, crucigramaDe, enLetras, escritoIgual, formatoDificil, formatosPosibles, listaDe, notaMemoria, nuevoEstado, ordenDeLista, preguntaDe, trozosDe, vistaDe, type EstadoItem } from "./academia-practicas-calificar";
 import { TODAS_LAS_PRACTICAS } from "./academia/practicas/index";
 import type { Actividad } from "./academia/practicas/tipos";
 import { FORMATOS, FORMATOS_SOLO_PARA_APRENDER, extraDeLecciones, type Formato, type RespuestaPractica } from "@shared/practicas";
 
 const huecos = (texto: string) => [...texto.matchAll(/\[\[([^\]]+)\]\]/g)].map((m) => m[1]);
+const conPalabras = (texto: string) => texto.replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\s+/g, " ").trim();
+
+/** Si una palabra está en la sopa de letras, en línea recta y en cualquier sentido. */
+function enSopa(filas: string[], w: string): boolean {
+  const N = filas.length;
+  const sentidos = [[0, 1], [1, 0], [1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1], [-1, 1]];
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      for (const [dr, dc] of sentidos) {
+        let ok = true;
+        for (let k = 0; k < w.length && ok; k++) if (filas[r + dr * k]?.[c + dc * k] !== w[k]) ok = false;
+        if (ok) return true;
+      }
+  return false;
+}
 const normal = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 /** La respuesta buena (o una mala) del paso en que va, con lo que sabe el servidor. */
@@ -56,6 +71,35 @@ function respuesta(a: Actividad, e: EstadoItem, bien: boolean): RespuestaPractic
     case "opciones":
     case "chat":
       return { pieza: "situacion", opcion: otra(e.orden.opciones.indexOf(v.opciones.findIndex((o: any) => o.bien)), v.opciones.length) };
+    case "anagrama":
+      return { pieza: "completa", huecos: [bien ? huecos(v.texto)[e.paso] : "zzzz"] };
+    case "sopa": {
+      const puestas = (e.rondas![0].colocadas as { trazo: number[]; respuesta: boolean }[]).filter((x) => x.respuesta).map((x) => x.trazo);
+      // (la primera se marca al revés: una palabra vale de una punta a la otra o al contrario)
+      return { pieza: "completa", trazos: bien ? puestas.map((t, k) => (k === 0 ? [t[2], t[3], t[0], t[1]] : t)) : [] };
+    }
+    case "crucigrama":
+      return { pieza: "completa", huecos: (e.rondas![0].palabras as { i: number }[]).map((x) => (bien ? huecos(v.texto)[x.i].toLowerCase() : "zzzz")) };
+    case "arma": {
+      const orden = e.rondas![0].orden as number[];
+      const correcto = orden.map((_, i) => orden.indexOf(i));
+      return { pieza: "completa", orden: bien ? correcto : [...correcto].reverse() };
+    }
+    case "memoria": {
+      // (mal: se equivoca más de lo que se perdona y después las encuentra; bien: siempre la pareja)
+      const cartas = e.rondas![0].cartas as { par: number; lado: number }[];
+      const quedan = cartas.map((_, i) => i).filter((i) => !(e.orden.descubiertas ?? []).includes(i));
+      const i = quedan[0];
+      const pareja = quedan.find((k) => k !== i && cartas[k].par === cartas[i].par)!;
+      const otraCarta = quedan.find((k) => k !== i && cartas[k].par !== cartas[i].par);
+      const fallar = !bien && (e.orden.fallos?.[0] ?? 0) <= Math.round(v.pares.length * 1.5) && otraCarta != null;
+      return { pieza: "relaciona", cartas: [i, fallar ? otraCarta! : pareja] };
+    }
+    case "atrapa": {
+      const r0 = e.rondas![0];
+      const del = (r0.frases as number[]).map((k, d) => (v.frases[k].grupo === r0.grupo ? d : -1)).filter((d) => d >= 0);
+      return { pieza: "clasifica", atrapadas: bien ? del : (r0.frases as number[]).map((_, d) => d).filter((d) => !del.includes(d)) };
+    }
     default:
       return null;
   }
@@ -105,6 +149,59 @@ function revisarVista(a: Actividad, e: EstadoItem, donde: string) {
     case "cual-falsa":
       assert.equal(vista.afirmaciones.length, 3, donde);
       distintas(vista.afirmaciones, "afirmaciones");
+      break;
+    case "anagrama": {
+      const h = huecos(v.texto)[vista.hueco].trim().toLocaleUpperCase("es");
+      assert.deepEqual([...vista.letras].sort(), [...h].sort(), `${donde}: las letras no son las de la palabra`);
+      assert.notEqual(vista.letras.join(""), h, `${donde}: las letras van en su orden`);
+      assert.deepEqual(vista.hechas, huecos(v.texto).slice(0, vista.hueco), donde);
+      break;
+    }
+    case "sopa":
+      assert.equal(vista.filas.length, 9, donde);
+      for (const fila of vista.filas) assert.match(fila, /^[A-ZÑ]{9}$/, donde);
+      assert.equal(vista.buscar, huecos(v.texto).length, donde);
+      for (const h of huecos(v.texto)) assert.ok(enSopa(vista.filas, enLetras(h)), `${donde}: ${h} no está en la sopa`);
+      break;
+    case "crucigrama": {
+      const hs = huecos(v.texto);
+      assert.deepEqual(vista.palabras.map((x) => x.hueco).sort(), hs.map((_, i) => i), `${donde}: faltan palabras`);
+      assert.ok(vista.filas <= 12 && vista.columnas <= 12, `${donde}: no cabe en el teléfono`);
+      const casillas = new Map<string, { letra: string; sentidos: string }>();
+      for (const x of vista.palabras) {
+        const w = enLetras(hs[x.hueco]);
+        assert.equal(x.largo, w.length, donde);
+        for (let j = 0; j < w.length; j++) {
+          const f = x.fila + (x.dir === "v" ? j : 0);
+          const c = x.col + (x.dir === "h" ? j : 0);
+          assert.ok(f >= 0 && f < vista.filas && c >= 0 && c < vista.columnas, `${donde}: se sale del crucigrama`);
+          const ya = casillas.get(`${f},${c}`);
+          assert.ok(!ya || (ya.letra === w[j] && !ya.sentidos.includes(x.dir)), `${donde}: el cruce no coincide`);
+          casillas.set(`${f},${c}`, { letra: w[j], sentidos: (ya?.sentidos ?? "") + x.dir });
+        }
+      }
+      break;
+    }
+    case "arma": {
+      const palabras = (s: string) => s.split(" ").sort();
+      const correcta = (e.rondas![0].trozos as string[]).join(" ");
+      assert.ok(vista.trozos.length >= 3 && vista.trozos.length <= 5, `${donde}: ${vista.trozos.length} trozos`);
+      assert.ok(conPalabras(v.texto).includes(correcta), `${donde}: la oración no es del texto`);
+      assert.ok(!/[.!?…]\s+[A-ZÁÉÍÓÚÑ]/.test(correcta.replace(/[a-zA-Z]\.\s/g, "")), `${donde}: arma más de una oración: ${correcta}`);
+      assert.deepEqual(palabras(vista.trozos.join(" ")), palabras(correcta), `${donde}: los trozos no son la oración`);
+      assert.notEqual(vista.trozos.join(" "), correcta, `${donde}: los trozos van en su orden`);
+      assert.ok(!/[«»]/.test(v.texto), `${donde}: una cita no se arma`);
+      break;
+    }
+    case "memoria":
+      assert.equal(vista.cartas.length, v.pares.length * 2, donde);
+      assert.deepEqual([...vista.cartas].sort(), (v.pares as string[][]).flat().sort(), donde);
+      assert.equal(vista.pasos, v.pares.length, donde);
+      assert.equal(vista.descubiertas.length, vista.paso * 2, donde);
+      break;
+    case "atrapa":
+      assert.ok(v.grupos.includes(vista.grupo), donde);
+      assert.deepEqual([...vista.frases].sort(), v.frases.map((f: any) => f.texto).sort(), donde);
       break;
     default:
       break;
@@ -233,6 +330,77 @@ test("el reto de dominio usa la forma más difícil que se pueda, y se juega ent
       if (FORMATOS[a.pieza].length > 1) assert.equal(jugar(a, nuevoEstado(leccion, a, 0, 11, f), true, `${leccion}/${a.id} reto`), 1);
     }
   }
+});
+
+test("las dinámicas del catálogo: letras, crucigrama, trozos y memoria", () => {
+  assert.equal(enLetras("Espíritu"), "ESPIRITU");
+  assert.equal(enLetras("niño"), "NIÑO", "la ñ queda");
+  assert.equal(enLetras("pingüino"), "PINGUINO");
+  // el crucigrama: cada palabra cruza otra en una letra igual; sin letra común, no se arma
+  const c = crucigramaDe(["gracia", "amor", "cruz"]);
+  assert.ok(c, "gracia, amor y cruz se cruzan");
+  assert.equal(c!.colocadas.length, 3);
+  assert.equal(crucigramaDe(["luz", "pan"]), null, "sin letra común no se cruzan");
+  assert.equal(crucigramaDe(["fe", "amor"]), null, "las de menos de 3 letras no van");
+  // los trozos: en las comas y nunca después de «de», «que» o «y»
+  const t = trozosDe("La gracia es el favor de Dios que no [[merecemos]], y nos salva por la fe.")!;
+  assert.deepEqual(t, ["La gracia es el favor", "de Dios que no merecemos,", "y nos salva", "por la fe."]);
+  assert.equal(trozosDe("Jesús dijo: «Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí»."), null, "un versículo no se arma");
+  assert.equal(trozosDe("Muy corta la frase."), null);
+  // con dos oraciones se arma una sola: la de la palabra clave (el orden de dos oraciones también podría ir al revés)
+  assert.deepEqual(trozosDe("La gracia es el favor de Dios que no merecemos. La fe es la mano vacía que recibe el [[regalo]] de Dios.")?.join(" "), "La fe es la mano vacía que recibe el regalo de Dios.");
+  assert.equal(trozosDe("Hacia el 2000 a. C. Dios llamó a [[Abraham]] para formar un pueblo nuevo.")?.join(" "), "Hacia el 2000 a. C. Dios llamó a Abraham para formar un pueblo nuevo.", "«a. C.» no corta la oración");
+  // la memoria perdona los primeros errores (destapar también es recordar)
+  assert.equal(notaMemoria(4, 0), 1);
+  assert.equal(notaMemoria(4, 6), 1, "4 parejas: se perdonan 6");
+  assert.ok(Math.abs(notaMemoria(4, 8) - 0.8) < 1e-9);
+  assert.equal(notaMemoria(3, 50), 0.5, "nunca menos de la mitad");
+});
+
+test("la sopa, el crucigrama, la memoria y «¡Atrápalas!» califican a medias lo que está a medias", () => {
+  const completa = { id: "z2", objetivo: 0, pieza: "completa", versiones: [{ texto: "La [[gracia]] y la [[verdad]] vinieron por [[Cristo]].", distractores: ["ley", "obras"], explica: "Así es.", apoyo: "una frase" }] } as unknown as Actividad;
+  // la sopa: dos de tres palabras
+  const es = nuevoEstado("prueba", completa, 0, 9, "sopa");
+  assert.equal(es.formato, "sopa");
+  const puestas = (es.rondas![0].colocadas as { trazo: number[]; respuesta: boolean }[]).filter((x) => x.respuesta).map((x) => x.trazo);
+  const s = contestar(completa, es, { pieza: "completa", trazos: [puestas[0], puestas[1], [0, 0, 0, 0]] });
+  assert.ok(Math.abs(s.devolucion.puntaje - 2 / 3) < 1e-9, "dos de tres");
+  assert.equal(s.devolucion.correccion.pieza === "completa" && s.devolucion.correccion.formato === "sopa" && s.devolucion.correccion.faltan.length, 1);
+  // la misma palabra dos veces cuenta una
+  const s2 = contestar(completa, es, { pieza: "completa", trazos: [puestas[0], puestas[0], puestas[0]] });
+  assert.ok(Math.abs(s2.devolucion.puntaje - 1 / 3) < 1e-9, "repetir una palabra no suma");
+  // el crucigrama: sin tildes ni mayúsculas, y una mala
+  const ec = nuevoEstado("prueba", completa, 0, 9, "crucigrama");
+  assert.equal(ec.formato, "crucigrama");
+  const orden = (ec.rondas![0].palabras as { i: number }[]).map((x) => x.i);
+  const dadas = orden.map((i) => ["GRACIA", "verdád", "otra"][i]);
+  const cr = contestar(completa, ec, { pieza: "completa", huecos: dadas });
+  assert.ok(Math.abs(cr.devolucion.puntaje - 2 / 3) < 1e-9, "dos de tres en el crucigrama");
+  // la memoria: un intento con cartas ya destapadas o repetidas es un error, no una pareja
+  const relaciona = { id: "z3", objetivo: 0, pieza: "relaciona", versiones: [{ pares: [["Gracia", "Favor no merecido"], ["Fe", "Confianza en Dios"], ["Justificación", "Declarados justos"]], explica: "Así es.", apoyo: "una frase" }] } as unknown as Actividad;
+  const em = nuevoEstado("prueba", relaciona, 0, 4, "memoria");
+  assert.equal(em.formato, "memoria");
+  const cartas = em.rondas![0].cartas as { par: number }[];
+  const j = cartas.findIndex((x, k) => k > 0 && x.par === cartas[0].par);
+  const m1 = contestar(relaciona, em, { pieza: "relaciona", cartas: [0, 0] });
+  assert.equal(m1.devolucion.bien, false, "la misma carta dos veces no es pareja");
+  assert.equal(m1.estado.paso, 0);
+  const m2 = contestar(relaciona, m1.estado, { pieza: "relaciona", cartas: [0, j] });
+  assert.equal(m2.devolucion.bien, true);
+  assert.deepEqual(m2.estado.orden.descubiertas, [0, j]);
+  const m3 = contestar(relaciona, m2.estado, { pieza: "relaciona", cartas: [0, j] });
+  assert.equal(m3.devolucion.bien, false, "una pareja ya destapada no cuenta otra vez");
+  // «¡Atrápalas!»: atrapar una que no es del grupo resta solo esa
+  const clasifica = { id: "z4", objetivo: 0, pieza: "clasifica", versiones: [{ consigna: "¿Es por gracia o por obras? Lleva cada frase a su grupo.", grupos: ["Por gracia", "Por obras"], frases: [{ texto: "Un regalo", grupo: 0 }, { texto: "Sin merecerlo", grupo: 0 }, { texto: "Por fe", grupo: 0 }, { texto: "Un salario", grupo: 1 }, { texto: "Lo que me gané", grupo: 1 }], explica: "Así es.", apoyo: "una frase" }] } as unknown as Actividad;
+  const ea = nuevoEstado("prueba", clasifica, 0, 4, "atrapa");
+  assert.equal(ea.formato, "atrapa");
+  const va = vistaDe(clasifica, ea);
+  assert.ok(va.formato === "atrapa" && va.grupo === "Por gracia" && va.pregunta === "¿Es por gracia o por obras?");
+  const r0 = ea.rondas![0];
+  const del = (r0.frases as number[]).map((k, d) => (k <= 2 ? d : -1)).filter((d) => d >= 0);
+  const otra = (r0.frases as number[]).findIndex((k) => k > 2);
+  const at = contestar(clasifica, ea, { pieza: "clasifica", atrapadas: [...del, otra] });
+  assert.ok(Math.abs(at.devolucion.puntaje - 4 / 5) < 1e-9, "una de cinco mal");
 });
 
 test("los puntos extra completan lo que falta para 100, en la parte de cada reto dominado", () => {

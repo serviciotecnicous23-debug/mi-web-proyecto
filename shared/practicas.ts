@@ -70,9 +70,9 @@ export const esCalificable = (p: Pieza) => !PIEZAS_FORMATIVAS.includes(p);
  */
 export const FORMATOS = {
   tarjetas: ["relampago"],
-  completa: ["banco", "elige", "escribe"],
-  relaciona: ["parejas", "elige-pareja"],
-  clasifica: ["recuadros", "desliza", "intruso"],
+  completa: ["banco", "elige", "escribe", "anagrama", "sopa", "crucigrama", "arma"],
+  relaciona: ["parejas", "elige-pareja", "memoria"],
+  clasifica: ["recuadros", "desliza", "intruso", "atrapa"],
   ordena: ["lista", "escalones", "donde-va"],
   verdad: ["verdad-o-error", "cual-falsa"],
   error: ["frases", "detective"],
@@ -96,11 +96,17 @@ export const NOMBRE_FORMATO: Record<Formato, string> = {
   banco: "Completa la idea",
   elige: "Elige la palabra",
   escribe: "Escríbela",
+  anagrama: "Anagrama",
+  sopa: "Sopa de letras",
+  crucigrama: "Crucigrama",
+  arma: "Arma la frase",
   parejas: "Relaciona",
   "elige-pareja": "Elige la pareja",
+  memoria: "Memoria",
   recuadros: "Clasifica",
   desliza: "Desliza",
   intruso: "¿Cuál no va?",
+  atrapa: "¡Atrápalas!",
   lista: "Ordena",
   escalones: "Escalones",
   "donde-va": "¿Dónde va?",
@@ -120,11 +126,17 @@ export const COMO_SE_JUEGA: Record<Formato, string> = {
   banco: "Toca una palabra de abajo y después el espacio donde va.",
   elige: "En cada espacio, toca la palabra que va.",
   escribe: "Escribe en cada espacio la palabra que falta.",
+  anagrama: "Las letras de la palabra que falta están revueltas: tócalas en orden.",
+  sopa: "Busca en la sopa de letras las palabras que completan la frase.",
+  crucigrama: "Escribe cada palabra del crucigrama con su pista.",
+  arma: "Toca los trozos en orden para armar la idea.",
   parejas: "Toca una idea de la izquierda y después su pareja de la derecha.",
   "elige-pareja": "Toca lo que corresponde a la idea de arriba.",
+  memoria: "Destapa dos cartas: si van juntas, quedan a la vista.",
   recuadros: "Toca una frase y después el recuadro del grupo donde va.",
   desliza: "Lleva cada frase a su lado: deslízala o toca el grupo.",
   intruso: "Tres frases van juntas y una no. Toca la que no va.",
+  atrapa: "Las frases caen: atrapa solo las del grupo que se pide.",
   lista: "Pon los pasos en orden: arrástralos o usa las flechas.",
   escalones: "Arma la escalera: toca lo que va en cada escalón, del primero al último.",
   "donde-va": "Un paso se salió de la lista. Toca el lugar donde va.",
@@ -207,11 +219,17 @@ export type ItemVista = { consigna: string } & (
   | { pieza: "completa"; formato: "banco"; partes: (string | { hueco: number })[]; banco: string[] }
   | { pieza: "completa"; formato: "elige"; partes: (string | { hueco: number })[]; opciones: string[][] }
   | { pieza: "completa"; formato: "escribe"; partes: (string | { hueco: number })[]; letras: number[]; iniciales: string[] }
+  | { pieza: "completa"; formato: "anagrama"; partes: (string | { hueco: number })[]; hueco: number; hechas: string[]; letras: string[]; paso: number; pasos: number }
+  | { pieza: "completa"; formato: "sopa"; partes: (string | { hueco: number })[]; filas: string[]; buscar: number }
+  | { pieza: "completa"; formato: "crucigrama"; partes: (string | { hueco: number })[]; filas: number; columnas: number; palabras: { n: number; hueco: number; fila: number; col: number; dir: "h" | "v"; largo: number }[] }
+  | { pieza: "completa"; formato: "arma"; trozos: string[] }
   | { pieza: "relaciona"; formato: "parejas"; izquierda: string[]; derecha: string[] }
   | { pieza: "relaciona"; formato: "elige-pareja"; idea: string; opciones: string[]; paso: number; pasos: number }
+  | { pieza: "relaciona"; formato: "memoria"; cartas: string[]; descubiertas: number[]; fallos: number; paso: number; pasos: number }
   | { pieza: "clasifica"; formato: "recuadros"; grupos: string[]; frases: string[] }
   | { pieza: "clasifica"; formato: "desliza"; grupos: string[]; frase: string; paso: number; pasos: number }
   | { pieza: "clasifica"; formato: "intruso"; frases: string[]; paso: number; pasos: number }
+  | { pieza: "clasifica"; formato: "atrapa"; pregunta: string | null; grupo: string; frases: string[] }
   | { pieza: "ordena"; formato: "lista"; pasos: string[] }
   | { pieza: "ordena" | "linea"; formato: "escalones"; colocados: string[]; opciones: string[]; paso: number; pasos: number }
   | { pieza: "ordena" | "linea"; formato: "donde-va"; suelto: string; lista: string[]; paso: number; pasos: number }
@@ -235,9 +253,9 @@ export type ItemVista = { consigna: string } & (
  */
 export type RespuestaPractica =
   | { pieza: "tarjetas"; opcion: number }
-  | { pieza: "completa"; huecos: string[] }
-  | { pieza: "relaciona"; pares?: number[]; opcion?: number }
-  | { pieza: "clasifica"; grupos?: number[]; grupo?: number; frase?: number }
+  | { pieza: "completa"; huecos?: string[]; trazos?: number[][]; orden?: number[] }
+  | { pieza: "relaciona"; pares?: number[]; opcion?: number; cartas?: number[] }
+  | { pieza: "clasifica"; grupos?: number[]; grupo?: number; frase?: number; atrapadas?: number[] }
   | { pieza: "ordena"; orden?: number[]; opcion?: number }
   | { pieza: "verdad"; verdad?: boolean; frase?: number }
   | { pieza: "error"; frase: number }
@@ -253,12 +271,17 @@ export type RespuestaPractica =
 /** La corrección de cada pieza (lo que se marca en pantalla después de contestar). */
 export type Correccion =
   | { pieza: "tarjetas"; correcta: number }
-  | { pieza: "completa"; correctas: string[]; marcas: boolean[]; error: string | null }
+  | { pieza: "completa"; formato?: undefined; correctas: string[]; marcas: boolean[]; error: string | null }
+  | { pieza: "completa"; formato: "anagrama"; correcta: string; bien: boolean }
+  | { pieza: "completa"; formato: "sopa"; elegidas: { texto: string; trazo: number[]; bien: boolean }[]; faltan: { texto: string; trazo: number[] }[]; palabras: string[] }
+  | { pieza: "completa"; formato: "arma"; correcto: number[]; texto: string }
   | { pieza: "relaciona"; formato?: undefined; correctas: number[]; marcas: boolean[] }
   | { pieza: "relaciona"; formato: "elige-pareja"; correcta: number }
+  | { pieza: "relaciona"; formato: "memoria"; cartas: number[]; par: boolean }
   | { pieza: "clasifica"; formato?: undefined; correctas: number[]; marcas: boolean[]; explicas: (string | null)[] }
   | { pieza: "clasifica"; formato: "desliza"; grupo: number; explica: string | null }
   | { pieza: "clasifica"; formato: "intruso"; intruso: number; grupoDe: string; grupoDeLasOtras: string }
+  | { pieza: "clasifica"; formato: "atrapa"; deGrupo: boolean[]; atrapadas: number[] }
   | { pieza: "ordena"; formato?: undefined; correcto: number[] }
   | { pieza: "ordena" | "linea"; formato: "escalones" | "donde-va"; correcta: number }
   | { pieza: "verdad"; formato?: undefined; verdad: boolean }

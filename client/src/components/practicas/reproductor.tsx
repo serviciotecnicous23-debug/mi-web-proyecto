@@ -14,11 +14,14 @@ import { cambiarSonido, sonarBien, sonarMal, sonarMedio, sonidoActivo } from "./
 import { Clasifica, Completa, EncuentraError, Explica, Relaciona, Relampago, Situacion, Verdad, Ordena as OrdenaLista, type PropsPieza } from "./piezas";
 import { Chat, CualFalsa, Desliza, Detective, DondeVa, EligePalabra, EligePareja, Escalones, Escribela, Intruso } from "./formas";
 import { Caso, Escenario, Linea, Mapa, MapaIdeas, Pasaje } from "./piezas-avanzadas";
+import { Anagrama, ArmaLaFrase, Atrapalas, Crucigrama, Memoria, Sopa } from "./dinamicas";
 import { AsiSeJuega, claveForma, iconoForma, nombreForma, TarjetaModalidad, useFormasVistas } from "./asi-se-juega";
 import { Resultado } from "./resultado";
 
 /** Las formas que se responden solas con un toque (no muestran «Comprobar»). */
-const SOLAS = new Set<Formato>(["relampago", "elige-pareja", "desliza", "intruso", "escalones", "donde-va", "verdad-o-error", "cual-falsa"]);
+const SOLAS = new Set<Formato>(["relampago", "elige-pareja", "desliza", "intruso", "escalones", "donde-va", "verdad-o-error", "cual-falsa", "memoria", "atrapa"]);
+/** Las que llevan su tiempo y no van contra el reloj (buscar en la sopa, escribir el crucigrama, ver caer las frases). */
+const SIN_RELOJ = new Set<Formato>(["texto", "sopa", "crucigrama", "atrapa"]);
 
 /** La modalidad «Contra el reloj»: segundos para el premio y puntos que da. */
 const RELOJ_SEGUNDOS = 20;
@@ -71,6 +74,18 @@ function Pieza(props: Omit<PropsPieza<any>, "vista" | "correccion"> & { vista: I
       return <Chat {...p} />;
     case "texto":
       return <Explica {...p} />;
+    case "anagrama":
+      return <Anagrama {...p} />;
+    case "sopa":
+      return <Sopa {...p} />;
+    case "crucigrama":
+      return <Crucigrama {...p} />;
+    case "arma":
+      return <ArmaLaFrase {...p} />;
+    case "memoria":
+      return <Memoria {...p} />;
+    case "atrapa":
+      return <Atrapalas {...p} />;
     default:
       break;
   }
@@ -178,7 +193,7 @@ function Devolucion_({ d, alSeguir, ultimo }: { d: Devolucion; alSeguir: () => v
       : tono === "medio"
         ? "bg-amber-50 dark:bg-amber-950/70 border-amber-500/60 text-amber-950 dark:text-amber-50"
         : "bg-rose-50 dark:bg-rose-950/70 border-rose-500/60 text-rose-950 dark:text-rose-50";
-  const error = d.correccion.pieza === "completa" ? d.correccion.error : null;
+  const error = d.correccion.pieza === "completa" && "error" in d.correccion ? d.correccion.error : null;
   return (
     <motion.div
       initial={quieto ? false : { y: "100%" }}
@@ -247,6 +262,8 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   const [paso, setPaso] = useState(0);
   const [respuesta, setRespuesta] = useState<RespuestaPractica | null>(null);
   const [devolucion, setDevolucion] = useState<Devolucion | null>(null);
+  /** La memoria, entre volteo y volteo: la devolución no abre su panel y se sigue sola. */
+  const [callada, setCallada] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [pista, setPista] = useState<string | null>(null);
   const [puntos, setPuntos] = useState(() => (intento.puntos ?? 0) + leerBono(claveBono));
@@ -265,7 +282,9 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   const zona = useRef<HTMLDivElement>(null);
   const vista = n < total ? vistas[n] : null;
   // (escribir con sus palabras no va contra el reloj: nadie escribe 15 palabras en 20 segundos)
-  const sinReloj = !!vista && (vista.formato === "texto" || vista.pieza === "caso");
+  const sinReloj = !!vista && (SIN_RELOJ.has(vista.formato) || vista.pieza === "caso");
+  // (la memoria no cambia de pantalla entre volteos: las cartas se quedan donde están)
+  const clavePaso = vista?.formato === "memoria" ? "memoria" : paso;
 
   // las formas de jugar distintas de este intento (para la portada)
   const formas = useMemo(() => new Set(intento.items.map((i) => claveForma(i.vista))).size, [intento.items]);
@@ -339,13 +358,16 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
     setError(null);
     try {
       const d = await responder(intento.id, n, r);
+      // (un volteo de la memoria que no fue pareja no es un error: es parte del juego)
+      const volteo = vista?.formato === "memoria" && !!d.siguiente;
+      setCallada(volteo);
       setDevolucion(d);
       if (d.bien) sonarBien();
-      else if (d.puntaje >= 0.5) sonarMedio();
+      else if (d.puntaje >= 0.5 || volteo) sonarMedio();
       else sonarMal();
       // los puntos: los del paso y, según la modalidad, los de más (nunca cambian la nota)
       const base = Math.round(d.puntaje * 10);
-      const s = d.bien ? seguidas + 1 : 0;
+      const s = d.bien ? seguidas + 1 : volteo ? seguidas : 0;
       setSeguidas(s);
       let bono = 0;
       let aviso: string | null = null;
@@ -359,7 +381,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
         aviso = `¡Rápido! +${RELOJ_PREMIO}`;
       }
       if (modalidad === "escalera") {
-        const e = d.bien ? escalon + 1 : d.puntaje >= 0.5 ? escalon : Math.max(0, escalon - 1);
+        const e = d.bien ? escalon + 1 : d.puntaje >= 0.5 || volteo ? escalon : Math.max(0, escalon - 1);
         if (e >= ESCALONES) {
           bono += ESCALERA_PREMIO;
           aviso = `¡Llegaste a la cima! +${ESCALERA_PREMIO}`;
@@ -380,6 +402,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
   const seguir = () => {
     if (!devolucion) return;
     const d = devolucion;
+    setCallada(false);
     setDevolucion(null);
     setRespuesta(null);
     setPista(null);
@@ -399,6 +422,14 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
       void terminar();
     } else setN(n + 1);
   };
+
+  // la memoria se sigue sola entre volteos (un momento para ver las dos cartas)
+  useEffect(() => {
+    if (!devolucion || !callada) return;
+    const t = window.setTimeout(seguir, devolucion.bien ? 650 : 1150);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devolucion, callada]);
 
   const salir = () => {
     if (resultado || portada || (n === 0 && !devolucion && paso === 0 && hechas.every((h) => !h))) return alSalir();
@@ -504,7 +535,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
             <Resultado r={resultado} intento={intento} puntos={puntos} alSalir={alSalir} alOtraVez={alOtraVez} />
           ) : vista && item ? (
             <AnimatePresence mode="wait">
-              <motion.div key={`${n}-${paso}`} initial={quieto ? false : { opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={quieto ? undefined : { opacity: 0, x: -30 }} transition={{ duration: 0.22 }}>
+              <motion.div key={`${n}-${clavePaso}`} initial={quieto ? false : { opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={quieto ? undefined : { opacity: 0, x: -30 }} transition={{ duration: 0.22 }}>
                 <div className="flex items-center gap-2 mb-2 min-w-0">
                   <button
                     type="button"
@@ -547,7 +578,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
                   </div>
                 )}
                 <Pieza
-                  key={`${n}-${paso}`}
+                  key={`${n}-${clavePaso}`}
                   vista={vista}
                   correccion={devolucion?.correccion ?? null}
                   devolucion={devolucion}
@@ -576,7 +607,7 @@ export function Reproductor({ intento, alSalir, alOtraVez }: { intento: IntentoV
 
       {/* abajo: comprobar o la devolución */}
       <AnimatePresence initial={false}>
-        {devolucion ? (
+        {devolucion && callada ? null : devolucion ? (
           <Devolucion_ key="d" d={devolucion} alSeguir={seguir} ultimo={n + 1 >= total} />
         ) : vista && !resultado && !portada && !SOLAS.has(vista.formato) ? (
           <motion.div key="c" initial={false} className="shrink-0 border-t border-border/60 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
