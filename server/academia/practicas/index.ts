@@ -51,6 +51,16 @@ import { PRACTICAS_N5_IDIOMAS } from "./n5-idiomas";
 import { PRACTICAS_N5_EXEGESIS } from "./n5-exegesis";
 import { PRACTICAS_N5_AVIVAMIENTO } from "./n5-avivamiento";
 import { PRACTICAS_N5_SEMINARIO } from "./n5-seminario";
+import { PRACTICAS_EVANGELISMO_MISIONES_1 } from "./evangelismo-misiones-1";
+import { PRACTICAS_EVANGELISMO_MISIONES_2 } from "./evangelismo-misiones-2";
+import { PRACTICAS_EVANGELISMO_MISIONES_3 } from "./evangelismo-misiones-3";
+import { PRACTICAS_EVANGELISMO_MISIONES_4 } from "./evangelismo-misiones-4";
+import { PRACTICAS_EVANGELISMO_MISIONES_5 } from "./evangelismo-misiones-5";
+import { PRACTICAS_PASTORAL_1 } from "./pastoral-1";
+import { PRACTICAS_PASTORAL_2 } from "./pastoral-2";
+import { PRACTICAS_PASTORAL_3 } from "./pastoral-3";
+import { PRACTICAS_PASTORAL_4 } from "./pastoral-4";
+import { PRACTICAS_PASTORAL_5 } from "./pastoral-5";
 
 const LISTA: PracticasMateria[] = [
   PRACTICAS_N1_SALVACION, PRACTICAS_N1_ORACION, PRACTICAS_N1_BIBLIA, PRACTICAS_N1_ESPIRITU,
@@ -73,6 +83,11 @@ const LISTA: PracticasMateria[] = [
   PRACTICAS_N5_TEOLOGIA_PASTORAL, PRACTICAS_N5_ADMINISTRACION, PRACTICAS_N5_DIDACTICA,
   PRACTICAS_N5_LIDERAZGO_2, PRACTICAS_N5_IDIOMAS, PRACTICAS_N5_EXEGESIS,
   PRACTICAS_N5_AVIVAMIENTO, PRACTICAS_N5_SEMINARIO,
+  // Especialidades: evangelismo-misiones, pastoral
+  PRACTICAS_EVANGELISMO_MISIONES_1, PRACTICAS_EVANGELISMO_MISIONES_2, PRACTICAS_EVANGELISMO_MISIONES_3,
+  PRACTICAS_EVANGELISMO_MISIONES_4, PRACTICAS_EVANGELISMO_MISIONES_5, PRACTICAS_PASTORAL_1,
+  PRACTICAS_PASTORAL_2, PRACTICAS_PASTORAL_3, PRACTICAS_PASTORAL_4,
+  PRACTICAS_PASTORAL_5,
 ];
 
 export const PRACTICAS_POR_MATERIA = new Map(LISTA.map((p) => [p.materia, p]));
