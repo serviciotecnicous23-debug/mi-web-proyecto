@@ -61,6 +61,16 @@ import { PRACTICAS_PASTORAL_2 } from "./pastoral-2";
 import { PRACTICAS_PASTORAL_3 } from "./pastoral-3";
 import { PRACTICAS_PASTORAL_4 } from "./pastoral-4";
 import { PRACTICAS_PASTORAL_5 } from "./pastoral-5";
+import { PRACTICAS_ALABANZA_1 } from "./alabanza-1";
+import { PRACTICAS_ALABANZA_2 } from "./alabanza-2";
+import { PRACTICAS_ALABANZA_3 } from "./alabanza-3";
+import { PRACTICAS_ALABANZA_4 } from "./alabanza-4";
+import { PRACTICAS_ALABANZA_5 } from "./alabanza-5";
+import { PRACTICAS_NINEZ_1 } from "./ninez-1";
+import { PRACTICAS_NINEZ_2 } from "./ninez-2";
+import { PRACTICAS_NINEZ_3 } from "./ninez-3";
+import { PRACTICAS_NINEZ_4 } from "./ninez-4";
+import { PRACTICAS_NINEZ_5 } from "./ninez-5";
 
 const LISTA: PracticasMateria[] = [
   PRACTICAS_N1_SALVACION, PRACTICAS_N1_ORACION, PRACTICAS_N1_BIBLIA, PRACTICAS_N1_ESPIRITU,
@@ -88,6 +98,11 @@ const LISTA: PracticasMateria[] = [
   PRACTICAS_EVANGELISMO_MISIONES_4, PRACTICAS_EVANGELISMO_MISIONES_5, PRACTICAS_PASTORAL_1,
   PRACTICAS_PASTORAL_2, PRACTICAS_PASTORAL_3, PRACTICAS_PASTORAL_4,
   PRACTICAS_PASTORAL_5,
+  // Especialidades: alabanza, ninez
+  PRACTICAS_ALABANZA_1, PRACTICAS_ALABANZA_2, PRACTICAS_ALABANZA_3,
+  PRACTICAS_ALABANZA_4, PRACTICAS_ALABANZA_5, PRACTICAS_NINEZ_1,
+  PRACTICAS_NINEZ_2, PRACTICAS_NINEZ_3, PRACTICAS_NINEZ_4,
+  PRACTICAS_NINEZ_5,
 ];
 
 export const PRACTICAS_POR_MATERIA = new Map(LISTA.map((p) => [p.materia, p]));
